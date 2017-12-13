@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY xsd  'http://www.w3.org/2001/XMLSchema#'>
+    <!ENTITY opensaber  'http://open-saber.org/vocab/core/#'>
+]>
+
+<!--
+    As per the OWL file, property hasOccupation of teacher class can 
+only take 1 value, but here it takes 2 values
+  -->
+
+<rdf:RDF
+  xmlns:rdf ="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:dc  ="http://purl.org/dc/elements/1.1/"
+  xmlns:owl ="http://www.w3.org/2002/07/owl#"
+  xmlns:schema="http://schema.org/"
+  xmlns:opensaber="http://open-saber.org/vocab/core/#"
+  xmlns     ="http://jena.hpl.hp.com/testing/reasoners/owl#"
+  xml:base  ="http://jena.hpl.hp.com/testing/reasoners/owl"
+>
+  	
+    <teacher rdf:about="&opensaber;teacher">
+	<schema:birthDate>2011-12-06</schema:birthDate>
+    	<opensaber:teachingHistory>
+      	<opensaber:teachingHistory/>
+    	</opensaber:teachingHistory>
+    	<schema:nationality>Indian</schema:nationality>
+   	<opensaber:protectedProperty>
+      		<opensaber:consentURL/>
+    	</opensaber:protectedProperty>
+    	<schema:sameAs>www.facebook.com/marvinpande419</schema:sameAs>
+    	<schema:name>Marvin</schema:name>
+    	<schema:identifier>b6ad2941-fac3-4c72-94b7-eb638538f55f</schema:identifier>
+    	<opensaber:languagesKnownISO>hi</opensaber:languagesKnownISO>
+    	<opensaber:homeLocation>
+      		<opensaber:indianAddress/>
+    	</opensaber:homeLocation>
+    	<opensaber:protectedProperty>
+      		<opensaber:consentURL/>
+   	</opensaber:protectedProperty>
+    	<schema:familyName>Pande</schema:familyName>
+    	<opensaber:languagesKnownISO>en</opensaber:languagesKnownISO>
+    	<schema:gender>male</schema:gender>
+    	<hasOccupation>teacher</hasOccupation>
+    	<hasOccupation>principal</hasOccupation>
+	<rdf:type rdf:resource="http://schema.org/Person"/>
+    </teacher>
+
+    
+</rdf:RDF>
