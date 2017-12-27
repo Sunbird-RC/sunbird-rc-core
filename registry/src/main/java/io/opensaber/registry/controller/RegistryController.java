@@ -27,7 +27,7 @@ import io.opensaber.registry.util.ResponseUtil;
  */
 @Controller
 @SpringBootApplication
-@ComponentScan({"com.example.registry"})
+@ComponentScan({"io.opensaber.registry"})
 public class RegistryController {
 	
 	@Autowired
@@ -61,15 +61,15 @@ public class RegistryController {
 	
 	@ResponseBody
 	@RequestMapping(value="/deleteEntity",method=RequestMethod.POST)
-	public ResponseEntity deleteEntity(@RequestBody EntityDto entityDto) throws JsonProcessingException{
-		boolean status = registryService.deleteEntity(entityDto);
+	public ResponseEntity deleteEntity(@RequestBody Object entity) throws JsonProcessingException{
+		boolean status = registryService.deleteEntity(entity);
 		return ResponseUtil.successResponse();
 	}
 	
 	@ResponseBody
 	@RequestMapping(value="/getEntity",method=RequestMethod.POST)
-	public ResponseEntity getEntity(@RequestBody EntityDto entityDto) throws JsonProcessingException{
-		Object entity = registryService.getEntityById(entityDto);
-		return ResponseUtil.successResponse(entity);
+	public ResponseEntity getEntity(@RequestBody Object entity) throws JsonProcessingException{
+		Object responseObj = registryService.getEntityById(entity);
+		return ResponseUtil.successResponse(responseObj);
 	}
 }

@@ -26,7 +26,7 @@ import org.springframework.data.cassandra.repository.config.EnableCassandraRepos
  */
 @Configuration
 @PropertySource(value = {"classpath:cassandra.properties"})
-@EnableCassandraRepositories(basePackages = {"com.example.registry"})
+@EnableCassandraRepositories(basePackages = {"io.opensaber.registry"})
 public class CassandraConfiguration {
 
 	@Autowired

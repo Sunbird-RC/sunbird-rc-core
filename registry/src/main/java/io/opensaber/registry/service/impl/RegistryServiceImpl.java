@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.model.dto.EntityDto;
 import io.opensaber.registry.service.RegistryService;
 
 /**
@@ -36,13 +35,13 @@ public class RegistryServiceImpl implements RegistryService{
 	}
 	
 	@Override
-	public Object getEntityById(EntityDto entityDto){
-		return registryDao.getEntityById(entityDto);
+	public Object getEntityById(Object entity){
+		return registryDao.getEntityById(entity);
 	}
 	
 	@Override
-	public boolean deleteEntity(EntityDto entityDto){
-		return registryDao.deleteEntity(entityDto);
+	public boolean deleteEntity(Object entity){
+		return registryDao.deleteEntity(entity);
 	}
 
 }

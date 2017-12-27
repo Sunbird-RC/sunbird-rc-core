@@ -2,9 +2,6 @@ package io.opensaber.registry.dao;
 
 import java.util.List;
 
-import io.opensaber.registry.model.Teacher;
-import io.opensaber.registry.model.dto.EntityDto;
-
 /**
  * 
  * @author jyotsna
@@ -18,8 +15,8 @@ public interface RegistryDao {
 	
 	public boolean updateEntity(Object entity);
 	
-	public Object getEntityById(EntityDto entityDto);
+	public Object getEntityById(Object entity);
 	
-	public boolean deleteEntity(EntityDto entityDto);
+	public boolean deleteEntity(Object entity);
 
 }

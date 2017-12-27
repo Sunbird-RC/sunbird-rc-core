@@ -33,13 +33,13 @@ import io.opensaber.registry.model.dto.EntityDto;
  */
 @Service
 public class RegistryDaoImpl implements RegistryDao{
-	
+
 	@Autowired
 	CassandraConfiguration cassandraConfig;
-	
+
 	@Autowired
 	ObjectMapper objectMapper;
-	
+
 	@Override
 	public List getEntityList(){
 		List<Teacher> teacherList = new ArrayList<Teacher>();
@@ -60,7 +60,7 @@ public class RegistryDaoImpl implements RegistryDao{
 		}
 		return teacherList;
 	}
-	
+
 	@Override
 	public boolean addEntity(Object entity){
 		try{
@@ -73,7 +73,7 @@ public class RegistryDaoImpl implements RegistryDao{
 		}
 		return false;
 	}
-	
+
 	@Override
 	public boolean updateEntity(Object entity){
 		try{
@@ -94,10 +94,11 @@ public class RegistryDaoImpl implements RegistryDao{
 		}
 		return false;
 	}
-	
+
 	@Override
-	public Object getEntityById(EntityDto entityDto){
+	public Object getEntityById(Object entity){
 		try{
+			EntityDto entityDto = (EntityDto)entity;
 			Select selectQuery = QueryBuilder.select().column("id")
 					.column("dob").column("email").column("avatar")
 					.column("emailverified").column("firstname").column("lastname")
@@ -111,10 +112,11 @@ public class RegistryDaoImpl implements RegistryDao{
 		}
 		return new Teacher();
 	}
-	
+
 	@Override
-	public boolean deleteEntity(EntityDto entityDto){
+	public boolean deleteEntity(Object entity){
 		try{
+			EntityDto entityDto = (EntityDto)entity;
 			Delete deleteQuery = QueryBuilder.delete().all().from("user");
 			Delete.Where whereQuery = deleteQuery.where();
 			Clause whereClause = QueryBuilder.eq("id", entityDto.getId());
