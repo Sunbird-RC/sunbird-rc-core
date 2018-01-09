@@ -1,4 +1,4 @@
-package io.opensaber.utils.convertors;
+package io.opensaber.utils.converters;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -7,7 +7,7 @@ import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 
 
-public class JavaJsonLdToRdfConverter {
+public class JsonLdToRdfConverter {
 
 	public static String jsonldToRDFConvertor(InputStream inputStream){
 		String rdfStr = "";
