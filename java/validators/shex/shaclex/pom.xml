@@ -20,10 +20,17 @@
 
 	<dependencyManagement>
 		<dependencies>
+
 		</dependencies>
 	</dependencyManagement>
 
 	<dependencies>
+		<dependency>
+			<groupId>es.weso</groupId>
+			<artifactId>shaclex_2.12</artifactId>
+			<version>0.0.63</version>
+			<type>pom</type>
+		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
