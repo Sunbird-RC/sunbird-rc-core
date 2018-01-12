@@ -1,6 +1,9 @@
 package io.opensaber.registry.controller;
 
 import java.util.List;
+import java.util.Optional;
+
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -8,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -16,7 +20,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.opensaber.registry.config.CassandraConfiguration;
-import io.opensaber.registry.model.dto.EntityDto;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.ResponseUtil;
 
@@ -71,5 +74,17 @@ public class RegistryController {
 	public ResponseEntity getEntity(@RequestBody Object entity) throws JsonProcessingException{
 		Object responseObj = registryService.getEntityById(entity);
 		return ResponseUtil.successResponse(responseObj);
+	}
+	
+	@ResponseBody
+	@RequestMapping(value="/convertToRdf",method=RequestMethod.POST)
+	public ResponseEntity convertToRdf(@RequestAttribute Object entity) throws JsonProcessingException{
+		return ResponseUtil.successResponse();
+	}
+	
+	
+	@RequestMapping(value="/retrieveJsonld",method=RequestMethod.GET)
+	public ResponseEntity retrieveJsonld() throws JsonProcessingException{
+		return ResponseUtil.successResponse();
 	}
 }
