@@ -88,7 +88,7 @@ public class RegistryControllerSteps {
 	}
 	
 	public String generateBaseUrl(){
-		return "http://localhost:8080";
+		return "http://localhost:8080/registry";
 	}
 
 }
