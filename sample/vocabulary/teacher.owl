@@ -1,0 +1,851 @@
+{
+  "@context": {
+    "sample": "http://example.com/voc/teacher/1.0.0/",
+    "cc": "http://creativecommons.org/ns#",
+    "cert": "http://www.w3.org/ns/auth/cert#",
+    "dbp": "http://dbpedia.org/property/",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "dc1": "http://purl.org/dc/terms/",
+    "dc11": "http://purl.org/dc/elements/1.1/",
+    "dcterms": "http://purl.org/dc/terms/",
+    "doap": "http://usefulinc.com/ns/doap#",
+    "exif": "http://www.w3.org/2003/12/exif/ns#",
+    "fn": "http://www.w3.org/2005/xpath-functions#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
+    "geonames": "http://www.geonames.org/ontology#",
+    "gr": "http://purl.org/goodrelations/v1#",
+    "log": "http://www.w3.org/2000/10/swap/log#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rei": "http://www.w3.org/2004/06/rei#",
+    "rsa": "http://www.w3.org/ns/auth/rsa#",
+    "rss": "http://purl.org/rss/1.0/",
+    "schema": "http://schema.org/",
+    "sfn": "http://www.w3.org/ns/sparql#",
+    "sioc": "http://rdfs.org/sioc/ns#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "swrc": "http://swrc.ontoware.org/ontology#",
+    "types": "http://rdfs.org/sioc/types#",
+    "vcard": "http://www.w3.org/2006/vcard/ns#",
+    "wot": "http://xmlns.com/wot/0.1/",
+    "xhtml": "http://www.w3.org/1999/xhtml#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "sample:",
+      "@type": "owl:Ontology",
+      "dc11:description": "W3C RDF Schema based sample vocabulary.",
+      "dc11:identifier": "OpenSaber Sample Vocabulary v1.0.0",
+      "dc11:title": "OpenSaber Sample Vocabulary",
+      "dcterms:issued": {
+          "@type": "xsd:date",
+          "@value": "2018-1-16"
+      }
+    },
+    {
+      "@id": "sample:Place",
+      "@type": [
+        "owl:Class",
+        "rdfs:Class"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Entities that have a somewhat fixed, physical location."
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Place"
+      },
+      "rdfs:subClassOf": {
+        "@id": "owl:Thing"
+      },
+      "skos:broadMatch": {
+        "@id": "schema:Place"
+      }
+    },
+    {
+      "@id": "sample:Organization",
+      "@type": [
+        "owl:Class",
+        "rdfs:Class"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "An Organization is any legal or physical entity."
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Organization"
+      },
+      "rdfs:subClassOf": {
+        "@id": "owl:Thing"
+      },
+      "skos:exactMatch": {
+        "@id": "schema:Organization"
+      }
+    },
+    {
+      "@id": "sample:School",
+      "@type": [
+        "owl:Class",
+        "rdfs:Class"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A school is where one goes to learn. A School is uniquely identified by a U-DISE Code."
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "School"
+      },
+      "rdfs:subClassOf": {
+        "@id": "sample:Organization"
+      },
+      "skos:exactMatch": {
+        "@id": "schema:School"
+      }
+    },
+    {
+      "@id": "sample:udiseNumber",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A U-DISE Code is a Number given to each school covered under U-DISE. It is a unique code given in the first year of coverage under U-DISE and used every year to ensure compatibilityand comparison across years."
+      },
+      "rdfs:domain": {
+        "@id": "sample:School"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "U-DISE Code (UDISE)"
+      },
+      "rdfs:range": {
+        "@id": "xsd:integer"
+      },
+      "skos:exactMatch": {
+        "@id": "schema:globalLocationNumber"
+      }
+    },
+    {
+      "@id": "sample:academicCalendarYearStart",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The calendar year in which the Academic year starts."
+      },
+      "rdfs:domain": {
+        "@id": "sample:School"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Academic Calendar Year Start"
+      },
+      "rdfs:range": {
+        "@id": "xsd:gYear"
+      }
+    },
+    {
+      "@id": "sample:academicCalendarYearEnd",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The calendar year in which the Academic year ends."
+      },
+      "rdfs:domain": {
+        "@id": "sample:School"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Academic Calendar Year End"
+      },
+      "rdfs:range": {
+        "@id": "xsd:gYear"
+      }
+    },
+    {
+      "@id": "sample:schoolName",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The name of the School without abbreviations or acronyms."
+      },
+      "rdfs:domain": {
+        "@id": "sample:School"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "School Name"
+      },
+      "rdfs:range": {
+        "@id": "rdf:langString"
+      },
+      "rdfs:subPropertyOf": {
+        "@id": "schema:name"
+      }
+    },
+    {
+      "@id": "sample:AreaTypeCode",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Area Type Code"
+      },
+      "rdfs:subClassOf": {
+        "@id": "sample:TypeCode"
+      }
+    },
+    {
+      "@id": "sample:TypeCode",
+      "@type": [
+        "rdfs:Class",
+        "owl:Class"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A list of codes."
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Type Code"
+      },
+      "rdfs:subClassOf": {
+        "@id": "owl:Thing"
+      }
+    },
+    {
+      "@id": "sample:AreaTypeCode-RURAL",
+      "@type": "sample:AreaTypeCode",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "An area not covered by the Municipal Corporation."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Rural"
+      },
+      "skos:prefLabel": "RURAL"
+    },
+    {
+      "@id": "sample:AreaTypeCode-URBAN",
+      "@type": "sample:AreaTypeCode",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "An area covered by the Municipal Corporation."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Urban"
+      },
+      "skos:prefLabel": "URBAN"
+    },
+    {
+      "@id": "sample:address",
+      "@type": [
+        "owl:ObjectProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "An Indian postal address."
+      },
+      "rdfs:domain": {
+        "@type": "owl:Class",
+        "owl:unionOf": {
+          "@list": [
+            {
+              "@id": "sample:Organization"
+            },
+            {
+              "@id": "sample:Place"
+            }
+          ]
+        }
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Has Postal Address"
+      },
+      "rdfs:range": {
+        "@id": "sample:IndianPostalAddress"
+      },
+      "skos:exactMatch": {
+        "@id": "schema:address"
+      }
+    },
+    {
+      "@id": "sample:IndianPostalAddress",
+      "@type": [
+        "rdfs:Class",
+        "owl:Class"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The location at which a particular organization or person may be found or reached in India."
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Indian Address"
+      },
+      "rdfs:subClassOf": {
+        "@id": "owl:Thing"
+      },
+      "skos:exactMatch": {
+        "@id": "schema:PostalAddress"
+      }
+    },
+    {
+      "@id": "sample:ruralAddress",
+      "@type": [
+        "owl:ObjectProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "An Indian postal address."
+      },
+      "rdfs:domain": {
+        "@id":"sample:IndianPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Has Rural Postal Address"
+      },
+      "rdfs:range": {
+        "@id": "sample:IndianRuralPostalAddress"
+      },
+      "skos:exactMatch": {
+        "@id": "schema:address"
+      }
+    },
+    {
+      "@id": "sample:urbanAddress",
+      "@type": [
+        "owl:ObjectProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "An Urban Indian postal address."
+      },
+      "rdfs:domain": {
+        "@id":"sample:IndianPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Has Urban Postal Address"
+      },
+      "rdfs:range": {
+        "@id": "sample:IndianUrbanPostalAddress"
+      }
+    },
+    {
+      "@id": "sample:IndianRuralPostalAddress",
+      "@type": [
+        "rdfs:Class",
+        "owl:Class"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The location at which a particular organization or person may be found or reached in Rural India."
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Indian Rural Address"
+      },
+      "rdfs:subClassOf": {
+        "@id": "sample:IndianPostalAddress"
+      }
+    },
+    {
+      "@id": "sample:IndianUrbanPostalAddress",
+      "@type": [
+        "rdfs:Class",
+        "owl:Class"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The location at which a particular organization or person may be found or reached in Urban India."
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Indian Urban Address"
+      },
+      "rdfs:subClassOf": {
+        "@id": "sample:IndianPostalAddress"
+      }
+    },
+    {
+      "@id": "sample:habitation",
+      "@type": [
+        "owl:ObjectProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A Habitation in a village"
+      },
+      "rdfs:domain": {
+        "@id":"sample:IndianRuralPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Has Habitation"
+      },
+      "rdfs:range": {
+        "@id": "rdf:langString"
+      }
+    },
+    {
+      "@id": "sample:mohalla",
+      "@type": [
+        "owl:ObjectProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A mohalla in a city"
+      },
+      "rdfs:domain": {
+        "@id":"sample:IndianUrbanPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Has Mohalla"
+      },
+      "rdfs:range": {
+        "@id": "rdf:langString"
+      }
+    },
+    {
+      "@id": "sample:Locality",
+      "@type": [
+        "rdfs:Class",
+        "owl:Class"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A locality in India"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Locality"
+      }
+    },
+    {
+      "@id": "sample:Habitation",
+      "@type": [
+        "rdfs:Class",
+        "owl:Class"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A habitation in Rural India"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Habitation"
+      },
+      "rdfs:subClassOf": {
+        "@id": "sample:Locality"
+      }
+    },
+    {
+      "@id": "sample:Mohalla",
+      "@type": [
+        "rdfs:Class",
+        "owl:Class"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A mohalla in Urban India"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Mohalla"
+      },
+      "rdfs:subClassOf": {
+        "@id": "sample:Locality"
+      }
+    },
+    {
+      "@id": "sample:villageName",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The name of the Village."
+      },
+      "rdfs:domain": {
+        "@id": "sample:IndianRuralPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Village Name"
+      },
+      "rdfs:range": {
+        "@id": "rdf:langString"
+      },
+      "rdfs:subPropertyOf": {
+        "@id": "schema:name"
+      }
+    },
+    {
+      "@id": "sample:wardNumber",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The Ward Number."
+      },
+      "rdfs:domain": {
+        "@id": "sample:IndianUrbanPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Ward Number"
+      },
+      "rdfs:range": {
+        "@id": "rdf:langString"
+      },
+      "rdfs:subPropertyOf": {
+        "@id": "schema:name"
+      }
+    },
+    {
+      "@id": "sample:municipality",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Municipality Name"
+      },
+      "rdfs:domain": {
+        "@id": "sample:IndianUrbanPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Municipality"
+      },
+      "rdfs:range": {
+        "@id": "rdf:langString"
+      },
+      "rdfs:subPropertyOf": {
+        "@id": "schema:name"
+      }
+    },
+    {
+      "@id": "sample:city",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "City Name"
+      },
+      "rdfs:domain": {
+        "@id": "sample:IndianUrbanPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "City"
+      },
+      "rdfs:range": {
+        "@id": "rdf:langString"
+      },
+      "rdfs:subPropertyOf": {
+        "@id": "schema:name"
+      }
+    },
+    {
+      "@id": "sample:pinCode",
+      "@type": [
+        "owl:DatatypeProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Pin Code"
+      },
+      "rdfs:domain": {
+        "@id": "sample:IndianPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Pin Code"
+      },
+      "rdfs:range": {
+        "@id": "xsd:string"
+      },
+      "skos:exactMatch": {
+        "@id": "schema:postalCode"
+      }
+    },
+    {
+      "@id": "sample:villagePanchayat",
+      "@type": [
+        "owl:DatatypeProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Pachanayat name"
+      },
+      "rdfs:domain": {
+        "@id": "sample:IndianRuralPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Village (Gram) Panchayat name"
+      },
+      "rdfs:range": {
+        "@id": "xsd:string"
+      }
+    },
+    {
+      "@id": "sample:clusterResourceCentre",
+      "@type": [
+        "owl:DatatypeProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The name of the Cluster Resource Centre (CRC) established under the Sarva Shiksha Abhiyan (SSA). On an average, a CRC is responsible for around 15 - 20 schools. Enter the CRC name in full. In case, the name is not available, get the name from the Block / District Officer."
+      },
+      "rdfs:domain": {
+        "@id": "sample:School"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Cluster Resource Centre Name"
+      },
+      "rdfs:range": {
+        "@id": "xsd:string"
+      }
+    },
+    {
+      "@id": "sample:revenueBlock",
+      "@type": [
+        "owl:DatatypeProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "A District is divided into various Revenue Blocks (also known as Community Development (CD) Block). In some states, it is also called as Mandal ot Taluka."
+      },
+      "rdfs:domain": {
+        "@id": "sample:School"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Revenue Block / Mandal / Taluka"
+      },
+      "rdfs:range": {
+        "@id": "xsd:string"
+      }
+    },
+    {
+      "@id": "sample:administrativeBlock",
+      "@type": [
+        "owl:DatatypeProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The administrative unit of the Education Department below the District level. Synonymous with the Block / Mandal / Taluka in most states or different if a separate administrative setup has been established to manage the education activities in the District."
+      },
+      "rdfs:domain": {
+        "@id": "sample:School"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Administrative Block"
+      },
+      "rdfs:range": {
+        "@id": "xsd:string"
+      }
+    },
+    {
+      "@id": "sample:district",
+      "@type": [
+        "owl:DatatypeProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "District"
+      },
+      "rdfs:domain": {
+        "@id": "sample:IndianPostalAddress"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "District"
+      },
+      "rdfs:range": {
+        "@id": "xsd:string"
+      }
+    },
+    {
+      "@id": "sample:assemblyConstituency",
+      "@type": [
+        "owl:DatatypeProperty",
+        "rdf:Property"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "District"
+      },
+      "rdfs:domain": {
+        "@id": "sample:School"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Assembly Constituency"
+      },
+      "rdfs:range": {
+        "@id": "xsd:string"
+      }
+    }
+  ]
+}
