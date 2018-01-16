@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -20,6 +22,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.opensaber.registry.config.CassandraConfiguration;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.config.InterceptorConfiguration;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.ResponseUtil;
 
@@ -31,15 +35,15 @@ import io.opensaber.registry.util.ResponseUtil;
 @Controller
 @SpringBootApplication
 @ComponentScan({"io.opensaber.registry"})
-public class RegistryController {
-	
+public class RegistryController extends SpringBootServletInitializer {
+
 	@Autowired
 	RegistryService registryService;
-
-	public static void main(String[] args) {
-		Class[] classArray = {RegistryController.class,CassandraConfiguration.class};
-		SpringApplication.run(classArray, args);
-	}
+	
+    @Override
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+        return application.sources(RegistryController.class);
+    }
 	
 	@ResponseBody
 	@RequestMapping(value="/getEntityList",method=RequestMethod.GET)
