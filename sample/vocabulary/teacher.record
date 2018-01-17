@@ -1,0 +1,5 @@
+{
+    "@context": "http://example.com/voc/teacher/1.0.0/",
+    "@type": "School",
+    "udiseNumber": "a"
+}
