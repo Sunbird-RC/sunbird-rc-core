@@ -285,6 +285,31 @@
       "skos:prefLabel": "URBAN"
     },
     {
+      "@id": "sample:area",
+      "@type": [
+        "rdf:Property",
+        "owl:ObjectProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Area details"
+      },
+      "rdfs:domain": {
+        "@id": "sample:Organization"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Has Area"
+      },
+      "rdfs:range": {
+        "@id": "sample:AreaTypeCode"
+      }
+    },
+    {
       "@id": "sample:address",
       "@type": [
         "owl:ObjectProperty",
@@ -846,6 +871,10 @@
       "rdfs:range": {
         "@id": "xsd:string"
       }
+    },
+    {
+      "@type": "sample:School",
+      "sample:udiseNumber": "a"
     }
   ]
 }

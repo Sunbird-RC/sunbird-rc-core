@@ -1,0 +1,319 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dc11: <http://purl.org/dc/elements/1.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ns0: <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix schema: <http://schema.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+<http://example.com/voc/teacher/1.0.0/>
+  a owl:Ontology ;
+  dc11:description "W3C RDF Schema based sample vocabulary."^^xsd:string ;
+  dc11:identifier "OpenSaber Sample Vocabulary v1.0.0"^^xsd:string ;
+  dc11:title "OpenSaber Sample Vocabulary"^^xsd:string ;
+  dc:issued "2018-1-16"^^xsd:date .
+
+<http://example.com/voc/teacher/1.0.0/Place>
+  a owl:Class, rdfs:Class ;
+  rdfs:comment "Entities that have a somewhat fixed, physical location."@en ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Place"@en ;
+  rdfs:subClassOf owl:Thing ;
+  ns0:term_status "testing"^^xsd:string ;
+  skos:broadMatch schema:Place .
+
+<http://example.com/voc/teacher/1.0.0/Organization>
+  a owl:Class, rdfs:Class ;
+  rdfs:comment "An Organization is any legal or physical entity."@en ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Organization"@en ;
+  rdfs:subClassOf owl:Thing ;
+  ns0:term_status "testing"^^xsd:string ;
+  skos:exactMatch schema:Organization .
+
+<http://example.com/voc/teacher/1.0.0/School>
+  a owl:Class, rdfs:Class ;
+  rdfs:comment "A school is where one goes to learn. A School is uniquely identified by a U-DISE Code."@en ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "School"@en ;
+  rdfs:subClassOf <http://example.com/voc/teacher/1.0.0/Organization> ;
+  ns0:term_status "testing"^^xsd:string ;
+  skos:exactMatch schema:School .
+
+<http://example.com/voc/teacher/1.0.0/udiseNumber>
+  a rdf:Property, owl:DatatypeProperty ;
+  rdfs:comment "A U-DISE Code is a Number given to each school covered under U-DISE. It is a unique code given in the first year of coverage under U-DISE and used every year to ensure compatibilityand comparison across years."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/School> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "U-DISE Code (UDISE)"@en ;
+  rdfs:range xsd:integer ;
+  ns0:term_status "testing"^^xsd:string ;
+  skos:exactMatch schema:globalLocationNumber .
+
+<http://example.com/voc/teacher/1.0.0/academicCalendarYearStart>
+  a rdf:Property, owl:DatatypeProperty ;
+  rdfs:comment "The calendar year in which the Academic year starts."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/School> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Academic Calendar Year Start"@en ;
+  rdfs:range xsd:gYear ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/academicCalendarYearEnd>
+  a rdf:Property, owl:DatatypeProperty ;
+  rdfs:comment "The calendar year in which the Academic year ends."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/School> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Academic Calendar Year End"@en ;
+  rdfs:range xsd:gYear ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/schoolName>
+  a rdf:Property, owl:DatatypeProperty ;
+  rdfs:comment "The name of the School without abbreviations or acronyms."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/School> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "School Name"@en ;
+  rdfs:range rdf:langString ;
+  rdfs:subPropertyOf schema:name ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/AreaTypeCode>
+  rdfs:label "Area Type Code"@en ;
+  rdfs:subClassOf <http://example.com/voc/teacher/1.0.0/TypeCode> .
+
+<http://example.com/voc/teacher/1.0.0/TypeCode>
+  a rdfs:Class, owl:Class ;
+  rdfs:comment "A list of codes."@en ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Type Code"@en ;
+  rdfs:subClassOf owl:Thing ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/AreaTypeCode-RURAL>
+  a <http://example.com/voc/teacher/1.0.0/AreaTypeCode> ;
+  rdfs:comment "An area not covered by the Municipal Corporation."@en ;
+  rdfs:label "Rural"@en ;
+  skos:prefLabel "RURAL"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/AreaTypeCode-URBAN>
+  a <http://example.com/voc/teacher/1.0.0/AreaTypeCode> ;
+  rdfs:comment "An area covered by the Municipal Corporation."@en ;
+  rdfs:label "Urban"@en ;
+  skos:prefLabel "URBAN"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/area>
+  a rdf:Property, owl:ObjectProperty ;
+  rdfs:comment "Area details"@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/Organization> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Has Area"@en ;
+  rdfs:range <http://example.com/voc/teacher/1.0.0/AreaTypeCode> ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/address>
+  a owl:ObjectProperty, rdf:Property ;
+  rdfs:comment "An Indian postal address."@en ;
+  rdfs:domain [
+    a owl:Class ;
+    owl:unionOf (
+     <http://example.com/voc/teacher/1.0.0/Organization>
+     <http://example.com/voc/teacher/1.0.0/Place>
+   )
+  ] ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Has Postal Address"@en ;
+  rdfs:range <http://example.com/voc/teacher/1.0.0/IndianPostalAddress> ;
+  ns0:term_status "testing"^^xsd:string ;
+  skos:exactMatch schema:address .
+
+<http://example.com/voc/teacher/1.0.0/IndianPostalAddress>
+  a rdfs:Class, owl:Class ;
+  rdfs:comment "The location at which a particular organization or person may be found or reached in India."@en ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Indian Address"@en ;
+  rdfs:subClassOf owl:Thing ;
+  ns0:term_status "testing"^^xsd:string ;
+  skos:exactMatch schema:PostalAddress .
+
+<http://example.com/voc/teacher/1.0.0/ruralAddress>
+  a owl:ObjectProperty, rdf:Property ;
+  rdfs:comment "An Indian postal address."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Has Rural Postal Address"@en ;
+  rdfs:range <http://example.com/voc/teacher/1.0.0/IndianRuralPostalAddress> ;
+  ns0:term_status "testing"^^xsd:string ;
+  skos:exactMatch schema:address .
+
+<http://example.com/voc/teacher/1.0.0/IndianRuralPostalAddress>
+  a rdfs:Class, owl:Class ;
+  rdfs:comment "The location at which a particular organization or person may be found or reached in Rural India."@en ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Indian Rural Address"@en ;
+  rdfs:subClassOf <http://example.com/voc/teacher/1.0.0/IndianPostalAddress> ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/urbanAddress>
+  a owl:ObjectProperty, rdf:Property ;
+  rdfs:comment "An Urban Indian postal address."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Has Urban Postal Address"@en ;
+  rdfs:range <http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress> ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress>
+  a rdfs:Class, owl:Class ;
+  rdfs:comment "The location at which a particular organization or person may be found or reached in Urban India."@en ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Indian Urban Address"@en ;
+  rdfs:subClassOf <http://example.com/voc/teacher/1.0.0/IndianPostalAddress> ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/habitation>
+  a owl:ObjectProperty, rdf:Property ;
+  rdfs:comment "A Habitation in a village"@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianRuralPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Has Habitation"@en ;
+  rdfs:range rdf:langString ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/mohalla>
+  a owl:ObjectProperty, rdf:Property ;
+  rdfs:comment "A mohalla in a city"@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Has Mohalla"@en ;
+  rdfs:range rdf:langString ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/Locality>
+  a rdfs:Class, owl:Class ;
+  rdfs:comment "A locality in India"@en ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Locality"@en ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/Habitation>
+  a rdfs:Class, owl:Class ;
+  rdfs:comment "A habitation in Rural India"@en ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Habitation"@en ;
+  rdfs:subClassOf <http://example.com/voc/teacher/1.0.0/Locality> ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/Mohalla>
+  a rdfs:Class, owl:Class ;
+  rdfs:comment "A mohalla in Urban India"@en ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Mohalla"@en ;
+  rdfs:subClassOf <http://example.com/voc/teacher/1.0.0/Locality> ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/villageName>
+  a rdf:Property, owl:DatatypeProperty ;
+  rdfs:comment "The name of the Village."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianRuralPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Village Name"@en ;
+  rdfs:range rdf:langString ;
+  rdfs:subPropertyOf schema:name ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/wardNumber>
+  a rdf:Property, owl:DatatypeProperty ;
+  rdfs:comment "The Ward Number."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Ward Number"@en ;
+  rdfs:range rdf:langString ;
+  rdfs:subPropertyOf schema:name ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/municipality>
+  a rdf:Property, owl:DatatypeProperty ;
+  rdfs:comment "Municipality Name"@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Municipality"@en ;
+  rdfs:range rdf:langString ;
+  rdfs:subPropertyOf schema:name ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/city>
+  a rdf:Property, owl:DatatypeProperty ;
+  rdfs:comment "City Name"@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "City"@en ;
+  rdfs:range rdf:langString ;
+  rdfs:subPropertyOf schema:name ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/pinCode>
+  a owl:DatatypeProperty, rdf:Property ;
+  rdfs:comment "Pin Code"@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Pin Code"@en ;
+  rdfs:range xsd:string ;
+  ns0:term_status "testing"^^xsd:string ;
+  skos:exactMatch schema:postalCode .
+
+<http://example.com/voc/teacher/1.0.0/villagePanchayat>
+  a owl:DatatypeProperty, rdf:Property ;
+  rdfs:comment "Pachanayat name"@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianRuralPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Village (Gram) Panchayat name"@en ;
+  rdfs:range xsd:string ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/clusterResourceCentre>
+  a owl:DatatypeProperty, rdf:Property ;
+  rdfs:comment "The name of the Cluster Resource Centre (CRC) established under the Sarva Shiksha Abhiyan (SSA). On an average, a CRC is responsible for around 15 - 20 schools. Enter the CRC name in full. In case, the name is not available, get the name from the Block / District Officer."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/School> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Cluster Resource Centre Name"@en ;
+  rdfs:range xsd:string ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/revenueBlock>
+  a owl:DatatypeProperty, rdf:Property ;
+  rdfs:comment "A District is divided into various Revenue Blocks (also known as Community Development (CD) Block). In some states, it is also called as Mandal ot Taluka."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/School> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Revenue Block / Mandal / Taluka"@en ;
+  rdfs:range xsd:string ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/administrativeBlock>
+  a owl:DatatypeProperty, rdf:Property ;
+  rdfs:comment "The administrative unit of the Education Department below the District level. Synonymous with the Block / Mandal / Taluka in most states or different if a separate administrative setup has been established to manage the education activities in the District."@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/School> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Administrative Block"@en ;
+  rdfs:range xsd:string ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/district>
+  a owl:DatatypeProperty, rdf:Property ;
+  rdfs:comment "District"@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/IndianPostalAddress> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "District"@en ;
+  rdfs:range xsd:string ;
+  ns0:term_status "testing"^^xsd:string .
+
+<http://example.com/voc/teacher/1.0.0/assemblyConstituency>
+  a owl:DatatypeProperty, rdf:Property ;
+  rdfs:comment "District"@en ;
+  rdfs:domain <http://example.com/voc/teacher/1.0.0/School> ;
+  rdfs:isDefinedBy <http://example.com/voc/teacher/1.0.0/> ;
+  rdfs:label "Assembly Constituency"@en ;
+  rdfs:range xsd:string ;
+  ns0:term_status "testing"^^xsd:string .
