@@ -2,24 +2,29 @@ PREFIX sample: <http://example.com/voc/teacher/1.0.0/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX ex: <http://ex.example/#>
 
-sample:udiseNumberConstraint xsd:integer TotalDigits 11
-sample:pincodeConstraint xsd:integer TotalDigits 6
-sample:isAYear xsd:date
-sample:areaTypeCodeEnum [sample:AreaTypeCode-RURAL sample:AreaTypeCode-URBAN]
+sample:isAYear xsd:gYear
+sample:isAString xsd:string
 
-sample:udiseShape {
-  sample:udiseNumber @sample:udiseNumberConstraint
-}
-
-sample:AcademicYearShape {
+sample:SchoolShape {
+    sample:udiseNumber xsd:integer TotalDigits 11 ;
     sample:academicCalendarYearStart @sample:isAYear ;
-    sample:academicCalendarYearEnd @sample:isAYear
+    sample:academicCalendarYearEnd @sample:isAYear ;
+    sample:area [sample:AreaTypeCode-RURAL sample:AreaTypeCode-URBAN] ;
+    sample:schoolName @sample:isAString 
 }
 
-sample:AreaTypeShape {
-    sample:area @sample:areaTypeCodeEnum
-}
-
-sample:PinCodeShape {
-    sample:pinCode @sample:pincodeConstraint
+sample:AddressShape {
+    a [sample:IndianUrbanPostalAddress sample:IndianRuralPostalAddress] ;
+    (
+        sample:mohalla @sample:isAString ;
+        sample:wardNumber @sample:isAString ;
+        sample:municipality @sample:isAString ;
+        sample:city @sample:isAString 
+        |
+        sample:habitation @sample:isAString ;
+        sample:villageName @sample:isAString ;
+        sample:villagePanchayat @sample:isAString ;
+    );
+    sample:pinCode xsd:integer TotalDigits 6 ;
+    sample:district @sample:isAString
 }

@@ -401,31 +401,6 @@
       }
     },
     {
-      "@id": "sample:urbanAddress",
-      "@type": [
-        "owl:ObjectProperty",
-        "rdf:Property"
-      ],
-      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
-      "rdfs:comment": {
-        "@language": "en",
-        "@value": "An Urban Indian postal address."
-      },
-      "rdfs:domain": {
-        "@id":"sample:IndianPostalAddress"
-      },
-      "rdfs:isDefinedBy": {
-        "@id": "sample:"
-      },
-      "rdfs:label": {
-        "@language": "en",
-        "@value": "Has Urban Postal Address"
-      },
-      "rdfs:range": {
-        "@id": "sample:IndianUrbanPostalAddress"
-      }
-    },
-    {
       "@id": "sample:IndianRuralPostalAddress",
       "@type": [
         "rdfs:Class",
