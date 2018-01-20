@@ -5,7 +5,7 @@
 	<groupId>io.opensaber</groupId>
 	<artifactId>registry</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>jar</packaging>
+	<packaging>war</packaging>
 	
 	<name>registry</name>
 	<description>registry</description>
@@ -21,6 +21,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
+		<start-class>io.opensaber.registry.controller.RegistryController</start-class>
 	</properties>
 
 	<dependencies>
@@ -29,6 +30,11 @@
 			<artifactId>registry-middleware</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 	    </dependency>
+	     <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
+        </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
@@ -109,10 +115,14 @@
 	</dependencies>
 
 	<build>
+		<finalName>registry</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<warName>registry</warName>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
