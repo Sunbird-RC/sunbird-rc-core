@@ -1,6 +1,13 @@
 package io.opensaber.validators.shex.shaclex;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import org.junit.Test;
+
+import es.weso.shacl.Path;
 
 public class ShaclexValidatorTest {
 	
@@ -10,7 +17,8 @@ public class ShaclexValidatorTest {
 	@Test
 	public void testValidateModelSchema() throws Exception {
 		ShaclexValidator validator = new ShaclexValidator();
-		validator.validate(getPath("good1.ttl"), getPath("good1.shex"), SCHEMAFORMAT, PROCESSOR);
+		String dataJSONLDString = new String(Files.readAllBytes(Paths.get(getPath("good1.jsonld"))), StandardCharsets.UTF_8);		
+		validator.validate(dataJSONLDString, getPath("good1.shex"), SCHEMAFORMAT, PROCESSOR);
 	}
 
 	private String getPath(String file) {
