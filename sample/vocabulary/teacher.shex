@@ -4,8 +4,11 @@ PREFIX ex: <http://ex.example/#>
 
 sample:isAYear xsd:gYear
 sample:isAString xsd:string
+sample:isAnInteger xsd:integer
+sample:isADate xsd:date
+sample:isURI xsd:uri
 
-sample:SchoolShape {
+sample:SchoolShape CLOSED {
     sample:udiseNumber xsd:integer TotalDigits 11 ;
     sample:academicCalendarYearStart @sample:isAYear ;
     sample:academicCalendarYearEnd @sample:isAYear ;
@@ -13,7 +16,7 @@ sample:SchoolShape {
     sample:schoolName @sample:isAString 
 }
 
-sample:AddressShape {
+sample:AddressShape CLOSED {
     a [sample:IndianUrbanPostalAddress sample:IndianRuralPostalAddress] ;
     (
         sample:mohalla @sample:isAString ;
@@ -27,4 +30,23 @@ sample:AddressShape {
     );
     sample:pinCode xsd:integer TotalDigits 6 ;
     sample:district @sample:isAString
+}
+
+sample:TeacherShape CLOSED {
+    sample:serialNum @sample:isAnInteger ;
+    sample:teacherCode @sample:isAnInteger {0,1} ;
+    sample:nationalIdentifier @sample:isAString ;
+    sample:teacherName @sample:isAString ;
+    sample:gender [sample:GenderTypeCode-MALE sample:GenderTypeCode-FEMALE] ;
+    sample:birthDate @sample:isADate ;
+    sample:socialCategory [SocialCategoryTypeCode-GENERAL sample:SocialCategoryTypeCode-SC sample:SocialCategoryTypeCode-ST sample:SocialCategoryTypeCode-OBC sample:SocialCategoryTypeCode-ORC sample:SocialCategoryTypeCode-OTHERS] ;
+    sample:highestAcademicQualification [] 
+}
+
+sample:TeacherRoleShape CLOSED {
+    sample:teacherType [sample:TeacherTypeCode-HEAD sample:TeacherTypeCode-ACTINGHEAD sample:TeacherTypeCode-TEACHER sample:TeacherTypeCode-RTEINSTRUCTOR sample:TeacherTypeCode-PRINCIPAL sample:TeacherTypeCode-VICEPRINCIPAL sample:TeacherTypeCode-LECTURER] ;
+    sample:appointmentType [sample:TeacherAppointmentTypeCode-REGULAR sample:TeacherAppointmentTypeCode-CONTRACT sample:TeacherAppointmentTypeCode-PARTTIME] ;
+    sample:startDate @sample:isADate ;
+    sample:endDate @sample:isADate ;
+    sample:schoolURI @sample:isURI ;
 }
