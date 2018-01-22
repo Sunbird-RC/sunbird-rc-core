@@ -1093,6 +1093,31 @@
       }
     },
     {
+      "@id": "sample:socialCategory",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The social category of the Teacher."
+      },
+      "rdfs:domain": {
+        "@id": "sample:Teacher"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Social Category"
+      },
+      "rdfs:range": {
+        "@id": "sample:SocialCategoryTypeCode"
+      }
+    },
+    {
       "@id": "sample:SocialCategoryTypeCode",
       "rdfs:label": {
         "@language": "en",
@@ -1179,6 +1204,31 @@
         "@value": "Others"
       },
       "skos:prefLabel": "OTHERS"
+    },
+    {
+      "@id": "sample:teacherType",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The type of the teacher."
+      },
+      "rdfs:domain": {
+        "@id": "sample:TeacherRole"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Teacher Type"
+      },
+      "rdfs:range": {
+        "@id": "sample:TeacherTypeCode"
+      }
     },
     {
       "@id": "sample:TeacherTypeCode",
@@ -1280,6 +1330,31 @@
         "@value": "Lecturer"
       },
       "skos:prefLabel": "LECTURER"
+    },
+    {
+      "@id": "sample:appointmentType",
+      "@type": [
+        "rdf:Property",
+        "owl:DatatypeProperty"
+      ],
+      "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "The appointment type of the teacher."
+      },
+      "rdfs:domain": {
+        "@id": "sample:TeacherRole"
+      },
+      "rdfs:isDefinedBy": {
+        "@id": "sample:"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Appointment Type"
+      },
+      "rdfs:range": {
+        "@id": "sample:TeacherAppointmentTypeCode"
+      }
     },
     {
       "@id": "sample:TeacherAppointmentTypeCode",
@@ -1450,7 +1525,7 @@
       }
     },
     {
-      "@id": "sample:schoolURL",
+      "@id": "sample:schoolURI",
       "@type": [
         "rdf:Property",
         "owl:DatatypeProperty"
@@ -1458,7 +1533,7 @@
       "http://www.w3.org/2003/06/sw-vocab-status/ns#term_status": "testing",
       "rdfs:comment": {
         "@language": "en",
-        "@value": "School Registry URL"
+        "@value": "School Registry URI"
       },
       "rdfs:domain": {
         "@id": "sample:TeachingRole"
@@ -1468,13 +1543,10 @@
       },
       "rdfs:label": {
         "@language": "en",
-        "@value": "School URL"
+        "@value": "School URI"
       },
       "rdfs:range": {
         "@id": "xsd:anyURI"
-      },
-      "rdfs:subPropertyOf": {
-        "@id": "schema:url"
       }
     },
     {
