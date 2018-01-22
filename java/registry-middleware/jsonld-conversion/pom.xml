@@ -1,0 +1,21 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.opensaber</groupId>
+    <artifactId>registry-middleware</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  <groupId>io.opensaber.middleware</groupId>
+  <artifactId>jsonld-conversion</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>JSON-LD Conversion</name>
+  <description>Conversion from rdf to json-ld</description>
+  
+  <dependencies>
+		<dependency>
+			<groupId>io.opensaber</groupId>
+			<artifactId>middleware-commons</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+</project>
