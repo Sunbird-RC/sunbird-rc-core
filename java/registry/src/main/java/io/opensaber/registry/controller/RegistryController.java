@@ -82,7 +82,7 @@ public class RegistryController extends SpringBootServletInitializer {
 	
 	@ResponseBody
 	@RequestMapping(value="/convertToRdf",method=RequestMethod.POST)
-	public ResponseEntity convertToRdf(@RequestAttribute Object actualRequestData) throws JsonProcessingException{
+	public ResponseEntity convertToRdf(@RequestAttribute Object dataObject) throws JsonProcessingException{
 		return ResponseUtil.successResponse();
 	}
 	
