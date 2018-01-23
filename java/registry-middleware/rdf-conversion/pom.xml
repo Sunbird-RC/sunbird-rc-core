@@ -7,7 +7,7 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<groupId>io.opensaber.middleware</groupId>
-	<artifactId>rdfConversion</artifactId>
+	<artifactId>rdf-conversion</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>RDF Conversion</name>
 	<description>Middleware to convert json-ld to rdf</description>

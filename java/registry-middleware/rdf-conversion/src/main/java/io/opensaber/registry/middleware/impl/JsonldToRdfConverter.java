@@ -40,6 +40,7 @@ public class JsonldToRdfConverter implements BaseMiddleware{
 		Map<String,Object> attributeMap = new HashMap<String,Object>();
 		if(!StringUtils.isEmpty(obj.toString())){
 			rdfVar = convertToRdf(obj.toString());
+			System.out.println(rdfVar);
 			attributeMap.put(Constants.ATTRIBUTE_NAME, rdfVar);
 		}
 		return attributeMap;
