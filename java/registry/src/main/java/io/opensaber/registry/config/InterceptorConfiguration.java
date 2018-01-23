@@ -4,10 +4,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+import io.opensaber.registry.interceptor.JsonldToRdfInterceptor;
+import io.opensaber.registry.interceptor.RdfToJsonldInterceptor;
 import io.opensaber.registry.middleware.impl.JsonldToRdfConverter;
 import io.opensaber.registry.middleware.impl.RdfToJsonldConverter;
-import io.opensaber.registry.middleware.interceptor.JsonldToRdfInterceptor;
-import io.opensaber.registry.middleware.interceptor.RdfToJsonldInterceptor;
 
 
 /**
