@@ -14,7 +14,7 @@
     <name>Conversion utilities</name>
     <packaging>pom</packaging>
     <modules>
-        <module>rdf2graph</module>
+        <module>rdf2Graph</module>
     </modules>
 
 </project>

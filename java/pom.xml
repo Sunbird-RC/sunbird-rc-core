@@ -14,6 +14,7 @@
         <module>validators</module>
 	<module>middleware-commons</module>
 	<module>registry-middleware</module>
+	<module>registry-interceptor</module>
 	<module>registry</module>
     </modules>
 
