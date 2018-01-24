@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.http.HttpStatus;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -69,8 +70,10 @@ public class RegistryControllerSteps {
 	public void convertToJsonld(){
 		ResponseEntity response = restTemplate.getForEntity(baseUrl+"/retrieveJsonld",String.class);
 		String body = (String)response.getBody();
+		int statusCode = response.getStatusCode().value();
 		assertNotNull(body);
-		assertTrue(body.toString().contains("@id"));
+		//assertTrue(body.toString().contains("@id"));
+		assertTrue(statusCode==HttpStatus.SC_OK);
 	}
 	
 	@Then("^The response contains (.*)")

@@ -22,12 +22,13 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		<start-class>io.opensaber.registry.controller.RegistryController</start-class>
+		<tinkerpop.version>3.1.0-incubating</tinkerpop.version>
 	</properties>
 
 	<dependencies>
 	    <dependency>
 	    	<groupId>io.opensaber</groupId>
-			<artifactId>registry-middleware</artifactId>
+			<artifactId>registry-interceptor</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 	    </dependency>
 	     <dependency>
@@ -112,6 +113,11 @@
 		    <artifactId>gherkin</artifactId>
 		    <version>5.0.0</version>
 		</dependency>
+		<!-- <dependency>
+            <groupId>org.apache.tinkerpop</groupId>
+            <artifactId>tinkergraph-gremlin</artifactId>
+            <version>${tinkerpop.version}</version>
+        </dependency> -->
 	</dependencies>
 
 	<build>
