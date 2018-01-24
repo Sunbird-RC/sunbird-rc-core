@@ -5,22 +5,20 @@
 	<artifactId>registry-middleware</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
+	
+	<parent>
+		<groupId>io.opensaber</groupId>
+		<version>0.0.1-SNAPSHOT</version>
+		<artifactId>middleware-bom</artifactId>
+	</parent>
 
 	<modules>
 		<module>rdf-conversion</module>
 		<module>jsonld-conversion</module>
 	</modules>
-	<build>
-		<finalName>registry-middleware</finalName>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.5.1</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+	
+	<!-- <build> <finalName>registry-middleware</finalName> <plugins> <plugin> 
+		<artifactId>maven-compiler-plugin</artifactId> <version>3.5.1</version> <configuration> 
+		<source>1.8</source> <target>1.8</target> </configuration> </plugin> </plugins> 
+		</build> -->
 </project>
