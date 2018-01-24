@@ -6,6 +6,7 @@
 		<artifactId>registry-middleware</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
+	
 	<groupId>io.opensaber.middleware</groupId>
 	<artifactId>rdf-conversion</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
