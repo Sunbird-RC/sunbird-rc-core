@@ -21,7 +21,7 @@ public class ShaclexValidator {
 
 	Option<String> none = Option.apply(null);
 
-	public void validate(Model dataModel, Schema schema) {
+	public Result validate(Model dataModel, Schema schema) {
 		RDFReader rdf = new RDFAsJenaModel(dataModel);
 		Result result = schema.validate(rdf,"TARGETDECLS",none,none, rdf.getPrefixMap(), schema.pm());
 		if (result.isValid()) {
@@ -36,9 +36,10 @@ public class ShaclexValidator {
 			errors.forEach((e) ->
 			System.out.println(e.show()));
 		}
+		return result;
 	} 
 
-	public void validate(String data, String dataFormat, String schemaFile, String schemaFormat, String processor) throws IOException {
+	public Result validate(String data, String dataFormat, String schemaFile, String schemaFormat, String processor) throws IOException {
 		System.out.println("Reading data JSONLD " + data);
 		Model dataModel = parse(data,dataFormat);//RDFDataMgr.loadModel(dataFile);
 		System.out.println("Model read. Size = " + dataModel.size());
@@ -46,7 +47,7 @@ public class ShaclexValidator {
 		System.out.println("Reading shapes file " + schemaFile + " with format " + schemaFormat);
 		Schema schema = readSchema(Paths.get(schemaFile),schemaFormat, processor);
 		System.out.println("Schema read" + schema.serialize(schemaFormat));
-		validate(dataModel,schema);
+		return validate(dataModel,schema);
 	}    
 	
 	public static Model parse(String rdfData, String format) {
