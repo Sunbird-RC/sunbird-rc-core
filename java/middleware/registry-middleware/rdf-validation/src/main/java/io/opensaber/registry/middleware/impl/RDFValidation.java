@@ -17,6 +17,7 @@ import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 
+import es.weso.schema.Result;
 import es.weso.schema.Schema;
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -46,7 +47,7 @@ public class RDFValidation implements BaseMiddleware{
 		} else if (RDF instanceof Model) {
 			ShaclexValidator validator = new ShaclexValidator();
 			Schema schema = validator.readSchema(this.schemaFilePath,SCHEMAFORMAT, PROCESSOR);
-			validator.validate((Model)RDF, schema);
+			mapData.put("validationResult", validator.validate((Model)RDF, schema));
 		} else {
 			throw new MiddlewareHaltException(this.getClass().getName()+"RDF Data is invalid!");
 		}

@@ -17,6 +17,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import es.weso.schema.Result;
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
@@ -24,24 +25,24 @@ import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 public class RDFValidationTest {
 	private static final String SIMPLE_SHEX = "good1.shex";
 	private static final String SIMPLE_JSONLD = "good1.jsonld";
-	private static final String SIMPLE_TTL = "good1.ttl";
+	private static final String COMPLEX_TTL = "teacher.record";
+	private static final String COMPLEX_SHEX = "teacher.shex";
 	Map<String, Object> mapData;
 	private BaseMiddleware m;
 	
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
-	
-    @Before 
-    public void initialize() {
+	 
+    private boolean setup(String shexFile) {
     	String file;
     	boolean successfulInitialization = false;
     	try {
-    		file = getPath(SIMPLE_SHEX);
+    		file = getPath(shexFile);
     		Path filePath = Paths.get(file);
     		m = new RDFValidation(filePath);
     		successfulInitialization = true;
 		} catch (NullPointerException e) {}
-    	assertTrue(successfulInitialization);
+    	return successfulInitialization;
     }
 
 	private String getPath(String file) throws NullPointerException {
@@ -50,6 +51,7 @@ public class RDFValidationTest {
     
 	@Test
 	public void testHaltIfNoRDFToValidate() throws IOException, MiddlewareHaltException{
+		assertTrue(setup(SIMPLE_SHEX));
 		mapData = new HashMap<String,Object>();
 		expectedEx.expect(MiddlewareHaltException.class);
 		expectedEx.expectMessage("RDF Data is missing!");
@@ -58,6 +60,7 @@ public class RDFValidationTest {
 	
 	@Test
 	public void testHaltIfRDFpresentButInvalid() throws IOException, MiddlewareHaltException{
+		assertTrue(setup(SIMPLE_SHEX));
 		mapData = new HashMap<String,Object>();
 		mapData.put("RDF", "{}");
 		expectedEx.expect(MiddlewareHaltException.class);
@@ -67,6 +70,7 @@ public class RDFValidationTest {
 	
 	@Test
 	public void testIfJSONLDIsSupported() throws IOException, MiddlewareHaltException{
+		assertTrue(setup(SIMPLE_SHEX));
 		mapData = new HashMap<String,Object>();
 		String jsonLDData = getPath(SIMPLE_JSONLD);
 		Path filePath = Paths.get(jsonLDData);
@@ -75,15 +79,19 @@ public class RDFValidationTest {
 		mapData.put("RDF", dataModel);
 		m.execute(mapData);
 	}
-
+	
 	@Test
-	public void testIfTTLIsUnSupported() throws IOException, MiddlewareHaltException{
+	public void testHaltIfvalidRDFpresentButFailsSHEX() throws IOException, MiddlewareHaltException{
+		assertTrue(setup(COMPLEX_SHEX));
 		mapData = new HashMap<String,Object>();
-		String jsonLDData = getPath(SIMPLE_TTL);
-		Path filePath = Paths.get(jsonLDData);
+		String data = getPath(SIMPLE_JSONLD);
+		Path filePath = Paths.get(data);
 		String RDF = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
-		Model dataModel = ShaclexValidator.parse(RDF,"TTL");
+		Model dataModel = ShaclexValidator.parse(RDF,"JSON-LD");
 		mapData.put("RDF", dataModel);
 		m.execute(mapData);
+		Result validationResult = (Result)mapData.get("validationResult");
+		assertNotNull(validationResult);
+		assertFalse(validationResult.isValid());
 	}
 }
