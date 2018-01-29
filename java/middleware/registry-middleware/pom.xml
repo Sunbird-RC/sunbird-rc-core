@@ -15,6 +15,7 @@
 	<modules>
 		<module>rdf-conversion</module>
 		<module>jsonld-conversion</module>
+		<module>rdf-validation</module>
 	</modules>
 	
 	<!-- <build> <finalName>registry-middleware</finalName> <plugins> <plugin> 
