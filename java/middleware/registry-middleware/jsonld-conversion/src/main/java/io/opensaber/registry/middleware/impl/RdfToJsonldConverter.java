@@ -20,7 +20,6 @@ import io.opensaber.registry.middleware.util.Constants;
  */
 public class RdfToJsonldConverter implements BaseMiddleware{
 
-	@Override
 	public Map<String,Object> execute(Map<String,Object> mapData) throws IOException {
 		String responseData = mapData.get(Constants.ATTRIBUTE_NAME).toString();
 		if(!StringUtils.isEmpty(responseData)){
@@ -34,7 +33,6 @@ public class RdfToJsonldConverter implements BaseMiddleware{
 		return mapData;
 	}
 
-	@Override
 	public Map<String,Object> next(Map<String,Object> mapData) throws IOException {
 		return new HashMap<String,Object>();
 	}
