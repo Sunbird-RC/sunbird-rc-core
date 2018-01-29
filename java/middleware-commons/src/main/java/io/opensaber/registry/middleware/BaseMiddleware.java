@@ -15,8 +15,9 @@ public interface BaseMiddleware {
 	 * @param request
 	 * @param response
 	 * @throws IOException
+	 * @throws MiddlewareHaltException 
 	 */
-	public Map<String,Object> execute(Map<String,Object> mapData) throws IOException;
+	public Map<String,Object> execute(Map<String,Object> mapData) throws IOException, MiddlewareHaltException;
 	
 	/**
 	 * This method chains the flow to the next middleware that needs to be executed
