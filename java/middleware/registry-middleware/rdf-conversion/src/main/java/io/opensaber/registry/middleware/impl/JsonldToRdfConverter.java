@@ -25,12 +25,10 @@ public class JsonldToRdfConverter implements BaseMiddleware{
 
 	public static String rdfVar = "";
 
-	@Override
 	public Map<String,Object> execute(Map<String,Object> mapData) throws IOException{
 		return getRdf(mapData.get(Constants.ATTRIBUTE_NAME));
 	}
 	
-	@Override
 	public Map<String,Object> next(Map<String,Object> mapData) throws IOException{
 		return  new HashMap<String,Object>();
 		
