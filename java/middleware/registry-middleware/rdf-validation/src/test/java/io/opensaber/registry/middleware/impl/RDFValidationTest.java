@@ -78,6 +78,7 @@ public class RDFValidationTest {
 		Model dataModel = ShaclexValidator.parse(RDF,"JSON-LD");
 		mapData.put("RDF", dataModel);
 		m.execute(mapData);
+		testForSuccessfulResult();
 	}
 	
 	@Test
@@ -90,8 +91,22 @@ public class RDFValidationTest {
 		Model dataModel = ShaclexValidator.parse(RDF,"JSON-LD");
 		mapData.put("RDF", dataModel);
 		m.execute(mapData);
+		testForUnsuccessfulResult();
+	}
+
+	private void testForSuccessfulResult() {
+		Result validationResult = testForResult();
+		assertTrue(validationResult.isValid());
+	}
+
+	private void testForUnsuccessfulResult() {
+		Result validationResult = testForResult();
+		assertFalse(validationResult.isValid());
+	}
+
+	private Result testForResult() {
 		Result validationResult = (Result)mapData.get("validationResult");
 		assertNotNull(validationResult);
-		assertFalse(validationResult.isValid());
+		return validationResult;
 	}
 }
