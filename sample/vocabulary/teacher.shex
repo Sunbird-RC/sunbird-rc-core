@@ -39,7 +39,7 @@ sample:TeacherShape CLOSED {
     sample:teacherName @sample:isAString ;
     sample:gender [sample:GenderTypeCode-MALE sample:GenderTypeCode-FEMALE] ;
     sample:birthDate @sample:isADate ;
-    sample:socialCategory [SocialCategoryTypeCode-GENERAL sample:SocialCategoryTypeCode-SC sample:SocialCategoryTypeCode-ST sample:SocialCategoryTypeCode-OBC sample:SocialCategoryTypeCode-ORC sample:SocialCategoryTypeCode-OTHERS] ;
+    sample:socialCategory [sample:SocialCategoryTypeCode-GENERAL sample:SocialCategoryTypeCode-SC sample:SocialCategoryTypeCode-ST sample:SocialCategoryTypeCode-OBC sample:SocialCategoryTypeCode-ORC sample:SocialCategoryTypeCode-OTHERS] ;
     sample:highestAcademicQualification [] 
 }
 
