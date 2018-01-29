@@ -38,9 +38,9 @@ public class ShaclexValidator {
 		}
 	} 
 
-	public void validate(String dataJSONLD, String schemaFile, String schemaFormat, String processor) throws IOException {
-		System.out.println("Reading data JSONLD " + dataJSONLD);
-		Model dataModel = parse(dataJSONLD);//RDFDataMgr.loadModel(dataFile);
+	public void validate(String data, String dataFormat, String schemaFile, String schemaFormat, String processor) throws IOException {
+		System.out.println("Reading data JSONLD " + data);
+		Model dataModel = parse(data,dataFormat);//RDFDataMgr.loadModel(dataFile);
 		System.out.println("Model read. Size = " + dataModel.size());
 		System.out.println(dataModel);
 		System.out.println("Reading shapes file " + schemaFile + " with format " + schemaFormat);
@@ -49,10 +49,10 @@ public class ShaclexValidator {
 		validate(dataModel,schema);
 	}    
 	
-	private Model parse(String jsonld) {
+	public static Model parse(String rdfData, String format) {
         Model m = ModelFactory.createDefaultModel();
-        StringReader reader = new StringReader(jsonld);
-        m.read(reader, null, "JSON-LD");
+        StringReader reader = new StringReader(rdfData);
+        m.read(reader, null, format);
         return m;
 	}
 
