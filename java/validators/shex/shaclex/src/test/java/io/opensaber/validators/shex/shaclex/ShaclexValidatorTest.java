@@ -17,8 +17,8 @@ public class ShaclexValidatorTest {
 	@Test
 	public void testValidateModelSchema() throws Exception {
 		ShaclexValidator validator = new ShaclexValidator();
-		String dataJSONLDString = new String(Files.readAllBytes(Paths.get(getPath("good1.jsonld"))), StandardCharsets.UTF_8);		
-		validator.validate(dataJSONLDString, getPath("good1.shex"), SCHEMAFORMAT, PROCESSOR);
+		String dataString = new String(Files.readAllBytes(Paths.get(getPath("good1.jsonld"))), StandardCharsets.UTF_8);		
+		validator.validate(dataString, "JSON-LD",getPath("good1.shex"), SCHEMAFORMAT, PROCESSOR);
 	}
 
 	private String getPath(String file) {
