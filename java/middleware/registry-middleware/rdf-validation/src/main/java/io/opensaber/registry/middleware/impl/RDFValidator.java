@@ -29,25 +29,25 @@ import io.opensaber.validators.shex.shaclex.ShaclexValidator;
  * @author steotia
  *
  */
-public class RDFValidation implements BaseMiddleware{
+public class RDFValidator implements BaseMiddleware{
 
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing!";
 	private Path schemaFilePath;	
 	public static final String SCHEMAFORMAT = "SHEXC";
 	public static final String PROCESSOR 	= "shex";
 	
-	public RDFValidation(Path schemaFilePath){
+	public RDFValidator(Path schemaFilePath){
 		this.schemaFilePath = schemaFilePath;
 	}
 
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
-		Object RDF = mapData.get("RDF");
+		Object RDF = mapData.get(Constants.RDF_OBJECT);
 		if (RDF==null) {
 			throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_MISSING); 
 		} else if (RDF instanceof Model) {
 			ShaclexValidator validator = new ShaclexValidator();
 			Schema schema = validator.readSchema(this.schemaFilePath,SCHEMAFORMAT, PROCESSOR);
-			mapData.put("validationResult", validator.validate((Model)RDF, schema));
+			mapData.put(Constants.RDF_VALIDATION_OBJECT, validator.validate((Model)RDF, schema));
 		} else {
 			throw new MiddlewareHaltException(this.getClass().getName()+"RDF Data is invalid!");
 		}
