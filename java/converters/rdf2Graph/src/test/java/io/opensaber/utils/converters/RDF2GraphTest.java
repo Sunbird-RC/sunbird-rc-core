@@ -17,8 +17,10 @@ import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
@@ -34,6 +36,9 @@ import org.junit.Test;
 import io.opensaber.utils.converters.RDF2Graph;
 
 public class RDF2GraphTest {
+
+	private static final String SUBJECT_LABEL = "ex:Picasso";
+	private static final String SUBJECT_EXPANDED_LABEL = "http://example.org/Picasso";
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -54,7 +59,7 @@ public class RDF2GraphTest {
 	@Test
 	public void createGraphFromTriple() throws Exception {
 		Graph graph = createGraph();
-		ModelBuilder modelBuilder = createSimpleRDF();
+		ModelBuilder modelBuilder = createSimpleRDF(SUBJECT_LABEL);
 		assertEquals(0,countGraphVertices(graph));
 		editGraph(graph, modelBuilder.build());
 //		Test for single vertex 
@@ -84,7 +89,7 @@ public class RDF2GraphTest {
 	@Test
 	public void handleDupeInTriple() throws Exception {
 		Graph graph = createGraph();
-		ModelBuilder modelBuilder = createSimpleRDF()
+		ModelBuilder modelBuilder = createSimpleRDF(SUBJECT_LABEL)
 				.add(FOAF.BIRTHDAY, "1987-08-25")
 				.add(FOAF.BIRTHDAY, "1987-08-25");
 		editGraph(graph, modelBuilder.build());
@@ -98,7 +103,7 @@ public class RDF2GraphTest {
 		BNode address = vf.createBNode();
 		BNode painting = vf.createBNode();
 		BNode reaction = vf.createBNode();
-		ModelBuilder modelBuilder = createSimpleRDF();
+		ModelBuilder modelBuilder = createSimpleRDF(SUBJECT_LABEL);
 		modelBuilder
 			.add("ex:homeAddress", address)
 			.add("ex:creatorOf", painting)
@@ -115,6 +120,7 @@ public class RDF2GraphTest {
 					.add("ex:rating","5")
 					.add(RDF.TYPE,"ex:AggregateRating");
 		editGraph(graph, modelBuilder.build());
+		dumpGraph(graph);
 //		1 subject, 3 Blank Nodes and 3 object IRIs
 		assertEquals(7,countGraphVertices(graph));
 		GraphTraversal<Vertex, Vertex> hasP = 
@@ -127,6 +133,44 @@ public class RDF2GraphTest {
 
 	@Test
 	public void handleRecursiveBNodeInTriple() throws Exception {
+	}
+	
+	@Test
+	public void createTripleFromGraphWithOnlySingleVertex(){
+		Graph graph = createGraph();
+		ModelBuilder modelBuilder = createSimpleRDF(SUBJECT_LABEL);
+		assertEquals(0,countGraphVertices(graph));
+		editGraph(graph, modelBuilder.build());
+		Model rdfModel = RDF2Graph.convertGraph2RDFModel(graph, SUBJECT_EXPANDED_LABEL);
+		System.out.println(rdfModel);
+		assertEquals(1, rdfModel.size()); 
+		String[] expected = {
+		                     "http://example.org/Picasso",
+		                     "http://xmlns.com/foaf/0.1/firstName",
+		                     "\"Pablo\"^^<http://www.w3.org/2001/XMLSchema#string>"
+		};
+		for(Statement rdfStatement: rdfModel) {
+			Value subjectValue = rdfStatement.getSubject();
+			IRI property = rdfStatement.getPredicate();
+			Value objectValue = rdfStatement.getObject();
+			assertEquals(expected[0], subjectValue.toString());
+			assertEquals(expected[1], property.toString());
+			assertEquals(expected[2], objectValue.toString());
+		}
+	}
+	
+	@Test
+	public void createTripleFromTwoVertices(){
+		Graph graph = createGraph();
+		ModelBuilder modelBuilder = createSimpleRDF(SUBJECT_LABEL);
+		ValueFactory vf = SimpleValueFactory.getInstance();
+		BNode address = vf.createBNode();
+		modelBuilder = modelBuilder
+				.add(RDF.TYPE, "ex:Artist");
+		assertEquals(0,countGraphVertices(graph));
+		editGraph(graph, modelBuilder.build());
+		Model rdfModel = RDF2Graph.convertGraph2RDFModel(graph, SUBJECT_EXPANDED_LABEL);
+		System.out.println(rdfModel);
 	}
 	
 
@@ -153,11 +197,11 @@ public class RDF2GraphTest {
 		graph.io(IoCore.graphson()).writeGraph("dump.json");
 	}
 	
-	private ModelBuilder createSimpleRDF(){
+	private ModelBuilder createSimpleRDF(String subjectLabel){
 		ModelBuilder builder = new ModelBuilder();
 		return builder
 				.setNamespace("ex", "http://example.org/")
-				.subject("ex:Picasso")
+				.subject(subjectLabel)
 				.add(FOAF.FIRST_NAME, "Pablo");
 	}
 	
