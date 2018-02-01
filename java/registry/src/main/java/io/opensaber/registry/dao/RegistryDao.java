@@ -11,7 +11,7 @@ public interface RegistryDao {
 	
 	public List getEntityList();
 	
-	public boolean addEntity(Object entity);
+	public boolean addEntity(Object entity,String label);
 	
 	public boolean updateEntity(Object entity);
 	

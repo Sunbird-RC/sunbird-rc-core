@@ -2,10 +2,22 @@ package io.opensaber.registry.dao.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-
+import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration.Configuration;
+import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.apache.tinkerpop.gremlin.structure.io.IoCore;
+import org.apache.tinkerpop.gremlin.structure.util.GraphFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +37,14 @@ import io.opensaber.registry.config.CassandraConfiguration;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.model.Teacher;
 import io.opensaber.registry.model.dto.EntityDto;
+import io.opensaber.registry.util.GraphDBFactory;
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.ResourceIterator;
+import org.neo4j.graphdb.Transaction;
 
 /**
  * 
@@ -62,17 +82,110 @@ public class RegistryDaoImpl implements RegistryDao{
 	}
 
 	@Override
-	public boolean addEntity(Object entity){
+	public boolean addEntity(Object entity,String label){
+		GraphDatabaseService gds = null;
 		try{
-			Map<String,Object> insertValues = objectMapper.convertValue(entity,  new TypeReference<HashMap<String, Object>>() {});
-			Insert insertQuery = QueryBuilder.insertInto("user").values(Lists.newArrayList(insertValues.keySet()), Lists.newArrayList(insertValues.values()));
-			cassandraConfig.cassandraTemplate().execute(insertQuery);
+			gds = GraphDBFactory.getGraphDatabaseService();
+			try ( Transaction tx = gds.beginTx() )
+			{
+				if(gds.findNodes(Label.label(label)).hasNext()){
+					tx.success();
+					tx.close();
+					throw new Exception();
+				}
+
+			}
+			TinkerGraph graph = (TinkerGraph)entity;
+			GraphTraversalSource gts = graph.traversal();
+			GraphTraversal<Vertex, Vertex> traversal = gts.V();
+			Map<String,Object[]> map = new HashMap<String,Object[]>();
+			List<String> createdLabels = new ArrayList<String>();
+			try ( Transaction tx = gds.beginTx() )
+			{
+				if(traversal.hasNext()){
+					Vertex v = traversal.next();
+					Node newNode = getNodeWithProperties(gds, v, false);
+					while(traversal.hasNext()){
+						v = traversal.next();
+						newNode = getNodeWithProperties(gds, v, true);
+						createdLabels.add(v.label());
+						Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
+						Iterator<Edge> incomingEdges = v.edges(Direction.IN);
+						createEdgeNodes(outgoingEdges, gds, newNode, map, createdLabels, Direction.OUT, v);
+						createEdgeNodes(incomingEdges, gds, newNode, map, createdLabels, Direction.IN, v);
+
+					}
+				}
+				tx.success();
+				tx.close();
+			}
+
+
 			return true;
 		}catch(Exception e){
 			e.printStackTrace();
 		}
 		return false;
 	}
+
+	private Node getNodeWithProperties(GraphDatabaseService gds,Vertex v, boolean dbCheck){
+		Node newNode;
+		if(dbCheck){
+			ResourceIterator<Node> nodes = gds.findNodes(Label.label(v.label()));
+			if(nodes.hasNext()){
+				newNode = nodes.next();
+			}else{
+				newNode = gds.createNode(Label.label(v.label()));
+			}
+		}
+		else{
+			newNode = gds.createNode(Label.label(v.label()));
+		}
+		Iterator<VertexProperty<Object>> properties = v.properties();
+		while(properties.hasNext()){
+			VertexProperty<Object> property = properties.next();
+			newNode.setProperty(property.key(), property.value());
+		}
+		return newNode;
+	}
+
+
+	private void createEdgeNodes(Iterator<Edge> edges, GraphDatabaseService gds, Node newNode, Map<String,Object[]> map, List<String> createdLabels, Direction direction, Vertex v){
+
+		while(edges.hasNext()){
+			Vertex vertex = null;
+			Edge edge = edges.next();
+			if(direction.equals(Direction.OUT)){
+				vertex = edge.inVertex();
+			}else{
+				vertex = edge.outVertex();
+			}
+			if(map.containsKey(vertex.label())){
+				Object[] checkEdgeArray = map.get(vertex.label());
+				if(checkEdgeArray.length==2 && checkEdgeArray[0].equals(direction.opposite()) && checkEdgeArray[1].equals(v.label()) ){
+					continue;
+				}
+			}
+			ResourceIterator<Node> nodeList = gds.findNodes(Label.label(vertex.label()));
+			Node nextNode = null;
+			if(nodeList.hasNext()){
+				nextNode = nodeList.next();
+			}else{
+				nextNode = gds.createNode(Label.label(vertex.label()));
+			}
+			RelationshipType relType = RelationshipType.withName(edge.label());
+			if(direction.equals(Direction.OUT)){
+				newNode.createRelationshipTo(nextNode, relType);
+
+			}else{
+				nextNode.createRelationshipTo(newNode, relType);
+			}
+			Object[] edgeArray = {direction,vertex.label()};
+			map.put(v.label(), edgeArray);
+			createdLabels.add(vertex.label());
+		}
+	}
+
 
 	@Override
 	public boolean updateEntity(Object entity){
@@ -98,7 +211,7 @@ public class RegistryDaoImpl implements RegistryDao{
 	@Override
 	public Object getEntityById(Object entity){
 		try{
-			EntityDto entityDto = (EntityDto)entity;
+			/*EntityDto entityDto = (EntityDto)entity;
 			Select selectQuery = QueryBuilder.select().column("id")
 					.column("dob").column("email").column("avatar")
 					.column("emailverified").column("firstname").column("lastname")
@@ -106,7 +219,9 @@ public class RegistryDaoImpl implements RegistryDao{
 			Where selectWhere = selectQuery.where();
 			Clause whereClause = QueryBuilder.eq("id", entityDto.getId());
 			selectWhere.and(whereClause);
-			return cassandraConfig.cassandraTemplate().selectOne(selectQuery,Teacher.class);
+			return cassandraConfig.cassandraTemplate().selectOne(selectQuery,Teacher.class);*/
+
+
 		}catch(Exception e){
 			e.printStackTrace();
 		}
