@@ -8,6 +8,7 @@
 	<properties>
 	    <jsonldConversionVersion>0.0.1-SNAPSHOT</jsonldConversionVersion>
 	    <rdfConversionVersion>0.0.1-SNAPSHOT</rdfConversionVersion>
+	    <rdfValidationVersion>0.0.1-SNAPSHOT</rdfValidationVersion>
 	</properties>
 	<dependencyManagement>
     <dependencies>
@@ -20,6 +21,11 @@
         <groupId>io.opensaber.middleware</groupId>
         <artifactId>rdf-conversion</artifactId>
         <version>${rdfConversionVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.opensaber.middleware</groupId>
+        <artifactId>rdf-validation</artifactId>
+        <version>${rdfValidationVersion}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -20,6 +20,7 @@ import org.junit.rules.ExpectedException;
 import es.weso.schema.Result;
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 
 public class RDFValidationTest {
@@ -39,7 +40,7 @@ public class RDFValidationTest {
     	try {
     		file = getPath(shexFile);
     		Path filePath = Paths.get(file);
-    		m = new RDFValidation(filePath);
+    		m = new RDFValidator(filePath);
     		successfulInitialization = true;
 		} catch (NullPointerException e) {}
     	return successfulInitialization;
@@ -62,7 +63,7 @@ public class RDFValidationTest {
 	public void testHaltIfRDFpresentButInvalid() throws IOException, MiddlewareHaltException{
 		assertTrue(setup(SIMPLE_SHEX));
 		mapData = new HashMap<String,Object>();
-		mapData.put("RDF", "{}");
+		mapData.put(Constants.RDF_OBJECT, "{}");
 		expectedEx.expect(MiddlewareHaltException.class);
 		expectedEx.expectMessage("RDF Data is invalid!");
 		m.execute(mapData);
@@ -76,8 +77,9 @@ public class RDFValidationTest {
 		Path filePath = Paths.get(jsonLDData);
 		String RDF = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
 		Model dataModel = ShaclexValidator.parse(RDF,"JSON-LD");
-		mapData.put("RDF", dataModel);
+		mapData.put(Constants.RDF_OBJECT, dataModel);
 		m.execute(mapData);
+		testForSuccessfulResult();
 	}
 	
 	@Test
@@ -88,10 +90,24 @@ public class RDFValidationTest {
 		Path filePath = Paths.get(data);
 		String RDF = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
 		Model dataModel = ShaclexValidator.parse(RDF,"JSON-LD");
-		mapData.put("RDF", dataModel);
+		mapData.put(Constants.RDF_OBJECT, dataModel);
 		m.execute(mapData);
-		Result validationResult = (Result)mapData.get("validationResult");
-		assertNotNull(validationResult);
+		testForUnsuccessfulResult();
+	}
+
+	private void testForSuccessfulResult() {
+		Result validationResult = testForResult();
+		assertTrue(validationResult.isValid());
+	}
+
+	private void testForUnsuccessfulResult() {
+		Result validationResult = testForResult();
 		assertFalse(validationResult.isValid());
+	}
+
+	private Result testForResult() {
+		Result validationResult = (Result)mapData.get(Constants.RDF_VALIDATION_OBJECT);
+		assertNotNull(validationResult);
+		return validationResult;
 	}
 }
