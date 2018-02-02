@@ -84,6 +84,8 @@ public class RDFValidationTest {
 	
 	@Test
 	public void testHaltIfvalidRDFpresentButFailsSHEX() throws IOException, MiddlewareHaltException{
+		expectedEx.expect(MiddlewareHaltException.class);
+		expectedEx.expectMessage("RDF Data is invalid!");
 		assertTrue(setup(COMPLEX_SHEX));
 		mapData = new HashMap<String,Object>();
 		String data = getPath(SIMPLE_JSONLD);
@@ -92,7 +94,7 @@ public class RDFValidationTest {
 		Model dataModel = ShaclexValidator.parse(RDF,"JSON-LD");
 		mapData.put(Constants.RDF_OBJECT, dataModel);
 		m.execute(mapData);
-		testForUnsuccessfulResult();
+//		testForUnsuccessfulResult();
 	}
 
 	private void testForSuccessfulResult() {
