@@ -3,3 +3,5 @@
 # open-saber
 
 Software Archetype for Building Electronic Registries is an open source software stack that is intended to build electronic registries of data. 
+
+Read the [Wiki](https://github.com/project-sunbird/open-saber/wiki) for more clarity

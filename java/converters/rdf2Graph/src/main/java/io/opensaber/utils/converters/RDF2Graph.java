@@ -2,6 +2,7 @@ package io.opensaber.utils.converters;
 
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.Stack;
 
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -74,23 +75,31 @@ public final class RDF2Graph
 		Vertex s;
 		if(hasLabel.hasNext()){
 			s = hasLabel.next();
-			System.out.println(s);
-			builder.subject(s.label());
-			Iterator<VertexProperty<String>> propertyIter = s.properties();
-			while (propertyIter.hasNext()){
-				VertexProperty<String> property = propertyIter.next();
-				System.out.println(property);
-				builder.add(property.label(), property.value());
-			}
-			
-			Iterator<Edge> edgeIter = s.edges(Direction.OUT);
-			Edge edge;
-			if(edgeIter.hasNext()){
-				edge = edgeIter.next();
-				s = edge.inVertex();
-				builder.add(edge.label(), s.label());
-			}
+			extractModelFromVertex(builder, s);
 		}
 		return builder.build();
+	}
+
+	private static void extractModelFromVertex(ModelBuilder builder, Vertex s) {
+		builder.subject(s.label());
+		Iterator<VertexProperty<String>> propertyIter = s.properties();
+		while (propertyIter.hasNext()){
+			VertexProperty<String> property = propertyIter.next();
+			builder.add(property.label(), property.value());
+		}
+		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
+		Edge edge;
+		Stack<Vertex> vStack = new Stack<Vertex>();
+		while(edgeIter.hasNext()){
+			edge = edgeIter.next();
+			s = edge.inVertex();
+			builder.add(edge.label(), s.label());
+			vStack.push(s);
+		}
+		Iterator<Vertex> vIterator = vStack.iterator();
+		while(vIterator.hasNext()){
+			s = vIterator.next();
+			extractModelFromVertex(builder,s);
+		}
 	}
 }
