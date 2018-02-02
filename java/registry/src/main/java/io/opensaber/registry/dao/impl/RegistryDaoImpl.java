@@ -98,21 +98,20 @@ public class RegistryDaoImpl implements RegistryDao{
 			TinkerGraph graph = (TinkerGraph)entity;
 			GraphTraversalSource gts = graph.traversal();
 			GraphTraversal<Vertex, Vertex> traversal = gts.V();
-			Map<String,Object[]> map = new HashMap<String,Object[]>();
-			List<String> createdLabels = new ArrayList<String>();
+			Map<String,List<Object[]>> map = new HashMap<String,List<Object[]>>();
 			try ( Transaction tx = gds.beginTx() )
 			{
 				if(traversal.hasNext()){
+					Map<String,Node> createdNodeMap = new HashMap<String,Node>();
 					Vertex v = traversal.next();
-					Node newNode = getNodeWithProperties(gds, v, false);
+					Node newNode = getNodeWithProperties(gds, v, false, createdNodeMap);
 					while(traversal.hasNext()){
 						v = traversal.next();
-						newNode = getNodeWithProperties(gds, v, true);
-						createdLabels.add(v.label());
+						newNode = getNodeWithProperties(gds, v, true, createdNodeMap);
 						Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
 						Iterator<Edge> incomingEdges = v.edges(Direction.IN);
-						createEdgeNodes(outgoingEdges, gds, newNode, map, createdLabels, Direction.OUT, v);
-						createEdgeNodes(incomingEdges, gds, newNode, map, createdLabels, Direction.IN, v);
+						createEdgeNodes(outgoingEdges, gds, newNode, map, Direction.OUT, v, createdNodeMap);
+						createEdgeNodes(incomingEdges, gds, newNode, map, Direction.IN, v, createdNodeMap);
 
 					}
 				}
@@ -128,61 +127,97 @@ public class RegistryDaoImpl implements RegistryDao{
 		return false;
 	}
 
-	private Node getNodeWithProperties(GraphDatabaseService gds,Vertex v, boolean dbCheck){
+	private Node getNodeWithProperties(GraphDatabaseService gds,Vertex v, boolean dbCheck, Map<String,Node> createdNodeMap){
+
 		Node newNode;
-		if(dbCheck){
-			ResourceIterator<Node> nodes = gds.findNodes(Label.label(v.label()));
-			if(nodes.hasNext()){
-				newNode = nodes.next();
-			}else{
-				newNode = gds.createNode(Label.label(v.label()));
-			}
+
+		if(createdNodeMap.containsKey(v.label())){
+			newNode = createdNodeMap.get(v.label());
 		}
 		else{
-			newNode = gds.createNode(Label.label(v.label()));
-		}
-		Iterator<VertexProperty<Object>> properties = v.properties();
-		while(properties.hasNext()){
-			VertexProperty<Object> property = properties.next();
-			newNode.setProperty(property.key(), property.value());
+			if(dbCheck){
+				ResourceIterator<Node> nodes = gds.findNodes(Label.label(v.label()));
+				if(nodes.hasNext()){
+					newNode = nodes.next();
+				}else{
+					newNode = gds.createNode(Label.label(v.label()));
+				}
+			}
+			else{
+				newNode = gds.createNode(Label.label(v.label()));
+			}
+			Iterator<VertexProperty<Object>> properties = v.properties();
+			while(properties.hasNext()){
+				VertexProperty<Object> property = properties.next();
+				newNode.setProperty(property.key(), property.value());
+			}
+			createdNodeMap.put(v.label(), newNode);
 		}
 		return newNode;
 	}
 
 
-	private void createEdgeNodes(Iterator<Edge> edges, GraphDatabaseService gds, Node newNode, Map<String,Object[]> map, List<String> createdLabels, Direction direction, Vertex v){
+	private void createEdgeNodes(Iterator<Edge> edges, GraphDatabaseService gds, Node newNode, Map<String,List<Object[]>> map, Direction direction, Vertex v, Map<String,Node> createdNodeMap){
 
 		while(edges.hasNext()){
 			Vertex vertex = null;
 			Edge edge = edges.next();
+			boolean continueFlag = false;
 			if(direction.equals(Direction.OUT)){
 				vertex = edge.inVertex();
+				if(map.containsKey(v.label())){
+					List<Object[]> edgeArrayList = map.get(v.label());
+					for(Object[] edgeArray: edgeArrayList){
+						if(edgeArray.length==2 && edgeArray[0].equals(direction.opposite()) && edgeArray[1].equals(vertex.label()) ){
+							continueFlag = true;
+							break;
+						}
+					}
+				}
+
 			}else{
 				vertex = edge.outVertex();
-			}
-			if(map.containsKey(vertex.label())){
-				Object[] checkEdgeArray = map.get(vertex.label());
-				if(checkEdgeArray.length==2 && checkEdgeArray[0].equals(direction.opposite()) && checkEdgeArray[1].equals(v.label()) ){
-					continue;
+				if(map.containsKey(vertex.label())){
+					List<Object[]> edgeArrayList = map.get(vertex.label());
+					for(Object[] edgeArray: edgeArrayList){
+						if(edgeArray.length==2 && edgeArray[0].equals(direction.opposite()) && edgeArray[1].equals(v.label()) ){
+							continueFlag = true;
+							break;
+						}
+					}
+
 				}
 			}
-			ResourceIterator<Node> nodeList = gds.findNodes(Label.label(vertex.label()));
-			Node nextNode = null;
-			if(nodeList.hasNext()){
-				nextNode = nodeList.next();
-			}else{
-				nextNode = gds.createNode(Label.label(vertex.label()));
+
+			if(continueFlag){
+				continue;
 			}
+			Node nextNode = getNodeWithProperties(gds, vertex, true, createdNodeMap);
 			RelationshipType relType = RelationshipType.withName(edge.label());
 			if(direction.equals(Direction.OUT)){
 				newNode.createRelationshipTo(nextNode, relType);
+				Object[] edgeArray = {direction,vertex.label()};
+				List<Object[]> edgeArrayList = null;
+				if(map.containsKey(v.label())){
+				edgeArrayList = map.get(v.label());
+				}else{
+					edgeArrayList = new ArrayList<Object[]>();
+				}
+				edgeArrayList.add(edgeArray);
+				map.put(v.label(), edgeArrayList);
 
 			}else{
 				nextNode.createRelationshipTo(newNode, relType);
+				Object[] edgeArray = {direction,v.label()};
+				List<Object[]> edgeArrayList = null;
+				if(map.containsKey(vertex.label())){
+				edgeArrayList = map.get(vertex.label());
+				}else{
+					edgeArrayList = new ArrayList<Object[]>();
+				}
+				edgeArrayList.add(edgeArray);
+				map.put(vertex.label(), edgeArrayList);
 			}
-			Object[] edgeArray = {direction,vertex.label()};
-			map.put(v.label(), edgeArray);
-			createdLabels.add(vertex.label());
 		}
 	}
 
