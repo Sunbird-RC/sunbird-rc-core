@@ -3,6 +3,7 @@ package io.opensaber.utils.converters;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalSource;
@@ -160,19 +161,70 @@ public class RDF2GraphTest {
 	}
 	
 	@Test
-	public void createTripleFromTwoVertices(){
+	public void createTripleFromTwoVertices() throws IOException{
 		Graph graph = createGraph();
 		ModelBuilder modelBuilder = createSimpleRDF(SUBJECT_LABEL);
-		ValueFactory vf = SimpleValueFactory.getInstance();
-		BNode address = vf.createBNode();
 		modelBuilder = modelBuilder
-				.add(RDF.TYPE, "ex:Artist");
-		assertEquals(0,countGraphVertices(graph));
+				.add(RDF.TYPE, "ex:Artist")
+				.add(FOAF.DEPICTION, "ex:Image");
 		editGraph(graph, modelBuilder.build());
+		assertEquals(3,countGraphVertices(graph));
+		dumpGraph(graph);
 		Model rdfModel = RDF2Graph.convertGraph2RDFModel(graph, SUBJECT_EXPANDED_LABEL);
-		System.out.println(rdfModel);
+		assertEquals(3, rdfModel.size());
+		String[] expected = 
+		{
+			"http://example.org/Picasso",
+			"http://xmlns.com/foaf/0.1/firstName",
+			"\"Pablo\"^^<http://www.w3.org/2001/XMLSchema#string>",
+			"http://example.org/Picasso",
+			"http://xmlns.com/foaf/0.1/depiction",
+			"\"http://example.org/Image\"^^<http://www.w3.org/2001/XMLSchema#string>",
+			"http://example.org/Picasso",
+			"http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+			"\"http://example.org/Artist\"^^<http://www.w3.org/2001/XMLSchema#string>"
+		};
+		int i = 0;
+		for(Statement rdfStatement: rdfModel) {
+			Value subjectValue = rdfStatement.getSubject();
+			IRI property = rdfStatement.getPredicate();
+			Value objectValue = rdfStatement.getObject();
+			System.out.println(rdfStatement);
+			assertEquals(expected[i], subjectValue.toString());
+			assertEquals(expected[i+1], property.toString());
+			assertEquals(expected[i+2], objectValue.toString());
+			i+=3;
+		}
 	}
 	
+	@Test
+	public void createTriplesFromBNode(){
+		Graph graph = createGraph();
+		ValueFactory vf = SimpleValueFactory.getInstance();
+		BNode address = vf.createBNode();
+		BNode painting = vf.createBNode();
+		BNode reaction = vf.createBNode();
+		ModelBuilder modelBuilder = createSimpleRDF(SUBJECT_LABEL);
+		modelBuilder
+			.add(RDF.TYPE, "ex:Artist")
+			.add("ex:homeAddress", address)
+			.add("ex:creatorOf", painting)
+			.subject(address)
+				.add("ex:street", "31 Art Gallery")
+				.add("ex:city", "Madrid")
+				.add("ex:country", "Spain")
+				.add(RDF.TYPE,"ex:PostalAddress")
+			.subject(painting)
+				.add(RDF.TYPE,"ex:CreativeWork")
+				.add("ex:depicts", "cubes")
+				.add("ex:reaction", reaction)
+				.subject(reaction)
+					.add("ex:rating","5")
+					.add(RDF.TYPE,"ex:AggregateRating");
+		editGraph(graph, modelBuilder.build());
+		Model rdfModel = RDF2Graph.convertGraph2RDFModel(graph, SUBJECT_EXPANDED_LABEL);
+		assertEquals(13, rdfModel.size()); 
+	}
 
 	private long countGraphVertices(Graph graph) {
 		return IteratorUtils.count(graph.vertices());
