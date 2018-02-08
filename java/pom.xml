@@ -15,6 +15,7 @@
 	    <module>middleware-commons</module>
 	    <module>middleware</module>
 	    <module>registry-interceptor</module>
+	    <module>registry</module>
     </modules>
 
 </project>

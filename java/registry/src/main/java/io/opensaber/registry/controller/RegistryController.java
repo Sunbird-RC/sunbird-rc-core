@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import io.opensaber.registry.config.CassandraConfiguration;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.config.InterceptorConfiguration;
 import io.opensaber.registry.service.RegistryService;
@@ -54,8 +53,8 @@ public class RegistryController extends SpringBootServletInitializer {
 	
 	@ResponseBody
 	@RequestMapping(value="/addEntity",method=RequestMethod.POST)
-	public ResponseEntity addEntity(@RequestBody Object entity) throws JsonProcessingException{
-		boolean status = registryService.addEntity(entity);
+	public ResponseEntity addEntity(@RequestAttribute Object dataObject) throws JsonProcessingException{
+		boolean status = registryService.addEntity(dataObject);
 		return ResponseUtil.successResponse();
 	}
 	
@@ -79,16 +78,5 @@ public class RegistryController extends SpringBootServletInitializer {
 		Object responseObj = registryService.getEntityById(entity);
 		return ResponseUtil.successResponse(responseObj);
 	}
-	
-	@ResponseBody
-	@RequestMapping(value="/convertToRdf",method=RequestMethod.POST)
-	public ResponseEntity convertToRdf(@RequestAttribute Object dataObject) throws JsonProcessingException{
-		return ResponseUtil.successResponse();
-	}
-	
-	
-	@RequestMapping(value="/retrieveJsonld",method=RequestMethod.GET)
-	public ResponseEntity retrieveJsonld() throws JsonProcessingException{
-		return ResponseUtil.successResponse();
-	}
+
 }
