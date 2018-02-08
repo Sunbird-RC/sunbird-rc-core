@@ -19,5 +19,15 @@
 			<artifactId>middleware-commons</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>io.open-saber</groupId>
+			<artifactId>shaclex</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency> 
+		<!-- <dependency>
+			<groupId>com.github.jsonld-java</groupId>
+			<artifactId>jsonld-java-jena</artifactId>
+			<version>0.4.1</version>
+		</dependency> -->
 	</dependencies>
 </project>

@@ -9,6 +9,6 @@ public class JsonKeys {
 	
 	public static String RESPONSE = "response";
 	public static String SUCCESS = "success";
-	public static String ERROR = "failure";
+	public static String FAILURE = "failure";
 
 }

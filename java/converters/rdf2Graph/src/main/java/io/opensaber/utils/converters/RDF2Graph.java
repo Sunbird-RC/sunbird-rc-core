@@ -1,9 +1,11 @@
 package io.opensaber.utils.converters;
 
 import java.util.Iterator;
-import java.util.Optional;
 import java.util.Stack;
 
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Direction;
@@ -12,7 +14,6 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -20,16 +21,56 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.impl.SimpleBNode;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
-import org.eclipse.rdf4j.model.util.Models;
 
-//import org.eclipse.rdf4j.model.util.ModelBuilder;
 
 public final class RDF2Graph 
 {
 	private RDF2Graph() {}
-	
+
+	public static Graph convertRDFStatement2Graph(org.apache.jena.rdf.model.Statement statement, Graph graph){
+		ValueFactory factory = SimpleValueFactory.getInstance();
+		org.apache.jena.rdf.model.Resource subject = statement.getSubject();
+		RDFNode object =statement.getObject();
+		Property property = statement.getPredicate();
+		Value subjectValue = getValueFromObject(subject, factory);
+		Value objectValue = getValueFromObject(object, factory);
+		IRI predicate = factory.createIRI(property.toString());
+		Statement finalStatement = factory.createStatement((Resource)subjectValue, predicate, objectValue);
+		graph = convertRDFStatement2Graph(finalStatement, graph);
+		return graph;
+	}
+
+	private static Value getValueFromObject(org.apache.jena.rdf.model.Resource object, ValueFactory factory){
+		Value value = null;
+		if(object.isLiteral()){
+			value = factory.createLiteral(object.toString());
+		}else if(object.isURIResource()){
+			value = factory.createIRI(object.toString());
+		}else{
+			value = factory.createBNode(object.toString());
+		}
+
+		return value;
+
+	}
+
+	private static Value getValueFromObject(RDFNode object, ValueFactory factory){
+		Value value = null;
+		if(object.isLiteral()){
+			value = factory.createLiteral(object.toString());
+		}else if(object.isURIResource()){
+			value = factory.createIRI(object.toString());
+		}else{
+			value = factory.createBNode(object.toString());
+		}
+
+		return value;
+
+	}
+
 	public static Graph convertRDFStatement2Graph(Statement rdfStatement, Graph graph) {
 		Value subjectValue = rdfStatement.getSubject();
 		IRI property = rdfStatement.getPredicate();

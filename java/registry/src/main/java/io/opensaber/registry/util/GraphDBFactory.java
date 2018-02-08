@@ -1,20 +1,11 @@
 package io.opensaber.registry.util;
 
-import java.io.File;
-
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
-import org.neo4j.driver.v1.AuthTokens;
-import org.neo4j.driver.v1.Driver;
-import org.neo4j.driver.v1.GraphDatabase;
-import org.neo4j.driver.v1.Record;
-import org.neo4j.driver.v1.Session;
-import org.neo4j.driver.v1.Transaction;
-import org.neo4j.driver.v1.TransactionWork;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.tinkerpop.api.impl.Neo4jGraphAPIImpl;
 
 public class GraphDBFactory {
@@ -44,5 +35,9 @@ public class GraphDBFactory {
 			graphDBService = ((Neo4jGraphAPIImpl) getGraphDB().getBaseGraph()).getGraphDatabase();
 		}
 		return graphDBService;
+	}
+	
+	public static Graph getEmptyGraph(){
+		return TinkerGraph.open();
 	}
 }
