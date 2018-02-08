@@ -1,0 +1,19 @@
+[
+    {
+        "@id":"http://example.org/S",
+        "http://www.w3.org/ns/shacl#targetNode":[
+            {
+                "@id":"http://example.org/x"
+            }]},
+            {
+                "@id":"http://example.org/x",
+                "http://example.org/p":[
+                    {
+                        "@id":"http://example.org/y"
+                    }
+                ]
+            },
+            {
+                "@id":"http://example.org/y"
+            }
+]
