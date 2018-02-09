@@ -7,6 +7,10 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	
+	<properties>
+		<junit.version>4.12</junit.version>
+	</properties>
+	
 	<groupId>io.opensaber.middleware</groupId>
 	<artifactId>rdf-conversion</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
@@ -24,6 +28,12 @@
 			<artifactId>shaclex</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency> 
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
 		<!-- <dependency>
 			<groupId>com.github.jsonld-java</groupId>
 			<artifactId>jsonld-java-jena</artifactId>

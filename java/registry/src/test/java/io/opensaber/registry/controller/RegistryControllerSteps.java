@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.http.HttpStatus;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -40,46 +39,79 @@ public class RegistryControllerSteps {
 	}
 	
 	
-	@Given("^JSON-LD data and base url are valid")
+	@Given("^Input data and base url are valid")
 	public void jsonldData(){
 		assertNotNull(jsonldString);
 		assertNotNull(restTemplate);
 		assertNotNull(baseUrl);
 	}
 	
-	@When("^JSON-LD data needs to be converted to RDF")
-	public void convertToRdf(){
+	@When("^Inserting a record into the registry")
+	public void addEntity(){
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity entity = new HttpEntity(jsonldString,headers);
-		ResponseEntity response = restTemplate.postForEntity(baseUrl+"/convertToRdf",
+		ResponseEntity response = restTemplate.postForEntity(baseUrl+"/addEntity",
 				entity,ObjectNode.class);
 		ObjectNode obj = (ObjectNode)response.getBody();
 		assertNotNull(obj);
 		assertEquals(obj.get(JsonKeys.RESPONSE).asText(), JsonKeys.SUCCESS);
 	}
 	
-	@Then("^The response is (.*)")
+	@Then("^Response for valid record is (.*)")
 	public void verifyResponse(String response){
 		assertNotNull(response);
 		assertTrue(response.contains(JsonKeys.SUCCESS));
 	}
 
-	
-	@When("^RDF data needs to be converted to JSON-LD")
-	public void convertToJsonld(){
-		ResponseEntity response = restTemplate.getForEntity(baseUrl+"/retrieveJsonld",String.class);
-		String body = (String)response.getBody();
-		int statusCode = response.getStatusCode().value();
-		assertNotNull(body);
-		//assertTrue(body.toString().contains("@id"));
-		assertTrue(statusCode==HttpStatus.SC_OK);
+	@Given("^Valid duplicate data")
+	public void jsonldDuplicateData(){
+		assertNotNull(jsonldString);
+		assertNotNull(restTemplate);
+		assertNotNull(baseUrl);
 	}
 	
-	@Then("^The response contains (.*)")
-	public void verifyJsonld(String response){
+	@When("^Inserting a duplicate record into the registry")
+	public void addDuplicateEntity(){
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		HttpEntity entity = new HttpEntity(jsonldString,headers);
+		ResponseEntity response = restTemplate.postForEntity(baseUrl+"/addEntity",
+				entity,ObjectNode.class);
+		ObjectNode obj = (ObjectNode)response.getBody();
+		assertNotNull(obj);
+		assertEquals(obj.get(JsonKeys.RESPONSE).asText(), JsonKeys.SUCCESS);
+	}
+	
+	@Then("^Response for duplicate record is (.*)")
+	public void verifyFailureResponse(String response){
 		assertNotNull(response);
-		assertTrue(response.contains("id"));
+		assertTrue(response.contains(JsonKeys.FAILURE));
+	}
+	
+	@Given("^Input data is invalid")
+	public void invalidJsonldData(){
+		assertNotNull(getInvalidJsonldString());
+		assertNotNull(restTemplate);
+		assertNotNull(baseUrl);
+	}
+	
+	@When("^Inserting invalid record into the registry")
+	public void addInvalidEntity(){
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		HttpEntity entity = new HttpEntity(jsonldString,headers);
+		ResponseEntity response = restTemplate.postForEntity(baseUrl+"/addEntity",
+				entity,ObjectNode.class);
+		ObjectNode obj = (ObjectNode)response.getBody();
+		assertNotNull(obj);
+		assertEquals(obj.get(JsonKeys.RESPONSE).asText(), JsonKeys.SUCCESS);
+	}
+	
+	@Then("^Response for invalid record is (.*)")
+	public void verifyFailureResponse2(String response){
+		assertNotNull(response);
+		assertTrue(response.contains(JsonKeys.FAILURE));
 	}
 
 	
@@ -88,6 +120,13 @@ public class RegistryControllerSteps {
 				+ "[\"schema:Person\",\"opensabre:Teacher\"],\"schema:identifier\": \"b6ad2941-fac3-4c72-94b7-eb638538f55f\",\"schema:image\": null,"
 				+ "\"schema:nationality\": \"Indian\",\"schema:birthDate\": \"2011-12-06\",\"schema:name\": \"Marvin\",\"schema:gender\": \"male\","
 				+ "\"schema:familyName\":\"Pande\",\"opensaber:languagesKnownISO\": [\"en\",\"hi\"]}";
+	}
+	
+	private String getInvalidJsonldString(){
+		return "{\"schema\": \"http://schema.org/\",\"opensaber\": \"http://open-saber.org/vocab/core/#\"},"
+				+ "\"schema:identifier\": \"b6ad2941-fac3-4c72-94b7-eb638538f55f\",\"schema:image\": null,"
+				+ "\"schema:nationality\": \"Indian\",\"schema:birthDate\": \"2011-12-06\",\"schema:name\": \"Marvin\",\"schema:gender\": \"male\","
+				+ "\"schema:familyName\":\"Pande\",\"opensaber:languagesKnownISO\": [\"en\",\"hi\"]";
 	}
 	
 	public String generateBaseUrl(){

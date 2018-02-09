@@ -41,4 +41,13 @@ public class ResponseUtil {
 		ResponseEntity responseEntity = new ResponseEntity<>(response, HttpStatus.OK);
 		return responseEntity;
 	}
+	
+	public static ResponseEntity failureResponse(Object obj) throws JsonProcessingException {
+		ObjectNode response = objectMapper.createObjectNode();
+		if (obj != null) {
+			response.putPOJO(JsonKeys.RESPONSE, obj);
+		}
+		ResponseEntity responseEntity = new ResponseEntity<>(response, HttpStatus.NOT_MODIFIED);
+		return responseEntity;
+	}
 }

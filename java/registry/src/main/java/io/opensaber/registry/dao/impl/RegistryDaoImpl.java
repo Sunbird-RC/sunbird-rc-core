@@ -19,10 +19,15 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
+import org.springframework.stereotype.Component;
 
 import io.opensaber.registry.dao.RegistryDao;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.GraphDBFactory;
 
+@Component
 public class RegistryDaoImpl implements RegistryDao {
 
 	@Override
@@ -32,50 +37,44 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public boolean addEntity(Object entity,String label){
+	public boolean addEntity(Object entity,String label) throws DuplicateRecordException, NullPointerException{
 		GraphDatabaseService gds = null;
-		try{
-			gds = GraphDBFactory.getGraphDatabaseService();
-			try ( Transaction tx = gds.beginTx() )
-			{
-				if(gds.findNodes(Label.label(label)).hasNext()){
-					tx.success();
-					tx.close();
-					throw new Exception();
-				}
-
-			}
-			TinkerGraph graph = (TinkerGraph)entity;
-			GraphTraversalSource gts = graph.traversal();
-			GraphTraversal<Vertex, Vertex> traversal = gts.V();
-			Map<String,List<Object[]>> map = new HashMap<String,List<Object[]>>();
-			try ( Transaction tx = gds.beginTx() )
-			{
-				if(traversal.hasNext()){
-					Map<String,Node> createdNodeMap = new HashMap<String,Node>();
-					Vertex v = traversal.next();
-					System.out.println("Printing label:"+v.label());
-					Node newNode = getNodeWithProperties(gds, v, false, createdNodeMap);
-					while(traversal.hasNext()){
-						v = traversal.next();
-						newNode = getNodeWithProperties(gds, v, true, createdNodeMap);
-						Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
-						Iterator<Edge> incomingEdges = v.edges(Direction.IN);
-						createEdgeNodes(outgoingEdges, gds, newNode, map, Direction.OUT, v, createdNodeMap);
-						createEdgeNodes(incomingEdges, gds, newNode, map, Direction.IN, v, createdNodeMap);
-
-					}
-				}
+		gds = GraphDBFactory.getGraphDatabaseService();
+		try ( Transaction tx = gds.beginTx() )
+		{
+			if(gds.findNodes(Label.label(label)).hasNext()){
 				tx.success();
 				tx.close();
+				throw new DuplicateRecordException(this.getClass().getName()+Constants.DUPLICATE_RECORD_MESSAGE);
 			}
 
-
-			return true;
-		}catch(Exception e){
-			e.printStackTrace();
 		}
-		return false;
+		TinkerGraph graph = (TinkerGraph)entity;
+		GraphTraversalSource gts = graph.traversal();
+		GraphTraversal<Vertex, Vertex> traversal = gts.V();
+		Map<String,List<Object[]>> map = new HashMap<String,List<Object[]>>();
+		try ( Transaction tx = gds.beginTx() )
+		{
+			if(traversal.hasNext()){
+				Map<String,Node> createdNodeMap = new HashMap<String,Node>();
+				Vertex v = traversal.next();
+				Node newNode = getNodeWithProperties(gds, v, false, createdNodeMap);
+				while(traversal.hasNext()){
+					v = traversal.next();
+					newNode = getNodeWithProperties(gds, v, true, createdNodeMap);
+					Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
+					Iterator<Edge> incomingEdges = v.edges(Direction.IN);
+					createEdgeNodes(outgoingEdges, gds, newNode, map, Direction.OUT, v, createdNodeMap);
+					createEdgeNodes(incomingEdges, gds, newNode, map, Direction.IN, v, createdNodeMap);
+
+				}
+			}
+			tx.success();
+			tx.close();
+		}
+		return true;
+
+		
 	}
 
 	private Node getNodeWithProperties(GraphDatabaseService gds,Vertex v, boolean dbCheck, Map<String,Node> createdNodeMap){
