@@ -3,7 +3,9 @@ package io.opensaber.registry.dao.impl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,8 @@ import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 
 import io.opensaber.registry.dao.RegistryDao;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.utils.converters.RDF2Graph;
 
 import static org.junit.Assert.assertFalse;
@@ -55,6 +59,9 @@ public class RegistryDaoImplTest {
 
 	private static String identifier;
 	
+	@Rule
+	public ExpectedException expectedEx = ExpectedException.none();
+	
 	private static final String SUBJECT_LABEL = "ex:Picasso";
 	private static final String SUBJECT_EXPANDED_LABEL = "http://example.org/Picasso";
 
@@ -65,7 +72,7 @@ public class RegistryDaoImplTest {
 	}
 
 	@Test
-	public void test_add_entity_with_single_node(){
+	public void test_add_entity_with_single_node() throws NullPointerException, DuplicateRecordException{
 		identifier = generateRandomId();
 		String label = "teacher";
 		getVertexForSubject(label, "identifier", identifier);
@@ -77,7 +84,7 @@ public class RegistryDaoImplTest {
 	
 	
 	@Test
-	public void test_add_with_blank_node() throws Exception {
+	public void test_add_with_blank_node() throws NullPointerException, DuplicateRecordException {
 		ValueFactory vf = SimpleValueFactory.getInstance();
 		BNode address = vf.createBNode();
 		BNode painting = vf.createBNode();
@@ -87,8 +94,6 @@ public class RegistryDaoImplTest {
 		modelBuilder = modelBuilder
 				.add(RDF.TYPE, "ex:Artist");
 		editGraph(graph, modelBuilder.build());
-//		test that a vertex got added since the object is an IRI
-		//assertEquals(2,countGraphVertices(graph));
 		modelBuilder = modelBuilder
 				.add(FOAF.DEPICTION, "ex:Image");
 		editGraph(graph, modelBuilder.build());
@@ -113,17 +118,18 @@ public class RegistryDaoImplTest {
 	}
 	
 	@Test
-	public void test_add_existing_entity(){
+	public void test_add_existing_entity() throws NullPointerException, DuplicateRecordException{
 		String label = "teacher";
 		getVertexForSubject(label, "identifier", identifier);
 		getVertexForSubject(label, "type", "Teacher");
-		boolean response = registryDao.addEntity(graph,label);
-		assertFalse(response);
+		expectedEx.expect(DuplicateRecordException.class);
+		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
+		registryDao.addEntity(graph,label);
 
 	}
 	
 	@Test
-	public void test_add_with_multiple_nodes(){
+	public void test_add_with_multiple_nodes() throws NullPointerException, DuplicateRecordException{
 		identifier = generateRandomId();
 		Vertex firstVertex = null;
 		Vertex secondVertex = null;
@@ -145,7 +151,7 @@ public class RegistryDaoImplTest {
 	}
 	
 	@Test
-	public void test_add_with_shared_nodes(){
+	public void test_add_with_shared_nodes() throws NullPointerException, DuplicateRecordException{
 		identifier = generateRandomId();
 		Vertex firstVertex = null;
 		Vertex secondVertex = null;
@@ -161,7 +167,7 @@ public class RegistryDaoImplTest {
 	}
 	
 	@Test
-	public void test_add_with_shared_nodes_add_new_properties(){
+	public void test_add_with_shared_nodes_add_new_properties() throws NullPointerException, DuplicateRecordException{
 		identifier = generateRandomId();
 		Vertex firstVertex = null;
 		Vertex secondVertex = null;
@@ -177,7 +183,7 @@ public class RegistryDaoImplTest {
 	}
 	
 	@Test
-	public void test_add_with_shared_nodes_update_existing_properties(){
+	public void test_add_with_shared_nodes_update_existing_properties() throws NullPointerException, DuplicateRecordException{
 		identifier = generateRandomId();
 		Vertex firstVertex = null;
 		Vertex secondVertex = null;
@@ -291,7 +297,6 @@ public class RegistryDaoImplTest {
 	private void editGraph(Graph graph, Model simpleRDFModel) {
 		clearGraph(graph);
 		for(Statement rdfStatement: simpleRDFModel) {
-			System.out.println("Statement subject:"+rdfStatement.getSubject().toString());
 			RDF2Graph.convertRDFStatement2Graph(rdfStatement, graph);
 		}
 	}

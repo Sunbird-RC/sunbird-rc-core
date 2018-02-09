@@ -2,74 +2,76 @@ package io.opensaber.registry.controller;
 
 import static org.junit.Assert.*;
 
+import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.service.RegistryService;
 
-import io.opensaber.registry.util.JsonKeys;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.sparql.vocabulary.FOAF;
+import org.apache.jena.vocabulary.RDF;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes=RegistryController.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RegistryControllerJUnitTest {
 
-	@Test
-	public void test_add_new_Entity() {
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity entity = new HttpEntity(getJsonString(),headers);
-		ResponseEntity response = restTemplate.postForEntity(generateUrl("/addEntity"),
-				entity,ObjectNode.class);
-		ObjectNode obj = (ObjectNode)response.getBody();
-		assertTrue(obj.get(JsonKeys.RESPONSE).asText().equals(JsonKeys.SUCCESS));
-	}
+	
+	@Autowired
+	RegistryService registryService;
+	
+	@Rule
+	public ExpectedException expectedEx = ExpectedException.none();
+	
+	private static final String SUBJECT_LABEL = "ex:Picasso";
+	
 	
 	@Test
-	public void test_add_existing_Entity() {
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity entity = new HttpEntity(getJsonString(),headers);
-		ResponseEntity response = restTemplate.postForEntity(generateUrl("/addEntity"),
-				entity,ObjectNode.class);
-		ObjectNode obj = (ObjectNode)response.getBody();
-		assertTrue(obj.get(JsonKeys.RESPONSE).asText().equals(JsonKeys.FAILURE));
+	public void test_add_entity() throws NullPointerException, DuplicateRecordException {
+		Model model = getRdf();
+		boolean response = registryService.addEntity(model);
+		assertTrue(response);
 	}
 	
 	@Test
-	public void test_add_Entity_with_invalid_format() {
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity entity = new HttpEntity(getJsonString(),headers);
-		ResponseEntity response = restTemplate.postForEntity(generateUrl("/addEntity"),
-				entity,ObjectNode.class);
-		ObjectNode obj = (ObjectNode)response.getBody();
-		assertTrue(obj.get(JsonKeys.RESPONSE).asText().equals(JsonKeys.FAILURE));
+	public void test_add_existing_entity() throws NullPointerException, DuplicateRecordException {
+		Model model = getRdf();
+		expectedEx.expect(DuplicateRecordException.class);
+		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
+		registryService.addEntity(model);
 	}
 	
-	public String generateUrl(String url){
-		return "http://localhost:8080"+url;
-	}
 	
-	public String getJsonString(){
-		return "{\"@context\": {\"schema\": \"http:schema.org/\",\"opensaber\": \"http:open-saber.org/vocab/core/#\"},\"@type\": "
-				+ "[\"schema:Person\",\"opensabre:Teacher\"],\"schema:identifier\": \"b6ad2941-fac3-4c72-94b7-eb638538f55f\",\"schema:image\": null,"
-				+ "\"schema:nationality\": \"Indian\",\"schema:birthDate\": \"2011-12-06\",\"schema:name\": \"Marvin\",\"schema:gender\": \"male\","
-				+ "\"schema:familyName\":\"Pande\",\"opensaber:languagesKnownISO\": [\"en\",\"hi\"]}";
+	public Model getRdf(){
+		Resource resource = ResourceFactory.createResource(SUBJECT_LABEL);
+		Model model = ModelFactory.createDefaultModel();
+		model.add(resource, FOAF.name, "Pablo");
+		Node address = NodeFactory.createBlankNode();
+		Node painting = NodeFactory.createBlankNode();
+		model.add(resource,RDF.type, "ex:Artist");
+		model.add(resource,FOAF.depiction, "ex:Image");
+		/*Property property = ResourceFactory.createProperty("ex:homeAddress");
+		model.add(resource,property, (RDFNode) address);
+		property = ResourceFactory.createProperty("ex:creatorOf");
+		model.add(resource,property, (RDFNode) painting);*/
+		return model;
 	}
-
 
 }

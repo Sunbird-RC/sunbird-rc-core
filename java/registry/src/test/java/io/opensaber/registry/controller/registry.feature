@@ -1,15 +1,23 @@
 #Author: jyotsna.raveendran@tarento.com
 
 @tag
-Feature: Data conversion between JSON-LD and RDF
+Feature: Inserting a record into the registry
 
   @tag1
-  Scenario: Converting from JSON-LD to RDF
-    Given JSON-LD data and base url are valid
-    When JSON-LD data needs to be converted to RDF
-    Then The response is success
+  Scenario: Inserting a valid record
+    Given Input data and base url are valid
+    When Inserting a record into the registry
+    Then Response for valid record is success
     
   @tag2
-  Scenario: Converting from RDF to JSON-LD
-  When RDF data needs to be converted to JSON-LD
-  Then The response contains id
+  Scenario: Inserting a duplicate record
+    Given Valid duplicate data
+    When Inserting a duplicate record into the registry
+    Then Response for duplicate record is failure
+    
+  @tag3
+  Scenario: Inserting invalid record
+    Given Input data is invalid
+    When Inserting invalid record into the registry
+    Then Response for invalid record is failure
+    

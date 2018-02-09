@@ -23,6 +23,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.config.InterceptorConfiguration;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.ResponseUtil;
 
@@ -38,40 +40,49 @@ public class RegistryController extends SpringBootServletInitializer {
 
 	@Autowired
 	RegistryService registryService;
-	
-    @Override
-    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-        return application.sources(RegistryController.class);
-    }
-	
+
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+		return application.sources(RegistryController.class);
+	}
+
 	@ResponseBody
 	@RequestMapping(value="/getEntityList",method=RequestMethod.GET)
 	public ResponseEntity getEntityList() throws JsonProcessingException{
 		List entityList = registryService.getEntityList();
 		return ResponseUtil.successResponse(entityList);
 	}
-	
+
 	@ResponseBody
 	@RequestMapping(value="/addEntity",method=RequestMethod.POST)
-	public ResponseEntity addEntity(@RequestAttribute Object dataObject) throws JsonProcessingException{
-		boolean status = registryService.addEntity(dataObject);
-		return ResponseUtil.successResponse();
+	public ResponseEntity addEntity(@RequestAttribute Object dataObject) throws JsonProcessingException, NullPointerException, DuplicateRecordException{
+		try{
+			boolean status = registryService.addEntity(dataObject);
+			if(status){
+				return ResponseUtil.successResponse();
+			}else{
+				return ResponseUtil.failureResponse(Constants.FAILED_INSERTION_MESSAGE);
+			}
+		}catch(Exception e){
+			return ResponseUtil.failureResponse(e.getMessage());
+		}
+
 	}
-	
+
 	@ResponseBody
 	@RequestMapping(value="/updateEntity",method=RequestMethod.PUT)
 	public ResponseEntity updateEntity(@RequestBody Object entity) throws JsonProcessingException{
 		boolean status = registryService.updateEntity(entity);
 		return ResponseUtil.successResponse();
 	}
-	
+
 	@ResponseBody
 	@RequestMapping(value="/deleteEntity",method=RequestMethod.POST)
 	public ResponseEntity deleteEntity(@RequestBody Object entity) throws JsonProcessingException{
 		boolean status = registryService.deleteEntity(entity);
 		return ResponseUtil.successResponse();
 	}
-	
+
 	@ResponseBody
 	@RequestMapping(value="/getEntity",method=RequestMethod.POST)
 	public ResponseEntity getEntity(@RequestBody Object entity) throws JsonProcessingException{
