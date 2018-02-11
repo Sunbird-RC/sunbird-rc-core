@@ -1,4 +1,4 @@
-package io.opensaber.registry.interceptor;
+/*package io.opensaber.registry.interceptor;
 
 import java.util.Map;
 
@@ -16,11 +16,11 @@ import io.opensaber.registry.middleware.impl.JsonldToRdfConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
 
-/**
+*//**
  * 
  * @author jyotsna
  *
- */
+ *//*
 @Component
 public class JsonldToRdfInterceptor extends BaseRequestHandler implements HandlerInterceptor{
 	
@@ -60,3 +60,4 @@ public class JsonldToRdfInterceptor extends BaseRequestHandler implements Handle
 
 	
 }
+*/
