@@ -75,8 +75,8 @@ public class BaseRequestHandler{
 		Enumeration<String> attributeNames = requestWrapper.getAttributeNames();
 		if(attributeNames!=null){
 			while(attributeNames.hasMoreElements()){
-				String header = attributeNames.nextElement();
-				requestAttributeMap.put(header, requestWrapper.getHeader(header));
+				String attribute = attributeNames.nextElement();
+				requestAttributeMap.put(attribute, requestWrapper.getAttribute(attribute));
 			}
 		}
 		return requestAttributeMap;
