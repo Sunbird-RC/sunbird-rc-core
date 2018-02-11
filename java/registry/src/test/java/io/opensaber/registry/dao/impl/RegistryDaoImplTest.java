@@ -63,7 +63,6 @@ public class RegistryDaoImplTest {
 	public ExpectedException expectedEx = ExpectedException.none();
 	
 	private static final String SUBJECT_LABEL = "ex:Picasso";
-	private static final String SUBJECT_EXPANDED_LABEL = "http://example.org/Picasso";
 
 	@Before
 	public void initializeGraph(){
@@ -289,10 +288,7 @@ public class RegistryDaoImplTest {
 		vertex.property(property, objectValue);
 		return vertex;
 	}
-	
-	private long countGraphVertices(Graph graph) {
-		return IteratorUtils.count(graph.vertices());
-	}
+
 
 	private void editGraph(Graph graph, Model simpleRDFModel) {
 		clearGraph(graph);
