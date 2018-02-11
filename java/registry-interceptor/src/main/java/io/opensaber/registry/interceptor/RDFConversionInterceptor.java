@@ -40,17 +40,12 @@ public class RDFConversionInterceptor extends BaseRequestHandler implements Hand
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-		try{
-		System.out.println("Entering rdf conversion prehandle");
 		setRequest(request);
 		Map<String,Object> attributeMap = rdfConverter.execute(getRequestBodyMap());
 		setRequestAttributes(attributeMap);
 		request = getRequest();
 		if(request.getAttribute(Constants.RDF_OBJECT)!=null){
 			return true;
-		}
-		}catch(Exception e){
-			e.printStackTrace();
 		}
 		return false;
 	}
