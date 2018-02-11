@@ -34,6 +34,12 @@
 			<groupId>io.open-saber</groupId>
 			<artifactId>rdf2graph</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.jena</groupId>
+					<artifactId>jena-base</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>io.opensaber</groupId>
@@ -148,7 +154,12 @@
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-base</artifactId>
 			<version>3.0.0</version>
-			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 	</dependencies>

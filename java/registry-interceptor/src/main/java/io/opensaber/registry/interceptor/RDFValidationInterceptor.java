@@ -13,6 +13,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.interceptor.handler.RequestWrapper;
+import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.util.Constants;
 
@@ -20,13 +21,18 @@ import io.opensaber.registry.middleware.util.Constants;
 @Component
 public class RDFValidationInterceptor extends BaseRequestHandler implements HandlerInterceptor {
 	
-	@Autowired
 	private RDFValidator rdfValidator;
+	
+	@Autowired
+	public RDFValidationInterceptor(RDFValidator rdfValidator){
+		this.rdfValidator = rdfValidator;
+	}
 
 	@Override
-	public boolean preHandle(HttpServletRequest arg0, HttpServletResponse arg1, Object arg2) throws Exception {
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws Exception {
+		System.out.println("Entering rdf validation prehandle");
 		setRequest(request);
-		Map<String,Object> attributeMap = rdfValidator.execute(getRequestBodyMap());
+		Map<String,Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
 		setRequestAttributes(attributeMap);
 		request = getRequest();
 		if(request.getAttribute(Constants.RDF_VALIDATION_OBJECT)!=null){

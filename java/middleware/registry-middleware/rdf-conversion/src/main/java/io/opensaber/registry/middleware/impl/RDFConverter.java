@@ -25,7 +25,7 @@ public class RDFConverter implements BaseMiddleware {
 		} else {
 			throw new MiddlewareHaltException(this.getClass().getName()+"JSONLD data is invalid!");
 		}
-		return null;
+		return mapData;
 	}
 
 	public Map<String, Object> next(Map<String, Object> mapData) throws IOException {

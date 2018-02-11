@@ -14,11 +14,14 @@ import org.springframework.core.env.Environment;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.opensaber.registry.interceptor.RDFConversionInterceptor;
+import io.opensaber.registry.interceptor.RDFValidationInterceptor;
 import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.impl.RdfToJsonldConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 /**
@@ -61,6 +64,14 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 		String shexFilePath = this.getClass().getResource("/"+shexFileName).getPath();
 		Path filePath = Paths.get(shexFilePath);
 		return new RDFValidator(filePath);
+	}
+	
+	@Override 
+    public void addInterceptors(InterceptorRegistry registry) { 
+		//registry.addInterceptor(new JsonldToRdfInterceptor(new JsonldToRdfConverter())).addPathPatterns("/convertToRdf");
+		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter())).addPathPatterns("/addEntity");
+		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator())).addPathPatterns("/addEntity");
+		
 	}
 	
 }
