@@ -1,0 +1,9 @@
+version: '2'
+services:
+  web:
+    image: tomcat
+    ports: 
+      - "8080:8080"
+    volumes:
+      - ./target/registry.war:/usr/local/tomcat/webapps/ROOT.war
+      - ./target/registry:/usr/local/tomcat/webapps/ROOT
