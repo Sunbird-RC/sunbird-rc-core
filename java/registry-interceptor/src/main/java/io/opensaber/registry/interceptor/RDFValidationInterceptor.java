@@ -30,7 +30,6 @@ public class RDFValidationInterceptor extends BaseRequestHandler implements Hand
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws Exception {
-		System.out.println("Entering rdf validation prehandle");
 		setRequest(request);
 		Map<String,Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
 		setRequestAttributes(attributeMap);
