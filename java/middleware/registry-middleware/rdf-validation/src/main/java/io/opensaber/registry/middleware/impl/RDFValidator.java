@@ -53,10 +53,10 @@ public class RDFValidator implements BaseMiddleware{
 			if(!validationResult.isValid()){
 				throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_INVALID);
 			}
+			return mapData;
 		} else {
 			throw new MiddlewareHaltException(this.getClass().getName()+"RDF Data is invalid!");
 		}
-		return null;
 	}
 
 	public Map<String, Object> next(Map<String, Object> mapData) throws IOException {

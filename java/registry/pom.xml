@@ -107,6 +107,16 @@
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j-tinkerpop-api-impl</artifactId>
 			<version>0.7-3.2.3</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.scala-lang</groupId>
+					<artifactId>scala-library</artifactId>
+				</exclusion>
+				<exclusion>
+					<artifactId>scala-reflect</artifactId>
+					<groupId>org.scala-lang</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.tinkerpop</groupId>
