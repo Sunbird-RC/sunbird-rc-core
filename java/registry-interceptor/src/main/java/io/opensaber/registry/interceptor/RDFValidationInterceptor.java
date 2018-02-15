@@ -32,7 +32,7 @@ public class RDFValidationInterceptor extends BaseRequestHandler implements Hand
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws Exception {
 		setRequest(request);
 		Map<String,Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
-		setRequestAttributes(attributeMap);
+		mergeRequestAttributes(attributeMap);
 		request = getRequest();
 		if(request.getAttribute(Constants.RDF_VALIDATION_OBJECT)!=null){
 			return true;

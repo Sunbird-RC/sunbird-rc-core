@@ -4,6 +4,7 @@ package io.opensaber.registry.config;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
@@ -62,6 +63,12 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 	public RDFValidator rdfValidator(){
 		String shexFileName = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
 		String shexFilePath = this.getClass().getResource("/"+shexFileName).getPath();
+		if(shexFilePath.contains(":")){
+			if(shexFilePath.startsWith("/")){
+				shexFilePath = shexFilePath.replaceFirst("/", StringUtils.EMPTY);
+				shexFilePath = shexFilePath.replaceFirst(":", "://");
+			}
+		}
 		Path filePath = Paths.get(shexFilePath);
 		return new RDFValidator(filePath);
 	}
