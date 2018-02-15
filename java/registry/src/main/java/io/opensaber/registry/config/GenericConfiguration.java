@@ -4,7 +4,6 @@ package io.opensaber.registry.config;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
