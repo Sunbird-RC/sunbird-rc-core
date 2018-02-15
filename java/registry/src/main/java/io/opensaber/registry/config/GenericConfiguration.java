@@ -61,7 +61,7 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 	@Bean
 	public RDFValidator rdfValidator(){
 		String shexFileName = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
-		String shexFilePath = this.getClass().getResource("/"+shexFileName).getPath();
+		String shexFilePath = this.getClass().getClassLoader().getResource(shexFileName).getPath();
 		Path filePath = Paths.get(shexFilePath);
 		return new RDFValidator(filePath);
 	}
