@@ -11,7 +11,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 import scala.Option;
 
 import es.weso.rdf.RDFReader;
@@ -27,12 +27,12 @@ public class ShaclexValidator {
 		if (result.isValid()) {
 			System.out.println("Result is valid");
 			System.out.println("Valid. Result: " + result.show());
-			List<Solution> solutions = JavaConversions.seqAsJavaList(result.solutions());
+			List<Solution> solutions = JavaConverters.seqAsJavaList(result.solutions());
 			solutions.forEach((solution) ->
 			System.out.println(solution.show()));
 		} else {
 			System.out.println("Not valid");
-			List<ErrorInfo> errors = JavaConversions.seqAsJavaList(result.errors());
+			List<ErrorInfo> errors = JavaConverters.seqAsJavaList(result.errors());
 			errors.forEach((e) ->
 			System.out.println(e.show()));
 		}
