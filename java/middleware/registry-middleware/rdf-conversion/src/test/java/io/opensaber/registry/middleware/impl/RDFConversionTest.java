@@ -3,6 +3,8 @@ package io.opensaber.registry.middleware.impl;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,8 +35,8 @@ public class RDFConversionTest {
     		m = new RDFConverter();
     }
 	
-	private String getPath(String file) throws NullPointerException {
-		return this.getClass().getResource("/"+file).getPath();
+	private URI getPath(String file) throws URISyntaxException {
+		return this.getClass().getClassLoader().getResource(file).toURI();
 	}
 
 	@Test
@@ -58,10 +60,10 @@ public class RDFConversionTest {
 	}
 	
 	@Test
-	public void testIfJSONLDIsSupported() throws IOException, MiddlewareHaltException{
+	public void testIfJSONLDIsSupported() throws IOException, MiddlewareHaltException, URISyntaxException{
 		setup();
 		mapData = new HashMap<String,Object>();
-		String jsonLDData = getPath(SIMPLE_JSONLD);
+		String jsonLDData = Paths.get(getPath(SIMPLE_JSONLD)).toString();
 		Path filePath = Paths.get(jsonLDData);
 		String jsonld = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
 		mapData.put(Constants.ATTRIBUTE_NAME, jsonld);

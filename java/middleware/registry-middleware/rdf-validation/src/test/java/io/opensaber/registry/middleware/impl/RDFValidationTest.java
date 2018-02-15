@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,7 +17,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
 import es.weso.schema.Result;
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -34,11 +34,11 @@ public class RDFValidationTest {
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 	 
-    private boolean setup(String shexFile) {
+    private boolean setup(String shexFile) throws URISyntaxException {
     	String file;
     	boolean successfulInitialization = false;
     	try {
-    		file = getPath(shexFile);
+    		file = Paths.get(getPath(shexFile)).toString();
     		Path filePath = Paths.get(file);
     		m = new RDFValidator(filePath);
     		successfulInitialization = true;
@@ -46,12 +46,12 @@ public class RDFValidationTest {
     	return successfulInitialization;
     }
 
-	private String getPath(String file) throws NullPointerException {
-		return this.getClass().getResource("/"+file).getPath();
+	private URI getPath(String file) throws URISyntaxException {
+		return this.getClass().getClassLoader().getResource(file).toURI();
 	}
     
 	@Test
-	public void testHaltIfNoRDFToValidate() throws IOException, MiddlewareHaltException{
+	public void testHaltIfNoRDFToValidate() throws IOException, MiddlewareHaltException, URISyntaxException{
 		assertTrue(setup(SIMPLE_SHEX));
 		mapData = new HashMap<String,Object>();
 		expectedEx.expect(MiddlewareHaltException.class);
@@ -60,7 +60,7 @@ public class RDFValidationTest {
 	}
 	
 	@Test
-	public void testHaltIfRDFpresentButInvalid() throws IOException, MiddlewareHaltException{
+	public void testHaltIfRDFpresentButInvalid() throws IOException, MiddlewareHaltException, URISyntaxException{
 		assertTrue(setup(SIMPLE_SHEX));
 		mapData = new HashMap<String,Object>();
 		mapData.put(Constants.RDF_OBJECT, "{}");
@@ -70,10 +70,10 @@ public class RDFValidationTest {
 	}
 	
 	@Test
-	public void testIfJSONLDIsSupported() throws IOException, MiddlewareHaltException{
+	public void testIfJSONLDIsSupported() throws IOException, MiddlewareHaltException, URISyntaxException{
 		assertTrue(setup(SIMPLE_SHEX));
 		mapData = new HashMap<String,Object>();
-		String jsonLDData = getPath(SIMPLE_JSONLD);
+		String jsonLDData = Paths.get(getPath(SIMPLE_JSONLD)).toString();
 		Path filePath = Paths.get(jsonLDData);
 		String RDF = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
 		Model dataModel = ShaclexValidator.parse(RDF,"JSON-LD");
@@ -83,12 +83,12 @@ public class RDFValidationTest {
 	}
 	
 	@Test
-	public void testHaltIfvalidRDFpresentButFailsSHEX() throws IOException, MiddlewareHaltException{
+	public void testHaltIfvalidRDFpresentButFailsSHEX() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
 		expectedEx.expectMessage("RDF Data is invalid!");
 		assertTrue(setup(COMPLEX_SHEX));
 		mapData = new HashMap<String,Object>();
-		String data = getPath(SIMPLE_JSONLD);
+		String data = Paths.get(getPath(SIMPLE_JSONLD)).toString();
 		Path filePath = Paths.get(data);
 		String RDF = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
 		Model dataModel = ShaclexValidator.parse(RDF,"JSON-LD");
