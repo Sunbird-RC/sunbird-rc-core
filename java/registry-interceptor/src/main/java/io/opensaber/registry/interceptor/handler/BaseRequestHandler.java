@@ -86,19 +86,6 @@ public class BaseRequestHandler{
 		return requestAttributeMap;
 	}
 
-	public Map<String,Object> mergeRequestAttributeMap() throws IOException{
-		setRequestWrapper();
-		Map<String,Object> requestAttributeMap = new HashMap<String,Object>();
-		Enumeration<String> attributeNames = requestWrapper.getAttributeNames();
-		if(attributeNames!=null){
-			while(attributeNames.hasMoreElements()){
-				String attribute = attributeNames.nextElement();
-				requestAttributeMap.put(attribute, requestWrapper.getAttribute(attribute));
-			}
-		}
-		return requestAttributeMap;
-	}
-
 	public Map<String,Object> getRequestParameterMap() throws IOException{
 		setRequestWrapper();
 		Map<String,Object> requestParameterMap = new HashMap<String,Object>();
