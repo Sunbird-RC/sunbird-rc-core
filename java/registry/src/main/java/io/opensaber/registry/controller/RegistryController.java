@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -35,6 +37,8 @@ import io.opensaber.registry.util.ResponseUtil;
 @SpringBootApplication
 @ComponentScan({"io.opensaber.registry"})
 public class RegistryController extends SpringBootServletInitializer {
+
+	private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
 
 	@Autowired
 	RegistryService registryService;

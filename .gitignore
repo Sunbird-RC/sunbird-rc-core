@@ -4,6 +4,10 @@
 .classpath
 .vscode
 
+/.idea
+*.iml
+.idea_modules
+
 .metadata
 bin/
 tmp/
