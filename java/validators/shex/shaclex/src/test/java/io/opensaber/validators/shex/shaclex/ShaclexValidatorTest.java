@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -20,16 +22,17 @@ public class ShaclexValidatorTest {
 	public static final String PROCESSOR 	= "shex";
 
 	@Test
-	public void testValidateModelSchema() throws IOException {
+	public void testValidateModelSchema() throws IOException, URISyntaxException {
 		ShaclexValidator validator = new ShaclexValidator();
-		String dataString = new String(Files.readAllBytes(Paths.get(getPath("good1.jsonld"))), StandardCharsets.UTF_8);		
-		Result result = validator.validate(dataString, "JSON-LD",getPath("good1.shex"), SCHEMAFORMAT, PROCESSOR);
+		String dataString = new String(Files.readAllBytes(Paths.get(getPath("good1.jsonld"))), StandardCharsets.UTF_8);	
+		
+		Result result = validator.validate(dataString, "JSON-LD",Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
 		assertNotNull(result);
 		assertTrue(result.isValid());
 	}
 
-	private String getPath(String file) {
-		return this.getClass().getResource("/"+file).getPath();
+	private URI getPath(String file) throws URISyntaxException {
+		return this.getClass().getClassLoader().getResource(file).toURI();
 	}
 
 }
