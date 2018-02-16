@@ -57,10 +57,9 @@ public class RegistryController extends SpringBootServletInitializer {
 
 	@ResponseBody
 	@RequestMapping(value="/addEntity",method=RequestMethod.POST)
-	public ResponseEntity addEntity(@RequestAttribute Object rdfValidationResult) throws JsonProcessingException, NullPointerException, DuplicateRecordException{
-		logger.info("Entering controller");
+	public ResponseEntity addEntity(@RequestAttribute Object rdf) throws JsonProcessingException, NullPointerException, DuplicateRecordException{
 		try{
-			boolean status = registryService.addEntity(rdfValidationResult);
+			boolean status = registryService.addEntity(rdf);
 			if(status){
 				return ResponseUtil.successResponse();
 			}else{
