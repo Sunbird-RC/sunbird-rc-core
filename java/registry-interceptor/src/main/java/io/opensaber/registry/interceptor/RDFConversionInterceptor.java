@@ -42,7 +42,7 @@ public class RDFConversionInterceptor extends BaseRequestHandler implements Hand
 			throws Exception {
 		setRequest(request);
 		Map<String,Object> attributeMap = rdfConverter.execute(getRequestBodyMap());
-		setRequestAttributes(attributeMap);
+		mergeRequestAttributes(attributeMap);
 		request = getRequest();
 		if(request.getAttribute(Constants.RDF_OBJECT)!=null){
 			return true;
