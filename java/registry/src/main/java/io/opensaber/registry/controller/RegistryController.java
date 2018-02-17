@@ -61,12 +61,11 @@ public class RegistryController extends SpringBootServletInitializer {
 			}else{
 				return ResponseUtil.failureResponse(Constants.FAILED_INSERTION_MESSAGE);
 			}
-		}catch(NullPointerException e){
-			e.printStackTrace();
-			return ResponseUtil.failureResponse(Constants.FAILED_INSERTION_MESSAGE);
+		}catch(DuplicateRecordException e){
+			return ResponseUtil.failureResponse(e.getMessage());
 		}catch(Exception e){
 			e.printStackTrace();
-			return ResponseUtil.failureResponse(e.getMessage());
+			return ResponseUtil.failureResponse(Constants.FAILED_INSERTION_MESSAGE);
 		}
 
 	}

@@ -29,7 +29,7 @@ public class ResponseUtil {
 	public static ResponseEntity successResponse(Object obj) throws JsonProcessingException {
 		ObjectNode response = objectMapper.createObjectNode();
 		if (obj != null) {
-			response.putPOJO(JsonKeys.RESPONSE, obj);
+			response.put(JsonKeys.RESPONSE, obj.toString());
 		}
 		ResponseEntity responseEntity = new ResponseEntity<>(response, HttpStatus.OK);
 		return responseEntity;
@@ -42,12 +42,12 @@ public class ResponseUtil {
 		return responseEntity;
 	}
 	
-	public static ResponseEntity failureResponse(Object obj) throws JsonProcessingException {
+	public static ResponseEntity failureResponse(String message) throws JsonProcessingException {
 		ObjectNode response = objectMapper.createObjectNode();
-		if (obj != null) {
-			response.putPOJO(JsonKeys.RESPONSE, obj);
+		if (message != null) {
+			response.put(JsonKeys.RESPONSE, message);
 		}
-		ResponseEntity responseEntity = new ResponseEntity<>(response, HttpStatus.NOT_MODIFIED);
+		ResponseEntity responseEntity = new ResponseEntity<>(response, HttpStatus.NOT_ACCEPTABLE);
 		return responseEntity;
 	}
 }
