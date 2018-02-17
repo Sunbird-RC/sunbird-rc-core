@@ -45,7 +45,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			if(gds.findNodes(Label.label(label)).hasNext()){
 				tx.success();
 				tx.close();
-				throw new DuplicateRecordException(this.getClass().getName()+Constants.DUPLICATE_RECORD_MESSAGE);
+				throw new DuplicateRecordException(Constants.DUPLICATE_RECORD_MESSAGE);
 			}
 
 		}
