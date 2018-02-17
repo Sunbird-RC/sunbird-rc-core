@@ -1,5 +1,6 @@
 package io.opensaber.registry.interceptor;
 
+import java.io.IOException;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.interceptor.handler.RequestWrapper;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.util.Constants;
@@ -29,7 +31,7 @@ public class RDFValidationInterceptor extends BaseRequestHandler implements Hand
 	}
 
 	@Override
-	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws Exception {
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException  {
 		setRequest(request);
 		Map<String,Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
 		mergeRequestAttributes(attributeMap);
