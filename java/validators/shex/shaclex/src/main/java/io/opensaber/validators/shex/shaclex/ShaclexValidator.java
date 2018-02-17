@@ -11,6 +11,8 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.collection.JavaConverters;
 import scala.Option;
 
@@ -19,34 +21,36 @@ import es.weso.rdf.jena.RDFAsJenaModel;
 
 public class ShaclexValidator {
 
+	private static Logger logger = LoggerFactory.getLogger(ShaclexValidator.class);
+
 	Option<String> none = Option.apply(null);
 
 	public Result validate(Model dataModel, Schema schema) {
 		RDFReader rdf = new RDFAsJenaModel(dataModel);
 		Result result = schema.validate(rdf,"TARGETDECLS",none,none, rdf.getPrefixMap(), schema.pm());
 		if (result.isValid()) {
-			System.out.println("Result is valid");
-			System.out.println("Valid. Result: " + result.show());
+			logger.info("Result is valid");
+			logger.info("Valid. Result: " + result.show());
 			List<Solution> solutions = JavaConverters.seqAsJavaList(result.solutions());
 			solutions.forEach((solution) ->
-			System.out.println(solution.show()));
+			logger.info(solution.show()));
 		} else {
-			System.out.println("Not valid");
+			logger.info("Not valid");
 			List<ErrorInfo> errors = JavaConverters.seqAsJavaList(result.errors());
 			errors.forEach((e) ->
-			System.out.println(e.show()));
+			logger.info(e.show()));
 		}
 		return result;
 	} 
 
 	public Result validate(String data, String dataFormat, String schemaFile, String schemaFormat, String processor) throws IOException {
-		System.out.println("Reading data JSONLD " + data);
+		logger.info("Reading data JSONLD " + data);
 		Model dataModel = parse(data,dataFormat);//RDFDataMgr.loadModel(dataFile);
-		System.out.println("Model read. Size = " + dataModel.size());
-		System.out.println(dataModel);
-		System.out.println("Reading shapes file " + schemaFile + " with format " + schemaFormat);
+		logger.info("Model read. Size = " + dataModel.size());
+		logger.info("dataModel: " + dataModel);
+		logger.info("Reading shapes file " + schemaFile + " with format " + schemaFormat);
 		Schema schema = readSchema(Paths.get(schemaFile),schemaFormat, processor);
-		System.out.println("Schema read" + schema.serialize(schemaFormat));
+		logger.info("Schema read" + schema.serialize(schemaFormat));
 		return validate(dataModel,schema);
 	}    
 	
