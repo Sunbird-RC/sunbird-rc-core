@@ -5,5 +5,7 @@ services:
     ports: 
       - "8080:8080"
     volumes:
-      - ./target/registry.war:/usr/local/tomcat/webapps/registry.war
+      - ./target/registry.war:/usr/local/tomcat/webapps/ROOT.war
+      - ./target/registry:/usr/local/tomcat/webapps/ROOT
+      - ./databases:/var/lib/neo4j/data/databases
     privileged: true
