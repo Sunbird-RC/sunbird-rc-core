@@ -21,22 +21,19 @@ public class BaseRequestHandler{
 
 	public void setRequest(HttpServletRequest request) throws IOException{
 		this.request = request;
+		setRequestWrapper();
 	}
 
 
 	public void setRequestWrapper() throws IOException{
-		if(requestWrapper==null){
-			requestWrapper = new RequestWrapper(request);
-		}
+		requestWrapper = new RequestWrapper(request);
 	}
 
 	public String getRequestBody() throws IOException{
-		setRequestWrapper();
 		return requestWrapper.getBody();
 	}
 
 	public String getRequestHeaderByName(String name) throws IOException{
-		setRequestWrapper();
 		return requestWrapper.getHeader(name);
 	}
 
@@ -61,7 +58,6 @@ public class BaseRequestHandler{
 	}
 
 	public Map<String,Object> getRequestHeaderMap() throws IOException{
-		setRequestWrapper();
 		Map<String,Object> requestHeaderMap = new HashMap<String,Object>();
 		Enumeration<String> headerNames = requestWrapper.getHeaderNames();
 		if(headerNames!=null){
@@ -74,7 +70,6 @@ public class BaseRequestHandler{
 	}
 
 	public Map<String,Object> getRequestAttributeMap() throws IOException{
-		setRequestWrapper();
 		Map<String,Object> requestAttributeMap = new HashMap<String,Object>();
 		Enumeration<String> attributeNames = requestWrapper.getAttributeNames();
 		if(attributeNames!=null){
@@ -87,7 +82,6 @@ public class BaseRequestHandler{
 	}
 
 	public Map<String,Object> getRequestParameterMap() throws IOException{
-		setRequestWrapper();
 		Map<String,Object> requestParameterMap = new HashMap<String,Object>();
 		requestParameterMap.putAll(requestWrapper.getParameterMap());
 		return requestParameterMap;
