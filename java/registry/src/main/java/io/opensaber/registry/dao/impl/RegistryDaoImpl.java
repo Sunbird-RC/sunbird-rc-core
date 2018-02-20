@@ -10,6 +10,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Component;
 
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.GraphDBFactory;
 
@@ -37,7 +37,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public boolean addEntity(Object entity,String label) throws DuplicateRecordException, NullPointerException{
+	public boolean addEntity(Graph entity,String label) throws DuplicateRecordException{
 		GraphDatabaseService gds = null;
 		gds = GraphDBFactory.getGraphDatabaseService();
 		try ( Transaction tx = gds.beginTx() )
@@ -172,7 +172,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public boolean updateEntity(Object entity) {
+	public boolean updateEntity(Graph entity,String label) {
 		// TODO Auto-generated method stub
 		return false;
 	}

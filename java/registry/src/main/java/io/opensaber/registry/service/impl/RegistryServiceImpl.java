@@ -8,6 +8,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -43,7 +44,7 @@ public class RegistryServiceImpl implements RegistryService{
 	}
 
 	@Override
-	public boolean addEntity(Object entity) throws NullPointerException, DuplicateRecordException{
+	public boolean addEntity(Model entity) throws DuplicateRecordException{
 		Graph graph = GraphDBFactory.getEmptyGraph();
 		Model rdfModel = (Model)entity;
 		StmtIterator iterator = rdfModel.listStatements();
@@ -71,8 +72,10 @@ public class RegistryServiceImpl implements RegistryService{
 	}
 
 	@Override
-	public boolean updateEntity(Object entity){
-		return registryDao.updateEntity(entity);
+	public boolean updateEntity(Model entity){
+		String label = "";
+		TinkerGraph tinkerGraph = TinkerGraph.open();
+		return registryDao.updateEntity(tinkerGraph,label);
 	}
 
 	@Override
