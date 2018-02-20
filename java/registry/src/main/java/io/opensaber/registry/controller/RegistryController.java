@@ -58,16 +58,16 @@ public class RegistryController extends SpringBootServletInitializer {
 	@ResponseBody
 	@RequestMapping(value="/addEntity",method=RequestMethod.POST)
 	public ResponseEntity addEntity(@RequestAttribute Object rdf) throws JsonProcessingException, NullPointerException, DuplicateRecordException{
-		try{
+		try {
 			boolean status = registryService.addEntity(rdf);
-			if(status){
+			if (status) {
 				return ResponseUtil.successResponse();
-			}else{
+			} else {
 				return ResponseUtil.failureResponse(Constants.FAILED_INSERTION_MESSAGE);
 			}
-		}catch(DuplicateRecordException e){
+		} catch (DuplicateRecordException e) {
 			return ResponseUtil.failureResponse(e.getMessage());
-		}catch(Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 			return ResponseUtil.failureResponse(Constants.FAILED_INSERTION_MESSAGE);
 		}
