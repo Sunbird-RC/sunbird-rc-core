@@ -6,3 +6,4 @@ services:
       - "8080:8080"
     volumes:
       - ./target/registry.war:/usr/local/tomcat/webapps/registry.war
+    privileged: true
