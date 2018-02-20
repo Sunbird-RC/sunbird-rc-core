@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,7 @@ public class RegistryController extends SpringBootServletInitializer {
 
 	@ResponseBody
 	@RequestMapping(value="/addEntity",method=RequestMethod.POST)
-	public ResponseEntity addEntity(@RequestAttribute Object rdf) throws JsonProcessingException, NullPointerException, DuplicateRecordException{
+	public ResponseEntity addEntity(@RequestAttribute Model rdf) throws JsonProcessingException, DuplicateRecordException{
 		try{
 			boolean status = registryService.addEntity(rdf);
 			if(status){
@@ -76,7 +77,7 @@ public class RegistryController extends SpringBootServletInitializer {
 
 	@ResponseBody
 	@RequestMapping(value="/updateEntity",method=RequestMethod.PUT)
-	public ResponseEntity updateEntity(@RequestBody Object entity) throws JsonProcessingException{
+	public ResponseEntity updateEntity(@RequestBody Model entity) throws JsonProcessingException{
 		boolean status = registryService.updateEntity(entity);
 		return ResponseUtil.successResponse();
 	}
