@@ -19,16 +19,19 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.GraphDBFactory;
 
 @Component
 public class RegistryDaoImpl implements RegistryDao {
+
+	@Autowired
+	private GraphDBFactory graphDBFactory;
 
 	@Override
 	public List getEntityList() {
@@ -37,9 +40,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public boolean addEntity(Object entity,String label) throws DuplicateRecordException, NullPointerException{
-		GraphDatabaseService gds = null;
-		gds = GraphDBFactory.getGraphDatabaseService();
+	public boolean addEntity(Object entity, String label) throws DuplicateRecordException, NullPointerException{
+		GraphDatabaseService gds = graphDBFactory.getGraphDatabaseService();
 		try ( Transaction tx = gds.beginTx() )
 		{
 			if(gds.findNodes(Label.label(label)).hasNext()){
@@ -52,11 +54,11 @@ public class RegistryDaoImpl implements RegistryDao {
 		TinkerGraph graph = (TinkerGraph)entity;
 		GraphTraversalSource gts = graph.traversal();
 		GraphTraversal<Vertex, Vertex> traversal = gts.V();
-		Map<String,List<Object[]>> map = new HashMap<String,List<Object[]>>();
+		Map<String,List<Object[]>> map = new HashMap<>();
 		try ( Transaction tx = gds.beginTx() )
 		{
 			if(traversal.hasNext()){
-				Map<String,Node> createdNodeMap = new HashMap<String,Node>();
+				Map<String,Node> createdNodeMap = new HashMap<>();
 				Vertex v = traversal.next();
 				Node newNode = getNodeWithProperties(gds, v, false, createdNodeMap);
 				while(traversal.hasNext()){
