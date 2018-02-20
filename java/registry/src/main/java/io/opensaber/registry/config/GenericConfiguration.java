@@ -4,6 +4,8 @@ package io.opensaber.registry.config;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import io.opensaber.registry.dao.impl.RegistryDaoImpl;
+import io.opensaber.registry.util.GraphDBFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
@@ -42,11 +44,6 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 	    objectMapper.setSerializationInclusion(Include.NON_NULL);
 	    return objectMapper;
 	}
-
-	/*@Bean
-	public JsonldToRdfConverter jsonldToRdfConverter(){
-		return new JsonldToRdfConverter();
-	}*/
 	
 	@Bean
 	public RdfToJsonldConverter rdfToJsonldConverter(){
@@ -64,6 +61,11 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 		String shexFilePath = this.getClass().getClassLoader().getResource(shexFileName).getPath();
 		Path filePath = Paths.get(shexFilePath);
 		return new RDFValidator(filePath);
+	}
+
+	@Bean
+	public GraphDBFactory graphDBFactory() {
+		return new GraphDBFactory(environment);
 	}
 	
 	@Override 
