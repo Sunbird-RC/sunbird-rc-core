@@ -5,14 +5,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.commons.lang.StringUtils;
@@ -28,7 +25,6 @@ import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.util.JsonKeys;
 import io.opensaber.registry.middleware.util.Constants;
 
@@ -46,7 +42,6 @@ public class RegistryControllerSteps {
 	private RestTemplate restTemplate;
 	private String baseUrl;
 	private String jsonldString;
-	private String file;
 	
 	
 	@Before
@@ -164,8 +159,6 @@ public class RegistryControllerSteps {
 
 		try {
 			String file = Paths.get(getPath(filename)).toString();
-			/*Path filePath = Paths.get(file);
-    		File jsonldFile = filePath.toFile();*/
 			jsonldString = readFromFile(file);	
 		} catch (Exception e) {
 			jsonldString = StringUtils.EMPTY;
@@ -195,20 +188,6 @@ public class RegistryControllerSteps {
 		return this.getClass().getClassLoader().getResource(file).toURI();
 	}
 
-	private String getJsonldString(){
-		return "{\"@context\": {\"schema\": \"http://schema.org/\",\"opensaber\": \"http://open-saber.org/vocab/core/#\"},\"@type\": "
-				+ "[\"schema:Person\",\"opensabre:Teacher\"],\"schema:identifier\": \"b6ad2941-fac3-4c72-94b7-eb638538f55f\",\"schema:image\": null,"
-				+ "\"schema:nationality\": \"Indian\",\"schema:birthDate\": \"2011-12-06\",\"schema:name\": \"Marvin\",\"schema:gender\": \"male\","
-				+ "\"schema:familyName\":\"Pande\",\"opensaber:languagesKnownISO\": [\"en\",\"hi\"]}";
-	}
-	
-	private String getInvalidJsonldString(){
-		return "{\"schema\": \"http://schema.org/\",\"opensaber\": \"http://open-saber.org/vocab/core/#\"},"
-				+ "\"schema:identifier\": \"b6ad2941-fac3-4c72-94b7-eb638538f55f\",\"schema:image\": null,"
-				+ "\"schema:nationality\": \"Indian\",\"schema:birthDate\": \"2011-12-06\",\"schema:name\": \"Marvin\",\"schema:gender\": \"male\","
-				+ "\"schema:familyName\":\"Pande\",\"opensaber:languagesKnownISO\": [\"en\",\"hi\"]";
-	}
-	
 	public String generateBaseUrl(){
 		return "http://localhost:8080/registry";
 	}
