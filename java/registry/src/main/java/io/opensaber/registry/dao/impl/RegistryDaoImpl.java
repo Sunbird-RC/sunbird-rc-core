@@ -148,12 +148,13 @@ public class RegistryDaoImpl implements RegistryDao {
 	private void addNodeAndEdgeToGraph(Map<String, List<Object[]>> vertexMap, Vertex currentVertex,
 									   Vertex newVertex, Direction direction) {
 
-		String vertexLabel = direction.equals(Direction.OUT) ? currentVertex.label() : newVertex.label();
-		Object[] edgeArray = {direction, vertexLabel};
+		String currentVertexLabel = direction.equals(Direction.OUT) ? newVertex.label() : currentVertex.label();
+		String createdVertexLabel = direction.equals(Direction.OUT) ? currentVertex.label() : newVertex.label();
+		Object[] edgeArray = {direction, currentVertexLabel};
 
-		List<Object[]> edgeArrayList = vertexMap.getOrDefault(vertexLabel, new ArrayList<>());
+		List<Object[]> edgeArrayList = vertexMap.getOrDefault(createdVertexLabel, new ArrayList<>());
 		edgeArrayList.add(edgeArray);
-		vertexMap.put(vertexLabel, edgeArrayList);
+		vertexMap.put(createdVertexLabel, edgeArrayList);
 	}
 
 	/**
