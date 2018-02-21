@@ -16,7 +16,7 @@ public class Constants {
 	public static final String SUBJECT_LABEL_TYPE = "subject.label.type";
 	public static final String NEO4J_DIRECTORY = "neo4j.directory";
 	
-	public static final String DUPLICATE_RECORD_MESSAGE = "Cannot insert duplicate record!";
+	public static final String DUPLICATE_RECORD_MESSAGE = "Cannot insert duplicate record";
 	public static final String FAILED_INSERTION_MESSAGE = "Failed to insert record";
 
 }

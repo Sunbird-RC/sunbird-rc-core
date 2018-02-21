@@ -19,8 +19,9 @@ public class BaseResponseHandler {
 	protected HttpServletResponse response;
 	protected ResponseWrapper responseWrapper;
 	
-	public void setResponse(HttpServletResponse response){
+	public void setResponse(HttpServletResponse response) throws IOException{
 		this.response = response;
+		setResponseWrapper();
 	}
 	
 	public void setResponseWrapper() throws IOException{
