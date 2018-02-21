@@ -6,6 +6,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
@@ -40,7 +41,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public boolean addEntity(Object entity, String label) throws DuplicateRecordException, NullPointerException {
+	public boolean addEntity(Graph entity,String label) throws DuplicateRecordException{
 		GraphDatabaseService gds = graphDBFactory.getGraphDatabaseService();
 		try ( Transaction tx = gds.beginTx() )
 		{
@@ -184,7 +185,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public boolean updateEntity(Object entity) {
+	public boolean updateEntity(Graph entity,String label) {
 		// TODO Auto-generated method stub
 		return false;
 	}

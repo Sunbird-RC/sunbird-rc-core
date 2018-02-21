@@ -15,9 +15,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
-import io.opensaber.registry.interceptor.handler.RequestWrapper;
 import io.opensaber.registry.middleware.impl.RDFConverter;
-import io.opensaber.registry.middleware.impl.RdfToJsonldConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
 /**
@@ -27,7 +25,7 @@ import io.opensaber.registry.middleware.util.Constants;
 @Order(1)
 @Component
 public class RDFConversionInterceptor extends BaseRequestHandler implements HandlerInterceptor {
-
+	
 
 	private RDFConverter rdfConverter;
 
