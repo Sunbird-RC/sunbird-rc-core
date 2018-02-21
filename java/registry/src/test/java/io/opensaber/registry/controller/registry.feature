@@ -24,6 +24,6 @@ Feature: Inserting a record into the registry
   @tag4
   Scenario: Inserting invalid record
     Given Base url is valid but input data has invalid root label
-    When Inserting record with no label/invalid label into the registry
+    When Inserting record with invalid type into the registry
     Then Response for invalid record is Failed to insert record
     

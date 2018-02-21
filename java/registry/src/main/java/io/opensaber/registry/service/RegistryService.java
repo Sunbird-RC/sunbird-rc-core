@@ -3,6 +3,7 @@ package io.opensaber.registry.service;
 import java.util.List;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
 
 import io.opensaber.registry.exception.DuplicateRecordException;
 
