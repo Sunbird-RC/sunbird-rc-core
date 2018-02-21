@@ -40,7 +40,7 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	/*
 	@Override
-	public boolean addEntity(Object entity, String label) throws DuplicateRecordException, NullPointerException {
+	public boolean addEntity(Graph entity,String label) throws DuplicateRecordException{
 		GraphDatabaseService gds = graphDBFactory.getGraphDatabaseService();
 		try ( Transaction tx = gds.beginTx() )
 		{
@@ -83,7 +83,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	*/
 
 	@Override
-	public boolean addEntity(Object entity, String label) throws DuplicateRecordException {
+	public boolean addEntity(Graph entity, String label) throws DuplicateRecordException {
 
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
@@ -279,7 +279,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public boolean updateEntity(Object entity) {
+	public boolean updateEntity(Graph entity,String label) {
 		// TODO Auto-generated method stub
 		return false;
 	}

@@ -47,7 +47,7 @@ public class ResponseUtil {
 		if (message != null) {
 			response.put(JsonKeys.RESPONSE, message);
 		}
-		ResponseEntity responseEntity = new ResponseEntity<>(response, HttpStatus.NOT_ACCEPTABLE);
+		ResponseEntity responseEntity = new ResponseEntity<>(response, HttpStatus.OK);
 		return responseEntity;
 	}
 }
