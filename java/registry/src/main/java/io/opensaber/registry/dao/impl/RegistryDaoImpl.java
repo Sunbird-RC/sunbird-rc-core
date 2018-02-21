@@ -102,15 +102,15 @@ public class RegistryDaoImpl implements RegistryDao {
 		if (traversal.hasNext()) {
 			Map<String, Vertex> createdNodeMap = new HashMap<>();
 			Vertex v = traversal.next();
-			Vertex newVertex = getNodeWithPropertiesNew(traversalSource, v, false, createdNodeMap);
+			Vertex newVertex = getNodeWithProperties(traversalSource, v, false, createdNodeMap);
 
 			while (traversal.hasNext()) {
 				v = traversal.next();
-				newVertex = getNodeWithPropertiesNew(traversalSource, v, true, createdNodeMap);
+				newVertex = getNodeWithProperties(traversalSource, v, true, createdNodeMap);
 				Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
 				Iterator<Edge> incomingEdges = v.edges(Direction.IN);
-				createEdgeNodesNew(outgoingEdges, traversalSource, newVertex, map, Direction.OUT, v, createdNodeMap);
-				createEdgeNodesNew(incomingEdges, traversalSource, newVertex, map, Direction.IN, v, createdNodeMap);
+				createEdgeNodes(outgoingEdges, traversalSource, newVertex, map, Direction.OUT, v, createdNodeMap);
+				createEdgeNodes(incomingEdges, traversalSource, newVertex, map, Direction.IN, v, createdNodeMap);
 
 			}
 		}
@@ -119,7 +119,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		return true;
 	}
 
-	private Vertex getNodeWithPropertiesNew(GraphTraversalSource traversal, Vertex v, boolean dbCheck, Map<String, Vertex> createdNodeMap) {
+	private Vertex getNodeWithProperties(GraphTraversalSource traversal, Vertex v, boolean dbCheck, Map<String, Vertex> createdNodeMap) {
 
 		Vertex newVertex;
 
@@ -146,6 +146,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		return newVertex;
 	}
 
+	/*
 	private Node getNodeWithProperties(GraphDatabaseService gds, Vertex v, boolean dbCheck, Map<String, Node> createdNodeMap) {
 
 		Node newNode;
@@ -174,9 +175,10 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 		return newNode;
 	}
+	*/
 
 
-	private void createEdgeNodesNew(Iterator<Edge> edges, GraphTraversalSource traversal,
+	private void createEdgeNodes(Iterator<Edge> edges, GraphTraversalSource traversal,
 									Vertex newVertex, Map<String, List<Object[]>> map, Direction direction, Vertex traversalVertex,
 									Map<String, Vertex> createdNodeMap) {
 
@@ -188,7 +190,7 @@ public class RegistryDaoImpl implements RegistryDao {
 
 			if (!nodeAndEdgeExists) {
 
-				Vertex nextVertex = getNodeWithPropertiesNew(traversal, vertex, true, createdNodeMap);
+				Vertex nextVertex = getNodeWithProperties(traversal, vertex, true, createdNodeMap);
 
 				if (direction.equals(Direction.OUT)) {
 					newVertex.addEdge(edge.label(), nextVertex);
@@ -201,7 +203,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 	}
 
-
+	/*
 	private void createEdgeNodes(Iterator<Edge> edges, GraphDatabaseService gds,
 								 Node newNode, Map<String,List<Object[]>> map, Direction direction, Vertex traversalVertex,
                                  Map<String, Node> createdNodeMap) {
@@ -227,6 +229,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			}
 		}
 	}
+	*/
 
 	/**
 	 * Method to add created nodes and edges to the graph
