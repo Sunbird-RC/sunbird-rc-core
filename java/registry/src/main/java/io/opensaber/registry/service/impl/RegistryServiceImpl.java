@@ -52,20 +52,14 @@ public class RegistryServiceImpl implements RegistryService{
 		String label = null;
 		while(iterator.hasNext()){
 			Statement rdfStatement = iterator.nextStatement();
-			String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-			String subjectValue = rdfStatement.getSubject().toString();
-			String predicate = rdfStatement.getPredicate().toString();
-			if(!rootSubjectFound && predicate.equals(RDF.TYPE.toString())){
-				RDFNode object = rdfStatement.getObject();
-				if(object.isURIResource()){
-					if(object.toString().equals(type)){
-						label = subjectValue;
-						rootSubjectFound = true;
-						System.out.println("Printing label:"+label);
-					}
+			if(!rootSubjectFound){
+				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement,type);
+				if(label!=null){
+					rootSubjectFound = true;
 				}
 			}
-			graph = RDF2Graph.convertRDFStatement2Graph(rdfStatement, graph);
+			graph = RDF2Graph.convertJenaRDFStatement2Graph(rdfStatement, graph);
 		}
 
 		return registryDao.addEntity(graph,label);
@@ -87,5 +81,6 @@ public class RegistryServiceImpl implements RegistryService{
 	public boolean deleteEntity(Object entity){
 		return registryDao.deleteEntity(entity);
 	}
+	
 
 }
