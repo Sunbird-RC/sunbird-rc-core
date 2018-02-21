@@ -1,10 +1,6 @@
 package io.opensaber.registry.dao.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -20,6 +16,8 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +28,8 @@ import io.opensaber.registry.util.GraphDBFactory;
 
 @Component
 public class RegistryDaoImpl implements RegistryDao {
+
+    private static Logger logger = LoggerFactory.getLogger(RegistryDaoImpl.class);
 
 	@Autowired
 	private GraphDBFactory graphDBFactory;
@@ -56,12 +56,14 @@ public class RegistryDaoImpl implements RegistryDao {
 		GraphTraversalSource gts = graph.traversal();
 		GraphTraversal<Vertex, Vertex> traversal = gts.V();
 		Map<String,List<Object[]>> map = new HashMap<>();
+
 		try ( Transaction tx = gds.beginTx() )
 		{
 			if(traversal.hasNext()){
-				Map<String,Node> createdNodeMap = new HashMap<>();
+				Map<String, Node> createdNodeMap = new HashMap<>();
 				Vertex v = traversal.next();
 				Node newNode = getNodeWithProperties(gds, v, false, createdNodeMap);
+
 				while(traversal.hasNext()){
 					v = traversal.next();
 					newNode = getNodeWithProperties(gds, v, true, createdNodeMap);
@@ -80,11 +82,11 @@ public class RegistryDaoImpl implements RegistryDao {
 		
 	}
 
-	private Node getNodeWithProperties(GraphDatabaseService gds,Vertex v, boolean dbCheck, Map<String,Node> createdNodeMap){
+	private Node getNodeWithProperties(GraphDatabaseService gds, Vertex v, boolean dbCheck, Map<String, Node> createdNodeMap) {
 
 		Node newNode;
 
-		if(createdNodeMap.containsKey(v.label())){
+		if(createdNodeMap.containsKey(v.label())) {
 			newNode = createdNodeMap.get(v.label());
 		}
 		else{
@@ -110,68 +112,76 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 
-	private void createEdgeNodes(Iterator<Edge> edges, GraphDatabaseService gds, Node newNode, Map<String,List<Object[]>> map, Direction direction, Vertex v, Map<String,Node> createdNodeMap){
+	private void createEdgeNodes(Iterator<Edge> edges, GraphDatabaseService gds,
+								 Node newNode, Map<String,List<Object[]>> map, Direction direction, Vertex traversalVertex,
+                                 Map<String, Node> createdNodeMap) {
 
-		while(edges.hasNext()){
-			Vertex vertex = null;
+		while(edges.hasNext()) {
+
 			Edge edge = edges.next();
-			boolean continueFlag = false;
-			if(direction.equals(Direction.OUT)){
-				vertex = edge.inVertex();
-				if(map.containsKey(v.label())){
-					List<Object[]> edgeArrayList = map.get(v.label());
-					for(Object[] edgeArray: edgeArrayList){
-						if(edgeArray.length==2 && edgeArray[0].equals(direction.opposite()) && edgeArray[1].equals(vertex.label()) ){
-							continueFlag = true;
-							break;
-						}
-					}
+			Vertex vertex = direction.equals(Direction.OUT) ? edge.inVertex(): edge.outVertex();
+			boolean nodeAndEdgeExists = validateAddVertex(map, traversalVertex, edge, direction);
+
+			if(!nodeAndEdgeExists) {
+
+				Node nextNode = getNodeWithProperties(gds, vertex, true, createdNodeMap);
+				RelationshipType relType = RelationshipType.withName(edge.label());
+
+				if(direction.equals(Direction.OUT)) {
+					newNode.createRelationshipTo(nextNode, relType);
+				} else {
+					nextNode.createRelationshipTo(newNode, relType);
 				}
 
-			}else{
-				vertex = edge.outVertex();
-				if(map.containsKey(vertex.label())){
-					List<Object[]> edgeArrayList = map.get(vertex.label());
-					for(Object[] edgeArray: edgeArrayList){
-						if(edgeArray.length==2 && edgeArray[0].equals(direction.opposite()) && edgeArray[1].equals(v.label()) ){
-							continueFlag = true;
-							break;
-						}
-					}
-
-				}
-			}
-
-			if(continueFlag){
-				continue;
-			}
-			Node nextNode = getNodeWithProperties(gds, vertex, true, createdNodeMap);
-			RelationshipType relType = RelationshipType.withName(edge.label());
-			if(direction.equals(Direction.OUT)){
-				newNode.createRelationshipTo(nextNode, relType);
-				Object[] edgeArray = {direction,vertex.label()};
-				List<Object[]> edgeArrayList = null;
-				if(map.containsKey(v.label())){
-				edgeArrayList = map.get(v.label());
-				}else{
-					edgeArrayList = new ArrayList<Object[]>();
-				}
-				edgeArrayList.add(edgeArray);
-				map.put(v.label(), edgeArrayList);
-
-			}else{
-				nextNode.createRelationshipTo(newNode, relType);
-				Object[] edgeArray = {direction,v.label()};
-				List<Object[]> edgeArrayList = null;
-				if(map.containsKey(vertex.label())){
-				edgeArrayList = map.get(vertex.label());
-				}else{
-					edgeArrayList = new ArrayList<Object[]>();
-				}
-				edgeArrayList.add(edgeArray);
-				map.put(vertex.label(), edgeArrayList);
+				addNodeAndEdgeToGraph(map, traversalVertex, vertex, direction);
 			}
 		}
+	}
+
+	/**
+	 * Method to add created nodes and edges to the graph
+	 * @param vertexMap
+	 * @param currentVertex
+	 * @param newVertex
+	 * @param direction
+	 */
+	private void addNodeAndEdgeToGraph(Map<String, List<Object[]>> vertexMap, Vertex currentVertex,
+									   Vertex newVertex, Direction direction) {
+
+		String vertexLabel = direction.equals(Direction.OUT) ? currentVertex.label() : newVertex.label();
+		Object[] edgeArray = {direction, vertexLabel};
+
+		List<Object[]> edgeArrayList = vertexMap.getOrDefault(vertexLabel, new ArrayList<>());
+		edgeArrayList.add(edgeArray);
+		vertexMap.put(vertexLabel, edgeArrayList);
+	}
+
+	/**
+	 * Method to validate if the vertex needs to be added to the graph
+	 * @param vertexMap
+	 * @param currTraversalVertex
+	 * @param edge
+	 * @param direction
+	 * @return
+	 */
+	private boolean validateAddVertex(Map<String, List<Object[]>> vertexMap, Vertex currTraversalVertex, Edge edge, Direction direction) {
+		boolean addVertex = false;
+
+		Vertex edgeVertex = direction.equals(Direction.OUT) ? edge.inVertex() : edge.outVertex();
+		String vertexLabel = direction.equals(Direction.OUT) ? currTraversalVertex.label() : edgeVertex.label();
+		String edgeLabel = direction.equals(Direction.OUT) ? edgeVertex.label() : currTraversalVertex.label();
+
+		if (vertexMap.containsKey(vertexLabel)) {
+			List<Object[]> edgeArrayList = vertexMap.get(vertexLabel);
+			for (Object[] edgeArray : edgeArrayList) {
+				if (edgeArray.length == 2 && edgeArray[0].equals(direction.opposite()) && edgeArray[1].equals(edgeLabel)) {
+					addVertex = true;
+					break;
+				}
+			}
+		}
+		return addVertex;
+
 	}
 
 	@Override
