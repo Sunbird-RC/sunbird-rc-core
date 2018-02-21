@@ -14,7 +14,7 @@
             <!-- daily rollover -->
             <fileNamePattern>logFile.%d{yyyy-MM-dd}.log</fileNamePattern>
 
-            <!-- keep 1 days' worth of history -->
+            <!-- keep 10 days' worth of history -->
             <maxHistory>10</maxHistory>
         </rollingPolicy>
 

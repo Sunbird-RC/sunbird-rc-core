@@ -4,8 +4,8 @@ package io.opensaber.registry.config;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.opensaber.registry.dao.impl.RegistryDaoImpl;
-import io.opensaber.registry.util.GraphDBFactory;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.sink.Neo4jGraphProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
@@ -63,9 +63,16 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 		return new RDFValidator(filePath);
 	}
 
+	/*
 	@Bean
 	public GraphDBFactory graphDBFactory() {
 		return new GraphDBFactory(environment);
+	}
+	*/
+
+	@Bean
+	public DatabaseProvider databaseProvider() {
+		return new Neo4jGraphProvider(environment);
 	}
 	
 	@Override 
