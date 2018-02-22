@@ -2,76 +2,76 @@ package io.opensaber.registry.controller;
 
 import static org.junit.Assert.*;
 
-import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.InvalidTypeException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.util.GraphDBFactory;
 
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.sparql.vocabulary.FOAF;
-import org.apache.jena.vocabulary.RDF;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes=RegistryController.class)
+@SpringBootTest(classes={RegistryController.class,GenericConfiguration.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class RegistryControllerJUnitTest {
+@ActiveProfiles(Constants.TEST_ENVIRONMENT)
+public class RegistryControllerJUnitTest extends RegistryTestBase{
+	
+	private static final String VALID_JSONLD1 = "school1.jsonld";
+	private static final String CONTEXT_CONSTANT = "sample:";
 
 	
 	@Autowired
 	RegistryService registryService;
 	
+	@Autowired
+	GraphDBFactory graphDBFactory;
+	
+	
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
-	
-	private static final String SUBJECT_LABEL = "ex:Picasso";
+
+	private static Model duplicateRdf = null;
 	
 	
 	@Test
-	public void test_add_entity() throws NullPointerException, DuplicateRecordException {
-		Model model = getRdf();
+	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException {
+		Model model = getNewValidRdf(VALID_JSONLD1, getSubjectType(), CONTEXT_CONSTANT);
+		duplicateRdf = model;
 		boolean response = registryService.addEntity(model);
 		assertTrue(response);
 	}
 	
 	@Test
-	public void test_add_existing_entity() throws NullPointerException, DuplicateRecordException {
-		Model model = getRdf();
+	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException {
 		expectedEx.expect(DuplicateRecordException.class);
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
-		registryService.addEntity(model);
+		registryService.addEntity(duplicateRdf);
 	}
 	
-	
-	public Model getRdf(){
-		Resource resource = ResourceFactory.createResource(SUBJECT_LABEL);
-		Model model = ModelFactory.createDefaultModel();
-		model.add(resource, FOAF.name, "Pablo");
-		Node address = NodeFactory.createBlankNode();
-		Node painting = NodeFactory.createBlankNode();
-		model.add(resource,RDF.type, "ex:Artist");
-		model.add(resource,FOAF.depiction, "ex:Image");
-		/*Property property = ResourceFactory.createProperty("ex:homeAddress");
-		model.add(resource,property, (RDFNode) address);
-		property = ResourceFactory.createProperty("ex:creatorOf");
-		model.add(resource,property, (RDFNode) painting);*/
-		return model;
+	@Test
+	public void test_adding_record_with_invalid_type() throws DuplicateRecordException, InvalidTypeException, Exception {
+		Model model = getRdfWithInvalidTpe();
+		expectedEx.expect(InvalidTypeException.class);
+		expectedEx.expectMessage(Constants.INVALID_TYPE_MESSAGE);
+		registryService.addEntity(model);
+		closeDB();
+	}
+
+	public void closeDB() throws Exception{
+		graphDBFactory.destroy();
 	}
 
 }

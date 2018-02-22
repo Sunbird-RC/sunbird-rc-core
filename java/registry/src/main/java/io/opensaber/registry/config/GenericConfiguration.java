@@ -37,7 +37,7 @@ import scalaz.Const;
  *
  */
 @Configuration
-@PropertySource(value = {"classpath:config.properties"})
+@PropertySource(value = {"classpath:config-${spring.profiles.active}.properties"})
 public class GenericConfiguration extends WebMvcConfigurerAdapter {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
