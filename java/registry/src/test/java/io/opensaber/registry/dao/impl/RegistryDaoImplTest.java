@@ -1,5 +1,6 @@
 package io.opensaber.registry.dao.impl;
 
+import io.opensaber.registry.sink.DatabaseProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -35,7 +36,6 @@ import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
 
 import static org.junit.Assert.assertTrue;
@@ -50,13 +50,13 @@ import static org.junit.Assert.assertTrue;
 public class RegistryDaoImplTest extends RegistryTestBase{
 
 	@Autowired
-	RegistryDao registryDao;
+	private RegistryDao registryDao;
 	
 	@Autowired
 	private Environment environment;
 	
 	@Autowired
-	GraphDBFactory graphDBFactory;
+	private DatabaseProvider databaseProvider;
 
 	private static Graph graph;
 
@@ -150,7 +150,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 	}
 	
 	public void closeDB() throws Exception{
-		graphDBFactory.destroy();
+		databaseProvider.shutdown();
 	}
 	
 

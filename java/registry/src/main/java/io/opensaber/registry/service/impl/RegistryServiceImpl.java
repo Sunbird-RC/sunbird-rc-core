@@ -45,28 +45,27 @@ public class RegistryServiceImpl implements RegistryService{
 	}
 
 	@Override
-	public boolean addEntity(Model entity) throws DuplicateRecordException, InvalidTypeException{
+	public boolean addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException {
 		Graph graph = GraphDBFactory.getEmptyGraph();
-		Model rdfModel = (Model)entity;
 		StmtIterator iterator = rdfModel.listStatements();
 		boolean rootSubjectFound = false;
 		String label = null;
-		while(iterator.hasNext()){
+		while (iterator.hasNext()) {
 			Statement rdfStatement = iterator.nextStatement();
-			if(!rootSubjectFound){
+			if (!rootSubjectFound) {
 				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-				label = RDF2Graph.getRootSubjectLabel(rdfStatement,type);
-				if(label!=null){
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
+				if (label != null) {
 					rootSubjectFound = true;
 				}
 			}
 			graph = RDF2Graph.convertJenaRDFStatement2Graph(rdfStatement, graph);
 		}
-		if(label==null){
+		if (label == null) {
 			throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
 		}
 
-		return registryDao.addEntity(graph,label);
+		return registryDao.addEntity(graph, label);
 	}
 
 	@Override
