@@ -5,7 +5,6 @@ import java.util.Stack;
 
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Direction;
@@ -24,13 +23,30 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 
 public final class RDF2Graph 
 {
 	private RDF2Graph() {}
+	
+	public static String getRootSubjectLabel(org.apache.jena.rdf.model.Statement rdfStatement, String type){
+		String subjectValue = rdfStatement.getSubject().toString();
+		String predicate = rdfStatement.getPredicate().toString();
+		String label = null;
+		if(predicate.equals(RDF.TYPE.toString())){
+			RDFNode object = rdfStatement.getObject();
+			if(object.isURIResource()){
+				if(object.toString().equals(type)){
+					label = subjectValue;
+					System.out.println("Printing label:"+label);
+				}
+			}
+		}
+		return label;
+	}
 
-	public static Graph convertRDFStatement2Graph(org.apache.jena.rdf.model.Statement statement, Graph graph){
+	public static Graph convertJenaRDFStatement2Graph(org.apache.jena.rdf.model.Statement statement, Graph graph){
 		ValueFactory factory = SimpleValueFactory.getInstance();
 		org.apache.jena.rdf.model.Resource subject = statement.getSubject();
 		RDFNode object =statement.getObject();
