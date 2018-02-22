@@ -2,6 +2,7 @@ package io.opensaber.registry.controller;
 
 import static org.junit.Assert.*;
 
+import io.opensaber.registry.sink.DatabaseProvider;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,7 +20,6 @@ import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.InvalidTypeException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.util.GraphDBFactory;
 
 import org.apache.jena.rdf.model.Model;
 
@@ -34,10 +34,10 @@ public class RegistryControllerJUnitTest extends RegistryTestBase{
 
 	
 	@Autowired
-	RegistryService registryService;
+	private RegistryService registryService;
 	
 	@Autowired
-	GraphDBFactory graphDBFactory;
+	private DatabaseProvider databaseProvider;
 	
 	
 	@Rule
@@ -71,7 +71,7 @@ public class RegistryControllerJUnitTest extends RegistryTestBase{
 	}
 
 	public void closeDB() throws Exception{
-		graphDBFactory.destroy();
+		databaseProvider.shutdown();
 	}
 
 }
