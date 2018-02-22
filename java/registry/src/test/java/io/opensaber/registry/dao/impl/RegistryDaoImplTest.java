@@ -35,6 +35,8 @@ import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.RecordDoesNotExistException;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.utils.converters.RDF2Graph;
 
@@ -151,6 +153,53 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 	
 	public void closeDB() throws Exception{
 		databaseProvider.shutdown();
+	}
+	
+	@Test
+	public void test_read_with_no_data(){
+		expectedEx.expect(RecordDoesNotExistException.class);
+		expectedEx.expectMessage("");
+		UUID label = UUID.randomUUID();
+		Graph graph = registryDao.getEntityById(label);
+	}
+	
+	@Test
+	public void test_no_exception_when_data_exists(){
+		
+	}
+
+
+	@Test
+	public void testGetEntity(){
+		EntityDto entityDto = new EntityDto();
+		entityDto.setId(identifier);
+		Object entity = registryDao.getEntityById(entityDto);
+		assertFalse((entity!=null));
+
+	}
+
+	@Test
+	public void testGetNonExistingEntity(){
+		EntityDto entityDto = new EntityDto();
+		entityDto.setId(generateRandomId());
+		Object entity = registryDao.getEntityById(entityDto);
+		assertFalse((entity!=null));
+
+	}
+
+	@Test
+	public void testModifyEntity(){
+		Vertex vertex = graph.addVertex(
+				T.label,"identifier");
+		vertex.property("is", "108115c3-320c-43d6-aaa7-7aab72777575");
+		graph.addVertex(
+				T.label,"type").property("is", "teacher");
+
+		getVertexForSubject("identifier","is", identifier, t);
+		getVertexForSubject("type","is", "teacher", t);
+		getVertexForSubject("email","is", "consent driven");
+		boolean response = registryDao.updateEntity(graph);
+		assertFalse(response);
 	}
 	
 

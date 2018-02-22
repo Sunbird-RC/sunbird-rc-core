@@ -285,7 +285,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public Object getEntityById(Object entity) {
+	public Graph getEntityById(Object entity) {
 		// TODO Auto-generated method stub
 		return null;
 	}
