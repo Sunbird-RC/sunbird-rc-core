@@ -26,13 +26,14 @@ import io.opensaber.registry.middleware.util.Constants;
  */
 public class RegistryControllerSteps extends RegistryTestBase{
 	
-	private static final String VALID_JSONLD1 = "school1.jsonld";
-	/*private static final String VALID_JSONLD2 = "school2.jsonld";*/
+	private static final String VALID_JSONLD2 = "school2.jsonld";
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
+	private static final String ADD_ENTITY = "addEntity";
+	private static final String CONTEXT_CONSTANT = "sample:";
 	
 	private RestTemplate restTemplate;
 	private String baseUrl;
-	private String duplicateLabel;
+	private static String duplicateLabel;
 	
 	
 	@Before
@@ -44,7 +45,7 @@ public class RegistryControllerSteps extends RegistryTestBase{
 	
 	@Given("^First input data and base url are valid")
 	public void jsonldData(){
-		setJsonld(VALID_JSONLD1);
+		setJsonld(VALID_JSONLD2);
 		assertNotNull(jsonld);
 		assertNotNull(restTemplate);
 		assertNotNull(baseUrl);
@@ -56,9 +57,9 @@ public class RegistryControllerSteps extends RegistryTestBase{
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		String label = generateRandomId();
 		duplicateLabel = label;
-		setJsonldWithNewRootLabel(label);
+		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+label);
 		HttpEntity entity = new HttpEntity(jsonld,headers);
-		ResponseEntity response = restTemplate.postForEntity(baseUrl+"/addEntity",
+		ResponseEntity response = restTemplate.postForEntity(baseUrl+ADD_ENTITY,
 				entity,ObjectNode.class);
 		ObjectNode obj = (ObjectNode)response.getBody();
 		assertNotNull(obj);
@@ -73,7 +74,7 @@ public class RegistryControllerSteps extends RegistryTestBase{
 
 	@Given("^Valid duplicate data")
 	public void jsonldDuplicateData(){
-		setJsonld(VALID_JSONLD1);
+		setJsonld(VALID_JSONLD2);
 		assertNotNull(jsonld);
 		assertNotNull(restTemplate);
 		assertNotNull(baseUrl);
@@ -83,9 +84,9 @@ public class RegistryControllerSteps extends RegistryTestBase{
 	public void addDuplicateEntity(){
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		setJsonldWithNewRootLabel(duplicateLabel);
+		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+duplicateLabel);
 		HttpEntity entity = new HttpEntity(jsonld,headers);
-		ResponseEntity response = restTemplate.postForEntity(baseUrl+"/addEntity",
+		ResponseEntity response = restTemplate.postForEntity(baseUrl+ADD_ENTITY,
 				entity,ObjectNode.class);
 		ObjectNode obj = (ObjectNode)response.getBody();
 		assertNotNull(obj);
@@ -100,7 +101,7 @@ public class RegistryControllerSteps extends RegistryTestBase{
 	
 	@Given("^Second input data and base url are valid")
 	public void newJsonldData(){
-		setJsonld(VALID_JSONLD1);
+		setJsonld(VALID_JSONLD2);
 		assertNotNull(jsonld);
 		assertNotNull(restTemplate);
 		assertNotNull(baseUrl);
@@ -111,9 +112,9 @@ public class RegistryControllerSteps extends RegistryTestBase{
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		String label = generateRandomId();
-		setJsonldWithNewRootLabel(label);
+		setJsonldWithNewRootLabel(CONTEXT_CONSTANT + label);
 		HttpEntity entity = new HttpEntity(jsonld,headers);
-		ResponseEntity response = restTemplate.postForEntity(baseUrl+"/addEntity",
+		ResponseEntity response = restTemplate.postForEntity(baseUrl+ADD_ENTITY,
 				entity,ObjectNode.class);
 		ObjectNode obj = (ObjectNode)response.getBody();
 		assertNotNull(obj);
@@ -126,7 +127,7 @@ public class RegistryControllerSteps extends RegistryTestBase{
 		assertTrue(response.contains(JsonKeys.SUCCESS));
 	}
 	
-	@Given("^Base url is valid but input data has invalid root label")
+	@Given("^Base url is valid but input data has invalid type")
 	public void invalidJsonldData(){
 		setJsonld(INVALID_LABEL_JSONLD);
 		assertNotNull(jsonld);
@@ -138,19 +139,19 @@ public class RegistryControllerSteps extends RegistryTestBase{
 	public void addInvalidEntity(){
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		String label = generateRandomId();
-		setJsonldWithNewRootLabel(label);
+		/*String label = generateRandomId();
+		setJsonldWithNewRootLabel(label);*/
 		HttpEntity entity = new HttpEntity(jsonld,headers);
-		ResponseEntity response = restTemplate.postForEntity(baseUrl+"/addEntity",
+		ResponseEntity response = restTemplate.postForEntity(baseUrl+ADD_ENTITY,
 				entity,ObjectNode.class);
 		ObjectNode obj = (ObjectNode)response.getBody();
 		assertNotNull(obj);
-		assertEquals(obj.get(JsonKeys.RESPONSE).asText(), Constants.FAILED_INSERTION_MESSAGE);
+		assertEquals(obj.get(JsonKeys.RESPONSE).asText(), Constants.INVALID_TYPE_MESSAGE);
 	}
 	
 	@Then("^Response for invalid record is (.*)")
 	public void verifyFailureResponse2(String response){
 		assertNotNull(response);
-		assertTrue(response.contains(Constants.FAILED_INSERTION_MESSAGE));
+		assertTrue(response.contains(Constants.INVALID_TYPE_MESSAGE));
 	}
 }

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.InvalidTypeException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.ResponseUtil;
@@ -58,7 +59,7 @@ public class RegistryController extends SpringBootServletInitializer {
 
 	@ResponseBody
 	@RequestMapping(value="/addEntity",method=RequestMethod.POST)
-	public ResponseEntity addEntity(@RequestAttribute Model rdf) throws JsonProcessingException, DuplicateRecordException{
+	public ResponseEntity addEntity(@RequestAttribute Model rdf) throws JsonProcessingException, DuplicateRecordException, InvalidTypeException{
 		try{
 			boolean status = registryService.addEntity(rdf);
 			if (status) {
@@ -67,6 +68,8 @@ public class RegistryController extends SpringBootServletInitializer {
 				return ResponseUtil.failureResponse(Constants.FAILED_INSERTION_MESSAGE);
 			}
 		} catch (DuplicateRecordException e) {
+			return ResponseUtil.failureResponse(e.getMessage());
+		} catch (InvalidTypeException e) {
 			return ResponseUtil.failureResponse(e.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();

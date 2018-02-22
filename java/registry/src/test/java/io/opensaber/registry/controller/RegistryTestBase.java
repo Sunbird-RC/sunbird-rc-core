@@ -20,17 +20,24 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.RDF;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.utils.converters.RDF2Graph;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 
+
 public class RegistryTestBase {
+	
+	@Autowired
+	private Environment environment;
 	
 	public String jsonld;
 	public static final String FORMAT = "JSON-LD";
 	private static final String INVALID_SUBJECT_LABEL = "ex:Picasso";
-	private static final String REPLACING_SUBJECT_LABEL = "<!samp131d>";
+	private static final String REPLACING_SUBJECT_LABEL = "!samp131d";
 	
 	public void setJsonld(String filename){
 
@@ -66,10 +73,10 @@ public class RegistryTestBase {
 	}
 
 	public String generateBaseUrl(){
-		return "http://localhost:8080/registry";
+		return Constants.INTEGRATION_TEST_BASE_URL;
 	}
 	
-	public Model getNewValidRdf(String fileName, String type){
+	public Model getNewValidRdf(String fileName, String type, String contextConstant){
 		setJsonld(fileName);
 		Model model = ShaclexValidator.parse(jsonld, FORMAT);
 		if(model!=null){
@@ -86,7 +93,7 @@ public class RegistryTestBase {
 					String uuid = UUID.randomUUID().toString();
 					predicate = statement.getPredicate();
 					rdfNode = statement.getObject();
-					label = "_:"+uuid;
+					label = contextConstant+uuid;
 					statementToBeRemoved = statement;
 					Resource subject = ResourceFactory.createResource(label);
 					statementToBeAdded = ResourceFactory.createStatement(subject, predicate, rdfNode);
@@ -122,4 +129,7 @@ public class RegistryTestBase {
 		return UUID.randomUUID().toString();
 	}
 
+	public String getSubjectType(){
+		return environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
+	}
 }
