@@ -22,8 +22,8 @@ Feature: Inserting a record into the registry
     Then Response for second valid record is success
     
   @tag4
-  Scenario: Inserting invalid record
-    Given Base url is valid but input data has invalid root label
+  Scenario: Inserting record with invalid type
+    Given Base url is valid but input data has invalid type
     When Inserting record with invalid type into the registry
-    Then Response for invalid record is Failed to insert record
+    Then Response for invalid record is Failed to insert due to invalid type
     
