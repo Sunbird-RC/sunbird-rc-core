@@ -18,7 +18,7 @@ public interface RegistryDao {
 	
 	public boolean updateEntity(Graph entity,String label);
 	
-	public Object getEntityById(Object entity);
+	public Graph getEntityById(Object entity);
 	
 	public boolean deleteEntity(Object entity);
 
