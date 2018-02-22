@@ -4,16 +4,17 @@ import java.util.List;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+
 
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
@@ -22,10 +23,14 @@ import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
 import io.opensaber.registry.middleware.util.Constants;
 
-@Component
-public class RegistryServiceImpl implements RegistryService {
 
-	private static Logger logger = LoggerFactory.getLogger(RegistryServiceImpl.class);
+/**
+ * 
+ * @author jyotsna
+ *
+ */
+@Component
+public class RegistryServiceImpl implements RegistryService{
 
 	@Autowired
 	RegistryDao registryDao;
@@ -40,7 +45,6 @@ public class RegistryServiceImpl implements RegistryService {
 
 	@Override
 	public boolean addEntity(Model entity) throws DuplicateRecordException{
-  try {
 		Graph graph = GraphDBFactory.getEmptyGraph();
 		Model rdfModel = (Model)entity;
 		StmtIterator iterator = rdfModel.listStatements();
@@ -48,27 +52,17 @@ public class RegistryServiceImpl implements RegistryService {
 		String label = null;
 		while(iterator.hasNext()){
 			Statement rdfStatement = iterator.nextStatement();
-			String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-			String subjectValue = rdfStatement.getSubject().toString();
-			String predicate = rdfStatement.getPredicate().toString();
-			if(!rootSubjectFound && predicate.equals(RDF.TYPE.toString())){
-				RDFNode object = rdfStatement.getObject();
-				if(object.isURIResource()){
-					if(object.toString().equals(type)){
-						label = subjectValue;
-						rootSubjectFound = true;
-						logger.info("Printing label:"+label);
-						}
-					}
+			if(!rootSubjectFound){
+				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement,type);
+				if(label!=null){
+					rootSubjectFound = true;
 				}
-				graph = RDF2Graph.convertRDFStatement2Graph(rdfStatement, graph);
 			}
-			return registryDao.addEntity(graph, label);
-
-		} catch (Exception ex) {
-			logger.error("Error when creating entity in RegistryServiceImpl : ", ex);
-			throw ex;
+			graph = RDF2Graph.convertJenaRDFStatement2Graph(rdfStatement, graph);
 		}
+
+		return registryDao.addEntity(graph,label);
 	}
 
 	@Override
@@ -87,5 +81,6 @@ public class RegistryServiceImpl implements RegistryService {
 	public boolean deleteEntity(Object entity){
 		return registryDao.deleteEntity(entity);
 	}
+	
 
 }
