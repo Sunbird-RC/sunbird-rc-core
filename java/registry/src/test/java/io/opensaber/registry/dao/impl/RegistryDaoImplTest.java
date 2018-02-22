@@ -9,6 +9,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
@@ -16,6 +18,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import cucumber.api.java.en.When;
 
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -30,18 +34,21 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.http4s.CacheDirective;
 
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.RecordDoesNotExistException;
+import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.utils.converters.RDF2Graph;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.UUID;
+import static org.mockito.Mockito.*;
 
 
 @RunWith(SpringRunner.class)
@@ -59,6 +66,9 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 	
 	@Autowired
 	private DatabaseProvider databaseProvider;
+	
+	@Mock
+	private DatabaseProvider mockDatabaseProvider;
 
 	private static Graph graph;
 
@@ -75,6 +85,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 	@Before
 	public void initializeGraph(){
 		graph = TinkerGraph.open();
+		MockitoAnnotations.initMocks(this);
 		
 	}
 
@@ -151,24 +162,46 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 		closeDB();
 	}
 	
-	public void closeDB() throws Exception{
+	public void closeDB() throws Exception {
 		databaseProvider.shutdown();
 	}
 	
 	@Test
-	public void test_read_with_no_data(){
-		expectedEx.expect(RecordDoesNotExistException.class);
-		expectedEx.expectMessage("");
+	public void test_read_with_no_data() throws RecordNotFoundException{
+		expectedEx.expect(RecordNotFoundException.class);
+		expectedEx.expectMessage(Constants.ENTITY_NOT_FOUND);
+		UUID label = getLabel();
+		Graph graph = registryDao.getEntityById(label.toString());
+	}
+
+	private UUID getLabel() {
 		UUID label = UUID.randomUUID();
-		Graph graph = registryDao.getEntityById(label);
+		return label;
 	}
 	
 	@Test
-	public void test_no_exception_when_data_exists(){
+	public void test_no_exception_when_data_exists() throws RecordNotFoundException{
+		UUID label = getLabel();
+		GraphTraversal mockGraphTraversal = mock(GraphTraversal.class);
+		when(mockGraphTraversal.hasNext()).thenReturn(true);
+		Graph graph = registryDao.getEntityById(label.toString());
+	}
+	
+	@Test
+	public void test_read_with_some_other_data(){
 		
 	}
 
-
+	@Test
+	public void test_read_single_node(){
+		
+	}
+	
+	@Test
+	public void test_read_nested_node(){
+		
+	}
+/*
 	@Test
 	public void testGetEntity(){
 		EntityDto entityDto = new EntityDto();
@@ -202,7 +235,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 		assertFalse(response);
 	}
 	
-
+*/
 
 	@After
 	public void closeGraph() throws Exception{

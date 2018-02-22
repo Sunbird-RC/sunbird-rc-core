@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.RecordNotFoundException;
 
 /**
  * 
@@ -18,8 +19,8 @@ public interface RegistryDao {
 	
 	public boolean updateEntity(Graph entity,String label);
 	
-	public Graph getEntityById(Object entity);
-	
 	public boolean deleteEntity(Object entity);
+
+	public Graph getEntityById(String label) throws RecordNotFoundException;
 
 }

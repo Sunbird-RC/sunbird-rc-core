@@ -1,13 +1,13 @@
 package io.opensaber.registry.exception;
 
-public class RecordDoesNotExistException extends Exception {
+public class RecordNotFoundException extends Exception {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public RecordDoesNotExistException (String message) {
+	public RecordNotFoundException (String message) {
 		super(message);
 	}
 

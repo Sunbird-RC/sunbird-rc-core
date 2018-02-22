@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 
 @Component
@@ -285,9 +286,14 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public Graph getEntityById(Object entity) {
-		// TODO Auto-generated method stub
-		return null;
+	public Graph getEntityById(String label) throws RecordNotFoundException {
+		Graph graphFromStore = databaseProvider.getGraphStore();
+		GraphTraversalSource traversalSource = graphFromStore.traversal();
+		TinkerGraph graph = TinkerGraph.open();
+		if (!traversalSource.clone().V().hasLabel(label).hasNext()) {
+			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
+		}
+		return graph;
 	}
 
 	@Override
