@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.InvalidTypeException;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
@@ -44,7 +45,7 @@ public class RegistryServiceImpl implements RegistryService{
 	}
 
 	@Override
-	public boolean addEntity(Model entity) throws DuplicateRecordException{
+	public boolean addEntity(Model entity) throws DuplicateRecordException, InvalidTypeException{
 		Graph graph = GraphDBFactory.getEmptyGraph();
 		Model rdfModel = (Model)entity;
 		StmtIterator iterator = rdfModel.listStatements();
@@ -60,6 +61,9 @@ public class RegistryServiceImpl implements RegistryService{
 				}
 			}
 			graph = RDF2Graph.convertJenaRDFStatement2Graph(rdfStatement, graph);
+		}
+		if(label==null){
+			throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
 		}
 
 		return registryDao.addEntity(graph,label);
