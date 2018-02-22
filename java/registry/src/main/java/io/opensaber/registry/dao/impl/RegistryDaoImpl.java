@@ -85,6 +85,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	@Override
 	public boolean addEntity(Graph entity, String label) throws DuplicateRecordException {
 
+		logger.info("Database Provider features: \n" + databaseProvider.getGraphStore().features());
+
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
 		if (traversalSource.clone().V().hasLabel(label).hasNext()) {
