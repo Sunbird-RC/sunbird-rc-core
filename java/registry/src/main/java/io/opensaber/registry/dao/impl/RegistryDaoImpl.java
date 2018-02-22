@@ -150,7 +150,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		String currentVertexLabel = direction.equals(Direction.OUT) ? newVertex.label() : currentVertex.label();
 		String createdVertexLabel = direction.equals(Direction.OUT) ? currentVertex.label() : newVertex.label();
 		Object[] edgeArray = {direction, currentVertexLabel};
-
 		List<Object[]> edgeArrayList = vertexMap.getOrDefault(createdVertexLabel, new ArrayList<>());
 		edgeArrayList.add(edgeArray);
 		vertexMap.put(createdVertexLabel, edgeArrayList);
