@@ -24,12 +24,16 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public final class RDF2Graph 
 {
 	private RDF2Graph() {}
-	
+
+	private static Logger logger = LoggerFactory.getLogger(RDF2Graph.class);
+
 	public static String getRootSubjectLabel(org.apache.jena.rdf.model.Statement rdfStatement, String type){
 		String subjectValue = rdfStatement.getSubject().toString();
 		String predicate = rdfStatement.getPredicate().toString();
@@ -39,7 +43,7 @@ public final class RDF2Graph
 			if(object.isURIResource()){
 				if(object.toString().equals(type)){
 					label = subjectValue;
-					System.out.println("Printing label:"+label);
+					logger.info("Printing label:" + label);
 				}
 			}
 		}

@@ -43,7 +43,7 @@ public class SqlgProvider implements DatabaseProvider {
     }
 
     @PreDestroy
-    public void destroy() throws Exception {
+    public void shutdown() throws Exception {
         logger.info("**************************************************************************");
         logger.info("Gracefully shutting down SQLG DB instance ...");
         logger.info("**************************************************************************");
