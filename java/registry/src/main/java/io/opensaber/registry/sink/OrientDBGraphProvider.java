@@ -40,7 +40,7 @@ public class OrientDBGraphProvider implements DatabaseProvider {
     }
 
     @PreDestroy
-    public void destroy() throws Exception {
+    public void shutdown() throws Exception {
         logger.info("**************************************************************************");
         logger.info("Gracefully shutting down OrientGraph DB instance ...");
         logger.info("**************************************************************************");
