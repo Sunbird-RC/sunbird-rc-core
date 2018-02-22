@@ -128,6 +128,38 @@
 			<artifactId>neo4j-gremlin</artifactId>
 			<version>${tinkerpop.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.orientechnologies</groupId>
+			<artifactId>orientdb-gremlin</artifactId>
+			<version>3.0.0m2</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.guava</groupId>
+					<artifactId>guava</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.orientechnologies</groupId>
+			<artifactId>orientdb-jdbc</artifactId>
+			<version>3.0.0m2</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.guava</groupId>
+					<artifactId>guava</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.umlg</groupId>
+			<artifactId>sqlg-h2</artifactId>
+			<version>1.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.umlg</groupId>
+			<artifactId>sqlg-h2-dialect</artifactId>
+			<version>1.5.0</version>
+		</dependency>
 		<!-- <dependency> <groupId>org.neo4j</groupId> <artifactId>neo4j-tinkerpop-api-impl</artifactId> 
 			<version>0.7-3.2.3</version> </dependency> -->
 		<dependency>

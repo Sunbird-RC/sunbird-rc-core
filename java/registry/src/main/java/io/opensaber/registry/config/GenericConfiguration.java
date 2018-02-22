@@ -6,6 +6,10 @@ import java.nio.file.Paths;
 
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.Neo4jGraphProvider;
+import io.opensaber.registry.sink.OrientDBGraphProvider;
+import io.opensaber.registry.sink.SqlgProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
@@ -25,6 +29,7 @@ import io.opensaber.registry.middleware.util.Constants;
 
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import scalaz.Const;
 
 /**
  * 
@@ -34,7 +39,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @Configuration
 @PropertySource(value = {"classpath:config.properties"})
 public class GenericConfiguration extends WebMvcConfigurerAdapter {
-	
+
+	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
+
 	@Autowired
 	private Environment environment;
 	
@@ -72,7 +79,16 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 
 	@Bean
 	public DatabaseProvider databaseProvider() {
-		return new Neo4jGraphProvider(environment);
+		String dbProvider = environment.getProperty(Constants.DATABASE_PROVIDER);
+		if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.ORIENTDB.getName())) {
+			return new OrientDBGraphProvider(environment);
+		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.NEO4J.getName())) {
+			return new Neo4jGraphProvider(environment);
+		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.SQLG.getName())) {
+			return new SqlgProvider(environment);
+		} else {
+			throw new RuntimeException("No Database Provider is configured. Please configure a Database Provider");
+		}
 	}
 	
 	@Override 
