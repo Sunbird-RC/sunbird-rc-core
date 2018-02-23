@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.InvalidTypeException;
+import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.ResponseUtil;
@@ -94,7 +95,7 @@ public class RegistryController extends SpringBootServletInitializer {
 
 	@ResponseBody
 	@RequestMapping(value="/getEntity",method=RequestMethod.POST)
-	public ResponseEntity getEntity(@RequestBody Object entity) throws JsonProcessingException{
+	public ResponseEntity getEntity(@RequestBody String entity) throws JsonProcessingException, RecordNotFoundException{
 		Object responseObj = registryService.getEntityById(entity);
 		return ResponseUtil.successResponse(responseObj);
 	}

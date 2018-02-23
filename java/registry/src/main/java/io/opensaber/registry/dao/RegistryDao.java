@@ -21,6 +21,6 @@ public interface RegistryDao {
 	
 	public boolean deleteEntity(Object entity);
 
-	public Graph getEntityById(String label) throws RecordNotFoundException;
+	public Graph getEntityById(String Id) throws RecordNotFoundException;
 
 }
