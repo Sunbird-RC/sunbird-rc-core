@@ -15,11 +15,9 @@ import javax.annotation.PreDestroy;
 public class Neo4jGraphProvider implements DatabaseProvider {
 
     private Logger logger = LoggerFactory.getLogger(Neo4jGraphProvider.class);
-    private Environment environment;
     private Graph graph;
 
     public Neo4jGraphProvider(Environment environment) {
-        this.environment = environment;
         String graphDbLocation = environment.getProperty(Constants.NEO4J_DIRECTORY);
         logger.info(String.format("Initializing graph db at %s ...", graphDbLocation));
         Configuration config = new BaseConfiguration();
