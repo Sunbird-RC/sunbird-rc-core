@@ -189,17 +189,20 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 	
 	@Test
 	public void test_read_with_some_other_data(){
-		
+		Graph graph=databaseProvider.getGraphStore();		
 	}
 
 	@Test
-	public void test_read_single_node(){
-		
+	public void test_read_single_node() throws RecordNotFoundException{
+		String label = getLabel().toString();
+		getVertexForSubject(label, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
+		Graph response=registryDao.getEntityById(label.toString());
+		assertTrue(graph==response);
 	}
 	
 	@Test
 	public void test_read_nested_node(){
-		
+		String label = getLabel().toString();
 	}
 /*
 	@Test
@@ -208,18 +211,14 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 		entityDto.setId(identifier);
 		Object entity = registryDao.getEntityById(entityDto);
 		assertFalse((entity!=null));
-
 	}
-
 	@Test
 	public void testGetNonExistingEntity(){
 		EntityDto entityDto = new EntityDto();
 		entityDto.setId(generateRandomId());
 		Object entity = registryDao.getEntityById(entityDto);
 		assertFalse((entity!=null));
-
 	}
-
 	@Test
 	public void testModifyEntity(){
 		Vertex vertex = graph.addVertex(
@@ -227,7 +226,6 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 		vertex.property("is", "108115c3-320c-43d6-aaa7-7aab72777575");
 		graph.addVertex(
 				T.label,"type").property("is", "teacher");
-
 		getVertexForSubject("identifier","is", identifier, t);
 		getVertexForSubject("type","is", "teacher", t);
 		getVertexForSubject("email","is", "consent driven");
