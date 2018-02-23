@@ -155,11 +155,6 @@
 			<version>2.2.4</version>
 		</dependency>
 		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk16</artifactId>
-			<version>1.46</version>
-		</dependency>
-		<dependency>
 			<groupId>org.neo4j.driver</groupId>
 			<artifactId>neo4j-java-driver</artifactId>
 			<version>1.4.4</version>
@@ -192,6 +187,7 @@
 					<warName>registry</warName>
 				</configuration>
 			</plugin>
+
 		</plugins>
 	</build>
 
