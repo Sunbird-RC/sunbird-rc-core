@@ -8,3 +8,4 @@ public interface DatabaseProvider {
     public void shutdown() throws Exception;
 
 }
+
