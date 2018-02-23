@@ -15,11 +15,9 @@ import javax.annotation.PreDestroy;
 public class OrientDBGraphProvider implements DatabaseProvider {
 
     private Logger logger = LoggerFactory.getLogger(OrientDBGraphProvider.class);
-    private Environment environment;
     private Graph graph;
 
     public OrientDBGraphProvider(Environment environment) {
-        this.environment = environment;
         String graphDbLocation = environment.getProperty(Constants.ORIENTDB_DIRECTORY);
         Configuration config = new BaseConfiguration();
         config.setProperty(OrientGraph.CONFIG_URL, String.format("embedded:%s", graphDbLocation));

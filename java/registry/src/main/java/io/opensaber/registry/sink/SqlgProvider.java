@@ -15,11 +15,9 @@ import javax.annotation.PreDestroy;
 public class SqlgProvider implements DatabaseProvider {
 
     private Logger logger = LoggerFactory.getLogger(SqlgProvider.class);
-    private Environment environment;
     private Graph graph;
 
     public SqlgProvider(Environment environment) {
-        this.environment = environment;
         String jdbcUrl = environment.getProperty("jdbc.url");
         String jdbcUsername = environment.getProperty("jdbc.username");
         String jdbcPassword = environment.getProperty("jdbc.password");
