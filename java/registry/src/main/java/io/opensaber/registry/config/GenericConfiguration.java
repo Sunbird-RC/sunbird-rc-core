@@ -8,6 +8,8 @@ import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.Neo4jGraphProvider;
 import io.opensaber.registry.sink.OrientDBGraphProvider;
 import io.opensaber.registry.sink.SqlgProvider;
+import io.opensaber.registry.sink.TinkerGraphProvider;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,6 +88,8 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 			return new Neo4jGraphProvider(environment);
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.SQLG.getName())) {
 			return new SqlgProvider(environment);
+		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName())) {
+			return new TinkerGraphProvider(environment);
 		} else {
 			throw new RuntimeException("No Database Provider is configured. Please configure a Database Provider");
 		}
