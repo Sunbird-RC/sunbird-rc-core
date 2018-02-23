@@ -1,6 +1,6 @@
 #Author: jyotsna.raveendran@tarento.com
 
-@tag
+@tag @Ignore
 Feature: Inserting a record into the registry
 
   @tag1

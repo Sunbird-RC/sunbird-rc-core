@@ -33,7 +33,8 @@ public class Constants {
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"),
 		ORIENTDB("ORIENTDB"),
-		SQLG("SQLG");
+		SQLG("SQLG"),
+		TINKERGRAPH("TINKERGRAPH");
 
 		private String name;
 

@@ -33,7 +33,9 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.http4s.CacheDirective;
 
 import io.opensaber.registry.config.GenericConfiguration;
@@ -45,8 +47,9 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.utils.converters.RDF2Graph;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.UUID;
 import static org.mockito.Mockito.*;
 
@@ -179,30 +182,48 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 		return label;
 	}
 	
-	@Test
-	public void test_no_exception_when_data_exists() throws RecordNotFoundException{
-		UUID label = getLabel();
-		GraphTraversal mockGraphTraversal = mock(GraphTraversal.class);
-		when(mockGraphTraversal.hasNext()).thenReturn(true);
-		Graph graph = registryDao.getEntityById(label.toString());
-	}
 	
 	@Test
-	public void test_read_with_some_other_data(){
-		Graph graph=databaseProvider.getGraphStore();		
+	public void test_read_with_some_other_data() throws IOException, DuplicateRecordException, RecordNotFoundException{
+		expectedEx.expect(RecordNotFoundException.class);
+		expectedEx.expectMessage(Constants.ENTITY_NOT_FOUND);
+		String label1 = UUID.randomUUID().toString();
+		String label2 = UUID.randomUUID().toString();
+		getVertexForSubject(label1, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
+		registryDao.addEntity(graph,label1);
+		registryDao.getEntityById(label2.toString());
+	}
+
+	private void dump_graph(Graph g,String filename) throws IOException {
+		g.io(IoCore.graphson()).writeGraph(filename);
 	}
 
 	@Test
-	public void test_read_single_node() throws RecordNotFoundException{
+	public void test_read_single_node() throws RecordNotFoundException, DuplicateRecordException, IOException{
 		String label = getLabel().toString();
 		getVertexForSubject(label, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
-		Graph response=registryDao.getEntityById(label.toString());
-		assertTrue(graph==response);
+		registryDao.addEntity(graph,label);
+		Graph entity = registryDao.getEntityById(label);
+		assertNotNull(entity);
+//		TODO Write a better checker
+		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
 	}
 	
 	@Test
-	public void test_read_nested_node(){
-		String label = getLabel().toString();
+	public void test_read_nested_node() throws NullPointerException, DuplicateRecordException, RecordNotFoundException{
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		boolean response = registryDao.addEntity(graph,rootLabel);
+		assertTrue(response);
+		Graph entity = registryDao.getEntityById("http://example.com/voc/teacher/1.0.0/1236");
+		assertNotNull(entity);
+		try {
+			dump_graph(graph, "incoming.json");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
 	}
 /*
 	@Test
@@ -280,6 +301,10 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 			graph = RDF2Graph.convertJenaRDFStatement2Graph(rdfStatement, graph);
 	}
 		return label;
+	}
+
+	private long countGraphVertices(Graph graph) {
+		return IteratorUtils.count(graph.vertices());
 	}
 	
 }

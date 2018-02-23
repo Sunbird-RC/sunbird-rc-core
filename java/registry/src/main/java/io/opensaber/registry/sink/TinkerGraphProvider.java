@@ -5,8 +5,9 @@ import javax.annotation.PreDestroy;
 
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
-
+import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -17,8 +18,13 @@ public class TinkerGraphProvider implements DatabaseProvider {
 
 	 private Logger logger = LoggerFactory.getLogger(TinkerGraphProvider.class);
 	    private Graph graph;
+		private Object environment;
 
-	     @Override
+	     public TinkerGraphProvider(Environment environment2) {
+			graph = TinkerGraph.open();
+		}
+
+		@Override
 	    public Graph getGraphStore() {
 	        return graph;
 	    }

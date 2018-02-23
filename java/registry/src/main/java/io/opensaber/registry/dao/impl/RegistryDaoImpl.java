@@ -1,12 +1,22 @@
 package io.opensaber.registry.dao.impl;
 
+import java.io.IOException;
 import java.util.*;
 
+import javax.mail.internet.NewsAddress;
+
 import io.opensaber.registry.sink.DatabaseProvider;
+import scala.reflect.internal.PrivateWithin;
+import scalaz.std.iterable;
+
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.util.ModelBuilder;
+import org.neo4j.cypher.internal.compiler.v2_3.mutation.GraphElementPropertyFunctions;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -98,10 +108,23 @@ public class RegistryDaoImpl implements RegistryDao {
 		GraphTraversalSource gts = graph.traversal();
 		GraphTraversal<Vertex, Vertex> traversal = gts.V();
 		Map<String, List<Object[]>> map = new HashMap<>();
+		
+		if (graphFromStore.features().graph().supportsTransactions()){
+			org.apache.tinkerpop.gremlin.structure.Transaction tx;
+			tx = graphFromStore.tx();
+			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
+			createEdgeNodes(traversalSource, traversal, map);
+			tx.commit();
+			tx.close();
+		} else {
+			createEdgeNodes(traversalSource, traversal, map);
+		}
+		
+		return true;
+	}
 
-		org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
-		tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-
+	private void createEdgeNodes(GraphTraversalSource traversalSource, GraphTraversal<Vertex, Vertex> traversal,
+			Map<String, List<Object[]>> map) {
 		if (traversal.hasNext()) {
 			Map<String, Vertex> createdNodeMap = new HashMap<>();
 			Vertex v = traversal.next();
@@ -117,9 +140,6 @@ public class RegistryDaoImpl implements RegistryDao {
 
 			}
 		}
-		tx.commit();
-		tx.close();
-		return true;
 	}
 
 	private Vertex getNodeWithProperties(GraphTraversalSource traversal, Vertex v, boolean dbCheck, Map<String, Vertex> createdNodeMap) {
@@ -139,11 +159,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			} else {
 				newVertex = traversal.clone().addV(v.label()).next();
 			}
-			Iterator<VertexProperty<Object>> properties = v.properties();
-			while (properties.hasNext()) {
-				VertexProperty<Object> property = properties.next();
-				newVertex.property(property.key(), property.value());
-			}
+			copyProperties(v, newVertex);
 			createdNodeMap.put(v.label(), newVertex);
 		}
 		return newVertex;
@@ -290,16 +306,64 @@ public class RegistryDaoImpl implements RegistryDao {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
 		TinkerGraph graph = TinkerGraph.open();
-		if (!traversalSource.clone().V().hasLabel(label).hasNext()) {
+		GraphTraversal<Vertex, Vertex> hasLabel = traversalSource.clone().V().hasLabel(label);
+		Graph parsedGraph = TinkerGraph.open();
+		if (!hasLabel.hasNext()) {
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
+		} else {
+			Vertex subject = hasLabel.next();
+			Vertex newSubject = parsedGraph.addVertex(subject.label());
+			copyProperties(subject, newSubject);
+			extractGraphFromVertex(parsedGraph,newSubject,subject);
 		}
-		return graph;
+		return parsedGraph;
+	}
+
+	private void copyProperties(Vertex subject, Vertex newSubject) {
+		Iterator<VertexProperty<Object>> iter = subject.properties();
+		while(iter.hasNext()){
+			VertexProperty<Object> property = iter.next();
+			newSubject.property(property.key(), property.value());
+		}
 	}
 
 	@Override
 	public boolean deleteEntity(Object entity) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s) {
+		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
+		Edge edge;
+		Stack<Vertex> vStack = new Stack<Vertex>();
+		Stack<Vertex> parsedVStack = new Stack<Vertex>();
+		while(edgeIter.hasNext()){
+			edge = edgeIter.next();
+			Vertex o = edge.inVertex();
+			Vertex newo = parsedGraph.addVertex(o.label());
+			copyProperties(o, newo);
+			parsedGraphSubject.addEdge(edge.label(), newo);
+			vStack.push(o);
+			parsedVStack.push(newo);
+			dump_graph(parsedGraph,"outgoing.json");
+		}
+		Iterator<Vertex> vIterator = vStack.iterator();
+		Iterator<Vertex> parsedVIterator = parsedVStack.iterator();
+		while(vIterator.hasNext()){
+			s = vIterator.next();
+			parsedGraphSubject = parsedVIterator.next();
+			extractGraphFromVertex(parsedGraph,parsedGraphSubject,s);
+		}
+	}
+
+	private void dump_graph(Graph parsedGraph, String filename) {
+		try {
+			parsedGraph.io(IoCore.graphson()).writeGraph(filename);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }
