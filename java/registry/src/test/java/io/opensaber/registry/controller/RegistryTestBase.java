@@ -76,39 +76,10 @@ public class RegistryTestBase {
 		return Constants.INTEGRATION_TEST_BASE_URL;
 	}
 	
-	public Model getNewValidRdf(String fileName, String type, String contextConstant){
+	public Model getNewValidRdf(String fileName, String contextConstant){
 		setJsonld(fileName);
+		setJsonldWithNewRootLabel(contextConstant+generateRandomId());
 		Model model = ShaclexValidator.parse(jsonld, FORMAT);
-		if(model!=null){
-			StmtIterator iterator = model.listStatements();
-			Property predicate = null;
-			RDFNode rdfNode = null;
-			String label = null;
-			Statement statementToBeRemoved = null;
-			Statement statementToBeAdded = null;
-			while(iterator.hasNext()){
-				Statement statement = iterator.next();
-				label = RDF2Graph.getRootSubjectLabel(statement,type);
-				if(label!=null){
-					String uuid = UUID.randomUUID().toString();
-					predicate = statement.getPredicate();
-					rdfNode = statement.getObject();
-					label = contextConstant+uuid;
-					statementToBeRemoved = statement;
-					Resource subject = ResourceFactory.createResource(label);
-					statementToBeAdded = ResourceFactory.createStatement(subject, predicate, rdfNode);
-					break;
-				}
-			}
-			if(label!=null && predicate!=null && rdfNode!=null){
-				if(statementToBeRemoved!=null){
-					model.remove(statementToBeRemoved);
-					if(statementToBeAdded!=null){
-						model.add(statementToBeAdded);
-					}
-				}
-			}
-		}
 		return model;
 	}
 	
