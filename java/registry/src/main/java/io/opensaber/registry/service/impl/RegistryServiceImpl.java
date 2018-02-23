@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.InvalidTypeException;
+import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
@@ -76,8 +77,8 @@ public class RegistryServiceImpl implements RegistryService{
 	}
 
 	@Override
-	public Object getEntityById(Object entity){
-		return registryDao.getEntityById(entity);
+	public Graph getEntityById(String id) throws RecordNotFoundException{
+		return registryDao.getEntityById(id);
 	}
 
 	@Override
