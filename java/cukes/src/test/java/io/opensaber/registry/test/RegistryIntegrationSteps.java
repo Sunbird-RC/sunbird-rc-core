@@ -1,4 +1,4 @@
-package io.opensaber.registry.controller;
+package io.opensaber.registry.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -16,17 +16,17 @@ import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import io.opensaber.registry.util.JsonKeys;
-import io.opensaber.registry.middleware.util.Constants;
+
+
 
 /**
  * 
  * @author jyotsna
  *
  */
-public class RegistryControllerSteps extends RegistryTestBase{
+public class RegistryIntegrationSteps extends RegistryTestBase{
 	
-	private static final String VALID_JSONLD2 = "school2.jsonld";
+	private static final String VALID_JSONLD= "school.jsonld";
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
 	private static final String ADD_ENTITY = "addEntity";
 	private static final String CONTEXT_CONSTANT = "sample:";
@@ -45,7 +45,7 @@ public class RegistryControllerSteps extends RegistryTestBase{
 	
 	@Given("^First input data and base url are valid")
 	public void jsonldData(){
-		setJsonld(VALID_JSONLD2);
+		setJsonld(VALID_JSONLD);
 		assertNotNull(jsonld);
 		assertNotNull(restTemplate);
 		assertNotNull(baseUrl);
@@ -74,7 +74,7 @@ public class RegistryControllerSteps extends RegistryTestBase{
 
 	@Given("^Valid duplicate data")
 	public void jsonldDuplicateData(){
-		setJsonld(VALID_JSONLD2);
+		setJsonld(VALID_JSONLD);
 		assertNotNull(jsonld);
 		assertNotNull(restTemplate);
 		assertNotNull(baseUrl);
@@ -101,7 +101,7 @@ public class RegistryControllerSteps extends RegistryTestBase{
 	
 	@Given("^Second input data and base url are valid")
 	public void newJsonldData(){
-		setJsonld(VALID_JSONLD2);
+		setJsonld(VALID_JSONLD);
 		assertNotNull(jsonld);
 		assertNotNull(restTemplate);
 		assertNotNull(baseUrl);
