@@ -79,7 +79,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 	private static String identifier;
 	
 	
-	private static final String VALID_JSONLD1 = "school1.jsonld";
+	private static final String VALID_JSONLD = "school.jsonld";
 	private static final String CONTEXT_CONSTANT = "sample:";
 	
 	@Rule
@@ -282,7 +282,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 
 	
 	private Model getNewValidRdf(){
-		return getNewValidRdf(VALID_JSONLD1, getSubjectType(),CONTEXT_CONSTANT);
+		return getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
 		
 	}
 	
