@@ -1,8 +1,11 @@
 package io.opensaber.utils.converters;
 
+import java.io.StringWriter;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Stack;
 
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -24,6 +27,8 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,6 +132,19 @@ public final class RDF2Graph
 					objectBNode.toString());
 			s.addEdge(property.toString(), o);
 		}
+	}
+	
+	public static org.apache.jena.rdf.model.Model convertRDFModel2Jena(Model rdf4jModel) {
+		org.apache.jena.rdf.model.Model jenaModel = ModelFactory.createDefaultModel();;
+		rdf4jModel.forEach(stmt -> jenaModel.add(convert(stmt)));
+		return jenaModel;
+	}
+
+	private static org.apache.jena.rdf.model.Statement convert(Statement rdf4jStatement) {
+		Value subjectValue = rdf4jStatement.getSubject();
+		IRI property = rdf4jStatement.getPredicate();
+		Value objectValue = rdf4jStatement.getObject();
+		return null;
 	}
 
 	public static Model convertGraph2RDFModel(Graph graph, String label) {
