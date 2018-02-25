@@ -1,6 +1,7 @@
 package io.opensaber.registry.service.impl;
 
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
@@ -32,7 +33,7 @@ public class RegistryServiceImplTest {
 	@Autowired
 	private RegistryService registryService;
 	
-	@Test
+	@Test @Ignore
 	public void testGetEntityById() throws RecordNotFoundException {
 		registryService.getEntityById("1234");
 	}
