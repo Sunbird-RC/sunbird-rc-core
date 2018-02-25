@@ -1,6 +1,8 @@
 package io.opensaber.registry.dao.impl;
 
 import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.tests.utility.TestHelper;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -87,8 +89,8 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 	@Before
 	public void initializeGraph(){
 		graph = TinkerGraph.open();
-		MockitoAnnotations.initMocks(this);
-		
+		MockitoAnnotations.initMocks(this);		
+		TestHelper.clearData(databaseProvider);
 	}
 
 	@Test
@@ -208,7 +210,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
 	}
 	
-	@Test @Ignore
+	@Test
 	public void test_read_nested_node() throws NullPointerException, DuplicateRecordException, RecordNotFoundException{
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
