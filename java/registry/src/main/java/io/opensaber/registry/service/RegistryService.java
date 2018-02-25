@@ -19,11 +19,11 @@ public interface RegistryService {
 	
 	public List getEntityList();
 	
-	public boolean addEntity(Model entity) throws DuplicateRecordException, InvalidTypeException;
+	public void addEntity(Model entity) throws DuplicateRecordException, InvalidTypeException;
 	
 	public boolean updateEntity(Model entity);
 	
-	public Graph getEntityById(String id) throws RecordNotFoundException;
+	public org.eclipse.rdf4j.model.Model getEntityById(String id) throws RecordNotFoundException;
 	
 	public boolean deleteEntity(Object entity);
 

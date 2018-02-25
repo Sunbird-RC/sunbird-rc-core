@@ -35,7 +35,7 @@ import io.opensaber.registry.middleware.util.Constants;
 public class RegistryServiceImpl implements RegistryService{
 
 	@Autowired
-	RegistryDao registryDao;
+	private RegistryDao registryDao;
 
 	@Autowired
 	private Environment environment;
@@ -46,7 +46,7 @@ public class RegistryServiceImpl implements RegistryService{
 	}
 
 	@Override
-	public boolean addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException {
+	public void addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException {
 		Graph graph = GraphDBFactory.getEmptyGraph();
 		StmtIterator iterator = rdfModel.listStatements();
 		boolean rootSubjectFound = false;
@@ -66,7 +66,7 @@ public class RegistryServiceImpl implements RegistryService{
 			throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
 		}
 
-		return registryDao.addEntity(graph, label);
+		registryDao.addEntity(graph, label);
 	}
 
 	@Override
@@ -77,8 +77,10 @@ public class RegistryServiceImpl implements RegistryService{
 	}
 
 	@Override
-	public Graph getEntityById(String id) throws RecordNotFoundException{
-		return registryDao.getEntityById(id);
+	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException{
+		Graph graph = registryDao.getEntityById(label);
+		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
+		return model;
 	}
 
 	@Override
