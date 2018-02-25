@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import cucumber.api.PendingException;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
@@ -29,11 +30,14 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
 	private static final String ADD_ENTITY = "addEntity";
 	private static final String CONTEXT_CONSTANT = "sample:";
+	private static final String READ_ENTITY = "getEntity";
 	
 	private RestTemplate restTemplate;
 	private String baseUrl;
 	private ResponseEntity response;
 	private Response responseObj;
+	private String labelToFetch;
+	private String label;
 	private static String duplicateLabel;
 	
 	
@@ -46,7 +50,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	@Given("^a valid record")
 	public void jsonldData(){
 		setJsonld(VALID_JSONLD);
-		String label = generateRandomId();
+		label = generateRandomId();
 		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+label);
 		assertNotNull(jsonld);
 	}
@@ -54,7 +58,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	@Given("^an invalid record")
 	public void invalidJsonldData(){
 		setJsonld(INVALID_LABEL_JSONLD);
-		String label = generateRandomId();
+		label = generateRandomId();
 		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+label);
 		assertNotNull(jsonld);
 	}
@@ -68,6 +72,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity entity = new HttpEntity(jsonld,headers);
+		System.out.println(jsonld);
 		ResponseEntity response = restTemplate.postForEntity(
 				baseUrl+ADD_ENTITY,
 				entity,
@@ -103,12 +108,51 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	public void issueRecordInRegistry(String qualifier) throws JsonParseException, JsonMappingException, IOException{
 		jsonldData();
 		addEntity();
-		callRegistryCreateAPI();
 		checkSuccessfulResponse();
 	}
 	
 	@Then("^error message is (.*)")
 	public void verifyUnsuccessfulMessage(String message){
 		assertEquals(message, responseObj.getParams().getErrmsg());
+	}
+	
+	@Given("^a non existent record id$")
+	public void a_non_existent_record_id() throws Exception {
+		label = generateRandomId();
+	}
+
+	@When("^retrieving the record from the registry$")
+	public void retrieving_the_record_from_the_registry(){
+		response = callRegistryReadAPI();
+	}
+
+	private ResponseEntity callRegistryReadAPI() {
+		HttpHeaders headers = new HttpHeaders();
+		HttpEntity entity = new HttpEntity("",headers);
+		System.out.println(label);
+		ResponseEntity response = restTemplate.getForEntity(baseUrl+READ_ENTITY+"/"+label, ObjectNode.class);
+//		ResponseEntity response = restTemplate.postForEntity(
+//				baseUrl+READ_ENTITY,
+//				entity,
+//				ObjectNode.class);
+		return response;
+		
+	}
+
+	@Then("^record retrieval should be unsuccessful$")
+	public void record_retrieval_should_be_unsuccessful() throws Exception {
+		checkUnsuccessfulResponse();
+	}
+	
+	@Given("^an existent record id$")
+	public void an_existent_record_id() throws Exception {
+		jsonldData();
+		addEntity();
+		checkSuccessfulResponse();
+	}
+
+	@Then("^record retrieval should be successful$")
+	public void record_retrieval_should_be_successful() throws Exception {
+		checkSuccessfulResponse();
 	}
 }
