@@ -1,6 +1,6 @@
 package io.opensaber.converters;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,29 +8,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.riot.RDFDataMgr;
 import org.eclipse.rdf4j.model.BNode;
-import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.FOAF;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.junit.Test;
-
-import com.complexible.common.rdf.StatementIterator;
 
 public class JenaRDF4JTest {
 	
 	@Test
-	public void test_jena_to_rdf4j() throws RDFParseException, UnsupportedRDFormatException, IOException{
+	public void test_jena_to_rdf4j() throws IOException{
 		ModelBuilder builder = new ModelBuilder();
 		String subjectLabel = "ex:Picasso";
 		buildRDF4J(builder, subjectLabel);
