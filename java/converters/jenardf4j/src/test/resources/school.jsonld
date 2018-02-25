@@ -1,0 +1,44 @@
+{
+    "@context": {
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "sample": "http://example.com/voc/teacher/1.0.0/",
+      "xsd": "http://www.w3.org/2001/XMLSchema#"
+    },
+    "@graph": [
+      {
+        "@id": "_:fa7740c185fb247729c7296c36b5c1257b1",
+        "@type": "sample:IndianUrbanPostalAddress",
+        "sample:city": "Gurgaon",
+        "sample:district": "Gurgaon",
+        "sample:mohalla": "Sector 14",
+        "sample:municipality": "MCG",
+        "sample:pinCode": 122001,
+        "sample:wardNumber": "456"
+      },
+      {
+        "@id": "!samp131d",
+        "@type": "sample:School",
+        "sample:academicCalendarYearEnd": {
+          "@type": "xsd:gYear",
+          "@value": "2018"
+        },
+        "sample:academicCalendarYearStart": {
+          "@type": "xsd:gYear",
+          "@value": "2017"
+        },
+        "sample:address": {
+          "@id": "_:fa7740c185fb247729c7296c36b5c1257b1"
+        },
+        "sample:area": {
+          "@id": "sample:AreaTypeCode-URBAN"
+        },
+        "sample:assemblyConstituency": "Gurgaon",
+        "sample:clusterResourceCentre": "some Cluster Resource",
+        "sample:revenueBlock": "some block",
+        "sample:schoolName": "DAV Public School",
+        "sample:udiseNumber": 23456789876
+      }
+    ]
+  }
+  
