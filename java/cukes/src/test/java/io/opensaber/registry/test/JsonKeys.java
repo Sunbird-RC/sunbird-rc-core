@@ -8,7 +8,7 @@ package io.opensaber.registry.test;
 public class JsonKeys {
 	
 	public static String RESPONSE = "response";
-	public static String SUCCESS = "success";
+	public static String SUCCESSFUL = "successful";
 	public static String FAILURE = "failure";
 
 }

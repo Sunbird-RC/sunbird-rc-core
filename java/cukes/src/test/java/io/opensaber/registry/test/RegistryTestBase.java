@@ -16,7 +16,7 @@ public class RegistryTestBase {
 	
 	public String jsonld;
 	public static final String FORMAT = "JSON-LD";
-	private static final String REPLACING_SUBJECT_LABEL = "!samp131d";
+	private static final String REPLACING_SUBJECT_LABEL = "<@id>";
 	private static final String EMPTY_STRING = "";
 	
 	public void setJsonld(String filename){
