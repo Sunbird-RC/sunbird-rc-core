@@ -1,6 +1,6 @@
 package io.opensaber.converters;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,6 +9,9 @@ import java.io.InputStreamReader;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.riot.RDFDataMgr;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -22,6 +25,8 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.junit.Test;
 
+import com.complexible.common.rdf.StatementIterator;
+
 public class JenaRDF4JTest {
 	
 	@Test
@@ -29,8 +34,29 @@ public class JenaRDF4JTest {
 		ModelBuilder builder = new ModelBuilder();
 		String subjectLabel = "ex:Picasso";
 		buildRDF4J(builder, subjectLabel);
-		Model jenaModel = JenaRDF4J.asJenaModel(builder.build());
-		assertNotNull(jenaModel);
+		org.eclipse.rdf4j.model.Model rdf4jModel = builder.build();
+		Model jenaModel = JenaRDF4J.asJenaModel(rdf4jModel);
+		org.eclipse.rdf4j.model.Model _rdf4jModel = JenaRDF4J.asRDF4JModel(jenaModel);
+		assertEquals(rdf4jModel, _rdf4jModel);
+//		TODO need to write tests - performing visual inspection now
+		printJenaStatements(jenaModel);
+		printRDF4JStatements(rdf4jModel);
+		printRDF4JStatements(_rdf4jModel);
+	}
+
+	private void printRDF4JStatements(org.eclipse.rdf4j.model.Model rdf4jModel) {
+		for (org.eclipse.rdf4j.model.Statement statement: rdf4jModel) {
+			System.out.println(statement);
+		}
+		
+	}
+
+	private void printJenaStatements(Model jenaModel) {
+		StmtIterator iterator = jenaModel.listStatements();
+		while(iterator.hasNext()){
+			Statement statement = iterator.next();
+			System.out.println(statement);
+		}
 	}
 
 	private void buildRDF4J(ModelBuilder builder, String subjectLabel) {

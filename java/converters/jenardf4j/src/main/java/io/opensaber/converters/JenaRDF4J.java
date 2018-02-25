@@ -157,7 +157,7 @@ public class JenaRDF4J {
 		}
 		else if (theLiteral.getLanguage() != null) {
 			return mInternalModel.createLiteral(theLiteral.getLabel(),
-												theLiteral.getLanguage().toString());
+												theLiteral.getLanguage().orElse(null));
 		}
 		else if (theLiteral.getDatatype() != null) {
 			return mInternalModel.createTypedLiteral(theLiteral.getLabel(),
@@ -188,7 +188,7 @@ public class JenaRDF4J {
 	 * @param theModel the model to convert
 	 * @return the set of statements in the Jena model saved in a rdf4j Graph
 	 */
-	public static org.eclipse.rdf4j.model.Model asrdf4jGraph(org.apache.jena.rdf.model.Model theModel) {
+	public static org.eclipse.rdf4j.model.Model asRDF4JModel(org.apache.jena.rdf.model.Model theModel) {
 		org.eclipse.rdf4j.model.Model aModel = new LinkedHashModel();
 
 		StmtIterator sIter = theModel.listStatements();
