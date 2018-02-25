@@ -62,12 +62,8 @@ public class RegistryController extends SpringBootServletInitializer {
 	@RequestMapping(value="/addEntity",method=RequestMethod.POST)
 	public ResponseEntity addEntity(@RequestAttribute Model rdf) throws JsonProcessingException, DuplicateRecordException, InvalidTypeException{
 		try{
-			boolean status = registryService.addEntity(rdf);
-			if (status) {
-				return ResponseUtil.successResponse();
-			} else {
-				return ResponseUtil.failureResponse(Constants.FAILED_INSERTION_MESSAGE);
-			}
+			registryService.addEntity(rdf);
+			return ResponseUtil.successResponse();
 		} catch (DuplicateRecordException e) {
 			return ResponseUtil.failureResponse(e.getMessage());
 		} catch (InvalidTypeException e) {
@@ -96,8 +92,8 @@ public class RegistryController extends SpringBootServletInitializer {
 	@ResponseBody
 	@RequestMapping(value="/getEntity",method=RequestMethod.POST)
 	public ResponseEntity getEntity(@RequestBody String entity) throws JsonProcessingException, RecordNotFoundException{
-		Object responseObj = registryService.getEntityById(entity);
-		return ResponseUtil.successResponse(responseObj);
+		org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(entity);
+		return ResponseUtil.successResponse(entityModel);
 	}
 
 }

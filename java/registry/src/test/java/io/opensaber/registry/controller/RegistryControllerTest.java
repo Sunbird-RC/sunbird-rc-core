@@ -50,8 +50,7 @@ public class RegistryControllerTest extends RegistryTestBase{
 	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException {
 		Model model = getNewValidRdf(VALID_JSONLD,CONTEXT_CONSTANT);
 		duplicateRdf = model;
-		boolean response = registryService.addEntity(model);
-		assertTrue(response);
+		registryService.addEntity(model);
 	}
 	
 	@Test
