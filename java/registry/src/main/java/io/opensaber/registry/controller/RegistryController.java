@@ -20,6 +20,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -78,11 +79,24 @@ public class RegistryController extends SpringBootServletInitializer {
 		return new ResponseEntity<Response>(response, HttpStatus.OK);
 	}
 
-	@ResponseBody
-	@RequestMapping(value="/getEntity",method=RequestMethod.POST)
-	public ResponseEntity getEntity(@RequestBody String entity) throws JsonProcessingException, RecordNotFoundException{
-		org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(entity);
-		return ResponseUtil.successResponse(entityModel);
+	@RequestMapping(value = "/getEntity/{id}", method = RequestMethod.GET)
+	public ResponseEntity<Response> getEntity(@PathVariable("id") String id){
+		Response response = new Response();
+		ResponseParams responseParams = new ResponseParams();
+		response.setId(UUID.randomUUID().toString());
+		response.setEts(System.currentTimeMillis() / 1000L);
+		response.setVer("1.0");
+		response.setParams(responseParams);
+		try {
+			org.eclipse.rdf4j.model.Model entityModel;
+			id = "http://example.com/voc/teacher/1.0.0/" + id;
+			entityModel = registryService.getEntityById(id);
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+		} catch (RecordNotFoundException e) {
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		}
+		return new ResponseEntity<Response>(response, HttpStatus.OK);
 	}
 
 }

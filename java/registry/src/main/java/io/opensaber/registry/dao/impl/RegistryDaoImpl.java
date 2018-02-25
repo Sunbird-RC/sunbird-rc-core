@@ -306,6 +306,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
 		TinkerGraph graph = TinkerGraph.open();
+		logger.info("FETCH: "+label);
 		GraphTraversal<Vertex, Vertex> hasLabel = traversalSource.clone().V().hasLabel(label);
 		Graph parsedGraph = TinkerGraph.open();
 		if (!hasLabel.hasNext()) {
