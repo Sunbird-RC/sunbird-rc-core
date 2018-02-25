@@ -17,7 +17,7 @@
       "sample:wardNumber": "456"
     },
     {
-      "@id": "!samp131d",
+      "@id": "<@id>",
       "@type": "sample:School",
       "sample:academicCalendarYearEnd": {
         "@type": "xsd:gYear",
