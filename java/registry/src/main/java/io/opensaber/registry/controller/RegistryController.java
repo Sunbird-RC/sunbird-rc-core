@@ -66,10 +66,7 @@ public class RegistryController extends SpringBootServletInitializer {
 		try{
 			registryService.addEntity(rdf);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-		} catch (DuplicateRecordException e) {
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		} catch (InvalidTypeException e) {
+		} catch (DuplicateRecordException | InvalidTypeException e) {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
