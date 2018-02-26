@@ -128,11 +128,11 @@ public class RegistryDaoImpl implements RegistryDao {
 		if (traversal.hasNext()) {
 			Map<String, Vertex> createdNodeMap = new HashMap<>();
 			Vertex v = traversal.next();
-			Vertex newVertex = getNodeWithProperties(traversalSource, v, false, createdNodeMap);
+			Vertex newVertex = getNodeWithProperties(traversalSource, v, createdNodeMap);
 
 			while (traversal.hasNext()) {
 				v = traversal.next();
-				newVertex = getNodeWithProperties(traversalSource, v, true, createdNodeMap);
+				newVertex = getNodeWithProperties(traversalSource, v, createdNodeMap);
 				Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
 				Iterator<Edge> incomingEdges = v.edges(Direction.IN);
 				createEdgeNodes(outgoingEdges, traversalSource, newVertex, map, Direction.OUT, v, createdNodeMap);
@@ -142,20 +142,16 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 	}
 
-	private Vertex getNodeWithProperties(GraphTraversalSource traversal, Vertex v, boolean dbCheck, Map<String, Vertex> createdNodeMap) {
+	private Vertex getNodeWithProperties(GraphTraversalSource traversal, Vertex v, Map<String, Vertex> createdNodeMap) {
 
 		Vertex newVertex;
 
 		if (createdNodeMap.containsKey(v.label())) {
 			newVertex = createdNodeMap.get(v.label());
 		} else {
-			if (dbCheck) {
-				GraphTraversal nodes = traversal.clone().V().hasLabel(v.label());
-				if (nodes.hasNext()) {
-					newVertex = (Vertex) nodes.next();
-				} else {
-					newVertex = traversal.clone().addV(v.label()).next();
-				}
+			GraphTraversal nodes = traversal.clone().V().hasLabel(v.label());
+			if (nodes.hasNext()) {
+				newVertex = (Vertex) nodes.next();
 			} else {
 				newVertex = traversal.clone().addV(v.label()).next();
 			}
@@ -209,7 +205,7 @@ public class RegistryDaoImpl implements RegistryDao {
 
 			if (!nodeAndEdgeExists) {
 
-				Vertex nextVertex = getNodeWithProperties(traversal, vertex, true, createdNodeMap);
+				Vertex nextVertex = getNodeWithProperties(traversal, vertex, createdNodeMap);
 
 				if (direction.equals(Direction.OUT)) {
 					newVertex.addEdge(edge.label(), nextVertex);
