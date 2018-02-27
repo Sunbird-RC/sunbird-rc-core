@@ -9,13 +9,14 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-
+import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.InvalidTypeException;
@@ -60,12 +61,13 @@ public class RegistryServiceImpl implements RegistryService{
 					rootSubjectFound = true;
 				}
 			}
-			graph = RDF2Graph.convertJenaRDFStatement2Graph(rdfStatement, graph);
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
 		}
+
 		if (label == null) {
 			throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
 		}
-
 		registryDao.addEntity(graph, label);
 	}
 

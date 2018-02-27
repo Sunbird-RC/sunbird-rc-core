@@ -37,14 +37,13 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
-import org.http4s.CacheDirective;
 
+import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.utils.converters.RDF2Graph;
 
@@ -52,7 +51,6 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.UUID;
-import static org.mockito.Mockito.*;
 
 
 @RunWith(SpringRunner.class)
@@ -153,7 +151,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 	}
 	
 	@Test
-	public void test_adding_shared_nodes_with_updated_properties() throws DuplicateRecordException,Exception{
+	public void test_adding_shared_nodes_with_updated_properties() throws DuplicateRecordException{
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
 		Resource resource = ResourceFactory.createResource(rootLabel);
@@ -163,7 +161,6 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 		updateGraphFromRdf(rdfModel);
 		boolean response = registryDao.addEntity(graph,rootLabel);
 		assertTrue(response);
-		closeDB();
 	}
 	
 	public void closeDB() throws Exception {
@@ -185,7 +182,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 	
 	
 	@Test
-	public void test_read_with_some_other_data() throws IOException, DuplicateRecordException, RecordNotFoundException{
+	public void test_read_with_some_other_data() throws IOException, DuplicateRecordException, RecordNotFoundException,Exception{
 		expectedEx.expect(RecordNotFoundException.class);
 		expectedEx.expectMessage(Constants.ENTITY_NOT_FOUND);
 		String label1 = UUID.randomUUID().toString();
@@ -193,6 +190,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 		getVertexForSubject(label1, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
 		registryDao.addEntity(graph,label1);
 		registryDao.getEntityById(label2.toString());
+		closeDB();
 	}
 
 	private void dump_graph(Graph g,String filename) throws IOException {
@@ -210,7 +208,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
 	}
 	
-	@Test @Ignore
+	@Test
 	public void test_read_nested_node() throws NullPointerException, DuplicateRecordException, RecordNotFoundException{
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
@@ -300,7 +298,8 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 					rootSubjectFound = true;
 				}
 			}
-			graph = RDF2Graph.convertJenaRDFStatement2Graph(rdfStatement, graph);
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);;
 	}
 		return label;
 	}
