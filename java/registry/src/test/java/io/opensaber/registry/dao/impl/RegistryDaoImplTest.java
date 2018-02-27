@@ -37,6 +37,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.config.GenericConfiguration;
@@ -225,6 +226,24 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 		}
 		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
 	}
+	
+	@Test
+	public void test_count_nested_node_with_first_node_as_blank_node() throws NullPointerException, DuplicateRecordException, RecordNotFoundException{
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdfWithFirstNodeAsBlankNode(rdfModel);
+		boolean response = registryDao.addEntity(graph,rootLabel);
+		assertTrue(response);
+		Graph entity = registryDao.getEntityById(rootLabel);
+		assertNotNull(entity);
+		try {
+			dump_graph(graph, "in_count.json");
+			dump_graph(entity, "out_count.json");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
+	}
 /*
 	@Test
 	public void testGetEntity(){
@@ -299,7 +318,43 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 				}
 			}
 			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);;
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+	}
+		return label;
+	}
+	
+	
+	private String updateGraphFromRdfWithFirstNodeAsBlankNode(Model rdfModel){
+		StmtIterator iterator = rdfModel.listStatements();
+		StmtIterator iterator2 = rdfModel.listStatements();
+		boolean rootSubjectFound = false;
+		String label = null;
+		while(iterator2.hasNext()){
+			Statement rdfStatement = iterator2.nextStatement();
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			String subjectValue = rdf4jStatement.getSubject().toString();
+			String predicate = rdf4jStatement.getPredicate().toString();
+			if(subjectValue.startsWith("_:") && predicate.equals(RDF.TYPE.toString())){
+				graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+				break;
+			}
+		}
+		while(iterator.hasNext()){
+			Statement rdfStatement = iterator.nextStatement();
+			if(!rootSubjectFound){
+				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement,type);
+				if(label!=null){
+					rootSubjectFound = true;
+				}
+			}
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			String subjectValue = rdf4jStatement.getSubject().toString();
+			String predicate = rdf4jStatement.getPredicate().toString();
+			if(subjectValue.startsWith("_:")&& predicate.equals(RDF.TYPE.toString())){
+				continue;
+			}
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
 	}
 		return label;
 	}
