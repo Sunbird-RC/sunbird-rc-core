@@ -231,17 +231,19 @@ public class RDF2GraphTest {
 				.subject(reaction)
 					.add("ex:rating","5")
 					.add(RDF.TYPE,"ex:AggregateRating");
-		editGraph(graph, modelBuilder.build());
-		Model rdfModel = RDF2Graph.convertGraph2RDFModel(graph, SUBJECT_EXPANDED_LABEL);
+		Model expectedModel = modelBuilder.build();
+		editGraph(graph, expectedModel);
+		Model convertedModel = RDF2Graph.convertGraph2RDFModel(graph, SUBJECT_EXPANDED_LABEL);
 		IRI blankPred = vf.createIRI("http://example.org/creatorOf");
-		checkNodes(graph, modelBuilder, blankPred, rdfModel, BNode.class);
+		checkNodes(graph, expectedModel, blankPred, convertedModel, BNode.class);
 		IRI iriPred = vf.createIRI("http://example.org/homeAddress");
-		checkNodes(graph, modelBuilder, iriPred, rdfModel, IRI.class);
-		assertEquals(13, rdfModel.size()); 
+		checkNodes(graph, expectedModel, iriPred, convertedModel, IRI.class);
+		assertEquals(expectedModel.size(), convertedModel.size()); 
+		System.out.println(expectedModel);
+		System.out.println(convertedModel);
 	}
 
-	private void checkNodes(Graph graph, ModelBuilder modelBuilder, IRI iriPred, Model rdfModel, Class _class) {
-		Model expectedModel = modelBuilder.build();
+	private void checkNodes(Graph graph, Model rdfModel, IRI iriPred, Model expectedModel, Class _class) {
 		Set<Value> actualObjects = rdfModel.filter(null, iriPred, null).objects();
 		Set<Value> expectedObjects = expectedModel.filter(null, iriPred, null).objects();
 		Assert.assertThat(expectedObjects, (Every.everyItem(instanceOf(_class))));
