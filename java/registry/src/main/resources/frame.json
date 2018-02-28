@@ -5,5 +5,5 @@
       "sample": "http://example.com/voc/teacher/1.0.0/",
       "xsd": "http://www.w3.org/2001/XMLSchema#"
     },
-    "rdf:type":"sample:School"
+    "@type":"sample:School"
   }
