@@ -13,17 +13,17 @@ import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 public class RDFConverter implements BaseMiddleware {
 	
 	private static final String JSONLD_DATA_IS_MISSING = "JSON-LD data is missing!";
-	public static final String FORMAT = "JSON-LD";
+	private static final String FORMAT = "JSON-LD";
 
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
 		Object jsonld = mapData.get(Constants.ATTRIBUTE_NAME);
-		if (jsonld==null) {
-			throw new MiddlewareHaltException(this.getClass().getName()+JSONLD_DATA_IS_MISSING); 
+		if (jsonld == null) {
+			throw new MiddlewareHaltException(this.getClass().getName() + JSONLD_DATA_IS_MISSING);
 		} else if (jsonld instanceof String) {
 			Model model = ShaclexValidator.parse(jsonld.toString(), FORMAT);
 			mapData.put(Constants.RDF_OBJECT, model);
 		} else {
-			throw new MiddlewareHaltException(this.getClass().getName()+"JSONLD data is invalid!");
+			throw new MiddlewareHaltException(this.getClass().getName() + "JSONLD data is invalid!");
 		}
 		return mapData;
 	}

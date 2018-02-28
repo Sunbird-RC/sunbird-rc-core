@@ -15,11 +15,6 @@ import io.opensaber.registry.interceptor.handler.BaseResponseHandler;
 import io.opensaber.registry.middleware.impl.RdfToJsonldConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
-/**
- * 
- * @author jyotsna
- *
- */
 @Component
 public class RdfToJsonldInterceptor extends BaseResponseHandler implements HandlerInterceptor{
 	

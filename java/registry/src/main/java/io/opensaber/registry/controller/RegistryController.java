@@ -85,9 +85,8 @@ public class RegistryController extends SpringBootServletInitializer {
 		response.setVer("1.0");
 		response.setParams(responseParams);
 		try {
-			org.eclipse.rdf4j.model.Model entityModel;
 			id = "http://example.com/voc/teacher/1.0.0/" + id;
-			entityModel = registryService.getEntityById(id);
+			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(id);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (RecordNotFoundException e) {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
