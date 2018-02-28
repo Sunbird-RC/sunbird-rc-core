@@ -283,15 +283,14 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	}
 
 	@Test
-	@Ignore
 	public void test_blank_node_uuid_update(@Mocked UUID mockedUUID) {
 
-		new NonStrictExpectations() {{
-			UUID.randomUUID();
-			result = mockedUUID;
-			UUID.randomUUID().toString();
-			result = "test-UUID";
-		}};
+		new NonStrictExpectations() {
+			{
+				UUID.randomUUID(); returns(mockedUUID);
+				mockedUUID.toString(); returns("test-UUID");
+			}
+		};
 
 		Model rdfModel = getNewValidRdf();
 		java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
