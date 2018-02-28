@@ -1,6 +1,7 @@
 package io.opensaber.registry.controller;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -94,39 +95,9 @@ public class RegistryController extends SpringBootServletInitializer {
 			org.eclipse.rdf4j.model.Model entityModel;
 			id = "http://example.com/voc/teacher/1.0.0/" + id;
 			entityModel = registryService.getEntityById(id);
-			Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
-			DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
-			JsonLDWriteContext ctx = new JsonLDWriteContext();
-			ClassPathResource res = new ClassPathResource("frame.json");
-			File file = res.getFile();
-			String fileString = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-			logger.info(fileString);
-			ctx.setFrame(fileString);
-			WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT) ;
-			PrefixMap pm = RiotLib.prefixMap(g);
-			String base = null;
-			StringWriter sWriterJena = new StringWriter();
-			w.write(sWriterJena, g, pm, base, ctx) ;
-			String jenaJSON = sWriterJena.toString();
-			logger.info("*************JSONLD_FRAME_PRETTY**********");
-			logger.info(jenaJSON);
-			
-			StringWriter sWriterJena2 = new StringWriter();
-			RDFDataMgr.write(sWriterJena2, jenaEntityModel, org.apache.jena.riot.RDFFormat.JSONLD_PRETTY);
-			logger.info("*************JSONLD_PRETTY**********");
-			String jenaJSON2 = sWriterJena2.toString();//.replaceAll("http://www.w3.org/1999/02/22-rdf-syntax-ns#type", "@type");
-			logger.info(jenaJSON2);
+			String jenaJSON = registryService.frameEntity(entityModel);
 			JSONObject jenaObj=new JSONObject(jenaJSON);
 			responseParams.setResultMap(jenaObj.toMap());
-//			logger.info("*************JENA**********");
-//			StringWriter sWriter = new StringWriter();
-//			Rio.write(entityModel, sWriter, RDFFormat.JSONLD);
-//			String jsonresult = sWriter.toString();
-//			logger.info("*************RDF4J**********");
-//			logger.info(jsonresult);
-//			logger.info("*************RDF4J**********");
-//			JSONArray obj=new JSONArray(jsonresult);
-//			responseParams.setResultList(obj.toList());
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (RecordNotFoundException e) {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
