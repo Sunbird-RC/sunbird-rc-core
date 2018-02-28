@@ -6,11 +6,6 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 
-/**
- * 
- * @author jyotsna
- *
- */
 public interface RegistryDao {
 	
 	public List getEntityList();

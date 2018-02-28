@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.opensaber.registry.interceptor;
 
 import java.util.Map;
@@ -18,10 +15,6 @@ import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
-/**
- * @author jyotsna
- *
- */
 @Order(1)
 @Component
 public class RDFConversionInterceptor extends BaseRequestHandler implements HandlerInterceptor {

@@ -7,7 +7,6 @@ import javax.mail.internet.NewsAddress;
 
 import io.opensaber.registry.sink.DatabaseProvider;
 import scala.reflect.internal.PrivateWithin;
-import scalaz.std.iterable;
 
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -108,8 +107,8 @@ public class RegistryDaoImpl implements RegistryDao {
 		GraphTraversalSource gts = graph.traversal();
 		GraphTraversal<Vertex, Vertex> traversal = gts.V();
 		Map<String, List<Object[]>> map = new HashMap<>();
-		
-		if (graphFromStore.features().graph().supportsTransactions()){
+
+		if (graphFromStore.features().graph().supportsTransactions()) {
 			org.apache.tinkerpop.gremlin.structure.Transaction tx;
 			tx = graphFromStore.tx();
 			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
