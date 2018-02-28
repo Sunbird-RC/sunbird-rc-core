@@ -1,12 +1,9 @@
 package io.opensaber.utils.converters;
 
-import java.io.StringWriter;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Stack;
 
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -27,8 +24,6 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,52 +43,11 @@ public final class RDF2Graph
 			if(object.isURIResource()){
 				if(object.toString().equals(type)){
 					label = subjectValue;
-					logger.info("Printing label:" + label);
+					logger.info("Printing root label:" + label);
 				}
 			}
 		}
 		return label;
-	}
-
-	public static Graph convertJenaRDFStatement2Graph(org.apache.jena.rdf.model.Statement statement, Graph graph){
-		ValueFactory factory = SimpleValueFactory.getInstance();
-		org.apache.jena.rdf.model.Resource subject = statement.getSubject();
-		RDFNode object =statement.getObject();
-		Property property = statement.getPredicate();
-		Value subjectValue = getValueFromObject(subject, factory);
-		Value objectValue = getValueFromObject(object, factory);
-		IRI predicate = factory.createIRI(property.toString());
-		Statement finalStatement = factory.createStatement((Resource)subjectValue, predicate, objectValue);
-		graph = convertRDFStatement2Graph(finalStatement, graph);
-		return graph;
-	}
-
-	private static Value getValueFromObject(org.apache.jena.rdf.model.Resource object, ValueFactory factory){
-		Value value = null;
-		if(object.isLiteral()){
-			value = factory.createLiteral(object.toString());
-		}else if(object.isURIResource()){
-			value = factory.createIRI(object.toString());
-		}else{
-			value = factory.createBNode(object.toString());
-		}
-
-		return value;
-
-	}
-
-	private static Value getValueFromObject(RDFNode object, ValueFactory factory){
-		Value value = null;
-		if(object.isLiteral()){
-			value = factory.createLiteral(object.toString());
-		}else if(object.isURIResource()){
-			value = factory.createIRI(object.toString());
-		}else{
-			value = factory.createBNode(object.toString());
-		}
-
-		return value;
-
 	}
 
 	public static Graph convertRDFStatement2Graph(Statement rdfStatement, Graph graph) {
@@ -105,46 +59,34 @@ public final class RDF2Graph
 	}
 
 	private static void updateGraph(Value subjectValue, IRI property, Value objectValue, Graph graph) {
-		GraphTraversalSource t = graph.traversal();
-		GraphTraversal<Vertex, Vertex> hasLabel = t.V().hasLabel(subjectValue.toString());
-		Vertex s;
-		if(hasLabel.hasNext()){
-			s = hasLabel.next();
-		} else {
-			s = graph.addVertex(
-					T.label,
-					subjectValue.toString());
-		}
+		Vertex s = getExistingVertexOrAdd(subjectValue.toString(), graph);
+		
 		if (objectValue instanceof Literal) {
 			Literal literal = (Literal)objectValue;
 			s.property(property.toString(), literal.getLabel());
 
 		} else if (objectValue instanceof IRI) {
 			IRI objectIRI = (IRI)objectValue;
-			Vertex o = graph.addVertex(
-					T.label,
-					objectIRI.toString());
+			Vertex o = getExistingVertexOrAdd(objectIRI.toString(), graph);
 			s.addEdge(property.toString(), o);
+			
 		} else if (objectValue instanceof BNode) {
 			BNode objectBNode = (BNode)objectValue;
-			Vertex o = graph.addVertex(
-					T.label,
-					objectBNode.toString());
+			Vertex o = getExistingVertexOrAdd(objectBNode.toString(), graph);		
 			s.addEdge(property.toString(), o);
+			
 		}
 	}
 	
-	public static org.apache.jena.rdf.model.Model convertRDFModel2Jena(Model rdf4jModel) {
-		org.apache.jena.rdf.model.Model jenaModel = ModelFactory.createDefaultModel();;
-		rdf4jModel.forEach(stmt -> jenaModel.add(convert(stmt)));
-		return jenaModel;
-	}
-
-	private static org.apache.jena.rdf.model.Statement convert(Statement rdf4jStatement) {
-		Value subjectValue = rdf4jStatement.getSubject();
-		IRI property = rdf4jStatement.getPredicate();
-		Value objectValue = rdf4jStatement.getObject();
-		return null;
+	private static Vertex getExistingVertexOrAdd(String label, Graph graph){
+		GraphTraversalSource t = graph.traversal();
+		GraphTraversal<Vertex, Vertex> traversal = t.V();
+		GraphTraversal<Vertex, Vertex> hasLabel = traversal.hasLabel(label);
+		if(hasLabel.hasNext()){
+			return hasLabel.next();
+		} else {
+			return graph.addVertex(T.label,label);
+		}
 	}
 
 	public static Model convertGraph2RDFModel(Graph graph, String label) {
@@ -160,10 +102,14 @@ public final class RDF2Graph
 	}
 
 	private static void extractModelFromVertex(ModelBuilder builder, Vertex s) {
+		logger.info("Vertex "+s.label());
+		ValueFactory vf = SimpleValueFactory.getInstance();
+		logger.info("ADDING it as Subject");
 		builder.subject(s.label());
 		Iterator<VertexProperty<String>> propertyIter = s.properties();
 		while (propertyIter.hasNext()){
 			VertexProperty<String> property = propertyIter.next();
+			logger.info("ADDING Property"+property.label()+": "+property.value());
 			builder.add(property.label(), property.value());
 		}
 		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
@@ -172,7 +118,16 @@ public final class RDF2Graph
 		while(edgeIter.hasNext()){
 			edge = edgeIter.next();
 			s = edge.inVertex();
-			builder.add(edge.label(), s.label());
+//			builder.add(edge.label(), bNode);
+			Resource node;
+			if(s.label().startsWith("_:")){
+				logger.info("ADDING NODE - BLANK");
+				node = vf.createBNode();
+			} else {
+				node = vf.createIRI(s.label());
+				logger.info("ADDING NODE - IRI");
+			}
+			builder.add(edge.label(), node);
 			vStack.push(s);
 		}
 		Iterator<Vertex> vIterator = vStack.iterator();

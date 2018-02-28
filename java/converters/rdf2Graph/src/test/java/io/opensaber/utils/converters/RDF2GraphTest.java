@@ -5,7 +5,9 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Set;
 
+import org.apache.jena.reasoner.rulesys.builtins.IsBNode;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -27,8 +29,16 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.FOAF;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.hamcrest.FeatureMatcher;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
+import org.hamcrest.beans.HasPropertyWithValue;
+import org.hamcrest.core.Every;
+import org.hamcrest.core.Is;
+import static org.hamcrest.Matchers.instanceOf;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -179,10 +189,10 @@ public class RDF2GraphTest {
 			"\"Pablo\"^^<http://www.w3.org/2001/XMLSchema#string>",
 			"http://example.org/Picasso",
 			"http://xmlns.com/foaf/0.1/depiction",
-			"\"http://example.org/Image\"^^<http://www.w3.org/2001/XMLSchema#string>",
+			"http://example.org/Image",
 			"http://example.org/Picasso",
 			"http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-			"\"http://example.org/Artist\"^^<http://www.w3.org/2001/XMLSchema#string>"
+			"http://example.org/Artist"
 		};
 		int i = 0;
 		for(Statement rdfStatement: rdfModel) {
@@ -201,7 +211,7 @@ public class RDF2GraphTest {
 	public void createTriplesFromBNode(){
 		Graph graph = createGraph();
 		ValueFactory vf = SimpleValueFactory.getInstance();
-		BNode address = vf.createBNode();
+		IRI address = vf.createIRI("ex:specific_address_id");
 		BNode painting = vf.createBNode();
 		BNode reaction = vf.createBNode();
 		ModelBuilder modelBuilder = createSimpleRDF(SUBJECT_LABEL);
@@ -221,9 +231,23 @@ public class RDF2GraphTest {
 				.subject(reaction)
 					.add("ex:rating","5")
 					.add(RDF.TYPE,"ex:AggregateRating");
-		editGraph(graph, modelBuilder.build());
-		Model rdfModel = RDF2Graph.convertGraph2RDFModel(graph, SUBJECT_EXPANDED_LABEL);
-		assertEquals(13, rdfModel.size()); 
+		Model expectedModel = modelBuilder.build();
+		editGraph(graph, expectedModel);
+		Model convertedModel = RDF2Graph.convertGraph2RDFModel(graph, SUBJECT_EXPANDED_LABEL);
+		IRI blankPred = vf.createIRI("http://example.org/creatorOf");
+		checkNodes(graph, expectedModel, blankPred, convertedModel, BNode.class);
+		IRI iriPred = vf.createIRI("http://example.org/homeAddress");
+		checkNodes(graph, expectedModel, iriPred, convertedModel, IRI.class);
+		assertEquals(expectedModel.size(), convertedModel.size()); 
+		System.out.println(expectedModel);
+		System.out.println(convertedModel);
+	}
+
+	private void checkNodes(Graph graph, Model rdfModel, IRI iriPred, Model expectedModel, Class _class) {
+		Set<Value> actualObjects = rdfModel.filter(null, iriPred, null).objects();
+		Set<Value> expectedObjects = expectedModel.filter(null, iriPred, null).objects();
+		Assert.assertThat(expectedObjects, (Every.everyItem(instanceOf(_class))));
+		Assert.assertThat(actualObjects, (Every.everyItem(instanceOf(_class))));
 	}
 
 	private long countGraphVertices(Graph graph) {
@@ -261,5 +285,4 @@ public class RDF2GraphTest {
 		Graph graph = TinkerGraph.open();
 		return graph;
 	}
-
 }
