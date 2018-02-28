@@ -88,19 +88,6 @@ public final class RDF2Graph
 			return graph.addVertex(T.label,label);
 		}
 	}
-	
-	public static org.apache.jena.rdf.model.Model convertRDFModel2Jena(Model rdf4jModel) {
-		org.apache.jena.rdf.model.Model jenaModel = ModelFactory.createDefaultModel();
-		rdf4jModel.forEach(stmt -> jenaModel.add(convert(stmt)));
-		return jenaModel;
-	}
-
-	private static org.apache.jena.rdf.model.Statement convert(Statement rdf4jStatement) {
-		Value subjectValue = rdf4jStatement.getSubject();
-		IRI property = rdf4jStatement.getPredicate();
-		Value objectValue = rdf4jStatement.getObject();
-		return null;
-	}
 
 	public static Model convertGraph2RDFModel(Graph graph, String label) {
 		ModelBuilder builder = new ModelBuilder();
@@ -115,11 +102,14 @@ public final class RDF2Graph
 	}
 
 	private static void extractModelFromVertex(ModelBuilder builder, Vertex s) {
+		logger.info("Vertex "+s.label());
 		ValueFactory vf = SimpleValueFactory.getInstance();
+		logger.info("ADDING it as Subject");
 		builder.subject(s.label());
 		Iterator<VertexProperty<String>> propertyIter = s.properties();
 		while (propertyIter.hasNext()){
 			VertexProperty<String> property = propertyIter.next();
+			logger.info("ADDING Property"+property.label()+": "+property.value());
 			builder.add(property.label(), property.value());
 		}
 		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
@@ -131,9 +121,11 @@ public final class RDF2Graph
 //			builder.add(edge.label(), bNode);
 			Resource node;
 			if(s.label().startsWith("_:")){
+				logger.info("ADDING NODE - BLANK");
 				node = vf.createBNode();
 			} else {
 				node = vf.createIRI(s.label());
+				logger.info("ADDING NODE - IRI");
 			}
 			builder.add(edge.label(), node);
 			vStack.push(s);
