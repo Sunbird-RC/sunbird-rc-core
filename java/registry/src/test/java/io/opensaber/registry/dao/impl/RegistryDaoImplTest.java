@@ -37,14 +37,14 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
-import org.http4s.CacheDirective;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 
+import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.utils.converters.RDF2Graph;
 
@@ -53,13 +53,8 @@ import javax.swing.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static org.mockito.Mockito.*;
 
 
 @RunWith(SpringRunner.class)
@@ -177,7 +172,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	}
 	
 	@Test
-	public void test_adding_shared_nodes_with_updated_properties() throws DuplicateRecordException,Exception{
+	public void test_adding_shared_nodes_with_updated_properties() throws DuplicateRecordException{
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
 		Resource resource = ResourceFactory.createResource(rootLabel);
@@ -187,7 +182,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		updateGraphFromRdf(rdfModel);
 		boolean response = registryDao.addEntity(graph,rootLabel);
 		assertTrue(response);
-		closeDB();
 	}
 	
 	public void closeDB() throws Exception {
@@ -209,7 +203,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	
 	
 	@Test
-	public void test_read_with_some_other_data() throws IOException, DuplicateRecordException, RecordNotFoundException{
+	public void test_read_with_some_other_data() throws IOException, DuplicateRecordException, RecordNotFoundException,Exception{
 		expectedEx.expect(RecordNotFoundException.class);
 		expectedEx.expectMessage(Constants.ENTITY_NOT_FOUND);
 		String label1 = UUID.randomUUID().toString();
@@ -217,6 +211,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		getVertexForSubject(label1, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
 		registryDao.addEntity(graph,label1);
 		registryDao.getEntityById(label2.toString());
+		closeDB();
 	}
 
 	private void dump_graph(Graph g,String filename) throws IOException {
@@ -233,9 +228,9 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 //		TODO Write a better checker
 		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
 	}
-	
-	@Test @Ignore
-	public void test_read_nested_node() throws NullPointerException, DuplicateRecordException, RecordNotFoundException {
+
+	@Test
+	public void test_read_nested_node() throws NullPointerException, DuplicateRecordException, RecordNotFoundException{
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
 		boolean response = registryDao.addEntity(graph,rootLabel);
@@ -245,6 +240,24 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		try {
 			dump_graph(graph, "in.json");
 			dump_graph(entity, "out.json");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
+	}
+	
+	@Test
+	public void test_count_nested_node_with_first_node_as_blank_node() throws NullPointerException, DuplicateRecordException, RecordNotFoundException{
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdfWithFirstNodeAsBlankNode(rdfModel);
+		boolean response = registryDao.addEntity(graph,rootLabel);
+		assertTrue(response);
+		Graph entity = registryDao.getEntityById(rootLabel);
+		assertNotNull(entity);
+		try {
+			dump_graph(graph, "in_count.json");
+			dump_graph(entity, "out_count.json");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -269,38 +282,36 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		assertEquals(1, count);
 	}
 
-    @Test
-    @Ignore
-    public void test_blank_node_uuid_update(@Mocked UUID mockedUUID) {
+	@Test
+	@Ignore
+	public void test_blank_node_uuid_update(@Mocked UUID mockedUUID) {
 
-        new NonStrictExpectations() {{
-            UUID.randomUUID();
-            result = mockedUUID;
-            UUID.randomUUID().toString();
-            result = "test-UUID";
-        }};
+		new NonStrictExpectations() {{
+			UUID.randomUUID();
+			result = mockedUUID;
+			UUID.randomUUID().toString();
+			result = "test-UUID";
+		}};
 
-        Model rdfModel = getNewValidRdf();
-        java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
-        StmtIterator iterator = rdfModel.listStatements();
+		Model rdfModel = getNewValidRdf();
+		java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
+		StmtIterator iterator = rdfModel.listStatements();
 
-        Optional<Statement> stmt = Optional.empty();
-        while (iterator.hasNext()) {
-            Statement st = iterator.next();
-            if (st.getObject().isURIResource()) {
-                String uri = st.getObject().asResource().getURI();
-                if (blankNodes.stream().anyMatch(p -> p.asResource().getURI().equals(uri))) {
-                    stmt = Optional.of(st);
-                    break;
-                }
-            }
-        }
-        Optional<Statement> updatedStatment = RDFUtil.updateIdForBlankNode(stmt.get(), blankNodes);
-        assertEquals("http://example.com/voc/teacher/1.0.0/testUUID", updatedStatment.get().getSubject().toString());
+		Optional<Statement> stmt = Optional.empty();
+		while (iterator.hasNext()) {
+			Statement st = iterator.next();
+			if (st.getObject().isURIResource()) {
+				String uri = st.getObject().asResource().getURI();
+				if (blankNodes.stream().anyMatch(p -> p.asResource().getURI().equals(uri))) {
+					stmt = Optional.of(st);
+					break;
+				}
+			}
+		}
+		Optional<Statement> updatedStatment = RDFUtil.updateIdForBlankNode(stmt.get(), blankNodes);
+		assertEquals("http://example.com/voc/teacher/1.0.0/testUUID", updatedStatment.get().getSubject().toString());
 
-    }
-
-
+	}
 /*
 	@Test
 	public void testGetEntity(){
@@ -374,7 +385,44 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 					rootSubjectFound = true;
 				}
 			}
-			graph = RDF2Graph.convertJenaRDFStatement2Graph(rdfStatement, graph);
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+	}
+		return label;
+	}
+	
+	
+	private String updateGraphFromRdfWithFirstNodeAsBlankNode(Model rdfModel){
+		StmtIterator iterator = rdfModel.listStatements();
+		StmtIterator iterator2 = rdfModel.listStatements();
+		boolean rootSubjectFound = false;
+		String label = null;
+		while(iterator2.hasNext()){
+			Statement rdfStatement = iterator2.nextStatement();
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			String subjectValue = rdf4jStatement.getSubject().toString();
+			String predicate = rdf4jStatement.getPredicate().toString();
+			if(subjectValue.startsWith("_:") && predicate.equals(RDF.TYPE.toString())){
+				graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+				break;
+			}
+		}
+		while(iterator.hasNext()){
+			Statement rdfStatement = iterator.nextStatement();
+			if(!rootSubjectFound){
+				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement,type);
+				if(label!=null){
+					rootSubjectFound = true;
+				}
+			}
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			String subjectValue = rdf4jStatement.getSubject().toString();
+			String predicate = rdf4jStatement.getPredicate().toString();
+			if(subjectValue.startsWith("_:")&& predicate.equals(RDF.TYPE.toString())){
+				continue;
+			}
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
 	}
 		return label;
 	}
