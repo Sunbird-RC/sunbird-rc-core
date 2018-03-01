@@ -5,6 +5,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -34,7 +36,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	
 	private RestTemplate restTemplate;
 	private String baseUrl;
-	private ResponseEntity response;
+	private ResponseEntity<ObjectNode> response;
 	private Response responseObj;
 	private String labelToFetch;
 	private String label;
@@ -68,12 +70,12 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		response = callRegistryCreateAPI();
 	}
 
-	private ResponseEntity callRegistryCreateAPI() {
+	private ResponseEntity<ObjectNode> callRegistryCreateAPI() {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity entity = new HttpEntity(jsonld,headers);
+		HttpEntity<String> entity = new HttpEntity<String>(jsonld,headers);
 		System.out.println(jsonld);
-		ResponseEntity response = restTemplate.postForEntity(
+		ResponseEntity<ObjectNode> response = restTemplate.postForEntity(
 				baseUrl+ADD_ENTITY,
 				entity,
 				ObjectNode.class);
@@ -126,11 +128,11 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		response = callRegistryReadAPI();
 	}
 
-	private ResponseEntity callRegistryReadAPI() {
+	private ResponseEntity<ObjectNode> callRegistryReadAPI() {
 		HttpHeaders headers = new HttpHeaders();
-		HttpEntity entity = new HttpEntity("",headers);
+		HttpEntity<String> entity = new HttpEntity<String>("",headers);
 		System.out.println(label);
-		ResponseEntity response = restTemplate.getForEntity(baseUrl+READ_ENTITY+"/"+label, ObjectNode.class);
+		ResponseEntity<ObjectNode> response = restTemplate.getForEntity(baseUrl+READ_ENTITY+"/"+label, ObjectNode.class);
 //		ResponseEntity response = restTemplate.postForEntity(
 //				baseUrl+READ_ENTITY,
 //				entity,
@@ -154,5 +156,15 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	@Then("^record retrieval should be successful$")
 	public void record_retrieval_should_be_successful() throws Exception {
 		checkSuccessfulResponse();
+	}
+	
+	@Then("^the record should match$")
+	public void the_record_should_match() throws Exception {
+		Map<String, Object> result = responseObj.getParams().getResultMap();
+		List<Object> list = (List<Object>) result.get("@graph");
+		assertEquals(1, list.size());
+		Map<String, Object> object = (Map<String, Object>) list.get(0);
+		assertEquals(object.get("@id"), "sample:"+label);
+//		System.out.println(object.keySet().size());
 	}
 }

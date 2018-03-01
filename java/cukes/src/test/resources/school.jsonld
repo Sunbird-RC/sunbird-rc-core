@@ -7,7 +7,7 @@
   },
   "@graph": [
     {
-      "@id": "_:fa7740c185fb247729c7296c36b5c1257b1",
+      "@id": "sample:fa7740c185fb247729c7296c36b5c1257b1",
       "@type": "sample:IndianUrbanPostalAddress",
       "sample:city": "Gurgaon",
       "sample:district": "Gurgaon",
@@ -28,7 +28,7 @@
         "@value": "2017"
       },
       "sample:address": {
-        "@id": "_:fa7740c185fb247729c7296c36b5c1257b1"
+        "@id": "sample:fa7740c185fb247729c7296c36b5c1257b1"
       },
       "sample:area": {
         "@id": "sample:AreaTypeCode-URBAN"
