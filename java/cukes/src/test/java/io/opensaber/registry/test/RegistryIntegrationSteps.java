@@ -4,10 +4,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.RDFDataMgr;
+import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -74,7 +82,6 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity<String> entity = new HttpEntity<String>(jsonld,headers);
-		System.out.println(jsonld);
 		ResponseEntity<ObjectNode> response = restTemplate.postForEntity(
 				baseUrl+ADD_ENTITY,
 				entity,
@@ -131,7 +138,6 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private ResponseEntity<ObjectNode> callRegistryReadAPI() {
 		HttpHeaders headers = new HttpHeaders();
 		HttpEntity<String> entity = new HttpEntity<String>("",headers);
-		System.out.println(label);
 		ResponseEntity<ObjectNode> response = restTemplate.getForEntity(baseUrl+READ_ENTITY+"/"+label, ObjectNode.class);
 //		ResponseEntity response = restTemplate.postForEntity(
 //				baseUrl+READ_ENTITY,
@@ -160,11 +166,13 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	
 	@Then("^the record should match$")
 	public void the_record_should_match() throws Exception {
+		Model expectedModel = ModelFactory.createDefaultModel();
+		RDFDataMgr.read(expectedModel, new StringReader(jsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD) ;
 		Map<String, Object> result = responseObj.getParams().getResultMap();
-		List<Object> list = (List<Object>) result.get("@graph");
-		assertEquals(1, list.size());
-		Map<String, Object> object = (Map<String, Object>) list.get(0);
-		assertEquals(object.get("@id"), "sample:"+label);
+		Model actualModel = ModelFactory.createDefaultModel();
+		String newJsonld = new JSONObject(result).toString(2);
+		RDFDataMgr.read(actualModel, new StringReader(newJsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD);
+		assertTrue(expectedModel.isIsomorphicWith(actualModel));
 //		System.out.println(object.keySet().size());
 	}
 }
