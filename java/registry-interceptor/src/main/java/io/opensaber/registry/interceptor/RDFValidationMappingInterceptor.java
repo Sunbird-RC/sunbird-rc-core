@@ -16,28 +16,28 @@ import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.interceptor.handler.RequestWrapper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.impl.RDFConverter;
+import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.util.Constants;
 
-//@Order(3)
-@Order(2)
+//@Order(2)
 @Component
-public class RDFValidationInterceptor extends BaseRequestHandler implements HandlerInterceptor {
+public class RDFValidationMappingInterceptor extends BaseRequestHandler implements HandlerInterceptor {
 	
-	private RDFValidator rdfValidator;
+	private RDFValidationMapper rdfValidationMapper;
 	
 	@Autowired
-	public RDFValidationInterceptor(RDFValidator rdfValidator){
-		this.rdfValidator = rdfValidator;
+	public RDFValidationMappingInterceptor(RDFValidationMapper rdfValidationMapper){
+		this.rdfValidationMapper = rdfValidationMapper;
 	}
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException  {
 		setRequest(request);
-		Map<String,Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
+		Map<String,Object> attributeMap = rdfValidationMapper.execute(getRequestAttributeMap());
 		mergeRequestAttributes(attributeMap);
 		request = getRequest();
-		if(request.getAttribute(Constants.RDF_VALIDATION_OBJECT)!=null){
+		if(request.getAttribute(Constants.RDF_VALIDATION_MAPPER_OBJECT)!=null){
 			return true;
 		}
 		return false;

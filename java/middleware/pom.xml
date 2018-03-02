@@ -6,30 +6,36 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<properties>
-	    <jsonldConversionVersion>0.0.1-SNAPSHOT</jsonldConversionVersion>
-	    <rdfConversionVersion>0.0.1-SNAPSHOT</rdfConversionVersion>
-	    <rdfValidationVersion>0.0.1-SNAPSHOT</rdfValidationVersion>
+		<jsonldConversionVersion>0.0.1-SNAPSHOT</jsonldConversionVersion>
+		<rdfConversionVersion>0.0.1-SNAPSHOT</rdfConversionVersion>
+		<rdfValidationVersion>0.0.1-SNAPSHOT</rdfValidationVersion>
+		<rdfValidationMapperVersion>0.0.1-SNAPSHOT</rdfValidationMapperVersion>
 	</properties>
 	<dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>io.opensaber.middleware</groupId>
-        <artifactId>jsonld-conversion</artifactId>
-        <version>${jsonldConversionVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opensaber.middleware</groupId>
-        <artifactId>rdf-conversion</artifactId>
-        <version>${rdfConversionVersion}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.opensaber.middleware</groupId>
-        <artifactId>rdf-validation</artifactId>
-        <version>${rdfValidationVersion}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-  <modules>
-    <module>registry-middleware</module>
-  </modules>
+		<dependencies>
+			<dependency>
+				<groupId>io.opensaber.middleware</groupId>
+				<artifactId>jsonld-conversion</artifactId>
+				<version>${jsonldConversionVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.opensaber.middleware</groupId>
+				<artifactId>rdf-conversion</artifactId>
+				<version>${rdfConversionVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.opensaber.middleware</groupId>
+				<artifactId>rdf-validation</artifactId>
+				<version>${rdfValidationVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.opensaber.middleware</groupId>
+				<artifactId>rdf-validation-mapping</artifactId>
+				<version>${rdfValidationMapperVersion}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<modules>
+		<module>registry-middleware</module>
+	</modules>
 </project>

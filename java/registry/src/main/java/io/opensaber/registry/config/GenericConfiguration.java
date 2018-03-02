@@ -3,6 +3,9 @@ package io.opensaber.registry.config;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.Neo4jGraphProvider;
@@ -24,7 +27,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationInterceptor;
+import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
 import io.opensaber.registry.middleware.impl.RDFConverter;
+import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.impl.RdfToJsonldConverter;
 import io.opensaber.registry.middleware.util.Constants;
@@ -46,24 +51,24 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 
 	@Autowired
 	private Environment environment;
-	
+
 	@Bean
 	public ObjectMapper objectMapper() {
-	    ObjectMapper objectMapper = new ObjectMapper();
-	    objectMapper.setSerializationInclusion(Include.NON_NULL);
-	    return objectMapper;
+		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.setSerializationInclusion(Include.NON_NULL);
+		return objectMapper;
 	}
-	
+
 	@Bean
 	public RdfToJsonldConverter rdfToJsonldConverter(){
 		return new RdfToJsonldConverter();
 	}
-	
+
 	@Bean
 	public RDFConverter rdfConverter(){
 		return new RDFConverter();
 	}
-	
+
 	@Bean
 	public RDFValidator rdfValidator(){
 		String shexFileName = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
@@ -77,7 +82,7 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 	public GraphDBFactory graphDBFactory() {
 		return new GraphDBFactory(environment);
 	}
-	*/
+	 */
 
 	@Bean
 	public DatabaseProvider databaseProvider() {
@@ -94,13 +99,30 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 			throw new RuntimeException("No Database Provider is configured. Please configure a Database Provider");
 		}
 	}
-	
+
+	@Bean
+	public RDFValidationMapper rdfValidationMapper(){
+		Map<String,String> typeValidationMap = new HashMap<String,String>();
+		EnumSet.allOf(Constants.ValidationMapper.class)
+		.forEach(type -> {
+			String key = environment.getProperty(type.getName()+Constants.SHAPE_TYPE);
+			String value = environment.getProperty(type.getName()+Constants.SHAPE_NAME);
+			if(key!=null && value!=null){
+				typeValidationMap.put(key,value);
+			}
+		});
+		return new RDFValidationMapper(typeValidationMap);
+	}
+
 	@Override 
-    public void addInterceptors(InterceptorRegistry registry) { 
+	public void addInterceptors(InterceptorRegistry registry) { 
 		//registry.addInterceptor(new JsonldToRdfInterceptor(new JsonldToRdfConverter())).addPathPatterns("/convertToRdf");
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter())).addPathPatterns("/addEntity");
+		//registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper())).addPathPatterns("/addEntity");
 		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator())).addPathPatterns("/addEntity");
-		
+
 	}
-	
+
+
+
 }

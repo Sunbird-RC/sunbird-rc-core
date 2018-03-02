@@ -9,6 +9,8 @@ import java.util.Map;
 import javax.management.relation.RelationService;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -36,19 +38,21 @@ public class RDFValidator implements BaseMiddleware{
 	private Path schemaFilePath;	
 	public static final String SCHEMAFORMAT = "SHEXC";
 	public static final String PROCESSOR 	= "shex";
-	
+
 	public RDFValidator(Path schemaFilePath){
 		this.schemaFilePath = schemaFilePath;
 	}
 
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
 		Object RDF = mapData.get(Constants.RDF_OBJECT);
+		Object validationRDF = mapData.get(Constants.RDF_VALIDATION_MAPPER_OBJECT);
 		if (RDF==null) {
 			throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_MISSING); 
 		} else if (RDF instanceof Model) {
 			ShaclexValidator validator = new ShaclexValidator();
 			Schema schema = validator.readSchema(this.schemaFilePath,SCHEMAFORMAT, PROCESSOR);
-			Result validationResult = validator.validate((Model)RDF, schema);
+			Model rdfWithValidations = mergeModels((Model)RDF, (Model)validationRDF);
+			Result validationResult = validator.validate(rdfWithValidations, schema);
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResult);
 			if(!validationResult.isValid()){
 				throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_INVALID);
@@ -62,6 +66,14 @@ public class RDFValidator implements BaseMiddleware{
 	public Map<String, Object> next(Map<String, Object> mapData) throws IOException {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public Model mergeModels(Model RDF, Model validationRDF){
+		System.out.println("Merging models");
+		if(validationRDF!=null){
+			RDF.add(validationRDF.listStatements());
+		}
+		return RDF;
 	}
 
 }
