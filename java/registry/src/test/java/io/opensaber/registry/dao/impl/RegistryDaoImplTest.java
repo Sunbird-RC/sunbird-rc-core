@@ -7,6 +7,7 @@ import io.opensaber.registry.util.RDFUtil;
 import mockit.Mocked;
 import mockit.NonStrictExpectations;
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.vocabulary.RDFS;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -48,18 +49,16 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.utils.converters.RDF2Graph;
 
-import javax.swing.*;
-
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes={RegistryDaoImpl.class
-		,Environment.class,ObjectMapper.class,GenericConfiguration.class})
+@SpringBootTest(classes = {RegistryDaoImpl.class, Environment.class, ObjectMapper.class, GenericConfiguration.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryDaoImplTest extends RegistryTestBase {
@@ -283,32 +282,46 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	}
 
 	@Test
-	public void test_blank_node_uuid_update(@Mocked UUID mockedUUID) {
+	public void test_blank_node_count_when_no_blank_node_present() {
+		Model rdfModel = getNewValidRdf();
+		StmtIterator blankNodeIterator =
+				rdfModel.listStatements(null,
+						ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"),
+						(RDFNode) null);
 
-		new NonStrictExpectations() {
-			{
-				UUID.randomUUID(); returns(mockedUUID);
-				mockedUUID.toString(); returns("test-UUID");
+		// Remove all the blank nodes from the existing model to create test data
+		while(blankNodeIterator.hasNext()) {
+			Statement parentStatement = blankNodeIterator.next();
+			StmtIterator childStatements = rdfModel.listStatements((Resource) parentStatement.getObject(), null, (RDFNode) null);
+			while (childStatements.hasNext()) {
+				childStatements.next();
+				childStatements.remove();
 			}
-		};
+			blankNodeIterator.remove();
+		}
+
+		java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
+		assertEquals(0, blankNodes.size());
+	}
+
+	@Test
+	public void test_match_blank_nodes() {
+		Model rdfModel = getNewValidRdf();
+		Resource expectedBlankNode =
+				ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress");
+		List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
+		int count = blankNodes.stream()
+				.filter(blankNode -> blankNode.equals(expectedBlankNode)).collect(Collectors.toList()).size();
+		assertEquals(1, count);
+	}
+
+	@Test
+	public void test_blank_node_uuid_update() {
 
 		Model rdfModel = getNewValidRdf();
+		RDFUtil.updateIdForBlankNode(rdfModel);
 		java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
-		StmtIterator iterator = rdfModel.listStatements();
-
-		Optional<Statement> stmt = Optional.empty();
-		while (iterator.hasNext()) {
-			Statement st = iterator.next();
-			if (st.getObject().isURIResource()) {
-				String uri = st.getObject().asResource().getURI();
-				if (blankNodes.stream().anyMatch(p -> p.asResource().getURI().equals(uri))) {
-					stmt = Optional.of(st);
-					break;
-				}
-			}
-		}
-		Optional<Statement> updatedStatment = RDFUtil.updateIdForBlankNode(stmt.get(), blankNodes);
-		assertEquals("http://example.com/voc/teacher/1.0.0/testUUID", updatedStatment.get().getSubject().toString());
+		assertEquals(0, blankNodes.size());
 
 	}
 /*

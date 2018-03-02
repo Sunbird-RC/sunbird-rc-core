@@ -14,6 +14,7 @@ public class Constants {
 	public static final String RDF_VALIDATION_OBJECT = "rdfValidationResult";
 	public static final String SHEX_PROPERTY_NAME = "shex.file";
 	public static final String SUBJECT_LABEL_TYPE = "subject.label.type";
+	public static final String REGISTRY_CONTEXT_BASE = "registry.context.base";
 
 	public static final String DATABASE_PROVIDER = "database.provider";
 	public static final String NEO4J_DIRECTORY = "neo4j.directory";
