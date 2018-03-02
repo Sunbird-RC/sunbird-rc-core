@@ -1,12 +1,10 @@
 shex.file=good1.shex
 subject.label.type=http://example.com/voc/teacher/1.0.0/School
-registry.context.base=http://example.com/voc/teacher/1.0.0/
 
 ##############################################################
 #               Database Provider Config                     #
 ##############################################################
 
-database.provider=NEO4J
-
 # NEO4J DB Configuration
-neo4j.directory=/data/databases/graph.db
+database.provider=neo4j
+neo4j.directory=./databases/graph.db

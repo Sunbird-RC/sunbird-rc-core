@@ -7,7 +7,6 @@ import io.opensaber.registry.util.RDFUtil;
 import mockit.Mocked;
 import mockit.NonStrictExpectations;
 import org.apache.jena.rdf.model.*;
-import org.apache.jena.vocabulary.RDFS;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -317,12 +316,10 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_blank_node_uuid_update() {
-
 		Model rdfModel = getNewValidRdf();
 		RDFUtil.updateIdForBlankNode(rdfModel);
 		java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
 		assertEquals(0, blankNodes.size());
-
 	}
 /*
 	@Test
