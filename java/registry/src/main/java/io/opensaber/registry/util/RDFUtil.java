@@ -52,6 +52,7 @@ public class RDFUtil {
                 String label = UUID.randomUUID().toString();
                 StmtIterator nodeProperties = node.getSubject().listProperties();
                 // String namespace = node.getObject().asResource().getNameSpace();
+                registryContext = "http://example.com/voc/teacher/1.0.0/";
 
                 /*
                  * Update the child node labels

@@ -64,7 +64,6 @@ public class RegistryServiceImpl implements RegistryService {
 
 			while (iterator.hasNext()) {
 				Statement rdfStatement = iterator.nextStatement();
-
 				if (!rootSubjectFound) {
 					String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
 					label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
