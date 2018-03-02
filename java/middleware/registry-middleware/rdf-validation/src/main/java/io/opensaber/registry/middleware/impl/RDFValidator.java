@@ -69,7 +69,6 @@ public class RDFValidator implements BaseMiddleware{
 	}
 
 	public Model mergeModels(Model RDF, Model validationRDF){
-		System.out.println("Merging models");
 		if(validationRDF!=null){
 			RDF.add(validationRDF.listStatements());
 		}
