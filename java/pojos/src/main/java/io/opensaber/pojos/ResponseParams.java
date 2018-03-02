@@ -1,5 +1,8 @@
 package io.opensaber.pojos;
 
+import java.util.List;
+import java.util.Map;
+
 import io.opensaber.pojos.Response.Status;
 
 public class ResponseParams{
@@ -8,7 +11,8 @@ public class ResponseParams{
 		private Status status = Status.UNSUCCESSFUL;
 		private String err;
 		private String errmsg;
-		private String result;
+		private Map<String, Object> resultMap;
+		private List<Object> resultList;
 		public String getResmsgid() {
 			return resmsgid;
 		}
@@ -39,10 +43,16 @@ public class ResponseParams{
 		public void setErrmsg(String errmsg) {
 			this.errmsg = errmsg;
 		}
-		public String getResult() {
-			return result;
+		public Map<String, Object> getResultMap() {
+			return resultMap;
 		}
-		public void setResult(String result) {
-			this.result = result;
+		public void setResultMap(Map<String, Object> resultMap) {
+			this.resultMap = resultMap;
+		}
+		public List<Object> getResultList() {
+			return resultList;
+		}
+		public void setResultList(List<Object> resultList) {
+			this.resultList = resultList;
 		}
 	}

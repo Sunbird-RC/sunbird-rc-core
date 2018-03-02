@@ -8,7 +8,3 @@ subject.label.type=http://example.com/voc/teacher/1.0.0/School
 # NEO4J DB Configuration
 database.provider=neo4j
 neo4j.directory=./databases/graph.db
-school.shape.name=http://example.com/voc/teacher/1.0.0/SchoolShape
-school.shape.type=http://example.com/voc/teacher/1.0.0/School
-address.shape.name=http://example.com/voc/teacher/1.0.0/AddressShape
-address.shape.type=http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress

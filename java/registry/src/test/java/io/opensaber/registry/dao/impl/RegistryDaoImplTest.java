@@ -3,6 +3,10 @@ package io.opensaber.registry.dao.impl;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 
+import io.opensaber.registry.util.RDFUtil;
+import mockit.Mocked;
+import mockit.NonStrictExpectations;
+import org.apache.jena.rdf.model.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -10,6 +14,9 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mock;
@@ -22,13 +29,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.apache.jena.rdf.model.Literal;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -51,15 +51,16 @@ import io.opensaber.utils.converters.RDF2Graph;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes={RegistryDaoImpl.class
-		,Environment.class,ObjectMapper.class,GenericConfiguration.class})
+@SpringBootTest(classes = {RegistryDaoImpl.class, Environment.class, ObjectMapper.class, GenericConfiguration.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class RegistryDaoImplTest extends RegistryTestBase{
+public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Autowired
 	private RegistryDao registryDao;
@@ -80,15 +81,32 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 	
 	private static final String VALID_JSONLD = "school.jsonld";
 	private static final String CONTEXT_CONSTANT = "sample:";
-	
+
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 
+	@Rule
+	public TestRule watcher = new TestWatcher() {
+		@Override
+		protected void starting(Description description) {
+			System.out.println("Executing test: " + description.getMethodName());
+		}
+
+		@Override
+		protected void succeeded(Description description) {
+			System.out.println("Successfully executed test: " + description.getMethodName());
+		}
+
+		@Override
+		protected void failed(Throwable e, Description description) {
+			System.out.println(String.format("Test %s failed. Error message: %s", description.getMethodName(), e.getMessage()));
+		}
+	};
 
 	@Before
-	public void initializeGraph(){
+	public void initializeGraph() {
 		graph = TinkerGraph.open();
-		MockitoAnnotations.initMocks(this);		
+		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);
 	}
 
@@ -208,7 +226,7 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 //		TODO Write a better checker
 		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
 	}
-	
+
 	@Test
 	public void test_read_nested_node() throws NullPointerException, DuplicateRecordException, RecordNotFoundException{
 		Model rdfModel = getNewValidRdf();
@@ -243,6 +261,65 @@ public class RegistryDaoImplTest extends RegistryTestBase{
 			e.printStackTrace();
 		}
 		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
+	}
+
+	@Test
+	public void test_blank_node_count() {
+		Model rdfModel = getNewValidRdf();
+		java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
+		StmtIterator iterator = rdfModel.listStatements();
+		int count = 0;
+		while (iterator.hasNext()) {
+			Statement stmt = iterator.next();
+			if (stmt.getObject().isURIResource()) {
+				String uri = stmt.getObject().asResource().getURI();
+				count += blankNodes.stream()
+						.filter(p -> p.asResource().getURI().equals(uri)).count();
+			}
+		}
+		assertEquals(1, count);
+	}
+
+	@Test
+	public void test_blank_node_count_when_no_blank_node_present() {
+		Model rdfModel = getNewValidRdf();
+		StmtIterator blankNodeIterator =
+				rdfModel.listStatements(null,
+						ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"),
+						(RDFNode) null);
+
+		// Remove all the blank nodes from the existing model to create test data
+		while(blankNodeIterator.hasNext()) {
+			Statement parentStatement = blankNodeIterator.next();
+			StmtIterator childStatements = rdfModel.listStatements((Resource) parentStatement.getObject(), null, (RDFNode) null);
+			while (childStatements.hasNext()) {
+				childStatements.next();
+				childStatements.remove();
+			}
+			blankNodeIterator.remove();
+		}
+
+		java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
+		assertEquals(0, blankNodes.size());
+	}
+
+	@Test
+	public void test_match_blank_nodes() {
+		Model rdfModel = getNewValidRdf();
+		Resource expectedBlankNode =
+				ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress");
+		List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
+		int count = blankNodes.stream()
+				.filter(blankNode -> blankNode.equals(expectedBlankNode)).collect(Collectors.toList()).size();
+		assertEquals(1, count);
+	}
+
+	@Test
+	public void test_blank_node_uuid_update() {
+		Model rdfModel = getNewValidRdf();
+		RDFUtil.updateIdForBlankNode(rdfModel);
+		java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
+		assertEquals(0, blankNodes.size());
 	}
 /*
 	@Test

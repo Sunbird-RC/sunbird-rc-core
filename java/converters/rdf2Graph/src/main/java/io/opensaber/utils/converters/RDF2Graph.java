@@ -1,6 +1,5 @@
 package io.opensaber.utils.converters;
 
-
 import java.util.Iterator;
 import java.util.Stack;
 
@@ -18,8 +17,11 @@ import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.slf4j.Logger;
@@ -86,19 +88,6 @@ public final class RDF2Graph
 			return graph.addVertex(T.label,label);
 		}
 	}
-	
-	public static org.apache.jena.rdf.model.Model convertRDFModel2Jena(Model rdf4jModel) {
-		org.apache.jena.rdf.model.Model jenaModel = ModelFactory.createDefaultModel();
-		rdf4jModel.forEach(stmt -> jenaModel.add(convert(stmt)));
-		return jenaModel;
-	}
-
-	private static org.apache.jena.rdf.model.Statement convert(Statement rdf4jStatement) {
-		Value subjectValue = rdf4jStatement.getSubject();
-		IRI property = rdf4jStatement.getPredicate();
-		Value objectValue = rdf4jStatement.getObject();
-		return null;
-	}
 
 	public static Model convertGraph2RDFModel(Graph graph, String label) {
 		ModelBuilder builder = new ModelBuilder();
@@ -113,10 +102,14 @@ public final class RDF2Graph
 	}
 
 	private static void extractModelFromVertex(ModelBuilder builder, Vertex s) {
+		logger.info("Vertex "+s.label());
+		ValueFactory vf = SimpleValueFactory.getInstance();
+		logger.info("ADDING it as Subject");
 		builder.subject(s.label());
 		Iterator<VertexProperty<String>> propertyIter = s.properties();
 		while (propertyIter.hasNext()){
 			VertexProperty<String> property = propertyIter.next();
+			logger.info("ADDING Property"+property.label()+": "+property.value());
 			builder.add(property.label(), property.value());
 		}
 		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
@@ -125,7 +118,16 @@ public final class RDF2Graph
 		while(edgeIter.hasNext()){
 			edge = edgeIter.next();
 			s = edge.inVertex();
-			builder.add(edge.label(), s.label());
+//			builder.add(edge.label(), bNode);
+			Resource node;
+			if(s.label().startsWith("_:")){
+				logger.info("ADDING NODE - BLANK");
+				node = vf.createBNode();
+			} else {
+				node = vf.createIRI(s.label());
+				logger.info("ADDING NODE - IRI");
+			}
+			builder.add(edge.label(), node);
 			vStack.push(s);
 		}
 		Iterator<Vertex> vIterator = vStack.iterator();

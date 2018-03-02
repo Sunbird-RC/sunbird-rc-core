@@ -1,10 +1,5 @@
 package io.opensaber.registry.middleware.util;
 
-/**
- * 
- * @author jyotsna
- *
- */
 public class Constants {
 	
 	public static final String REQUEST_ATTRIBUTE_NAME = "dataObject";
@@ -17,6 +12,7 @@ public class Constants {
 	public static final String SHAPE_NAME = "shape.name";
 	public static final String SHAPE_TYPE = "shape.type";
 	public static final String RDF_VALIDATION_MAPPER_OBJECT = "rdfValidationMapper";
+	public static final String REGISTRY_CONTEXT_BASE = "registry.context.base";
 
 	public static final String DATABASE_PROVIDER = "database.provider";
 	public static final String NEO4J_DIRECTORY = "neo4j.directory";

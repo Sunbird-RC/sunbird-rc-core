@@ -3,25 +3,12 @@ package io.opensaber.registry.dao.impl;
 import java.io.IOException;
 import java.util.*;
 
-import javax.mail.internet.NewsAddress;
-
 import io.opensaber.registry.sink.DatabaseProvider;
-import scala.reflect.internal.PrivateWithin;
-import scalaz.std.iterable;
-
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.util.ModelBuilder;
-import org.neo4j.cypher.internal.compiler.v2_3.mutation.GraphElementPropertyFunctions;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.ResourceIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,8 +95,8 @@ public class RegistryDaoImpl implements RegistryDao {
 		GraphTraversalSource gts = graph.traversal();
 		GraphTraversal<Vertex, Vertex> traversal = gts.V();
 		Map<String, List<Object[]>> map = new HashMap<>();
-		
-		if (graphFromStore.features().graph().supportsTransactions()){
+
+		if (graphFromStore.features().graph().supportsTransactions()) {
 			org.apache.tinkerpop.gremlin.structure.Transaction tx;
 			tx = graphFromStore.tx();
 			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);

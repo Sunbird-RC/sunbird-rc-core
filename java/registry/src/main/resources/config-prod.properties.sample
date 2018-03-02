@@ -5,10 +5,22 @@ subject.label.type=http://example.com/voc/teacher/1.0.0/School
 #               Database Provider Config                     #
 ##############################################################
 
+database.provider=NEO4J
+
 # NEO4J DB Configuration
+<<<<<<< HEAD
+neo4j.directory=/data/databases/graph.db
+
+# ORIENT DB Configuration
+orientdb.directory=/data/orientdb/registry.db
+
+# SQLG-H2 DB Configuration
+jdbc.url=jdbc:h2:file:/data/h2/registry_db
+jdbc.username=
+jdbc.password=
+
+base.url=http://localhost:8080/registry/
+=======
 database.provider=neo4j
 neo4j.directory=./databases/graph.db
-school.shape.name=http://example.com/voc/teacher/1.0.0/SchoolShape
-school.shape.type=http://example.com/voc/teacher/1.0.0/School
-address.shape.name=http://example.com/voc/teacher/1.0.0/AddressShape
-address.shape.type=http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress
+>>>>>>> Issue #20 feat: framing output
