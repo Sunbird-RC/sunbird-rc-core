@@ -1,11 +1,11 @@
-version: '2'
-services:
-  web:
-    image: tomcat
-    ports: 
-      - "8080:8080"
-    volumes:
-      - ./target/registry.war:/usr/local/tomcat/webapps/ROOT.war
-      - ./target/registry:/usr/local/tomcat/webapps/ROOT
-      - ./databases:/var/lib/neo4j/data/databases
-    privileged: true
+jar:
+  image: frolvlad/alpine-oraclejdk8:slim
+  ports:
+    - "8080:8080"
+    - "9000:9000"
+  volumes:
+    - ./target/registry.jar:/registry.jar
+    - /data:/data
+    - ./logs:/logs
+  command: java -jar /registry.jar
+  privileged: true
