@@ -1,5 +1,7 @@
 package io.opensaber.registry.controller;
 
+import static org.apache.commons.lang3.StringUtils.substringAfter;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -43,7 +45,13 @@ public class RegistryTestBase {
 
 		try {
 			String file = Paths.get(getPath(filename)).toString();
-			jsonld = readFromFile(file);	
+			System.out.println("file"+file);
+	    	jsonld = readFromFile(file);	
+	    	System.out.println("jsonld"+jsonld);
+	    	jsonld= substringAfter(jsonld,"request\":");
+	    	jsonld = jsonld.substring(0, jsonld.length() - 1);
+	    	System.out.println("jsonld 2"+jsonld);
+	    	
 		} catch (Exception e) {
 			jsonld = StringUtils.EMPTY;
 		}
@@ -75,6 +83,13 @@ public class RegistryTestBase {
 	public String generateBaseUrl(){
 		return Constants.INTEGRATION_TEST_BASE_URL;
 	}
+	
+/*	public Model getNewValidRdf(String fileName, String contextConstant){
+		setJsonld(fileName);
+		setJsonldWithNewRootLabel(contextConstant+generateRandomId());
+		Model model = ShaclexValidator.parse(jsonld, FORMAT);
+		return model;
+	}*/
 	
 	public Model getNewValidRdf(String fileName, String contextConstant){
 		setJsonld(fileName);

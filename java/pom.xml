@@ -12,8 +12,8 @@
         <module>validators</module>
 	    <module>middleware-commons</module>
 	    <module>middleware</module>
-	    <module>registry-interceptor</module>
-    	<module>pojos</module>
+	    <module>pojos</module>
+	    <module>registry-interceptor</module>    	
   </modules>
 
 </project>

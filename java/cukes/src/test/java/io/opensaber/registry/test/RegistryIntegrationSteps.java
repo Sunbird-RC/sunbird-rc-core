@@ -38,6 +38,7 @@ import io.opensaber.pojos.Response;
 public class RegistryIntegrationSteps extends RegistryTestBase{
 	
 	private static final String VALID_JSONLD= "school.jsonld";
+	private static final String VALID_NEW_JSONLD="newSchool.jsonld";
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
 	private static final String ADD_ENTITY = "addEntity";
 	private static final String CONTEXT_CONSTANT = "sample:";
@@ -58,9 +59,17 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		baseUrl = generateBaseUrl();
 	}
 	
-	@Given("^a valid record")
+	/*@Given("^a valid record")
 	public void jsonldData(){
 		setJsonld(VALID_JSONLD);
+		label = generateRandomId();
+		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+label);
+		assertNotNull(jsonld);
+	}*/
+	
+	@Given("^a valid record")
+	public void jsonldData(){
+		setJsonld(VALID_NEW_JSONLD);
 		label = generateRandomId();
 		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+label);
 		assertNotNull(jsonld);

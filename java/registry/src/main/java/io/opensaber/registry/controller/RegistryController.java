@@ -20,11 +20,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import io.opensaber.converters.JenaRDF4J;
+import io.opensaber.pojos.Request;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.InvalidTypeException;
 import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
 
 @RestController
@@ -50,6 +54,32 @@ public class RegistryController {
 		response.setEts(System.currentTimeMillis() / 1000L);
 		response.setVer("1.0");
 		response.setParams(responseParams);
+		try{			
+			registryService.addEntity(rdf);
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+		} catch (DuplicateRecordException | InvalidTypeException e) {
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		} catch (Exception e) {
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		}
+		return new ResponseEntity<Response>(response, HttpStatus.OK);
+	}
+	
+	@ResponseBody
+	@RequestMapping(value="/addEntityTest",method=RequestMethod.POST)
+	public ResponseEntity<Response> addEntityTest(@RequestAttribute Request requestModel) throws JsonProcessingException, DuplicateRecordException, InvalidTypeException{
+	
+		Response response = new Response();
+		ResponseParams responseParams = new ResponseParams();
+		response.setId(UUID.randomUUID().toString());
+		response.setEts(System.currentTimeMillis() / 1000L);
+		response.setVer("1.0");
+		response.setParams(responseParams);
+		
+		Model rdf = (Model) requestModel.getRdf();
+				
 		try{
 			registryService.addEntity(rdf);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
