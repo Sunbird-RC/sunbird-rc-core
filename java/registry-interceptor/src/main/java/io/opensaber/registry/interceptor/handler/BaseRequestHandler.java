@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletRequest;
@@ -12,6 +13,9 @@ import org.apache.jena.rdf.model.Model;
 
 import com.google.gson.Gson;
 import io.opensaber.pojos.Request;
+import io.opensaber.pojos.RequestParams;
+import io.opensaber.pojos.Response;
+import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.middleware.util.Constants;
 import static org.apache.commons.lang3.StringUtils.*;
 
@@ -82,7 +86,7 @@ public class BaseRequestHandler{
 		return requestBodyMap;
 	}
 	
-	public Map<String,Object> getRequestBodyMapTest() throws IOException{
+/*	public Map<String,Object> getRequestBodyMapTest() throws IOException{
 		Map<String,Object> requestBodyMap = new HashMap<String,Object>();
 		Gson gson = new Gson();
     	Request requestModel= gson.fromJson(getRequestBody(), Request.class);
@@ -93,6 +97,30 @@ public class BaseRequestHandler{
        	requestBody = requestBody.substring(0, requestBody.length() - 1);
     	    
     	requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestBody);
+		
+	    return requestBodyMap;
+	}*/
+	
+	public Map<String,Object> getRequestBodyMapTest() throws IOException{
+		Map<String,Object> requestBodyMap = new HashMap<String,Object>();
+		Gson gson = new Gson();
+    	Request requestModel= gson.fromJson(getRequestBody(), Request.class);
+    	RequestParams requestParams = new RequestParams();
+    	
+    	requestParams.setDid("123");
+    	requestParams.setKey("abc");
+    	requestParams.setMsgid(UUID.randomUUID().toString());
+		requestModel.setParams(requestParams);
+    	
+		requestModel.setId("open-saber.registry.create");
+		requestModel.setEts(System.currentTimeMillis() / 1000L);
+		requestModel.setVer("1.0");
+		    	
+		requestBodyMap.put(Constants.REQUEST_ATTRIBUTE, requestModel);
+		String requestBody=getRequestBody();    	
+    	   	    
+    	requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestBody);
+    	requestModel.setRequestMap(requestBodyMap);
 		
 	    return requestBodyMap;
 	}

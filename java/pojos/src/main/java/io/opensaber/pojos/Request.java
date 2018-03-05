@@ -11,8 +11,7 @@ public class Request {
 	private RequestParams params;
 	private Map<String, Object> requestMap;
 	private List<Object> requestList;
-	private Object rdf;
-	
+		
 	public String getId() {
 		return id;
 	}
@@ -49,12 +48,5 @@ public class Request {
 	}
 	public void setRequestList(List<Object> requestList) {
 		this.requestList = requestList;
-	}
-	
-	public Object getRdf() {
-		return rdf;
-	}
-	public void setRdf(Object rdf) {
-		this.rdf = rdf;
 	}
 }

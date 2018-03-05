@@ -1,5 +1,6 @@
 package io.opensaber.registry.controller;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.jena.rdf.model.Model;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import groovy.ui.SystemOutputInterceptor;
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.pojos.Request;
 import io.opensaber.pojos.Response;
@@ -77,9 +79,10 @@ public class RegistryController {
 		response.setEts(System.currentTimeMillis() / 1000L);
 		response.setVer("1.0");
 		response.setParams(responseParams);
-		
-		Model rdf = (Model) requestModel.getRdf();
-				
+	
+		Map<String,Object> requestMap= requestModel.getRequestMap();
+		Model rdf= (Model) requestMap.get("rdf");
+						
 		try{
 			registryService.addEntity(rdf);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
