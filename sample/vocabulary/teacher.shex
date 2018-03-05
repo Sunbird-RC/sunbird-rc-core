@@ -9,11 +9,13 @@ sample:isADate xsd:date
 sample:isURI xsd:uri
 
 sample:SchoolShape CLOSED {
+    a [sample:School] ;
     sample:udiseNumber xsd:integer TotalDigits 11 ;
     sample:academicCalendarYearStart @sample:isAYear ;
     sample:academicCalendarYearEnd @sample:isAYear ;
     sample:area [sample:AreaTypeCode-RURAL sample:AreaTypeCode-URBAN] ;
-    sample:schoolName @sample:isAString 
+    sample:schoolName @sample:isAString ;
+    sample:address IRI
 }
 
 sample:AddressShape CLOSED {
