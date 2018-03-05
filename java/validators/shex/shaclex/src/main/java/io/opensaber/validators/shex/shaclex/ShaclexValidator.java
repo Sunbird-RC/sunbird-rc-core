@@ -1,12 +1,14 @@
 package io.opensaber.validators.shex.shaclex;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import es.weso.schema.*;
+import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -63,6 +65,12 @@ public class ShaclexValidator {
 
 	public Schema readSchema(Path schemaFilePath, String format, String processor) throws IOException {
 		String contents = new String(Files.readAllBytes(schemaFilePath));
+		return Schemas.fromString(contents,format,processor,none).get();
+	}
+
+	public Schema readSchema(String schemaFileName, String format, String processor) throws IOException {
+		InputStream is = this.getClass().getClassLoader().getResourceAsStream(schemaFileName);
+		String contents = new String(ByteStreams.toByteArray(is));
 		return Schemas.fromString(contents,format,processor,none).get();
 	}
 

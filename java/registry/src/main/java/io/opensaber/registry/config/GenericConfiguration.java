@@ -1,8 +1,5 @@
 package io.opensaber.registry.config;
 
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,17 +32,14 @@ import io.opensaber.registry.middleware.impl.RdfToJsonldConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import scalaz.Const;
 
-/**
- * 
- * @author jyotsna
- *
- */
 @Configuration
 @PropertySource(value = {"classpath:config-${spring.profiles.active}.properties"})
-public class GenericConfiguration extends WebMvcConfigurerAdapter {
+// public class GenericConfiguration extends WebMvcConfigurerAdapter {
+public class GenericConfiguration implements WebMvcConfigurer {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
 
@@ -72,9 +66,7 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 	@Bean
 	public RDFValidator rdfValidator(){
 		String shexFileName = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
-		String shexFilePath = this.getClass().getClassLoader().getResource(shexFileName).getPath();
-		Path filePath = Paths.get(shexFilePath);
-		return new RDFValidator(filePath);
+		return new RDFValidator(shexFileName);
 	}
 
 	/*
