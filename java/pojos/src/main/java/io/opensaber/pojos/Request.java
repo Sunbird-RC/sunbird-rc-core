@@ -11,7 +11,15 @@ public class Request {
 	private RequestParams params;
 	private Map<String, Object> requestMap;
 	private List<Object> requestList;
+	private Object rdf;
+	
 		
+	public Object getRdf() {
+		return rdf;
+	}
+	public void setRdf(Object rdf) {
+		this.rdf = rdf;
+	}
 	public String getId() {
 		return id;
 	}

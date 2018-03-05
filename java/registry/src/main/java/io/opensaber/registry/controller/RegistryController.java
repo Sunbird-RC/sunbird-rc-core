@@ -80,8 +80,7 @@ public class RegistryController {
 		response.setVer("1.0");
 		response.setParams(responseParams);
 	
-		Map<String,Object> requestMap= requestModel.getRequestMap();
-		Model rdf= (Model) requestMap.get("rdf");
+		Model rdf= (Model) requestModel.getRdf();
 						
 		try{
 			registryService.addEntity(rdf);

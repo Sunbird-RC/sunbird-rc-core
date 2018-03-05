@@ -58,17 +58,25 @@ public class BaseRequestHandler{
 		}
 	}
 
-	public void mergeRequestAttributesTest(Map<String,Object> attributeMap){		
+ public void mergeRequestAttributesTest(Map<String,Object> attributeMap){		
 		
 		if(attributeMap!=null){
 			for(Map.Entry<String, Object> entry: attributeMap.entrySet()){
 				
 				if(null == request.getAttribute(entry.getKey())){
-					request.setAttribute(entry.getKey(), entry.getValue());					
+					request.setAttribute(entry.getKey(), entry.getValue());
+					if(entry.getKey().equalsIgnoreCase("rdf")) {						
+						Object rdfModel= entry.getValue();
+						if(attributeMap.containsKey("requestModel")){
+							Object requestModel=attributeMap.get("requestModel");
+							((Request) requestModel).setRdf(rdfModel);
+					}
+				}
 			}
 		}
 	 }
 	}
+
 	public HttpServletRequest getRequest(){
 		return request;
 	}
@@ -79,7 +87,7 @@ public class BaseRequestHandler{
 		return requestBodyMap;
 	}
 	
-/*	public Map<String,Object> getRequestBodyMapTest() throws IOException{
+	public Map<String,Object> getRequestBodyMapTest() throws IOException{
 		Map<String,Object> requestBodyMap = new HashMap<String,Object>();
 		Gson gson = new Gson();
     	Request requestModel= gson.fromJson(getRequestBody(), Request.class);
@@ -92,32 +100,8 @@ public class BaseRequestHandler{
     	requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestBody);
 		
 	    return requestBodyMap;
-	}*/
-	
-	public Map<String,Object> getRequestBodyMapTest() throws IOException{
-		Map<String,Object> requestBodyMap = new HashMap<String,Object>();
-		Gson gson = new Gson();
-    	Request requestModel= gson.fromJson(getRequestBody(), Request.class);
-    	RequestParams requestParams = new RequestParams();
-    	
-    	requestParams.setDid("123");
-    	requestParams.setKey("abc");
-    	requestParams.setMsgid(UUID.randomUUID().toString());
-		requestModel.setParams(requestParams);
-    	
-		requestModel.setId("open-saber.registry.create");
-		requestModel.setEts(System.currentTimeMillis() / 1000L);
-		requestModel.setVer("1.0");
-		    	
-		requestBodyMap.put(Constants.REQUEST_ATTRIBUTE, requestModel);
-		String requestBody=getRequestBody();    	
-    	   	    
-    	requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestBody);
-    	requestModel.setRequestMap(requestBodyMap);
-		
-	    return requestBodyMap;
 	}
-
+	
 	public Map<String,Object> getRequestHeaderMap() throws IOException{
 		Map<String,Object> requestHeaderMap = new HashMap<String,Object>();
 		Enumeration<String> headerNames = requestWrapper.getHeaderNames();
