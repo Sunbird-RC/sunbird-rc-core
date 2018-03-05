@@ -2,25 +2,14 @@ package io.opensaber.registry.middleware.impl;
 
 
 import java.io.IOException;
+
 import java.io.StringWriter;
-import java.nio.file.Path;
-import java.util.HashMap;
+
 import java.util.Map;
 
-import javax.management.relation.RelationService;
-
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.springframework.util.StringUtils;
-
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.github.jsonldjava.core.JsonLdConsts;
-import com.github.jsonldjava.core.JsonLdOptions;
-import com.github.jsonldjava.core.JsonLdProcessor;
-import com.github.jsonldjava.utils.JsonUtils;
 
 import es.weso.schema.Result;
 import es.weso.schema.Schema;
@@ -29,23 +18,19 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 
-/**
- * 
- * @author steotia
- *
- */
 public class RDFValidator implements BaseMiddleware{
 
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing!";
 	private static final String RDF_DATA_IS_INVALID = "RDF Data is invalid!";
 	private static final String RDF_VALIDATION_MAPPING_MISSING = "RDF validation mapping is missing!";
 	private static final String RDF_VALIDATION_MAPPING_NULL = "RDF validation mapping is null!";
-	private Path schemaFilePath;	
-	public static final String SCHEMAFORMAT = "SHEXC";
-	public static final String PROCESSOR 	= "shex";
 
-	public RDFValidator(Path schemaFilePath){
-		this.schemaFilePath = schemaFilePath;
+	private String schemaFileName;
+	private static final String SCHEMAFORMAT = "SHEXC";
+	private static final String PROCESSOR 	= "shex";
+
+	public RDFValidator(String schemaFileName) {
+		this.schemaFileName = schemaFileName;
 	}
 
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
@@ -57,9 +42,11 @@ public class RDFValidator implements BaseMiddleware{
 			throw new MiddlewareHaltException(this.getClass().getName()+RDF_VALIDATION_MAPPING_NULL); 
 		}else if (RDF instanceof Model) {
 			ShaclexValidator validator = new ShaclexValidator();
-			Schema schema = validator.readSchema(this.schemaFilePath,SCHEMAFORMAT, PROCESSOR);
+
+			Schema schema = validator.readSchema(schemaFileName, SCHEMAFORMAT, PROCESSOR);
 			Model rdfWithValidations = mergeModels((Model)RDF, (Model)validationRDF);
 			Result validationResult = validator.validate(rdfWithValidations, schema);
+
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResult);
 			if(!validationResult.isValid()){
 				throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_INVALID);

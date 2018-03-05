@@ -29,7 +29,8 @@ import org.apache.jena.rdf.model.Model;
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryControllerTest extends RegistryTestBase{
 	
-	private static final String VALID_JSONLD = "school.jsonld";
+	//private static final String VALID_JSONLD = "school.jsonld";
+	private static final String VALID_JSONLD = "newSchool.jsonld";
 	private static final String CONTEXT_CONSTANT = "sample:";
 
 	

@@ -1,0 +1,54 @@
+{
+  "id":  "open-saber.registry.create",
+  "ver": "1.0",
+  "ets":  "YYYY-MM-DDThh:mm:ssZ+/-nn.nn",
+  "params": {
+    "did": "", 
+    "key": "", 
+    "msgid": "" 
+    },
+  "request": {
+"@graph": [
+  {
+    "@id": "_:fa7740c185fb247729c7296c36b5c1257b1",
+    "@type": "sample:IndianUrbanPostalAddress",
+    "sample:city": "Mumbai",
+    "sample:district": "Mumbai",
+    "sample:mohalla": "Kulupwadi",
+    "sample:municipality": "Borivali",
+    "sample:pinCode": 400067,
+    "sample:wardNumber": "637"
+  },
+  {
+    "@id": "teacher:1201",
+    "@type": "sample:School",
+    "sample:assemblyConstituency": "Mumbai",
+    "sample:clusterResourceCentre": "some Cluster Resource",
+    "sample:revenueBlock": "some block",
+    "sample:schoolName": "PSBB International School",
+    "sample:udiseNumber": 35567834567,
+    "sample:academicCalendarYearEnd": {
+      "@type": "xsd:gYear",
+      "@value": "2016"
+    },
+    "sample:academicCalendarYearStart": {
+      "@type": "xsd:gYear",
+      "@value": "2015"
+    },
+    "sample:address": {
+      "@id": "_:fa7740c185fb247729c7296c36b5c1257b1"
+    },
+    "sample:area": {
+      "@id": "sample:AreaTypeCode-URBAN"
+    }
+  }
+],
+"@context": {
+  "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+  "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+  "sample": "http://example.com/voc/teacher/1.0.0/",
+  "teacher": "http://example.com/teacher/",
+  "xsd": "http://www.w3.org/2001/XMLSchema#"
+}
+}
+}

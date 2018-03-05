@@ -1,8 +1,5 @@
 package io.opensaber.registry.config;
 
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
+import io.opensaber.registry.interceptor.RDFConversionInterceptorNew;
 import io.opensaber.registry.interceptor.RDFValidationInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
 import io.opensaber.registry.middleware.impl.RDFConverter;
@@ -35,17 +33,11 @@ import io.opensaber.registry.middleware.impl.RdfToJsonldConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import scalaz.Const;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * 
- * @author jyotsna
- *
- */
 @Configuration
 @PropertySource(value = {"classpath:config-${spring.profiles.active}.properties"})
-public class GenericConfiguration extends WebMvcConfigurerAdapter {
+public class GenericConfiguration implements WebMvcConfigurer {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
 
@@ -72,9 +64,7 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 	@Bean
 	public RDFValidator rdfValidator(){
 		String shexFileName = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
-		String shexFilePath = this.getClass().getClassLoader().getResource(shexFileName).getPath();
-		Path filePath = Paths.get(shexFilePath);
-		return new RDFValidator(filePath);
+		return new RDFValidator(shexFileName);
 	}
 
 	/*
@@ -117,6 +107,7 @@ public class GenericConfiguration extends WebMvcConfigurerAdapter {
 	@Override 
 	public void addInterceptors(InterceptorRegistry registry) { 
 		//registry.addInterceptor(new JsonldToRdfInterceptor(new JsonldToRdfConverter())).addPathPatterns("/convertToRdf");
+		registry.addInterceptor(new RDFConversionInterceptorNew(rdfConverter())).addPathPatterns("/addEntityTest");
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter())).addPathPatterns("/addEntity");
 		//registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper())).addPathPatterns("/addEntity");
 		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator())).addPathPatterns("/addEntity");
