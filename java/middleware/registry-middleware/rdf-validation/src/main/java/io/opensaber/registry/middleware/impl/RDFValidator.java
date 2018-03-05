@@ -2,9 +2,14 @@ package io.opensaber.registry.middleware.impl;
 
 
 import java.io.IOException;
+
+import java.io.StringWriter;
+
 import java.util.Map;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 
 import es.weso.schema.Result;
 import es.weso.schema.Schema;
@@ -17,6 +22,8 @@ public class RDFValidator implements BaseMiddleware{
 
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing!";
 	private static final String RDF_DATA_IS_INVALID = "RDF Data is invalid!";
+	private static final String RDF_VALIDATION_MAPPING_MISSING = "RDF validation mapping is missing!";
+	private static final String RDF_VALIDATION_MAPPING_NULL = "RDF validation mapping is null!";
 
 	private String schemaFileName;
 	private static final String SCHEMAFORMAT = "SHEXC";
@@ -31,7 +38,9 @@ public class RDFValidator implements BaseMiddleware{
 		Object validationRDF = mapData.get(Constants.RDF_VALIDATION_MAPPER_OBJECT);
 		if (RDF==null) {
 			throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_MISSING); 
-		} else if (RDF instanceof Model) {
+		}else if(validationRDF == null){
+			throw new MiddlewareHaltException(this.getClass().getName()+RDF_VALIDATION_MAPPING_NULL); 
+		}else if (RDF instanceof Model) {
 			ShaclexValidator validator = new ShaclexValidator();
 
 			Schema schema = validator.readSchema(schemaFileName, SCHEMAFORMAT, PROCESSOR);
@@ -53,10 +62,13 @@ public class RDFValidator implements BaseMiddleware{
 		return null;
 	}
 
-	public Model mergeModels(Model RDF, Model validationRDF){
+	private Model mergeModels(Model RDF, Model validationRDF){
 		if(validationRDF!=null){
 			RDF.add(validationRDF.listStatements());
 		}
+		StringWriter sw = new StringWriter();
+		RDFDataMgr.write(sw, RDF, Lang.TTL);
+		System.out.println(sw.toString());
 		return RDF;
 	}
 
