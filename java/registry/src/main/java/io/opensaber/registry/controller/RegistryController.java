@@ -50,6 +50,7 @@ public class RegistryController {
 	@ResponseBody
 	@RequestMapping(value="/addEntity",method=RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Model rdf) throws JsonProcessingException, DuplicateRecordException, InvalidTypeException{
+		System.out.println("\n\n\nINSIDE CONTROLLER\n\n\n");
 		Response response = new Response();
 		ResponseParams responseParams = new ResponseParams();
 		response.setId(UUID.randomUUID().toString());
@@ -80,8 +81,8 @@ public class RegistryController {
 		response.setVer("1.0");
 		response.setParams(responseParams);
 	
-		Model rdf= (Model) requestModel.getRdf();
-						
+		Model rdf=(Model)requestModel.getRequestMap().get("rdf");
+							
 		try{
 			registryService.addEntity(rdf);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);

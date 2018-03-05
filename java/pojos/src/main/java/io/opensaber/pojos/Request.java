@@ -10,16 +10,7 @@ public class Request {
 	private Long ets;	
 	private RequestParams params;
 	private Map<String, Object> requestMap;
-	private List<Object> requestList;
-	private Object rdf;
-	
-		
-	public Object getRdf() {
-		return rdf;
-	}
-	public void setRdf(Object rdf) {
-		this.rdf = rdf;
-	}
+				
 	public String getId() {
 		return id;
 	}
@@ -51,10 +42,5 @@ public class Request {
 	public void setRequestMap(Map<String, Object> requestMap) {
 		this.requestMap = requestMap;
 	}
-	public List<Object> getRequestList() {
-		return requestList;
-	}
-	public void setRequestList(List<Object> requestList) {
-		this.requestList = requestList;
-	}
+
 }

@@ -65,14 +65,7 @@ public class BaseRequestHandler{
 				
 				if(null == request.getAttribute(entry.getKey())){
 					request.setAttribute(entry.getKey(), entry.getValue());
-					if(entry.getKey().equalsIgnoreCase("rdf")) {						
-						Object rdfModel= entry.getValue();
-						if(attributeMap.containsKey("requestModel")){
-							Object requestModel=attributeMap.get("requestModel");
-							((Request) requestModel).setRdf(rdfModel);
-					}
-				}
-			}
+		  }
 		}
 	 }
 	}
@@ -91,14 +84,14 @@ public class BaseRequestHandler{
 		Map<String,Object> requestBodyMap = new HashMap<String,Object>();
 		Gson gson = new Gson();
     	Request requestModel= gson.fromJson(getRequestBody(), Request.class);
-		requestBodyMap.put(Constants.REQUEST_ATTRIBUTE, requestModel);
+      	requestBodyMap.put(Constants.REQUEST_ATTRIBUTE, requestModel);
 		
     	String requestBody=getRequestBody();    	
     	requestBody= substringAfter(requestBody,"request\":");
        	requestBody = requestBody.substring(0, requestBody.length() - 1);
-    	    
-    	requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestBody);
-		
+       	    	    
+    	requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestBody);    	
+    	requestModel.setRequestMap(requestBodyMap);		
 	    return requestBodyMap;
 	}
 	
@@ -120,6 +113,8 @@ public class BaseRequestHandler{
 		if(attributeNames!=null){
 			while(attributeNames.hasMoreElements()){
 				String attribute = attributeNames.nextElement();
+				System.out.println("##attribute##"+attribute);
+				System.out.println("%%% attribute_value%%%"+requestWrapper.getAttribute(attribute));
 				requestAttributeMap.put(attribute, requestWrapper.getAttribute(attribute));
 			}
 		}
