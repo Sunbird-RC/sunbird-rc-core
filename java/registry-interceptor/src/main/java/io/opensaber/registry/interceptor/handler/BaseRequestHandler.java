@@ -64,14 +64,7 @@ public class BaseRequestHandler{
 			for(Map.Entry<String, Object> entry: attributeMap.entrySet()){
 				
 				if(null == request.getAttribute(entry.getKey())){
-					request.setAttribute(entry.getKey(), entry.getValue());
-					if(entry.getKey().equalsIgnoreCase("rdf")) {						
-						Object rdfModel= entry.getValue();
-						if(attributeMap.containsKey("requestModel")){
-							Object requestModel=attributeMap.get("requestModel");
-							((Request) requestModel).setRdf(rdfModel);
-					}
-				}
+					request.setAttribute(entry.getKey(), entry.getValue());					
 			}
 		}
 	 }
