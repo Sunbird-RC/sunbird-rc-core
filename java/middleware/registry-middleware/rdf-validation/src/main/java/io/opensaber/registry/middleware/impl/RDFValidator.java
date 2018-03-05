@@ -2,6 +2,7 @@ package io.opensaber.registry.middleware.impl;
 
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +12,8 @@ import javax.management.relation.RelationService;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -35,6 +38,8 @@ public class RDFValidator implements BaseMiddleware{
 
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing!";
 	private static final String RDF_DATA_IS_INVALID = "RDF Data is invalid!";
+	private static final String RDF_VALIDATION_MAPPING_MISSING = "RDF validation mapping is missing!";
+	private static final String RDF_VALIDATION_MAPPING_NULL = "RDF validation mapping is null!";
 	private Path schemaFilePath;	
 	public static final String SCHEMAFORMAT = "SHEXC";
 	public static final String PROCESSOR 	= "shex";
@@ -48,7 +53,9 @@ public class RDFValidator implements BaseMiddleware{
 		Object validationRDF = mapData.get(Constants.RDF_VALIDATION_MAPPER_OBJECT);
 		if (RDF==null) {
 			throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_MISSING); 
-		} else if (RDF instanceof Model) {
+		}else if(validationRDF == null){
+			throw new MiddlewareHaltException(this.getClass().getName()+RDF_VALIDATION_MAPPING_NULL); 
+		}else if (RDF instanceof Model) {
 			ShaclexValidator validator = new ShaclexValidator();
 			Schema schema = validator.readSchema(this.schemaFilePath,SCHEMAFORMAT, PROCESSOR);
 			Model rdfWithValidations = mergeModels((Model)RDF, (Model)validationRDF);
@@ -68,10 +75,13 @@ public class RDFValidator implements BaseMiddleware{
 		return null;
 	}
 
-	public Model mergeModels(Model RDF, Model validationRDF){
+	private Model mergeModels(Model RDF, Model validationRDF){
 		if(validationRDF!=null){
 			RDF.add(validationRDF.listStatements());
 		}
+		StringWriter sw = new StringWriter();
+		RDFDataMgr.write(sw, RDF, Lang.TTL);
+		System.out.println(sw.toString());
 		return RDF;
 	}
 

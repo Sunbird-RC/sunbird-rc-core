@@ -174,16 +174,7 @@ public class RDFValidationMapperTest {
 		assertTrue(iter1.toList().size() == 1);
 		assertTrue(iter2.toList().size() == 0);
 	}
-	
-	public static void main(String args[]){
-		Model model = ModelFactory.createDefaultModel() ;
-		String url = new File("/home/jyotsna/opensaber/testRepo/open-saber/java/middleware/registry-middleware/rdf-validation-mapping/src/main/resources/teacher.record").toURI().toString();
-		//model.read("teacher.record",null, "TURTLE") ;
-		model = RDFDataMgr.loadModel(url,Lang.TURTLE);
-		StringWriter sw = new StringWriter();
-		RDFDataMgr.write(sw, model, RDFFormat.JSONLD_COMPACT_PRETTY);
-		System.out.println(sw.toString());
-	}
+
 }
 
 
