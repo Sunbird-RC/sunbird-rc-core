@@ -33,12 +33,9 @@ import io.opensaber.registry.middleware.util.Constants;
 
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import scalaz.Const;
 
 @Configuration
 @PropertySource(value = {"classpath:config-${spring.profiles.active}.properties"})
-// public class GenericConfiguration extends WebMvcConfigurerAdapter {
 public class GenericConfiguration implements WebMvcConfigurer {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);

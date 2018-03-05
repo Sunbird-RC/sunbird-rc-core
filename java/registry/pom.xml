@@ -14,7 +14,6 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<!-- <version>1.5.9.RELEASE</version> -->
 		<version>2.0.0.RELEASE</version>
 		<relativePath />
 	</parent>
@@ -23,7 +22,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-		<!-- <start-class>io.opensaber.registry.controller.RegistryController</start-class> -->
 		<tinkerpop.version>3.3.1</tinkerpop.version>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
@@ -240,10 +238,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<!-- <warName>registry</warName> -->
-					<!-- <excludeArtifactIds>spring-boot-starter-tomcat</excludeArtifactIds> -->
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

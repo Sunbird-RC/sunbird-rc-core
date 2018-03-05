@@ -1,24 +1,8 @@
 package io.opensaber.registry.controller;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.UUID;
 
-import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.WriterDatasetRIOT;
-import org.apache.jena.riot.system.PrefixMap;
-import org.apache.jena.riot.system.RiotLib;
-import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.riot.JsonLDWriteContext;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
