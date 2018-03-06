@@ -4,8 +4,6 @@ import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 
 import io.opensaber.registry.util.RDFUtil;
-import mockit.Mocked;
-import mockit.NonStrictExpectations;
 import org.apache.jena.rdf.model.*;
 import org.junit.After;
 import org.junit.Before;

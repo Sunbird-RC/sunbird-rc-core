@@ -14,20 +14,14 @@ import java.util.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.RDF;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.service.RegistryService;
-import io.opensaber.utils.converters.RDF2Graph;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 
 
@@ -45,13 +39,7 @@ public class RegistryTestBase {
 
 		try {
 			String file = Paths.get(getPath(filename)).toString();
-			System.out.println("file"+file);
-	    	jsonld = readFromFile(file);	
-	    	System.out.println("jsonld"+jsonld);
-	    	jsonld= substringAfter(jsonld,"request\":");
-	    	jsonld = jsonld.substring(0, jsonld.length() - 1);
-	    	System.out.println("jsonld 2"+jsonld);
-	    	
+	    	jsonld = readFromFile(file);
 		} catch (Exception e) {
 			jsonld = StringUtils.EMPTY;
 		}
