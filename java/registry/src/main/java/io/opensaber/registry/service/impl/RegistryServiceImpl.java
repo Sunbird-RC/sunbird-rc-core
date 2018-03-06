@@ -2,11 +2,13 @@ package io.opensaber.registry.service.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import io.opensaber.registry.util.RDFUtil;
+import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
@@ -111,9 +113,8 @@ public class RegistryServiceImpl implements RegistryService {
 		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
 		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
 		JsonLDWriteContext ctx = new JsonLDWriteContext();
-		ClassPathResource res = new ClassPathResource("frame.json");
-		File file = res.getFile();
-		String fileString = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+		InputStream is = this.getClass().getClassLoader().getResourceAsStream("frame.json");
+		String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
 		ctx.setFrame(fileString);
 		WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT) ;
 		PrefixMap pm = RiotLib.prefixMap(g);
