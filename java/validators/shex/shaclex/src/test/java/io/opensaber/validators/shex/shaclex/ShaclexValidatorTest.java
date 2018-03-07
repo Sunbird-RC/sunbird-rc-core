@@ -1,8 +1,8 @@
 package io.opensaber.validators.shex.shaclex;
 
-import static org.junit.Assert.*;
+import es.weso.schema.Result;
+import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -10,11 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import org.junit.Test;
-import org.scalactic.Validation;
-
-import es.weso.schema.Result;
-import es.weso.shacl.Path;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class ShaclexValidatorTest {
 	

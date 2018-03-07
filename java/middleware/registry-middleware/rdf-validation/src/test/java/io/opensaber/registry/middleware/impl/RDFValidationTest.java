@@ -35,6 +35,7 @@ public class RDFValidationTest {
 	private static final String SIMPLE_SHEX = "good1.shex";
 	private static final String SIMPLE_JSONLD = "good1.jsonld";
 	private static final String COMPLEX_TTL = "teacher.record";
+	private static final String COMPLEX_INVALID_TTL = "teacher.badrecord";
 	private static final String COMPLEX_SHEX = "teacher.shex";
 	private static final String SCHOOL_JSONLD = "school.jsonld";
 	//public static final String FORMAT = "JSON-LD";
@@ -72,52 +73,28 @@ public class RDFValidationTest {
 	
 	@Test
 	public void testHaltIfRDFpresentButInvalid() throws IOException, MiddlewareHaltException, URISyntaxException{
+		expectedEx.expect(MiddlewareHaltException.class);
+		expectedEx.expectMessage("RDF Data is invalid!");
 		assertTrue(setup(SIMPLE_SHEX));
 		mapData = new HashMap<>();
 		mapData.put(Constants.RDF_OBJECT, "{}");
-		expectedEx.expect(MiddlewareHaltException.class);
-		expectedEx.expectMessage("RDF Data is invalid!");
+		Model model = getModel();
+		mapData.put(Constants.RDF_VALIDATION_MAPPER_OBJECT, model);
 		middleware.execute(mapData);
 	}
 	
+
 	@Test
-	public void testIfJSONLDIsSupported() throws IOException, MiddlewareHaltException, URISyntaxException{
-		assertTrue(setup(SIMPLE_SHEX));
-		mapData = new HashMap<>();
-		String jsonLDData = Paths.get(getPath(SIMPLE_JSONLD)).toString();
-		Path filePath = Paths.get(jsonLDData);
-		String RDF = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
-		Model dataModel = ShaclexValidator.parse(RDF,"JSON-LD");
-		mapData.put(Constants.RDF_OBJECT, dataModel);
-		middleware.execute(mapData);
-		testForSuccessfulResult();
-	}
-	
-	@Test @Ignore
-	public void testHaltIfvalidRDFpresentButFailsSHEX() throws IOException, MiddlewareHaltException, URISyntaxException{
-		expectedEx.expect(MiddlewareHaltException.class);
-		expectedEx.expectMessage("RDF Data is invalid!");
-		assertTrue(setup(COMPLEX_SHEX));
-		mapData = new HashMap<>();
-		String data = Paths.get(getPath(SIMPLE_JSONLD)).toString();
-		Path filePath = Paths.get(data);
-		String RDF = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
-		Model dataModel = ShaclexValidator.parse(RDF,"JSON-LD");
-		mapData.put(Constants.RDF_OBJECT, dataModel);
-		middleware.execute(mapData);
-//		testForUnsuccessfulResult();
-	}
-	@Test @Ignore
 	public void testHaltIfValidationMappingMissing() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
-		expectedEx.expectMessage("RDF validation mapping is missing!");
+		expectedEx.expectMessage("RDF validation mapping is null!");
 		assertTrue(setup(COMPLEX_SHEX));
 		mapData = new HashMap<String,Object>();
 		mapData.put(Constants.RDF_OBJECT, getValidRdf(COMPLEX_TTL));
 		middleware.execute(mapData);
 	}
 	
-	@Test @Ignore
+	@Test
 	public void testHaltIfValidationMappingIsNull() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
 		expectedEx.expectMessage("RDF validation mapping is null!");
@@ -140,23 +117,42 @@ public class RDFValidationTest {
 		testForSuccessfulResult();
 	}
 	
-	@Test @Ignore
+	@Test
 	public void testIfComplexJSONLDIsSupported() throws IOException, MiddlewareHaltException, URISyntaxException{
 		assertTrue(setup(COMPLEX_SHEX));
 		mapData = new HashMap<String,Object>();
 		mapData.put(Constants.RDF_OBJECT, getValidRdf(COMPLEX_TTL));
+		Model model = getModel();
+		mapData.put(Constants.RDF_VALIDATION_MAPPER_OBJECT, model);
+		middleware.execute(mapData);
+		testForSuccessfulResult();
+	}
+
+	private Model getModel() {
 		Model model = ModelFactory.createDefaultModel();
 		Resource subject = ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/SchoolShape");
 		Property predicate = ResourceFactory.createProperty("http://www.w3.org/ns/shacl#targetNode");
 		RDFNode object = ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/1234");
-		Resource subject2 = ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/AddressShape");
-		Property predicate2 = ResourceFactory.createProperty("http://www.w3.org/ns/shacl#targetNode");
-		RDFNode object2 = ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/urbanaddress");
 		model.add(subject, predicate, object);
-		model.add(subject2, predicate2, object2);
+		return model;
+	}
+
+	@Test
+	public void testIfaRealValidationFails() throws IOException, URISyntaxException, MiddlewareHaltException {
+		expectedEx.expect(MiddlewareHaltException.class);
+		expectedEx.expectMessage("RDF Data is invalid!");
+		assertTrue(setup(COMPLEX_SHEX));
+		mapData = new HashMap<String,Object>();
+		mapData.put(Constants.RDF_OBJECT, getValidRdf(COMPLEX_INVALID_TTL));
+		Model model = getModel();
 		mapData.put(Constants.RDF_VALIDATION_MAPPER_OBJECT, model);
-		middleware.execute(mapData);
-		testForSuccessfulResult();
+		try {
+			middleware.execute(mapData);
+		} catch (MiddlewareHaltException e) {
+			testForUnsuccessfulResult();
+			throw(e);
+		}
+
 	}
 
 	private void testForSuccessfulResult() {

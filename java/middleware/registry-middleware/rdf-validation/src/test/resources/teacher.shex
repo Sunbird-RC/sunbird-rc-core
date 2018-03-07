@@ -7,10 +7,10 @@ sample:isAString xsd:string
 sample:SchoolShape {
 	a [sample:School] ;
 	sample:schoolName @sample:isAString ;
-	sample:address IRI
+	sample:address @sample:AddressShape
 }
 
-sample:AddressShape CLOSED {
+sample:AddressShape {
     a [sample:IndianUrbanPostalAddress sample:IndianRuralPostalAddress] ;
     sample:district @sample:isAString
 }

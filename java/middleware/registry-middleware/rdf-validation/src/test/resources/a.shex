@@ -1,0 +1,12 @@
+PREFIX sample: <http://example.com/voc/teacher/1.0.0/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+sample:AShape CLOSED {
+    a [sample:A] ;
+    sample:b @sample:BShape
+}
+
+sample:BShape CLOSED {
+    a [sample:B] ;
+    sample:c xsd:string
+}

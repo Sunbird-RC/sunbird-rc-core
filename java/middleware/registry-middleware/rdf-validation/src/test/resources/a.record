@@ -1,0 +1,10 @@
+@prefix sample: <http://example.com/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+sample:a001 a sample:A ;
+    sample:b sample:b001 .
+
+sample:b001 a sample:B ;
+    sample:c "something c" .
+
+sample:AShape sh:targetNode sample:a001 .

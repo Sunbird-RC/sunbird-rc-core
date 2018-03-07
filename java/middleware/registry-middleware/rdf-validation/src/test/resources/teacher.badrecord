@@ -3,9 +3,9 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 
 sample:1234 a sample:School ;
-    sample:schoolName "BVM" ;
+    sample:schoolName 1234 ;
     sample:address sample:urbanaddress .
-    
+
 sample:urbanaddress a sample:IndianUrbanPostalAddress ;
     sample:district "Gurgaon" .
 
