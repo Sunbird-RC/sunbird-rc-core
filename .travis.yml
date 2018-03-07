@@ -1,0 +1,7 @@
+language: java
+jdk:
+  - openjdk8
+env:
+  - BUILD_DIR=java
+  - BUILD_DIR=java/registry
+script: cd $BUILD_DIR && mvn clean install
