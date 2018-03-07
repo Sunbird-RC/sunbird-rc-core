@@ -1,11 +1,8 @@
 language: java
 jdk:
   - openjdk8
-env:
-  - BUILD_DIR=java
-  - BUILD_DIR=java/registry
 cache:
   directories:
   - $HOME/.m2
 script: 
-  - cd $BUILD_DIR && mvn clean install
+  - cd java && mvn clean install && cd registry && mvn clean install
