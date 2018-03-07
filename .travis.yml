@@ -4,4 +4,9 @@ jdk:
 env:
   - BUILD_DIR=java
   - BUILD_DIR=java/registry
-script: cd $BUILD_DIR && mvn clean install
+cache:
+  directories:
+  - $HOME/.m2
+script: 
+  - cd $BUILD_DIR && mvnw clean install
+  - bash <(curl -s https://codecov.io/bash)
