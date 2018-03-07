@@ -8,5 +8,4 @@ cache:
   directories:
   - $HOME/.m2
 script: 
-  - cd $BUILD_DIR && mvnw clean install
-  - bash <(curl -s https://codecov.io/bash)
+  - cd $BUILD_DIR && mvn clean install
