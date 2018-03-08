@@ -1,53 +1,40 @@
 {
-  "id":  "open-saber.registry.create",
-  "ver": "1.0",
-  "ets":  "11234",
-  "params": {
-    "did": "", 
-    "key": "", 
-    "msgid": "" 
-    },
-  "request":{
-  "@context": {
-    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "sample": "http://example.com/voc/teacher/1.0.0/",
-    "xsd": "http://www.w3.org/2001/XMLSchema#"
-  },
-  "@graph": [
-    {
-      "@id": "_:fa7740c185fb247729c7296c36b5c1257b1",
-      "@type": "sample:IndianUrbanPostalAddress",
-      "sample:city": "Gurgaon",
-      "sample:district": "Gurgaon",
-      "sample:mohalla": "Sector 14",
-      "sample:municipality": "MCG",
-      "sample:pinCode": 122001,
-      "sample:wardNumber": "456"
-    },
-    {
-      "@id": "<!samp131d>",
-      "@type": "sample:schl",
-      "sample:academicCalendarYearEnd": {
-        "@type": "xsd:gYear",
-        "@value": "2018"
-      },
-      "sample:academicCalendarYearStart": {
-        "@type": "xsd:gYear",
-        "@value": "2017"
-      },
-      "sample:address": {
-        "@id": "_:fa7740c185fb247729c7296c36b5c1257b1"
-      },
-      "sample:area": {
-        "@id": "sample:AreaTypeCode-URBAN"
-      },
-      "sample:assemblyConstituency": "Gurgaon",
-      "sample:clusterResourceCentre": "some Cluster Resource",
-      "sample:revenueBlock": "some block",
-      "sample:schoolName": "DAV Public School",
-      "sample:udiseNumber": 23456789876
-    }
-  ]
-}
+	"id": "open-saber.registry.create",
+	"ver": "1.0",
+	"ets": "11234",
+	"params": {
+		"did": "",
+		"key": "",
+		"msgid": ""
+	},
+	"request": {
+		"sample:academicCalendarYearEnd": "2018",
+		"sample:academicCalendarYearStart": "2017",
+		"sample:assemblyConstituency": "Gurgaon",
+		"@type": "sample:Schl",
+		"sample:schoolName": "Bluebells",
+		"sample:udiseNumber": "9876",
+		"sample:clusterResourceCentre": "some Cluster Resource",
+		"@id": "<@id>",
+		"sample:address": {
+			"sample:district": "Gurgaon",
+			"@type": "sample:IndianUrbanPostalAddress",
+			"sample:mohalla": "Sector 14",
+			"sample:municipality": "MCG",
+			"sample:city": "Gurgaon",
+			"@id": "sample:fa7740c185fb247329c7296c36b5c1257b1",
+			"sample:pinCode": "122001",
+			"sample:wardNumber": "456"
+		},
+		"sample:area": {
+			"@id": "sample:AreaTypeCode-URBAN"
+		},
+		"sample:revenueBlock": "some block",
+		"@context": {
+			"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+			"xsd": "http://www.w3.org/2001/XMLSchema#",
+			"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+			"sample": "http://example.com/voc/teacher/1.0.0/"
+		}
+	}
 }
