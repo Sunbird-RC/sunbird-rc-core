@@ -84,7 +84,7 @@ public class RDFValidationTest {
 	}
 	
 
-	@Test
+	@Test @Ignore
 	public void testHaltIfValidationMappingMissing() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
 		expectedEx.expectMessage("RDF validation mapping is null!");
@@ -94,7 +94,7 @@ public class RDFValidationTest {
 		middleware.execute(mapData);
 	}
 	
-	@Test
+	@Test @Ignore
 	public void testHaltIfValidationMappingIsNull() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
 		expectedEx.expectMessage("RDF validation mapping is null!");

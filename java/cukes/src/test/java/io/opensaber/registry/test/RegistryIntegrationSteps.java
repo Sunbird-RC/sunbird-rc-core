@@ -1,5 +1,6 @@
 package io.opensaber.registry.test;
 
+import static org.apache.commons.lang3.StringUtils.substringAfter;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -33,6 +34,7 @@ import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import io.opensaber.pojos.Request;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.Response.Status;
 
@@ -165,7 +167,9 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	@Then("^the record should match$")
 	public void the_record_should_match() throws Exception {
 		Model expectedModel = ModelFactory.createDefaultModel();
-		RDFDataMgr.read(expectedModel, new StringReader(jsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD) ;
+		String jsonldBody= substringAfter(jsonld,"request\":");
+		jsonldBody = jsonldBody.substring(0, jsonldBody.length() - 1);
+		RDFDataMgr.read(expectedModel, new StringReader(jsonldBody), null, org.apache.jena.riot.RDFLanguages.JSONLD) ;
 		Map<String, Object> result = response.getBody().getResultMap();
 		Model actualModel = ModelFactory.createDefaultModel();
 		String newJsonld = new JSONObject(result).toString(2);

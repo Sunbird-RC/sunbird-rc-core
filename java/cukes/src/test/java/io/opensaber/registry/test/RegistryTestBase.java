@@ -57,7 +57,7 @@ public class RegistryTestBase {
 	}
 
 	public void setJsonldWithNewRootLabel(String id){
-		jsonld.replace(REPLACING_SUBJECT_LABEL, id);
+		jsonld = jsonld.replace(REPLACING_SUBJECT_LABEL, id);
 	}
 	
 	
