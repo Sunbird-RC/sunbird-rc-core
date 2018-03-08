@@ -1,4 +1,13 @@
 {
+  "id":  "open-saber.registry.create",
+  "ver": "1.0",
+  "ets":  "11234",
+  "params": {
+    "did": "", 
+    "key": "", 
+    "msgid": "" 
+    },
+  "request":{
   "@context": {
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
@@ -40,4 +49,5 @@
       "sample:udiseNumber": 23456789876
     }
   ]
+}
 }

@@ -1,5 +1,7 @@
 package io.opensaber.registry.controller;
 
+import java.net.InetAddress;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -49,30 +51,7 @@ public class RegistryController {
 
 	@ResponseBody
 	@RequestMapping(value="/addEntity",method=RequestMethod.POST)
-	public ResponseEntity<Response> addEntity(@RequestAttribute Model rdf) throws JsonProcessingException, DuplicateRecordException, InvalidTypeException{
-		System.out.println("\n\n\nINSIDE CONTROLLER\n\n\n");
-		Response response = new Response();
-		ResponseParams responseParams = new ResponseParams();
-		response.setId(UUID.randomUUID().toString());
-		response.setEts(System.currentTimeMillis() / 1000L);
-		response.setVer("1.0");
-		response.setParams(responseParams);
-		try{			
-			registryService.addEntity(rdf);
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-		} catch (DuplicateRecordException | InvalidTypeException e) {
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		} catch (Exception e) {
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		}
-		return new ResponseEntity<Response>(response, HttpStatus.OK);
-	}
-	
-	@ResponseBody
-	@RequestMapping(value="/addEntityTest",method=RequestMethod.POST)
-	public ResponseEntity<Response> addEntityTest(@RequestAttribute Request requestModel) throws JsonProcessingException, DuplicateRecordException, InvalidTypeException{
+	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) throws JsonProcessingException, DuplicateRecordException, InvalidTypeException{
 	
 		Response response = new Response();
 		ResponseParams responseParams = new ResponseParams();
@@ -82,10 +61,13 @@ public class RegistryController {
 		response.setParams(responseParams);
 	
 		Model rdf=(Model)requestModel.getRequestMap().get("rdf");
-							
-		try{
-			registryService.addEntity(rdf);
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+					
+   	try{
+			String label=registryService.addEntity(rdf);
+			Map<String,Object> resultMap= new HashMap<>();
+			resultMap.put("entity", label);
+		    response.setResultMap(resultMap);
+		 	responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (DuplicateRecordException | InvalidTypeException e) {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
@@ -109,7 +91,7 @@ public class RegistryController {
 			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(id);
 			String jenaJSON = registryService.frameEntity(entityModel);
 			JSONObject jenaObj=new JSONObject(jenaJSON);
-			responseParams.setResultMap(jenaObj.toMap());
+			response.setResultMap(jenaObj.toMap());
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (RecordNotFoundException e) {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);

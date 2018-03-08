@@ -19,7 +19,6 @@ import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.util.Constants;
 
-//@Order(3)
 @Order(2)
 @Component
 public class RDFValidationInterceptor extends BaseRequestHandler implements HandlerInterceptor {

@@ -18,7 +18,7 @@ public interface RegistryService {
 	
 	public List getEntityList();
 	
-	public void addEntity(Model entity) throws DuplicateRecordException, InvalidTypeException;
+	public String addEntity(Model entity) throws DuplicateRecordException, InvalidTypeException;
 	
 	public boolean updateEntity(Model entity);
 	

@@ -23,7 +23,7 @@ public class RegistryTestBase {
 
 		try {
 			String file = Paths.get(getPath(filename)).toString();
-			jsonld = readFromFile(file);	
+			jsonld = readFromFile(file);			
 		} catch (Exception e) {
 			jsonld = EMPTY_STRING;
 		}
@@ -56,9 +56,11 @@ public class RegistryTestBase {
 		return Constants.INTEGRATION_TEST_BASE_URL;
 	}
 
-	public void setJsonldWithNewRootLabel(String label){
-		jsonld = jsonld.replace(REPLACING_SUBJECT_LABEL, label);
+	public void setJsonldWithNewRootLabel(String id){
+		jsonld.replace(REPLACING_SUBJECT_LABEL, id);
 	}
+	
+	
 	
 	public static String generateRandomId(){
 		return UUID.randomUUID().toString();

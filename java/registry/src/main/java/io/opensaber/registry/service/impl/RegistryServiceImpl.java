@@ -55,7 +55,7 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public void addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException {
+	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException {
 		try {
 			Graph graph = GraphDBFactory.getEmptyGraph();
 			RDFUtil.updateIdForBlankNode(rdfModel);
@@ -77,10 +77,13 @@ public class RegistryServiceImpl implements RegistryService {
 				graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
 			}
 
+		
 			if (label == null) {
 				throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
 			}
 			registryDao.addEntity(graph, label);
+			return label;
+			
 		} catch (DuplicateRecordException | InvalidTypeException ex) {
 			throw ex;
 		} catch (Exception ex) {

@@ -34,11 +34,12 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import io.opensaber.pojos.Response;
+import io.opensaber.pojos.Response.Status;
 
 public class RegistryIntegrationSteps extends RegistryTestBase{
 	
 	private static final String VALID_JSONLD= "school.jsonld";
-	private static final String VALID_NEW_JSONLD="newSchool.jsonld";
+	private static final String VALID_NEWJSONLD= "newSchool.jsonld";
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
 	private static final String ADD_ENTITY = "addEntity";
 	private static final String CONTEXT_CONSTANT = "sample:";
@@ -46,10 +47,10 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	
 	private RestTemplate restTemplate;
 	private String baseUrl;
-	private ResponseEntity<ObjectNode> response;
+	private ResponseEntity<Response> response;
 	private Response responseObj;
 	private String labelToFetch;
-	private String label;
+	private String id;
 	private static String duplicateLabel;
 	
 	
@@ -59,27 +60,19 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		baseUrl = generateBaseUrl();
 	}
 	
-	/*@Given("^a valid record")
-	public void jsonldData(){
-		setJsonld(VALID_JSONLD);
-		label = generateRandomId();
-		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+label);
-		assertNotNull(jsonld);
-	}*/
-	
 	@Given("^a valid record")
 	public void jsonldData(){
-		setJsonld(VALID_NEW_JSONLD);
-		label = generateRandomId();
-		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+label);
+		setJsonld(VALID_NEWJSONLD);
+		id= generateRandomId();
+		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+id);	
 		assertNotNull(jsonld);
 	}
 	
 	@Given("^an invalid record")
 	public void invalidJsonldData(){
 		setJsonld(INVALID_LABEL_JSONLD);
-		label = generateRandomId();
-		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+label);
+	    id= generateRandomId();
+		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+id);
 		assertNotNull(jsonld);
 	}
 	
@@ -88,14 +81,14 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		response = callRegistryCreateAPI();
 	}
 
-	private ResponseEntity<ObjectNode> callRegistryCreateAPI() {
+	private ResponseEntity<Response> callRegistryCreateAPI() {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity<String> entity = new HttpEntity<String>(jsonld,headers);
-		ResponseEntity<ObjectNode> response = restTemplate.postForEntity(
+		ResponseEntity<Response> response = restTemplate.postForEntity(
 				baseUrl+ADD_ENTITY,
 				entity,
-				ObjectNode.class);
+				Response.class);	
 		return response;
 	}
 	
@@ -111,16 +104,14 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 
 
 	private void checkSuccessfulResponse() throws JsonParseException, JsonMappingException, IOException {
-		String jsonString = response.getBody().toString();
-		responseObj = new ObjectMapper().readValue(jsonString, Response.class);
-		assertEquals(Response.Status.SUCCCESSFUL, responseObj.getParams().getStatus());
+		Status responseStatus = response.getBody().getParams().getStatus();
+		assertEquals(Response.Status.SUCCCESSFUL, responseStatus);
 	}
 
 
 	private void checkUnsuccessfulResponse() throws JsonParseException, JsonMappingException, IOException {
-		String jsonString = response.getBody().toString();
-		responseObj = new ObjectMapper().readValue(jsonString, Response.class);
-		assertEquals(Response.Status.UNSUCCESSFUL, responseObj.getParams().getStatus());
+		Status responseStatus = response.getBody().getParams().getStatus();
+		assertEquals(Response.Status.UNSUCCESSFUL, responseStatus);
 	}
 	
 	@Given("(.*) record issued into the registry")
@@ -131,13 +122,13 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	}
 	
 	@Then("^error message is (.*)")
-	public void verifyUnsuccessfulMessage(String message){
-		assertEquals(message, responseObj.getParams().getErrmsg());
+	public void verifyUnsuccessfulMessage(String message) throws JsonParseException, JsonMappingException, IOException{
+		assertEquals(message, response.getBody().getParams().getErrmsg());
 	}
 	
 	@Given("^a non existent record id$")
 	public void a_non_existent_record_id() throws Exception {
-		label = generateRandomId();
+		id = generateRandomId();
 	}
 
 	@When("^retrieving the record from the registry$")
@@ -145,14 +136,10 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		response = callRegistryReadAPI();
 	}
 
-	private ResponseEntity<ObjectNode> callRegistryReadAPI() {
+	private ResponseEntity<Response> callRegistryReadAPI() {
 		HttpHeaders headers = new HttpHeaders();
 		HttpEntity<String> entity = new HttpEntity<String>("",headers);
-		ResponseEntity<ObjectNode> response = restTemplate.getForEntity(baseUrl+READ_ENTITY+"/"+label, ObjectNode.class);
-//		ResponseEntity response = restTemplate.postForEntity(
-//				baseUrl+READ_ENTITY,
-//				entity,
-//				ObjectNode.class);
+		ResponseEntity<Response> response = restTemplate.getForEntity(baseUrl+READ_ENTITY+"/"+id, Response.class);
 		return response;
 		
 	}
@@ -167,6 +154,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		jsonldData();
 		addEntity();
 		checkSuccessfulResponse();
+	//	assertNotNull(jsonld);
 	}
 
 	@Then("^record retrieval should be successful$")
@@ -178,7 +166,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	public void the_record_should_match() throws Exception {
 		Model expectedModel = ModelFactory.createDefaultModel();
 		RDFDataMgr.read(expectedModel, new StringReader(jsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD) ;
-		Map<String, Object> result = responseObj.getParams().getResultMap();
+		Map<String, Object> result = response.getBody().getResultMap();
 		Model actualModel = ModelFactory.createDefaultModel();
 		String newJsonld = new JSONObject(result).toString(2);
 		RDFDataMgr.read(actualModel, new StringReader(newJsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD);

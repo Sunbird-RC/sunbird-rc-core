@@ -11,7 +11,6 @@ public class ResponseParams{
 		private Status status = Status.UNSUCCESSFUL;
 		private String err;
 		private String errmsg;
-		private Map<String, Object> resultMap;
 		private List<Object> resultList;
 		public String getResmsgid() {
 			return resmsgid;
@@ -42,13 +41,7 @@ public class ResponseParams{
 		}
 		public void setErrmsg(String errmsg) {
 			this.errmsg = errmsg;
-		}
-		public Map<String, Object> getResultMap() {
-			return resultMap;
-		}
-		public void setResultMap(Map<String, Object> resultMap) {
-			this.resultMap = resultMap;
-		}
+		}		
 		public List<Object> getResultList() {
 			return resultList;
 		}

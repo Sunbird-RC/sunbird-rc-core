@@ -1,14 +1,17 @@
 package io.opensaber.pojos;
 
+import java.util.Map;
+
 public class Response {
 	private String id;
 	private String ver;
 	private Long ets;	
 	private ResponseParams params;
-	public enum Status
+	public enum Status	
 	{
 	    SUCCCESSFUL,UNSUCCESSFUL;
 	};
+	private Map<String, Object> resultMap;
 	public String getId() {
 		return id;
 	}
@@ -32,5 +35,11 @@ public class Response {
 	}
 	public void setParams(ResponseParams params) {
 		this.params = params;
+	}
+	public Map<String, Object> getResultMap() {
+		return resultMap;
+	}
+	public void setResultMap(Map<String, Object> resultMap) {
+		this.resultMap = resultMap;
 	}
 }
