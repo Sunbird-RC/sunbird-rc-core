@@ -3,14 +3,30 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX ex: <http://ex.example/#>
 
 sample:isAString xsd:string
+sample:isAYear xsd:gYear
 
 sample:SchoolShape {
 	a [sample:School] ;
-	sample:schoolName @sample:isAString ;
+	sample:udiseNumber xsd:integer ;
+    sample:academicCalendarYearStart @sample:isAYear ;
+    sample:academicCalendarYearEnd @sample:isAYear ;
+    sample:area [sample:AreaTypeCode-RURAL sample:AreaTypeCode-URBAN] ;
+    sample:schoolName @sample:isAString ;
 	sample:address @sample:AddressShape
 }
 
 sample:AddressShape {
     a [sample:IndianUrbanPostalAddress sample:IndianRuralPostalAddress] ;
+    (
+        sample:mohalla @sample:isAString ;
+        sample:wardNumber @sample:isAString ;
+        sample:municipality @sample:isAString ;
+        sample:city @sample:isAString 
+        |
+        sample:habitation @sample:isAString ;
+        sample:villageName @sample:isAString ;
+        sample:villagePanchayat @sample:isAString ;
+    );
+    sample:pinCode xsd:integer ;
     sample:district @sample:isAString
 }

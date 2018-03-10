@@ -20,7 +20,7 @@ import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.util.Constants;
 
-//@Order(2)
+@Order(2)
 @Component
 public class RDFValidationMappingInterceptor extends BaseRequestHandler implements HandlerInterceptor {
 	

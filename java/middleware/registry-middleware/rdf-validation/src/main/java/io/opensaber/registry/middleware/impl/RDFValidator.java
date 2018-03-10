@@ -22,8 +22,9 @@ public class RDFValidator implements BaseMiddleware{
 
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing!";
 	private static final String RDF_DATA_IS_INVALID = "RDF Data is invalid!";
+	private static final String RDF_VALIDATION_MAPPING_IS_INVALID = "RDF validation mapping is invalid!";
 	private static final String RDF_VALIDATION_MAPPING_MISSING = "RDF validation mapping is missing!";
-	private static final String RDF_VALIDATION_MAPPING_NULL = "RDF validation mapping is null!";
+	//private static final String RDF_VALIDATION_MAPPING_NULL = "RDF validation mapping is null!";
 
 	private String schemaFileName;
 	private static final String SCHEMAFORMAT = "SHEXC";
@@ -38,25 +39,22 @@ public class RDFValidator implements BaseMiddleware{
 		Object validationRDF = mapData.get(Constants.RDF_VALIDATION_MAPPER_OBJECT);
 		if (RDF == null) {
 			throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_MISSING);
-		}/*else if(validationRDF == null){
-			throw new MiddlewareHaltException(this.getClass().getName()+RDF_VALIDATION_MAPPING_NULL); 
-		}*/ else if (RDF instanceof Model) {
+		}else if(validationRDF == null){
+			throw new MiddlewareHaltException(this.getClass().getName()+RDF_VALIDATION_MAPPING_MISSING); 
+		}else if(!(RDF instanceof Model)){
+			throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_INVALID);
+		}else if(!(validationRDF instanceof Model)){
+			throw new MiddlewareHaltException(this.getClass().getName() + RDF_VALIDATION_MAPPING_IS_INVALID);
+		} else {
 			ShaclexValidator validator = new ShaclexValidator();
-
 			Schema schema = validator.readSchema(schemaFileName, SCHEMAFORMAT, PROCESSOR);
 			Model rdfWithValidations = mergeModels((Model) RDF, (Model) validationRDF);
 			Result validationResult = validator.validate(rdfWithValidations, schema);
-
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResult);
-//			System.out.println(schema);
-//			System.out.println(rdfWithValidations);
-//			System.out.println(validationResult);
 			if (!validationResult.isValid()) {
 				throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_INVALID);
 			}
 			return mapData;
-		} else {
-			throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_INVALID);
 		}
 	}
 

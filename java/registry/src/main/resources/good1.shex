@@ -1,24 +1,24 @@
 PREFIX sample: <http://example.com/voc/teacher/1.0.0/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX ex: <http://ex.example/#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-sample:isAYear xsd:gYear
 sample:isAString xsd:string
-sample:isAnInteger xsd:integer
-sample:isADate xsd:date
-sample:isURI xsd:anyURI
+sample:isAYear xsd:gYear
 
-
-sample:SchoolShape CLOSED {
-	a [sample:School] ;
+sample:SchoolShape {
+	sample:udiseNumber @sample:isAString ;
+    sample:academicCalendarYearStart @sample:isAString ;
+    sample:academicCalendarYearEnd @sample:isAString ;
     sample:area [sample:AreaTypeCode-RURAL sample:AreaTypeCode-URBAN] ;
-    sample:address IRI ;
-    sample:schoolName @sample:isAString 
+    sample:schoolName @sample:isAString ;
+	sample:address @sample:AddressShape ;
+	sample:revenueBlock @sample:isAString {0,1} ;
+	sample:assemblyConstituency @sample:isAString {0,1} ;
+	sample:clusterResourceCentre @sample:isAString {0,1}
 }
 
-sample:AddressShape CLOSED {
-    a [sample:address sample:IndianUrbanPostalAddress sample:IndianRuralPostalAddress] ;
+sample:AddressShape {
+    a [sample:IndianUrbanPostalAddress sample:IndianRuralPostalAddress] ;
     (
         sample:mohalla @sample:isAString ;
         sample:wardNumber @sample:isAString ;
@@ -29,26 +29,6 @@ sample:AddressShape CLOSED {
         sample:villageName @sample:isAString ;
         sample:villagePanchayat @sample:isAString ;
     );
-    sample:pinCode xsd:integer TotalDigits 6 ;
+    sample:pinCode @sample:isAString ;
     sample:district @sample:isAString
 }
-
-sample:TeacherShape CLOSED {
-    sample:serialNum @sample:isAnInteger ;
-    sample:teacherCode @sample:isAnInteger {0,1} ;
-    sample:nationalIdentifier @sample:isAString ;
-    sample:teacherName @sample:isAString ;
-    sample:gender [sample:GenderTypeCode-MALE sample:GenderTypeCode-FEMALE] ;
-    sample:birthDate @sample:isADate ;
-    sample:socialCategory [sample:SocialCategoryTypeCode-GENERAL sample:SocialCategoryTypeCode-SC sample:SocialCategoryTypeCode-ST sample:SocialCategoryTypeCode-OBC sample:SocialCategoryTypeCode-ORC sample:SocialCategoryTypeCode-OTHERS] ;
-    sample:highestAcademicQualification [] 
-}
-
-sample:TeacherRoleShape CLOSED {
-    sample:teacherType [sample:TeacherTypeCode-HEAD sample:TeacherTypeCode-ACTINGHEAD sample:TeacherTypeCode-TEACHER sample:TeacherTypeCode-RTEINSTRUCTOR sample:TeacherTypeCode-PRINCIPAL sample:TeacherTypeCode-VICEPRINCIPAL sample:TeacherTypeCode-LECTURER] ;
-    sample:appointmentType [sample:TeacherAppointmentTypeCode-REGULAR sample:TeacherAppointmentTypeCode-CONTRACT sample:TeacherAppointmentTypeCode-PARTTIME] ;
-    sample:startDate @sample:isADate ;
-    sample:endDate @sample:isADate ;
-    sample:schoolURI @sample:isURI ;
-}
-

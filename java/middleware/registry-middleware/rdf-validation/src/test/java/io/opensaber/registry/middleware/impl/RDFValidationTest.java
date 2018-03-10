@@ -84,20 +84,20 @@ public class RDFValidationTest {
 	}
 	
 
-	@Test @Ignore
+	@Test
 	public void testHaltIfValidationMappingMissing() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
-		expectedEx.expectMessage("RDF validation mapping is null!");
+		expectedEx.expectMessage("RDF validation mapping is missing!");
 		assertTrue(setup(COMPLEX_SHEX));
 		mapData = new HashMap<String,Object>();
 		mapData.put(Constants.RDF_OBJECT, getValidRdf(COMPLEX_TTL));
 		middleware.execute(mapData);
 	}
 	
-	@Test @Ignore
+	@Test
 	public void testHaltIfValidationMappingIsNull() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
-		expectedEx.expectMessage("RDF validation mapping is null!");
+		expectedEx.expectMessage("RDF validation mapping is missing!");
 		assertTrue(setup(COMPLEX_SHEX));
 		mapData = new HashMap<String,Object>();
 		mapData.put(Constants.RDF_OBJECT, getValidRdf(COMPLEX_TTL));
@@ -105,10 +105,10 @@ public class RDFValidationTest {
 		middleware.execute(mapData);
 	}
 	
-	@Test @Ignore
+	@Test
 	public void testHaltIfValidationMappingIsNotModel() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
-		expectedEx.expectMessage("RDF validation mapping is invalid");
+		expectedEx.expectMessage("RDF validation mapping is invalid!");
 		assertTrue(setup(COMPLEX_SHEX));
 		mapData = new HashMap<String,Object>();
 		mapData.put(Constants.RDF_OBJECT, getValidRdf(COMPLEX_TTL));
