@@ -24,9 +24,6 @@ public class RegistryDaoImpl implements RegistryDao {
 
     private static Logger logger = LoggerFactory.getLogger(RegistryDaoImpl.class);
 
-	// @Autowired
-	// private GraphDBFactory graphDBFactory;
-
 	@Autowired
 	private DatabaseProvider databaseProvider;
 
@@ -35,50 +32,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	/*
-	@Override
-	public boolean addEntity(Graph entity,String label) throws DuplicateRecordException{
-		GraphDatabaseService gds = graphDBFactory.getGraphDatabaseService();
-		try ( Transaction tx = gds.beginTx() )
-		{
-			if(gds.findNodes(Label.label(label)).hasNext()){
-				tx.success();
-				tx.close();
-				throw new DuplicateRecordException(Constants.DUPLICATE_RECORD_MESSAGE);
-			}
-
-		}
-		TinkerGraph graph = (TinkerGraph) entity;
-		GraphTraversalSource gts = graph.traversal();
-		GraphTraversal<Vertex, Vertex> traversal = gts.V();
-		Map<String,List<Object[]>> map = new HashMap<>();
-
-		try ( Transaction tx = gds.beginTx() )
-		{
-			if(traversal.hasNext()){
-				Map<String, Node> createdNodeMap = new HashMap<>();
-				Vertex v = traversal.next();
-				Node newNode = getNodeWithProperties(gds, v, false, createdNodeMap);
-
-				while(traversal.hasNext()){
-					v = traversal.next();
-					newNode = getNodeWithProperties(gds, v, true, createdNodeMap);
-					Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
-					Iterator<Edge> incomingEdges = v.edges(Direction.IN);
-					createEdgeNodes(outgoingEdges, gds, newNode, map, Direction.OUT, v, createdNodeMap);
-					createEdgeNodes(incomingEdges, gds, newNode, map, Direction.IN, v, createdNodeMap);
-
-				}
-			}
-			tx.success();
-			tx.close();
-		}
-		return true;
-
-		
-	}
-	*/
 
 	@Override
 	public boolean addEntity(Graph entity, String label) throws DuplicateRecordException {
@@ -148,38 +101,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		return newVertex;
 	}
 
-	/*
-	private Node getNodeWithProperties(GraphDatabaseService gds, Vertex v, boolean dbCheck, Map<String, Node> createdNodeMap) {
-
-		Node newNode;
-
-		if(createdNodeMap.containsKey(v.label())) {
-			newNode = createdNodeMap.get(v.label());
-		}
-		else{
-			if(dbCheck){
-				ResourceIterator<Node> nodes = gds.findNodes(Label.label(v.label()));
-				if(nodes.hasNext()){
-					newNode = nodes.next();
-				}else{
-					newNode = gds.createNode(Label.label(v.label()));
-				}
-			}
-			else{
-				newNode = gds.createNode(Label.label(v.label()));
-			}
-			Iterator<VertexProperty<Object>> properties = v.properties();
-			while(properties.hasNext()){
-				VertexProperty<Object> property = properties.next();
-				newNode.setProperty(property.key(), property.value());
-			}
-			createdNodeMap.put(v.label(), newNode);
-		}
-		return newNode;
-	}
-	*/
-
-
 	private void createEdgeNodes(Iterator<Edge> edges, GraphTraversalSource traversal,
 									Vertex newVertex, Map<String, List<Object[]>> map, Direction direction, Vertex traversalVertex,
 									Map<String, Vertex> createdNodeMap) {
@@ -204,34 +125,6 @@ public class RegistryDaoImpl implements RegistryDao {
 			}
 		}
 	}
-
-	/*
-	private void createEdgeNodes(Iterator<Edge> edges, GraphDatabaseService gds,
-								 Node newNode, Map<String,List<Object[]>> map, Direction direction, Vertex traversalVertex,
-                                 Map<String, Node> createdNodeMap) {
-
-		while(edges.hasNext()) {
-
-			Edge edge = edges.next();
-			Vertex vertex = direction.equals(Direction.OUT) ? edge.inVertex(): edge.outVertex();
-			boolean nodeAndEdgeExists = validateAddVertex(map, traversalVertex, edge, direction);
-
-			if(!nodeAndEdgeExists) {
-
-				Node nextNode = getNodeWithProperties(gds, vertex, true, createdNodeMap);
-				RelationshipType relType = RelationshipType.withName(edge.label());
-
-				if(direction.equals(Direction.OUT)) {
-					newNode.createRelationshipTo(nextNode, relType);
-				} else {
-					nextNode.createRelationshipTo(newNode, relType);
-				}
-
-				addNodeAndEdgeToGraph(map, traversalVertex, vertex, direction);
-			}
-		}
-	}
-	*/
 
 	/**
 	 * Method to add created nodes and edges to the graph
@@ -279,9 +172,76 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public boolean updateEntity(Graph entity,String label) {
-		// TODO Auto-generated method stub
+	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel) throws RecordNotFoundException {
+		Graph graphFromStore = databaseProvider.getGraphStore();
+		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
+		logger.info("FETCH: "+ rootNodeLabel);
+
+		TinkerGraph graphForUpdate = (TinkerGraph) entityForUpdate;
+		GraphTraversalSource updateGraphTraversalSource = graphForUpdate.traversal();
+
+		// Check if the root node being updated exists in the database
+		GraphTraversal<Vertex, Vertex> hasLabel = dbGraphTraversalSource.clone().V().hasLabel(rootNodeLabel);
+		if (!hasLabel.hasNext()) {
+			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
+		} else {
+			if (graphFromStore.features().graph().supportsTransactions()) {
+				org.apache.tinkerpop.gremlin.structure.Transaction tx;
+				tx = graphFromStore.tx();
+				tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
+				updateGraph(dbGraphTraversalSource, updateGraphTraversalSource, rootNodeLabel);
+				tx.commit();
+				tx.close();
+			} else {
+				updateGraph(dbGraphTraversalSource, updateGraphTraversalSource, rootNodeLabel);
+			}
+		}
 		return false;
+	}
+
+	private void updateGraph(GraphTraversalSource dbGraphSource, GraphTraversalSource factsForUpdate,
+							 String rootNodeLabel) {
+
+		GraphTraversal<Vertex, Vertex> updatedGraphTraversal = factsForUpdate.clone().V().has(T.label, rootNodeLabel);
+
+		while (updatedGraphTraversal.hasNext()) {
+			Vertex ver = updatedGraphTraversal.next();
+
+			ver.vertices(Direction.OUT).forEachRemaining(v ->
+				v.properties().forEachRemaining(p -> {
+					dbGraphSource.clone().V().properties(p.label()).forEachRemaining(pr ->
+							pr.element().property(p.key(), p.value())
+					);
+				})
+			);
+
+			ver.properties().forEachRemaining(p -> {
+				dbGraphSource.clone().V().properties(p.label()).forEachRemaining(pr ->
+						pr.element().property(p.key(), p.value())
+				);
+			});
+		}
+
+	}
+
+	public static String printGraph(GraphTraversalSource graph, String rootLabel) {
+		StringBuilder sb = new StringBuilder();
+		GraphTraversal<Vertex, Vertex> tr = graph.clone().V().has(T.label, rootLabel);
+		while (tr.hasNext()) {
+			Vertex ver = tr.next();
+			ver.vertices(Direction.OUT).forEachRemaining(v -> {
+				sb.append(String.format("RootNode: %s \n", v.label()));
+					v.properties().forEachRemaining(p ->
+							sb.append(String.format("Subject: %s, Predicate: %s, Object: %s\n", p.label(), p.key(), p.value()))
+					);
+				}
+			);
+
+			ver.properties().forEachRemaining(p ->
+				sb.append(String.format("Subject: %s, Predicate: %s, Object: %s\n", p.label(), p.key(), p.value()))
+			);
+		}
+		return sb.toString();
 	}
 
 	@Override

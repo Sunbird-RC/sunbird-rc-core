@@ -72,18 +72,17 @@ public class RegistryTestBase {
 		return Constants.INTEGRATION_TEST_BASE_URL;
 	}
 	
-/*	public Model getNewValidRdf(String fileName, String contextConstant){
-		setJsonld(fileName);
-		setJsonldWithNewRootLabel(contextConstant+generateRandomId());
-		Model model = ShaclexValidator.parse(jsonld, FORMAT);
-		return model;
-	}*/
-	
 	public Model getNewValidRdf(String fileName, String contextConstant){
 		setJsonld(fileName);
 		setJsonldWithNewRootLabel(contextConstant+generateRandomId());
 		Model model = ShaclexValidator.parse(jsonld, FORMAT);
 		return model;
+	}
+
+	public Model getNewValidRdf(String fileName, String contextConstant, String rootNodeLabel){
+		setJsonld(fileName);
+		setJsonldWithNewRootLabel(rootNodeLabel);
+		return ShaclexValidator.parse(jsonld, FORMAT);
 	}
 	
 	public Model getRdfWithInvalidTpe(){

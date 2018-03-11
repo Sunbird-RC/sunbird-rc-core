@@ -1,6 +1,7 @@
 package io.opensaber.registry.dao;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import io.opensaber.registry.exception.DuplicateRecordException;
@@ -12,7 +13,7 @@ public interface RegistryDao {
 	
 	public boolean addEntity(Graph entity,String label) throws DuplicateRecordException;
 	
-	public boolean updateEntity(Graph entity,String label);
+	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel) throws RecordNotFoundException;
 	
 	public boolean deleteEntity(Object entity);
 

@@ -9,18 +9,13 @@ import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.InvalidTypeException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 
-/**
- * 
- * @author jyotsna
- *
- */
 public interface RegistryService {
 	
 	public List getEntityList();
 	
 	public String addEntity(Model entity) throws DuplicateRecordException, InvalidTypeException;
 	
-	public boolean updateEntity(Model entity);
+	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException;
 	
 	public org.eclipse.rdf4j.model.Model getEntityById(String id) throws RecordNotFoundException;
 	

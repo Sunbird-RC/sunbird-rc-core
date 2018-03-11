@@ -93,10 +93,31 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public boolean updateEntity(Model entity){
-		String label = "";
-		TinkerGraph tinkerGraph = TinkerGraph.open();
-		return registryDao.updateEntity(tinkerGraph,label);
+	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException {
+		Graph graph = GraphDBFactory.getEmptyGraph();
+
+		StmtIterator iterator = entity.listStatements();
+		boolean rootSubjectFound = false;
+		String label = null;
+
+		while (iterator.hasNext()) {
+			Statement rdfStatement = iterator.nextStatement();
+			if (!rootSubjectFound) {
+				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
+				if (label != null) {
+					rootSubjectFound = true;
+				}
+			}
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+		}
+
+		if (label == null) {
+			throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
+		}
+
+		return registryDao.updateEntity(graph, rootNodeLabel);
 	}
 
 	@Override

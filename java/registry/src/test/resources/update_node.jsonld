@@ -1,0 +1,21 @@
+{
+  "@id":"!samp131d",
+  "@type":"sample:School",
+  "sample:revenueBlock":"updated block",
+  "sample:clusterResourceCentre":"Updated Cluster Resource",
+  "sample:address":{
+    "sample:district":"Gurgaon",
+    "@type":"sample:IndianUrbanPostalAddress",
+    "sample:mohalla":"Updated Sector 14",
+    "sample:municipality":"Updated MCG",
+    "sample:city":"Gurgaon",
+    "sample:pinCode":"122001",
+    "sample:wardNumber":"456"
+  },
+  "@context":{
+    "rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "xsd":"http://www.w3.org/2001/XMLSchema#",
+    "rdfs":"http://www.w3.org/2000/01/rdf-schema#",
+    "sample":"http://example.com/voc/teacher/1.0.0/"
+  }
+}
