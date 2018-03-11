@@ -48,8 +48,11 @@ public class RDFValidator implements BaseMiddleware{
 		} else {
 			ShaclexValidator validator = new ShaclexValidator();
 			Schema schema = validator.readSchema(schemaFileName, SCHEMAFORMAT, PROCESSOR);
-			Model rdfWithValidations = mergeModels((Model) RDF, (Model) validationRDF);
-			Result validationResult = validator.validate(rdfWithValidations, schema);
+			mergeModels((Model) RDF, (Model) validationRDF);
+			/*StringWriter sw = new StringWriter();
+			RDFDataMgr.write(sw, (Model)validationRDF, Lang.TTL);
+			System.out.println(sw.toString());*/
+			Result validationResult = validator.validate((Model)validationRDF, schema);
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResult);
 			if (!validationResult.isValid()) {
 				throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_INVALID);
@@ -63,14 +66,10 @@ public class RDFValidator implements BaseMiddleware{
 		return null;
 	}
 
-	private Model mergeModels(Model RDF, Model validationRDF){
+	private void mergeModels(Model RDF, Model validationRDF){
 		if(validationRDF!=null){
-			RDF.add(validationRDF.listStatements());
+			validationRDF.add(RDF.listStatements());
 		}
-		StringWriter sw = new StringWriter();
-		RDFDataMgr.write(sw, RDF, Lang.TTL);
-		System.out.println(sw.toString());
-		return RDF;
 	}
 
 }
