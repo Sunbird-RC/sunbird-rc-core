@@ -1,0 +1,106 @@
+{
+	"@context": 
+	{
+		"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+		"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+		"sample": "http://example.com/voc/teacher/1.0.0/",
+		"xsd": "http://www.w3.org/2001/XMLSchema#"
+	},
+
+	"@id": "sample:fa7740c185fb247729c7296c36b5c1257b2",
+	"@type": "sample:Teacher",
+	"sample:serialNum": 12,
+	"sample:teacherCode": 12234,
+	"sample:nationalIdentifier": "1234567890123456",
+	"sample:teacherName": "Marvin Pande",
+	"sample:gender": "sample:GenderTypeCode-MALE",
+	"sample:birthDate": 
+	{
+		"@type": "xsd:date",
+		"@value": "06-12-1990"
+	},
+
+	"sample:socialCategory": "sample:SocialCategoryTypeCode-GENERAL",
+	"sample:highestAcademicQualification": "sample:AcademicQualificationTypeCode-PHD",
+	"sample:highestTeacherQualification": "sample:TeacherQualificationTypeCode-MED",
+	"sample:yearOfJoiningService": 
+	{
+		"@type": "xsd:gYear",
+		"@value": "2014"
+	},
+
+	"sample:teachingRole": 
+	{
+		"@type": "sample:TeachingRole",
+		"sample:teacherType": "sample:TeacherTypeCode-HEAD",
+		"sample:appointmentType": "sample:TeacherAppointmentTypeCode-REGULAR",
+		"sample:classesTaught": "sample:ClassTypeCode-SECONDARYANDHIGHERSECONDARY",
+		"sample:appointedForSubjects": "sample:SubjectCode-MATH",
+		"sample:mainSubjectsTaught": 
+		[
+			"sample:SubjectCode-MATH",
+			"sample:SubjectCode-PHYSICS"
+		],
+
+		"sample:appointmentYear": 
+		{
+			"@type": "xsd:gYear",
+			"@value": "2015"
+		}
+	},
+
+	"sample:inServiceTeacherTrainingFromBRC": 
+	{
+		"@type": "sample:InServiceTeacherTrainingFromBlockResourceCentre",
+		"sample:daysOfInServiceTeacherTraining": 10
+	},
+
+	"sample:inServiceTeacherTrainingFromCRC": 
+	{
+		"@type": "sample:InServiceTeacherTrainingFromClusterResourceCentre",
+		"sample:daysOfInServiceTeacherTraining": 2
+	},
+
+	"sample:inServiceTeacherTrainingFromDIET": 
+	{
+		"@type": "sample:InServiceTeacherTrainingFromDIET",
+		"sample:daysOfInServiceTeacherTraining": 5.5
+	},
+
+	"sample:inServiceTeacherTrainingFromOthers": 
+	{
+		"@type": "sample:InServiceTeacherTrainingFromOthers",
+		"sample:daysOfInServiceTeacherTraining": 3.5
+	},
+
+	"sample:nonTeachingAssignmentsForAcademicCalendar": 
+	{
+		"@type": "sample:NonTeachingAssignmentsForAcademicCalendar",
+		"sample:daysOfNonTeachingAssignments": 6
+	},
+
+	"sample:basicProficiencyLevel": 
+	[
+		{
+			"@type": "sample:BasicProficiencyLevel",
+			"sample:proficiencySubject": "sample:SubjectCode-MATH",
+			"sample:proficiencyAcademicQualification": "sample:AcademicQualificationTypeCode-PHD"
+		},
+
+		{
+			"@type": "sample:BasicProficiencyLevel",
+			"sample:proficiencySubject": "sample:SubjectCode-ENGLISH",
+			"sample:proficiencyAcademicQualification": "sample:AcademicQualificationTypeCode-BELED"
+		},
+
+		{
+			"@type": "sample:BasicProficiencyLevel",
+			"sample:proficiencySubject": "sample:SubjectCode-SOCIALSTUDIES",
+			"sample:proficiencyAcademicQualification": "sample:AcademicQualificationTypeCode-DIPLOMAORBASIC"
+		}
+	],
+
+	"sample:disabilityType": "sample:DisabilityCode-NA",
+	"sample:trainedForChildrenSpecialNeeds": "sample:YesNoCode-YES",
+	"sample:trainedinUseOfComputer": "sample:YesNoCode-YES"
+}

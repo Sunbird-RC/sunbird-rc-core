@@ -1,0 +1,61 @@
+PREFIX sample: <http://example.com/voc/teacher/1.0.0/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://ex.example/#>
+
+sample:isAYear xsd:gYear
+sample:isAString xsd:string
+sample:isAnInteger xsd:integer
+sample:isADate xsd:date
+sample:isURI xsd:uri
+sample:isADecimal xsd:decimal
+
+sample:TeacherShape {
+	a [sample:Teacher] ;
+    sample:serialNum @sample:isAnInteger ;
+    sample:teacherCode @sample:isAnInteger ;
+    sample:nationalIdentifier @sample:isAString ;
+    sample:teacherName @sample:isAString ;
+    sample:gender [sample:GenderTypeCode-MALE sample:GenderTypeCode-FEMALE] ;
+    sample:birthDate @sample:isADate ;
+    sample:socialCategory [sample:SocialCategoryTypeCode-GENERAL sample:SocialCategoryTypeCode-SC sample:SocialCategoryTypeCode-ST sample:SocialCategoryTypeCode-OBC sample:SocialCategoryTypeCode-ORC sample:SocialCategoryTypeCode-OTHERS] ;
+    sample:highestAcademicQualification [sample:AcademicQualificationTypeCode-BELOWSECONDARY, sample:AcademicQualificationTypeCode-SECONDARY, sample:AcademicQualificationTypeCode-HIGHERSECONDARY,sample:AcademicQualificationTypeCode-GRADUATE, sample:AcademicQualificationTypeCode-POSTGRADUATE, sample:AcademicQualificationTypeCode-MPHIL, sample:AcademicQualificationTypeCode-POSTDOC, sample:AcademicQualificationTypeCode-PHD] ;
+    sample:socialCategory [sample:SocialCategoryTypeCode-GENERAL, sample:SocialCategoryTypeCode-SC, sample:SocialCategoryTypeCode-ST, sample:SocialCategoryTypeCode-GENERAL, sample:SocialCategoryTypeCode-OBC, sample:SocialCategoryTypeCode-ORC, sample:SocialCategoryTypeCode-OTHERS] ;
+    sample:highestTeacherQualification [sample:TeacherQualificationTypeCode-DIPLOMAORBASIC, sample:TeacherQualificationTypeCode-BELED, sample:TeacherQualificationTypeCode-MED, sample:TeacherQualificationTypeCode-OTHERS, sample:TeacherQualificationTypeCode-NONE, sample:TeacherQualificationTypeCode-SPECIAL] ; 
+    sample:yearOfJoiningService @sample:isAYear ;
+    sample:teachingRole @sample:TeacherRoleShape ;
+    sample:inServiceTeacherTrainingFromBRC @sample:InServiceTeacherTrainingShape ;
+    sample:inServiceTeacherTrainingFromCRC @sample:InServiceTeacherTrainingShape ;
+    sample:inServiceTeacherTrainingFromDIET @sample:InServiceTeacherTrainingShape ;
+    sample:inServiceTeacherTrainingFromOthers @sample:InServiceTeacherTrainingShape ;
+    sample:nonTeachingAssignmentsForAcademicCalendar @sample:NonTeachingAssignmentsForAcademicCalendarShape ;
+    sample:basicProficiencyLevel @sample:BasicProficiencyLevelShape {3} ;
+    sample:disabilityType [sample:DisabilityCode-NA, sample:DisabilityCode-LOCOMOTOR, sample:DisabilityCode-VISUAL, sample:DisabilityCode-OTHERDISABILITY] ;
+    sample:trainedForChildrenSpecialNeeds [sample:YesNoCode-YES, sample:YesNoCode-NO] ;
+    sample:trainedinUseOfComputer [sample:YesNoCode-YES, sample:YesNoCode-NO]
+}
+
+sample:TeacherRoleShape {
+	a [sample:TeachingRole] ;
+    sample:teacherType [sample:TeacherTypeCode-HEAD sample:TeacherTypeCode-ACTINGHEAD sample:TeacherTypeCode-TEACHER sample:TeacherTypeCode-RTEINSTRUCTOR sample:TeacherTypeCode-PRINCIPAL sample:TeacherTypeCode-VICEPRINCIPAL sample:TeacherTypeCode-LECTURER] ;
+    sample:appointmentType [sample:TeacherAppointmentTypeCode-REGULAR sample:TeacherAppointmentTypeCode-CONTRACT sample:TeacherAppointmentTypeCode-PARTTIME] ;
+    sample:classesTaught [sample:ClassTypeCode-PRIMARY, sample:ClassTypeCode-UPPERPRIMARY, sample:ClassTypeCode-PRIMARYANDUPPERPRIMARY, sample:ClassTypeCode-SECONDARY, sample:ClassTypeCode-HIGHERSECONDARY, sample:ClassTypeCode-UPPERPRIMARYANDSECONDARY, sample:ClassTypeCode-SECONDARYANDHIGHERSECONDARY] ;
+    sample:appointedForSubjects [sample:SubjectCode-ALL, sample:SubjectCode-LANGUAGE, sample:SubjectCode-MATH, sample:SubjectCode-ENVSTUDIES, sample:SubjectCode-SPORTS, sample:SubjectCode-MUSIC, sample:SubjectCode-SCIENCE, sample:SubjectCode-SOCIALSTUDIES, sample:SubjectCode-ACCOUNTANCY, sample:SubjectCode-BIOLOGY, sample:SubjectCode-BUSINESSSTUDIES, sample:SubjectCode-CHEMISTRY, sample:SubjectCode-COMPSC, sample:SubjectCode-ECONOMICS, sample:SubjectCode-FINEARTS, sample:SubjectCode-ENGDRAWING,sample:SubjectCode-GEOGRAPHY, sample:SubjectCode-HISTORY, sample:SubjectCode-HOMESCIENCE, sample:SubjectCode-PHILOSOPHY, sample:SubjectCode-PHYSICS, sample:SubjectCode-POLITICALSCIENCE, sample:SubjectCode-FOREIGNLANG, sample:SubjectCode-BOTONY, sample:SubjectCode-ZOOLOGY, sample:SubjectCode-HINDI, sample:SubjectCode-MARATHI, sample:SubjectCode-SANSKRIT, sample:SubjectCode-SINDHI, sample:SubjectCode-URDU, sample:SubjectCode-ENLISH, sample:SubjectCode-REGIONALLANGUAGE, sample:SubjectCode-ARTEDUCATION, sample:SubjectCode-PHYSICALEDUCATION, sample:SubjectCode-WORKEDUCATION, sample:SubjectCode-OTHER] ;
+    sample:mainSubjectsTaught @sample:isAString {1,2} ;
+    sample:appointmentYear @sample:isAYear
+}
+
+sample:BasicProficiencyLevelShape {
+	a [sample:BasicProficiencyLevel] ;
+	sample:proficiencySubject [sample:SubjectCode-ALL, sample:SubjectCode-LANGUAGE, sample:SubjectCode-MATH, sample:SubjectCode-ENVSTUDIES, sample:SubjectCode-SPORTS, sample:SubjectCode-MUSIC, sample:SubjectCode-SCIENCE, sample:SubjectCode-SOCIALSTUDIES, sample:SubjectCode-ACCOUNTANCY, sample:SubjectCode-BIOLOGY, sample:SubjectCode-BUSINESSSTUDIES, sample:SubjectCode-CHEMISTRY, sample:SubjectCode-COMPSC, sample:SubjectCode-ECONOMICS, sample:SubjectCode-FINEARTS, sample:SubjectCode-ENGDRAWING,sample:SubjectCode-GEOGRAPHY, sample:SubjectCode-HISTORY, sample:SubjectCode-HOMESCIENCE, sample:SubjectCode-PHILOSOPHY, sample:SubjectCode-PHYSICS, sample:SubjectCode-POLITICALSCIENCE, sample:SubjectCode-FOREIGNLANG, sample:SubjectCode-BOTONY, sample:SubjectCode-ZOOLOGY, sample:SubjectCode-HINDI, sample:SubjectCode-MARATHI, sample:SubjectCode-SANSKRIT, sample:SubjectCode-SINDHI, sample:SubjectCode-URDU, sample:SubjectCode-ENLISH, sample:SubjectCode-REGIONALLANGUAGE, sample:SubjectCode-ARTEDUCATION, sample:SubjectCode-PHYSICALEDUCATION, sample:SubjectCode-WORKEDUCATION, sample:SubjectCode-OTHER] ;
+	sample:proficiencyAcademicQualification [sample:AcademicQualificationTypeCode-BELOWSECONDARY, sample:AcademicQualificationTypeCode-SECONDARY, sample:AcademicQualificationTypeCode-HIGHERSECONDARY,sample:AcademicQualificationTypeCode-GRADUATE, sample:AcademicQualificationTypeCode-POSTGRADUATE, sample:AcademicQualificationTypeCode-MPHIL, sample:AcademicQualificationTypeCode-POSTDOC, sample:AcademicQualificationTypeCode-PHD]
+}
+
+sample:InServiceTeacherTrainingShape {
+	a [sample:InServiceTeacherTrainingFromBlockResourceCentre sample:InServiceTeacherTrainingFromClusterResourceCentre sample:InServiceTeacherTrainingFromDIET sample:InServiceTeacherTrainingFromOthers] ;
+	sample:daysOfInServiceTeacherTraining @sample:isADecimal
+}
+
+sample:NonTeachingAssignmentsForAcademicCalendarShape {
+	a [sample:NonTeachingAssignmentsForAcademicCalendar] ;
+	sample:daysOfNonTeachingAssignments @sample:isADecimal
+}
