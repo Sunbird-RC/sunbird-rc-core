@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.google.gson.JsonParser;
 import org.apache.jena.rdf.model.Model;
 
 import com.google.gson.Gson;
@@ -61,9 +62,8 @@ public class BaseRequestHandler{
 		Gson gson = new Gson();
 		Request requestModel = gson.fromJson(getRequestBody(), Request.class);
 		requestBodyMap.put(Constants.REQUEST_ATTRIBUTE, requestModel);
-		String requestBody = getRequestBody();
-		requestBody = substringAfter(requestBody, "request\":");
-		requestBody = requestBody.substring(0, requestBody.length() - 1);
+		String requestBody = new JsonParser().parse(getRequestBody())
+				.getAsJsonObject().getAsJsonObject("request").toString();
 		requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestBody);
 		requestModel.setRequestMap(requestBodyMap);
 		return requestBodyMap;
