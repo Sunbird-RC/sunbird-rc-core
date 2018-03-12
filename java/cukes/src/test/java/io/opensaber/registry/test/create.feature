@@ -22,4 +22,8 @@ Feature: Inserting a record into the registry
     When issuing the record into the registry
     Then record issuing should be unsuccessful
     And error message is Failed to insert due to invalid type
-   
+  
+   Scenario: Getting an expected response
+    Given a response 
+    When response matches expected format
+    Then the response format should be successful

@@ -12,3 +12,8 @@ Feature: Reading a record from the registry
     When retrieving the record from the registry
     Then record retrieval should be successful
     And the record should match
+
+   Scenario: Getting an expected response
+    Given a read response 
+    When response matches expected format
+    Then the response format should be successful
