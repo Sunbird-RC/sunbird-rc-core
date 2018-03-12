@@ -34,10 +34,10 @@ public class RDFConversionInterceptor extends BaseRequestHandler implements Hand
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		setRequest(request);
-		Map<String,Object> attributeMap = rdfConverter.execute(getRequestBodyMap());
+		Map<String, Object> attributeMap = rdfConverter.execute(getRequestBodyMap());
 		mergeRequestAttributes(attributeMap);
 		request = getRequest();
-		if(request.getAttribute(Constants.RDF_OBJECT)!=null){
+		if (request.getAttribute(Constants.RDF_OBJECT) != null) {
 			return true;
 		}
 		return false;

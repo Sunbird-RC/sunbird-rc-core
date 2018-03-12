@@ -8,8 +8,8 @@ import io.opensaber.pojos.Response.Status;
 public class ResponseParams{
 		public String resmsgid;
 		private String msgid;
-		private Status status = Status.UNSUCCESSFUL;
 		private String err;
+		private Status status = Status.UNSUCCESSFUL;
 		private String errmsg;
 		private List<Object> resultList;
 		public String getResmsgid() {

@@ -50,28 +50,36 @@ public class RegistryController {
 	}
 
 	@ResponseBody
-	@RequestMapping(value="/addEntity",method=RequestMethod.POST)
-	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) throws JsonProcessingException, DuplicateRecordException, InvalidTypeException{
-	
+	@RequestMapping(value = "/addEntity", method = RequestMethod.POST)
+	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel)
+			throws JsonProcessingException, DuplicateRecordException, InvalidTypeException {
+
 		Response response = new Response();
 		ResponseParams responseParams = new ResponseParams();
-		response.setId(UUID.randomUUID().toString());
+		response.setId(requestModel.getId());
 		response.setEts(System.currentTimeMillis() / 1000L);
 		response.setVer("1.0");
 		response.setParams(responseParams);
-	
-		Model rdf=(Model)requestModel.getRequestMap().get("rdf");
-					
-   	try{
-			String label=registryService.addEntity(rdf);
-			Map<String,Object> resultMap= new HashMap<>();
-			resultMap.put("entity", label);
-		    response.setResultMap(resultMap);
-		 	responseParams.setStatus(Response.Status.SUCCCESSFUL);
+
+		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
+		responseParams.setMsgid(UUID.randomUUID().toString());
+		responseParams.setErr("");
+		responseParams.setResmsgid("");
+		response.setResponseCode("OK");
+		Map<String, Object> result = new HashMap<>();
+		
+		try {
+			String label = registryService.addEntity(rdf);			
+			result.put("entity", label);
+			response.setResult(result);
+			responseParams.setErrmsg("");
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);			
 		} catch (DuplicateRecordException | InvalidTypeException e) {
+			response.setResult(result);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
+			response.setResult(result);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		}
@@ -82,23 +90,62 @@ public class RegistryController {
 	public ResponseEntity<Response> getEntity(@PathVariable("id") String id){
 		Response response = new Response();
 		ResponseParams responseParams = new ResponseParams();
-		response.setId(UUID.randomUUID().toString());
 		response.setEts(System.currentTimeMillis() / 1000L);
 		response.setVer("1.0");
-		response.setParams(responseParams);
-		try {
-			id = "http://example.com/voc/teacher/1.0.0/" + id;
+		response.setParams(responseParams);		
+		id = "http://example.com/voc/teacher/1.0.0/" + id;
+		response.setId(id);
+		response.setResponseCode("OK");
+		responseParams.setMsgid(UUID.randomUUID().toString());
+		responseParams.setErr("");		
+		responseParams.setResmsgid("");	
+				
+		try {			
 			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(id);
 			String jenaJSON = registryService.frameEntity(entityModel);
 			JSONObject jenaObj=new JSONObject(jenaJSON);
-			response.setResultMap(jenaObj.toMap());
+			response.setResult(jenaObj.toMap());
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (RecordNotFoundException e) {
+			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
+			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Ding! You encountered an error!");
+			logger.error("ERROR!", e);
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/entity/{id}", method = RequestMethod.PUT)
+	public ResponseEntity<Response> updateEntity(@RequestAttribute Request requestModel, @PathVariable("id") String id) {
+		Response response = new Response();
+		ResponseParams responseParams = new ResponseParams();		
+		response.setEts(System.currentTimeMillis() / 1000L);
+		response.setVer("1.0");
+		response.setParams(responseParams);
+
+		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
+		id = "http://example.com/voc/teacher/1.0.0/" + id;
+		response.setId(id);
+		response.setResponseCode("OK");
+		responseParams.setMsgid(UUID.randomUUID().toString());
+		responseParams.setErr("");		
+		responseParams.setResmsgid("");		
+		try {			
+			registryService.updateEntity(rdf, id);			
+			responseParams.setErrmsg("");
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+		} catch (RecordNotFoundException | InvalidTypeException e) {
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+			
+		} catch (Exception e) {
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(String.format("Error occurred when updating Entity ID %s", id));
 			logger.error("ERROR!", e);
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);

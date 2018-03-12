@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +47,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private static final String ADD_ENTITY = "addEntity";
 	private static final String CONTEXT_CONSTANT = "sample:";
 	private static final String READ_ENTITY = "getEntity";
-	
+		
 	private RestTemplate restTemplate;
 	private String baseUrl;
 	private ResponseEntity<Response> response;
@@ -170,11 +171,56 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		String jsonldBody= substringAfter(jsonld,"request\":");
 		jsonldBody = jsonldBody.substring(0, jsonldBody.length() - 1);
 		RDFDataMgr.read(expectedModel, new StringReader(jsonldBody), null, org.apache.jena.riot.RDFLanguages.JSONLD) ;
-		Map<String, Object> result = response.getBody().getResultMap();
+		Map<String, Object> result = response.getBody().getResult();
 		Model actualModel = ModelFactory.createDefaultModel();
 		String newJsonld = new JSONObject(result).toString(2);
 		RDFDataMgr.read(actualModel, new StringReader(newJsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD);
 		assertTrue(expectedModel.isIsomorphicWith(actualModel));
-//		System.out.println(object.keySet().size());
 	}
+	
+	@Given("^a response")
+	public void validResponseFormat(){
+		try {
+			setJsonld(VALID_NEWJSONLD);
+			id= generateRandomId();
+			setJsonldWithNewRootLabel(CONTEXT_CONSTANT+id);	
+			response = callRegistryCreateAPI();
+		} catch (Exception e) {
+			response = null;
+		}
+		assertNotNull(response);
+	}
+	
+	@Given("^a read response")
+	public void validReadResponseFormat(){
+		try {
+			id= generateRandomId();
+			response=callRegistryReadAPI();
+		} catch (Exception e) {
+			response = null;
+		}
+		assertNotNull(response);
+	}
+	
+	@When("^response matches expected format")
+	public void response_format_check(){
+	
+		assertEquals( true, (response.getBody().getId()!=null 
+				&& response.getBody().getEts() !=null 
+				&& response.getBody().getVer()!=null
+				&& response.getBody().getResponseCode().equalsIgnoreCase("OK")
+				&& response.getBody().getParams().getErr()!=null
+				&& response.getBody().getParams().getErrmsg()!=null
+				&& response.getBody().getParams().getMsgid()!=null
+				&& response.getBody().getParams().getResmsgid()!=null
+				&& response.getBody().getParams().getStatus()!=null
+				&&(response.getBody().getParams().getStatus().equals(Response.Status.SUCCCESSFUL)?
+						(response.getBody().getResult()!= null) : response.getBody().getResult()==null))
+	            && (response.getBody().getClass().getDeclaredFields().length == 6));
+	}
+
+	@Then("^the response format should be successful") 
+	public void response_successful() throws Exception {
+		assertEquals(true,response !=null);
+	}	
 }

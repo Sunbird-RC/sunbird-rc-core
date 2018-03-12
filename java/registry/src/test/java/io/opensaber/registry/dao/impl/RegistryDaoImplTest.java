@@ -5,6 +5,8 @@ import io.opensaber.registry.tests.utility.TestHelper;
 
 import io.opensaber.registry.util.RDFUtil;
 import org.apache.jena.rdf.model.*;
+import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONMapper;
+import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -25,8 +27,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -46,11 +46,17 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.utils.converters.RDF2Graph;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -281,21 +287,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Test
 	public void test_blank_node_count_when_no_blank_node_present() {
 		Model rdfModel = getNewValidRdf();
-		StmtIterator blankNodeIterator =
-				rdfModel.listStatements(null,
-						ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"),
-						(RDFNode) null);
-
-		// Remove all the blank nodes from the existing model to create test data
-		while(blankNodeIterator.hasNext()) {
-			Statement parentStatement = blankNodeIterator.next();
-			StmtIterator childStatements = rdfModel.listStatements((Resource) parentStatement.getObject(), null, (RDFNode) null);
-			while (childStatements.hasNext()) {
-				childStatements.next();
-				childStatements.remove();
-			}
-			blankNodeIterator.remove();
-		}
+		removeStattementFromModel(rdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"));
 
 		java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
 		assertEquals(0, blankNodes.size());
@@ -318,6 +310,140 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		RDFUtil.updateIdForBlankNode(rdfModel);
 		java.util.List<RDFNode> blankNodes = RDFUtil.getBlankNodes(rdfModel);
 		assertEquals(0, blankNodes.size());
+	}
+
+	@Test
+	public void test_update_when_entity_not_exists() throws DuplicateRecordException, RecordNotFoundException {
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		registryDao.addEntity(graph, rootLabel);
+
+		expectedEx.expect(RecordNotFoundException.class);
+		expectedEx.expectMessage(Constants.ENTITY_NOT_FOUND);
+
+		Graph testGraph = TinkerGraph.open();
+		UUID label = getLabel();
+		testGraph.addVertex(T.label, label.toString(), "test_label_predicate", "test_value");
+		registryDao.updateEntity(testGraph, label.toString());
+	}
+
+	@Test
+	public void test_update_single_literal_node() throws DuplicateRecordException, RecordNotFoundException, IOException {
+
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		registryDao.addEntity(graph, rootLabel);
+
+		Model updateRdfModel = createRdfFromFile("update_node.jsonld", rootLabel);
+		removeStattementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"));
+		removeStattementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"));
+		Graph updateGraph = TinkerGraph.open();
+
+		String updateRootNodeLabel = createGraphFromRdf(updateGraph, updateRdfModel);
+		registryDao.updateEntity(updateGraph, rootLabel);
+		assertEquals(rootLabel, updateRootNodeLabel);
+
+		Graph updatedGraphResult = registryDao.getEntityById(rootLabel);
+
+		StringBuilder result = new StringBuilder();
+		updatedGraphResult.traversal().V()
+				.properties("http://example.com/voc/teacher/1.0.0/revenueBlock")
+				.forEachRemaining(p -> result.append(p.value()));
+		assertEquals("updated block", result.toString());
+	}
+
+
+	@Test
+	public void test_update_multiple_literal_nodes() throws DuplicateRecordException, RecordNotFoundException, IOException {
+
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		registryDao.addEntity(graph, rootLabel);
+
+		Model updateRdfModel = createRdfFromFile("update_node.jsonld", rootLabel);
+		removeStattementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"));
+		Graph updateGraph = TinkerGraph.open();
+
+		String updateRootNodeLabel = createGraphFromRdf(updateGraph, updateRdfModel);
+		registryDao.updateEntity(updateGraph, rootLabel);
+		assertEquals(rootLabel, updateRootNodeLabel);
+
+		Graph updatedGraphResult = registryDao.getEntityById(rootLabel);
+
+		ArrayList<String> result = new ArrayList<>();
+		String prefix = "http://example.com/voc/teacher/1.0.0";
+
+		updatedGraphResult.traversal().V()
+				.properties(String.format("%s/revenueBlock", prefix),
+						String.format("%s/clusterResourceCentre", prefix))
+				.forEachRemaining(p -> result.add(p.value().toString()));
+		List<String> expected = Arrays.asList("updated block", "Updated Cluster Resource");
+		assertThat(result, is(expected));
+		assertThat(result, contains("updated block", "Updated Cluster Resource"));
+		assertThat(result, hasSize(2));
+	}
+
+	@Test
+	public void test_update_iri_node() throws DuplicateRecordException, RecordNotFoundException {
+
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		registryDao.addEntity(graph, rootLabel);
+
+		Model updateRdfModel = createRdfFromFile("update_node.jsonld", rootLabel);
+		removeStattementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"));
+		removeStattementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/revenueBlock"));
+		Graph updateGraph = TinkerGraph.open();
+
+		String updateRootNodeLabel = createGraphFromRdf(updateGraph, updateRdfModel);
+		registryDao.updateEntity(updateGraph, rootLabel);
+		assertEquals(rootLabel, updateRootNodeLabel);
+
+		Graph updatedGraphResult = registryDao.getEntityById(rootLabel);
+
+		ArrayList<String> result = new ArrayList<>();
+		String prefix = "http://example.com/voc/teacher/1.0.0";
+
+		updatedGraphResult.traversal().V()
+				.properties(String.format("%s/mohalla", prefix),
+						String.format("%s/municipality", prefix))
+				.forEachRemaining(p -> result.add(p.value().toString()));
+		List<String> expected = Arrays.asList("Updated Sector 14", "Updated MCG");
+		assertThat(result, is(expected));
+		assertThat(result, contains("Updated Sector 14", "Updated MCG"));
+		assertThat(result, hasSize(2));
+	}
+
+	@Test
+	public void test_update_iri_node_and_literal_nodes() throws DuplicateRecordException, RecordNotFoundException, IOException {
+
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		registryDao.addEntity(graph, rootLabel);
+
+		Model updateRdfModel = createRdfFromFile("update_node.jsonld", rootLabel);
+		Graph updateGraph = TinkerGraph.open();
+
+		String updateRootNodeLabel = createGraphFromRdf(updateGraph, updateRdfModel);
+		registryDao.updateEntity(updateGraph, rootLabel);
+		assertEquals(rootLabel, updateRootNodeLabel);
+
+		Graph updatedGraphResult = registryDao.getEntityById(rootLabel);
+
+		ArrayList<String> result = new ArrayList<>();
+		String prefix = "http://example.com/voc/teacher/1.0.0";
+
+		updatedGraphResult.traversal().V()
+				.properties(String.format("%s/revenueBlock", prefix),
+						String.format("%s/clusterResourceCentre", prefix),
+						String.format("%s/mohalla", prefix),
+						String.format("%s/municipality", prefix))
+				.forEachRemaining(p -> result.add(p.value().toString()));
+
+		List<String> expected = Arrays.asList("updated block", "Updated Cluster Resource", "Updated Sector 14", "Updated MCG");
+		assertThat(result, is(expected));
+		assertThat(result, contains("updated block", "Updated Cluster Resource", "Updated Sector 14", "Updated MCG"));
+		assertThat(result, hasSize(4));
 	}
 /*
 	@Test
@@ -357,7 +483,23 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		}
 	}
 
-	
+	private void removeStattementFromModel(Model rdfModel, Property predicate) {
+		StmtIterator blankNodeIterator =
+				rdfModel.listStatements(null, predicate, (RDFNode) null);
+
+		// Remove all the blank nodes from the existing model to create test data
+		while(blankNodeIterator.hasNext()) {
+			Statement parentStatement = blankNodeIterator.next();
+			if(parentStatement.getObject() instanceof Resource) {
+				StmtIterator childStatements = rdfModel.listStatements((Resource) parentStatement.getObject(), null, (RDFNode) null);
+				while (childStatements.hasNext()) {
+					childStatements.next();
+					childStatements.remove();
+				}
+			}
+			blankNodeIterator.remove();
+		}
+	}
 
 	private Vertex getVertexForSubject(String subjectValue, String property, String objectValue){
 		Vertex vertex = null;
@@ -378,23 +520,46 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		return getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
 		
 	}
-	
-	private String updateGraphFromRdf(Model rdfModel){
+
+	private Model createRdfFromFile(String jsonldFilename, String rootNodeLabel) {
+		return getNewValidRdf(jsonldFilename, CONTEXT_CONSTANT, rootNodeLabel);
+	}
+
+	private String updateGraphFromRdf(Model rdfModel) {
 		StmtIterator iterator = rdfModel.listStatements();
 		boolean rootSubjectFound = false;
 		String label = null;
-		while(iterator.hasNext()){
+		while (iterator.hasNext()) {
 			Statement rdfStatement = iterator.nextStatement();
-			if(!rootSubjectFound){
+			if (!rootSubjectFound) {
 				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-				label = RDF2Graph.getRootSubjectLabel(rdfStatement,type);
-				if(label!=null){
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
+				if (label != null) {
 					rootSubjectFound = true;
 				}
 			}
 			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
 			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+		}
+		return label;
 	}
+
+	private String createGraphFromRdf(Graph newGraph, Model rdfModel) {
+		StmtIterator iterator = rdfModel.listStatements();
+		boolean rootSubjectFound = false;
+		String label = null;
+		while (iterator.hasNext()) {
+			Statement rdfStatement = iterator.nextStatement();
+			if (!rootSubjectFound) {
+				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
+				if (label != null) {
+					rootSubjectFound = true;
+				}
+			}
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			newGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph);
+		}
 		return label;
 	}
 	

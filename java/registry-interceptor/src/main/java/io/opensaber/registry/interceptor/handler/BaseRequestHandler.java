@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.google.gson.JsonParser;
 import org.apache.jena.rdf.model.Model;
 
 import com.google.gson.Gson;
@@ -56,17 +57,16 @@ public class BaseRequestHandler{
 		return request;
 	}
 
-	public Map<String,Object> getRequestBodyMap() throws IOException{
-		Map<String,Object> requestBodyMap = new HashMap<String,Object>();
+	public Map<String, Object> getRequestBodyMap() throws IOException {
+		Map<String, Object> requestBodyMap = new HashMap<>();
 		Gson gson = new Gson();
-    	Request requestModel= gson.fromJson(getRequestBody(), Request.class);
-      	requestBodyMap.put(Constants.REQUEST_ATTRIBUTE, requestModel);
-		String requestBody=getRequestBody();    	
-    	requestBody= substringAfter(requestBody,"request\":");
-       	requestBody = requestBody.substring(0, requestBody.length() - 1);
-       	requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestBody);    	
-    	requestModel.setRequestMap(requestBodyMap);		
-	    return requestBodyMap;
+		Request requestModel = gson.fromJson(getRequestBody(), Request.class);
+		requestBodyMap.put(Constants.REQUEST_ATTRIBUTE, requestModel);
+		String requestBody = new JsonParser().parse(getRequestBody())
+				.getAsJsonObject().getAsJsonObject("request").toString();
+		requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestBody);
+		requestModel.setRequestMap(requestBodyMap);
+		return requestBodyMap;
 	}
 	
 	public Map<String,Object> getRequestHeaderMap() throws IOException{

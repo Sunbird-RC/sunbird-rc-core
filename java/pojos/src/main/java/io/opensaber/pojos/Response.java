@@ -11,7 +11,12 @@ public class Response {
 	{
 	    SUCCCESSFUL,UNSUCCESSFUL;
 	};
-	private Map<String, Object> resultMap;
+	private String responseCode;
+	private Map<String, Object> result;	
+
+	public void setResponseCode(String responseCode) {
+		this.responseCode = responseCode;
+	}
 	public String getId() {
 		return id;
 	}
@@ -36,10 +41,13 @@ public class Response {
 	public void setParams(ResponseParams params) {
 		this.params = params;
 	}
-	public Map<String, Object> getResultMap() {
-		return resultMap;
+	public Map<String, Object> getResult() {
+		return result;
 	}
-	public void setResultMap(Map<String, Object> resultMap) {
-		this.resultMap = resultMap;
+	public void setResult(Map<String, Object> result) {
+		this.result = result;
+	}	
+	public String getResponseCode() {
+		return responseCode;
 	}
 }
