@@ -17,5 +17,3 @@ sample:urbanaddress a sample:IndianUrbanPostalAddress ;
     sample:city "Gurgaon" ;
     sample:pinCode 122001 ;
     sample:district "Gurgaon" .
-
-sample:SchoolShape sh:targetNode sample:1234 .

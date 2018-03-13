@@ -3,20 +3,15 @@ package io.opensaber.registry.middleware.impl;
 
 import java.io.IOException;
 
-import java.io.StringWriter;
-
 import java.util.Map;
 
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-
-import es.weso.schema.Result;
 import es.weso.schema.Schema;
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
+import io.opensaber.pojos.ValidationResponse;
 
 public class RDFValidator implements BaseMiddleware{
 
@@ -52,9 +47,9 @@ public class RDFValidator implements BaseMiddleware{
 			/*StringWriter sw = new StringWriter();
 			RDFDataMgr.write(sw, (Model)validationRDF, Lang.TTL);
 			System.out.println(sw.toString());*/
-			Result validationResult = validator.validate((Model)validationRDF, schema);
-			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResult);
-			if (!validationResult.isValid()) {
+			ValidationResponse validationResponse = validator.validate((Model) validationRDF, schema);
+			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
+			if (!validationResponse.isValid()) {
 				throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_INVALID);
 			}
 			return mapData;

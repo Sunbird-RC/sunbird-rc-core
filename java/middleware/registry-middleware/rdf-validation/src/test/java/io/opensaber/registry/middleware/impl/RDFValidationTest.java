@@ -26,6 +26,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import es.weso.schema.Result;
+import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -156,19 +157,19 @@ public class RDFValidationTest {
 	}
 
 	private void testForSuccessfulResult() {
-		Result validationResult = testForResult();
-		assertTrue(validationResult.isValid());
+		ValidationResponse validationResponse = testForResult();
+		assertTrue(validationResponse.isValid());
 	}
 
 	private void testForUnsuccessfulResult() {
-		Result validationResult = testForResult();
-		assertFalse(validationResult.isValid());
+		ValidationResponse validationResponse = testForResult();
+		assertFalse(validationResponse.isValid());
 	}
 
-	private Result testForResult() {
-		Result validationResult = (Result)mapData.get(Constants.RDF_VALIDATION_OBJECT);
-		assertNotNull(validationResult);
-		return validationResult;
+	private ValidationResponse testForResult() {
+		ValidationResponse validationResponse = (ValidationResponse)mapData.get(Constants.RDF_VALIDATION_OBJECT);
+		assertNotNull(validationResponse);
+		return validationResponse;
 	}
 	
 	private void setJsonld(String filename){

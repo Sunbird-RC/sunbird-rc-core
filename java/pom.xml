@@ -8,11 +8,11 @@
     <name>Software for Open Registries</name>
     <packaging>pom</packaging>
     <modules>
+    	<module>pojos</module>
         <module>converters</module>
         <module>validators</module>
 	    <module>middleware-commons</module>
 	    <module>middleware</module>
-	    <module>pojos</module>
 	    <module>registry-interceptor</module>    	
   </modules>
 

@@ -5,7 +5,8 @@ PREFIX ex: <http://ex.example/#>
 sample:isAString xsd:string
 sample:isAYear xsd:gYear
 
-sample:SchoolShape {
+sample:SchoolShape CLOSED{
+	a [sample:School] ;
 	sample:udiseNumber @sample:isAString ;
     sample:academicCalendarYearStart @sample:isAString ;
     sample:academicCalendarYearEnd @sample:isAString ;
@@ -17,7 +18,7 @@ sample:SchoolShape {
 	sample:clusterResourceCentre @sample:isAString {0,1}
 }
 
-sample:AddressShape {
+sample:AddressShape CLOSED{
     a [sample:IndianUrbanPostalAddress sample:IndianRuralPostalAddress] ;
     (
         sample:mohalla @sample:isAString ;

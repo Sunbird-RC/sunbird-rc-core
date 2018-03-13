@@ -1,6 +1,7 @@
 package io.opensaber.validators.shex.shaclex;
 
-import es.weso.schema.Result;
+import io.opensaber.pojos.ValidationResponse;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -23,9 +24,9 @@ public class ShaclexValidatorTest {
 		ShaclexValidator validator = new ShaclexValidator();
 		String dataString = new String(Files.readAllBytes(Paths.get(getPath("good1.jsonld"))), StandardCharsets.UTF_8);	
 		
-		Result result = validator.validate(dataString, "JSON-LD",Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
-		assertNotNull(result);
-		assertTrue(result.isValid());
+		ValidationResponse validationResponse = validator.validate(dataString, "JSON-LD",Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+		assertNotNull(validationResponse);
+		assertTrue(validationResponse.isValid());
 	}
 
 	private URI getPath(String file) throws URISyntaxException {

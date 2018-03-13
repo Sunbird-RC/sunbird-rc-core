@@ -8,5 +8,3 @@ sample:1234 a sample:School ;
 
 sample:urbanaddress a sample:IndianUrbanPostalAddress ;
     sample:district "Gurgaon" .
-
-sample:SchoolShape sh:targetNode sample:1234 .
