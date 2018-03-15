@@ -1,19 +1,14 @@
 package io.opensaber.registry.test;
 
-import static org.apache.commons.lang3.StringUtils.substringAfter;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -27,21 +22,17 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import cucumber.api.PendingException;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import io.opensaber.pojos.Request;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.Response.Status;
 
 public class RegistryIntegrationSteps extends RegistryTestBase{
 	
-	private static final String VALID_JSONLD= "school.jsonld";
+	// private static final String VALID_JSONLD= "school.jsonld";
 	private static final String VALID_NEWJSONLD= "newSchool.jsonld";
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
 	private static final String ADD_ENTITY = "addEntity";
@@ -66,7 +57,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	@Given("^a valid record")
 	public void jsonldData(){
 		setJsonld(VALID_NEWJSONLD);
-		id= generateRandomId();
+		id = generateRandomId();
 		setJsonldWithNewRootLabel(CONTEXT_CONSTANT+id);	
 		assertNotNull(jsonld);
 	}
@@ -87,7 +78,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private ResponseEntity<Response> callRegistryCreateAPI() {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity<String> entity = new HttpEntity<String>(jsonld,headers);
+		HttpEntity<String> entity = new HttpEntity<>(jsonld,headers);
 		ResponseEntity<Response> response = restTemplate.postForEntity(
 				baseUrl+ADD_ENTITY,
 				entity,
@@ -140,8 +131,6 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	}
 
 	private ResponseEntity<Response> callRegistryReadAPI() {
-		HttpHeaders headers = new HttpHeaders();
-		HttpEntity<String> entity = new HttpEntity<String>("",headers);
 		ResponseEntity<Response> response = restTemplate.getForEntity(baseUrl+READ_ENTITY+"/"+id, Response.class);
 		return response;
 		
@@ -168,8 +157,8 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	@Then("^the record should match$")
 	public void the_record_should_match() throws Exception {
 		Model expectedModel = ModelFactory.createDefaultModel();
-		String jsonldBody= substringAfter(jsonld,"request\":");
-		jsonldBody = jsonldBody.substring(0, jsonldBody.length() - 1);
+		ObjectMapper mapper = new ObjectMapper();
+		String jsonldBody = mapper.readTree(jsonld).path("request").toString();
 		RDFDataMgr.read(expectedModel, new StringReader(jsonldBody), null, org.apache.jena.riot.RDFLanguages.JSONLD) ;
 		Map<String, Object> result = response.getBody().getResult();
 		Model actualModel = ModelFactory.createDefaultModel();
