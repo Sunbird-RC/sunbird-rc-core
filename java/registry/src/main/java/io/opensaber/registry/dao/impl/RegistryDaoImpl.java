@@ -5,8 +5,6 @@ import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.util.RDFUtil;
-import io.opensaber.utils.converters.RDF2Graph;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
@@ -16,6 +14,7 @@ import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.opensaber.registry.dao.RegistryDao;
@@ -30,6 +29,9 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	@Autowired
 	private DatabaseProvider databaseProvider;
+
+	@Value("${registry.context.base}")
+	private String registryContext;
 
 	@Override
 	public List getEntityList() {
@@ -189,7 +191,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	 */
 	private String generateBlankNodeLabel(String label) {
 		if(label.startsWith("_:")) {
-			label = String.format("http://example.com/voc/teacher/1.0.0/%s", generateRandomUUID());
+			label = String.format("%s%s", registryContext, generateRandomUUID());
 		}
 		return label;
 	}

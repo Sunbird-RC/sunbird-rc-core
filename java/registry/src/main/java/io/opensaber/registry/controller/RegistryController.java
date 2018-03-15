@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
@@ -44,6 +45,9 @@ public class RegistryController {
 
 	@Autowired
 	private RegistryService registryService;
+
+	@Value("${registry.context.base}")
+	private String registryContext;
 
 	public static void main(String[] args) {
 		SpringApplication.run(RegistryController.class, args);
@@ -93,7 +97,7 @@ public class RegistryController {
 		response.setEts(System.currentTimeMillis() / 1000L);
 		response.setVer("1.0");
 		response.setParams(responseParams);		
-		id = "http://example.com/voc/teacher/1.0.0/" + id;
+		id = registryContext + id;
 		response.setId(id);
 		response.setResponseCode("OK");
 		responseParams.setMsgid(UUID.randomUUID().toString());
@@ -129,7 +133,7 @@ public class RegistryController {
 		response.setParams(responseParams);
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
-		id = "http://example.com/voc/teacher/1.0.0/" + id;
+		id = registryContext + id;
 		response.setId(id);
 		response.setResponseCode("OK");
 		responseParams.setMsgid(UUID.randomUUID().toString());
