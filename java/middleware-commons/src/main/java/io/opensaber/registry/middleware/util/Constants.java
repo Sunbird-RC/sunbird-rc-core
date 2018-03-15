@@ -30,6 +30,8 @@ public class Constants {
 	public static final String INVALID_TYPE_MESSAGE = "Failed to insert due to invalid type";
 	
 	public static final String ENTITY_NOT_FOUND = "Entity does not exist";
+	public static final String JSONLD_PARSE_ERROR = "Unable to parse JSON-LD";
+	public static final String RDF_VALIDATION_ERROR = "Unable to validate RDF";
 
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"),

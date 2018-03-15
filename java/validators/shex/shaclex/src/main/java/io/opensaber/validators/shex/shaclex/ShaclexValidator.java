@@ -28,6 +28,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import scala.collection.JavaConverters;
+import scala.util.Either;
 import scala.Option;
 
 import es.weso.rdf.RDFReader;
@@ -106,6 +107,10 @@ public class ShaclexValidator {
 	public Schema readSchema(String schemaFileName, String format, String processor) throws IOException {
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream(schemaFileName);
 		String contents = new String(ByteStreams.toByteArray(is));
+		Either<String, Schema> result = Schemas.fromString(contents,format,processor,none);
+		if(result.isLeft()){
+		logger.info("Error from schema validation = " + result.left().get());
+		}
 		return Schemas.fromString(contents,format,processor,none).right().get();
 	}
 

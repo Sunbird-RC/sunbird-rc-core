@@ -20,7 +20,7 @@
 			"@vocab": "http://example.com/voc/teacher/1.0.0/"
 		},
 
-		"@id": "teacher:fa7740c185fb247729c7296c36b5c1257b1",
+		"@id": "<@id>",
 		"@type": "Teacher",
 		"serialNum": "12",
 		"teacherCode": "12234",
@@ -50,6 +50,7 @@
 		"yearOfJoiningService": "2014",
 		"teachingRole": 
 		{
+			"@id": "<@id>",
 			"@type": "TeachingRole",
 			"teacherType": 
 			{
@@ -87,30 +88,35 @@
 
 		"inServiceTeacherTrainingFromBRC": 
 		{
+			"@id": "<@id>",
 			"@type": "InServiceTeacherTrainingFromBlockResourceCentre",
 			"teacher:daysOfInServiceTeacherTraining": "10"
 		},
 
 		"inServiceTeacherTrainingFromCRC": 
 		{
+			"@id": "<@id>",
 			"@type": "InServiceTeacherTrainingFromClusterResourceCentre",
 			"teacher:daysOfInServiceTeacherTraining": "2"
 		},
 
 		"inServiceTeacherTrainingFromDIET": 
 		{
+			"@id": "<@id>",
 			"@type": "InServiceTeacherTrainingFromDIET",
 			"teacher:daysOfInServiceTeacherTraining": "5.5"
 		},
 
 		"inServiceTeacherTrainingFromOthers": 
 		{
+			"@id": "<@id>",
 			"@type": "InServiceTeacherTrainingFromOthers",
 			"teacher:daysOfInServiceTeacherTraining": "3.5"
 		},
 
 		"nonTeachingAssignmentsForAcademicCalendar": 
 		{
+			"@id": "<@id>",
 			"@type": "NonTeachingAssignmentsForAcademicCalendar",
 			"teacher:daysOfNonTeachingAssignments": "6"
 		},
@@ -118,6 +124,7 @@
 		"basicProficiencyLevel": 
 		[
 			{
+				"@id": "<@id>",
 				"@type": "BasicProficiencyLevel",
 				"proficiencySubject": 
 				{
@@ -131,6 +138,7 @@
 			},
 
 			{
+				"@id": "<@id>",
 				"@type": "BasicProficiencyLevel",
 				"proficiencySubject": 
 				{
@@ -144,6 +152,7 @@
 			},
 
 			{
+				"@id": "<@id>",
 				"@type": "BasicProficiencyLevel",
 				"proficiencySubject": 
 				{

@@ -21,7 +21,7 @@ public class RDFConverter implements BaseMiddleware {
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
 		Object jsonld = mapData.get(Constants.ATTRIBUTE_NAME);
 		if (jsonld == null) {
-			throw new MiddlewareHaltException(this.getClass().getName() + JSONLD_DATA_IS_MISSING);
+			throw new MiddlewareHaltException(JSONLD_DATA_IS_MISSING);
 		} else if (jsonld instanceof String) {
 			Model model = ShaclexValidator.parse(jsonld.toString(), FORMAT);
 			logger.info("RDF Converter called...");

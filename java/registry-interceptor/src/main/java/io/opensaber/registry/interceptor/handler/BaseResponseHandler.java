@@ -6,8 +6,18 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+
+import com.google.gson.Gson;
+
+import io.opensaber.pojos.Response;
+import io.opensaber.pojos.ResponseParams;
+import io.opensaber.registry.interceptor.BaseInterceptor;
 
 /**
  * 
@@ -57,4 +67,27 @@ public class BaseResponseHandler {
 		return responseHeaderMap;
 	}
 	
+	public void writeResponseObj(Gson gson, String errMessage) throws IOException{
+		response.setStatus(HttpStatus.OK.value());
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+		writeResponseBody(gson.toJson(setErrorResponse(errMessage)));
+	}
+	
+	public Response setErrorResponse(String message){
+		Response response = new Response();
+		ResponseParams responseParams = new ResponseParams();
+		response.setId("");
+		response.setEts(System.currentTimeMillis() / 1000L);
+		response.setVer("1.0");
+		response.setParams(responseParams);
+		responseParams.setMsgid(UUID.randomUUID().toString());
+		responseParams.setErr("");
+		responseParams.setResmsgid("");
+		response.setResponseCode("OK");
+		Map<String, Object> result = new HashMap<>();
+		response.setResult(result);
+		responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+		responseParams.setErrmsg(message);
+		return response;
+	}
 }

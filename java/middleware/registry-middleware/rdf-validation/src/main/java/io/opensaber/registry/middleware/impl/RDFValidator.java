@@ -2,10 +2,13 @@ package io.opensaber.registry.middleware.impl;
 
 
 import java.io.IOException;
-
+import java.io.StringWriter;
 import java.util.Map;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+
 import es.weso.schema.Schema;
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -33,13 +36,13 @@ public class RDFValidator implements BaseMiddleware{
 		Object RDF = mapData.get(Constants.RDF_OBJECT);
 		Object validationRDF = mapData.get(Constants.RDF_VALIDATION_MAPPER_OBJECT);
 		if (RDF == null) {
-			throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_MISSING);
+			throw new MiddlewareHaltException(RDF_DATA_IS_MISSING);
 		}else if(validationRDF == null){
-			throw new MiddlewareHaltException(this.getClass().getName()+RDF_VALIDATION_MAPPING_MISSING); 
+			throw new MiddlewareHaltException(RDF_VALIDATION_MAPPING_MISSING); 
 		}else if(!(RDF instanceof Model)){
-			throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_INVALID);
+			throw new MiddlewareHaltException(RDF_DATA_IS_INVALID);
 		}else if(!(validationRDF instanceof Model)){
-			throw new MiddlewareHaltException(this.getClass().getName() + RDF_VALIDATION_MAPPING_IS_INVALID);
+			throw new MiddlewareHaltException(RDF_VALIDATION_MAPPING_IS_INVALID);
 		} else {
 			ShaclexValidator validator = new ShaclexValidator();
 			Schema schema = validator.readSchema(schemaFileName, SCHEMAFORMAT, PROCESSOR);
@@ -50,7 +53,7 @@ public class RDFValidator implements BaseMiddleware{
 			ValidationResponse validationResponse = validator.validate((Model) validationRDF, schema);
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
 			if (!validationResponse.isValid()) {
-				throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_INVALID);
+				throw new MiddlewareHaltException(RDF_DATA_IS_INVALID);
 			}
 			return mapData;
 		}

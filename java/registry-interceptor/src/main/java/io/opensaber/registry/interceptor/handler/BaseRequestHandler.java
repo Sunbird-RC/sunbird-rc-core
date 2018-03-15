@@ -20,7 +20,7 @@ import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.middleware.util.Constants;
 import static org.apache.commons.lang3.StringUtils.*;
 
-public class BaseRequestHandler{
+public class BaseRequestHandler extends BaseResponseHandler{
 
 	protected RequestWrapper requestWrapper;
 	protected HttpServletRequest request;

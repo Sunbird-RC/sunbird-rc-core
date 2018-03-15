@@ -13,12 +13,13 @@ import java.util.UUID;
 
 public class RegistryTestBase {
 
-	
+
 	public String jsonld;
 	public static final String FORMAT = "JSON-LD";
 	private static final String REPLACING_SUBJECT_LABEL = "<@id>";
 	private static final String EMPTY_STRING = "";
-	
+	private static final String CONTEXT_CONSTANT = "teacher:";
+
 	public void setJsonld(String filename){
 
 		try {
@@ -56,12 +57,24 @@ public class RegistryTestBase {
 		return Constants.INTEGRATION_TEST_BASE_URL;
 	}
 
-	public void setJsonldWithNewRootLabel(String id){
-		jsonld = jsonld.replace(REPLACING_SUBJECT_LABEL, id);
+	public String setJsonldWithNewRootLabel(){
+		String id = null;
+		String replacingId = null;
+		while(jsonld.contains(REPLACING_SUBJECT_LABEL)){
+			if(id==null){
+				id = generateRandomId();
+				replacingId = CONTEXT_CONSTANT+id;
+			}else{
+				replacingId = CONTEXT_CONSTANT+generateRandomId();
+			}
+			jsonld = jsonld.replaceFirst(REPLACING_SUBJECT_LABEL, replacingId);
+
+		}
+		return id;
 	}
-	
-	
-	
+
+
+
 	public static String generateRandomId(){
 		return UUID.randomUUID().toString();
 	}
