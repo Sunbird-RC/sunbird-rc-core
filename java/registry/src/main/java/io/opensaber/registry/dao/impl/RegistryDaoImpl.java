@@ -3,15 +3,18 @@ package io.opensaber.registry.dao.impl;
 import java.io.IOException;
 import java.util.*;
 
+import com.google.common.collect.ImmutableList;
 import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.opensaber.registry.dao.RegistryDao;
@@ -27,12 +30,16 @@ public class RegistryDaoImpl implements RegistryDao {
 	@Autowired
 	private DatabaseProvider databaseProvider;
 
+	@Value("${registry.context.base}")
+	private String registryContext;
+
 	@Override
 	public List getEntityList() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	/*
 	@Override
 	public boolean addEntity(Graph entity, String label) throws DuplicateRecordException {
 
@@ -59,41 +66,178 @@ public class RegistryDaoImpl implements RegistryDao {
 		} else {
 			createEdgeNodes(traversalSource, traversal, map);
 		}
-		
+
+		return true;
+	}
+	*/
+
+	@Override
+	public boolean addEntity(Graph entity, String label) throws DuplicateRecordException {
+
+		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
+		logger.info("Creating entity with label " + label);
+		Graph graphFromStore = databaseProvider.getGraphStore();
+		GraphTraversalSource traversalSource = graphFromStore.traversal();
+		if (traversalSource.clone().V().hasLabel(label).hasNext()) {
+			throw new DuplicateRecordException(Constants.DUPLICATE_RECORD_MESSAGE);
+		}
+
+		TinkerGraph graph = (TinkerGraph) entity;
+		createOrUpdateEntity(graph, label);
+		logger.info("Successfully created entity with label " + label);
 		return true;
 	}
 
-	private void createEdgeNodes(GraphTraversalSource traversalSource, GraphTraversal<Vertex, Vertex> traversal,
-			Map<String, List<Object[]>> map) {
-		if (traversal.hasNext()) {
-			Map<String, Vertex> createdNodeMap = new HashMap<>();
-			Vertex v = traversal.next();
-			Vertex newVertex = getNodeWithProperties(traversalSource, v, createdNodeMap);
+	/**
+	 * This method is commonly used for both create and update entity
+	 * @param entity
+	 * @param rootLabel
+	 */
+	private void createOrUpdateEntity(Graph entity, String rootLabel) {
+		Graph graphFromStore = databaseProvider.getGraphStore();
+		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 
-			while (traversal.hasNext()) {
-				v = traversal.next();
-				newVertex = getNodeWithProperties(traversalSource, v, createdNodeMap);
-				Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
-				Iterator<Edge> incomingEdges = v.edges(Direction.IN);
-				createEdgeNodes(outgoingEdges, traversalSource, newVertex, map, Direction.OUT, v, createdNodeMap);
-				createEdgeNodes(incomingEdges, traversalSource, newVertex, map, Direction.IN, v, createdNodeMap);
+		TinkerGraph graph = (TinkerGraph) entity;
+		GraphTraversalSource traversal = graph.traversal();
 
+		if (graphFromStore.features().graph().supportsTransactions()) {
+			org.apache.tinkerpop.gremlin.structure.Transaction tx;
+			tx = graphFromStore.tx();
+			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
+			addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel);
+			tx.commit();
+			tx.close();
+		} else {
+			addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel);
+		}
+
+	}
+
+	/**
+	 * This method creates the root node of the entity if it already isn't present in the graph store
+	 * or updates the properties of the root node or adds new properties if the properties are not already
+	 * present in the node.
+	 * @param dbTraversalSource
+	 * @param entitySource
+	 * @param rootLabel
+	 */
+	private void addOrUpdateVerticesAndEdges(GraphTraversalSource dbTraversalSource,
+											 GraphTraversalSource entitySource, String rootLabel) {
+
+		GraphTraversal<Vertex, Vertex> gts = entitySource.clone().V().hasLabel(rootLabel);
+
+		while (gts.hasNext()) {
+			Vertex v = gts.next();
+			String label = generateBlankNodeLabel(v.label());
+			GraphTraversal<Vertex, Vertex> hasLabel = dbTraversalSource.clone().V().hasLabel(label);
+
+			if (hasLabel.hasNext()) {
+				logger.info(String.format("Root node label %s already exists. Updating properties for the root node.", rootLabel));
+				Vertex existingVertex = hasLabel.next();
+				copyProperties(v, existingVertex);
+				addOrUpdateVertexAndEdge(v, existingVertex, dbTraversalSource);
+			} else {
+				Vertex newVertex = dbTraversalSource.clone().addV(label).next();
+				copyProperties(v, newVertex);
+				addOrUpdateVertexAndEdge(v, newVertex, dbTraversalSource);
 			}
 		}
 	}
 
-	private Vertex getNodeWithProperties(GraphTraversalSource traversal, Vertex v, Map<String, Vertex> createdNodeMap) {
+	/**
+	 * This method takes the root node of an entity and then recursively creates or updates child vertices
+	 * and edges.
+	 * @param v
+	 * @param dbVertex
+	 * @param dbGraph
+	 */
+	private void addOrUpdateVertexAndEdge(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph) {
+		Iterator<Edge> edges = v.edges(Direction.OUT);
+		Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
+		List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(Direction.OUT));
+		while(edges.hasNext()) {
+			Edge e = edges.next();
+			Vertex ver = e.inVertex();
+			String label = generateBlankNodeLabel(ver.label());
+			GraphTraversal<Vertex, Vertex> gt = dbGraph.clone().V().hasLabel(label);
+			if (gt.hasNext()) {
+				Vertex existingV = gt.next();
+				logger.info(String.format("Vertex with label %s already exists. Updating properties for the vertex", existingV.label()));
+				copyProperties(ver, existingV);
+				Optional<Edge> edgeAlreadyExists =
+						dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(e.label())).findFirst();
+				if(!edgeAlreadyExists.isPresent()) {
+					logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), existingV.label()));
+					dbVertex.addEdge(e.label(), existingV);
+				}
+				parsedVertices.push(new Pair<>(ver, existingV));
+			} else {
+				Vertex newV = dbGraph.addV(label).next();
+				logger.info(String.format("Adding vertex with label %s and adding properties", newV.label()));
+				copyProperties(ver, newV);
+				logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), newV.label()));
+				dbVertex.addEdge(e.label(), newV);
+				parsedVertices.push(new Pair<>(ver, newV));
+			}
+		}
+		parsedVertices.forEach(pv -> addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph));
+	}
+
+	/**
+	 * Blank nodes are no longer supported. If the input data has a blank node, which is identified
+	 * by the node's label which starts with :_, then a random UUID is used as the label for the blank node.
+	 * @param label
+	 * @return
+	 */
+	private String generateBlankNodeLabel(String label) {
+		if(label.startsWith("_:")) {
+			label = String.format("%s%s", registryContext, generateRandomUUID());
+		}
+		return label;
+	}
+
+	public static String generateRandomUUID() {
+		return UUID.randomUUID().toString();
+	}
+
+	/**
+	 * @deprecated
+	 * @param dbTraversalSource
+	 * @param traversal
+	 * @param map
+	 */
+	private void createEdgeNodes(GraphTraversalSource dbTraversalSource, GraphTraversal<Vertex, Vertex> traversal,
+								 Map<String, List<Object[]>> map) {
+		Map<String, Vertex> createdNodeMap = new HashMap<>();
+		while (traversal.hasNext()) {
+			Vertex v = traversal.next();
+			Vertex newVertex = getNodeWithProperties(dbTraversalSource, v, createdNodeMap);
+			Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
+			Iterator<Edge> incomingEdges = v.edges(Direction.IN);
+			createEdgeNodes(outgoingEdges, dbTraversalSource, newVertex, map, Direction.OUT, v, createdNodeMap);
+			createEdgeNodes(incomingEdges, dbTraversalSource, newVertex, map, Direction.IN, v, createdNodeMap);
+		}
+	}
+
+	/**
+	 * @deprecated
+	 * @param dbTraversalSource
+	 * @param v
+	 * @param createdNodeMap
+	 * @return
+	 */
+	private Vertex getNodeWithProperties(GraphTraversalSource dbTraversalSource, Vertex v, Map<String, Vertex> createdNodeMap) {
 
 		Vertex newVertex;
 
 		if (createdNodeMap.containsKey(v.label())) {
 			newVertex = createdNodeMap.get(v.label());
 		} else {
-			GraphTraversal nodes = traversal.clone().V().hasLabel(v.label());
+			GraphTraversal nodes = dbTraversalSource.clone().V().hasLabel(v.label());
 			if (nodes.hasNext()) {
 				newVertex = (Vertex) nodes.next();
 			} else {
-				newVertex = traversal.clone().addV(v.label()).next();
+				newVertex = dbTraversalSource.clone().addV(v.label()).next();
 			}
 			copyProperties(v, newVertex);
 			createdNodeMap.put(v.label(), newVertex);
@@ -101,9 +245,19 @@ public class RegistryDaoImpl implements RegistryDao {
 		return newVertex;
 	}
 
-	private void createEdgeNodes(Iterator<Edge> edges, GraphTraversalSource traversal,
-									Vertex newVertex, Map<String, List<Object[]>> map, Direction direction, Vertex traversalVertex,
-									Map<String, Vertex> createdNodeMap) {
+	/**
+	 * @deprecated
+	 * @param edges
+	 * @param dbTraversalSource
+	 * @param newVertex
+	 * @param map
+	 * @param direction
+	 * @param traversalVertex
+	 * @param createdNodeMap
+	 */
+	private void createEdgeNodes(Iterator<Edge> edges, GraphTraversalSource dbTraversalSource,
+								 Vertex newVertex, Map<String, List<Object[]>> map,
+								 Direction direction, Vertex traversalVertex, Map<String, Vertex> createdNodeMap) {
 
 		while (edges.hasNext()) {
 
@@ -112,8 +266,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			boolean nodeAndEdgeExists = validateAddVertex(map, traversalVertex, edge, direction);
 
 			if (!nodeAndEdgeExists) {
-
-				Vertex nextVertex = getNodeWithProperties(traversal, vertex, createdNodeMap);
+				Vertex nextVertex = getNodeWithProperties(dbTraversalSource, vertex, createdNodeMap);
 
 				if (direction.equals(Direction.OUT)) {
 					newVertex.addEdge(edge.label(), nextVertex);
@@ -128,6 +281,7 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	/**
 	 * Method to add created nodes and edges to the graph
+	 * @deprecated
 	 * @param vertexMap
 	 * @param currentVertex
 	 * @param newVertex
@@ -145,13 +299,15 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	/**
 	 * Method to validate if the vertex needs to be added to the graph
+	 * @deprecated
 	 * @param vertexMap
 	 * @param currTraversalVertex
 	 * @param edge
 	 * @param direction
 	 * @return
 	 */
-	private boolean validateAddVertex(Map<String, List<Object[]>> vertexMap, Vertex currTraversalVertex, Edge edge, Direction direction) {
+	private boolean validateAddVertex(Map<String, List<Object[]>> vertexMap,
+									  Vertex currTraversalVertex, Edge edge, Direction direction) {
 		boolean addVertex = false;
 
 		Vertex edgeVertex = direction.equals(Direction.OUT) ? edge.inVertex() : edge.outVertex();
@@ -175,80 +331,22 @@ public class RegistryDaoImpl implements RegistryDao {
 	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel) throws RecordNotFoundException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
-		logger.info("FETCH: "+ rootNodeLabel);
-
 		TinkerGraph graphForUpdate = (TinkerGraph) entityForUpdate;
-		GraphTraversalSource updateGraphTraversalSource = graphForUpdate.traversal();
 
 		// Check if the root node being updated exists in the database
-		GraphTraversal<Vertex, Vertex> hasLabel = dbGraphTraversalSource.clone().V().hasLabel(rootNodeLabel);
-		if (!hasLabel.hasNext()) {
+		GraphTraversal<Vertex, Vertex> hasRootLabel = dbGraphTraversalSource.clone().V().hasLabel(rootNodeLabel);
+		if (!hasRootLabel.hasNext()) {
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		} else {
-			if (graphFromStore.features().graph().supportsTransactions()) {
-				org.apache.tinkerpop.gremlin.structure.Transaction tx;
-				tx = graphFromStore.tx();
-				tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-				updateGraph(dbGraphTraversalSource, updateGraphTraversalSource, rootNodeLabel);
-				tx.commit();
-				tx.close();
-			} else {
-				updateGraph(dbGraphTraversalSource, updateGraphTraversalSource, rootNodeLabel);
-			}
+			createOrUpdateEntity(graphForUpdate, rootNodeLabel);
 		}
 		return false;
-	}
-
-	private void updateGraph(GraphTraversalSource dbGraphSource, GraphTraversalSource factsForUpdate,
-							 String rootNodeLabel) {
-
-		GraphTraversal<Vertex, Vertex> updatedGraphTraversal = factsForUpdate.clone().V().has(T.label, rootNodeLabel);
-
-		while (updatedGraphTraversal.hasNext()) {
-			Vertex ver = updatedGraphTraversal.next();
-
-			ver.vertices(Direction.OUT).forEachRemaining(v ->
-				v.properties().forEachRemaining(p -> {
-					dbGraphSource.clone().V().properties(p.label()).forEachRemaining(pr ->
-							pr.element().property(p.key(), p.value())
-					);
-				})
-			);
-
-			ver.properties().forEachRemaining(p -> {
-				dbGraphSource.clone().V().properties(p.label()).forEachRemaining(pr ->
-						pr.element().property(p.key(), p.value())
-				);
-			});
-		}
-
-	}
-
-	public static String printGraph(GraphTraversalSource graph, String rootLabel) {
-		StringBuilder sb = new StringBuilder();
-		GraphTraversal<Vertex, Vertex> tr = graph.clone().V().has(T.label, rootLabel);
-		while (tr.hasNext()) {
-			Vertex ver = tr.next();
-			ver.vertices(Direction.OUT).forEachRemaining(v -> {
-				sb.append(String.format("RootNode: %s \n", v.label()));
-					v.properties().forEachRemaining(p ->
-							sb.append(String.format("Subject: %s, Predicate: %s, Object: %s\n", p.label(), p.key(), p.value()))
-					);
-				}
-			);
-
-			ver.properties().forEachRemaining(p ->
-				sb.append(String.format("Subject: %s, Predicate: %s, Object: %s\n", p.label(), p.key(), p.value()))
-			);
-		}
-		return sb.toString();
 	}
 
 	@Override
 	public Graph getEntityById(String label) throws RecordNotFoundException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
-		TinkerGraph graph = TinkerGraph.open();
 		logger.info("FETCH: "+label);
 		GraphTraversal<Vertex, Vertex> hasLabel = traversalSource.clone().V().hasLabel(label);
 		Graph parsedGraph = TinkerGraph.open();

@@ -1,13 +1,10 @@
 package io.opensaber.registry.service.impl;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.List;
-import io.opensaber.registry.util.RDFUtil;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -20,12 +17,10 @@ import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import io.opensaber.converters.JenaRDF4J;
@@ -58,8 +53,6 @@ public class RegistryServiceImpl implements RegistryService {
 	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException {
 		try {
 			Graph graph = GraphDBFactory.getEmptyGraph();
-			RDFUtil.updateIdForBlankNode(rdfModel);
-
 			StmtIterator iterator = rdfModel.listStatements();
 			boolean rootSubjectFound = false;
 			String label = null;

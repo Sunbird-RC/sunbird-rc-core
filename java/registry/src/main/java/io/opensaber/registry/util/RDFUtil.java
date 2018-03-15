@@ -1,12 +1,26 @@
 package io.opensaber.registry.util;
 
+import io.opensaber.converters.JenaRDF4J;
+import org.apache.jena.ext.com.google.common.io.ByteStreams;
+import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.riot.JsonLDWriteContext;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.WriterDatasetRIOT;
+import org.apache.jena.riot.system.PrefixMap;
+import org.apache.jena.riot.system.RiotLib;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Value;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class RDFUtil {
@@ -103,6 +117,22 @@ public class RDFUtil {
 
         return ResourceFactory.createStatement(subject, predicate, objectCopy);
 
+    }
+
+    public static String frameEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException {
+        Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
+        DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
+        JsonLDWriteContext ctx = new JsonLDWriteContext();
+        InputStream is = RDFUtil.class.getClassLoader().getResourceAsStream("frame.json");
+        String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+        ctx.setFrame(fileString);
+        WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT) ;
+        PrefixMap pm = RiotLib.prefixMap(g);
+        String base = null;
+        StringWriter sWriterJena = new StringWriter();
+        w.write(sWriterJena, g, pm, base, ctx) ;
+        String jenaJSON = sWriterJena.toString();
+        return jenaJSON;
     }
 
 }

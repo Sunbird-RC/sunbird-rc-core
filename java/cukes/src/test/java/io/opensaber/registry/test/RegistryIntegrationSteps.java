@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -21,8 +22,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonParser;
 
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
@@ -33,6 +32,7 @@ import io.opensaber.pojos.Response.Status;
 
 public class RegistryIntegrationSteps extends RegistryTestBase{
 	
+
 	private static final String VALID_JSONLD= "school.jsonld";
 	//private static final String VALID_NEWJSONLD= "newSchool.jsonld";
 	private static final String VALID_NEWJSONLD= "teacher.jsonld";
@@ -77,7 +77,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private ResponseEntity<Response> callRegistryCreateAPI() {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity<String> entity = new HttpEntity<String>(jsonld,headers);
+		HttpEntity<String> entity = new HttpEntity<>(jsonld,headers);
 		ResponseEntity<Response> response = restTemplate.postForEntity(
 				baseUrl+ADD_ENTITY,
 				entity,
@@ -130,8 +130,6 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	}
 
 	private ResponseEntity<Response> callRegistryReadAPI() {
-		HttpHeaders headers = new HttpHeaders();
-		HttpEntity<String> entity = new HttpEntity<String>("",headers);
 		ResponseEntity<Response> response = restTemplate.getForEntity(baseUrl+READ_ENTITY+"/"+id, Response.class);
 		return response;
 		
@@ -159,7 +157,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	public void the_record_should_match() throws Exception {
 		Model expectedModel = ModelFactory.createDefaultModel();
 		ObjectMapper mapper = new ObjectMapper();
-        String jsonldBody = mapper.readTree(jsonld).path("request").toString();
+		String jsonldBody = mapper.readTree(jsonld).path("request").toString();
 		RDFDataMgr.read(expectedModel, new StringReader(jsonldBody), null, org.apache.jena.riot.RDFLanguages.JSONLD) ;
 		Map<String, Object> result = response.getBody().getResult();
 		Model actualModel = ModelFactory.createDefaultModel();
