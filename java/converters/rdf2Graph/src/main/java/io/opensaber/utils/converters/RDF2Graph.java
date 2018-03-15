@@ -21,11 +21,16 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.datatypes.XMLDatatypeUtil;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.XMLConstants;
+import javax.xml.datatype.DatatypeConstants;
+import javax.xml.namespace.QName;
 
 
 public final class RDF2Graph 
@@ -60,21 +65,17 @@ public final class RDF2Graph
 
 	private static void updateGraph(Value subjectValue, IRI property, Value objectValue, Graph graph) {
 		Vertex s = getExistingVertexOrAdd(subjectValue.toString(), graph);
-		
 		if (objectValue instanceof Literal) {
 			Literal literal = (Literal)objectValue;
-			s.property(property.toString(), literal.getLabel());
-
+			s.property(property.toString(), literal.getLabel()).property("@type",literal.getDatatype().toString());
 		} else if (objectValue instanceof IRI) {
 			IRI objectIRI = (IRI)objectValue;
 			Vertex o = getExistingVertexOrAdd(objectIRI.toString(), graph);
 			s.addEdge(property.toString(), o);
-			
 		} else if (objectValue instanceof BNode) {
 			BNode objectBNode = (BNode)objectValue;
 			Vertex o = getExistingVertexOrAdd(objectBNode.toString(), graph);		
 			s.addEdge(property.toString(), o);
-			
 		}
 	}
 	
@@ -110,7 +111,42 @@ public final class RDF2Graph
 		while (propertyIter.hasNext()){
 			VertexProperty<String> property = propertyIter.next();
 			logger.info("ADDING Property"+property.label()+": "+property.value());
-			builder.add(property.label(), property.value());
+			String literal = property.value();
+			String type = property.property("@type").value().toString();
+			Object object = literal;
+			logger.info("TYPE is: "+type);
+			switch(type){
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#boolean": object=XMLDatatypeUtil.parseBoolean(literal);
+                                    break;
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#byte":    object=XMLDatatypeUtil.parseByte(literal);
+                                    break;
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#short":   object=XMLDatatypeUtil.parseShort(literal);
+                                    break;
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#int":     object=XMLDatatypeUtil.parseInt(literal);
+                                    break;
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#long":    object=XMLDatatypeUtil.parseLong(literal);
+                                    break;
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#float":   object=XMLDatatypeUtil.parseFloat(literal);
+                                    break;
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#double":  object=XMLDatatypeUtil.parseDouble(literal);
+                                    break;
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#integer": object=XMLDatatypeUtil.parseInteger(literal);
+                                    break;
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#decimal": object=XMLDatatypeUtil.parseDecimal(literal);
+                                    break;
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#dateTime":
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#time":
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#date":
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gYearMonth":
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonthDay":
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gYear":
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonth":
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gDay":    object=XMLDatatypeUtil.parseCalendar(literal);
+                                    break;
+                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#duration": object=XMLDatatypeUtil.parseDuration(literal);
+                                     break;
+            }
+			builder.add(property.label(), object);
 		}
 		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
 		Edge edge;

@@ -1,50 +1,30 @@
 package io.opensaber.utils.converters;
 
-import static org.junit.Assert.*;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
-
-import org.apache.jena.reasoner.rulesys.builtins.IsBNode;
-import org.apache.tinkerpop.gremlin.process.traversal.TraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
-import org.eclipse.rdf4j.model.BNode;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
+import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.FOAF;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.hamcrest.FeatureMatcher;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
-import org.hamcrest.beans.HasPropertyWithValue;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.hamcrest.core.Every;
-import org.hamcrest.core.Is;
-import static org.hamcrest.Matchers.instanceOf;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-//import org.eclipse.rdf4j.model.util.ModelBuilder;
+import org.junit.*;
 
-import io.opensaber.utils.converters.RDF2Graph;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Set;
+
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.*;
 
 public class RDF2GraphTest {
 
@@ -241,6 +221,25 @@ public class RDF2GraphTest {
 		assertEquals(expectedModel.size(), convertedModel.size()); 
 		System.out.println(expectedModel);
 		System.out.println(convertedModel);
+	}
+
+	@Test
+	public void testDataTypePersistedInGraph(){
+		ModelBuilder builder = new ModelBuilder();
+		builder
+			.setNamespace("ex", "http://example.org/")
+				.subject("ex:someSubject")
+					.add("ex:dateProperty", new GregorianCalendar(1885, Calendar.APRIL, 1).getTime())
+					.add("ex:intProperty", 5)
+                    .add("ex:stringProperty","xyz")
+                    .add(RDF.TYPE, "ex:typeProperty");
+		Model model = builder.build();
+		Graph graph = createGraph();
+        editGraph(graph, model);
+        Model _model = RDF2Graph.convertGraph2RDFModel(graph,"http://example.org/someSubject");
+        Rio.write(model, System.out, RDFFormat.TURTLE);
+        Rio.write(_model, System.out, RDFFormat.TURTLE);
+        Assert.assertTrue(Models.isomorphic(model,_model));
 	}
 
 	private void checkNodes(Graph graph, Model rdfModel, IRI iriPred, Model expectedModel, Class _class) {
