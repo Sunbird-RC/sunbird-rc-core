@@ -7,12 +7,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.T;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -67,7 +62,9 @@ public final class RDF2Graph
 		Vertex s = getExistingVertexOrAdd(subjectValue.toString(), graph);
 		if (objectValue instanceof Literal) {
 			Literal literal = (Literal)objectValue;
-			s.property(property.toString(), literal.getLabel()).property("@type",literal.getDatatype().toString());
+			String datatype = literal.getDatatype().toString();
+			logger.info("TYPE saved is "+datatype);
+			s.property(property.toString(), literal.getLabel()).property("@type",datatype);
 		} else if (objectValue instanceof IRI) {
 			IRI objectIRI = (IRI)objectValue;
 			Vertex o = getExistingVertexOrAdd(objectIRI.toString(), graph);
@@ -112,39 +109,57 @@ public final class RDF2Graph
 			VertexProperty<String> property = propertyIter.next();
 			logger.info("ADDING Property"+property.label()+": "+property.value());
 			String literal = property.value();
-			String type = property.property("@type").value().toString();
+			Property<Object> metaProperty = property.property("@type");
+			String type = null;
+			if(metaProperty.isPresent()){
+			    type = metaProperty.value().toString();
+            }
 			Object object = literal;
 			logger.info("TYPE is: "+type);
-			switch(type){
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#boolean": object=XMLDatatypeUtil.parseBoolean(literal);
-                                    break;
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#byte":    object=XMLDatatypeUtil.parseByte(literal);
-                                    break;
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#short":   object=XMLDatatypeUtil.parseShort(literal);
-                                    break;
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#int":     object=XMLDatatypeUtil.parseInt(literal);
-                                    break;
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#long":    object=XMLDatatypeUtil.parseLong(literal);
-                                    break;
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#float":   object=XMLDatatypeUtil.parseFloat(literal);
-                                    break;
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#double":  object=XMLDatatypeUtil.parseDouble(literal);
-                                    break;
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#integer": object=XMLDatatypeUtil.parseInteger(literal);
-                                    break;
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#decimal": object=XMLDatatypeUtil.parseDecimal(literal);
-                                    break;
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#dateTime":
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#time":
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#date":
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gYearMonth":
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonthDay":
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gYear":
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonth":
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gDay":    object=XMLDatatypeUtil.parseCalendar(literal);
-                                    break;
-                case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#duration": object=XMLDatatypeUtil.parseDuration(literal);
-                                     break;
+			if(type!=null){
+                switch(type){
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#boolean":
+                        object=XMLDatatypeUtil.parseBoolean(literal);
+                        break;
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#byte":
+                        object=XMLDatatypeUtil.parseByte(literal);
+                        break;
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#short":
+                        object=XMLDatatypeUtil.parseShort(literal);
+                        break;
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#int":
+                        object=XMLDatatypeUtil.parseInt(literal);
+                        break;
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#long":
+                        object=XMLDatatypeUtil.parseLong(literal);
+                        break;
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#float":
+                        object=XMLDatatypeUtil.parseFloat(literal);
+                        break;
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#double":
+                        object=XMLDatatypeUtil.parseDouble(literal);
+                        break;
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#integer":
+                        object=XMLDatatypeUtil.parseInteger(literal);
+                        break;
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#decimal":
+                        object=XMLDatatypeUtil.parseDecimal(literal);
+                        break;
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#dateTime":
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#time":
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#date":
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gYearMonth":
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonthDay":
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gYear":
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonth":
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gDay":
+                        object=XMLDatatypeUtil.parseCalendar(literal);
+                        break;
+                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#duration":
+                        object=XMLDatatypeUtil.parseDuration(literal);
+                        break;
+                }
+
             }
 			builder.add(property.label(), object);
 		}
