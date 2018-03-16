@@ -18,7 +18,7 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.hamcrest.core.Every;
 import org.junit.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Set;
@@ -224,16 +224,8 @@ public class RDF2GraphTest {
 	}
 
 	@Test
-	public void testDataTypePersistedInGraph(){
-		ModelBuilder builder = new ModelBuilder();
-		builder
-			.setNamespace("ex", "http://example.org/")
-				.subject("ex:someSubject")
-					.add("ex:dateProperty", new GregorianCalendar(1885, Calendar.APRIL, 1).getTime())
-					.add("ex:intProperty", 5)
-                    .add("ex:stringProperty","xyz")
-                    .add(RDF.TYPE, "ex:typeProperty");
-		Model model = builder.build();
+	public void testDataTypePersistedInGraph() throws IOException {
+        Model model = Rio.parse(getInputStream("rich-literal.ttl"), "", RDFFormat.TURTLE);
 		Graph graph = createGraph();
         editGraph(graph, model);
         Model _model = RDF2Graph.convertGraph2RDFModel(graph,"http://example.org/someSubject");
@@ -284,4 +276,10 @@ public class RDF2GraphTest {
 		Graph graph = TinkerGraph.open();
 		return graph;
 	}
+
+	private InputStream getInputStream(String filename) throws FileNotFoundException {
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource(filename).getFile());
+        return new FileInputStream(file);
+    }
 }
