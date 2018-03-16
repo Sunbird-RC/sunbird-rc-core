@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 import cucumber.api.java.Before;
+import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
@@ -94,6 +95,12 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	public void verifyUnsuccessfulResponse() throws JsonParseException, JsonMappingException, IOException{
 		checkUnsuccessfulResponse();
 	}
+	
+	@And("^fetching the record from the registry should match the issued record")
+	public void fetchRecordFromRegistryAndVerify() throws JsonParseException, JsonMappingException, IOException{
+		response = callRegistryReadAPI();
+		checkForIsomorphicModel();
+	}
 
 
 	private void checkSuccessfulResponse() throws JsonParseException, JsonMappingException, IOException {
@@ -105,6 +112,18 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private void checkUnsuccessfulResponse() throws JsonParseException, JsonMappingException, IOException {
 		Status responseStatus = response.getBody().getParams().getStatus();
 		assertEquals(Response.Status.UNSUCCESSFUL, responseStatus);
+	}
+	
+	private void checkForIsomorphicModel() throws IOException{
+		Model expectedModel = ModelFactory.createDefaultModel();
+		ObjectMapper mapper = new ObjectMapper();
+		String jsonldBody = mapper.readTree(jsonld).path("request").toString();
+		RDFDataMgr.read(expectedModel, new StringReader(jsonldBody), null, org.apache.jena.riot.RDFLanguages.JSONLD) ;
+		Map<String, Object> result = response.getBody().getResult();
+		Model actualModel = ModelFactory.createDefaultModel();
+		String newJsonld = new JSONObject(result).toString(2);
+		RDFDataMgr.read(actualModel, new StringReader(newJsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD);
+		assertTrue(expectedModel.isIsomorphicWith(actualModel));
 	}
 	
 	@Given("(.*) record issued into the registry")
@@ -155,15 +174,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 
 	@Then("^the record should match$")
 	public void the_record_should_match() throws Exception {
-		Model expectedModel = ModelFactory.createDefaultModel();
-		ObjectMapper mapper = new ObjectMapper();
-		String jsonldBody = mapper.readTree(jsonld).path("request").toString();
-		RDFDataMgr.read(expectedModel, new StringReader(jsonldBody), null, org.apache.jena.riot.RDFLanguages.JSONLD) ;
-		Map<String, Object> result = response.getBody().getResult();
-		Model actualModel = ModelFactory.createDefaultModel();
-		String newJsonld = new JSONObject(result).toString(2);
-		RDFDataMgr.read(actualModel, new StringReader(newJsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD);
-		assertTrue(expectedModel.isIsomorphicWith(actualModel));
+		checkForIsomorphicModel();
 	}
 	
 	@Given("^a response")
