@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
+import io.opensaber.registry.fields.configuration.FieldConfiguration;
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
@@ -70,6 +71,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public RDFValidator rdfValidator(){
 		String shexFileName = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
 		return new RDFValidator(shexFileName);
+	}
+	
+	@Bean
+	public FieldConfiguration fieldConfiguration(){
+		return new FieldConfiguration();
 	}
 
 	/*

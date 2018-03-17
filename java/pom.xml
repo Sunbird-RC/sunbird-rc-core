@@ -13,7 +13,8 @@
         <module>validators</module>
 	    <module>middleware-commons</module>
 	    <module>middleware</module>
-	    <module>registry-interceptor</module>    	
+	    <module>registry-interceptor</module>   
+	    <module>field-level-configuration</module> 	
   </modules>
 
 </project>
