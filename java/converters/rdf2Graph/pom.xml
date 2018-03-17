@@ -32,6 +32,12 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.13</version>
+            <scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
@@ -57,6 +63,11 @@
 			<groupId>org.eclipse.rdf4j</groupId>
 			<artifactId>rdf4j-queryresultio-text</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-rio-turtle</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<!-- <dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
@@ -78,7 +89,12 @@
 			<artifactId>jena-core</artifactId>
 			<version>3.6.0</version>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>2.0.1.Final</version>
+        </dependency>
+    </dependencies>
 
 	<build>
 		<plugins>
