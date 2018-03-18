@@ -17,12 +17,15 @@
 			"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
 			"teacher": "http://example.com/voc/teacher/1.0.0/",
 			"xsd": "http://www.w3.org/2001/XMLSchema#",
-			"@vocab": "http://example.com/voc/teacher/1.0.0/"
+			"@vocab": "http://example.com/voc/teacher/1.0.0/",
+			"serialNum": {
+			    "@type": "xsd:integer"
+			}
 		},
 
 		"@id": "<@id>",
 		"@type": "Teacher",
-		"serialNum": "12",
+		"serialNum": 12,
 		"teacherCode": "12234",
 		"nationalIdentifier": "1234567890123456",
 		"teacherName": "Marvin Pande",
