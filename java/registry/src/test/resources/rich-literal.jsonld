@@ -1,0 +1,18 @@
+{
+  "@context": {
+    "ex": "http://example.org/"
+  },
+  "@id": "!samp131d",
+  "@type": "ex:typeProperty",
+  "ex:booleanProperty": true,
+  "ex:dateProperty": {
+    "@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+    "@value": "1885-04-01T00:00:00.000+05:30"
+  },
+  "ex:floatProperty": 1.1,
+  "ex:intProperty": {
+    "@type": "http://www.w3.org/2001/XMLSchema#int",
+    "@value": "5"
+  },
+  "ex:stringProperty": "xyz"
+}
