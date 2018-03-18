@@ -8,8 +8,19 @@
 		"teacher": "http://example.com/voc/teacher/1.0.0/"
 	},
 
-	"@id": "opensaber:fa7740c185fb247729c7296c36b5c1257b1",
 	"@type": "opensaber:Registry",
-	"teacher:privateFields": ["teacher:nationalIdentifier","teacher:teacherCode","teacher:birthDate"]
-	
+	"teacher:privateFields": 
+	[
+		{
+			"@id": "teacher:nationalIdentifier"
+		},
+
+		{
+			"@id": "teacher:teacherCode"
+		},
+
+		{
+			"@id": "teacher:birthDate"
+		}
+	]
 }
