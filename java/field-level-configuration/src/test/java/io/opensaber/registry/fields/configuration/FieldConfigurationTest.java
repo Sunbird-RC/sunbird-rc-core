@@ -2,27 +2,34 @@ package io.opensaber.registry.fields.configuration;
 
 import static org.junit.Assert.*;
 
-import org.junit.Ignore;
+import java.io.IOException;
+
 import org.junit.Test;
+
 
 public class FieldConfigurationTest {
 	
 	private FieldConfiguration fieldConfiguration;
+	private String configFileSchema = "teacher-privacy.jsonld";
 	
-	private void initialize(){
-		fieldConfiguration = new FieldConfiguration();
+	private void initialize() throws IOException{
+		fieldConfiguration = new FieldConfiguration(configFileSchema);
 	}
 
 	@Test
-	public void test_privacy_check_for_existing_field() {
+	public void test_privacy_check_for_private_field() throws IOException{
 		initialize();
-		assertTrue(fieldConfiguration.getPrivacyForField("nationalIndentifier"));
+		assertNotNull(fieldConfiguration.getConfigRdf());
+		assertTrue(ConfigurationFilter.isExistingConfiguration("http://example.com/voc/teacher/1.0.0/privateFields",
+				"http://example.com/voc/teacher/1.0.0/nationalIdentifier",fieldConfiguration.getConfigRdf()));
 	}
 	
-	@Test @Ignore
-	public void test_privacy_check_for_non_existing_field() {
+	@Test
+	public void test_privacy_check_for_non_private_field() throws IOException{
 		initialize();
-		assertFalse(fieldConfiguration.getPrivacyForField("teacherName"));
+		assertNotNull(fieldConfiguration.getConfigRdf());
+		assertFalse(ConfigurationFilter.isExistingConfiguration("http://example.com/voc/teacher/1.0.0/privateFields",
+				"http://example.com/voc/teacher/1.0.0/teacherName",fieldConfiguration.getConfigRdf()));
 	}
 
 }

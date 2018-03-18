@@ -9,11 +9,13 @@ public class Constants {
 	public static final String RDF_OBJECT = "rdf";
 	public static final String RDF_VALIDATION_OBJECT = "rdfValidationResult";
 	public static final String SHEX_PROPERTY_NAME = "shex.file";
+	public static final String FIELD_CONFIG_SCEHEMA_FILE = "config.schema.file";
 	public static final String SUBJECT_LABEL_TYPE = "subject.label.type";
 	public static final String SHAPE_NAME = "shape.name";
 	public static final String SHAPE_TYPE = "shape.type";
 	public static final String RDF_VALIDATION_MAPPER_OBJECT = "rdfValidationMapper";
 	public static final String REGISTRY_CONTEXT_BASE = "registry.context.base";
+	public static final String PRIVACY_PROPERTY = "config.privacy.property";
 
 	public static final String DATABASE_PROVIDER = "database.provider";
 	public static final String NEO4J_DIRECTORY = "neo4j.directory";

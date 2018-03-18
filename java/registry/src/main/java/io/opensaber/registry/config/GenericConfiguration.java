@@ -1,5 +1,6 @@
 package io.opensaber.registry.config;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,8 +75,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 	
 	@Bean
-	public FieldConfiguration fieldConfiguration(){
-		return new FieldConfiguration();
+	public FieldConfiguration fieldConfiguration() throws IOException{
+		String fieldConfigFileName = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
+		return new FieldConfiguration(fieldConfigFileName);
 	}
 
 	/*
