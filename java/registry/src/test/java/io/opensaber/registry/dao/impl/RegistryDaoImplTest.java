@@ -1,17 +1,15 @@
 package io.opensaber.registry.dao.impl;
 
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import es.weso.rdf.jena.RDFAsJenaModel;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 
 import io.opensaber.registry.util.RDFUtil;
-import mockit.MockUp;
-import mockit.Mocked;
 import mockit.NonStrictExpectations;
 import org.apache.jena.rdf.model.*;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONMapper;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -51,16 +49,14 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.utils.converters.RDF2Graph;
 
+import javax.validation.constraints.AssertTrue;
+
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -89,6 +85,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	
 	
 	private static final String VALID_JSONLD = "school.jsonld";
+    private static final String RICH_LITERAL_TTL = "rich-literal.jsonld";
 	private static final String CONTEXT_CONSTANT = "sample:";
 
 	@Rule
@@ -457,6 +454,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		}};
 
 		Model rdfModel = getNewValidRdf();
+		System.out.println(rdfModel);
 		String rootLabel = updateGraphFromRdf(rdfModel);
 		registryDao.addEntity(graph, rootLabel);
 
@@ -522,6 +520,19 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		}
 	}
 
+	@Test
+	public void savingMetaProperties() throws DuplicateRecordException, RecordNotFoundException {
+        Model inputModel = getNewValidRdf(RICH_LITERAL_TTL, "ex:");
+        String rootLabel = updateGraphFromRdf(inputModel,"http://example.org/typeProperty");
+        registryDao.addEntity(graph, rootLabel);
+        Graph entity = registryDao.getEntityById(rootLabel);
+        org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(entity, rootLabel);
+        Model outputModel = JenaRDF4J.asJenaModel(model);
+        assertTrue(inputModel.difference(outputModel).isEmpty());
+        assertTrue(outputModel.difference(inputModel).isEmpty());
+
+	}
+
 	private String getJsonldFromGraph(Graph entity, String rootLabel) {
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(entity, rootLabel);
 		String jsonldOutput = "";
@@ -575,15 +586,19 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		return getNewValidRdf(jsonldFilename, CONTEXT_CONSTANT, rootNodeLabel);
 	}
 
-	private String updateGraphFromRdf(Model rdfModel) {
+    private String updateGraphFromRdf(Model rdfModel) {
+        return updateGraphFromRdf(rdfModel,environment.getProperty(Constants.SUBJECT_LABEL_TYPE));
+    }
+
+	private String updateGraphFromRdf(Model rdfModel, String rootLabelType) {
+	    System.out.println("Searching for "+rootLabelType);
 		StmtIterator iterator = rdfModel.listStatements();
 		boolean rootSubjectFound = false;
 		String label = null;
 		while (iterator.hasNext()) {
 			Statement rdfStatement = iterator.nextStatement();
 			if (!rootSubjectFound) {
-				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-				label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement, rootLabelType);
 				if (label != null) {
 					rootSubjectFound = true;
 				}

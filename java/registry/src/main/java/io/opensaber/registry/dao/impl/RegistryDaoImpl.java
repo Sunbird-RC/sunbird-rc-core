@@ -2,9 +2,12 @@ package io.opensaber.registry.dao.impl;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.common.collect.ImmutableList;
 import io.opensaber.registry.sink.DatabaseProvider;
+import org.apache.jena.base.Sys;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
@@ -362,11 +365,57 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	private void copyProperties(Vertex subject, Vertex newSubject) {
+	    HashMap<String,HashMap<String,String>> propertyMetaPropertyMap = new HashMap<String,HashMap<String,String>>();
+	    HashMap<String,String> metaPropertyMap;
 		Iterator<VertexProperty<Object>> iter = subject.properties();
 		while(iter.hasNext()){
 			VertexProperty<Object> property = iter.next();
-			newSubject.property(property.key(), property.value());
+			if(property.key().startsWith("meta.")){
+			    logger.info("META PROPERTY "+property);
+                Pattern pattern = Pattern.compile("meta\\.(.*)\\.(.*)");
+                Matcher match = pattern.matcher(property.key().toString());
+                if(match.find()){
+                    String _property = match.group(1);
+                    String _meta_property = match.group(2);
+                    logger.info("MATCHED meta property "+match.group(1)+ " "+match.group(2));
+                    if(propertyMetaPropertyMap.containsKey(property.key())){
+                        logger.info("FOUND in propertyMetaPropertyMap");
+                        metaPropertyMap = propertyMetaPropertyMap.get(property.key());
+                    } else {
+                        logger.info("CREATING metaPropertyMap in propertyMetaPropertyMap");
+                        metaPropertyMap = new HashMap<>();
+                        propertyMetaPropertyMap.put(_property,metaPropertyMap);
+                    }
+                    metaPropertyMap.put(_meta_property,property.value().toString());
+                }
+            } else {
+                newSubject.property(property.key(), property.value());
+            }
+			if(subject.graph().features().vertex().supportsMetaProperties()) {
+                Iterator<Property<Object>> metaPropertyIter = property.properties();
+                while (metaPropertyIter.hasNext()) {
+                    Property<Object> metaProperty = metaPropertyIter.next();
+                    if (newSubject.graph().features().vertex().supportsMetaProperties()) {
+                        newSubject.property(property.key()).property(metaProperty.key(), metaProperty.value());
+                    } else {
+                        String metaKey = "meta." + property.key() + "." + metaProperty.key();
+                        newSubject.property(metaKey, metaProperty.value());
+                    }
+                }
+            }
 		}
+		Iterator propertyIter = propertyMetaPropertyMap.entrySet().iterator();
+		while(propertyIter.hasNext()){
+            Map.Entry pair = (Map.Entry)propertyIter.next();
+            logger.info("PROPERTY <- "+pair.getKey());
+            HashMap<String,String> _mpmap = (HashMap<String, String>) pair.getValue();
+            Iterator _mpmapIter = _mpmap.entrySet().iterator();
+            while(_mpmapIter.hasNext()) {
+                Map.Entry _pair = (Map.Entry)_mpmapIter.next();
+                logger.info("META PROPERTY <- "+_pair.getKey()+"|"+_pair.getValue());
+                newSubject.property(pair.getKey().toString()).property(_pair.getKey().toString(),_pair.getValue().toString());
+            }
+        }
 	}
 
 	@Override

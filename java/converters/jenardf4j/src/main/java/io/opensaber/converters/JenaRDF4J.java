@@ -155,7 +155,7 @@ public class JenaRDF4J {
 		if (theLiteral == null) {
 			return null;
 		}
-		else if (theLiteral.getLanguage() != null) {
+		else if (theLiteral.getLanguage().isPresent()) {
 			return mInternalModel.createLiteral(theLiteral.getLabel(),
 												theLiteral.getLanguage().orElse(null));
 		}

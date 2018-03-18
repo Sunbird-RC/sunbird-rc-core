@@ -3,7 +3,6 @@ package io.opensaber.utils.converters;
 import java.util.Iterator;
 import java.util.Stack;
 
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -24,9 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.XMLConstants;
-import javax.xml.datatype.DatatypeConstants;
-import javax.xml.namespace.QName;
-
 
 public final class RDF2Graph 
 {
