@@ -106,6 +106,7 @@ public class RegistryController {
 				
 		try {			
 			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(id);
+			logger.info("FETCHED "+entityModel);
 			String jenaJSON = registryService.frameEntity(entityModel);
 			JSONObject jenaObj=new JSONObject(jenaJSON);
 			response.setResult(jenaObj.toMap());

@@ -17,6 +17,8 @@ import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,8 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
+
+import static org.apache.tinkerpop.gremlin.structure.io.IoCore.graphson;
 
 @Component
 public class RegistryServiceImpl implements RegistryService {
@@ -116,7 +120,21 @@ public class RegistryServiceImpl implements RegistryService {
 	@Override
 	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException{
 		Graph graph = registryDao.getEntityById(label);
+        try {
+            graph.io(graphson()).writeGraph("graph.json");
+        } catch (IOException e) {
+            e.printStackTrace();
+        };
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
+        for (org.eclipse.rdf4j.model.Statement statement: model) {
+            logger.info("STATEMENT "+statement);
+            Value value = statement.getObject();
+            if (value instanceof Literal) {
+                Literal literal = (Literal) value;
+                System.out.println("datatype: " + literal.getDatatype());
+            }
+        }
+		logger.info("ENTITY in Service "+model);
 		return model;
 	}
 
