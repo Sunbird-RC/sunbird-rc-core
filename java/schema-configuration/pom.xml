@@ -10,7 +10,7 @@
 	<groupId>io.opensaber</groupId>
 	<artifactId>schema-configuration</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Field level configuration</name>
+	<name>Schema configuration</name>
 	<description>Configurations for fields</description>
 	<dependencies>
 		<dependency>

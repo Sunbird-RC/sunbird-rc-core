@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.fields.configuration.SchemaConfigurator;
+import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
 
 @Component
@@ -23,7 +23,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 	private String decryptionUri;
 	
 	@Autowired
-	SchemaConfigurator fieldConfiguration;
+	SchemaConfigurator schemaConfigurator;
 	
 	private static Logger logger = LoggerFactory.getLogger(EncryptionServiceImpl.class);
 	
@@ -48,8 +48,8 @@ public class EncryptionServiceImpl implements EncryptionService {
 	
     public boolean encryptionRequired(VertexProperty<Object> property) throws EncryptionException {
     
-    	logger.info("----Return from fieldConfiguration : ----- "+fieldConfiguration.isPrivate(property.key()));
-     	return fieldConfiguration.isPrivate(property.key());
+    	logger.info("----Return from fieldConfiguration : ----- "+schemaConfigurator.isPrivate(property.key()));
+     	return schemaConfigurator.isPrivate(property.key());
     }
 
 
