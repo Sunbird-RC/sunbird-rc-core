@@ -22,8 +22,10 @@ import org.springframework.stereotype.Component;
 
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.service.EncryptionService;
 
 @Component
 public class RegistryDaoImpl implements RegistryDao {
@@ -32,6 +34,9 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	@Autowired
 	private DatabaseProvider databaseProvider;
+	
+	@Autowired
+	private EncryptionService encryptionService;
 
 	@Value("${registry.context.base}")
 	private String registryContext;
@@ -75,7 +80,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	*/
 
 	@Override
-	public boolean addEntity(Graph entity, String label) throws DuplicateRecordException {
+	public boolean addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException {
 
 		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
 		logger.info("Creating entity with label " + label);
@@ -95,8 +100,10 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * This method is commonly used for both create and update entity
 	 * @param entity
 	 * @param rootLabel
+	 * @throws EncryptionException 
+	 * @throws NoSuchElementException 
 	 */
-	private void createOrUpdateEntity(Graph entity, String rootLabel) {
+	private void createOrUpdateEntity(Graph entity, String rootLabel) throws NoSuchElementException, EncryptionException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 
@@ -123,11 +130,14 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @param dbTraversalSource
 	 * @param entitySource
 	 * @param rootLabel
+	 * @throws EncryptionException 
+	 * @throws NoSuchElementException 
 	 */
 	private void addOrUpdateVerticesAndEdges(GraphTraversalSource dbTraversalSource,
-											 GraphTraversalSource entitySource, String rootLabel) {
+											 GraphTraversalSource entitySource, String rootLabel) throws NoSuchElementException, EncryptionException {
 
 		GraphTraversal<Vertex, Vertex> gts = entitySource.clone().V().hasLabel(rootLabel);
+		Constants.METHOD_ORIGIN="addOrUpdate";
 
 		while (gts.hasNext()) {
 			Vertex v = gts.next();
@@ -153,11 +163,15 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @param v
 	 * @param dbVertex
 	 * @param dbGraph
+	 * @throws EncryptionException 
+	 * @throws NoSuchElementException 
 	 */
-	private void addOrUpdateVertexAndEdge(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph) {
+	private void addOrUpdateVertexAndEdge(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph) throws NoSuchElementException, EncryptionException {
 		Iterator<Edge> edges = v.edges(Direction.OUT);
 		Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
 		List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(Direction.OUT));
+		Constants.METHOD_ORIGIN="addOrUpdate";
+		
 		while(edges.hasNext()) {
 			Edge e = edges.next();
 			Vertex ver = e.inVertex();
@@ -183,7 +197,13 @@ public class RegistryDaoImpl implements RegistryDao {
 				parsedVertices.push(new Pair<>(ver, newV));
 			}
 		}
-		parsedVertices.forEach(pv -> addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph));
+		parsedVertices.forEach(pv -> {
+			try {
+				addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph);
+			} catch (NoSuchElementException | EncryptionException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 
 	/**
@@ -208,9 +228,11 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @param dbTraversalSource
 	 * @param traversal
 	 * @param map
+	 * @throws EncryptionException 
+	 * @throws NoSuchElementException 
 	 */
 	private void createEdgeNodes(GraphTraversalSource dbTraversalSource, GraphTraversal<Vertex, Vertex> traversal,
-								 Map<String, List<Object[]>> map) {
+								 Map<String, List<Object[]>> map) throws NoSuchElementException, EncryptionException {
 		Map<String, Vertex> createdNodeMap = new HashMap<>();
 		while (traversal.hasNext()) {
 			Vertex v = traversal.next();
@@ -228,10 +250,13 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @param v
 	 * @param createdNodeMap
 	 * @return
+	 * @throws EncryptionException 
+	 * @throws NoSuchElementException 
 	 */
-	private Vertex getNodeWithProperties(GraphTraversalSource dbTraversalSource, Vertex v, Map<String, Vertex> createdNodeMap) {
+	private Vertex getNodeWithProperties(GraphTraversalSource dbTraversalSource, Vertex v, Map<String, Vertex> createdNodeMap) throws NoSuchElementException, EncryptionException {
 
 		Vertex newVertex;
+		Constants.METHOD_ORIGIN="addOrUpdate";
 
 		if (createdNodeMap.containsKey(v.label())) {
 			newVertex = createdNodeMap.get(v.label());
@@ -257,10 +282,12 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @param direction
 	 * @param traversalVertex
 	 * @param createdNodeMap
+	 * @throws EncryptionException 
+	 * @throws NoSuchElementException 
 	 */
 	private void createEdgeNodes(Iterator<Edge> edges, GraphTraversalSource dbTraversalSource,
 								 Vertex newVertex, Map<String, List<Object[]>> map,
-								 Direction direction, Vertex traversalVertex, Map<String, Vertex> createdNodeMap) {
+								 Direction direction, Vertex traversalVertex, Map<String, Vertex> createdNodeMap) throws NoSuchElementException, EncryptionException {
 
 		while (edges.hasNext()) {
 
@@ -331,7 +358,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel) throws RecordNotFoundException {
+	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel) throws RecordNotFoundException, NoSuchElementException, EncryptionException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 		TinkerGraph graphForUpdate = (TinkerGraph) entityForUpdate;
@@ -347,7 +374,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public Graph getEntityById(String label) throws RecordNotFoundException {
+	public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException {
+		Constants.METHOD_ORIGIN="read";
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
 		logger.info("FETCH: "+label);
@@ -364,12 +392,37 @@ public class RegistryDaoImpl implements RegistryDao {
 		return parsedGraph;
 	}
 
-	private void copyProperties(Vertex subject, Vertex newSubject) {
+	private void copyProperties(Vertex subject, Vertex newSubject) throws NoSuchElementException, EncryptionException {
 	    HashMap<String,HashMap<String,String>> propertyMetaPropertyMap = new HashMap<String,HashMap<String,String>>();
 	    HashMap<String,String> metaPropertyMap;
+	    Object propertyValue=null;
 		Iterator<VertexProperty<Object>> iter = subject.properties();
 		while(iter.hasNext()){
 			VertexProperty<Object> property = iter.next();
+			if(encryptionService.encryptionRequired(property) && Constants.METHOD_ORIGIN.equalsIgnoreCase("addOrUpdate")) {
+				propertyValue =  encryptionService.encrypt(property.value()).getBody();
+		        String encryptedKey = "@encrypted"+property.key().substring(property.key().lastIndexOf("/") + 1).trim();
+		        logger.info("propertyKey:  "+property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), encryptedKey)+
+		        		"====== propertyValue: "+propertyValue);
+		        newSubject.property(property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), encryptedKey), propertyValue);	
+		        return;
+			}
+			
+			if(Constants.METHOD_ORIGIN.equalsIgnoreCase("read")) {
+				boolean encryptedProperty = property.key().substring(property.key().lastIndexOf("/") + 1).trim().substring(0, Math.min(property.key().substring(property.key().lastIndexOf("/") + 1).trim().length(), 10)).equalsIgnoreCase("@encrypted");
+				if(encryptedProperty) {
+					propertyValue = encryptionService.decrypt(property.value()).getBody();
+					String decryptedKey = property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), property.key().substring(property.key().lastIndexOf("/") + 1).trim().substring(10));
+					logger.info("propertyKey: "+decryptedKey+"======== propertyValue: "+ propertyValue);
+					newSubject.property(decryptedKey, propertyValue);
+					return;
+				}
+			}	
+			else {		
+				logger.info("propertyKey: "+property.key()+"========= propertyValue: "+  property.value());
+				newSubject.property(property.key(), property.value());
+			}			
+			
 			if(property.key().startsWith("meta.")){
 			    logger.info("META PROPERTY "+property);
                 Pattern pattern = Pattern.compile("meta\\.(.*)\\.(.*)");
@@ -424,11 +477,12 @@ public class RegistryDaoImpl implements RegistryDao {
 		return false;
 	}
 
-	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s) {
+	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s) throws NoSuchElementException, EncryptionException {
 		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
 		Edge edge;
 		Stack<Vertex> vStack = new Stack<Vertex>();
 		Stack<Vertex> parsedVStack = new Stack<Vertex>();
+		Constants.METHOD_ORIGIN="read";
 		while(edgeIter.hasNext()){
 			edge = edgeIter.next();
 			Vertex o = edge.inVertex();

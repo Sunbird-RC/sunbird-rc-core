@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.dao.impl.RegistryDaoImpl;
+import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
@@ -34,7 +35,7 @@ public class RegistryServiceImplTest {
 	private RegistryService registryService;
 	
 	@Test @Ignore
-	public void testGetEntityById() throws RecordNotFoundException {
+	public void testGetEntityById() throws RecordNotFoundException, EncryptionException {
 		registryService.getEntityById("1234");
 	}
 

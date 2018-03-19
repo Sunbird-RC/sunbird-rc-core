@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.InvalidTypeException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -54,7 +55,7 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException {
+	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException, EncryptionException{
 		try {
 			Graph graph = GraphDBFactory.getEmptyGraph();
 			StmtIterator iterator = rdfModel.listStatements();
@@ -81,7 +82,7 @@ public class RegistryServiceImpl implements RegistryService {
 			registryDao.addEntity(graph, label);
 			return label;
 			
-		} catch (DuplicateRecordException | InvalidTypeException ex) {
+		} catch (DuplicateRecordException | InvalidTypeException | EncryptionException ex) {
 			throw ex;
 		} catch (Exception ex) {
 			logger.error("Exception when creating entity: ", ex);
@@ -90,7 +91,7 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException {
+	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException, EncryptionException {
 		Graph graph = GraphDBFactory.getEmptyGraph();
 
 		StmtIterator iterator = entity.listStatements();
@@ -118,7 +119,7 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException{
+	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException, EncryptionException{
 		Graph graph = registryDao.getEntityById(label);
         try {
             graph.io(graphson()).writeGraph("graph.json");

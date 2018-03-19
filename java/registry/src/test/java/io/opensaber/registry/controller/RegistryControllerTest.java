@@ -17,6 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.InvalidTypeException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
@@ -47,14 +48,14 @@ public class RegistryControllerTest extends RegistryTestBase{
 	
 	
 	@Test
-	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException {
+	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException{
 		Model model = getNewValidRdf(VALID_JSONLD,CONTEXT_CONSTANT);
 		duplicateRdf = model;
 		registryService.addEntity(model);
 	}
 	
 	@Test
-	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException {
+	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException {
 		expectedEx.expect(DuplicateRecordException.class);
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
 		registryService.addEntity(duplicateRdf);
