@@ -3,6 +3,11 @@ package io.opensaber.registry.controller;
 import static org.junit.Assert.*;
 
 import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.tests.utility.TestHelper;
+import io.opensaber.registry.util.RDFUtil;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
+import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,26 +44,30 @@ public class RegistryControllerTest extends RegistryTestBase{
 	
 	@Autowired
 	private DatabaseProvider databaseProvider;
-	
-	
+
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 
-	private static Model duplicateRdf = null;
-	
-	
+	@Before
+	public void initialize() {
+		TestHelper.clearData(databaseProvider);
+	}
+
 	@Test
-	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException{
-		Model model = getNewValidRdf(VALID_JSONLD,CONTEXT_CONSTANT);
-		duplicateRdf = model;
-		registryService.addEntity(model);
+	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException {
+		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
+		String entityId = registryService.addEntity(model);
+		assertEquals(5, IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()));
 	}
 	
 	@Test
 	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException {
 		expectedEx.expect(DuplicateRecordException.class);
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
-		registryService.addEntity(duplicateRdf);
+		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
+		String entityId = registryService.addEntity(model);
+		RDFUtil.updateRdfModelNodeId(model, ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/School"), entityId);
+		registryService.addEntity(model);
 	}
 	
 	@Test

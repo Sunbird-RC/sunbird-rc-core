@@ -1,10 +1,8 @@
 {
-  "@id":"!samp131d",
   "@type":"sample:School",
   "sample:revenueBlock": "updated block",
   "sample:clusterResourceCentre":"Updated Cluster Resource",
   "sample:address":{
-    "@id": "sample:test-UUID",
     "sample:district":"Gurgaon",
     "@type":"sample:IndianUrbanPostalAddress",
     "sample:mohalla":"Updated Sector 14",

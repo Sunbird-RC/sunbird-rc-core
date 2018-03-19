@@ -60,6 +60,7 @@ public class RegistryServiceImpl implements RegistryService {
 			Graph graph = GraphDBFactory.getEmptyGraph();
 			StmtIterator iterator = rdfModel.listStatements();
 			boolean rootSubjectFound = false;
+			boolean rootNodeBlank = false;
 			String label = null;
 
 			while (iterator.hasNext()) {
@@ -70,17 +71,21 @@ public class RegistryServiceImpl implements RegistryService {
 					if (label != null) {
 						rootSubjectFound = true;
 					}
+					if(rdfStatement.getSubject().isAnon() && rdfStatement.getSubject().getURI() == null) {
+						rootNodeBlank = true;
+					}
 				}
 				org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
 				graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
 			}
 
-		
 			if (label == null) {
 				throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
 			}
-			registryDao.addEntity(graph, label);
-			return label;
+
+			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
+			// if it is a blank node
+			return registryDao.addEntity(graph, rootNodeBlank ? String.format("_:%s", label) : label);
 			
 		} catch (DuplicateRecordException | InvalidTypeException | EncryptionException ex) {
 			throw ex;

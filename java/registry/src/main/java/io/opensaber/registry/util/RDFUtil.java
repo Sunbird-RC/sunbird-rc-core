@@ -10,6 +10,8 @@ import org.apache.jena.riot.WriterDatasetRIOT;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.T;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -73,7 +75,7 @@ public class RDFUtil {
                  */
                 while (nodeProperties.hasNext()) {
                     Statement childNode = nodeProperties.next();
-                    Statement updated = updateSubjectLabel(childNode, label, registryContext);
+                    Statement updated = updateSubjectLabel(childNode, label);
                     nodeProperties.remove();
                     updatedStatements.add(updated);
                 }
@@ -83,7 +85,7 @@ public class RDFUtil {
 
                 while(parent.hasNext()) {
                     Statement parentSt = parent.next();
-                    Statement updatedParent = updateResource(parentSt, label, registryContext);
+                    Statement updatedParent = updateResource(parentSt, label);
                     parent.remove();
                     updatedStatements.add(updatedParent);
                 }
@@ -92,26 +94,26 @@ public class RDFUtil {
         model.add(updatedStatements.toArray(new Statement[0]));
     }
 
-    private static Statement updateSubjectLabel(Statement statement, String label, String namespace) {
+    public static Statement updateSubjectLabel(Statement statement, String label) {
         Resource subject = statement.getSubject();
         Property predicate = statement.getPredicate();
         RDFNode object = statement.getObject();
 
-        Resource subjectCopy = ResourceFactory.createResource(String.format("%s%s", namespace, label));
+        Resource subjectCopy = ResourceFactory.createResource(label);
         BeanWrapper bw = new BeanWrapperImpl(subject);
         BeanUtils.copyProperties(bw.getWrappedInstance(), subjectCopy);
 
         return ResourceFactory.createStatement(subjectCopy, predicate, object);
     }
 
-    private static Statement updateResource(Statement statement, String label, String namespace) {
+    public static Statement updateResource(Statement statement, String label) {
 
         Resource subject = statement.getSubject();
         Property predicate = statement.getPredicate();
         RDFNode object = statement.getObject();
 
         Resource res = object.asResource();
-        Resource objectCopy = ResourceFactory.createResource(String.format("%s%s", namespace, label));
+        Resource objectCopy = ResourceFactory.createResource(label);
         BeanWrapper bw = new BeanWrapperImpl(object);
         BeanUtils.copyProperties(bw.getWrappedInstance(), objectCopy);
 
@@ -133,6 +135,34 @@ public class RDFUtil {
         w.write(sWriterJena, g, pm, base, ctx) ;
         String jenaJSON = sWriterJena.toString();
         return jenaJSON;
+    }
+
+    public static void updateRdfModelNodeId(Model rdfModel, RDFNode object, String label) {
+        StmtIterator stmtIterator = rdfModel.listStatements();
+        ArrayList<Statement> updatedStatements = new ArrayList<>();
+
+        while(stmtIterator.hasNext()) {
+            Statement node = stmtIterator.next();
+            if(!node.getObject().isLiteral() && node.getObject().asResource().equals(object)) {
+                StmtIterator parentItr = rdfModel.listStatements(null, null, node.getSubject());
+                StmtIterator nodeProperties = node.getSubject().listProperties();
+
+                while (nodeProperties.hasNext()) {
+                    Statement childNode = nodeProperties.next();
+                    Statement updated = RDFUtil.updateSubjectLabel(childNode, label);
+                    nodeProperties.remove();
+                    updatedStatements.add(updated);
+                }
+
+                while (parentItr.hasNext()) {
+                    Statement parent = parentItr.next();
+                    Statement updatedParent = RDFUtil.updateResource(parent, label);
+                    parentItr.remove();
+                    updatedStatements.add(updatedParent);
+                }
+            }
+        }
+        rdfModel.add(updatedStatements.toArray(new Statement[0]));
     }
 
 }

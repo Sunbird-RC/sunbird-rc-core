@@ -6,7 +6,6 @@
 	"sample:schoolName": "Bluebells",
 	"sample:udiseNumber": "9876",
 	"sample:clusterResourceCentre": "some Cluster Resource",
-	"@id": "!samp131d",
 	"sample:address": {
 		"sample:district": "Gurgaon",
 		"@type": "sample:IndianUrbanPostalAddress",

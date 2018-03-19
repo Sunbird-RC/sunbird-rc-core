@@ -48,12 +48,10 @@ public class RegistryDaoImpl implements RegistryDao {
 		return null;
 	}
 
-	/*
 	@Override
-	public boolean addEntity(Graph entity, String label) throws DuplicateRecordException {
+	public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException {
 
 		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
-
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
 		if (traversalSource.clone().V().hasLabel(label).hasNext()) {
@@ -61,40 +59,9 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 
 		TinkerGraph graph = (TinkerGraph) entity;
-		GraphTraversalSource gts = graph.traversal();
-		GraphTraversal<Vertex, Vertex> traversal = gts.V();
-		Map<String, List<Object[]>> map = new HashMap<>();
-
-		if (graphFromStore.features().graph().supportsTransactions()) {
-			org.apache.tinkerpop.gremlin.structure.Transaction tx;
-			tx = graphFromStore.tx();
-			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-			createEdgeNodes(traversalSource, traversal, map);
-			tx.commit();
-			tx.close();
-		} else {
-			createEdgeNodes(traversalSource, traversal, map);
-		}
-
-		return true;
-	}
-	*/
-
-	@Override
-	public boolean addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException {
-
-		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
-		logger.info("Creating entity with label " + label);
-		Graph graphFromStore = databaseProvider.getGraphStore();
-		GraphTraversalSource traversalSource = graphFromStore.traversal();
-		if (traversalSource.clone().V().hasLabel(label).hasNext()) {
-			throw new DuplicateRecordException(Constants.DUPLICATE_RECORD_MESSAGE);
-		}
-
-		TinkerGraph graph = (TinkerGraph) entity;
-		createOrUpdateEntity(graph, label,"addOrUpdate");
-		logger.info("Successfully created entity with label " + label);
-		return true;
+		String rootNodeLabel = createOrUpdateEntity(graph, label, "addOrUpdate");
+		logger.info("Successfully created entity with label " + rootNodeLabel);
+		return rootNodeLabel;
 	}
 
 	/**
@@ -104,23 +71,28 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws EncryptionException 
 	 * @throws NoSuchElementException 
 	 */
-	private void createOrUpdateEntity(Graph entity, String rootLabel, String methodOrigin) throws NoSuchElementException, EncryptionException {
+	private String createOrUpdateEntity(Graph entity, String rootLabel, String methodOrigin) throws NoSuchElementException, EncryptionException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 
 		TinkerGraph graph = (TinkerGraph) entity;
 		GraphTraversalSource traversal = graph.traversal();
 
+		// Root node label will be auto-generate if a new entity is created
+		String rootNodeLabel;
+
 		if (graphFromStore.features().graph().supportsTransactions()) {
 			org.apache.tinkerpop.gremlin.structure.Transaction tx;
 			tx = graphFromStore.tx();
 			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-			addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel,methodOrigin);
+			rootNodeLabel = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel, methodOrigin);
 			tx.commit();
 			tx.close();
 		} else {
-			addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel,methodOrigin);
+			rootNodeLabel = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel, methodOrigin);
 		}
+
+		return rootNodeLabel;
 
 	}
 
@@ -134,27 +106,30 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws EncryptionException 
 	 * @throws NoSuchElementException 
 	 */
-	private void addOrUpdateVerticesAndEdges(GraphTraversalSource dbTraversalSource,
-											 GraphTraversalSource entitySource, String rootLabel, String methodOrigin) throws NoSuchElementException, EncryptionException {
+	private String addOrUpdateVerticesAndEdges(GraphTraversalSource dbTraversalSource,
+											 GraphTraversalSource entitySource, String rootLabel, String methodOrigin)
+			throws NoSuchElementException, EncryptionException {
 
 		GraphTraversal<Vertex, Vertex> gts = entitySource.clone().V().hasLabel(rootLabel);
-	
+		String label = generateBlankNodeLabel(rootLabel);
+
 		while (gts.hasNext()) {
 			Vertex v = gts.next();
-			String label = generateBlankNodeLabel(v.label());
 			GraphTraversal<Vertex, Vertex> hasLabel = dbTraversalSource.clone().V().hasLabel(label);
 
 			if (hasLabel.hasNext()) {
 				logger.info(String.format("Root node label %s already exists. Updating properties for the root node.", rootLabel));
 				Vertex existingVertex = hasLabel.next();
-				copyProperties(v, existingVertex,methodOrigin);
+				copyProperties(v, existingVertex, methodOrigin);
 				addOrUpdateVertexAndEdge(v, existingVertex, dbTraversalSource, methodOrigin);
 			} else {
+				logger.info(String.format("Creating entity with label %s", rootLabel));
 				Vertex newVertex = dbTraversalSource.clone().addV(label).next();
 				copyProperties(v, newVertex,methodOrigin);
 				addOrUpdateVertexAndEdge(v, newVertex, dbTraversalSource,methodOrigin);
 			}
 		}
+		return label;
 	}
 
 	/**
@@ -166,7 +141,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws EncryptionException 
 	 * @throws NoSuchElementException 
 	 */
-	private void addOrUpdateVertexAndEdge(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph, String methodOrigin) throws NoSuchElementException, EncryptionException {
+	private void addOrUpdateVertexAndEdge(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph, String methodOrigin)
+			throws NoSuchElementException, EncryptionException {
 		Iterator<Edge> edges = v.edges(Direction.OUT);
 		Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
 		List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(Direction.OUT));
@@ -222,141 +198,9 @@ public class RegistryDaoImpl implements RegistryDao {
 		return UUID.randomUUID().toString();
 	}
 
-	/**
-	 * @deprecated
-	 * @param dbTraversalSource
-	 * @param traversal
-	 * @param map
-	 * @throws EncryptionException 
-	 * @throws NoSuchElementException 
-	 */
-	private void createEdgeNodes(GraphTraversalSource dbTraversalSource, GraphTraversal<Vertex, Vertex> traversal,
-								 Map<String, List<Object[]>> map, String methodOrigin) throws NoSuchElementException, EncryptionException {
-		Map<String, Vertex> createdNodeMap = new HashMap<>();
-		while (traversal.hasNext()) {
-			Vertex v = traversal.next();
-			Vertex newVertex = getNodeWithProperties(dbTraversalSource, v, createdNodeMap, methodOrigin);
-			Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
-			Iterator<Edge> incomingEdges = v.edges(Direction.IN);
-			createEdgeNodes(outgoingEdges, dbTraversalSource, newVertex, map, Direction.OUT, v, createdNodeMap, methodOrigin);
-			createEdgeNodes(incomingEdges, dbTraversalSource, newVertex, map, Direction.IN, v, createdNodeMap, methodOrigin);
-		}
-	}
-
-	/**
-	 * @deprecated
-	 * @param dbTraversalSource
-	 * @param v
-	 * @param createdNodeMap
-	 * @return
-	 * @throws EncryptionException 
-	 * @throws NoSuchElementException 
-	 */
-	private Vertex getNodeWithProperties(GraphTraversalSource dbTraversalSource, Vertex v, Map<String, Vertex> createdNodeMap, String methodOrigin) throws NoSuchElementException, EncryptionException {
-
-		Vertex newVertex;
-	
-		if (createdNodeMap.containsKey(v.label())) {
-			newVertex = createdNodeMap.get(v.label());
-		} else {
-			GraphTraversal nodes = dbTraversalSource.clone().V().hasLabel(v.label());
-			if (nodes.hasNext()) {
-				newVertex = (Vertex) nodes.next();
-			} else {
-				newVertex = dbTraversalSource.clone().addV(v.label()).next();
-			}
-			copyProperties(v, newVertex,methodOrigin);
-			createdNodeMap.put(v.label(), newVertex);
-		}
-		return newVertex;
-	}
-
-	/**
-	 * @deprecated
-	 * @param edges
-	 * @param dbTraversalSource
-	 * @param newVertex
-	 * @param map
-	 * @param direction
-	 * @param traversalVertex
-	 * @param createdNodeMap
-	 * @throws EncryptionException 
-	 * @throws NoSuchElementException 
-	 */
-	private void createEdgeNodes(Iterator<Edge> edges, GraphTraversalSource dbTraversalSource,
-								 Vertex newVertex, Map<String, List<Object[]>> map,
-								 Direction direction, Vertex traversalVertex, Map<String, Vertex> createdNodeMap, String methodOrigin) throws NoSuchElementException, EncryptionException {
-
-		while (edges.hasNext()) {
-
-			Edge edge = edges.next();
-			Vertex vertex = direction.equals(Direction.OUT) ? edge.inVertex() : edge.outVertex();
-			boolean nodeAndEdgeExists = validateAddVertex(map, traversalVertex, edge, direction);
-
-			if (!nodeAndEdgeExists) {
-				Vertex nextVertex = getNodeWithProperties(dbTraversalSource, vertex, createdNodeMap, methodOrigin);
-
-				if (direction.equals(Direction.OUT)) {
-					newVertex.addEdge(edge.label(), nextVertex);
-				} else {
-					nextVertex.addEdge(edge.label(), newVertex);
-				}
-
-				addNodeAndEdgeToGraph(map, traversalVertex, vertex, direction);
-			}
-		}
-	}
-
-	/**
-	 * Method to add created nodes and edges to the graph
-	 * @deprecated
-	 * @param vertexMap
-	 * @param currentVertex
-	 * @param newVertex
-	 * @param direction
-	 */
-	private void addNodeAndEdgeToGraph(Map<String, List<Object[]>> vertexMap, Vertex currentVertex,
-									   Vertex newVertex, Direction direction) {
-		String currentVertexLabel = direction.equals(Direction.OUT) ? newVertex.label() : currentVertex.label();
-		String createdVertexLabel = direction.equals(Direction.OUT) ? currentVertex.label() : newVertex.label();
-		Object[] edgeArray = {direction, currentVertexLabel};
-		List<Object[]> edgeArrayList = vertexMap.getOrDefault(createdVertexLabel, new ArrayList<>());
-		edgeArrayList.add(edgeArray);
-		vertexMap.put(createdVertexLabel, edgeArrayList);
-	}
-
-	/**
-	 * Method to validate if the vertex needs to be added to the graph
-	 * @deprecated
-	 * @param vertexMap
-	 * @param currTraversalVertex
-	 * @param edge
-	 * @param direction
-	 * @return
-	 */
-	private boolean validateAddVertex(Map<String, List<Object[]>> vertexMap,
-									  Vertex currTraversalVertex, Edge edge, Direction direction) {
-		boolean addVertex = false;
-
-		Vertex edgeVertex = direction.equals(Direction.OUT) ? edge.inVertex() : edge.outVertex();
-		String vertexLabel = direction.equals(Direction.OUT) ? currTraversalVertex.label() : edgeVertex.label();
-		String edgeLabel = direction.equals(Direction.OUT) ? edgeVertex.label() : currTraversalVertex.label();
-
-		if (vertexMap.containsKey(vertexLabel)) {
-			List<Object[]> edgeArrayList = vertexMap.get(vertexLabel);
-			for (Object[] edgeArray : edgeArrayList) {
-				if (edgeArray.length == 2 && edgeArray[0].equals(direction.opposite()) && edgeArray[1].equals(edgeLabel)) {
-					addVertex = true;
-					break;
-				}
-			}
-		}
-		return addVertex;
-
-	}
-
 	@Override
-	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel, String methodOrigin) throws RecordNotFoundException, NoSuchElementException, EncryptionException {
+	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel, String methodOrigin)
+			throws RecordNotFoundException, NoSuchElementException, EncryptionException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 		TinkerGraph graphForUpdate = (TinkerGraph) entityForUpdate;
