@@ -14,7 +14,7 @@
 	    <module>middleware-commons</module>
 	    <module>middleware</module>
 	    <module>registry-interceptor</module>   
-	    <module>field-level-configuration</module> 	
+	    <module>schema-configuration</module> 	
   </modules>
 
 </project>

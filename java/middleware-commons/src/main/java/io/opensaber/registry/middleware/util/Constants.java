@@ -15,7 +15,8 @@ public class Constants {
 	public static final String SHAPE_TYPE = "shape.type";
 	public static final String RDF_VALIDATION_MAPPER_OBJECT = "rdfValidationMapper";
 	public static final String REGISTRY_CONTEXT_BASE = "registry.context.base";
-	public static final String PRIVACY_PROPERTY = "config.privacy.property";
+	public static final String PRIVACY_PROPERTY = "privateProperties";
+	public static final String OPENSABER_CONTEXT_BASE = "http://example.com/voc/opensaber/1.0.0/";
 
 	public static final String DATABASE_PROVIDER = "database.provider";
 	public static final String NEO4J_DIRECTORY = "neo4j.directory";

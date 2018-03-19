@@ -8,7 +8,7 @@
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 	<groupId>io.opensaber</groupId>
-	<artifactId>field-level-configuration</artifactId>
+	<artifactId>schema-configuration</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Field level configuration</name>
 	<description>Configurations for fields</description>

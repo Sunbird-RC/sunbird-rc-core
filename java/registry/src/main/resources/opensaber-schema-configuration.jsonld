@@ -9,7 +9,7 @@
 	},
 
 	"@type": "opensaber:Registry",
-	"teacher:privateFields": 
+	"opensaber:privateProperties": 
 	[
 		{
 			"@id": "teacher:nationalIdentifier"

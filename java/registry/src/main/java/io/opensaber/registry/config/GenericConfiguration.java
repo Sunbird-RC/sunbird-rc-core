@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
-import io.opensaber.registry.fields.configuration.FieldConfiguration;
+import io.opensaber.registry.fields.configuration.SchemaConfigurator;
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
@@ -75,9 +75,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 	
 	@Bean
-	public FieldConfiguration fieldConfiguration() throws IOException{
+	public SchemaConfigurator fieldConfiguration() throws IOException{
 		String fieldConfigFileName = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
-		return new FieldConfiguration(fieldConfigFileName);
+		return new SchemaConfigurator(fieldConfigFileName);
 	}
 
 	/*
