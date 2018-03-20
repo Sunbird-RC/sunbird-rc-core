@@ -1,0 +1,163 @@
+# API Spec for Open-Saber Registry Application
+swagger: '2.0'
+info:
+  title: Open-Saber
+  description: APIs for Open-saber registry
+  version: "1.0.0"
+# the domain of the service
+host: io.open-saber
+# array of all schemes that your API supports
+schemes:
+  - http
+# will be prefixed to all paths
+basePath: /
+produces:
+  - application/json
+paths:
+  /addEntity:
+    post:
+      summary: Add record
+      description: |
+        Add record endpoint adds a record of a defined type into the registry
+        and returns response which includes whether the operation was successful
+        or whether it was a failure and message indicating the reason for failure.
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+        - in: body
+          name: requestObject
+          description: Request body
+          required: true
+          schema:
+            $ref: '#/definitions/Entity'
+          
+      responses:
+        200:
+          description: Status of the operation
+          schema:
+              $ref: '#/definitions/AddOpSuccessResponse'
+  /getEntity:
+    get:
+      summary: Get record
+      description: |
+        Get record endpoint gets a record from the registry based on the unique identifier
+        and returns the record in the response.
+      produces:
+      - application/json
+      parameters:
+        - in: query
+          name: id
+          description: Unique identifier for the record
+          required: true
+          type: string
+          
+      responses:
+        200:
+          description: id of the object created and the status of the operation
+          schema:
+              $ref: '#/definitions/GetOpSuccessResponse'
+  /entity:
+    patch:
+      summary: Update record
+      description: |
+        Update record endpoint updates a record of a defined type into the registry
+        and returns whether the operation was successful or unsuccessful as part of
+        the response. Update record end point either updates the properties of the
+        nodes under the root node or create child nodes if no id is provided.
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+        - in: body
+          name: requestObject
+          description: Request body
+          required: true
+          schema:
+            $ref: '#/definitions/Entity'
+          
+      responses:
+        200:
+          description: Status of the operation
+          schema:
+              $ref: '#/definitions/AddOpSuccessResponse'        
+
+definitions:
+  Entity:
+    type: object
+    properties:
+        id:
+          type: string
+          description: Unique identifier respresenting the api
+        ver:
+          type: string
+          description: Version of the API
+        ets:
+          type: integer
+          description: Timestamp(in seconds) at which the request was sent
+          format: int64
+        params:
+          type: object
+          properties:
+            did:
+              type: string
+              description: Device id from which the request originates
+            key:
+              type: string
+              description: API key for accessing the API
+            msgid:
+              type: string
+              description: Unique msg id for the request
+        request:
+          type: object
+          description: This is JSON-LD data which represents the actual record which is inserted into the registry
+  AddOpSuccessResponse:
+    type: object
+    properties:
+        id:
+          type: string
+          description: Unique identifier representing the response of the operation
+        ver:
+          type: string
+          description: Version of the API
+        ets:
+          type: integer
+          description: Timestamp(in seconds) at which the response was sent
+          format: int64
+        params:
+          type: object
+          properties:
+            status:
+              type: string
+              description: status of the operation indicating SUCCESSFUL or UNSUCCESSFUL
+        resultMap:
+          type: object
+          properties:
+            entity:
+              type: string
+              description: Unique identifier representing the record
+  GetOpSuccessResponse:
+    type: object
+    properties:
+        id:
+          type: string
+          description: Unique identifier representing the response of the operation
+        ver:
+          type: string
+          description: Version of the API
+        ets:
+          type: integer
+          description: Timestamp(in seconds) at which the response was sent
+          format: int64
+        params:
+          type: object
+          properties:
+            status:
+              type: string
+              description: status of the operation indicating SUCCESSFUL or UNSUCCESSFUL
+        resultMap:
+          type: object
+          description: This represents the record retrieved from the registry
+
