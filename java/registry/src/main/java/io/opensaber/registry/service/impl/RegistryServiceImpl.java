@@ -115,7 +115,7 @@ public class RegistryServiceImpl implements RegistryService {
 			throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
 		}
 
-		return registryDao.updateEntity(graph, rootNodeLabel);
+		return registryDao.updateEntity(graph, rootNodeLabel,"addOrUpdate");
 	}
 
 	@Override

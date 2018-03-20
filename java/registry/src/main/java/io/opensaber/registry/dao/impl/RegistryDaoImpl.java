@@ -1,3 +1,4 @@
+
 package io.opensaber.registry.dao.impl;
 
 import java.io.IOException;
@@ -91,7 +92,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 
 		TinkerGraph graph = (TinkerGraph) entity;
-		createOrUpdateEntity(graph, label);
+		createOrUpdateEntity(graph, label,"addOrUpdate");
 		logger.info("Successfully created entity with label " + label);
 		return true;
 	}
@@ -103,7 +104,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws EncryptionException 
 	 * @throws NoSuchElementException 
 	 */
-	private void createOrUpdateEntity(Graph entity, String rootLabel) throws NoSuchElementException, EncryptionException {
+	private void createOrUpdateEntity(Graph entity, String rootLabel, String methodOrigin) throws NoSuchElementException, EncryptionException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 
@@ -114,11 +115,11 @@ public class RegistryDaoImpl implements RegistryDao {
 			org.apache.tinkerpop.gremlin.structure.Transaction tx;
 			tx = graphFromStore.tx();
 			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-			addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel);
+			addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel,methodOrigin);
 			tx.commit();
 			tx.close();
 		} else {
-			addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel);
+			addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel,methodOrigin);
 		}
 
 	}
@@ -134,11 +135,10 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws NoSuchElementException 
 	 */
 	private void addOrUpdateVerticesAndEdges(GraphTraversalSource dbTraversalSource,
-											 GraphTraversalSource entitySource, String rootLabel) throws NoSuchElementException, EncryptionException {
+											 GraphTraversalSource entitySource, String rootLabel, String methodOrigin) throws NoSuchElementException, EncryptionException {
 
 		GraphTraversal<Vertex, Vertex> gts = entitySource.clone().V().hasLabel(rootLabel);
-		Constants.METHOD_ORIGIN="addOrUpdate";
-
+	
 		while (gts.hasNext()) {
 			Vertex v = gts.next();
 			String label = generateBlankNodeLabel(v.label());
@@ -147,12 +147,12 @@ public class RegistryDaoImpl implements RegistryDao {
 			if (hasLabel.hasNext()) {
 				logger.info(String.format("Root node label %s already exists. Updating properties for the root node.", rootLabel));
 				Vertex existingVertex = hasLabel.next();
-				copyProperties(v, existingVertex);
-				addOrUpdateVertexAndEdge(v, existingVertex, dbTraversalSource);
+				copyProperties(v, existingVertex,methodOrigin);
+				addOrUpdateVertexAndEdge(v, existingVertex, dbTraversalSource, methodOrigin);
 			} else {
 				Vertex newVertex = dbTraversalSource.clone().addV(label).next();
-				copyProperties(v, newVertex);
-				addOrUpdateVertexAndEdge(v, newVertex, dbTraversalSource);
+				copyProperties(v, newVertex,methodOrigin);
+				addOrUpdateVertexAndEdge(v, newVertex, dbTraversalSource,methodOrigin);
 			}
 		}
 	}
@@ -166,11 +166,10 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws EncryptionException 
 	 * @throws NoSuchElementException 
 	 */
-	private void addOrUpdateVertexAndEdge(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph) throws NoSuchElementException, EncryptionException {
+	private void addOrUpdateVertexAndEdge(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph, String methodOrigin) throws NoSuchElementException, EncryptionException {
 		Iterator<Edge> edges = v.edges(Direction.OUT);
 		Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
 		List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(Direction.OUT));
-		Constants.METHOD_ORIGIN="addOrUpdate";
 		
 		while(edges.hasNext()) {
 			Edge e = edges.next();
@@ -180,7 +179,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			if (gt.hasNext()) {
 				Vertex existingV = gt.next();
 				logger.info(String.format("Vertex with label %s already exists. Updating properties for the vertex", existingV.label()));
-				copyProperties(ver, existingV);
+				copyProperties(ver, existingV,methodOrigin);
 				Optional<Edge> edgeAlreadyExists =
 						dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(e.label())).findFirst();
 				if(!edgeAlreadyExists.isPresent()) {
@@ -191,7 +190,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			} else {
 				Vertex newV = dbGraph.addV(label).next();
 				logger.info(String.format("Adding vertex with label %s and adding properties", newV.label()));
-				copyProperties(ver, newV);
+				copyProperties(ver, newV, methodOrigin);
 				logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), newV.label()));
 				dbVertex.addEdge(e.label(), newV);
 				parsedVertices.push(new Pair<>(ver, newV));
@@ -199,7 +198,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 		parsedVertices.forEach(pv -> {
 			try {
-				addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph);
+				addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph,methodOrigin);
 			} catch (NoSuchElementException | EncryptionException e) {
 				e.printStackTrace();
 			}
@@ -232,15 +231,15 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws NoSuchElementException 
 	 */
 	private void createEdgeNodes(GraphTraversalSource dbTraversalSource, GraphTraversal<Vertex, Vertex> traversal,
-								 Map<String, List<Object[]>> map) throws NoSuchElementException, EncryptionException {
+								 Map<String, List<Object[]>> map, String methodOrigin) throws NoSuchElementException, EncryptionException {
 		Map<String, Vertex> createdNodeMap = new HashMap<>();
 		while (traversal.hasNext()) {
 			Vertex v = traversal.next();
-			Vertex newVertex = getNodeWithProperties(dbTraversalSource, v, createdNodeMap);
+			Vertex newVertex = getNodeWithProperties(dbTraversalSource, v, createdNodeMap, methodOrigin);
 			Iterator<Edge> outgoingEdges = v.edges(Direction.OUT);
 			Iterator<Edge> incomingEdges = v.edges(Direction.IN);
-			createEdgeNodes(outgoingEdges, dbTraversalSource, newVertex, map, Direction.OUT, v, createdNodeMap);
-			createEdgeNodes(incomingEdges, dbTraversalSource, newVertex, map, Direction.IN, v, createdNodeMap);
+			createEdgeNodes(outgoingEdges, dbTraversalSource, newVertex, map, Direction.OUT, v, createdNodeMap, methodOrigin);
+			createEdgeNodes(incomingEdges, dbTraversalSource, newVertex, map, Direction.IN, v, createdNodeMap, methodOrigin);
 		}
 	}
 
@@ -253,11 +252,10 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws EncryptionException 
 	 * @throws NoSuchElementException 
 	 */
-	private Vertex getNodeWithProperties(GraphTraversalSource dbTraversalSource, Vertex v, Map<String, Vertex> createdNodeMap) throws NoSuchElementException, EncryptionException {
+	private Vertex getNodeWithProperties(GraphTraversalSource dbTraversalSource, Vertex v, Map<String, Vertex> createdNodeMap, String methodOrigin) throws NoSuchElementException, EncryptionException {
 
 		Vertex newVertex;
-		Constants.METHOD_ORIGIN="addOrUpdate";
-
+	
 		if (createdNodeMap.containsKey(v.label())) {
 			newVertex = createdNodeMap.get(v.label());
 		} else {
@@ -267,7 +265,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			} else {
 				newVertex = dbTraversalSource.clone().addV(v.label()).next();
 			}
-			copyProperties(v, newVertex);
+			copyProperties(v, newVertex,methodOrigin);
 			createdNodeMap.put(v.label(), newVertex);
 		}
 		return newVertex;
@@ -287,7 +285,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	 */
 	private void createEdgeNodes(Iterator<Edge> edges, GraphTraversalSource dbTraversalSource,
 								 Vertex newVertex, Map<String, List<Object[]>> map,
-								 Direction direction, Vertex traversalVertex, Map<String, Vertex> createdNodeMap) throws NoSuchElementException, EncryptionException {
+								 Direction direction, Vertex traversalVertex, Map<String, Vertex> createdNodeMap, String methodOrigin) throws NoSuchElementException, EncryptionException {
 
 		while (edges.hasNext()) {
 
@@ -296,7 +294,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			boolean nodeAndEdgeExists = validateAddVertex(map, traversalVertex, edge, direction);
 
 			if (!nodeAndEdgeExists) {
-				Vertex nextVertex = getNodeWithProperties(dbTraversalSource, vertex, createdNodeMap);
+				Vertex nextVertex = getNodeWithProperties(dbTraversalSource, vertex, createdNodeMap, methodOrigin);
 
 				if (direction.equals(Direction.OUT)) {
 					newVertex.addEdge(edge.label(), nextVertex);
@@ -358,7 +356,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel) throws RecordNotFoundException, NoSuchElementException, EncryptionException {
+	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel, String methodOrigin) throws RecordNotFoundException, NoSuchElementException, EncryptionException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 		TinkerGraph graphForUpdate = (TinkerGraph) entityForUpdate;
@@ -368,14 +366,13 @@ public class RegistryDaoImpl implements RegistryDao {
 		if (!hasRootLabel.hasNext()) {
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		} else {
-			createOrUpdateEntity(graphForUpdate, rootNodeLabel);
+			createOrUpdateEntity(graphForUpdate, rootNodeLabel, methodOrigin);
 		}
 		return false;
 	}
 
 	@Override
 	public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException {
-		Constants.METHOD_ORIGIN="read";
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
 		logger.info("FETCH: "+label);
@@ -386,45 +383,39 @@ public class RegistryDaoImpl implements RegistryDao {
 		} else {
 			Vertex subject = hasLabel.next();
 			Vertex newSubject = parsedGraph.addVertex(subject.label());
-			copyProperties(subject, newSubject);
+			copyProperties(subject, newSubject,"read");
 			extractGraphFromVertex(parsedGraph,newSubject,subject);
 		}
 		return parsedGraph;
 	}
 
-	private void copyProperties(Vertex subject, Vertex newSubject) throws NoSuchElementException, EncryptionException {
+	private void copyProperties(Vertex subject, Vertex newSubject, String methodOrigin) throws NoSuchElementException, EncryptionException {
 	    HashMap<String,HashMap<String,String>> propertyMetaPropertyMap = new HashMap<String,HashMap<String,String>>();
 	    HashMap<String,String> metaPropertyMap;
 	    Object propertyValue=null;
 		Iterator<VertexProperty<Object>> iter = subject.properties();
 		while(iter.hasNext()){
 			VertexProperty<Object> property = iter.next();
-			if(encryptionService.encryptionRequired(property) && Constants.METHOD_ORIGIN.equalsIgnoreCase("addOrUpdate")) {
+			if(encryptionService.encryptionRequired(property) && methodOrigin.equalsIgnoreCase("addOrUpdate")) {
 				propertyValue =  encryptionService.encrypt(property.value()).getBody();
 		        String encryptedKey = "@encrypted"+property.key().substring(property.key().lastIndexOf("/") + 1).trim();
 		        logger.info("propertyKey:  "+property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), encryptedKey)+
 		        		"====== propertyValue: "+propertyValue);
 		        newSubject.property(property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), encryptedKey), propertyValue);	
-		        return;
 			}
 			
-			if(Constants.METHOD_ORIGIN.equalsIgnoreCase("read")) {
+			if(methodOrigin.equalsIgnoreCase("read")) {	
 				boolean encryptedProperty = property.key().substring(property.key().lastIndexOf("/") + 1).trim().substring(0, Math.min(property.key().substring(property.key().lastIndexOf("/") + 1).trim().length(), 10)).equalsIgnoreCase("@encrypted");
-				if(encryptedProperty) {
+				if(encryptedProperty) {					
 					propertyValue = encryptionService.decrypt(property.value()).getBody();
 					String decryptedKey = property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), property.key().substring(property.key().lastIndexOf("/") + 1).trim().substring(10));
 					logger.info("propertyKey: "+decryptedKey+"======== propertyValue: "+ propertyValue);
 					newSubject.property(decryptedKey, propertyValue);
-					return;
 				}
 			}	
-			else {		
-				logger.info("propertyKey: "+property.key()+"========= propertyValue: "+  property.value());
-				newSubject.property(property.key(), property.value());
-			}			
-			
+	
 			if(property.key().startsWith("meta.")){
-			    logger.info("META PROPERTY "+property);
+				logger.info("META PROPERTY "+property);
                 Pattern pattern = Pattern.compile("meta\\.(.*)\\.(.*)");
                 Matcher match = pattern.matcher(property.key().toString());
                 if(match.find()){
@@ -441,11 +432,12 @@ public class RegistryDaoImpl implements RegistryDao {
                     }
                     metaPropertyMap.put(_meta_property,property.value().toString());
                 }
-            } else {
-                newSubject.property(property.key(), property.value());
+            } 
+			else {
+			      newSubject.property(property.key(), property.value());
             }
 			if(subject.graph().features().vertex().supportsMetaProperties()) {
-                Iterator<Property<Object>> metaPropertyIter = property.properties();
+				Iterator<Property<Object>> metaPropertyIter = property.properties();
                 while (metaPropertyIter.hasNext()) {
                     Property<Object> metaProperty = metaPropertyIter.next();
                     if (newSubject.graph().features().vertex().supportsMetaProperties()) {
@@ -482,12 +474,11 @@ public class RegistryDaoImpl implements RegistryDao {
 		Edge edge;
 		Stack<Vertex> vStack = new Stack<Vertex>();
 		Stack<Vertex> parsedVStack = new Stack<Vertex>();
-		Constants.METHOD_ORIGIN="read";
 		while(edgeIter.hasNext()){
 			edge = edgeIter.next();
 			Vertex o = edge.inVertex();
 			Vertex newo = parsedGraph.addVertex(o.label());
-			copyProperties(o, newo);
+			copyProperties(o, newo,"read");
 			parsedGraphSubject.addEdge(edge.label(), newo);
 			vStack.push(o);
 			parsedVStack.push(newo);

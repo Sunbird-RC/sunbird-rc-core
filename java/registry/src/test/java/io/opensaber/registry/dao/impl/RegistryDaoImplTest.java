@@ -1,4 +1,7 @@
-/*package io.opensaber.registry.dao.impl;
+
+
+
+package io.opensaber.registry.dao.impl;
 
 import es.weso.rdf.jena.RDFAsJenaModel;
 import io.opensaber.registry.sink.DatabaseProvider;
@@ -49,6 +52,7 @@ import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.EncryptionService;
+import io.opensaber.registry.service.impl.EncryptionServiceImpl;
 import io.opensaber.utils.converters.RDF2Graph;
 
 import javax.validation.constraints.AssertTrue;
@@ -64,7 +68,7 @@ import java.util.stream.Collectors;
 
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {RegistryDaoImpl.class, Environment.class, ObjectMapper.class, GenericConfiguration.class})
+@SpringBootTest(classes = {RegistryDaoImpl.class, Environment.class, ObjectMapper.class, GenericConfiguration.class,EncryptionServiceImpl.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryDaoImplTest extends RegistryTestBase {
@@ -370,7 +374,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Graph testGraph = TinkerGraph.open();
 		UUID label = getLabel();
 		testGraph.addVertex(T.label, label.toString(), "test_label_predicate", "test_value");
-		registryDao.updateEntity(testGraph, label.toString());
+		registryDao.updateEntity(testGraph, label.toString(),"addOrUpdate");
 	}
 
 	@Test
@@ -386,7 +390,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Graph updateGraph = TinkerGraph.open();
 
 		String updateRootNodeLabel = createGraphFromRdf(updateGraph, updateRdfModel);
-		registryDao.updateEntity(updateGraph, rootLabel);
+		registryDao.updateEntity(updateGraph, rootLabel,"addOrUpdate");
 		assertEquals(rootLabel, updateRootNodeLabel);
 
 		Graph updatedGraphResult = registryDao.getEntityById(rootLabel);
@@ -410,7 +414,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Graph updateGraph = TinkerGraph.open();
 
 		String updateRootNodeLabel = createGraphFromRdf(updateGraph, updateRdfModel);
-		registryDao.updateEntity(updateGraph, rootLabel);
+		registryDao.updateEntity(updateGraph, rootLabel,"addOrUpdate");
 		assertEquals(rootLabel, updateRootNodeLabel);
 
 		Graph updatedGraphResult = registryDao.getEntityById(rootLabel);
@@ -445,7 +449,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Graph updateGraph = TinkerGraph.open();
 
 		createGraphFromRdf(updateGraph, updateRdfModel);
-		registryDao.updateEntity(updateGraph, rootLabel);
+		registryDao.updateEntity(updateGraph, rootLabel,"addOrUpdate");
 
 		Graph updatedGraphResult = registryDao.getEntityById(rootLabel);
 
@@ -480,7 +484,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Graph updateGraph = TinkerGraph.open();
 
 		String updateRootNodeLabel = createGraphFromRdf(updateGraph, updateRdfModel);
-		registryDao.updateEntity(updateGraph, rootLabel);
+		registryDao.updateEntity(updateGraph, rootLabel,"addOrUpdate");
 		assertEquals(rootLabel, updateRootNodeLabel);
 
 		Graph updatedGraphResult = registryDao.getEntityById(rootLabel);
@@ -500,6 +504,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		assertThat(result, contains("updated block", "Updated Cluster Resource", "Updated Sector 14", "Updated MCG"));
 		assertThat(result, hasSize(4));
 	}
+		
 	/*
 		@Test
 		public void testGetEntity(){
@@ -531,7 +536,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	*/
 
-/*	@After
+	@After
 	public void closeGraph() throws Exception{
 		if(graph!=null){
 			graph.close();
@@ -686,4 +691,4 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		return IteratorUtils.count(graph.vertices());
 	}
 	
-}*/
+}

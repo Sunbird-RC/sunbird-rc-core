@@ -15,7 +15,7 @@ public interface RegistryDao {
 	
 	public boolean addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException;
 	
-	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel) throws RecordNotFoundException, NoSuchElementException, EncryptionException;
+	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel, String methodOrigin) throws RecordNotFoundException, NoSuchElementException, EncryptionException;
 	
 	public boolean deleteEntity(Object entity);
 
