@@ -2,6 +2,7 @@ package io.opensaber.registry.controller;
 
 import static org.junit.Assert.*;
 
+import io.opensaber.registry.app.OpenSaberApplication;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 import io.opensaber.registry.util.RDFUtil;
@@ -30,7 +31,7 @@ import io.opensaber.registry.service.RegistryService;
 import org.apache.jena.rdf.model.Model;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes={RegistryController.class,GenericConfiguration.class})
+@SpringBootTest(classes={OpenSaberApplication.class, RegistryController.class, GenericConfiguration.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryControllerTest extends RegistryTestBase{
@@ -38,7 +39,6 @@ public class RegistryControllerTest extends RegistryTestBase{
 	private static final String VALID_JSONLD = "school.jsonld";
 	private static final String CONTEXT_CONSTANT = "sample:";
 
-	
 	@Autowired
 	private RegistryService registryService;
 	

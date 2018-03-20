@@ -85,8 +85,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	private static Graph graph;
 
 	private static String identifier;
-	
-	
+
 	private static final String VALID_JSONLD = "school.jsonld";
     private static final String RICH_LITERAL_TTL = "rich-literal.jsonld";
 	private static final String CONTEXT_CONSTANT = "sample:";

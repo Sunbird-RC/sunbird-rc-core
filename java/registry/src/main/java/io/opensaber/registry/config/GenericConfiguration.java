@@ -81,13 +81,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new SchemaConfigurator(fieldConfigFileName);
 	}
 
-	/*
-	@Bean
-	public GraphDBFactory graphDBFactory() {
-		return new GraphDBFactory(environment);
-	}
-	 */
-
 	@Bean
 	public DatabaseProvider databaseProvider() {
 		String dbProvider = environment.getProperty(Constants.DATABASE_PROVIDER);

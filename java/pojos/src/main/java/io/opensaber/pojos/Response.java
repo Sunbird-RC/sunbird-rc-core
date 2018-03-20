@@ -5,12 +5,13 @@ import java.util.Map;
 public class Response {
 	private String id;
 	private String ver;
-	private Long ets;	
+	private Long ets;
 	private ResponseParams params;
-	public enum Status	
-	{
-	    SUCCCESSFUL,UNSUCCESSFUL;
-	};
+
+	public enum Status {
+		SUCCCESSFUL, UNSUCCESSFUL;
+	}
+
 	private String responseCode;
 	private Map<String, Object> result;	
 
