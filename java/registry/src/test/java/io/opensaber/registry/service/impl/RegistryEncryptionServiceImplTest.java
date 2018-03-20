@@ -11,16 +11,19 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.EncryptionService;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes={EncryptionServiceImpl.class})
+@SpringBootTest(classes={EncryptionServiceImpl.class,Environment.class, GenericConfiguration.class,})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryEncryptionServiceImplTest {
 
@@ -102,12 +105,15 @@ public class RegistryEncryptionServiceImplTest {
 	public void test_only_encrypted_value_decryption() throws Exception {
 		 byte[] array = new byte[7];
 		 new Random().nextBytes(array);
-		 String generatedString = new String(array, Charset.forName("UTF-8"));	
-		 ResponseEntity<String> decryptedValue = encryptionService.decrypt(generatedString);	
-		 if(decryptedValue==null) {
-		 expectedEx.expect(EncryptionException.class);
+		 String generatedString = new String(array, Charset.forName("UTF-8"));
+		 ResponseEntity<String> decryptedValue=null;
+		 try {
+			 decryptedValue = encryptionService.decrypt(generatedString);
+		 }catch(Exception e){
+		 expectedEx.expect(Exception.class);
 		 expectedEx.expectMessage(containsString("no encrypted value for decryption!"));
 		 }
+		 assertEquals(null,decryptedValue);
 	}
 	
 }
