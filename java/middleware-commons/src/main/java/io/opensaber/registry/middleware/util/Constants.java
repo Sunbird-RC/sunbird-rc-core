@@ -8,6 +8,7 @@ public class Constants {
 	public static final String REQUEST_ATTRIBUTE= "requestModel";
 	public static final String RDF_OBJECT = "rdf";
 	public static final String RDF_VALIDATION_OBJECT = "rdfValidationResult";
+	public static final String TOKEN_OBJECT = "token";
 	public static final String SHEX_PROPERTY_NAME = "shex.file";
 	public static final String FIELD_CONFIG_SCEHEMA_FILE = "config.schema.file";
 	public static final String SUBJECT_LABEL_TYPE = "subject.label.type";

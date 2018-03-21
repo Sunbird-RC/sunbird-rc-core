@@ -10,6 +10,7 @@
 		<rdfConversionVersion>0.0.1-SNAPSHOT</rdfConversionVersion>
 		<rdfValidationVersion>0.0.1-SNAPSHOT</rdfValidationVersion>
 		<rdfValidationMapperVersion>0.0.1-SNAPSHOT</rdfValidationMapperVersion>
+		<authorizationVersion>0.0.1-SNAPSHOT</authorizationVersion>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -32,6 +33,11 @@
 				<groupId>io.opensaber.middleware</groupId>
 				<artifactId>rdf-validation-mapping</artifactId>
 				<version>${rdfValidationMapperVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.opensaber</groupId>
+				<artifactId>authorization</artifactId>
+				<version>${authorizationVersion}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
