@@ -3,6 +3,7 @@ package io.opensaber.registry.controller;
 import static org.junit.Assert.*;
 
 import io.opensaber.registry.app.OpenSaberApplication;
+import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 import io.opensaber.registry.util.RDFUtil;
@@ -54,14 +55,14 @@ public class RegistryControllerTest extends RegistryTestBase{
 	}
 
 	@Test
-	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException {
+	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException {
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
 		String entityId = registryService.addEntity(model);
-		assertEquals(5, IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()));
+		assertEquals(5, IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot("@audit")));
 	}
 	
 	@Test
-	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException {
+	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException {
 		expectedEx.expect(DuplicateRecordException.class);
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);

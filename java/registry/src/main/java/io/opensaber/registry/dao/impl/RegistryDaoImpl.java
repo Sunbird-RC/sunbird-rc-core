@@ -7,6 +7,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.collect.ImmutableList;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.jena.base.Sys;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -49,7 +51,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException {
+	public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException {
 
 		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
 		Graph graphFromStore = databaseProvider.getGraphStore();
@@ -71,7 +73,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws EncryptionException 
 	 * @throws NoSuchElementException 
 	 */
-	private String createOrUpdateEntity(Graph entity, String rootLabel, String methodOrigin) throws NoSuchElementException, EncryptionException {
+	private String createOrUpdateEntity(Graph entity, String rootLabel, String methodOrigin) throws NoSuchElementException, EncryptionException, AuditFailedException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 
@@ -108,7 +110,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	 */
 	private String addOrUpdateVerticesAndEdges(GraphTraversalSource dbTraversalSource,
 											 GraphTraversalSource entitySource, String rootLabel, String methodOrigin)
-			throws NoSuchElementException, EncryptionException {
+            throws NoSuchElementException, EncryptionException, AuditFailedException {
 
 		GraphTraversal<Vertex, Vertex> gts = entitySource.clone().V().hasLabel(rootLabel);
 		String label = generateBlankNodeLabel(rootLabel);
@@ -142,7 +144,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws NoSuchElementException 
 	 */
 	private void addOrUpdateVertexAndEdge(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph, String methodOrigin)
-			throws NoSuchElementException, EncryptionException {
+            throws NoSuchElementException, EncryptionException, AuditFailedException {
 		Iterator<Edge> edges = v.edges(Direction.OUT);
 		Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
 		List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(Direction.OUT));
@@ -172,10 +174,11 @@ public class RegistryDaoImpl implements RegistryDao {
 				parsedVertices.push(new Pair<>(ver, newV));
 			}
 		}
+//		TODO: why catch?
 		parsedVertices.forEach(pv -> {
 			try {
 				addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph,methodOrigin);
-			} catch (NoSuchElementException | EncryptionException e) {
+			} catch (NoSuchElementException | EncryptionException | AuditFailedException e) {
 				e.printStackTrace();
 			}
 		});
@@ -200,7 +203,7 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	@Override
 	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel, String methodOrigin)
-			throws RecordNotFoundException, NoSuchElementException, EncryptionException {
+            throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 		TinkerGraph graphForUpdate = (TinkerGraph) entityForUpdate;
@@ -216,7 +219,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	@Override
-	public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException {
+	public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
 		logger.info("FETCH: "+label);
@@ -233,7 +236,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		return parsedGraph;
 	}
 
-	private void copyProperties(Vertex subject, Vertex newSubject, String methodOrigin) throws NoSuchElementException, EncryptionException {
+	private void copyProperties(Vertex subject, Vertex newSubject, String methodOrigin) throws NoSuchElementException, EncryptionException, AuditFailedException {
 	    HashMap<String,HashMap<String,String>> propertyMetaPropertyMap = new HashMap<String,HashMap<String,String>>();
 	    HashMap<String,String> metaPropertyMap;
 	    Object propertyValue=null;
@@ -245,7 +248,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		        String encryptedKey = "@encrypted"+property.key().substring(property.key().lastIndexOf("/") + 1).trim();
 		        logger.info("propertyKey:  "+property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), encryptedKey)+
 		        		"====== propertyValue: "+propertyValue);
-		        newSubject.property(property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), encryptedKey), propertyValue);	
+		        setProperty(newSubject,property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), encryptedKey), propertyValue);
 			}
 			
 			if(methodOrigin.equalsIgnoreCase("read")) {	
@@ -254,47 +257,41 @@ public class RegistryDaoImpl implements RegistryDao {
 					propertyValue = encryptionService.decrypt(property.value()).getBody();
 					String decryptedKey = property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), property.key().substring(property.key().lastIndexOf("/") + 1).trim().substring(10));
 					logger.info("propertyKey: "+decryptedKey+"======== propertyValue: "+ propertyValue);
-					newSubject.property(decryptedKey, propertyValue);
+					setProperty(newSubject,decryptedKey, propertyValue);
 				}
 			}	
 	
 			if(property.key().startsWith("meta.")){
-				logger.info("META PROPERTY "+property);
-                Pattern pattern = Pattern.compile("meta\\.(.*)\\.(.*)");
-                Matcher match = pattern.matcher(property.key().toString());
-                if(match.find()){
-                    String _property = match.group(1);
-                    String _meta_property = match.group(2);
-                    logger.info("MATCHED meta property "+match.group(1)+ " "+match.group(2));
-                    if(propertyMetaPropertyMap.containsKey(property.key())){
-                        logger.info("FOUND in propertyMetaPropertyMap");
-                        metaPropertyMap = propertyMetaPropertyMap.get(property.key());
-                    } else {
-                        logger.info("CREATING metaPropertyMap in propertyMetaPropertyMap");
-                        metaPropertyMap = new HashMap<>();
-                        propertyMetaPropertyMap.put(_property,metaPropertyMap);
-                    }
-                    metaPropertyMap.put(_meta_property,property.value().toString());
-                }
+                buildPropertyMetaMap(propertyMetaPropertyMap, property);
             } 
 			else {
-			      newSubject.property(property.key(), property.value());
+			    setProperty(newSubject,property.key(), property.value());
             }
-			if(subject.graph().features().vertex().supportsMetaProperties()) {
-				Iterator<Property<Object>> metaPropertyIter = property.properties();
-                while (metaPropertyIter.hasNext()) {
-                    Property<Object> metaProperty = metaPropertyIter.next();
-                    if (newSubject.graph().features().vertex().supportsMetaProperties()) {
-                        newSubject.property(property.key()).property(metaProperty.key(), metaProperty.value());
-                    } else {
-                        String metaKey = "meta." + property.key() + "." + metaProperty.key();
-                        newSubject.property(metaKey, metaProperty.value());
-                    }
-                }
-            }
-		}
-		Iterator propertyIter = propertyMetaPropertyMap.entrySet().iterator();
-		while(propertyIter.hasNext()){
+            setMetaProperty(subject, newSubject, property);
+        }
+        setMetaPropertyFromMap(newSubject, propertyMetaPropertyMap);
+	}
+
+    private void setProperty(Vertex v, String key, Object newValue) throws AuditFailedException {
+        Object oldValue = v.property(key);
+        v.property(key, newValue);
+	    if(v.graph().variables().get("@persisted").isPresent()) {
+	        System.out.println("AUDITING");
+            AuditRecord record = new AuditRecord();
+            record
+                    .subject(v.label())
+                    .predicate(key)
+                    .oldObject(oldValue)
+                    .newObject(newValue)
+                    .record(databaseProvider);
+        } else {
+            System.out.println("NOT AUDITING");
+        }
+    }
+
+    private void setMetaPropertyFromMap(Vertex newSubject, HashMap<String, HashMap<String, String>> propertyMetaPropertyMap) {
+        Iterator propertyIter = propertyMetaPropertyMap.entrySet().iterator();
+        while(propertyIter.hasNext()){
             Map.Entry pair = (Map.Entry)propertyIter.next();
             logger.info("PROPERTY <- "+pair.getKey());
             HashMap<String,String> _mpmap = (HashMap<String, String>) pair.getValue();
@@ -305,15 +302,51 @@ public class RegistryDaoImpl implements RegistryDao {
                 newSubject.property(pair.getKey().toString()).property(_pair.getKey().toString(),_pair.getValue().toString());
             }
         }
-	}
+    }
 
-	@Override
+    private void setMetaProperty(Vertex subject, Vertex newSubject, VertexProperty<Object> property) throws AuditFailedException {
+        if(subject.graph().features().vertex().supportsMetaProperties()) {
+            Iterator<Property<Object>> metaPropertyIter = property.properties();
+            while (metaPropertyIter.hasNext()) {
+                Property<Object> metaProperty = metaPropertyIter.next();
+                if (newSubject.graph().features().vertex().supportsMetaProperties()) {
+                    newSubject.property(property.key()).property(metaProperty.key(), metaProperty.value());
+                } else {
+                    String metaKey = "meta." + property.key() + "." + metaProperty.key();
+                    setProperty(newSubject,metaKey, metaProperty.value());
+                }
+            }
+        }
+    }
+
+    private void buildPropertyMetaMap(HashMap<String, HashMap<String, String>> propertyMetaPropertyMap, VertexProperty<Object> property) {
+        HashMap<String, String> metaPropertyMap;
+        logger.info("META PROPERTY "+property);
+        Pattern pattern = Pattern.compile("meta\\.(.*)\\.(.*)");
+        Matcher match = pattern.matcher(property.key().toString());
+        if(match.find()){
+            String _property = match.group(1);
+            String _meta_property = match.group(2);
+            logger.info("MATCHED meta property "+match.group(1)+ " "+match.group(2));
+            if(propertyMetaPropertyMap.containsKey(property.key())){
+                logger.info("FOUND in propertyMetaPropertyMap");
+                metaPropertyMap = propertyMetaPropertyMap.get(property.key());
+            } else {
+                logger.info("CREATING metaPropertyMap in propertyMetaPropertyMap");
+                metaPropertyMap = new HashMap<>();
+                propertyMetaPropertyMap.put(_property,metaPropertyMap);
+            }
+            metaPropertyMap.put(_meta_property,property.value().toString());
+        }
+    }
+
+    @Override
 	public boolean deleteEntity(Object entity) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
-	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s) throws NoSuchElementException, EncryptionException {
+	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s) throws NoSuchElementException, EncryptionException, AuditFailedException {
 		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
 		Edge edge;
 		Stack<Vertex> vStack = new Stack<Vertex>();

@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import io.opensaber.registry.exception.*;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -27,10 +29,6 @@ import org.springframework.stereotype.Component;
 
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.exception.InvalidTypeException;
-import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.GraphDBFactory;
@@ -55,7 +53,7 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException, EncryptionException{
+	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException {
 		try {
 			Graph graph = GraphDBFactory.getEmptyGraph();
 			StmtIterator iterator = rdfModel.listStatements();
@@ -87,7 +85,7 @@ public class RegistryServiceImpl implements RegistryService {
 			// if it is a blank node
 			return registryDao.addEntity(graph, rootNodeBlank ? String.format("_:%s", label) : label);
 			
-		} catch (DuplicateRecordException | InvalidTypeException | EncryptionException ex) {
+		} catch (DuplicateRecordException | InvalidTypeException | EncryptionException | AuditFailedException ex) {
 			throw ex;
 		} catch (Exception ex) {
 			logger.error("Exception when creating entity: ", ex);
@@ -96,7 +94,7 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException, EncryptionException {
+	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException, EncryptionException, AuditFailedException {
 		Graph graph = GraphDBFactory.getEmptyGraph();
 
 		StmtIterator iterator = entity.listStatements();
@@ -124,7 +122,7 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException, EncryptionException{
+	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException, EncryptionException, AuditFailedException {
 		Graph graph = registryDao.getEntityById(label);
         try {
             graph.io(graphson()).writeGraph("graph.json");

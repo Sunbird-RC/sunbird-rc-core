@@ -84,17 +84,20 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public DatabaseProvider databaseProvider() {
 		String dbProvider = environment.getProperty(Constants.DATABASE_PROVIDER);
+		DatabaseProvider provider;
 		if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.ORIENTDB.getName())) {
-			return new OrientDBGraphProvider(environment);
+            provider = new OrientDBGraphProvider(environment);
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.NEO4J.getName())) {
-			return new Neo4jGraphProvider(environment);
+            provider = new Neo4jGraphProvider(environment);
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.SQLG.getName())) {
-			return new SqlgProvider(environment);
+            provider = new SqlgProvider(environment);
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName())) {
-			return new TinkerGraphProvider(environment);
+            provider = new TinkerGraphProvider(environment);
 		} else {
 			throw new RuntimeException("No Database Provider is configured. Please configure a Database Provider");
 		}
+        provider.getGraphStore().variables().set("@persisted",true);
+		return provider;
 	}
 
 	@Bean

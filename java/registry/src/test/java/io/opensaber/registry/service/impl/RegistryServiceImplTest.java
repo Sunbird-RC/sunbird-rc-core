@@ -1,5 +1,6 @@
 package io.opensaber.registry.service.impl;
 
+import io.opensaber.registry.exception.AuditFailedException;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class RegistryServiceImplTest {
 	private RegistryService registryService;
 	
 	@Test @Ignore
-	public void testGetEntityById() throws RecordNotFoundException, EncryptionException {
+	public void testGetEntityById() throws RecordNotFoundException, EncryptionException, AuditFailedException {
 		registryService.getEntityById("1234");
 	}
 

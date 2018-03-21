@@ -3,12 +3,18 @@
 
 package io.opensaber.registry.dao.impl;
 
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
+import io.opensaber.registry.model.AuditRecord;
+import io.opensaber.registry.model.AuditRecordReader;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 
 import io.opensaber.registry.util.RDFUtil;
+import org.apache.jena.base.Sys;
 import org.apache.jena.rdf.model.*;
-import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.jena.rdf.model.Property;
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
@@ -32,9 +38,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.T;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
@@ -119,19 +122,46 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	}
 
 	@Test
-	public void test_adding_a_single_node() throws DuplicateRecordException, RecordNotFoundException, EncryptionException {
+	public void test_adding_a_single_node() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, LabelCannotBeNullException, AuditFailedException {
 		String label = generateRandomId();
 		identifier = label;
 		getVertexForSubject(label, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
 		String response = registryDao.addEntity(graph, label);
 		Graph entity = registryDao.getEntityById(response);
-		assertEquals(1, IteratorUtils.count(entity.traversal().clone().V()));
+		assertEquals(1, IteratorUtils.count(entity.traversal().clone().V().hasNot("@audit")));
 		Vertex v = entity.traversal().V().has(T.label, label).next();
 		assertEquals("DAV Public School", v.property("http://example.com/voc/teacher/1.0.0/schoolName").value());
+        checkIfAuditRecordsAreRight(entity);
 	}
-	
-	@Test @Ignore
-	public void test_adding_existing_root_node() throws NullPointerException, DuplicateRecordException, EncryptionException {
+
+    private void checkIfAuditRecordsAreRight(Graph entity) throws LabelCannotBeNullException {
+        Iterator it = getPropCounterMap(entity).entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            System.out.println(pair.getKey() + " = " + pair.getValue());
+            assertEquals(pair.getValue(), new AuditRecordReader(databaseProvider).fetchAuditRecords(String.valueOf(pair.getKey()),null).size());
+            it.remove();
+        }
+    }
+
+    private Map<String,Integer> getPropCounterMap(Graph entity) {
+	    Map<String,Integer> entityPropertyCountMap = new HashMap<>();
+        Iterator<Vertex> iter = entity.traversal().clone().V().hasNot("@audit");
+        while(iter.hasNext()){
+            Vertex vertex = iter.next();
+            entityPropertyCountMap.put(vertex.label(),0);
+            Iterator<VertexProperty<Object>> propIter = vertex.properties();
+            while(propIter.hasNext()){
+                entityPropertyCountMap.put(vertex.label(),entityPropertyCountMap.get(vertex.label())+1);
+                propIter.next();
+            }
+        }
+        System.out.println(entityPropertyCountMap);
+        return entityPropertyCountMap;
+    }
+
+    @Test @Ignore
+	public void test_adding_existing_root_node() throws NullPointerException, DuplicateRecordException, EncryptionException, AuditFailedException {
 		getVertexForSubject(identifier, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
 		expectedEx.expect(DuplicateRecordException.class);
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
@@ -139,17 +169,21 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	}
 	
 	@Test
-	public void test_adding_multiple_nodes() throws NullPointerException, DuplicateRecordException, RecordNotFoundException, EncryptionException {
+	public void test_adding_multiple_nodes() throws NullPointerException, DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException, LabelCannotBeNullException {
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
 		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+		System.out.println(response);
 		Graph entity = registryDao.getEntityById(response);
 		long vertexCount = IteratorUtils.count(entity.traversal().clone().V());
 		assertEquals(5, vertexCount);
+        checkIfAuditRecordsAreRight(entity);
+//		Iterator mapIter = getPropCounterMap(entity);
+//        assertEquals(getPropCounterMap(entity), new AuditRecordReader(databaseProvider).fetchAuditRecords(response,null).size());
 	}
 
-	@Test
-	public void test_adding_shared_nodes() {
+    @Test
+	public void test_adding_shared_nodes() throws LabelCannotBeNullException {
 		try {
 			Model rdfModel1 = getNewValidRdf();
 			TinkerGraph graphEntity1 = TinkerGraph.open();
@@ -157,6 +191,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			String entity1Label = registryDao.addEntity(graphEntity1, "_:" + rootLabelEntity1);
 
 			Graph entity1 = registryDao.getEntityById(entity1Label);
+            checkIfAuditRecordsAreRight(entity1);
 
 			// Expected count of vertices in one entity
 			assertEquals(5, IteratorUtils.count(entity1.traversal().V()));
@@ -167,11 +202,12 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			String entity2Label = registryDao.addEntity(graphEntity2, "_:" + rootLabelEntity2);
 
 			Graph entity2 = registryDao.getEntityById(entity2Label);
+            checkIfAuditRecordsAreRight(entity2);
 
 			assertEquals(5, IteratorUtils.count(entity2.traversal().V()));
 
-			long verticesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V());
-			long edgesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E());
+			long verticesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot("@audit"));
+			long edgesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E().hasNot("@audit"));
 
 			// Expected count of vertices is 6 with two entities with same address created
 			assertEquals(7, verticesCountAfterSharedNodesCreation);
@@ -180,11 +216,13 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		} catch (DuplicateRecordException | RecordNotFoundException | EncryptionException | NoSuchElementException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-	}
+		} catch (AuditFailedException e) {
+            e.printStackTrace();
+        }
+    }
 	
 	@Test
-	public void test_adding_shared_nodes_with_new_properties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException {
+	public void test_adding_shared_nodes_with_new_properties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException {
 
 		// Add a new entity
 		Model rdfModel = getNewValidRdf();
@@ -219,7 +257,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	}
 	
 	@Test
-	public void test_adding_shared_nodes_with_updated_properties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException {
+	public void test_adding_shared_nodes_with_updated_properties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException {
 
 		// Add a new entity
 		Model rdfModel = getNewValidRdf();
@@ -258,7 +296,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	}
 	
 	@Test
-	public void test_read_with_no_data() throws RecordNotFoundException, EncryptionException{
+	public void test_read_with_no_data() throws RecordNotFoundException, EncryptionException, AuditFailedException {
 		expectedEx.expect(RecordNotFoundException.class);
 		expectedEx.expectMessage(Constants.ENTITY_NOT_FOUND);
 		UUID label = getLabel();
@@ -291,7 +329,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_read_single_node()
-			throws RecordNotFoundException, DuplicateRecordException, IOException, EncryptionException {
+            throws RecordNotFoundException, DuplicateRecordException, IOException, EncryptionException, AuditFailedException {
 
 		String label = getLabel().toString();
 		getVertexForSubject(label, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
@@ -304,7 +342,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_read_nested_node()
-			throws NullPointerException, DuplicateRecordException, RecordNotFoundException, EncryptionException {
+            throws NullPointerException, DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException {
 
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
@@ -323,7 +361,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	
 	@Test
 	public void test_count_nested_node_with_first_node_as_blank_node()
-			throws NullPointerException, DuplicateRecordException, RecordNotFoundException, NoSuchElementException, EncryptionException {
+            throws NullPointerException, DuplicateRecordException, RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
 
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdfWithFirstNodeAsBlankNode(rdfModel);
@@ -342,7 +380,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_blank_node_count_when_no_blank_node_present()
-			throws DuplicateRecordException, RecordNotFoundException, EncryptionException {
+            throws DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException {
 
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
@@ -356,7 +394,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_update_when_entity_not_exists()
-			throws DuplicateRecordException, RecordNotFoundException, EncryptionException, NoSuchElementException {
+            throws DuplicateRecordException, RecordNotFoundException, EncryptionException, NoSuchElementException, AuditFailedException {
 
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
@@ -374,7 +412,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_update_single_literal_node()
-			throws DuplicateRecordException, RecordNotFoundException, EncryptionException, NoSuchElementException {
+            throws DuplicateRecordException, RecordNotFoundException, EncryptionException, NoSuchElementException, AuditFailedException {
 
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
@@ -401,7 +439,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_update_multiple_literal_nodes()
-			throws DuplicateRecordException, RecordNotFoundException, EncryptionException, NoSuchElementException {
+            throws DuplicateRecordException, RecordNotFoundException, EncryptionException, NoSuchElementException, AuditFailedException {
 
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
@@ -434,7 +472,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_update_iri_node()
-			throws DuplicateRecordException, RecordNotFoundException, NoSuchElementException, EncryptionException {
+            throws DuplicateRecordException, RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
 
 		Model rdfModel = getNewValidRdf();
 		Graph graph = TinkerGraph.open();
@@ -473,7 +511,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_update_iri_node_and_literal_nodes()
-			throws DuplicateRecordException, RecordNotFoundException, EncryptionException, NoSuchElementException {
+            throws DuplicateRecordException, RecordNotFoundException, EncryptionException, NoSuchElementException, AuditFailedException {
 
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
@@ -546,7 +584,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	}
 
 	@Test
-	public void savingMetaProperties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException {
+	public void savingMetaProperties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException {
         Model inputModel = getNewValidRdf(RICH_LITERAL_TTL, "ex:");
         String rootLabel = updateGraphFromRdf(inputModel, graph, "http://example.org/typeProperty");
         registryDao.addEntity(graph, rootLabel);
