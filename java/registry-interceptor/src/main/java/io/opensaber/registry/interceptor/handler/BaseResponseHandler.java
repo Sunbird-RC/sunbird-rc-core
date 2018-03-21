@@ -71,16 +71,8 @@ public class BaseResponseHandler {
 	}
 	
 	public Response setErrorResponse(String message){
-		Response response = new Response();
 		ResponseParams responseParams = new ResponseParams();
-		response.setId("");
-		response.setEts(System.currentTimeMillis() / 1000L);
-		response.setVer("1.0");
-		response.setParams(responseParams);
-		responseParams.setMsgid(UUID.randomUUID().toString());
-		responseParams.setErr("");
-		responseParams.setResmsgid("");
-		response.setResponseCode("OK");
+		Response response = new Response(Response.API_ID.NONE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
 		response.setResult(result);
 		responseParams.setStatus(Response.Status.UNSUCCESSFUL);

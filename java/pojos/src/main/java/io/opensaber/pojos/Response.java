@@ -8,6 +8,35 @@ public class Response {
 	private Long ets;
 	private ResponseParams params;
 
+	public Response() {
+		this.ver = "1.0";
+		this.ets = System.currentTimeMillis() / 1000L;
+	}
+
+	public Response(API_ID apiId, String httpStatus, ResponseParams responseParams) {
+		this.ver = "1.0";
+		this.ets = System.currentTimeMillis() / 1000L;
+		this.id = apiId.getId();
+		this.responseCode = httpStatus;
+		this.params = responseParams;
+	}
+
+	public enum API_ID {
+		CREATE("open-saber.registry.create"),
+		READ("open-saber.registry.read"),
+		UPDATE("open-saber.registry.update"),
+		NONE("");
+		private String id;
+
+		private API_ID(String id) {
+			this.id = id;
+		}
+
+		public String getId() {
+			return id;
+		}
+	}
+
 	public enum Status {
 		SUCCCESSFUL, UNSUCCESSFUL;
 	}

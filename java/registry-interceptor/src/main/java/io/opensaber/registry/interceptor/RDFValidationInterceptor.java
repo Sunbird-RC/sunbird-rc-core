@@ -6,6 +6,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -22,9 +24,9 @@ import io.opensaber.registry.middleware.util.Constants;
 @Order(3)
 @Component
 public class RDFValidationInterceptor extends BaseRequestHandler implements HandlerInterceptor{
-	
-	private RDFValidator rdfValidator;
 
+	private static Logger logger = LoggerFactory.getLogger(RDFValidationInterceptor.class);
+	private RDFValidator rdfValidator;
 	private Gson gson;
 	
 	@Autowired
@@ -35,20 +37,22 @@ public class RDFValidationInterceptor extends BaseRequestHandler implements Hand
 
 
 	@Override
-	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException  {
-		try{
-		setRequest(request);
-		Map<String,Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
-		mergeRequestAttributes(attributeMap);
-		request = getRequest();
-		if(request.getAttribute(Constants.RDF_VALIDATION_OBJECT)!=null){
-			return true;
-		}
-		}catch(MiddlewareHaltException e){
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {
+		try {
+			setRequest(request);
+			Map<String, Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
+			mergeRequestAttributes(attributeMap);
+			request = getRequest();
+			if (request.getAttribute(Constants.RDF_VALIDATION_OBJECT) != null) {
+				return true;
+			}
+		} catch (MiddlewareHaltException e) {
+			logger.error("MiddlewareHaltException from RDFValidationInterceptor: ", e);
 			setResponse(response);
 			writeResponseObj(gson, e.getMessage());
 			response = getResponse();
-		}catch(Exception e){
+		} catch (Exception e) {
+			logger.error("Exception from RDFValidationInterceptor: ", e);
 			setResponse(response);
 			writeResponseObj(gson, Constants.RDF_VALIDATION_ERROR);
 			response = getResponse();

@@ -42,25 +42,15 @@ public class RegistryController {
 	@RequestMapping(value = "/addEntity", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
 
-		Response response = new Response();
-		ResponseParams responseParams = new ResponseParams();
-		response.setId(requestModel.getId());
-		response.setEts(System.currentTimeMillis() / 1000L);
-		response.setVer("1.0");
-		response.setParams(responseParams);
-
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
-		responseParams.setMsgid(UUID.randomUUID().toString());
-		responseParams.setErr("");
-		responseParams.setResmsgid("");
-		response.setResponseCode("OK");
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
 		
 		try {
 			String label = registryService.addEntity(rdf);			
 			result.put("entity", label);
 			response.setResult(result);
-			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);			
 		} catch (DuplicateRecordException | InvalidTypeException e) {
 			response.setResult(result);
@@ -76,17 +66,9 @@ public class RegistryController {
 
 	@RequestMapping(value = "/getEntity/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> getEntity(@PathVariable("id") String id){
-		Response response = new Response();
-		ResponseParams responseParams = new ResponseParams();
-		response.setEts(System.currentTimeMillis() / 1000L);
-		response.setVer("1.0");
-		response.setParams(responseParams);		
 		id = registryContext + id;
-		response.setId(id);
-		response.setResponseCode("OK");
-		responseParams.setMsgid(UUID.randomUUID().toString());
-		responseParams.setErr("");		
-		responseParams.setResmsgid("");	
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
 				
 		try {			
 			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(id);
@@ -109,21 +91,14 @@ public class RegistryController {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/entity/{id}", method = RequestMethod.PUT)
+	@RequestMapping(value = "/entity/{id}", method = RequestMethod.PATCH)
 	public ResponseEntity<Response> updateEntity(@RequestAttribute Request requestModel, @PathVariable("id") String id) {
-		Response response = new Response();
-		ResponseParams responseParams = new ResponseParams();		
-		response.setEts(System.currentTimeMillis() / 1000L);
-		response.setVer("1.0");
-		response.setParams(responseParams);
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		id = registryContext + id;
-		response.setId(id);
-		response.setResponseCode("OK");
-		responseParams.setMsgid(UUID.randomUUID().toString());
-		responseParams.setErr("");		
-		responseParams.setResmsgid("");		
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+
 		try {			
 			registryService.updateEntity(rdf, id);			
 			responseParams.setErrmsg("");
