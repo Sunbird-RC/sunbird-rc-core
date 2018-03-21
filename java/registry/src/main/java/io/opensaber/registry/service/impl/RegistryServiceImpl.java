@@ -70,9 +70,9 @@ public class RegistryServiceImpl implements RegistryService {
 					label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
 					if (label != null) {
 						rootSubjectFound = true;
-					}
-					if(rdfStatement.getSubject().isAnon() && rdfStatement.getSubject().getURI() == null) {
-						rootNodeBlank = true;
+						if(rdfStatement.getSubject().isAnon() && rdfStatement.getSubject().getURI() == null) {
+							rootNodeBlank = true;
+						}
 					}
 				}
 				org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
