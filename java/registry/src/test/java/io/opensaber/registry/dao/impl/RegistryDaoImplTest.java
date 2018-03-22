@@ -3,6 +3,8 @@
 
 package io.opensaber.registry.dao.impl;
 
+import io.opensaber.registry.authorization.AuthorizationToken;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
 import io.opensaber.registry.model.AuditRecordReader;
@@ -31,6 +33,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -117,6 +121,15 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		graph = TinkerGraph.open();
 		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);
+        AuthInfo authInfo = new AuthInfo();
+        authInfo.setAud("aud");
+        authInfo.setName("name");
+        authInfo.setSub("sub");
+        AuthorizationToken authorizationToken = new AuthorizationToken(
+                authInfo,
+                null,
+                Collections.singletonList(new SimpleGrantedAuthority("blah")));
+        SecurityContextHolder.getContext().setAuthentication(authorizationToken);
 	}
 
 	@Test

@@ -1,11 +1,17 @@
 package io.opensaber.registry.model;
 
+import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.json.JSONObject;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
+
+@Component
 
 public class AuditRecord {
     private String subject;
@@ -51,6 +57,7 @@ public class AuditRecord {
         if(!rootNodeExists){
 //            System.out.println("AUDIT ROOT NOT FOUND - CREATING");
             rootVertex = _source.addV(subject).next();
+            updateUserInfo(rootVertex);
         } else {
 //            System.out.println("AUDIT ROOT FOUND - NOT CREATING");
             rootVertex = _source.V().hasLabel(subject).next();
@@ -62,8 +69,15 @@ public class AuditRecord {
         recordVertex.property("newObject",this.newObject);
         recordVertex.property("@audit",true);
         recordVertex.property("@auditRecord",true);
+        updateUserInfo(recordVertex);
         rootVertex.addEdge("audit",recordVertex).property("@audit",true);
         System.out.println(this);
+    }
+
+    private void updateUserInfo(Vertex vertex) {
+        String authinfo = new JSONObject( getCurrentUserInfo() ).toString();
+        System.out.println("authinfo "+authinfo);
+        vertex.property("authInfo",authinfo);
     }
 
     public String getPredicate() {
@@ -80,6 +94,10 @@ public class AuditRecord {
 
     public String getSubject() {
         return subject;
+    }
+
+    private AuthInfo getCurrentUserInfo(){
+        return (AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }
 
