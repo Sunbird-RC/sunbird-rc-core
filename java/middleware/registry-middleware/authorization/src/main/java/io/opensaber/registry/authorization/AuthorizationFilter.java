@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -16,8 +18,10 @@ import io.opensaber.registry.middleware.util.Constants;
 
 public class AuthorizationFilter implements BaseMiddleware{
 	
-	private static final String TOKEN_IS_MISSING = "Token is missing";
-	private static final String TOKEN_IS_INVALID = "Token is invalid";
+	private static Logger logger = LoggerFactory.getLogger(AuthorizationFilter.class);
+	
+	private static final String TOKEN_IS_MISSING = "Auth token is missing";
+	private static final String TOKEN_IS_INVALID = "Auth token is invalid";
 	
 	public Map<String,Object> execute(Map<String,Object> mapObject) throws MiddlewareHaltException{
 		Object tokenObject = mapObject.get(Constants.TOKEN_OBJECT);
@@ -26,7 +30,7 @@ public class AuthorizationFilter implements BaseMiddleware{
 		}
 		String token = tokenObject.toString();
 		AuthInfo authInfo = extractTokenIntoAuthInfo(token);
-		if(authInfo.getSub() == null || authInfo.getAud() == null){
+		if(authInfo.getSub() == null || authInfo.getAud() == null || authInfo.getName() == null){
 			throw new MiddlewareHaltException(TOKEN_IS_INVALID);
 		}
 		List<SimpleGrantedAuthority> authorityList = new ArrayList<SimpleGrantedAuthority>();
@@ -44,7 +48,7 @@ public class AuthorizationFilter implements BaseMiddleware{
 		        .setSigningKeyResolver(authInfo)
 		        .parseClaimsJws(token);
 		} catch (Exception e) {
-		  
+			logger.info("Claim extracted but verification failed");
 		}
 		return authInfo;
 	}
@@ -56,5 +60,6 @@ public class AuthorizationFilter implements BaseMiddleware{
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
 
 }

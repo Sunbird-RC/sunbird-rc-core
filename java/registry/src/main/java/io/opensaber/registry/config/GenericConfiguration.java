@@ -11,6 +11,7 @@ import io.opensaber.registry.sink.OrientDBGraphProvider;
 import io.opensaber.registry.sink.SqlgProvider;
 import io.opensaber.registry.sink.TinkerGraphProvider;
 
+import org.apache.tomcat.util.http.parser.Authorization;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
-
+import io.opensaber.registry.authorization.AuthorizationFilter;
+import io.opensaber.registry.interceptor.AuthorizationInterceptor;
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
@@ -67,6 +69,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public RDFConverter rdfConverter(){
 		return new RDFConverter();
+	}
+	
+	@Bean
+	public AuthorizationFilter authorizationFilter(){
+		return new AuthorizationFilter();
 	}
 
 	@Bean
@@ -116,10 +123,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Override 
 	public void addInterceptors(InterceptorRegistry registry) { 
-		//registry.addInterceptor(new JsonldToRdfInterceptor(new JsonldToRdfConverter())).addPathPatterns("/convertToRdf");
-		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(),gson())).addPathPatterns("/addEntity", "/entity/{id}");
-		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper())).addPathPatterns("/addEntity");
-		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(),gson())).addPathPatterns("/addEntity");
+		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(),gson())).addPathPatterns("/**").order(1);
+		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(),gson())).addPathPatterns("/addEntity", "/entity/{id}").order(2);
+		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper())).addPathPatterns("/addEntity").order(3);
+		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(),gson())).addPathPatterns("/addEntity").order(4);
 
 	}
 

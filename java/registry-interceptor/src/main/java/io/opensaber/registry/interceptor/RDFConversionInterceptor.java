@@ -6,7 +6,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -18,7 +17,6 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
-@Order(1)
 @Component
 public class RDFConversionInterceptor extends BaseRequestHandler implements HandlerInterceptor{
 
@@ -50,6 +48,7 @@ public class RDFConversionInterceptor extends BaseRequestHandler implements Hand
 			writeResponseObj(gson, e.getMessage());
 			response = getResponse();
 		}catch(Exception e){
+			e.printStackTrace();
 			setResponse(response);
 			writeResponseObj(gson, Constants.JSONLD_PARSE_ERROR);
 			response = getResponse();

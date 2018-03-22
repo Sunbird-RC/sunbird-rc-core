@@ -21,8 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
@@ -52,7 +54,6 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	@Override
 	public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException {
-
 		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
@@ -395,6 +396,10 @@ public class RegistryDaoImpl implements RegistryDao {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	private AuthInfo getCurrentUserInfo(){
+		return (AuthInfo)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 	}
 
 }

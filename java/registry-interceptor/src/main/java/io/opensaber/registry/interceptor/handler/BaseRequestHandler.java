@@ -60,22 +60,23 @@ public class BaseRequestHandler extends BaseResponseHandler{
 	public Map<String, Object> getRequestBodyMap() throws IOException {
 		Map<String, Object> requestBodyMap = new HashMap<>();
 		Gson gson = new Gson();
-		Request requestModel = gson.fromJson(getRequestBody(), Request.class);
+		String requestBody = getRequestBody();
+		Request requestModel = gson.fromJson(requestBody, Request.class);
 		requestBodyMap.put(Constants.REQUEST_ATTRIBUTE, requestModel);
-		String requestBody = new JsonParser().parse(getRequestBody())
+		String requestObject = new JsonParser().parse(requestBody)
 				.getAsJsonObject().getAsJsonObject("request").toString();
-		requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestBody);
+		requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestObject);
 		requestModel.setRequestMap(requestBodyMap);
 		return requestBodyMap;
 	}
 	
 	public Map<String,Object> getRequestHeaderMap() throws IOException{
 		Map<String,Object> requestHeaderMap = new HashMap<String,Object>();
-		Enumeration<String> headerNames = requestWrapper.getHeaderNames();
+		Enumeration<String> headerNames = request.getHeaderNames();
 		if(headerNames!=null){
 			while(headerNames.hasMoreElements()){
 				String header = headerNames.nextElement();
-				requestHeaderMap.put(header, requestWrapper.getHeader(header));
+				requestHeaderMap.put(header, request.getHeader(header));
 			}
 		}
 		return requestHeaderMap;
@@ -83,11 +84,11 @@ public class BaseRequestHandler extends BaseResponseHandler{
 
 	public Map<String,Object> getRequestAttributeMap() throws IOException{
 		Map<String,Object> requestAttributeMap = new HashMap<String,Object>();
-		Enumeration<String> attributeNames = requestWrapper.getAttributeNames();
+		Enumeration<String> attributeNames = request.getAttributeNames();
 		if(attributeNames!=null){
 			while(attributeNames.hasMoreElements()){
 				String attribute = attributeNames.nextElement();
-				requestAttributeMap.put(attribute, requestWrapper.getAttribute(attribute));
+				requestAttributeMap.put(attribute, request.getAttribute(attribute));
 			}
 		}
 		return requestAttributeMap;
@@ -95,7 +96,7 @@ public class BaseRequestHandler extends BaseResponseHandler{
 
 	public Map<String,Object> getRequestParameterMap() throws IOException{
 		Map<String,Object> requestParameterMap = new HashMap<String,Object>();
-		requestParameterMap.putAll(requestWrapper.getParameterMap());
+		requestParameterMap.putAll(request.getParameterMap());
 		return requestParameterMap;
 	}
 

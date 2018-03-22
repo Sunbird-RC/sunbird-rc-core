@@ -7,20 +7,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
-import io.opensaber.registry.interceptor.handler.RequestWrapper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.impl.RDFValidationMapper;
-import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.util.Constants;
 
-@Order(2)
 @Component
 public class RDFValidationMappingInterceptor extends BaseRequestHandler implements HandlerInterceptor {
 	

@@ -31,7 +31,7 @@ public class AuthorizationFilterTest {
 
 	@Test
 	public void test_missing_auth_token() throws MiddlewareHaltException, IOException{
-		expectedEx.expectMessage("Token is missing");
+		expectedEx.expectMessage("Auth token is missing");
 		expectedEx.expect(MiddlewareHaltException.class);
 		Map<String,Object> mapObject = new HashMap<String,Object>();
 		baseM.execute(mapObject);
@@ -55,10 +55,10 @@ public class AuthorizationFilterTest {
 	
 	@Test
 	public void test_invalid_token() throws MiddlewareHaltException, IOException{
-		expectedEx.expectMessage("Token is invalid");
+		expectedEx.expectMessage("Auth token is invalid");
 		expectedEx.expect(MiddlewareHaltException.class);
 		Map<String,Object> mapObject = new HashMap<String,Object>();
-		mapObject.put(Constants.TOKEN_OBJECT, "invalidtoken");
+		mapObject.put(Constants.TOKEN_OBJECT, "invalid.token.");
 		baseM.execute(mapObject);
 	}
 

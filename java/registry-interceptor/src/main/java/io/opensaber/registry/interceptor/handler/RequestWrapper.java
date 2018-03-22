@@ -17,13 +17,14 @@ import javax.servlet.http.HttpServletRequestWrapper;
  *
  */
 public class RequestWrapper extends HttpServletRequestWrapper {
-    private final String body;
+    private String body;
+    private HttpServletRequest request;
  
-    public RequestWrapper(HttpServletRequest request) throws IOException
+    public RequestWrapper(HttpServletRequest request)
     {
        super(request);
-         
-        StringBuilder stringBuilder = new StringBuilder();
+       this.request = request;
+       /* StringBuilder stringBuilder = new StringBuilder();
         BufferedReader bufferedReader = null;
         try {
             InputStream inputStream = request.getInputStream();
@@ -40,7 +41,7 @@ public class RequestWrapper extends HttpServletRequestWrapper {
         } catch (IOException ex) {
             throw ex;
         } 
-        body = stringBuilder.toString();
+        body = stringBuilder.toString();*/
     }
  
     @Override
@@ -71,7 +72,25 @@ public class RequestWrapper extends HttpServletRequestWrapper {
     }
  
     //Use this method to read the request body any number of times
-    public String getBody() {
+    public String getBody() throws IOException{
+    	 StringBuilder stringBuilder = new StringBuilder();
+         BufferedReader bufferedReader = null;
+         try {
+             InputStream inputStream = request.getInputStream();
+             if (inputStream != null) {
+                 bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                 char[] charBuffer = new char[128];
+                 int bytesRead = -1;
+                 while ((bytesRead = bufferedReader.read(charBuffer)) > 0) {
+                     stringBuilder.append(charBuffer, 0, bytesRead);
+                 }
+             } else {
+                 stringBuilder.append("");
+             }
+         } catch (IOException ex) {
+             throw ex;
+         } 
+         body = stringBuilder.toString();
         return this.body;
     }
 }

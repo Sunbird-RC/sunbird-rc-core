@@ -2,12 +2,14 @@ package io.opensaber.registry.interceptor.handler;
 
 
 import java.io.BufferedWriter;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
 
 import javax.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 /**
@@ -16,6 +18,8 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
  *
  */
 public class ResponseWrapper extends ContentCachingResponseWrapper{
+	
+	private static Logger logger = LoggerFactory.getLogger(ResponseWrapper.class);
  
     public ResponseWrapper(HttpServletResponse response) {
         super(response);
@@ -27,6 +31,7 @@ public class ResponseWrapper extends ContentCachingResponseWrapper{
 	 * @return
 	 */
 	public void writeResponseBody(String content) {
+		logger.info("Response content:"+content);
 		BufferedWriter bufferedWriter = null;
 		try {
 			OutputStream outputStream = this.getResponse().getOutputStream();
@@ -35,14 +40,15 @@ public class ResponseWrapper extends ContentCachingResponseWrapper{
 				bufferedWriter = new BufferedWriter(new OutputStreamWriter(
 						outputStream));
 				bufferedWriter.write(content);
-
 			} 
-		} catch (IOException ex) {
+		} catch (Exception ex) {
+			logger.error("ERROR IN SENDING RESPONSE:",ex);
 		} finally {
 			if (bufferedWriter != null) {
 				try {
 					bufferedWriter.close();
-				} catch (IOException ex) {
+				} catch (Exception ex) {
+					logger.error("ERROR in closing stream",ex);
 				}
 			}
 		}

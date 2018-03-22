@@ -11,6 +11,8 @@ public class AuthInfo extends SigningKeyResolverAdapter{
 	private String aud;
 	
 	private String sub;
+	
+	private String name;
 
 	public String getAud() {
 		return aud;
@@ -28,10 +30,19 @@ public class AuthInfo extends SigningKeyResolverAdapter{
 		this.sub = sub;
 	}
 	
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	@Override
     public Key resolveSigningKey(JwsHeader header, Claims claims) {
     	this.aud = claims.getAudience();
     	this.sub = claims.getSubject();
+    	this.name = (String)claims.get("name");
         return null; // will throw exception, can be caught in caller
     }
 

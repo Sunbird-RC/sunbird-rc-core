@@ -8,7 +8,7 @@ public class Constants {
 	public static final String REQUEST_ATTRIBUTE= "requestModel";
 	public static final String RDF_OBJECT = "rdf";
 	public static final String RDF_VALIDATION_OBJECT = "rdfValidationResult";
-	public static final String TOKEN_OBJECT = "token";
+	public static final String TOKEN_OBJECT = "x-authenticated-user-token";
 	public static final String SHEX_PROPERTY_NAME = "shex.file";
 	public static final String FIELD_CONFIG_SCEHEMA_FILE = "config.schema.file";
 	public static final String SUBJECT_LABEL_TYPE = "subject.label.type";
@@ -34,6 +34,7 @@ public class Constants {
 	public static final String INVALID_TYPE_MESSAGE = "Failed to insert due to invalid type";
 	
 	public static final String ENTITY_NOT_FOUND = "Entity does not exist";
+	public static final String TOKEN_EXTRACTION_ERROR = "Unable to extract auth token";
 	public static final String JSONLD_PARSE_ERROR = "Unable to parse JSON-LD";
 	public static final String RDF_VALIDATION_ERROR = "Unable to validate RDF";
 

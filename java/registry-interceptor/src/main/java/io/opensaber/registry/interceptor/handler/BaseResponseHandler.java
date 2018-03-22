@@ -32,13 +32,11 @@ public class BaseResponseHandler {
 	}
 	
 	public void setResponseWrapper() throws IOException{
-		if(responseWrapper==null){
-			responseWrapper = new ResponseWrapper(response);
-		}
+		responseWrapper = new ResponseWrapper(response);
 	}
 	
 	public void writeResponseBody(String content) throws IOException{
-		setResponseWrapper();
+		//setResponseWrapper();
 		responseWrapper.writeResponseBody(content);
 		response = (HttpServletResponse)responseWrapper.getResponse();
 	}
@@ -48,12 +46,12 @@ public class BaseResponseHandler {
 	}
 	
 	public String getResponseContent() throws IOException{
-		setResponseWrapper();
+		//setResponseWrapper();
 		return responseWrapper.getResponseContent();
 	}
 	
 	public Map<String,Object> getResponseHeaderMap() throws IOException{
-		setResponseWrapper();
+		//setResponseWrapper();
 		Map<String,Object> responseHeaderMap = new HashMap<String,Object>();
 		Collection<String> headerNames = responseWrapper.getHeaderNames();
 		if(headerNames!=null){
@@ -65,8 +63,8 @@ public class BaseResponseHandler {
 	}
 	
 	public void writeResponseObj(Gson gson, String errMessage) throws IOException{
-		response.setStatus(HttpStatus.OK.value());
-		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+		responseWrapper.setStatus(HttpStatus.OK.value());
+		responseWrapper.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		writeResponseBody(gson.toJson(setErrorResponse(errMessage)));
 	}
 	
