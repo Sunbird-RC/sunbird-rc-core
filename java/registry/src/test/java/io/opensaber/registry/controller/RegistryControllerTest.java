@@ -3,6 +3,8 @@ package io.opensaber.registry.controller;
 import static org.junit.Assert.*;
 
 import io.opensaber.registry.app.OpenSaberApplication;
+import io.opensaber.registry.authorization.AuthorizationToken;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
@@ -19,6 +21,8 @@ import org.junit.runners.MethodSorters;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -30,6 +34,8 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
 
 import org.apache.jena.rdf.model.Model;
+
+import java.util.Collections;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes={OpenSaberApplication.class, RegistryController.class, GenericConfiguration.class})
@@ -52,6 +58,14 @@ public class RegistryControllerTest extends RegistryTestBase{
 	@Before
 	public void initialize() {
 		TestHelper.clearData(databaseProvider);
+        AuthInfo authInfo = new AuthInfo();
+        authInfo.setAud("aud");
+        authInfo.setName("name");
+        authInfo.setSub("sub");
+        AuthorizationToken authorizationToken = new AuthorizationToken(
+                authInfo,
+                Collections.singletonList(new SimpleGrantedAuthority("blah")));
+        SecurityContextHolder.getContext().setAuthentication(authorizationToken);
 	}
 
 	@Test

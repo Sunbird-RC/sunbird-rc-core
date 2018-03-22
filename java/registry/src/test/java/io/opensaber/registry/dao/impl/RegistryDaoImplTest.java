@@ -127,7 +127,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
         authInfo.setSub("sub");
         AuthorizationToken authorizationToken = new AuthorizationToken(
                 authInfo,
-                null,
                 Collections.singletonList(new SimpleGrantedAuthority("blah")));
         SecurityContextHolder.getContext().setAuthentication(authorizationToken);
 	}
