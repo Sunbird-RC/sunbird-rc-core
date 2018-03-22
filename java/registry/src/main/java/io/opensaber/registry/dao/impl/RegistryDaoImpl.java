@@ -174,7 +174,6 @@ public class RegistryDaoImpl implements RegistryDao {
 				parsedVertices.push(new Pair<>(ver, newV));
 			}
 		}
-//		TODO: why catch?
 		parsedVertices.forEach(pv -> {
 			try {
 				addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph,methodOrigin);
@@ -243,24 +242,21 @@ public class RegistryDaoImpl implements RegistryDao {
 		Iterator<VertexProperty<Object>> iter = subject.properties();
 		while(iter.hasNext()){
 			VertexProperty<Object> property = iter.next();
-			if(encryptionService.encryptionRequired(property) && methodOrigin.equalsIgnoreCase("addOrUpdate")) {
+			String tailOfPropertyKey=property.key().substring(property.key().lastIndexOf("/") + 1).trim();
+			if(methodOrigin.equalsIgnoreCase("addOrUpdate") && encryptionService.encryptionRequired(property)) {
+				boolean existingEncyptedPropertyKey=tailOfPropertyKey.substring(0, Math.min(tailOfPropertyKey.length(), 9)).equalsIgnoreCase("encrypted");
 				propertyValue =  encryptionService.encrypt(property.value()).getBody();
-		        String encryptedKey = "@encrypted"+property.key().substring(property.key().lastIndexOf("/") + 1).trim();
-		        logger.info("propertyKey:  "+property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), encryptedKey)+
-		        		"====== propertyValue: "+propertyValue);
-		        setProperty(newSubject,property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), encryptedKey), propertyValue);
-			}
-			
-			if(methodOrigin.equalsIgnoreCase("read")) {	
-				boolean encryptedProperty = property.key().substring(property.key().lastIndexOf("/") + 1).trim().substring(0, Math.min(property.key().substring(property.key().lastIndexOf("/") + 1).trim().length(), 10)).equalsIgnoreCase("@encrypted");
-				if(encryptedProperty) {					
-					propertyValue = encryptionService.decrypt(property.value()).getBody();
-					String decryptedKey = property.key().replace(property.key().substring(property.key().lastIndexOf("/") + 1).trim(), property.key().substring(property.key().lastIndexOf("/") + 1).trim().substring(10));
-					logger.info("propertyKey: "+decryptedKey+"======== propertyValue: "+ propertyValue);
-					setProperty(newSubject,decryptedKey, propertyValue);
+				if(!existingEncyptedPropertyKey) {
+		        String encryptedKey = "encrypted"+tailOfPropertyKey;
+		        setProperty(newSubject,property.key().replace(tailOfPropertyKey, encryptedKey), propertyValue);
+		        property.remove();
 				}
+			}			
+			if(methodOrigin.equalsIgnoreCase("read") && (tailOfPropertyKey.substring(0, Math.min(tailOfPropertyKey.length(), 9)).equalsIgnoreCase("encrypted"))) {	
+					propertyValue = encryptionService.decrypt(property.value()).getBody();
+					String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
+					setProperty(newSubject,decryptedKey, propertyValue);
 			}	
-	
 			if(property.key().startsWith("meta.")){
                 buildPropertyMetaMap(propertyMetaPropertyMap, property);
             } 
