@@ -167,8 +167,12 @@ public class RegistryDaoImplTest extends RegistryTestBase {
                 entityPropertyCountMap.put(vertex.label(),entityPropertyCountMap.get(vertex.label())+1);
                 propIter.next();
             }
+            Iterator<Edge> edgesIter = vertex.edges(Direction.OUT);
+            while(edgesIter.hasNext()){
+                entityPropertyCountMap.put(vertex.label(),entityPropertyCountMap.get(vertex.label())+1);
+                edgesIter.next();
+            }
         }
-        System.out.println(">>>> "+entityPropertyCountMap);
         return entityPropertyCountMap;
     }
 
@@ -611,7 +615,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_update_iri_node_and_literal_nodes()
-            throws DuplicateRecordException, RecordNotFoundException, EncryptionException, NoSuchElementException, AuditFailedException {
+            throws DuplicateRecordException, RecordNotFoundException, EncryptionException, NoSuchElementException, AuditFailedException, LabelCannotBeNullException {
 
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
@@ -627,6 +631,9 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		registryDao.updateEntity(updateGraph, response, "addOrUpdate");
 
 		Graph updatedGraphResult = registryDao.getEntityById(response);
+
+        Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(rdfModel, updateRdfModel,Arrays.asList("http://example.com/voc/teacher/1.0.0/address"));
+        checkIfAuditRecordsAreRight(updatedGraphResult,generateUpdateMapFromRDF(updateRdfModelWithoutType));
 
 		ArrayList<String> result = new ArrayList<>();
 		String prefix = "http://example.com/voc/teacher/1.0.0";

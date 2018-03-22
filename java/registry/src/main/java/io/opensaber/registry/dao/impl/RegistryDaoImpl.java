@@ -163,6 +163,15 @@ public class RegistryDaoImpl implements RegistryDao {
 				if(!edgeAlreadyExists.isPresent()) {
 					logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), existingV.label()));
 					dbVertex.addEdge(e.label(), existingV);
+
+                    AuditRecord record = new AuditRecord();
+                    record
+                            .subject(dbVertex.label())
+                            .predicate(e.label())
+                            .oldObject(null)
+                            .newObject(existingV.label())
+                            .record(databaseProvider);
+
 				}
 				parsedVertices.push(new Pair<>(ver, existingV));
 			} else {
@@ -171,6 +180,15 @@ public class RegistryDaoImpl implements RegistryDao {
 				copyProperties(ver, newV, methodOrigin);
 				logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), newV.label()));
 				dbVertex.addEdge(e.label(), newV);
+
+                AuditRecord record = new AuditRecord();
+                record
+                        .subject(dbVertex.label())
+                        .predicate(e.label())
+                        .oldObject(null)
+                        .newObject(newV.label())
+                        .record(databaseProvider);
+
 				parsedVertices.push(new Pair<>(ver, newV));
 			}
 		}
