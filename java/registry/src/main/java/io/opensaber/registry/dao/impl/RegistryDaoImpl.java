@@ -249,15 +249,14 @@ public class RegistryDaoImpl implements RegistryDao {
 				if(!existingEncyptedPropertyKey) {
 		        String encryptedKey = "encrypted"+tailOfPropertyKey;
 		        setProperty(newSubject,property.key().replace(tailOfPropertyKey, encryptedKey), propertyValue);
-		        property.remove();
 				}
 			}			
-			if(methodOrigin.equalsIgnoreCase("read") && (tailOfPropertyKey.substring(0, Math.min(tailOfPropertyKey.length(), 9)).equalsIgnoreCase("encrypted"))) {	
+			else if(methodOrigin.equalsIgnoreCase("read") && (tailOfPropertyKey.substring(0, Math.min(tailOfPropertyKey.length(), 9)).equalsIgnoreCase("encrypted"))) {	
 					propertyValue = encryptionService.decrypt(property.value()).getBody();
 					String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
 					setProperty(newSubject,decryptedKey, propertyValue);
 			}	
-			if(property.key().startsWith("meta.")){
+			else if(property.key().startsWith("meta.")){
                 buildPropertyMetaMap(propertyMetaPropertyMap, property);
             } 
 			else {
