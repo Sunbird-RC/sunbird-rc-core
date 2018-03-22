@@ -35,7 +35,7 @@ public class AuthorizationFilter implements BaseMiddleware{
 		}
 		List<SimpleGrantedAuthority> authorityList = new ArrayList<SimpleGrantedAuthority>();
 		authorityList.add(new SimpleGrantedAuthority(authInfo.getAud()));
-		AuthorizationToken  authorizationToken = new AuthorizationToken(authInfo, token, authorityList);
+		AuthorizationToken  authorizationToken = new AuthorizationToken(authInfo, authorityList);
 		SecurityContextHolder.getContext().setAuthentication(authorizationToken);
 		return mapObject;
 	}

@@ -13,9 +13,8 @@ public class AuthorizationToken extends AbstractAuthenticationToken{
 	private String token;
     private final AuthInfo authInfo;
 
-    public AuthorizationToken( AuthInfo authInfo, String token, List<SimpleGrantedAuthority> grantedAuthorities ) {
+    public AuthorizationToken( AuthInfo authInfo, List<SimpleGrantedAuthority> grantedAuthorities ) {
     	super(grantedAuthorities);
-        this.token = token;
         this.authInfo = authInfo;
     }
 
