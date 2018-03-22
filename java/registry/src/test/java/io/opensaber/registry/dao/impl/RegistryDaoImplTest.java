@@ -5,13 +5,11 @@ package io.opensaber.registry.dao.impl;
 
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
-import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.model.AuditRecordReader;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 
 import io.opensaber.registry.util.RDFUtil;
-import org.apache.jena.base.Sys;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdf.model.Property;
 import org.apache.tinkerpop.gremlin.structure.*;
@@ -131,17 +129,31 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		assertEquals(1, IteratorUtils.count(entity.traversal().clone().V().hasNot("@audit")));
 		Vertex v = entity.traversal().V().has(T.label, label).next();
 		assertEquals("DAV Public School", v.property("http://example.com/voc/teacher/1.0.0/schoolName").value());
-        checkIfAuditRecordsAreRight(entity);
+        checkIfAuditRecordsAreRight(entity, null);
 	}
 
-    private void checkIfAuditRecordsAreRight(Graph entity) throws LabelCannotBeNullException {
+    private int checkIfAuditRecordsAreRight(Graph entity, Map<String, Map<String, Integer>> updateCountMap) throws LabelCannotBeNullException {
+	    System.out.println("ADJUSTMENT MAP="+updateCountMap);
+	    int count=0;
+	    int adjustedCount;
         Iterator it = getPropCounterMap(entity).entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry)it.next();
-            System.out.println(pair.getKey() + " = " + pair.getValue());
-            assertEquals(pair.getValue(), new AuditRecordReader(databaseProvider).fetchAuditRecords(String.valueOf(pair.getKey()),null).size());
+            Map.Entry<String,Integer> pair = (Map.Entry)it.next();
+            int updatedPropertyCount=0;
+            System.out.println("updateCountMap "+updateCountMap+" "+pair.getKey());
+            if(updateCountMap!=null) {
+                Map<String, Integer> labelPropertyMap = updateCountMap.get(String.valueOf(pair.getKey()));
+                if (labelPropertyMap != null) {
+                    updatedPropertyCount = labelPropertyMap.values().stream().mapToInt(i->i).sum();;
+                }
+            }
+            adjustedCount = pair.getValue().intValue()+updatedPropertyCount;
+            System.out.println(pair.getKey() + " = " + adjustedCount);
+            count+=adjustedCount;
+            assertEquals(adjustedCount, new AuditRecordReader(databaseProvider).fetchAuditRecords(String.valueOf(pair.getKey()),null).size());
             it.remove();
         }
+        return count;
     }
 
     private Map<String,Integer> getPropCounterMap(Graph entity) {
@@ -156,7 +168,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
                 propIter.next();
             }
         }
-        System.out.println(entityPropertyCountMap);
+        System.out.println(">>>> "+entityPropertyCountMap);
         return entityPropertyCountMap;
     }
 
@@ -177,7 +189,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Graph entity = registryDao.getEntityById(response);
 		long vertexCount = IteratorUtils.count(entity.traversal().clone().V());
 		assertEquals(5, vertexCount);
-        checkIfAuditRecordsAreRight(entity);
+        checkIfAuditRecordsAreRight(entity, null);
 //		Iterator mapIter = getPropCounterMap(entity);
 //        assertEquals(getPropCounterMap(entity), new AuditRecordReader(databaseProvider).fetchAuditRecords(response,null).size());
 	}
@@ -191,7 +203,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			String entity1Label = registryDao.addEntity(graphEntity1, "_:" + rootLabelEntity1);
 
 			Graph entity1 = registryDao.getEntityById(entity1Label);
-            checkIfAuditRecordsAreRight(entity1);
+            checkIfAuditRecordsAreRight(entity1, null);
 
 			// Expected count of vertices in one entity
 			assertEquals(5, IteratorUtils.count(entity1.traversal().V()));
@@ -202,7 +214,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			String entity2Label = registryDao.addEntity(graphEntity2, "_:" + rootLabelEntity2);
 
 			Graph entity2 = registryDao.getEntityById(entity2Label);
-            checkIfAuditRecordsAreRight(entity2);
+            checkIfAuditRecordsAreRight(entity2, null);
 
 			assertEquals(5, IteratorUtils.count(entity2.traversal().V()));
 
@@ -222,14 +234,20 @@ public class RegistryDaoImplTest extends RegistryTestBase {
     }
 	
 	@Test
-	public void test_adding_shared_nodes_with_new_properties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException {
+	public void test_adding_shared_nodes_with_new_properties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException, LabelCannotBeNullException {
 
 		// Add a new entity
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
 		String rootLabel = updateGraphFromRdf(rdfModel, graph);
-		registryDao.addEntity(graph, String.format("_:%s", rootLabel));
-
+		System.out.println("PRINTING MODEL TO ADD");
+        printModel(rdfModel);
+        String newEntityResponse;
+        newEntityResponse = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+        Graph entity = registryDao.getEntityById(newEntityResponse);
+        System.out.println("CHECKING AUDIT RECORDS");
+        int count1 = checkIfAuditRecordsAreRight(entity, null);
+        System.out.println("AUDIT RECORDS "+count1);
 		// Create a new TinkerGraph with the existing jsonld
 		Graph newEntityGraph = TinkerGraph.open();
 		Model newRdfModel = getNewValidRdf();
@@ -245,26 +263,37 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Literal literal = ResourceFactory.createPlainLiteral("Gurgaon alias");
 		newRdfModel.add(ResourceFactory.createStatement(resource, predicate, literal));
 		String newRootLabel = updateGraphFromRdf(newRdfModel, newEntityGraph);
-
-		String newEntityResponse = registryDao.addEntity(newEntityGraph, String.format("_:%s", newRootLabel));
-		Graph entity = registryDao.getEntityById(newEntityResponse);
+        printModel(newRdfModel);
+		newEntityResponse = registryDao.addEntity(newEntityGraph, String.format("_:%s", newRootLabel));
+		entity = registryDao.getEntityById(newEntityResponse);
+        int count2 = checkIfAuditRecordsAreRight(entity, null);
+        System.out.println("AUDIT RECORDS "+count2);
 		String propertyValue = (String) entity.traversal().clone().V()
 			.properties("http://example.com/voc/teacher/1.0.0/districtAlias")
 			.next()
 			.value();
 		assertEquals("Gurgaon alias", propertyValue);
+		assertEquals(1,count2-count1);
 
 	}
-	
-	@Test
-	public void test_adding_shared_nodes_with_updated_properties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException {
+
+    private void printModel(Model rdfModel) {
+        Iterator iter = rdfModel.listStatements();
+        while(iter.hasNext()){
+            System.out.println(iter.next());
+}
+    }
+
+    @Test
+	public void test_adding_shared_nodes_with_updated_properties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException, LabelCannotBeNullException {
 
 		// Add a new entity
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
 		String rootLabel = updateGraphFromRdf(rdfModel, graph);
-		registryDao.addEntity(graph, String.format("_:%s", rootLabel));
-
+		String label = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+        Graph entity0 = registryDao.getEntityById(label);
+        checkIfAuditRecordsAreRight(entity0, null);
 		// Create a new TinkerGraph with the existing jsonld
 		Graph newEntityGraph = TinkerGraph.open();
 		Model newRdfModel = getNewValidRdf();
@@ -284,6 +313,11 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 		String newEntityResponse = registryDao.addEntity(newEntityGraph, String.format("_:%s", newRootLabel));
 		Graph entity = registryDao.getEntityById(newEntityResponse);
+		Map<String,Map<String,Integer>> updateCountMap = new HashMap<>();
+        Map<String,Integer> updatePropCountMap = new HashMap<>();
+        updatePropCountMap.put("http://example.com/voc/teacher/1.0.0/municipality",1);
+		updateCountMap.put(addressLabel, updatePropCountMap);
+        checkIfAuditRecordsAreRight(entity0,updateCountMap);
 		String propertyValue = (String) entity.traversal().clone().V()
 				.properties("http://example.com/voc/teacher/1.0.0/municipality")
 				.next()

@@ -273,19 +273,24 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
     private void setProperty(Vertex v, String key, Object newValue) throws AuditFailedException {
-        Object oldValue = v.property(key);
+        VertexProperty vp = v.property(key);
+        Object oldValue = vp.isPresent() ? vp.value() : null;
         v.property(key, newValue);
-	    if(v.graph().variables().get("@persisted").isPresent()) {
-	        System.out.println("AUDITING");
-            AuditRecord record = new AuditRecord();
-            record
-                    .subject(v.label())
-                    .predicate(key)
-                    .oldObject(oldValue)
-                    .newObject(newValue)
-                    .record(databaseProvider);
+        if(!Objects.equals(oldValue,newValue)) {
+            if (v.graph().variables().get("@persisted").isPresent()) {
+//                System.out.println("AUDITING");
+                AuditRecord record = new AuditRecord();
+                record
+                        .subject(v.label())
+                        .predicate(key)
+                        .oldObject(oldValue)
+                        .newObject(newValue)
+                        .record(databaseProvider);
+            } else {
+//                System.out.println("NOT AUDITING");
+            }
         } else {
-            System.out.println("NOT AUDITING");
+//            System.out.println("NO CHANGE!");
         }
     }
 

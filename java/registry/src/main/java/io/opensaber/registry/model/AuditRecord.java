@@ -10,8 +10,8 @@ import java.util.List;
 public class AuditRecord {
     private String subject;
     private String predicate;
-    private Object oldObject;
-    private Object newObject;
+    private String oldObject;
+    private String newObject;
 
     public AuditRecord subject(String label) {
         this.subject = label+"-AUDIT";
@@ -24,12 +24,12 @@ public class AuditRecord {
     }
 
     public AuditRecord oldObject(Object oldValue) {
-        this.oldObject = oldValue;
+        this.oldObject = String.valueOf(oldValue);
         return this;
     }
 
     public AuditRecord newObject(Object newValue) {
-        this.newObject = newValue;
+        this.newObject = String.valueOf(newValue);
         return this;
     }
 
@@ -43,16 +43,16 @@ public class AuditRecord {
                 '}';
     }
 
-    public boolean record(DatabaseProvider provider) throws AuditFailedException {
-        System.out.println("AUDITING as "+subject);
+    public void record(DatabaseProvider provider) throws AuditFailedException {
+//        System.out.println("AUDITING as "+subject);
         GraphTraversalSource _source = provider.getGraphStore().traversal().clone();
         boolean rootNodeExists = _source.V().hasLabel(subject).hasNext();
         Vertex rootVertex;
         if(!rootNodeExists){
-            System.out.println("AUDIT ROOT NOT FOUND - CREATING");
+//            System.out.println("AUDIT ROOT NOT FOUND - CREATING");
             rootVertex = _source.addV(subject).next();
         } else {
-            System.out.println("AUDIT ROOT FOUND - NOT CREATING");
+//            System.out.println("AUDIT ROOT FOUND - NOT CREATING");
             rootVertex = _source.V().hasLabel(subject).next();
             rootVertex.property("@audit","true");
         }
@@ -63,8 +63,7 @@ public class AuditRecord {
         recordVertex.property("@audit",true);
         recordVertex.property("@auditRecord",true);
         rootVertex.addEdge("audit",recordVertex).property("@audit",true);
-//        System.out.println("AUDIT "+subject+" | "+predicate+" | "+oldObject+" > "+newObject);
-        return false;
+        System.out.println(this);
     }
 
     public String getPredicate() {
