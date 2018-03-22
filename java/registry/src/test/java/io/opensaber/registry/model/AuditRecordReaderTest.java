@@ -66,7 +66,7 @@ public class AuditRecordReaderTest {
     @Test
     public void testFetchingUnMatchedLabel() throws LabelCannotBeNullException {
         when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
-        when(hasLabelMock.out("record")).thenReturn(traversalMock);
+        when(hasLabelMock.out("audit")).thenReturn(traversalMock);
         when(traversalMock.hasNext()).thenReturn(false);
         List<AuditRecord> auditRecords = auditRecordReader.fetchAuditRecords("X",null);
         assertNotNull(auditRecords);
@@ -76,7 +76,7 @@ public class AuditRecordReaderTest {
     @Test
     public void testSingleAuditRecordMatch() throws LabelCannotBeNullException {
         when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
-        when(hasLabelMock.out("record")).thenReturn(traversalMock);
+        when(hasLabelMock.out("audit")).thenReturn(traversalMock);
         Vertex auditVertex1 = mock(Vertex.class);
         VertexProperty predicate1 = mock(VertexProperty.class);
         VertexProperty oldObject1 = mock(VertexProperty.class);
@@ -102,7 +102,7 @@ public class AuditRecordReaderTest {
     public void testPredicateButNoMatch() throws LabelCannotBeNullException {
         when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
         GraphTraversal tempTraversalMock = mock(GraphTraversal.class);
-        when(hasLabelMock.out("record")).thenReturn(tempTraversalMock);
+        when(hasLabelMock.out("audit")).thenReturn(tempTraversalMock);
         when(tempTraversalMock.has("predicate","P")).thenReturn(traversalMock);
         List<AuditRecord> auditRecords = auditRecordReader.fetchAuditRecords("X","P");
         when(traversalMock.hasNext()).thenReturn(false);
@@ -113,7 +113,7 @@ public class AuditRecordReaderTest {
     public void testPredicateMatchButOneRecord() throws LabelCannotBeNullException {
         when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
         GraphTraversal tempTraversalMock = mock(GraphTraversal.class);
-        when(hasLabelMock.out("record")).thenReturn(tempTraversalMock);
+        when(hasLabelMock.out("audit")).thenReturn(tempTraversalMock);
         when(tempTraversalMock.has("predicate","PREDICATE1")).thenReturn(traversalMock);
         Vertex auditVertex1 = mock(Vertex.class);
         VertexProperty predicate1 = mock(VertexProperty.class);
