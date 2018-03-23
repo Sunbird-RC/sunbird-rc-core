@@ -2,10 +2,12 @@ package io.opensaber.registry.interceptor;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.opensaber.pojos.ValidationResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +43,13 @@ public class RDFValidationInterceptor extends BaseRequestHandler implements Hand
 			Map<String, Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
 			mergeRequestAttributes(attributeMap);
 			request = getRequest();
-			if (request.getAttribute(Constants.RDF_VALIDATION_OBJECT) != null) {
+			ValidationResponse validationResponse = (ValidationResponse) request.getAttribute(Constants.RDF_VALIDATION_OBJECT);
+			if (validationResponse != null && validationResponse.isValid()) {
 				return true;
+			} else {
+				setResponse(response);
+				writeResponseObj(validationResponse.getError(), validationResponse);
+				response = getResponse();
 			}
 		} catch (MiddlewareHaltException e) {
 			logger.error("MiddlewareHaltException from RDFValidationInterceptor: ", e);

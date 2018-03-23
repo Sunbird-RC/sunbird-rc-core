@@ -37,24 +37,23 @@ public class RDFValidator implements BaseMiddleware{
 		Object validationRDF = mapData.get(Constants.RDF_VALIDATION_MAPPER_OBJECT);
 		if (RDF == null) {
 			throw new MiddlewareHaltException(RDF_DATA_IS_MISSING);
-		}else if(validationRDF == null){
-			throw new MiddlewareHaltException(RDF_VALIDATION_MAPPING_MISSING); 
-		}else if(!(RDF instanceof Model)){
+		} else if (validationRDF == null) {
+			throw new MiddlewareHaltException(RDF_VALIDATION_MAPPING_MISSING);
+		} else if (!(RDF instanceof Model)) {
 			throw new MiddlewareHaltException(RDF_DATA_IS_INVALID);
-		}else if(!(validationRDF instanceof Model)){
+		} else if (!(validationRDF instanceof Model)) {
 			throw new MiddlewareHaltException(RDF_VALIDATION_MAPPING_IS_INVALID);
 		} else {
 			ShaclexValidator validator = new ShaclexValidator();
 			Schema schema = validator.readSchema(schemaFileName, SCHEMAFORMAT, PROCESSOR);
 			mergeModels((Model) RDF, (Model) validationRDF);
-			/*StringWriter sw = new StringWriter();
-			RDFDataMgr.write(sw, (Model)validationRDF, Lang.TTL);
-			System.out.println(sw.toString());*/
 			ValidationResponse validationResponse = validator.validate((Model) validationRDF, schema);
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
+			/*
 			if (!validationResponse.isValid()) {
 				throw new MiddlewareHaltException(RDF_DATA_IS_INVALID);
 			}
+			*/
 			return mapData;
 		}
 	}

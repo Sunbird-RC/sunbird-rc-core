@@ -1,19 +1,51 @@
-[
-    {
-        "@id":"http://example.org/S",
-        "http://www.w3.org/ns/shacl#targetNode":[
-            {
-                "@id":"http://example.org/x"
-            }]},
-            {
-                "@id":"http://example.org/x",
-                "http://example.org/p":[
-                    {
-                        "@id":"http://example.org/y"
-                    }
-                ]
-            },
-            {
-                "@id":"http://example.org/y"
-            }
-]
+{
+  "@context":{
+    "rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs":"http://www.w3.org/2000/01/rdf-schema#",
+    "teacher":"http://example.com/voc/teacher/1.0.0/",
+    "xsd":"http://www.w3.org/2001/XMLSchema#",
+    "@vocab":"http://example.com/voc/teacher/1.0.0/"
+  },
+  "@type":"Teacher",
+  "serialNum": 12,
+  "teacherCode":"12234",
+  "nationalIdentifier":"1234567890123456",
+  "teacherName":"Marvin Pande",
+  "gender":{
+    "@id":"teacher:GenderTypeCode-MALE"
+  },
+  "birthDate": {
+    "@value": "1990-12-06",
+    "@type": "xsd:date"
+  },
+  "socialCategory":{
+    "@id":"teacher:SocialCategoryTypeCode-GENERAL"
+  },
+  "highestAcademicQualification":{
+    "@id":"teacher:AcademicQualificationTypeCode-PHD"
+  },
+  "highestTeacherQualification":{
+    "@id":"teacher:TeacherQualificationTypeCode-MED"
+  },
+  "yearOfJoiningService":"2014",
+  "inServiceTeacherTrainingFromBRC":{
+    "@type":"InServiceTeacherTrainingFromBlockResourceCentre",
+    "teacher:daysOfInServiceTeacherTraining":"10"
+  },
+  "inServiceTeacherTrainingFromCRC":{
+    "@type":"InServiceTeacherTrainingFromClusterResourceCentre",
+    "teacher:daysOfInServiceTeacherTraining":"2"
+  },
+  "inServiceTeacherTrainingFromDIET":{
+    "@type":"InServiceTeacherTrainingFromDIET",
+    "teacher:daysOfInServiceTeacherTraining":"5.5"
+  },
+  "inServiceTeacherTrainingFromOthers":{
+    "@type":"InServiceTeacherTrainingFromOthers",
+    "teacher:daysOfInServiceTeacherTraining":"3.5"
+  },
+  "nonTeachingAssignmentsForAcademicCalendar":{
+    "@type":"NonTeachingAssignmentsForAcademicCalendar",
+    "teacher:daysOfNonTeachingAssignments":"6"
+  }
+}

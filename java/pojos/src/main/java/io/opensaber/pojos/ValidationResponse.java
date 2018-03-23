@@ -1,22 +1,41 @@
 package io.opensaber.pojos;
 
-import java.util.List;
+import com.google.gson.annotations.Expose;
 
-public class ValidationResponse {
-	
+import java.util.HashMap;
+
+public class ValidationResponse extends BaseErrorResponse {
+
+	@Expose(serialize = false)
 	private boolean isValid;
-	private List<String> error;
+	@Expose(serialize = false)
+	private String error;
+	private HashMap<String, String> fields;
+
+	public ValidationResponse(String type) {
+		super(type);
+	}
+
 	public boolean isValid() {
 		return isValid;
 	}
 	public void setValid(boolean isValid) {
 		this.isValid = isValid;
 	}
-	public List<String> getError() {
+
+	public String getError() {
 		return error;
 	}
-	public void setError(List<String> error) {
+
+	public void setError(String error) {
 		this.error = error;
 	}
 
+	public HashMap<String, String> getFields() {
+		return fields;
+	}
+
+	public void setFields(HashMap<String, String> fields) {
+		this.fields = fields;
+	}
 }
