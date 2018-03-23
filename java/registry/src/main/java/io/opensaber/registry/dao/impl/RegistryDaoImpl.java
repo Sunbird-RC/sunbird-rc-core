@@ -35,6 +35,7 @@ import io.opensaber.registry.service.EncryptionService;
 @Component
 public class RegistryDaoImpl implements RegistryDao {
 
+    public static final String META = "meta.";
     private static Logger logger = LoggerFactory.getLogger(RegistryDaoImpl.class);
 
 	@Autowired
@@ -275,7 +276,7 @@ public class RegistryDaoImpl implements RegistryDao {
 					String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
 					setProperty(newSubject,decryptedKey, propertyValue);
 			}	
-			else if(property.key().startsWith("meta.")){
+			else if(isaMetaProperty(property.key())){
                 buildPropertyMetaMap(propertyMetaPropertyMap, property);
             } 
 			else {
@@ -286,11 +287,15 @@ public class RegistryDaoImpl implements RegistryDao {
         setMetaPropertyFromMap(newSubject, propertyMetaPropertyMap);
 	}
 
+    private boolean isaMetaProperty(String key) {
+        return key.startsWith(META);
+    }
+
     private void setProperty(Vertex v, String key, Object newValue) throws AuditFailedException {
         VertexProperty vp = v.property(key);
         Object oldValue = vp.isPresent() ? vp.value() : null;
         v.property(key, newValue);
-        if(!Objects.equals(oldValue,newValue)) {
+        if(!isaMetaProperty(key)&&!Objects.equals(oldValue,newValue)) {
             if (v.graph().variables().get("@persisted").isPresent()) {
 //                System.out.println("AUDITING");
                 AuditRecord record = new AuditRecord();
@@ -331,11 +336,15 @@ public class RegistryDaoImpl implements RegistryDao {
                 if (newSubject.graph().features().vertex().supportsMetaProperties()) {
                     newSubject.property(property.key()).property(metaProperty.key(), metaProperty.value());
                 } else {
-                    String metaKey = "meta." + property.key() + "." + metaProperty.key();
+                    String metaKey = getMetaKey(property, metaProperty);
                     setProperty(newSubject,metaKey, metaProperty.value());
                 }
             }
         }
+    }
+
+    private String getMetaKey(VertexProperty<Object> property, Property<Object> metaProperty) {
+        return META + property.key() + "." + metaProperty.key();
     }
 
     private void buildPropertyMetaMap(HashMap<String, HashMap<String, String>> propertyMetaPropertyMap, VertexProperty<Object> property) {

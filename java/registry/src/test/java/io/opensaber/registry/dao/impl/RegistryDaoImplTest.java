@@ -16,12 +16,7 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdf.model.Property;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
@@ -370,7 +365,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		getVertexForSubject(label1, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
 		String response = registryDao.addEntity(graph, label1);
 		registryDao.getEntityById(label2);
-		closeDB();
 	}
 
 	private void dump_graph(Graph g,String filename) throws IOException {
@@ -696,7 +690,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	*/
 
 	@After
-	public void closeGraph() throws Exception{
+	public void shutDown() throws Exception{
 		if(graph!=null){
 			graph.close();
 		}

@@ -1,5 +1,6 @@
 package io.opensaber.registry.model;
 
+import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
 import io.opensaber.registry.sink.DatabaseProvider;
@@ -34,6 +35,7 @@ public class AuditRecordReaderTest {
     public ExpectedException expectedEx = ExpectedException.none();
     private GraphTraversal hasLabelMock;
     private GraphTraversal traversalMock;
+    private AuthInfo authInfo;
 
     @Before
     public void setUp() throws Exception {
@@ -45,6 +47,7 @@ public class AuditRecordReaderTest {
         this.VMock = mock(GraphTraversal.class);
         this.hasLabelMock = mock(GraphTraversal.class);
         this.traversalMock = mock(GraphTraversal.class);
+        this.authInfo = mock(AuthInfo.class);
         when(databaseProviderMock.getGraphStore()).thenReturn(graphMock);
         when(graphMock.traversal()).thenReturn(graphTraversalSourceMock);
         when(graphTraversalSourceMock.clone()).thenReturn(graphTraversalSourceCloneMock);
@@ -81,12 +84,19 @@ public class AuditRecordReaderTest {
         VertexProperty predicate1 = mock(VertexProperty.class);
         VertexProperty oldObject1 = mock(VertexProperty.class);
         VertexProperty newObject1 = mock(VertexProperty.class);
+        VertexProperty authInfo1 = mock(VertexProperty.class);
         when(auditVertex1.property("predicate")).thenReturn(predicate1);
+        when(predicate1.isPresent()).thenReturn(true);
         when(predicate1.value()).thenReturn("PREDICATE1");
         when(auditVertex1.property("oldObject")).thenReturn(oldObject1);
+        when(oldObject1.isPresent()).thenReturn(true);
         when(oldObject1.value()).thenReturn("OLDOBJECT1");
         when(auditVertex1.property("newObject")).thenReturn(newObject1);
+        when(newObject1.isPresent()).thenReturn(true);
         when(newObject1.value()).thenReturn("NEWOBJECT1");
+        when(auditVertex1.property("authInfo")).thenReturn(authInfo1);
+        when(authInfo1.isPresent()).thenReturn(true);
+        when(authInfo1.value()).thenReturn("AUTHINFO1");
         when(traversalMock.hasNext()).thenReturn(true,false);
         when(traversalMock.next()).thenReturn(auditVertex1);
         List<AuditRecord> auditRecords = auditRecordReader.fetchAuditRecords("X",null);
@@ -119,13 +129,21 @@ public class AuditRecordReaderTest {
         VertexProperty predicate1 = mock(VertexProperty.class);
         VertexProperty oldObject1 = mock(VertexProperty.class);
         VertexProperty newObject1 = mock(VertexProperty.class);
+        VertexProperty authInfo1 = mock(VertexProperty.class);
         when(auditVertex1.property("predicate")).thenReturn(predicate1);
+        when(predicate1.isPresent()).thenReturn(true);
         when(predicate1.value()).thenReturn("PREDICATE1");
         when(auditVertex1.property("oldObject")).thenReturn(oldObject1);
+        when(oldObject1.isPresent()).thenReturn(true);
         when(oldObject1.value()).thenReturn("OLDOBJECT1");
         when(auditVertex1.property("newObject")).thenReturn(newObject1);
+        when(newObject1.isPresent()).thenReturn(true);
         when(newObject1.value()).thenReturn("NEWOBJECT1");
+        when(auditVertex1.property("authInfo")).thenReturn(authInfo1);
+        when(authInfo1.isPresent()).thenReturn(true);
+        when(authInfo1.value()).thenReturn("AUTHINFO1");
         when(traversalMock.hasNext()).thenReturn(true,false);
+        when(predicate1.isPresent()).thenReturn(true);
         when(traversalMock.next()).thenReturn(auditVertex1);
         List<AuditRecord> auditRecords = auditRecordReader.fetchAuditRecords("X","PREDICATE1");
         assertEquals(1,auditRecords.size());

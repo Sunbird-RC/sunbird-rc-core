@@ -18,6 +18,7 @@ public class AuditRecord {
     private String predicate;
     private String oldObject;
     private String newObject;
+    private String readOnlyAuthInfo;
 
     public AuditRecord subject(String label) {
         this.subject = label+"-AUDIT";
@@ -46,6 +47,7 @@ public class AuditRecord {
                 ", predicate='" + predicate + '\'' +
                 ", oldObject=" + oldObject +
                 ", newObject=" + newObject +
+                ", readOnlyAuthInfo=" + readOnlyAuthInfo +
                 '}';
     }
 
@@ -76,7 +78,6 @@ public class AuditRecord {
 
     private void updateUserInfo(Vertex vertex) {
         String authinfo = new JSONObject( getCurrentUserInfo() ).toString();
-        System.out.println("authinfo "+authinfo);
         vertex.property("authInfo",authinfo);
     }
 
@@ -98,6 +99,10 @@ public class AuditRecord {
 
     private AuthInfo getCurrentUserInfo(){
         return (AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    public void readOnlyAuthInfo(String authInfo) {
+        this.readOnlyAuthInfo=authInfo;
     }
 }
 
