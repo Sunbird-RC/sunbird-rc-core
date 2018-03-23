@@ -9,7 +9,10 @@
   "@type":"Teacher",
   "serialNum": 12,
   "teacherCode":"12234",
-  "nationalIdentifier":"1234567890123456",
+  "nationalIdentifier": {
+    "@value": 1234567890123456.1,
+    "@type": "xsd:decimal"
+  },
   "teacherName":"Marvin Pande",
   "gender":{
     "@id":"teacher:GenderTypeCode-MALE"
@@ -30,19 +33,31 @@
   "yearOfJoiningService":"2014",
   "inServiceTeacherTrainingFromBRC":{
     "@type":"InServiceTeacherTrainingFromBlockResourceCentre",
-    "teacher:daysOfInServiceTeacherTraining":"10"
+    "teacher:daysOfInServiceTeacherTraining": {
+      "@value": 10.8,
+      "@type": "xsd:decimal"
+    }
   },
   "inServiceTeacherTrainingFromCRC":{
     "@type":"InServiceTeacherTrainingFromClusterResourceCentre",
-    "teacher:daysOfInServiceTeacherTraining":"2"
+    "teacher:daysOfInServiceTeacherTraining": {
+      "@value": 2.3,
+      "@type": "xsd:decimal"
+    }
   },
   "inServiceTeacherTrainingFromDIET":{
     "@type":"InServiceTeacherTrainingFromDIET",
-    "teacher:daysOfInServiceTeacherTraining":"5.5"
+    "teacher:daysOfInServiceTeacherTraining": {
+      "@value": 5.7,
+      "@type": "xsd:decimal"
+    }
   },
   "inServiceTeacherTrainingFromOthers":{
     "@type":"InServiceTeacherTrainingFromOthers",
-    "teacher:daysOfInServiceTeacherTraining":"3.5"
+    "teacher:daysOfInServiceTeacherTraining": {
+      "@value": 3.5,
+      "@type": "xsd:decimal"
+    }
   },
   "nonTeachingAssignmentsForAcademicCalendar":{
     "@type":"NonTeachingAssignmentsForAcademicCalendar",

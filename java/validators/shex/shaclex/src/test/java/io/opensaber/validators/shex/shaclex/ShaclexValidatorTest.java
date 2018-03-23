@@ -1,5 +1,6 @@
 package io.opensaber.validators.shex.shaclex;
 
+import com.google.gson.*;
 import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.pojos.ValidationResponse;
@@ -11,7 +12,9 @@ import org.apache.jena.vocabulary.RDF;
 import org.junit.Test;
 import scala.Option;
 
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -22,8 +25,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ShaclexValidatorTest {
 	
@@ -31,7 +33,7 @@ public class ShaclexValidatorTest {
 	private static final String PROCESSOR 	= "shex";
 
 	@Test
-	public void testValidateModelSchema() throws Exception {
+	public void test_validate_model_schema() throws Exception {
 
 		String dataString = new String(Files.readAllBytes(Paths.get(getPath("good1.jsonld"))), StandardCharsets.UTF_8);
 		ValidationResponse validationResponse =
@@ -39,25 +41,146 @@ public class ShaclexValidatorTest {
 						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
 		assertNotNull(validationResponse);
 		assertTrue(validationResponse.isValid());
+		assertEquals(0, validationResponse.getFields().size());
+	}
+
+
+	@Test
+	public void test_validate_invalid_primitive_literal_datatype() throws Exception {
+
+		JsonParser p = new JsonParser();
+		JsonObject jsonObject = p.parse(new InputStreamReader
+				(this.getClass().getClassLoader().getResourceAsStream("good1.jsonld"))).getAsJsonObject();
+		jsonObject.addProperty("serialNum", "14");
+
+		String dataString = new Gson().toJson(jsonObject);
+		ValidationResponse validationResponse =
+				validate(dataString, "JSON-LD",
+						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+
+		assertNotNull(validationResponse);
+		assertFalse(validationResponse.isValid());
+		assertEquals(1, validationResponse.getFields().size());
+		validationResponse.getFields().forEach((key, value) -> {
+			assertEquals("http://example.com/voc/teacher/1.0.0/serialNum", key);
+			assertEquals("14 does not have datatype xsd:integer", value);
+		});
+	}
+
+	@Test
+	public void test_validate_invalid_typed_literal_datatype() throws Exception {
+
+		JsonParser p = new JsonParser();
+		JsonObject jsonObject = p.parse(new InputStreamReader
+				(this.getClass().getClassLoader().getResourceAsStream("good1.jsonld"))).getAsJsonObject();
+		jsonObject.add("nationalIdentifier", p.parse("{\"@value\": \"abc\", \"@type\": \"xsd:decimal\"}"));
+
+		String dataString = new Gson().toJson(jsonObject);
+		ValidationResponse validationResponse =
+				validate(dataString, "JSON-LD",
+						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+
+		assertNotNull(validationResponse);
+		assertFalse(validationResponse.isValid());
+		assertEquals(1, validationResponse.getFields().size());
+		validationResponse.getFields().forEach((key, value) -> {
+			assertEquals("http://example.com/voc/teacher/1.0.0/nationalIdentifier", key);
+			assertEquals("Details: Lexical form 'abc' is not a legal instance of " +
+					"Datatype[http://www.w3.org/2001/XMLSchema#decimal -> class java.math.BigDecimal] Lexical form 'abc' " +
+					"is not a legal instance of Datatype[http://www.w3.org/2001/XMLSchema#decimal -> class java.math.BigDecimal] " +
+					"during parse -org.apache.xerces.impl.dv.InvalidDatatypeValueException: cvc-datatype-valid.1.2.1: 'abc' " +
+					"is not a valid value for 'decimal'.", value);
+		});
+	}
+
+	@Test
+	public void test_validate_invalid_date_datatype() throws Exception {
+
+		JsonParser p = new JsonParser();
+		JsonObject jsonObject = p.parse(new InputStreamReader
+				(this.getClass().getClassLoader().getResourceAsStream("good1.jsonld"))).getAsJsonObject();
+		jsonObject.addProperty("birthDate", "1990-12-06");
+
+		String dataString = new Gson().toJson(jsonObject);
+		ValidationResponse validationResponse =
+				validate(dataString, "JSON-LD",
+						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+		assertNotNull(validationResponse);
+		assertFalse(validationResponse.isValid());
+		assertEquals(1, validationResponse.getFields().size());
+		validationResponse.getFields().forEach((key, value) -> {
+			assertEquals("http://example.com/voc/teacher/1.0.0/birthDate", key);
+			assertEquals("1990-12-06 does not have datatype xsd:date", value);
+		});
+	}
+
+	@Test
+	public void test_validate_enumerated_iri_property() throws Exception {
+
+		JsonParser p = new JsonParser();
+		JsonObject jsonObject = p.parse(new InputStreamReader
+				(this.getClass().getClassLoader().getResourceAsStream("good1.jsonld"))).getAsJsonObject();
+		jsonObject.add("gender", p.parse("{\"@id\" : \"teacher:GenderTypeCode-INVALID\"}"));
+
+		String dataString = new Gson().toJson(jsonObject);
+		ValidationResponse validationResponse =
+				validate(dataString, "JSON-LD",
+						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+		assertNotNull(validationResponse);
+		assertFalse(validationResponse.isValid());
+		assertEquals(1, validationResponse.getFields().size());
+		validationResponse.getFields().forEach((key, value) -> {
+			assertEquals("http://example.com/voc/teacher/1.0.0/gender", key);
+			assertEquals("Error: teacher:GenderTypeCode-INVALID does not belong to " +
+					"[<http://example.com/voc/teacher/1.0.0/GenderTypeCode-MALE>,<http://example.com/voc/teacher/1.0.0/GenderTypeCode-FEMALE>]", value);
+		});
+	}
+
+	@Test
+	public void test_validate_nested_literal_property() throws Exception {
+
+		JsonParser p = new JsonParser();
+		JsonObject jsonObject = p.parse(new InputStreamReader
+				(this.getClass().getClassLoader().getResourceAsStream("good1.jsonld"))).getAsJsonObject();
+		jsonObject.add("inServiceTeacherTrainingFromOthers",
+				p.parse("{\"@type\":\"InServiceTeacherTrainingFromOthers\",\"teacher:daysOfInServiceTeacherTraining\": {\"@value\": \"abc\",\"@type\": \"xsd:decimal\"}}"));
+
+		String dataString = new Gson().toJson(jsonObject);
+		ValidationResponse validationResponse =
+				validate(dataString, "JSON-LD",
+						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+		assertNotNull(validationResponse);
+		assertFalse(validationResponse.isValid());
+		assertEquals(1, validationResponse.getFields().size());
+
+		validationResponse.getFields().forEach((key, value) -> {
+			assertEquals("http://example.com/voc/teacher/1.0.0/daysOfInServiceTeacherTraining", key);
+			assertEquals("Details: Lexical form 'abc' is not a legal instance of " +
+					"Datatype[http://www.w3.org/2001/XMLSchema#decimal -> class java.math.BigDecimal] Lexical form 'abc' " +
+					"is not a legal instance of Datatype[http://www.w3.org/2001/XMLSchema#decimal -> class java.math.BigDecimal] " +
+					"during parse -org.apache.xerces.impl.dv.InvalidDatatypeValueException: cvc-datatype-valid.1.2.1: 'abc' " +
+					"is not a valid value for 'decimal'.", value);
+		});
+
 	}
 
 	private ValidationResponse validate(String data, String dataFormat, String schemaFile,
 									   String schemaFormat, String processor) throws Exception {
 		ShaclexValidator validator = new ShaclexValidator();
-		System.out.println("Reading data JSONLD " + data);
-		Model dataModel = ShaclexValidator.parse(data, dataFormat);//RDFDataMgr.loadModel(dataFile);
+		Model dataModel = ShaclexValidator.parse(data, dataFormat);
 		Model validationRDF = generateShapeModel(dataModel);
 		mergeModels(dataModel, validationRDF);
-		System.out.println("Data model with the target shapes for validation: \n" + printRDF(validationRDF));
 		Schema schema = readSchema(Paths.get(schemaFile), schemaFormat, processor);
 		return validator.validate(validationRDF, schema);
 	}
 
+	/*
 	private String printRDF(Model validationRdf) {
 		StringWriter sw = new StringWriter();
 		RDFDataMgr.write(sw, validationRdf, Lang.TTL);
 		return sw.toString();
 	}
+	*/
 
 
 	private void mergeModels(Model RDF, Model validationRDF) {

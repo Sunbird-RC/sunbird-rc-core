@@ -13,7 +13,7 @@ teacher:TeacherShape CLOSED{
 	a [teacher:Teacher] ;
     teacher:serialNum @teacher:isAnInteger ;
     teacher:teacherCode @teacher:isAString {0,1} ;
-    teacher:nationalIdentifier @teacher:isAString {0,1} ;
+    teacher:nationalIdentifier @teacher:isADecimal *;
     teacher:teacherName @teacher:isAString ;
     teacher:gender [teacher:GenderTypeCode-MALE teacher:GenderTypeCode-FEMALE] ;
     teacher:birthDate @teacher:isADate ;
@@ -36,7 +36,7 @@ teacher:BasicProficiencyLevelShape CLOSED{
 
 teacher:InServiceTeacherTrainingShape CLOSED{
 	a [teacher:InServiceTeacherTrainingFromBlockResourceCentre teacher:InServiceTeacherTrainingFromClusterResourceCentre teacher:InServiceTeacherTrainingFromDIET teacher:InServiceTeacherTrainingFromOthers] ;
-	teacher:daysOfInServiceTeacherTraining @teacher:isAString
+	teacher:daysOfInServiceTeacherTraining @teacher:isADecimal
 }
 
 teacher:NonTeachingAssignmentsForAcademicCalendarShape CLOSED{
