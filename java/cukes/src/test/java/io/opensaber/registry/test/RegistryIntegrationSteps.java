@@ -5,10 +5,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RDFDataMgr;
@@ -17,8 +21,10 @@ import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -39,8 +45,10 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	//private static final String VALID_NEWJSONLD= "newSchool.jsonld";
 	private static final String VALID_NEWJSONLD= "teacher.jsonld";
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
+	private static final String INVALID_NEWJSONLD= "invalid-teacher.jsonld";
 	private static final String ADD_ENTITY = "addEntity";
 	private static final String READ_ENTITY = "getEntity";
+	private static final String UPDATE_ENTITY = "entity";
 	private static final String AUTH_HEADER_NAME = "x-authenticated-user-token";
 		
 	private RestTemplate restTemplate;
@@ -51,6 +59,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private String id;
 	private static String duplicateLabel;
 	private HttpHeaders headers;
+	private String updateId;
 	
 	@Before
 	public void initializeData(){
@@ -65,9 +74,16 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		assertNotNull(jsonld);
 	}
 	
-	@Given("^an invalid record")
-	public void invalidJsonldData(){
+	@Given("^a record with invalid type")
+	public void invalidTypeJsonldData(){
 		setJsonld(INVALID_LABEL_JSONLD);
+	    id=setJsonldWithNewRootLabel();
+		assertNotNull(jsonld);
+	}
+	
+	@And("^an invalid record")
+	public void invalidJsonldData(){
+		setJsonld(INVALID_NEWJSONLD);
 	    id=setJsonldWithNewRootLabel();
 		assertNotNull(jsonld);
 	}
@@ -94,6 +110,14 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	public void addEntity(){
 		response = callRegistryCreateAPI();
 	}
+	
+	@When("^updating the record in registry")
+	public void updateEntity(){
+		JsonParser p = new JsonParser();
+        JsonObject jsonObject = p.parse(jsonld).getAsJsonObject();
+        jsonObject.addProperty("@id", id);
+		response = callRegistryUpdateAPI();
+	}
 
 	private ResponseEntity<Response> callRegistryCreateAPI() {
 		headers.setContentType(MediaType.APPLICATION_JSON);
@@ -103,6 +127,16 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 				entity,
 				Response.class);	
 		return response;
+	}
+	
+	private ResponseEntity<Response> callRegistryUpdateAPI() {
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		HttpEntity<String> entity = new HttpEntity<>(jsonld,headers);
+		//ResponseEntity<Response> response = restTemplate.exchange(baseUrl+UPDATE_ENTITY+"/"+id, HttpMethod.PATCH,entity,Response.class);
+		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+		restTemplate.setRequestFactory(requestFactory);
+		Response response = restTemplate.patchForObject(baseUrl+UPDATE_ENTITY+"/"+updateId, entity, Response.class);
+		return new ResponseEntity(response,HttpStatus.OK);
 	}
 	
 	@Then("^record issuing should be successful")
@@ -164,6 +198,8 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	@Given("(.*) record issued into the registry")
 	public void issueRecordInRegistry(String qualifier) throws JsonParseException, JsonMappingException, IOException{
 		jsonldData();
+		updateId = id;
+		System.out.println("Id getting inserted into db:"+id);
 		setValidAuthToken();
 		addEntity();
 		checkSuccessfulResponse();

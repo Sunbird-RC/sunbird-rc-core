@@ -17,10 +17,7 @@
 			"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
 			"teacher": "http://example.com/voc/teacher/1.0.0/",
 			"xsd": "http://www.w3.org/2001/XMLSchema#",
-			"@vocab": "http://example.com/voc/teacher/1.0.0/",
-			"serialNum": {
-			    "@type": "xsd:integer"
-			}
+			"@vocab": "http://example.com/voc/teacher/1.0.0/"
 		},
 
 		"@id": "<@id>",
@@ -34,7 +31,12 @@
 			"@id": "teacher:GenderTypeCode-MALE"
 		},
 
-		"birthDate": "06-12-1990",
+		"birthDate": 
+		{
+			"@type": "xsd:date",
+			"@value": "1990-12-06"
+		},
+
 		"socialCategory": 
 		{
 			"@id": "teacher:SocialCategoryTypeCode-GENERAL"
@@ -50,7 +52,12 @@
 			"@id": "teacher:TeacherQualificationTypeCode-MED"
 		},
 
-		"yearOfJoiningService": "2014",
+		"yearOfJoiningService": 
+		{
+			"@type": "xsd:gYear",
+			"@value": "2014"
+		},
+
 		"teachingRole": 
 		{
 			"@id": "<@id>",
@@ -86,42 +93,61 @@
 				}
 			],
 
-			"appointmentYear": "2015"
+			"appointmentYear": 
+			{
+				"@type": "xsd:gYear",
+				"@value": "2015"
+			}
 		},
 
 		"inServiceTeacherTrainingFromBRC": 
 		{
 			"@id": "<@id>",
 			"@type": "InServiceTeacherTrainingFromBlockResourceCentre",
-			"teacher:daysOfInServiceTeacherTraining": "10"
+			"teacher:daysOfInServiceTeacherTraining": {
+				"@type": "xsd:decimal",
+				"@value":"10"
+			}
 		},
 
 		"inServiceTeacherTrainingFromCRC": 
 		{
 			"@id": "<@id>",
 			"@type": "InServiceTeacherTrainingFromClusterResourceCentre",
-			"teacher:daysOfInServiceTeacherTraining": "2"
+			"teacher:daysOfInServiceTeacherTraining": {
+				"@type": "xsd:decimal",
+				"@value":"2"
+				}
 		},
 
 		"inServiceTeacherTrainingFromDIET": 
 		{
 			"@id": "<@id>",
 			"@type": "InServiceTeacherTrainingFromDIET",
-			"teacher:daysOfInServiceTeacherTraining": "5.5"
+			"teacher:daysOfInServiceTeacherTraining": {
+				"@type": "xsd:decimal",
+				"@value":"5.5"
+				}
 		},
 
 		"inServiceTeacherTrainingFromOthers": 
 		{
 			"@id": "<@id>",
 			"@type": "InServiceTeacherTrainingFromOthers",
-			"teacher:daysOfInServiceTeacherTraining": "3.5"
+			"teacher:daysOfInServiceTeacherTraining": {
+				"@type": "xsd:decimal",
+				"@value":"3.5"
+				}
 		},
 
 		"nonTeachingAssignmentsForAcademicCalendar": 
 		{
 			"@id": "<@id>",
 			"@type": "NonTeachingAssignmentsForAcademicCalendar",
-			"teacher:daysOfNonTeachingAssignments": "6"
+			"teacher:daysOfNonTeachingAssignments": {
+				"@type": "xsd:decimal",
+				"@value":"6"
+				}
 		},
 
 		"basicProficiencyLevel": 

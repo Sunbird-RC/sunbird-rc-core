@@ -23,7 +23,7 @@ Feature: Inserting a record into the registry
     And fetching the record from the registry should match the issued record
 
   Scenario: Inserting record with invalid type
-    Given an invalid record
+    Given a record with invalid type
     And a valid auth token
     When issuing the record into the registry
     Then record issuing should be unsuccessful
@@ -47,3 +47,10 @@ Feature: Inserting a record into the registry
     When issuing the record into the registry
     Then record issuing should be unsuccessful
     And error message is Auth token is missing
+    
+  Scenario: Issuing an invalid record
+    Given an invalid record
+    And a valid auth token
+    When issuing the record into the registry
+    Then record issuing should be unsuccessful
+    And error message is RDF Data is invalid!

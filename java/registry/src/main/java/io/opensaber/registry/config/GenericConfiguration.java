@@ -125,8 +125,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public void addInterceptors(InterceptorRegistry registry) { 
 		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(),gson())).addPathPatterns("/**").order(1);
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(),gson())).addPathPatterns("/addEntity", "/entity/{id}").order(2);
-		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper())).addPathPatterns("/addEntity").order(3);
-		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(),gson())).addPathPatterns("/addEntity").order(4);
+		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper())).addPathPatterns("/addEntity", "/entity/{id}").order(3);
+		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(),gson())).addPathPatterns("/addEntity", "/entity/{id}").order(4);
 
 	}
 
