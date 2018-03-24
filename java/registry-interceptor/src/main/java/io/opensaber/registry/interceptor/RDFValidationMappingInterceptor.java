@@ -27,12 +27,12 @@ public class RDFValidationMappingInterceptor extends BaseRequestHandler implemen
 	}
 
 	@Override
-	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException  {
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {
 		setRequest(request);
-		Map<String,Object> attributeMap = rdfValidationMapper.execute(getRequestAttributeMap());
+		Map<String, Object> attributeMap = rdfValidationMapper.execute(getRequestAttributeMap());
 		mergeRequestAttributes(attributeMap);
 		request = getRequest();
-		if(request.getAttribute(Constants.RDF_VALIDATION_MAPPER_OBJECT)!=null){
+		if (request.getAttribute(Constants.RDF_VALIDATION_MAPPER_OBJECT) != null) {
 			return true;
 		}
 		return false;

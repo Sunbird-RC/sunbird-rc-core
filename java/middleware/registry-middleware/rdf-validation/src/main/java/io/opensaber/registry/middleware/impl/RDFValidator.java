@@ -19,7 +19,7 @@ import io.opensaber.pojos.ValidationResponse;
 public class RDFValidator implements BaseMiddleware{
 
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing!";
-	private static final String RDF_DATA_IS_INVALID = "RDF Data is invalid!";
+	private static final String RDF_DATA_IS_INVALID = "Data validation failed!";
 	private static final String RDF_VALIDATION_MAPPING_IS_INVALID = "RDF validation mapping is invalid!";
 	private static final String RDF_VALIDATION_MAPPING_MISSING = "RDF validation mapping is missing!";
 	//private static final String RDF_VALIDATION_MAPPING_NULL = "RDF validation mapping is null!";
@@ -49,11 +49,6 @@ public class RDFValidator implements BaseMiddleware{
 			mergeModels((Model) RDF, (Model) validationRDF);
 			ValidationResponse validationResponse = validator.validate((Model) validationRDF, schema);
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
-			/*
-			if (!validationResponse.isValid()) {
-				throw new MiddlewareHaltException(RDF_DATA_IS_INVALID);
-			}
-			*/
 			return mapData;
 		}
 	}

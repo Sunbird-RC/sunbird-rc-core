@@ -7,4 +7,4 @@ Feature: Updating a record in registry
     And an invalid record for updating
     When updating the record in registry
     Then record issuing should be unsuccessful
-    And error message is RDF Data is invalid!
+    And error message is Data validation failed!

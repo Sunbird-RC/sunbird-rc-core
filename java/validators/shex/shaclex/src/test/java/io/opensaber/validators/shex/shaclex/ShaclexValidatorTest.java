@@ -12,7 +12,6 @@ import org.apache.jena.vocabulary.RDF;
 import org.junit.Test;
 import scala.Option;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
@@ -35,10 +34,10 @@ public class ShaclexValidatorTest {
 	@Test
 	public void test_validate_model_schema() throws Exception {
 
-		String dataString = new String(Files.readAllBytes(Paths.get(getPath("good1.jsonld"))), StandardCharsets.UTF_8);
+		String dataString = new String(Files.readAllBytes(Paths.get(getPath("teacher.jsonld"))), StandardCharsets.UTF_8);
 		ValidationResponse validationResponse =
 				validate(dataString, "JSON-LD",
-						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+						Paths.get(getPath("teacher.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
 		assertNotNull(validationResponse);
 		assertTrue(validationResponse.isValid());
 		assertEquals(0, validationResponse.getFields().size());
@@ -50,13 +49,13 @@ public class ShaclexValidatorTest {
 
 		JsonParser p = new JsonParser();
 		JsonObject jsonObject = p.parse(new InputStreamReader
-				(this.getClass().getClassLoader().getResourceAsStream("good1.jsonld"))).getAsJsonObject();
+				(this.getClass().getClassLoader().getResourceAsStream("teacher.jsonld"))).getAsJsonObject();
 		jsonObject.addProperty("serialNum", "14");
 
 		String dataString = new Gson().toJson(jsonObject);
 		ValidationResponse validationResponse =
 				validate(dataString, "JSON-LD",
-						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+						Paths.get(getPath("teacher.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
 
 		assertNotNull(validationResponse);
 		assertFalse(validationResponse.isValid());
@@ -72,13 +71,13 @@ public class ShaclexValidatorTest {
 
 		JsonParser p = new JsonParser();
 		JsonObject jsonObject = p.parse(new InputStreamReader
-				(this.getClass().getClassLoader().getResourceAsStream("good1.jsonld"))).getAsJsonObject();
+				(this.getClass().getClassLoader().getResourceAsStream("teacher.jsonld"))).getAsJsonObject();
 		jsonObject.add("nationalIdentifier", p.parse("{\"@value\": \"abc\", \"@type\": \"xsd:decimal\"}"));
 
 		String dataString = new Gson().toJson(jsonObject);
 		ValidationResponse validationResponse =
 				validate(dataString, "JSON-LD",
-						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+						Paths.get(getPath("teacher.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
 
 		assertNotNull(validationResponse);
 		assertFalse(validationResponse.isValid());
@@ -98,13 +97,13 @@ public class ShaclexValidatorTest {
 
 		JsonParser p = new JsonParser();
 		JsonObject jsonObject = p.parse(new InputStreamReader
-				(this.getClass().getClassLoader().getResourceAsStream("good1.jsonld"))).getAsJsonObject();
+				(this.getClass().getClassLoader().getResourceAsStream("teacher.jsonld"))).getAsJsonObject();
 		jsonObject.addProperty("birthDate", "1990-12-06");
 
 		String dataString = new Gson().toJson(jsonObject);
 		ValidationResponse validationResponse =
 				validate(dataString, "JSON-LD",
-						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+						Paths.get(getPath("teacher.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
 		assertNotNull(validationResponse);
 		assertFalse(validationResponse.isValid());
 		assertEquals(1, validationResponse.getFields().size());
@@ -119,13 +118,13 @@ public class ShaclexValidatorTest {
 
 		JsonParser p = new JsonParser();
 		JsonObject jsonObject = p.parse(new InputStreamReader
-				(this.getClass().getClassLoader().getResourceAsStream("good1.jsonld"))).getAsJsonObject();
+				(this.getClass().getClassLoader().getResourceAsStream("teacher.jsonld"))).getAsJsonObject();
 		jsonObject.add("gender", p.parse("{\"@id\" : \"teacher:GenderTypeCode-INVALID\"}"));
 
 		String dataString = new Gson().toJson(jsonObject);
 		ValidationResponse validationResponse =
 				validate(dataString, "JSON-LD",
-						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+						Paths.get(getPath("teacher.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
 		assertNotNull(validationResponse);
 		assertFalse(validationResponse.isValid());
 		assertEquals(1, validationResponse.getFields().size());
@@ -141,14 +140,14 @@ public class ShaclexValidatorTest {
 
 		JsonParser p = new JsonParser();
 		JsonObject jsonObject = p.parse(new InputStreamReader
-				(this.getClass().getClassLoader().getResourceAsStream("good1.jsonld"))).getAsJsonObject();
+				(this.getClass().getClassLoader().getResourceAsStream("teacher.jsonld"))).getAsJsonObject();
 		jsonObject.add("inServiceTeacherTrainingFromOthers",
 				p.parse("{\"@type\":\"InServiceTeacherTrainingFromOthers\",\"teacher:daysOfInServiceTeacherTraining\": {\"@value\": \"abc\",\"@type\": \"xsd:decimal\"}}"));
 
 		String dataString = new Gson().toJson(jsonObject);
 		ValidationResponse validationResponse =
 				validate(dataString, "JSON-LD",
-						Paths.get(getPath("good1.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+						Paths.get(getPath("teacher.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
 		assertNotNull(validationResponse);
 		assertFalse(validationResponse.isValid());
 		assertEquals(1, validationResponse.getFields().size());
@@ -174,13 +173,11 @@ public class ShaclexValidatorTest {
 		return validator.validate(validationRDF, schema);
 	}
 
-	/*
 	private String printRDF(Model validationRdf) {
 		StringWriter sw = new StringWriter();
 		RDFDataMgr.write(sw, validationRdf, Lang.TTL);
 		return sw.toString();
 	}
-	*/
 
 
 	private void mergeModels(Model RDF, Model validationRDF) {

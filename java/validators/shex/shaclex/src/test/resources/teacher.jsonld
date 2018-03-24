@@ -30,7 +30,10 @@
   "highestTeacherQualification":{
     "@id":"teacher:TeacherQualificationTypeCode-MED"
   },
-  "yearOfJoiningService":"2014",
+  "yearOfJoiningService": {
+    "@value": "2014",
+    "@type" : "xsd:gYear"
+  },
   "inServiceTeacherTrainingFromBRC":{
     "@type":"InServiceTeacherTrainingFromBlockResourceCentre",
     "teacher:daysOfInServiceTeacherTraining": {
@@ -61,6 +64,9 @@
   },
   "nonTeachingAssignmentsForAcademicCalendar":{
     "@type":"NonTeachingAssignmentsForAcademicCalendar",
-    "teacher:daysOfNonTeachingAssignments":"6"
+    "teacher:daysOfNonTeachingAssignments": {
+      "@value": 6,
+      "@type": "xsd:decimal"
+    }
   }
 }

@@ -53,4 +53,4 @@ Feature: Inserting a record into the registry
     And a valid auth token
     When issuing the record into the registry
     Then record issuing should be unsuccessful
-    And error message is RDF Data is invalid!
+    And error message is Data validation failed!

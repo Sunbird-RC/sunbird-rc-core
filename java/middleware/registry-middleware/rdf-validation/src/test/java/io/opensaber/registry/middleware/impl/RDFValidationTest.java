@@ -8,24 +8,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.junit.Ignore;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.vocabulary.RDF;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import es.weso.schema.Result;
 import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -36,11 +27,12 @@ public class RDFValidationTest {
 	private static final String SIMPLE_SHEX = "good1.shex";
 	private static final String SIMPLE_JSONLD = "good1.jsonld";
 	private static final String COMPLEX_TTL = "teacher.record";
-	private static final String COMPLEX_INVALID_TTL = "teacher.badrecord";
+	private static final String COMPLEX_INVALID_JSONLD = "teacher_badrecord.jsonld";
 	private static final String COMPLEX_SHEX = "teacher.shex";
 	private static final String SCHOOL_JSONLD = "school.jsonld";
 	//public static final String FORMAT = "JSON-LD";
 	public static final String TTL_FORMAT = "TTL";
+	public static final String JSONLD_FORMAT = "JSONLD";
 	private String jsonld;
 	private static final String EMPTY_STRING = "";
 	private Map<String, Object> mapData;
@@ -49,12 +41,12 @@ public class RDFValidationTest {
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 
-	private boolean setup(String shexFile) throws URISyntaxException {
-		boolean successfulInitialization = false;
+	private boolean setup(String shexFile) {
+		boolean successfulInitialization = true;
 		try {
 			middleware = new RDFValidator(shexFile);
-			successfulInitialization = true;
-		} catch (NullPointerException e) {
+		} catch (Exception e) {
+			successfulInitialization = false;
 		}
 		return successfulInitialization;
 	}
@@ -75,7 +67,7 @@ public class RDFValidationTest {
 	@Test
 	public void testHaltIfRDFpresentButInvalid() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
-		expectedEx.expectMessage("RDF Data is invalid!");
+		expectedEx.expectMessage("Data validation failed!");
 		assertTrue(setup(SIMPLE_SHEX));
 		mapData = new HashMap<>();
 		mapData.put(Constants.RDF_OBJECT, "{}");
@@ -129,6 +121,33 @@ public class RDFValidationTest {
 		testForSuccessfulResult();
 	}
 
+	private Model generateShapeModel(Model inputRdf) throws Exception {
+		Model model = ModelFactory.createDefaultModel();
+		Map<String, String> typeValidationMap = new HashMap<>();
+		typeValidationMap.put("http://example.com/voc/teacher/1.0.0/School", "http://example.com/voc/teacher/1.0.0/SchoolShape");
+		for (Map.Entry<String, String> map : typeValidationMap.entrySet()) {
+			String key = map.getKey();
+			StmtIterator iter = filterStatement(null, RDF.type, key, inputRdf);
+			String value = map.getValue();
+			if (value == null) {
+				throw new Exception("Validation missing for type");
+			}
+			while (iter.hasNext()) {
+				Resource subjectResource = ResourceFactory.createResource(value);
+				Property predicate = ResourceFactory.createProperty("http://www.w3.org/ns/shacl#targetNode");
+				model.add(subjectResource, predicate, iter.next().getSubject());
+			}
+		}
+		return model;
+	}
+
+	private StmtIterator filterStatement(String subject, Property predicate, String object, Model resultModel) {
+		Resource subjectResource = subject != null ? ResourceFactory.createResource(subject) : null;
+		RDFNode objectResource = object != null ? ResourceFactory.createResource(object) : null;
+		StmtIterator iter = resultModel.listStatements(subjectResource, predicate, objectResource);
+		return iter;
+	}
+
 	private Model getModel() {
 		Model model = ModelFactory.createDefaultModel();
 		Resource subject = ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/SchoolShape");
@@ -139,21 +158,21 @@ public class RDFValidationTest {
 	}
 
 	@Test
-	public void testIfaRealValidationFails() throws IOException, URISyntaxException, MiddlewareHaltException {
-		expectedEx.expect(MiddlewareHaltException.class);
-		expectedEx.expectMessage("RDF Data is invalid!");
+	public void testIfaRealValidationFails() throws Exception {
 		assertTrue(setup(COMPLEX_SHEX));
-		mapData = new HashMap<String,Object>();
-		mapData.put(Constants.RDF_OBJECT, getValidRdf(COMPLEX_INVALID_TTL));
-		Model model = getModel();
+		mapData = new HashMap<>();
+		Model dataModel = getValidRdf(COMPLEX_INVALID_JSONLD, JSONLD_FORMAT);
+		mapData.put(Constants.RDF_OBJECT, getValidRdf(COMPLEX_INVALID_JSONLD, JSONLD_FORMAT));
+		Model model = generateShapeModel(dataModel);
 		mapData.put(Constants.RDF_VALIDATION_MAPPER_OBJECT, model);
-		try {
-			middleware.execute(mapData);
-		} catch (MiddlewareHaltException e) {
-			testForUnsuccessfulResult();
-			throw(e);
-		}
-
+		middleware.execute(mapData);
+		ValidationResponse response = (ValidationResponse) mapData.get(Constants.RDF_VALIDATION_OBJECT);
+		assertFalse(response.isValid());
+		Map<String, String> errorFields = response.getFields();
+		errorFields.forEach((key, value) -> {
+			assertEquals("http://example.com/voc/teacher/1.0.0/academicCalendarYearStart", key);
+			assertEquals("2014 does not have datatype xsd:gYear", value);
+		});
 	}
 
 	private void testForSuccessfulResult() {
@@ -201,6 +220,11 @@ public class RDFValidationTest {
 		return sb.toString();
 	}
 
+	private Model getValidRdf(String filename, String format) {
+		setJsonld(filename);
+		Model model = ShaclexValidator.parse(jsonld, format);
+		return model;
+	}
 	
 	private Model getValidRdf(String fileName){
 		setJsonld(fileName);
