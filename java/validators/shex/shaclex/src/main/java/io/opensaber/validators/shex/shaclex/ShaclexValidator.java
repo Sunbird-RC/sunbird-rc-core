@@ -99,7 +99,10 @@ public class ShaclexValidator {
 		logger.info(String.format("Node Id: %s is NON-CONFORMANT with reason: %s"
 				, validationInfo.getNode(), validationInfo.getReason()));
 
-		String errorNode = validationInfo.getNode().replace("_:", "");
+		// Remove the _: from the root node id if it is a blank node. If it is a URI (in the case of an update),
+		// remove the <> from the URI in the error result node element.
+		String errorNode = validationInfo.getNode().replace("_:", "")
+				.replace("<", "").replace(">", "");
 
 		/*
 		 * The Shaclex library error message has three parts split by a \n newline character
@@ -109,7 +112,7 @@ public class ShaclexValidator {
 		 */
 		String[] errorInfo = validationInfo.getReason().trim().split("\n");
 		ShaclexErrorData errorData;
-		logger.info("Error message split by new line character size " + errorInfo.length);
+		logger.info("Size of String[] by splitting Error message by newline: " + errorInfo.length);
 
 		if(errorInfo.length > 1) {
 			String readableErrorMsg = errorInfo[errorInfo.length - 1];
@@ -130,6 +133,11 @@ public class ShaclexValidator {
 		} else {
 			String readableErrorMsg = validationInfo.getReason();
 			String nodeValueWithError = extractErrorNodeValue(validationInfo.getReason(), "^Error: (?s)(.*) does not");
+
+			// If the error node contains the domain prefix, it needs to be replaced with the appropriate domain context URI.
+			// For e.g., if the error node contains teacher:InServiceTeacherTrainingFromDIET, it needs to be translated to
+			// http://example.com/voc/teacher/1.0.0/InServiceTeacherTrainingFromDIET. The prefix man contains the prefix URI
+			// as <http://example.com/voc/teacher/1.0.0/> and hence the angled brackets need to be pruned.
 			if(nodeValueWithError.contains(":")) {
 				String contextPrefix = nodeValueWithError.substring(0, nodeValueWithError.indexOf(":"));
 				String contextUri = pm.getIRI(contextPrefix).get().toString()
@@ -157,6 +165,10 @@ public class ShaclexValidator {
 		StmtIterator iterator = dataModel.listStatements();
 		HashMap<String, String> errorList = new HashMap<>();
 
+		logger.info("Parent error node: " + parentErrorNode);
+		logger.info("Error node value: " + errorData.getNodeValueWithError());
+		logger.info("IRI node under which error node is present: " + errorData.getIriNode());
+		logger.info("Error node datatype, if present: " + errorData.getNodeDataType());
 		/*
 		 * Iterate through the RDF statements to find the Node Id, Node Value combination which
 		 * failed the validation.
