@@ -73,7 +73,7 @@ public class AuditRecord {
         recordVertex.property("@auditRecord",true);
         updateUserInfo(recordVertex);
         rootVertex.addEdge("audit",recordVertex).property("@audit",true);
-        System.out.println(this);
+        // System.out.println(this);
     }
 
     private void updateUserInfo(Vertex vertex) {

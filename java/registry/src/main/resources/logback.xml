@@ -23,6 +23,11 @@
         </encoder>
     </appender>
 
+    <logger name="io.opensaber.validators.shex.shaclex" level="ERROR"/>
+    <logger name="es.weso" level="ERROR"/>
+    <logger name="io.opensaber.utils.converters" level="ERROR"/>
+    <logger name="io.opensaber.registry.dao.impl.RegistryDaoImpl" level="ERROR"/>
+
     <root level="info" additivity="false">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>

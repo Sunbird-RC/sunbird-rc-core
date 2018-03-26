@@ -1,4 +1,4 @@
-@controller
+@controller @update
 Feature: Updating a record in registry
 
   Scenario: Updating an existing record

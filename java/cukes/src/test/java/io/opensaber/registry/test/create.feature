@@ -1,4 +1,4 @@
-@controller
+@controller @create
 Feature: Inserting a record into the registry
 
   Scenario: Issuing a valid record

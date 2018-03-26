@@ -1,4 +1,4 @@
-@controller
+@controller @read
 Feature: Reading a record from the registry
 
   Scenario: Reading a record which doesn't exist
