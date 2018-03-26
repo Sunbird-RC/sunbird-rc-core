@@ -10,16 +10,19 @@ import io.opensaber.registry.sink.Neo4jGraphProvider;
 import io.opensaber.registry.sink.OrientDBGraphProvider;
 import io.opensaber.registry.sink.SqlgProvider;
 import io.opensaber.registry.sink.TinkerGraphProvider;
-
 import org.apache.tomcat.util.http.parser.Authorization;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +40,7 @@ import io.opensaber.registry.middleware.impl.RdfToJsonldConverter;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -48,6 +52,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Autowired
 	private Environment environment;
+	
+	@Value("${connection.timeout}")
+	private int connectionTimeout;
+	
+	@Value("${read.timeout}")
+	private int readTimeout;
+	
+	@Value("${connection.request.timeout}")
+	private int connectionRequestTimeout;
 
 	@Bean
 	public ObjectMapper objectMapper() {
@@ -87,7 +100,18 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		String fieldConfigFileName = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
 		return new SchemaConfigurator(fieldConfigFileName);
 	}
-
+	
+	@Bean
+	public RestTemplate restTemaplteProvider() throws IOException{
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+		requestFactory.setConnectTimeout(connectionTimeout);
+		requestFactory.setConnectionRequestTimeout(connectionRequestTimeout);
+		requestFactory.setReadTimeout(readTimeout);
+		return new RestTemplate(requestFactory);
+	}
+	
+	
 	@Bean
 	public DatabaseProvider databaseProvider() {
 		String dbProvider = environment.getProperty(Constants.DATABASE_PROVIDER);

@@ -32,7 +32,6 @@ public class Constants {
 	public static final String DUPLICATE_RECORD_MESSAGE = "Cannot insert duplicate record";
 	public static final String FAILED_INSERTION_MESSAGE = "Failed to insert record";
 	public static final String INVALID_TYPE_MESSAGE = "Failed to insert due to invalid type";
-	
 	public static final String ENTITY_NOT_FOUND = "Entity does not exist";
 	public static final String TOKEN_EXTRACTION_ERROR = "Unable to extract auth token";
 	public static final String JSONLD_PARSE_ERROR = "Unable to parse JSON-LD";

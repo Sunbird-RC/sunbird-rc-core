@@ -1,6 +1,3 @@
-
-
-
 package io.opensaber.registry.dao.impl;
 
 import io.opensaber.registry.authorization.AuthorizationToken;
@@ -8,6 +5,7 @@ import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
 import io.opensaber.registry.model.AuditRecordReader;
+import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 
@@ -23,16 +21,20 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
-
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
@@ -51,12 +53,16 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.impl.EncryptionServiceImpl;
 import io.opensaber.utils.converters.RDF2Graph;
-
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
-
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.*;
 
@@ -66,33 +72,56 @@ import java.util.*;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryDaoImplTest extends RegistryTestBase {
-
-	@Autowired
-	private RegistryDao registryDao;
+	
+	@Rule
+	public ExpectedException expectedEx = ExpectedException.none();
+	
+	@Rule public MockitoRule rule = MockitoJUnit.rule();
+	
+	@Value("${encryption.active}")
+	private String encryptionStatus;
+	
+	@Value("${decryption.active}")
+	private String decryptionStatus;
+	
+	/*@Autowired
+	private EncryptionService encryptionService;*/
 	
 	@Autowired
 	private Environment environment;
 	
 	@Autowired
-	private DatabaseProvider databaseProvider;
+	private RegistryDao registryDao;
 	
+	@Mock
+	private EncryptionService encryptionMock;
+	
+	@InjectMocks
+	RegistryDaoImpl registryDaoImpl;
+	
+	@Mock
+	private SchemaConfigurator mockSchemaConfigurator;
+	
+  	private static Graph graph;
+			
 	@Autowired
-	private EncryptionService encryptionService;
+	private DatabaseProvider databaseProvider;
 	
 	@Mock
 	private DatabaseProvider mockDatabaseProvider;
-
-	private static Graph graph;
 
 	private static String identifier;
 
 	private static final String VALID_JSONLD = "school.jsonld";
     private static final String RICH_LITERAL_TTL = "rich-literal.jsonld";
 	private static final String CONTEXT_CONSTANT = "sample:";
-
-	@Rule
-	public ExpectedException expectedEx = ExpectedException.none();
-
+	private static final String CONFIG_SCHEMA_FILE = "opensaber-schema-configuration-school-test.jsonld";
+	
+	private SchemaConfigurator schemaConfigurator;
+	private void initialize(String file) throws IOException{
+		schemaConfigurator = new SchemaConfigurator(file);
+	}
+	
 	@Rule
 	public TestRule watcher = new TestWatcher() {
 		@Override
@@ -125,7 +154,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
                 Collections.singletonList(new SimpleGrantedAuthority("blah")));
         SecurityContextHolder.getContext().setAuthentication(authorizationToken);
 	}
-
+	
 	@Test
 	public void test_adding_a_single_node() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, LabelCannotBeNullException, AuditFailedException {
 		String label = generateRandomId();
@@ -163,6 +192,32 @@ public class RegistryDaoImplTest extends RegistryTestBase {
         return count;
     }
 
+    public String updateGraphFromRdf(Model rdfModel) {
+		 
+        return updateGraphFromRdf(rdfModel, graph, environment.getProperty(Constants.SUBJECT_LABEL_TYPE));
+    }
+
+    public String updateGraphFromRdf(Model rdfModel, Graph graph) {
+	 return updateGraphFromRdf(rdfModel, graph, environment.getProperty(Constants.SUBJECT_LABEL_TYPE));
+ }
+
+    public String updateGraphFromRdf(Model rdfModel, Graph graph, String rootLabelType) {
+	StmtIterator iterator = rdfModel.listStatements();
+	boolean rootSubjectFound = false;
+	String label = null;
+	while (iterator.hasNext()) {
+		Statement rdfStatement = iterator.nextStatement();
+			if (!rootSubjectFound) {
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement, rootLabelType);
+				if (label != null) {
+					rootSubjectFound = true;
+				}
+			}
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+		}
+		return label;
+}
     private Map<String,Integer> getPropCounterMap(Graph entity) {
 	    Map<String,Integer> entityPropertyCountMap = new HashMap<>();
         Iterator<Vertex> iter = entity.traversal().clone().V().hasNot("@audit");
@@ -348,12 +403,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Graph graph = registryDao.getEntityById(label.toString());
 	}
 
-	private UUID getLabel() {
-		UUID label = UUID.randomUUID();
-		return label;
-	}
-	
-	
 	@Test
 	public void test_read_with_some_other_data()
 			throws IOException, DuplicateRecordException, RecordNotFoundException, EncryptionException, Exception {
@@ -658,8 +707,8 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		assertThat(result, hasSize(4));
 	}
 		
-	/*
-		@Test
+	
+/*		@Test
 		public void testGetEntity(){
 			EntityDto entityDto = new EntityDto();
 			entityDto.setId(identifier);
@@ -686,8 +735,8 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			boolean response = registryDao.updateEntity(graph);
 			assertFalse(response);
 		}
-
-	*/
+*/
+	
 
 	@After
 	public void shutDown() throws Exception{
@@ -728,6 +777,39 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		return jsonldOutput;
 	}
 
+	public Vertex getVertexForSubject(String subjectValue, String property, String objectValue){
+		Vertex vertex = null;
+		graph = TinkerGraph.open();
+		GraphTraversalSource t = graph.traversal();
+		GraphTraversal<Vertex, Vertex> hasLabel = t.V().hasLabel(subjectValue);
+		if(hasLabel.hasNext()){
+			vertex = hasLabel.next();
+		} else {
+			vertex = graph.addVertex(
+					T.label,subjectValue);
+		}
+		vertex.property(property, objectValue);
+		return vertex;
+	}
+	
+	public Vertex getVertexWithMultipleProperties(String subjectValue, Map<String, String> map){
+		Vertex vertex = null;
+		graph = TinkerGraph.open();
+		GraphTraversalSource t = graph.traversal();
+		GraphTraversal<Vertex, Vertex> hasLabel = t.V().hasLabel(subjectValue);
+		if(hasLabel.hasNext()){
+			vertex = hasLabel.next();
+		} else {
+			vertex = graph.addVertex(
+					T.label,subjectValue);
+		}
+		for (Map.Entry<String, String> entry : map.entrySet())
+		{
+			vertex.property(entry.getKey(), entry.getValue());
+		}
+		return vertex;
+	}
+	
 	private void removeStattementFromModel(Model rdfModel, Property predicate) {
 		StmtIterator blankNodeIterator =
 				rdfModel.listStatements(null, predicate, (RDFNode) null);
@@ -746,57 +828,11 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		}
 	}
 
-	private Vertex getVertexForSubject(String subjectValue, String property, String objectValue){
-		Vertex vertex = null;
-		GraphTraversalSource t = graph.traversal();
-		GraphTraversal<Vertex, Vertex> hasLabel = t.V().hasLabel(subjectValue);
-		if(hasLabel.hasNext()){
-			vertex = hasLabel.next();
-		} else {
-			vertex = graph.addVertex(
-					T.label,subjectValue);
-		}
-		vertex.property(property, objectValue);
-		return vertex;
-	}
-
-	
-	private Model getNewValidRdf(){
-		return getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
-		
-	}
-
 	private Model createRdfFromFile(String jsonldFilename, String rootNodeLabel) {
 		return getNewValidRdf(jsonldFilename, CONTEXT_CONSTANT, rootNodeLabel);
 	}
 
-    private String updateGraphFromRdf(Model rdfModel) {
-        return updateGraphFromRdf(rdfModel, graph, environment.getProperty(Constants.SUBJECT_LABEL_TYPE));
-    }
-
-    private String updateGraphFromRdf(Model rdfModel, Graph graph) {
-		return updateGraphFromRdf(rdfModel, graph, environment.getProperty(Constants.SUBJECT_LABEL_TYPE));
-	}
-
-	private String updateGraphFromRdf(Model rdfModel, Graph graph, String rootLabelType) {
-		StmtIterator iterator = rdfModel.listStatements();
-		boolean rootSubjectFound = false;
-		String label = null;
-		while (iterator.hasNext()) {
-			Statement rdfStatement = iterator.nextStatement();
-			if (!rootSubjectFound) {
-				label = RDF2Graph.getRootSubjectLabel(rdfStatement, rootLabelType);
-				if (label != null) {
-					rootSubjectFound = true;
-				}
-			}
-			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
-		}
-		return label;
-	}
-
-	private String createGraphFromRdf(Graph newGraph, Model rdfModel) {
+   private String createGraphFromRdf(Graph newGraph, Model rdfModel) {
 		StmtIterator iterator = rdfModel.listStatements();
 		boolean rootSubjectFound = false;
 		String label = null;
@@ -855,4 +891,129 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		return IteratorUtils.count(graph.vertices());
 	}
 	
+	/*@Test
+	public void test_encryptionCall_for_nonEncryptableProperty() throws Exception {
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(true);
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
+		
+	   	String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+		Graph entity = registryDao.getEntityById(response);		
+		long vertexCount = IteratorUtils.count(entity.traversal().clone().V());
+		verify(encryptionMock, times((int) vertexCount*2)).encrypt(Mockito.anyString());
+	}*/
+	
+	/*@Test
+	public void test_encryptionCall_for_encryptable_but_null_property() throws Exception {
+		String privateProperty = null;
+		encryptionMock.encrypt(privateProperty);
+		verify(encryptionMock, never()).encrypt(privateProperty);
+	}*/
+
+	@Test
+	public void test_encryptionServiceCall_for_null_property() throws Exception {
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		GraphTraversal<Vertex, Vertex> gtvs = graph.traversal().clone().V();
+		
+		if (gtvs.hasNext()) {
+			Vertex v = gtvs.next();
+			Iterator<VertexProperty<Object>> iter = v.properties();
+			while (iter.hasNext()) {
+				VertexProperty<Object> property = iter.next();
+				if (encryptionMock.isEncryptable(property.key()) && property.value() == null) {
+					encryptionMock.encrypt(property.value());					
+				}
+			}
+		}		
+		verify(encryptionMock, never()).encrypt(Mockito.anyString());
+	}
+	
+/*	@Test(expected = HttpServerErrorException.class)
+	public void test_only_encrypted_value_decryption() throws Exception {
+		 byte[] array = new byte[7];
+		 new Random().nextBytes(array);
+		 String generatedString = new String(array, Charset.forName("UTF-8"));
+		 String  decryptedValue=null;
+		 try {
+			decryptedValue = encryptionService.decrypt(generatedString);
+			fail("HttpServerErrorException expected");
+		 }
+		 catch (HttpServerErrorException ex) {
+			assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatusCode());
+			//assertNotNull(ex.getStatusText());
+			assertEquals(null,decryptedValue);
+		}		 
+	}*/
+	
+/*	@Test
+	public void test_properties_single_node() throws Exception {	
+		String label = generateRandomId();
+		Map<String,String> map=new HashMap<>();
+		map.put("http://example.com/voc/teacher/1.0.0/schoolName", "ABC International School");
+		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
+		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
+		
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(true);
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
+	    when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
+		
+	    when(encryptionMock.encrypt("ABC International School")).thenReturn("mockEncryptedSchoolName");
+	    when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
+	    when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
+		
+	    getVertexWithMultipleProperties(label,map);		
+		String response = registryDao.addEntity(graph, label);
+		registryDao.getEntityById(response);		
+		
+		verify(encryptionMock, times(3)).isEncryptable(Mockito.anyString());
+		verify(encryptionMock, times(3)).encrypt(Mockito.anyString());
+	}
+	
+	@Test
+	public void test_properties_multi_node() throws Exception {
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		
+		when(encryptionMock.encrypt("Bluebells")).thenReturn("mockEncryptedSchoolName");
+	    when(encryptionMock.encrypt("some Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
+	    when(encryptionMock.encrypt("9876")).thenReturn("mockEncryptedUdiseNumber");
+	    
+	    String response = registryDao.addEntity(graph, "_:"+rootLabel);
+		Graph entity = registryDao.getEntityById(response);
+		long vertexCount = IteratorUtils.count(entity.traversal().clone().V());
+		int totalPrivatePropertyCount=(int) (vertexCount*3);
+		
+		verify(encryptionMock, times(totalPrivatePropertyCount)).isEncryptable(Mockito.anyString());
+		verify(encryptionMock, times(totalPrivatePropertyCount)).encrypt(Mockito.anyString());	
+	}*/
+	
+	@Test
+	public void test_encryption_EncryptionError() throws Exception {
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		when(encryptionMock.encrypt(Mockito.anyString())).thenThrow(EncryptionException.class);
+
+		try {
+			registryDao.addEntity(graph, rootLabel);
+		} catch (EncryptionException e) {
+			assertThat(e.toString(), allOf(containsString("EncryptionException")));
+		}
+	}
+
+	@Test
+	public void test_decryption_EncryptionException() throws Exception {
+		Model rdfModel = getNewValidRdf();
+		String label = updateGraphFromRdf(rdfModel);
+		when(encryptionMock.decrypt(Mockito.anyString())).thenThrow(EncryptionException.class);
+
+		try {
+			String response = registryDao.addEntity(graph, String.format("_:%s", label));
+			registryDao.getEntityById(response);
+		} catch (EncryptionException e) {
+			assertThat(e.toString(), allOf(containsString("EncryptionException")));
+		}
+	}
+
 }

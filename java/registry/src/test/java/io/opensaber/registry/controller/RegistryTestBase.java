@@ -16,12 +16,22 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.T;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
+import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.utils.converters.RDF2Graph;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 
 
@@ -34,6 +44,9 @@ public class RegistryTestBase {
 	public static final String FORMAT = "JSON-LD";
 	private static final String INVALID_SUBJECT_LABEL = "ex:Picasso";
 	private static final String REPLACING_SUBJECT_LABEL = "!samp131d";
+	private static final String VALID_JSONLD = "school.jsonld";
+	private static final String CONTEXT_CONSTANT = "sample:";
+	private Graph graph;
 	
 	public void setJsonld(String filename){
 
@@ -46,6 +59,10 @@ public class RegistryTestBase {
 
 	}
 
+	public UUID getLabel() {
+		UUID label = UUID.randomUUID();
+		return label;
+	}
 	public String readFromFile(String file) throws IOException,FileNotFoundException{
 		BufferedReader reader = new BufferedReader(new FileReader (file));
 		StringBuilder sb = new StringBuilder();
@@ -63,7 +80,7 @@ public class RegistryTestBase {
 		}
 		return sb.toString();
 	}
-
+	
 	public URI getPath(String file) throws URISyntaxException {
 		return this.getClass().getClassLoader().getResource(file).toURI();
 	}
@@ -93,6 +110,13 @@ public class RegistryTestBase {
 		model.add(resource,FOAF.depiction, "ex:Image");
 		return model;
 	}
+	
+	public Model getNewValidRdf(){
+		return getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
+		
+	}
+	
+
 	
 	public void setJsonldWithNewRootLabel(String label){
 		jsonld = jsonld.replace(REPLACING_SUBJECT_LABEL, label);

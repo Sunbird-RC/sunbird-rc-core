@@ -3,6 +3,7 @@ package io.opensaber.registry.dao.impl;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,6 +54,23 @@ public class RegistryDaoImpl implements RegistryDao {
 		return null;
 	}
 
+	/*@FunctionalInterface
+	public interface ThrowingConsumer<T, E extends Exception> {
+	    void accept(T t) throws E;
+	}
+	
+	static <T> Consumer<T> throwingConsumerWrapper(
+			  ThrowingConsumer<T, Exception> throwingConsumer) {
+			  
+			    return i -> {
+			        try {
+			            throwingConsumer.accept(i);
+			        } catch (Exception ex) {
+			            throw new RuntimeException(ex);
+			        }
+			    };
+			}*/
+	
 	@Override
 	public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException {
 		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
@@ -194,13 +212,9 @@ public class RegistryDaoImpl implements RegistryDao {
 				parsedVertices.push(new Pair<>(ver, newV));
 			}
 		}
-		parsedVertices.forEach(pv -> {
-			try {
-				addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph,methodOrigin);
-			} catch (NoSuchElementException | EncryptionException | AuditFailedException e) {
-				e.printStackTrace();
-			}
-		});
+		for(Pair<Vertex, Vertex> pv : parsedVertices) {
+			addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph,methodOrigin);
+		}
 	}
 
 	/**
@@ -263,16 +277,19 @@ public class RegistryDaoImpl implements RegistryDao {
 		while(iter.hasNext()){
 			VertexProperty<Object> property = iter.next();
 			String tailOfPropertyKey=property.key().substring(property.key().lastIndexOf("/") + 1).trim();
-			if(methodOrigin.equalsIgnoreCase("addOrUpdate") && encryptionService.encryptionRequired(property)) {
-				boolean existingEncyptedPropertyKey=tailOfPropertyKey.substring(0, Math.min(tailOfPropertyKey.length(), 9)).equalsIgnoreCase("encrypted");
-				propertyValue =  encryptionService.encrypt(property.value()).getBody();
+			boolean existingEncyptedPropertyKey=tailOfPropertyKey.substring(0, Math.min(tailOfPropertyKey.length(), 9)).equalsIgnoreCase("encrypted");
+			if(methodOrigin.equalsIgnoreCase("addOrUpdate")  && existingEncyptedPropertyKey) {
+				property.remove();
+			}								
+			if(methodOrigin.equalsIgnoreCase("addOrUpdate") && encryptionService.isEncryptable(property.key())) {				
+				propertyValue =  encryptionService.encrypt(property.value());
 				if(!existingEncyptedPropertyKey) {
 		        String encryptedKey = "encrypted"+tailOfPropertyKey;
 		        setProperty(newSubject,property.key().replace(tailOfPropertyKey, encryptedKey), propertyValue);
 				}
 			}			
-			else if(methodOrigin.equalsIgnoreCase("read") && (tailOfPropertyKey.substring(0, Math.min(tailOfPropertyKey.length(), 9)).equalsIgnoreCase("encrypted"))) {	
-					propertyValue = encryptionService.decrypt(property.value()).getBody();
+			else if(methodOrigin.equalsIgnoreCase("read") && encryptionService.isDecryptable(tailOfPropertyKey)) {	
+					propertyValue = encryptionService.decrypt(property.value());
 					String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
 					setProperty(newSubject,decryptedKey, propertyValue);
 			}	

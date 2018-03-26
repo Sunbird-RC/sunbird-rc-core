@@ -7,10 +7,12 @@ import io.opensaber.registry.exception.EncryptionException;
 
 public interface EncryptionService {
 
-	public ResponseEntity<String> encrypt(Object propertyValue) throws EncryptionException;
+	public String encrypt(Object propertyValue) throws EncryptionException;
 	
-	public ResponseEntity<String> decrypt(Object propertyValue) throws EncryptionException;	
+	public String decrypt(Object propertyValue) throws EncryptionException;	
 	
-	public boolean encryptionRequired(VertexProperty<Object>  property) throws EncryptionException;
+	public boolean isEncryptable(String  propertyKey) throws EncryptionException;
+	
+	public boolean isDecryptable(String tailPropertyKey) throws EncryptionException;
 	
 }

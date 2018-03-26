@@ -2,7 +2,6 @@ package io.opensaber.registry.service.impl;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +15,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
-
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
@@ -33,65 +31,68 @@ public class EncryptionServiceImpl implements EncryptionService {
 	@Autowired
 	SchemaConfigurator schemaConfigurator;
 	
+	@Autowired
+	RestTemplate restTemplate;
+	
 	private static Logger logger = LoggerFactory.getLogger(EncryptionServiceImpl.class);
 	
 	@Override
-	public ResponseEntity<String> encrypt(Object propertyValue) throws EncryptionException {
-		
-		HttpClient httpClient = HttpClientBuilder.create().build();
-		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-		requestFactory.setConnectTimeout(5000);
-		requestFactory.setConnectionRequestTimeout(5000);
-		requestFactory.setReadTimeout(5000);
+	public String encrypt(Object propertyValue) throws EncryptionException {
 		
 		MultiValueMap<String, Object> map= new LinkedMultiValueMap<String, Object>();
 		map.add("value", propertyValue);
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map);
-		RestTemplate restTemplate = new RestTemplate(requestFactory);
+		ResponseEntity<String> response=null;
 		try {
-		    ResponseEntity<String> response = restTemplate.postForEntity(encryptionUri, request, String.class);
-		    return response;
+		    response = restTemplate.postForEntity(encryptionUri, request, String.class);
+		   	return response.getBody();
 		}catch(ResourceAccessException e) {
 			logger.error("Exception while connecting enryption service : ", e);
-			return null;
+			throw new EncryptionException("Exception while connecting enryption service! ");
 		}catch(ServiceUnavailableException e) {
 	    	logger.error("Service not available exception !: ", e);
-	    	return null;
+	  		throw new EncryptionException("Encryption service is not available !");
 		}catch(Exception e) {
-	    	logger.error("Exception in encryption service !: ", e);
-	    	return null;
+	    	logger.error("Exception in encryption servie !: ", e);
+	    	throw new EncryptionException("Exception in encryption service ! ");
 	    }	    
 	}
 	
 	@Override
-     public ResponseEntity<String> decrypt(Object propertyValue) throws EncryptionException {		
-		HttpClient httpClient = HttpClientBuilder.create().build();
-		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-		requestFactory.setConnectTimeout(5000);
-		requestFactory.setConnectionRequestTimeout(5000);
-		requestFactory.setReadTimeout(5000);
-	
+     public String decrypt(Object propertyValue) throws EncryptionException {		
+						
 		MultiValueMap<String, Object> map= new LinkedMultiValueMap<String, Object>();
 		map.add("value", propertyValue);
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map);
-		RestTemplate restTemplate = new RestTemplate(requestFactory);
+		ResponseEntity<String> response=null;
 		try {
-			ResponseEntity<String> response = restTemplate.postForEntity(decryptionUri, request, String.class);
-			return response;
+			response = restTemplate.postForEntity(decryptionUri, request, String.class);
+			return response.getBody();
 		}catch(ResourceAccessException e) {
 	    	logger.error("Exception while connecting dcryption service : ", e);
-			return null;
+	    	throw new EncryptionException("Exception while connecting enryption service ! ");
 		}catch(ServiceUnavailableException e) {
-	    	logger.error("Service not available exception !: ", e);
-	    	return null;
+	    	logger.error("Service not available exception ! ", e);
+	    	throw new EncryptionException("Encryption service is not available !");
 		}catch(Exception e) {
 	    	logger.error("Exception in decryption service !: ", e);
-	    	return null;
+	       	throw new EncryptionException("Exception in encryption service ! ");
 		}   
 	}
 	
-    public boolean encryptionRequired(VertexProperty<Object> property) throws EncryptionException {    
-    	logger.info("----Return from fieldConfiguration : ----- "+schemaConfigurator.isPrivate(property.key()));
-     	return schemaConfigurator.isPrivate(property.key());
+    public boolean isEncryptable(String propertyKey) throws EncryptionException {    
+    	if(propertyKey!=null) {
+    		return schemaConfigurator.isPrivate(propertyKey);
+    	}else
+    		return false;
     }
+    
+    public boolean isDecryptable(String tailPropertyKey) throws EncryptionException {    
+    	if(tailPropertyKey!=null) {
+    		return tailPropertyKey.substring(0, Math.min(tailPropertyKey.length(), 9)).equalsIgnoreCase("encrypted");    
+    	}else
+    		return false;
+    }
+    
+    
 }

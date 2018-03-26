@@ -121,7 +121,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 
 	private ResponseEntity<Response> callRegistryCreateAPI() {
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity<String> entity = new HttpEntity<>(jsonld,headers);
+		HttpEntity<String> entity = new HttpEntity<String>(jsonld,headers);
 		ResponseEntity<Response> response = restTemplate.postForEntity(
 				baseUrl+ADD_ENTITY,
 				entity,

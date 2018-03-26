@@ -1,0 +1,26 @@
+{
+	"@context": 
+	{
+		"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+		"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+		"opensaber": "http://example.com/voc/opensaber/1.0.0/",
+		"xsd": "http://www.w3.org/2001/XMLSchema#",
+		"sample": "http://example.com/voc/teacher/1.0.0/"
+	},
+
+	"@type": "opensaber:Registry",
+	"opensaber:privateProperties": 
+	[
+		{
+			"@id": "sample:schoolName"
+		},
+
+		{
+			"@id": "sample:clusterResourceCentre"
+		},
+
+		{
+			"@id": "sample:udiseNumber"
+		}
+	]
+}
