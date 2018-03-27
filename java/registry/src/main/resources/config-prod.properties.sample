@@ -1,20 +1,32 @@
+#The namespace of the registry context
 registry.context.base=http://example.com/voc/teacher/1.0.0/
+
+#IRI of the datatype of the records issued/stored in registry, for e.g if namespace of the
+#   teacher registry is http://example.com/voc/teacher/1.0.0/ and type is
+#   Teacher, then configure this field as
+#   http://example.com/voc/teacher/1.0.0/Teacher
 subject.label.type=${registry.context.base}Teacher
+
+#This refers to the opensaber schema configuration JSON-LD file
 config.schema.file=schema-configuration.jsonld
 
 ##############################################################
 #               Database Provider Config                     #
 ##############################################################
-
+#Name of the database used by the registry.  
+# The configuration options include NEO4J, ORIENTDB, SQLQ, TINKERGRAPH
 database.provider=NEO4J
 
-# NEO4J DB Configuration
+# Specifies the path for the neo4j database directory in the file system
 neo4j.directory=/data/databases/graph.db
 
 ##############################################################
 #               RDF Validation Config                        #
 ##############################################################
+#Name of the file which contains validations for the data issued into the registry
 validations.file=validations.shex
+
+#Shape name and type of the entity which is present in the validations file
 validations.entity.shape.name=${registry.context.base}TeacherShape
 validations.entity.shape.type=${registry.context.base}Teacher
 
@@ -22,6 +34,7 @@ validations.entity.shape.type=${registry.context.base}Teacher
 #               SpringBoot Actuator Config                   #
 ##############################################################
 
+#Can be configured if required
 management.security.enabled=false
 management.endpoints.web.exposure.include=info,metrics,health,env,auditevents,mappings,heapdump,threaddump
 management.endpoints.web.base-path=admin
@@ -40,5 +53,7 @@ read.timeout= 5000
 ##############################################################
 #              Encryption/Decryption Configuration           #
 ##############################################################
-encryption.uri= https://dev.open-sunbird.org/encryption/encrypt
-decryption.uri= https://dev.open-sunbird.org/encryption/decrypt
+#Encryption and decryption urls
+encryption.decryption.base=https://dev.open-sunbird.org/encryption/
+encryption.uri= ${encryption.decryption.base}encrypt
+decryption.uri= ${encryption.decryption.base}decrypt
