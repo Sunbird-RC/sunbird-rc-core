@@ -1,16 +1,25 @@
 package io.opensaber.registry.controller;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.jena.rdf.model.Model;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestAttribute;
@@ -38,20 +47,23 @@ public class RegistryController {
 	@Value("${registry.context.base}")
 	private String registryContext;
 
+	@Value("${vocab.fileName}")
+	private String vocabFileName;
+
 	@ResponseBody
-	@RequestMapping(value = "/addEntity", method = RequestMethod.POST)
+	@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
-		
+
 		try {
-			String label = registryService.addEntity(rdf);			
+			String label = registryService.addEntity(rdf);
 			result.put("entity", label);
 			response.setResult(result);
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);			
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (DuplicateRecordException | InvalidTypeException e) {
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
@@ -64,17 +76,17 @@ public class RegistryController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/getEntity/{id}", method = RequestMethod.GET)
-	public ResponseEntity<Response> getEntity(@PathVariable("id") String id){
+	@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
+	public ResponseEntity<Response> getEntity(@PathVariable("id") String id) {
 		id = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
-				
-		try {			
+
+		try {
 			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(id);
 			logger.debug("FETCHED " + entityModel);
 			String jenaJSON = registryService.frameEntity(entityModel);
-			JSONObject jenaObj=new JSONObject(jenaJSON);
+			JSONObject jenaObj = new JSONObject(jenaJSON);
 			response.setResult(jenaObj.toMap());
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (RecordNotFoundException e) {
@@ -91,22 +103,23 @@ public class RegistryController {
 	}
 
 	@ResponseBody
-	@RequestMapping(value = "/entity/{id}", method = RequestMethod.PATCH)
-	public ResponseEntity<Response> updateEntity(@RequestAttribute Request requestModel, @PathVariable("id") String id) {
+	@RequestMapping(value = "/update/{id}", method = RequestMethod.PATCH)
+	public ResponseEntity<Response> updateEntity(@RequestAttribute Request requestModel,
+			@PathVariable("id") String id) {
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		id = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
 
-		try {			
-			registryService.updateEntity(rdf, id);			
+		try {
+			registryService.updateEntity(rdf, id);
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (RecordNotFoundException | InvalidTypeException e) {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
-			
+
 		} catch (Exception e) {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(String.format("Error occurred when updating Entity ID %s", id));
@@ -114,5 +127,4 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
 }

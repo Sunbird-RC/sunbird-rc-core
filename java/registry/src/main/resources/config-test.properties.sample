@@ -15,3 +15,8 @@ read.timeout= 5000
 encryption.decryption.base=https://dev.open-sunbird.org/encryption/
 encryption.uri= ${encryption.decryption.base}encrypt
 decryption.uri= ${encryption.decryption.base}decrypt
+
+##############################################################
+#         			    Vocab file Config           	    #
+##############################################################
+vocab.fileName=teacher.owl

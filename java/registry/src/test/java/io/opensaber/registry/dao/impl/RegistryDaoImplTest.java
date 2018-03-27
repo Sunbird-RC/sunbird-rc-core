@@ -59,6 +59,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -76,7 +77,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 	
-	@Rule public MockitoRule rule = MockitoJUnit.rule();
+	//@Rule public MockitoRule rule = MockitoJUnit.rule();
 	
 	@Value("${encryption.active}")
 	private String encryptionStatus;
@@ -96,6 +97,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Mock
 	private EncryptionService encryptionMock;
 	
+	@Autowired
 	@InjectMocks
 	RegistryDaoImpl registryDaoImpl;
 	
@@ -107,8 +109,8 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Autowired
 	private DatabaseProvider databaseProvider;
 	
-	@Mock
-	private DatabaseProvider mockDatabaseProvider;
+	/*@Mock
+	private DatabaseProvider mockDatabaseProvider;*/
 
 	private static String identifier;
 
@@ -891,24 +893,48 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		return IteratorUtils.count(graph.vertices());
 	}
 	
-	/*@Test
-	public void test_encryptionCall_for_nonEncryptableProperty() throws Exception {
-		Model rdfModel = getNewValidRdf();
-		String rootLabel = updateGraphFromRdf(rdfModel);
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(true);
+	@Test
+	public void test_encryption_for_nonEncryptableProperty() throws Exception {
+		String label = generateRandomId();
+		Map<String, String> map = new HashMap<>();
+		map.put("http://example.com/voc/teacher/1.0.0/schoolName", "ABC International School");
+		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
+		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
+
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(false);
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"))
+				.thenReturn(true);
 		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
-		
-	   	String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
-		Graph entity = registryDao.getEntityById(response);		
-		long vertexCount = IteratorUtils.count(entity.traversal().clone().V());
-		verify(encryptionMock, times((int) vertexCount*2)).encrypt(Mockito.anyString());
-	}*/
+
+		when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
+		when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
+
+		getVertexWithMultipleProperties(label, map);
+		String response = registryDao.addEntity(graph,label);
+		Graph entity = registryDao.getEntityById(response);
+		verify(encryptionMock, times(2)).encrypt(Mockito.anyString());
+	}
 	
 	/*@Test
 	public void test_encryptionCall_for_encryptable_but_null_property() throws Exception {
-		String privateProperty = null;
-		encryptionMock.encrypt(privateProperty);
-		verify(encryptionMock, never()).encrypt(privateProperty);
+		String label = generateRandomId();
+		Map<String, String> map = new HashMap<>();
+		map.put("http://example.com/voc/teacher/1.0.0/schoolName", null);
+		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
+		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
+
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(false);
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
+
+		when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
+		when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
+
+		getVertexWithMultipleProperties(label, map);
+		String response = registryDao.addEntity(graph, label);
+		Graph entity = registryDao.getEntityById(response);
+
+		verify(encryptionMock, times(2)).encrypt(Mockito.anyString());
 	}*/
 
 	@Test
@@ -947,7 +973,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		}		 
 	}*/
 	
-/*	@Test
+	@Test
 	public void test_properties_single_node() throws Exception {	
 		String label = generateRandomId();
 		Map<String,String> map=new HashMap<>();
@@ -962,13 +988,21 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	    when(encryptionMock.encrypt("ABC International School")).thenReturn("mockEncryptedSchoolName");
 	    when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
 	    when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
+	    
+	    when(encryptionMock.isDecryptable("encryptedschoolName")).thenReturn(true);
+		when(encryptionMock.isDecryptable("encryptedclusterResourceCentre")).thenReturn(true);
+	    when(encryptionMock.isDecryptable("encryptedudiseNumber")).thenReturn(true);
+	    
+	    when(encryptionMock.decrypt("mockEncryptedSchoolName")).thenReturn("ABC International School");
+	    when(encryptionMock.decrypt("mockEncryptedClusterResourceCentre")).thenReturn("test Cluster Resource");
+	    when(encryptionMock.decrypt("mockEncryptedUdiseNumber")).thenReturn("1234");
 		
 	    getVertexWithMultipleProperties(label,map);		
 		String response = registryDao.addEntity(graph, label);
 		registryDao.getEntityById(response);		
 		
-		verify(encryptionMock, times(3)).isEncryptable(Mockito.anyString());
 		verify(encryptionMock, times(3)).encrypt(Mockito.anyString());
+		verify(encryptionMock, times(3)).decrypt(Mockito.anyString());
 	}
 	
 	@Test
@@ -976,18 +1010,30 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
 		
-		when(encryptionMock.encrypt("Bluebells")).thenReturn("mockEncryptedSchoolName");
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(true);
+		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
+	    when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
+	    
+	    when(encryptionMock.encrypt("Bluebells")).thenReturn("mockEncryptedSchoolName");
 	    when(encryptionMock.encrypt("some Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
 	    when(encryptionMock.encrypt("9876")).thenReturn("mockEncryptedUdiseNumber");
 	    
+	    when(encryptionMock.isDecryptable("encryptedschoolName")).thenReturn(true);
+		when(encryptionMock.isDecryptable("encryptedclusterResourceCentre")).thenReturn(true);
+	    when(encryptionMock.isDecryptable("encryptedudiseNumber")).thenReturn(true);
+	    
+	    when(encryptionMock.decrypt("mockEncryptedSchoolName")).thenReturn("ABC International School");
+	    when(encryptionMock.decrypt("mockEncryptedClusterResourceCentre")).thenReturn("test Cluster Resource");
+	    when(encryptionMock.decrypt("mockEncryptedUdiseNumber")).thenReturn("1234");
+	    
+	    int privatePropertycount=3;
 	    String response = registryDao.addEntity(graph, "_:"+rootLabel);
 		Graph entity = registryDao.getEntityById(response);
-		long vertexCount = IteratorUtils.count(entity.traversal().clone().V());
-		int totalPrivatePropertyCount=(int) (vertexCount*3);
+		long vertexCount = IteratorUtils.count(entity.traversal().clone().V());		
 		
-		verify(encryptionMock, times(totalPrivatePropertyCount)).isEncryptable(Mockito.anyString());
-		verify(encryptionMock, times(totalPrivatePropertyCount)).encrypt(Mockito.anyString());	
-	}*/
+		verify(encryptionMock, times(3)).encrypt(Mockito.anyString());	
+		verify(encryptionMock, times(3)).decrypt(Mockito.anyString());		
+	}
 	
 	@Test
 	public void test_encryption_EncryptionError() throws Exception {

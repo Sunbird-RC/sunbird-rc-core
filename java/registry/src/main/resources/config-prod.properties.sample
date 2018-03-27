@@ -51,9 +51,14 @@ connection.request.timeout= 5000
 read.timeout= 5000
 
 ##############################################################
-#              Encryption/Decryption Configuration           #
+#              Encryption/Decryption Config		            #
 ##############################################################
 #Encryption and decryption urls
 encryption.decryption.base=https://dev.open-sunbird.org/encryption/
 encryption.uri= ${encryption.decryption.base}encrypt
 decryption.uri= ${encryption.decryption.base}decrypt
+
+##############################################################
+#         			    Vocab file Config           	    #
+##############################################################
+vocab.fileName=teacher.owl

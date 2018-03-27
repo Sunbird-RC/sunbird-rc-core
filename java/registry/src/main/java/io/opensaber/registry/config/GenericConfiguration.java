@@ -1,6 +1,7 @@
 package io.opensaber.registry.config;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +43,9 @@ import io.opensaber.registry.schema.config.SchemaConfigurator;
 
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.resource.PathResourceResolver;
 
 @Configuration
 @PropertySource(value = {"classpath:config-${spring.profiles.active}.properties"})
@@ -52,6 +55,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Autowired
 	private Environment environment;
+	
+	@Value("${vocab.fileName}")
+	private String vocabFileName;
 	
 	@Value("${connection.timeout}")
 	private int connectionTimeout;
@@ -145,12 +151,25 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Override 
 	public void addInterceptors(InterceptorRegistry registry) { 
 		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(),gson())).addPathPatterns("/**").order(1);
-		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(),gson())).addPathPatterns("/addEntity", "/entity/{id}").order(2);
-		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(),gson())).addPathPatterns("/addEntity", "/entity/{id}").order(3);
-		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(),gson())).addPathPatterns("/addEntity", "/entity/{id}").order(4);
-
+		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(),gson())).addPathPatterns("/create", "/update/{id}").order(2);
+		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper())).addPathPatterns("/create", "/update/{id}").order(3);
+		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(),gson())).addPathPatterns("/create", "/update/{id}").order(4);
 	}
 
-
+	@Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    	String resourcePath=null;
+    	try {
+    		resourcePath=this.getClass().getClassLoader().getResource(vocabFileName).toURI().toString();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			logger.error("ERROR!", e);
+		}
+        registry.addResourceHandler("/resources/**")
+            .addResourceLocations(resourcePath)
+            .setCachePeriod(3600)
+            .resourceChain(true)
+            .addResolver(new PathResourceResolver());
+    }
 
 }
