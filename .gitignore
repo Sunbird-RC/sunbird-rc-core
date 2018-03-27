@@ -65,3 +65,15 @@ logs
 .scala_dependencies
 .worksheet
 
+# Properties
+config-*.properties
+application.properties
+
+# Json-LD
+schema-configuration.jsonld
+schema-configuration-school-test.jsonld
+frame.json
+
+# Shex file
+validations.shex
+
