@@ -12,7 +12,7 @@ import org.umlg.sqlg.structure.SqlgGraph;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-public class SqlgProvider implements DatabaseProvider {
+public class SqlgProvider extends DatabaseProvider {
 
     private Logger logger = LoggerFactory.getLogger(SqlgProvider.class);
     private Graph graph;

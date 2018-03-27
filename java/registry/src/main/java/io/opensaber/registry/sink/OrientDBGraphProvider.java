@@ -12,7 +12,7 @@ import org.springframework.core.env.Environment;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-public class OrientDBGraphProvider implements DatabaseProvider {
+public class OrientDBGraphProvider extends DatabaseProvider {
 
     private Logger logger = LoggerFactory.getLogger(OrientDBGraphProvider.class);
     private Graph graph;

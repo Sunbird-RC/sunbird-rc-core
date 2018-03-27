@@ -37,6 +37,10 @@ public class Constants {
 	public static final String RDF_VALIDATION_ERROR = "Unable to validate RDF";
 	public static final String RDF_VALIDATION_MAPPING_ERROR = "Unable to map validations";
 
+	public static final String OPENSABER_REGISTRY_API_NAME = "opensaber-registry-api";
+	public static final String SUNBIRD_ENCRYPTION_SERVICE_NAME = "sunbird.encryption.service";
+	public static final String OPENSABER_DATABASE_NAME = "opensaber.database";
+
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"),
 		ORIENTDB("ORIENTDB"),

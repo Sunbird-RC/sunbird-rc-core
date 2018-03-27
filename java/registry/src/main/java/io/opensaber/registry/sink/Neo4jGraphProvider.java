@@ -12,7 +12,7 @@ import org.springframework.core.env.Environment;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-public class Neo4jGraphProvider implements DatabaseProvider {
+public class Neo4jGraphProvider extends DatabaseProvider {
 
     private Logger logger = LoggerFactory.getLogger(Neo4jGraphProvider.class);
     private Graph graph;

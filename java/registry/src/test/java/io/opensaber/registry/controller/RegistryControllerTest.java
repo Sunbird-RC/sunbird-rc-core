@@ -2,29 +2,36 @@ package io.opensaber.registry.controller;
 
 import static org.junit.Assert.*;
 
+import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.app.OpenSaberApplication;
 import io.opensaber.registry.authorization.AuthorizationToken;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.service.EncryptionService;
+import io.opensaber.registry.service.impl.EncryptionServiceImpl;
+import io.opensaber.registry.service.impl.RegistryServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 import io.opensaber.registry.util.RDFUtil;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.when;
+
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.exception.DuplicateRecordException;
@@ -38,13 +45,15 @@ import org.apache.jena.rdf.model.Model;
 import java.util.Collections;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes={OpenSaberApplication.class, RegistryController.class, GenericConfiguration.class})
+@SpringBootTest(classes={OpenSaberApplication.class, RegistryController.class, GenericConfiguration.class, EncryptionServiceImpl.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class RegistryControllerTest extends RegistryTestBase{
+public class RegistryControllerTest extends RegistryTestBase {
 	
 	private static final String VALID_JSONLD = "school.jsonld";
 	private static final String CONTEXT_CONSTANT = "sample:";
+
+	private boolean isInitialized = false;
 
 	@Autowired
 	private RegistryService registryService;
@@ -52,11 +61,32 @@ public class RegistryControllerTest extends RegistryTestBase{
 	@Autowired
 	private DatabaseProvider databaseProvider;
 
+	@Mock
+	private EncryptionServiceImpl encryptionService;
+
+	@Mock
+	private DatabaseProvider mockDatabaseProvider;
+
+	@InjectMocks
+	private RegistryServiceImpl registryServiceForHealth;
+
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 
+	public void setup() {
+		if (!isInitialized) {
+			MockitoAnnotations.initMocks(this);
+			ReflectionTestUtils.setField(encryptionService, "encryptionServiceHealthCheckUri", "encHealthCheckUri");
+			ReflectionTestUtils.setField(encryptionService, "decryptionUri", "decryptionUri");
+			ReflectionTestUtils.setField(encryptionService, "encryptionUri", "encryptionUri");
+			isInitialized = true;
+		}
+	}
+
 	@Before
 	public void initialize() {
+		setup();
+		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);
         AuthInfo authInfo = new AuthInfo();
         authInfo.setAud("aud");
@@ -92,6 +122,30 @@ public class RegistryControllerTest extends RegistryTestBase{
 		expectedEx.expectMessage(Constants.INVALID_TYPE_MESSAGE);
 		registryService.addEntity(model);
 		closeDB();
+	}
+
+	@Test
+	public void test_health_check_up_scenario() throws Exception {
+		when(encryptionService.isEncryptionServiceUp()).thenReturn(true);
+		when(mockDatabaseProvider.isDatabaseServiceUp()).thenReturn(true);
+		HealthCheckResponse response = registryServiceForHealth.health();
+		assertTrue(response.isHealthy());
+		response.getChecks().forEach(ch -> assertTrue(ch.isHealthy()));
+	}
+
+	@Test
+	public void test_health_check_down_scenario() throws Exception {
+		when(encryptionService.isEncryptionServiceUp()).thenReturn(false);
+		when(mockDatabaseProvider.isDatabaseServiceUp()).thenReturn(true);
+		HealthCheckResponse response = registryServiceForHealth.health();
+		assertFalse(response.isHealthy());
+		response.getChecks().forEach(ch -> {
+			if(ch.getName().equalsIgnoreCase(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME)) {
+				assertFalse(ch.isHealthy());
+			} else {
+				assertTrue(ch.isHealthy());
+			}
+		});
 	}
 
 	public void closeDB() throws Exception{

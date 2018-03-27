@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
@@ -27,6 +28,9 @@ public class EncryptionServiceImpl implements EncryptionService {
 
 	@Value("${decryption.uri}")
 	private String decryptionUri;
+
+	@Value("${sunbird.encryption-service.health.check}")
+	private String encryptionServiceHealthCheckUri;
 	
 	@Autowired
 	SchemaConfigurator schemaConfigurator;
@@ -93,6 +97,26 @@ public class EncryptionServiceImpl implements EncryptionService {
     	}else
     		return false;
     }
-    
-    
+
+	/**
+	 * This method is used to check if the sunbird encryption service is up
+	 * @return
+	 */
+	@Override
+	public boolean isEncryptionServiceUp() {
+		boolean isEncryptionServiceUp = false;
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+		RestTemplate restTemplate = new RestTemplate(requestFactory);
+		try {
+			ResponseEntity<String> response = restTemplate.getForEntity(encryptionServiceHealthCheckUri, String.class);
+			if (response.getBody().equalsIgnoreCase("UP")) {
+				isEncryptionServiceUp = true;
+			}
+		} catch (RestClientException ex) {
+			logger.error("RestClientException when checking the health of the Sunbird encryption service: ", ex);
+		}
+		return isEncryptionServiceUp;
+	}
+
 }

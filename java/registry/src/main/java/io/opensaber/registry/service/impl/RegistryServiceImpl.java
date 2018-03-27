@@ -4,9 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
+import io.opensaber.pojos.ComponentHealthInfo;
+import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.exception.*;
+import io.opensaber.registry.service.EncryptionService;
+import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -24,6 +29,7 @@ import org.eclipse.rdf4j.model.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.health.Health;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -46,6 +52,12 @@ public class RegistryServiceImpl implements RegistryService {
 
 	@Autowired
 	private Environment environment;
+
+	@Autowired
+	EncryptionService encryptionService;
+
+	@Autowired
+	DatabaseProvider databaseProvider;
 
 	@Override
 	public List getEntityList(){
@@ -145,6 +157,21 @@ public class RegistryServiceImpl implements RegistryService {
 	@Override
 	public boolean deleteEntity(Object entity){
 		return registryDao.deleteEntity(entity);
+	}
+
+	public HealthCheckResponse health() throws Exception {
+		HealthCheckResponse healthCheck;
+		boolean encryptionServiceStatusUp = encryptionService.isEncryptionServiceUp();
+		boolean databaseServiceup = databaseProvider.isDatabaseServiceUp();
+		boolean overallHealthStatus = encryptionServiceStatusUp && databaseServiceup;
+
+		ComponentHealthInfo encryptionHealthInfo = new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, encryptionServiceStatusUp);
+		ComponentHealthInfo databaseServiceInfo = new ComponentHealthInfo(Constants.OPENSABER_DATABASE_NAME, databaseServiceup);
+		List<ComponentHealthInfo> checks = new ArrayList<>();
+		checks.add(encryptionHealthInfo);
+		checks.add(databaseServiceInfo);
+		healthCheck = new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, overallHealthStatus, checks);
+		return healthCheck;
 	}
 
 	@Override

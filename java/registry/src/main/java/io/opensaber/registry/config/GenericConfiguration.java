@@ -2,7 +2,6 @@ package io.opensaber.registry.config;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +10,6 @@ import io.opensaber.registry.sink.Neo4jGraphProvider;
 import io.opensaber.registry.sink.OrientDBGraphProvider;
 import io.opensaber.registry.sink.SqlgProvider;
 import io.opensaber.registry.sink.TinkerGraphProvider;
-import org.apache.tomcat.util.http.parser.Authorization;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
@@ -148,10 +146,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new RDFValidationMapper(typeValidationMap);
 	}
 
-	@Override 
+	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson())).addPathPatterns("/**")
-				.order(1);
+		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
+				.addPathPatterns("/**").excludePathPatterns("/health").order(1);
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
 				.addPathPatterns("/create", "/update/{id}").order(2);
 		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))

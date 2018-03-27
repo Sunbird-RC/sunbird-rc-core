@@ -6,9 +6,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.UUID;
-
+import java.util.stream.Stream;
 
 
 public class RegistryTestBase {
@@ -31,20 +32,15 @@ public class RegistryTestBase {
 
 	}
 
-	public String readFromFile(String file) throws IOException,FileNotFoundException{
-		BufferedReader reader = new BufferedReader(new FileReader (file));
+	public String readFromFile(String file) {
 		StringBuilder sb = new StringBuilder();
-		try{
-			String line = null;
-			while((line = reader.readLine()) !=null){
-				sb.append(line);
-			}
-		}catch(Exception e){
+		try {
+			BufferedReader reader = Files.newBufferedReader(Paths.get(file));
+			Stream<String> lines = reader.lines();
+			lines.forEach(sb::append);
+			lines.close();
+		} catch (IOException e) {
 			return EMPTY_STRING;
-		}finally{
-			if(reader!=null){
-				reader.close();
-			}
 		}
 		return sb.toString();
 	}

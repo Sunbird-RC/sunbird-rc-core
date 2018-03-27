@@ -1,25 +1,18 @@
 package io.opensaber.registry.controller;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
-import org.apache.commons.lang.StringUtils;
+import io.opensaber.pojos.HealthCheckResponse;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.util.JSONUtil;
 import org.apache.jena.rdf.model.Model;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestAttribute;
@@ -127,4 +120,28 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+
+	@ResponseBody
+	@RequestMapping(value = "/health", method = RequestMethod.GET)
+	public ResponseEntity<Response> health() {
+
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.HEALTH, "OK", responseParams);
+
+		try {
+			HealthCheckResponse healthCheckResult = registryService.health();
+			response.setResult(JSONUtil.onvertObjectJsonMap(healthCheckResult));
+			responseParams.setErrmsg("");
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+		} catch (Exception e) {
+            HealthCheckResponse healthCheckResult =
+                    new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, false, null);
+            response.setResult(JSONUtil.onvertObjectJsonMap(healthCheckResult));
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg("Error during health check");
+			logger.error("ERROR!", e);
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 }

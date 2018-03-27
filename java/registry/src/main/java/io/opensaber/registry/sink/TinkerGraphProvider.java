@@ -14,7 +14,7 @@ import org.springframework.core.env.Environment;
 
 import io.opensaber.registry.middleware.util.Constants;
 
-public class TinkerGraphProvider implements DatabaseProvider {
+public class TinkerGraphProvider extends DatabaseProvider {
 
 	 private Logger logger = LoggerFactory.getLogger(TinkerGraphProvider.class);
 	    private Graph graph;

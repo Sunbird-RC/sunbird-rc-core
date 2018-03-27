@@ -31,6 +31,11 @@ validations.entity.shape.name=${registry.context.base}TeacherShape
 validations.entity.shape.type=${registry.context.base}Teacher
 
 ##############################################################
+#               RDF Validation Config                        #
+##############################################################
+sunbird.encryption-service.health.check=https://dev.open-sunbird.org/encryption/
+
+##############################################################
 #               SpringBoot Actuator Config                   #
 ##############################################################
 
@@ -57,6 +62,7 @@ read.timeout= 5000
 encryption.decryption.base=https://dev.open-sunbird.org/encryption/
 encryption.uri= ${encryption.decryption.base}encrypt
 decryption.uri= ${encryption.decryption.base}decrypt
+sunbird.encryption-service.health.check=https://dev.open-sunbird.org/encryption/
 
 ##############################################################
 #         			    Vocab file Config           	    #

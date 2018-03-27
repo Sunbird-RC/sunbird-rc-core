@@ -25,6 +25,7 @@ public class Response {
 		CREATE("open-saber.registry.create"),
 		READ("open-saber.registry.read"),
 		UPDATE("open-saber.registry.update"),
+		HEALTH("open-saber.registry.health"),
 		NONE("");
 		private String id;
 
