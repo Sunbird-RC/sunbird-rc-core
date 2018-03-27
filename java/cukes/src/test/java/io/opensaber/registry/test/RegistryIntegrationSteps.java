@@ -46,9 +46,9 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private static final String VALID_NEWJSONLD= "teacher.jsonld";
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
 	private static final String INVALID_NEWJSONLD= "invalid-teacher.jsonld";
-	private static final String ADD_ENTITY = "addEntity";
-	private static final String READ_ENTITY = "getEntity";
-	private static final String UPDATE_ENTITY = "entity";
+	private static final String ADD_ENTITY = "create";
+	private static final String READ_ENTITY = "read";
+	private static final String UPDATE_ENTITY = "update";
 	private static final String AUTH_HEADER_NAME = "x-authenticated-user-token";
 		
 	private RestTemplate restTemplate;
