@@ -1,2 +1,1 @@
-server.contextPath=/registry
 spring.profiles.active=test

@@ -1,5 +1,6 @@
-shex.file=good1.shex
-subject.label.type=http://example.com/voc/teacher/1.0.0/School
+registry.context.base=http://example.com/voc/teacher/1.0.0/
+subject.label.type=${registry.context.base}Teacher
+config.schema.file=schema-configuration.jsonld
 
 ##############################################################
 #               Database Provider Config                     #
@@ -8,19 +9,36 @@ subject.label.type=http://example.com/voc/teacher/1.0.0/School
 database.provider=NEO4J
 
 # NEO4J DB Configuration
-<<<<<<< HEAD
 neo4j.directory=/data/databases/graph.db
 
-# ORIENT DB Configuration
-orientdb.directory=/data/orientdb/registry.db
+##############################################################
+#               RDF Validation Config                        #
+##############################################################
+validations.file=validations.shex
+validations.entity.shape.name=${registry.context.base}TeacherShape
+validations.entity.shape.type=${registry.context.base}Teacher
 
-# SQLG-H2 DB Configuration
-jdbc.url=jdbc:h2:file:/data/h2/registry_db
-jdbc.username=
-jdbc.password=
+##############################################################
+#               SpringBoot Actuator Config                   #
+##############################################################
 
-base.url=http://localhost:8080/registry/
-=======
-database.provider=neo4j
-neo4j.directory=./databases/graph.db
->>>>>>> Issue #20 feat: framing output
+management.security.enabled=false
+management.endpoints.web.exposure.include=info,metrics,health,env,auditevents,mappings,heapdump,threaddump
+management.endpoints.web.base-path=admin
+management.endpoint.health.show-details=ALWAYS
+management.server.port=9000
+management.context-path=admin
+management.port=9000
+
+##############################################################
+#               Http Connection Timeout Config               #
+##############################################################
+connection.timeout= 5000
+connection.request.timeout= 5000
+read.timeout= 5000
+
+##############################################################
+#              Encryption/Decryption Configuration           #
+##############################################################
+encryption.uri= https://dev.open-sunbird.org/encryption/encrypt
+decryption.uri= https://dev.open-sunbird.org/encryption/decrypt

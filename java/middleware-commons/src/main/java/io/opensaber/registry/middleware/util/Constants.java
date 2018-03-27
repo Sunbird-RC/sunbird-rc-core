@@ -9,11 +9,11 @@ public class Constants {
 	public static final String RDF_OBJECT = "rdf";
 	public static final String RDF_VALIDATION_OBJECT = "rdfValidationResult";
 	public static final String TOKEN_OBJECT = "x-authenticated-user-token";
-	public static final String SHEX_PROPERTY_NAME = "shex.file";
+	public static final String SHEX_PROPERTY_NAME = "validations.file";
 	public static final String FIELD_CONFIG_SCEHEMA_FILE = "config.schema.file";
 	public static final String SUBJECT_LABEL_TYPE = "subject.label.type";
-	public static final String SHAPE_NAME = "shape.name";
-	public static final String SHAPE_TYPE = "shape.type";
+	public static final String SHAPE_NAME = "validations.entity.shape.name";
+	public static final String SHAPE_TYPE = "validations.entity.shape.type";
 	public static final String RDF_VALIDATION_MAPPER_OBJECT = "rdfValidationMapper";
 	public static final String REGISTRY_CONTEXT_BASE = "registry.context.base";
 	public static final String PRIVACY_PROPERTY = "privateProperties";
@@ -25,7 +25,6 @@ public class Constants {
 
 	public static final String TEST_ENVIRONMENT = "test";
 	public static final String PROD_ENVIRONMENT = "prod";
-	public static final String BASE_URL = "base.url";
 	public static final String INTEGRATION_TEST_BASE_URL = "http://localhost:8080/";
 	public static final String TARGET_NODE_IRI = "http://www.w3.org/ns/shacl#targetNode";
 	
@@ -36,6 +35,7 @@ public class Constants {
 	public static final String TOKEN_EXTRACTION_ERROR = "Unable to extract auth token";
 	public static final String JSONLD_PARSE_ERROR = "Unable to parse JSON-LD";
 	public static final String RDF_VALIDATION_ERROR = "Unable to validate RDF";
+	public static final String RDF_VALIDATION_MAPPING_ERROR = "Unable to map validations";
 
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"),
@@ -54,7 +54,7 @@ public class Constants {
 		}
 	}
 	
-	public enum ValidationMapper {
+	/*public enum ValidationMapper {
 		SCHOOL("school."),
 		ADDRESS("address."),
 		TEACHER("teacher."),
@@ -70,6 +70,6 @@ public class Constants {
 			return name;
 		}
 		
-	}
+	}*/
 
 }

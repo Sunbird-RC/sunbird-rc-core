@@ -4,6 +4,7 @@ jdk:
 cache:
   directories:
   - "$HOME/.m2"
+before_script: ./configure-dependencies.sh
 script:
 - cd java && mvn clean install && cd registry && mvn clean install
 notifications:

@@ -134,14 +134,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public RDFValidationMapper rdfValidationMapper(){
 		Map<String,String> typeValidationMap = new HashMap<String,String>();
-		EnumSet.allOf(Constants.ValidationMapper.class)
-		.forEach(type -> {
-			String key = environment.getProperty(type.getName()+Constants.SHAPE_TYPE);
-			String value = environment.getProperty(type.getName()+Constants.SHAPE_NAME);
-			if(key!=null && value!=null){
-				typeValidationMap.put(key,value);
-			}
-		});
+		String shapeType = environment.getProperty(Constants.SHAPE_TYPE);
+		String shapeName = environment.getProperty(Constants.SHAPE_NAME);
+		if(shapeType!=null && shapeName!=null){
+			typeValidationMap.put(shapeType,shapeName);
+		}
 		return new RDFValidationMapper(typeValidationMap);
 	}
 
@@ -149,7 +146,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public void addInterceptors(InterceptorRegistry registry) { 
 		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(),gson())).addPathPatterns("/**").order(1);
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(),gson())).addPathPatterns("/addEntity", "/entity/{id}").order(2);
-		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper())).addPathPatterns("/addEntity", "/entity/{id}").order(3);
+		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(),gson())).addPathPatterns("/addEntity", "/entity/{id}").order(3);
 		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(),gson())).addPathPatterns("/addEntity", "/entity/{id}").order(4);
 
 	}

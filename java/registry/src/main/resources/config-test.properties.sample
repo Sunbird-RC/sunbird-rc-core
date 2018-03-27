@@ -1,4 +1,15 @@
-shex.file=good1.shex
-subject.label.type=http://example.com/voc/teacher/1.0.0/School
+registry.context.base=http://example.com/voc/teacher/1.0.0/
+validations.file=good1.shex
+subject.label.type=${registry.context.base}School
 database.provider=TINKERGRAPH
-base.url=http://localhost:8080/
+config.schema.file=schema-configuration-school-test.jsonld
+
+connection.timeout= 5000
+connection.request.timeout= 5000
+read.timeout= 5000
+
+##############################################################
+#              Encryption/Decryption Configuration           #
+##############################################################
+encryption.uri= https://dev.open-sunbird.org/encryption/encrypt
+decryption.uri= https://dev.open-sunbird.org/encryption/decrypt
