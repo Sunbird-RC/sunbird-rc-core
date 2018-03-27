@@ -149,11 +149,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Override 
-	public void addInterceptors(InterceptorRegistry registry) { 
-		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(),gson())).addPathPatterns("/**").order(1);
-		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(),gson())).addPathPatterns("/create", "/update/{id}").order(2);
-		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper())).addPathPatterns("/create", "/update/{id}").order(3);
-		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(),gson())).addPathPatterns("/create", "/update/{id}").order(4);
+	public void addInterceptors(InterceptorRegistry registry) {
+		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson())).addPathPatterns("/**")
+				.order(1);
+		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
+				.addPathPatterns("/create", "/update/{id}").order(2);
+		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
+				.addPathPatterns("/create", "/update/{id}").order(3);
+		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(), gson()))
+				.addPathPatterns("/create", "/update/{id}").order(4);
 	}
 
 	@Override
