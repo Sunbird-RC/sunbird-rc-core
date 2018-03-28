@@ -29,7 +29,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 	@Value("${decryption.uri}")
 	private String decryptionUri;
 
-	@Value("${sunbird.encryption-service.health.check}")
+	@Value("${encryption.decryption.base}")
 	private String encryptionServiceHealthCheckUri;
 	
 	@Autowired
