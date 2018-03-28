@@ -54,9 +54,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Autowired
 	private Environment environment;
 	
-	@Value("${vocab.fileName}")
-	private String vocabFileName;
-	
 	@Value("${connection.timeout}")
 	private int connectionTimeout;
 	
@@ -159,19 +156,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    	String resourcePath=null;
-    	try {
-    		resourcePath=this.getClass().getClassLoader().getResource(vocabFileName).toURI().toString();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-			logger.error("ERROR!", e);
-		}
-        registry.addResourceHandler("/resources/**")
-            .addResourceLocations(resourcePath)
-            .setCachePeriod(3600)
-            .resourceChain(true)
-            .addResolver(new PathResourceResolver());
-    }
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		registry.addResourceHandler("/resources/**")
+		.addResourceLocations("classpath:/BOOT-INF/classes/vocabulary/")
+		.setCachePeriod(3600)
+		.resourceChain(true)
+		.addResolver(new PathResourceResolver());
+	}
 
 }

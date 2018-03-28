@@ -40,9 +40,7 @@ public class RegistryController {
 	@Value("${registry.context.base}")
 	private String registryContext;
 
-	@Value("${vocab.fileName}")
-	private String vocabFileName;
-
+	
 	@ResponseBody
 	@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {

@@ -64,7 +64,3 @@ encryption.uri= ${encryption.decryption.base}encrypt
 decryption.uri= ${encryption.decryption.base}decrypt
 sunbird.encryption-service.health.check=https://dev.open-sunbird.org/encryption/
 
-##############################################################
-#         			    Vocab file Config           	    #
-##############################################################
-vocab.fileName=teacher.owl
