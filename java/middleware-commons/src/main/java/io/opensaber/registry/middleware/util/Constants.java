@@ -36,6 +36,7 @@ public class Constants {
 	public static final String JSONLD_PARSE_ERROR = "Unable to parse JSON-LD";
 	public static final String RDF_VALIDATION_ERROR = "Unable to validate RDF";
 	public static final String RDF_VALIDATION_MAPPING_ERROR = "Unable to map validations";
+	public static final String CUSTOM_EXCEPTION_ERROR = "Something went wrong!! Please try again later";
 
 	public static final String OPENSABER_REGISTRY_API_NAME = "opensaber-registry-api";
 	public static final String SUNBIRD_ENCRYPTION_SERVICE_NAME = "sunbird.encryption.service";
@@ -57,23 +58,5 @@ public class Constants {
 			return name;
 		}
 	}
-	
-	/*public enum ValidationMapper {
-		SCHOOL("school."),
-		ADDRESS("address."),
-		TEACHER("teacher."),
-		TEACHER_ROLE("teacher.role.");
-		
-		private String name;
-
-		private ValidationMapper(String name) {
-			this.name = name;
-		}
-
-		public String getName() {
-			return name;
-		}
-		
-	}*/
 
 }

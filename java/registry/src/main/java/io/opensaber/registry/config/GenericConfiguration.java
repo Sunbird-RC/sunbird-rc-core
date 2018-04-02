@@ -1,7 +1,6 @@
 package io.opensaber.registry.config;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
 import io.opensaber.registry.authorization.AuthorizationFilter;
+import io.opensaber.registry.exception.CustomExceptionHandler;
 import io.opensaber.registry.interceptor.AuthorizationInterceptor;
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationInterceptor;
@@ -40,6 +40,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -74,7 +75,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public Gson gson(){
 		return new Gson();
 	}
-
+	
 	@Bean
 	public RdfToJsonldConverter rdfToJsonldConverter(){
 		return new RdfToJsonldConverter();
@@ -146,7 +147,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
-				.addPathPatterns("/**").excludePathPatterns("/health").order(1);
+				.addPathPatterns("/**").excludePathPatterns("/health","/error").order(1);
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
 				.addPathPatterns("/create", "/update/{id}").order(2);
 		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
@@ -157,11 +158,21 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Override
 	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		try{
 		registry.addResourceHandler("/resources/**")
-		.addResourceLocations("classpath:/BOOT-INF/classes/vocabulary/")
+		.addResourceLocations("classpath:vocab/1.0/")
 		.setCachePeriod(3600)
 		.resourceChain(true)
 		.addResolver(new PathResourceResolver());
+		}catch(Exception e){
+			throw e;
+		}
+
 	}
+
+	@Bean
+    public HandlerExceptionResolver customExceptionHandler () {
+        return new CustomExceptionHandler(gson());
+    }
 
 }

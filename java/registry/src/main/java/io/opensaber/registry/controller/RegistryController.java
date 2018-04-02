@@ -33,7 +33,7 @@ import io.opensaber.registry.service.RegistryService;
 public class RegistryController {
 
 	private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
-
+	
 	@Autowired
 	private RegistryService registryService;
 
@@ -141,5 +141,6 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+
 
 }
