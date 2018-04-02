@@ -48,7 +48,6 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private static final String INVALID_NEWJSONLD= "invalid-teacher.jsonld";
 	private static final String ADD_ENTITY = "create";
 	private static final String READ_ENTITY = "read";
-	private static final String UPDATE_ENTITY = "update";
 	private static final String AUTH_HEADER_NAME = "x-authenticated-user-token";
 		
 	private RestTemplate restTemplate;
@@ -110,14 +109,6 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	public void addEntity(){
 		response = callRegistryCreateAPI();
 	}
-	
-	@When("^updating the record in registry")
-	public void updateEntity(){
-		JsonParser p = new JsonParser();
-        JsonObject jsonObject = p.parse(jsonld).getAsJsonObject();
-        jsonObject.addProperty("@id", id);
-		response = callRegistryUpdateAPI();
-	}
 
 	private ResponseEntity<Response> callRegistryCreateAPI() {
 		headers.setContentType(MediaType.APPLICATION_JSON);
@@ -127,16 +118,6 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 				entity,
 				Response.class);	
 		return response;
-	}
-	
-	private ResponseEntity<Response> callRegistryUpdateAPI() {
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity<String> entity = new HttpEntity<>(jsonld,headers);
-		//ResponseEntity<Response> response = restTemplate.exchange(baseUrl+UPDATE_ENTITY+"/"+id, HttpMethod.PATCH,entity,Response.class);
-		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-		restTemplate.setRequestFactory(requestFactory);
-		Response response = restTemplate.patchForObject(baseUrl+UPDATE_ENTITY+"/"+updateId, entity, Response.class);
-		return new ResponseEntity(response,HttpStatus.OK);
 	}
 	
 	@Then("^record issuing should be successful")

@@ -25,8 +25,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -59,7 +57,6 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -366,7 +363,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Graph newEntityGraph = TinkerGraph.open();
 		Model newRdfModel = getNewValidRdf();
 		updateNodeLabel(newRdfModel, "http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress");
-		removeStattementFromModel(newRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/municipality"));
+		removeStatementFromModel(newRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/municipality"));
 
 		String addressLabel = databaseProvider.getGraphStore().traversal().clone().V()
 				.has(T.label, "http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress")
@@ -517,8 +514,8 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		checkIfAuditRecordsAreRight(entity,null);
 
 		Model updateRdfModel = createRdfFromFile("update_node.jsonld", response);
-		removeStattementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"));
-		removeStattementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"));
+		removeStatementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"));
+		removeStatementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"));
 		updateNodeLabel(updateRdfModel, "http://example.com/voc/teacher/1.0.0/School");
 		Graph updateGraph = TinkerGraph.open();
         createGraphFromRdf(updateGraph, updateRdfModel);
@@ -602,7 +599,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		String response = registryDao.addEntity(graph, "_:"+rootLabel);
 
 		Model updateRdfModel = createRdfFromFile("update_node.jsonld", response);
-		removeStattementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"));
+		removeStatementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"));
 		updateNodeLabel(updateRdfModel, "http://example.com/voc/teacher/1.0.0/School");
 		Graph updateGraph = TinkerGraph.open();
 
@@ -639,8 +636,8 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 		Model updateRdfModel = createRdfFromFile("update_node.jsonld", rootLabel);
 		// Remove literal properties from update
-		removeStattementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"));
-		removeStattementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/revenueBlock"));
+		removeStatementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"));
+		removeStatementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/revenueBlock"));
 		// Update new rdf model with the labels generated for School and Address nodes
 		updateNodeLabel(updateRdfModel, "http://example.com/voc/teacher/1.0.0/School");
 		updateNodeLabel(updateRdfModel, "http://example.com/voc/teacher/1.0.0/IndianUrbanPostalAddress");
@@ -812,7 +809,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		return vertex;
 	}
 	
-	private void removeStattementFromModel(Model rdfModel, Property predicate) {
+	private void removeStatementFromModel(Model rdfModel, Property predicate) {
 		StmtIterator blankNodeIterator =
 				rdfModel.listStatements(null, predicate, (RDFNode) null);
 

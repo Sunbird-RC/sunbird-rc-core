@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class JSONUtil {
 
-    public static Map<String, Object> onvertObjectJsonMap(Object object) {
+    public static Map<String, Object> convertObjectJsonMap(Object object) {
         Gson gson = new Gson();
         String result = gson.toJson(object);
         Type type = new TypeToken<Map<String, Object>>(){}.getType();

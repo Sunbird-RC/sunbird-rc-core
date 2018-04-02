@@ -128,13 +128,13 @@ public class RegistryController {
 
 		try {
 			HealthCheckResponse healthCheckResult = registryService.health();
-			response.setResult(JSONUtil.onvertObjectJsonMap(healthCheckResult));
+			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (Exception e) {
             HealthCheckResponse healthCheckResult =
                     new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, false, null);
-            response.setResult(JSONUtil.onvertObjectJsonMap(healthCheckResult));
+            response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Error during health check");
 			logger.error("ERROR!", e);

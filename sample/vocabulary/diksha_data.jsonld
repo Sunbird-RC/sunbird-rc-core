@@ -20,12 +20,12 @@
         "assertionId":"e8f204a3-fe9d-45c8-b9ed-67061440ca60",
         "assertionType":"Assertion",
         "badgeId":"java-se-8-programmer",
-        "badgeURL": "http://diksha.gov.in/public/badges/java-se-8-programmer",
+        "badgeURL":"http://diksha.gov.in/public/badges/java-se-8-programmer",
         "recipient":{
           "@type":"diksha:Identity",
           "identity":"sha256$2e4073c27e83948c2d75bb424fa65e8eecef013e327f071c90515904af6e3261",
           "identityType":"email",
-          "identityHashed": true,
+          "identityHashed":true,
           "identitySalt":"17212da8-0fce-49ba-b39d-058edc73ea0d"
         },
         "verify":{
