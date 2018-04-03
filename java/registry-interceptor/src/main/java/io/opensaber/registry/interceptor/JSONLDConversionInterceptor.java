@@ -1,28 +1,31 @@
 package io.opensaber.registry.interceptor;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 import io.opensaber.registry.interceptor.handler.BaseResponseHandler;
-import io.opensaber.registry.middleware.impl.RdfToJsonldConverter;
+import io.opensaber.registry.middleware.impl.JSONLDConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
 @Component
-public class RdfToJsonldInterceptor extends BaseResponseHandler implements HandlerInterceptor{
+public class JSONLDConversionInterceptor extends BaseResponseHandler implements HandlerInterceptor{
 	
-	private RdfToJsonldConverter rdfToJsonldConverter;
+	private static Logger logger = LoggerFactory.getLogger(JSONLDConversionInterceptor.class);
+	
+	private JSONLDConverter jsonldConverter;
 	
 	@Autowired
-	public RdfToJsonldInterceptor(RdfToJsonldConverter rdfToJsonldConverter){
-		this.rdfToJsonldConverter = rdfToJsonldConverter;
+	public JSONLDConversionInterceptor(JSONLDConverter jsonldConverter){
+		this.jsonldConverter = jsonldConverter;
 	}
 
 	@Override
@@ -34,13 +37,12 @@ public class RdfToJsonldInterceptor extends BaseResponseHandler implements Handl
 	@Override
 	public void postHandle(HttpServletRequest request,HttpServletResponse response,
 	  Object handler, ModelAndView modelAndView) throws Exception {
+		logger.info("RESPONSE COMMITTED:"+response.isCommitted());
 		setResponse(response);
-		String responseBody = getResponseContent();
-		Map<String,Object> responseMap = new HashMap<String,Object>();
-		responseMap.put(Constants.RESPONSE_ATTRIBUTE_NAME, responseBody);
-		responseMap = rdfToJsonldConverter.execute(responseMap);
-		if(responseMap.get(Constants.RESPONSE_ATTRIBUTE_NAME)!=null){
-			writeResponseBody(responseMap.get(Constants.RESPONSE_ATTRIBUTE_NAME).toString());
+		Map<String,Object> responseMap = jsonldConverter.execute(getResponseBodyMap());
+		if(responseMap.get(Constants.RESPONSE_ATTRIBUTE)!=null){
+			setFormattedResponse(responseMap.get(Constants.RESPONSE_ATTRIBUTE).toString());
+			writeResponseBody(getFormattedResponse());
 		}
 		response = getResponse();		
 	}

@@ -9,9 +9,13 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.pojos.ValidationResponseSerializer;
+import io.opensaber.registry.middleware.util.Constants;
+
+import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
@@ -29,6 +33,7 @@ public class BaseResponseHandler {
 	
 	protected HttpServletResponse response;
 	protected ResponseWrapper responseWrapper;
+	protected Response formattedResponse;
 
 	public void setResponse(HttpServletResponse response) throws IOException {
 		this.response = response;
@@ -50,8 +55,25 @@ public class BaseResponseHandler {
 	}
 
 	public String getResponseContent() throws IOException {
-		//setResponseWrapper();
+		setResponseWrapper();
 		return responseWrapper.getResponseContent();
+	}
+	
+	public void setFormattedResponse(String json){
+		JSONObject jsonObj = new JSONObject(json);
+		formattedResponse.setResult(jsonObj.toMap());
+	}
+	
+	public String getFormattedResponse(){
+		Gson gson = new Gson();
+		return gson.toJson(formattedResponse);
+	}
+	
+	public Map<String, Object> getResponseBodyMap() throws IOException {
+		Gson gson = new Gson();
+		String responseBody = getResponseContent();
+		formattedResponse = gson.fromJson(responseBody, Response.class);
+		return formattedResponse.getResult();
 	}
 
 	public Map<String, Object> getResponseHeaderMap() throws IOException {

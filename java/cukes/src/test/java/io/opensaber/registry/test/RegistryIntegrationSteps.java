@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.Map;
 
@@ -37,6 +36,7 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.Response.Status;
+
 
 public class RegistryIntegrationSteps extends RegistryTestBase{
 	

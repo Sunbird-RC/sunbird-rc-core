@@ -29,13 +29,14 @@ import com.google.gson.Gson;
 import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.exception.CustomExceptionHandler;
 import io.opensaber.registry.interceptor.AuthorizationInterceptor;
+import io.opensaber.registry.interceptor.JSONLDConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
 import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.impl.RDFValidator;
-import io.opensaber.registry.middleware.impl.RdfToJsonldConverter;
+import io.opensaber.registry.middleware.impl.JSONLDConverter;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 
@@ -77,8 +78,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 	
 	@Bean
-	public RdfToJsonldConverter rdfToJsonldConverter(){
-		return new RdfToJsonldConverter();
+	public JSONLDConverter jsonldConverter(){
+		return new JSONLDConverter();
 	}
 
 	@Bean
@@ -147,13 +148,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
-				.addPathPatterns("/**").excludePathPatterns("/health","/error").order(1);
+		.addPathPatterns("/**").excludePathPatterns("/health","/error").order(1);
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
-				.addPathPatterns("/create", "/update/{id}").order(2);
+		.addPathPatterns("/create", "/update/{id}").order(2);
 		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
-				.addPathPatterns("/create", "/update/{id}").order(3);
+		.addPathPatterns("/create", "/update/{id}").order(3);
 		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(), gson()))
-				.addPathPatterns("/create", "/update/{id}").order(4);
+		.addPathPatterns("/create", "/update/{id}").order(4);
+		/*registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
+		.addPathPatterns("/read/{id}").order(2);*/
 	}
 
 	@Override

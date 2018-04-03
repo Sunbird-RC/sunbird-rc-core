@@ -2,15 +2,17 @@ package io.opensaber.registry.interceptor.handler;
 
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
-
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.util.ContentCachingResponseWrapper;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * 
@@ -59,8 +61,9 @@ public class ResponseWrapper extends ContentCachingResponseWrapper{
 	 * 
 	 * @return
 	 */
-    public String getResponseContent() {
-        return new String(this.getContentAsByteArray());
+    public String getResponseContent() throws IOException{
+        //return new String(this.getContentAsByteArray());
+    	return IOUtils.toString(this.getContentInputStream(), UTF_8);
     }
 
 	
