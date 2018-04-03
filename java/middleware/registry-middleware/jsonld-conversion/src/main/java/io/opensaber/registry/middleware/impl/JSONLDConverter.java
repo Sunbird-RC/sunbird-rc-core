@@ -38,7 +38,7 @@ public class JSONLDConverter implements BaseMiddleware{
 				Model jenaEntityModel = JenaRDF4J.asJenaModel((org.eclipse.rdf4j.model.Model)responseData);
 				DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
 				JsonLDWriteContext ctx = new JsonLDWriteContext();
-				InputStream is = this.getClass().getClassLoader().getResourceAsStream("frame.json");
+				InputStream is = this.getClass().getClassLoader().getResourceAsStream("sample-frame.json");
 				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
 				ctx.setFrame(fileString);
 				WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT) ;
