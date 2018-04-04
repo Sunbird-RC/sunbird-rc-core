@@ -29,7 +29,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 	@Value("${decryption.uri}")
 	private String decryptionUri;
 
-	@Value("${encryption.decryption.base}")
+	@Value("${encryption.base}")
 	private String encryptionServiceHealthCheckUri;
 	
 	@Autowired

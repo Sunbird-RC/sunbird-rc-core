@@ -20,7 +20,7 @@ public class Constants {
 	public static final String OPENSABER_CONTEXT_BASE = "http://example.com/voc/opensaber/1.0.0/";
 
 	public static final String DATABASE_PROVIDER = "database.provider";
-	public static final String NEO4J_DIRECTORY = "neo4j.directory";
+	public static final String NEO4J_DIRECTORY = "database.neo4j-directory";
 	public static final String ORIENTDB_DIRECTORY = "orientdb.directory";
 
 	public static final String TEST_ENVIRONMENT = "test";

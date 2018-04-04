@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
@@ -29,7 +28,6 @@ import com.google.gson.Gson;
 import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.exception.CustomExceptionHandler;
 import io.opensaber.registry.interceptor.AuthorizationInterceptor;
-import io.opensaber.registry.interceptor.JSONLDConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
@@ -48,7 +46,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 
 @Configuration
-@PropertySource(value = {"classpath:config-${spring.profiles.active}.properties"})
 public class GenericConfiguration implements WebMvcConfigurer {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
