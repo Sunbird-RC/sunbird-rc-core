@@ -111,7 +111,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	private DatabaseProvider mockDatabaseProvider;*/
 	
 	@Value("${registry.system.base}")
-	private String registrySystemContext;
+	private String registrySystemContext="http://example.com/voc/opensaber/";
 
 	private static String identifier;
 
