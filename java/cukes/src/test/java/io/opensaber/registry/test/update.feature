@@ -22,3 +22,10 @@ Feature: Updating a record in registry
     Given valid data for updating a record
     When updating the record in the registry
     Then updating the record should be successful
+    
+  Scenario: Updating values for an existing record
+    Given valid data for updating a record
+    When updating the record in the registry
+    And getting audit records for update
+    Then check audit records are matched with expected records
+   

@@ -47,6 +47,9 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	@Value("${registry.context.base}")
 	private String registryContext;
+	
+	@Value("${registry.system.base}")
+	private String registrySystemContext;
 
 	@Override
 	public List getEntityList() {
@@ -185,8 +188,10 @@ public class RegistryDaoImpl implements RegistryDao {
 					dbVertex.addEdge(e.label(), existingV);
 
                     AuditRecord record = new AuditRecord();
+                    String tailOfdbVertex=dbVertex.label().substring(dbVertex.label().lastIndexOf("/") + 1).trim();
+                    String auditVertexlabel= registrySystemContext+tailOfdbVertex;
                     record
-                            .subject(dbVertex.label())
+                            .subject(auditVertexlabel)
                             .predicate(e.label())
                             .oldObject(null)
                             .newObject(existingV.label())
@@ -202,8 +207,11 @@ public class RegistryDaoImpl implements RegistryDao {
 				dbVertex.addEdge(e.label(), newV);
 
                 AuditRecord record = new AuditRecord();
+                String tailOfdbVertex=dbVertex.label().substring(dbVertex.label().lastIndexOf("/") + 1).trim();
+                String auditVertexlabel= registrySystemContext+tailOfdbVertex;
+                
                 record
-                        .subject(dbVertex.label())
+                        .subject(auditVertexlabel)
                         .predicate(e.label())
                         .oldObject(null)
                         .newObject(newV.label())
@@ -214,7 +222,10 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 		for(Pair<Vertex, Vertex> pv : parsedVertices) {
 			addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph,methodOrigin);
+			System.out.println("----------parsedGraph-----"+pv.getValue0().label()+"----------"+ pv.getValue1().label());
 		}
+		
+		
 	}
 
 	/**
@@ -255,12 +266,11 @@ public class RegistryDaoImpl implements RegistryDao {
 	public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
-		logger.info("FETCH: "+label);
 		GraphTraversal<Vertex, Vertex> hasLabel = traversalSource.clone().V().hasLabel(label);
 		Graph parsedGraph = TinkerGraph.open();
 		if (!hasLabel.hasNext()) {
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
-		} else {
+		} else {					
 			Vertex subject = hasLabel.next();
 			Vertex newSubject = parsedGraph.addVertex(subject.label());
 			copyProperties(subject, newSubject,"read");
@@ -268,7 +278,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 		return parsedGraph;
 	}
-
+	
 	private void copyProperties(Vertex subject, Vertex newSubject, String methodOrigin) throws NoSuchElementException, EncryptionException, AuditFailedException {
 	    HashMap<String,HashMap<String,String>> propertyMetaPropertyMap = new HashMap<String,HashMap<String,String>>();
 	    HashMap<String,String> metaPropertyMap;
@@ -289,7 +299,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				}
 			}			
 			else if(methodOrigin.equalsIgnoreCase("read") && encryptionService.isDecryptable(tailOfPropertyKey)) {	
-					propertyValue = encryptionService.decrypt(property.value());
+				   	propertyValue = encryptionService.decrypt(property.value());
 					String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
 					setProperty(newSubject,decryptedKey, propertyValue);
 			}	
@@ -297,7 +307,9 @@ public class RegistryDaoImpl implements RegistryDao {
                 buildPropertyMetaMap(propertyMetaPropertyMap, property);
             } 
 			else {
-			    setProperty(newSubject,property.key(), property.value());
+				if (!(methodOrigin.equalsIgnoreCase("read") && property.key().contains("@audit"))) {
+					setProperty(newSubject, property.key(), property.value());
+				}
             }
             setMetaProperty(subject, newSubject, property);
         }
@@ -316,8 +328,10 @@ public class RegistryDaoImpl implements RegistryDao {
             if (v.graph().variables().get("@persisted").isPresent()) {
 //                System.out.println("AUDITING");
                 AuditRecord record = new AuditRecord();
+                String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
+                String auditVertexlabel= registrySystemContext+tailOfdbVertex;
                 record
-                        .subject(v.label())
+                        .subject(auditVertexlabel)
                         .predicate(key)
                         .oldObject(oldValue)
                         .newObject(newValue)
@@ -419,7 +433,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		try {
 			parsedGraph.io(IoCore.graphson()).writeGraph(filename);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -427,5 +440,4 @@ public class RegistryDaoImpl implements RegistryDao {
 	private AuthInfo getCurrentUserInfo(){
 		return (AuthInfo)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 	}
-
 }

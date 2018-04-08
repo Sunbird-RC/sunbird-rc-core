@@ -1,11 +1,14 @@
 package io.opensaber.registry.controller;
 
+import java.sql.Blob;
 import java.util.HashMap;
 import java.util.Map;
 
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.JSONUtil;
+
+import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.rdf.model.Model;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -21,6 +24,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.opensaber.pojos.Request;
 import io.opensaber.pojos.Response;
@@ -40,6 +47,9 @@ public class RegistryController {
 
 	@Value("${registry.context.base}")
 	private String registryContext;
+	
+	@Value("${registry.system.base}")
+	private String registrySystemContext;
 
 	@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
@@ -139,6 +149,36 @@ public class RegistryController {
 			responseParams.setErrmsg("Error during health check");
 			logger.error("ERROR!", e);
 		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/fetchAudit/{id}", method = RequestMethod.GET)
+	public ResponseEntity<Response> fetchAudit(@PathVariable("id") String id) {
+
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
+		id=registrySystemContext+id;
+
+		try {
+			org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(id);
+			String jenaJSON = registryService.frameAuditEntity(auditModel);
+			JSONObject jenaObj = new JSONObject(jenaJSON);
+			Map<String,Object> map=jenaObj.toMap();
+			System.out.println(jenaObj);
+			System.out.println(map.get("@graph").toString());
+			response.setResult(map);
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+		} catch (RecordNotFoundException e) {
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		} catch (Exception e) {
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg("Meh ! You encountered an error!");
+			logger.error("ERROR!", e);
+		}	
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 

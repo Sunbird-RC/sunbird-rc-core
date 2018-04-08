@@ -6,22 +6,31 @@ import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
+import java.util.UUID;
 
 @Component
 
 public class AuditRecord {
-    private String subject;
+	private String subject;
     private String predicate;
     private String oldObject;
     private String newObject;
     private String readOnlyAuthInfo;
-
-    public AuditRecord subject(String label) {
-        this.subject = label+"-AUDIT";
+    
+    @Autowired
+    Environment env;
+    
+    @Value("${registry.system.base}")
+	private String registrySystemContext="http://example.com/voc/opensaber/";
+	
+	public AuditRecord subject(String label) {
+    	String tailOfLabel=label.substring(label.lastIndexOf("/") + 1).trim();
+        this.subject = registrySystemContext+tailOfLabel+"-AUDIT";
         return this;
     }
 
@@ -43,7 +52,7 @@ public class AuditRecord {
     @Override
     public String toString() {
         return "AuditRecord{" +
-                "subject='" + subject + '\'' +
+        	    "  subject='" + subject + '\'' +
                 ", predicate='" + predicate + '\'' +
                 ", oldObject=" + oldObject +
                 ", newObject=" + newObject +
@@ -54,6 +63,7 @@ public class AuditRecord {
     public void record(DatabaseProvider provider) throws AuditFailedException {
 //        System.out.println("AUDITING as "+subject);
         GraphTraversalSource _source = provider.getGraphStore().traversal().clone();
+              
         boolean rootNodeExists = _source.V().hasLabel(subject).hasNext();
         Vertex rootVertex;
         if(!rootNodeExists){
@@ -63,24 +73,37 @@ public class AuditRecord {
         } else {
 //            System.out.println("AUDIT ROOT FOUND - NOT CREATING");
             rootVertex = _source.V().hasLabel(subject).next();
-            rootVertex.property("@audit","true");
+            rootVertex.property(registrySystemContext+"@audit","true");
         }
-        Vertex recordVertex = _source.addV("auditRecord").next();
-        recordVertex.property("predicate",this.predicate);
-        recordVertex.property("oldObject",this.oldObject);
-        recordVertex.property("newObject",this.newObject);
-        recordVertex.property("@audit",true);
-        recordVertex.property("@auditRecord",true);
+      
+        String uuid=UUID.randomUUID().toString();
+        String auditLabel=registrySystemContext+uuid;
+        String predicate=registrySystemContext+ "predicate";
+        String oldObject=registrySystemContext+"oldObject";
+        String newObject=registrySystemContext+"newObject";
+        String audit=registrySystemContext+"@audit";
+        String auditRecord=registrySystemContext+"@auditRecord";
+             
+        Vertex recordVertex = _source.addV(auditLabel).next();
+        recordVertex.property(predicate,this.predicate);
+        recordVertex.property(oldObject,this.oldObject);
+        recordVertex.property(newObject,this.newObject);
+        recordVertex.property(audit,"true");
+        recordVertex.property(auditRecord,"true");
         updateUserInfo(recordVertex);
-        rootVertex.addEdge("audit",recordVertex).property("@audit",true);
+      
+        String edgeLabel=registrySystemContext+"audit";
+        
+        rootVertex.addEdge(edgeLabel,recordVertex).property("@audit",true);	
         // System.out.println(this);
     }
 
     private void updateUserInfo(Vertex vertex) {
-        String authinfo = new JSONObject( getCurrentUserInfo() ).toString();
-        vertex.property("authInfo",authinfo);
+        String authinfo = new JSONObject( getCurrentUserInfo()).toString(); 
+        String authInfoLabel=registrySystemContext+"authInfo";
+        vertex.property(authInfoLabel,authinfo);
     }
-
+    
     public String getPredicate() {
         return predicate;
     }

@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -60,6 +61,9 @@ public class RegistryControllerTest extends RegistryTestBase {
 	
 	@Autowired
 	private DatabaseProvider databaseProvider;
+	
+	 @Value("${registry.system.base}")
+	private String registrySystemContext;
 
 	@Mock
 	private EncryptionServiceImpl encryptionService;
@@ -102,7 +106,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException {
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
 		String entityId = registryService.addEntity(model);
-		assertEquals(5, IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot("@audit")));
+		assertEquals(5, IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot(registrySystemContext+"@audit")));
 	}
 	
 	@Test

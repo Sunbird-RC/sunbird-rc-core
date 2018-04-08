@@ -34,3 +34,7 @@ Feature: Reading a record from the registry
     Then record retrieval should be unsuccessful
     And error message is Auth token is missing
    
+   Scenario: Reading a record with audit info
+    Given an existent record id
+    When retrieving the record from the registry 
+    Then record should never have any associated audit info

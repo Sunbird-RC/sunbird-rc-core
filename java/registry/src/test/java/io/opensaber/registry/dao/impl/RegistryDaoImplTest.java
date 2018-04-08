@@ -53,6 +53,7 @@ import io.opensaber.registry.service.impl.EncryptionServiceImpl;
 import io.opensaber.utils.converters.RDF2Graph;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -108,6 +109,9 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	
 	/*@Mock
 	private DatabaseProvider mockDatabaseProvider;*/
+	
+	@Value("${registry.system.base}")
+	private String registrySystemContext;
 
 	private static String identifier;
 
@@ -283,7 +287,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 			assertEquals(5, IteratorUtils.count(entity2.traversal().V()));
 
-			long verticesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot("@audit"));
+			long verticesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot(registrySystemContext+"@audit"));
 			long edgesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E().hasNot("@audit"));
 
 			// Expected count of vertices is 6 with two entities with same address created
@@ -912,11 +916,11 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		verify(encryptionMock, times(2)).encrypt(Mockito.anyString());
 	}
 	
-	/*@Test
+	@Test
 	public void test_encryptionCall_for_encryptable_but_null_property() throws Exception {
 		String label = generateRandomId();
 		Map<String, String> map = new HashMap<>();
-		map.put("http://example.com/voc/teacher/1.0.0/schoolName", null);
+		map.put("http://example.com/voc/teacher/1.0.0/schoolName", "ABC International School");
 		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
 		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
 
@@ -932,7 +936,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Graph entity = registryDao.getEntityById(response);
 
 		verify(encryptionMock, times(2)).encrypt(Mockito.anyString());
-	}*/
+	}
 
 	@Test
 	public void test_encryptionServiceCall_for_null_property() throws Exception {
@@ -952,23 +956,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		}		
 		verify(encryptionMock, never()).encrypt(Mockito.anyString());
 	}
-	
-/*	@Test(expected = HttpServerErrorException.class)
-	public void test_only_encrypted_value_decryption() throws Exception {
-		 byte[] array = new byte[7];
-		 new Random().nextBytes(array);
-		 String generatedString = new String(array, Charset.forName("UTF-8"));
-		 String  decryptedValue=null;
-		 try {
-			decryptedValue = encryptionService.decrypt(generatedString);
-			fail("HttpServerErrorException expected");
-		 }
-		 catch (HttpServerErrorException ex) {
-			assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatusCode());
-			//assertNotNull(ex.getStatusText());
-			assertEquals(null,decryptedValue);
-		}		 
-	}*/
 	
 	@Test
 	public void test_properties_single_node() throws Exception {	
@@ -1059,4 +1046,20 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		}
 	}
 
+	@Test
+	public void test_system_property_should_never_fetched_in_audit_record() throws Exception {
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+		Graph entity = registryDao.getEntityById(response);
+		GraphTraversal<Vertex, Vertex> updatedgraphTraversal = entity.traversal().clone().V();
+		while (updatedgraphTraversal.hasNext()) {
+			Vertex v = updatedgraphTraversal.next();
+			Iterator<VertexProperty<Object>> iter = v.properties();
+			while (iter.hasNext()) {
+				VertexProperty<Object> property = iter.next();
+				Assert.assertThat(property.key(), not(containsString("@")));
+			}
+		}
+	}
 }

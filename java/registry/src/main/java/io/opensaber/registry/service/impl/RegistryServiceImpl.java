@@ -6,6 +6,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
@@ -18,12 +19,14 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.JsonLDWriteContext;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WriterDatasetRIOT;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
 import org.slf4j.Logger;
@@ -191,5 +194,29 @@ public class RegistryServiceImpl implements RegistryService {
 		return jenaJSON;
 	}
 	
-
+	@Override
+	public String frameAuditEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException {
+		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
+		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
+		JsonLDWriteContext ctx =	 new JsonLDWriteContext();
+		InputStream is = this.getClass().getClassLoader().getResourceAsStream("audit_frame.json");
+		String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+		ctx.setFrame(fileString);
+		WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT);
+		PrefixMap pm = RiotLib.prefixMap(g);
+		String base = null;
+		StringWriter sWriterJena = new StringWriter();
+		w.write(sWriterJena, g, pm, base, ctx);				
+		String jenaJSON = sWriterJena.toString();
+		return jenaJSON;
+	}
+	
+	@Override
+	public org.eclipse.rdf4j.model.Model getAuditNode(String id) throws IOException, NoSuchElementException, RecordNotFoundException,
+			EncryptionException, AuditFailedException {				
+		String label= id+"-AUDIT";
+		Graph graph = registryDao.getEntityById(label);
+		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
+		return model;
+	}
 }

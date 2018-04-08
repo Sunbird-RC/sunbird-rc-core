@@ -288,4 +288,15 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	public void response_successful() throws Exception {
 		assertEquals(true,response !=null);
 	}	
+	
+	@Then("^record should never have any associated audit info$")
+	public void test_audit_record_unexpected_in_read() throws Exception {
+		response = callRegistryReadAPI();
+		Map<String,Object> map=response.getBody().getResult();
+		if(map.containsKey("(?i)(?<= |^)audit(?= |$)")) {
+			checkUnsuccessfulResponse();			
+		}else {
+			checkSuccessfulResponse();
+		}
+	}
 }

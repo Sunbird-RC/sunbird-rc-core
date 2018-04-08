@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
@@ -30,6 +31,9 @@ public class AuditRecordReaderTest {
     private GraphTraversalSource graphTraversalSourceMock;
     private GraphTraversalSource graphTraversalSourceCloneMock;
     private GraphTraversal VMock;
+    
+    @Value("${registry.system.base}")
+	private String registrySystemContext="http://example.com/voc/opensaber/";
 
     @Rule
     public ExpectedException expectedEx = ExpectedException.none();
@@ -68,8 +72,8 @@ public class AuditRecordReaderTest {
 
     @Test
     public void testFetchingUnMatchedLabel() throws LabelCannotBeNullException {
-        when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
-        when(hasLabelMock.out("audit")).thenReturn(traversalMock);
+        when(VMock.hasLabel(registrySystemContext+"X-AUDIT")).thenReturn(hasLabelMock);
+        when(hasLabelMock.out(registrySystemContext+"audit")).thenReturn(traversalMock);
         when(traversalMock.hasNext()).thenReturn(false);
         List<AuditRecord> auditRecords = auditRecordReader.fetchAuditRecords("X",null);
         assertNotNull(auditRecords);
@@ -78,23 +82,23 @@ public class AuditRecordReaderTest {
 
     @Test
     public void testSingleAuditRecordMatch() throws LabelCannotBeNullException {
-        when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
-        when(hasLabelMock.out("audit")).thenReturn(traversalMock);
+        when(VMock.hasLabel(registrySystemContext+"X-AUDIT")).thenReturn(hasLabelMock);
+        when(hasLabelMock.out(registrySystemContext+"audit")).thenReturn(traversalMock);
         Vertex auditVertex1 = mock(Vertex.class);
         VertexProperty predicate1 = mock(VertexProperty.class);
         VertexProperty oldObject1 = mock(VertexProperty.class);
         VertexProperty newObject1 = mock(VertexProperty.class);
         VertexProperty authInfo1 = mock(VertexProperty.class);
-        when(auditVertex1.property("predicate")).thenReturn(predicate1);
+        when(auditVertex1.property(registrySystemContext+"predicate")).thenReturn(predicate1);
         when(predicate1.isPresent()).thenReturn(true);
-        when(predicate1.value()).thenReturn("PREDICATE1");
-        when(auditVertex1.property("oldObject")).thenReturn(oldObject1);
+        when(predicate1.value()).thenReturn(registrySystemContext+"PREDICATE1");
+        when(auditVertex1.property(registrySystemContext+"oldObject")).thenReturn(oldObject1);
         when(oldObject1.isPresent()).thenReturn(true);
-        when(oldObject1.value()).thenReturn("OLDOBJECT1");
-        when(auditVertex1.property("newObject")).thenReturn(newObject1);
+        when(oldObject1.value()).thenReturn(registrySystemContext+"OLDOBJECT1");
+        when(auditVertex1.property(registrySystemContext+"newObject")).thenReturn(newObject1);
         when(newObject1.isPresent()).thenReturn(true);
-        when(newObject1.value()).thenReturn("NEWOBJECT1");
-        when(auditVertex1.property("authInfo")).thenReturn(authInfo1);
+        when(newObject1.value()).thenReturn(registrySystemContext+"NEWOBJECT1");
+        when(auditVertex1.property(registrySystemContext+"authInfo")).thenReturn(authInfo1);
         when(authInfo1.isPresent()).thenReturn(true);
         when(authInfo1.value()).thenReturn("AUTHINFO1");
         when(traversalMock.hasNext()).thenReturn(true,false);
@@ -102,18 +106,18 @@ public class AuditRecordReaderTest {
         List<AuditRecord> auditRecords = auditRecordReader.fetchAuditRecords("X",null);
         assertEquals(1,auditRecords.size());
         AuditRecord record = auditRecords.get(0);
-        assertEquals(record.getSubject(),"X-AUDIT");
-        assertEquals(record.getPredicate(),"PREDICATE1");
-        assertEquals(record.getOldObject(),"OLDOBJECT1");
-        assertEquals(record.getNewObject(),"NEWOBJECT1");
+        assertEquals(record.getSubject(),registrySystemContext+"X-AUDIT");
+        assertEquals(record.getPredicate(),registrySystemContext+"PREDICATE1");
+        assertEquals(record.getOldObject(),registrySystemContext+"OLDOBJECT1");
+        assertEquals(record.getNewObject(),registrySystemContext+"NEWOBJECT1");
     }
 
     @Test
     public void testPredicateButNoMatch() throws LabelCannotBeNullException {
-        when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
+        when(VMock.hasLabel(registrySystemContext+"X-AUDIT")).thenReturn(hasLabelMock);
         GraphTraversal tempTraversalMock = mock(GraphTraversal.class);
-        when(hasLabelMock.out("audit")).thenReturn(tempTraversalMock);
-        when(tempTraversalMock.has("predicate","P")).thenReturn(traversalMock);
+        when(hasLabelMock.out(registrySystemContext+"audit")).thenReturn(tempTraversalMock);
+        when(tempTraversalMock.has(registrySystemContext+"predicate","P")).thenReturn(traversalMock);
         List<AuditRecord> auditRecords = auditRecordReader.fetchAuditRecords("X","P");
         when(traversalMock.hasNext()).thenReturn(false);
         assertEquals(0,auditRecords.size());
@@ -121,27 +125,27 @@ public class AuditRecordReaderTest {
 
     @Test
     public void testPredicateMatchButOneRecord() throws LabelCannotBeNullException {
-        when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
+        when(VMock.hasLabel(registrySystemContext+"X-AUDIT")).thenReturn(hasLabelMock);
         GraphTraversal tempTraversalMock = mock(GraphTraversal.class);
-        when(hasLabelMock.out("audit")).thenReturn(tempTraversalMock);
-        when(tempTraversalMock.has("predicate","PREDICATE1")).thenReturn(traversalMock);
+        when(hasLabelMock.out(registrySystemContext+"audit")).thenReturn(tempTraversalMock);
+        when(tempTraversalMock.has(registrySystemContext+"predicate","PREDICATE1")).thenReturn(traversalMock);
         Vertex auditVertex1 = mock(Vertex.class);
         VertexProperty predicate1 = mock(VertexProperty.class);
         VertexProperty oldObject1 = mock(VertexProperty.class);
         VertexProperty newObject1 = mock(VertexProperty.class);
         VertexProperty authInfo1 = mock(VertexProperty.class);
-        when(auditVertex1.property("predicate")).thenReturn(predicate1);
+        when(auditVertex1.property(registrySystemContext+"predicate")).thenReturn(predicate1);
         when(predicate1.isPresent()).thenReturn(true);
-        when(predicate1.value()).thenReturn("PREDICATE1");
-        when(auditVertex1.property("oldObject")).thenReturn(oldObject1);
+        when(predicate1.value()).thenReturn(registrySystemContext+"PREDICATE1");
+        when(auditVertex1.property(registrySystemContext+"oldObject")).thenReturn(oldObject1);
         when(oldObject1.isPresent()).thenReturn(true);
-        when(oldObject1.value()).thenReturn("OLDOBJECT1");
-        when(auditVertex1.property("newObject")).thenReturn(newObject1);
+        when(oldObject1.value()).thenReturn(registrySystemContext+"OLDOBJECT1");
+        when(auditVertex1.property(registrySystemContext+"newObject")).thenReturn(newObject1);
         when(newObject1.isPresent()).thenReturn(true);
-        when(newObject1.value()).thenReturn("NEWOBJECT1");
-        when(auditVertex1.property("authInfo")).thenReturn(authInfo1);
+        when(newObject1.value()).thenReturn(registrySystemContext+"NEWOBJECT1");
+        when(auditVertex1.property(registrySystemContext+"authInfo")).thenReturn(authInfo1);
         when(authInfo1.isPresent()).thenReturn(true);
-        when(authInfo1.value()).thenReturn("AUTHINFO1");
+        when(authInfo1.value()).thenReturn(registrySystemContext+"AUTHINFO1");
         when(traversalMock.hasNext()).thenReturn(true,false);
         when(predicate1.isPresent()).thenReturn(true);
         when(traversalMock.next()).thenReturn(auditVertex1);

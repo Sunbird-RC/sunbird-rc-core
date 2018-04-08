@@ -7,12 +7,17 @@ import cucumber.api.Scenario;
 import cucumber.api.java8.En;
 import io.opensaber.pojos.Response;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -25,14 +30,15 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
     private static final String UPDATE_REST_ENDPOINT = "update";
     private static final String READ_REST_ENDPOINT = "read";
     private static final String CONTEXT_CONSTANT = "sample:";
+    private static final String AUDIT_REST_ENDPOINT = "fetchAudit";
 
     // private RestTemplate restTemplate;
     private String baseUrl;
     private ResponseEntity<Response> response;
     private String id;
     private HttpHeaders headers;
-
-    /**
+    
+     /**
      * The list of integration test scenarios that will be run as part of the update feature
      * integration test
      */
@@ -79,6 +85,38 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
         });
 
         Then("^updating the record should be successful", () -> checkSuccessfulResponse());
+        
+        And("^getting audit records for update$", () -> {          
+        	 StringBuilder url = new StringBuilder();
+             url.append(baseUrl).append(AUDIT_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+             response = fetchEntity(url.toString(),headers);          	
+        });
+        
+        Then("^check audit records are matched with expected records$",() -> {
+        	
+        	 Object auditRecords = response.getBody().getResult().get("@graph");
+          	             
+             Map<String,List<Object>> updatedProperties=new HashMap<>();
+             List<Object> values1= new ArrayList<>();
+             values1.add("12");
+             values1.add("12");
+             updatedProperties.put("serialNum", values1);
+             List<Object> values2= new ArrayList<>();
+             values2.add("12234");
+             values2.add("17382");
+             updatedProperties.put("teacherCode", values2);
+             List<Object> values3= new ArrayList<>();
+             values3.add("Marvin Pande");
+             values3.add("Akshaya Vijayalakshmi");
+             updatedProperties.put("teacherName", values3);
+             List<Object> values4= new ArrayList<>();
+             values4.add("2014");
+             values4.add("2016");
+             updatedProperties.put("@value", values4);    
+             
+             
+        	
+        });
     }
 
     /**

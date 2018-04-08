@@ -2,6 +2,7 @@ package io.opensaber.registry.service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.exception.*;
@@ -23,5 +24,9 @@ public interface RegistryService {
 	public HealthCheckResponse health() throws Exception;
 
 	public String frameEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException;
+	
+	public String frameAuditEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException;
 
+	public org.eclipse.rdf4j.model.Model getAuditNode(String id) throws IOException, NoSuchElementException, RecordNotFoundException,
+	EncryptionException, AuditFailedException;
 }
