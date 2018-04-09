@@ -22,9 +22,6 @@ public class AuditRecord {
     private String newObject;
     private String readOnlyAuthInfo;
     
-    @Autowired
-    Environment env;
-    
     @Value("${registry.system.base}")
 	private String registrySystemContext="http://example.com/voc/opensaber/";
 	
@@ -61,9 +58,8 @@ public class AuditRecord {
     }
 
     public void record(DatabaseProvider provider) throws AuditFailedException {
-//        System.out.println("AUDITING as "+subject);
+    
         GraphTraversalSource _source = provider.getGraphStore().traversal().clone();
-              
         boolean rootNodeExists = _source.V().hasLabel(subject).hasNext();
         Vertex rootVertex;
         if(!rootNodeExists){

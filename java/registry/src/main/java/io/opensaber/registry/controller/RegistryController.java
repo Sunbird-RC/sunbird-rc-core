@@ -49,8 +49,8 @@ public class RegistryController {
 	private String registryContext;
 	
 	@Value("${registry.system.base}")
-	private String registrySystemContext;
-
+	private String registrySystemContext="http://example.com/voc/opensaber/";
+	
 	@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
 
@@ -158,7 +158,7 @@ public class RegistryController {
 
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
-		id=registrySystemContext+id;
+		id=registrySystemContext+id;	
 
 		try {
 			org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(id);

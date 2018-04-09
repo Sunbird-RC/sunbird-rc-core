@@ -49,7 +49,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	private String registryContext;
 	
 	@Value("${registry.system.base}")
-	private String registrySystemContext;
+	private String registrySystemContext="http://example.com/voc/opensaber/";
 
 	@Override
 	public List getEntityList() {
