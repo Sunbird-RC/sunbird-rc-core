@@ -1,0 +1,1361 @@
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://www.w3.org/2004/02/skos/core#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfa: <http://www.w3.org/ns/rdfa#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <http://schema.org/> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix opensaber: <http://opensaber.io/vocab/2018/01/> .
+
+opensaber:IndianTeacher a rdfs:Class ;
+    rdfs:label "IndianTeacher" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "An Indian Teacher." ;
+    rdfs:subClassOf opensaber:IndianCitizen,
+        opensaber:Professional,
+        schema:EducationalAudience .
+
+opensaber:Professional a rdfs:Class ;
+    rdfs:label "Professional" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A Professional." ;
+    rdfs:subClassOf schema:Person .
+
+opensaber:IndianResident a rdfs:Class ;
+    rdfs:label "IndianResident" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A Resident of India." ;
+    rdfs:subClassOf schema:Person .
+
+opensaber:IndianCitizen a rdfs:Class ;
+    rdfs:label "IndianCitizen" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "An Indian citizen." ;
+    rdfs:subClassOf opensaber:ResidentOfIndia .
+
+opensaber:virtualAadharID a rdf:Property ;
+    rdfs:label "aadharID" ;
+    schema:domainIncludes opensaber:ResidentOfIndia ;
+    schema:rangeIncludes opensaber:VirtualAadharID ;
+    rdfs:comment "The Virtual Aadhar ID of the Resident of India" ;
+    rdfs:subPropertyOf schema:identifier .
+
+opensaber:Female a opensaber:GenderType ;
+    rdfs:label "Female" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The female gender." .
+
+opensaber:Male a opensaber:GenderType ;
+    rdfs:label "Male" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The male gender." .
+
+opensaber:TransGender a opensaber:GenderType ;
+    rdfs:label "TransGender" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The transgender." .
+
+opensaber:GenderType a rdfs:Class ;
+    rdfs:label "GenderType" ;
+    rdfs:comment "An enumeration of genders." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:gender a rdf:Property ;
+    rdfs:label "gender" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:GenderType ;
+    rdfs:comment "Gender of the person." .
+
+opensaber:IndianSocialCategoryType a rdfs:Class ;
+    rdfs:label "IndianSocialCategoryType" ;
+    rdfs:comment "An enumeration of Indian social categories." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:GeneralIndianSocialCategory a schema:IndianSocialCategoryType ;
+    rdfs:label "GeneralIndianSocialCategory" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The general Indian social category." .
+
+opensaber:SCIndianSocialCategory a schema:IndianSocialCategoryType ;
+    rdfs:label "SCIndianSocialCategory" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The SC social category." .
+
+opensaber:STIndianSocialCategory a schema:IndianSocialCategoryType ;
+    rdfs:label "STIndianSocialCategory" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The ST Indian social category." .
+
+opensaber:OBCIndianSocialCategory a schema:IndianSocialCategoryType ;
+    rdfs:label "OBCIndianSocialCategory" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The OBC Indian social category." .
+
+opensaber:ORCIndianSocialCategory a schema:IndianSocialCategoryType ;
+    rdfs:label "ORCIndianSocialCategory" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The ORC Indian social category." .
+
+opensaber:OtherIndianSocialCategory a schema:IndianSocialCategoryType ;
+    rdfs:label "ORCIndianSocialCategory" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Other Indian social category." .
+
+opensaber:indianSocialCategory a rdf:Property ;
+    rdfs:label "indianSocialcategory" ;
+    schema:domainIncludes opensaber:IndianCitizen ;
+    schema:rangeIncludes opensaber:IndianSocialCategoryType ;
+    rdfs:comment "The social category of an Indian citizen." .
+
+opensaber:IndianTeacherType a rdfs:Class ;
+    rdfs:label "IndianTeacherType" ;
+    rdfs:comment "An enumeration of types of Indian teachers." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:HeadTeacher a schema:IndianTeacherType ;
+    rdfs:label "HeadTeacher" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The Head teacher." .
+
+opensaber:ActingHeadTeacher a schema:IndianTeacherType ;
+    rdfs:label "ActingHeadTeacher" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The Acting Head teacher." .
+
+opensaber:Teacher a schema:IndianTeacherType ;
+    rdfs:label "Teacher" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A teacher." .
+
+opensaber:RTEPositionedTeacher a schema:IndianTeacherType ;
+    rdfs:label "RTEPositionedTeacher" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A teacher positioned by RTE." .
+
+opensaber:Principal a schema:IndianTeacherType ;
+    rdfs:label "PrincipalTeacher" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The Principal." .
+
+opensaber:VicePrincipal a schema:IndianTeacherType ;
+    rdfs:label "VicePrincipalTeacher" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The Vice Principal." .
+
+opensaber:Lecturer a schema:IndianTeacherType ;
+    rdfs:label "Lecturer" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "The Lecturer." .
+
+opensaber:teacherType a rdf:Property ;
+    rdfs:label "teacherType" ;
+    schema:domainIncludes opensaber:IndianTeacher ;
+    schema:rangeIncludes opensaber:TeacherType ;
+    rdfs:comment "The type of a Teacher." .
+
+opensaber:AppointmentType a rdfs:Class ;
+    rdfs:label "AppointmentType" ;
+    rdfs:comment "An enumeration of types of appointments of any professional." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:RegularAppointment a opensaber:AppointmentType ;
+    rdfs:label "RegularAppointment" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A regular appointment." .
+
+opensaber:ContractAppointment a opensaber:AppointmentType ;
+    rdfs:label "ContractAppointment" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A contract appointment." .
+
+opensaber:PartTimeAppointment a opensaber:AppointmentType ;
+    rdfs:label "PartTimeAppointment" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A part time appointment." .
+
+opensaber:appointmentType a rdf:Property ;
+    rdfs:label "appointmentType" ;
+    schema:domainIncludes opensaber:Service ;
+    schema:rangeIncludes opensaber:AppointmentType ;
+    rdfs:comment "The nature of appointment in a job." .
+
+opensaber:Service a rdfs:Class ;
+    rdfs:label "Service" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A service" .
+
+opensaber:TeachingService a rdfs:Class ;
+    rdfs:label "TeachingService" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A teaching service" ;
+    rdfs:subClassOf opensaber:Service .
+
+opensaber:teachingService a rdf:Property ;
+    rdfs:label "teachingService" ;
+    schema:domainIncludes schema:Teacher ;
+    schema:isPartOf <http://pending.opensaber.io>  ;
+    schema:rangeIncludes schema:TeachingService ;
+    rdfs:comment "A sub property of service, specifically a teaching service." .
+
+opensaber:dateOfJoiningService a rdf:Property ;
+    rdfs:label "dateOfJoiningService" ;
+    schema:domainIncludes schema:Service ;
+    schema:isPartOf <http://pending.opensaber.io>  ;
+    schema:rangeIncludes schema:Date ;
+    rdfs:comment "A sub property of service, specifically a teaching service." .
+
+opensaber:AuthorityType a rdfs:Class ;
+    rdfs:label "AuthorityType" ;
+    rdfs:comment "An enumeration of types of Appointment Authorities." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:CentralAgency a opensaber:AuthorityType ;
+    rdfs:label "CentralAgency" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Central Agency, CBSE/KV/NVS ." .
+
+opensaber:StateEduDept a opensaber:AuthorityType ;
+    rdfs:label "StateEduDept" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "State Education Dept." .
+
+opensaber:ZillaParishad a opensaber:AuthorityType ;
+    rdfs:label "ZillaParishad" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Zilla Parishad." .
+
+opensaber:TribalMinistry a opensaber:AuthorityType ;
+    rdfs:label "TribalMinistry" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Tribal Ministry." .
+
+opensaber:MinorityAgencies a opensaber:AuthorityType ;
+    rdfs:label "MinorityAgencies" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Minority Agencies." .
+
+opensaber:DefenceMinistry a opensaber:AuthorityType ;
+    rdfs:label "DefenceMinistry" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Defence Ministry." .
+
+opensaber:RailwayMinistry a opensaber:AuthorityType ;
+    rdfs:label "RailwayMinistry" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Railway Ministry." .
+
+opensaber:OtherAuthority a opensaber:AuthorityType ;
+    rdfs:label "OtherAuthority" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Other Authority." .
+
+opensaber:appointmentAuthority a rdf:Property ;
+    rdfs:label "appointmentAuthority" ;
+    schema:domainIncludes opensaber:TeachingService ;
+    schema:rangeIncludes opensaber:AuthorityType ;
+    rdfs:comment "The nature of appointment in a job." .
+
+opensaber:DisabilityType a rdfs:Class ;
+    rdfs:label "DisabilityType" ;
+    rdfs:comment "An enumeration of types of disabilities." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:LocoMotorDisability a opensaber:DisabilityType ;
+    rdfs:label "LocoMotorDisability" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A loco motor disability" .
+
+opensaber:VisualDisability a opensaber:DisabilityType ;
+    rdfs:label "VisualDisability" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A visual disability" .
+
+opensaber:OtherDisability a opensaber:DisabilityType ;
+    rdfs:label "OtherDisability" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A disability other than locomotor and visual." .
+
+opensaber:disability a rdf:Property ;
+    rdfs:label "disability" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:DisabilityType ;
+    rdfs:comment "A disability." .
+
+opensaber:BloodGroupType a rdfs:Class ;
+    rdfs:label "BloodGroupType" ;
+    rdfs:comment "An enumeration of blood groups." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:ARhPositive a opensaber:BloodGroupType ;
+    rdfs:label "ARhPositive" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A+ Blood Group." .
+
+opensaber:ARhNegative a opensaber:BloodGroupType ;
+    rdfs:label "ARhNegative" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A- Blood Group." .
+
+opensaber:BRhPositive a opensaber:BloodGroupType ;
+    rdfs:label "BRhPositive" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "B+ Blood Group." .
+
+opensaber:BRhNegative a opensaber:BloodGroupType ;
+    rdfs:label "BRhNegative" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "B- Blood Group." .
+
+opensaber:ABRhPositive a opensaber:BloodGroupType ;
+    rdfs:label "ABRhPositive" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "AB+ Blood Group." .
+
+opensaber:ABRhNegative a opensaber:BloodGroupType ;
+    rdfs:label "ABRhNegative" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "AB- Blood Group." .
+
+opensaber:ORhPositive a opensaber:BloodGroupType ;
+    rdfs:label "OBRhPositive" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "O+ Blood Group." .
+
+opensaber:ORhNegative a opensaber:BloodGroupType ;
+    rdfs:label "ORhNegative" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "O- Blood Group." .
+
+opensaber:bloodGroup a rdf:Property ;
+    rdfs:label "bloodGroup" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:BloodGroupType ;
+    rdfs:comment "Blood Group of a Person." .
+
+opensaber:AcademicQualification a rdfs:Class ;
+    rdfs:label "AcademicQualificationType" ;
+    rdfs:comment "An enumeration of academic qualification." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:BelowSecondary a opensaber:AcademicQualification ;
+    rdfs:label "BelowSecondary" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Below Secondary Academic Qualification." .
+
+opensaber:Secondary a opensaber:AcademicQualification ;
+    rdfs:label "Secondary" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Secondary Academic Qualification." .
+
+opensaber:HigherSecondary a opensaber:AcademicQualification ;
+    rdfs:label "HigherSecondary" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Higher Secondary Academic Qualification." .
+
+opensaber:Graduate a opensaber:AcademicQualification ;
+    rdfs:label "Graduate" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Graduate Academic Qualification." .
+
+opensaber:PostGraduate a opensaber:AcademicQualification ;
+    rdfs:label "PostGraduate" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Post Graduate Academic Qualification." .
+
+opensaber:MPhil a opensaber:AcademicQualification ;
+    rdfs:label "MPhil" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "M.Phil. Academic Qualification." .
+
+opensaber:Doctoral a opensaber:AcademicQualification ;
+    rdfs:label "PhD" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Ph.D. Academic Qualification." .
+
+opensaber:PostDoctoral a opensaber:AcademicQualification ;
+    rdfs:label "PostDoctoral" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "PostDoctoral Academic Qualification." .
+
+opensaber:highestAcademicQualification a rdf:Property ;
+    rdfs:label "highestAcademicQualification" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:AcademicQualification ;
+    rdfs:comment "Academic Qualification of a Person." .
+
+opensaber:ProfessionalQualification a rdfs:Class ;
+    rdfs:label "ProfessionalQualification" ;
+    rdfs:comment "An enumeration of professional qualification." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:TeacherQualification a rdfs:Class ;
+    rdfs:label "TeacherQualification" ;
+    rdfs:comment "An enumeration of teacher professional qualification." ;
+    rdfs:subClassOf schema:ProfessionalQualification .
+
+opensaber:TeacherDiploma a opensaber:TeacherQualification ;
+    rdfs:label "BelowSecondary" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Diploma or certificate in basic teachers’ training of a duration not less than two years." .
+
+opensaber:TeacherBElEd a opensaber:TeacherQualification ;
+    rdfs:label "TeacherBElEd" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Bachelor of Elementary Education (B.El. Ed.)" .
+
+opensaber:TeacherBEd a opensaber:TeacherQualification ;
+    rdfs:label "TeacherBEd" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "B.Ed. or equivalent." .
+
+opensaber:TeacherMEd a opensaber:TeacherQualification ;
+    rdfs:label "TeacherMEd" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "M.Ed. or equivalent." .
+
+opensaber:TeacherDiplomaSpEd a opensaber:TeacherQualification ;
+    rdfs:label "TeacherDiplomaSpEd" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Diploma/degree in special education." .
+
+opensaber:TeacherRelevantPursue a opensaber:TeacherQualification ;
+    rdfs:label "TeacherRelevantPursue" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Pursuing any relevant professional course." .
+
+opensaber:TeacherNoProfQual a opensaber:TeacherQualification ;
+    rdfs:label "TeacherNoProfQual" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Not having a Professional Qualification as enumerated." .
+
+opensaber:highestTeacherQualification a rdf:Property ;
+    rdfs:label "highestTeacherQualification" ;
+    schema:domainIncludes schema:Teacher ;
+    schema:rangeIncludes opensaber:TeacherQualification ;
+    rdfs:comment "Professional Qualificatios of a Teacher." .
+
+opensaber:ProfessionalTitle a rdfs:Class ;
+    rdfs:label "ProfessionalTitle" ;
+    rdfs:comment "An enumeration of professional titles." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:TeacherTitle a rdfs:Class ;
+    rdfs:label "TeacherTitle" ;
+    rdfs:comment "An enumeration of teacher titles." ;
+    rdfs:subClassOf schema:ProfessionalTitle .
+
+opensaber:PGT a opensaber:TeacherTitle ;
+    rdfs:label "PGT" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Post Graduate Teacher." .
+
+opensaber:TGT a opensaber:TeacherTitle ;
+    rdfs:label "TGT" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Trained Graduate Teacher." .
+
+opensaber:PRT a opensaber:TeacherTitle ;
+    rdfs:label "PRT" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Primary Teacher." .
+
+opensaber:TeacherOtherTitle a opensaber:TeacherTitle ;
+    rdfs:label "TeacherOtherTitle" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Other." .
+
+opensaber:teacherTitle a rdf:Property ;
+    rdfs:label "teacherTitle" ;
+    schema:domainIncludes opensaber:Teacher ;
+    schema:rangeIncludes opensaber:TeacherTitle ;
+    rdfs:comment "Title of a Teacher." .
+
+opensaber:highestMathQualification a rdf:Property ;
+    rdfs:label "highestMathQualification" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:AcademicQualification ;
+    rdfs:comment "Math Qualification of a Person." .
+
+opensaber:highestScienceQualification a rdf:Property ;
+    rdfs:label "highestScienceQualification" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:AcademicQualification ;
+    rdfs:comment "Science Qualification of a Person." .
+
+opensaber:highestEnglishQualification a rdf:Property ;
+    rdfs:label "highestEnglishQualification" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:AcademicQualification ;
+    rdfs:comment "English Qualification of a Person." .
+
+opensaber:highestSSTQualification a rdf:Property ;
+    rdfs:label "highestSSTQualification" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:AcademicQualification ;
+    rdfs:comment "Social Studies Qualification of a Person." .
+
+opensaber:VernacularLanguage a rdfs:Class ;
+    rdfs:label "IndianVernacularLanguage" ;
+    rdfs:comment "An enumeration of vernacular languages." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:IndianVernacularLanguage a opensaber:VernacularLanguage ;
+    rdfs:label "IndianVernacularLanguage" ;
+    rdfs:comment "An enumeration of Indian vernacular languages." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:VernacularLanguageNone a opensaber:IndianVernacularLanguage ;
+    rdfs:label "VernacularLanguageNone" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "No Vernacular Language." .
+
+opensaber:Assamese a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Assamese" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Assamese Language." .
+
+opensaber:Bengali a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Bengali" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Bengali Language." .
+
+opensaber:Gujarati a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Gujarati" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Gujarati Language." .
+
+opensaber:Hindi a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Hindi" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Hindi Language." .
+
+opensaber:Kannada a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Kannada" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Kannada Language." .
+
+opensaber:Kashmiri a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Kashmiri" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Kashmiri Language." .
+
+opensaber:Konkani a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Konkani" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Konkani Language." .
+
+opensaber:Malayalam a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Malayalam" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Malayalam Language." .
+
+opensaber:Manipuri a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Manipuri" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Manipuri Language." .
+
+opensaber:Marathi a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Marathi" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Marathi Language." .
+
+opensaber:Nepali a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Nepali" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Nepali Language." .
+
+opensaber:Oriya a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Oriya" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Oriya Language." .
+
+opensaber:Punjabi a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Punjabi" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Punjabi Language." .
+
+opensaber:Sanskrit a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Sanskrit" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Sanskrit Language." .
+
+opensaber:Sindhi a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Sindhi" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Sindhi Language." .
+
+opensaber:Tamil a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Tamil" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Tamil Language." .
+
+opensaber:Telugu a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Telugu" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Telugu Language." .
+
+opensaber:Urdu a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Urdu" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Urdu Language." .
+
+opensaber:Bodo a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Bodo" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Bodo Language." .
+
+opensaber:Santhali a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Santhali" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Santhali Language." .
+
+opensaber:Maithili a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Maithili" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Maithili Language." .
+
+opensaber:Dogri a opensaber:IndianVernacularLanguage ;
+    rdfs:label "Dogri" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Dogri Language." .
+
+opensaber:vernacularLanguageSkill a rdf:Property ;
+    rdfs:label "vernacularLanguageSkill" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:VernacularLanguageSkill ;
+    rdfs:comment "Vernacular Languages known." .
+
+opensaber:vernacularLanguage a rdf:Property ;
+    rdfs:label "vernacularLanguage" ;
+    schema:domainIncludes schema:VernacularLanguageSkill ;
+    schema:rangeIncludes opensaber:VernacularLanguage ;
+    rdfs:comment "Vernacular Language known." .
+
+opensaber:highestvernacularLanguageQualification a rdf:Property ;
+    rdfs:label "highestvernacularLanguageQualification" ;
+    schema:domainIncludes schema:VernacularLanguageSkill ;
+    schema:rangeIncludes opensaber:AcademicQualification ;
+    rdfs:comment "Qualification of Vernacular Language known." .
+
+opensaber:isDElEdEnrollee a rdf:Property ;
+    rdfs:label "isDElEdEnrollee" ;
+    schema:domainIncludes schema:Teacher ;
+    schema:rangeIncludes opensaber:Boolean ;
+    rdfs:comment "Enrolled in D.El.Ed. programme of NIOS." .
+
+opensaber:IndianSchoolClasses a rdf:Class ;
+    rdfs:label "IndianSchoolClasses" ;
+    rdfs:comment "An enumeration of classes in an Indian school." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:Class1 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class1" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 1." .
+
+opensaber:Class2 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class2" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 2." .
+
+opensaber:Class3 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class3" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 3." .
+
+opensaber:Class4 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class4" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 4." .
+
+opensaber:Class5 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class5" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 5." .
+
+opensaber:Class6 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class6" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 6." .
+
+opensaber:Class7 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class7" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 7." .
+
+opensaber:Class8 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class8" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 8." .
+
+opensaber:Class9 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class9" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 9." .
+
+opensaber:Class10 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class10" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 10." .
+
+opensaber:Class11 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class11" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 11." .
+
+opensaber:Class12 a opensaber:IndianSchoolClasses ;
+    rdfs:label "Class12" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Class 12." .
+
+opensaber:IndianSchoolSubjects a rdf:Class ;
+    rdfs:label "IndianSchoolSubjects" ;
+    rdfs:comment "An enumeration of subjects in an Indian school." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:SubjectAll a opensaber:IndianSchoolSubjects ;
+    rdfs:label "SubjectAll" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "All Subjects." .
+
+opensaber:Mathematics a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Mathematics" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Mathematics." .
+
+opensaber:Sciences a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Sciences" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Sciences." .
+
+opensaber:SocialStudies a opensaber:IndianSchoolSubjects ;
+    rdfs:label "SocialStudies" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Social Studies." .
+
+opensaber:EVS a opensaber:IndianSchoolSubjects ;
+    rdfs:label "EVS" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Environment studies." .
+
+opensaber:Sports a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Sports" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Sports." .
+
+opensaber:Music a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Music" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Music." .
+
+opensaber:Physics a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Physics" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Physics." .
+
+opensaber:Biology a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Biology" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Biology." .
+
+opensaber:Chemistry a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Chemistry" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Chemistry." .
+
+opensaber:ComputerScience a opensaber:IndianSchoolSubjects ;
+    rdfs:label "ComputerScience" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Computer Science." .
+
+opensaber:Geography a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Geography" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Geography." .
+
+opensaber:History a opensaber:IndianSchoolSubjects ;
+    rdfs:label "History" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "History." .
+
+opensaber:PoliticalScience a opensaber:IndianSchoolSubjects ;
+    rdfs:label "PoliticalScience" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Political Science." .
+
+opensaber:Accountancy a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Accountancy" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Accountancy." .
+
+opensaber:BusinessStudies a opensaber:IndianSchoolSubjects ;
+    rdfs:label "BusinessStudies" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Business Studies." .
+
+opensaber:Economics a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Economics" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Economics." .
+
+opensaber:ForeignLanguage a opensaber:IndianSchoolSubjects ;
+    rdfs:label "ForeignLanguage" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Foreign Language." .
+
+opensaber:Hindi a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Hindi" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Hindi." .
+
+opensaber:Sanskrit a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Sanskrit" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Sanskrit." .
+
+opensaber:Sindhi a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Sindhi" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Sindhi." .
+
+opensaber:Urdu a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Urdu" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Urdu." .
+
+opensaber:English a opensaber:IndianSchoolSubjects ;
+    rdfs:label "English" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "English." .
+
+opensaber:RegionalLanguage a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Regional Language" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Regional Language." .
+
+opensaber:ArtEducation a opensaber:IndianSchoolSubjects ;
+    rdfs:label "ArtEducation" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Art Education." .
+
+opensaber:PhysicalEducation a opensaber:IndianSchoolSubjects ;
+    rdfs:label "PhysicalEducation" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Health & physical education." .
+
+opensaber:WorkEducation a opensaber:IndianSchoolSubjects ;
+    rdfs:label "WorkEducation" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Work Education." .
+
+opensaber:EngineeringDrawing a opensaber:IndianSchoolSubjects ;
+    rdfs:label "EngineeringDrawing" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Engineering Drawing." .
+
+opensaber:FineArts a opensaber:IndianSchoolSubjects ;
+    rdfs:label "FineArts" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Fine Arts." .
+
+opensaber:HomeScience a opensaber:IndianSchoolSubjects ;
+    rdfs:label "HomeScience" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Home Science." .
+
+opensaber:Philosophy a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Philosophy" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Philosophy." .
+
+opensaber:Psychology a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Psychology" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Psychology." .
+
+opensaber:Botany a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Botany" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Botany." .
+
+opensaber:Zoology a opensaber:IndianSchoolSubjects ;
+    rdfs:label "Zoology" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Zoology." .
+
+opensaber:OtherSubject a opensaber:IndianSchoolSubjects ;
+    rdfs:label "OtherSubject" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Other Subject." .
+
+opensaber:teachingExperience a rdf:Property ;
+    rdfs:label "teachingExperience" ;
+    schema:domainIncludes opensaber:Teacher ;
+    schema:rangeIncludes opensaber:TeachingExperience ;
+    rdfs:comment "Teaching experience." .
+
+opensaber:TeachingExperience a rdfs:Class ;
+    rdfs:label "TeachingExperience" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Teaching Experience." .
+
+opensaber:classesTaught a rdf:Property ;
+    rdfs:label "classesTaught" ;
+    schema:domainIncludes opensaber:TeachingExperience ;
+    schema:rangeIncludes opensaber:IndianSchoolClasses ;
+    rdfs:comment "Classes Taught." .
+
+opensaber:subjectsTaught a rdf:Property ;
+    rdfs:label "subjectsTaught" ;
+    schema:domainIncludes opensaber:TeachingExperience ;
+    schema:rangeIncludes opensaber:IndianSchoolSubjects ;
+    rdfs:comment "Subjects Taught." .
+
+opensaber:subjectsAppointedFor a rdf:Property ;
+    rdfs:label "subjectsAppointedFor" ;
+    schema:domainIncludes opensaber:TeachingExperience ;
+    schema:rangeIncludes opensaber:IndianSchoolSubjects ;
+    rdfs:comment "Subjects appointed for." .
+
+opensaber:dateOfJoiningSchool a rdf:Property ;
+    rdfs:label "dateOfJoiningSchool" ;
+    schema:domainIncludes opensaber:TeachingExperience ;
+    schema:rangeIncludes schema:Date ;
+    rdfs:comment "Date of joining school." .
+
+opensaber:isMasterTrainer a rdf:Property ;
+    rdfs:label "isMasterTrainer" ;
+    schema:domainIncludes schema:Teacher ;
+    schema:rangeIncludes opensaber:Boolean ;
+    rdfs:comment "Is master trainer." .
+
+opensaber:TrainingSubjects a rdf:Class ;
+    rdfs:label "IndianSchoolClasses" ;
+    rdfs:comment "An enumeration of training subjects." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:SubjectSpecificKnowledge a opensaber:TrainingSubjects ;
+    rdfs:label "SubjectSpecificKnowledge" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Subject Specific Knowledge." .
+
+opensaber:PedagogicalIssues a opensaber:TrainingSubjects ;
+    rdfs:label "PedagogicalIssues" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Pedagogical Issues." .
+
+opensaber:ICTSkills a opensaber:TrainingSubjects ;
+    rdfs:label "ICTSkills" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "ICT Skills." .
+
+opensaber:CWSNSkills a opensaber:TrainingSubjects ;
+    rdfs:label "CWSNSkills" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Knowledge and Skills to engage with CWSN." .
+
+opensaber:LeadershipSkills a opensaber:TrainingSubjects ;
+    rdfs:label "LeadershipSkills" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Leadership and Management Skills." .
+
+opensaber:SubjectSpecificKnowledge a opensaber:TrainingSubjects ;
+    rdfs:label "SubjectSpecificKnowledge" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Subject Specific Knowledge." .
+
+opensaber:GenderSensitivity a opensaber:TrainingSubjects ;
+    rdfs:label "GenderSensitivity" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Gender Sensitivity." .
+
+opensaber:CareerGuidance a opensaber:TrainingSubjects ;
+    rdfs:label "CareerGuidance" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Career Guidance." .
+
+opensaber:Assessment a opensaber:TrainingSubjects ;
+    rdfs:label "Assessment" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Assessment." .
+
+opensaber:ValueEducation a opensaber:TrainingSubjects ;
+    rdfs:label "ValueEducation" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Value Education." .
+
+opensaber:LifeSkill a opensaber:TrainingSubjects ;
+    rdfs:label "LifeSkill" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Life Skill." .
+
+opensaber:VocationalEducation a opensaber:TrainingSubjects ;
+    rdfs:label "VocationalEducation" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Vocational Education." .
+
+opensaber:ExperientialLearning a opensaber:TrainingSubjects ;
+    rdfs:label "ExperientialLearning" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Experiential Learning." .
+
+opensaber:OtherKnowledge a opensaber:TrainingSubjects ;
+    rdfs:label "OtherKnowledge" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Other Knowledge." .
+
+opensaber:pastTraining a rdf:Property ;
+    rdfs:label "pastTraining" ;
+    schema:domainIncludes opensaber:Teacher ;
+    schema:rangeIncludes opensaber:TrainingSubjects ;
+    rdfs:comment "Past training." .
+
+opensaber:isBRCorCRC a rdf:Property ;
+    rdfs:label "isBRCorCRC" ;
+    schema:domainIncludes schema:Teacher ;
+    schema:rangeIncludes opensaber:Boolean ;
+    rdfs:comment "Is a BRC or CRC as well?." .
+
+opensaber:IndianSchoolBoard a rdf:Class ;
+    rdfs:label "IndianSchoolBoard" ;
+    rdfs:comment "An enumeration of Indian School Boards." ;
+    rdfs:subClassOf schema:Enumeration .
+
+opensaber:StateBoard a opensaber:IndianSchoolBoard ;
+    rdfs:label "StateBoard" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "State Board." .
+
+opensaber:CBSE a opensaber:IndianSchoolBoard ;
+    rdfs:label "CBSE" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "CBSE." .
+
+opensaber:ICSE a opensaber:IndianSchoolBoard ;
+    rdfs:label "ICSE" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "ICSE." .
+
+opensaber:IB a opensaber:IndianSchoolBoard ;
+    rdfs:label "IB" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "IB." .
+
+opensaber:Cambridge a opensaber:IndianSchoolBoard ;
+    rdfs:label "Cambridge" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "Cambridge Board." .
+
+opensaber:boardAffiliation a rdf:Property ;
+    rdfs:label "boardAffiliation" ;
+    schema:domainIncludes opensaber:TeachingExperience ;
+    schema:rangeIncludes schema:IndianSchoolBoard ;
+    rdfs:comment "School board affiliation." .
