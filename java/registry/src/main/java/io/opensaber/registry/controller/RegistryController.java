@@ -1,5 +1,6 @@
 package io.opensaber.registry.controller;
 
+import java.lang.reflect.Type;
 import java.sql.Blob;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,10 +29,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 import io.opensaber.pojos.Request;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
+import io.opensaber.pojos.ValidationResponse;
+import io.opensaber.pojos.ValidationResponseSerializer;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.InvalidTypeException;
 import io.opensaber.registry.exception.RecordNotFoundException;
@@ -163,11 +169,9 @@ public class RegistryController {
 		try {
 			org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(id);
 			String jenaJSON = registryService.frameAuditEntity(auditModel);
-			JSONObject jenaObj = new JSONObject(jenaJSON);
-			Map<String,Object> map=jenaObj.toMap();
-			System.out.println(jenaObj);
-			System.out.println(map.get("@graph").toString());
-			response.setResult(map);
+			System.out.println("JenaJSON = \n" + jenaJSON);
+			Type type = new TypeToken<Map<String, Object>>(){}.getType();
+			response.setResult(new Gson().fromJson(jenaJSON, type));
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (RecordNotFoundException e) {
 			response.setResult(null);

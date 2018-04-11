@@ -69,16 +69,16 @@ public class AuditRecord {
         } else {
 //            System.out.println("AUDIT ROOT FOUND - NOT CREATING");
             rootVertex = _source.V().hasLabel(subject).next();
-            rootVertex.property(registrySystemContext+"@audit","true");
+            rootVertex.property(registrySystemContext+"audit","true");
         }
-      
+     
         String uuid=UUID.randomUUID().toString();
         String auditLabel=registrySystemContext+uuid;
         String predicate=registrySystemContext+ "predicate";
         String oldObject=registrySystemContext+"oldObject";
         String newObject=registrySystemContext+"newObject";
-        String audit=registrySystemContext+"@audit";
-        String auditRecord=registrySystemContext+"@auditRecord";
+        String audit=registrySystemContext+"audit";
+        String auditRecord=registrySystemContext+"auditRecord";
              
         Vertex recordVertex = _source.addV(auditLabel).next();
         recordVertex.property(predicate,this.predicate);

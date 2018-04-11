@@ -3,38 +3,61 @@ package io.opensaber.registry.test;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+
 import cucumber.api.Scenario;
 import cucumber.api.java8.En;
 import io.opensaber.pojos.Response;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.json.JSONObject;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.jsonldjava.core.JsonLdProcessor;
+import com.github.jsonldjava.core.JsonLdTripleCallback;
+import com.github.jsonldjava.utils.JsonUtils;
+
 import org.springframework.http.ResponseEntity;
+import org.apache.jena.ext.com.google.common.collect.Maps;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-
 import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 
     private static final String VALID_JSONLD_FILE = "create_teacher.jsonld";
     private static final String VALID_UPDATE_JSONLD_FILE = "update_teacher.jsonld";
+    private static final String UPDATE_JSONLD__AUDIT_FILE = "update_teacher_audit.jsonld";
     private static final String INVALID_UPDATE_JSONLD = "invalid-teacher.jsonld";
     private static final String CREATE_REST_ENDPOINT = "create";
     private static final String UPDATE_REST_ENDPOINT = "update";
     private static final String READ_REST_ENDPOINT = "read";
     private static final String CONTEXT_CONSTANT = "sample:";
     private static final String AUDIT_REST_ENDPOINT = "fetchAudit";
+    @Value("${registry.system.base}")
+	private String registrySystemContext="http://example.com/voc/opensaber/";
 
     // private RestTemplate restTemplate;
     private String baseUrl;
-    private ResponseEntity<Response> response;
+    private ResponseEntity<Response> response,auditBeforeUpdate, auditAfterUpdate;
     private String id;
     private HttpHeaders headers;
     
@@ -69,7 +92,7 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
             StringBuilder url = new StringBuilder();
             url.append(baseUrl).append(UPDATE_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
             response = updateEntity(jsonld, url.toString(), headers);
-        });
+         });
 
         Then("^updating the record should be unsuccessful$", () -> checkUnsuccessfulResponse());
 
@@ -83,41 +106,53 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
             response = fetchEntity(url.toString(), headers);
             jsonld = updateInputJsonldRootNodeId(response);
         });
-
+        
+        Given("^input for updating single record$", () -> {
+            StringBuilder url = new StringBuilder();
+            url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            response = fetchEntity(url.toString(), headers);
+            jsonld = updateInputJsonldRootNodeIdForAudit(response);
+        });
+        
+        And("^audit record before update$", () -> {          
+       	 StringBuilder url = new StringBuilder();
+            url.append(baseUrl).append(AUDIT_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            auditBeforeUpdate = fetchEntity(url.toString(),headers);          	
+       });
+        
         Then("^updating the record should be successful", () -> checkSuccessfulResponse());
         
-        And("^getting audit records for update$", () -> {          
+        And("^getting audit records after update$", () -> {          
         	 StringBuilder url = new StringBuilder();
              url.append(baseUrl).append(AUDIT_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
-             response = fetchEntity(url.toString(),headers);          	
+             auditAfterUpdate = fetchEntity(url.toString(),headers);          	
         });
         
-        Then("^check audit records are matched with expected records$",() -> {
-        	
-        	 Object auditRecords = response.getBody().getResult().get("@graph");
-          	             
-             Map<String,List<Object>> updatedProperties=new HashMap<>();
-             List<Object> values1= new ArrayList<>();
-             values1.add("12");
-             values1.add("12");
-             updatedProperties.put("serialNum", values1);
-             List<Object> values2= new ArrayList<>();
-             values2.add("12234");
-             values2.add("17382");
-             updatedProperties.put("teacherCode", values2);
-             List<Object> values3= new ArrayList<>();
-             values3.add("Marvin Pande");
-             values3.add("Akshaya Vijayalakshmi");
-             updatedProperties.put("teacherName", values3);
-             List<Object> values4= new ArrayList<>();
-             values4.add("2014");
-             values4.add("2016");
-             updatedProperties.put("@value", values4);    
-             
-             
-        	
-        });
-    }
+        Then("^check audit records are matched with expected records$", () -> {
+
+			Model modelAudit = ModelFactory.createDefaultModel();
+			StringReader reader = new StringReader(new Gson().toJson(auditBeforeUpdate.getBody().getResult()));
+			modelAudit.read(reader, null, "JSON-LD");
+
+			Model modelInput = ModelFactory.createDefaultModel();
+			StringReader readerInput = new StringReader(new Gson().toJson(auditAfterUpdate.getBody().getResult()));
+			modelInput.read(readerInput, null, "JSON-LD");
+			StmtIterator itr = modelAudit.listStatements();
+			Model diff = modelInput.difference(modelAudit);
+			System.out.println("Model Diff: " + diff);
+					
+			StmtIterator sIter;
+			if (diff.size() != 0) {
+				sIter = diff.listStatements();
+				while (sIter.hasNext()) {
+					Statement stmt=sIter.nextStatement();
+					if (stmt.getPredicate().toString().contains("newObject")) {
+						assertEquals(true, stmt.getObject().toString().contains("FEMALE"));
+					} 				
+				}
+			}
+		});
+	}
 
     /**
      * Cucumber Background steps which will be executed before each test
@@ -145,6 +180,21 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 
         JsonObject updateJsonObject = parser.parse(new InputStreamReader
                 (this.getClass().getClassLoader().getResourceAsStream("update_teacher.jsonld"))).getAsJsonObject();
+        updateJsonObject.getAsJsonObject("request").addProperty("@id", entityId);
+        return gson.toJson(updateJsonObject);
+    }
+    
+    private String updateInputJsonldRootNodeIdForAudit(ResponseEntity<Response> response) {
+
+        Map<String, Object> responseData = response.getBody().getResult();
+        Gson gson = new Gson();
+        JsonParser parser = new JsonParser();
+        JsonObject responseResult = parser.parse(gson.toJson(responseData)).getAsJsonObject();
+        JsonObject entity = responseResult.getAsJsonArray("@graph").get(0).getAsJsonObject();
+        String entityId = entity.get("@id").getAsString();
+
+        JsonObject updateJsonObject = parser.parse(new InputStreamReader
+                (this.getClass().getClassLoader().getResourceAsStream("update_teacher_audit.jsonld"))).getAsJsonObject();
         updateJsonObject.getAsJsonObject("request").addProperty("@id", entityId);
         return gson.toJson(updateJsonObject);
     }

@@ -106,7 +106,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException {
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
 		String entityId = registryService.addEntity(model);
-		assertEquals(5, IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot(registrySystemContext+"@audit")));
+		assertEquals(5, IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot(registrySystemContext+"audit")));
 	}
 	
 	@Test

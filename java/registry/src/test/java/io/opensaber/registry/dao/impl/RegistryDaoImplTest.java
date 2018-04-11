@@ -287,7 +287,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 			assertEquals(5, IteratorUtils.count(entity2.traversal().V()));
 
-			long verticesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot(registrySystemContext+"@audit"));
+			long verticesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot(registrySystemContext+"audit"));
 			long edgesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E().hasNot("@audit"));
 
 			// Expected count of vertices is 6 with two entities with same address created
