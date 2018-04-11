@@ -445,13 +445,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		String response = registryDao.addEntity(graph, "_:"+rootLabel);
 		Graph entity = registryDao.getEntityById(response);
 		assertNotNull(entity);
-		try {
-			dump_graph(graph, "in.json");
-			dump_graph(entity, "out.json");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		assertEquals(countGraphVertices(graph), countGraphVertices(entity));
 	}
 	
@@ -464,13 +457,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		String response = registryDao.addEntity(graph, "_:"+rootLabel);
 		Graph entity = registryDao.getEntityById(response);
 		assertNotNull(entity);
-		try {
-			dump_graph(graph, "in_count.json");
-			dump_graph(entity, "out_count.json");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
 	}
 

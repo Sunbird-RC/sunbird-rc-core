@@ -418,7 +418,6 @@ public class RegistryDaoImpl implements RegistryDao {
 			parsedGraphSubject.addEdge(edge.label(), newo);
 			vStack.push(o);
 			parsedVStack.push(newo);
-			dump_graph(parsedGraph,"outgoing.json");
 		}
 		Iterator<Vertex> vIterator = vStack.iterator();
 		Iterator<Vertex> parsedVIterator = parsedVStack.iterator();
