@@ -8,7 +8,6 @@ import io.opensaber.registry.model.AuditRecordReader;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
-
 import io.opensaber.registry.util.RDFUtil;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdf.model.Property;
@@ -39,7 +38,6 @@ import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryTestBase;
@@ -75,17 +73,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 	
-	//@Rule public MockitoRule rule = MockitoJUnit.rule();
-	
-	@Value("${encryption.active}")
-	private String encryptionStatus;
-	
-	@Value("${decryption.active}")
-	private String decryptionStatus;
-	
-	/*@Autowired
-	private EncryptionService encryptionService;*/
-	
 	@Autowired
 	private Environment environment;
 	
@@ -95,20 +82,17 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Mock
 	private EncryptionService encryptionMock;
 	
+	@Mock
+	private SchemaConfigurator mockSchemaConfigurator;
+	
 	@Autowired
 	@InjectMocks
 	RegistryDaoImpl registryDaoImpl;
-	
-	@Mock
-	private SchemaConfigurator mockSchemaConfigurator;
 	
   	private static Graph graph;
 			
 	@Autowired
 	private DatabaseProvider databaseProvider;
-	
-	/*@Mock
-	private DatabaseProvider mockDatabaseProvider;*/
 	
 	@Value("${registry.system.base}")
 	private String registrySystemContext="http://example.com/voc/opensaber/";
@@ -165,7 +149,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		getVertexForSubject(label, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
 		String response = registryDao.addEntity(graph, label);
 		Graph entity = registryDao.getEntityById(response);
-		assertEquals(1, IteratorUtils.count(entity.traversal().clone().V().hasNot("@audit")));
+		assertEquals(1, IteratorUtils.count(entity.traversal().clone().V().hasNot(registrySystemContext+"audit")));
 		Vertex v = entity.traversal().V().has(T.label, label).next();
 		assertEquals("DAV Public School", v.property("http://example.com/voc/teacher/1.0.0/schoolName").value());
         checkIfAuditRecordsAreRight(entity, null);
@@ -223,7 +207,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 }
     private Map<String,Integer> getPropCounterMap(Graph entity) {
 	    Map<String,Integer> entityPropertyCountMap = new HashMap<>();
-        Iterator<Vertex> iter = entity.traversal().clone().V().hasNot("@audit");
+        Iterator<Vertex> iter = entity.traversal().clone().V().hasNot(registrySystemContext+"audit");
         while(iter.hasNext()){
             Vertex vertex = iter.next();
             entityPropertyCountMap.put(vertex.label(),0);
@@ -288,7 +272,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			assertEquals(5, IteratorUtils.count(entity2.traversal().V()));
 
 			long verticesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot(registrySystemContext+"audit"));
-			long edgesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E().hasNot("@audit"));
+			long edgesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E().hasNot(registrySystemContext+"audit"));
 
 			// Expected count of vertices is 6 with two entities with same address created
 			assertEquals(7, verticesCountAfterSharedNodesCreation);
@@ -403,7 +387,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		expectedEx.expect(RecordNotFoundException.class);
 		expectedEx.expectMessage(Constants.ENTITY_NOT_FOUND);
 		UUID label = getLabel();
-		Graph graph = registryDao.getEntityById(label.toString());
+		registryDao.getEntityById(label.toString());
 	}
 
 	@Test
@@ -415,7 +399,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		String label1 = UUID.randomUUID().toString();
 		String label2 = UUID.randomUUID().toString();
 		getVertexForSubject(label1, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
-		String response = registryDao.addEntity(graph, label1);
+		registryDao.addEntity(graph, label1);
 		registryDao.getEntityById(label2);
 	}
 
@@ -879,7 +863,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	private long countGraphVertices(Graph graph) {
 		return IteratorUtils.count(graph.vertices());
 	}
-	
+		
 	@Test
 	public void test_encryption_for_nonEncryptableProperty() throws Exception {
 		String label = generateRandomId();
@@ -888,17 +872,17 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
 		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
 
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(false);
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"))
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(false);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"))
 				.thenReturn(true);
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
 
 		when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
 		when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
 
 		getVertexWithMultipleProperties(label, map);
 		String response = registryDao.addEntity(graph,label);
-		Graph entity = registryDao.getEntityById(response);
+		registryDao.getEntityById(response);
 		verify(encryptionMock, times(2)).encrypt(Mockito.anyString());
 	}
 	
@@ -910,16 +894,16 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
 		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
 
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(false);
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(false);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
 
 		when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
 		when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
 
 		getVertexWithMultipleProperties(label, map);
 		String response = registryDao.addEntity(graph, label);
-		Graph entity = registryDao.getEntityById(response);
+		registryDao.getEntityById(response);
 
 		verify(encryptionMock, times(2)).encrypt(Mockito.anyString());
 	}
@@ -927,7 +911,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Test
 	public void test_encryptionServiceCall_for_null_property() throws Exception {
 		Model rdfModel = getNewValidRdf();
-		String rootLabel = updateGraphFromRdf(rdfModel);
+		updateGraphFromRdf(rdfModel);
 		GraphTraversal<Vertex, Vertex> gtvs = graph.traversal().clone().V();
 		
 		if (gtvs.hasNext()) {
@@ -935,7 +919,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			Iterator<VertexProperty<Object>> iter = v.properties();
 			while (iter.hasNext()) {
 				VertexProperty<Object> property = iter.next();
-				if (encryptionMock.isEncryptable(property.key()) && property.value() == null) {
+				if (mockSchemaConfigurator.isPrivate(property.key()) && property.value() == null) {
 					encryptionMock.encrypt(property.value());					
 				}
 			}
@@ -951,17 +935,17 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
 		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
 		
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(true);
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
-	    when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(true);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
+	    when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
 		
 	    when(encryptionMock.encrypt("ABC International School")).thenReturn("mockEncryptedSchoolName");
 	    when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
 	    when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
 	    
-	    when(encryptionMock.isDecryptable("encryptedschoolName")).thenReturn(true);
-		when(encryptionMock.isDecryptable("encryptedclusterResourceCentre")).thenReturn(true);
-	    when(encryptionMock.isDecryptable("encryptedudiseNumber")).thenReturn(true);
+	    when(mockSchemaConfigurator.isEncrypted("encryptedschoolName")).thenReturn(true);
+		when(mockSchemaConfigurator.isEncrypted("encryptedclusterResourceCentre")).thenReturn(true);
+	    when(mockSchemaConfigurator.isEncrypted("encryptedudiseNumber")).thenReturn(true);
 	    
 	    when(encryptionMock.decrypt("mockEncryptedSchoolName")).thenReturn("ABC International School");
 	    when(encryptionMock.decrypt("mockEncryptedClusterResourceCentre")).thenReturn("test Cluster Resource");
@@ -980,27 +964,25 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
 		
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(true);
-		when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
-	    when(encryptionMock.isEncryptable("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(true);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
+	    when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
 	    
 	    when(encryptionMock.encrypt("Bluebells")).thenReturn("mockEncryptedSchoolName");
 	    when(encryptionMock.encrypt("some Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
 	    when(encryptionMock.encrypt("9876")).thenReturn("mockEncryptedUdiseNumber");
 	    
-	    when(encryptionMock.isDecryptable("encryptedschoolName")).thenReturn(true);
-		when(encryptionMock.isDecryptable("encryptedclusterResourceCentre")).thenReturn(true);
-	    when(encryptionMock.isDecryptable("encryptedudiseNumber")).thenReturn(true);
+	    when(mockSchemaConfigurator.isEncrypted("encryptedschoolName")).thenReturn(true);
+		when(mockSchemaConfigurator.isEncrypted("encryptedclusterResourceCentre")).thenReturn(true);
+	    when(mockSchemaConfigurator.isEncrypted("encryptedudiseNumber")).thenReturn(true);
 	    
 	    when(encryptionMock.decrypt("mockEncryptedSchoolName")).thenReturn("ABC International School");
 	    when(encryptionMock.decrypt("mockEncryptedClusterResourceCentre")).thenReturn("test Cluster Resource");
 	    when(encryptionMock.decrypt("mockEncryptedUdiseNumber")).thenReturn("1234");
+	  
+	    String response =registryDao.addEntity(graph, "_:"+rootLabel);					
+	    registryDao.getEntityById(response);
 	    
-	    int privatePropertycount=3;
-	    String response = registryDao.addEntity(graph, "_:"+rootLabel);
-		Graph entity = registryDao.getEntityById(response);
-		long vertexCount = IteratorUtils.count(entity.traversal().clone().V());		
-		
 		verify(encryptionMock, times(3)).encrypt(Mockito.anyString());	
 		verify(encryptionMock, times(3)).decrypt(Mockito.anyString());		
 	}

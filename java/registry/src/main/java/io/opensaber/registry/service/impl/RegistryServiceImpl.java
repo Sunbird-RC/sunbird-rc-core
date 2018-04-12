@@ -7,11 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.exception.*;
-import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
@@ -19,26 +17,23 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.JsonLDWriteContext;
-import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WriterDatasetRIOT;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.health.Health;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
@@ -57,10 +52,10 @@ public class RegistryServiceImpl implements RegistryService {
 	private Environment environment;
 
 	@Autowired
-	EncryptionService encryptionService;
-
-	@Autowired
 	DatabaseProvider databaseProvider;
+	
+	@Autowired
+	EncryptionService encryptionService;
 
 	@Override
 	public List getEntityList(){

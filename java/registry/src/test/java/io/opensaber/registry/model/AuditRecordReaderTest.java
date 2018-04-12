@@ -72,7 +72,7 @@ public class AuditRecordReaderTest {
 
     @Test
     public void testFetchingUnMatchedLabel() throws LabelCannotBeNullException {
-        when(VMock.hasLabel(registrySystemContext+"X-AUDIT")).thenReturn(hasLabelMock);
+        when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
         when(hasLabelMock.out(registrySystemContext+"audit")).thenReturn(traversalMock);
         when(traversalMock.hasNext()).thenReturn(false);
         List<AuditRecord> auditRecords = auditRecordReader.fetchAuditRecords("X",null);
@@ -82,7 +82,7 @@ public class AuditRecordReaderTest {
 
     @Test
     public void testSingleAuditRecordMatch() throws LabelCannotBeNullException {
-        when(VMock.hasLabel(registrySystemContext+"X-AUDIT")).thenReturn(hasLabelMock);
+        when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
         when(hasLabelMock.out(registrySystemContext+"audit")).thenReturn(traversalMock);
         Vertex auditVertex1 = mock(Vertex.class);
         VertexProperty predicate1 = mock(VertexProperty.class);
@@ -106,7 +106,7 @@ public class AuditRecordReaderTest {
         List<AuditRecord> auditRecords = auditRecordReader.fetchAuditRecords("X",null);
         assertEquals(1,auditRecords.size());
         AuditRecord record = auditRecords.get(0);
-        assertEquals(record.getSubject(),registrySystemContext+"X-AUDIT");
+        assertEquals(record.getSubject(),"X-AUDIT");
         assertEquals(record.getPredicate(),registrySystemContext+"PREDICATE1");
         assertEquals(record.getOldObject(),registrySystemContext+"OLDOBJECT1");
         assertEquals(record.getNewObject(),registrySystemContext+"NEWOBJECT1");
@@ -114,7 +114,7 @@ public class AuditRecordReaderTest {
 
     @Test
     public void testPredicateButNoMatch() throws LabelCannotBeNullException {
-        when(VMock.hasLabel(registrySystemContext+"X-AUDIT")).thenReturn(hasLabelMock);
+        when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
         GraphTraversal tempTraversalMock = mock(GraphTraversal.class);
         when(hasLabelMock.out(registrySystemContext+"audit")).thenReturn(tempTraversalMock);
         when(tempTraversalMock.has(registrySystemContext+"predicate","P")).thenReturn(traversalMock);
@@ -125,7 +125,7 @@ public class AuditRecordReaderTest {
 
     @Test
     public void testPredicateMatchButOneRecord() throws LabelCannotBeNullException {
-        when(VMock.hasLabel(registrySystemContext+"X-AUDIT")).thenReturn(hasLabelMock);
+        when(VMock.hasLabel("X-AUDIT")).thenReturn(hasLabelMock);
         GraphTraversal tempTraversalMock = mock(GraphTraversal.class);
         when(hasLabelMock.out(registrySystemContext+"audit")).thenReturn(tempTraversalMock);
         when(tempTraversalMock.has(registrySystemContext+"predicate","PREDICATE1")).thenReturn(traversalMock);

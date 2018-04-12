@@ -29,7 +29,6 @@ public class AuditRecordReader {
     }
 
     public List<AuditRecord> fetchAuditRecords(String label, String predicate) throws LabelCannotBeNullException {
-        // System.out.println("FETCH AUDIT RECORD "+label);
     	List<AuditRecord> records = new ArrayList<AuditRecord>();
         if(label==null) throw new LabelCannotBeNullException("Label cannot be null");
         GraphTraversalSource traversalSource = databaseProvider.getGraphStore().traversal();
@@ -47,7 +46,6 @@ public class AuditRecordReader {
             record.oldObject(getValue(auditVertex,registrySystemContext+"oldObject"));
             record.newObject(getValue(auditVertex,registrySystemContext+"newObject"));
             record.readOnlyAuthInfo(getValue(auditVertex,registrySystemContext+"authInfo"));
-            // System.out.println(record);
             records.add(record);
         }
         return records;
@@ -66,7 +64,6 @@ public class AuditRecordReader {
     }
 
     private String getAuditLabel(String label) {
-    	String tailOfLabel=label.substring(label.lastIndexOf("/") + 1).trim();
-        return registrySystemContext+tailOfLabel+"-AUDIT";
+    	return label+"-AUDIT";
     }
 }

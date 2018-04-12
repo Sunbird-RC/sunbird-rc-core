@@ -3,6 +3,8 @@ package io.opensaber.registry.schema.config;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Random;
 
 import org.junit.Test;
 
@@ -37,6 +39,19 @@ public class SchemaConfiguratorTest {
 		initialize(CONFIG_SCHEMA_FILE);
 		assertNotNull(schemaConfigurator.getSchemaConfig());
 		assertFalse(schemaConfigurator.isPrivate("sample"));
+	}
+	
+	@Test
+	public void test_isEncrypted() throws Exception {
+		byte[] array = new byte[7];
+		new Random().nextBytes(array);
+		String randomString = new String(array, Charset.forName("UTF-8"));
+		String encryptedProperty= "encryptedschoolName";
+		initialize(CONFIG_SCHEMA_FILE);
+		
+		assertEquals(true,schemaConfigurator.isEncrypted(encryptedProperty));
+		assertEquals(false,schemaConfigurator.isEncrypted(null));
+		assertEquals(false,schemaConfigurator.isEncrypted(randomString));
 	}
 
 

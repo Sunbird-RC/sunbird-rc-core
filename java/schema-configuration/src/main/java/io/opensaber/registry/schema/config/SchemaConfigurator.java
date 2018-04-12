@@ -9,9 +9,6 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.StmtIterator;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 
@@ -38,6 +35,13 @@ public class SchemaConfigurator {
 			return true;
 		}
 		return false;
+	}
+
+	public boolean isEncrypted(String tailPropertyKey) {
+		if (tailPropertyKey != null) {
+			return tailPropertyKey.substring(0, Math.min(tailPropertyKey.length(), 9)).equalsIgnoreCase("encrypted");
+		} else
+			return false;
 	}
 
 	public Model getSchemaConfig() {

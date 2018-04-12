@@ -164,7 +164,7 @@ public class RegistryController {
 
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
-		id=registrySystemContext+id;	
+		id=registryContext+id;	
 
 		try {
 			org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(id);

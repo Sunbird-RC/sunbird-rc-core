@@ -3,15 +3,15 @@ package io.opensaber.registry.dao.impl;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import com.google.common.collect.ImmutableList;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.model.AuditRecord;
+import io.opensaber.registry.schema.config.SchemaConfigurator;
+import io.opensaber.registry.service.EncryptionService;
+import io.opensaber.registry.service.impl.EncryptionServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
-import org.apache.jena.base.Sys;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
@@ -24,14 +24,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-
 import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.service.EncryptionService;
 
 @Component
 public class RegistryDaoImpl implements RegistryDao {
@@ -44,12 +42,15 @@ public class RegistryDaoImpl implements RegistryDao {
 	
 	@Autowired
 	private EncryptionService encryptionService;
-
+	
 	@Value("${registry.context.base}")
 	private String registryContext;
 	
 	@Value("${registry.system.base}")
 	private String registrySystemContext="http://example.com/voc/opensaber/";
+	
+	@Autowired
+	SchemaConfigurator schemaConfigurator;
 
 	@Override
 	public List getEntityList() {
@@ -188,10 +189,8 @@ public class RegistryDaoImpl implements RegistryDao {
 					dbVertex.addEdge(e.label(), existingV);
 
                     AuditRecord record = new AuditRecord();
-                    String tailOfdbVertex=dbVertex.label().substring(dbVertex.label().lastIndexOf("/") + 1).trim();
-                    String auditVertexlabel= registrySystemContext+tailOfdbVertex;
                     record
-                            .subject(auditVertexlabel)
+                            .subject(dbVertex.label())
                             .predicate(e.label())
                             .oldObject(null)
                             .newObject(existingV.label())
@@ -207,11 +206,8 @@ public class RegistryDaoImpl implements RegistryDao {
 				dbVertex.addEdge(e.label(), newV);
 
                 AuditRecord record = new AuditRecord();
-                String tailOfdbVertex=dbVertex.label().substring(dbVertex.label().lastIndexOf("/") + 1).trim();
-                String auditVertexlabel= registrySystemContext+tailOfdbVertex;
-                
                 record
-                        .subject(auditVertexlabel)
+                        .subject(dbVertex.label())
                         .predicate(e.label())
                         .oldObject(null)
                         .newObject(newV.label())
@@ -222,7 +218,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 		for(Pair<Vertex, Vertex> pv : parsedVertices) {
 			addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph,methodOrigin);
-			System.out.println("----------parsedGraph-----"+pv.getValue0().label()+"----------"+ pv.getValue1().label());
 		}
 		
 		
@@ -279,41 +274,42 @@ public class RegistryDaoImpl implements RegistryDao {
 		return parsedGraph;
 	}
 	
-	private void copyProperties(Vertex subject, Vertex newSubject, String methodOrigin) throws NoSuchElementException, EncryptionException, AuditFailedException {
-	    HashMap<String,HashMap<String,String>> propertyMetaPropertyMap = new HashMap<String,HashMap<String,String>>();
-	    HashMap<String,String> metaPropertyMap;
-	    Object propertyValue=null;
+	private void copyProperties(Vertex subject, Vertex newSubject, String methodOrigin)
+			throws NoSuchElementException, EncryptionException, AuditFailedException {
+		HashMap<String, HashMap<String, String>> propertyMetaPropertyMap = new HashMap<String, HashMap<String, String>>();
+		HashMap<String, String> metaPropertyMap;
+		Object propertyValue = null;
 		Iterator<VertexProperty<Object>> iter = subject.properties();
-		while(iter.hasNext()){
+		while (iter.hasNext()) {
 			VertexProperty<Object> property = iter.next();
-			String tailOfPropertyKey=property.key().substring(property.key().lastIndexOf("/") + 1).trim();
-			boolean existingEncyptedPropertyKey=tailOfPropertyKey.substring(0, Math.min(tailOfPropertyKey.length(), 9)).equalsIgnoreCase("encrypted");
-			if(methodOrigin.equalsIgnoreCase("addOrUpdate")  && existingEncyptedPropertyKey) {
+			String tailOfPropertyKey = property.key().substring(property.key().lastIndexOf("/") + 1).trim();
+			boolean existingEncyptedPropertyKey = tailOfPropertyKey
+					.substring(0, Math.min(tailOfPropertyKey.length(), 9)).equalsIgnoreCase("encrypted");
+			if (methodOrigin.equalsIgnoreCase("addOrUpdate") && existingEncyptedPropertyKey) {
 				property.remove();
-			}								
-			if(methodOrigin.equalsIgnoreCase("addOrUpdate") && encryptionService.isEncryptable(property.key())) {				
-				propertyValue =  encryptionService.encrypt(property.value());
-				if(!existingEncyptedPropertyKey) {
-		        String encryptedKey = "encrypted"+tailOfPropertyKey;
-		        setProperty(newSubject,property.key().replace(tailOfPropertyKey, encryptedKey), propertyValue);
+			}
+			if (methodOrigin.equalsIgnoreCase("addOrUpdate") && schemaConfigurator.isPrivate(property.key())) {
+				propertyValue = encryptionService.encrypt(property.value());
+				if (!existingEncyptedPropertyKey) {
+					String encryptedKey = "encrypted" + tailOfPropertyKey;
+					setProperty(newSubject, property.key().replace(tailOfPropertyKey, encryptedKey), propertyValue);
 				}
-			}			
-			else if(methodOrigin.equalsIgnoreCase("read") && encryptionService.isDecryptable(tailOfPropertyKey)) {	
-				   	propertyValue = encryptionService.decrypt(property.value());
-					String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
-					setProperty(newSubject,decryptedKey, propertyValue);
-			}	
-			else if(isaMetaProperty(property.key())){
-                buildPropertyMetaMap(propertyMetaPropertyMap, property);
-            } 
-			else {
-				if (!(methodOrigin.equalsIgnoreCase("read") && property.key().contains("@audit"))) {
+			} else if (methodOrigin.equalsIgnoreCase("read") && schemaConfigurator.isEncrypted(tailOfPropertyKey)) {
+				propertyValue = encryptionService.decrypt(property.value());
+				String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
+				setProperty(newSubject, decryptedKey, propertyValue);
+
+			} else if (isaMetaProperty(property.key())) {
+				buildPropertyMetaMap(propertyMetaPropertyMap, property);
+			} else {
+				if (!(methodOrigin.equalsIgnoreCase("read")
+						&& property.key().contains(registrySystemContext + "audit"))) {
 					setProperty(newSubject, property.key(), property.value());
 				}
-            }
-            setMetaProperty(subject, newSubject, property);
-        }
-        setMetaPropertyFromMap(newSubject, propertyMetaPropertyMap);
+			}
+			setMetaProperty(subject, newSubject, property);
+		}
+		setMetaPropertyFromMap(newSubject, propertyMetaPropertyMap);
 	}
 
     private boolean isaMetaProperty(String key) {
@@ -328,10 +324,8 @@ public class RegistryDaoImpl implements RegistryDao {
             if (v.graph().variables().get("@persisted").isPresent()) {
 //                System.out.println("AUDITING");
                 AuditRecord record = new AuditRecord();
-                String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
-                String auditVertexlabel= registrySystemContext+tailOfdbVertex;
                 record
-                        .subject(auditVertexlabel)
+                        .subject(v.label())
                         .predicate(key)
                         .oldObject(oldValue)
                         .newObject(newValue)

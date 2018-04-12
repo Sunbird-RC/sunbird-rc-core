@@ -26,8 +26,7 @@ public class AuditRecord {
 	private String registrySystemContext="http://example.com/voc/opensaber/";
 	
 	public AuditRecord subject(String label) {
-    	String tailOfLabel=label.substring(label.lastIndexOf("/") + 1).trim();
-        this.subject = registrySystemContext+tailOfLabel+"-AUDIT";
+    	this.subject = label+"-AUDIT";
         return this;
     }
 
@@ -90,7 +89,7 @@ public class AuditRecord {
       
         String edgeLabel=registrySystemContext+"audit";
         
-        rootVertex.addEdge(edgeLabel,recordVertex).property("@audit",true);	
+        rootVertex.addEdge(edgeLabel,recordVertex).property(registrySystemContext+"audit",true);	
         // System.out.println(this);
     }
 

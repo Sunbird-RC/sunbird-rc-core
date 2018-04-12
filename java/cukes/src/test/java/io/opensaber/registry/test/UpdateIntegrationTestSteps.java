@@ -139,8 +139,7 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 			modelInput.read(readerInput, null, "JSON-LD");
 			StmtIterator itr = modelAudit.listStatements();
 			Model diff = modelInput.difference(modelAudit);
-			System.out.println("Model Diff: " + diff);
-					
+						
 			StmtIterator sIter;
 			if (diff.size() != 0) {
 				sIter = diff.listStatements();
