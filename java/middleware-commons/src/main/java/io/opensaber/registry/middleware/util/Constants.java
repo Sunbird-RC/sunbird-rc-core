@@ -41,6 +41,7 @@ public class Constants {
 	public static final String OPENSABER_REGISTRY_API_NAME = "opensaber-registry-api";
 	public static final String SUNBIRD_ENCRYPTION_SERVICE_NAME = "sunbird.encryption.service";
 	public static final String OPENSABER_DATABASE_NAME = "opensaber.database";
+	public static final String PERSISTENT_GRAPH = "persistent_graph";
 
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"),

@@ -15,15 +15,7 @@
       "xsd":"http://www.w3.org/2001/XMLSchema#",
       "@vocab":"http://example.com/voc/teacher/1.0.0/"
     },
-    
-		"@type": "Teacher",
-		"serialNum": 12,
-		"teacherCode": "12234",
-		"nationalIdentifier": "1234567890123456",
-		"teacherName": "Marvin Pande",
-		"gender": 
-		{
-			"@id": "teacher:GenderTypeCode-FEMALE"
-		}
-}
+    "@type":"Teacher",
+    "serialNum":14
+  }
 }

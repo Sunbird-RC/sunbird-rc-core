@@ -27,6 +27,7 @@
     <logger name="es.weso" level="ERROR"/>
     <logger name="io.opensaber.utils.converters" level="ERROR"/>
     <logger name="io.opensaber.registry.dao.impl.RegistryDaoImpl" level="ERROR"/>
+    <logger name="org.springframework" level="ERROR"/>
 
     <root level="info" additivity="false">
         <appender-ref ref="STDOUT"/>

@@ -169,7 +169,6 @@ public class RegistryController {
 		try {
 			org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(id);
 			String jenaJSON = registryService.frameAuditEntity(auditModel);
-			System.out.println("JenaJSON = \n" + jenaJSON);
 			Type type = new TypeToken<Map<String, Object>>(){}.getType();
 			response.setResult(new Gson().fromJson(jenaJSON, type));
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);

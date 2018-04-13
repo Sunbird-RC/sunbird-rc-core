@@ -1,11 +1,30 @@
-jar:
-  image: frolvlad/alpine-oraclejdk8:slim
-  ports:
-    - "8080:8080"
-    - "9000:9000"
-  volumes:
-    - ./target/registry.jar:/registry.jar
-    - /data:/data
-    - ./logs:/logs
-  command: java -jar /registry.jar
-  privileged: true
+version: "3.3"
+
+services:
+  opensaberneo4j:
+    image: neo4j:3.3
+    deploy:
+      replicas: 1
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - /data:/data
+      - /data/logs:/var/log/neo4j
+      - /data/conf:/conf
+
+  registry:
+    image: frolvlad/alpine-oraclejdk8:slim
+    deploy:
+      replicas: 1
+    depends_on:
+      - opensaberneo4j
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./target/registry.jar:/registry.jar
+      - /data:/data
+      - ./logs:/logs
+    command: java -jar /registry.jar
+    environment:
+      - NEO4J_HOST=opensaberneo4j

@@ -123,6 +123,13 @@
 			<artifactId>neo4j-gremlin</artifactId>
 			<version>${tinkerpop.version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.steelbridgelabs.oss</groupId>
+			<artifactId>neo4j-gremlin-bolt</artifactId>
+			<version>0.2.27</version>
+		</dependency>
+
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-gremlin</artifactId>

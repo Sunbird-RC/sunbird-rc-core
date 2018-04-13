@@ -72,7 +72,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
-	
+
 	@Autowired
 	private Environment environment;
 	
@@ -132,6 +132,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		graph = TinkerGraph.open();
 		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);
+		databaseProvider.getGraphStore().addVertex(Constants.PERSISTENT_GRAPH);
         AuthInfo authInfo = new AuthInfo();
         authInfo.setAud("aud");
         authInfo.setName("name");
@@ -155,29 +156,30 @@ public class RegistryDaoImplTest extends RegistryTestBase {
         checkIfAuditRecordsAreRight(entity, null);
 	}
 
-    private int checkIfAuditRecordsAreRight(Graph entity, Map<String, Map<String, Integer>> updateCountMap) throws LabelCannotBeNullException {
-	    System.out.println("ADJUSTMENT MAP="+updateCountMap);
-	    int count=0;
-	    int adjustedCount;
-        Iterator it = getPropCounterMap(entity).entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String,Integer> pair = (Map.Entry)it.next();
-            int updatedPropertyCount=0;
-            System.out.println("updateCountMap "+updateCountMap+" "+pair.getKey());
-            if(updateCountMap!=null) {
-                Map<String, Integer> labelPropertyMap = updateCountMap.get(String.valueOf(pair.getKey()));
-                if (labelPropertyMap != null) {
-                    updatedPropertyCount = labelPropertyMap.values().stream().mapToInt(i->i).sum();;
-                }
-            }
-            adjustedCount = pair.getValue().intValue()+updatedPropertyCount;
-            System.out.println(pair.getKey() + " = " + adjustedCount);
-            count+=adjustedCount;
-            assertEquals(adjustedCount, new AuditRecordReader(databaseProvider).fetchAuditRecords(String.valueOf(pair.getKey()),null).size());
-            it.remove();
-        }
-        return count;
-    }
+	private int checkIfAuditRecordsAreRight(Graph entity, Map<String, Map<String, Integer>> updateCountMap) throws LabelCannotBeNullException {
+		// System.out.println("ADJUSTMENT MAP=" + updateCountMap);
+		int count = 0;
+		int adjustedCount;
+		Iterator it = getPropCounterMap(entity).entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<String, Integer> pair = (Map.Entry) it.next();
+			int updatedPropertyCount = 0;
+			// System.out.println("updateCountMap " + updateCountMap + " " + pair.getKey());
+			if (updateCountMap != null) {
+				Map<String, Integer> labelPropertyMap = updateCountMap.get(String.valueOf(pair.getKey()));
+				if (labelPropertyMap != null) {
+					updatedPropertyCount = labelPropertyMap.values().stream().mapToInt(i -> i).sum();
+					;
+				}
+			}
+			adjustedCount = pair.getValue().intValue() + updatedPropertyCount;
+			// System.out.println(pair.getKey() + " = " + adjustedCount);
+			count += adjustedCount;
+			assertEquals(adjustedCount, new AuditRecordReader(databaseProvider).fetchAuditRecords(String.valueOf(pair.getKey()), null).size());
+			it.remove();
+		}
+		return count;
+	}
 
     public String updateGraphFromRdf(Model rdfModel) {
 		 
@@ -253,6 +255,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			Model rdfModel1 = getNewValidRdf();
 			TinkerGraph graphEntity1 = TinkerGraph.open();
 			String rootLabelEntity1 = createGraphFromRdf(graphEntity1, rdfModel1);
+
 			String entity1Label = registryDao.addEntity(graphEntity1, "_:" + rootLabelEntity1);
 
 			Graph entity1 = registryDao.getEntityById(entity1Label);
@@ -271,8 +274,13 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 			assertEquals(5, IteratorUtils.count(entity2.traversal().V()));
 
-			long verticesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot(registrySystemContext+"audit"));
-			long edgesCountAfterSharedNodesCreation = IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E().hasNot(registrySystemContext+"audit"));
+			long verticesCountAfterSharedNodesCreation =
+					IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
+							.filter(v -> !v.get().label().equalsIgnoreCase(Constants.PERSISTENT_GRAPH))
+							.hasNot(registrySystemContext + "audit"));
+			long edgesCountAfterSharedNodesCreation =
+					IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E()
+							.hasNot(registrySystemContext + "audit"));
 
 			// Expected count of vertices is 6 with two entities with same address created
 			assertEquals(7, verticesCountAfterSharedNodesCreation);

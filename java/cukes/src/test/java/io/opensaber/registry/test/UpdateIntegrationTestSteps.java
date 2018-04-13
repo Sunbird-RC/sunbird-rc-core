@@ -104,52 +104,48 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
             StringBuilder url = new StringBuilder();
             url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
             response = fetchEntity(url.toString(), headers);
-            jsonld = updateInputJsonldRootNodeId(response);
+            jsonld = updateInputJsonldRootNodeId(response, "update_teacher.jsonld");
         });
         
         Given("^input for updating single record$", () -> {
             StringBuilder url = new StringBuilder();
             url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
             response = fetchEntity(url.toString(), headers);
-            jsonld = updateInputJsonldRootNodeIdForAudit(response);
+            jsonld = updateInputJsonldRootNodeId(response, "update_teacher_audit.jsonld");
+        });
+
+        And("^audit record before update$", () -> {
+            StringBuilder url = new StringBuilder();
+            url.append(baseUrl).append(AUDIT_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            auditBeforeUpdate = fetchEntity(url.toString(), headers);
         });
         
-        And("^audit record before update$", () -> {          
-       	 StringBuilder url = new StringBuilder();
-            url.append(baseUrl).append(AUDIT_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
-            auditBeforeUpdate = fetchEntity(url.toString(),headers);          	
-       });
-        
         Then("^updating the record should be successful", () -> checkSuccessfulResponse());
-        
-        And("^getting audit records after update$", () -> {          
-        	 StringBuilder url = new StringBuilder();
-             url.append(baseUrl).append(AUDIT_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
-             auditAfterUpdate = fetchEntity(url.toString(),headers);          	
+
+        And("^getting audit records after update$", () -> {
+            StringBuilder url = new StringBuilder();
+            url.append(baseUrl).append(AUDIT_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            auditAfterUpdate = fetchEntity(url.toString(), headers);
         });
         
         Then("^check audit records are matched with expected records$", () -> {
 
-			Model modelAudit = ModelFactory.createDefaultModel();
-			StringReader reader = new StringReader(new Gson().toJson(auditBeforeUpdate.getBody().getResult()));
-			modelAudit.read(reader, null, "JSON-LD");
+            Model modelAudit = ModelFactory.createDefaultModel();
+            StringReader reader = new StringReader(new Gson().toJson(auditBeforeUpdate.getBody().getResult()));
+            modelAudit.read(reader, null, "JSON-LD");
 
-			Model modelInput = ModelFactory.createDefaultModel();
-			StringReader readerInput = new StringReader(new Gson().toJson(auditAfterUpdate.getBody().getResult()));
-			modelInput.read(readerInput, null, "JSON-LD");
-			StmtIterator itr = modelAudit.listStatements();
-			Model diff = modelInput.difference(modelAudit);
-						
-			StmtIterator sIter;
-			if (diff.size() != 0) {
-				sIter = diff.listStatements();
-				while (sIter.hasNext()) {
-					Statement stmt=sIter.nextStatement();
-					if (stmt.getPredicate().toString().contains("newObject")) {
-						assertEquals(true, stmt.getObject().toString().contains("FEMALE"));
-					} 				
-				}
-			}
+            Model modelInput = ModelFactory.createDefaultModel();
+            StringReader readerInput = new StringReader(new Gson().toJson(auditAfterUpdate.getBody().getResult()));
+            modelInput.read(readerInput, null, "JSON-LD");
+            Model diff = modelInput.difference(modelAudit);
+
+            StmtIterator sIter = diff.listStatements();
+            while (sIter.hasNext()) {
+                Statement stmt = sIter.nextStatement();
+                if (stmt.getPredicate().toString().contains("newObject")) {
+                    assertEquals(true, stmt.getObject().toString().contains("14"));
+                }
+            }
 		});
 	}
 
@@ -168,7 +164,7 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
         });
     }
 
-    private String updateInputJsonldRootNodeId(ResponseEntity<Response> response) {
+    private String updateInputJsonldRootNodeId(ResponseEntity<Response> response, String updateJsonFilename) {
 
         Map<String, Object> responseData = response.getBody().getResult();
         Gson gson = new Gson();
@@ -178,22 +174,7 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
         String entityId = entity.get("@id").getAsString();
 
         JsonObject updateJsonObject = parser.parse(new InputStreamReader
-                (this.getClass().getClassLoader().getResourceAsStream("update_teacher.jsonld"))).getAsJsonObject();
-        updateJsonObject.getAsJsonObject("request").addProperty("@id", entityId);
-        return gson.toJson(updateJsonObject);
-    }
-    
-    private String updateInputJsonldRootNodeIdForAudit(ResponseEntity<Response> response) {
-
-        Map<String, Object> responseData = response.getBody().getResult();
-        Gson gson = new Gson();
-        JsonParser parser = new JsonParser();
-        JsonObject responseResult = parser.parse(gson.toJson(responseData)).getAsJsonObject();
-        JsonObject entity = responseResult.getAsJsonArray("@graph").get(0).getAsJsonObject();
-        String entityId = entity.get("@id").getAsString();
-
-        JsonObject updateJsonObject = parser.parse(new InputStreamReader
-                (this.getClass().getClassLoader().getResourceAsStream("update_teacher_audit.jsonld"))).getAsJsonObject();
+                (this.getClass().getClassLoader().getResourceAsStream(updateJsonFilename))).getAsJsonObject();
         updateJsonObject.getAsJsonObject("request").addProperty("@id", entityId);
         return gson.toJson(updateJsonObject);
     }

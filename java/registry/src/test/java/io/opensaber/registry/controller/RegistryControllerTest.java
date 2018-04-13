@@ -95,6 +95,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 		setup();
 		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);
+		databaseProvider.getGraphStore().addVertex(Constants.PERSISTENT_GRAPH);
         AuthInfo authInfo = new AuthInfo();
         authInfo.setAud("aud");
         authInfo.setName("name");
@@ -108,8 +109,11 @@ public class RegistryControllerTest extends RegistryTestBase {
 	@Test
 	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException, RecordNotFoundException {
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
-		String entityId = registryService.addEntity(model);
-		assertEquals(5, IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot(registrySystemContext+"audit")));
+		registryService.addEntity(model);
+		assertEquals(5,
+				IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
+						.filter(v -> !v.get().label().equalsIgnoreCase(Constants.PERSISTENT_GRAPH))
+						.hasNot(registrySystemContext + "audit")));
 	}
 	
 	@Test
@@ -123,7 +127,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 	}
 	
 	@Test
-	public void test_adding_record_with_invalid_type() throws DuplicateRecordException, InvalidTypeException, Exception, RecordNotFoundException {
+	public void test_adding_record_with_invalid_type() throws Exception {
 		Model model = getRdfWithInvalidTpe();
 		expectedEx.expect(InvalidTypeException.class);
 		expectedEx.expectMessage(Constants.INVALID_TYPE_MESSAGE);

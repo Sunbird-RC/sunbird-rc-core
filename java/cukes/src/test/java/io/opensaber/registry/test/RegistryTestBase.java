@@ -29,15 +29,13 @@ public class RegistryTestBase {
 	private static final String CONTEXT_URL = "http://example.com/voc/teacher/1.0.0/";
 	protected RestTemplate restTemplate;
 
-	public void setJsonld(String filename){
-
+	public void setJsonld(String filename) {
 		try {
 			String file = Paths.get(getPath(filename)).toString();
 			jsonld = readFromFile(file);
 		} catch (Exception e) {
 			jsonld = EMPTY_STRING;
 		}
-
 	}
 
 	public String readFromFile(String file) {

@@ -11,6 +11,8 @@ import io.opensaber.registry.sink.SqlgProvider;
 import io.opensaber.registry.sink.TinkerGraphProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.tinkerpop.gremlin.structure.T;
+import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,17 +119,33 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		String dbProvider = environment.getProperty(Constants.DATABASE_PROVIDER);
 		DatabaseProvider provider;
 		if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.ORIENTDB.getName())) {
-            provider = new OrientDBGraphProvider(environment);
+			provider = new OrientDBGraphProvider(environment);
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.NEO4J.getName())) {
-            provider = new Neo4jGraphProvider(environment);
+			provider = new Neo4jGraphProvider(environment);
+			// logger.info("graph features: \n" + provider.getGraphStore().features());
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.SQLG.getName())) {
-            provider = new SqlgProvider(environment);
+			provider = new SqlgProvider(environment);
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName())) {
-            provider = new TinkerGraphProvider(environment);
+			provider = new TinkerGraphProvider(environment);
 		} else {
 			throw new RuntimeException("No Database Provider is configured. Please configure a Database Provider");
 		}
-        provider.getGraphStore().variables().set("@persisted",true);
+
+		// provider.getGraphStore().variables().set("@persisted",true);
+
+		if (IteratorUtils.count(provider.getGraphStore().traversal().V().has(T.label, Constants.PERSISTENT_GRAPH)) == 0) {
+			logger.info("Adding PERSISTENT_GRAPH node...");
+			if (provider.getGraphStore().features().graph().supportsTransactions()) {
+				org.apache.tinkerpop.gremlin.structure.Transaction tx;
+				tx = provider.getGraphStore().tx();
+				tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
+				provider.getGraphStore().traversal().clone().addV(Constants.PERSISTENT_GRAPH).next();
+				tx.commit();
+			} else {
+				provider.getGraphStore().traversal().clone().addV(Constants.PERSISTENT_GRAPH);
+			}
+		}
+
 		return provider;
 	}
 
@@ -145,26 +163,26 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
-		.addPathPatterns("/**").excludePathPatterns("/health","/error").order(1);
+				.addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
-		.addPathPatterns("/create", "/update/{id}").order(2);
+				.addPathPatterns("/create", "/update/{id}").order(2);
 		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
-		.addPathPatterns("/create", "/update/{id}").order(3);
+				.addPathPatterns("/create", "/update/{id}").order(3);
 		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(), gson()))
-		.addPathPatterns("/create", "/update/{id}").order(4);
+				.addPathPatterns("/create", "/update/{id}").order(4);
 		/*registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
 		.addPathPatterns("/read/{id}").order(2);*/
 	}
 
 	@Override
 	public void addResourceHandlers(ResourceHandlerRegistry registry) {
-		try{
-		registry.addResourceHandler("/resources/**")
-		.addResourceLocations("classpath:vocab/1.0/")
-		.setCachePeriod(3600)
-		.resourceChain(true)
-		.addResolver(new PathResourceResolver());
-		}catch(Exception e){
+		try {
+			registry.addResourceHandler("/resources/**")
+				.addResourceLocations("classpath:vocab/1.0/")
+				.setCachePeriod(3600)
+				.resourceChain(true)
+				.addResolver(new PathResourceResolver());
+		} catch (Exception e) {
 			throw e;
 		}
 
