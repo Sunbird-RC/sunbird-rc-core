@@ -135,6 +135,32 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	@ResponseBody
+	@RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
+	public ResponseEntity<Response> upsertEntity(@RequestAttribute Request requestModel,
+			@PathVariable("id") String id) {
+
+		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
+		id = registryContext + id;
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+
+		try {
+			registryService.upsertEntity(rdf, id);
+			responseParams.setErrmsg("");
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+		} catch (RecordNotFoundException | InvalidTypeException e) {
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+
+		} catch (Exception e) {
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(String.format("Error occurred when updating Entity ID %s", id));
+			logger.error("ERROR!", e);
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 	@RequestMapping(value = "/health", method = RequestMethod.GET)
 	public ResponseEntity<Response> health() {
