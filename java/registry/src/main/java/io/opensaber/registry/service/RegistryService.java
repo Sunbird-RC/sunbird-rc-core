@@ -13,13 +13,15 @@ public interface RegistryService {
 	
 	public List getEntityList();
 	
-	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException;
+	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException, RecordNotFoundException;
 	
 	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException, EncryptionException, AuditFailedException;
 	
+	public boolean upsertEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException, EncryptionException, AuditFailedException;
+	
 	public org.eclipse.rdf4j.model.Model getEntityById(String id) throws RecordNotFoundException, EncryptionException, AuditFailedException;
 	
-	public boolean deleteEntity(Object entity);
+	public boolean deleteEntity(Object entity) throws AuditFailedException, RecordNotFoundException;
 
 	public HealthCheckResponse health() throws Exception;
 

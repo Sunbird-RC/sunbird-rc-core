@@ -63,7 +63,7 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException {
+	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException, RecordNotFoundException {
 		try {
 			Graph graph = GraphDBFactory.getEmptyGraph();
 			StmtIterator iterator = rdfModel.listStatements();
@@ -105,30 +105,14 @@ public class RegistryServiceImpl implements RegistryService {
 
 	@Override
 	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException, EncryptionException, AuditFailedException {
-		Graph graph = GraphDBFactory.getEmptyGraph();
-
-		StmtIterator iterator = entity.listStatements();
-		boolean rootSubjectFound = false;
-		String label = null;
-
-		while (iterator.hasNext()) {
-			Statement rdfStatement = iterator.nextStatement();
-			if (!rootSubjectFound) {
-				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-				label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
-				if (label != null) {
-					rootSubjectFound = true;
-				}
-			}
-			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
-		}
-
-		if (label == null) {
-			throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
-		}
-
-		return registryDao.updateEntity(graph, rootNodeLabel,"addOrUpdate");
+		Graph graph =  generateGraphFromRDF(entity);
+		return registryDao.updateEntity(graph, rootNodeLabel,"update");
+	}
+	
+	@Override
+	public boolean upsertEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException, EncryptionException, AuditFailedException {
+		Graph graph =  generateGraphFromRDF(entity);
+		return registryDao.updateEntity(graph, rootNodeLabel,"upsert");
 	}
 
 	@Override
@@ -153,8 +137,8 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public boolean deleteEntity(Object entity){
-		return registryDao.deleteEntity(entity);
+	public boolean deleteEntity(Object entity) throws AuditFailedException, RecordNotFoundException{
+		return registryDao.deleteEntity("","");
 	}
 
 	public HealthCheckResponse health() throws Exception {
@@ -213,5 +197,31 @@ public class RegistryServiceImpl implements RegistryService {
 		Graph graph = registryDao.getEntityById(label);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
 		return model;
+	}
+	
+	private Graph generateGraphFromRDF(Model entity) throws InvalidTypeException{
+		Graph graph = GraphDBFactory.getEmptyGraph();
+
+		StmtIterator iterator = entity.listStatements();
+		boolean rootSubjectFound = false;
+		String label = null;
+
+		while (iterator.hasNext()) {
+			Statement rdfStatement = iterator.nextStatement();
+			if (!rootSubjectFound) {
+				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
+				label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
+				if (label != null) {
+					rootSubjectFound = true;
+				}
+			}
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+		}
+
+		if (label == null) {
+			throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
+		}
+		return graph;
 	}
 }

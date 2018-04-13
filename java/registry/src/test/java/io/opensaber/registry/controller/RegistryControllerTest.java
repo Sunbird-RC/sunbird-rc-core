@@ -35,6 +35,7 @@ import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.InvalidTypeException;
+import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.RegistryService;
@@ -105,14 +106,14 @@ public class RegistryControllerTest extends RegistryTestBase {
 	}
 
 	@Test
-	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException {
+	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException, RecordNotFoundException {
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
 		String entityId = registryService.addEntity(model);
 		assertEquals(5, IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V().hasNot(registrySystemContext+"audit")));
 	}
 	
 	@Test
-	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException {
+	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException, RecordNotFoundException {
 		expectedEx.expect(DuplicateRecordException.class);
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
@@ -122,7 +123,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 	}
 	
 	@Test
-	public void test_adding_record_with_invalid_type() throws DuplicateRecordException, InvalidTypeException, Exception {
+	public void test_adding_record_with_invalid_type() throws DuplicateRecordException, InvalidTypeException, Exception, RecordNotFoundException {
 		Model model = getRdfWithInvalidTpe();
 		expectedEx.expect(InvalidTypeException.class);
 		expectedEx.expectMessage(Constants.INVALID_TYPE_MESSAGE);

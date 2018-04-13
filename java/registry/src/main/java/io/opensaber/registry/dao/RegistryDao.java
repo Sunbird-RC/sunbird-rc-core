@@ -14,12 +14,12 @@ public interface RegistryDao {
 
 	public List getEntityList();
 
-	public String addEntity(Graph entity, String label) throws DuplicateRecordException, EncryptionException, AuditFailedException;
+	public String addEntity(Graph entity, String label) throws DuplicateRecordException, EncryptionException, AuditFailedException, RecordNotFoundException;
 
 	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel, String methodOrigin)
 			throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException;
 
-	public boolean deleteEntity(Object entity);
+	public boolean deleteEntity(String rootLabel, String labelToBeDeleted) throws RecordNotFoundException,AuditFailedException;
 
 	public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException;
 
