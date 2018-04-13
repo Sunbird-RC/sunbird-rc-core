@@ -10,14 +10,12 @@ import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
-import io.opensaber.registry.service.impl.EncryptionServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -353,8 +351,10 @@ public class RegistryDaoImpl implements RegistryDao {
 		Object oldValue = vp.isPresent() ? vp.value() : null;
 		v.property(key, newValue);
 		if (!isaMetaProperty(key) && !Objects.equals(oldValue, newValue)) {
-			// if (v.graph().variables().get("@persisted").isPresent()) {
-			if (v.graph().traversal().clone().V().has(T.label, Constants.PERSISTENT_GRAPH).hasNext()) {
+			GraphTraversal<Vertex, Vertex> configTraversal =
+					v.graph().traversal().clone().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG);
+			if (configTraversal.hasNext()
+					&& configTraversal.next().property(Constants.PERSISTENT_GRAPH).value().equals(true)) {
 				AuditRecord record = new AuditRecord();
 				record
 					.subject(v.label())

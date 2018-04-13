@@ -120,30 +120,18 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		DatabaseProvider provider;
 		if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.ORIENTDB.getName())) {
 			provider = new OrientDBGraphProvider(environment);
+			provider.initializeGlobalGraphConfiguration();
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.NEO4J.getName())) {
 			provider = new Neo4jGraphProvider(environment);
-			// logger.info("graph features: \n" + provider.getGraphStore().features());
+			provider.initializeGlobalGraphConfiguration();
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.SQLG.getName())) {
 			provider = new SqlgProvider(environment);
+			provider.initializeGlobalGraphConfiguration();
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName())) {
 			provider = new TinkerGraphProvider(environment);
+			provider.initializeGlobalGraphConfiguration();
 		} else {
 			throw new RuntimeException("No Database Provider is configured. Please configure a Database Provider");
-		}
-
-		// provider.getGraphStore().variables().set("@persisted",true);
-
-		if (IteratorUtils.count(provider.getGraphStore().traversal().V().has(T.label, Constants.PERSISTENT_GRAPH)) == 0) {
-			logger.info("Adding PERSISTENT_GRAPH node...");
-			if (provider.getGraphStore().features().graph().supportsTransactions()) {
-				org.apache.tinkerpop.gremlin.structure.Transaction tx;
-				tx = provider.getGraphStore().tx();
-				tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-				provider.getGraphStore().traversal().clone().addV(Constants.PERSISTENT_GRAPH).next();
-				tx.commit();
-			} else {
-				provider.getGraphStore().traversal().clone().addV(Constants.PERSISTENT_GRAPH);
-			}
 		}
 
 		return provider;

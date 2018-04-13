@@ -49,6 +49,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.impl.EncryptionServiceImpl;
 import io.opensaber.utils.converters.RDF2Graph;
+
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
@@ -132,7 +133,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		graph = TinkerGraph.open();
 		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);
-		databaseProvider.getGraphStore().addVertex(Constants.PERSISTENT_GRAPH);
+		databaseProvider.getGraphStore().addVertex(Constants.GRAPH_GLOBAL_CONFIG).property(Constants.PERSISTENT_GRAPH, true);
         AuthInfo authInfo = new AuthInfo();
         authInfo.setAud("aud");
         authInfo.setName("name");
@@ -276,7 +277,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 			long verticesCountAfterSharedNodesCreation =
 					IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
-							.filter(v -> !v.get().label().equalsIgnoreCase(Constants.PERSISTENT_GRAPH))
+							.filter(v -> !v.get().label().equalsIgnoreCase(Constants.GRAPH_GLOBAL_CONFIG))
 							.hasNot(registrySystemContext + "audit"));
 			long edgesCountAfterSharedNodesCreation =
 					IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E()

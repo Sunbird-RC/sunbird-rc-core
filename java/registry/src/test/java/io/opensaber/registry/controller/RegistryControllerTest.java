@@ -95,7 +95,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 		setup();
 		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);
-		databaseProvider.getGraphStore().addVertex(Constants.PERSISTENT_GRAPH);
+		databaseProvider.getGraphStore().addVertex(Constants.GRAPH_GLOBAL_CONFIG).property(Constants.PERSISTENT_GRAPH, true);
         AuthInfo authInfo = new AuthInfo();
         authInfo.setAud("aud");
         authInfo.setName("name");
@@ -112,7 +112,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 		registryService.addEntity(model);
 		assertEquals(5,
 				IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
-						.filter(v -> !v.get().label().equalsIgnoreCase(Constants.PERSISTENT_GRAPH))
+						.filter(v -> !v.get().label().equalsIgnoreCase(Constants.GRAPH_GLOBAL_CONFIG))
 						.hasNot(registrySystemContext + "audit")));
 	}
 	
