@@ -7,29 +7,41 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
-import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
+import javax.annotation.PostConstruct;
+
+@Component
 public class AuditRecordReader {
-    private final DatabaseProvider databaseProvider;
+    private DatabaseProvider databaseProvider;
+ 
+	@Value("${registry.system.base}")
+	private String registrySystemContext;
     
-    @Value("${registry.system.base}")
-	private String registrySystemContext="http://example.com/voc/opensaber/";
+    @Autowired
+    private Environment env;
     
-    String uuid=UUID.randomUUID().toString();
+    @Autowired
+    AuditRecord record;
 
     public AuditRecordReader(DatabaseProvider databaseProvider) {
         this.databaseProvider = databaseProvider;
     }
-
+    public AuditRecordReader() {
+        this.databaseProvider = databaseProvider;
+    }
+    
+    public void setDatabaseProvider(DatabaseProvider databaseProvider) {
+		this.databaseProvider = databaseProvider;
+	} 
+    
     public List<AuditRecord> fetchAuditRecords(String label, String predicate) throws LabelCannotBeNullException {
-    	List<AuditRecord> records = new ArrayList<AuditRecord>();
+       	List<AuditRecord> records = new ArrayList<AuditRecord>();
         if(label==null) throw new LabelCannotBeNullException("Label cannot be null");
         GraphTraversalSource traversalSource = databaseProvider.getGraphStore().traversal();
         GraphTraversal<Vertex, Vertex> traversal;
@@ -40,7 +52,6 @@ public class AuditRecordReader {
         }
         while(traversal.hasNext()){
             Vertex auditVertex = traversal.next();
-            AuditRecord record = new AuditRecord();
             record.subject(label);
             record.predicate(getValue(auditVertex,registrySystemContext+"predicate"));
             record.oldObject(getValue(auditVertex,registrySystemContext+"oldObject"));

@@ -4,6 +4,7 @@ import io.opensaber.registry.authorization.AuthorizationToken;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
+import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.model.AuditRecordReader;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.sink.DatabaseProvider;
@@ -95,8 +96,11 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Autowired
 	private DatabaseProvider databaseProvider;
 	
+	@Autowired
+	AuditRecordReader auditRecordReader;
+	
 	@Value("${registry.system.base}")
-	private String registrySystemContext="http://example.com/voc/opensaber/";
+	private String registrySystemContext;
 
 	private static String identifier;
 
@@ -158,14 +162,12 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	}
 
 	private int checkIfAuditRecordsAreRight(Graph entity, Map<String, Map<String, Integer>> updateCountMap) throws LabelCannotBeNullException {
-		// System.out.println("ADJUSTMENT MAP=" + updateCountMap);
 		int count = 0;
 		int adjustedCount;
 		Iterator it = getPropCounterMap(entity).entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<String, Integer> pair = (Map.Entry) it.next();
 			int updatedPropertyCount = 0;
-			// System.out.println("updateCountMap " + updateCountMap + " " + pair.getKey());
 			if (updateCountMap != null) {
 				Map<String, Integer> labelPropertyMap = updateCountMap.get(String.valueOf(pair.getKey()));
 				if (labelPropertyMap != null) {
@@ -174,9 +176,9 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 				}
 			}
 			adjustedCount = pair.getValue().intValue() + updatedPropertyCount;
-			// System.out.println(pair.getKey() + " = " + adjustedCount);
 			count += adjustedCount;
-			assertEquals(adjustedCount, new AuditRecordReader(databaseProvider).fetchAuditRecords(String.valueOf(pair.getKey()), null).size());
+		//	auditRecordReader.setDatabaseProvider(databaseProvider);
+			assertEquals(adjustedCount, auditRecordReader.fetchAuditRecords(String.valueOf(pair.getKey()), null).size());
 			it.remove();
 		}
 		return count;
@@ -274,21 +276,19 @@ public class RegistryDaoImplTest extends RegistryTestBase {
             checkIfAuditRecordsAreRight(entity2, null);
 
 			assertEquals(5, IteratorUtils.count(entity2.traversal().V()));
-
 			long verticesCountAfterSharedNodesCreation =
 					IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
 							.filter(v -> !v.get().label().equalsIgnoreCase(Constants.GRAPH_GLOBAL_CONFIG))
-							.hasNot(registrySystemContext + "audit"));
+							.hasNot("@audit"));
 			long edgesCountAfterSharedNodesCreation =
 					IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E()
-							.hasNot(registrySystemContext + "audit"));
+							.hasNot("@audit"));
 
 			// Expected count of vertices is 6 with two entities with same address created
 			assertEquals(7, verticesCountAfterSharedNodesCreation);
 			assertEquals(8, edgesCountAfterSharedNodesCreation);
 
 		} catch (DuplicateRecordException | RecordNotFoundException | EncryptionException | NoSuchElementException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (AuditFailedException e) {
             e.printStackTrace();

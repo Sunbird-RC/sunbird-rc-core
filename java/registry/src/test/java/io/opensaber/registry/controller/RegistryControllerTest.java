@@ -37,13 +37,14 @@ import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.InvalidTypeException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.RegistryService;
 import org.apache.jena.rdf.model.Model;
 import java.util.Collections;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes={OpenSaberApplication.class, RegistryController.class, GenericConfiguration.class, EncryptionServiceImpl.class})
+@SpringBootTest(classes={OpenSaberApplication.class, RegistryController.class, GenericConfiguration.class, EncryptionServiceImpl.class,AuditRecord.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryControllerTest extends RegistryTestBase {
@@ -113,7 +114,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 		assertEquals(5,
 				IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
 						.filter(v -> !v.get().label().equalsIgnoreCase(Constants.GRAPH_GLOBAL_CONFIG))
-						.hasNot(registrySystemContext + "audit")));
+						.hasNot("@audit")));
 	}
 	
 	@Test

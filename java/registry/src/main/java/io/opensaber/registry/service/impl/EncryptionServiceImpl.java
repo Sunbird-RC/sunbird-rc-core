@@ -24,13 +24,13 @@ import io.opensaber.registry.service.EncryptionService;
 public class EncryptionServiceImpl implements EncryptionService {
 	
 	@Value("${encryption.uri}")
-	private String encryptionUri="https://dev.open-sunbird.org/encryption/encrypt";
+	private String encryptionUri;
 
 	@Value("${decryption.uri}")
-	private String decryptionUri="https://dev.open-sunbird.org/encryption/decrypt";
+	private String decryptionUri;
 
 	@Value("${encryption.base}")
-	private String encryptionServiceHealthCheckUri="https://staging.open-sunbird.org/encryption/";
+	private String encryptionServiceHealthCheckUri;
 	
 	@Autowired
 	SchemaConfigurator schemaConfigurator;
@@ -39,13 +39,11 @@ public class EncryptionServiceImpl implements EncryptionService {
 	
 	@Override
 	public String encrypt(Object propertyValue) throws EncryptionException {
-		
 		MultiValueMap<String, Object> map= new LinkedMultiValueMap<String, Object>();
 		map.add("value", propertyValue);
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map);
-		ResponseEntity<String> response=null;
 		try {
-		    response = new RestTemplate().postForEntity(encryptionUri, request, String.class);
+			ResponseEntity<String> response = new RestTemplate().postForEntity(encryptionUri, request, String.class);
 		   	return response.getBody();
 		}catch(ResourceAccessException e) {
 			logger.error("Exception while connecting enryption service : ", e);
@@ -65,9 +63,8 @@ public class EncryptionServiceImpl implements EncryptionService {
 		MultiValueMap<String, Object> map= new LinkedMultiValueMap<String, Object>();
 		map.add("value", propertyValue);
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map);
-		ResponseEntity<String> response=null;
 		try {
-			response = new RestTemplate().postForEntity(decryptionUri, request, String.class);
+			ResponseEntity<String>  response = new RestTemplate().postForEntity(decryptionUri, request, String.class);
 			return response.getBody();
 		}catch(ResourceAccessException e) {
 	    	logger.error("Exception while connecting dcryption service : ", e);
@@ -101,5 +98,4 @@ public class EncryptionServiceImpl implements EncryptionService {
 		}
 		return isEncryptionServiceUp;
 	}
-
 }

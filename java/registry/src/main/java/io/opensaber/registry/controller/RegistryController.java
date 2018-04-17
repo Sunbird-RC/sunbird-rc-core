@@ -55,7 +55,7 @@ public class RegistryController {
 	private String registryContext;
 	
 	@Value("${registry.system.base}")
-	private String registrySystemContext="http://example.com/voc/opensaber/";
+	private String registrySystemContext;
 	
 	@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {

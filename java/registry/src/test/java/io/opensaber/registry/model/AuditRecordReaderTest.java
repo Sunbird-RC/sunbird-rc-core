@@ -1,10 +1,11 @@
 package io.opensaber.registry.model;
 
 import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.config.GenericConfiguration;
+
 import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
-import org.apache.jena.reasoner.IllegalParameterException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -15,17 +16,28 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringRunner;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes={Environment.class,ObjectMapper.class,GenericConfiguration.class, AuditRecordReader.class})
+@ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class AuditRecordReaderTest {
 
-    private AuditRecordReader auditRecordReader;
+	@Autowired
+	private AuditRecordReader auditRecordReader;
     private DatabaseProvider databaseProviderMock;
     private Graph graphMock;
     private GraphTraversalSource graphTraversalSourceMock;
@@ -33,7 +45,7 @@ public class AuditRecordReaderTest {
     private GraphTraversal VMock;
     
     @Value("${registry.system.base}")
-	private String registrySystemContext="http://example.com/voc/opensaber/";
+	private String registrySystemContext;
 
     @Rule
     public ExpectedException expectedEx = ExpectedException.none();
@@ -44,7 +56,7 @@ public class AuditRecordReaderTest {
     @Before
     public void setUp() throws Exception {
         this.databaseProviderMock = mock(DatabaseProvider.class);
-        this.auditRecordReader = new AuditRecordReader(databaseProviderMock);
+        auditRecordReader.setDatabaseProvider(databaseProviderMock);
         this.graphMock = mock(Graph.class);
         this.graphTraversalSourceMock = mock(GraphTraversalSource.class);
         this.graphTraversalSourceCloneMock = mock(GraphTraversalSource.class);
@@ -56,8 +68,7 @@ public class AuditRecordReaderTest {
         when(graphMock.traversal()).thenReturn(graphTraversalSourceMock);
         when(graphTraversalSourceMock.clone()).thenReturn(graphTraversalSourceCloneMock);
         when(graphTraversalSourceCloneMock.V()).thenReturn(VMock);
-        auditRecordReader = new AuditRecordReader(databaseProviderMock);
-    }
+      }
 
     @After
     public void tearDown() throws Exception {

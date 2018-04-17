@@ -3,7 +3,6 @@ package io.opensaber.registry.config;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.Neo4jGraphProvider;
 import io.opensaber.registry.sink.OrientDBGraphProvider;
@@ -11,22 +10,17 @@ import io.opensaber.registry.sink.SqlgProvider;
 import io.opensaber.registry.sink.TinkerGraphProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.tinkerpop.gremlin.structure.T;
-import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-
 import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.exception.CustomExceptionHandler;
 import io.opensaber.registry.interceptor.AuthorizationInterceptor;
@@ -38,8 +32,9 @@ import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.impl.JSONLDConverter;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.model.AuditRecord;
+import io.opensaber.registry.model.AuditRecordReader;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
-
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -51,6 +46,7 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 public class GenericConfiguration implements WebMvcConfigurer {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
+	private DatabaseProvider databaseProvider;
 
 	@Autowired
 	private Environment environment;
@@ -63,7 +59,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	
 	@Value("${connection.request.timeout}")
 	private int connectionRequestTimeout;
-
+	
 	@Bean
 	public ObjectMapper objectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -95,6 +91,17 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public RDFValidator rdfValidator(){
 		String shexFileName = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
 		return new RDFValidator(shexFileName);
+	}
+	
+	@Bean
+	public AuditRecord record() {
+		return new AuditRecord();
+	}
+	
+	@Bean
+	public AuditRecordReader auditRecordReader() {
+		this.databaseProvider=databaseProvider();
+		return new AuditRecordReader(databaseProvider);
 	}
 	
 	@Bean

@@ -13,8 +13,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import java.util.UUID;
 
-@Component
+import javax.annotation.PostConstruct;
 
+@Component
 public class AuditRecord {
 	private String subject;
     private String predicate;
@@ -23,7 +24,7 @@ public class AuditRecord {
     private String readOnlyAuthInfo;
     
     @Value("${registry.system.base}")
-	private String registrySystemContext="http://example.com/voc/opensaber/";
+	private String registrySystemContext;
 	
 	public AuditRecord subject(String label) {
     	this.subject = label+"-AUDIT";
@@ -57,18 +58,18 @@ public class AuditRecord {
     }
 
     public void record(DatabaseProvider provider) throws AuditFailedException {
-    
+
         GraphTraversalSource _source = provider.getGraphStore().traversal().clone();
         boolean rootNodeExists = _source.V().hasLabel(subject).hasNext();
         Vertex rootVertex;
         if(!rootNodeExists){
-//            System.out.println("AUDIT ROOT NOT FOUND - CREATING");
+        	/***"AUDIT ROOT NOT FOUND - CREATING"***/
             rootVertex = _source.addV(subject).next();
             updateUserInfo(rootVertex);
-        } else {
-//            System.out.println("AUDIT ROOT FOUND - NOT CREATING");
+        } else {	
+        	/***AUDIT ROOT FOUND - NOT CREATING"**/
             rootVertex = _source.V().hasLabel(subject).next();
-            rootVertex.property(registrySystemContext+"audit","true");
+            rootVertex.property("@audit","true");
         }
      
         String uuid=UUID.randomUUID().toString();
@@ -76,22 +77,19 @@ public class AuditRecord {
         String predicate=registrySystemContext+ "predicate";
         String oldObject=registrySystemContext+"oldObject";
         String newObject=registrySystemContext+"newObject";
-        String audit=registrySystemContext+"audit";
-        String auditRecord=registrySystemContext+"auditRecord";
-             
+                 
         Vertex recordVertex = _source.addV(auditLabel).next();
         recordVertex.property(predicate,this.predicate);
         recordVertex.property(oldObject,this.oldObject);
         recordVertex.property(newObject,this.newObject);
-        recordVertex.property(audit,"true");
-        recordVertex.property(auditRecord,"true");
+        recordVertex.property("@audit","true");
+        recordVertex.property("@auditRecord","true");
         updateUserInfo(recordVertex);
       
         String edgeLabel=registrySystemContext+"audit";
         
-        rootVertex.addEdge(edgeLabel,recordVertex).property(registrySystemContext+"audit",true);	
-        // System.out.println(this);
-    }
+        rootVertex.addEdge(edgeLabel,recordVertex).property("@audit",true);	
+     }
 
     private void updateUserInfo(Vertex vertex) {
         String authinfo = new JSONObject( getCurrentUserInfo()).toString(); 
@@ -122,5 +120,6 @@ public class AuditRecord {
     public void readOnlyAuthInfo(String authInfo) {
         this.readOnlyAuthInfo=authInfo;
     }
+
 }
 

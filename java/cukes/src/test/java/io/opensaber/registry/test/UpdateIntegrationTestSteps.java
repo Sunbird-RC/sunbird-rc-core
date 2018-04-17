@@ -53,7 +53,7 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
     private static final String CONTEXT_CONSTANT = "sample:";
     private static final String AUDIT_REST_ENDPOINT = "fetchAudit";
     @Value("${registry.system.base}")
-	private String registrySystemContext="http://example.com/voc/opensaber/";
+	private String registrySystemContext;
 
     // private RestTemplate restTemplate;
     private String baseUrl;

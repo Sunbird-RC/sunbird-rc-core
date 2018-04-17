@@ -46,10 +46,13 @@ public class RegistryDaoImpl implements RegistryDao {
 	private String registryContext;
 	
 	@Value("${registry.system.base}")
-	private String registrySystemContext="http://example.com/voc/opensaber/";
+	private String registrySystemContext;
 	
 	@Autowired
 	SchemaConfigurator schemaConfigurator;
+	
+	@Autowired
+	AuditRecord record;
 
 	@Override
 	public List getEntityList() {
@@ -202,7 +205,6 @@ public class RegistryDaoImpl implements RegistryDao {
 						logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), existingV.label()));
 						dbVertex.addEdge(e.label(), existingV);
 
-						AuditRecord record = new AuditRecord();
 						record
 						.subject(dbVertex.label())
 						.predicate(e.label())
@@ -222,7 +224,6 @@ public class RegistryDaoImpl implements RegistryDao {
 				logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), newV.label()));
 				dbVertex.addEdge(e.label(), newV);
 
-				AuditRecord record = new AuditRecord();
 				record
 				.subject(dbVertex.label())
 				.predicate(e.label())
@@ -333,7 +334,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				buildPropertyMetaMap(propertyMetaPropertyMap, property);
 			} else {
 				if (!(methodOrigin.equalsIgnoreCase("read")
-						&& property.key().contains(registrySystemContext + "audit"))) {
+						&& property.key().contains("@audit"))) {
 					setProperty(newSubject, property.key(), property.value());
 				}
 			}
@@ -355,7 +356,7 @@ public class RegistryDaoImpl implements RegistryDao {
 					v.graph().traversal().clone().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG);
 			if (configTraversal.hasNext()
 					&& configTraversal.next().property(Constants.PERSISTENT_GRAPH).value().equals(true)) {
-				AuditRecord record = new AuditRecord();
+			
 				record
 					.subject(v.label())
 					.predicate(key)
@@ -467,8 +468,7 @@ public class RegistryDaoImpl implements RegistryDao {
     					o.remove();
     					edge.remove();
     				}
-    				AuditRecord record = new AuditRecord();
-	                String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
+    			    String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
 	                String auditVertexlabel= registrySystemContext+tailOfdbVertex;
 	                record
 	                        .subject(auditVertexlabel)
