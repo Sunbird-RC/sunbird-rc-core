@@ -36,6 +36,7 @@ database:
   host: ${NEO4J_HOST}
   port: 7687
   neo4j-directory: /data/databases/graph.db
+  neo4j-profiler-enabled: false
 
 # RDF Validation Config
 validations:
@@ -95,6 +96,7 @@ database:
   host: ${NEO4J_HOST}
   port: 7687
   neo4j-directory: /data/databases/graph.db
+  neo4j-profiler-enabled: false
 
 # RDF Validation Config
 validations:
