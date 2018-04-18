@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
@@ -50,32 +51,15 @@ public class RegistryDaoImpl implements RegistryDao {
 	
 	@Autowired
 	SchemaConfigurator schemaConfigurator;
-	
+
 	@Autowired
-	AuditRecord record;
+	ApplicationContext appContext;
 
 	@Override
 	public List getEntityList() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	/*@FunctionalInterface
-	public interface ThrowingConsumer<T, E extends Exception> {
-	    void accept(T t) throws E;
-	}
-
-	static <T> Consumer<T> throwingConsumerWrapper(
-			  ThrowingConsumer<T, Exception> throwingConsumer) {
-
-			    return i -> {
-			        try {
-			            throwingConsumer.accept(i);
-			        } catch (Exception ex) {
-			            throw new RuntimeException(ex);
-			        }
-			    };
-			}*/
 
 	@Override
 	public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException {
@@ -205,6 +189,7 @@ public class RegistryDaoImpl implements RegistryDao {
 						logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), existingV.label()));
 						dbVertex.addEdge(e.label(), existingV);
 
+						AuditRecord record = appContext.getBean(AuditRecord.class);
 						record
 						.subject(dbVertex.label())
 						.predicate(e.label())
@@ -224,6 +209,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), newV.label()));
 				dbVertex.addEdge(e.label(), newV);
 
+				AuditRecord record = appContext.getBean(AuditRecord.class);
 				record
 				.subject(dbVertex.label())
 				.predicate(e.label())
@@ -356,7 +342,8 @@ public class RegistryDaoImpl implements RegistryDao {
 					v.graph().traversal().clone().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG);
 			if (configTraversal.hasNext()
 					&& configTraversal.next().property(Constants.PERSISTENT_GRAPH).value().equals(true)) {
-			
+
+				AuditRecord record = appContext.getBean(AuditRecord.class);
 				record
 					.subject(v.label())
 					.predicate(key)
@@ -469,7 +456,8 @@ public class RegistryDaoImpl implements RegistryDao {
     					edge.remove();
     				}
     			    String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
-	                String auditVertexlabel= registrySystemContext+tailOfdbVertex;
+					String auditVertexlabel = registrySystemContext + tailOfdbVertex;
+					AuditRecord record = appContext.getBean(AuditRecord.class);
 	                record
 	                        .subject(auditVertexlabel)
 	                        .predicate(edge.label())
@@ -483,7 +471,8 @@ public class RegistryDaoImpl implements RegistryDao {
     }
     
     
-	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s) throws NoSuchElementException, EncryptionException, AuditFailedException {
+	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s)
+			throws NoSuchElementException, EncryptionException, AuditFailedException {
 		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
 		Edge edge;
 		Stack<Vertex> vStack = new Stack<Vertex>();
@@ -514,7 +503,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 	}
 
-	private AuthInfo getCurrentUserInfo(){
-		return (AuthInfo)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	private AuthInfo getCurrentUserInfo() {
+		return (AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 	}
 }

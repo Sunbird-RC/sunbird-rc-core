@@ -25,20 +25,23 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes={Environment.class,ObjectMapper.class,GenericConfiguration.class, AuditRecordReader.class})
+@SpringBootTest(classes = { Environment.class, GenericConfiguration.class, AuditRecordReader.class })
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class AuditRecordReaderTest {
 
-	@Autowired
-	private AuditRecordReader auditRecordReader;
+    @Mock
     private DatabaseProvider databaseProviderMock;
+
+	@Autowired
+    @InjectMocks
+	private AuditRecordReader auditRecordReader;
+
     private Graph graphMock;
     private GraphTraversalSource graphTraversalSourceMock;
     private GraphTraversalSource graphTraversalSourceCloneMock;
@@ -55,8 +58,6 @@ public class AuditRecordReaderTest {
 
     @Before
     public void setUp() throws Exception {
-        this.databaseProviderMock = mock(DatabaseProvider.class);
-        auditRecordReader.setDatabaseProvider(databaseProviderMock);
         this.graphMock = mock(Graph.class);
         this.graphTraversalSourceMock = mock(GraphTraversalSource.class);
         this.graphTraversalSourceCloneMock = mock(GraphTraversalSource.class);
@@ -71,9 +72,7 @@ public class AuditRecordReaderTest {
       }
 
     @After
-    public void tearDown() throws Exception {
-
-    }
+    public void tearDown() throws Exception {}
 
     @Test
     public void testNullLabel() throws LabelCannotBeNullException {

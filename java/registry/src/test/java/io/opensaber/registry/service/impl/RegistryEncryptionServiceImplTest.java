@@ -39,11 +39,7 @@ public class RegistryEncryptionServiceImplTest extends RegistryTestBase {
 	
 	@Mock
 	private RestTemplate mockRestTemplate;
-	
-	@InjectMocks
-	@Autowired
-	EncryptionServiceImpl encryptionServiceImpl;
-	
+
 	@Autowired
 	EncryptionService encryptionService;
 

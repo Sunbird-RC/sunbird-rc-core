@@ -38,10 +38,11 @@ public class Neo4jGraphProvider extends DatabaseProvider {
             try {
                 String databaseHost = environment.getProperty("database.host");
                 String databasePort = environment.getProperty("database.port");
+                Boolean profilerEnabled = Boolean.parseBoolean(environment.getProperty("database.neo4j-profiler-enabled"));
                 driver = GraphDatabase.driver(String.format("bolt://%s:%s", databaseHost, databasePort), AuthTokens.none());
                 Neo4JElementIdProvider<?> idProvider = new Neo4JNativeElementIdProvider();
                 Neo4JGraph neo4JGraph = new Neo4JGraph(driver, idProvider, idProvider);
-                neo4JGraph.setProfilerEnabled(true);
+                neo4JGraph.setProfilerEnabled(profilerEnabled);
                 graph = neo4JGraph;
             } catch (Exception ex) {
                 logger.error("Exception when initializing Neo4J DB connection...", ex);

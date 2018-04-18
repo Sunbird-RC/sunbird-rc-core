@@ -5,6 +5,7 @@ import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.app.OpenSaberApplication;
 import io.opensaber.registry.authorization.AuthorizationToken;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.dao.impl.RegistryDaoImpl;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.service.impl.EncryptionServiceImpl;
 import io.opensaber.registry.service.impl.RegistryServiceImpl;
@@ -44,7 +45,8 @@ import org.apache.jena.rdf.model.Model;
 import java.util.Collections;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes={OpenSaberApplication.class, RegistryController.class, GenericConfiguration.class, EncryptionServiceImpl.class,AuditRecord.class})
+@SpringBootTest(classes = {OpenSaberApplication.class, RegistryController.class,
+		GenericConfiguration.class, EncryptionServiceImpl.class, RegistryDaoImpl.class, AuditRecord.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryControllerTest extends RegistryTestBase {
@@ -59,9 +61,6 @@ public class RegistryControllerTest extends RegistryTestBase {
 	
 	@Autowired
 	private DatabaseProvider databaseProvider;
-	
-	 @Value("${registry.system.base}")
-	private String registrySystemContext;
 
 	@Mock
 	private SchemaConfigurator mockSchemaConfigurator;
@@ -108,7 +107,8 @@ public class RegistryControllerTest extends RegistryTestBase {
 	}
 
 	@Test
-	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException, RecordNotFoundException {
+	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException,
+			EncryptionException, AuditFailedException, RecordNotFoundException {
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
 		registryService.addEntity(model);
 		assertEquals(5,
@@ -118,12 +118,14 @@ public class RegistryControllerTest extends RegistryTestBase {
 	}
 	
 	@Test
-	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException, RecordNotFoundException {
+	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException,
+			EncryptionException, AuditFailedException, RecordNotFoundException {
 		expectedEx.expect(DuplicateRecordException.class);
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
 		String entityId = registryService.addEntity(model);
-		RDFUtil.updateRdfModelNodeId(model, ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/School"), entityId);
+		RDFUtil.updateRdfModelNodeId(model,
+				ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/School"), entityId);
 		registryService.addEntity(model);
 	}
 	

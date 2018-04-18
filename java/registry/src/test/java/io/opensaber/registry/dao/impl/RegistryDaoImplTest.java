@@ -67,7 +67,8 @@ import java.util.*;
 
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {RegistryDaoImpl.class, Environment.class, ObjectMapper.class, GenericConfiguration.class,EncryptionServiceImpl.class})
+@SpringBootTest(classes = {RegistryDaoImpl.class, Environment.class, ObjectMapper.class,
+		GenericConfiguration.class, EncryptionServiceImpl.class, AuditRecordReader.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryDaoImplTest extends RegistryTestBase {
@@ -155,7 +156,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		getVertexForSubject(label, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
 		String response = registryDao.addEntity(graph, label);
 		Graph entity = registryDao.getEntityById(response);
-		assertEquals(1, IteratorUtils.count(entity.traversal().clone().V().hasNot(registrySystemContext+"audit")));
+		assertEquals(1, IteratorUtils.count(entity.traversal().clone().V()));
 		Vertex v = entity.traversal().V().has(T.label, label).next();
 		assertEquals("DAV Public School", v.property("http://example.com/voc/teacher/1.0.0/schoolName").value());
         checkIfAuditRecordsAreRight(entity, null);
@@ -212,7 +213,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 }
     private Map<String,Integer> getPropCounterMap(Graph entity) {
 	    Map<String,Integer> entityPropertyCountMap = new HashMap<>();
-        Iterator<Vertex> iter = entity.traversal().clone().V().hasNot(registrySystemContext+"audit");
+        Iterator<Vertex> iter = entity.traversal().clone().V().hasNot("@audit");
         while(iter.hasNext()){
             Vertex vertex = iter.next();
             entityPropertyCountMap.put(vertex.label(),0);

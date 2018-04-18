@@ -52,10 +52,7 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
     private static final String READ_REST_ENDPOINT = "read";
     private static final String CONTEXT_CONSTANT = "sample:";
     private static final String AUDIT_REST_ENDPOINT = "fetchAudit";
-    @Value("${registry.system.base}")
-	private String registrySystemContext;
 
-    // private RestTemplate restTemplate;
     private String baseUrl;
     private ResponseEntity<Response> response,auditBeforeUpdate, auditAfterUpdate;
     private String id;
