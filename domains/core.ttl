@@ -157,19 +157,19 @@ opensaber:appointmentType a rdf:Property ;
     schema:rangeIncludes opensaber:AppointmentType ;
     rdfs:comment "The nature of appointment in a job." .
 
+opensaber:dateOfJoiningService a rdf:Property ;
+    rdfs:label "dateOfJoiningService" ;
+    schema:domainIncludes opensaber:Service ;
+    schema:isPartOf <http://pending.opensaber.io>  ;
+    schema:rangeIncludes schema:Date ;
+    rdfs:comment "Date of joining a service." .
+
 opensaber:Service a rdfs:Class ;
     rdfs:label "Service" ;
     dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
     schema:category "issue-136" ;
     schema:isPartOf <http://pending.opensaber.io> ;
     rdfs:comment "A service" .
-
-opensaber:dateOfJoiningService a rdf:Property ;
-    rdfs:label "dateOfJoiningService" ;
-    schema:domainIncludes schema:Service ;
-    schema:isPartOf <http://pending.opensaber.io>  ;
-    schema:rangeIncludes schema:Date ;
-    rdfs:comment "A sub property of service, specifically a teaching service." .
 
 opensaber:AuthorityType a rdfs:Class ;
     rdfs:label "AuthorityType" ;
@@ -1002,6 +1002,81 @@ opensaber:Cambridge a opensaber:IndianSchoolBoard ;
 
 opensaber:boardAffiliation a rdf:Property ;
     rdfs:label "boardAffiliation" ;
-    schema:domainIncludes opensaber:TeachingExperience ;
-    schema:rangeIncludes schema:IndianSchoolBoard ;
+    schema:domainIncludes opensaber:IndianSchool ;
+    schema:rangeIncludes opensaber:IndianSchoolBoard ;
     rdfs:comment "School board affiliation." .
+
+opensaber:eventsAttended a rdf:Property ;
+    rdfs:label "eventsAttended" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes schema:Event ;
+    rdfs:comment "Events Attended." .
+
+opensaber:skills a rdf:Property ;
+    rdfs:label "skills" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes schema:Text ;
+    rdfs:comment "Skills enumerated." .
+
+opensaber:trainingsNeeded a rdf:Property ;
+    rdfs:label "trainingsNeeded" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:Training ;
+    rdfs:comment "Needed training." .
+
+opensaber:trainingsCompleted a rdf:Property ;
+    rdfs:label "trainingsCompleted" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:Training ;
+    rdfs:comment "Completed training." .
+
+opensaber:Training a rdfs:Class ;
+    rdfs:label "Training" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A Training." ;
+    rdfs:subClassOf schema:Course .
+
+opensaber:Credential a rdfs:Class ;
+    rdfs:label "Credential" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A credential." ;
+    rdfs:subClassOf schema:Thing .
+
+opensaber:Badge a rdfs:Class ;
+    rdfs:label "Badge" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A badge as a credential." ;
+    rdfs:subClassOf schema:Credential .
+
+opensaber:awardedBadge a rdf:Property ;
+    rdfs:label "awardedBadge" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:Badge ;
+    rdfs:comment "Awarded Badge." .
+
+opensaber:contentContribution a rdf:Property ;
+    rdfs:label "contentContribution" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes opensaber:Badge ;
+    rdfs:comment "Content contributions." .
+
+opensaber:externalID a rdf:Property ;
+    rdfs:label "externalID" ;
+    schema:domainIncludes schema:Thing ;
+    schema:rangeIncludes schema:Text ;
+    rdfs:comment "An external Identifier." ;
+    rdfs:subPropertyOf schema:identifier .
+
+opensaber:dateOfJoiningService a rdf:Property ;
+    rdfs:label "dateOfJoiningService" ;
+    schema:domainIncludes opensaber:Service ;
+    schema:isPartOf <http://pending.opensaber.io>  ;
+    schema:rangeIncludes schema:Date ;
+    rdfs:comment "A sub property of service, specifically a teaching service." .
+

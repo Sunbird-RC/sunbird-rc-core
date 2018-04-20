@@ -9,6 +9,15 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix opensaber: <http://opensaber.io/vocab/2018/01/> .
 
+opensaber:Teacher a rdfs:Class ;
+    rdfs:label "Teacher" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A Teacher." ;
+    rdfs:subClassOf schema:Person, 
+        schema:EducationalAudience .
+
 opensaber:IndianTeacher a rdfs:Class ;
     rdfs:label "IndianTeacher" ;
     dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
@@ -16,8 +25,29 @@ opensaber:IndianTeacher a rdfs:Class ;
     schema:isPartOf <http://pending.opensaber.io> ;
     rdfs:comment "An Indian Teacher." ;
     rdfs:subClassOf opensaber:IndianCitizen,
-        opensaber:Professional,
-        schema:EducationalAudience .
+        opensaber:Teacher .
+
+opensaber:IndianSchool a rdfs:Class ;
+    rdfs:label "IndianSchool" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "An Indian School." ;
+    rdfs:subClassOf schema:School .
+
+opensaber:taughtAt a rdf:Property ;
+    rdfs:label "indianSchoolCode" ;
+    schema:domainIncludes opensaber:SchoolTeachingService ;
+    schema:rangeIncludes schema:School ;
+    rdfs:comment "Unique Identifier for an Indian School." ;
+    rdfs:subPropertyOf schema:identifier .
+
+schema:schoolCode a rdf:Property ;
+    rdfs:label "udiseCode" ;
+    schema:domainIncludes opensaber:IndianSchool ;
+    schema:rangeIncludes schema:Text;
+    rdfs:comment "UDISE code of an Indian school." ;
+    rdfs:subPropertyOf schema:identifier .
 
 opensaber:IndianTeacherType a rdfs:Class ;
     rdfs:label "IndianTeacherType" ;
@@ -38,7 +68,7 @@ opensaber:ActingHeadTeacher a schema:IndianTeacherType ;
     schema:isPartOf <http://pending.opensaber.io> ;
     rdfs:comment "The Acting Head teacher." .
 
-opensaber:Teacher a schema:IndianTeacherType ;
+opensaber:RegularTeacher a schema:IndianTeacherType ;
     rdfs:label "Teacher" ;
     dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
     schema:category "issue-136" ;
@@ -75,7 +105,7 @@ opensaber:Lecturer a schema:IndianTeacherType ;
 
 opensaber:teacherType a rdf:Property ;
     rdfs:label "teacherType" ;
-    schema:domainIncludes opensaber:IndianTeacher ;
+    schema:domainIncludes opensaber:Teacher ;
     schema:rangeIncludes opensaber:TeacherType ;
     rdfs:comment "The type of a Teacher." .
 
@@ -87,11 +117,19 @@ opensaber:TeachingService a rdfs:Class ;
     rdfs:comment "A teaching service" ;
     rdfs:subClassOf opensaber:Service .
 
-opensaber:teachingService a rdf:Property ;
+opensaber:SchoolTeachingService a rdfs:Class ;
+    rdfs:label "SchoolTeachingService" ;
+    dct:source <https://github.com/project-sunbird/open-saber/issues/136> ;
+    schema:category "issue-136" ;
+    schema:isPartOf <http://pending.opensaber.io> ;
+    rdfs:comment "A teaching service" ;
+    rdfs:subClassOf opensaber:TeachingService .
+
+opensaber:schoolTeachingService a rdf:Property ;
     rdfs:label "teachingService" ;
     schema:domainIncludes schema:Teacher ;
     schema:isPartOf <http://pending.opensaber.io>  ;
-    schema:rangeIncludes schema:TeachingService ;
+    schema:rangeIncludes schema:SchoolTeachingService ;
     rdfs:comment "A sub property of service, specifically a teaching service." .
 
 opensaber:appointmentAuthority a rdf:Property ;
@@ -100,7 +138,11 @@ opensaber:appointmentAuthority a rdf:Property ;
     schema:rangeIncludes opensaber:AuthorityType ;
     rdfs:comment "The nature of appointment in a job." .
 
-
+opensaber:dateOfJoiningSchoolTeachingService a rdf:Property ;
+    rdfs:label "dateOfJoiningSchoolTeachingService" ;
+    schema:domainIncludes opensaber:SchoolTeachingService ;
+    schema:rangeIncludes schema:Date ;
+    rdfs:comment "Date of joining the school." .
 
 opensaber:TeacherQualification a rdfs:Class ;
     rdfs:label "TeacherQualification" ;
@@ -158,7 +200,7 @@ opensaber:TeacherNoProfQual a opensaber:TeacherQualification ;
 
 opensaber:highestTeacherQualification a rdf:Property ;
     rdfs:label "highestTeacherQualification" ;
-    schema:domainIncludes schema:Teacher ;
+    schema:domainIncludes opensaber:Teacher ;
     schema:rangeIncludes opensaber:TeacherQualification ;
     rdfs:comment "Professional Qualificatios of a Teacher." .
 
@@ -209,7 +251,7 @@ opensaber:isDElEdEnrollee a rdf:Property ;
 
 opensaber:teachingExperience a rdf:Property ;
     rdfs:label "teachingExperience" ;
-    schema:domainIncludes opensaber:Teacher ;
+    schema:domainIncludes opensaber:TeachingService ;
     schema:rangeIncludes opensaber:TeachingExperience ;
     rdfs:comment "Teaching experience." .
 
@@ -234,24 +276,18 @@ opensaber:subjectsTaught a rdf:Property ;
 
 opensaber:subjectsAppointedFor a rdf:Property ;
     rdfs:label "subjectsAppointedFor" ;
-    schema:domainIncludes opensaber:TeachingExperience ;
+    schema:domainIncludes opensaber:TeachingService ;
     schema:rangeIncludes opensaber:IndianSchoolSubjects ;
     rdfs:comment "Subjects appointed for." .
 
-opensaber:dateOfJoiningSchool a rdf:Property ;
-    rdfs:label "dateOfJoiningSchool" ;
-    schema:domainIncludes opensaber:TeachingExperience ;
-    schema:rangeIncludes schema:Date ;
-    rdfs:comment "Date of joining school." .
-
 opensaber:isMasterTrainer a rdf:Property ;
     rdfs:label "isMasterTrainer" ;
-    schema:domainIncludes schema:Teacher ;
-    schema:rangeIncludes opensaber:Boolean ;
-    rdfs:comment "Is master trainer." .
+    schema:domainIncludes opensaber:Teacher ;
+    schema:rangeIncludes schema:Boolean ;
+    rdfs:comment "Is/was master trainer?" .
 
 opensaber:TrainingSubjects a rdf:Class ;
-    rdfs:label "IndianSchoolClasses" ;
+    rdfs:label "TrainingSubjects" ;
     rdfs:comment "An enumeration of training subjects." ;
     rdfs:subClassOf schema:Enumeration .
 
@@ -361,6 +397,42 @@ opensaber:pastTraining a rdf:Property ;
 
 opensaber:isBRCorCRC a rdf:Property ;
     rdfs:label "isBRCorCRC" ;
-    schema:domainIncludes schema:Teacher ;
+    schema:domainIncludes opensaber:Teacher ;
     schema:rangeIncludes opensaber:Boolean ;
     rdfs:comment "Is a BRC or CRC as well?." .
+
+opensaber:languageOfInstruction a rdf:Property ;
+    rdfs:label "languageOfInstruction" ;
+    schema:domainIncludes opensaber:Teacher ;
+    schema:rangeIncludes opensaber:IndianVernacularLanguage ;
+    rdfs:comment "Past training." .
+
+opensaber:summary a rdf:Property ;
+    rdfs:label "summary" ;
+    schema:domainIncludes opensaber:Teacher ;
+    schema:rangeIncludes schema:Text ;
+    rdfs:comment "Summary." .
+
+opensaber:papersPresented a rdf:Property ;
+    rdfs:label "papersPresented" ;
+    schema:domainIncludes schema:Person ;
+    schema:rangeIncludes schema:ScholarlyArticle ;
+    rdfs:comment "Publications/Academic Papers Presented." .
+
+opensaber:trainingsCompleted a rdf:Property ;
+    rdfs:label "trainingsCompleted" ;
+    schema:domainIncludes opensaber:Teacher ;
+    schema:rangeIncludes schema:Course ;
+    rdfs:comment "Publications/Academic Papers Presented." .
+
+opensaber:contentContribution a rdf:Property ;
+    rdfs:label "contentContribution" ;
+    schema:domainIncludes opensaber:Teacher ;
+    schema:rangeIncludes schema:CreativeWork ;
+    rdfs:comment "list of content contributed which are live." .
+
+opensaber:teacherRole a rdf:Property ;
+    rdfs:label "teacherRole" ;
+    schema:domainIncludes opensaber:Teacher ;
+    schema:rangeIncludes schema:Role ;
+    rdfs:comment "Role of a teacher." .
