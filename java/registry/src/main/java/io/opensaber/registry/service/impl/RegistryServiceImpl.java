@@ -14,6 +14,10 @@ import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.JsonLDWriteContext;
@@ -25,6 +29,7 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +41,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.GraphDBFactory;
+import io.opensaber.registry.util.RDFUtil;
 import io.opensaber.utils.converters.RDF2Graph;
 
 import static org.apache.tinkerpop.gremlin.structure.io.IoCore.graphson;
@@ -49,13 +55,13 @@ public class RegistryServiceImpl implements RegistryService {
 	private RegistryDao registryDao;
 
 	@Autowired
-	private Environment environment;
-
-	@Autowired
 	DatabaseProvider databaseProvider;
 	
 	@Autowired
 	EncryptionService encryptionService;
+	
+	@org.springframework.beans.factory.annotation.Value("${feature.toggling}")
+	private Boolean featureToggling;
 
 	@Override
 	public List getEntityList(){
@@ -63,9 +69,9 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public String addEntity(Model rdfModel) throws DuplicateRecordException, InvalidTypeException, EncryptionException, AuditFailedException, RecordNotFoundException {
+	public String addEntity(Model rdfModel) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
 		try {
-			Graph graph = GraphDBFactory.getEmptyGraph();
+			/*Graph graph = GraphDBFactory.getEmptyGraph();
 			StmtIterator iterator = rdfModel.listStatements();
 			boolean rootSubjectFound = false;
 			boolean rootNodeBlank = false;
@@ -86,16 +92,60 @@ public class RegistryServiceImpl implements RegistryService {
 				org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
 				graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
 			}
-
 			if (label == null) {
 				throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
-			}
+			}*/
+			
 
 			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
 			// if it is a blank node
-			return registryDao.addEntity(graph, rootNodeBlank ? String.format("_:%s", label) : label);
+			String label = getRootLabel(rdfModel);
+			Graph graph = generateGraphFromRDF(rdfModel);
+			return registryDao.addEntity(graph, label);
 			
-		} catch (DuplicateRecordException | InvalidTypeException | EncryptionException | AuditFailedException ex) {
+		} catch (DuplicateRecordException | EntityCreationException | EncryptionException | AuditFailedException | MultipleEntityException ex) {
+			throw ex;
+		} catch (Exception ex) {
+			logger.error("Exception when creating entity: ", ex);
+			throw ex;
+		}
+	}
+	
+	@Override
+	public String addToExistingEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
+		try {
+			String label = getRootLabel(rdfModel);
+			Graph graph = generateGraphFromRDF(rdfModel);
+			/*if((label == null) && featureToggling){
+				StmtIterator stmtIter = rdfModel.listStatements();
+				List<String> subjectList = new ArrayList();
+				List<String> subjectWithTypeList = new ArrayList();
+				while (stmtIter.hasNext()) {
+					Statement rdfStatement = stmtIter.nextStatement();
+					Resource subject = rdfStatement.getSubject();
+					subjectList.add(subject.toString());
+					String predicate = rdfStatement.getPredicate().toString();
+					if(predicate.equals(RDF.TYPE.toString())){
+						subjectWithTypeList.add(subject.toString());
+					}
+					org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+					graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+				}
+				for(String sub : subjectWithTypeList){
+					if(subjectList.contains(sub)){
+						subjectList.remove(sub);
+					}
+				}
+				if(subjectList.size()>0){
+					label = subjectList.get(0);
+				}
+			}*/
+			
+			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
+			// if it is a blank node
+			return registryDao.addEntity(graph, label);
+			
+		} catch (DuplicateRecordException | EntityCreationException | EncryptionException | AuditFailedException ex) {
 			throw ex;
 		} catch (Exception ex) {
 			logger.error("Exception when creating entity: ", ex);
@@ -104,16 +154,12 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException, EncryptionException, AuditFailedException {
+	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
+		String label = getRootLabel(entity);
 		Graph graph =  generateGraphFromRDF(entity);
-		return registryDao.updateEntity(graph, rootNodeLabel,"update");
+		return registryDao.updateEntity(graph, label,"update");
 	}
-	
-	@Override
-	public boolean upsertEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, InvalidTypeException, EncryptionException, AuditFailedException {
-		Graph graph =  generateGraphFromRDF(entity);
-		return registryDao.updateEntity(graph, rootNodeLabel,"upsert");
-	}
+
 
 	@Override
 	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException, EncryptionException, AuditFailedException {
@@ -138,10 +184,18 @@ public class RegistryServiceImpl implements RegistryService {
 		return model;
 	}
 
-	@Override
-	public boolean deleteEntity(Object entity) throws AuditFailedException, RecordNotFoundException{
-		return registryDao.deleteEntity("","");
-	}
+	/*@Override
+	public boolean deleteEntity(Model rdfModel) throws AuditFailedException, RecordNotFoundException{
+		StmtIterator iterator = rdfModel.listStatements();
+		Graph graph = GraphDBFactory.getEmptyGraph();
+		while (iterator.hasNext()) {
+			Statement rdfStatement = iterator.nextStatement();
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+		}
+
+		return registryDao.deleteEntity(graph, "");
+	}*/
 
 	public HealthCheckResponse health() throws Exception {
 		HealthCheckResponse healthCheck;
@@ -201,8 +255,8 @@ public class RegistryServiceImpl implements RegistryService {
 		return model;
 	}
 	
-	private Graph generateGraphFromRDF(Model entity) throws InvalidTypeException{
-		Graph graph = GraphDBFactory.getEmptyGraph();
+	private Graph generateGraphFromRDF(Model entity) throws EntityCreationException, MultipleEntityException{
+		/*Graph graph = GraphDBFactory.getEmptyGraph();
 
 		StmtIterator iterator = entity.listStatements();
 		boolean rootSubjectFound = false;
@@ -223,7 +277,30 @@ public class RegistryServiceImpl implements RegistryService {
 
 		if (label == null) {
 			throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
+		}*/
+		Graph graph = GraphDBFactory.getEmptyGraph();
+		StmtIterator iterator = entity.listStatements();
+		while (iterator.hasNext()) {
+			Statement rdfStatement = iterator.nextStatement();
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
 		}
 		return graph;
+	}
+	
+	private String getRootLabel(Model entity) throws EntityCreationException, MultipleEntityException{
+		List<Resource> rootLabels = RDFUtil.getRootLabels(entity);
+		if(rootLabels.size() == 0){
+			throw new EntityCreationException(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
+		} else if(rootLabels.size() > 1){
+			throw new MultipleEntityException(Constants.ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE);
+		} else{
+			Resource subject = rootLabels.get(0);
+			String label = subject.toString();
+			if(subject.isAnon() && subject.getURI() == null){
+				label = String.format("_:%s", label);
+			}
+			return label;
+		}
 	}
 }

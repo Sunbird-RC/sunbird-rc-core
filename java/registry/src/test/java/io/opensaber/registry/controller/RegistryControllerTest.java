@@ -35,13 +35,15 @@ import org.springframework.web.client.RestTemplate;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.exception.InvalidTypeException;
-import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.RegistryService;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+
 import java.util.Collections;
 
 @RunWith(SpringRunner.class)
@@ -107,8 +109,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 	}
 
 	@Test
-	public void test_adding_a_new_record() throws DuplicateRecordException, InvalidTypeException,
-			EncryptionException, AuditFailedException, RecordNotFoundException {
+	public void test_adding_a_new_record() throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException{
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
 		registryService.addEntity(model);
 		assertEquals(5,
@@ -118,8 +119,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 	}
 	
 	@Test
-	public void test_adding_duplicate_record() throws DuplicateRecordException, InvalidTypeException,
-			EncryptionException, AuditFailedException, RecordNotFoundException {
+	public void test_adding_duplicate_record() throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
 		expectedEx.expect(DuplicateRecordException.class);
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
@@ -130,10 +130,20 @@ public class RegistryControllerTest extends RegistryTestBase {
 	}
 	
 	@Test
-	public void test_adding_record_with_invalid_type() throws Exception {
-		Model model = getRdfWithInvalidTpe();
-		expectedEx.expect(InvalidTypeException.class);
-		expectedEx.expectMessage(Constants.INVALID_TYPE_MESSAGE);
+	public void test_adding_record_with_no_entity() throws Exception {
+		Model model = ModelFactory.createDefaultModel();
+		expectedEx.expect(EntityCreationException.class);
+		expectedEx.expectMessage(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
+		registryService.addEntity(model);
+		closeDB();
+	}
+	
+	@Test
+	public void test_adding_record_with_more_than_one_entity() throws Exception {
+		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
+		model.add(getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT));
+		expectedEx.expect(MultipleEntityException.class);
+		expectedEx.expectMessage(Constants.ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE);
 		registryService.addEntity(model);
 		closeDB();
 	}

@@ -164,5 +164,22 @@ public class RDFUtil {
         }
         rdfModel.add(updatedStatements.toArray(new Statement[0]));
     }
+    
+    public static boolean isSingleValued(String property){
+    	return false;
+    }
+    
+    public static List<Resource> getRootLabels(Model rdfModel){
+    	List<Resource> rootLabelList = new ArrayList<Resource>();
+    	ResIterator resIter = rdfModel.listSubjects();
+		while(resIter.hasNext()){
+			Resource resource = resIter.next();
+			StmtIterator stmtIter = rdfModel.listStatements(null, null, resource);
+			if(!stmtIter.hasNext()){
+				rootLabelList.add(resource);
+			}
+		}
+		return rootLabelList;
+    }
 
 }

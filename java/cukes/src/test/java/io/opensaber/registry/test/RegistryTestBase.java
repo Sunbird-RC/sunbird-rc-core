@@ -12,6 +12,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -112,5 +114,25 @@ public class RegistryTestBase {
 		ResponseEntity<Response> response = restTemplate.exchange(url, HttpMethod.GET, entity, Response.class);
 		return response;
 	}
+	
+	/*public ResponseEntity<Response> addEntity(String jsonldData, String url, HttpHeaders headers) {
+		HttpEntity<String> entity = new HttpEntity<>(jsonldData, headers);
+		ResponseEntity<Response> response = restTemplate.postForEntity(url, entity, Response.class);
+		return response;
+	}
+
+	public ResponseEntity<Response> update(String jsonldData, String url, HttpHeaders headers) {
+		HttpEntity<String> entity = new HttpEntity<>(jsonldData, headers);
+		Response response = restTemplate.patchForObject(url, entity, Response.class);
+		return new ResponseEntity(response, HttpStatus.OK);
+	}
+
+	public ResponseEntity<Response> readEntity(String url, HttpHeaders headers, String id) {
+		HttpEntity<String> entity = new HttpEntity<>(headers);
+		Map<String,String> queryParams = new HashMap<String,String>();
+		queryParams.put("id", id);
+		ResponseEntity<Response> response = restTemplate.exchange(url, HttpMethod.GET, entity, Response.class,queryParams);
+		return response;
+	}*/
 
 }

@@ -60,6 +60,10 @@ encryption:
 
 decryption:
   uri: https://dev.open-sunbird.org/encryption/decrypt
+  
+# Feature Toggling
+feature:
+  toggling: false
 ---
 ##################################################################
 #                      STAGING PROFILE                           #
@@ -120,6 +124,10 @@ encryption:
 
 decryption:
   uri: https://staging.open-sunbird.org/encryption/decrypt
+  
+# Feature Toggling
+feature:
+  toggling: false
 ---
 ##################################################################
 #                      TEST PROFILE                              #
@@ -165,3 +173,7 @@ encryption:
 
 decryption:
   uri: https://dev.open-sunbird.org/encryption/decrypt
+  
+# Feature Toggling
+feature:
+  toggling: false

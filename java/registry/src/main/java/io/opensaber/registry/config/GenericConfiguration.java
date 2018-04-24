@@ -153,13 +153,23 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
-				.addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
-		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
-				.addPathPatterns("/create", "/update/{id}").order(2);
-		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
-				.addPathPatterns("/create", "/update/{id}").order(3);
-		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(), gson()))
-				.addPathPatterns("/create", "/update/{id}").order(4);
+		.addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
+		boolean featureToggling = Boolean.parseBoolean(environment.getProperty(Constants.FEATURE_TOGGLING));
+		if(featureToggling){
+			registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
+			.addPathPatterns("/add", "/update").order(2);
+			registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
+			.addPathPatterns("/add", "/update").order(3);
+			registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(), gson()))
+			.addPathPatterns("/add", "/update").order(4);
+		} else {
+			registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
+			.addPathPatterns("/create", "/update/{id}").order(2);
+			registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
+			.addPathPatterns("/create", "/update/{id}").order(3);
+			registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(), gson()))
+			.addPathPatterns("/create", "/update/{id}").order(4);
+		}
 		/*registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
 		.addPathPatterns("/read/{id}").order(2);*/
 	}

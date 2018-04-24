@@ -1,6 +1,8 @@
 package io.opensaber.utils.converters;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Stack;
 
 import org.apache.jena.rdf.model.RDFNode;
@@ -60,7 +62,21 @@ public final class RDF2Graph
 			Literal literal = (Literal)objectValue;
 			String datatype = literal.getDatatype().toString();
 			logger.info("TYPE saved is "+datatype);
-			s.property(property.toString(), literal.getLabel()).property("@type",datatype);
+			/*VertexProperty vp = s.property(property.toString());
+			if(vp.isPresent()){
+				Object value = vp.value();
+				List valueList = new ArrayList();
+				if(value instanceof List){
+					valueList = (List)value;
+				} else{
+					String valueStr = (String)value;
+					valueList.add(valueStr);
+				}
+				s.property(property.toString(), valueList);
+				
+			}else{*/
+				s.property(property.toString(), literal.getLabel()).property("@type",datatype);
+			//}
 		} else if (objectValue instanceof IRI) {
 			IRI objectIRI = (IRI)objectValue;
 			Vertex o = getExistingVertexOrAdd(objectIRI.toString(), graph);

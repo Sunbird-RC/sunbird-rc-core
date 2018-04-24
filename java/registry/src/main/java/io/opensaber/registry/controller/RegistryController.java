@@ -5,6 +5,9 @@ import java.sql.Blob;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.websocket.server.PathParam;
+
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.JSONUtil;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,7 +43,7 @@ import io.opensaber.pojos.ResponseParams;
 import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.pojos.ValidationResponseSerializer;
 import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.InvalidTypeException;
+import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.service.RegistryService;
 
@@ -59,7 +63,6 @@ public class RegistryController {
 	
 	@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
-
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
@@ -70,7 +73,34 @@ public class RegistryController {
 			result.put("entity", label);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-		} catch (DuplicateRecordException | InvalidTypeException e) {
+		} catch (DuplicateRecordException | EntityCreationException e) {
+			response.setResult(result);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		} catch (Exception e) {
+			response.setResult(result);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	
+	@RequestMapping(value = "/add", method = RequestMethod.POST)
+	public ResponseEntity<Response> addToExistingEntity(@RequestAttribute Request requestModel, 
+			@RequestParam("id") String id, @RequestParam("prop") String property) {
+
+		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
+		Map<String, Object> result = new HashMap<>();
+
+		try {
+			String label = registryService.addToExistingEntity(rdf, id, property);
+			result.put("entity", label);
+			response.setResult(result);
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+		} catch (DuplicateRecordException | EntityCreationException e) {
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
@@ -109,7 +139,7 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
+	
 	@ResponseBody
 	@RequestMapping(value = "/update/{id}", method = RequestMethod.PATCH)
 	public ResponseEntity<Response> updateEntity(@RequestAttribute Request requestModel,
@@ -124,7 +154,7 @@ public class RegistryController {
 			registryService.updateEntity(rdf, id);
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-		} catch (RecordNotFoundException | InvalidTypeException e) {
+		} catch (RecordNotFoundException | EntityCreationException e) {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 
@@ -137,8 +167,8 @@ public class RegistryController {
 	}
 	
 	@ResponseBody
-	@RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
-	public ResponseEntity<Response> upsertEntity(@RequestAttribute Request requestModel,
+	@RequestMapping(value = "/update", method = RequestMethod.POST)
+	public ResponseEntity<Response> update(@RequestAttribute Request requestModel,
 			@PathVariable("id") String id) {
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
@@ -147,10 +177,10 @@ public class RegistryController {
 		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
 
 		try {
-			registryService.upsertEntity(rdf, id);
+			registryService.updateEntity(rdf, id);
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-		} catch (RecordNotFoundException | InvalidTypeException e) {
+		} catch (RecordNotFoundException | EntityCreationException e) {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 
