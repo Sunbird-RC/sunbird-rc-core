@@ -1,4 +1,4 @@
-PREFIX teacher: <http://example.com/voc/teacher/1.0.0/>
+PREFIX teacher: <http://localhost:8080/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX ex: <http://ex.example/#>
 
