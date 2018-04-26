@@ -46,7 +46,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private static final String VALID_NEWJSONLD= "teacher.jsonld";
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
 	private static final String INVALID_NEWJSONLD= "invalid-teacher.jsonld";
-	private static final String ADD_ENTITY = "create";
+	private static final String ADD_ENTITY = "add";
 	private static final String READ_ENTITY = "read";
 	private static final String AUTH_HEADER_NAME = "x-authenticated-user-token";
 		
@@ -180,7 +180,6 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	public void issueRecordInRegistry(String qualifier) throws JsonParseException, JsonMappingException, IOException{
 		jsonldData();
 		updateId = id;
-		System.out.println("Id getting inserted into db:"+id);
 		setValidAuthToken();
 		addEntity();
 		checkSuccessfulResponse();
@@ -213,7 +212,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 
 	private ResponseEntity<Response> callRegistryReadAPI() {
 		HttpEntity<String> entity = new HttpEntity<>(headers);
-		ResponseEntity<Response> response = restTemplate.exchange(baseUrl+READ_ENTITY+"/"+id, HttpMethod.GET,entity,Response.class);
+		ResponseEntity<Response> response = restTemplate.exchange(baseUrl+"/"+id, HttpMethod.GET,entity,Response.class);
 		return response;
 		
 	}

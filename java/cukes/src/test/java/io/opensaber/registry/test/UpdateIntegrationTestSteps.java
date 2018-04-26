@@ -47,7 +47,7 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
     private static final String VALID_UPDATE_JSONLD_FILE = "update_teacher.jsonld";
     private static final String UPDATE_JSONLD__AUDIT_FILE = "update_teacher_audit.jsonld";
     private static final String INVALID_UPDATE_JSONLD = "invalid-teacher.jsonld";
-    private static final String CREATE_REST_ENDPOINT = "create";
+    private static final String CREATE_REST_ENDPOINT = "add";
     private static final String UPDATE_REST_ENDPOINT = "update";
     private static final String READ_REST_ENDPOINT = "read";
     private static final String CONTEXT_CONSTANT = "sample:";
@@ -87,8 +87,9 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 
         When("^updating the record in the registry$", () -> {
             StringBuilder url = new StringBuilder();
-            url.append(baseUrl).append(UPDATE_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
-            response = updateEntity(jsonld, url.toString(), headers);
+            //url.append(baseUrl).append(UPDATE_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            url.append(baseUrl).append(UPDATE_REST_ENDPOINT);
+            response = update(jsonld, url.toString(), headers);
          });
 
         Then("^updating the record should be unsuccessful$", () -> checkUnsuccessfulResponse());
@@ -99,14 +100,16 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 
         Given("^valid data for updating a record$", () -> {
             StringBuilder url = new StringBuilder();
-            url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            //url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            url.append(id);
             response = fetchEntity(url.toString(), headers);
             jsonld = updateInputJsonldRootNodeId(response, "update_teacher.jsonld");
         });
         
         Given("^input for updating single record$", () -> {
             StringBuilder url = new StringBuilder();
-            url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            //url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            url.append(id);
             response = fetchEntity(url.toString(), headers);
             jsonld = updateInputJsonldRootNodeId(response, "update_teacher_audit.jsonld");
         });
@@ -193,7 +196,7 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
     private void verifyValidationErrorMessage(String message) {
         Map<String, Object> result = response.getBody().getResult();
         Map<String, String> validationErrorData = (Map<String, String>) result.get("data");
-        String validationError = validationErrorData.get("http://example.com/voc/teacher/1.0.0/serialNum");
+        String validationError = validationErrorData.get(Constants.INTEGRATION_TEST_BASE_URL+"serialNum");
         assertEquals(message, validationError);
     }
 

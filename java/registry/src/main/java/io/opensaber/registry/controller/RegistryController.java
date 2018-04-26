@@ -1,18 +1,15 @@
 package io.opensaber.registry.controller;
 
 import java.lang.reflect.Type;
-import java.sql.Blob;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.websocket.server.PathParam;
 
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.JSONUtil;
 
-import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.rdf.model.Model;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -21,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,18 +26,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import io.opensaber.pojos.Request;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
-import io.opensaber.pojos.ValidationResponse;
-import io.opensaber.pojos.ValidationResponseSerializer;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.exception.RecordNotFoundException;
@@ -57,9 +47,6 @@ public class RegistryController {
 
 	@Value("${registry.context.base}")
 	private String registryContext;
-	
-	@Value("${registry.system.base}")
-	private String registrySystemContext;
 	
 	@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
@@ -88,15 +75,15 @@ public class RegistryController {
 	
 	@RequestMapping(value = "/add", method = RequestMethod.POST)
 	public ResponseEntity<Response> addToExistingEntity(@RequestAttribute Request requestModel, 
-			@RequestParam("id") String id, @RequestParam("prop") String property) {
-
+			@RequestParam(value="id", required = false) String id, @RequestParam(value="prop", required = false) String property) {
+		
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
 
 		try {
-			String label = registryService.addToExistingEntity(rdf, id, property);
+			String label = registryService.addEntity(rdf, id, property);
 			result.put("entity", label);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
@@ -114,6 +101,34 @@ public class RegistryController {
 
 	@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> getEntity(@PathVariable("id") String id) {
+		id = registryContext + id;
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
+
+		try {
+			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(id);
+			logger.debug("FETCHED: " + entityModel);
+			String jenaJSON = registryService.frameEntity(entityModel);
+			JSONObject jenaObj = new JSONObject(jenaJSON);
+			/*Map<String,Object> resultMap = new HashMap<String,Object>();
+			resultMap.put(Constants.RESPONSE_ATTRIBUTE, entityModel);*/
+			response.setResult(jenaObj.toMap());
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+		} catch (RecordNotFoundException e) {
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		} catch (Exception e) {
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg("Ding! You encountered an error!");
+			logger.error("ERROR!", e);
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
+	public ResponseEntity<Response> readEntity(@PathVariable("id") String id) {
 		id = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
@@ -168,16 +183,14 @@ public class RegistryController {
 	
 	@ResponseBody
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
-	public ResponseEntity<Response> update(@RequestAttribute Request requestModel,
-			@PathVariable("id") String id) {
+	public ResponseEntity<Response> update(@RequestAttribute Request requestModel) {
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
-		id = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
 
 		try {
-			registryService.updateEntity(rdf, id);
+			registryService.updateEntity(rdf, null);
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (RecordNotFoundException | EntityCreationException e) {
@@ -186,7 +199,7 @@ public class RegistryController {
 
 		} catch (Exception e) {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(String.format("Error occurred when updating Entity ID %s", id));
+			responseParams.setErrmsg("Error occurred when updating Entity");
 			logger.error("ERROR!", e);
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);

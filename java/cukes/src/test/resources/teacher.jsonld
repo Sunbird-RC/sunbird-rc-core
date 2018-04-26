@@ -15,9 +15,9 @@
 		{
 			"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
 			"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-			"teacher": "http://example.com/voc/teacher/1.0.0/",
+			"teacher": "http://localhost:8080/",
 			"xsd": "http://www.w3.org/2001/XMLSchema#",
-			"@vocab": "http://example.com/voc/teacher/1.0.0/"
+			"@vocab": "http://localhost:8080/"
 		},
 
 		"@id": "<@id>",

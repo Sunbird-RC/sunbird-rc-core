@@ -18,6 +18,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.ResIterator;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.JsonLDWriteContext;
@@ -69,34 +70,8 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public String addEntity(Model rdfModel) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
+	public String addEntity(Model rdfModel) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException {
 		try {
-			/*Graph graph = GraphDBFactory.getEmptyGraph();
-			StmtIterator iterator = rdfModel.listStatements();
-			boolean rootSubjectFound = false;
-			boolean rootNodeBlank = false;
-			String label = null;
-
-			while (iterator.hasNext()) {
-				Statement rdfStatement = iterator.nextStatement();
-				if (!rootSubjectFound) {
-					String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-					label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
-					if (label != null) {
-						rootSubjectFound = true;
-						if(rdfStatement.getSubject().isAnon() && rdfStatement.getSubject().getURI() == null) {
-							rootNodeBlank = true;
-						}
-					}
-				}
-				org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-				graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
-			}
-			if (label == null) {
-				throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
-			}*/
-			
-
 			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
 			// if it is a blank node
 			String label = getRootLabel(rdfModel);
@@ -112,40 +87,17 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 	
 	@Override
-	public String addToExistingEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
+	public String addEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException, 
+	EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException {
 		try {
 			String label = getRootLabel(rdfModel);
 			Graph graph = generateGraphFromRDF(rdfModel);
-			/*if((label == null) && featureToggling){
-				StmtIterator stmtIter = rdfModel.listStatements();
-				List<String> subjectList = new ArrayList();
-				List<String> subjectWithTypeList = new ArrayList();
-				while (stmtIter.hasNext()) {
-					Statement rdfStatement = stmtIter.nextStatement();
-					Resource subject = rdfStatement.getSubject();
-					subjectList.add(subject.toString());
-					String predicate = rdfStatement.getPredicate().toString();
-					if(predicate.equals(RDF.TYPE.toString())){
-						subjectWithTypeList.add(subject.toString());
-					}
-					org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-					graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
-				}
-				for(String sub : subjectWithTypeList){
-					if(subjectList.contains(sub)){
-						subjectList.remove(sub);
-					}
-				}
-				if(subjectList.size()>0){
-					label = subjectList.get(0);
-				}
-			}*/
 			
 			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
 			// if it is a blank node
-			return registryDao.addEntity(graph, label);
+			return registryDao.addEntity(graph, label, subject, property);
 			
-		} catch (DuplicateRecordException | EntityCreationException | EncryptionException | AuditFailedException ex) {
+		} catch (EntityCreationException | EncryptionException | AuditFailedException ex) {
 			throw ex;
 		} catch (Exception ex) {
 			logger.error("Exception when creating entity: ", ex);
@@ -164,13 +116,6 @@ public class RegistryServiceImpl implements RegistryService {
 	@Override
 	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException, EncryptionException, AuditFailedException {
 		Graph graph = registryDao.getEntityById(label);
-		/*
-		try {
-			graph.io(graphson()).writeGraph("graph.json");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		*/
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
 		for (org.eclipse.rdf4j.model.Statement statement : model) {
 			logger.debug("STATEMENT " + statement);
@@ -213,12 +158,15 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public String frameEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException {
+	public String frameEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException, MultipleEntityException, EntityCreationException {
 		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
+		String rootLabel = getRootLabel(jenaEntityModel);
+		String rootLabelType = getTypeForRootLabel(jenaEntityModel, rootLabel);
 		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
 		JsonLDWriteContext ctx = new JsonLDWriteContext();
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("frame.json");
 		String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+		fileString = fileString.replace("<@type>", rootLabelType);
 		ctx.setFrame(fileString);
 		WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT) ;
 		PrefixMap pm = RiotLib.prefixMap(g);
@@ -256,28 +204,6 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 	
 	private Graph generateGraphFromRDF(Model entity) throws EntityCreationException, MultipleEntityException{
-		/*Graph graph = GraphDBFactory.getEmptyGraph();
-
-		StmtIterator iterator = entity.listStatements();
-		boolean rootSubjectFound = false;
-		String label = null;
-
-		while (iterator.hasNext()) {
-			Statement rdfStatement = iterator.nextStatement();
-			if (!rootSubjectFound) {
-				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-				label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
-				if (label != null) {
-					rootSubjectFound = true;
-				}
-			}
-			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
-		}
-
-		if (label == null) {
-			throw new InvalidTypeException(Constants.INVALID_TYPE_MESSAGE);
-		}*/
 		Graph graph = GraphDBFactory.getEmptyGraph();
 		StmtIterator iterator = entity.listStatements();
 		while (iterator.hasNext()) {
@@ -301,6 +227,17 @@ public class RegistryServiceImpl implements RegistryService {
 				label = String.format("_:%s", label);
 			}
 			return label;
+		}
+	}
+	
+	private String getTypeForRootLabel(Model entity, String rootLabel) throws EntityCreationException, MultipleEntityException{
+		List<String> rootLabelType = RDFUtil.getTypeForSubject(entity, rootLabel);
+		if(rootLabelType.size() == 0){
+			throw new EntityCreationException(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
+		} else if(rootLabelType.size() > 1){
+			throw new MultipleEntityException(Constants.ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE);
+		} else{
+			return rootLabelType.get(0);
 		}
 	}
 }

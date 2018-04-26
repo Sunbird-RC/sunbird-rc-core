@@ -216,6 +216,11 @@
 			<artifactId>schema-configuration</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>commons-validator</groupId>
+			<artifactId>commons-validator</artifactId>
+			<version>1.6</version>
+		</dependency>
 
 		<!-- Test Dependencies -->
 

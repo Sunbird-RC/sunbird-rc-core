@@ -23,7 +23,6 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,6 +36,7 @@ import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
@@ -109,7 +109,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 	}
 
 	@Test
-	public void test_adding_a_new_record() throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException{
+	public void test_adding_a_new_record() throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException{
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
 		registryService.addEntity(model);
 		assertEquals(5,
@@ -119,7 +119,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 	}
 	
 	@Test
-	public void test_adding_duplicate_record() throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
+	public void test_adding_duplicate_record() throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException {
 		expectedEx.expect(DuplicateRecordException.class);
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);

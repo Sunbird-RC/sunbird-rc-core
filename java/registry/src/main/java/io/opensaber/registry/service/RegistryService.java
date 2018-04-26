@@ -7,15 +7,15 @@ import java.util.NoSuchElementException;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.exception.*;
 import org.apache.jena.rdf.model.Model;
-import org.springframework.boot.actuate.health.Health;
 
 public interface RegistryService {
 	
 	public List getEntityList();
 	
-	public String addEntity(Model rdfModel) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException;
+	public String addEntity(Model rdfModel) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException;
 	
-	public String addToExistingEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException;
+	public String addEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException, 
+	EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException;
 	
 	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException;
 	
@@ -25,7 +25,7 @@ public interface RegistryService {
 
 	public HealthCheckResponse health() throws Exception;
 
-	public String frameEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException;
+	public String frameEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException, MultipleEntityException, EntityCreationException;
 	
 	public String frameAuditEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException;
 

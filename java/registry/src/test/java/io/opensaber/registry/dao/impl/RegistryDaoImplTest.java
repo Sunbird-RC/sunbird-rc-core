@@ -99,9 +99,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	
 	@Autowired
 	AuditRecordReader auditRecordReader;
-	
-	@Value("${registry.system.base}")
-	private String registrySystemContext;
 
 	private static String identifier;
 
@@ -157,7 +154,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		String response = registryDao.addEntity(graph, label);
 		Graph entity = registryDao.getEntityById(response);
 		assertEquals(1, IteratorUtils.count(entity.traversal().clone().V()));
-		Vertex v = entity.traversal().V().has(T.label, label).next();
+		Vertex v = entity.traversal().V().has(T.label, response).next();
 		assertEquals("DAV Public School", v.property("http://example.com/voc/teacher/1.0.0/schoolName").value());
         checkIfAuditRecordsAreRight(entity, null);
 	}

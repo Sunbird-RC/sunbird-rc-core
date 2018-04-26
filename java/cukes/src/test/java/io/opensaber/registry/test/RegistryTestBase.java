@@ -28,7 +28,6 @@ public class RegistryTestBase {
 	private static final String REPLACING_SUBJECT_LABEL = "<@id>";
 	private static final String EMPTY_STRING = "";
 	private static final String CONTEXT_CONSTANT = "teacher:";
-	private static final String CONTEXT_URL = "http://example.com/voc/teacher/1.0.0/";
 	protected RestTemplate restTemplate;
 
 	public void setJsonld(String filename) {
@@ -85,7 +84,7 @@ public class RegistryTestBase {
 
 	public static String extractIdWithoutContext(String label) {
 		String extractedId = label;
-		Pattern pattern = Pattern.compile("^" + Pattern.quote(CONTEXT_URL) + "(.*?)$");
+		Pattern pattern = Pattern.compile("^" + Pattern.quote(Constants.INTEGRATION_TEST_BASE_URL) + "(.*?)$");
 		Matcher matcher = pattern.matcher(label);
 		if(matcher.find()) {
 			extractedId = matcher.group(1);
@@ -115,7 +114,7 @@ public class RegistryTestBase {
 		return response;
 	}
 	
-	/*public ResponseEntity<Response> addEntity(String jsonldData, String url, HttpHeaders headers) {
+	public ResponseEntity<Response> addEntity(String jsonldData, String url, HttpHeaders headers) {
 		HttpEntity<String> entity = new HttpEntity<>(jsonldData, headers);
 		ResponseEntity<Response> response = restTemplate.postForEntity(url, entity, Response.class);
 		return response;
@@ -123,8 +122,8 @@ public class RegistryTestBase {
 
 	public ResponseEntity<Response> update(String jsonldData, String url, HttpHeaders headers) {
 		HttpEntity<String> entity = new HttpEntity<>(jsonldData, headers);
-		Response response = restTemplate.patchForObject(url, entity, Response.class);
-		return new ResponseEntity(response, HttpStatus.OK);
+		ResponseEntity<Response> response = restTemplate.postForEntity(url, entity, Response.class);
+		return response;
 	}
 
 	public ResponseEntity<Response> readEntity(String url, HttpHeaders headers, String id) {
@@ -133,6 +132,6 @@ public class RegistryTestBase {
 		queryParams.put("id", id);
 		ResponseEntity<Response> response = restTemplate.exchange(url, HttpMethod.GET, entity, Response.class,queryParams);
 		return response;
-	}*/
+	}
 
 }

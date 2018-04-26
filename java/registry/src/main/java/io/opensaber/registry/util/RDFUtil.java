@@ -10,6 +10,7 @@ import org.apache.jena.riot.WriterDatasetRIOT;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.slf4j.Logger;
@@ -180,6 +181,17 @@ public class RDFUtil {
 			}
 		}
 		return rootLabelList;
+    }
+    
+    public static List<String> getTypeForSubject(Model rdfModel, String label){
+    	List<String> typeIRIs = new ArrayList<String>();
+    	Resource subject = ResourceFactory.createResource(label);
+    	NodeIterator nodeIter = rdfModel.listObjectsOfProperty(subject, RDF.type);
+		while(nodeIter.hasNext()){
+			RDFNode rdfNode = nodeIter.next();
+			typeIRIs.add(rdfNode.toString());
+		}
+		return typeIRIs;
     }
 
 }
