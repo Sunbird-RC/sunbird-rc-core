@@ -11,7 +11,7 @@ enviroment: development
 
 registry:
   context:
-    base: http://example.com/voc/teacher/1.0.0/
+    base: http://localhost:8080/
   system:
     base: http://example.com/voc/opensaber/
 
@@ -43,8 +43,8 @@ validations:
   file: validations.shex
   entity:
     shape:
-      name: http://example.com/voc/teacher/1.0.0/TeacherShape
-      type: http://example.com/voc/teacher/1.0.0/Teacher
+      name: http://localhost:8080/TeacherShape
+      type: http://localhost:8080/Teacher
 
 # Http Connection Timeout Config
 connection:
