@@ -7,11 +7,11 @@ sample:isAYear xsd:gYear
 
 sample:SchoolShape CLOSED{
 	a [sample:School] ;
-	sample:udiseNumber @sample:isAString ;
-    sample:academicCalendarYearStart @sample:isAString ;
-    sample:academicCalendarYearEnd @sample:isAString ;
-    sample:area [sample:AreaTypeCode-RURAL sample:AreaTypeCode-URBAN] ;
-    sample:schoolName @sample:isAString ;
+	sample:udiseNumber @sample:isAString {0,1};
+    sample:academicCalendarYearStart @sample:isAString {0,1};
+    sample:academicCalendarYearEnd @sample:isAString {0,1};
+    sample:area [sample:AreaTypeCode-RURAL sample:AreaTypeCode-URBAN] {0,1};
+    sample:schoolName @sample:isAString {0,1};
 	sample:address @sample:AddressShape ;
 	sample:revenueBlock @sample:isAString {0,1} ;
 	sample:assemblyConstituency @sample:isAString {0,1} ;
@@ -21,15 +21,15 @@ sample:SchoolShape CLOSED{
 sample:AddressShape CLOSED{
     a [sample:IndianUrbanPostalAddress sample:IndianRuralPostalAddress] ;
     (
-        sample:mohalla @sample:isAString ;
-        sample:wardNumber @sample:isAString ;
-        sample:municipality @sample:isAString ;
-        sample:city @sample:isAString 
+        sample:mohalla @sample:isAString {0,1};
+        sample:wardNumber @sample:isAString {0,1};
+        sample:municipality @sample:isAString {0,1};
+        sample:city @sample:isAString {0,1}
         |
-        sample:habitation @sample:isAString ;
-        sample:villageName @sample:isAString ;
-        sample:villagePanchayat @sample:isAString ;
+        sample:habitation @sample:isAString {0,1};
+        sample:villageName @sample:isAString {0,1};
+        sample:villagePanchayat @sample:isAString {0,1};
     );
-    sample:pinCode @sample:isAString ;
-    sample:district @sample:isAString
+    sample:pinCode @sample:isAString {0,1};
+    sample:district @sample:isAString {0,1}
 }

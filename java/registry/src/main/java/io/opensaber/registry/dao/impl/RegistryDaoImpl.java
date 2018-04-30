@@ -18,6 +18,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,6 +147,13 @@ public class RegistryDaoImpl implements RegistryDao {
 		Vertex rootVertex = rootGts.next();
 		Vertex entityVertex = entityGts.next();
 		rootVertex.addEdge(property, entityVertex);
+		AuditRecord record = appContext.getBean(AuditRecord.class);
+		record
+		.subject(rootVertex.label())
+		.predicate(property)
+		.oldObject(null)
+		.newObject(entityVertex.label())
+		.record(databaseProvider);
 	}
 
 	/**
@@ -233,33 +241,49 @@ public class RegistryDaoImpl implements RegistryDao {
 	private void addOrUpdateVertexAndEdge(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph, String methodOrigin)
 			throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
 		Iterator<Edge> edges = v.edges(Direction.OUT);
+		Iterator<Edge> edgeList = v.edges(Direction.OUT);
 		Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
 		List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(Direction.OUT));
-
+		List<Edge> edgeVertexMatchList = new ArrayList<Edge>();
+		while(edgeList.hasNext()) {
+			Edge e = edgeList.next();
+			Vertex ver = e.inVertex();
+			String edgeLabel = e.label();
+			Optional<Edge> edgeVertexAlreadyExists =
+					dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(edgeLabel) && ed.inVertex().label().equalsIgnoreCase(ver.label())).findFirst();
+			if(edgeVertexAlreadyExists.isPresent()){
+				edgeVertexMatchList.add(edgeVertexAlreadyExists.get());
+			}
+		}
+		logger.info("Matching list size:"+edgeVertexMatchList.size());
+			
 		while(edges.hasNext()) {
 			Edge e = edges.next();
 			Vertex ver = e.inVertex();
-			
+			System.out.println("Vertex being encountered"+ver.label());
+			String edgeLabel = e.label();
 			GraphTraversal<Vertex, Vertex> gt = dbGraph.clone().V().hasLabel(ver.label());
+			Optional<Edge> edgeAlreadyExists =
+					dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(e.label())).findFirst();
+			Optional<Edge> edgeVertexAlreadyExists =
+					dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(edgeLabel) && ed.inVertex().label().equalsIgnoreCase(ver.label())).findFirst();
+			removeEdge(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
 			if (gt.hasNext()) {
-					Vertex existingV = gt.next();
-					logger.info(String.format("Vertex with label %s already exists. Updating properties for the vertex", existingV.label()));
-					copyProperties(ver, existingV,methodOrigin);
-					Optional<Edge> edgeAlreadyExists =
-							dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(e.label())).findFirst();
-					if(!edgeAlreadyExists.isPresent()) {
-						logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), existingV.label()));
-						dbVertex.addEdge(e.label(), existingV);
-
-						AuditRecord record = appContext.getBean(AuditRecord.class);
-						record
-						.subject(dbVertex.label())
-						.predicate(e.label())
-						.oldObject(null)
-						.newObject(existingV.label())
-						.record(databaseProvider);
-					}
-					parsedVertices.push(new Pair<>(ver, existingV));
+				Vertex existingV = gt.next();
+				logger.info(String.format("Vertex with label %s already exists. Updating properties for the vertex", existingV.label()));
+				copyProperties(ver, existingV,methodOrigin);
+				if(!edgeVertexAlreadyExists.isPresent()){
+					Edge edgeAdded = dbVertex.addEdge(edgeLabel, existingV);
+					edgeVertexMatchList.add(edgeAdded);
+					AuditRecord record = appContext.getBean(AuditRecord.class);
+					record
+					.subject(dbVertex.label())
+					.predicate(e.label())
+					.oldObject(null)
+					.newObject(existingV.label())
+					.record(databaseProvider);
+				}
+				parsedVertices.push(new Pair<>(ver, existingV));
 			} else {
 				if(methodOrigin.equalsIgnoreCase("update") && !isIRI(ver.label()) && featureToggling){
 					throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
@@ -269,8 +293,9 @@ public class RegistryDaoImpl implements RegistryDao {
 				logger.info(String.format("Adding vertex with label %s and adding properties", newV.label()));
 				copyProperties(ver, newV, methodOrigin);
 				logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), newV.label()));
-				dbVertex.addEdge(e.label(), newV);
 
+				Edge edgeAdded = dbVertex.addEdge(edgeLabel, newV);
+				edgeVertexMatchList.add(edgeAdded);
 				AuditRecord record = appContext.getBean(AuditRecord.class);
 				record
 				.subject(dbVertex.label())
@@ -288,6 +313,81 @@ public class RegistryDaoImpl implements RegistryDao {
 
 
 	}
+	
+	private void removeEdge(Vertex dbVertex, Edge e, Optional<Edge> edgeAlreadyExists,List<Edge> edgeVertexMatchList, String methodOrigin)
+	 throws AuditFailedException, RecordNotFoundException{
+		
+		Graph graphFromStore = databaseProvider.getGraphStore();
+    	GraphTraversalSource traversalSource = graphFromStore.traversal();
+    	GraphTraversal<Vertex, Vertex> dbHasLabel = traversalSource.clone().V().hasLabel(dbVertex.label());
+    	if (!dbHasLabel.hasNext()) {
+    		throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
+    	}
+    	boolean isSingleValued = schemaConfigurator.isSingleValued(e.label());
+    	if(dbHasLabel.hasNext()){
+    		Vertex dbSourceVertex = dbHasLabel.next();
+    		if (graphFromStore.features().graph().supportsTransactions()) {
+    			org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
+    			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
+    			removeEdge(isSingleValued, dbSourceVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
+    			tx.commit();
+    		}else{
+    			removeEdge(isSingleValued, dbSourceVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
+    		}
+    	}
+	}
+	
+	private void removeEdge(boolean isSingleValued, Vertex dbSourceVertex, Edge e, Optional<Edge> edgeAlreadyExists,List<Edge> edgeVertexMatchList, String methodOrigin)
+			throws AuditFailedException{
+		if((edgeAlreadyExists.isPresent() && methodOrigin.equalsIgnoreCase("update")) || isSingleValued){
+				Iterator<Edge> edgeIter = dbSourceVertex.edges(Direction.OUT, e.label());
+				while(edgeIter.hasNext()){
+					Edge edge = edgeIter.next();
+					Optional<Edge> existingEdgeVertex =
+							edgeVertexMatchList.stream().filter(ed -> ed.label().equalsIgnoreCase(edge.label()) && ed.inVertex().label().equalsIgnoreCase(edge.inVertex().label())).findFirst();
+					if(!existingEdgeVertex.isPresent()){
+						deleteEdgeAndNodeRecursively(dbSourceVertex, edge, null);
+					}
+				}
+		}
+	}
+	
+	private void deleteEdgeAndNodeRecursively(Vertex v, Edge dbEdgeToBeRemoved, Vertex dbVertexToBeDeleted) throws AuditFailedException{
+		logger.info("Deleting edge and node:"+dbEdgeToBeRemoved.label());
+    	if(dbVertexToBeDeleted == null){
+    		dbVertexToBeDeleted = dbEdgeToBeRemoved.inVertex();
+    	}
+    	Iterator<Edge> inEdgeIter = dbVertexToBeDeleted.edges(Direction.IN);
+		Iterator<Edge> outEdgeIter = dbVertexToBeDeleted.edges(Direction.OUT);
+		if((inEdgeIter.hasNext() && IteratorUtils.count(inEdgeIter) > 1) || outEdgeIter.hasNext()){
+			dbEdgeToBeRemoved.remove();
+			AuditRecord record = appContext.getBean(AuditRecord.class);
+			String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
+			String auditVertexlabel= registryContext+tailOfdbVertex;
+			record
+			.subject(auditVertexlabel)
+			.predicate(dbEdgeToBeRemoved.label())
+			.oldObject(dbVertexToBeDeleted.label())
+			.newObject(null)
+			.record(databaseProvider);
+		}else{
+			dbVertexToBeDeleted.remove();
+			dbEdgeToBeRemoved.remove();
+			AuditRecord record = appContext.getBean(AuditRecord.class);
+			String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
+			String auditVertexlabel= registryContext+tailOfdbVertex;
+			record
+			.subject(auditVertexlabel)
+			.predicate(dbEdgeToBeRemoved.label())
+			.oldObject(dbVertexToBeDeleted.label())
+			.newObject(null)
+			.record(databaseProvider);
+		}
+		
+    }
+    
+    	
+    	
 
 	/**
 	 * Blank nodes are no longer supported. If the input data has a blank node, which is identified
@@ -406,10 +506,9 @@ public class RegistryDaoImpl implements RegistryDao {
     private void setProperty(Vertex v, String key, Object newValue, String methodOrigin) throws AuditFailedException {
     	VertexProperty vp = v.property(key);
     	Object oldValue = vp.isPresent() ? vp.value() : null;
-    	if(RDFUtil.isSingleValued(key)){
+    	if(schemaConfigurator.isSingleValued(key)){
     		v.property(key, newValue);
-    	}/*else if(featureToggling){
-    		if(vp.isPresent()){
+    	}else if(vp.isPresent()){
     			Object value = vp.value();
     			List valueList = new ArrayList();
     			if(value instanceof List){
@@ -419,11 +518,7 @@ public class RegistryDaoImpl implements RegistryDao {
     				valueList.add(valueStr);
     			}
     			v.property(key, valueList);
-
-    		}else{
-    			v.property(key, newValue);
-    		}
-    	}*/else{
+    	}else{
     		v.property(key, newValue);
     	}
     	if (!isaMetaProperty(key) && !Objects.equals(oldValue, newValue)) {
@@ -531,9 +626,9 @@ public class RegistryDaoImpl implements RegistryDao {
     	}
 
     	return false;
-    }
+    }*/
 
-    private void deleteEdgeAndNode(Vertex v, GraphTraversal<Vertex, Vertex> gts) throws AuditFailedException{
+    /*private void deleteEdgeAndNode(Vertex v, GraphTraversal<Vertex, Vertex> gts) throws AuditFailedException{
     	List<Edge> dbEdgesForVertex = ImmutableList.copyOf(v.edges(Direction.OUT));
     	if(gts.hasNext()){
     		Vertex vertex = gts.next();
@@ -557,7 +652,7 @@ public class RegistryDaoImpl implements RegistryDao {
     					}
     					AuditRecord record = appContext.getBean(AuditRecord.class);
     					String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
-    					String auditVertexlabel= registrySystemContext+tailOfdbVertex;
+    					String auditVertexlabel= registryContext+tailOfdbVertex;
     					record
     					.subject(auditVertexlabel)
     					.predicate(dbEdge.label())

@@ -95,6 +95,11 @@ public class RegistryTestBase {
 		Model model = ShaclexValidator.parse(jsonld, FORMAT);
 		return model;
 	}
+	
+	public Model getNewValidRdf(String fileName){
+		setJsonld(fileName);
+		return ShaclexValidator.parse(jsonld, FORMAT);
+	}
 
 	public Model getNewValidRdf(String fileName, String contextConstant, String rootNodeLabel){
 		setJsonld(fileName);
