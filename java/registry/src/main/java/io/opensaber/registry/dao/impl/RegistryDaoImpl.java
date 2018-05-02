@@ -260,14 +260,13 @@ public class RegistryDaoImpl implements RegistryDao {
 		while(edges.hasNext()) {
 			Edge e = edges.next();
 			Vertex ver = e.inVertex();
-			System.out.println("Vertex being encountered"+ver.label());
 			String edgeLabel = e.label();
 			GraphTraversal<Vertex, Vertex> gt = dbGraph.clone().V().hasLabel(ver.label());
 			Optional<Edge> edgeAlreadyExists =
 					dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(e.label())).findFirst();
 			Optional<Edge> edgeVertexAlreadyExists =
 					dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(edgeLabel) && ed.inVertex().label().equalsIgnoreCase(ver.label())).findFirst();
-			removeEdge(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
+			verifyAndDelete(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
 			if (gt.hasNext()) {
 				Vertex existingV = gt.next();
 				logger.info(String.format("Vertex with label %s already exists. Updating properties for the vertex", existingV.label()));
@@ -314,7 +313,7 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	}
 	
-	private void removeEdge(Vertex dbVertex, Edge e, Optional<Edge> edgeAlreadyExists,List<Edge> edgeVertexMatchList, String methodOrigin)
+	/*private void deleteEdgeAndNode(Vertex dbVertex, Edge e, Optional<Edge> edgeAlreadyExists,List<Edge> edgeVertexMatchList, String methodOrigin)
 	 throws AuditFailedException, RecordNotFoundException{
 		
 		Graph graphFromStore = databaseProvider.getGraphStore();
@@ -329,16 +328,26 @@ public class RegistryDaoImpl implements RegistryDao {
     		if (graphFromStore.features().graph().supportsTransactions()) {
     			org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
     			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-    			removeEdge(isSingleValued, dbSourceVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
+    			deleteEdgeAndNode(isSingleValued, dbSourceVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
     			tx.commit();
     		}else{
-    			removeEdge(isSingleValued, dbSourceVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
+    			deleteEdgeAndNode(isSingleValued, dbSourceVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
     		}
     	}
-	}
+	}*/
 	
-	private void removeEdge(boolean isSingleValued, Vertex dbSourceVertex, Edge e, Optional<Edge> edgeAlreadyExists,List<Edge> edgeVertexMatchList, String methodOrigin)
+	/**
+	 * This method checks if deletion of edge and node is required based on criteria and invokes deleteEdgeAndNode method
+	 * @param dbSourceVertex
+	 * @param e
+	 * @param edgeAlreadyExists
+	 * @param edgeVertexMatchList
+	 * @param methodOrigin
+	 * @throws AuditFailedException
+	 */
+	private void verifyAndDelete(Vertex dbSourceVertex, Edge e, Optional<Edge> edgeAlreadyExists,List<Edge> edgeVertexMatchList, String methodOrigin)
 			throws AuditFailedException{
+		boolean isSingleValued = schemaConfigurator.isSingleValued(e.label());
 		if((edgeAlreadyExists.isPresent() && methodOrigin.equalsIgnoreCase("update")) || isSingleValued){
 				Iterator<Edge> edgeIter = dbSourceVertex.edges(Direction.OUT, e.label());
 				while(edgeIter.hasNext()){
@@ -346,13 +355,20 @@ public class RegistryDaoImpl implements RegistryDao {
 					Optional<Edge> existingEdgeVertex =
 							edgeVertexMatchList.stream().filter(ed -> ed.label().equalsIgnoreCase(edge.label()) && ed.inVertex().label().equalsIgnoreCase(edge.inVertex().label())).findFirst();
 					if(!existingEdgeVertex.isPresent()){
-						deleteEdgeAndNodeRecursively(dbSourceVertex, edge, null);
+						deleteEdgeAndNode(dbSourceVertex, edge, null);
 					}
 				}
 		}
 	}
 	
-	private void deleteEdgeAndNodeRecursively(Vertex v, Edge dbEdgeToBeRemoved, Vertex dbVertexToBeDeleted) throws AuditFailedException{
+	/**
+	 * This method deletes the edge and node if the node is an orphan node and if not, deletes only the edge
+	 * @param v
+	 * @param dbEdgeToBeRemoved
+	 * @param dbVertexToBeDeleted
+	 * @throws AuditFailedException
+	 */
+	private void deleteEdgeAndNode(Vertex v, Edge dbEdgeToBeRemoved, Vertex dbVertexToBeDeleted) throws AuditFailedException{
 		logger.info("Deleting edge and node:"+dbEdgeToBeRemoved.label());
     	if(dbVertexToBeDeleted == null){
     		dbVertexToBeDeleted = dbEdgeToBeRemoved.inVertex();
@@ -360,29 +376,23 @@ public class RegistryDaoImpl implements RegistryDao {
     	Iterator<Edge> inEdgeIter = dbVertexToBeDeleted.edges(Direction.IN);
 		Iterator<Edge> outEdgeIter = dbVertexToBeDeleted.edges(Direction.OUT);
 		if((inEdgeIter.hasNext() && IteratorUtils.count(inEdgeIter) > 1) || outEdgeIter.hasNext()){
+			logger.info("Deleting edge only:"+dbEdgeToBeRemoved.label());
 			dbEdgeToBeRemoved.remove();
-			AuditRecord record = appContext.getBean(AuditRecord.class);
-			String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
-			String auditVertexlabel= registryContext+tailOfdbVertex;
-			record
-			.subject(auditVertexlabel)
-			.predicate(dbEdgeToBeRemoved.label())
-			.oldObject(dbVertexToBeDeleted.label())
-			.newObject(null)
-			.record(databaseProvider);
+			
 		}else{
+			logger.info("Deleting edge and node:"+dbEdgeToBeRemoved.label()+":"+dbVertexToBeDeleted.label());
 			dbVertexToBeDeleted.remove();
 			dbEdgeToBeRemoved.remove();
-			AuditRecord record = appContext.getBean(AuditRecord.class);
-			String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
-			String auditVertexlabel= registryContext+tailOfdbVertex;
-			record
-			.subject(auditVertexlabel)
-			.predicate(dbEdgeToBeRemoved.label())
-			.oldObject(dbVertexToBeDeleted.label())
-			.newObject(null)
-			.record(databaseProvider);
 		}
+		AuditRecord record = appContext.getBean(AuditRecord.class);
+		String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
+		String auditVertexlabel= registryContext+tailOfdbVertex;
+		record
+		.subject(auditVertexlabel)
+		.predicate(dbEdgeToBeRemoved.label())
+		.oldObject(dbVertexToBeDeleted.label())
+		.newObject(null)
+		.record(databaseProvider);
 		
     }
     
@@ -506,21 +516,42 @@ public class RegistryDaoImpl implements RegistryDao {
     private void setProperty(Vertex v, String key, Object newValue, String methodOrigin) throws AuditFailedException {
     	VertexProperty vp = v.property(key);
     	Object oldValue = vp.isPresent() ? vp.value() : null;
-    	if(schemaConfigurator.isSingleValued(key)){
+    	if(oldValue!=null && !methodOrigin.equalsIgnoreCase("update") && !schemaConfigurator.isSingleValued(key)){
+    		List valueList = new ArrayList();
+			if(oldValue instanceof List){
+				valueList = (List)oldValue;
+			} else{
+				String valueStr = (String)oldValue;
+				valueList.add(valueStr);
+			}
+			
+			if(newValue instanceof List){
+				valueList.addAll((List)newValue);
+			} else{
+				valueList.add(newValue);
+			}
+			newValue = valueList;
+    	}
+    	v.property(key, newValue);
+    	/*if(schemaConfigurator.isSingleValued(key)){
+    		System.out.println("Printing value for single-valued:"+newValue);
     		v.property(key, newValue);
-    	}else if(vp.isPresent()){
-    			Object value = vp.value();
+    	}else if(oldValue!=null && !methodOrigin.equalsIgnoreCase("update")){
+    			//Object value = vp.value();
     			List valueList = new ArrayList();
-    			if(value instanceof List){
-    				valueList = (List)value;
+    			if(oldValue instanceof List){
+    				valueList = (List)oldValue;
     			} else{
-    				String valueStr = (String)value;
+    				String valueStr = (String)oldValue;
     				valueList.add(valueStr);
     			}
+    			valueList.add(newValue);
+    			System.out.println("Printing value list:"+valueList);
     			v.property(key, valueList);
     	}else{
+    		System.out.println("Printing value for else case:"+newValue);
     		v.property(key, newValue);
-    	}
+    	}*/
     	if (!isaMetaProperty(key) && !Objects.equals(oldValue, newValue)) {
     		GraphTraversal<Vertex, Vertex> configTraversal =
     				v.graph().traversal().clone().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG);

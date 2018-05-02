@@ -72,6 +72,7 @@ public final class RDF2Graph
 					String valueStr = (String)value;
 					valueList.add(valueStr);
 				}
+				valueList.add(literal.getLabel());
 				s.property(property.toString(), valueList).property("@type",datatype);
 				
 			}else{

@@ -86,7 +86,7 @@ public class SchemaConfigurator {
     			logger.info("Single-valued");
     			return true;
     		}
-    		if(minValue > 0){
+    		if(minValue > 1){
     			logger.info("Multi-valued");
     			return false;
     		} else if(maxValue > 1){
