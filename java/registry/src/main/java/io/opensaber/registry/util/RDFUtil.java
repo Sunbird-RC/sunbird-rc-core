@@ -166,9 +166,6 @@ public class RDFUtil {
         rdfModel.add(updatedStatements.toArray(new Statement[0]));
     }
     
-    public static boolean isSingleValued(String property){
-    	return false;
-    }
     
     public static List<Resource> getRootLabels(Model rdfModel){
     	List<Resource> rootLabelList = new ArrayList<Resource>();
@@ -193,5 +190,6 @@ public class RDFUtil {
 		}
 		return typeIRIs;
     }
+    
 
 }

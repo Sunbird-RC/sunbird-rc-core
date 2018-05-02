@@ -15,28 +15,29 @@ public class SchemaConfiguratorTest {
 	
 	private SchemaConfigurator schemaConfigurator;
 	private static final String CONFIG_SCHEMA_FILE = "opensaber-schema-configuration.jsonld";
+	private static final String CONFIG_VALIDATION_FILE = "validations.shex";
 	
-	private void initialize(String file) throws IOException{
-		schemaConfigurator = new SchemaConfigurator(file);
+	private void initialize(String file, String validationFile) throws IOException{
+		schemaConfigurator = new SchemaConfigurator(file, validationFile);
 	}
 
 	@Test
 	public void test_privacy_check_for_private_field() throws IOException{
-		initialize(CONFIG_SCHEMA_FILE);
+		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
 		assertNotNull(schemaConfigurator.getSchemaConfig());
 		assertTrue(schemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/birthDate"));
 	}
 	
 	@Test
 	public void test_privacy_check_for_non_private_field() throws IOException{
-		initialize(CONFIG_SCHEMA_FILE);
+		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
 		assertNotNull(schemaConfigurator.getSchemaConfig());
 		assertFalse(schemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/teacherName"));
 	}
 	
 	@Test
 	public void test_privacy_check_for_non_existent_field() throws IOException{
-		initialize(CONFIG_SCHEMA_FILE);
+		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
 		assertNotNull(schemaConfigurator.getSchemaConfig());
 		assertFalse(schemaConfigurator.isPrivate("sample"));
 	}
@@ -47,7 +48,7 @@ public class SchemaConfiguratorTest {
 		new Random().nextBytes(array);
 		String randomString = new String(array, Charset.forName("UTF-8"));
 		String encryptedProperty= "encryptedschoolName";
-		initialize(CONFIG_SCHEMA_FILE);
+		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
 		
 		assertEquals(true,schemaConfigurator.isEncrypted(encryptedProperty));
 		assertEquals(false,schemaConfigurator.isEncrypted(null));

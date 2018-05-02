@@ -62,7 +62,7 @@ public final class RDF2Graph
 			Literal literal = (Literal)objectValue;
 			String datatype = literal.getDatatype().toString();
 			logger.info("TYPE saved is "+datatype);
-			/*VertexProperty vp = s.property(property.toString());
+			VertexProperty vp = s.property(property.toString());
 			if(vp.isPresent()){
 				Object value = vp.value();
 				List valueList = new ArrayList();
@@ -72,11 +72,12 @@ public final class RDF2Graph
 					String valueStr = (String)value;
 					valueList.add(valueStr);
 				}
-				s.property(property.toString(), valueList);
+				valueList.add(literal.getLabel());
+				s.property(property.toString(), valueList).property("@type",datatype);
 				
-			}else{*/
+			}else{
 				s.property(property.toString(), literal.getLabel()).property("@type",datatype);
-			//}
+			}
 		} else if (objectValue instanceof IRI) {
 			IRI objectIRI = (IRI)objectValue;
 			Vertex o = getExistingVertexOrAdd(objectIRI.toString(), graph);

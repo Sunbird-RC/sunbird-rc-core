@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.PostConstruct;
@@ -19,8 +21,8 @@ import javax.annotation.PostConstruct;
 public class AuditRecord {
 	private String subject;
     private String predicate;
-    private String oldObject;
-    private String newObject;
+    private Object oldObject;
+    private Object newObject;
     private String readOnlyAuthInfo;
     
     @Value("${registry.system.base}")
@@ -37,12 +39,20 @@ public class AuditRecord {
     }
 
     public AuditRecord oldObject(Object oldValue) {
-        this.oldObject = String.valueOf(oldValue);
+    	if(oldValue instanceof List){
+    		this.oldObject = (List)oldValue;
+    	}else {
+    		this.oldObject = String.valueOf(oldValue);
+    	}
         return this;
     }
 
     public AuditRecord newObject(Object newValue) {
-        this.newObject = String.valueOf(newValue);
+        if(newValue instanceof List){
+    		this.newObject = (List)newValue;
+    	}else {
+    		this.newObject = String.valueOf(newValue);
+    	}
         return this;
     }
 

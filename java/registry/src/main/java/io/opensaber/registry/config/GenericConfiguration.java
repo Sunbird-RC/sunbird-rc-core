@@ -102,7 +102,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public SchemaConfigurator schemaConfiguration() throws IOException{
 		String fieldConfigFileName = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
-		return new SchemaConfigurator(fieldConfigFileName);
+		String validationConfigFile = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
+		return new SchemaConfigurator(fieldConfigFileName, validationConfigFile);
 	}
 	
 	@Bean

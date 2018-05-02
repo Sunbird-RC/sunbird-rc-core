@@ -1,7 +1,7 @@
 {
-  "@id":"!samp131d",
-  "sample:revenueBlock": "updated block",
-  "sample:clusterResourceCentre":"Updated Cluster Resource",
+    "@type":"sample:IndianUrbanPostalAddress",
+    "sample:mohalla":"Updated Sector 14",
+    "sample:municipality":"Updated MCG",
   "@context":{
     "rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "xsd":"http://www.w3.org/2001/XMLSchema#",

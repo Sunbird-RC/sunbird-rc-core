@@ -1,0 +1,28 @@
+package io.opensaber.registry;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
+
+import io.opensaber.registry.controller.RegistryControllerTest;
+import io.opensaber.registry.dao.impl.EncryptionDaoImplTest;
+import io.opensaber.registry.dao.impl.RegistryDaoImplTest;
+import io.opensaber.registry.service.impl.RegistryEncryptionServiceImplTest;
+import io.opensaber.registry.service.impl.RegistryServiceImplTest;
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+@SuiteClasses({RegistryDaoImplTest.class, RegistryControllerTest.class, RegistryServiceImplTest.class, 
+	EncryptionDaoImplTest.class, RegistryEncryptionServiceImplTest.class})
+@RunWith(Suite.class)
+public class RegistryTestSuite {
+
+	public static Test suite() {
+		TestSuite suite = new TestSuite(RegistryTestSuite.class.getName());
+		//$JUnit-BEGIN$
+
+		//$JUnit-END$
+		return suite;
+	}
+
+}
