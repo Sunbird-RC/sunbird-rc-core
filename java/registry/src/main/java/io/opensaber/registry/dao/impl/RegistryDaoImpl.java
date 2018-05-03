@@ -72,14 +72,14 @@ public class RegistryDaoImpl implements RegistryDao {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
 		if (traversalSource.clone().V().hasLabel(label).hasNext()) {
-			closeGraph(graphFromStore);
+			// closeGraph(graphFromStore);
 			throw new DuplicateRecordException(Constants.DUPLICATE_RECORD_MESSAGE);
 		}
 
 		TinkerGraph graph = (TinkerGraph) entity;
 		String rootNodeLabel = createOrUpdateEntity(graph, label, "create");
 		logger.info("Successfully created entity with label " + rootNodeLabel);
-		closeGraph(graphFromStore);
+		// closeGraph(graphFromStore);
 		return rootNodeLabel;
 	}
 	
@@ -90,24 +90,25 @@ public class RegistryDaoImpl implements RegistryDao {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
 		if (rootNodeLabel!=null && property!=null && !traversalSource.clone().V().hasLabel(rootNodeLabel).hasNext()) {
-			closeGraph(graphFromStore);
+			// closeGraph(graphFromStore);
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		} else if (traversalSource.clone().V().hasLabel(label).hasNext()) {
-			closeGraph(graphFromStore);
+			// closeGraph(graphFromStore);
 			throw new DuplicateRecordException(Constants.DUPLICATE_RECORD_MESSAGE);
 		}
 
 		TinkerGraph graph = (TinkerGraph) entity;
 		label = createOrUpdateEntity(graph, label, "create");
-		
-		if (rootNodeLabel!=null && property!=null){
+
+		if (rootNodeLabel != null && property != null) {
 			connectNodes(rootNodeLabel, label, property);
 		}
 		logger.info("Successfully created entity with label " + label);
-		closeGraph(graphFromStore);
+		// closeGraph(graphFromStore);
 		return label;
 	}
 
+	/*
 	private void closeGraph(Graph graph) {
 		try {
 			graph.close();
@@ -115,18 +116,19 @@ public class RegistryDaoImpl implements RegistryDao {
 			logger.error("Exception when closing the database graph", ex);
 		}
 	}
+	*/
 	
 	private void connectNodes(String rootLabel, String label, String property) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
 		
 		if (!traversalSource.clone().V().hasLabel(rootLabel).hasNext()) {
-			closeGraph(graphFromStore);
+			// closeGraph(graphFromStore);
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		}
 		
 		if (!traversalSource.clone().V().hasLabel(label).hasNext()) {
-			closeGraph(graphFromStore);
+			// closeGraph(graphFromStore);
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		}
 		
@@ -135,7 +137,6 @@ public class RegistryDaoImpl implements RegistryDao {
 			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
 			connectRootToEntity(traversalSource, rootLabel, label, property);
 			tx.commit();
-			// tx.close();
 		} else {
 			connectRootToEntity(traversalSource, rootLabel, label, property);
 		}
@@ -163,7 +164,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws EncryptionException 
 	 * @throws NoSuchElementException 
 	 */
-	private String createOrUpdateEntity(Graph entity, String rootLabel, String methodOrigin) throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
+	private String createOrUpdateEntity(Graph entity, String rootLabel, String methodOrigin)
+			throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 
@@ -395,9 +397,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		.record(databaseProvider);
 		
     }
-    
-    	
-    	
 
 	/**
 	 * Blank nodes are no longer supported. If the input data has a blank node, which is identified
@@ -441,11 +440,11 @@ public class RegistryDaoImpl implements RegistryDao {
 		// Check if the root node being updated exists in the database
 		GraphTraversal<Vertex, Vertex> hasRootLabel = dbGraphTraversalSource.clone().V().hasLabel(rootNodeLabel);
 		if (!hasRootLabel.hasNext()) {
-			closeGraph(graphFromStore);
+			// closeGraph(graphFromStore);
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		} else {
 			createOrUpdateEntity(graphForUpdate, rootNodeLabel, methodOrigin);
-			closeGraph(graphFromStore);
+			// closeGraph(graphFromStore);
 		}
 		return false;
 	}
@@ -458,14 +457,14 @@ public class RegistryDaoImpl implements RegistryDao {
 		GraphTraversal<Vertex, Vertex> hasLabel = traversalSource.clone().V().hasLabel(label);
 		Graph parsedGraph = TinkerGraph.open();
 		if (!hasLabel.hasNext()) {
-            closeGraph(graphFromStore);
+            // closeGraph(graphFromStore);
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		} else {					
 			Vertex subject = hasLabel.next();
 			Vertex newSubject = parsedGraph.addVertex(subject.label());
 			copyProperties(subject, newSubject,"read");
 			extractGraphFromVertex(parsedGraph,newSubject,subject);
-            closeGraph(graphFromStore);
+            // closeGraph(graphFromStore);
 		}
 		return parsedGraph;
 	}

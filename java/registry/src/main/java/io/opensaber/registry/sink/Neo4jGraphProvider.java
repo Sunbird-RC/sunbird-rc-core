@@ -2,6 +2,7 @@ package io.opensaber.registry.sink;
 
 import com.steelbridgelabs.oss.neo4j.structure.Neo4JElementIdProvider;
 import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
+import com.steelbridgelabs.oss.neo4j.structure.providers.DatabaseSequenceElementIdProvider;
 import com.steelbridgelabs.oss.neo4j.structure.providers.Neo4JNativeElementIdProvider;
 import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.configuration.BaseConfiguration;
@@ -69,6 +70,8 @@ public class Neo4jGraphProvider extends DatabaseProvider {
         logger.info("Gracefully shutting down Graph DB instance ...");
         logger.info("**************************************************************************");
         graph.close();
-        driver.close();
+        if (driver != null) {
+            driver.close();
+        }
     }
 }

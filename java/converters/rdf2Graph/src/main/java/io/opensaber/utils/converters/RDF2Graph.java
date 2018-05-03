@@ -113,14 +113,14 @@ public final class RDF2Graph
 	}
 
 	private static void extractModelFromVertex(ModelBuilder builder, Vertex s) {
-		logger.info("Vertex "+s.label());
+		logger.debug("Vertex "+s.label());
 		ValueFactory vf = SimpleValueFactory.getInstance();
-		logger.info("ADDING it as Subject");
+		logger.debug("ADDING it as Subject");
 		builder.subject(s.label());
 		Iterator<VertexProperty<String>> propertyIter = s.properties();
 		while (propertyIter.hasNext()){
 			VertexProperty<String> property = propertyIter.next();
-			logger.info("ADDING Property "+property.label()+": "+property.value());
+			logger.debug("ADDING Property "+property.label()+": "+property.value());
 			String literal = property.value();
 			Property<Object> metaProperty = property.property("@type");
 			String type = null;
@@ -128,44 +128,44 @@ public final class RDF2Graph
 			    type = metaProperty.value().toString();
             }
 			Object object = literal;
-			logger.info("TYPE is: "+type);
+			logger.debug("TYPE is: "+type);
 			if(type!=null){
                 switch(type){
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#boolean":
-                        logger.info("Found boolean");
+                        logger.debug("Found boolean");
                         object=vf.createLiteral(XMLDatatypeUtil.parseBoolean(literal));
                         break;
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#byte":
                         object=vf.createLiteral(XMLDatatypeUtil.parseByte(literal));
-                        logger.info("Found byte");
+                        logger.debug("Found byte");
                         break;
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#short":
                         object=vf.createLiteral(XMLDatatypeUtil.parseShort(literal));
-                        logger.info("Found short");
+                        logger.debug("Found short");
                         break;
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#int":
                         object=vf.createLiteral(XMLDatatypeUtil.parseInt(literal));
-                        logger.info("Found int");
+                        logger.debug("Found int");
                         break;
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#long":
                         object=vf.createLiteral(XMLDatatypeUtil.parseLong(literal));
-                        logger.info("Found long");
+                        logger.debug("Found long");
                         break;
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#float":
                         object=vf.createLiteral(XMLDatatypeUtil.parseFloat(literal));
-                        logger.info("Found float");
+                        logger.debug("Found float");
                         break;
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#double":
                         object=vf.createLiteral(XMLDatatypeUtil.parseDouble(literal));
-                        logger.info("Found double");
+                        logger.debug("Found double");
                         break;
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#integer":
                         object=vf.createLiteral(XMLDatatypeUtil.parseInteger(literal));
-                        logger.info("Found integer");
+                        logger.debug("Found integer");
                         break;
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#decimal":
                         object=vf.createLiteral(XMLDatatypeUtil.parseDecimal(literal));
-                        logger.info("Found decimal");
+                        logger.debug("Found decimal");
                         break;
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#dateTime":
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#time":
@@ -176,7 +176,7 @@ public final class RDF2Graph
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonth":
                     case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gDay":
                         object=vf.createLiteral(XMLDatatypeUtil.parseCalendar(literal));
-                        logger.info("Found date");
+                        logger.debug("Found date");
                         break;
 //                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#duration":
 //                        object=vf.createLiteral(XMLDatatypeUtil.parseDuration(literal));
@@ -184,7 +184,7 @@ public final class RDF2Graph
 //                        break;
                 }
             }
-            logger.info("OBJECT ADDED is "+object+"-"+object.getClass().getName());
+            logger.debug("OBJECT ADDED is "+object+"-"+object.getClass().getName());
 			builder.add(property.label(), object);
 		}
 		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
@@ -196,11 +196,11 @@ public final class RDF2Graph
 //			builder.add(edge.label(), bNode);
 			Resource node;
 			if(s.label().startsWith("_:")){
-				logger.info("ADDING NODE - BLANK");
+				logger.debug("ADDING NODE - BLANK");
 				node = vf.createBNode();
 			} else {
 				node = vf.createIRI(s.label());
-				logger.info("ADDING NODE - IRI");
+				logger.debug("ADDING NODE - IRI");
 			}
 			builder.add(edge.label(), node);
 			vStack.push(s);
