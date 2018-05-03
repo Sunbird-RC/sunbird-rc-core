@@ -64,6 +64,15 @@ decryption:
 # Feature Toggling
 feature:
   toggling: false
+
+  keycloak:
+    sso:
+      publicKey:  ${sunbird_sso_publickey}
+      realm:  ${sunbird_sso_realm}
+      auth_server_url:  ${sunbird_sso_url}
+      username: ${sunbird_sso_username}
+      password: ${sunbird_sso_password}
+      clientId: ${sunbird_sso_client_id}
 ---
 ##################################################################
 #                      STAGING PROFILE                           #
@@ -128,6 +137,15 @@ decryption:
 # Feature Toggling
 feature:
   toggling: false
+
+  keycloak:
+    sso:
+      publicKey:  ${sunbird_sso_publickey}
+      realm:  ${sunbird_sso_realm}
+      auth_server_url:  ${sunbird_sso_url}
+      username: ${sunbird_sso_username}
+      password: ${sunbird_sso_password}
+      clientId: ${sunbird_sso_client_id}
 ---
 ##################################################################
 #                      TEST PROFILE                              #
@@ -177,3 +195,12 @@ decryption:
 # Feature Toggling
 feature:
   toggling: false
+
+  keycloak:
+    sso:
+      publicKey:  ${sunbird_sso_publickey}
+      realm:  ${sunbird_sso_realm}
+      auth_server_url:  ${sunbird_sso_url}
+      username: ${sunbird_sso_username}
+      password: ${sunbird_sso_password}
+      clientId: ${sunbird_sso_client_id}

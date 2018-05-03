@@ -45,9 +45,11 @@ public abstract class DatabaseProvider {
                 Vertex globalConfig = getGraphStore().traversal().clone().addV(Constants.GRAPH_GLOBAL_CONFIG).next();
                 globalConfig.property(Constants.PERSISTENT_GRAPH, true);
                 tx.commit();
+                logger.debug("Graph initialised using transaction !");
             } else {
                 Vertex globalConfig = getGraphStore().traversal().clone().addV(Constants.GRAPH_GLOBAL_CONFIG).next();
                 globalConfig.property(Constants.PERSISTENT_GRAPH, true);
+                logger.debug("Graph initialised without transaction !");
             }
         }
     }

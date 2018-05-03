@@ -6,6 +6,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -24,6 +26,8 @@ public class RDFValidationMappingInterceptor extends BaseRequestHandler implemen
 	private RDFValidationMapper rdfValidationMapper;
 	
 	private Gson gson;
+
+	private static Logger logger = LoggerFactory.getLogger(RDFValidationMappingInterceptor.class);
 	
 	@Autowired
 	public RDFValidationMappingInterceptor(RDFValidationMapper rdfValidationMapper, Gson gson){
@@ -39,13 +43,16 @@ public class RDFValidationMappingInterceptor extends BaseRequestHandler implemen
 		mergeRequestAttributes(attributeMap);
 		request = getRequest();
 		if (request.getAttribute(Constants.RDF_VALIDATION_MAPPER_OBJECT) != null) {
+			logger.debug("RDF validator object mapped successfully !");
 			return true;
 		}
 		}catch(MiddlewareHaltException e){
+			logger.error("MiddlewareHaltException from RDFValidationMappingInterceptor !" + e);
 			setResponse(response);
 			writeResponseObj(gson, e.getMessage());
 			response = getResponse();
 		}catch(Exception e){
+			logger.error("Exception from RDFValidationMappingInterceptor !" + e);
 			e.printStackTrace();
 			setResponse(response);
 			writeResponseObj(gson, Constants.RDF_VALIDATION_MAPPING_ERROR);

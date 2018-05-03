@@ -44,7 +44,8 @@ public class JSONLDConversionInterceptor extends BaseResponseHandler implements 
 			setFormattedResponse(responseMap.get(Constants.RESPONSE_ATTRIBUTE).toString());
 			writeResponseBody(getFormattedResponse());
 		}
-		response = getResponse();		
+		response = getResponse();
+		logger.debug("JSON-LD converted successfully !");
 	}
 	
 	@Override

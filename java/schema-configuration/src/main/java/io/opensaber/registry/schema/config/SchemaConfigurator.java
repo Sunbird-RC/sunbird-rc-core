@@ -2,7 +2,6 @@ package io.opensaber.registry.schema.config;
 
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -15,7 +14,6 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.registry.middleware.util.Constants;
@@ -32,8 +30,9 @@ public class SchemaConfigurator {
 	private Model validationConfig;
 	private static final String SCHEMAFORMAT = "SHEXC";
 	private static final String PROCESSOR 	= "shex";
+
 	private Option<String> none = Option.empty();
-	
+
 	public SchemaConfigurator(String schemaFile, String validationFile) throws IOException{
 		loadSchemaConfigModel(schemaFile);
 		loadValidationConfigModel(validationFile);
@@ -100,7 +99,7 @@ public class SchemaConfigurator {
 		logger.info("Property not matching any condition:" + property);
 		return true;
 	}
-	
+
 	private Long getValueConstraint(String constraint, Resource subject){
     	Property predicate = ResourceFactory.createProperty(constraint);
 		NodeIterator nodeIter = validationConfig.listObjectsOfProperty(subject, predicate);
