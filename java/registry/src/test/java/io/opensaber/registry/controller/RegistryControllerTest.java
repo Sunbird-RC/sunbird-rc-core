@@ -1,6 +1,8 @@
 package io.opensaber.registry.controller;
 
 import static org.junit.Assert.*;
+
+import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.app.OpenSaberApplication;
 import io.opensaber.registry.authorization.AuthorizationToken;
@@ -12,8 +14,11 @@ import io.opensaber.registry.service.impl.RegistryServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 import io.opensaber.registry.util.RDFUtil;
+import io.opensaber.validators.shex.shaclex.ShaclexValidator;
+
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
+import org.assertj.core.util.Arrays;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
@@ -23,6 +28,7 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,8 +49,11 @@ import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.RegistryService;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {OpenSaberApplication.class, RegistryController.class,
@@ -54,9 +63,13 @@ import java.util.Collections;
 public class RegistryControllerTest extends RegistryTestBase {
 	
 	private static final String VALID_JSONLD = "school.jsonld";
+	private static final String VALIDNEW_JSONLD = "school1.jsonld";
 	private static final String CONTEXT_CONSTANT = "sample:";
 
 	private boolean isInitialized = false;
+	
+	@Value("${registry.context.base}")
+	private String registryContextBase;
 
 	@Autowired
 	private RegistryService registryService;
@@ -111,7 +124,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 	@Test
 	public void test_adding_a_new_record() throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException{
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
-		registryService.addEntity(model);
+		registryService.addEntity(model,null,null);
 		assertEquals(5,
 				IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
 						.filter(v -> !v.get().label().equalsIgnoreCase(Constants.GRAPH_GLOBAL_CONFIG))
@@ -123,10 +136,10 @@ public class RegistryControllerTest extends RegistryTestBase {
 		expectedEx.expect(DuplicateRecordException.class);
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
 		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
-		String entityId = registryService.addEntity(model);
+		String entityId = registryService.addEntity(model,null,null);
 		RDFUtil.updateRdfModelNodeId(model,
 				ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/School"), entityId);
-		registryService.addEntity(model);
+		registryService.addEntity(model,null,null);
 	}
 	
 	@Test
@@ -134,7 +147,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 		Model model = ModelFactory.createDefaultModel();
 		expectedEx.expect(EntityCreationException.class);
 		expectedEx.expectMessage(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
-		registryService.addEntity(model);
+		registryService.addEntity(model,null,null);
 		closeDB();
 	}
 	
@@ -144,7 +157,7 @@ public class RegistryControllerTest extends RegistryTestBase {
 		model.add(getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT));
 		expectedEx.expect(MultipleEntityException.class);
 		expectedEx.expectMessage(Constants.ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE);
-		registryService.addEntity(model);
+		registryService.addEntity(model,null,null);
 		closeDB();
 	}
 
@@ -171,9 +184,25 @@ public class RegistryControllerTest extends RegistryTestBase {
 			}
 		});
 	}
+	
+	@Test
+	public void test_adding_record_with_multi_valued_literal_properties() throws Exception {
+		Model model = getNewValidRdf(VALIDNEW_JSONLD);
+		List<Resource> roots = RDFUtil.getRootLabels(model);
+		String[] ct = {"I","II","III","IV"};
+		List classesTaught = Arrays.asList(ct);
+		for(Object obj : classesTaught){
+			model.add(roots.get(0), ResourceFactory.createProperty(registryContextBase+"classesTaught"), (String)obj);
+		}
+		String response = registryService.addEntity(model,null,null);
+		assertTrue(ShaclexValidator.parse(registryService.frameEntity(registryService.getEntityById(response)),"JSON-LD").isIsomorphicWith(model));
+		closeDB();
+	}
 
 	public void closeDB() throws Exception{
 		databaseProvider.shutdown();
 	}
+	
+	
 
 }

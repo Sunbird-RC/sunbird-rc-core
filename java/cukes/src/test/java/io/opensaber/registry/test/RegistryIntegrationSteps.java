@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +46,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private static final String VALID_JSONLD= "school.jsonld";
 	//private static final String VALID_NEWJSONLD= "newSchool.jsonld";
 	private static final String VALID_NEWJSONLD= "teacher.jsonld";
+	private static final String ENTITY_JSONLD= "basicProficiencyLevel.jsonld";
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
 	private static final String INVALID_NEWJSONLD= "invalid-teacher.jsonld";
 	private static final String ADD_ENTITY = "add";
@@ -71,6 +74,12 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		setJsonld(VALID_NEWJSONLD);
 		id=setJsonldWithNewRootLabel();	
 		assertNotNull(jsonld);
+	}
+	
+	@Given("^an id for a non-existent record")
+	public void non_existent_record(){
+		id=generateRandomId();
+		updateId=id;
 	}
 	
 	@Given("^a record with invalid type")
@@ -109,6 +118,23 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	public void addEntity(){
 		response = callRegistryCreateAPI();
 	}
+	
+	@When("^an entity for the record is issued into the registry$")
+	public void add_entity_to_existing_record_in_registry(){
+		jsonldData(ENTITY_JSONLD);
+		response = callRegistryCreateAPI(baseUrl+updateId,baseUrl+"basicProficiencyLevel");
+	}
+	
+	@When("^the same entity for the record is issued into the registry$")
+	public void add_existing_entity_to_existing_record_in_registry(){
+		response = callRegistryCreateAPI(baseUrl+updateId,baseUrl+"basicProficiencyLevel");
+	}
+	
+	public void jsonldData(String filename){
+		setJsonld(filename);
+		id=setJsonldWithNewRootLabel();	
+		assertNotNull(jsonld);
+	}
 
 	private ResponseEntity<Response> callRegistryCreateAPI() {
 		headers.setContentType(MediaType.APPLICATION_JSON);
@@ -117,6 +143,20 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 				baseUrl+ADD_ENTITY,
 				entity,
 				Response.class);	
+		return response;
+	}
+	
+	private ResponseEntity<Response> callRegistryCreateAPI(String entityLabel, String property) {
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		HttpEntity<String> entity = new HttpEntity<String>(jsonld,headers);
+		Map<String,String> uriVariables = new HashMap<String,String>();
+		uriVariables.put("id", entityLabel);
+		uriVariables.put("prop", property);
+		ResponseEntity<Response> response = restTemplate.postForEntity(
+				baseUrl+ADD_ENTITY+"?id={id}&prop={prop}",
+				entity,
+				Response.class,
+				uriVariables);	
 		return response;
 	}
 	
@@ -209,6 +249,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	public void retrieving_the_record_from_the_registry(){
 		response = callRegistryReadAPI();
 	}
+
 
 	private ResponseEntity<Response> callRegistryReadAPI() {
 		HttpEntity<String> entity = new HttpEntity<>(headers);

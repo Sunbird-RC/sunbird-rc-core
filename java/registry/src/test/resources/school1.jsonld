@@ -1,0 +1,30 @@
+{
+	"@id":"!samp131d",
+	"sample:academicCalendarYearEnd": "2018",
+	"sample:academicCalendarYearStart": "2017",
+	"sample:assemblyConstituency": "Gurgaon",
+	"@type": "sample:School",
+	"sample:schoolName": "Bluebells",
+	"sample:udiseNumber": "9876",
+	"sample:clusterResourceCentre": "some Cluster Resource",
+	"sample:address": {
+		"@id":"!samp131d",
+		"sample:district": "Gurgaon",
+		"@type": "sample:IndianUrbanPostalAddress",
+		"sample:mohalla": "Sector 14",
+		"sample:municipality": "MCG",
+		"sample:city": "Gurgaon",
+		"sample:pinCode": "122001",
+		"sample:wardNumber": "456"
+	},
+	"sample:area": {
+		"@id": "sample:AreaTypeCode-URBAN"
+	},
+	"sample:revenueBlock": "some block",
+	"@context": {
+		"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+		"xsd": "http://www.w3.org/2001/XMLSchema#",
+		"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+		"sample": "http://example.com/voc/teacher/1.0.0/"
+	}
+}

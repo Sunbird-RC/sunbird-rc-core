@@ -61,15 +61,15 @@ public class RegistryServiceImpl implements RegistryService {
 	@Autowired
 	EncryptionService encryptionService;
 	
-	@org.springframework.beans.factory.annotation.Value("${feature.toggling}")
-	private Boolean featureToggling;
+	/*@org.springframework.beans.factory.annotation.Value("${feature.toggling}")
+	private Boolean featureToggling;*/
 
 	@Override
 	public List getEntityList(){
 		return registryDao.getEntityList();
 	}
 
-	@Override
+	/*@Override
 	public String addEntity(Model rdfModel) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException {
 		try {
 			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
@@ -84,7 +84,7 @@ public class RegistryServiceImpl implements RegistryService {
 			logger.error("Exception when creating entity: ", ex);
 			throw ex;
 		}
-	}
+	}*/
 	
 	@Override
 	public String addEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException, 
@@ -106,7 +106,7 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
+	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
 		String label = getRootLabel(entity);
 		Graph graph =  generateGraphFromRDF(entity);
 		return registryDao.updateEntity(graph, label,"update");

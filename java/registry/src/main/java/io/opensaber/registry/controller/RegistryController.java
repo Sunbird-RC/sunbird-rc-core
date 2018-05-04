@@ -48,7 +48,7 @@ public class RegistryController {
 	@Value("${registry.context.base}")
 	private String registryContext;
 	
-	@RequestMapping(value = "/create", method = RequestMethod.POST)
+	/*@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
@@ -70,13 +70,12 @@ public class RegistryController {
 			responseParams.setErrmsg(e.getMessage());
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+	}*/
 
 	
 	@RequestMapping(value = "/add", method = RequestMethod.POST)
 	public ResponseEntity<Response> addToExistingEntity(@RequestAttribute Request requestModel, 
 			@RequestParam(value="id", required = false) String id, @RequestParam(value="prop", required = false) String property) {
-		
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
@@ -99,7 +98,7 @@ public class RegistryController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
+	/*@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> getEntity(@PathVariable("id") String id) {
 		id = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
@@ -110,8 +109,8 @@ public class RegistryController {
 			logger.debug("FETCHED: " + entityModel);
 			String jenaJSON = registryService.frameEntity(entityModel);
 			JSONObject jenaObj = new JSONObject(jenaJSON);
-			/*Map<String,Object> resultMap = new HashMap<String,Object>();
-			resultMap.put(Constants.RESPONSE_ATTRIBUTE, entityModel);*/
+			Map<String,Object> resultMap = new HashMap<String,Object>();
+			resultMap.put(Constants.RESPONSE_ATTRIBUTE, entityModel);
 			response.setResult(jenaObj.toMap());
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (RecordNotFoundException e) {
@@ -125,7 +124,7 @@ public class RegistryController {
 			logger.error("ERROR!", e);
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+	}*/
 	
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> readEntity(@PathVariable("id") String id) {
@@ -155,7 +154,7 @@ public class RegistryController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@ResponseBody
+	/*@ResponseBody
 	@RequestMapping(value = "/update/{id}", method = RequestMethod.PATCH)
 	public ResponseEntity<Response> updateEntity(@RequestAttribute Request requestModel,
 			@PathVariable("id") String id) {
@@ -179,7 +178,7 @@ public class RegistryController {
 			logger.error("ERROR!", e);
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+	}*/
 	
 	@ResponseBody
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
@@ -190,7 +189,7 @@ public class RegistryController {
 		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
 
 		try {
-			registryService.updateEntity(rdf, null);
+			registryService.updateEntity(rdf);
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (RecordNotFoundException | EntityCreationException e) {

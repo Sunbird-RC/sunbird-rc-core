@@ -12,12 +12,12 @@ public interface RegistryService {
 	
 	public List getEntityList();
 	
-	public String addEntity(Model rdfModel) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException;
+	//public String addEntity(Model rdfModel) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException;
 	
 	public String addEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException, 
 	EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException;
 	
-	public boolean updateEntity(Model entity, String rootNodeLabel) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException;
+	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException;
 	
 	public org.eclipse.rdf4j.model.Model getEntityById(String id) throws RecordNotFoundException, EncryptionException, AuditFailedException;
 	

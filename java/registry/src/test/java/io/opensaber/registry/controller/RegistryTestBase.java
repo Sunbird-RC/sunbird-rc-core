@@ -98,6 +98,7 @@ public class RegistryTestBase {
 	
 	public Model getNewValidRdf(String fileName){
 		setJsonld(fileName);
+		setJsonldWithNewRootLabel();
 		return ShaclexValidator.parse(jsonld, FORMAT);
 	}
 
@@ -125,6 +126,12 @@ public class RegistryTestBase {
 	
 	public void setJsonldWithNewRootLabel(String label){
 		jsonld = jsonld.replace(REPLACING_SUBJECT_LABEL, label);
+	}
+	
+	public void setJsonldWithNewRootLabel(){
+		while (jsonld.contains(REPLACING_SUBJECT_LABEL)) {
+			jsonld = jsonld.replaceFirst(REPLACING_SUBJECT_LABEL, CONTEXT_CONSTANT+generateRandomId());
+		}
 	}
 	
 	public static String generateRandomId(){
