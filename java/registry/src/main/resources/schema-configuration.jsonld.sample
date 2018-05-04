@@ -5,7 +5,7 @@
 		"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
 		"opensaber": "http://example.com/voc/opensaber/1.0.0/",
 		"xsd": "http://www.w3.org/2001/XMLSchema#",
-		"teacher": "http://example.com/voc/teacher/1.0.0/"
+		"teacher": "http://localhost:8080/"
 	},
 
 	"@type": "opensaber:Registry",

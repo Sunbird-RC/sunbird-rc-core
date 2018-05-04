@@ -43,6 +43,27 @@ public class SchemaConfiguratorTest {
 	}
 	
 	@Test
+	public void test_single_valued_property() throws IOException{
+		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
+		assertNotNull(schemaConfigurator.getValidationConfig());
+		assertTrue(schemaConfigurator.isSingleValued("http://example.com/voc/teacher/1.0.0/serialNum"));
+	}
+	
+	@Test
+	public void test_multi_valued_property() throws IOException{
+		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
+		assertNotNull(schemaConfigurator.getValidationConfig());
+		assertFalse(schemaConfigurator.isSingleValued("http://example.com/voc/teacher/1.0.0/mainSubjectsTaught"));
+	}
+	
+	@Test
+	public void test_non_configured_property() throws IOException{
+		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
+		assertNotNull(schemaConfigurator.getValidationConfig());
+		assertTrue(schemaConfigurator.isSingleValued("http://example.com/voc/teacher/1.0.0/predicate"));
+	}
+	
+	@Test
 	public void test_isEncrypted() throws Exception {
 		byte[] array = new byte[7];
 		new Random().nextBytes(array);

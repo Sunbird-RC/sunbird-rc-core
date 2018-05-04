@@ -195,7 +195,9 @@ public class RegistryControllerTest extends RegistryTestBase {
 			model.add(roots.get(0), ResourceFactory.createProperty(registryContextBase+"classesTaught"), (String)obj);
 		}
 		String response = registryService.addEntity(model,null,null);
-		assertTrue(ShaclexValidator.parse(registryService.frameEntity(registryService.getEntityById(response)),"JSON-LD").isIsomorphicWith(model));
+		org.eclipse.rdf4j.model.Model responseModel = registryService.getEntityById(response);
+		Model jenaModel = JenaRDF4J.asJenaModel(responseModel);
+		assertTrue(jenaModel.isIsomorphicWith(model));
 		closeDB();
 	}
 
