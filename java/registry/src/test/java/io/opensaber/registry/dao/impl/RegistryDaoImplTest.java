@@ -1095,7 +1095,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model updateRdfModel = createRdfFromFile("update_node.jsonld", response);
 		removeStatementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"));
 		removeStatementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/revenueBlock"));
-		Resource newSubject = ResourceFactory.createProperty(response);
+		Resource newSubject = ResourceFactory.createResource(response);
 		Property newPredicate = ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/area");
 		RDFNode newRdfNode = ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/AreaTypeCode-RURAL");
 		updateRdfModel.add(newSubject, newPredicate, newRdfNode);

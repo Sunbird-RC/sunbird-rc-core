@@ -57,9 +57,6 @@ public class RegistryDaoImpl implements RegistryDao {
 	@Autowired
 	ApplicationContext appContext;
 
-	@Value("${feature.toggling}")
-	private Boolean featureToggling;
-
 	@Override
 	public List getEntityList() {
 		// TODO Auto-generated method stub
@@ -229,7 +226,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				//}
 				addOrUpdateVertexAndEdge(v, existingVertex, dbTraversalSource, methodOrigin);
 			} else {
-				if(methodOrigin.equalsIgnoreCase("update") && featureToggling){
+				if(methodOrigin.equalsIgnoreCase("update")){
 					throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 				}
 				label = generateBlankNodeLabel(rootLabel);
@@ -297,7 +294,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				}
 				parsedVertices.push(new Pair<>(ver, existingV));
 			} else {
-				if(methodOrigin.equalsIgnoreCase("update") && !isIRI(ver.label()) && featureToggling){
+				if(methodOrigin.equalsIgnoreCase("update") && !isIRI(ver.label())){
 					throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 				}
 				String label = generateBlankNodeLabel(ver.label());
@@ -388,6 +385,8 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 		Iterator<Edge> inEdgeIter = dbVertexToBeDeleted.edges(Direction.IN);
 		Iterator<Edge> outEdgeIter = dbVertexToBeDeleted.edges(Direction.OUT);
+		String edgeLabel = dbEdgeToBeRemoved.label();
+		String vertexLabel = dbVertexToBeDeleted.label();
 		if((inEdgeIter.hasNext() && IteratorUtils.count(inEdgeIter) > 1) || outEdgeIter.hasNext()){
 			logger.info("Deleting edge only:"+dbEdgeToBeRemoved.label());
 			dbEdgeToBeRemoved.remove();
@@ -402,8 +401,8 @@ public class RegistryDaoImpl implements RegistryDao {
 		String auditVertexlabel= registryContext+tailOfdbVertex;
 		record
 		.subject(auditVertexlabel)
-		.predicate(dbEdgeToBeRemoved.label())
-		.oldObject(dbVertexToBeDeleted.label())
+		.predicate(edgeLabel)
+		.oldObject(vertexLabel)
 		.newObject(null)
 		.record(databaseProvider);
 

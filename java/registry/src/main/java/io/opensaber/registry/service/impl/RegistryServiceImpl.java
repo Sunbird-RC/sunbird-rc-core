@@ -117,14 +117,14 @@ public class RegistryServiceImpl implements RegistryService {
 	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException, EncryptionException, AuditFailedException {
 		Graph graph = registryDao.getEntityById(label);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
-		for (org.eclipse.rdf4j.model.Statement statement : model) {
+		/*for (org.eclipse.rdf4j.model.Statement statement : model) {
 			logger.debug("STATEMENT " + statement);
 			Value value = statement.getObject();
 			if (value instanceof Literal) {
 				Literal literal = (Literal) value;
 				logger.debug("datatype: " + literal.getDatatype());
 			}
-		}
+		}*/
 		logger.debug("ENTITY in Service " + model);
 		return model;
 	}
