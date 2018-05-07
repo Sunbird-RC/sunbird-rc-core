@@ -61,6 +61,7 @@ public class AuthorizationFilterTest {
 		Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
 		String accessToken = (String) myMap.get("access_token");
 		mapObject.put(Constants.TOKEN_OBJECT, accessToken);
+		mapObject.put("userName", System.getenv("sunbird_sso_username"));
 		baseM.execute(mapObject);
 		AuthInfo authInfo = (AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		assertNotNull(authInfo.getSub());
@@ -122,6 +123,7 @@ public class AuthorizationFilterTest {
 			Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
 			String accessToken = (String) myMap.get("access_token");
 			mapObject.put(Constants.TOKEN_OBJECT, accessToken);
+			mapObject.put("userName",System.getenv("sunbird_sso_username"));
 
 			assertNotNull(System.getenv("sunbird_sso_publickey"));
 			assertNotNull(System.getenv("sunbird_sso_realm"));

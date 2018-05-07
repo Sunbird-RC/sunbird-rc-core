@@ -68,7 +68,7 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	@Override
 	public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
-		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
+		logger.debug("RegistryDaoImpl : Database Provider features: \n" + databaseProvider.getGraphStore().features());
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 		if (dbGraphTraversalSource.clone().V().hasLabel(label).hasNext()) {
@@ -84,8 +84,10 @@ public class RegistryDaoImpl implements RegistryDao {
 			//rootNodeLabel = createOrUpdateEntity(dbGraphTraversalSource, graph, label, "create");
 			rootNodeLabel = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
 			tx.commit();
+			logger.debug("RegistryDaoImpl : Entity added for transactional DB with rootNodeLabel : {}",rootNodeLabel);
 		}else{
 			rootNodeLabel = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
+			logger.debug("RegistryDaoImpl : Entity added for non-transactional DB with rootNodeLabel : {}",rootNodeLabel);
 		} 
 		logger.info("Successfully created entity with label " + rootNodeLabel);
 		// closeGraph(graphFromStore);
@@ -95,7 +97,7 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	@Override
 	public String addEntity(Graph entity, String label, String rootNodeLabel, String property) throws DuplicateRecordException, RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException{
-		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
+		logger.debug("RegistryDaoImpl : Database Provider features: \n" + databaseProvider.getGraphStore().features());
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 		if (rootNodeLabel!=null && property!=null && !dbGraphTraversalSource.clone().V().hasLabel(rootNodeLabel).hasNext()) {
@@ -117,8 +119,10 @@ public class RegistryDaoImpl implements RegistryDao {
 				connectNodes(rootNodeLabel, label, property);
 			}
 			tx.commit();
+			logger.debug("RegistryDaoImpl : Entity added for transactional DB with rootNodeLabel : {},	label	:	{},	property	: 	{}",rootNodeLabel, label, property);
 		}else{
 			label = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
+			logger.debug("RegistryDaoImpl : Entity added for non-transactional DB with rootNodeLabel : {},	label	:	{},	property	: 	{}",rootNodeLabel, label, property);
 			if (rootNodeLabel!=null && property!=null){
 				connectNodes(rootNodeLabel, label, property);
 			}
@@ -168,6 +172,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		.oldObject(null)
 		.newObject(entityVertex.label())
 		.record(databaseProvider);
+		logger.debug("RegistryDaoImpl : Audit record generated of connectRootToEntity for rootLabel : {}, label	:	{}, property :	{}",rootLabel,label,property);
 	}
 
 	/**
@@ -268,7 +273,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				edgeVertexMatchList.add(edgeVertexAlreadyExists.get());
 			}
 		}
-		logger.info("Matching list size:"+edgeVertexMatchList.size());
+		logger.debug("RegistryDaoImpl : Matching list size:"+edgeVertexMatchList.size());
 
 		while(edges.hasNext()) {
 			Edge e = edges.next();
@@ -295,7 +300,7 @@ public class RegistryDaoImpl implements RegistryDao {
 					.newObject(existingV.label())
 					.record(databaseProvider);
 
-					logger.info("Audit record created for update/insert(upsert) with label : {}  ", dbVertex.label());
+					logger.debug("RegistryDaoImpl : Audit record created for update/insert(upsert) with label : {}  ", dbVertex.label());
 				}
 				parsedVertices.push(new Pair<>(ver, existingV));
 			} else {
@@ -304,9 +309,9 @@ public class RegistryDaoImpl implements RegistryDao {
 				}
 				String label = generateBlankNodeLabel(ver.label());
 				Vertex newV = dbGraph.addV(label).next();
-				logger.info(String.format("Adding vertex with label {} and adding properties", newV.label()));
+				logger.debug(String.format("RegistryDaoImpl : Adding vertex with label {} and adding properties", newV.label()));
 				copyProperties(ver, newV, methodOrigin);
-				logger.info(String.format("Adding edge with label {} for the vertex label {}.", e.label(), newV.label()));
+				logger.debug(String.format("RegistryDaoImpl : Adding edge with label {} for the vertex label {}.", e.label(), newV.label()));
 
 				Edge edgeAdded = dbVertex.addEdge(edgeLabel, newV);
 				edgeVertexMatchList.add(edgeAdded);
@@ -318,7 +323,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				.newObject(newV.label())
 				.record(databaseProvider);
 
-				logger.info("Audit record created for update with label : {} ", dbVertex.label());
+				logger.debug("RegistryDaoImpl : Audit record created for update with label : {} ", dbVertex.label());
 				parsedVertices.push(new Pair<>(ver, newV));
 			}
 		}
@@ -385,18 +390,17 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws AuditFailedException
 	 */
 	private void deleteEdgeAndNode(Vertex v, Edge dbEdgeToBeRemoved, Vertex dbVertexToBeDeleted) throws AuditFailedException{
-		logger.info("Deleting edge and node:"+dbEdgeToBeRemoved.label());
+		logger.info("Deleting edge and node for edge-label :	{} , vertex-label :	{}", dbEdgeToBeRemoved.label(),dbVertexToBeDeleted.label());
 		if(dbVertexToBeDeleted == null){
 			dbVertexToBeDeleted = dbEdgeToBeRemoved.inVertex();
 		}
 		Iterator<Edge> inEdgeIter = dbVertexToBeDeleted.edges(Direction.IN);
 		Iterator<Edge> outEdgeIter = dbVertexToBeDeleted.edges(Direction.OUT);
 		if((inEdgeIter.hasNext() && IteratorUtils.count(inEdgeIter) > 1) || outEdgeIter.hasNext()){
-			logger.info("Deleting edge only:"+dbEdgeToBeRemoved.label());
+			logger.debug("RegistryDaoImpl : Deleting edge only for edge-label: {}",dbEdgeToBeRemoved.label());
 			dbEdgeToBeRemoved.remove();
-
 		}else{
-			logger.info("Deleting edge and node:"+dbEdgeToBeRemoved.label()+":"+dbVertexToBeDeleted.label());
+			logger.debug("RegistryDaoImpl : Deleting edge and node for edge-label: {} and vertex-label : {}", dbEdgeToBeRemoved.label(), dbVertexToBeDeleted.label());
 			dbVertexToBeDeleted.remove();
 			dbEdgeToBeRemoved.remove();
 		}
@@ -409,6 +413,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		.oldObject(dbVertexToBeDeleted.label())
 		.newObject(null)
 		.record(databaseProvider);
+		logger.debug("RegistryDaoImpl : Audit record created for deletion of vertex : {}", dbVertexToBeDeleted);
 
 	}
 
@@ -464,8 +469,10 @@ public class RegistryDaoImpl implements RegistryDao {
 				//createOrUpdateEntity(graphForUpdate, rootNodeLabel, methodOrigin);
 				addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootNodeLabel, methodOrigin);
 				tx.commit();
+				logger.debug("RegistryDaoImpl : Entity Updated for transactional DB with rootNodeLabel : {}",rootNodeLabel);
 			}else{
 				addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootNodeLabel, methodOrigin);
+				logger.debug("RegistryDaoImpl : Entity Updated for non-transactional DB with rootNodeLabel : {}",rootNodeLabel);
 				//createOrUpdateEntity(graphForUpdate, rootNodeLabel, methodOrigin);
 			}
 			//closeGraph(graphFromStore);
@@ -482,15 +489,16 @@ public class RegistryDaoImpl implements RegistryDao {
 		Graph parsedGraph = TinkerGraph.open();
 		if (!hasLabel.hasNext()) {
             // closeGraph(graphFromStore);
-            logger.info("Record not found !");
+            logger.info("Record not found  for label : {}",label);
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
-		} else {					
+		} else {
+			logger.info("Record exists for label : {}",label);
 			Vertex subject = hasLabel.next();
 			Vertex newSubject = parsedGraph.addVertex(subject.label());
 			copyProperties(subject, newSubject,"read");
 			extractGraphFromVertex(parsedGraph,newSubject,subject);
             // closeGraph(graphFromStore);
-            logger.info("Record found for requested entity !");
+
 		}
 		return parsedGraph;
 	}
@@ -517,13 +525,13 @@ public class RegistryDaoImpl implements RegistryDao {
 				if (!existingEncyptedPropertyKey) {
 					String encryptedKey = "encrypted" + tailOfPropertyKey;
 					setProperty(newSubject, property.key().replace(tailOfPropertyKey, encryptedKey), propertyValue, methodOrigin);
-					logger.debug("Private property {} encrypted successfully!"+privatePropertyCount++);
+					logger.debug("RegistryDaoImpl : private property {} encrypted successfully!"+privatePropertyCount++);
 					}
 			} else if (methodOrigin.equalsIgnoreCase("read") && schemaConfigurator.isEncrypted(tailOfPropertyKey)) {
 				propertyValue = encryptionService.decrypt(property.value());
 				String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
 				setProperty(newSubject, decryptedKey, propertyValue, methodOrigin);
-				logger.debug("Private property {} decrypted successfully !"+privatePropertyCount++);
+				logger.debug("RegistryDaoImpl : Private property {} decrypted successfully !"+privatePropertyCount++);
 			} else if (isaMetaProperty(property.key())) {
 				buildPropertyMetaMap(propertyMetaPropertyMap, property);
 			} else {
@@ -594,12 +602,12 @@ public class RegistryDaoImpl implements RegistryDao {
 				.oldObject(oldValue)
 				.newObject(newValue)
 				.record(databaseProvider);
-				logger.info("Audit record created for {}  !", v.label());
+				logger.debug("Audit record created for {}  !", v.label());
 			} else {
 				// System.out.println("NOT AUDITING");
 			}
 		} else {
-			logger.info("No change found for auditing !");
+			logger.debug("No change found for auditing !");
 		}
 	}
 
@@ -639,18 +647,18 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	private void buildPropertyMetaMap(HashMap<String, HashMap<String, String>> propertyMetaPropertyMap, VertexProperty<Object> property) {
 		HashMap<String, String> metaPropertyMap;
-		logger.debug("Meta Property: "+property);
+		logger.debug("RegistryDaoImpl : Meta Property: "+property);
 		Pattern pattern = Pattern.compile("meta\\.(.*)\\.(.*)");
 		Matcher match = pattern.matcher(property.key().toString());
 		if(match.find()){
 			String _property = match.group(1);
 			String _meta_property = match.group(2);
-			logger.debug("Matched meta property "+match.group(1)+ " "+match.group(2));
+			logger.debug("RegistryDaoImpl : Matched meta property "+match.group(1)+ " "+match.group(2));
 			if(propertyMetaPropertyMap.containsKey(property.key())){
-				logger.debug("Found in propertyMetaPropertyMap");
+				logger.debug("RegistryDaoImpl : Found in propertyMetaPropertyMap");
 				metaPropertyMap = propertyMetaPropertyMap.get(property.key());
 			} else {
-				logger.info("Creating metaPropertyMap in propertyMetaPropertyMap");
+				logger.debug("RegistryDaoImpl : Creating metaPropertyMap in propertyMetaPropertyMap");
 				metaPropertyMap = new HashMap<>();
 				propertyMetaPropertyMap.put(_property,metaPropertyMap);
 			}

@@ -37,7 +37,7 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 		try{
 			setRequest(request);
 			authorizationFilter.execute(getRequestHeaderMap());
-			logger.info(" Authentication successfull !");
+			//logger.info(" Authentication successfull !", request.getAuthType()+"=="+request.getRequestURI()+"=="+request.getQueryString() );
 			return true;
 		}catch(MiddlewareHaltException e){
 			logger.info(" Authentication Failed !");

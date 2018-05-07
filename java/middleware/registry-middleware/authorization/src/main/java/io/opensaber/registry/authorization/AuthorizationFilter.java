@@ -51,8 +51,11 @@ public class AuthorizationFilter implements BaseMiddleware {
           String token = tokenObject.toString();
           try {
               if (!keyCloakServiceImpl.verifyToken(token).trim().isEmpty()) {
-
-                  logger.info("Access token verified successfully with KeyCloak server !");
+               /*   if(mapObject.containsKey("userName")) {
+                      logger.info("Access token for user {} verified successfully with KeyCloak server !", mapObject.get("userName"));
+                  }else {*/
+                      logger.info("Access token verified successfully with KeyCloak server !");
+                //  }
                   AuthInfo authInfo = extractTokenIntoAuthInfo(token);
                   if (authInfo.getSub() == null || authInfo.getAud() == null || authInfo.getName() == null) {
                       throw new MiddlewareHaltException(TOKEN_IS_INVALID);

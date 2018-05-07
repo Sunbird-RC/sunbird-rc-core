@@ -95,12 +95,13 @@ public class RegistryServiceImpl implements RegistryService {
 
 			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
 			// if it is a blank node
+			logger.debug("RegistryServiceImpl : adding subject : {} with property : {}",subject,property);
 			return registryDao.addEntity(graph, label, subject, property);
 
 		} catch (EntityCreationException | EncryptionException | AuditFailedException ex) {
 			throw ex;
 		} catch (Exception ex) {
-			logger.error("Exception when creating entity: ", ex);
+			logger.error("RegistryServiceImpl : Exception when creating entity: ", ex);
 			throw ex;
 		}
 	}
@@ -109,7 +110,7 @@ public class RegistryServiceImpl implements RegistryService {
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
 		String label = getRootLabel(entity);
 		Graph graph = generateGraphFromRDF(entity);
-		logger.debug("Service layer graph :", graph);
+		logger.debug("RegistryServiceImpl : Update entity for graph : {}", graph);
 		return registryDao.updateEntity(graph, label, "update");
 	}
 
@@ -118,16 +119,15 @@ public class RegistryServiceImpl implements RegistryService {
 	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException, EncryptionException, AuditFailedException {
 		Graph graph = registryDao.getEntityById(label);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
-		logger.debug("Service layer rdf4j model :", model);
+		logger.debug("RegistryServiceImpl : rdf4j model :", model);
 		for (org.eclipse.rdf4j.model.Statement statement : model) {
-			logger.debug("STATEMENT  " + statement);
+			logger.debug("RegistryServiceImpl : STATEMENT  " + statement);
 			Value value = statement.getObject();
 			if (value instanceof Literal) {
 				Literal literal = (Literal) value;
-				logger.debug("datatype: " + literal.getDatatype());
+				logger.debug("RegistryServiceImpl : datatype: " + literal.getDatatype());
 			}
 		}
-		logger.debug("ENTITY in Service " + model);
 		return model;
 	}
 
@@ -165,6 +165,7 @@ public class RegistryServiceImpl implements RegistryService {
 		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
 		String rootLabel = getRootLabel(jenaEntityModel);
 		String rootLabelType = getTypeForRootLabel(jenaEntityModel, rootLabel);
+		logger.debug("RegistryServiceImpl : jenaEntityModel for framing: {} \n rootlabel : {}, \n rootLabelType: {}",jenaEntityModel,rootLabel,rootLabelType);
 		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
 		JsonLDWriteContext ctx = new JsonLDWriteContext();
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("frame.json");
@@ -177,12 +178,14 @@ public class RegistryServiceImpl implements RegistryService {
 		StringWriter sWriterJena = new StringWriter();
 		w.write(sWriterJena, g, pm, base, ctx);
 		String jenaJSON = sWriterJena.toString();
+		logger.debug("RegistryServiceImpl : jenaJSON for framing : {}", jenaJSON);
 		return jenaJSON;
 	}
 	
 	@Override
 	public String frameAuditEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException {
 		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
+		logger.debug("RegistryServiceImpl : jenaEntityModel for audit-framing: {} ",jenaEntityModel);
 		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
 		JsonLDWriteContext ctx = new JsonLDWriteContext();
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("audit_frame.json");
@@ -194,6 +197,7 @@ public class RegistryServiceImpl implements RegistryService {
 		StringWriter sWriterJena = new StringWriter();
 		w.write(sWriterJena, g, pm, base, ctx);
 		String jenaJSON = sWriterJena.toString();
+		logger.debug("RegistryServiceImpl : jenaJSON for audit-framing: {}", jenaJSON);
 		return jenaJSON;
 	}
 	
@@ -203,7 +207,7 @@ public class RegistryServiceImpl implements RegistryService {
 		String label = id + "-AUDIT";
 		Graph graph = registryDao.getEntityById(label);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
-		logger.debug("Audit Model : " + model);
+		logger.debug("RegistryServiceImpl : Audit Model : " + model);
 		return model;
 	}
 	

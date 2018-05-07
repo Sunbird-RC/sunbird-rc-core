@@ -89,7 +89,7 @@ public class RegistryController {
 			result.put("entity", label);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller : Entity with label {} added !", label);
+			logger.debug("RegistryController : Entity with label {} added !", label);
 		} catch (DuplicateRecordException | EntityCreationException e) {
 			logger.error("DuplicateRecordException|EntityCreationException in controller while adding entity !",e);
 			response.setResult(result);
@@ -142,21 +142,21 @@ public class RegistryController {
 
 		try {
 			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(id);
-			logger.debug("FETCHED: " + entityModel);
+			logger.debug("RegistryController : Fetched entity: " + entityModel);
 			String jenaJSON = registryService.frameEntity(entityModel);
 			JSONObject jenaObj = new JSONObject(jenaJSON);
 			/*Map<String,Object> resultMap = new HashMap<String,Object>();
 			resultMap.put(Constants.RESPONSE_ATTRIBUTE, entityModel);*/
 			response.setResult(jenaObj.toMap());
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller: entity for {} read !", id);
+			logger.debug("RegistryController: Read entity for {}!", id);
 		} catch (RecordNotFoundException e) {
-			logger.error("Controller: RecordNotFoundException while reading entity !", e);
+			logger.error("RegistryController: RecordNotFoundException while reading entity !", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
-			logger.error("Controller: Exception while reading entity!", e);
+			logger.error("RegistryController: Exception while reading entity!", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Ding! You encountered an error!");
@@ -204,14 +204,14 @@ public class RegistryController {
 			registryService.updateEntity(rdf);
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller: entity updated !");
+			logger.debug("RegistryController: entity updated !");
 		} catch (RecordNotFoundException | EntityCreationException e) {
-			logger.error("Controller: RecordNotFoundException|EntityCreationException while updating entity (without id)!", e);
+			logger.error("RegistryController: RecordNotFoundException|EntityCreationException while updating entity (without id)!", e);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 
 		} catch (Exception e) {
-			logger.error("Controller: Exception while updating entity (without id)!", e);
+			logger.error("RegistryController: Exception while updating entity (without id)!", e);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Error occurred when updating Entity");
 		}
@@ -251,19 +251,19 @@ public class RegistryController {
 
 		try {
 			org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(id);
-			logger.debug("Audit Record model :"+ auditModel);
+			logger.debug("RegistryController : Audit Record model :"+ auditModel);
 			String jenaJSON = registryService.frameAuditEntity(auditModel);
 			Type type = new TypeToken<Map<String, Object>>(){}.getType();
 			response.setResult(new Gson().fromJson(jenaJSON, type));
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller: audit records fetched !");
+			logger.debug("RegistryController: audit records fetched !");
 		} catch (RecordNotFoundException e) {
-			logger.error("Controller: RecordNotFoundException while fetching audit !", e);
+			logger.error("RegistryController: RecordNotFoundException while fetching audit !", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
-			logger.error("Controller: Exception while fetching audit !", e);
+			logger.error("RegistryController: Exception while fetching audit !", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Meh ! You encountered an error!");
