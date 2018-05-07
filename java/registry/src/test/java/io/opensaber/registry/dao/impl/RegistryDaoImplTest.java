@@ -83,7 +83,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	private Environment environment;
 	
 	@Autowired
-	private RegistryDao registryDao;
+	private RegistryDaoImpl registryDao;
 	
   	private static Graph graph;
 			

@@ -1,0 +1,40 @@
+{
+  "teacher":
+    {
+    "id": "test_root_id",
+    "teachingRole": {
+      "id": "test_teaching_role_id",
+      "teacherType": "TeacherTypeCode-HEAD",
+      "appointmentType": "TeacherAppointmentTypeCode-REGULAR",
+      "classesTaught": [
+        "ClassTypeCode-SECONDARYANDHIGHERSECONDARY"
+      ],
+      "appointedForSubjects": [
+        "SubjectCode-MATH"
+      ],
+      "mainSubjectsTaught": [
+        "SubjectCode-PHYSICS",
+        "SubjectCode-MATH"
+      ],
+      "appointmentYear": "2015"
+    },
+    "basicProficiencyLevel": [
+      {
+        "id": "test_id_1",
+        "proficiencySubject": "SubjectCode-MATH",
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-PHD"
+      },
+      {
+        "id": "test_id_2",
+        "proficiencySubject": "SubjectCode-ENGLISH",
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-HIGHERSECONDARY"
+      },
+      {
+        "id": "test_id_3",
+        "proficiencySubject": "SubjectCode-SOCIALSTUDIES",
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-SOCIALSTUDIES"
+      }
+    ]
+  }
+
+}
