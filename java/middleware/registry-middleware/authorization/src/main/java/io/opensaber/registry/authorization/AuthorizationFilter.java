@@ -37,6 +37,11 @@ public class AuthorizationFilter implements BaseMiddleware {
         this.keyCloakServiceImpl = keyCloakServiceImpl;
     }
 
+    /**
+     * This method validates JWT access token against Sunbird Keycloak server and sets the valid access token to a map object
+     * @param mapObject
+     * @throws MiddlewareHaltException
+     */
       public Map<String, Object> execute(Map<String, Object> mapObject) throws MiddlewareHaltException {
           Object tokenObject = mapObject.get(Constants.TOKEN_OBJECT);
 
@@ -70,13 +75,15 @@ public class AuthorizationFilter implements BaseMiddleware {
           return mapObject;
           }
 
-
+    /**
+     * This method extracts Authorisation information ,i.e. AuthInfo from input JWT access token
+     * @param token
+     */
     public AuthInfo extractTokenIntoAuthInfo(String token) {
         AuthInfo authInfo = new AuthInfo();
         try {
-            Method toPublicKeyMethod = KeyCloakServiceImpl.class.getDeclaredMethod("toPublicKey", String.class);
-            toPublicKeyMethod.setAccessible(true);
-            PublicKey publicKey = (PublicKey) toPublicKeyMethod.invoke(new KeyCloakServiceImpl(), System.getenv("sunbird_sso_publickey"));
+
+            PublicKey publicKey = (PublicKey) keyCloakServiceImpl.toPublicKey(System.getenv("sunbird_sso_publickey"));
 
             Jwts.parser()
                     .setSigningKey(publicKey)
