@@ -36,6 +36,8 @@ public class AuthorizationFilterTest {
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 
+	Type type = new TypeToken<Map<String, String>>() {}.getType();
+
 	@Test
 		public void test_missing_auth_token() throws MiddlewareHaltException, IOException{
 		expectedEx.expectMessage("Auth token is missing");
@@ -54,20 +56,17 @@ public class AuthorizationFilterTest {
 		headers.set("content-type", "application/x-www-form-urlencoded");
 		HttpEntity<String> request = new HttpEntity<String>(body, headers);
 
-		try {
-			String url = System.getenv("sunbird_sso_url")+"realms/"+System.getenv("sunbird_sso_realm")+"/protocol/openid-connect/token ";
-			ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
-			Type type = new TypeToken<Map<String, String>>(){}.getType();
-			Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
-			String accessToken = (String)myMap.get("access_token");
-			mapObject.put(Constants.TOKEN_OBJECT,accessToken);
-			baseM.execute(mapObject);
-			AuthInfo authInfo = (AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-			assertNotNull(authInfo.getSub());
-			assertNotNull(authInfo.getAud());
-		}catch (Exception e) {
-			e.printStackTrace();
-		}
+		String url = System.getenv("sunbird_sso_url") + "realms/" + System.getenv("sunbird_sso_realm") + "/protocol/openid-connect/token ";
+		ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
+		Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
+		String accessToken = (String) myMap.get("access_token");
+		mapObject.put(Constants.TOKEN_OBJECT, accessToken);
+		baseM.execute(mapObject);
+		AuthInfo authInfo = (AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		assertNotNull(authInfo.getSub());
+		assertNotNull(authInfo.getAud());
+		assertEquals("874ed8a5-782e-4f6c-8f36-e0288455901e",authInfo.getSub());
+		assertEquals("admin-cli", authInfo.getAud());
 	}
 
 	@Test
@@ -81,30 +80,24 @@ public class AuthorizationFilterTest {
 
 	@Test
     public void test_keycloak_token_validation() throws Exception {
-        Map<String, Object> mapObject = new HashMap<String, Object>();
+		Map<String, Object> mapObject = new HashMap<String, Object>();
 		String body = "client_id=" + System.getenv("sunbird_sso_client_id") + "&username=" + System.getenv("sunbird_sso_username")
 				+ "&password=" + System.getenv("sunbird_sso_password") + "&grant_type=password";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setCacheControl("no-cache");
-        headers.set("content-type", "application/x-www-form-urlencoded");
-        HttpEntity<String> request = new HttpEntity<String>(body, headers);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setCacheControl("no-cache");
+		headers.set("content-type", "application/x-www-form-urlencoded");
+		HttpEntity<String> request = new HttpEntity<String>(body, headers);
 
-        try {
-			String url = System.getenv("sunbird_sso_url")+"realms/"+System.getenv("sunbird_sso_realm")+"/protocol/openid-connect/token ";
-            ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
-            Type type = new TypeToken<Map<String, String>>() {
-            }.getType();
-            Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
-            String accessToken = (String) myMap.get("access_token");
-            mapObject.put(Constants.TOKEN_OBJECT, accessToken);
-            String userId = "874ed8a5-782e-4f6c-8f36-e0288455901e";
-			assertEquals(new KeyCloakServiceImpl().verifyToken(accessToken), userId);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+		String url = System.getenv("sunbird_sso_url") + "realms/" + System.getenv("sunbird_sso_realm") + "/protocol/openid-connect/token ";
+		ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
+		Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
+		String accessToken = (String) myMap.get("access_token");
+		mapObject.put(Constants.TOKEN_OBJECT, accessToken);
+		String userId = "874ed8a5-782e-4f6c-8f36-e0288455901e";
+		assertEquals(new KeyCloakServiceImpl().verifyToken(accessToken), userId);
+	}
 
-    @Test
+	@Test
 	public void test_invalid_environment_variable() throws Exception {
 		expectedEx.expectMessage("Auth token and/or Environment variable is invalid");
 		expectedEx.expect(MiddlewareHaltException.class);
@@ -123,12 +116,9 @@ public class AuthorizationFilterTest {
 		String userName = System.getenv("sunbird_sso_username");
 		String password = System.getenv("sunbird_sso_password");
 		String clientId = System.getenv("sunbird_sso_client_id");
-
 		try {
-			String url = System.getenv("sunbird_sso_url")+"realms/"+System.getenv("sunbird_sso_realm")+"/protocol/openid-connect/token ";
+			String url = System.getenv("sunbird_sso_url") + "realms/" + System.getenv("sunbird_sso_realm") + "/protocol/openid-connect/token ";
 			ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
-			Type type = new TypeToken<Map<String, String>>() {
-			}.getType();
 			Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
 			String accessToken = (String) myMap.get("access_token");
 			mapObject.put(Constants.TOKEN_OBJECT, accessToken);
@@ -155,8 +145,8 @@ public class AuthorizationFilterTest {
 			assertThat(System.getenv("sunbird_sso_client_id"), is("invalid.clientId"));
 
 			baseM.execute(mapObject);
+		}finally {
 
-		} finally {
 			injectEnvironmentVariable("sunbird_sso_publickey", publicKey);
 			injectEnvironmentVariable("sunbird_sso_realm", realm);
 			injectEnvironmentVariable("sunbird_sso_url", authUrl);

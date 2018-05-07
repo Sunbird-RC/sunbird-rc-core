@@ -14,6 +14,12 @@ public class KeyCloakServiceImpl {
 
 	private static Logger logger = LoggerFactory.getLogger(KeyCloakServiceImpl.class);
 
+    /**
+     * This method verifies input JWT access token using RSATokenVerifier of Sunbird keycloak server
+     * @param accessToken
+     * @throws VerificationException
+     * @throws Exception
+     */
 public String verifyToken(String accessToken) throws VerificationException, Exception {
 	String userId = "";
     try {
@@ -23,17 +29,20 @@ public String verifyToken(String accessToken) throws VerificationException, Exce
         userId = token.getSubject();
         logger.debug("Authentication token \n TokenId: {} \t isActive: {} \t isExpired: {} \t", token.getId(), token.isActive(), token.isExpired());
     } catch (VerificationException e) {
-        logger.error("Invalid Auth token or Environment Variable !" + e);
         throw new VerificationException();
     } catch (Exception e) {
-        logger.error("Authentication Failed ! " + e);
         throw new Exception();
     }
     return userId;
 	}
 
-
-private PublicKey toPublicKey(String publicKeyString) {
+    /**
+     * This method transforms public key from String to encoded format
+     * @param publicKeyString
+     * @throws VerificationException
+     * @throws Exception
+     */
+public PublicKey toPublicKey(String publicKeyString) {
 	try {
 		byte[] publicBytes = Base64.getDecoder().decode(publicKeyString);
 		X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
