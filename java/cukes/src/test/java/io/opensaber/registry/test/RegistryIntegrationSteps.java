@@ -59,6 +59,9 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private static String duplicateLabel;
 	private HttpHeaders headers;
 	private String updateId;
+
+    Type type = new TypeToken<Map<String, String>>() {
+    }.getType();
 	
 	@Before
 	public void initializeData(){
@@ -209,8 +212,6 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		try {
 			String url = System.getenv("sunbird_sso_url")+"realms/"+System.getenv("sunbird_sso_realm")+"/protocol/openid-connect/token ";
 			ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
-			Type type = new TypeToken<Map<String, String>>() {
-			}.getType();
 			Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
 			String accessToken = (String) myMap.get("access_token");
 			headers.add(AUTH_HEADER_NAME, accessToken);

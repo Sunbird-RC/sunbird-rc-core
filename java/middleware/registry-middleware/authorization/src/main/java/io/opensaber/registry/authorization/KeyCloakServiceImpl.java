@@ -22,18 +22,12 @@ public class KeyCloakServiceImpl {
      */
 public String verifyToken(String accessToken) throws VerificationException, Exception {
 	String userId = "";
-    try {
-        PublicKey publicKey = toPublicKey(System.getenv("sunbird_sso_publickey"));
-        AccessToken token = RSATokenVerifier.verifyToken(accessToken, publicKey,
-                System.getenv("sunbird_sso_url") + "realms/" + System.getenv("sunbird_sso_realm"), true, true);
-        userId = token.getSubject();
-        logger.debug("Authentication token \n TokenId: {} \t isActive: {} \t isExpired: {} \t", token.getId(), token.isActive(), token.isExpired());
-    } catch (VerificationException e) {
-        throw new VerificationException();
-    } catch (Exception e) {
-        throw new Exception();
-    }
-    return userId;
+    PublicKey publicKey = toPublicKey(System.getenv("sunbird_sso_publickey"));
+    AccessToken token = RSATokenVerifier.verifyToken(accessToken, publicKey,
+            System.getenv("sunbird_sso_url") + "realms/" + System.getenv("sunbird_sso_realm"), true, true);
+    userId = token.getSubject();
+    logger.debug("Authentication token \n TokenId: {} \t isActive: {} \t isExpired: {} \t", token.getId(), token.isActive(), token.isExpired());
+     return userId;
 	}
 
     /**

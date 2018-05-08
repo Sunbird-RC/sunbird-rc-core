@@ -57,6 +57,9 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
     private ResponseEntity<Response> response,auditBeforeUpdate, auditAfterUpdate;
     private String id;
     private HttpHeaders headers;
+
+    Type type = new TypeToken<Map<String, String>>() {
+    }.getType();
     
      /**
      * The list of integration test scenarios that will be run as part of the update feature
@@ -81,8 +84,6 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 
         String url = System.getenv("sunbird_sso_url") + "realms/" + System.getenv("sunbird_sso_realm") + "/protocol/openid-connect/token ";
         ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
-        Type type = new TypeToken<Map<String, String>>() {
-        }.getType();
         Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
         String accessToken = (String) myMap.get("access_token");
 
