@@ -3,6 +3,7 @@ package io.opensaber.registry.client;
 import io.opensaber.registry.client.data.RequestData;
 import io.opensaber.registry.client.data.ResponseData;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -48,7 +49,7 @@ public interface Client<T> {
      * @param requestData
      * @return
      */
-    ResponseData<T> addAndAssociateEntity(URI existingEntity, URI property, RequestData<T> requestData, Map<String, String> headers);
+    ResponseData<T> addAndAssociateEntity(URI existingEntity, URI property, RequestData<T> requestData, Map<String, String> headers) throws UnsupportedEncodingException;
 
     /**
      * This method will take the FQ {@link java.net.URI} of an existing entity that needs to be retrieved.

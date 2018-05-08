@@ -10,12 +10,12 @@ public class Response {
 
 	public Response() {
 		this.ver = "1.0";
-		this.ets = System.currentTimeMillis() / 1000L;
+		this.ets = System.currentTimeMillis();
 	}
 
 	public Response(API_ID apiId, String httpStatus, ResponseParams responseParams) {
 		this.ver = "1.0";
-		this.ets = System.currentTimeMillis() / 1000L;
+		this.ets = System.currentTimeMillis();
 		this.id = apiId.getId();
 		this.responseCode = httpStatus;
 		this.params = responseParams;
