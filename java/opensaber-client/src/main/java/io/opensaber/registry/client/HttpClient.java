@@ -1,10 +1,12 @@
 package io.opensaber.registry.client;
 
 import io.opensaber.pojos.Response;
+import io.opensaber.registry.config.Configuration;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -20,7 +22,11 @@ public class HttpClient {
     private RestTemplate restTemplate;
 
     private HttpClient() {
-        restTemplate = new RestTemplate();
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Configuration.HTTP_CONNECT_TIMEOUT);
+        requestFactory.setReadTimeout(Configuration.HTTP_READ_TIMEOUT);
+        requestFactory.setConnectionRequestTimeout(Configuration.HTTP_CONNECTION_REQUEST_TIMEOUT);
+        restTemplate = new RestTemplate(requestFactory);
     }
 
     public ResponseEntity<Response> post(String url, HttpHeaders headers, String payload) {

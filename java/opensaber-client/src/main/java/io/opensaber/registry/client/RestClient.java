@@ -10,6 +10,8 @@ import io.opensaber.pojos.ResponseSerializer;
 import io.opensaber.registry.client.data.RequestData;
 import io.opensaber.registry.client.data.ResponseData;
 import io.opensaber.registry.config.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
@@ -18,6 +20,8 @@ import java.net.URI;
 import java.util.Map;
 
 public class RestClient implements Client<String> {
+
+    private static Logger logger = LoggerFactory.getLogger(RestClient.class);
 
     private HttpClient httpClient;
     private static Type mapType = new TypeToken<Map<String, Object>>(){}.getType();

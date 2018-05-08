@@ -38,4 +38,7 @@ public class Configuration {
     public static final String HOST = Configuration.instance.config.getString("registry.service.host");
     public static final Integer PORT = Configuration.instance.config.getInt("registry.service.port");
     public static final String BASE_URL = Configuration.instance.config.getString("registry.service.baseUrl");
+    public static final Integer HTTP_CONNECT_TIMEOUT = Configuration.instance.config.getInt("registry.http.connect-timeout");
+    public static final Integer HTTP_READ_TIMEOUT = Configuration.instance.config.getInt("registry.http.read-timeout");
+    public static final Integer HTTP_CONNECTION_REQUEST_TIMEOUT = Configuration.instance.config.getInt("registry.http.connection-request-timeout");
 }
