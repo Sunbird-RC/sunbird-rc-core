@@ -390,7 +390,12 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * @throws AuditFailedException
 	 */
 	private void deleteEdgeAndNode(Vertex v, Edge dbEdgeToBeRemoved, Vertex dbVertexToBeDeleted) throws AuditFailedException{
-		logger.info("Deleting edge and node for edge-label :	{} , vertex-label :	{}", dbEdgeToBeRemoved.label(),dbVertexToBeDeleted.label());
+		if(dbVertexToBeDeleted !=null) {
+			logger.info("Deleting edge and node for edge-label :	{} , vertex-label :	{}", dbEdgeToBeRemoved.label(), dbVertexToBeDeleted.label());
+		}else{
+			logger.info("Deleting edge and node for edge-label :	{} ", dbEdgeToBeRemoved.label());
+		}
+
 		if(dbVertexToBeDeleted == null){
 			dbVertexToBeDeleted = dbEdgeToBeRemoved.inVertex();
 		}
