@@ -54,9 +54,8 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
     }
 
     private JsonNode loadDefaultMapping() throws IOException {
-        String jsonMappingFile = Configuration.getInstance().getConfig().getString("mapping.file");
         String mappingJson = CharStreams.toString(new InputStreamReader
-                (JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream(jsonMappingFile), "UTF-8"));
+                (JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream(Configuration.MAPPING_FILE), "UTF-8"));
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readTree(mappingJson);
     }

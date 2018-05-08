@@ -32,4 +32,10 @@ public class Configuration {
         }
         return config;
     }
+
+    public static final String MAPPING_FILE = Configuration.instance.config.getString("mapping.file");
+
+    public static final String HOST = Configuration.instance.config.getString("registry.service.host");
+    public static final Integer PORT = Configuration.instance.config.getInt("registry.service.port");
+    public static final String BASE_URL = Configuration.instance.config.getString("registry.service.baseUrl");
 }
