@@ -19,7 +19,7 @@ teacher:TeacherShape CLOSED {
     teacher:birthDate @teacher:isADate {0,1};
     teacher:socialCategory [teacher:SocialCategoryTypeCode-GENERAL teacher:SocialCategoryTypeCode-SC teacher:SocialCategoryTypeCode-ST teacher:SocialCategoryTypeCode-OBC teacher:SocialCategoryTypeCode-ORC teacher:SocialCategoryTypeCode-OTHERS] {0,1};
     teacher:highestAcademicQualification [teacher:AcademicQualificationTypeCode-BELOWSECONDARY teacher:AcademicQualificationTypeCode-SECONDARY teacher:AcademicQualificationTypeCode-HIGHERSECONDARY teacher:AcademicQualificationTypeCode-GRADUATE teacher:AcademicQualificationTypeCode-POSTGRADUATE teacher:AcademicQualificationTypeCode-MPHIL teacher:AcademicQualificationTypeCode-POSTDOC teacher:AcademicQualificationTypeCode-PHD] {0,1};
-	teacher:highestTeacherQualification [teacher:TeacherQualificationTypeCode-DIPLOMAORBASIC teacher:TeacherQualificationTypeCode-BELED teacher:TeacherQualificationTypeCode-MED teacher:TeacherQualificationTypeCode-OTHERS teacher:TeacherQualificationTypeCode-NONE teacher:TeacherQualificationTypeCode-SPECIAL] {0,1}; 
+	teacher:highestTeacherQualification [teacher:TeacherQualificationTypeCode-DIPLOMAORBASIC teacher:TeacherQualificationTypeCode-BELED teacher:TeacherQualificationTypeCode-MED teacher:TeacherQualificationTypeCode-OTHERS teacher:TeacherQualificationTypeCode-NONE teacher:TeacherQualificationTypeCode-SPECIAL] {0,1};
     teacher:yearOfJoiningService @teacher:isAYear {0,1};
     teacher:teachingRole @teacher:TeacherRoleShape {0,1};
     teacher:inServiceTeacherTrainingFromBRC @teacher:InServiceTeacherTrainingShape {0,1};

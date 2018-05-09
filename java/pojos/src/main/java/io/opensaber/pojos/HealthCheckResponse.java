@@ -38,4 +38,13 @@ public class HealthCheckResponse {
     public void setChecks(List<ComponentHealthInfo> checks) {
         this.checks = checks;
     }
+
+    @Override
+    public String toString() {
+        return "HealthCheckResponse{" +
+                "name='" + name + '\'' +
+                ", healthy=" + healthy +
+                ", checks=" + checks +
+                '}';
+    }
 }

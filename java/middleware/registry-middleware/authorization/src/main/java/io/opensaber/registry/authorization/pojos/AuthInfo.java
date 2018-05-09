@@ -38,12 +38,4 @@ public class AuthInfo extends SigningKeyResolverAdapter{
 		this.name = name;
 	}
 
-	@Override
-    public Key resolveSigningKey(JwsHeader header, Claims claims) {
-    	this.aud = claims.getAudience();
-    	this.sub = claims.getSubject();
-    	this.name = (String)claims.get("name");
-        return null; // will throw exception, can be caught in caller
-    }
-
 }

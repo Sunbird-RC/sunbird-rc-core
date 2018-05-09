@@ -45,8 +45,10 @@ public class RDFValidationInterceptor extends BaseRequestHandler implements Hand
 			request = getRequest();
 			ValidationResponse validationResponse = (ValidationResponse) request.getAttribute(Constants.RDF_VALIDATION_OBJECT);
 			if (validationResponse != null && validationResponse.isValid()) {
+				logger.info("RDF Validated successfully !");
 				return true;
 			} else {
+				logger.info("RDF Validation failed!");
 				setResponse(response);
 				writeResponseObj(validationResponse.getError(), validationResponse);
 				response = getResponse();

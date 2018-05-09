@@ -3,6 +3,8 @@ package io.opensaber.registry.interceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -17,7 +19,8 @@ import io.opensaber.registry.middleware.util.Constants;
 
 @Component
 public class AuthorizationInterceptor extends BaseRequestHandler implements HandlerInterceptor{
-	
+
+	private static Logger logger = LoggerFactory.getLogger(AuthorizationInterceptor.class);
 	private AuthorizationFilter authorizationFilter;
 	
 	private Gson gson;
@@ -34,12 +37,15 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 		try{
 			setRequest(request);
 			authorizationFilter.execute(getRequestHeaderMap());
+			logger.info(" Authentication successfull !");
 			return true;
 		}catch(MiddlewareHaltException e){
+			logger.info(" Authentication Failed !");
 			setResponse(response);
 			writeResponseObj(gson, e.getMessage());
 			response = getResponse();
 		}catch(Exception e){
+			logger.info(" Authentication Failed !");
 			setResponse(response);
 			writeResponseObj(gson, Constants.TOKEN_EXTRACTION_ERROR);
 			response = getResponse();

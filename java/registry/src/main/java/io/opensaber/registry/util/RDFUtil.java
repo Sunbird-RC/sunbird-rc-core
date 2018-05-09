@@ -41,9 +41,11 @@ public class RDFUtil {
     public static List<RDFNode> getBlankNodes(Model model) {
         StmtIterator it = model.listStatements();
         List<RDFNode> blankNodes = new ArrayList<>();
+        int blankNodeCount=0;
         while (it.hasNext()) {
             Statement stmt = it.next();
             if (stmt.getSubject().isAnon() && !stmt.getObject().isLiteral() && stmt.getSubject().getURI() == null) {
+                 logger.debug("blank node %s : %s", blankNodeCount++,stmt.getObject());
                 blankNodes.add(stmt.getObject());
             }
         }
@@ -68,8 +70,8 @@ public class RDFUtil {
 
                 String label = UUID.randomUUID().toString();
                 StmtIterator nodeProperties = node.getSubject().listProperties();
+                int updatedBlankNodeCount =0;
                 // String namespace = node.getObject().asResource().getNameSpace();
-                registryContext = "http://example.com/voc/teacher/1.0.0/";
 
                 /*
                  * Update the child node labels
@@ -79,16 +81,17 @@ public class RDFUtil {
                     Statement updated = updateSubjectLabel(childNode, label);
                     nodeProperties.remove();
                     updatedStatements.add(updated);
+                    logger.debug("Updated blank node statement %s : %s",updatedBlankNodeCount++,updated.toString());
                 }
 
                 // Update the parent node label
                 // updateSubjectLabel(node, label, namespace);
-
                 while(parent.hasNext()) {
                     Statement parentSt = parent.next();
                     Statement updatedParent = updateResource(parentSt, label);
                     parent.remove();
                     updatedStatements.add(updatedParent);
+                    logger.debug("Updated corresponding parent statement(s) for blank node(s) : %s",updatedParent.toString());
                 }
             }
         }
@@ -147,12 +150,14 @@ public class RDFUtil {
             if(!node.getObject().isLiteral() && node.getObject().asResource().equals(object)) {
                 StmtIterator parentItr = rdfModel.listStatements(null, null, node.getSubject());
                 StmtIterator nodeProperties = node.getSubject().listProperties();
+                int updatePropertyCount =0;
 
                 while (nodeProperties.hasNext()) {
                     Statement childNode = nodeProperties.next();
                     Statement updated = RDFUtil.updateSubjectLabel(childNode, label);
                     nodeProperties.remove();
                     updatedStatements.add(updated);
+                    logger.debug("Updated Rdf statement %s : %s", updatePropertyCount++, updated.toString());
                 }
 
                 while (parentItr.hasNext()) {
@@ -160,6 +165,7 @@ public class RDFUtil {
                     Statement updatedParent = RDFUtil.updateResource(parent, label);
                     parentItr.remove();
                     updatedStatements.add(updatedParent);
+                    logger.debug("Updated corresponding parent statement(s) for RdfModel(s) : "+ updatedParent.toString());
                 }
             }
         }

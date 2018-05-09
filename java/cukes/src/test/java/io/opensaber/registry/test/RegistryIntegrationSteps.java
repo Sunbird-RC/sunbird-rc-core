@@ -3,22 +3,18 @@ package io.opensaber.registry.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RDFDataMgr;
 import org.json.JSONObject;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,10 +23,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-
+import com.google.gson.Gson;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-
 import cucumber.api.java.Before;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
@@ -38,6 +33,8 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.Response.Status;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 
 
 public class RegistryIntegrationSteps extends RegistryTestBase{
@@ -62,6 +59,9 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private static String duplicateLabel;
 	private HttpHeaders headers;
 	private String updateId;
+
+    Type type = new TypeToken<Map<String, String>>() {
+    }.getType();
 	
 	@Before
 	public void initializeData(){
@@ -202,15 +202,28 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	}
 	
 	private void setValidAuthHeader(){
+		String body = "client_id=" + System.getenv("sunbird_sso_client_id") + "&username=" + System.getenv("sunbird_sso_username")
+				+ "&password=" + System.getenv("sunbird_sso_password") + "&grant_type=password";
 		headers = new HttpHeaders();
-		headers.add(AUTH_HEADER_NAME, "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ1WXhXdE4tZzRfMld5MG5P"
-				+ "S1ZoaE5hU0gtM2lSSjdXU25ibFlwVVU0TFRrIn0.eyJqdGkiOiI2OTBiNDZjZS03MjI5LTQ5NjgtODU4Yy0yMzNjNmJhZjMxODMiLCJleHAiOjE1MjE1NjI0NDUsIm5iZiI6MCwiaWF0IjoxNTIxNTE5MjQ1LCJpc3MiOiJodHRwczovL3N0YWdpbmcub3Blbi1zdW5iaXJkLm9yZy9hdXRoL3"
-				+ "JlYWxtcy9zdW5iaXJkIiwiYXVkIjoiYWRtaW4tY2xpIiwic3ViIjoiYWJkYmRjYzEtZDI5Yy00ZTQyLWI1M2EtODVjYTY4NzI3MjRiIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiYWRtaW4tY2xpIiwiYXV0aF90aW1lIjowLCJzZXNzaW9uX3N0YXRlIjoiZmZiYWE2ZWUtMDhmZi00OGVlLThlYTEt"
-				+ "ZTI3YzhlZTE5ZDVjIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6W10sInJlc291cmNlX2FjY2VzcyI6e30sIm5hbWUiOiJSYXl1bHUgVmlsbGEiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJ2cmF5dWx1IiwiZ2l2ZW5fbmFtZSI6IlJheXVsdSIsImZhbWlseV9uYW1lIjoiVmlsbGEiLCJlbWF"
-				+ "pbCI6InJheXVsdUBnbWFpbC5jb20ifQ.U1hsUoXGYKtYssOkytMo_tnexHhwKs86IXrDw8rhL9tpG5c6DArVJvdhn5wTEbgzp52efNwQ5LrGGmpBFRWDw0szA5ggT347RCbTTxXZEFF2bUEE8rr0KbkfPOwk5Gazo_xRerW-URyWPlzqppZaUPc6kzY8TDouGmKF8qyVenaxrRgbhKNRYbZWFviARLyt"
-				+ "ZTMLtgLafhmOvj6r3vK-kt36afUNROBSoNaxhcvSF9QnTRB1_0Bnb_qyVMqEDSdwZdGs3rMU_W8SFWMewxxXPuYWEXIvXIr2AMs7naCR4colLGz8AOMFR44-qTEF-eF71qqBNouh1hgd4N0l4sKzxA");
+		headers.setCacheControl("no-cache");
+		headers.set("content-type", "application/x-www-form-urlencoded");
+		HttpEntity<String> request = new HttpEntity<String>(body, headers);
+
+		try {
+			String url = System.getenv("sunbird_sso_url")+"realms/"+System.getenv("sunbird_sso_realm")+"/protocol/openid-connect/token ";
+			ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
+			Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
+			String accessToken = (String) myMap.get("access_token");
+			headers.add(AUTH_HEADER_NAME, accessToken);
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
-	
+
+	public HttpHeaders getHeaders() {
+		return headers;
+	}
+
 	private void setInvalidAuthHeader(){
 		headers = new HttpHeaders();
 		headers.add(AUTH_HEADER_NAME, "1234");

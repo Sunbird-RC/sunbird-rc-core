@@ -5,6 +5,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -20,7 +22,7 @@ import io.opensaber.registry.middleware.util.Constants;
 @Component
 public class RDFConversionInterceptor extends BaseRequestHandler implements HandlerInterceptor{
 
-
+	private static Logger logger = LoggerFactory.getLogger(RDFConversionInterceptor.class);
 	private RDFConverter rdfConverter;
 	
 	private Gson gson;
@@ -41,13 +43,16 @@ public class RDFConversionInterceptor extends BaseRequestHandler implements Hand
 		mergeRequestAttributes(attributeMap);
 		request = getRequest();
 		if (request.getAttribute(Constants.RDF_OBJECT) != null) {
+			logger.debug("RDF object for conversion :" + request.getAttribute(Constants.RDF_OBJECT));
 			return true;
 		}
 		}catch(MiddlewareHaltException e){
+			logger.error("MiddlewareHaltException from RDFConversionInterceptor !"+ e);
 			setResponse(response);
 			writeResponseObj(gson, e.getMessage());
 			response = getResponse();
 		}catch(Exception e){
+			logger.error("Exception from RDFConversionInterceptor!"+ e);
 			e.printStackTrace();
 			setResponse(response);
 			writeResponseObj(gson, Constants.JSONLD_PARSE_ERROR);

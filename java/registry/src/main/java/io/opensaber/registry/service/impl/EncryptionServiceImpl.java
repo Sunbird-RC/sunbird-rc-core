@@ -62,12 +62,13 @@ public class EncryptionServiceImpl implements EncryptionService {
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map);
 		try {
 			ResponseEntity<String> response = new RestTemplate().postForEntity(encryptionUri, request, String.class);
+			logger.info("Property encrypted successfully !");
 		   	return response.getBody();
 		}catch(ResourceAccessException e) {
-			logger.error("Exception while connecting enryption service : ", e);
+			logger.error("ResourceAccessException while connecting enryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service! ");
 		}catch(ServiceUnavailableException e) {
-	    	logger.error("Service not available exception !: ", e);
+	    	logger.error("ServiceUnavailableException while connecting enryption service!: ", e);
 	  		throw new EncryptionException("Encryption service is not available !");
 		}catch(Exception e) {
 	    	logger.error("Exception in encryption servie !: ", e);
@@ -83,12 +84,13 @@ public class EncryptionServiceImpl implements EncryptionService {
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map);
 		try {
 			ResponseEntity<String>  response = new RestTemplate().postForEntity(decryptionUri, request, String.class);
+			logger.info("Property decrypted successfully !");
 			return response.getBody();
 		}catch(ResourceAccessException e) {
-	    	logger.error("Exception while connecting dcryption service : ", e);
+	    	logger.error("ResourceAccessException while connecting dcryption service : ", e);
 	    	throw new EncryptionException("Exception while connecting enryption service ! ");
 		}catch(ServiceUnavailableException e) {
-	    	logger.error("Service not available exception ! ", e);
+	    	logger.error("ServiceUnavailableException while connecting enryption service!", e);
 	    	throw new EncryptionException("Encryption service is not available !");
 		}catch(Exception e) {
 	    	logger.error("Exception in decryption service !: ", e);
@@ -157,6 +159,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 			ResponseEntity<String> response = restTemplate.getForEntity(encryptionServiceHealthCheckUri, String.class);
 			if (response.getBody().equalsIgnoreCase("UP")) {
 				isEncryptionServiceUp = true;
+				logger.debug("Encryption service running !");
 			}
 		} catch (RestClientException ex) {
 			logger.error("RestClientException when checking the health of the Sunbird encryption service: ", ex);

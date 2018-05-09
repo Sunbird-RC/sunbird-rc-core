@@ -60,11 +60,14 @@ public class RegistryController {
 			result.put("entity", label);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			logger.debug("Controller : Entity with label {} created !", label);
 		} catch (DuplicateRecordException | EntityCreationException e) {
+			logger.error("Controller : DuplicateRecordException|EntityCreationException while creating entity !", e);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
+			logger.error("Controller: Exception while creating entity !", e);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
@@ -86,11 +89,14 @@ public class RegistryController {
 			result.put("entity", label);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			logger.debug("Controller : Entity with label {} added !", label);
 		} catch (DuplicateRecordException | EntityCreationException e) {
+			logger.error("DuplicateRecordException|EntityCreationException in controller while adding entity !",e);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
+			logger.error("Exception in controller while adding entity !",e);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
@@ -113,15 +119,17 @@ public class RegistryController {
 			resultMap.put(Constants.RESPONSE_ATTRIBUTE, entityModel);
 			response.setResult(jenaObj.toMap());
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			logger.debug("Controller: entity for {} fetched !", id);
 		} catch (RecordNotFoundException e) {
+			logger.error("Controller: RecordNotFoundException while fetching entity !", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
+			logger.error("Controller: Exception while fetching entity!", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Ding! You encountered an error!");
-			logger.error("ERROR!", e);
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}*/
@@ -141,15 +149,17 @@ public class RegistryController {
 			resultMap.put(Constants.RESPONSE_ATTRIBUTE, entityModel);*/
 			response.setResult(jenaObj.toMap());
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			logger.debug("Controller: entity for {} read !", id);
 		} catch (RecordNotFoundException e) {
+			logger.error("Controller: RecordNotFoundException while reading entity !", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
+			logger.error("Controller: Exception while reading entity!", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Ding! You encountered an error!");
-			logger.error("ERROR!", e);
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -168,14 +178,16 @@ public class RegistryController {
 			registryService.updateEntity(rdf, id);
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			logger.debug("Controller: entity for {} updated !", id);
 		} catch (RecordNotFoundException | EntityCreationException e) {
+			logger.error("Controller: RecordNotFoundException|EntityCreationException while updating entity !", e);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 
 		} catch (Exception e) {
+			logger.error("Controller: Exception while updating entity!", e);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(String.format("Error occurred when updating Entity ID %s", id));
-			logger.error("ERROR!", e);
+			responseParams.setErrmsg(String.format("Error occurred when updating Entity ID {}", id));
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}*/
@@ -192,14 +204,16 @@ public class RegistryController {
 			registryService.updateEntity(rdf);
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			logger.debug("Controller: entity updated !");
 		} catch (RecordNotFoundException | EntityCreationException e) {
+			logger.error("Controller: RecordNotFoundException|EntityCreationException while updating entity (without id)!", e);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 
 		} catch (Exception e) {
+			logger.error("Controller: Exception while updating entity (without id)!", e);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Error occurred when updating Entity");
-			logger.error("ERROR!", e);
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -215,13 +229,14 @@ public class RegistryController {
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			logger.debug("Application heath checked : ", healthCheckResult.toString());
 		} catch (Exception e) {
+			logger.error("Error in health checking!", e);
             HealthCheckResponse healthCheckResult =
                     new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, false, null);
             response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Error during health check");
-			logger.error("ERROR!", e);
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -236,20 +251,23 @@ public class RegistryController {
 
 		try {
 			org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(id);
+			logger.debug("Audit Record model :"+ auditModel);
 			String jenaJSON = registryService.frameAuditEntity(auditModel);
 			Type type = new TypeToken<Map<String, Object>>(){}.getType();
 			response.setResult(new Gson().fromJson(jenaJSON, type));
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			logger.debug("Controller: audit records fetched !");
 		} catch (RecordNotFoundException e) {
+			logger.error("Controller: RecordNotFoundException while fetching audit !", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
+			logger.error("Controller: Exception while fetching audit !", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Meh ! You encountered an error!");
-			logger.error("ERROR!", e);
-		}	
+		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 

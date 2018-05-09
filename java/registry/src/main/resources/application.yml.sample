@@ -57,10 +57,22 @@ read:
 encryption:
   base: https://dev.open-sunbird.org/encryption/
   uri: https://dev.open-sunbird.org/encryption/encrypt
+  batch:
+    uri: https://dev.open-sunbird.org/encryption/encrypt/obj
 
 decryption:
   uri: https://dev.open-sunbird.org/encryption/decrypt
-  
+  batch:
+    uri: https://dev.open-sunbird.org/encryption/decrypt/obj
+
+  keycloak:
+    sso:
+      publicKey:  ${sunbird_sso_publickey}
+      realm:  ${sunbird_sso_realm}
+      auth_server_url:  ${sunbird_sso_url}
+      username: ${sunbird_sso_username}
+      password: ${sunbird_sso_password}
+      clientId: ${sunbird_sso_client_id}
 ---
 ##################################################################
 #                      STAGING PROFILE                           #
@@ -118,10 +130,23 @@ read:
 encryption:
   base: https://staging.open-sunbird.org/encryption/
   uri: https://staging.open-sunbird.org/encryption/encrypt
+  batch:
+    uri: https://staging.open-sunbird.org/encryption/encrypt/obj
 
 decryption:
   uri: https://staging.open-sunbird.org/encryption/decrypt
+  batch:
+    uri: https://staging.open-sunbird.org/encryption/decrypt/obj
   
+
+  keycloak:
+    sso:
+      publicKey:  ${sunbird_sso_publickey}
+      realm:  ${sunbird_sso_realm}
+      auth_server_url:  ${sunbird_sso_url}
+      username: ${sunbird_sso_username}
+      password: ${sunbird_sso_password}
+      clientId: ${sunbird_sso_client_id}
 ---
 ##################################################################
 #                      TEST PROFILE                              #
@@ -164,6 +189,19 @@ read:
 encryption:
   base: https://dev.open-sunbird.org/encryption/
   uri: https://dev.open-sunbird.org/encryption/encrypt
+  batch:
+    uri: https://dev.open-sunbird.org/encryption/encrypt/obj
 
 decryption:
   uri: https://dev.open-sunbird.org/encryption/decrypt
+  batch:
+    uri: https://dev.open-sunbird.org/encryption/decrypt/obj
+
+  keycloak:
+    sso:
+      publicKey:  ${sunbird_sso_publickey}
+      realm:  ${sunbird_sso_realm}
+      auth_server_url:  ${sunbird_sso_url}
+      username: ${sunbird_sso_username}
+      password: ${sunbird_sso_password}
+      clientId: ${sunbird_sso_client_id}

@@ -223,7 +223,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder = ImmutableTable.<Vertex,Vertex,Map<String,Object>> builder();
 			//Map<Vertex,Map<String,Object>> encDecPropertyBuilder = new HashMap<Vertex,Map<String,Object>>();
 			if (hasLabel.hasNext()) {
-				logger.info(String.format("Root node label %s already exists. Updating properties for the root node.", rootLabel));
+				logger.info(String.format("Root node label {} already exists. Updating properties for the root node.", rootLabel));
 				Vertex existingVertex = hasLabel.next();
 				copyProperties(v, existingVertex, methodOrigin, encDecPropertyBuilder);
 				addOrUpdateVertexAndEdge(v, existingVertex, dbTraversalSource, methodOrigin, encDecPropertyBuilder);
@@ -232,7 +232,7 @@ public class RegistryDaoImpl implements RegistryDao {
 					throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 				}
 				label = generateBlankNodeLabel(rootLabel);
-				logger.info(String.format("Creating entity with label %s", rootLabel));
+				logger.info(String.format("Creating entity with label {}", rootLabel));
 				Vertex newVertex = dbTraversalSource.clone().addV(label).next();
 				copyProperties(v, newVertex,methodOrigin, encDecPropertyBuilder);
 				addOrUpdateVertexAndEdge(v, newVertex, dbTraversalSource,methodOrigin, encDecPropertyBuilder);
@@ -287,7 +287,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			verifyAndDelete(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
 			if (gt.hasNext()) {
 				Vertex existingV = gt.next();
-				logger.info(String.format("Vertex with label %s already exists. Updating properties for the vertex", existingV.label()));
+				logger.info(String.format("Vertex with label {} already exists. Updating properties for the vertex", existingV.label()));
 				copyProperties(ver, existingV,methodOrigin, encDecPropertyBuilder);
 				if(!edgeVertexAlreadyExists.isPresent()){
 					Edge edgeAdded = dbVertex.addEdge(edgeLabel, existingV);
@@ -299,6 +299,8 @@ public class RegistryDaoImpl implements RegistryDao {
 					.oldObject(null)
 					.newObject(existingV.label())
 					.record(databaseProvider);
+
+					logger.info("Audit record created for update/insert(upsert) with label : {}  ", dbVertex.label());
 				}
 				parsedVertices.push(new Pair<>(ver, existingV));
 			} else {
@@ -307,9 +309,9 @@ public class RegistryDaoImpl implements RegistryDao {
 				}
 				String label = generateBlankNodeLabel(ver.label());
 				Vertex newV = dbGraph.addV(label).next();
-				logger.info(String.format("Adding vertex with label %s and adding properties", newV.label()));
+				logger.info(String.format("Adding vertex with label {} and adding properties", newV.label()));
 				copyProperties(ver, newV, methodOrigin, encDecPropertyBuilder);
-				logger.info(String.format("Adding edge with label %s for the vertex label %s.", e.label(), newV.label()));
+				logger.info(String.format("Adding edge with label {} for the vertex label {}.", e.label(), newV.label()));
 
 				Edge edgeAdded = dbVertex.addEdge(edgeLabel, newV);
 				edgeVertexMatchList.add(edgeAdded);
@@ -321,6 +323,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				.newObject(newV.label())
 				.record(databaseProvider);
 
+				logger.info("Audit record created for update with label : {} ", dbVertex.label());
 				parsedVertices.push(new Pair<>(ver, newV));
 			}
 		}
@@ -486,7 +489,8 @@ public class RegistryDaoImpl implements RegistryDao {
 		ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder = ImmutableTable.<Vertex,Vertex,Map<String,Object>> builder();
 		Graph parsedGraph = TinkerGraph.open();
 		if (!hasLabel.hasNext()) {
-			//closeGraph(graphFromStore);
+            // closeGraph(graphFromStore);
+            logger.info("Record not found !");
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		} else {					
 			Vertex subject = hasLabel.next();
@@ -500,6 +504,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			}
 			logger.info("Time taken to update decrypted properties:"+(System.currentTimeMillis() - timestamp));
 			// closeGraph(graphFromStore);
+
 		}
 		return parsedGraph;
 	}
@@ -509,7 +514,9 @@ public class RegistryDaoImpl implements RegistryDao {
 			throws NoSuchElementException, EncryptionException, AuditFailedException {
 		HashMap<String, HashMap<String, String>> propertyMetaPropertyMap = new HashMap<String, HashMap<String, String>>();
 		Iterator<VertexProperty<Object>> iter = subject.properties();
+
 		Map<String,Object> propertyMap = new HashMap<String,Object>();
+
 		while (iter.hasNext()) {
 			VertexProperty<Object> property = iter.next();
 			String tailOfPropertyKey = property.key().substring(property.key().lastIndexOf("/") + 1).trim();
@@ -530,7 +537,6 @@ public class RegistryDaoImpl implements RegistryDao {
 				/*propertyValue = encryptionService.decrypt(property.value());*/
 				String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
 				setProperty(newSubject, decryptedKey, EMPTY_STRING, methodOrigin);
-
 			} else if (isaMetaProperty(property.key())) {
 				buildPropertyMetaMap(propertyMetaPropertyMap, property);
 				//setMetaProperty(subject, newSubject, property, methodOrigin);
@@ -587,11 +593,12 @@ public class RegistryDaoImpl implements RegistryDao {
 				.oldObject(oldValue)
 				.newObject(newValue)
 				.record(databaseProvider);
+				logger.info("Audit record created for {}  !", v.label());
 			} else {
 				// System.out.println("NOT AUDITING");
 			}
 		} else {
-			// System.out.println("NO CHANGE!");
+			logger.info("No change found for auditing !");
 		}
 	}
 
@@ -631,18 +638,18 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	private void buildPropertyMetaMap(HashMap<String, HashMap<String, String>> propertyMetaPropertyMap, VertexProperty<Object> property) {
 		HashMap<String, String> metaPropertyMap;
-		logger.info("META PROPERTY "+property);
+		logger.debug("Meta Property: "+property);
 		Pattern pattern = Pattern.compile("meta\\.(.*)\\.(.*)");
 		Matcher match = pattern.matcher(property.key().toString());
 		if(match.find()){
 			String _property = match.group(1);
 			String _meta_property = match.group(2);
-			logger.info("MATCHED meta property "+match.group(1)+ " "+match.group(2));
+			logger.debug("Matched meta property "+match.group(1)+ " "+match.group(2));
 			if(propertyMetaPropertyMap.containsKey(property.key())){
-				logger.info("FOUND in propertyMetaPropertyMap");
+				logger.debug("Found in propertyMetaPropertyMap");
 				metaPropertyMap = propertyMetaPropertyMap.get(property.key());
 			} else {
-				logger.info("CREATING metaPropertyMap in propertyMetaPropertyMap");
+				logger.info("Creating metaPropertyMap in propertyMetaPropertyMap");
 				metaPropertyMap = new HashMap<>();
 				propertyMetaPropertyMap.put(_property,metaPropertyMap);
 			}
@@ -650,7 +657,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 	}
 
-	/*@Override
+    /*@Override
     public boolean deleteEntity (Graph entity, String rootLabel) throws RecordNotFoundException,AuditFailedException {
     	Graph graphFromStore = databaseProvider.getGraphStore();
     	GraphTraversalSource traversalSource = graphFromStore.traversal();
@@ -661,6 +668,7 @@ public class RegistryDaoImpl implements RegistryDao {
 
     	GraphTraversal<Vertex, Vertex> hasNestedLabel = traversalSource.clone().V().hasLabel(labelToBeDeleted);
     	if (!hasNestedLabel.hasNext()) {
+			logger.info("Record not found to be deleted !");
     		throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
     	}
     	TinkerGraph graph = (TinkerGraph) entity;
@@ -674,8 +682,11 @@ public class RegistryDaoImpl implements RegistryDao {
     		deleteEdgeAndNode(dbHasLabel.next(), gts);
     		tx.commit();
     		tx.close();
+    		logger.info("Entity for {} deleted !", rootLabel);
+    		return true;
     	} else {
     		deleteEdgeAndNode(dbHasLabel.next(), gts);
+    		logger.info("Entity for {} deleted !", rootLabel);
     	}
 
     	return false;
@@ -712,6 +723,8 @@ public class RegistryDaoImpl implements RegistryDao {
     					.oldObject(dbVertexToBeDeleted.label())
     					.newObject(null)
     					.record(databaseProvider);
+
+    					logger.info("Audit record created for delete with label : {} !", auditVertexlabel);
     				}
     			}
     		}
