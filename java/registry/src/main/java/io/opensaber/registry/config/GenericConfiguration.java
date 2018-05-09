@@ -3,6 +3,8 @@ package io.opensaber.registry.config;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import io.opensaber.registry.authorization.KeyCloakServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.Neo4jGraphProvider;
 import io.opensaber.registry.sink.OrientDBGraphProvider;
@@ -66,7 +68,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		objectMapper.setSerializationInclusion(Include.NON_NULL);
 		return objectMapper;
 	}
-	
+
 	@Bean
 	public Gson gson(){
 		return new Gson();
@@ -81,10 +83,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public RDFConverter rdfConverter(){
 		return new RDFConverter();
 	}
-	
+
 	@Bean
 	public AuthorizationFilter authorizationFilter(){
-		return new AuthorizationFilter();
+		return new AuthorizationFilter(new KeyCloakServiceImpl());
 	}
 
 	@Bean
@@ -105,7 +107,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		String validationConfigFile = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
 		return new SchemaConfigurator(fieldConfigFileName, validationConfigFile);
 	}
-	
+
 	@Bean
 	public RestTemplate restTemaplteProvider() throws IOException{
 		HttpClient httpClient = HttpClientBuilder.create().build();
@@ -115,7 +117,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		requestFactory.setReadTimeout(readTimeout);
 		return new RestTemplate(requestFactory);
 	}
-	
+
 	
 	@Bean
 	public DatabaseProvider databaseProvider() {
@@ -142,11 +144,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Bean
 	public RDFValidationMapper rdfValidationMapper(){
-		Map<String,String> typeValidationMap = new HashMap<String,String>();
+		Map<String, String> typeValidationMap = new HashMap<String, String>();
 		String shapeType = environment.getProperty(Constants.SHAPE_TYPE);
 		String shapeName = environment.getProperty(Constants.SHAPE_NAME);
-		if(shapeType!=null && shapeName!=null){
-			typeValidationMap.put(shapeType,shapeName);
+		if (shapeType != null && shapeName != null) {
+			typeValidationMap.put(shapeType, shapeName);
 		}
 		return new RDFValidationMapper(typeValidationMap);
 	}
@@ -154,25 +156,25 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
-		.addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
+				.addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
-		.addPathPatterns("/add", "/update").order(2);
+				.addPathPatterns("/add", "/update").order(2);
 		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
-		.addPathPatterns("/add", "/update").order(3);
+				.addPathPatterns("/add", "/update").order(3);
 		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(), gson()))
-		.addPathPatterns("/add", "/update").order(4);
-		/*registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
-		.addPathPatterns("/read/{id}").order(2);*/
+				.addPathPatterns("/add", "/update").order(4);
+	/*	registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
+				.addPathPatterns("/read/{id}").order(2);*/
 	}
 
 	@Override
 	public void addResourceHandlers(ResourceHandlerRegistry registry) {
 		try {
 			registry.addResourceHandler("/resources/**")
-				.addResourceLocations("classpath:vocab/1.0/")
-				.setCachePeriod(3600)
-				.resourceChain(true)
-				.addResolver(new PathResourceResolver());
+					.addResourceLocations("classpath:vocab/1.0/")
+					.setCachePeriod(3600)
+					.resourceChain(true)
+					.addResolver(new PathResourceResolver());
 		} catch (Exception e) {
 			throw e;
 		}
@@ -183,5 +185,4 @@ public class GenericConfiguration implements WebMvcConfigurer {
     public HandlerExceptionResolver customExceptionHandler () {
         return new CustomExceptionHandler(gson());
     }
-
 }

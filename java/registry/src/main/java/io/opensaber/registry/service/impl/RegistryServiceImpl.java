@@ -77,26 +77,26 @@ public class RegistryServiceImpl implements RegistryService {
 			String label = getRootLabel(rdfModel);
 			Graph graph = generateGraphFromRDF(rdfModel);
 			return registryDao.addEntity(graph, label);
-			
+
 		} catch (DuplicateRecordException | EntityCreationException | EncryptionException | AuditFailedException | MultipleEntityException ex) {
 			throw ex;
 		} catch (Exception ex) {
-			logger.error("Exception when creating entity: ", ex);
+			logger.error("Exception in creating entity: ", ex);
 			throw ex;
 		}
 	}*/
 	
 	@Override
-	public String addEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException, 
+	public String addEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException,
 	EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException {
 		try {
 			String label = getRootLabel(rdfModel);
 			Graph graph = generateGraphFromRDF(rdfModel);
-			
+
 			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
 			// if it is a blank node
 			return registryDao.addEntity(graph, label, subject, property);
-			
+
 		} catch (EntityCreationException | EncryptionException | AuditFailedException ex) {
 			throw ex;
 		} catch (Exception ex) {
@@ -108,8 +108,9 @@ public class RegistryServiceImpl implements RegistryService {
 	@Override
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
 		String label = getRootLabel(entity);
-		Graph graph =  generateGraphFromRDF(entity);
-		return registryDao.updateEntity(graph, label,"update");
+		Graph graph = generateGraphFromRDF(entity);
+		logger.debug("Service layer graph :", graph);
+		return registryDao.updateEntity(graph, label, "update");
 	}
 
 
@@ -117,8 +118,12 @@ public class RegistryServiceImpl implements RegistryService {
 	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException, EncryptionException, AuditFailedException {
 		Graph graph = registryDao.getEntityById(label);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
+		logger.debug("Service layer rdf4j model :", model);
 		/*for (org.eclipse.rdf4j.model.Statement statement : model) {
 			logger.debug("STATEMENT " + statement);
+		logger.debug("Service layer rdf4j model :", model);
+		for (org.eclipse.rdf4j.model.Statement statement : model) {
+			logger.debug("STATEMENT  " + statement);
 			Value value = statement.getObject();
 			if (value instanceof Literal) {
 				Literal literal = (Literal) value;
@@ -154,6 +159,7 @@ public class RegistryServiceImpl implements RegistryService {
 		checks.add(encryptionHealthInfo);
 		checks.add(databaseServiceInfo);
 		healthCheck = new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, overallHealthStatus, checks);
+		logger.info("Heath Check :  encryptionHealthInfo  {} \n\t  databaseServiceInfo {} ", checks.get(0), checks.get(1));
 		return healthCheck;
 	}
 
@@ -168,11 +174,11 @@ public class RegistryServiceImpl implements RegistryService {
 		String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
 		fileString = fileString.replace("<@type>", rootLabelType);
 		ctx.setFrame(fileString);
-		WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT) ;
+		WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT);
 		PrefixMap pm = RiotLib.prefixMap(g);
 		String base = null;
 		StringWriter sWriterJena = new StringWriter();
-		w.write(sWriterJena, g, pm, base, ctx) ;
+		w.write(sWriterJena, g, pm, base, ctx);
 		String jenaJSON = sWriterJena.toString();
 		return jenaJSON;
 	}
@@ -181,7 +187,7 @@ public class RegistryServiceImpl implements RegistryService {
 	public String frameAuditEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException {
 		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
 		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
-		JsonLDWriteContext ctx =	 new JsonLDWriteContext();
+		JsonLDWriteContext ctx = new JsonLDWriteContext();
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("audit_frame.json");
 		String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
 		ctx.setFrame(fileString);
@@ -189,17 +195,18 @@ public class RegistryServiceImpl implements RegistryService {
 		PrefixMap pm = RiotLib.prefixMap(g);
 		String base = null;
 		StringWriter sWriterJena = new StringWriter();
-		w.write(sWriterJena, g, pm, base, ctx);				
+		w.write(sWriterJena, g, pm, base, ctx);
 		String jenaJSON = sWriterJena.toString();
 		return jenaJSON;
 	}
 	
 	@Override
 	public org.eclipse.rdf4j.model.Model getAuditNode(String id) throws IOException, NoSuchElementException, RecordNotFoundException,
-			EncryptionException, AuditFailedException {				
-		String label= id+"-AUDIT";
+			EncryptionException, AuditFailedException {
+		String label = id + "-AUDIT";
 		Graph graph = registryDao.getEntityById(label);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
+		logger.debug("Audit Model : " + model);
 		return model;
 	}
 	
@@ -216,14 +223,14 @@ public class RegistryServiceImpl implements RegistryService {
 	
 	private String getRootLabel(Model entity) throws EntityCreationException, MultipleEntityException{
 		List<Resource> rootLabels = RDFUtil.getRootLabels(entity);
-		if(rootLabels.size() == 0){
+		if (rootLabels.size() == 0) {
 			throw new EntityCreationException(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
-		} else if(rootLabels.size() > 1){
+		} else if (rootLabels.size() > 1) {
 			throw new MultipleEntityException(Constants.ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE);
-		} else{
+		} else {
 			Resource subject = rootLabels.get(0);
 			String label = subject.toString();
-			if(subject.isAnon() && subject.getURI() == null){
+			if (subject.isAnon() && subject.getURI() == null) {
 				label = String.format("_:%s", label);
 			}
 			return label;
@@ -232,11 +239,11 @@ public class RegistryServiceImpl implements RegistryService {
 	
 	private String getTypeForRootLabel(Model entity, String rootLabel) throws EntityCreationException, MultipleEntityException{
 		List<String> rootLabelType = RDFUtil.getTypeForSubject(entity, rootLabel);
-		if(rootLabelType.size() == 0){
+		if (rootLabelType.size() == 0) {
 			throw new EntityCreationException(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
-		} else if(rootLabelType.size() > 1){
+		} else if (rootLabelType.size() > 1) {
 			throw new MultipleEntityException(Constants.ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE);
-		} else{
+		} else {
 			return rootLabelType.get(0);
 		}
 	}

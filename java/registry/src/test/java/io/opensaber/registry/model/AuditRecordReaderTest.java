@@ -41,7 +41,6 @@ public class AuditRecordReaderTest {
 	@Autowired
     @InjectMocks
 	private AuditRecordReader auditRecordReader;
-
     private Graph graphMock;
     private GraphTraversalSource graphTraversalSourceMock;
     private GraphTraversalSource graphTraversalSourceCloneMock;

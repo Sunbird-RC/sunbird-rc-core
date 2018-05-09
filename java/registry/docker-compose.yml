@@ -1,7 +1,5 @@
 version: "3.3"
-
 services:
-
   registry:
     image: frolvlad/alpine-oraclejdk8:slim
     deploy:
@@ -13,3 +11,12 @@ services:
       - /data:/data
       - ./logs:/logs
     command: java -jar /registry.jar
+    environment:
+      - sunbird_sso_publickey=${sunbird_sso_publickey}
+      - sunbird_sso_realm=${sunbird_sso_realm}
+      - sunbird_sso_url=${sunbird_sso_url}
+      - sunbird_sso_username=${sunbird_sso_username}
+      - sunbird_sso_password=${sunbird_sso_password}
+      - sunbird_sso_client_id=${sunbird_sso_client_id}
+
+

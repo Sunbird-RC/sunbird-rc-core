@@ -1,5 +1,6 @@
 package io.opensaber.registry.model;
 
+import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
 import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -7,6 +8,8 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -19,6 +22,8 @@ import javax.annotation.PostConstruct;
 
 @Component
 public class AuditRecordReader {
+
+    private static Logger logger = LoggerFactory.getLogger(AuditRecordReader.class);
     private DatabaseProvider databaseProvider;
 
     @Autowired
@@ -42,6 +47,7 @@ public class AuditRecordReader {
         } else {
             traversal = traversalSource.clone().V().hasLabel(getAuditLabel(label)).out(registrySystemContext + "audit");
         }
+        int recordCount = 0;
         while (traversal.hasNext()) {
             Vertex auditVertex = traversal.next();
             AuditRecord record = appContext.getBean(AuditRecord.class);
@@ -51,6 +57,7 @@ public class AuditRecordReader {
             record.newObject(getValue(auditVertex, registrySystemContext + "newObject"));
             record.readOnlyAuthInfo(getValue(auditVertex, registrySystemContext + "authInfo"));
             records.add(record);
+            logger.debug("AuditRecordReader - AuditRecord {}  : {} ",recordCount++,record);
         }
         return records;
     }
