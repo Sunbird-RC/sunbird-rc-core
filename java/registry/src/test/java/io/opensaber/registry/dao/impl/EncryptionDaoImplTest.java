@@ -34,6 +34,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
@@ -66,6 +72,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 
@@ -84,6 +91,9 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 	
 	@Autowired
 	private RegistryDao registryDao;
+	
+	@Autowired
+	private Gson gson;
 	
 	@Mock
 	private EncryptionService encryptionMock;
@@ -211,7 +221,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		return vertex;
 	}
 	
-	public Vertex getVertexWithMultipleProperties(String subjectValue, Map<String, String> map){
+	public Vertex getVertexWithMultipleProperties(String subjectValue, Map<String, Object> map){
 		Vertex vertex = null;
 		graph = TinkerGraph.open();
 		GraphTraversalSource t = graph.traversal();
@@ -222,7 +232,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 			vertex = graph.addVertex(
 					T.label,subjectValue);
 		}
-		for (Map.Entry<String, String> entry : map.entrySet())
+		for (Map.Entry<String, Object> entry : map.entrySet())
 		{
 			vertex.property(entry.getKey(), entry.getValue());
 		}
@@ -233,45 +243,94 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 	@Test
 	public void test_encryption_for_nonEncryptableProperty() throws Exception {
 		String label = generateRandomId();
-		Map<String, String> map = new HashMap<>();
+		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("http://example.com/voc/teacher/1.0.0/schoolName", "ABC International School");
 		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
 		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
+		
+		Map<String, Object> newMap = new HashMap<String, Object>();
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedclusterResourceCentre", "mockEncryptedClusterResourceCentre");
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedudiseNumber", "mockEncryptedUdiseNumber");
 
 		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(false);
 		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/clusterResourceCentre"))
 				.thenReturn(true);
 		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
 
-		when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
-		when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
+		when(encryptionMock.encrypt(map)).thenReturn(newMap);
+		//when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
 
 		getVertexWithMultipleProperties(label, map);
 		String response = registryDao.addEntity(graph,label);
 		registryDao.getEntityById(response);
-		verify(encryptionMock, times(2)).encrypt(Mockito.anyString());
+		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
 	}
 	
 	@Test
 	public void test_encryptionCall_for_encryptable_but_null_property() throws Exception {
 		String label = generateRandomId();
-		Map<String, String> map = new HashMap<>();
+		Map<String, Object> map = new HashMap<>();
 		map.put("http://example.com/voc/teacher/1.0.0/schoolName", "ABC International School");
 		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
 		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
 
+		Map<String, Object> newMap = new HashMap<String, Object>();
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedclusterResourceCentre", "mockEncryptedClusterResourceCentre");
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedudiseNumber", "mockEncryptedUdiseNumber");
+		
 		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(false);
 		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
 		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
 
-		when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
-		when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
+		when(encryptionMock.encrypt(map)).thenReturn(newMap);
+		//when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
 
 		getVertexWithMultipleProperties(label, map);
 		String response = registryDao.addEntity(graph, label);
 		registryDao.getEntityById(response);
 
-		verify(encryptionMock, times(2)).encrypt(Mockito.anyString());
+		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
+	}
+	
+	@Test
+	public void test_encryptionCall_for_encryptable_multi_valued_property() throws Exception {
+		JsonParser p = new JsonParser();
+		JsonObject jsonObject = p.parse(new InputStreamReader
+				(this.getClass().getClassLoader().getResourceAsStream("school.jsonld"))).getAsJsonObject();
+		jsonObject.add("classesTaught", p.parse("[\"I\",\"II\",\"III\"]"));
+		String dataString = gson.toJson(jsonObject);
+		Model rdfModel = getNewValidRdfFromJsonString(dataString);
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		
+		Map<String, Object> map = new HashMap<>();
+		map.put("http://example.com/voc/teacher/1.0.0/schoolName", "ABC International School");
+		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
+		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
+
+		Map<String, Object> newMap = new HashMap<String, Object>();
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedclusterResourceCentre", "mockEncryptedClusterResourceCentre");
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedudiseNumber", "mockEncryptedUdiseNumber");
+		List encryptedClassList = new ArrayList();
+		encryptedClassList.add("mockEncryptedClassesTaughtI");
+		encryptedClassList.add("mockEncryptedClassesTaughtII");
+		encryptedClassList.add("mockEncryptedClassesTaughtIII");
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedclassesTaught", encryptedClassList);
+		
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(false);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
+		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/classesTaught")).thenReturn(true);
+
+		when(encryptionMock.encrypt(map)).thenReturn(newMap);
+		when(encryptionMock.encrypt("I")).thenReturn("mockEncryptedClassesTaughtI");
+		when(encryptionMock.encrypt("II")).thenReturn("mockEncryptedClassesTaughtII");
+		when(encryptionMock.encrypt("III")).thenReturn("mockEncryptedClassesTaughtIII");
+
+		String response =registryDao.addEntity(graph, "_:"+rootLabel);
+		registryDao.getEntityById(response);
+
+		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
+		verify(encryptionMock, times(3)).encrypt(Mockito.anyString());
 	}
 
 	@Test
@@ -296,7 +355,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 	@Test
 	public void test_properties_single_node() throws Exception {	
 		String label = generateRandomId();
-		Map<String,String> map=new HashMap<>();
+		Map<String,Object> map=new HashMap<>();
 		map.put("http://example.com/voc/teacher/1.0.0/schoolName", "ABC International School");
 		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "test Cluster Resource");
 		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "1234");
@@ -305,52 +364,77 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
 	    when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
 		
-	    when(encryptionMock.encrypt("ABC International School")).thenReturn("mockEncryptedSchoolName");
-	    when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
+	    Map<String, Object> newMap = new HashMap<String, Object>();
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedclusterResourceCentre", "mockEncryptedClusterResourceCentre");
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedudiseNumber", "mockEncryptedUdiseNumber");
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedschoolName", "mockEncryptedSchoolName");
+		
+	    when(encryptionMock.encrypt(map)).thenReturn(newMap);
+	   /* when(encryptionMock.encrypt("test Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
 	    when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
-	    
+	    */
 	    when(mockSchemaConfigurator.isEncrypted("encryptedschoolName")).thenReturn(true);
 		when(mockSchemaConfigurator.isEncrypted("encryptedclusterResourceCentre")).thenReturn(true);
 	    when(mockSchemaConfigurator.isEncrypted("encryptedudiseNumber")).thenReturn(true);
 	    
-	    when(encryptionMock.decrypt("mockEncryptedSchoolName")).thenReturn("ABC International School");
-	    when(encryptionMock.decrypt("mockEncryptedClusterResourceCentre")).thenReturn("test Cluster Resource");
-	    when(encryptionMock.decrypt("mockEncryptedUdiseNumber")).thenReturn("1234");
+	    when(encryptionMock.decrypt(newMap)).thenReturn(map);
+	    /*when(encryptionMock.decrypt("mockEncryptedClusterResourceCentre")).thenReturn("test Cluster Resource");
+	    when(encryptionMock.decrypt("mockEncryptedUdiseNumber")).thenReturn("1234");*/
 		
 	    getVertexWithMultipleProperties(label,map);		
 		String response = registryDao.addEntity(graph, label);
 		registryDao.getEntityById(response);		
 		
-		verify(encryptionMock, times(3)).encrypt(Mockito.anyString());
-		verify(encryptionMock, times(3)).decrypt(Mockito.anyString());
+		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
+		verify(encryptionMock, times(1)).decrypt(Mockito.anyMap());
 	}
 	
 	@Test
 	public void test_properties_multi_node() throws Exception {
-		Model rdfModel = getNewValidRdf();
+		JsonParser p = new JsonParser();
+		JsonObject jsonObject = p.parse(new InputStreamReader
+				(this.getClass().getClassLoader().getResourceAsStream("school.jsonld"))).getAsJsonObject();
+		JsonObject addressObject = jsonObject.getAsJsonObject("sample:address");
+		addressObject.addProperty("street", "1st main");
+		String dataString = gson.toJson(jsonObject);
+		System.out.println("dataString=="+dataString);
+		Model rdfModel = getNewValidRdfFromJsonString(dataString);
 		String rootLabel = updateGraphFromRdf(rdfModel);
 		
 		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/schoolName")).thenReturn(true);
 		when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/clusterResourceCentre")).thenReturn(true);
 	    when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/udiseNumber")).thenReturn(true);
+	    when(mockSchemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/street")).thenReturn(true);
 	    
-	    when(encryptionMock.encrypt("Bluebells")).thenReturn("mockEncryptedSchoolName");
-	    when(encryptionMock.encrypt("some Cluster Resource")).thenReturn("mockEncryptedClusterResourceCentre");
-	    when(encryptionMock.encrypt("9876")).thenReturn("mockEncryptedUdiseNumber");
+	    Map<String,Object> map=new HashMap<>();
+		map.put("http://example.com/voc/teacher/1.0.0/schoolName", "Bluebells");
+		map.put("http://example.com/voc/teacher/1.0.0/clusterResourceCentre", "some Cluster Resource");
+		map.put("http://example.com/voc/teacher/1.0.0/udiseNumber", "9876");
+		map.put("http://example.com/voc/teacher/1.0.0/street", "1st main");
+		
+		
+		Map<String, Object> newMap = new HashMap<String, Object>();
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedclusterResourceCentre", "mockEncryptedClusterResourceCentre");
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedudiseNumber", "mockEncryptedUdiseNumber");
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedschoolName", "mockEncryptedSchoolName");
+		newMap.put("http://example.com/voc/teacher/1.0.0/encryptedStreet", "mockEncryptedStreet");
+		
+	    when(encryptionMock.encrypt(map)).thenReturn(newMap);
+
 	    
 	    when(mockSchemaConfigurator.isEncrypted("encryptedschoolName")).thenReturn(true);
 		when(mockSchemaConfigurator.isEncrypted("encryptedclusterResourceCentre")).thenReturn(true);
 	    when(mockSchemaConfigurator.isEncrypted("encryptedudiseNumber")).thenReturn(true);
+	    when(mockSchemaConfigurator.isEncrypted("encryptedStreet")).thenReturn(true);
 	    
-	    when(encryptionMock.decrypt("mockEncryptedSchoolName")).thenReturn("ABC International School");
-	    when(encryptionMock.decrypt("mockEncryptedClusterResourceCentre")).thenReturn("test Cluster Resource");
-	    when(encryptionMock.decrypt("mockEncryptedUdiseNumber")).thenReturn("1234");
+	    when(encryptionMock.decrypt(newMap)).thenReturn(map);
+	    
 	  
 	    String response =registryDao.addEntity(graph, "_:"+rootLabel);					
 	    registryDao.getEntityById(response);
 	    
-		verify(encryptionMock, times(3)).encrypt(Mockito.anyString());	
-		verify(encryptionMock, times(3)).decrypt(Mockito.anyString());		
+		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());	
+		verify(encryptionMock, times(1)).decrypt(Mockito.anyMap());		
 	}
 	
 	@Test
