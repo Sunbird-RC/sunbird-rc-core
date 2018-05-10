@@ -35,8 +35,6 @@ import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.validator.routines.UrlValidator;
-/*import org.perf4j.StopWatch;
-import org.perf4j.LoggingStopWatch;*/
 import org.springframework.util.StopWatch;
 
 @Component
@@ -45,7 +43,6 @@ public class RegistryDaoImpl implements RegistryDao {
     public static final String META = "meta.";
     private static Logger logger = LoggerFactory.getLogger(RegistryDaoImpl.class);
     private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
-    //StopWatch stopWatch = new LoggingStopWatch();
 
     @Autowired
     private DatabaseProvider databaseProvider;

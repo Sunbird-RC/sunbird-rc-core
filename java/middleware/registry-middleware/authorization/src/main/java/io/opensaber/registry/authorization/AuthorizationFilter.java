@@ -1,7 +1,6 @@
 package io.opensaber.registry.authorization;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,12 +19,12 @@ import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.codec.binary.Base64;
-import org.perf4j.StopWatch;
-import org.perf4j.LoggingStopWatch;
+import org.springframework.util.StopWatch;
 
 public class AuthorizationFilter implements BaseMiddleware {
 
     private static Logger logger = LoggerFactory.getLogger(AuthorizationFilter.class);
+    private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 
     private static final String TOKEN_IS_MISSING = "Auth token is missing";
     private static final String TOKEN_IS_INVALID = "Auth token is invalid";
@@ -53,9 +52,11 @@ public class AuthorizationFilter implements BaseMiddleware {
           }
           String token = tokenObject.toString();
           try {
-              StopWatch stopWatch = new LoggingStopWatch();
+              StopWatch watch = new StopWatch();
+              watch.start("KeyCloak Authentication Performance Monitoring !");
               if (!keyCloakServiceImpl.verifyToken(token).trim().isEmpty()) {
-                  stopWatch.stop("KeyCloak Authentication","Performance Monitoring !");
+                  watch.stop();
+                  prefLogger.info(watch.prettyPrint());
                   if (mapObject.containsKey("userName")) {
                       logger.info("Access token for user {} verified successfully with KeyCloak server !", mapObject.get("userName"));
                   } else {
