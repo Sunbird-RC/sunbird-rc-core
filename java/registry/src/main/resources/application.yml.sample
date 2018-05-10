@@ -57,9 +57,13 @@ read:
 encryption:
   base: https://dev.open-sunbird.org/encryption/
   uri: https://dev.open-sunbird.org/encryption/encrypt
+  batch:
+    uri: https://dev.open-sunbird.org/encryption/encrypt/obj
 
 decryption:
   uri: https://dev.open-sunbird.org/encryption/decrypt
+  batch:
+    uri: https://dev.open-sunbird.org/encryption/decrypt/obj
 
   keycloak:
     sso:
@@ -126,9 +130,14 @@ read:
 encryption:
   base: https://staging.open-sunbird.org/encryption/
   uri: https://staging.open-sunbird.org/encryption/encrypt
+  batch:
+    uri: https://staging.open-sunbird.org/encryption/encrypt/obj
 
 decryption:
   uri: https://staging.open-sunbird.org/encryption/decrypt
+  batch:
+    uri: https://staging.open-sunbird.org/encryption/decrypt/obj
+  
 
   keycloak:
     sso:
@@ -180,9 +189,13 @@ read:
 encryption:
   base: https://dev.open-sunbird.org/encryption/
   uri: https://dev.open-sunbird.org/encryption/encrypt
+  batch:
+    uri: https://dev.open-sunbird.org/encryption/encrypt/obj
 
 decryption:
   uri: https://dev.open-sunbird.org/encryption/decrypt
+  batch:
+    uri: https://dev.open-sunbird.org/encryption/decrypt/obj
 
   keycloak:
     sso:

@@ -5,6 +5,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,7 +30,7 @@ import io.opensaber.registry.service.EncryptionService;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { EncryptionServiceImpl.class,Environment.class, GenericConfiguration.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class RegistryEncryptionServiceImplTest extends RegistryTestBase {
+public class EncryptionServiceImplTest extends RegistryTestBase {
 
 
 	@Rule
@@ -68,6 +70,19 @@ public class RegistryEncryptionServiceImplTest extends RegistryTestBase {
 		 
 		 assertNotEquals(generatedString,response);
 		 assertNotEquals(null,response);
+		 
+	}
+	
+	@Test
+	public void test_multi_value_service_encryption() throws Exception {
+	
+		 Map<String, Object> propertyMap = new HashMap<String, Object>();
+		 propertyMap.put("school", "BVM");
+		 propertyMap.put("name", "john");
+		 Map<String, Object> responseMap = encryptionService.encrypt(propertyMap);
+		 
+		 assertNotEquals(null,responseMap);
+		 assertNotEquals("BVM",responseMap.get("school"));
 		 
 	}
 
