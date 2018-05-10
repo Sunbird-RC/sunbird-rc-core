@@ -15,6 +15,9 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 import io.opensaber.pojos.ValidationResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StopWatch;
 
 public class RDFValidator implements BaseMiddleware{
 
@@ -23,10 +26,12 @@ public class RDFValidator implements BaseMiddleware{
 	private static final String RDF_VALIDATION_MAPPING_IS_INVALID = "RDF validation mapping is invalid!";
 	private static final String RDF_VALIDATION_MAPPING_MISSING = "RDF validation mapping is missing!";
 	//private static final String RDF_VALIDATION_MAPPING_NULL = "RDF validation mapping is null!";
+	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 
 	private String schemaFileName;
 	private static final String SCHEMAFORMAT = "SHEXC";
 	private static final String PROCESSOR 	= "shex";
+	StopWatch watch = new StopWatch();
 
 	public RDFValidator(String schemaFileName) {
 		this.schemaFileName = schemaFileName;
@@ -45,9 +50,19 @@ public class RDFValidator implements BaseMiddleware{
 			throw new MiddlewareHaltException(RDF_VALIDATION_MAPPING_IS_INVALID);
 		} else {
 			ShaclexValidator validator = new ShaclexValidator();
+			watch.start("RDF Validator readSchema() and mergeModels() Performance Testing !");
 			Schema schema = validator.readSchema(schemaFileName, SCHEMAFORMAT, PROCESSOR);
 			mergeModels((Model) RDF, (Model) validationRDF);
+			watch.stop();
+			prefLogger.info(watch.prettyPrint());
+			prefLogger.info(watch.shortSummary());
+			prefLogger.info(watch.toString());
+			watch.start("RDF Validator validate() Performance Testing !");
 			ValidationResponse validationResponse = validator.validate((Model) validationRDF, schema);
+			watch.stop();
+			prefLogger.info(watch.prettyPrint());
+			prefLogger.info(watch.shortSummary());
+			prefLogger.info(watch.toString());
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
 			return mapData;
 		}

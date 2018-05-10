@@ -18,12 +18,14 @@ import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
+import org.springframework.util.StopWatch;
 import scala.Option;
 import scala.util.Either;
 
 public class SchemaConfigurator {
 	
 	private static Logger logger = LoggerFactory.getLogger(SchemaConfigurator.class);
+	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 	
 	private static final String FORMAT = "JSON-LD";
 	private Model schemaConfig;
@@ -34,8 +36,20 @@ public class SchemaConfigurator {
 	private Option<String> none = Option.empty();
 
 	public SchemaConfigurator(String schemaFile, String validationFile) throws IOException{
+		StopWatch watch =new StopWatch();
+		watch.start("Schema Configurator loadSchemaConfigModel() Performance Monitoring !");
 		loadSchemaConfigModel(schemaFile);
+		watch.stop();
+		/*prefLogger.info(watch.prettyPrint());
+		prefLogger.info(watch.shortSummary());*/
+		prefLogger.info(watch.currentTaskName()+"  :  "+watch.getLastTaskTimeMillis());
+
+		watch.start("Schema Configurator loadValidationConfigModel() Performance Monitoring !");
 		loadValidationConfigModel(validationFile);
+		watch.stop();
+		/*prefLogger.info(watch.prettyPrint());
+		prefLogger.info(watch.shortSummary());*/
+		prefLogger.info(watch.currentTaskName()+"  :  "+watch.getLastTaskTimeMillis());
 	}
 	
 	public void loadSchemaConfigModel(String schemaFile) throws IOException{

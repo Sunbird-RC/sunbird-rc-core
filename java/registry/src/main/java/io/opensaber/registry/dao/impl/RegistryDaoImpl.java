@@ -1,23 +1,18 @@
 
 package io.opensaber.registry.dao.impl;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import com.google.common.collect.ImmutableList;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.util.RDFUtil;
-
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
-import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.javatuples.Pair;
@@ -26,9 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
@@ -175,6 +168,8 @@ public class RegistryDaoImpl implements RegistryDao {
         Vertex rootVertex = rootGts.next();
         Vertex entityVertex = entityGts.next();
         rootVertex.addEdge(property, entityVertex);
+        StopWatch watch = new StopWatch();
+        watch.start("RegistryDaoImpl Audit Record creation in connectRootToEntity() performance monitoring !");
         AuditRecord record = appContext.getBean(AuditRecord.class);
         record
                 .subject(rootVertex.label())
@@ -182,6 +177,8 @@ public class RegistryDaoImpl implements RegistryDao {
                 .oldObject(null)
                 .newObject(entityVertex.label())
                 .record(databaseProvider);
+        watch.stop();
+        prefLogger.info(watch.prettyPrint());
         logger.debug("RegistryDaoImpl : Audit record generated of connectRootToEntity for rootLabel : {}, label	:	{}, property :	{}", rootLabel, label, property);
     }
 
@@ -297,6 +294,7 @@ public class RegistryDaoImpl implements RegistryDao {
             Optional<Edge> edgeVertexAlreadyExists =
                     dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(edgeLabel) && ed.inVertex().label().equalsIgnoreCase(ver.label())).findFirst();
             verifyAndDelete(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
+            StopWatch watch = new StopWatch();
             if (gt.hasNext()) {
                 Vertex existingV = gt.next();
                 logger.info(String.format("Vertex with label {} already exists. Updating properties for the vertex", existingV.label()));
@@ -305,13 +303,15 @@ public class RegistryDaoImpl implements RegistryDao {
                     Edge edgeAdded = dbVertex.addEdge(edgeLabel, existingV);
                     edgeVertexMatchList.add(edgeAdded);
                     AuditRecord record = appContext.getBean(AuditRecord.class);
+                    watch.start("RegistryDaoImpl Audit Record creation in addOrUpdateVertexAndEdge() performance monitoring !");
                     record
                             .subject(dbVertex.label())
                             .predicate(e.label())
                             .oldObject(null)
                             .newObject(existingV.label())
                             .record(databaseProvider);
-
+                    watch.stop();
+                    prefLogger.info(watch.prettyPrint());
                     logger.debug("RegistryDaoImpl : Audit record created for update/insert(upsert) with label : {}  ", dbVertex.label());
                 }
                 parsedVertices.push(new Pair<>(ver, existingV));
@@ -328,13 +328,15 @@ public class RegistryDaoImpl implements RegistryDao {
                 Edge edgeAdded = dbVertex.addEdge(edgeLabel, newV);
                 edgeVertexMatchList.add(edgeAdded);
                 AuditRecord record = appContext.getBean(AuditRecord.class);
+                watch.start("RegistryDaoImpl Audit Record creation in addOrUpdateVertexAndEdge() performance monitoring !");
                 record
                         .subject(dbVertex.label())
                         .predicate(e.label())
                         .oldObject(null)
                         .newObject(newV.label())
                         .record(databaseProvider);
-
+                watch.stop();
+                prefLogger.info(watch.prettyPrint());
                 logger.debug("RegistryDaoImpl : Audit record created for update with label : {} ", dbVertex.label());
                 parsedVertices.push(new Pair<>(ver, newV));
             }
@@ -426,12 +428,16 @@ public class RegistryDaoImpl implements RegistryDao {
         AuditRecord record = appContext.getBean(AuditRecord.class);
         String tailOfdbVertex = v.label().substring(v.label().lastIndexOf("/") + 1).trim();
         String auditVertexlabel = registryContext + tailOfdbVertex;
+        StopWatch watch = new StopWatch();
+        watch.start("RegistryDaoImpl Audit Record creation for deleteEdgeAndNode() performance monitoring !");
         record
                 .subject(auditVertexlabel)
                 .predicate(dbEdgeToBeRemoved.label())
                 .oldObject(dbVertexToBeDeleted.label())
                 .newObject(null)
                 .record(databaseProvider);
+        watch.stop();
+        prefLogger.info(watch.prettyPrint());
         logger.debug("RegistryDaoImpl : Audit record created for deletion of vertex : {}", dbVertexToBeDeleted);
 
     }
@@ -639,12 +645,16 @@ public class RegistryDaoImpl implements RegistryDao {
                     && configTraversal.next().property(Constants.PERSISTENT_GRAPH).value().equals(true)) {
 
                 AuditRecord record = appContext.getBean(AuditRecord.class);
+                StopWatch watch = new StopWatch();
+                watch.start("RegistryDaoImpl Audit creation record for setProperty() performance monitoring !");
                 record
                         .subject(v.label())
                         .predicate(key)
                         .oldObject(oldValue)
                         .newObject(newValue)
                         .record(databaseProvider);
+                watch.stop();
+                prefLogger.info(watch.prettyPrint());
                 logger.debug("Audit record created for {}  !", v.label());
             } else {
                 // System.out.println("NOT AUDITING");

@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StopWatch;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -26,6 +27,8 @@ import io.opensaber.registry.middleware.util.Constants;
 public class RDFValidationInterceptor extends BaseRequestHandler implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(RDFValidationInterceptor.class);
+	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
+
 	private RDFValidator rdfValidator;
 	private Gson gson;
 	
@@ -40,8 +43,12 @@ public class RDFValidationInterceptor extends BaseRequestHandler implements Hand
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {
 		try {
 			setRequest(request);
+			StopWatch watch = new StopWatch();
+			watch.start("RDFValidationInterceptor performance testing !");
 			Map<String, Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
 			mergeRequestAttributes(attributeMap);
+			watch.stop();
+			prefLogger.info(watch.prettyPrint());
 			request = getRequest();
 			ValidationResponse validationResponse = (ValidationResponse) request.getAttribute(Constants.RDF_VALIDATION_OBJECT);
 			if (validationResponse != null && validationResponse.isValid()) {

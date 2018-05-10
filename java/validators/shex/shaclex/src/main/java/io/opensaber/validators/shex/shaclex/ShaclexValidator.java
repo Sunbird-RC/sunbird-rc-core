@@ -14,6 +14,8 @@ import es.weso.shapeMaps.ResultShapeMap;
 import io.opensaber.pojos.ValidationInfo;
 import io.opensaber.pojos.ValidationResponse;
 
+import org.apache.commons.lang3.time.StopWatch;
+import org.apache.jena.ext.com.google.common.base.Stopwatch;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.*;
 
@@ -33,12 +35,14 @@ import es.weso.rdf.jena.RDFAsJenaModel;
 public class ShaclexValidator {
 
 	private static Logger logger = LoggerFactory.getLogger(ShaclexValidator.class);
-	
+
 	private static final String NON_CONFORMANT = "nonconformant";
 	private Option<String> none = Option.empty();
 
 	public ValidationResponse validate(Model dataModel, Schema schema) {
 		RDFReader rdf = new RDFAsJenaModel(dataModel);
+		StopWatch watch = new StopWatch();
+		watch.start();
 		Result result = schema.validate(rdf, "TARGETDECLS", null, none, none, rdf.getPrefixMap(), schema.pm());
 		return parseValidationOutput(dataModel, result, schema.pm());
 	}

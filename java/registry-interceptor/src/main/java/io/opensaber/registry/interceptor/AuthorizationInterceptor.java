@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StopWatch;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -21,6 +22,7 @@ import io.opensaber.registry.middleware.util.Constants;
 public class AuthorizationInterceptor extends BaseRequestHandler implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(AuthorizationInterceptor.class);
+	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 	private AuthorizationFilter authorizationFilter;
 	
 	private Gson gson;
@@ -36,7 +38,11 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 			throws Exception {
 		try{
 			setRequest(request);
+			StopWatch watch = new StopWatch();
+			watch.start("AuthorizationInterceptor performance monitoring !");
 			authorizationFilter.execute(getRequestHeaderMap());
+			watch.stop();
+			prefLogger.info(watch.prettyPrint());
 			//logger.info(" Authentication successfull !", request.getAuthType()+"=="+request.getRequestURI()+"=="+request.getQueryString() );
 			return true;
 		}catch(MiddlewareHaltException e){
