@@ -10,7 +10,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,7 +20,6 @@ import org.springframework.web.client.RestTemplate;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
 

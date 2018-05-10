@@ -44,7 +44,6 @@ public class EncryptionServiceImpl implements EncryptionService {
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map);
 		try {
 			ResponseEntity<String> response = new RestTemplate().postForEntity(encryptionUri, request, String.class);
-			logger.info("Property encrypted successfully !");
 		   	return response.getBody();
 		}catch(ResourceAccessException e) {
 			logger.error("ResourceAccessException while connecting enryption service : ", e);
@@ -59,14 +58,13 @@ public class EncryptionServiceImpl implements EncryptionService {
 	}
 	
 	@Override
-     public String decrypt(Object propertyValue) throws EncryptionException {		
-						
+     public String decrypt(Object propertyValue) throws EncryptionException {
+
 		MultiValueMap<String, Object> map= new LinkedMultiValueMap<String, Object>();
 		map.add("value", propertyValue);
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map);
 		try {
 			ResponseEntity<String>  response = new RestTemplate().postForEntity(decryptionUri, request, String.class);
-			logger.info("Property decrypted successfully !");
 			return response.getBody();
 		}catch(ResourceAccessException e) {
 	    	logger.error("ResourceAccessException while connecting dcryption service : ", e);

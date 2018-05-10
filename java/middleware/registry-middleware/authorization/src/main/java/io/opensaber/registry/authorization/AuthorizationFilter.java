@@ -20,6 +20,8 @@ import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.codec.binary.Base64;
+import org.perf4j.StopWatch;
+import org.perf4j.LoggingStopWatch;
 
 public class AuthorizationFilter implements BaseMiddleware {
 
@@ -30,6 +32,7 @@ public class AuthorizationFilter implements BaseMiddleware {
     private static final String VERIFICATION_EXCEPTION = "Auth token and/or Environment variable is invalid";
 
     public KeyCloakServiceImpl keyCloakServiceImpl;
+
 
     public AuthorizationFilter() {}
 
@@ -50,7 +53,9 @@ public class AuthorizationFilter implements BaseMiddleware {
           }
           String token = tokenObject.toString();
           try {
+              StopWatch stopWatch = new LoggingStopWatch();
               if (!keyCloakServiceImpl.verifyToken(token).trim().isEmpty()) {
+                  stopWatch.stop("KeyCloak Authentication","Performance Monitoring !");
                   if (mapObject.containsKey("userName")) {
                       logger.info("Access token for user {} verified successfully with KeyCloak server !", mapObject.get("userName"));
                   } else {

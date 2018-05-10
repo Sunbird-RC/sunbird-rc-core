@@ -89,21 +89,13 @@ public class RegistryServiceImpl implements RegistryService {
 	@Override
 	public String addEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException,
 	EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException {
-		try {
-			String label = getRootLabel(rdfModel);
-			Graph graph = generateGraphFromRDF(rdfModel);
+		String label = getRootLabel(rdfModel);
+		Graph graph = generateGraphFromRDF(rdfModel);
 
-			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
-			// if it is a blank node
-			logger.debug("RegistryServiceImpl : adding subject : {} with property : {}",subject,property);
-			return registryDao.addEntity(graph, label, subject, property);
-
-		} catch (EntityCreationException | EncryptionException | AuditFailedException ex) {
-			throw ex;
-		} catch (Exception ex) {
-			logger.error("RegistryServiceImpl : Exception when creating entity: ", ex);
-			throw ex;
-		}
+		// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
+		// if it is a blank node
+		logger.debug("RegistryServiceImpl : adding subject : {} with property : {}", subject, property);
+		return registryDao.addEntity(graph, label, subject, property);
 	}
 
 	@Override
