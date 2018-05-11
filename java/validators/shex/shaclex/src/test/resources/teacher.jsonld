@@ -34,6 +34,45 @@
     "@value": "2014",
     "@type" : "xsd:gYear"
   },
+  "teacher:teachingRole":{
+      "teacher:mainSubjectsTaught":[
+        {
+          "@id":"teacher:SubjectCode-MATH"
+        },
+        {
+          "@id":"teacher:SubjectCode-PHYSICS"
+        }
+      ],
+      "teacher:teacherType":{
+        "@id":"teacher:TeacherTypeCode-HEAD"
+      },
+      "@type":"teacher:TeachingRole",
+      "teacher:appointedForSubjects":{
+        "@id":"teacher:SubjectCode-MATH"
+      },
+      "teacher:appointmentType":{
+        "@id":"teacher:TeacherAppointmentTypeCode-REGULAR"
+      },
+      "teacher:classesTaught":{
+        "@id":"teacher:ClassTypeCode-SECONDARYANDHIGHERSECONDARY"
+      },
+      "@id":"teacher:01255511-2ece-412d-8d43-010660331562",
+      "teacher:appointmentYear":{
+        "@value":"2015",
+        "@type":"xsd:gYear"
+      }
+  },
+  "basicProficiencyLevel":[
+      {
+        "@type":"BasicProficiencyLevel",
+        "proficiencySubject":{
+          "@id":"teacher:SubjectCode-SOCIALSTUDIES"
+        },
+        "proficiencyAcademicQualification":{
+          "@id":"teacher:AcademicQualificationTypeCode-BELOWSECONDARY"
+        }
+      }
+    ],
   "inServiceTeacherTrainingFromBRC":{
     "@type":"InServiceTeacherTrainingFromBlockResourceCentre",
     "teacher:daysOfInServiceTeacherTraining": {
