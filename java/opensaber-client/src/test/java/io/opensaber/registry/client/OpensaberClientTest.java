@@ -30,18 +30,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
-public class RestClientTest {
+public class OpensaberClientTest {
 
     private Gson gson;
 
-    public RestClientTest() {
+    public OpensaberClientTest() {
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(ResponseSerializer.class, new ResponseSerializer());
         gson = builder.create();
     }
 
     @Mock
-    private RestClient opensaberClient;
+    private OpensaberClient opensaberClient;
     @Mock
     private RequestData<String> requestData;
     @Mock
@@ -74,7 +74,7 @@ public class RestClientTest {
     }
 
     @Test
-    public void testAddEntity() {
+    public void testAddEntity() throws Exception {
         Response apiResponse = new Response(Response.API_ID.CREATE, "OK", new ResponseParams());
         when(opensaberClient.addEntity(requestData, headers)).thenReturn(new ResponseData<>(gson.toJson(apiResponse)));
         Response response = gson.fromJson(opensaberClient.addEntity(requestData, headers).getResponseData(), Response.class);
@@ -105,7 +105,7 @@ public class RestClientTest {
     }
 
     @Test
-    public void testReadEntity() {
+    public void testReadEntity() throws Exception {
         Response apiResponse = new Response(Response.API_ID.READ, "OK", new ResponseParams());
         URI entityUri = PowerMockito.mock(URI.class);
         when(opensaberClient.readEntity(entityUri, headers)).thenReturn(new ResponseData<>(gson.toJson(apiResponse)));

@@ -7,6 +7,7 @@ import static org.junit.Assert.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CharStreams;
+import io.opensaber.registry.transform.utils.JsonUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,14 +30,14 @@ public class JsonToJsonLdConverterTest {
         mappingJson = mapper.readTree(CharStreams.toString(new InputStreamReader(
                 JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("context_mapping.json"))));
         inputJson = mapper.readTree(CharStreams.toString(new InputStreamReader(
-                JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_data.json"))));
+                JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_json_data.json"))));
     }
 
     @Test
-    public void test_process_node() throws Exception {
+    public void testProcessNode() throws Exception {
         Iterator<Map.Entry<String, JsonNode>> fieldIterator = inputJson.path("teacher").fields();
         JsonNode nodeMappings = mappingJson.path("teacher").path("definition");
-        ObjectNode result = transformer.createObjectNode();
+        ObjectNode result = JsonUtils.createObjectNode();
         String expectedResult = "{\"teachingRole\":{\"teacherType\":{\"@id\":\"teacher:TeacherTypeCode-HEAD\"},\"appointmentType\":{\"@id\":\"teacher:TeacherAppointmentTypeCode-REGULAR\"},\"classesTaught\":[{\"@id\":\"teacher:ClassTypeCode-SECONDARYANDHIGHERSECONDARY\"}],\"appointedForSubjects\":[{\"@id\":\"teacher:SubjectCode-MATH\"}],\"mainSubjectsTaught\":[{\"@id\":\"teacher:SubjectCode-PHYSICS\"},{\"@id\":\"teacher:SubjectCode-MATH\"}],\"appointmentYear\":{\"@type\":\"xsd:gYear\",\"@value\":\"2015\"},\"@type\":\"TeachingRole\",\"@id\":\"test_teaching_role_id\"}}";
 
         while(fieldIterator.hasNext()) {
@@ -53,10 +54,10 @@ public class JsonToJsonLdConverterTest {
     }
 
     @Test
-    public void test_process_collection_node() throws Exception {
+    public void testProcessCollectionNode() throws Exception {
         Iterator<Map.Entry<String, JsonNode>> fieldIterator = inputJson.path("teacher").fields();
         JsonNode nodeMappings = mappingJson.path("teacher").path("definition");
-        ObjectNode result = transformer.createObjectNode();
+        ObjectNode result = JsonUtils.createObjectNode();
         String expectedResult = "{\"basicProficiencyLevel\":[{\"proficiencySubject\":{\"@id\":\"teacher:SubjectCode-MATH\"},\"proficiencyAcademicQualification\":{\"@id\":\"teacher:AcademicQualificationTypeCode-PHD\"},\"@type\":\"BasicProficiencyLevel\",\"@id\":\"test_id_1\"},{\"proficiencySubject\":{\"@id\":\"teacher:SubjectCode-ENGLISH\"},\"proficiencyAcademicQualification\":{\"@id\":\"teacher:AcademicQualificationTypeCode-HIGHERSECONDARY\"},\"@type\":\"BasicProficiencyLevel\",\"@id\":\"test_id_2\"},{\"proficiencySubject\":{\"@id\":\"teacher:SubjectCode-SOCIALSTUDIES\"},\"proficiencyAcademicQualification\":{\"@id\":\"teacher:AcademicQualificationTypeCode-SOCIALSTUDIES\"},\"@type\":\"BasicProficiencyLevel\",\"@id\":\"test_id_3\"}]}";
 
         while(fieldIterator.hasNext()) {
@@ -71,16 +72,16 @@ public class JsonToJsonLdConverterTest {
     }
 
     @Test
-    public void test_construct_json_ld() throws Exception {
+    public void testConstructJsonld() throws Exception {
         for (JsonNode node : inputJson) {
             if (node instanceof ObjectNode) {
                 ObjectNode object = (ObjectNode) node;
                 object.remove("basicProficiencyLevel");
             }
         }
-        String expectedResult = "{\"@type\":\"Teacher\",\"@id\":\"teacher:test_root_id\",\"teachingRole\":{\"teacherType\":{\"@id\":\"teacher:TeacherTypeCode-HEAD\"},\"appointmentType\":{\"@id\":\"teacher:TeacherAppointmentTypeCode-REGULAR\"},\"classesTaught\":[{\"@id\":\"teacher:ClassTypeCode-SECONDARYANDHIGHERSECONDARY\"}],\"appointedForSubjects\":[{\"@id\":\"teacher:SubjectCode-MATH\"}],\"mainSubjectsTaught\":[{\"@id\":\"teacher:SubjectCode-PHYSICS\"},{\"@id\":\"teacher:SubjectCode-MATH\"}],\"appointmentYear\":{\"@type\":\"xsd:gYear\",\"@value\":\"2015\"},\"@type\":\"TeachingRole\",\"@id\":\"test_teaching_role_id\"},\"context\":{\"xsd\":\"http://www.w3.org/2001/XMLSchema#\",\"teacher\":\"http://example.com/voc/teacher/1.0.0/\"}}";
+        String expectedResult = "{\"@type\":\"Teacher\",\"@id\":\"teacher:test_root_id\",\"teachingRole\":{\"teacherType\":{\"@id\":\"teacher:TeacherTypeCode-HEAD\"},\"appointmentType\":{\"@id\":\"teacher:TeacherAppointmentTypeCode-REGULAR\"},\"classesTaught\":[{\"@id\":\"teacher:ClassTypeCode-SECONDARYANDHIGHERSECONDARY\"}],\"appointedForSubjects\":[{\"@id\":\"teacher:SubjectCode-MATH\"}],\"mainSubjectsTaught\":[{\"@id\":\"teacher:SubjectCode-PHYSICS\"},{\"@id\":\"teacher:SubjectCode-MATH\"}],\"appointmentYear\":{\"@type\":\"xsd:gYear\",\"@value\":\"2015\"},\"@type\":\"TeachingRole\",\"@id\":\"test_teaching_role_id\"},\"@context\":{\"xsd\":\"http://www.w3.org/2001/XMLSchema#\",\"teacher\":\"http://localhost:8080/\",\"@vocab\":\"http://localhost:8080/\"}}";
         ObjectNode result = transformer.constructJsonLd(inputJson, mappingJson);
-        System.out.println(result);
+        // OpeOpeSystem.out.println(result);
         assertEquals(expectedResult.trim(), result.toString());
     }
 

@@ -20,7 +20,7 @@ public interface Client<T> {
      * @param headers
      * @return
      */
-    ResponseData<T> addEntity(RequestData<T> requestData, Map<String, String> headers);
+    ResponseData<T> addEntity(RequestData<T> requestData, Map<String, String> headers) throws Exception;
 
     /**
      * This method will allow you to update an existing entity. The {@link io.opensaber.registry.client.data.RequestData}
@@ -59,5 +59,5 @@ public interface Client<T> {
      * @param headers
      * @return
      */
-    ResponseData<T> readEntity(URI entity, Map<String, String> headers);
+    ResponseData<T> readEntity(URI entity, Map<String, String> headers) throws Exception;
 }
