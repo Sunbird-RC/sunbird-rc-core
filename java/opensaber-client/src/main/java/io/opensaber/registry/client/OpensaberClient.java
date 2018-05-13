@@ -13,8 +13,9 @@ import io.opensaber.pojos.ResponseSerializer;
 import io.opensaber.registry.client.data.RequestData;
 import io.opensaber.registry.client.data.ResponseData;
 import io.opensaber.registry.config.Configuration;
+import io.opensaber.registry.constants.Constants.ApiEndPoints;
+import io.opensaber.registry.exception.TransformationException;
 import io.opensaber.registry.transform.ITransformer;
-import io.opensaber.registry.transform.JsonldToJsonTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -39,7 +40,7 @@ public class OpensaberClient implements Client<String> {
 
     private HttpClient httpClient;
     private Gson gson;
-    private ObjectMapper mapper = new ObjectMapper();
+    // private ObjectMapper mapper = new ObjectMapper();
     private static Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
 
 
@@ -79,22 +80,23 @@ public class OpensaberClient implements Client<String> {
 
 
     @Override
-    public ResponseData<String> addEntity(RequestData<String> requestData, Map<String, String> headers) throws Exception {
+    public ResponseData<String> addEntity(RequestData<String> requestData, Map<String, String> headers) throws TransformationException {
         ResponseData<String> transformedReqData = requestTransformer.transform(requestData);
-        logger.info("AddEntity Transformed Request Data: " + transformedReqData.getResponseData());
-        System.out.println("AddEntity Transformed Request Data: " + transformedReqData.getResponseData());
+        logger.debug("AddEntity Transformed Request Data: " + transformedReqData.getResponseData());
         ResponseEntity<Response> response =
-                httpClient.post(Configuration.BASE_URL + "/add", createHttpHeaders(headers),
-                        gson.toJson(createRequestEntity(new RequestData<>(transformedReqData.getResponseData()))));
+                httpClient.post(Configuration.BASE_URL + ApiEndPoints.ADD, createHttpHeaders(headers),
+                        gson.toJson(createRequestEntity(transformedReqData.getResponseData())));
         String result = gson.toJson(response.getBody());
         return new ResponseData<>(result);
     }
 
     @Override
-    public ResponseData<String> updateEntity(RequestData<String> requestData, Map<String, String> headers) {
+    public ResponseData<String> updateEntity(RequestData<String> requestData, Map<String, String> headers) throws TransformationException {
+        ResponseData<String> transformedReqData = requestTransformer.transform(requestData);
+        logger.debug("UpdateEntity Transformed Request Data: " + transformedReqData.getResponseData());
         ResponseEntity<Response> response =
-                httpClient.post(Configuration.BASE_URL + "/update",
-                        createHttpHeaders(headers), gson.toJson(createRequestEntity(requestData)));
+                httpClient.post(Configuration.BASE_URL + ApiEndPoints.UPDATE,
+                        createHttpHeaders(headers), gson.toJson(createRequestEntity(transformedReqData.getResponseData())));
         String result = gson.toJson(response.getBody());
         return new ResponseData<>(result);
     }
@@ -102,33 +104,33 @@ public class OpensaberClient implements Client<String> {
     @Override
     public ResponseData<String> addAndAssociateEntity(URI existingEntity, URI property,
                                                       RequestData<String> requestData, Map<String, String> headers)
-            throws UnsupportedEncodingException {
+            throws UnsupportedEncodingException, TransformationException {
+        ResponseData<String> transformedReqData = requestTransformer.transform(requestData);
+        logger.debug("AddAndAssociateEntity Transformed Request Data: " + transformedReqData.getResponseData());
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put("id", URLEncoder.encode(existingEntity.toString(), "UTF-8"));
         queryParams.put("prop", URLEncoder.encode(property.toString(), "UTF-8"));
         ResponseEntity<Response> response =
-                httpClient.post(Configuration.BASE_URL + "/add",
-                        createHttpHeaders(headers), queryParams, gson.toJson(createRequestEntity(requestData)));
+                httpClient.post(Configuration.BASE_URL + ApiEndPoints.ADD,
+                        createHttpHeaders(headers), queryParams,
+                        gson.toJson(createRequestEntity(transformedReqData.getResponseData())));
         String result = gson.toJson(response.getBody());
         return new ResponseData<>(result);
     }
 
     @Override
-    public ResponseData<String> readEntity(URI entity, Map<String, String> headers) throws Exception {
+    public ResponseData<String> readEntity(URI entity, Map<String, String> headers) throws TransformationException {
         ResponseEntity<Response> response = httpClient.get(entity.toString(), createHttpHeaders(headers));
-        System.out.println(gson.toJson(response.getBody()));
         JsonObject responseJson = gson.toJsonTree(response.getBody()).getAsJsonObject();
         String resultNode = gson.toJson(response.getBody().getResult(), mapType);
-        String transformedJson = JsonldToJsonTransformer.getInstance().transform(new RequestData<>(resultNode)).getResponseData();
-        logger.info("Transformed JSON = " + transformedJson);
-        System.out.println("Transformed JSON = " + transformedJson);
+        String transformedJson = responseTransformer.transform(new RequestData<>(resultNode)).getResponseData();
+        logger.debug("Transformed Response Data: " + transformedJson);
         responseJson.add("result", gson.fromJson(transformedJson, JsonObject.class));
-        // String result = gson.toJson(response.getBody());
         return new ResponseData<>(responseJson.toString());
     }
 
-    private Request createRequestEntity(RequestData<String> requestData) {
-        return new Request(new RequestParams(), gson.fromJson(requestData.getRequestData(), mapType));
+    private Request createRequestEntity(String requestData) {
+        return new Request(new RequestParams(), gson.fromJson(requestData, mapType));
     }
 
     private HttpHeaders createHttpHeaders(Map<String, String> headers) {

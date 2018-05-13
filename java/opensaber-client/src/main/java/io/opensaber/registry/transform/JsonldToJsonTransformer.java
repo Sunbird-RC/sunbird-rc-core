@@ -11,6 +11,9 @@ import com.google.common.io.CharStreams;
 import io.opensaber.registry.client.data.RequestData;
 import io.opensaber.registry.client.data.ResponseData;
 import io.opensaber.registry.config.Configuration;
+import io.opensaber.registry.constants.Constants.*;
+import io.opensaber.registry.constants.ErrorCode;
+import io.opensaber.registry.exception.TransformationException;
 import io.opensaber.registry.transform.utils.JsonUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.slf4j.Logger;
@@ -55,28 +58,33 @@ public class JsonldToJsonTransformer implements ITransformer<String> {
     }
 
     @Override
-    public ResponseData<String> transform(RequestData<String> data) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode input = mapper.readTree(data.getRequestData());
-        ObjectNode result = constructJson(input, fieldMapping);
-        String jsonldResult = mapper.writeValueAsString(result);
-        return new ResponseData<>(jsonldResult);
+    public ResponseData<String> transform(RequestData<String> data) throws TransformationException {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode input = mapper.readTree(data.getRequestData());
+            ObjectNode result = constructJson(input, fieldMapping);
+            String jsonldResult = mapper.writeValueAsString(result);
+            return new ResponseData<>(jsonldResult);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            throw new TransformationException(ex.getMessage(), ex, ErrorCode.JSONLD_TO_JSON_TRANFORMATION_ERROR);
+        }
     }
 
     public ObjectNode constructJson(JsonNode rootDataNode, JsonNode nodeMapping) throws IOException, ParseException {
         ObjectNode result = JsonNodeFactory.instance.objectNode();
-        JsonNode framedJsonldNode = rootDataNode.path("@graph");
-        Map<String, String> context = mapper.readValue(nodeMapping.path("context").toString(), mapTypeRef);
+        JsonNode framedJsonldNode = rootDataNode.path(JsonldConstants.GRAPH);
+        Map<String, String> context = mapper.readValue(nodeMapping.path(MappingConstants.CONTEXT).toString(), mapTypeRef);
 
         for (JsonNode dataNode : framedJsonldNode) {
-            String dataNodeType = dataNode.path("@type").asText();
+            String dataNodeType = dataNode.path(JsonldConstants.TYPE).asText();
             for (JsonNode mapping : nodeMapping) {
-                if (String.format("%s:%s", mapping.path("prefix").asText(),
-                        mapping.path("type").asText()).equalsIgnoreCase(dataNodeType)) {
-                    String nodeLabel = mapping.path("type").asText().toLowerCase();
+                if (String.format("%s:%s", mapping.path(MappingConstants.PREFIX).asText(),
+                        mapping.path(MappingConstants.TYPE).asText()).equalsIgnoreCase(dataNodeType)) {
+                    String nodeLabel = mapping.path(MappingConstants.TYPE).asText().toLowerCase();
                     result.setAll(processComplexNode(
                             new AbstractMap.SimpleEntry<>(nodeLabel, dataNode),
-                            mapping.path("definition"),
+                            mapping.path(MappingConstants.DEFINITION),
                             context));
                     break;
                 }
@@ -105,15 +113,15 @@ public class JsonldToJsonTransformer implements ITransformer<String> {
         ObjectNode resultNode = JsonUtils.createObjectNode();
         List<Map.Entry<String, JsonNode>> childNodes = Lists.newArrayList(dataNode.fields());
         for (Map.Entry<String, JsonNode> node : childNodes) {
-            if (!(node.getKey().equalsIgnoreCase("@id")
-                    || node.getKey().equalsIgnoreCase("@type"))) {
+            if (!(node.getKey().equalsIgnoreCase(JsonldConstants.ID)
+                    || node.getKey().equalsIgnoreCase(JsonldConstants.TYPE))) {
 
                 String nodeKey = node.getKey().split(":")[1];
-                if(mapping.path(nodeKey).path("definition").isMissingNode()) {
+                if(mapping.path(nodeKey).path(MappingConstants.DEFINITION).isMissingNode()) {
                     resultNode.setAll(processLiteralsOrConstantsNode(node));
                 } else {
-                    JsonNode nodeMapping = mapping.path(nodeKey).path("definition");
-                    if(mapping.path(nodeKey).path("collection").asBoolean()) {
+                    JsonNode nodeMapping = mapping.path(nodeKey).path(MappingConstants.DEFINITION);
+                    if(mapping.path(nodeKey).path(MappingConstants.COLLECTION).asBoolean()) {
                         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
                         for (JsonNode n : node.getValue()) {
                             arrayNode.add(processUnitComplexNode(n, nodeMapping, context));
@@ -126,9 +134,9 @@ public class JsonldToJsonTransformer implements ITransformer<String> {
             }
         }
 
-        String [] nodeIdArray = dataNode.path("@id").asText().split(":");
+        String [] nodeIdArray = dataNode.path(JsonldConstants.ID).asText().split(":");
         String contextUri = context.getOrDefault(nodeIdArray[0], nodeIdArray[1]);
-        resultNode.put("id", contextUri + nodeIdArray[1]);
+        resultNode.put(MappingConstants.ID, contextUri + nodeIdArray[1]);
         return resultNode;
     }
 
@@ -139,7 +147,7 @@ public class JsonldToJsonTransformer implements ITransformer<String> {
         if (nodeData.isArray()) {
             ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
             for (JsonNode dataNode : nodeData) {
-                if (dataNode.path("@id").isMissingNode()) {
+                if (dataNode.path(JsonldConstants.ID).isMissingNode()) {
                     arrayNode.add(processLiteralNode(dataNode));
                 } else {
                     arrayNode.add(processEnumeratedConstant(dataNode));
@@ -147,7 +155,7 @@ public class JsonldToJsonTransformer implements ITransformer<String> {
             }
             result.putArray(field).addAll(arrayNode);
         } else {
-            if (nodeData.path("@id").isMissingNode()) {
+            if (nodeData.path(JsonldConstants.ID).isMissingNode()) {
                 result.set(field, processLiteralNode(nodeData));
             } else {
                 result.set(field, processEnumeratedConstant(nodeData));
@@ -157,11 +165,12 @@ public class JsonldToJsonTransformer implements ITransformer<String> {
     }
 
     private JsonNode processEnumeratedConstant(JsonNode dataNode) {
-        return mapper.convertValue(dataNode.path("@id").asText().split(":")[1], JsonNode.class);
+        return mapper.convertValue(dataNode.path(JsonldConstants.ID).asText().split(":")[1], JsonNode.class);
     }
 
     private JsonNode processLiteralNode(JsonNode dataNode) throws ParseException {
-        String data = dataNode.path("@value").isMissingNode() ? dataNode.asText() : dataNode.path("@value").asText();
+        String data = dataNode.path(JsonldConstants.VALUE).isMissingNode() ? dataNode.asText()
+                : dataNode.path(JsonldConstants.VALUE).asText();
         JsonNode result;
         if (NumberUtils.isNumber(data)) {
             result = mapper.convertValue(NumberFormat.getInstance().parse(data), JsonNode.class);

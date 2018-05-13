@@ -9,6 +9,7 @@ import io.opensaber.pojos.ResponseParams;
 import io.opensaber.pojos.ResponseSerializer;
 import io.opensaber.registry.client.data.RequestData;
 import io.opensaber.registry.client.data.ResponseData;
+import io.opensaber.registry.exception.TransformationException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -74,7 +75,7 @@ public class OpensaberClientTest {
     }
 
     @Test
-    public void testAddEntity() throws Exception {
+    public void testAddEntity() throws TransformationException {
         Response apiResponse = new Response(Response.API_ID.CREATE, "OK", new ResponseParams());
         when(opensaberClient.addEntity(requestData, headers)).thenReturn(new ResponseData<>(gson.toJson(apiResponse)));
         Response response = gson.fromJson(opensaberClient.addEntity(requestData, headers).getResponseData(), Response.class);
@@ -83,7 +84,7 @@ public class OpensaberClientTest {
     }
 
     @Test
-    public void testAddAndAssociateEntity() throws UnsupportedEncodingException {
+    public void testAddAndAssociateEntity() throws UnsupportedEncodingException, TransformationException {
         Response apiResponse = new Response(Response.API_ID.CREATE, "OK", new ResponseParams());
         URI entityUri = PowerMockito.mock(URI.class);
         URI propertyPredicateUri = PowerMockito.mock(URI.class);
@@ -96,7 +97,7 @@ public class OpensaberClientTest {
     }
 
     @Test
-    public void testUpdateEntity() {
+    public void testUpdateEntity() throws TransformationException {
         Response apiResponse = new Response(Response.API_ID.UPDATE, "OK", new ResponseParams());
         when(opensaberClient.updateEntity(requestData, headers)).thenReturn(new ResponseData<>(gson.toJson(apiResponse)));
         Response response = gson.fromJson(opensaberClient.updateEntity(requestData, headers).getResponseData(), Response.class);
@@ -105,7 +106,7 @@ public class OpensaberClientTest {
     }
 
     @Test
-    public void testReadEntity() throws Exception {
+    public void testReadEntity() throws TransformationException {
         Response apiResponse = new Response(Response.API_ID.READ, "OK", new ResponseParams());
         URI entityUri = PowerMockito.mock(URI.class);
         when(opensaberClient.readEntity(entityUri, headers)).thenReturn(new ResponseData<>(gson.toJson(apiResponse)));

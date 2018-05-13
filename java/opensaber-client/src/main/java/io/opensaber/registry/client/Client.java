@@ -2,6 +2,7 @@ package io.opensaber.registry.client;
 
 import io.opensaber.registry.client.data.RequestData;
 import io.opensaber.registry.client.data.ResponseData;
+import io.opensaber.registry.exception.TransformationException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -20,7 +21,7 @@ public interface Client<T> {
      * @param headers
      * @return
      */
-    ResponseData<T> addEntity(RequestData<T> requestData, Map<String, String> headers) throws Exception;
+    ResponseData<T> addEntity(RequestData<T> requestData, Map<String, String> headers) throws TransformationException;
 
     /**
      * This method will allow you to update an existing entity. The {@link io.opensaber.registry.client.data.RequestData}
@@ -34,7 +35,7 @@ public interface Client<T> {
      * @param requestData
      * @return
      */
-    ResponseData<T> updateEntity(RequestData<T> requestData, Map<String, String> headers);
+    ResponseData<T> updateEntity(RequestData<T> requestData, Map<String, String> headers) throws TransformationException;
 
     /**
      * This method will allow you to create a new entity and link to an existing entity.
@@ -49,7 +50,7 @@ public interface Client<T> {
      * @param requestData
      * @return
      */
-    ResponseData<T> addAndAssociateEntity(URI existingEntity, URI property, RequestData<T> requestData, Map<String, String> headers) throws UnsupportedEncodingException;
+    ResponseData<T> addAndAssociateEntity(URI existingEntity, URI property, RequestData<T> requestData, Map<String, String> headers) throws UnsupportedEncodingException, TransformationException;
 
     /**
      * This method will take the FQ {@link java.net.URI} of an existing entity that needs to be retrieved.
@@ -59,5 +60,5 @@ public interface Client<T> {
      * @param headers
      * @return
      */
-    ResponseData<T> readEntity(URI entity, Map<String, String> headers) throws Exception;
+    ResponseData<T> readEntity(URI entity, Map<String, String> headers) throws TransformationException;
 }
