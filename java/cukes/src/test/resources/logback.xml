@@ -1,0 +1,17 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.apache.http" level="ERROR"/>
+    <logger name="io.opensaber.registry.client" level="OFF"/>
+    <logger name="io.opensaber.registry.transform" level="OFF"/>
+
+    <root level="info" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>

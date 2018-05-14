@@ -1,6 +1,5 @@
 package io.opensaber.registry.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -21,10 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,7 +77,8 @@ public class OpensaberClient implements Client<String> {
 
 
     @Override
-    public ResponseData<String> addEntity(RequestData<String> requestData, Map<String, String> headers) throws TransformationException {
+    public ResponseData<String> addEntity(RequestData<String> requestData, Map<String, String> headers)
+            throws TransformationException {
         ResponseData<String> transformedReqData = requestTransformer.transform(requestData);
         logger.debug("AddEntity Transformed Request Data: " + transformedReqData.getResponseData());
         ResponseEntity<Response> response =
@@ -91,7 +89,8 @@ public class OpensaberClient implements Client<String> {
     }
 
     @Override
-    public ResponseData<String> updateEntity(RequestData<String> requestData, Map<String, String> headers) throws TransformationException {
+    public ResponseData<String> updateEntity(RequestData<String> requestData, Map<String, String> headers)
+            throws TransformationException {
         ResponseData<String> transformedReqData = requestTransformer.transform(requestData);
         logger.debug("UpdateEntity Transformed Request Data: " + transformedReqData.getResponseData());
         ResponseEntity<Response> response =
@@ -119,7 +118,8 @@ public class OpensaberClient implements Client<String> {
     }
 
     @Override
-    public ResponseData<String> readEntity(URI entity, Map<String, String> headers) throws TransformationException {
+    public ResponseData<String> readEntity(URI entity, Map<String, String> headers)
+            throws TransformationException {
         ResponseEntity<Response> response = httpClient.get(entity.toString(), createHttpHeaders(headers));
         JsonObject responseJson = gson.toJsonTree(response.getBody()).getAsJsonObject();
         String resultNode = gson.toJson(response.getBody().getResult(), mapType);

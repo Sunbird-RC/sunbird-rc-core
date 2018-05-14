@@ -12,14 +12,19 @@ import com.google.common.io.CharStreams;
 import io.opensaber.registry.exception.NodeMappingNotDefinedException;
 import io.opensaber.registry.transform.utils.JsonUtils;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Iterator;
 import java.util.Map;
 
-public class JsonToJsonLdConverterTest {
+public class JsonToJsonLdTransformerTest {
+
+    @Rule
+    public ExpectedException expectedEx = ExpectedException.none();
 
     private JsonNode mappingJson;
     private JsonNode inputJson;
@@ -121,14 +126,20 @@ public class JsonToJsonLdConverterTest {
                 object.remove("basicProficiencyLevel");
             }
         }
-
         ObjectNode result = transformer.constructJsonLd(inputJson, mappingJson);
-        // System.out.println(result);
         ObjectNode expectedTeacherJsonldOutput = (ObjectNode) mapper.readTree(CharStreams.toString(new InputStreamReader(
                 JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_jsonld_output_data.json"))));
         expectedTeacherJsonldOutput.remove("basicProficiencyLevel");
 
         assertEquals(expectedTeacherJsonldOutput, result);
+    }
+
+    @Test
+    public void testNodeMappingNotFoundScenario() throws NodeMappingNotDefinedException, IOException {
+        expectedEx.expect(NodeMappingNotDefinedException.class);
+        expectedEx.expectMessage("");
+        JsonNode invalidInputJson = mapper.readTree("{\"teacher\":{\"id\": \"test_root_id\",\"teachingInvalidRole\": {\"id\": \"test_teaching_role_id\",\"teacherType\": \"TeacherTypeCode-HEAD\",\"appointmentType\":\"TeacherAppointmentTypeCode-REGULAR\"}}}");
+        ObjectNode result = transformer.constructJsonLd(invalidInputJson, mappingJson);
     }
 
 }

@@ -96,7 +96,7 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
                     JsonNode rootNodeMapping = nodeMapping.path(rootNode.getKey());
                     JsonNode rootNodeMappingDefinition = rootNodeMapping.path(MappingConstants.DEFINITION);
                     resultNode.put(JsonldConstants.TYPE, rootNodeMapping.path(MappingConstants.TYPE).asText());
-                    iterateAndConstructElements(node, rootNodeMapping, rootNodeMappingDefinition, resultNode);
+                    iterateAndConstructElements(node, rootNodeMappingDefinition, resultNode);
                     arrayNode.add(resultNode.deepCopy());
                 }
                 result.putArray(rootNode.getKey()).addAll(arrayNode);
@@ -105,7 +105,7 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
                 JsonNode rootNodeMapping = nodeMapping.path(rootNode.getKey());
                 JsonNode rootNodeMappingDefinition = rootNodeMapping.path(MappingConstants.DEFINITION);
                 result.put(JsonldConstants.TYPE, rootNodeMapping.path(MappingConstants.TYPE).asText());
-                iterateAndConstructElements(rootDataNode.path(rootNode.getKey()), rootNodeMapping, rootNodeMappingDefinition, result);
+                iterateAndConstructElements(rootDataNode.path(rootNode.getKey()), rootNodeMappingDefinition, result);
             }
         }
 
@@ -118,21 +118,21 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
 
     }
 
-    private void iterateAndConstructElements(JsonNode node, JsonNode nodeMapping,
-                                             JsonNode nodeMappingDefinition, ObjectNode resultNode)
+    private void iterateAndConstructElements(JsonNode node, JsonNode nodeMappingDefinition, ObjectNode resultNode)
             throws NodeMappingNotDefinedException, IOException {
         Iterator<Map.Entry<String, JsonNode>> fieldIterator = node.fields();
         while (fieldIterator.hasNext()) {
             Map.Entry<String, JsonNode> dataNode = fieldIterator.next();
             if (!dataNode.getKey().equalsIgnoreCase(MappingConstants.ID)) {
+                if (nodeMappingDefinition.path(dataNode.getKey()).isMissingNode()) {
+                    throw new NodeMappingNotDefinedException(
+                            String.format("Node type not defined for %s", dataNode.getKey()), ErrorCode.NODE_MAPPING_NOT_DEFINED);
+                }
+
                 Map<String, Object> mapping = mapper.readValue(nodeMappingDefinition.path(dataNode.getKey()).toString(), typeRef);
                 String dataNodeType = nodeMappingDefinition.path(dataNode.getKey()).path(MappingConstants.TYPE).asText();
                 constructJsonElement(dataNode, mapping, dataNodeType, resultNode);
             } else {
-                /*
-                resultNode.put(JsonldConstants.ID, String.format("%s:%s",
-                        nodeMapping.path(MappingConstants.PREFIX).asText(), dataNode.getValue().asText()));
-                        */
                 resultNode.put(JsonldConstants.ID, dataNode.getValue().asText());
             }
         }
@@ -229,7 +229,8 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
                 resultNode.set(nodeElementKey, leafNode.deepCopy());
             } else {
                 logger.error("Child element node with no node type defined: " + childElementNode);
-                throw new NodeMappingNotDefinedException("Node type not defined", ErrorCode.NODE_MAPPING_NOT_DEFINED);
+                throw new NodeMappingNotDefinedException(String.format("Node type not defined for %s",
+                        dataNode.getKey()), ErrorCode.NODE_MAPPING_NOT_DEFINED);
             }
         }
 
