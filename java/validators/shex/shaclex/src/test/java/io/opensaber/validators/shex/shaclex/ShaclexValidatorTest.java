@@ -163,6 +163,69 @@ public class ShaclexValidatorTest {
 
 	}
 
+	@Test
+	public void test_validate_enumerated_constants_property() throws Exception {
+
+		JsonParser p = new JsonParser();
+		JsonObject jsonObject = p.parse(new InputStreamReader
+				(this.getClass().getClassLoader().getResourceAsStream("teacher.jsonld"))).getAsJsonObject();
+		jsonObject.add("socialCategory",
+				p.parse("{\"@id\":\"teacher:SocialCategoryTypeCode-INVALID\"}"));
+
+		String dataString = new Gson().toJson(jsonObject);
+		ValidationResponse validationResponse =
+				validate(dataString, "JSON-LD",
+						Paths.get(getPath("teacher.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+		assertNotNull(validationResponse);
+		assertFalse(validationResponse.isValid());
+		assertEquals(1, validationResponse.getFields().size());
+
+		validationResponse.getFields().forEach((key, value) -> {
+			assertEquals("http://example.com/voc/teacher/1.0.0/socialCategory", key);
+			assertEquals("Error: teacher:SocialCategoryTypeCode-INVALID does not belong to " +
+					"[<http://example.com/voc/teacher/1.0.0/SocialCategoryTypeCode-GENERAL>," +
+					"<http://example.com/voc/teacher/1.0.0/SocialCategoryTypeCode-SC>," +
+					"<http://example.com/voc/teacher/1.0.0/SocialCategoryTypeCode-ST>," +
+					"<http://example.com/voc/teacher/1.0.0/SocialCategoryTypeCode-OBC>," +
+					"<http://example.com/voc/teacher/1.0.0/SocialCategoryTypeCode-ORC>," +
+					"<http://example.com/voc/teacher/1.0.0/SocialCategoryTypeCode-OTHERS>]", value);
+		});
+
+	}
+
+	@Test
+	public void test_validate_nested_enumerated_constants_property() throws Exception {
+
+		JsonParser p = new JsonParser();
+		JsonObject jsonObject = p.parse(new InputStreamReader
+				(this.getClass().getClassLoader().getResourceAsStream("teacher.jsonld"))).getAsJsonObject();
+
+		jsonObject.add("basicProficiencyLevel",
+				p.parse("[{\"@type\":\"BasicProficiencyLevel\",\"proficiencySubject\":{\"@id\":\"teacher:SubjectCode-SOCIALSTUDIES\"},\"proficiencyAcademicQualification\":{\"@id\":\"teacher:AcademicQualificationTypeCode-SOCIALSTUDIES\"}}]"));
+
+		String dataString = new Gson().toJson(jsonObject);
+		ValidationResponse validationResponse =
+				validate(dataString, "JSON-LD",
+						Paths.get(getPath("teacher.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+		assertNotNull(validationResponse);
+		assertFalse(validationResponse.isValid());
+		assertEquals(1, validationResponse.getFields().size());
+
+		validationResponse.getFields().forEach((key, value) -> {
+			assertEquals("http://example.com/voc/teacher/1.0.0/proficiencyAcademicQualification", key);
+			assertEquals("Errors: Error: teacher:AcademicQualificationTypeCode-SOCIALSTUDIES does not belong to " +
+					"[<http://example.com/voc/teacher/1.0.0/AcademicQualificationTypeCode-BELOWSECONDARY>," +
+					"<http://example.com/voc/teacher/1.0.0/AcademicQualificationTypeCode-SECONDARY>," +
+					"<http://example.com/voc/teacher/1.0.0/AcademicQualificationTypeCode-HIGHERSECONDARY>," +
+					"<http://example.com/voc/teacher/1.0.0/AcademicQualificationTypeCode-GRADUATE>," +
+					"<http://example.com/voc/teacher/1.0.0/AcademicQualificationTypeCode-POSTGRADUATE>," +
+					"<http://example.com/voc/teacher/1.0.0/AcademicQualificationTypeCode-MPHIL>," +
+					"<http://example.com/voc/teacher/1.0.0/AcademicQualificationTypeCode-POSTDOC>," +
+					"<http://example.com/voc/teacher/1.0.0/AcademicQualificationTypeCode-PHD>]", value);
+		});
+
+	}
+
 	private ValidationResponse validate(String data, String dataFormat, String schemaFile,
 									   String schemaFormat, String processor) throws Exception {
 		ShaclexValidator validator = new ShaclexValidator();

@@ -19,7 +19,7 @@ import cucumber.api.junit.Cucumber;
             "json:target/cucumber-results/registry_it_report.json",
             "junit:target/cucumber-results/registry_it_report.xml"
     },
-    tags = {"@create or @read or @update"},
+    tags = {"@create or @read or @update or @opensaberclient"},
     features = "src/test/java/io/opensaber/registry/test",
     glue = {"io.opensaber.registry.test"})
 public class RegistryIntegrationTest {

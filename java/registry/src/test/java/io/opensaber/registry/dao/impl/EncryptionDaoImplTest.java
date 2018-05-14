@@ -96,7 +96,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 	private Gson gson;
 	
 	@Mock
-	private EncryptionService encryptionMock;
+	private EncryptionServiceImpl encryptionMock;
 	
 	@Mock
 	private SchemaConfigurator mockSchemaConfigurator;

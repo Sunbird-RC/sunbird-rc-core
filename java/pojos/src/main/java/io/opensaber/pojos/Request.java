@@ -1,5 +1,7 @@
 package io.opensaber.pojos;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 import java.util.Map;
 
@@ -9,7 +11,20 @@ public class Request {
 	private String ver;
 	private Long ets;	
 	private RequestParams params;
+	@SerializedName("request")
 	private Map<String, Object> requestMap;
+
+	public Request() {
+		this.ver = "1.0";
+		this.ets = System.currentTimeMillis();
+	}
+
+	public Request(RequestParams params, Map<String, Object> requestMap) {
+		this.ver = "1.0";
+		this.ets = System.currentTimeMillis();
+		this.params = params;
+		this.requestMap = requestMap;
+	}
 				
 	public String getId() {
 		return id;

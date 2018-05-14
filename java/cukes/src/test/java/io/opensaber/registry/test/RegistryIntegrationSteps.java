@@ -37,7 +37,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 
 
-public class RegistryIntegrationSteps extends RegistryTestBase{
+public class RegistryIntegrationSteps extends RegistryTestBase {
 	
 
 	private static final String VALID_JSONLD= "school.jsonld";
@@ -200,24 +200,10 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		RDFDataMgr.read(actualModel, new StringReader(newJsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD);
 		assertTrue(expectedModel.isIsomorphicWith(actualModel));
 	}
-	
-	private void setValidAuthHeader(){
-		String body = "client_id=" + System.getenv("sunbird_sso_client_id") + "&username=" + System.getenv("sunbird_sso_username")
-				+ "&password=" + System.getenv("sunbird_sso_password") + "&grant_type=password";
-		headers = new HttpHeaders();
-		headers.setCacheControl("no-cache");
-		headers.set("content-type", "application/x-www-form-urlencoded");
-		HttpEntity<String> request = new HttpEntity<String>(body, headers);
 
-		try {
-			String url = System.getenv("sunbird_sso_url")+"realms/"+System.getenv("sunbird_sso_realm")+"/protocol/openid-connect/token ";
-			ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
-			Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
-			String accessToken = (String) myMap.get("access_token");
-			headers.add(AUTH_HEADER_NAME, accessToken);
-		}catch (Exception e) {
-			e.printStackTrace();
-		}
+	private void setValidAuthHeader() {
+		headers = new HttpHeaders();
+		headers.add(AUTH_HEADER_NAME, accessToken);
 	}
 
 	public HttpHeaders getHeaders() {

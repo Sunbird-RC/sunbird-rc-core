@@ -74,7 +74,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	private String registryContextBase;
 
 	@Autowired
-	private RegistryService registryService;
+	private RegistryServiceImpl registryService;
 	
 	@Autowired
 	private DatabaseProvider databaseProvider;
