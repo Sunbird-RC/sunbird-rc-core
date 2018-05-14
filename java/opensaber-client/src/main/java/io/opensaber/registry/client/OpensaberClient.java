@@ -104,12 +104,12 @@ public class OpensaberClient implements Client<String> {
     @Override
     public ResponseData<String> addAndAssociateEntity(URI existingEntity, URI property,
                                                       RequestData<String> requestData, Map<String, String> headers)
-            throws UnsupportedEncodingException, TransformationException {
+            throws TransformationException {
         ResponseData<String> transformedReqData = requestTransformer.transform(requestData);
         logger.debug("AddAndAssociateEntity Transformed Request Data: " + transformedReqData.getResponseData());
         Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("id", URLEncoder.encode(existingEntity.toString(), "UTF-8"));
-        queryParams.put("prop", URLEncoder.encode(property.toString(), "UTF-8"));
+        queryParams.put("id", existingEntity.toString());
+        queryParams.put("prop", property.toString());
         ResponseEntity<Response> response =
                 httpClient.post(Configuration.BASE_URL + ApiEndPoints.ADD,
                         createHttpHeaders(headers), queryParams,

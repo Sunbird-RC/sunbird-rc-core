@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,13 +31,14 @@ public class HttpClient {
     }
 
     public ResponseEntity<Response> post(String url, HttpHeaders headers, String payload) {
-        System.out.println("JSON-LD payload");
         return post(url, headers, new HashMap<>(), payload);
     }
 
     public ResponseEntity<Response> post(String url, HttpHeaders headers, Map<String, String> queryParams, String payload) {
         HttpEntity<String> entity = new HttpEntity<>(payload, headers);
-        ResponseEntity<Response> response = restTemplate.exchange(url, HttpMethod.POST, entity, Response.class, queryParams);
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(url);
+        queryParams.forEach((param, paramValue) -> uriBuilder.queryParam(param, paramValue));
+        ResponseEntity<Response> response = restTemplate.exchange(uriBuilder.toUriString(), HttpMethod.POST, entity, Response.class);
         return response;
     }
 
@@ -46,7 +48,9 @@ public class HttpClient {
 
     public ResponseEntity<Response> get(String url, HttpHeaders headers, Map<String, String> queryParams) {
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<Response> response = restTemplate.exchange(url, HttpMethod.GET, entity, Response.class, queryParams);
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(url);
+        queryParams.forEach((param, paramValue) -> uriBuilder.queryParam(param, paramValue));
+        ResponseEntity<Response> response = restTemplate.exchange(uriBuilder.toUriString(), HttpMethod.GET, entity, Response.class);
         return response;
     }
 }

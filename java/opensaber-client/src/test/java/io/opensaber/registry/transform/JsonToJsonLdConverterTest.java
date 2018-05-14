@@ -5,12 +5,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import static org.junit.Assert.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CharStreams;
+import io.opensaber.registry.exception.NodeMappingNotDefinedException;
 import io.opensaber.registry.transform.utils.JsonUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Iterator;
 import java.util.Map;
@@ -30,11 +34,11 @@ public class JsonToJsonLdConverterTest {
         mappingJson = mapper.readTree(CharStreams.toString(new InputStreamReader(
                 JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("context_mapping.json"))));
         inputJson = mapper.readTree(CharStreams.toString(new InputStreamReader(
-                JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_json_data.json"))));
+                JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_json_input_data.json"))));
     }
 
     @Test
-    public void testProcessNode() throws Exception {
+    public void testProcessNode() throws NodeMappingNotDefinedException, IOException {
         Iterator<Map.Entry<String, JsonNode>> fieldIterator = inputJson.path("teacher").fields();
         JsonNode nodeMappings = mappingJson.path("teacher").path("definition");
         ObjectNode result = JsonUtils.createObjectNode();
@@ -54,7 +58,7 @@ public class JsonToJsonLdConverterTest {
     }
 
     @Test
-    public void testProcessCollectionNode() throws Exception {
+    public void testProcessCollectionNode() throws NodeMappingNotDefinedException, IOException {
         Iterator<Map.Entry<String, JsonNode>> fieldIterator = inputJson.path("teacher").fields();
         JsonNode nodeMappings = mappingJson.path("teacher").path("definition");
         ObjectNode result = JsonUtils.createObjectNode();
@@ -72,17 +76,59 @@ public class JsonToJsonLdConverterTest {
     }
 
     @Test
-    public void testConstructJsonld() throws Exception {
+    public void testConversionWithPartialData() throws NodeMappingNotDefinedException, IOException {
         for (JsonNode node : inputJson) {
             if (node instanceof ObjectNode) {
                 ObjectNode object = (ObjectNode) node;
                 object.remove("basicProficiencyLevel");
             }
         }
-        String expectedResult = "{\"@type\":\"Teacher\",\"@id\":\"teacher:test_root_id\",\"teachingRole\":{\"teacherType\":{\"@id\":\"teacher:TeacherTypeCode-HEAD\"},\"appointmentType\":{\"@id\":\"teacher:TeacherAppointmentTypeCode-REGULAR\"},\"classesTaught\":[{\"@id\":\"teacher:ClassTypeCode-SECONDARYANDHIGHERSECONDARY\"}],\"appointedForSubjects\":[{\"@id\":\"teacher:SubjectCode-MATH\"}],\"mainSubjectsTaught\":[{\"@id\":\"teacher:SubjectCode-PHYSICS\"},{\"@id\":\"teacher:SubjectCode-MATH\"}],\"appointmentYear\":{\"@type\":\"xsd:gYear\",\"@value\":\"2015\"},\"@type\":\"TeachingRole\",\"@id\":\"test_teaching_role_id\"},\"@context\":{\"xsd\":\"http://www.w3.org/2001/XMLSchema#\",\"teacher\":\"http://localhost:8080/\",\"@vocab\":\"http://localhost:8080/\"}}";
+        ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+        arrayNode.add("teacher:SubjectCode-ENGLISH").add("teacher:SubjectCode-MATH");
+        ObjectNode teachingRoleNode = JsonNodeFactory.instance.objectNode();
+        teachingRoleNode.putArray("mainSubjectsTaught").addAll(arrayNode);
+        teachingRoleNode.put("id", "test_teaching_role_id");
+
+        ((ObjectNode) inputJson.path("teacher")).set("teachingRole", teachingRoleNode);
         ObjectNode result = transformer.constructJsonLd(inputJson, mappingJson);
-        // OpeOpeSystem.out.println(result);
-        assertEquals(expectedResult.trim(), result.toString());
+
+        ObjectNode expectedTeacherJsonldOutput = (ObjectNode) mapper.readTree(CharStreams.toString(new InputStreamReader(
+                JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_jsonld_output_data.json"))));
+
+        expectedTeacherJsonldOutput.remove("basicProficiencyLevel");
+        ObjectNode teachingRoleJsonldNode = (ObjectNode) expectedTeacherJsonldOutput.path("teachingRole");
+        teachingRoleJsonldNode.remove("teacherType");
+        teachingRoleJsonldNode.remove("appointmentType");
+        teachingRoleJsonldNode.remove("classesTaught");
+        teachingRoleJsonldNode.remove("appointedForSubjects");
+        teachingRoleJsonldNode.remove("mainSubjectsTaught");
+        teachingRoleJsonldNode.remove("appointmentYear");
+
+        ArrayNode mainSubjectsTaughtJsonld = JsonNodeFactory.instance.arrayNode();
+        mainSubjectsTaughtJsonld.add(JsonNodeFactory.instance.objectNode().put("@id", "teacher:teacher:SubjectCode-ENGLISH"));
+        mainSubjectsTaughtJsonld.add(JsonNodeFactory.instance.objectNode().put("@id", "teacher:teacher:SubjectCode-MATH"));
+
+        teachingRoleJsonldNode.putArray("mainSubjectsTaught").addAll(mainSubjectsTaughtJsonld);
+
+        assertEquals(expectedTeacherJsonldOutput, result);
+    }
+
+    @Test
+    public void testConstructJsonld() throws NodeMappingNotDefinedException, IOException {
+        for (JsonNode node : inputJson) {
+            if (node instanceof ObjectNode) {
+                ObjectNode object = (ObjectNode) node;
+                object.remove("basicProficiencyLevel");
+            }
+        }
+
+        ObjectNode result = transformer.constructJsonLd(inputJson, mappingJson);
+        // System.out.println(result);
+        ObjectNode expectedTeacherJsonldOutput = (ObjectNode) mapper.readTree(CharStreams.toString(new InputStreamReader(
+                JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_jsonld_output_data.json"))));
+        expectedTeacherJsonldOutput.remove("basicProficiencyLevel");
+
+        assertEquals(expectedTeacherJsonldOutput, result);
     }
 
 }

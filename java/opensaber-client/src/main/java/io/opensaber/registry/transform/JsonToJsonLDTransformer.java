@@ -22,10 +22,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class JsonToJsonLDTransformer implements ITransformer<String> {
 
@@ -131,8 +129,11 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
                 String dataNodeType = nodeMappingDefinition.path(dataNode.getKey()).path(MappingConstants.TYPE).asText();
                 constructJsonElement(dataNode, mapping, dataNodeType, resultNode);
             } else {
+                /*
                 resultNode.put(JsonldConstants.ID, String.format("%s:%s",
                         nodeMapping.path(MappingConstants.PREFIX).asText(), dataNode.getValue().asText()));
+                        */
+                resultNode.put(JsonldConstants.ID, dataNode.getValue().asText());
             }
         }
     }
@@ -191,19 +192,22 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
 
     @SuppressWarnings("unchecked")
     private ObjectNode generateJsonldNode(Map.Entry<String, JsonNode> node,
-                                                Map<String, Object> nodeMapping,
-                                                boolean mappingIsAComplexObject) throws NodeMappingNotDefinedException {
+                                          Map<String, Object> nodeMapping,
+                                          boolean mappingIsAComplexObject) throws NodeMappingNotDefinedException {
 
         ObjectNode resultNode = JsonUtils.createObjectNode();
+        List<Map.Entry<String, JsonNode>> dataNodes = Lists.newArrayList(node.getValue().fields()).stream()
+                .filter(n -> !n.getKey().equalsIgnoreCase("id"))
+                .collect(Collectors.toList());
 
-        for (Map.Entry<String, Object> childMapping : nodeMapping.entrySet()) {
+        for (Map.Entry<String, JsonNode> dataNode : dataNodes) {
 
             ObjectNode leafNode = JsonUtils.createObjectNode();
-            String nodeElementKey = mappingIsAComplexObject ? childMapping.getKey() : node.getKey();
+            String nodeElementKey = mappingIsAComplexObject ? dataNode.getKey() : node.getKey();
             JsonNode childElementNode = mappingIsAComplexObject ? node.getValue().path(nodeElementKey) : node.getValue();
             HashMap<String, Object> nodeMappingValues = null;
             if (mappingIsAComplexObject) {
-                nodeMappingValues = (HashMap<String, Object>) childMapping.getValue();
+                nodeMappingValues = (HashMap<String, Object>) nodeMapping.get(nodeElementKey);
             }
 
             String nodeType = mappingIsAComplexObject ? nodeMappingValues.get(MappingConstants.TYPE).toString() : nodeMapping.get(MappingConstants.TYPE).toString();

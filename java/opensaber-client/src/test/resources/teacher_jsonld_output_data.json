@@ -1,0 +1,73 @@
+{
+  "@type": "Teacher",
+  "@id": "test_root_id",
+  "teachingRole": {
+    "teacherType": {
+      "@id": "teacher:TeacherTypeCode-HEAD"
+    },
+    "appointmentType": {
+      "@id": "teacher:TeacherAppointmentTypeCode-REGULAR"
+    },
+    "classesTaught": [
+      {
+        "@id": "teacher:ClassTypeCode-SECONDARYANDHIGHERSECONDARY"
+      }
+    ],
+    "appointedForSubjects": [
+      {
+        "@id": "teacher:SubjectCode-MATH"
+      }
+    ],
+    "mainSubjectsTaught": [
+      {
+        "@id": "teacher:SubjectCode-PHYSICS"
+      },
+      {
+        "@id": "teacher:SubjectCode-MATH"
+      }
+    ],
+    "appointmentYear": {
+      "@type": "xsd:gYear",
+      "@value": "2015"
+    },
+    "@type": "TeachingRole",
+    "@id": "test_teaching_role_id"
+  },
+  "basicProficiencyLevel": [
+    {
+      "proficiencySubject": {
+        "@id": "teacher:SubjectCode-MATH"
+      },
+      "proficiencyAcademicQualification": {
+        "@id": "teacher:AcademicQualificationTypeCode-PHD"
+      },
+      "@type": "BasicProficiencyLevel",
+      "@id": "test_id_1"
+    },
+    {
+      "proficiencySubject": {
+        "@id": "teacher:SubjectCode-ENGLISH"
+      },
+      "proficiencyAcademicQualification": {
+        "@id": "teacher:AcademicQualificationTypeCode-HIGHERSECONDARY"
+      },
+      "@type": "BasicProficiencyLevel",
+      "@id": "test_id_2"
+    },
+    {
+      "proficiencySubject": {
+        "@id": "teacher:SubjectCode-SOCIALSTUDIES"
+      },
+      "proficiencyAcademicQualification": {
+        "@id": "teacher:AcademicQualificationTypeCode-SOCIALSTUDIES"
+      },
+      "@type": "BasicProficiencyLevel",
+      "@id": "test_id_3"
+    }
+  ],
+  "@context": {
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "teacher": "http://localhost:8080/",
+    "@vocab": "http://localhost:8080/"
+  }
+}

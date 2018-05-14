@@ -34,7 +34,7 @@ public class JsonldToJsonTransformerTest {
         mappingJson = mapper.readTree(CharStreams.toString(new InputStreamReader(
                 JsonldToJsonTransformer.class.getClassLoader().getResourceAsStream("context_mapping.json"))));
         inputJson = mapper.readTree(CharStreams.toString(new InputStreamReader(
-                JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_jsonld_data.json"))));
+                JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_jsonld_input_data.json"))));
     }
 
     @Test
