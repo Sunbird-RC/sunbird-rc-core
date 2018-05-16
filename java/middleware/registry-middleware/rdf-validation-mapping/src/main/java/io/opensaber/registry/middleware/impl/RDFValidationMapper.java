@@ -36,12 +36,8 @@ public class RDFValidationMapper implements BaseMiddleware{
 
 	public RDFValidationMapper(Model validationConfig){
 		if(validationConfig!=null){
-			initializeShapeMap(validationConfig);
+			shapeTypeMap = getShapeMap(RDF.type, SX_SHAPE_IRI, validationConfig);
 		}
-	}
-
-	private void initializeShapeMap(Model validationConfig){
-		shapeTypeMap = getShapeMap(RDF.type, SX_SHAPE_IRI, validationConfig);
 	}
 
 	public Map<String,String> getShapeTypeMap(){
@@ -93,27 +89,37 @@ public class RDFValidationMapper implements BaseMiddleware{
 		return model;
 	}
 
+	/**
+	 * This method generates a shapemap which contains mappings between each entity type and the corresponding
+	 * shape that the validations should target. Here we first filter out all the shape resources from the validationConfig.
+	 * Then we iterate through the list of shape resources and do a bunch of filtering based a few predicates to finally arrive at
+	 * the type for which the shape is targeted.
+	 * @param predicate
+	 * @param object
+	 * @param validationConfig is the rdf model format of the Schema file used for validations
+	 * @return
+	 */
 	private Map<String,String> getShapeMap(Property predicate, String object, Model validationConfig){
 		Map<String,String> shapeMap = new HashMap<String, String>();
 		List<Resource> shapeList = RDFUtil.getListOfSubjects(predicate, object, validationConfig);
-		for(Resource subject: shapeList){
-			RDFNode node = getIteratorAfterFilter(subject, SX_EXPRESSION_IRI, validationConfig);
-			RDFNode firstNode = getIteratorAfterFilter(node, SX_EXPRESSIONS_IRI, validationConfig);
-			RDFNode secondNode = getIteratorAfterFilter(firstNode, RDF.first.getURI(), validationConfig);
-			RDFNode thirdNode = getIteratorAfterFilter(secondNode, SX_VALUES_IRI, validationConfig);
+		for(Resource shape: shapeList){
+			RDFNode node = getObjectAfterFilter(shape, SX_EXPRESSION_IRI, validationConfig);
+			RDFNode firstNode = getObjectAfterFilter(node, SX_EXPRESSIONS_IRI, validationConfig);
+			RDFNode secondNode = getObjectAfterFilter(firstNode, RDF.first.getURI(), validationConfig);
+			RDFNode thirdNode = getObjectAfterFilter(secondNode, SX_VALUES_IRI, validationConfig);
 			if(thirdNode == null){
-				thirdNode = getIteratorAfterFilter(secondNode, SX_VALUE_EXPR_IRI, validationConfig);
+				thirdNode = getObjectAfterFilter(secondNode, SX_VALUE_EXPR_IRI, validationConfig);
 			}
-			RDFNode fourthNode = getIteratorAfterFilter(thirdNode, SX_VALUES_IRI, validationConfig);
-			RDFNode fifthNode = getIteratorAfterFilter(fourthNode, RDF.first.getURI(), validationConfig);
-			if(fifthNode!=null){
-				shapeMap.put(fifthNode.toString(), subject.toString());
+			RDFNode fourthNode = getObjectAfterFilter(thirdNode, SX_VALUES_IRI, validationConfig);
+			RDFNode typeNode = getObjectAfterFilter(fourthNode, RDF.first.getURI(), validationConfig);
+			if(typeNode!=null){
+				shapeMap.put(typeNode.toString(), shape.toString());
 			}
 		}
 		return shapeMap;
 	}
 	
-	private RDFNode getIteratorAfterFilter(RDFNode node, String predicate, Model validationConfig){
+	private RDFNode getObjectAfterFilter(RDFNode node, String predicate, Model validationConfig){
 			Property property = ResourceFactory.createProperty(predicate);
 			List<RDFNode> nodeList = RDFUtil.getListOfObjectNodes((Resource)node, property,validationConfig);
 			if(nodeList.size() != 0){
