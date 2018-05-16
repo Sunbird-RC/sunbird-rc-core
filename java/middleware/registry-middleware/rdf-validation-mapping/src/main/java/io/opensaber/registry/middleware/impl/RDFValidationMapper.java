@@ -25,7 +25,12 @@ public class RDFValidationMapper implements BaseMiddleware{
 	private static final String RDF_DATA_IS_INVALID = "RDF Data is invalid";
 	private static final String VALIDATION_IS_MISSING = "Validation is missing";
 	private static final String VALIDATION_MISSING_FOR_TYPE = "Validation missing for type";
-	private static final String SX_SHAPE_NAMESPACE = "http://shex.io/ns/shex#Shape";
+	private static final String SX_SHAPE_IRI = "http://shex.io/ns/shex#Shape";
+	private static final String SX_EXPRESSION_IRI = "http://shex.io/ns/shex#expression";
+	private static final String SX_EXPRESSIONS_IRI = "http://shex.io/ns/shex#expressions";
+	private static final String SX_VALUES_IRI = "http://shex.io/ns/shex#values";
+	private static final String SX_VALUE_EXPR_IRI = "http://shex.io/ns/shex#valueExpr";
+
 
 	private Map<String,String> shapeTypeMap;
 
@@ -36,7 +41,7 @@ public class RDFValidationMapper implements BaseMiddleware{
 	}
 
 	private void initializeShapeMap(Model validationConfig){
-		shapeTypeMap = getShapeMap(RDF.type, SX_SHAPE_NAMESPACE, validationConfig);
+		shapeTypeMap = getShapeMap(RDF.type, SX_SHAPE_IRI, validationConfig);
 	}
 
 	public Map<String,String> getShapeTypeMap(){
@@ -92,16 +97,15 @@ public class RDFValidationMapper implements BaseMiddleware{
 		Map<String,String> shapeMap = new HashMap<String, String>();
 		List<Resource> shapeList = RDFUtil.getListOfSubjects(predicate, object, validationConfig);
 		for(Resource subject: shapeList){
-			Property property1 = ResourceFactory.createProperty("http://shex.io/ns/shex#expression");
-			List<RDFNode> rdfNodeList = RDFUtil.getListOfObjectNodes(subject, property1, validationConfig);
-			RDFNode firstNode = getIteratorAfterFilter(rdfNodeList.get(0), "http://shex.io/ns/shex#expressions", validationConfig);
-			RDFNode secondNode = getIteratorAfterFilter(firstNode, "http://www.w3.org/1999/02/22-rdf-syntax-ns#first", validationConfig);
-			RDFNode thirdNode = getIteratorAfterFilter(secondNode, "http://shex.io/ns/shex#values", validationConfig);
+			RDFNode node = getIteratorAfterFilter(subject, SX_EXPRESSION_IRI, validationConfig);
+			RDFNode firstNode = getIteratorAfterFilter(node, SX_EXPRESSIONS_IRI, validationConfig);
+			RDFNode secondNode = getIteratorAfterFilter(firstNode, RDF.first.getURI(), validationConfig);
+			RDFNode thirdNode = getIteratorAfterFilter(secondNode, SX_VALUES_IRI, validationConfig);
 			if(thirdNode == null){
-				thirdNode = getIteratorAfterFilter(secondNode, "http://shex.io/ns/shex#valueExpr", validationConfig);
+				thirdNode = getIteratorAfterFilter(secondNode, SX_VALUE_EXPR_IRI, validationConfig);
 			}
-			RDFNode fourthNode = getIteratorAfterFilter(thirdNode, "http://shex.io/ns/shex#values", validationConfig);
-			RDFNode fifthNode = getIteratorAfterFilter(fourthNode, "http://www.w3.org/1999/02/22-rdf-syntax-ns#first", validationConfig);
+			RDFNode fourthNode = getIteratorAfterFilter(thirdNode, SX_VALUES_IRI, validationConfig);
+			RDFNode fifthNode = getIteratorAfterFilter(fourthNode, RDF.first.getURI(), validationConfig);
 			if(fifthNode!=null){
 				shapeMap.put(fifthNode.toString(), subject.toString());
 			}
