@@ -1,8 +1,6 @@
 package io.opensaber.registry.config;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
@@ -12,6 +10,7 @@ import io.opensaber.registry.sink.SqlgProvider;
 import io.opensaber.registry.sink.TinkerGraphProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -143,14 +143,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public RDFValidationMapper rdfValidationMapper(){
-		Map<String, String> typeValidationMap = new HashMap<String, String>();
-		String shapeType = environment.getProperty(Constants.SHAPE_TYPE);
-		String shapeName = environment.getProperty(Constants.SHAPE_NAME);
-		if (shapeType != null && shapeName != null) {
-			typeValidationMap.put(shapeType, shapeName);
+	public RDFValidationMapper rdfValidationMapper() {
+		Model validationConfig = null;
+		try{
+			validationConfig = schemaConfiguration().getValidationConfig();
+		}catch(Exception e){
+			logger.error("Unable to get validation configuration");
 		}
-		return new RDFValidationMapper(typeValidationMap);
+		return new RDFValidationMapper(validationConfig);
 	}
 
 	@Override
@@ -185,4 +185,5 @@ public class GenericConfiguration implements WebMvcConfigurer {
     public HandlerExceptionResolver customExceptionHandler () {
         return new CustomExceptionHandler(gson());
     }
+	
 }

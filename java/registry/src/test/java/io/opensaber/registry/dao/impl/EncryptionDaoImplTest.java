@@ -10,7 +10,7 @@ import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 import io.opensaber.registry.util.GraphDBFactory;
-import io.opensaber.registry.util.RDFUtil;
+
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdf.model.Property;
 import org.apache.tinkerpop.gremlin.structure.*;
@@ -56,6 +56,7 @@ import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.exception.MultipleEntityException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.impl.EncryptionServiceImpl;
 import io.opensaber.utils.converters.RDF2Graph;
