@@ -21,7 +21,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -162,6 +164,25 @@ public class ShaclexValidatorTest {
 		});
 
 	}
+	
+	@Test
+	public void test_target_and_validate_nested_entity() throws Exception {
+
+		JsonParser p = new JsonParser();
+		JsonObject jsonObject = p.parse(new InputStreamReader
+				(this.getClass().getClassLoader().getResourceAsStream("teacher.jsonld"))).getAsJsonObject();
+		JsonObject newJsonObject = jsonObject.getAsJsonObject("inServiceTeacherTrainingFromBRC");
+		newJsonObject.add("@context", jsonObject.get("@context"));
+
+		String dataString = new Gson().toJson(newJsonObject);
+		ValidationResponse validationResponse =
+				validate(dataString, "JSON-LD",
+						Paths.get(getPath("teacher.shex")).toString(), SCHEMAFORMAT, PROCESSOR);
+		assertNotNull(validationResponse);
+		assertTrue(validationResponse.isValid());
+		assertEquals(0, validationResponse.getFields().size());
+
+	}
 
 	private ValidationResponse validate(String data, String dataFormat, String schemaFile,
 									   String schemaFormat, String processor) throws Exception {
@@ -171,12 +192,6 @@ public class ShaclexValidatorTest {
 		mergeModels(dataModel, validationRDF);
 		Schema schema = readSchema(Paths.get(schemaFile), schemaFormat, processor);
 		return validator.validate(validationRDF, schema);
-	}
-
-	private String printRDF(Model validationRdf) {
-		StringWriter sw = new StringWriter();
-		RDFDataMgr.write(sw, validationRdf, Lang.TTL);
-		return sw.toString();
 	}
 
 
@@ -199,7 +214,8 @@ public class ShaclexValidatorTest {
 		Model model = ModelFactory.createDefaultModel();
 		Map<String, String> typeValidationMap = new HashMap<>();
 		typeValidationMap.put("http://example.com/voc/teacher/1.0.0/Teacher", "http://example.com/voc/teacher/1.0.0/TeacherShape");
-		for (Map.Entry<String, String> map : typeValidationMap.entrySet()) {
+		typeValidationMap.put("http://example.com/voc/teacher/1.0.0/InServiceTeacherTrainingFromBlockResourceCentre", "http://example.com/voc/teacher/1.0.0/InServiceTeacherTrainingShape");
+		/*for (Map.Entry<String, String> map : typeValidationMap.entrySet()) {
 			String key = map.getKey();
 			StmtIterator iter = filterStatement(null, RDF.type, key, inputRdf);
 			String value = map.getValue();
@@ -211,15 +227,43 @@ public class ShaclexValidatorTest {
 				Property predicate = ResourceFactory.createProperty("http://www.w3.org/ns/shacl#targetNode");
 				model.add(subjectResource, predicate, iter.next().getSubject());
 			}
+		}*/
+		List<Resource> labelNodes = getRootLabels(inputRdf);
+		if(labelNodes.size()==1){
+			Resource target = labelNodes.get(0);
+			List<String> typeList = getTypeForSubject(inputRdf, target);
+			if(typeList.size() == 1){
+				String targetType = typeList.get(0);
+				String shapeName = typeValidationMap.get(targetType);
+				Resource subjectResource = ResourceFactory.createResource(shapeName);
+				Property predicate = ResourceFactory.createProperty("http://www.w3.org/ns/shacl#targetNode");
+				model.add(subjectResource,predicate, target);
+			}
 		}
 		return model;
 	}
 
-	private StmtIterator filterStatement(String subject, Property predicate, String object, Model resultModel) {
-		Resource subjectResource = subject != null ? ResourceFactory.createResource(subject) : null;
-		RDFNode objectResource = object != null ? ResourceFactory.createResource(object) : null;
-		StmtIterator iter = resultModel.listStatements(subjectResource, predicate, objectResource);
-		return iter;
-	}
+	public static List<Resource> getRootLabels(Model rdfModel){
+    	List<Resource> rootLabelList = new ArrayList<Resource>();
+    	ResIterator resIter = rdfModel.listSubjects();
+		while(resIter.hasNext()){
+			Resource resource = resIter.next();
+			StmtIterator stmtIter = rdfModel.listStatements(null, null, resource);
+			if(!stmtIter.hasNext()){
+				rootLabelList.add(resource);
+			}
+		}
+		return rootLabelList;
+    }
+    
+    public static List<String> getTypeForSubject(Model rdfModel, Resource root){
+    	List<String> typeIRIs = new ArrayList<String>();
+    	NodeIterator nodeIter = rdfModel.listObjectsOfProperty(root, RDF.type);
+		while(nodeIter.hasNext()){
+			RDFNode rdfNode = nodeIter.next();
+			typeIRIs.add(rdfNode.toString());
+		}
+		return typeIRIs;
+    }
 
 }

@@ -2,6 +2,7 @@ package io.opensaber.registry.config;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
@@ -12,6 +13,15 @@ import io.opensaber.registry.sink.SqlgProvider;
 import io.opensaber.registry.sink.TinkerGraphProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.NodeIterator;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -36,6 +47,7 @@ import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.impl.JSONLDConverter;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import org.springframework.web.client.RestTemplate;
@@ -143,14 +155,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public RDFValidationMapper rdfValidationMapper(){
-		Map<String, String> typeValidationMap = new HashMap<String, String>();
-		String shapeType = environment.getProperty(Constants.SHAPE_TYPE);
-		String shapeName = environment.getProperty(Constants.SHAPE_NAME);
-		if (shapeType != null && shapeName != null) {
-			typeValidationMap.put(shapeType, shapeName);
+	public RDFValidationMapper rdfValidationMapper() {
+		Model validationConfig = null;
+		try{
+			validationConfig = schemaConfiguration().getValidationConfig();
+		}catch(Exception e){
+			logger.error("Unable to get validation configuration");
 		}
-		return new RDFValidationMapper(typeValidationMap);
+		return new RDFValidationMapper(validationConfig);
 	}
 
 	@Override
@@ -185,4 +197,5 @@ public class GenericConfiguration implements WebMvcConfigurer {
     public HandlerExceptionResolver customExceptionHandler () {
         return new CustomExceptionHandler(gson());
     }
+	
 }
