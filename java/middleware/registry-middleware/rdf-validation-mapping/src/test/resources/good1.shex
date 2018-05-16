@@ -1,0 +1,35 @@
+PREFIX sample: <http://example.com/voc/teacher/1.0.0/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://ex.example/#>
+
+sample:isAString xsd:string
+sample:isAYear xsd:gYear
+
+sample:SchoolShape CLOSED{
+	a [sample:School] ;
+	sample:udiseNumber @sample:isAString {0,1};
+    sample:academicCalendarYearStart @sample:isAString {0,1};
+    sample:academicCalendarYearEnd @sample:isAString {0,1};
+    sample:area [sample:AreaTypeCode-RURAL sample:AreaTypeCode-URBAN] {0,1};
+    sample:schoolName @sample:isAString {0,1};
+	sample:address @sample:AddressShape ;
+	sample:revenueBlock @sample:isAString {0,1} ;
+	sample:assemblyConstituency @sample:isAString {0,1} ;
+	sample:clusterResourceCentre @sample:isAString {0,1}
+}
+
+sample:AddressShape CLOSED{
+    a [sample:IndianUrbanPostalAddress sample:IndianRuralPostalAddress] ;
+    (
+        sample:mohalla @sample:isAString {0,1};
+        sample:wardNumber @sample:isAString {0,1};
+        sample:municipality @sample:isAString {0,1};
+        sample:city @sample:isAString {0,1}
+        |
+        sample:habitation @sample:isAString {0,1};
+        sample:villageName @sample:isAString {0,1};
+        sample:villagePanchayat @sample:isAString {0,1};
+    );
+    sample:pinCode @sample:isAString {0,1};
+    sample:district @sample:isAString {0,1}
+}

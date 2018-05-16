@@ -39,10 +39,10 @@ import org.springframework.stereotype.Component;
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.GraphDBFactory;
-import io.opensaber.registry.util.RDFUtil;
 import io.opensaber.utils.converters.RDF2Graph;
 
 import static org.apache.tinkerpop.gremlin.structure.io.IoCore.graphson;
@@ -90,7 +90,8 @@ public class RegistryServiceImpl implements RegistryService {
 	public String addEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException,
 	EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException {
 		try {
-			String label = getRootLabel(rdfModel);
+			Resource root = getRootNode(rdfModel);
+			String label = getRootLabel(root);
 			Graph graph = generateGraphFromRDF(rdfModel);
 
 			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
@@ -107,7 +108,8 @@ public class RegistryServiceImpl implements RegistryService {
 
 	@Override
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
-		String label = getRootLabel(entity);
+		Resource root = getRootNode(entity);
+		String label = getRootLabel(root);
 		Graph graph = generateGraphFromRDF(entity);
 		logger.debug("Service layer graph :", graph);
 		return registryDao.updateEntity(graph, label, "update");
@@ -166,8 +168,8 @@ public class RegistryServiceImpl implements RegistryService {
 	@Override
 	public String frameEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException, MultipleEntityException, EntityCreationException {
 		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
-		String rootLabel = getRootLabel(jenaEntityModel);
-		String rootLabelType = getTypeForRootLabel(jenaEntityModel, rootLabel);
+		Resource root = getRootNode(jenaEntityModel);
+		String rootLabelType = getTypeForRootLabel(jenaEntityModel, root);
 		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
 		JsonLDWriteContext ctx = new JsonLDWriteContext();
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("frame.json");
@@ -221,24 +223,26 @@ public class RegistryServiceImpl implements RegistryService {
 		return graph;
 	}
 	
-	private String getRootLabel(Model entity) throws EntityCreationException, MultipleEntityException{
+	private String getRootLabel(Resource subject) {
+		String label = subject.toString();
+		if (subject.isAnon() && subject.getURI() == null) {
+			label = String.format("_:%s", label);
+		}
+		return label;
+	}
+	
+	private Resource getRootNode(Model entity) throws EntityCreationException, MultipleEntityException{
 		List<Resource> rootLabels = RDFUtil.getRootLabels(entity);
 		if (rootLabels.size() == 0) {
 			throw new EntityCreationException(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
 		} else if (rootLabels.size() > 1) {
 			throw new MultipleEntityException(Constants.ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE);
 		} else {
-			Resource subject = rootLabels.get(0);
-			String label = subject.toString();
-			if (subject.isAnon() && subject.getURI() == null) {
-				label = String.format("_:%s", label);
-			}
-			return label;
+			return rootLabels.get(0);
 		}
 	}
-	
-	private String getTypeForRootLabel(Model entity, String rootLabel) throws EntityCreationException, MultipleEntityException{
-		List<String> rootLabelType = RDFUtil.getTypeForSubject(entity, rootLabel);
+	private String getTypeForRootLabel(Model entity, Resource root) throws EntityCreationException, MultipleEntityException{
+		List<String> rootLabelType = RDFUtil.getTypeForSubject(entity, root);
 		if (rootLabelType.size() == 0) {
 			throw new EntityCreationException(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
 		} else if (rootLabelType.size() > 1) {
