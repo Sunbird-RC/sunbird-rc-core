@@ -92,8 +92,8 @@ public class RDFValidationMapper implements BaseMiddleware{
 	/**
 	 * This method generates a shapemap which contains mappings between each entity type and the corresponding
 	 * shape that the validations should target. Here we first filter out all the shape resources from the validationConfig.
-	 * Then we iterate through the list of shape resources and do a bunch of filtering based a few predicates to finally arrive at
-	 * the type for which the shape is targeted.
+	 * Then we iterate through the list of shape resources and do a bunch of filtering from the validationConfig
+	 * based on a few predicates to finally arrive at the type for which the shape is targeted.
 	 * @param predicate
 	 * @param object
 	 * @param validationConfig is the rdf model format of the Schema file used for validations
