@@ -22,17 +22,39 @@
             <pattern>%d{HH:mm:ss.SSS}  %-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
         </encoder>
     </appender>
+    
+    <appender name="RegistryAuditAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>/data/logs/registry_neo4j.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      		<fileNamePattern>/data/logs/registry_neo4j-%d{MM-dd-yyyy-hh}-%i.log</fileNamePattern>
+      		<minIndex>1</minIndex>
+      		<maxIndex>3</maxIndex>
+    	</rollingPolicy>
+
+		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<maxFileSize>250MB</maxFileSize>
+		</triggeringPolicy>
+		
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<Pattern>
+				%d %msg%n
+			</Pattern>
+		</encoder>
+	</appender>
+
 
     <logger name="io.opensaber.validators.shex.shaclex" level="ERROR"/>
     <logger name="es.weso" level="ERROR"/>
     <logger name="io.opensaber.utils.converters" level="ERROR"/>
     <logger name="io.opensaber.registry.dao.impl.RegistryDaoImpl" level="ERROR"/>
     <logger name="org.springframework" level="ERROR"/>
+    <logger name="GraphEventLogger" level="DEBUG">
+    	<appender-ref ref="RegistryAuditAppender" additivity="false"/>
+    </logger>
 
     <root level="info" additivity="false">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </root>
-
-
+    
 </configuration>

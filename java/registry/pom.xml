@@ -227,6 +227,11 @@
 			<artifactId>commons-validator</artifactId>
 			<version>1.6</version>
 		</dependency>
+		<dependency>
+			<groupId>io.opensaber</groupId>
+			<artifactId>transaction-event-handler</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 
 		<!-- Test Dependencies -->
 
