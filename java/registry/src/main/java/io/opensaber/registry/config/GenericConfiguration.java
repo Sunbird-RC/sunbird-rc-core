@@ -62,6 +62,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${connection.request.timeout}")
 	private int connectionRequestTimeout;
 
+	@Value("${authentication.enabled}")
+	private boolean authenticationEnabled;
+
 	@Bean
 	public ObjectMapper objectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -155,8 +158,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
-				.addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
+	    if(authenticationEnabled) {
+            registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
+                    .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
+        }
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
 				.addPathPatterns("/add", "/update").order(2);
 		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
