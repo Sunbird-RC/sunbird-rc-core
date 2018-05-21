@@ -41,10 +41,6 @@ database:
 # RDF Validation Config
 validations:
   file: validations.shex
-  entity:
-    shape:
-      name: http://localhost:8080/TeacherShape
-      type: http://localhost:8080/Teacher
 
 # Http Connection Timeout Config
 connection:
@@ -73,6 +69,9 @@ decryption:
       username: ${sunbird_sso_username}
       password: ${sunbird_sso_password}
       clientId: ${sunbird_sso_client_id}
+      
+audit:
+  enabled: false
 ---
 ##################################################################
 #                      STAGING PROFILE                           #
@@ -114,10 +113,6 @@ database:
 # RDF Validation Config
 validations:
   file: validations.shex
-  entity:
-    shape:
-      name: http://example.com/voc/teacher/1.0.0/TeacherShape
-      type: http://example.com/voc/teacher/1.0.0/Teacher
 
 # Http Connection Timeout Config
 connection:
@@ -147,6 +142,9 @@ decryption:
       username: ${sunbird_sso_username}
       password: ${sunbird_sso_password}
       clientId: ${sunbird_sso_client_id}
+      
+audit:
+  enabled: false
 ---
 ##################################################################
 #                      TEST PROFILE                              #
@@ -205,3 +203,6 @@ decryption:
       username: ${sunbird_sso_username}
       password: ${sunbird_sso_password}
       clientId: ${sunbird_sso_client_id}
+      
+audit:
+  enabled: false

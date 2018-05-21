@@ -23,10 +23,10 @@ Feature: Updating a record in registry
     When updating the record in the registry
     Then updating the record should be successful
     
-  Scenario: Updating values for an existing record
-    Given input for updating single record 
-    And audit record before update
-    When updating the record in the registry
-	And getting audit records after update
- 	Then check audit records are matched with expected records
+  #Scenario: Updating values for an existing record
+    #Given input for updating single record 
+    #And audit record before update
+    #When updating the record in the registry
+	#And getting audit records after update
+ 	#Then check audit records are matched with expected records
    

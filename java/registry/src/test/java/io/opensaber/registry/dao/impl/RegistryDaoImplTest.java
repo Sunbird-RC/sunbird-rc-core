@@ -156,25 +156,28 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	}
 
 	private int checkIfAuditRecordsAreRight(Graph entity, Map<String, Map<String, Integer>> updateCountMap) throws LabelCannotBeNullException {
+		boolean auditEnabled = environment.getProperty("audit.enabled") != null ? Boolean.parseBoolean(environment.getProperty("audit.enabled")) : false;
 		int count = 0;
-		int adjustedCount;
-		Map<String, Integer> pairMap = getPropCounterMap(entity);
-		Iterator it = pairMap.entrySet().iterator();
-		while (it.hasNext()) {
-			Map.Entry<String, Integer> pair = (Map.Entry) it.next();
-			int updatedPropertyCount = 0;
-			if (updateCountMap != null) {
-				Map<String, Integer> labelPropertyMap = updateCountMap.get(String.valueOf(pair.getKey()));
-				if (labelPropertyMap != null) {
-					updatedPropertyCount = labelPropertyMap.values().stream().mapToInt(i -> i).sum();
-					;
+		if(auditEnabled){
+			int adjustedCount;
+			Map<String, Integer> pairMap = getPropCounterMap(entity);
+			Iterator it = pairMap.entrySet().iterator();
+			while (it.hasNext()) {
+				Map.Entry<String, Integer> pair = (Map.Entry) it.next();
+				int updatedPropertyCount = 0;
+				if (updateCountMap != null) {
+					Map<String, Integer> labelPropertyMap = updateCountMap.get(String.valueOf(pair.getKey()));
+					if (labelPropertyMap != null) {
+						updatedPropertyCount = labelPropertyMap.values().stream().mapToInt(i -> i).sum();
+						;
+					}
 				}
+				adjustedCount = pair.getValue().intValue() + updatedPropertyCount;
+				count += adjustedCount;
+				//	auditRecordReader.setDatabaseProvider(databaseProvider);
+				assertEquals(adjustedCount, auditRecordReader.fetchAuditRecords(String.valueOf(pair.getKey()), null).size());
+				it.remove();
 			}
-			adjustedCount = pair.getValue().intValue() + updatedPropertyCount;
-			count += adjustedCount;
-		//	auditRecordReader.setDatabaseProvider(databaseProvider);
-			assertEquals(adjustedCount, auditRecordReader.fetchAuditRecords(String.valueOf(pair.getKey()), null).size());
-			it.remove();
 		}
 		return count;
 	}
@@ -333,7 +336,10 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			.next()
 			.value();
 		assertEquals("Gurgaon alias", propertyValue);
-		assertEquals(1,count2-count1);
+		boolean auditEnabled = environment.getProperty("audit.enabled") != null ? Boolean.parseBoolean(environment.getProperty("audit.enabled")) : false;
+		if(auditEnabled){
+			assertEquals(1,count2-count1);
+		}
 
 	}
 

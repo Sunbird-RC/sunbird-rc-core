@@ -64,7 +64,7 @@ public class Constants {
 	}
 	
 	public enum AuditProperties {
-	    createdOn, lastUpdatedOn;
+	    createdOn, lastUpdatedOn, createdBy, lastUpdatedBy;
 	}
 	
 	public enum GraphParams {
