@@ -25,7 +25,7 @@ Feature: Reading a record from the registry
     And an invalid auth token
     When retrieving the record from the registry 
     Then record retrieval should be unsuccessful
-    And error message is Auth token and/or Environment variable is invalid
+    And error message is Auth token is invalid
     
   Scenario: Reading a record with missing token
     Given an existent record id

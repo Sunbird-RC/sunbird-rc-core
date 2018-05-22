@@ -32,7 +32,7 @@ Feature: Inserting a record into the registry
     And an invalid auth token
     When issuing the record into the registry
     Then record issuing should be unsuccessful
-    And error message is Auth token and/or Environment variable is invalid
+    And error message is Auth token is invalid
 
   Scenario: Issuing a record with missing auth token
     Given a valid record
