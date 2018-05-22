@@ -6,8 +6,14 @@ spring:
 ##################################################################
 spring:
   profiles: dev
+  output:
+    ansi:
+      enabled: ALWAYS
 name: dev-yaml
 enviroment: development
+logging:
+level:
+PERFORMANCE_INSTRUMENTATION: TRACE
 
 registry:
   context:
@@ -60,27 +66,24 @@ encryption:
 
 decryption:
   uri: https://dev.open-sunbird.org/encryption/decrypt
-  
+
 # Feature Toggling
 feature:
   toggling: false
-
-  keycloak:
-    sso:
-      publicKey:  ${sunbird_sso_publickey}
-      realm:  ${sunbird_sso_realm}
-      auth_server_url:  ${sunbird_sso_url}
-      username: ${sunbird_sso_username}
-      password: ${sunbird_sso_password}
-      clientId: ${sunbird_sso_client_id}
 ---
 ##################################################################
 #                      STAGING PROFILE                           #
 ##################################################################
 spring:
   profiles: staging
+  output:
+    ansi:
+      enabled: ALWAYS
 name: staging-yaml
 enviroment: staging
+logging:
+level:
+PERFORMANCE_INSTRUMENTATION: TRACE
 
 registry:
   context:
@@ -133,27 +136,24 @@ encryption:
 
 decryption:
   uri: https://staging.open-sunbird.org/encryption/decrypt
-  
+
 # Feature Toggling
 feature:
   toggling: false
-
-  keycloak:
-    sso:
-      publicKey:  ${sunbird_sso_publickey}
-      realm:  ${sunbird_sso_realm}
-      auth_server_url:  ${sunbird_sso_url}
-      username: ${sunbird_sso_username}
-      password: ${sunbird_sso_password}
-      clientId: ${sunbird_sso_client_id}
 ---
 ##################################################################
 #                      TEST PROFILE                              #
 ##################################################################
 spring:
   profiles: test
+  output:
+    ansi:
+      enabled: ALWAYS
 name: test-yaml
 enviroment: test
+logging:
+level:
+PERFORMANCE_INSTRUMENTATION: TRACE
 
 registry:
   context:
@@ -191,16 +191,8 @@ encryption:
 
 decryption:
   uri: https://dev.open-sunbird.org/encryption/decrypt
-  
+
 # Feature Toggling
 feature:
   toggling: false
 
-  keycloak:
-    sso:
-      publicKey:  ${sunbird_sso_publickey}
-      realm:  ${sunbird_sso_realm}
-      auth_server_url:  ${sunbird_sso_url}
-      username: ${sunbird_sso_username}
-      password: ${sunbird_sso_password}
-      clientId: ${sunbird_sso_client_id}
