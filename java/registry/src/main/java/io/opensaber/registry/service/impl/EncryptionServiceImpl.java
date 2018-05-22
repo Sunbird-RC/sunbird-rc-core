@@ -46,6 +46,9 @@ public class EncryptionServiceImpl implements EncryptionService {
 
 	@Value("${encryption.base}")
 	private String encryptionServiceHealthCheckUri;
+
+	@Autowired
+	RestTemplate restTemplate;
 	
 	@Autowired
 	private Gson gson;
@@ -57,92 +60,92 @@ public class EncryptionServiceImpl implements EncryptionService {
 	
 	@Override
 	public String encrypt(Object propertyValue) throws EncryptionException {
-		MultiValueMap<String, Object> map= new LinkedMultiValueMap<String, Object>();
+		MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 		map.add("value", propertyValue);
-		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map);
+		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map);
 		try {
-			ResponseEntity<String> response = new RestTemplate().postForEntity(encryptionUri, request, String.class);
+			ResponseEntity<String> response = restTemplate.postForEntity(encryptionUri, request, String.class);
 			logger.info("Property encrypted successfully !");
-		   	return response.getBody();
-		}catch(ResourceAccessException e) {
+			return response.getBody();
+		} catch (ResourceAccessException e) {
 			logger.error("ResourceAccessException while connecting enryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service! ");
-		}catch(ServiceUnavailableException e) {
-	    	logger.error("ServiceUnavailableException while connecting enryption service!: ", e);
-	  		throw new EncryptionException("Encryption service is not available !");
-		}catch(Exception e) {
-	    	logger.error("Exception in encryption servie !: ", e);
-	    	throw new EncryptionException("Exception in encryption service ! ");
-	    }	    
+		} catch (ServiceUnavailableException e) {
+			logger.error("ServiceUnavailableException while connecting enryption service!: ", e);
+			throw new EncryptionException("Encryption service is not available !");
+		} catch (Exception e) {
+			logger.error("Exception in encryption servie !: ", e);
+			throw new EncryptionException("Exception in encryption service ! ");
+		}
 	}
-	
+
 	@Override
-     public String decrypt(Object propertyValue) throws EncryptionException {		
-						
-		MultiValueMap<String, Object> map= new LinkedMultiValueMap<String, Object>();
+	public String decrypt(Object propertyValue) throws EncryptionException {
+
+		MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 		map.add("value", propertyValue);
-		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<MultiValueMap<String, Object>>(map);
+		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map);
 		try {
-			ResponseEntity<String>  response = new RestTemplate().postForEntity(decryptionUri, request, String.class);
+			ResponseEntity<String> response = restTemplate.postForEntity(decryptionUri, request, String.class);
 			logger.info("Property decrypted successfully !");
 			return response.getBody();
-		}catch(ResourceAccessException e) {
-	    	logger.error("ResourceAccessException while connecting dcryption service : ", e);
-	    	throw new EncryptionException("Exception while connecting enryption service ! ");
-		}catch(ServiceUnavailableException e) {
-	    	logger.error("ServiceUnavailableException while connecting enryption service!", e);
-	    	throw new EncryptionException("Encryption service is not available !");
-		}catch(Exception e) {
-	    	logger.error("Exception in decryption service !: ", e);
-	       	throw new EncryptionException("Exception in encryption service ! ");
-		}   
+		} catch (ResourceAccessException e) {
+			logger.error("ResourceAccessException while connecting dcryption service : ", e);
+			throw new EncryptionException("Exception while connecting enryption service ! ");
+		} catch (ServiceUnavailableException e) {
+			logger.error("ServiceUnavailableException while connecting enryption service!", e);
+			throw new EncryptionException("Encryption service is not available !");
+		} catch (Exception e) {
+			logger.error("Exception in decryption service !: ", e);
+			throw new EncryptionException("Exception in encryption service ! ");
+		}
 	}
-	
+
 	@Override
 	public Map<String, Object> encrypt(Map<String, Object> propertyValue) throws EncryptionException {
-		Map<String, Object> map= new HashMap<String, Object>();
+		Map<String, Object> map = new HashMap<>();
 		map.put("value", propertyValue);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity<String> entity = new HttpEntity<String>(gson.toJson(map),headers);
+		HttpEntity<String> entity = new HttpEntity<>(gson.toJson(map), headers);
 		try {
-			ResponseEntity<String> response = new RestTemplate().postForEntity(encryptionBatchUri, entity, String.class);
-		   	return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>(){}.getType());
-		}catch(ResourceAccessException e) {
+			ResponseEntity<String> response = restTemplate.postForEntity(encryptionBatchUri, entity, String.class);
+			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {}.getType());
+		} catch (ResourceAccessException e) {
 			logger.error("Exception while connecting enryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service! ");
-		}catch(ServiceUnavailableException e) {
-	    	logger.error("Service not available exception !: ", e);
-	  		throw new EncryptionException("Encryption service is not available !");
-		}catch(Exception e) {
-	    	logger.error("Exception in encryption servie !: ", e);
-	    	throw new EncryptionException("Exception in encryption service ! ");
-	    }	    
+		} catch (ServiceUnavailableException e) {
+			logger.error("Service not available exception !: ", e);
+			throw new EncryptionException("Encryption service is not available !");
+		} catch (Exception e) {
+			logger.error("Exception in encryption servie !: ", e);
+			throw new EncryptionException("Exception in encryption service ! ");
+		}
 	}
-	
+
 	@Override
-     public Map<String, Object> decrypt(Map<String, Object> propertyValue) throws EncryptionException {		
-		Map<String, Object> map= new HashMap<String, Object>();
+	public Map<String, Object> decrypt(Map<String, Object> propertyValue) throws EncryptionException {
+		Map<String, Object> map = new HashMap<>();
 		map.put("value", propertyValue);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity<String> entity = new HttpEntity<String>(gson.toJson(map),headers);
+		HttpEntity<String> entity = new HttpEntity<>(gson.toJson(map), headers);
 
 		try {
-			ResponseEntity<String>  response = new RestTemplate().postForEntity(decryptionBatchUri, entity, String.class);
-			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>(){}.getType());
-		}catch(ResourceAccessException e) {
-	    	logger.error("Exception while connecting dcryption service : ", e);
-	    	throw new EncryptionException("Exception while connecting enryption service ! ");
-		}catch(ServiceUnavailableException e) {
-	    	logger.error("Service not available exception ! ", e);
-	    	throw new EncryptionException("Encryption service is not available !");
-		}catch(Exception e) {
-	    	logger.error("Exception in decryption service !: ", e);
-	       	throw new EncryptionException("Exception in encryption service ! ");
-		}   
+			ResponseEntity<String> response = restTemplate.postForEntity(decryptionBatchUri, entity, String.class);
+			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {}.getType());
+		} catch (ResourceAccessException e) {
+			logger.error("Exception while connecting dcryption service : ", e);
+			throw new EncryptionException("Exception while connecting enryption service ! ");
+		} catch (ServiceUnavailableException e) {
+			logger.error("Service not available exception ! ", e);
+			throw new EncryptionException("Encryption service is not available !");
+		} catch (Exception e) {
+			logger.error("Exception in decryption service !: ", e);
+			throw new EncryptionException("Exception in encryption service ! ");
+		}
 	}
 	
 	/**
