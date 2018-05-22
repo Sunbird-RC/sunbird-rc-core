@@ -17,6 +17,8 @@ import org.apache.jena.vocabulary.RDF;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import es.weso.schema.Schema;
 import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -33,10 +35,13 @@ public class RDFValidationTest {
 	//public static final String FORMAT = "JSON-LD";
 	public static final String TTL_FORMAT = "TTL";
 	public static final String JSONLD_FORMAT = "JSONLD";
+	private static final String SCHEMAFORMAT = "SHEXC";
+	private static final String PROCESSOR 	= "shex";
 	private String jsonld;
 	private static final String EMPTY_STRING = "";
 	private Map<String, Object> mapData;
 	private BaseMiddleware middleware;
+	
 	
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
@@ -44,7 +49,19 @@ public class RDFValidationTest {
 	private boolean setup(String shexFile) {
 		boolean successfulInitialization = true;
 		try {
-			middleware = new RDFValidator(shexFile);
+			ShaclexValidator validator = new ShaclexValidator();
+			Schema schema = validator.readSchema(shexFile, SCHEMAFORMAT, PROCESSOR);
+			middleware = new RDFValidator(schema);
+		} catch (Exception e) {
+			successfulInitialization = false;
+		}
+		return successfulInitialization;
+	}
+	
+	private boolean setup(Schema schema) {
+		boolean successfulInitialization = true;
+		try {
+			middleware = new RDFValidator(schema);
 		} catch (Exception e) {
 			successfulInitialization = false;
 		}
@@ -108,6 +125,19 @@ public class RDFValidationTest {
 		mapData.put(Constants.RDF_VALIDATION_MAPPER_OBJECT, "{}");
 		middleware.execute(mapData);
 		testForSuccessfulResult();
+	}
+	
+	@Test
+	public void testHaltIfSchemaIsMissing() throws IOException, MiddlewareHaltException, URISyntaxException{
+		expectedEx.expect(MiddlewareHaltException.class);
+		expectedEx.expectMessage("Schema for validation is missing");
+		Schema schema = null;
+		assertTrue(setup(schema));
+		mapData = new HashMap<String,Object>();
+		mapData.put(Constants.RDF_OBJECT, getValidRdf(COMPLEX_TTL));
+		Model model = getModel();
+		mapData.put(Constants.RDF_VALIDATION_MAPPER_OBJECT, model);
+		middleware.execute(mapData);
 	}
 	
 	@Test
