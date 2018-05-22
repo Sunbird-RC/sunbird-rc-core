@@ -98,7 +98,7 @@ public class RegistryServiceImpl implements RegistryService {
 			// if it is a blank node
 			return registryDao.addEntity(graph, label, subject, property);
 
-		} catch (EntityCreationException | EncryptionException | AuditFailedException ex) {
+		} catch (EntityCreationException | EncryptionException | AuditFailedException | DuplicateRecordException | MultipleEntityException ex) {
 			throw ex;
 		} catch (Exception ex) {
 			logger.error("Exception when creating entity: ", ex);
