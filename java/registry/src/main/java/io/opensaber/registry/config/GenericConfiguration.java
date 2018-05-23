@@ -23,6 +23,8 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+
+import es.weso.schema.Schema;
 import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.exception.CustomExceptionHandler;
 import io.opensaber.registry.interceptor.AuthorizationInterceptor;
@@ -89,18 +91,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public AuthorizationFilter authorizationFilter(){
 		return new AuthorizationFilter(new KeyCloakServiceImpl());
 	}
-
-	@Bean
-	public RDFValidator rdfValidator(){
-		String shexFileName = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
-		return new RDFValidator(shexFileName);
-	}
-
-	@Bean
-	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-	public AuditRecord auditRecord() {
-		return new AuditRecord();
-	}
 	
 	@Bean
 	public SchemaConfigurator schemaConfiguration() throws IOException{
@@ -109,6 +99,23 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new SchemaConfigurator(fieldConfigFileName, validationConfigFile);
 	}
 
+	@Bean
+	public RDFValidator rdfValidator(){
+		Schema schema = null;
+		try{
+			schema = schemaConfiguration().getSchema();
+		}catch(Exception e){
+			logger.error("Unable to retrieve schema for validations");
+		}
+		return new RDFValidator(schema);
+	}
+
+	@Bean
+	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+	public AuditRecord auditRecord() {
+		return new AuditRecord();
+	}
+	
 	@Bean
 	public RestTemplate restTemaplteProvider() throws IOException{
 		HttpClient httpClient = HttpClientBuilder.create().build();

@@ -69,12 +69,12 @@ public class RDFValidationMapper implements BaseMiddleware{
 	public Model generateShapeModel(Model inputRdf) throws MiddlewareHaltException{
 		Model model = ModelFactory.createDefaultModel();
 		List<Resource> labelNodes = RDFUtil.getRootLabels(inputRdf);
-		if(labelNodes.size() == 0 || labelNodes.size()>1){
+		if(labelNodes.size() != 1){
 			throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_INVALID);
 		}
 		Resource target = labelNodes.get(0);
 		List<String> typeList = RDFUtil.getTypeForSubject(inputRdf, target);
-		if(typeList.size() == 0 || typeList.size()>1){
+		if(typeList.size() != 1){
 			throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_INVALID);
 		}
 		String targetType = typeList.get(0);
