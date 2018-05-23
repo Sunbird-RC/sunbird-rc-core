@@ -2,18 +2,13 @@ package io.opensaber.registry.middleware.impl;
 
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Map;
-
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-
 import es.weso.schema.Schema;
+
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 import io.opensaber.pojos.ValidationResponse;
 
@@ -23,14 +18,12 @@ public class RDFValidator implements BaseMiddleware{
 	private static final String RDF_DATA_IS_INVALID = "Data validation failed!";
 	private static final String RDF_VALIDATION_MAPPING_IS_INVALID = "RDF validation mapping is invalid!";
 	private static final String RDF_VALIDATION_MAPPING_MISSING = "RDF validation mapping is missing!";
-	//private static final String RDF_VALIDATION_MAPPING_NULL = "RDF validation mapping is null!";
+	private static final String SCHEMA_IS_NULL = "Schema for validation is missing";
 
-	private String schemaFileName;
-	private static final String SCHEMAFORMAT = "SHEXC";
-	private static final String PROCESSOR 	= "shex";
-
-	public RDFValidator(String schemaFileName) {
-		this.schemaFileName = schemaFileName;
+	private Schema schema;
+	
+	public RDFValidator(Schema schema) {
+		this.schema = schema;
 	}
 
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
@@ -44,9 +37,10 @@ public class RDFValidator implements BaseMiddleware{
 			throw new MiddlewareHaltException(RDF_DATA_IS_INVALID);
 		} else if (!(validationRDF instanceof Model)) {
 			throw new MiddlewareHaltException(RDF_VALIDATION_MAPPING_IS_INVALID);
+		}else if (schema == null) {
+			throw new MiddlewareHaltException(SCHEMA_IS_NULL);
 		} else {
 			ShaclexValidator validator = new ShaclexValidator();
-			Schema schema = validator.readSchema(schemaFileName, SCHEMAFORMAT, PROCESSOR);
 			mergeModels((Model) RDF, (Model) validationRDF);
 			ValidationResponse validationResponse = validator.validate((Model) validationRDF, schema);
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
