@@ -64,6 +64,9 @@ public class RegistryDaoImpl implements RegistryDao {
 	
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
+	
+	@Value("${authentication.enabled}")
+	private boolean authenticationEnabled;
 
 	@Override
 	public List getEntityList() {
@@ -71,7 +74,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		return null;
 	}
 
-	@Override
+	/*@Override
 	public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
 		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
 		Graph graphFromStore = databaseProvider.getGraphStore();
@@ -95,7 +98,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		logger.info("Successfully created entity with label " + rootNodeLabel);
 		// closeGraph(graphFromStore);
 		return rootNodeLabel;
-	}
+	}*/
 
 
 	@Override
@@ -605,7 +608,7 @@ public class RegistryDaoImpl implements RegistryDao {
 					GraphTraversal<Vertex, Vertex> configTraversal =
 							v.graph().traversal().clone().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG);
 					if (configTraversal.hasNext()
-							&& configTraversal.next().property(Constants.PERSISTENT_GRAPH).value().equals(true) && auditEnabled) {
+							&& configTraversal.next().property(Constants.PERSISTENT_GRAPH).value().equals(true)) {
 
 						AuditRecord record = appContext.getBean(AuditRecord.class);
 						record
@@ -879,14 +882,16 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 	}*/
 	private void setAuditInfo(Vertex v, boolean isNew){
-		String username = ((AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getName();
-		String timestamp = sdf.format(new Date());
-		if(isNew){
-			v.property(registryContext+Constants.AuditProperties.createdBy.name(),username);
-			v.property(registryContext+Constants.AuditProperties.createdOn.name(),timestamp);
+		if(authenticationEnabled){
+			String username = ((AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getName();
+			String timestamp = sdf.format(new Date());
+			if(isNew){
+				v.property(registryContext+Constants.AuditProperties.createdBy.name(),username);
+				v.property(registryContext+Constants.AuditProperties.createdOn.name(),timestamp);
+			}
+			v.property(registryContext+Constants.AuditProperties.lastUpdatedBy.name(),username);
+			v.property(registryContext+Constants.AuditProperties.lastUpdatedOn.name(),timestamp);
 		}
-		v.property(registryContext+Constants.AuditProperties.lastUpdatedBy.name(),username);
-		v.property(registryContext+Constants.AuditProperties.lastUpdatedOn.name(),timestamp);
 	}
 
 }

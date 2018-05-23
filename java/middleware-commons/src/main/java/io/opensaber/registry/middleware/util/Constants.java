@@ -39,6 +39,7 @@ public class Constants {
 	public static final String RDF_VALIDATION_MAPPING_ERROR = "Unable to map validations";
 	public static final String CUSTOM_EXCEPTION_ERROR = "Something went wrong!! Please try again later";
 	public static final String ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE = "Cannot add/update/view more than one entity";
+	public static final String AUDIT_IS_DISABLED = "Audit is disabled";
 
 	public static final String OPENSABER_REGISTRY_API_NAME = "opensaber-registry-api";
 	public static final String SUNBIRD_ENCRYPTION_SERVICE_NAME = "sunbird.encryption.service";

@@ -147,7 +147,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		String label = generateRandomId();
 		identifier = label;
 		getVertexForSubject(label, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
-		String response = registryDao.addEntity(graph, label);
+		String response = registryDao.addEntity(graph, label,null, null);
 		Graph entity = registryDao.getEntityById(response);
 		assertEquals(1, IteratorUtils.count(entity.traversal().clone().V()));
 		Vertex v = entity.traversal().V().has(T.label, response).next();
@@ -235,16 +235,16 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
-		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
 		Graph entity = registryDao.getEntityById(response);
-		registryDao.addEntity(entity, response);
+		registryDao.addEntity(entity, response, null, null);
 	}
 	
 	@Test
 	public void test_adding_multiple_nodes() throws NullPointerException, DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException, LabelCannotBeNullException {
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
-		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
 		Graph entity = registryDao.getEntityById(response);
 		long vertexCount = IteratorUtils.count(entity.traversal().clone().V());
 		assertEquals(5, vertexCount);
@@ -260,7 +260,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			TinkerGraph graphEntity1 = TinkerGraph.open();
 			String rootLabelEntity1 = createGraphFromRdf(graphEntity1, rdfModel1);
 
-			String entity1Label = registryDao.addEntity(graphEntity1, "_:" + rootLabelEntity1);
+			String entity1Label = registryDao.addEntity(graphEntity1, "_:" + rootLabelEntity1, null, null);
 
 			Graph entity1 = registryDao.getEntityById(entity1Label);
             checkIfAuditRecordsAreRight(entity1, null);
@@ -271,7 +271,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			Model rdfModel2 = getNewValidRdf();
 			TinkerGraph graphEntity2 = TinkerGraph.open();
 			String rootLabelEntity2 = createGraphFromRdf(graphEntity2, rdfModel2);
-			String entity2Label = registryDao.addEntity(graphEntity2, "_:" + rootLabelEntity2);
+			String entity2Label = registryDao.addEntity(graphEntity2, "_:" + rootLabelEntity2, null, null);
 
 			Graph entity2 = registryDao.getEntityById(entity2Label);
             checkIfAuditRecordsAreRight(entity2, null);
@@ -306,7 +306,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		System.out.println("PRINTING MODEL TO ADD");
         printModel(rdfModel);
         String newEntityResponse;
-        newEntityResponse = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+        newEntityResponse = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
         Graph entity = registryDao.getEntityById(newEntityResponse);
         System.out.println("CHECKING AUDIT RECORDS");
         int count1 = checkIfAuditRecordsAreRight(entity, null);
@@ -327,7 +327,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		newRdfModel.add(ResourceFactory.createStatement(resource, predicate, literal));
 		String newRootLabel = updateGraphFromRdf(newRdfModel, newEntityGraph);
         printModel(newRdfModel);
-		newEntityResponse = registryDao.addEntity(newEntityGraph, String.format("_:%s", newRootLabel));
+		newEntityResponse = registryDao.addEntity(newEntityGraph, String.format("_:%s", newRootLabel), null, null);
 		entity = registryDao.getEntityById(newEntityResponse);
         int count2 = checkIfAuditRecordsAreRight(entity, null);
         System.out.println("AUDIT RECORDS "+count2);
@@ -357,7 +357,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
 		String rootLabel = updateGraphFromRdf(rdfModel, graph);
-		String label = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+		String label = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
         Graph entity0 = registryDao.getEntityById(label);
         checkIfAuditRecordsAreRight(entity0, null);
 		// Create a new TinkerGraph with the existing jsonld
@@ -377,7 +377,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		newRdfModel.add(ResourceFactory.createStatement(resource, predicate, literal));
 		String newRootLabel = updateGraphFromRdf(newRdfModel, newEntityGraph);
 
-		String newEntityResponse = registryDao.addEntity(newEntityGraph, String.format("_:%s", newRootLabel));
+		String newEntityResponse = registryDao.addEntity(newEntityGraph, String.format("_:%s", newRootLabel), null, null);
 		Graph entity = registryDao.getEntityById(newEntityResponse);
 		Map<String,Map<String,Integer>> updateCountMap = new HashMap<>();
         Map<String,Integer> updatePropCountMap = new HashMap<>();
@@ -412,7 +412,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		String label1 = UUID.randomUUID().toString();
 		String label2 = UUID.randomUUID().toString();
 		getVertexForSubject(label1, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
-		registryDao.addEntity(graph, label1);
+		registryDao.addEntity(graph, label1, null, null);
 		registryDao.getEntityById(label2);
 	}
 
@@ -426,7 +426,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 		String label = getLabel().toString();
 		getVertexForSubject(label, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
-		String response = registryDao.addEntity(graph, label);
+		String response = registryDao.addEntity(graph, label, null, null);
 		Graph entity = registryDao.getEntityById(response);
 		assertNotNull(entity);
 //		TODO Write a better checker
@@ -439,7 +439,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
-		String response = registryDao.addEntity(graph, "_:"+rootLabel);
+		String response = registryDao.addEntity(graph, "_:"+rootLabel, null, null);
 		Graph entity = registryDao.getEntityById(response);
 		assertNotNull(entity);
 		assertEquals(countGraphVertices(graph), countGraphVertices(entity));
@@ -451,7 +451,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdfWithFirstNodeAsBlankNode(rdfModel);
-		String response = registryDao.addEntity(graph, "_:"+rootLabel);
+		String response = registryDao.addEntity(graph, "_:"+rootLabel, null, null);
 		Graph entity = registryDao.getEntityById(response);
 		assertNotNull(entity);
 		assertEquals(countGraphVertices(graph),countGraphVertices(entity));
@@ -464,7 +464,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
 		String rootLabel = updateGraphFromRdf(rdfModel, graph);
-		String response = registryDao.addEntity(graph, "_:"+rootLabel);
+		String response = registryDao.addEntity(graph, "_:"+rootLabel, null, null);
 		Graph entity = registryDao.getEntityById(response);
 
 		GraphTraversal<Vertex, Vertex> blankNodes = entity.traversal().clone().V().filter(v -> v.get().label().startsWith("_:")).V();
@@ -478,7 +478,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
 		String rootLabel = updateGraphFromRdf(rdfModel, graph);
-		registryDao.addEntity(graph, rootLabel);
+		registryDao.addEntity(graph, rootLabel, null, null);
 
 		expectedEx.expect(RecordNotFoundException.class);
 		expectedEx.expectMessage(Constants.ENTITY_NOT_FOUND);
@@ -496,7 +496,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
 		String rootLabel = updateGraphFromRdf(rdfModel, graph);
-		String response = registryDao.addEntity(graph, "_:"+rootLabel);
+		String response = registryDao.addEntity(graph, "_:"+rootLabel, null, null);
         Graph entity = registryDao.getEntityById(response);
 		checkIfAuditRecordsAreRight(entity,null);
 
@@ -653,7 +653,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
 		String rootLabel = updateGraphFromRdf(rdfModel, graph);
-		String response = registryDao.addEntity(graph, "_:"+rootLabel);
+		String response = registryDao.addEntity(graph, "_:"+rootLabel, null, null);
 		Graph entity = registryDao.getEntityById(response);
 		Model updateRdfModel = createRdfFromFile("update_node.jsonld", response);
 		removeStatementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"));
@@ -694,7 +694,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = getNewValidRdf();
 		Graph graph = TinkerGraph.open();
 		String rootLabel = updateGraphFromRdf(rdfModel, graph);
-		String response = registryDao.addEntity(graph, "_:"+rootLabel);
+		String response = registryDao.addEntity(graph, "_:"+rootLabel, null, null);
 		Graph entity = registryDao.getEntityById(response);
 		Model updateRdfModel = getNewValidRdf("add_node.jsonld");
 
@@ -738,7 +738,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
 		String rootLabel = updateGraphFromRdf(rdfModel, graph);
-		String response = registryDao.addEntity(graph, "_:"+rootLabel);
+		String response = registryDao.addEntity(graph, "_:"+rootLabel, null, null);
 		Graph entity = registryDao.getEntityById(response);
 		Model addedModel = JenaRDF4J.asJenaModel(RDF2Graph.convertGraph2RDFModel(entity, response));
 		Model updateRdfModel = createRdfFromFile("update_node.jsonld", response);
@@ -830,7 +830,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	public void savingMetaProperties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException {
         Model inputModel = getNewValidRdf(RICH_LITERAL_TTL, "ex:");
         String rootLabel = updateGraphFromRdf(inputModel, graph, "http://example.org/typeProperty");
-        registryDao.addEntity(graph, rootLabel);
+        registryDao.addEntity(graph, rootLabel, null, null);
         Graph entity = registryDao.getEntityById(rootLabel);
         org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(entity, rootLabel);
         Model outputModel = JenaRDF4J.asJenaModel(model);
@@ -1004,7 +1004,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	public void test_system_property_should_never_fetched_in_audit_record() throws Exception {
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
-		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
 		Graph entity = registryDao.getEntityById(response);
 		GraphTraversal<Vertex, Vertex> updatedgraphTraversal = entity.traversal().clone().V();
 		while (updatedgraphTraversal.hasNext()) {
@@ -1062,7 +1062,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	public void test_update_properties() throws Exception {
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
-		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
 		Graph entity = registryDao.getEntityById(response);
 		checkIfAuditRecordsAreRight(entity,null);
 
@@ -1094,7 +1094,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	public void test_update_single_valued_properties() throws Exception {
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
-		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel));
+		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
 		Graph entity = registryDao.getEntityById(response);
 		
 		checkIfAuditRecordsAreRight(entity,null);

@@ -14,7 +14,7 @@ public interface RegistryDao {
 
 	public List getEntityList();
 
-	public String addEntity(Graph entity, String label) throws DuplicateRecordException, EncryptionException, AuditFailedException, RecordNotFoundException;
+//	public String addEntity(Graph entity, String label) throws DuplicateRecordException, EncryptionException, AuditFailedException, RecordNotFoundException;
 	
 	public String addEntity(Graph entity, String label, String rootNodeLabel, String property) throws DuplicateRecordException, RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException;
 
