@@ -259,6 +259,7 @@ public class RegistryController {
 			logger.debug("RegistryController: audit records fetched !");
 		} catch (RecordNotFoundException e) {
 			logger.error("RegistryController: RecordNotFoundException while fetching audit !", e);
+
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
@@ -270,6 +271,4 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
-
 }

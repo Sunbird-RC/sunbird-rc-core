@@ -1,18 +1,17 @@
-package io.opensaber.registry.util;
+package io.opensaber.registry.middleware.util;
 
 import io.opensaber.converters.JenaRDF4J;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.riot.JsonLDWriteContext;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WriterDatasetRIOT;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.vocabulary.RDF;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.T;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -186,10 +185,9 @@ public class RDFUtil {
 		return rootLabelList;
     }
     
-    public static List<String> getTypeForSubject(Model rdfModel, String label){
+    public static List<String> getTypeForSubject(Model rdfModel, Resource root){
     	List<String> typeIRIs = new ArrayList<String>();
-    	Resource subject = ResourceFactory.createResource(label);
-    	NodeIterator nodeIter = rdfModel.listObjectsOfProperty(subject, RDF.type);
+    	NodeIterator nodeIter = rdfModel.listObjectsOfProperty(root, RDF.type);
 		while(nodeIter.hasNext()){
 			RDFNode rdfNode = nodeIter.next();
 			typeIRIs.add(rdfNode.toString());
@@ -197,5 +195,29 @@ public class RDFUtil {
 		return typeIRIs;
     }
     
+
+    public static StmtIterator filterStatement(String subject, Property predicate, String object, Model resultModel){
+		Resource subjectResource = subject!=null? ResourceFactory.createResource(subject) : null;
+		RDFNode objectResource = object!=null? ResourceFactory.createResource(object) : null;
+		StmtIterator iter = resultModel.listStatements(subjectResource, predicate, objectResource);
+		return iter;
+	}
+    
+    public static List<Resource> getListOfSubjects(Property predicate, String object, Model resultModel){
+		RDFNode objectResource = object!=null? ResourceFactory.createResource(object) : null;
+		ResIterator iter = resultModel.listSubjectsWithProperty(predicate, objectResource);
+		return iter.toList();
+	}
+    
+    public static List<RDFNode> getListOfObjectNodes(Resource resource, Property predicate, Model resultModel){
+		NodeIterator iter = resultModel.listObjectsOfProperty(resource, predicate);
+		return iter.toList();
+	}
+    
+    public static String printRDF(Model validationRdf) {
+		StringWriter sw = new StringWriter();
+		RDFDataMgr.write(sw, validationRdf, Lang.TTL);
+		return sw.toString();
+	}
 
 }

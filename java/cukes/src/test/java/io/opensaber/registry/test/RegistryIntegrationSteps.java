@@ -37,7 +37,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 
 
-public class RegistryIntegrationSteps extends RegistryTestBase{
+public class RegistryIntegrationSteps extends RegistryTestBase {
 	
 
 	private static final String VALID_JSONLD= "school.jsonld";
@@ -59,6 +59,9 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 	private static String duplicateLabel;
 	private HttpHeaders headers;
 	private String updateId;
+
+    Type type = new TypeToken<Map<String, String>>() {
+    }.getType();
 	
 	@Before
 	public void initializeData(){
@@ -197,7 +200,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase{
 		RDFDataMgr.read(actualModel, new StringReader(newJsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD);
 		assertTrue(expectedModel.isIsomorphicWith(actualModel));
 	}
-	
+
 	private void setValidAuthHeader(){
 		String body = "client_id=" + System.getenv("sunbird_sso_client_id") + "&username=" + System.getenv("sunbird_sso_username")
 				+ "&password=" + System.getenv("sunbird_sso_password") + "&grant_type=password";

@@ -27,6 +27,9 @@ public class AuditRecord {
     
     @Value("${registry.system.base}")
 	private String registrySystemContext;
+
+    @Value("${authentication.enabled}")
+    private boolean authenticationEnabled;
 	
 	public AuditRecord subject(String label) {
     	this.subject = label+"-AUDIT";
@@ -102,9 +105,11 @@ public class AuditRecord {
      }
 
     private void updateUserInfo(Vertex vertex) {
-        String authinfo = new JSONObject( getCurrentUserInfo()).toString(); 
-        String authInfoLabel=registrySystemContext+"authInfo";
-        vertex.property(authInfoLabel,authinfo);
+	    if(authenticationEnabled) {
+            String authinfo = new JSONObject(getCurrentUserInfo()).toString();
+            String authInfoLabel = registrySystemContext + "authInfo";
+            vertex.property(authInfoLabel, authinfo);
+        }
     }
     
     public String getPredicate() {

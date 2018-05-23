@@ -30,7 +30,7 @@ public class RDFValidationMappingInterceptor extends BaseRequestHandler implemen
 
 	private static Logger logger = LoggerFactory.getLogger(RDFValidationMappingInterceptor.class);
 	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
-	
+
 	@Autowired
 	public RDFValidationMappingInterceptor(RDFValidationMapper rdfValidationMapper, Gson gson){
 		this.rdfValidationMapper = rdfValidationMapper;

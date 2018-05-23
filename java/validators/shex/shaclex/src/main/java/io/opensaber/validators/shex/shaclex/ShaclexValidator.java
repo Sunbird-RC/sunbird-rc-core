@@ -7,28 +7,22 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import es.weso.rdf.PrefixMap;
 import es.weso.schema.*;
 import es.weso.shapeMaps.ResultShapeMap;
 import io.opensaber.pojos.ValidationInfo;
 import io.opensaber.pojos.ValidationResponse;
-
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.jena.ext.com.google.common.base.Stopwatch;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
 import scala.collection.JavaConverters;
 import scala.util.Either;
 import scala.Option;
-
 import es.weso.rdf.RDFReader;
 import es.weso.rdf.jena.RDFAsJenaModel;
 
@@ -121,6 +115,12 @@ public class ShaclexValidator {
 		if(errorInfo.length > 1) {
 			String readableErrorMsg = errorInfo[errorInfo.length - 1];
 			String nodeValueWithError = extractErrorNodeValue(validationInfo.getReason(), "Error: Attempt: node:([^,]*)");
+			if (StringUtils.isEmpty(nodeValueWithError)) {
+				nodeValueWithError = extractErrorNodeValue(validationInfo.getReason(), "Errors: Error: (.*?) does not belong to");
+			}
+			if (nodeValueWithError.contains(":")) {
+				nodeValueWithError = replaceContextPrefixWithContextUri(nodeValueWithError, pm);
+			}
 			Optional<String> nodeDataType = getNullableOptionalString(extractErrorNodeValue(validationInfo.getReason(),
 					Pattern.quote("Datatype[") + "(.*?)" + Pattern.quote("->")));
 			Optional<String> iriNodeIdentifier = getNullableOptionalString(extractErrorNodeValue(validationInfo.getReason(),
@@ -143,11 +143,14 @@ public class ShaclexValidator {
 			// http://example.com/voc/teacher/1.0.0/InServiceTeacherTrainingFromDIET. The prefix man contains the prefix URI
 			// as <http://example.com/voc/teacher/1.0.0/> and hence the angled brackets need to be pruned.
 			if(nodeValueWithError.contains(":")) {
+				/*
 				String contextPrefix = nodeValueWithError.substring(0, nodeValueWithError.indexOf(":"));
 				String contextUri = pm.getIRI(contextPrefix).get().toString()
 						.replace("<", "").replace(">", "");
 				String nodeValue = nodeValueWithError.substring(nodeValueWithError.indexOf(":") + 1);
 				nodeValueWithError = contextUri + nodeValue;
+				*/
+				nodeValueWithError = replaceContextPrefixWithContextUri(nodeValueWithError, pm);
 			}
 			Optional<String> iriNode = Optional.empty();
 			Optional<String> nodeDataType = Optional.empty();
@@ -156,6 +159,15 @@ public class ShaclexValidator {
 		HashMap<String, String> errorList =
 				new HashMap<>(extractFieldInfoFromRDF(dataModel, errorNode, errorData));
 		return errorList;
+	}
+
+	private String replaceContextPrefixWithContextUri(String nodeValueWithError, PrefixMap pm) {
+		String contextPrefix = nodeValueWithError.substring(0, nodeValueWithError.indexOf(":"));
+		String contextUri = pm.getIRI(contextPrefix).get().toString()
+				.replace("<", "").replace(">", "");
+		String nodeValue = nodeValueWithError.substring(nodeValueWithError.indexOf(":") + 1);
+		nodeValueWithError = contextUri + nodeValue;
+		return nodeValueWithError;
 	}
 
 	/**
@@ -173,6 +185,7 @@ public class ShaclexValidator {
 		logger.info("Error node value: " + errorData.getNodeValueWithError());
 		logger.info("IRI node under which error node is present: " + errorData.getIriNode());
 		logger.info("Error node datatype, if present: " + errorData.getNodeDataType());
+
 		/*
 		 * Iterate through the RDF statements to find the Node Id, Node Value combination which
 		 * failed the validation.

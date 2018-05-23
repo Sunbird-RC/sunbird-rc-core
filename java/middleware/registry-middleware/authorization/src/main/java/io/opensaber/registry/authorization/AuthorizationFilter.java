@@ -32,7 +32,6 @@ public class AuthorizationFilter implements BaseMiddleware {
 
     public KeyCloakServiceImpl keyCloakServiceImpl;
 
-
     public AuthorizationFilter() {}
 
     public AuthorizationFilter(KeyCloakServiceImpl keyCloakServiceImpl) {
@@ -91,7 +90,6 @@ public class AuthorizationFilter implements BaseMiddleware {
     public AuthInfo extractTokenIntoAuthInfo(String token) {
         AuthInfo authInfo = new AuthInfo();
         try {
-
             PublicKey publicKey = (PublicKey) keyCloakServiceImpl.toPublicKey(System.getenv("sunbird_sso_publickey"));
 
             Jwts.parser()
@@ -132,6 +130,4 @@ public class AuthorizationFilter implements BaseMiddleware {
         // TODO Auto-generated method stub
         return null;
     }
-
-
 }

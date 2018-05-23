@@ -13,6 +13,7 @@ import es.weso.schema.Schema;
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 import io.opensaber.pojos.ValidationResponse;
 import org.slf4j.Logger;
@@ -54,15 +55,13 @@ public class RDFValidator implements BaseMiddleware{
 			Schema schema = validator.readSchema(schemaFileName, SCHEMAFORMAT, PROCESSOR);
 			mergeModels((Model) RDF, (Model) validationRDF);
 			watch.stop();
-			prefLogger.info(watch.prettyPrint());
 			prefLogger.info(watch.shortSummary());
-			prefLogger.info(watch.toString());
+
 			watch.start("RDF Validator validate() Performance Testing !");
 			ValidationResponse validationResponse = validator.validate((Model) validationRDF, schema);
 			watch.stop();
-			prefLogger.info(watch.prettyPrint());
 			prefLogger.info(watch.shortSummary());
-			prefLogger.info(watch.toString());
+
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
 			return mapData;
 		}

@@ -1,9 +1,6 @@
 package io.opensaber.registry.config;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.Neo4jGraphProvider;
@@ -12,6 +9,7 @@ import io.opensaber.registry.sink.SqlgProvider;
 import io.opensaber.registry.sink.TinkerGraphProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +59,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	
 	@Value("${connection.request.timeout}")
 	private int connectionRequestTimeout;
+
+	@Value("${authentication.enabled}")
+	private boolean authenticationEnabled;
 
 	@Bean
 	public ObjectMapper objectMapper() {
@@ -143,20 +144,23 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public RDFValidationMapper rdfValidationMapper(){
-		Map<String, String> typeValidationMap = new HashMap<String, String>();
-		String shapeType = environment.getProperty(Constants.SHAPE_TYPE);
-		String shapeName = environment.getProperty(Constants.SHAPE_NAME);
-		if (shapeType != null && shapeName != null) {
-			typeValidationMap.put(shapeType, shapeName);
+
+	public RDFValidationMapper rdfValidationMapper() {
+		Model validationConfig = null;
+		try{
+			validationConfig = schemaConfiguration().getValidationConfig();
+		}catch(Exception e){
+			logger.error("Unable to get validation configuration");
 		}
-		return new RDFValidationMapper(typeValidationMap);
+		return new RDFValidationMapper(validationConfig);
 	}
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
-				.addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
+	    if(authenticationEnabled) {
+            registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
+                    .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
+        }
 		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
 				.addPathPatterns("/add", "/update").order(2);
 		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))

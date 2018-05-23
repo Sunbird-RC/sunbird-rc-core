@@ -57,6 +57,9 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
     private ResponseEntity<Response> response,auditBeforeUpdate, auditAfterUpdate;
     private String id;
     private HttpHeaders headers;
+
+    Type type = new TypeToken<Map<String, String>>() {
+    }.getType();
     
      /**
      * The list of integration test scenarios that will be run as part of the update feature
@@ -93,7 +96,6 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
         headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("x-authenticated-user-token", accessToken);
-
     }
 
     /**

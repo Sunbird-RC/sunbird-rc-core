@@ -28,6 +28,7 @@ public class SchemaConfigurator {
 	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 	
 	private static final String FORMAT = "JSON-LD";
+	private Schema schema;
 	private Model schemaConfig;
 	private Model validationConfig;
 	private static final String SCHEMAFORMAT = "SHEXC";
@@ -40,16 +41,17 @@ public class SchemaConfigurator {
 		watch.start("Schema Configurator loadSchemaConfigModel() Performance Monitoring !");
 		loadSchemaConfigModel(schemaFile);
 		watch.stop();
-		/*prefLogger.info(watch.prettyPrint());
-		prefLogger.info(watch.shortSummary());*/
-		prefLogger.info(watch.currentTaskName()+"  :  "+watch.getLastTaskTimeMillis());
+		prefLogger.info(watch.shortSummary());
+
+		watch.start("Schema Configurator loadSchemaForValidation() Performance Monitoring !");
+		loadSchemaForValidation(validationFile);
+		watch.stop();
+		prefLogger.info(watch.shortSummary());
 
 		watch.start("Schema Configurator loadValidationConfigModel() Performance Monitoring !");
-		loadValidationConfigModel(validationFile);
+		loadValidationConfigModel();
 		watch.stop();
-		/*prefLogger.info(watch.prettyPrint());
-		prefLogger.info(watch.shortSummary());*/
-		prefLogger.info(watch.currentTaskName()+"  :  "+watch.getLastTaskTimeMillis());
+		prefLogger.info(watch.shortSummary());
 	}
 	
 	public void loadSchemaConfigModel(String schemaFile) throws IOException{
@@ -58,14 +60,17 @@ public class SchemaConfigurator {
 		schemaConfig = ShaclexValidator.parse(contents, FORMAT);
 	}
 
-	public void loadValidationConfigModel(String validationFile) throws IOException {
+	public void loadSchemaForValidation(String validationFile) throws IOException {
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream(validationFile);
 		String contents = new String(ByteStreams.toByteArray(is));
 		Either<String, Schema> result = Schemas.fromString(contents, SCHEMAFORMAT, PROCESSOR, none);
 		if (result.isLeft()) {
 			logger.info("Error from schema validation = " + result.left().get());
 		}
-		Schema schema = result.right().get();
+		schema = result.right().get();
+	}
+	
+	public void loadValidationConfigModel(){
 		validationConfig = ShaclexValidator.parse(schema.serialize(FORMAT).right().get(), FORMAT);
 	}
 
@@ -136,6 +141,10 @@ public class SchemaConfigurator {
 	
 	public Model getValidationConfig(){
 		return validationConfig;
+	}
+	
+	public Schema getSchema(){
+		return schema;
 	}
 
 }
