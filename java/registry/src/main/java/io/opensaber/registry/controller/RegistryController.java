@@ -3,14 +3,9 @@ package io.opensaber.registry.controller;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.JSONUtil;
-
-import javafx.scene.paint.Stop;
 import org.apache.jena.rdf.model.Model;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -27,10 +22,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
 import io.opensaber.pojos.Request;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
