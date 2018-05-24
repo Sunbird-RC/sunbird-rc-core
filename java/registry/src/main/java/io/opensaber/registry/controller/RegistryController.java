@@ -10,6 +10,7 @@ import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.JSONUtil;
 
+import javafx.scene.paint.Stop;
 import org.apache.jena.rdf.model.Model;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,12 +43,15 @@ import io.opensaber.registry.service.RegistryService;
 public class RegistryController {
 
 	private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
+	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 	
 	@Autowired
 	private RegistryService registryService;
 
 	@Value("${registry.context.base}")
 	private String registryContext;
+
+	StopWatch watch =new StopWatch();
 	
 	/*@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
@@ -79,6 +84,7 @@ public class RegistryController {
 	@RequestMapping(value = "/add", method = RequestMethod.POST)
 	public ResponseEntity<Response> addToExistingEntity(@RequestAttribute Request requestModel, 
 			@RequestParam(value="id", required = false) String id, @RequestParam(value="prop", required = false) String property) {
+		watch.start("ADD Performance Monitoring !");
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
@@ -101,6 +107,8 @@ public class RegistryController {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		}
+		watch.stop();
+		prefLogger.info(watch.prettyPrint());
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -136,6 +144,7 @@ public class RegistryController {
 	
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> readEntity(@PathVariable("id") String id) {
+		watch.start("READ Performance Monitoring ! ");
 		id = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
@@ -161,6 +170,8 @@ public class RegistryController {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Ding! You encountered an error!");
 		}
+		watch.stop();
+		prefLogger.info(watch.prettyPrint());
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
@@ -195,7 +206,7 @@ public class RegistryController {
 	@ResponseBody
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	public ResponseEntity<Response> update(@RequestAttribute Request requestModel) {
-
+		watch.start("UPDATE Performance Monitoring !");
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
@@ -215,6 +226,8 @@ public class RegistryController {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Error occurred when updating Entity");
 		}
+		watch.stop();
+		prefLogger.info(watch.prettyPrint());
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -244,7 +257,7 @@ public class RegistryController {
 	@ResponseBody
 	@RequestMapping(value = "/fetchAudit/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> fetchAudit(@PathVariable("id") String id) {
-
+		watch.start("FETCHAUDIT Performance Monitoring !");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
 		id=registryContext+id;	
@@ -269,6 +282,8 @@ public class RegistryController {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Meh ! You encountered an error!");
 		}
+		watch.stop();
+		prefLogger.info(watch.prettyPrint());
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 }

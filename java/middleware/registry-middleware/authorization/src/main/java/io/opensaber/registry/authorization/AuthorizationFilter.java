@@ -1,7 +1,6 @@
 package io.opensaber.registry.authorization;
 
 import java.io.IOException;
-import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,7 @@ public class AuthorizationFilter implements BaseMiddleware {
     private static final String TOKEN_IS_INVALID = "Auth token is invalid";
     private static final String VERIFICATION_EXCEPTION = "Auth token and/or Environment variable is invalid";
 
-    public KeyCloakServiceImpl keyCloakServiceImpl;
+    private KeyCloakServiceImpl keyCloakServiceImpl;
 
     public AuthorizationFilter() {}
 
@@ -65,7 +64,7 @@ public class AuthorizationFilter implements BaseMiddleware {
                   if (authInfo.getSub() == null || authInfo.getAud() == null || authInfo.getName() == null) {
                       throw new MiddlewareHaltException(TOKEN_IS_INVALID);
                   }
-                  List<SimpleGrantedAuthority> authorityList = new ArrayList<SimpleGrantedAuthority>();
+                  List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
 
                   authorityList.add(new SimpleGrantedAuthority(authInfo.getAud()));
                   AuthorizationToken authorizationToken = new AuthorizationToken(authInfo, authorityList);
@@ -85,16 +84,13 @@ public class AuthorizationFilter implements BaseMiddleware {
 
     /**
      * This method extracts Authorisation information ,i.e. AuthInfo from input JWT access token
+     *
      * @param token
      */
     public AuthInfo extractTokenIntoAuthInfo(String token) {
         AuthInfo authInfo = new AuthInfo();
         try {
-            PublicKey publicKey = (PublicKey) keyCloakServiceImpl.toPublicKey(System.getenv("sunbird_sso_publickey"));
-
-            Jwts.parser()
-                    .setSigningKey(publicKey)
-                    .parseClaimsJws(token);
+            Jwts.parser().setSigningKey(keyCloakServiceImpl.getPublicKey()).parseClaimsJws(token);
 
             String[] split_string = token.split("\\.");
             String base64EncodedBody = split_string[1];
@@ -102,8 +98,7 @@ public class AuthorizationFilter implements BaseMiddleware {
             String body = new String(base64Url.decode(base64EncodedBody));
 
             Map<String, Object> map = new Gson().fromJson(
-                    body, new TypeToken<HashMap<String, Object>>() {
-                    }.getType()
+                    body, new TypeToken<HashMap<String, Object>>() {}.getType()
             );
 
             for (String s : map.keySet()) {

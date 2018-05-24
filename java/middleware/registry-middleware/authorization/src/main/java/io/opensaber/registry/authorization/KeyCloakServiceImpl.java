@@ -14,6 +14,14 @@ public class KeyCloakServiceImpl {
 
 	private static Logger logger = LoggerFactory.getLogger(KeyCloakServiceImpl.class);
 
+	private String ssoUrl = System.getenv("sunbird_sso_url");
+	private String ssoRealm = System.getenv("sunbird_sso_realm");
+	private PublicKey publicKey = toPublicKey(System.getenv("sunbird_sso_publickey"));
+
+	public PublicKey getPublicKey() {
+		return publicKey;
+	}
+
 	/**
 	 * This method verifies input JWT access token using RSATokenVerifier of Sunbird keycloak server
 	 *
@@ -22,18 +30,9 @@ public class KeyCloakServiceImpl {
 	 * @throws Exception
 	 */
 	public String verifyToken(String accessToken) throws VerificationException, Exception {
-		String userId = "";
-		try {
-			PublicKey publicKey = toPublicKey(System.getenv("sunbird_sso_publickey"));
-			AccessToken token = RSATokenVerifier.verifyToken(accessToken, publicKey,
-					System.getenv("sunbird_sso_url") + "realms/" + System.getenv("sunbird_sso_realm"), true, true);
-			userId = token.getSubject();
-			logger.debug("Authentication token \n TokenId: {} \t isActive: {} \t isExpired: {} \t", token.getId(), token.isActive(), token.isExpired());
-		} catch (VerificationException e) {
-			throw new VerificationException();
-		} catch (Exception e) {
-			throw new Exception();
-		}
+		AccessToken token = RSATokenVerifier.verifyToken(accessToken, publicKey,ssoUrl + "realms/" + ssoRealm, true, true);
+		String userId = token.getSubject();
+		logger.debug("Authentication token \n TokenId: {} \t isActive: {} \t isExpired: {} \t",token.getId(), token.isActive(), token.isExpired());
 		return userId;
 	}
 
