@@ -41,17 +41,17 @@ public class SchemaConfigurator {
 		watch.start("Schema Configurator loadSchemaConfigModel() Performance Monitoring !");
 		loadSchemaConfigModel(schemaFile);
 		watch.stop();
-		prefLogger.info(watch.shortSummary());
+		prefLogger.info(watch.prettyPrint());
 
 		watch.start("Schema Configurator loadSchemaForValidation() Performance Monitoring !");
 		loadSchemaForValidation(validationFile);
 		watch.stop();
-		prefLogger.info(watch.shortSummary());
+		prefLogger.info(watch.prettyPrint());
 
 		watch.start("Schema Configurator loadValidationConfigModel() Performance Monitoring !");
 		loadValidationConfigModel();
 		watch.stop();
-		prefLogger.info(watch.shortSummary());
+		prefLogger.info(watch.prettyPrint());
 	}
 	
 	public void loadSchemaConfigModel(String schemaFile) throws IOException{

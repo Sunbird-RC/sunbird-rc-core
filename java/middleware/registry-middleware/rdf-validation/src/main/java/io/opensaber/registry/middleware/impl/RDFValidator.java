@@ -54,12 +54,12 @@ public class RDFValidator implements BaseMiddleware{
 			watch.start("RDF Validator: mergeModels() Performance Testing !");
 			mergeModels((Model) RDF, (Model) validationRDF);
 			watch.stop();
-			prefLogger.info(watch.shortSummary());
+			prefLogger.info(watch.prettyPrint());
 
 			watch.start("RDF Validator: validate() Performance Testing !");
 			ValidationResponse validationResponse = validator.validate((Model) validationRDF, schema);
 			watch.stop();
-			prefLogger.info(watch.shortSummary());
+			prefLogger.info(watch.prettyPrint());
 
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
 			return mapData;

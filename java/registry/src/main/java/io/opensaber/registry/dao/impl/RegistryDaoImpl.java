@@ -68,9 +68,11 @@ public class RegistryDaoImpl implements RegistryDao {
     public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException {
         logger.debug("RegistryDaoImpl : Database Provider features: \n" + databaseProvider.getGraphStore().features());
         StopWatch watch = new StopWatch();
-        watch.start("addEntity");
+        watch.start("getGraphStore() and traversal() in addEntity() Performance Monitoring !");
         Graph graphFromStore = databaseProvider.getGraphStore();
         GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
+        watch.stop();
+        prefLogger.info(watch.prettyPrint());
         if (dbGraphTraversalSource.clone().V().hasLabel(label).hasNext()) {
             //closeGraph(graphFromStore);
             throw new DuplicateRecordException(Constants.DUPLICATE_RECORD_MESSAGE);
@@ -82,16 +84,20 @@ public class RegistryDaoImpl implements RegistryDao {
             org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
             tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
             //rootNodeLabel = createOrUpdateEntity(dbGraphTraversalSource, graph, label, "create");
+            watch.start("addOrUpdateVerticesAndEdges() inside addEntity() Performance Monitoring !");
             rootNodeLabel = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
+            watch.stop();
+            prefLogger.info(watch.prettyPrint());
             tx.commit();
             logger.debug("RegistryDaoImpl : Entity added for transactional DB with rootNodeLabel : {}", rootNodeLabel);
         } else {
+            watch.start("addOrUpdateVerticesAndEdges() inside addEntity() Performance Monitoring !");
             rootNodeLabel = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
+            watch.stop();
+            prefLogger.info(watch.prettyPrint());
             logger.debug("RegistryDaoImpl : Entity added for non-transactional DB with rootNodeLabel : {}", rootNodeLabel);
         }
         logger.info("Successfully created entity with label " + rootNodeLabel);
-        watch.stop();
-        prefLogger.info(watch.prettyPrint());
         // closeGraph(graphFromStore);
         return rootNodeLabel;
     }
@@ -101,9 +107,11 @@ public class RegistryDaoImpl implements RegistryDao {
     public String addEntity(Graph entity, String label, String rootNodeLabel, String property) throws DuplicateRecordException, RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
         logger.debug("RegistryDaoImpl : Database Provider features: \n" + databaseProvider.getGraphStore().features());
         StopWatch watch = new StopWatch();
-        watch.start("addEntity with rootLabel and property");
+        watch.start("getGraphStore() and traversal() in addEntity() Performance Monitoring !");
         Graph graphFromStore = databaseProvider.getGraphStore();
         GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
+        watch.stop();
+        prefLogger.info(watch.prettyPrint());
         if (rootNodeLabel != null && property != null && !dbGraphTraversalSource.clone().V().hasLabel(rootNodeLabel).hasNext()) {
             //closeGraph(graphFromStore);
             throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
@@ -118,22 +126,26 @@ public class RegistryDaoImpl implements RegistryDao {
             org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
             tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
             //label = createOrUpdateEntity(graph, label, "create");
+            watch.start("addOrUpdateVerticesAndEdges() Performance Monitoring !");
             label = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
+            watch.stop();
+            prefLogger.info(watch.prettyPrint());
             if (rootNodeLabel != null && property != null) {
                 connectNodes(rootNodeLabel, label, property);
             }
             tx.commit();
             logger.debug("RegistryDaoImpl : Entity added for transactional DB with rootNodeLabel : {},	label	:	{},	property	: 	{}", rootNodeLabel, label, property);
         } else {
+            watch.start("addOrUpdateVerticesAndEdges() Performance Monitoring !");
             label = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
+            watch.stop();
+            prefLogger.info(watch.prettyPrint());
             logger.debug("RegistryDaoImpl : Entity added for non-transactional DB with rootNodeLabel : {},	label	:	{},	property	: 	{}", rootNodeLabel, label, property);
             if (rootNodeLabel != null && property != null) {
                 connectNodes(rootNodeLabel, label, property);
             }
         }
         logger.info("Successfully created entity with label " + label);
-        watch.stop();
-        prefLogger.info(watch.prettyPrint());
         // closeGraph(graphFromStore);
         return label;
     }
@@ -232,7 +244,7 @@ public class RegistryDaoImpl implements RegistryDao {
 
         GraphTraversal<Vertex, Vertex> gts = entitySource.clone().V().hasLabel(rootLabel);
         String label = rootLabel;
-
+        StopWatch watch = new StopWatch();
         while (gts.hasNext()) {
             Vertex v = gts.next();
             GraphTraversal<Vertex, Vertex> hasLabel = dbTraversalSource.clone().V().hasLabel(rootLabel);
@@ -242,9 +254,15 @@ public class RegistryDaoImpl implements RegistryDao {
                 logger.info(String.format("Root node label {} already exists. Updating properties for the root node.", rootLabel));
                 Vertex existingVertex = hasLabel.next();
                 //if(!methodOrigin.equalsIgnoreCase("upsert")){
+                watch.start("copyProperties() Performance Monitoring !");
                 copyProperties(v, existingVertex, methodOrigin, encDecPropertyBuilder);
+                watch.stop();
+                prefLogger.info(watch.prettyPrint());
                 //}
+                watch.start("addOrUpdateVertexAndEdge() Performance Monitoring !");
                 addOrUpdateVertexAndEdge(v, existingVertex, dbTraversalSource, methodOrigin, encDecPropertyBuilder);
+                watch.stop();
+                prefLogger.info(watch.prettyPrint());
             } else {
                 if (methodOrigin.equalsIgnoreCase("update")) {
                     throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
@@ -252,15 +270,22 @@ public class RegistryDaoImpl implements RegistryDao {
                 label = generateBlankNodeLabel(rootLabel);
                 logger.info(String.format("Creating entity with label {}", rootLabel));
                 Vertex newVertex = dbTraversalSource.clone().addV(label).next();
+                watch.start("copyProperties() Perofrmance Monitoring !");
                 copyProperties(v, newVertex, methodOrigin, encDecPropertyBuilder);
+                watch.stop();
+                prefLogger.info(watch.prettyPrint());
+                watch.start("addOrUpdateVertexAndEdge() Performance Monitoring !");
                 addOrUpdateVertexAndEdge(v, newVertex, dbTraversalSource, methodOrigin, encDecPropertyBuilder);
+                watch.stop();
+                prefLogger.info(watch.prettyPrint());
             }
             Table<Vertex,Vertex,Map<String,Object>>  encDecPropertyTable = encDecPropertyBuilder.build();
-            long timestamp = System.currentTimeMillis();
+            watch.start("updateEncryptedDecryptedProperties() Performance Monitoring !");
             if(encDecPropertyTable.size() > 0){
                 updateEncryptedDecryptedProperties(encDecPropertyTable, methodOrigin);
             }
-            logger.info("Time taken to update encrypted properties:"+(System.currentTimeMillis() - timestamp));
+            watch.stop();
+            prefLogger.info(watch.prettyPrint());
         }
 
         return label;
@@ -283,6 +308,8 @@ public class RegistryDaoImpl implements RegistryDao {
         Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
         List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(Direction.OUT));
         List<Edge> edgeVertexMatchList = new ArrayList<Edge>();
+        StopWatch watch = new StopWatch();
+
         while (edgeList.hasNext()) {
             Edge e = edgeList.next();
             Vertex ver = e.inVertex();
@@ -305,16 +332,18 @@ public class RegistryDaoImpl implements RegistryDao {
             Optional<Edge> edgeVertexAlreadyExists =
                     dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(edgeLabel) && ed.inVertex().label().equalsIgnoreCase(ver.label())).findFirst();
             verifyAndDelete(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
-            StopWatch watch = new StopWatch();
             if (gt.hasNext()) {
                 Vertex existingV = gt.next();
                 logger.info(String.format("Vertex with label {} already exists. Updating properties for the vertex", existingV.label()));
+                watch.start("copyProperties() in addOrUpdateVertexAndEdge() Performance Monitoring !");
                 copyProperties(ver, existingV, methodOrigin, encDecPropertyBuilder);
+                watch.stop();
+                prefLogger.info(watch.prettyPrint());
                 if (!edgeVertexAlreadyExists.isPresent()) {
                     Edge edgeAdded = dbVertex.addEdge(edgeLabel, existingV);
                     edgeVertexMatchList.add(edgeAdded);
                     AuditRecord record = appContext.getBean(AuditRecord.class);
-                    watch.start("RegistryDaoImpl Audit Record creation in addOrUpdateVertexAndEdge() performance monitoring !");
+                    watch.start("Audit Record creation in addOrUpdateVertexAndEdge() performance monitoring !");
                     record
                             .subject(dbVertex.label())
                             .predicate(e.label())
@@ -333,7 +362,10 @@ public class RegistryDaoImpl implements RegistryDao {
                 String label = generateBlankNodeLabel(ver.label());
                 Vertex newV = dbGraph.addV(label).next();
                 logger.debug(String.format("RegistryDaoImpl : Adding vertex with label {} and adding properties", newV.label()));
+                watch.start("copyProperties() in addOrUpdateVertexAndEdge() Performance Monitoring !");
                 copyProperties(ver, newV, methodOrigin, encDecPropertyBuilder);
+                watch.stop();
+                prefLogger.info(watch.prettyPrint());
                 logger.debug(String.format("RegistryDaoImpl : Adding edge with label {} for the vertex label {}.", e.label(), newV.label()));
 
                 Edge edgeAdded = dbVertex.addEdge(edgeLabel, newV);
@@ -516,7 +548,7 @@ public class RegistryDaoImpl implements RegistryDao {
             //closeGraph(graphFromStore);
         }
         watch.stop();
-        logger.info(watch.prettyPrint());
+        prefLogger.info(watch.prettyPrint());
         return false;
     }
 
@@ -524,9 +556,11 @@ public class RegistryDaoImpl implements RegistryDao {
     @Override
     public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
         StopWatch watch = new StopWatch();
-        watch.start("getEntityById");
+        watch.start("getGraphStore() and traversal() in addEntity() Performance Monitoring !");
         Graph graphFromStore = databaseProvider.getGraphStore();
         GraphTraversalSource traversalSource = graphFromStore.traversal();
+        watch.stop();
+        prefLogger.info(watch.prettyPrint());
         GraphTraversal<Vertex, Vertex> hasLabel = traversalSource.clone().V().hasLabel(label);
         ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder = ImmutableTable.<Vertex,Vertex,Map<String,Object>> builder();
         Graph parsedGraph = TinkerGraph.open();
@@ -538,18 +572,24 @@ public class RegistryDaoImpl implements RegistryDao {
             logger.info("Record exists for label : {}", label);
             Vertex subject = hasLabel.next();
             Vertex newSubject = parsedGraph.addVertex(subject.label());
+            watch.start("copyProperties() in getEntityById() Performance Monitoring !");
             copyProperties(subject, newSubject, "read", encDecPropertyBuilder);
+            watch.stop();
+            prefLogger.info(watch.prettyPrint());
+            watch.start("extractGraphFromVertex() in getEntityById() Performance Monitoring !");
             extractGraphFromVertex(parsedGraph, newSubject, subject, encDecPropertyBuilder);
+            watch.stop();
+            prefLogger.info(watch.prettyPrint());
             Table<Vertex,Vertex,Map<String,Object>>  encDecPropertyTable = encDecPropertyBuilder.build();
-            long timestamp = System.currentTimeMillis();
+            watch.start("Time taken to update decrypted properties");
             if(encDecPropertyTable.size()>0){
                 updateEncryptedDecryptedProperties(encDecPropertyTable, "read");
             }
-            logger.info("Time taken to update decrypted properties:"+(System.currentTimeMillis() - timestamp));
+            watch.stop();
+            prefLogger.info(watch.prettyPrint());
         // closeGraph(graphFromStore);
         }
-        watch.stop();
-        logger.info(watch.prettyPrint());
+        logger.debug(watch.prettyPrint());
         return parsedGraph;
     }
 
@@ -559,9 +599,6 @@ public class RegistryDaoImpl implements RegistryDao {
         HashMap<String, HashMap<String, String>> propertyMetaPropertyMap = new HashMap<String, HashMap<String, String>>();
         Iterator<VertexProperty<Object>> iter = subject.properties();
         Map<String,Object> propertyMap = new HashMap<String,Object>();
-
-
-        StopWatch watch = new StopWatch();
 
         while (iter.hasNext()) {
             VertexProperty<Object> property = iter.next();
@@ -814,16 +851,16 @@ public class RegistryDaoImpl implements RegistryDao {
         StopWatch watch = new StopWatch();
 
 		if (methodOrigin.equalsIgnoreCase("create") || methodOrigin.equalsIgnoreCase("update")){
-			watch.start("Encryption Service Started");
+			watch.start("Encryption Service Performance Monitoring !");
 			encDecMap = encryptionService.encrypt(propertyMap);
 			watch.stop();
-			prefLogger.info(watch.shortSummary());
+			prefLogger.info(watch.prettyPrint());
 			logger.info("Time taken to encrypt: {}", watch.getTotalTimeMillis());
 		}else{
-			watch.start("Decryption Service Started");
+			watch.start("Decryption Service Performance Monitoring !");
 			encDecMap = encryptionService.decrypt(propertyMap);
 			watch.stop();
-			prefLogger.info(watch.shortSummary());
+			prefLogger.info(watch.prettyPrint());
 			logger.info("Time taken to decrypt: {}", watch.getTotalTimeMillis());
 		}
 
