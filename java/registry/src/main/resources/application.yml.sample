@@ -40,7 +40,10 @@ database:
 
 # RDF Validation Config
 validations:
-  file: validations.shex
+  create:
+    file: validations_create.shex
+  update:
+    file: validations_update.shex
 
 # Http Connection Timeout Config
 connection:
@@ -116,7 +119,10 @@ database:
 
 # RDF Validation Config
 validations:
-  file: validations.shex
+  create:
+    file: validations_create.shex
+  update:
+    file: validations_update.shex
 
 # Http Connection Timeout Config
 connection:
@@ -181,7 +187,10 @@ database:
 
 # RDF Validation Config
 validations:
-  file: good1.shex
+  create:
+    file: good1.shex
+  update:
+    file: good1.shex
 
 # Http Connection Timeout Config
 connection:
