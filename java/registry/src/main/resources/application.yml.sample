@@ -41,10 +41,6 @@ database:
 # RDF Validation Config
 validations:
   file: validations.shex
-  entity:
-    shape:
-      name: http://localhost:8080/TeacherShape
-      type: http://localhost:8080/Teacher
 
 # Http Connection Timeout Config
 connection:
@@ -65,6 +61,9 @@ decryption:
   batch:
     uri: https://dev.open-sunbird.org/encryption/decrypt/obj
 
+audit:
+  enabled: false
+
 authentication:
   enabled: false
 
@@ -76,6 +75,7 @@ keycloak:
     username: ${sunbird_sso_username}
     password: ${sunbird_sso_password}
     clientId: ${sunbird_sso_client_id}
+
 ---
 ##################################################################
 #                      STAGING PROFILE                           #
@@ -117,10 +117,6 @@ database:
 # RDF Validation Config
 validations:
   file: validations.shex
-  entity:
-    shape:
-      name: http://example.com/voc/teacher/1.0.0/TeacherShape
-      type: http://example.com/voc/teacher/1.0.0/Teacher
 
 # Http Connection Timeout Config
 connection:
@@ -141,6 +137,9 @@ decryption:
   batch:
     uri: https://staging.open-sunbird.org/encryption/decrypt/obj
 
+audit:
+  enabled: false
+
 authentication:
   enabled: true
 
@@ -152,6 +151,7 @@ keycloak:
     username: ${sunbird_sso_username}
     password: ${sunbird_sso_password}
     clientId: ${sunbird_sso_client_id}
+
 ---
 ##################################################################
 #                      TEST PROFILE                              #
@@ -201,6 +201,9 @@ decryption:
   uri: https://dev.open-sunbird.org/encryption/decrypt
   batch:
     uri: https://dev.open-sunbird.org/encryption/decrypt/obj
+
+audit:
+  enabled: false
 
 authentication:
   enabled: true

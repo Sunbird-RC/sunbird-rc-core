@@ -1,6 +1,6 @@
-
 package io.opensaber.registry.dao.impl;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,6 +43,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	public static final String META = "meta.";
 	public static final String EMPTY_STRING = StringUtils.EMPTY;
 	private static Logger logger = LoggerFactory.getLogger(RegistryDaoImpl.class);
+	
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
 
 	@Autowired
@@ -59,6 +61,12 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	@Autowired
 	ApplicationContext appContext;
+	
+	@Value("${audit.enabled}")
+	private boolean auditEnabled;
+	
+	@Value("${authentication.enabled}")
+	private boolean authenticationEnabled;
 
 	@Override
 	public List getEntityList() {
@@ -66,7 +74,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		return null;
 	}
 
-	@Override
+	/*@Override
 	public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
 		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
 		Graph graphFromStore = databaseProvider.getGraphStore();
@@ -90,7 +98,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		logger.info("Successfully created entity with label " + rootNodeLabel);
 		// closeGraph(graphFromStore);
 		return rootNodeLabel;
-	}
+	}*/
 
 
 	@Override
@@ -161,6 +169,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		Vertex rootVertex = rootGts.next();
 		Vertex entityVertex = entityGts.next();
 		rootVertex.addEdge(property, entityVertex);
+		if(auditEnabled){
 		AuditRecord record = appContext.getBean(AuditRecord.class);
 		record
 		.subject(rootVertex.label())
@@ -168,6 +177,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		.oldObject(null)
 		.newObject(entityVertex.label())
 		.record(databaseProvider);
+		}
 	}
 
 	/**
@@ -225,6 +235,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			if (hasLabel.hasNext()) {
 				logger.info(String.format("Root node label {} already exists. Updating properties for the root node.", rootLabel));
 				Vertex existingVertex = hasLabel.next();
+				setAuditInfo(v, false);
 				copyProperties(v, existingVertex, methodOrigin, encDecPropertyBuilder);
 				addOrUpdateVertexAndEdge(v, existingVertex, dbTraversalSource, methodOrigin, encDecPropertyBuilder);
 			} else {
@@ -234,6 +245,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				label = generateBlankNodeLabel(rootLabel);
 				logger.info(String.format("Creating entity with label {}", rootLabel));
 				Vertex newVertex = dbTraversalSource.clone().addV(label).next();
+				setAuditInfo(v, true);
 				copyProperties(v, newVertex,methodOrigin, encDecPropertyBuilder);
 				addOrUpdateVertexAndEdge(v, newVertex, dbTraversalSource,methodOrigin, encDecPropertyBuilder);
 			}
@@ -287,11 +299,13 @@ public class RegistryDaoImpl implements RegistryDao {
 			verifyAndDelete(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
 			if (gt.hasNext()) {
 				Vertex existingV = gt.next();
+				setAuditInfo(ver, false);
 				logger.info(String.format("Vertex with label {} already exists. Updating properties for the vertex", existingV.label()));
 				copyProperties(ver, existingV,methodOrigin, encDecPropertyBuilder);
 				if(!edgeVertexAlreadyExists.isPresent()){
 					Edge edgeAdded = dbVertex.addEdge(edgeLabel, existingV);
 					edgeVertexMatchList.add(edgeAdded);
+					if(auditEnabled){
 					AuditRecord record = appContext.getBean(AuditRecord.class);
 					record
 					.subject(dbVertex.label())
@@ -299,7 +313,7 @@ public class RegistryDaoImpl implements RegistryDao {
 					.oldObject(null)
 					.newObject(existingV.label())
 					.record(databaseProvider);
-
+					}
 					logger.info("Audit record created for update/insert(upsert) with label : {}  ", dbVertex.label());
 				}
 				parsedVertices.push(new Pair<>(ver, existingV));
@@ -309,12 +323,14 @@ public class RegistryDaoImpl implements RegistryDao {
 				}
 				String label = generateBlankNodeLabel(ver.label());
 				Vertex newV = dbGraph.addV(label).next();
+				setAuditInfo(ver, true);
 				logger.info(String.format("Adding vertex with label {} and adding properties", newV.label()));
 				copyProperties(ver, newV, methodOrigin, encDecPropertyBuilder);
 				logger.info(String.format("Adding edge with label {} for the vertex label {}.", e.label(), newV.label()));
 
 				Edge edgeAdded = dbVertex.addEdge(edgeLabel, newV);
 				edgeVertexMatchList.add(edgeAdded);
+				if(auditEnabled){
 				AuditRecord record = appContext.getBean(AuditRecord.class);
 				record
 				.subject(dbVertex.label())
@@ -322,7 +338,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				.oldObject(null)
 				.newObject(newV.label())
 				.record(databaseProvider);
-
+				}
 				logger.info("Audit record created for update with label : {} ", dbVertex.label());
 				parsedVertices.push(new Pair<>(ver, newV));
 			}
@@ -407,6 +423,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			dbVertexToBeDeleted.remove();
 			dbEdgeToBeRemoved.remove();
 		}
+		if(auditEnabled){
 		AuditRecord record = appContext.getBean(AuditRecord.class);
 		String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
 		String auditVertexlabel= registryContext+tailOfdbVertex;
@@ -416,6 +433,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		.oldObject(vertexLabel)
 		.newObject(null)
 		.record(databaseProvider);
+		}
 
 	}
 
@@ -516,7 +534,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		Iterator<VertexProperty<Object>> iter = subject.properties();
 
 		Map<String,Object> propertyMap = new HashMap<String,Object>();
-
 		while (iter.hasNext()) {
 			VertexProperty<Object> property = iter.next();
 			String tailOfPropertyKey = property.key().substring(property.key().lastIndexOf("/") + 1).trim();
@@ -560,46 +577,52 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	private void setProperty(Vertex v, String key, Object newValue, String methodOrigin) throws AuditFailedException {
-		VertexProperty vp = v.property(key);
-		Object oldValue = vp.isPresent() ? vp.value() : null;
-		if(oldValue!=null && !methodOrigin.equalsIgnoreCase("update") && !schemaConfigurator.isSingleValued(key)){
-			List valueList = new ArrayList();
-			if(oldValue instanceof List){
-				valueList = (List)oldValue;
-			} else{
-				String valueStr = (String)oldValue;
-				valueList.add(valueStr);
-			}
+		if(!(methodOrigin.equalsIgnoreCase("read") && (key.endsWith(Constants.AuditProperties.createdBy.name())
+				|| key.endsWith(Constants.AuditProperties.createdOn.name())
+				|| key.endsWith(Constants.AuditProperties.lastUpdatedBy.name())
+				|| key.endsWith(Constants.AuditProperties.lastUpdatedOn.name())))){
+			VertexProperty vp = v.property(key);
+			Object oldValue = vp.isPresent() ? vp.value() : null;
+			if(oldValue!=null && !methodOrigin.equalsIgnoreCase("update") && !schemaConfigurator.isSingleValued(key)){
+				List valueList = new ArrayList();
+				if(oldValue instanceof List){
+					valueList = (List)oldValue;
+				} else{
+					String valueStr = (String)oldValue;
+					valueList.add(valueStr);
+				}
 
-			if(newValue instanceof List){
-				valueList.addAll((List)newValue);
-			} else{
-				valueList.add(newValue);
+				if(newValue instanceof List){
+					valueList.addAll((List)newValue);
+				} else{
+					valueList.add(newValue);
+				}
+				newValue = valueList;
 			}
-			newValue = valueList;
-		}
-		v.property(key, newValue);
-		
-		if (!isaMetaProperty(key) && !Objects.equals(oldValue, newValue)) {
-			GraphTraversal<Vertex, Vertex> configTraversal =
-					v.graph().traversal().clone().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG);
-			if (configTraversal.hasNext()
-					&& configTraversal.next().property(Constants.PERSISTENT_GRAPH).value().equals(true)) {
+			v.property(key, newValue);
+			if(!(key.endsWith(Constants.AuditProperties.createdBy.name())
+					|| key.endsWith(Constants.AuditProperties.createdOn.name())
+					|| key.endsWith(Constants.AuditProperties.lastUpdatedBy.name())
+					|| key.endsWith(Constants.AuditProperties.lastUpdatedOn.name())) && auditEnabled){
+				if (!isaMetaProperty(key) && !Objects.equals(oldValue, newValue)) {
+					GraphTraversal<Vertex, Vertex> configTraversal =
+							v.graph().traversal().clone().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG);
+					if (configTraversal.hasNext()
+							&& configTraversal.next().property(Constants.PERSISTENT_GRAPH).value().equals(true)) {
 
-				AuditRecord record = appContext.getBean(AuditRecord.class);
-				record
-				.subject(v.label())
-				.predicate(key)
-				.oldObject(oldValue)
-				.newObject(newValue)
-				.record(databaseProvider);
-				logger.info("Audit record created for {}  !", v.label());
-			} else {
-				// System.out.println("NOT AUDITING");
+						AuditRecord record = appContext.getBean(AuditRecord.class);
+						record
+						.subject(v.label())
+						.predicate(key)
+						.oldObject(oldValue)
+						.newObject(newValue)
+						.record(databaseProvider);
+						logger.info("Audit record created for {}  !", v.label());
+					}
+				}
 			}
-		} else {
-			logger.info("No change found for auditing !");
 		}
+
 	}
 
 	private void setMetaPropertyFromMap(Vertex newSubject, HashMap<String, HashMap<String, String>> propertyMetaPropertyMap) {
@@ -857,9 +880,18 @@ public class RegistryDaoImpl implements RegistryDao {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}*/
+	private void setAuditInfo(Vertex v, boolean isNew){
+		if(authenticationEnabled){
+			String username = ((AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getName();
+			String timestamp = sdf.format(new Date());
+			if(isNew){
+				v.property(registryContext+Constants.AuditProperties.createdBy.name(),username);
+				v.property(registryContext+Constants.AuditProperties.createdOn.name(),timestamp);
+			}
+			v.property(registryContext+Constants.AuditProperties.lastUpdatedBy.name(),username);
+			v.property(registryContext+Constants.AuditProperties.lastUpdatedOn.name(),timestamp);
+		}
 	}
 
-	private AuthInfo getCurrentUserInfo() {
-		return (AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-	}*/
 }

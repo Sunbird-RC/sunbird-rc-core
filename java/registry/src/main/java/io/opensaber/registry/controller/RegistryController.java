@@ -48,6 +48,9 @@ public class RegistryController {
 	@Value("${registry.context.base}")
 	private String registryContext;
 	
+	@Value("${audit.enabled}")
+	private boolean auditEnabled;
+	
 	/*@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
@@ -247,26 +250,34 @@ public class RegistryController {
 
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
-		id=registryContext+id;	
+		
+		if(auditEnabled){
+			id=registryContext+id;	
 
-		try {
-			org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(id);
-			logger.debug("Audit Record model :"+ auditModel);
-			String jenaJSON = registryService.frameAuditEntity(auditModel);
-			Type type = new TypeToken<Map<String, Object>>(){}.getType();
-			response.setResult(new Gson().fromJson(jenaJSON, type));
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller: audit records fetched !");
-		} catch (RecordNotFoundException e) {
-			logger.error("Controller: RecordNotFoundException while fetching audit !", e);
+			try {
+				org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(id);
+				logger.debug("Audit Record model :"+ auditModel);
+				String jenaJSON = registryService.frameAuditEntity(auditModel);
+				Type type = new TypeToken<Map<String, Object>>(){}.getType();
+				response.setResult(new Gson().fromJson(jenaJSON, type));
+				responseParams.setStatus(Response.Status.SUCCCESSFUL);
+				logger.debug("Controller: audit records fetched !");
+			} catch (RecordNotFoundException e) {
+				logger.error("Controller: RecordNotFoundException while fetching audit !", e);
+				response.setResult(null);
+				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+				responseParams.setErrmsg(e.getMessage());
+			} catch (Exception e) {
+				logger.error("Controller: Exception while fetching audit !", e);
+				response.setResult(null);
+				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+				responseParams.setErrmsg("Meh ! You encountered an error!");
+			} 
+		} else {
+			logger.info("Controller: Audit is disabled");
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		} catch (Exception e) {
-			logger.error("Controller: Exception while fetching audit !", e);
-			response.setResult(null);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg("Meh ! You encountered an error!");
+			responseParams.setErrmsg(Constants.AUDIT_IS_DISABLED);
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

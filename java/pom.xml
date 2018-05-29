@@ -15,6 +15,7 @@
 	    <module>middleware</module>
 	    <module>registry-interceptor</module>   
 	    <module>schema-configuration</module>
+	    <module>transaction-event-handler</module>
         <module>opensaber-client</module>
   </modules>
 

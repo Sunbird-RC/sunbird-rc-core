@@ -23,10 +23,20 @@ Feature: Updating a record in registry
     When updating the record in the registry
     Then updating the record should be successful
     
-  Scenario: Updating values for an existing record
+
+#Toggle between the below 2 features based on the configuration of audit.enabled property in configuration
+
+  #Scenario: Updating values for an existing record and verifying audit details
+    #Given input for updating single record 
+    #And audit record before update
+    #When updating the record in the registry
+	#And getting audit records after update
+ 	#Then check audit records are matched with expected records
+ 	
+  Scenario: Updating values for an existing record and verifying that audit is disabled
     Given input for updating single record 
     And audit record before update
     When updating the record in the registry
 	And getting audit records after update
- 	Then check audit records are matched with expected records
+ 	Then check audit is disabled
    
