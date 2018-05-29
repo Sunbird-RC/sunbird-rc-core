@@ -97,19 +97,22 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public SchemaConfigurator schemaConfiguration() throws IOException{
 		String fieldConfigFileName = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
-		String validationConfigFile = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
-		return new SchemaConfigurator(fieldConfigFileName, validationConfigFile);
+		String validationConfigFileForCreate = environment.getProperty(Constants.SHEX_CREATE_PROPERTY_NAME);
+		String validationConfigFileForUpdate = environment.getProperty(Constants.SHEX_UPDATE_PROPERTY_NAME);
+		return new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate);
 	}
 
 	@Bean
 	public RDFValidator rdfValidator(){
-		Schema schema = null;
+		Schema schemaForCreate = null;
+		Schema schemaForUpdate = null;
 		try{
-			schema = schemaConfiguration().getSchema();
+			schemaForCreate = schemaConfiguration().getSchemaForCreate();
+			schemaForUpdate = schemaConfiguration().getSchemaForUpdate();
 		}catch(Exception e){
 			logger.error("Unable to retrieve schema for validations");
 		}
-		return new RDFValidator(schema);
+		return new RDFValidator(schemaForCreate, schemaForUpdate);
 	}
 
 	@Bean
