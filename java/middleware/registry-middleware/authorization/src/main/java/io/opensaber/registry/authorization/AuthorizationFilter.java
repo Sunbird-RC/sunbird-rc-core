@@ -50,7 +50,7 @@ public class AuthorizationFilter implements BaseMiddleware {
         try {
             if (!keyCloakServiceImpl.verifyToken(token).trim().isEmpty()) {
 
-                logger.info("Access token verified successfully with KeyCloak server !");
+                logger.debug("Access token verified successfully with KeyCloak server !");
                 AuthInfo authInfo = extractTokenIntoAuthInfo(token);
                 if (authInfo.getSub() == null || authInfo.getAud() == null || authInfo.getName() == null) {
                     throw new MiddlewareHaltException(TOKEN_IS_INVALID);
@@ -64,10 +64,10 @@ public class AuthorizationFilter implements BaseMiddleware {
                 throw new MiddlewareHaltException(TOKEN_IS_INVALID);
             }
         } catch (VerificationException e) {
-            logger.error("AuthorizationFilter: Invalid Auth token or Environment variable!");
+            logger.error("AuthorizationFilter: Invalid Auth token or Environment variable!", e);
             throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
         } catch (Exception e) {
-            logger.error("AuthorizationFilter: MiddlewareHaltException !");
+            logger.error("AuthorizationFilter: MiddlewareHaltException !", e);
             throw new MiddlewareHaltException(TOKEN_IS_INVALID);
         }
         return mapObject;
@@ -104,7 +104,7 @@ public class AuthorizationFilter implements BaseMiddleware {
                 }
             }
         } catch (Exception e) {
-            logger.error("Claim extracted but verification failed !");
+            logger.error("Claim extracted but verification failed !", e);
         }
         return authInfo;
     }

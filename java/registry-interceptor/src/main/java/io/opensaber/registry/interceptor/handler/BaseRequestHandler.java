@@ -25,13 +25,13 @@ public class BaseRequestHandler extends BaseResponseHandler{
 	protected RequestWrapper requestWrapper;
 	protected HttpServletRequest request;
 
-	public void setRequest(HttpServletRequest request) throws IOException{
+	public void setRequest(HttpServletRequest request) throws IOException {
 		this.request = request;
 		setRequestWrapper();
 	}
 
 
-	public void setRequestWrapper() throws IOException{
+	public void setRequestWrapper() throws IOException {
 		requestWrapper = new RequestWrapper(request);
 	}
 
@@ -39,14 +39,14 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		return requestWrapper.getBody();
 	}
 
-	public String getRequestHeaderByName(String name) throws IOException{
+	public String getRequestHeaderByName(String name) throws IOException {
 		return requestWrapper.getHeader(name);
 	}
 
-	public void mergeRequestAttributes(Map<String,Object> attributeMap){
-		if(attributeMap!=null){
-			for(Map.Entry<String, Object> entry: attributeMap.entrySet()){
-				if(null == request.getAttribute(entry.getKey())){
+	public void mergeRequestAttributes(Map<String, Object> attributeMap) {
+		if (attributeMap != null) {
+			for (Map.Entry<String, Object> entry : attributeMap.entrySet()) {
+				if (null == request.getAttribute(entry.getKey())) {
 					request.setAttribute(entry.getKey(), entry.getValue());
 				}
 			}
@@ -69,12 +69,12 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		requestModel.setRequestMap(requestBodyMap);
 		return requestBodyMap;
 	}
-	
-	public Map<String,Object> getRequestHeaderMap() throws IOException{
-		Map<String,Object> requestHeaderMap = new HashMap<String,Object>();
+
+	public Map<String, Object> getRequestHeaderMap() throws IOException {
+		Map<String, Object> requestHeaderMap = new HashMap<>();
 		Enumeration<String> headerNames = request.getHeaderNames();
-		if(headerNames!=null){
-			while(headerNames.hasMoreElements()){
+		if (headerNames != null) {
+			while (headerNames.hasMoreElements()) {
 				String header = headerNames.nextElement();
 				requestHeaderMap.put(header, request.getHeader(header));
 			}
@@ -82,11 +82,11 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		return requestHeaderMap;
 	}
 
-	public Map<String,Object> getRequestAttributeMap() throws IOException{
-		Map<String,Object> requestAttributeMap = new HashMap<String,Object>();
+	public Map<String, Object> getRequestAttributeMap() throws IOException {
+		Map<String, Object> requestAttributeMap = new HashMap<>();
 		Enumeration<String> attributeNames = request.getAttributeNames();
-		if(attributeNames!=null){
-			while(attributeNames.hasMoreElements()){
+		if (attributeNames != null) {
+			while (attributeNames.hasMoreElements()) {
 				String attribute = attributeNames.nextElement();
 				requestAttributeMap.put(attribute, request.getAttribute(attribute));
 			}
@@ -94,8 +94,8 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		return requestAttributeMap;
 	}
 
-	public Map<String,Object> getRequestParameterMap() throws IOException{
-		Map<String,Object> requestParameterMap = new HashMap<String,Object>();
+	public Map<String, Object> getRequestParameterMap() throws IOException {
+		Map<String, Object> requestParameterMap = new HashMap<>();
 		requestParameterMap.putAll(request.getParameterMap());
 		return requestParameterMap;
 	}

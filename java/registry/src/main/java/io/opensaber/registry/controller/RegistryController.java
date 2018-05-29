@@ -4,14 +4,11 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.JSONUtil;
 
 import org.apache.jena.rdf.model.Model;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +44,9 @@ public class RegistryController {
 
 	@Value("${registry.context.base}")
 	private String registryContext;
+
+	private Gson gson = new Gson();
+	private Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
 	
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
@@ -139,20 +139,18 @@ public class RegistryController {
 	
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> readEntity(@PathVariable("id") String id) {
-		id = registryContext + id;
+
+		String entityId = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
 
 		try {
-			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(id);
+			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(entityId);
 			logger.debug("FETCHED: " + entityModel);
 			String jenaJSON = registryService.frameEntity(entityModel);
-			JSONObject jenaObj = new JSONObject(jenaJSON);
-			/*Map<String,Object> resultMap = new HashMap<String,Object>();
-			resultMap.put(Constants.RESPONSE_ATTRIBUTE, entityModel);*/
-			response.setResult(jenaObj.toMap());
+			response.setResult(gson.fromJson(jenaJSON, mapType));
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller: entity for {} read !", id);
+			logger.debug("Controller: entity for {} read !", entityId);
 		} catch (RecordNotFoundException e) {
 			logger.error("Controller: RecordNotFoundException while reading entity !", e);
 			response.setResult(null);
@@ -250,16 +248,15 @@ public class RegistryController {
 
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
-		
-		if(auditEnabled){
-			id=registryContext+id;	
+
+		if (auditEnabled) {
+			String entityId = registryContext + id;
 
 			try {
-				org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(id);
-				logger.debug("Audit Record model :"+ auditModel);
+				org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(entityId);
+				logger.debug("Audit Record model :" + auditModel);
 				String jenaJSON = registryService.frameAuditEntity(auditModel);
-				Type type = new TypeToken<Map<String, Object>>(){}.getType();
-				response.setResult(new Gson().fromJson(jenaJSON, type));
+				response.setResult(gson.fromJson(jenaJSON, mapType));
 				responseParams.setStatus(Response.Status.SUCCCESSFUL);
 				logger.debug("Controller: audit records fetched !");
 			} catch (RecordNotFoundException e) {
@@ -272,7 +269,7 @@ public class RegistryController {
 				response.setResult(null);
 				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 				responseParams.setErrmsg("Meh ! You encountered an error!");
-			} 
+			}
 		} else {
 			logger.info("Controller: Audit is disabled");
 			response.setResult(null);
