@@ -24,11 +24,11 @@
     </appender>
     
     <appender name="RegistryAuditAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>/data/logs/registry_neo4j.log</file>
+		<file>logs/registry_neo4j.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-      		<fileNamePattern>/data/logs/registry_neo4j-%d{MM-dd-yyyy-hh}-%i.log</fileNamePattern>
+      		<fileNamePattern>logs/registry_neo4j-%d{MM-dd-yyyy-hh}-%i.log</fileNamePattern>
       		<minIndex>1</minIndex>
-      		<maxIndex>3</maxIndex>
+      		<maxIndex>10</maxIndex>
     	</rollingPolicy>
 
 		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
@@ -42,14 +42,14 @@
 		</encoder>
 	</appender>
 
-
     <logger name="io.opensaber.validators.shex.shaclex" level="ERROR"/>
     <logger name="es.weso" level="ERROR"/>
     <logger name="io.opensaber.utils.converters" level="ERROR"/>
     <logger name="io.opensaber.registry.dao.impl.RegistryDaoImpl" level="ERROR"/>
     <logger name="org.springframework" level="ERROR"/>
-    <logger name="GraphEventLogger" level="DEBUG">
-    	<appender-ref ref="RegistryAuditAppender" additivity="false"/>
+
+    <logger name="GraphEventLogger" level="DEBUG" additivity="false">
+    	<appender-ref ref="RegistryAuditAppender"/>
     </logger>
 
     <root level="info" additivity="false">

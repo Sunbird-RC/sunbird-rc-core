@@ -101,7 +101,7 @@ public class SchemaConfigurator {
 				return true;
 			}
 		}
-		logger.info("Property not matching any condition:" + property);
+		logger.debug("Property not matching any condition:" + property);
 		return true;
 	}
 

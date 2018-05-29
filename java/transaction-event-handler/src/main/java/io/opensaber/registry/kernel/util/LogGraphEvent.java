@@ -4,14 +4,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LogGraphEvent {
 
-	private static final Logger graphEventLogger = LogManager.getLogger("GraphEventLogger");
+	private static final Logger graphEventLogger = LoggerFactory.getLogger("GraphEventLogger");
 	private static ObjectMapper mapper = new ObjectMapper();
 	
 	
