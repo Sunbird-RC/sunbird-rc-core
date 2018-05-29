@@ -228,7 +228,7 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
                 resultNode.putArray(nodeElementKey).addAll(arrayNode);
             } else if (nodeType.startsWith(MappingConstants.XSD_ELEMENT)) {
                 leafNode.put(JsonldConstants.TYPE, nodeType);
-                leafNode.set(JsonldConstants.VALUE, childElementNode);
+                leafNode.put(JsonldConstants.VALUE, childElementNode.asText());
                 resultNode.set(nodeElementKey, leafNode.deepCopy());
             } else {
                 logger.error("Child element node with no node type defined: " + childElementNode);

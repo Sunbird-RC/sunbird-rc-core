@@ -9,14 +9,14 @@
   },
   "teacherCode":{
     "@type":"xsd:string",
-    "@value":12234
+    "@value":"12234"
   },
   "socialCategory":{
     "@id":"teacher:SocialCategoryTypeCode-GENERAL"
   },
   "serialNum":{
     "@type":"xsd:integer",
-    "@value":12
+    "@value":"12"
   },
   "disabilityType":{
     "@id":"teacher:DisabilityCode-NA"
@@ -43,7 +43,7 @@
   },
   "nationalIdentifier":{
     "@type":"xsd:string",
-    "@value":1234567890123456
+    "@value":"1234567890123456"
   },
   "teachingRole":{
     "mainSubjectsTaught":[
@@ -80,7 +80,7 @@
   "inServiceTeacherTrainingFromDIET":{
     "daysOfInServiceTeacherTraining":{
       "@type":"xsd:decimal",
-      "@value":5.5
+      "@value":"5.5"
     },
     "@type":"InServiceTeacherTrainingFromDIET",
     "@id":"http://localhost:8080/9455b798-3872-45c8-979b-405426188ed6"
@@ -88,7 +88,7 @@
   "inServiceTeacherTrainingFromCRC":{
     "daysOfInServiceTeacherTraining":{
       "@type":"xsd:decimal",
-      "@value":2
+      "@value":"2"
     },
     "@type":"InServiceTeacherTrainingFromClusterResourceCentre"
   },
@@ -124,21 +124,21 @@
   "inServiceTeacherTrainingFromBRC":{
     "daysOfInServiceTeacherTraining":{
       "@type":"xsd:decimal",
-      "@value":10.5
+      "@value":"10.5"
     },
     "@type":"InServiceTeacherTrainingFromBlockResourceCentre"
   },
   "inServiceTeacherTrainingFromOthers":{
     "daysOfInServiceTeacherTraining":{
       "@type":"xsd:decimal",
-      "@value":3.5
+      "@value":"3.5"
     },
     "@type":"InServiceTeacherTrainingFromOthers"
   },
   "nonTeachingAssignmentsForAcademicCalendar":{
     "daysOfNonTeachingAssignments":{
       "@type":"xsd:decimal",
-      "@value":6
+      "@value":"6"
     },
     "@type":"NonTeachingAssignmentsForAcademicCalendar"
   },
