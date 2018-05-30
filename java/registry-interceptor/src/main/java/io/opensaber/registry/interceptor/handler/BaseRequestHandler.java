@@ -82,14 +82,23 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		return requestHeaderMap;
 	}
 
-	public Map<String, Object> getRequestAttributeMap() throws IOException {
-		Map<String, Object> requestAttributeMap = new HashMap<>();
+
+	public Map<String,Object> getRequestAttributeMap() throws IOException{
+		boolean isMethodOriginAdded = false;
+		Map<String,Object> requestAttributeMap = new HashMap<String,Object>();
 		Enumeration<String> attributeNames = request.getAttributeNames();
 		if (attributeNames != null) {
 			while (attributeNames.hasMoreElements()) {
 				String attribute = attributeNames.nextElement();
+				if(attribute.equalsIgnoreCase(Constants.METHOD_ORIGIN)){
+					isMethodOriginAdded = true;
+				}
 				requestAttributeMap.put(attribute, request.getAttribute(attribute));
 			}
+			if(!isMethodOriginAdded){
+				requestAttributeMap.put(Constants.METHOD_ORIGIN, getRequestPath());
+			}
+			
 		}
 		return requestAttributeMap;
 	}
@@ -98,6 +107,10 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		Map<String, Object> requestParameterMap = new HashMap<>();
 		requestParameterMap.putAll(request.getParameterMap());
 		return requestParameterMap;
+	}
+	
+	public String getRequestPath() throws IOException{
+		return request.getServletPath();
 	}
 
 }

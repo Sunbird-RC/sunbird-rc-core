@@ -41,7 +41,7 @@ public final class RDF2Graph
 			if(object.isURIResource()){
 				if(object.toString().equals(type)){
 					label = subjectValue;
-					logger.info("Printing root label:" + label);
+					logger.debug("Printing root label:" + label);
 				}
 			}
 		}
@@ -61,7 +61,7 @@ public final class RDF2Graph
 		if (objectValue instanceof Literal) {
 			Literal literal = (Literal)objectValue;
 			String datatype = literal.getDatatype().toString();
-			logger.info("TYPE saved is "+datatype);
+			logger.debug("TYPE saved is "+datatype);
 			VertexProperty vp = s.property(property.toString());
 			if(vp.isPresent()){
 				Object value = vp.value();

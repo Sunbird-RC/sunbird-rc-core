@@ -97,7 +97,7 @@ public class ShaclexValidator {
 
 	private HashMap<String, String> extractValidationNodeInfo(Model dataModel, ValidationInfo validationInfo, PrefixMap pm) {
 
-		logger.info(String.format("Node Id: %s is NON-CONFORMANT with reason: %s"
+		System.out.println(String.format("Node Id: %s is NON-CONFORMANT with reason: %s"
 				, validationInfo.getNode(), validationInfo.getReason()));
 
 		// Remove the _: from the root node id if it is a blank node. If it is a URI (in the case of an update),

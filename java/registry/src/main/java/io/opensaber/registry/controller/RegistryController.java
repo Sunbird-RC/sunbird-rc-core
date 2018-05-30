@@ -50,33 +50,6 @@ public class RegistryController {
 	
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
-	
-	/*@RequestMapping(value = "/create", method = RequestMethod.POST)
-	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
-		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
-		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
-		Map<String, Object> result = new HashMap<>();
-
-		try {
-			String label = registryService.addEntity(rdf);
-			result.put("entity", label);
-			response.setResult(result);
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller : Entity with label {} created !", label);
-		} catch (DuplicateRecordException | EntityCreationException e) {
-			logger.error("Controller : DuplicateRecordException|EntityCreationException while creating entity !", e);
-			response.setResult(result);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		} catch (Exception e) {
-			logger.error("Controller: Exception while creating entity !", e);
-			response.setResult(result);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		}
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}*/
 
 	
 	@RequestMapping(value = "/add", method = RequestMethod.POST)
@@ -107,36 +80,6 @@ public class RegistryController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	/*@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
-	public ResponseEntity<Response> getEntity(@PathVariable("id") String id) {
-		id = registryContext + id;
-		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
-
-		try {
-			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(id);
-			logger.debug("FETCHED: " + entityModel);
-			String jenaJSON = registryService.frameEntity(entityModel);
-			JSONObject jenaObj = new JSONObject(jenaJSON);
-			Map<String,Object> resultMap = new HashMap<String,Object>();
-			resultMap.put(Constants.RESPONSE_ATTRIBUTE, entityModel);
-			response.setResult(jenaObj.toMap());
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller: entity for {} fetched !", id);
-		} catch (RecordNotFoundException e) {
-			logger.error("Controller: RecordNotFoundException while fetching entity !", e);
-			response.setResult(null);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		} catch (Exception e) {
-			logger.error("Controller: Exception while fetching entity!", e);
-			response.setResult(null);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg("Ding! You encountered an error!");
-		}
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}*/
-	
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> readEntity(@PathVariable("id") String id) {
 
@@ -164,34 +107,6 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
-	/*@ResponseBody
-	@RequestMapping(value = "/update/{id}", method = RequestMethod.PATCH)
-	public ResponseEntity<Response> updateEntity(@RequestAttribute Request requestModel,
-			@PathVariable("id") String id) {
-
-		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
-		id = registryContext + id;
-		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
-
-		try {
-			registryService.updateEntity(rdf, id);
-			responseParams.setErrmsg("");
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller: entity for {} updated !", id);
-		} catch (RecordNotFoundException | EntityCreationException e) {
-			logger.error("Controller: RecordNotFoundException|EntityCreationException while updating entity !", e);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-
-		} catch (Exception e) {
-			logger.error("Controller: Exception while updating entity!", e);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(String.format("Error occurred when updating Entity ID {}", id));
-		}
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}*/
 	
 	@ResponseBody
 	@RequestMapping(value = "/update", method = RequestMethod.POST)

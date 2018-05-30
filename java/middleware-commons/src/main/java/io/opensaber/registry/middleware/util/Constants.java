@@ -8,8 +8,10 @@ public class Constants {
 	public static final String REQUEST_ATTRIBUTE= "requestModel";
 	public static final String RDF_OBJECT = "rdf";
 	public static final String RDF_VALIDATION_OBJECT = "rdfValidationResult";
+	public static final String METHOD_ORIGIN = "methodOrigin";
 	public static final String TOKEN_OBJECT = "x-authenticated-user-token";
-	public static final String SHEX_PROPERTY_NAME = "validations.file";
+	public static final String SHEX_CREATE_PROPERTY_NAME = "validations.create.file";
+	public static final String SHEX_UPDATE_PROPERTY_NAME = "validations.update.file";
 	public static final String FIELD_CONFIG_SCEHEMA_FILE = "config.schema.file";
 	public static final String SUBJECT_LABEL_TYPE = "subject.label.type";
 	public static final String SHAPE_NAME = "validations.entity.shape.name";
@@ -28,6 +30,10 @@ public class Constants {
 	public static final String PROD_ENVIRONMENT = "prod";
 	public static final String INTEGRATION_TEST_BASE_URL = "http://localhost:8080/";
 	public static final String TARGET_NODE_IRI = "http://www.w3.org/ns/shacl#targetNode";
+	public static final String XSD_PREFIX = "xsd";
+	public static final String XSD_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
+	public static final String CONTEXT_KEYWORD = "@context";
+	public static final String TYPE_KEYWORD = "@type";
 	
 	public static final String DUPLICATE_RECORD_MESSAGE = "Cannot insert duplicate record";
 	public static final String FAILED_INSERTION_MESSAGE = "Failed to insert record";
