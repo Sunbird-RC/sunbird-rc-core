@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import io.opensaber.pojos.HealthCheckResponse;
+import io.opensaber.registry.config.OpenSaberStopWatch;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.JSONUtil;
 import org.apache.jena.rdf.model.Model;
@@ -41,11 +42,12 @@ public class RegistryController {
 	@Autowired
 	private RegistryService registryService;
 
+	@Autowired
+	private OpenSaberStopWatch watch;
+
 	@Value("${registry.context.base}")
 	private String registryContext;
 
-	StopWatch watch =new StopWatch();
-	
 	/*@RequestMapping(value = "/create", method = RequestMethod.POST)
 	public ResponseEntity<Response> addEntity(@RequestAttribute Request requestModel) {
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
@@ -78,6 +80,7 @@ public class RegistryController {
 	public ResponseEntity<Response> addToExistingEntity(@RequestAttribute Request requestModel, 
 			@RequestParam(value="id", required = false) String id, @RequestParam(value="prop", required = false) String property) {
 		watch.start("ADD Performance Monitoring !");
+
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);

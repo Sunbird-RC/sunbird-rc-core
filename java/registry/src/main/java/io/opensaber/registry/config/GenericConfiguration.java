@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -23,7 +24,6 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-
 import es.weso.schema.Schema;
 import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.exception.CustomExceptionHandler;
@@ -55,7 +55,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	
 	@Value("${connection.timeout}")
 	private int connectionTimeout;
-	
+
 	@Value("${read.timeout}")
 	private int readTimeout;
 	
@@ -70,6 +70,13 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		ObjectMapper objectMapper = new ObjectMapper();
 		objectMapper.setSerializationInclusion(Include.NON_NULL);
 		return objectMapper;
+	}
+
+
+	@ConditionalOnProperty(value="performance-monitoring.enabled")
+	@Bean
+	public OpenSaberStopWatch customStopWatch(){
+		return new OpenSaberStopWatch();
 	}
 
 	@Bean

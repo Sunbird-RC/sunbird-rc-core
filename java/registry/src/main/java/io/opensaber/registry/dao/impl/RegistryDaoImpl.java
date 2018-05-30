@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.google.common.collect.ImmutableList;
+import io.opensaber.registry.config.OpenSaberStopWatch;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
@@ -21,9 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
@@ -31,7 +30,6 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
-import org.springframework.util.StopWatch;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 
@@ -58,6 +56,9 @@ public class RegistryDaoImpl implements RegistryDao {
     @Autowired
     ApplicationContext appContext;
 
+    @Autowired
+    private OpenSaberStopWatch watch;
+
     @Override
     public List getEntityList() {
         // TODO Auto-generated method stub
@@ -67,7 +68,6 @@ public class RegistryDaoImpl implements RegistryDao {
     @Override
     public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException {
         logger.debug("RegistryDaoImpl : Database Provider features: \n" + databaseProvider.getGraphStore().features());
-        StopWatch watch = new StopWatch();
         watch.start("getGraphStore() and traversal() in addEntity() Performance Monitoring !");
         Graph graphFromStore = databaseProvider.getGraphStore();
         GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
@@ -106,7 +106,6 @@ public class RegistryDaoImpl implements RegistryDao {
     @Override
     public String addEntity(Graph entity, String label, String rootNodeLabel, String property) throws DuplicateRecordException, RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
         logger.debug("RegistryDaoImpl : Database Provider features: \n" + databaseProvider.getGraphStore().features());
-        StopWatch watch = new StopWatch();
         watch.start("getGraphStore() and traversal() in addEntity() Performance Monitoring !");
         Graph graphFromStore = databaseProvider.getGraphStore();
         GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
@@ -183,7 +182,6 @@ public class RegistryDaoImpl implements RegistryDao {
         Vertex rootVertex = rootGts.next();
         Vertex entityVertex = entityGts.next();
         rootVertex.addEdge(property, entityVertex);
-        StopWatch watch = new StopWatch();
         watch.start("RegistryDaoImpl Audit Record creation in connectRootToEntity() performance monitoring !");
         AuditRecord record = appContext.getBean(AuditRecord.class);
         record
@@ -244,7 +242,6 @@ public class RegistryDaoImpl implements RegistryDao {
 
         GraphTraversal<Vertex, Vertex> gts = entitySource.clone().V().hasLabel(rootLabel);
         String label = rootLabel;
-        StopWatch watch = new StopWatch();
         while (gts.hasNext()) {
             Vertex v = gts.next();
             GraphTraversal<Vertex, Vertex> hasLabel = dbTraversalSource.clone().V().hasLabel(rootLabel);
@@ -308,7 +305,6 @@ public class RegistryDaoImpl implements RegistryDao {
         Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
         List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(Direction.OUT));
         List<Edge> edgeVertexMatchList = new ArrayList<Edge>();
-        StopWatch watch = new StopWatch();
 
         while (edgeList.hasNext()) {
             Edge e = edgeList.next();
@@ -470,7 +466,6 @@ public class RegistryDaoImpl implements RegistryDao {
         AuditRecord record = appContext.getBean(AuditRecord.class);
         String tailOfdbVertex = v.label().substring(v.label().lastIndexOf("/") + 1).trim();
         String auditVertexlabel = registryContext + tailOfdbVertex;
-        StopWatch watch = new StopWatch();
         watch.start("RegistryDaoImpl Audit Record creation for deleteEdgeAndNode() performance monitoring !");
         record
                 .subject(auditVertexlabel)
@@ -521,7 +516,6 @@ public class RegistryDaoImpl implements RegistryDao {
     @Override
     public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel, String methodOrigin)
             throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
-        StopWatch watch = new StopWatch();
         watch.start("Update");
         Graph graphFromStore = databaseProvider.getGraphStore();
         GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
@@ -555,7 +549,6 @@ public class RegistryDaoImpl implements RegistryDao {
 
     @Override
     public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
-        StopWatch watch = new StopWatch();
         watch.start("getGraphStore() and traversal() in addEntity() Performance Monitoring !");
         Graph graphFromStore = databaseProvider.getGraphStore();
         GraphTraversalSource traversalSource = graphFromStore.traversal();
@@ -662,7 +655,6 @@ public class RegistryDaoImpl implements RegistryDao {
                     && configTraversal.next().property(Constants.PERSISTENT_GRAPH).value().equals(true)) {
 
                 AuditRecord record = appContext.getBean(AuditRecord.class);
-                StopWatch watch = new StopWatch();
                 watch.start("RegistryDaoImpl Audit creation record for setProperty() performance monitoring !");
                 record
                         .subject(v.label())
@@ -848,7 +840,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		logger.debug("Private property count : {}", listPropertyMap.size());
 		listPropertyMap.forEach((k,v) -> propertyMap.remove(k));
 		Map<String,Object> encDecMap = new HashMap<String,Object>();
-        StopWatch watch = new StopWatch();
 
 		if (methodOrigin.equalsIgnoreCase("create") || methodOrigin.equalsIgnoreCase("update")){
 			watch.start("Encryption Service Performance Monitoring !");
