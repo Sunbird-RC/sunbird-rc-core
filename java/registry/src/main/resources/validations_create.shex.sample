@@ -12,36 +12,36 @@ teacher:isADecimal xsd:decimal
 
 teacher:TeacherShape CLOSED {
 	a [teacher:Teacher] ;
-    teacher:serialNum @teacher:isAnInteger {0,1} ;
-    teacher:teacherCode @teacher:isAString OR opensaber:private {0,1} ;
-    teacher:nationalIdentifier @teacher:isAString {0,1} ;
-    teacher:teacherName @teacher:isAString {0,1};
-    teacher:gender [teacher:GenderTypeCode-MALE teacher:GenderTypeCode-FEMALE] {0,1};
-    teacher:birthDate @teacher:isADate OR opensaber:private {0,1};
-    teacher:socialCategory [teacher:SocialCategoryTypeCode-GENERAL teacher:SocialCategoryTypeCode-SC teacher:SocialCategoryTypeCode-ST teacher:SocialCategoryTypeCode-OBC teacher:SocialCategoryTypeCode-ORC teacher:SocialCategoryTypeCode-OTHERS] {0,1};
-    teacher:highestAcademicQualification [teacher:AcademicQualificationTypeCode-BELOWSECONDARY teacher:AcademicQualificationTypeCode-SECONDARY teacher:AcademicQualificationTypeCode-HIGHERSECONDARY teacher:AcademicQualificationTypeCode-GRADUATE teacher:AcademicQualificationTypeCode-POSTGRADUATE teacher:AcademicQualificationTypeCode-MPHIL teacher:AcademicQualificationTypeCode-POSTDOC teacher:AcademicQualificationTypeCode-PHD] {0,1};
+    teacher:serialNum @teacher:isAnInteger ;
+    teacher:teacherCode @teacher:isAString ;
+    teacher:nationalIdentifier @teacher:isAString ;
+    teacher:teacherName @teacher:isAString ;
+    teacher:gender [teacher:GenderTypeCode-MALE teacher:GenderTypeCode-FEMALE] ;
+    teacher:birthDate @teacher:isADate ;
+    teacher:socialCategory [teacher:SocialCategoryTypeCode-GENERAL teacher:SocialCategoryTypeCode-SC teacher:SocialCategoryTypeCode-ST teacher:SocialCategoryTypeCode-OBC teacher:SocialCategoryTypeCode-ORC teacher:SocialCategoryTypeCode-OTHERS] ;
+    teacher:highestAcademicQualification [teacher:AcademicQualificationTypeCode-BELOWSECONDARY teacher:AcademicQualificationTypeCode-SECONDARY teacher:AcademicQualificationTypeCode-HIGHERSECONDARY teacher:AcademicQualificationTypeCode-GRADUATE teacher:AcademicQualificationTypeCode-POSTGRADUATE teacher:AcademicQualificationTypeCode-MPHIL teacher:AcademicQualificationTypeCode-POSTDOC teacher:AcademicQualificationTypeCode-PHD] ;
 	teacher:highestTeacherQualification [teacher:TeacherQualificationTypeCode-DIPLOMAORBASIC teacher:TeacherQualificationTypeCode-BELED teacher:TeacherQualificationTypeCode-MED teacher:TeacherQualificationTypeCode-OTHERS teacher:TeacherQualificationTypeCode-NONE teacher:TeacherQualificationTypeCode-SPECIAL] {0,1};
-    teacher:yearOfJoiningService @teacher:isAYear {0,1};
-    teacher:teachingRole @teacher:TeacherRoleShape {0,1};
-    teacher:inServiceTeacherTrainingFromBRC @teacher:InServiceTeacherTrainingShape {0,1};
-    teacher:inServiceTeacherTrainingFromCRC @teacher:InServiceTeacherTrainingShape {0,1};
-    teacher:inServiceTeacherTrainingFromDIET @teacher:InServiceTeacherTrainingShape {0,1};
-    teacher:inServiceTeacherTrainingFromOthers @teacher:InServiceTeacherTrainingShape {0,1};
+    teacher:yearOfJoiningService @teacher:isAYear ;
+    teacher:teachingRole @teacher:TeacherRoleShape ;
+    teacher:inServiceTeacherTrainingFromBRC @teacher:InServiceTeacherTrainingShape ;
+    teacher:inServiceTeacherTrainingFromCRC @teacher:InServiceTeacherTrainingShape ;
+    teacher:inServiceTeacherTrainingFromDIET @teacher:InServiceTeacherTrainingShape ;
+    teacher:inServiceTeacherTrainingFromOthers @teacher:InServiceTeacherTrainingShape ;
     teacher:nonTeachingAssignmentsForAcademicCalendar @teacher:NonTeachingAssignmentsForAcademicCalendarShape *;
-    teacher:basicProficiencyLevel @teacher:BasicProficiencyLevelShape *;
-    teacher:disabilityType [teacher:DisabilityCode-NA teacher:DisabilityCode-LOCOMOTOR teacher:DisabilityCode-VISUAL teacher:DisabilityCode-OTHERDISABILITY] *;
-    teacher:trainedForChildrenSpecialNeeds [teacher:YesNoCode-YES teacher:YesNoCode-NO] {0,1};
-    teacher:trainedinUseOfComputer [teacher:YesNoCode-YES teacher:YesNoCode-NO] {0,1}
+    teacher:basicProficiencyLevel @teacher:BasicProficiencyLevelShape {3};
+    teacher:disabilityType [teacher:DisabilityCode-NA teacher:DisabilityCode-LOCOMOTOR teacher:DisabilityCode-VISUAL teacher:DisabilityCode-OTHERDISABILITY] ;
+    teacher:trainedForChildrenSpecialNeeds [teacher:YesNoCode-YES teacher:YesNoCode-NO] ;
+    teacher:trainedinUseOfComputer [teacher:YesNoCode-YES teacher:YesNoCode-NO]
 }
 
 teacher:TeacherRoleShape CLOSED {
 	a [teacher:TeachingRole] ;
-    teacher:teacherType [teacher:TeacherTypeCode-HEAD teacher:TeacherTypeCode-ACTINGHEAD teacher:TeacherTypeCode-TEACHER teacher:TeacherTypeCode-RTEINSTRUCTOR teacher:TeacherTypeCode-PRINCIPAL teacher:TeacherTypeCode-VICEPRINCIPAL teacher:TeacherTypeCode-LECTURER] {0,1} ;
-    teacher:appointmentType [teacher:TeacherAppointmentTypeCode-REGULAR teacher:TeacherAppointmentTypeCode-CONTRACT teacher:TeacherAppointmentTypeCode-PARTTIME] {0,1} ;
+    teacher:teacherType [teacher:TeacherTypeCode-HEAD teacher:TeacherTypeCode-ACTINGHEAD teacher:TeacherTypeCode-TEACHER teacher:TeacherTypeCode-RTEINSTRUCTOR teacher:TeacherTypeCode-PRINCIPAL teacher:TeacherTypeCode-VICEPRINCIPAL teacher:TeacherTypeCode-LECTURER] ;
+    teacher:appointmentType [teacher:TeacherAppointmentTypeCode-REGULAR teacher:TeacherAppointmentTypeCode-CONTRACT teacher:TeacherAppointmentTypeCode-PARTTIME] ;
     teacher:classesTaught [teacher:ClassTypeCode-PRIMARY teacher:ClassTypeCode-UPPERPRIMARY teacher:ClassTypeCode-PRIMARYANDUPPERPRIMARY teacher:ClassTypeCode-SECONDARY teacher:ClassTypeCode-HIGHERSECONDARY teacher:ClassTypeCode-UPPERPRIMARYANDSECONDARY teacher:ClassTypeCode-SECONDARYANDHIGHERSECONDARY] * ;
     teacher:appointedForSubjects [teacher:SubjectCode-ALL teacher:SubjectCode-LANGUAGE teacher:SubjectCode-ENGLISH teacher:SubjectCode-MATH teacher:SubjectCode-ENVSTUDIES teacher:SubjectCode-SPORTS teacher:SubjectCode-MUSIC teacher:SubjectCode-SCIENCE teacher:SubjectCode-SOCIALSTUDIES teacher:SubjectCode-ACCOUNTANCY teacher:SubjectCode-BIOLOGY teacher:SubjectCode-BUSINESSSTUDIES teacher:SubjectCode-CHEMISTRY teacher:SubjectCode-COMPSC teacher:SubjectCode-ECONOMICS teacher:SubjectCode-FINEARTS teacher:SubjectCode-ENGDRAWING teacher:SubjectCode-GEOGRAPHY teacher:SubjectCode-HISTORY teacher:SubjectCode-HOMESCIENCE teacher:SubjectCode-PHILOSOPHY teacher:SubjectCode-PHYSICS teacher:SubjectCode-POLITICALSCIENCE teacher:SubjectCode-FOREIGNLANG teacher:SubjectCode-BOTONY teacher:SubjectCode-ZOOLOGY teacher:SubjectCode-HINDI teacher:SubjectCode-MARATHI teacher:SubjectCode-SANSKRIT teacher:SubjectCode-SINDHI teacher:SubjectCode-URDU teacher:SubjectCode-ENLISH teacher:SubjectCode-REGIONALLANGUAGE teacher:SubjectCode-ARTEDUCATION teacher:SubjectCode-PHYSICALEDUCATION teacher:SubjectCode-WORKEDUCATION teacher:SubjectCode-OTHER] * ;
     teacher:mainSubjectsTaught [teacher:SubjectCode-ALL teacher:SubjectCode-LANGUAGE teacher:SubjectCode-ENGLISH teacher:SubjectCode-MATH teacher:SubjectCode-ENVSTUDIES teacher:SubjectCode-SPORTS teacher:SubjectCode-MUSIC teacher:SubjectCode-SCIENCE teacher:SubjectCode-SOCIALSTUDIES teacher:SubjectCode-ACCOUNTANCY teacher:SubjectCode-BIOLOGY teacher:SubjectCode-BUSINESSSTUDIES teacher:SubjectCode-CHEMISTRY teacher:SubjectCode-COMPSC teacher:SubjectCode-ECONOMICS teacher:SubjectCode-FINEARTS teacher:SubjectCode-ENGDRAWING teacher:SubjectCode-GEOGRAPHY teacher:SubjectCode-HISTORY teacher:SubjectCode-HOMESCIENCE teacher:SubjectCode-PHILOSOPHY teacher:SubjectCode-PHYSICS teacher:SubjectCode-POLITICALSCIENCE teacher:SubjectCode-FOREIGNLANG teacher:SubjectCode-BOTONY teacher:SubjectCode-ZOOLOGY teacher:SubjectCode-HINDI teacher:SubjectCode-MARATHI teacher:SubjectCode-SANSKRIT teacher:SubjectCode-SINDHI teacher:SubjectCode-URDU teacher:SubjectCode-ENLISH teacher:SubjectCode-REGIONALLANGUAGE teacher:SubjectCode-ARTEDUCATION teacher:SubjectCode-PHYSICALEDUCATION teacher:SubjectCode-WORKEDUCATION teacher:SubjectCode-OTHER] * ;
-    teacher:appointmentYear @teacher:isAYear {0,1}
+    teacher:appointmentYear @teacher:isAYear
 }
 
 teacher:BasicProficiencyLevelShape CLOSED {

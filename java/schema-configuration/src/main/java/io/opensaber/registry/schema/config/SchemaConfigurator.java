@@ -44,12 +44,18 @@ public class SchemaConfigurator {
 	
 	public void loadSchemaConfigModel(String schemaFile) throws IOException{
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream(schemaFile);
+		if(is == null){
+			throw new IOException(Constants.SCHEMA_CONFIGURATION_MISSING);
+		}
 		String contents = new String(ByteStreams.toByteArray(is));
 		schemaConfig = ShaclexValidator.parse(contents, FORMAT);
 	}
 
 	public void loadSchemaForValidation(String validationcreateFile, boolean isCreate) throws IOException {
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream(validationcreateFile);
+		if(is == null){
+			throw new IOException(Constants.VALIDATION_CONFIGURATION_MISSING);
+		}
 		String contents = new String(ByteStreams.toByteArray(is));
 		Either<String, Schema> result = Schemas.fromString(contents, SCHEMAFORMAT, PROCESSOR, none);
 		if (result.isLeft()) {

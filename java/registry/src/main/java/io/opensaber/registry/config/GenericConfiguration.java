@@ -28,6 +28,7 @@ import com.google.gson.Gson;
 
 import es.weso.schema.Schema;
 import io.opensaber.registry.authorization.AuthorizationFilter;
+import io.opensaber.registry.exception.CustomException;
 import io.opensaber.registry.exception.CustomExceptionHandler;
 import io.opensaber.registry.interceptor.AuthorizationInterceptor;
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
@@ -95,10 +96,16 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 	
 	@Bean
-	public SchemaConfigurator schemaConfiguration() throws IOException{
+	public SchemaConfigurator schemaConfiguration() throws IOException, CustomException{
 		String fieldConfigFileName = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
 		String validationConfigFileForCreate = environment.getProperty(Constants.SHEX_CREATE_PROPERTY_NAME);
 		String validationConfigFileForUpdate = environment.getProperty(Constants.SHEX_UPDATE_PROPERTY_NAME);
+		if(fieldConfigFileName == null){
+			throw new CustomException(Constants.SCHEMA_CONFIGURATION_MISSING);
+		}
+		if(validationConfigFileForCreate == null || validationConfigFileForUpdate == null){
+			throw new CustomException(Constants.VALIDATION_CONFIGURATION_MISSING);
+		}
 		return new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate);
 	}
 
