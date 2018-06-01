@@ -8,8 +8,10 @@ public class Constants {
 	public static final String REQUEST_ATTRIBUTE= "requestModel";
 	public static final String RDF_OBJECT = "rdf";
 	public static final String RDF_VALIDATION_OBJECT = "rdfValidationResult";
+	public static final String METHOD_ORIGIN = "methodOrigin";
 	public static final String TOKEN_OBJECT = "x-authenticated-user-token";
-	public static final String SHEX_PROPERTY_NAME = "validations.file";
+	public static final String SHEX_CREATE_PROPERTY_NAME = "validations.create.file";
+	public static final String SHEX_UPDATE_PROPERTY_NAME = "validations.update.file";
 	public static final String FIELD_CONFIG_SCEHEMA_FILE = "config.schema.file";
 	public static final String SUBJECT_LABEL_TYPE = "subject.label.type";
 	public static final String SHAPE_NAME = "validations.entity.shape.name";
@@ -28,6 +30,10 @@ public class Constants {
 	public static final String PROD_ENVIRONMENT = "prod";
 	public static final String INTEGRATION_TEST_BASE_URL = "http://localhost:8080/";
 	public static final String TARGET_NODE_IRI = "http://www.w3.org/ns/shacl#targetNode";
+	public static final String XSD_PREFIX = "xsd";
+	public static final String XSD_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
+	public static final String CONTEXT_KEYWORD = "@context";
+	public static final String TYPE_KEYWORD = "@type";
 	
 	public static final String DUPLICATE_RECORD_MESSAGE = "Cannot insert duplicate record";
 	public static final String FAILED_INSERTION_MESSAGE = "Failed to insert record";
@@ -39,6 +45,7 @@ public class Constants {
 	public static final String RDF_VALIDATION_MAPPING_ERROR = "Unable to map validations";
 	public static final String CUSTOM_EXCEPTION_ERROR = "Something went wrong!! Please try again later";
 	public static final String ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE = "Cannot add/update/view more than one entity";
+	public static final String AUDIT_IS_DISABLED = "Audit is disabled";
 
 	public static final String OPENSABER_REGISTRY_API_NAME = "opensaber-registry-api";
 	public static final String SUNBIRD_ENCRYPTION_SERVICE_NAME = "sunbird.encryption.service";
@@ -61,6 +68,14 @@ public class Constants {
 		public String getName() {
 			return name;
 		}
+	}
+	
+	public enum AuditProperties {
+	    createdOn, lastUpdatedOn, createdBy, lastUpdatedBy;
+	}
+	
+	public enum GraphParams {
+		properties, userId, operationType, label, requestId, nodeId, removedRelations, addedRelations, ets, createdOn, transactionData, CREATE, UPDATE, DELETE
 	}
 
 }

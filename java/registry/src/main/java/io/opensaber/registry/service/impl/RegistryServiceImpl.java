@@ -14,11 +14,7 @@ import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.ResIterator;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.JsonLDWriteContext;
@@ -28,14 +24,11 @@ import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.eclipse.rdf4j.model.Literal;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.middleware.util.Constants;
@@ -45,7 +38,6 @@ import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
 
-import static org.apache.tinkerpop.gremlin.structure.io.IoCore.graphson;
 
 @Component
 public class RegistryServiceImpl implements RegistryService {
@@ -60,32 +52,12 @@ public class RegistryServiceImpl implements RegistryService {
 	
 	@Autowired
 	EncryptionService encryptionService;
-	
-	/*@org.springframework.beans.factory.annotation.Value("${feature.toggling}")
-	private Boolean featureToggling;*/
 
 	@Override
 	public List getEntityList(){
 		return registryDao.getEntityList();
 	}
 
-	/*@Override
-	public String addEntity(Model rdfModel) throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException {
-		try {
-			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
-			// if it is a blank node
-			String label = getRootLabel(rdfModel);
-			Graph graph = generateGraphFromRDF(rdfModel);
-			return registryDao.addEntity(graph, label);
-
-		} catch (DuplicateRecordException | EntityCreationException | EncryptionException | AuditFailedException | MultipleEntityException ex) {
-			throw ex;
-		} catch (Exception ex) {
-			logger.error("Exception in creating entity: ", ex);
-			throw ex;
-		}
-	}*/
-	
 	@Override
 	public String addEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException,
 	EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException {
@@ -121,19 +93,6 @@ public class RegistryServiceImpl implements RegistryService {
 		Graph graph = registryDao.getEntityById(label);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
 		logger.debug("RegistryServiceImpl : rdf4j model :", model);
-
-		/*for (org.eclipse.rdf4j.model.Statement statement : model) {
-			logger.debug("STATEMENT " + statement);
-		logger.debug("Service layer rdf4j model :", model);
-		for (org.eclipse.rdf4j.model.Statement statement : model) {
-			logger.debug("STATEMENT  " + statement);
-			Value value = statement.getObject();
-			if (value instanceof Literal) {
-				Literal literal = (Literal) value;
-				logger.debug("RegistryServiceImpl : datatype: " + literal.getDatatype());			}
-			}
-		}*/
-		logger.debug("ENTITY in Service " + model);
 		return model;
 	}
 

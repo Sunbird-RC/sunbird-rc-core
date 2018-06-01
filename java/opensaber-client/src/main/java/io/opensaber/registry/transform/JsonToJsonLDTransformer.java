@@ -128,7 +128,6 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
                     throw new NodeMappingNotDefinedException(
                             String.format("Node type not defined for %s", dataNode.getKey()), ErrorCode.NODE_MAPPING_NOT_DEFINED);
                 }
-
                 Map<String, Object> mapping = mapper.readValue(nodeMappingDefinition.path(dataNode.getKey()).toString(), typeRef);
                 String dataNodeType = nodeMappingDefinition.path(dataNode.getKey()).path(MappingConstants.TYPE).asText();
                 constructJsonElement(dataNode, mapping, dataNodeType, resultNode);
@@ -196,7 +195,11 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
                                           boolean mappingIsAComplexObject) throws NodeMappingNotDefinedException {
 
         ObjectNode resultNode = JsonUtils.createObjectNode();
-        List<Map.Entry<String, JsonNode>> dataNodes = Lists.newArrayList(node.getValue().fields()).stream()
+        List<Map.Entry<String, JsonNode>> dataNodeList =
+                Lists.newArrayList(node.getValue().fields()).size() == 0 ?
+                        Lists.newArrayList(node) :
+                        Lists.newArrayList(node.getValue().fields());
+        List<Map.Entry<String, JsonNode>> dataNodes = dataNodeList.stream()
                 .filter(n -> !n.getKey().equalsIgnoreCase("id"))
                 .collect(Collectors.toList());
 
@@ -225,7 +228,7 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
                 resultNode.putArray(nodeElementKey).addAll(arrayNode);
             } else if (nodeType.startsWith(MappingConstants.XSD_ELEMENT)) {
                 leafNode.put(JsonldConstants.TYPE, nodeType);
-                leafNode.set(JsonldConstants.VALUE, childElementNode);
+                leafNode.put(JsonldConstants.VALUE, childElementNode.asText());
                 resultNode.set(nodeElementKey, leafNode.deepCopy());
             } else {
                 logger.error("Child element node with no node type defined: " + childElementNode);

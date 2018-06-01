@@ -42,6 +42,7 @@ public class AuthorizationFilter implements BaseMiddleware {
      * @param mapObject
      * @throws MiddlewareHaltException
      */
+
       public Map<String, Object> execute(Map<String, Object> mapObject) throws MiddlewareHaltException {
           Object tokenObject = mapObject.get(Constants.TOKEN_OBJECT);
 
@@ -113,7 +114,7 @@ public class AuthorizationFilter implements BaseMiddleware {
                 }
             }
         } catch (Exception e) {
-            logger.error("Claim extracted but verification failed !");
+            logger.error("Claim extracted but verification failed !", e);
         }
         return authInfo;
     }

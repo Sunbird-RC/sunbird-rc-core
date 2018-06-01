@@ -47,7 +47,10 @@ public class JsonToJsonLdTransformerTest {
         Iterator<Map.Entry<String, JsonNode>> fieldIterator = inputJson.path("teacher").fields();
         JsonNode nodeMappings = mappingJson.path("teacher").path("definition");
         ObjectNode result = JsonUtils.createObjectNode();
-        String expectedResult = "{\"teachingRole\":{\"teacherType\":{\"@id\":\"teacher:TeacherTypeCode-HEAD\"},\"appointmentType\":{\"@id\":\"teacher:TeacherAppointmentTypeCode-REGULAR\"},\"classesTaught\":[{\"@id\":\"teacher:ClassTypeCode-SECONDARYANDHIGHERSECONDARY\"}],\"appointedForSubjects\":[{\"@id\":\"teacher:SubjectCode-MATH\"}],\"mainSubjectsTaught\":[{\"@id\":\"teacher:SubjectCode-PHYSICS\"},{\"@id\":\"teacher:SubjectCode-MATH\"}],\"appointmentYear\":{\"@type\":\"xsd:gYear\",\"@value\":\"2015\"},\"@type\":\"TeachingRole\",\"@id\":\"test_teaching_role_id\"}}";
+        ObjectNode jsonldOutput = (ObjectNode) mapper.readTree(CharStreams.toString(new InputStreamReader(
+                JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_jsonld_output_data.json"))));
+        ObjectNode expectedResult = JsonNodeFactory.instance.objectNode();
+        expectedResult.set("teachingRole", jsonldOutput.path("teachingRole"));
 
         while(fieldIterator.hasNext()) {
             Map.Entry<String, JsonNode> node = fieldIterator.next();
@@ -56,7 +59,7 @@ public class JsonToJsonLdTransformerTest {
                 Map<String, Object> definitionMapping = (Map<String, Object>) mapping.get("definition");
                 transformer.processNode(node, definitionMapping, mapping.get("type").toString(),
                         transformer.isMappingAComplexObject(definitionMapping), result);
-                assertEquals(expectedResult.trim(), result.toString());
+                assertEquals(expectedResult, result);
             }
         }
 
@@ -67,7 +70,10 @@ public class JsonToJsonLdTransformerTest {
         Iterator<Map.Entry<String, JsonNode>> fieldIterator = inputJson.path("teacher").fields();
         JsonNode nodeMappings = mappingJson.path("teacher").path("definition");
         ObjectNode result = JsonUtils.createObjectNode();
-        String expectedResult = "{\"basicProficiencyLevel\":[{\"proficiencySubject\":{\"@id\":\"teacher:SubjectCode-MATH\"},\"proficiencyAcademicQualification\":{\"@id\":\"teacher:AcademicQualificationTypeCode-PHD\"},\"@type\":\"BasicProficiencyLevel\",\"@id\":\"test_id_1\"},{\"proficiencySubject\":{\"@id\":\"teacher:SubjectCode-ENGLISH\"},\"proficiencyAcademicQualification\":{\"@id\":\"teacher:AcademicQualificationTypeCode-HIGHERSECONDARY\"},\"@type\":\"BasicProficiencyLevel\",\"@id\":\"test_id_2\"},{\"proficiencySubject\":{\"@id\":\"teacher:SubjectCode-SOCIALSTUDIES\"},\"proficiencyAcademicQualification\":{\"@id\":\"teacher:AcademicQualificationTypeCode-SOCIALSTUDIES\"},\"@type\":\"BasicProficiencyLevel\",\"@id\":\"test_id_3\"}]}";
+        ObjectNode jsonldOutput = (ObjectNode) mapper.readTree(CharStreams.toString(new InputStreamReader(
+                JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_jsonld_output_data.json"))));
+        ObjectNode expectedResult = JsonNodeFactory.instance.objectNode();
+        expectedResult.set("basicProficiencyLevel", jsonldOutput.path("basicProficiencyLevel"));
 
         while(fieldIterator.hasNext()) {
             Map.Entry<String, JsonNode> node = fieldIterator.next();
@@ -75,7 +81,7 @@ public class JsonToJsonLdTransformerTest {
                 Map<String, Object> mapping = mapper.readValue(nodeMappings.path(node.getKey()).toString(), typeRef);
                 transformer.processCollectionNode(node, mapping, mapping.get("type").toString(),
                         transformer.isMappingAComplexObject(mapping), result);
-                assertEquals(expectedResult.trim(), result.toString());
+                assertEquals(expectedResult, result);
             }
         }
     }
@@ -92,7 +98,7 @@ public class JsonToJsonLdTransformerTest {
         arrayNode.add("teacher:SubjectCode-ENGLISH").add("teacher:SubjectCode-MATH");
         ObjectNode teachingRoleNode = JsonNodeFactory.instance.objectNode();
         teachingRoleNode.putArray("mainSubjectsTaught").addAll(arrayNode);
-        teachingRoleNode.put("id", "test_teaching_role_id");
+        teachingRoleNode.put("id", "http://localhost:8080/5ab00f91-3c9e-4657-a9dd-622a5f8fd723");
 
         ((ObjectNode) inputJson.path("teacher")).set("teachingRole", teachingRoleNode);
         ObjectNode result = transformer.constructJsonLd(inputJson, mappingJson);
@@ -100,7 +106,6 @@ public class JsonToJsonLdTransformerTest {
         ObjectNode expectedTeacherJsonldOutput = (ObjectNode) mapper.readTree(CharStreams.toString(new InputStreamReader(
                 JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_jsonld_output_data.json"))));
 
-        expectedTeacherJsonldOutput.remove("basicProficiencyLevel");
         ObjectNode teachingRoleJsonldNode = (ObjectNode) expectedTeacherJsonldOutput.path("teachingRole");
         teachingRoleJsonldNode.remove("teacherType");
         teachingRoleJsonldNode.remove("appointmentType");
@@ -114,22 +119,14 @@ public class JsonToJsonLdTransformerTest {
         mainSubjectsTaughtJsonld.add(JsonNodeFactory.instance.objectNode().put("@id", "teacher:teacher:SubjectCode-MATH"));
 
         teachingRoleJsonldNode.putArray("mainSubjectsTaught").addAll(mainSubjectsTaughtJsonld);
-
-        assertEquals(expectedTeacherJsonldOutput, result);
+        assertEquals(teachingRoleJsonldNode, result.path("teachingRole"));
     }
 
     @Test
     public void testConstructJsonld() throws NodeMappingNotDefinedException, IOException {
-        for (JsonNode node : inputJson) {
-            if (node instanceof ObjectNode) {
-                ObjectNode object = (ObjectNode) node;
-                object.remove("basicProficiencyLevel");
-            }
-        }
         ObjectNode result = transformer.constructJsonLd(inputJson, mappingJson);
         ObjectNode expectedTeacherJsonldOutput = (ObjectNode) mapper.readTree(CharStreams.toString(new InputStreamReader(
                 JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_jsonld_output_data.json"))));
-        expectedTeacherJsonldOutput.remove("basicProficiencyLevel");
 
         assertEquals(expectedTeacherJsonldOutput, result);
     }

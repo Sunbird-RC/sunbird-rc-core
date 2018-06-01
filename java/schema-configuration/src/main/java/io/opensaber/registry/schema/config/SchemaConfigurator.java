@@ -28,7 +28,8 @@ public class SchemaConfigurator {
 	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 	
 	private static final String FORMAT = "JSON-LD";
-	private Schema schema;
+	private Schema schemaForCreate;
+	private Schema schemaForUpdate;
 	private Model schemaConfig;
 	private Model validationConfig;
 	private static final String SCHEMAFORMAT = "SHEXC";
@@ -36,7 +37,7 @@ public class SchemaConfigurator {
 
 	private Option<String> none = Option.empty();
 
-	public SchemaConfigurator(String schemaFile, String validationFile) throws IOException{
+	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile) throws IOException{
 		StopWatch watch =new StopWatch();
 		watch.start("Schema Configurator loadSchemaConfigModel() Performance Monitoring !");
 		loadSchemaConfigModel(schemaFile);
@@ -44,7 +45,8 @@ public class SchemaConfigurator {
 		prefLogger.info(watch.prettyPrint());
 
 		watch.start("Schema Configurator loadSchemaForValidation() Performance Monitoring !");
-		loadSchemaForValidation(validationFile);
+		loadSchemaForValidation(validationcreateFile, true);
+		loadSchemaForValidation(validationUpdateFile, false);
 		watch.stop();
 		prefLogger.info(watch.prettyPrint());
 
@@ -60,18 +62,22 @@ public class SchemaConfigurator {
 		schemaConfig = ShaclexValidator.parse(contents, FORMAT);
 	}
 
-	public void loadSchemaForValidation(String validationFile) throws IOException {
-		InputStream is = this.getClass().getClassLoader().getResourceAsStream(validationFile);
+	public void loadSchemaForValidation(String validationcreateFile, boolean isCreate) throws IOException {
+		InputStream is = this.getClass().getClassLoader().getResourceAsStream(validationcreateFile);
 		String contents = new String(ByteStreams.toByteArray(is));
 		Either<String, Schema> result = Schemas.fromString(contents, SCHEMAFORMAT, PROCESSOR, none);
 		if (result.isLeft()) {
 			logger.info("Error from schema validation = " + result.left().get());
 		}
-		schema = result.right().get();
+		if(isCreate){
+			schemaForCreate = result.right().get();
+		}else{
+			schemaForUpdate = result.right().get();
+		}
 	}
-	
+
 	public void loadValidationConfigModel(){
-		validationConfig = ShaclexValidator.parse(schema.serialize(FORMAT).right().get(), FORMAT);
+		validationConfig = ShaclexValidator.parse(schemaForUpdate.serialize(FORMAT).right().get(), FORMAT);
 	}
 
 	public boolean isPrivate(String propertyName) {
@@ -115,7 +121,7 @@ public class SchemaConfigurator {
 				return true;
 			}
 		}
-		logger.info("Property not matching any condition:" + property);
+		logger.debug("Property not matching any condition:" + property);
 		return true;
 	}
 
@@ -142,9 +148,13 @@ public class SchemaConfigurator {
 	public Model getValidationConfig(){
 		return validationConfig;
 	}
-	
-	public Schema getSchema(){
-		return schema;
+
+	public Schema getSchemaForCreate() {
+		return schemaForCreate;
+	}
+
+	public Schema getSchemaForUpdate() {
+		return schemaForUpdate;
 	}
 
 }

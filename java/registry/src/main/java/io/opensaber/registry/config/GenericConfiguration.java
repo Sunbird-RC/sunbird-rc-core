@@ -1,6 +1,8 @@
 package io.opensaber.registry.config;
 
 import java.io.IOException;
+
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.Neo4jGraphProvider;
@@ -15,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -65,6 +66,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${authentication.enabled}")
 	private boolean authenticationEnabled;
 
+	@Value("${perf.monitoring.enabled}")
+	private boolean performance_monitoring;
+
 	@Bean
 	public ObjectMapper objectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -72,11 +76,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return objectMapper;
 	}
 
-
-	@ConditionalOnProperty(value="performance-monitoring.enabled")
-	@Bean
-	public OpenSaberStopWatch customStopWatch(){
-		return new OpenSaberStopWatch();
+    @Bean
+	public OpenSaberInstrumentation customStopWatch() {
+		return new OpenSaberInstrumentation(performance_monitoring);
 	}
 
 	@Bean
@@ -102,19 +104,22 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public SchemaConfigurator schemaConfiguration() throws IOException{
 		String fieldConfigFileName = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
-		String validationConfigFile = environment.getProperty(Constants.SHEX_PROPERTY_NAME);
-		return new SchemaConfigurator(fieldConfigFileName, validationConfigFile);
+		String validationConfigFileForCreate = environment.getProperty(Constants.SHEX_CREATE_PROPERTY_NAME);
+		String validationConfigFileForUpdate = environment.getProperty(Constants.SHEX_UPDATE_PROPERTY_NAME);
+		return new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate);
 	}
 
 	@Bean
 	public RDFValidator rdfValidator(){
-		Schema schema = null;
+		Schema schemaForCreate = null;
+		Schema schemaForUpdate = null;
 		try{
-			schema = schemaConfiguration().getSchema();
+			schemaForCreate = schemaConfiguration().getSchemaForCreate();
+			schemaForUpdate = schemaConfiguration().getSchemaForUpdate();
 		}catch(Exception e){
 			logger.error("Unable to retrieve schema for validations");
 		}
-		return new RDFValidator(schema);
+		return new RDFValidator(schemaForCreate, schemaForUpdate);
 	}
 
 	@Bean

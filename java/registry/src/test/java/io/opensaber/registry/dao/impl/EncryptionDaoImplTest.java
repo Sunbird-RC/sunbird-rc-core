@@ -264,7 +264,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		//when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
 
 		getVertexWithMultipleProperties(label, map);
-		String response = registryDao.addEntity(graph,label);
+		String response = registryDao.addEntity(graph,label, null, null);
 		registryDao.getEntityById(response);
 		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
 	}
@@ -289,7 +289,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		//when(encryptionMock.encrypt("1234")).thenReturn("mockEncryptedUdiseNumber");
 
 		getVertexWithMultipleProperties(label, map);
-		String response = registryDao.addEntity(graph, label);
+		String response = registryDao.addEntity(graph, label, null, null);
 		registryDao.getEntityById(response);
 
 		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
@@ -329,7 +329,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		when(encryptionMock.encrypt("II")).thenReturn("mockEncryptedClassesTaughtII");
 		when(encryptionMock.encrypt("III")).thenReturn("mockEncryptedClassesTaughtIII");
 
-		String response =registryDao.addEntity(graph, "_:"+rootLabel);
+		String response =registryDao.addEntity(graph, "_:"+rootLabel, null, null);
 		registryDao.getEntityById(response);
 
 		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
@@ -385,7 +385,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 	    when(encryptionMock.decrypt("mockEncryptedUdiseNumber")).thenReturn("1234");*/
 		
 	    getVertexWithMultipleProperties(label,map);		
-		String response = registryDao.addEntity(graph, label);
+		String response = registryDao.addEntity(graph, label, null, null);
 		registryDao.getEntityById(response);		
 		
 		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
@@ -433,7 +433,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 	    when(encryptionMock.decrypt(newMap)).thenReturn(map);
 	    
 	  
-	    String response =registryDao.addEntity(graph, "_:"+rootLabel);					
+	    String response =registryDao.addEntity(graph, "_:"+rootLabel, null, null);					
 	    registryDao.getEntityById(response);
 	    
 		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());	
@@ -447,7 +447,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		when(encryptionMock.encrypt(Mockito.anyString())).thenThrow(EncryptionException.class);
 
 		try {
-			registryDao.addEntity(graph, rootLabel);
+			registryDao.addEntity(graph, rootLabel, null, null);
 		} catch (EncryptionException e) {
 			assertThat(e.toString(), allOf(containsString("EncryptionException")));
 		}
@@ -460,7 +460,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		when(encryptionMock.decrypt(Mockito.anyString())).thenThrow(EncryptionException.class);
 
 		try {
-			String response = registryDao.addEntity(graph, String.format("_:%s", label));
+			String response = registryDao.addEntity(graph, String.format("_:%s", label), null, null);
 			registryDao.getEntityById(response);
 		} catch (EncryptionException e) {
 			assertThat(e.toString(), allOf(containsString("EncryptionException")));

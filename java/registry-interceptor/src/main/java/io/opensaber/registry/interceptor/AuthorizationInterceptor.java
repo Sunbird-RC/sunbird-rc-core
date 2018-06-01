@@ -41,15 +41,16 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 			authorizationFilter.execute(getRequestHeaderMap());
 			watch.stop();
 			prefLogger.info(watch.prettyPrint());
-			//logger.info(" Authentication successfull !", request.getAuthType()+"=="+request.getRequestURI()+"=="+request.getQueryString() );
+			logger.info(" Authentication successfull !");
+
 			return true;
 		}catch(MiddlewareHaltException e){
-			logger.info(" Authentication Failed !");
+			logger.error(" Authentication Failed !", e);
 			setResponse(response);
 			writeResponseObj(gson, e.getMessage());
 			response = getResponse();
 		}catch(Exception e){
-			logger.info(" Authentication Failed !");
+			logger.error(" Authentication Failed !", e);
 			setResponse(response);
 			writeResponseObj(gson, Constants.TOKEN_EXTRACTION_ERROR);
 			response = getResponse();

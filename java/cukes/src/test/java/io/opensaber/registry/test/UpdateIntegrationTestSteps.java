@@ -8,6 +8,9 @@ import com.google.gson.reflect.TypeToken;
 import cucumber.api.Scenario;
 import cucumber.api.java8.En;
 import io.opensaber.pojos.Response;
+import io.opensaber.pojos.ResponseParams;
+import io.opensaber.pojos.Response.Status;
+
 import org.apache.jena.rdf.model.StmtIterator;
 import org.json.JSONObject;
 
@@ -164,6 +167,21 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
                     assertEquals(true, stmt.getObject().toString().contains("14"));
                 }
             }
+		});
+        
+        Then("^check audit is disabled$", () -> {
+        	
+        	Status responseStatus = auditBeforeUpdate.getBody().getParams().getStatus();
+    		assertEquals(Response.Status.UNSUCCESSFUL, responseStatus);
+    		
+            ResponseParams responseParams = auditBeforeUpdate.getBody().getParams();
+            assertEquals(responseParams.getErrmsg(),"Audit is disabled");
+           
+            responseStatus = auditAfterUpdate.getBody().getParams().getStatus();
+    		assertEquals(Response.Status.UNSUCCESSFUL, responseStatus);
+    		
+            responseParams = auditAfterUpdate.getBody().getParams();
+            assertEquals(responseParams.getErrmsg(),"Audit is disabled");
 		});
 	}
 

@@ -22,22 +22,25 @@ public class RDFValidator implements BaseMiddleware{
 	private static final String RDF_VALIDATION_MAPPING_IS_INVALID = "RDF validation mapping is invalid!";
 	private static final String RDF_VALIDATION_MAPPING_MISSING = "RDF validation mapping is missing!";
     private static final String SCHEMA_IS_NULL = "Schema for validation is missing";
-    private static final String SCHEMAFORMAT = "SHEXC";
-    private static final String PROCESSOR 	= "shex";
+	private static final String INVALID_REQUEST_PATH = "Request URL is invalid";
+	private static final String ADD_REQUEST_PATH = "/add";
 
     private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 	private String schemaFileName;
 
 	StopWatch watch = new StopWatch();
 
-	private Schema schema;
+	private Schema schemaForCreate;
+	private Schema schemaForUpdate;
 	
-	public RDFValidator(Schema schema) {
-		this.schema = schema;
+	public RDFValidator(Schema schemaForCreate, Schema schemaForUpdate) {
+		this.schemaForCreate = schemaForCreate;
+		this.schemaForUpdate = schemaForUpdate;
 	}
 
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
 		Object RDF = mapData.get(Constants.RDF_OBJECT);
+		Object method = mapData.get(Constants.METHOD_ORIGIN);
 		Object validationRDF = mapData.get(Constants.RDF_VALIDATION_MAPPER_OBJECT);
 		if (RDF == null) {
 			throw new MiddlewareHaltException(RDF_DATA_IS_MISSING);
@@ -47,17 +50,25 @@ public class RDFValidator implements BaseMiddleware{
 			throw new MiddlewareHaltException(RDF_DATA_IS_INVALID);
 		} else if (!(validationRDF instanceof Model)) {
 			throw new MiddlewareHaltException(RDF_VALIDATION_MAPPING_IS_INVALID);
-		}else if (schema == null) {
+		}else if (method == null){
+			throw new MiddlewareHaltException(INVALID_REQUEST_PATH);
+		}else if (schemaForCreate == null || schemaForUpdate == null) {
 			throw new MiddlewareHaltException(SCHEMA_IS_NULL);
 		} else {
 			ShaclexValidator validator = new ShaclexValidator();
 			watch.start("RDF Validator: mergeModels() Performance Testing !");
 			mergeModels((Model) RDF, (Model) validationRDF);
+
 			watch.stop();
 			prefLogger.info(watch.prettyPrint());
 
 			watch.start("RDF Validator: validate() Performance Testing !");
-			ValidationResponse validationResponse = validator.validate((Model) validationRDF, schema);
+			ValidationResponse validationResponse = null;
+			if(ADD_REQUEST_PATH.equals((String)method)){
+				validationResponse = validator.validate((Model) validationRDF, schemaForCreate);
+			} else {
+				validationResponse = validator.validate((Model) validationRDF, schemaForUpdate);
+			}
 			watch.stop();
 			prefLogger.info(watch.prettyPrint());
 

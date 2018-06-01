@@ -19,9 +19,9 @@
         "SubjectCode-MATH"
       ],
       "teacherType":"TeacherTypeCode-HEAD",
-      "appointedForSubjects":"SubjectCode-MATH",
+      "appointedForSubjects":["SubjectCode-MATH"],
       "appointmentType":"TeacherAppointmentTypeCode-REGULAR",
-      "classesTaught":"ClassTypeCode-SECONDARYANDHIGHERSECONDARY",
+      "classesTaught":["ClassTypeCode-SECONDARYANDHIGHERSECONDARY"],
       "appointmentYear":"2015",
       "id":"http://localhost:8080/5ab00f91-3c9e-4657-a9dd-622a5f8fd723"
     },
