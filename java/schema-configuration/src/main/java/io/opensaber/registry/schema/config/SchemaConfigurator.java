@@ -35,34 +35,40 @@ public class SchemaConfigurator {
 
 	private Option<String> none = Option.empty();
 
-	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile) throws IOException{
+	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile) throws IOException {
 		loadSchemaConfigModel(schemaFile);
 		loadSchemaForValidation(validationcreateFile, true);
 		loadSchemaForValidation(validationUpdateFile, false);
 		loadValidationConfigModel();
 	}
-	
-	public void loadSchemaConfigModel(String schemaFile) throws IOException{
+
+	private void loadSchemaConfigModel(String schemaFile) throws IOException {
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream(schemaFile);
+		if (is == null) {
+			throw new IOException(Constants.SCHEMA_CONFIGURATION_MISSING);
+		}
 		String contents = new String(ByteStreams.toByteArray(is));
 		schemaConfig = ShaclexValidator.parse(contents, FORMAT);
 	}
 
-	public void loadSchemaForValidation(String validationcreateFile, boolean isCreate) throws IOException {
-		InputStream is = this.getClass().getClassLoader().getResourceAsStream(validationcreateFile);
+	private void loadSchemaForValidation(String validationFile, boolean isCreate) throws IOException {
+		InputStream is = this.getClass().getClassLoader().getResourceAsStream(validationFile);
+		if (is == null) {
+			throw new IOException(Constants.VALIDATION_CONFIGURATION_MISSING);
+		}
 		String contents = new String(ByteStreams.toByteArray(is));
 		Either<String, Schema> result = Schemas.fromString(contents, SCHEMAFORMAT, PROCESSOR, none);
 		if (result.isLeft()) {
 			logger.info("Error from schema validation = " + result.left().get());
 		}
-		if(isCreate){
+		if (isCreate) {
 			schemaForCreate = result.right().get();
-		}else{
+		} else {
 			schemaForUpdate = result.right().get();
 		}
 	}
 
-	public void loadValidationConfigModel(){
+	private void loadValidationConfigModel(){
 		validationConfig = ShaclexValidator.parse(schemaForUpdate.serialize(FORMAT).right().get(), FORMAT);
 	}
 
@@ -70,10 +76,7 @@ public class SchemaConfigurator {
 		Property property = ResourceFactory.createProperty(Constants.OPENSABER_CONTEXT_BASE + Constants.PRIVACY_PROPERTY);
 		RDFNode rdfNode = ResourceFactory.createResource(propertyName);
 		StmtIterator iter = schemaConfig.listStatements(null, property, rdfNode);
-		while (iter.hasNext()) {
-			return true;
-		}
-		return false;
+		return iter.hasNext();
 	}
 
 	public boolean isEncrypted(String tailPropertyKey) {
@@ -111,21 +114,20 @@ public class SchemaConfigurator {
 		return true;
 	}
 
-	private Long getValueConstraint(String constraint, Resource subject){
-    	Property predicate = ResourceFactory.createProperty(constraint);
+	private Long getValueConstraint(String constraint, Resource subject) {
+		Property predicate = ResourceFactory.createProperty(constraint);
 		NodeIterator nodeIter = validationConfig.listObjectsOfProperty(subject, predicate);
-		while(nodeIter.hasNext()){
+		while (nodeIter.hasNext()) {
 			RDFNode node = nodeIter.next();
-			if(node.isLiteral()){
+			if (node.isLiteral()) {
 				Literal literal = node.asLiteral();
-				Long value = literal.getLong();
-				return value;
-			} else if(node.isURIResource()){
+				return literal.getLong();
+			} else if (node.isURIResource()) {
 				return 2L;
 			}
 		}
 		return null;
-    }
+	}
 	
 	public Model getSchemaConfig() {
 		return schemaConfig;
