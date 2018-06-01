@@ -15,7 +15,9 @@ logging:
 level:
 PERFORMANCE_INSTRUMENTATION: TRACE
 
-performance-monitoring.enabled: true
+perf:
+  monitoring:
+    enabled: true
 
 registry:
   context:
@@ -102,7 +104,9 @@ logging:
 level:
 PERFORMANCE_INSTRUMENTATION: TRACE
 
-performance-monitoring.enabled: true
+perf:
+  monitoring:
+    enabled: true
 
 registry:
   context:
@@ -189,7 +193,9 @@ logging:
 level:
 PERFORMANCE_INSTRUMENTATION: TRACE
 
-performance-monitoring.enabled: true
+perf:
+  monitoring:
+    enabled: true
 
 registry:
   context:

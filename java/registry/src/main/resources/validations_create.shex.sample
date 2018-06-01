@@ -13,8 +13,8 @@ teacher:isADecimal xsd:decimal
 teacher:TeacherShape CLOSED {
 	a [teacher:Teacher] ;
     teacher:serialNum @teacher:isAnInteger ;
-    teacher:teacherCode @teacher:isAString OR opensaber:private ;
-    teacher:nationalIdentifier @teacher:isAString OR opensaber:private ;
+    teacher:teacherCode @teacher:isAString ;
+    teacher:nationalIdentifier @teacher:isAString ;
     teacher:teacherName @teacher:isAString ;
     teacher:gender [teacher:GenderTypeCode-MALE teacher:GenderTypeCode-FEMALE] ;
     teacher:birthDate @teacher:isADate ;
