@@ -13,6 +13,8 @@ public class OpenSaberInstrumentation {
         this.performanceMonitoingEnabled = performance_monitoring;
     }
 
+    public OpenSaberInstrumentation(){}
+
     public void start(String str) {
         if (performanceMonitoingEnabled) {
             perfLogger.info(str);

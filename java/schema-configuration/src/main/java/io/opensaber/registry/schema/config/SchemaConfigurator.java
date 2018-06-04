@@ -2,6 +2,8 @@ package io.opensaber.registry.schema.config;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -18,15 +20,13 @@ import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
-import org.springframework.util.StopWatch;
 import scala.Option;
 import scala.util.Either;
 
 public class SchemaConfigurator {
 	
 	private static Logger logger = LoggerFactory.getLogger(SchemaConfigurator.class);
-	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
-	
+
 	private static final String FORMAT = "JSON-LD";
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;
@@ -38,22 +38,19 @@ public class SchemaConfigurator {
 	private Option<String> none = Option.empty();
 
 	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile) throws IOException{
-		StopWatch watch =new StopWatch();
+		OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
 		watch.start("Schema Configurator loadSchemaConfigModel() Performance Monitoring !");
 		loadSchemaConfigModel(schemaFile);
 		watch.stop();
-		prefLogger.info(watch.prettyPrint());
 
 		watch.start("Schema Configurator loadSchemaForValidation() Performance Monitoring !");
 		loadSchemaForValidation(validationcreateFile, true);
 		loadSchemaForValidation(validationUpdateFile, false);
 		watch.stop();
-		prefLogger.info(watch.prettyPrint());
 
 		watch.start("Schema Configurator loadValidationConfigModel() Performance Monitoring !");
 		loadValidationConfigModel();
 		watch.stop();
-		prefLogger.info(watch.prettyPrint());
 	}
 
 	private void loadSchemaConfigModel(String schemaFile) throws IOException {

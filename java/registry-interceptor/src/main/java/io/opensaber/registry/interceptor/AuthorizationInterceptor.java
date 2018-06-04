@@ -3,11 +3,11 @@ package io.opensaber.registry.interceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StopWatch;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 import com.google.gson.Gson;
@@ -20,7 +20,6 @@ import io.opensaber.registry.middleware.util.Constants;
 public class AuthorizationInterceptor extends BaseRequestHandler implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(AuthorizationInterceptor.class);
-	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 	private AuthorizationFilter authorizationFilter;
 	
 	private Gson gson;
@@ -30,17 +29,16 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 		this.authorizationFilter = authorizationFilter;
 		this.gson = gson;
 	}
+	OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		try{
 			setRequest(request);
-			StopWatch watch = new StopWatch();
 			watch.start("AuthorizationInterceptor performance monitoring !");
 			authorizationFilter.execute(getRequestHeaderMap());
 			watch.stop();
-			prefLogger.info(watch.prettyPrint());
 			logger.info(" Authentication successfull !");
 
 			return true;

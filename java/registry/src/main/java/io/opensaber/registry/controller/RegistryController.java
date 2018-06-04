@@ -35,9 +35,6 @@ public class RegistryController {
 	@Autowired
 	private RegistryService registryService;
 
-	@Value("${perf.monitoring.enabled}")
-	private boolean perfMonitoringEnabled;
-
 	@Value("${registry.context.base}")
 	private String registryContext;
 

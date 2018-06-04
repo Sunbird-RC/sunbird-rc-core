@@ -5,11 +5,11 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StopWatch;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -21,7 +21,7 @@ import io.opensaber.registry.middleware.util.Constants;
 public class JSONLDConversionInterceptor extends BaseResponseHandler implements HandlerInterceptor{
 	
 	private static Logger logger = LoggerFactory.getLogger(JSONLDConversionInterceptor.class);
-	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
+	OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
 	
 	private JSONLDConverter jsonldConverter;
 	
@@ -41,11 +41,9 @@ public class JSONLDConversionInterceptor extends BaseResponseHandler implements 
 	  Object handler, ModelAndView modelAndView) throws Exception {
 		logger.info("RESPONSE COMMITTED : "+response.isCommitted());
 		setResponse(response);
-		StopWatch watch =new StopWatch();
 		watch.start("JSONLDConversionInterceptor performance monitoring !");
 		Map<String,Object> responseMap = jsonldConverter.execute(getResponseBodyMap());
 		watch.stop();
-		prefLogger.info(watch.prettyPrint());
 		if(responseMap.get(Constants.RESPONSE_ATTRIBUTE)!=null){
 			setFormattedResponse(responseMap.get(Constants.RESPONSE_ATTRIBUTE).toString());
 			writeResponseBody(getFormattedResponse());

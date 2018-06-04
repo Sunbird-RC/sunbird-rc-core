@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.keycloak.common.VerificationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +19,10 @@ import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.codec.binary.Base64;
-import org.springframework.util.StopWatch;
 
 public class AuthorizationFilter implements BaseMiddleware {
 
     private static Logger logger = LoggerFactory.getLogger(AuthorizationFilter.class);
-    private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
-
     private static final String TOKEN_IS_MISSING = "Auth token is missing";
     private static final String TOKEN_IS_INVALID = "Auth token is invalid";
     private static final String VERIFICATION_EXCEPTION = "Auth token and/or Environment variable is invalid";
@@ -36,6 +34,8 @@ public class AuthorizationFilter implements BaseMiddleware {
     public AuthorizationFilter(KeyCloakServiceImpl keyCloakServiceImpl) {
         this.keyCloakServiceImpl = keyCloakServiceImpl;
     }
+
+    OpenSaberInstrumentation watch= new OpenSaberInstrumentation();
 
     /**
      * This method validates JWT access token against Sunbird Keycloak server and sets the valid access token to a map object
@@ -51,11 +51,10 @@ public class AuthorizationFilter implements BaseMiddleware {
           }
           String token = tokenObject.toString();
           try {
-              StopWatch watch = new StopWatch();
+
               watch.start("KeyCloak Authentication Performance Monitoring !");
               if (!keyCloakServiceImpl.verifyToken(token).trim().isEmpty()) {
                   watch.stop();
-                  prefLogger.info(watch.prettyPrint());
                   if (mapObject.containsKey("userName")) {
                       logger.info("Access token for user {} verified successfully with KeyCloak server !", mapObject.get("userName"));
                   } else {

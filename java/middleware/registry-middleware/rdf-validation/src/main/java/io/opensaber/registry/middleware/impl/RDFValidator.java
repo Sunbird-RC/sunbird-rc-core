@@ -3,17 +3,14 @@ package io.opensaber.registry.middleware.impl;
 
 import java.io.IOException;
 import java.util.Map;
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.apache.jena.rdf.model.Model;
 import es.weso.schema.Schema;
-
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 import io.opensaber.pojos.ValidationResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.StopWatch;
 
 public class RDFValidator implements BaseMiddleware{
 
@@ -24,11 +21,9 @@ public class RDFValidator implements BaseMiddleware{
     private static final String SCHEMA_IS_NULL = "Schema for validation is missing";
 	private static final String INVALID_REQUEST_PATH = "Request URL is invalid";
 	private static final String ADD_REQUEST_PATH = "/add";
-
-    private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 	private String schemaFileName;
 
-	StopWatch watch = new StopWatch();
+	OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
 
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;
@@ -60,7 +55,6 @@ public class RDFValidator implements BaseMiddleware{
 			mergeModels((Model) RDF, (Model) validationRDF);
 
 			watch.stop();
-			prefLogger.info(watch.prettyPrint());
 
 			watch.start("RDF Validator: validate() Performance Testing !");
 			ValidationResponse validationResponse = null;
@@ -70,8 +64,6 @@ public class RDFValidator implements BaseMiddleware{
 				validationResponse = validator.validate((Model) validationRDF, schemaForUpdate);
 			}
 			watch.stop();
-			prefLogger.info(watch.prettyPrint());
-
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
 			return mapData;
 		}
