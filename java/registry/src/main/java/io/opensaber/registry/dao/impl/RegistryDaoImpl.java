@@ -881,16 +881,19 @@ public class RegistryDaoImpl implements RegistryDao {
 			e.printStackTrace();
 		}
 	}*/
-	private void setAuditInfo(Vertex v, boolean isNew){
-		if(authenticationEnabled){
+
+
+	private void setAuditInfo(Vertex v, boolean isNew) {
+		if (authenticationEnabled) {
 			String username = ((AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getName();
-			String timestamp = sdf.format(new Date());
-			if(isNew){
-				v.property(registryContext+Constants.AuditProperties.createdBy.name(),username);
-				v.property(registryContext+Constants.AuditProperties.createdOn.name(),timestamp);
+			// String timestamp = sdf.format(new Date());
+			long timestamp = new Date().getTime();
+			if (isNew) {
+				v.property(registryContext + Constants.AuditProperties.createdBy.name(), username);
+				v.property(registryContext + Constants.AuditProperties.createdOn.name(), timestamp);
 			}
-			v.property(registryContext+Constants.AuditProperties.lastUpdatedBy.name(),username);
-			v.property(registryContext+Constants.AuditProperties.lastUpdatedOn.name(),timestamp);
+			v.property(registryContext + Constants.AuditProperties.lastUpdatedBy.name(), username);
+			v.property(registryContext + Constants.AuditProperties.lastUpdatedOn.name(), timestamp);
 		}
 	}
 
