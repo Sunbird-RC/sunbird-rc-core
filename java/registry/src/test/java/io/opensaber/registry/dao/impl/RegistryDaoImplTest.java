@@ -4,12 +4,9 @@ import io.opensaber.registry.authorization.AuthorizationToken;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
-import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.model.AuditRecordReader;
-import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
-import io.opensaber.registry.util.GraphDBFactory;
 
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdf.model.Property;
@@ -22,9 +19,6 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,7 +37,6 @@ import org.eclipse.rdf4j.model.vocabulary.RDF;
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.EntityCreationException;
@@ -51,21 +44,15 @@ import io.opensaber.registry.exception.MultipleEntityException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.impl.EncryptionServiceImpl;
 import io.opensaber.utils.converters.RDF2Graph;
 
-import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.*;
 
@@ -94,19 +81,12 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Autowired
 	AuditRecordReader auditRecordReader;
 	
-	/*@Mock
-	private EncryptionService encryptionMock;
-	
-	@Autowired
-	@InjectMocks
-	private RegistryDaoImpl registryDaoImpl;
-*/
-	private static String identifier;
+	@Value("${registry.context.base}")
+	private String registryContext;
 
-	private static final String VALID_JSONLD = "school.jsonld";
+	
     private static final String RICH_LITERAL_TTL = "rich-literal.jsonld";
 	private static final String CONTEXT_CONSTANT = "sample:";
-	private static final String CONFIG_SCHEMA_FILE = "opensaber-schema-configuration-school-test.jsonld";
 	
 	@Rule
 	public TestRule watcher = new TestWatcher() {
@@ -145,7 +125,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Test
 	public void test_adding_a_single_node() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, LabelCannotBeNullException, AuditFailedException {
 		String label = generateRandomId();
-		identifier = label;
 		getVertexForSubject(label, "http://example.com/voc/teacher/1.0.0/schoolName", "DAV Public School");
 		String response = registryDao.addEntity(graph, label,null, null);
 		Graph entity = registryDao.getEntityById(response);
@@ -174,7 +153,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 				}
 				adjustedCount = pair.getValue().intValue() + updatedPropertyCount;
 				count += adjustedCount;
-				//	auditRecordReader.setDatabaseProvider(databaseProvider);
 				assertEquals(adjustedCount, auditRecordReader.fetchAuditRecords(String.valueOf(pair.getKey()), null).size());
 				it.remove();
 			}
@@ -1119,4 +1097,31 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		assertTrue(updatedGraphResult.traversal().E().hasLabel("http://example.com/voc/teacher/1.0.0/area").hasNext());
 		assertEquals(updatedGraphResult.traversal().E().hasLabel("http://example.com/voc/teacher/1.0.0/area").next().inVertex().label(),"http://example.com/voc/teacher/1.0.0/AreaTypeCode-RURAL");
 	}
+	
+	@Test
+	public void test_setAuthInfo_for_create(){
+		Graph graph = TinkerGraph.open();
+		Vertex v = graph.addVertex("1234");
+		registryDao.setAuditInfo(v, true);
+		assertTrue(v.property(registryContext +"createdBy").isPresent());
+		assertTrue(v.property(registryContext +"lastUpdatedBy").isPresent());
+		assertEquals(v.property(registryContext +"createdOn").value(), 
+				v.property(registryContext +"lastUpdatedOn").value());
+	}
+	
+	@Test
+	public void test_setAuthInfo_for_update(){
+		Graph graph = TinkerGraph.open();
+		Vertex v = graph.addVertex("1234");
+		registryDao.setAuditInfo(v, true);
+		assertTrue(v.property(registryContext +"createdBy").isPresent());
+		assertTrue(v.property(registryContext +"lastUpdatedBy").isPresent());
+		assertEquals(v.property(registryContext +"createdOn").value(), 
+				v.property(registryContext +"lastUpdatedOn").value());
+		registryDao.setAuditInfo(v, false);
+		assertTrue(v.property(registryContext +"lastUpdatedBy").isPresent());
+		assertNotEquals(v.property(registryContext +"createdOn").value(), 
+				v.property(registryContext +"lastUpdatedOn").value());
+	}
+	
 }

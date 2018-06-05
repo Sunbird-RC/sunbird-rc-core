@@ -74,33 +74,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		return null;
 	}
 
-	/*@Override
-	public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
-		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
-		Graph graphFromStore = databaseProvider.getGraphStore();
-		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
-		if (dbGraphTraversalSource.clone().V().hasLabel(label).hasNext()) {
-			//closeGraph(graphFromStore);
-			throw new DuplicateRecordException(Constants.DUPLICATE_RECORD_MESSAGE);
-		}
-		String rootNodeLabel;
-		TinkerGraph graph = (TinkerGraph) entity;
-		GraphTraversalSource traversal = graph.traversal();
-		if (graphFromStore.features().graph().supportsTransactions()) {
-			org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
-			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-			//rootNodeLabel = createOrUpdateEntity(dbGraphTraversalSource, graph, label, "create");
-			rootNodeLabel = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
-			tx.commit();
-		}else{
-			rootNodeLabel = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
-		} 
-		logger.info("Successfully created entity with label " + rootNodeLabel);
-		// closeGraph(graphFromStore);
-		return rootNodeLabel;
-	}*/
-
-
 	@Override
 	public String addEntity(Graph entity, String label, String rootNodeLabel, String property) throws DuplicateRecordException, RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException{
 		logger.debug("Database Provider features: \n" + databaseProvider.getGraphStore().features());
@@ -136,16 +109,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		return label;
 	}
 
-	/*
-	private void closeGraph(Graph graph) {
-		try {
-			graph.close();
-		} catch (Exception ex) {
-			logger.error("Exception when closing the database graph", ex);
-		}
-	}
-	*/
-
 	private void connectNodes(String rootLabel, String label, String property) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
 		GraphTraversalSource traversalSource = graphFromStore.traversal();
@@ -163,6 +126,18 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	}
 
+	/**
+	 * This method connects 2 nodes specified by the node labels,
+	 * with an edge defined by the property label
+	 * @param dbTraversalSource
+	 * @param rootLabel
+	 * @param label
+	 * @param property
+	 * @throws RecordNotFoundException
+	 * @throws NoSuchElementException
+	 * @throws EncryptionException
+	 * @throws AuditFailedException
+	 */
 	private void connectRootToEntity(GraphTraversalSource dbTraversalSource, String rootLabel, String label, String property) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
 		GraphTraversal<Vertex, Vertex> rootGts = dbTraversalSource.clone().V().hasLabel(rootLabel);
 		GraphTraversal<Vertex, Vertex> entityGts = dbTraversalSource.clone().V().hasLabel(label);
@@ -170,45 +145,16 @@ public class RegistryDaoImpl implements RegistryDao {
 		Vertex entityVertex = entityGts.next();
 		rootVertex.addEdge(property, entityVertex);
 		if(auditEnabled){
-		AuditRecord record = appContext.getBean(AuditRecord.class);
-		record
-		.subject(rootVertex.label())
-		.predicate(property)
-		.oldObject(null)
-		.newObject(entityVertex.label())
-		.record(databaseProvider);
+			AuditRecord record = appContext.getBean(AuditRecord.class);
+			record
+			.subject(rootVertex.label())
+			.predicate(property)
+			.oldObject(null)
+			.newObject(entityVertex.label())
+			.record(databaseProvider);
 		}
 	}
 
-	/**
-	 * This method is commonly used for both create and update entity
-	 * @param entity
-	 * @param rootLabel
-	 * @throws EncryptionException 
-	 * @throws NoSuchElementException 
-	 */
-
-	/*private String createOrUpdateEntity(GraphTraversalSource dbGraphTraversalSource, Graph entity, String rootLabel, String methodOrigin) throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
-
-		TinkerGraph graph = (TinkerGraph) entity;
-		GraphTraversalSource traversal = graph.traversal();
-
-		// Root node label will be auto-generate if a new entity is created
-		String rootNodeLabel;
-
-		if (graphFromStore.features().graph().supportsTransactions()) {
-			org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
-			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-			rootNodeLabel = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel, methodOrigin);
-			tx.commit();
-			// tx.close();
-		} else {
-			rootNodeLabel = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel, methodOrigin);
-		}
-
-		return addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootLabel, methodOrigin);
-
-	}*/
 
 	/**
 	 * This method creates the root node of the entity if it already isn't present in the graph store
@@ -350,29 +296,6 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	}
 
-	/*private void deleteEdgeAndNode(Vertex dbVertex, Edge e, Optional<Edge> edgeAlreadyExists,List<Edge> edgeVertexMatchList, String methodOrigin)
-	 throws AuditFailedException, RecordNotFoundException{
-
-		Graph graphFromStore = databaseProvider.getGraphStore();
-    	GraphTraversalSource traversalSource = graphFromStore.traversal();
-    	GraphTraversal<Vertex, Vertex> dbHasLabel = traversalSource.clone().V().hasLabel(dbVertex.label());
-    	if (!dbHasLabel.hasNext()) {
-    		throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
-    	}
-    	boolean isSingleValued = schemaConfigurator.isSingleValued(e.label());
-    	if(dbHasLabel.hasNext()){
-    		Vertex dbSourceVertex = dbHasLabel.next();
-    		if (graphFromStore.features().graph().supportsTransactions()) {
-    			org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
-    			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-    			deleteEdgeAndNode(isSingleValued, dbSourceVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
-    			tx.commit();
-    		}else{
-    			deleteEdgeAndNode(isSingleValued, dbSourceVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
-    		}
-    	}
-	}*/
-
 	/**
 	 * This method checks if deletion of edge and node is required based on criteria and invokes deleteEdgeAndNode method
 	 * @param dbSourceVertex
@@ -424,15 +347,15 @@ public class RegistryDaoImpl implements RegistryDao {
 			dbEdgeToBeRemoved.remove();
 		}
 		if(auditEnabled){
-		AuditRecord record = appContext.getBean(AuditRecord.class);
-		String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
-		String auditVertexlabel= registryContext+tailOfdbVertex;
-		record
-		.subject(auditVertexlabel)
-		.predicate(edgeLabel)
-		.oldObject(vertexLabel)
-		.newObject(null)
-		.record(databaseProvider);
+			AuditRecord record = appContext.getBean(AuditRecord.class);
+			String tailOfdbVertex=v.label().substring(v.label().lastIndexOf("/") + 1).trim();
+			String auditVertexlabel= registryContext+tailOfdbVertex;
+			record
+			.subject(auditVertexlabel)
+			.predicate(edgeLabel)
+			.oldObject(vertexLabel)
+			.newObject(null)
+			.record(databaseProvider);
 		}
 
 	}
@@ -451,13 +374,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		return label;
 	}
 
-	/*private boolean isBlankNode(String label){
-		if(label.startsWith("_:")) {
-			return true;
-		}
-		return false;
-	}
-*/
 	private boolean isIRI(String label){
 		UrlValidator urlValidator = new UrlValidator(UrlValidator.ALLOW_LOCAL_URLS);
 		if(urlValidator.isValid(label)) {
@@ -480,20 +396,16 @@ public class RegistryDaoImpl implements RegistryDao {
 		// Check if the root node being updated exists in the database
 		GraphTraversal<Vertex, Vertex> hasRootLabel = dbGraphTraversalSource.clone().V().hasLabel(rootNodeLabel);
 		if (!hasRootLabel.hasNext()) {
-			// closeGraph(graphFromStore);
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		} else {
 			if (graphFromStore.features().graph().supportsTransactions()) {
 				org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
 				tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-				//createOrUpdateEntity(graphForUpdate, rootNodeLabel, methodOrigin);
 				addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootNodeLabel, methodOrigin);
 				tx.commit();
 			}else{
 				addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, rootNodeLabel, methodOrigin);
-				//createOrUpdateEntity(graphForUpdate, rootNodeLabel, methodOrigin);
 			}
-			//closeGraph(graphFromStore);
 		}
 		return false;
 	}
@@ -507,7 +419,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder = ImmutableTable.<Vertex,Vertex,Map<String,Object>> builder();
 		Graph parsedGraph = TinkerGraph.open();
 		if (!hasLabel.hasNext()) {
-            // closeGraph(graphFromStore);
             logger.info("Record not found !");
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		} else {					
@@ -521,7 +432,6 @@ public class RegistryDaoImpl implements RegistryDao {
 				updateEncryptedDecryptedProperties(encDecPropertyTable, "read");
 			}
 			logger.info("Time taken to update decrypted properties:"+(System.currentTimeMillis() - timestamp));
-			// closeGraph(graphFromStore);
 
 		}
 		return parsedGraph;
@@ -544,19 +454,12 @@ public class RegistryDaoImpl implements RegistryDao {
 			}
 			if ((methodOrigin.equalsIgnoreCase("create") || methodOrigin.equalsIgnoreCase("update")) && schemaConfigurator.isPrivate(property.key()) && !existingEncyptedPropertyKey) {
 				propertyMap.put(property.key(), property.value());
-				/*propertyValue = encryptionService.encrypt(property.value());
-				if (!existingEncyptedPropertyKey) {
-					String encryptedKey = "encrypted" + tailOfPropertyKey;
-					setProperty(newSubject, property.key().replace(tailOfPropertyKey, encryptedKey), propertyValue, methodOrigin);
-				}*/
 			} else if (methodOrigin.equalsIgnoreCase("read") && schemaConfigurator.isEncrypted(tailOfPropertyKey)) {
 				propertyMap.put(property.key(), property.value());
-				/*propertyValue = encryptionService.decrypt(property.value());*/
 				String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
 				setProperty(newSubject, decryptedKey, EMPTY_STRING, methodOrigin);
 			} else if (isaMetaProperty(property.key())) {
 				buildPropertyMetaMap(propertyMetaPropertyMap, property);
-				//setMetaProperty(subject, newSubject, property, methodOrigin);
 			} else {
 				if (!(methodOrigin.equalsIgnoreCase("read")
 						&& property.key().contains("@audit"))) {
@@ -874,26 +777,16 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 
-	/*private void dump_graph(Graph parsedGraph, String filename) {
-		try {
-			parsedGraph.io(IoCore.graphson()).writeGraph(filename);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}*/
-
-
-	private void setAuditInfo(Vertex v, boolean isNew) {
-		if (authenticationEnabled) {
-			String username = ((AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getName();
-			// String timestamp = sdf.format(new Date());
+	public void setAuditInfo(Vertex v, boolean isNew){
+		if(authenticationEnabled){
+			String userId = ((AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getSub();
 			long timestamp = new Date().getTime();
-			if (isNew) {
-				v.property(registryContext + Constants.AuditProperties.createdBy.name(), username);
-				v.property(registryContext + Constants.AuditProperties.createdOn.name(), timestamp);
+			if(isNew){
+				v.property(registryContext+Constants.AuditProperties.createdBy.name(),userId);
+				v.property(registryContext+Constants.AuditProperties.createdOn.name(),timestamp);
 			}
-			v.property(registryContext + Constants.AuditProperties.lastUpdatedBy.name(), username);
-			v.property(registryContext + Constants.AuditProperties.lastUpdatedOn.name(), timestamp);
+			v.property(registryContext+Constants.AuditProperties.lastUpdatedBy.name(),userId);
+			v.property(registryContext+Constants.AuditProperties.lastUpdatedOn.name(),timestamp);
 		}
 	}
 
