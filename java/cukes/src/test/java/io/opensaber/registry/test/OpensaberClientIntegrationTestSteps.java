@@ -26,9 +26,6 @@ import static org.junit.Assert.assertEquals;
 
 public class OpensaberClientIntegrationTestSteps extends RegistryTestBase implements En {
 
-    // @Rule
-    // private ExpectedException expectedEx = ExpectedException.none();
-
     private OpensaberClient client;
 
     private JsonNode jsonInput;
@@ -43,7 +40,7 @@ public class OpensaberClientIntegrationTestSteps extends RegistryTestBase implem
     public OpensaberClientIntegrationTestSteps() throws IOException {
         headers.put("Content-Type", MediaType.APPLICATION_JSON_VALUE);
         headers.put("x-authenticated-user-token", accessToken);
-;        initialize();
+        initialize();
         initializeCommonSteps();
     }
 

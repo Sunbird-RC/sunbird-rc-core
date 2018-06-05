@@ -24,8 +24,7 @@ public class AuthorizationFilter implements BaseMiddleware {
 
     private static Logger logger = LoggerFactory.getLogger(AuthorizationFilter.class);
     private static final String TOKEN_IS_MISSING = "Auth token is missing";
-    private static final String TOKEN_IS_INVALID = "Auth token is invalid";
-    private static final String VERIFICATION_EXCEPTION = "Auth token and/or Environment variable is invalid";
+    private static final String VERIFICATION_EXCEPTION = "Auth token is invalid";
 
     private KeyCloakServiceImpl keyCloakServiceImpl;
 
@@ -62,7 +61,7 @@ public class AuthorizationFilter implements BaseMiddleware {
                   }
                   AuthInfo authInfo = extractTokenIntoAuthInfo(token);
                   if (authInfo.getSub() == null || authInfo.getAud() == null || authInfo.getName() == null) {
-                      throw new MiddlewareHaltException(TOKEN_IS_INVALID);
+                      throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
                   }
                   List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
 
@@ -70,14 +69,11 @@ public class AuthorizationFilter implements BaseMiddleware {
                   AuthorizationToken authorizationToken = new AuthorizationToken(authInfo, authorityList);
                   SecurityContextHolder.getContext().setAuthentication(authorizationToken);
               } else {
-                  throw new MiddlewareHaltException(TOKEN_IS_INVALID);
+                  throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
               }
-          } catch (VerificationException e) {
-              logger.error("AuthorizationFilter: Invalid Auth token or Environment variable!");
-              throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
           } catch (Exception e) {
               logger.error("AuthorizationFilter: MiddlewareHaltException !");
-              throw new MiddlewareHaltException(TOKEN_IS_INVALID);
+              throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
           }
           return mapObject;
           }

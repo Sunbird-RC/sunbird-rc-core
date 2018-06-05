@@ -54,7 +54,7 @@ public class ProcessTransactionData {
 		//User id and request id needs to be set here
 		//String userId = "";
 		String requestId = "";
-		List<Map<String, Object>> messageMap = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> messageMap = new ArrayList<>();
 		messageMap.addAll(getCretedNodeMessages(data, graphDb, requestId));
 		messageMap.addAll(getUpdatedNodeMessages(data, graphDb, requestId));
 		messageMap.addAll(getDeletedNodeMessages(data, requestId));
@@ -64,11 +64,11 @@ public class ProcessTransactionData {
 	}
 
 	private List<Map<String, Object>> getCretedNodeMessages(TransactionData data, GraphDatabaseService graphDb, String requestId) {
-		List<Map<String, Object>> lstMessageMap = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> lstMessageMap = new ArrayList<>();
 		try {
 			List<Long> createdNodeIds = getCreatedNodeIds(data);
 			for (Long nodeId : createdNodeIds) {
-				Map<String, Object> transactionData = new HashMap<String, Object>();
+				Map<String, Object> transactionData = new HashMap<>();
 				Map<String, Object> propertiesMap = getAssignedNodePropertyEntry(nodeId, data);
 				if (null != propertiesMap && !propertiesMap.isEmpty()) {
 					transactionData.put(Constants.GraphParams.properties.name(), propertiesMap);
@@ -85,11 +85,11 @@ public class ProcessTransactionData {
 	}
 
 	private List<Map<String, Object>> getUpdatedNodeMessages(TransactionData data, GraphDatabaseService graphDb, String requestId) {
-		List<Map<String, Object>> lstMessageMap = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> lstMessageMap = new ArrayList<>();
 		try {
 			List<Long> updatedNodeIds = getUpdatedNodeIds(data);
 			for (Long nodeId : updatedNodeIds) {
-				Map<String, Object> transactionData = new HashMap<String, Object>();
+				Map<String, Object> transactionData = new HashMap<>();
 				Map<String, Object> propertiesMap = getAllPropertyEntry(nodeId, data);
 				if (null != propertiesMap && !propertiesMap.isEmpty()) {
 					transactionData.put(Constants.GraphParams.properties.name(), propertiesMap);
@@ -106,12 +106,12 @@ public class ProcessTransactionData {
 
 	@SuppressWarnings("rawtypes")
 	private List<Map<String, Object>> getDeletedNodeMessages(TransactionData data, String requestId) {
-		List<Map<String, Object>> lstMessageMap = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> lstMessageMap = new ArrayList<>();
 		try {
 			List<Long> deletedNodeIds = getDeletedNodeIds(data);
 			for (Long nodeId : deletedNodeIds) {
-				Map<String, Object> map = new HashMap<String, Object>();
-				Map<String, Object> transactionData = new HashMap<String, Object>();
+				Map<String, Object> map = new HashMap<>();
+				Map<String, Object> transactionData = new HashMap<>();
 				Map<String, Object> removedNodeProp = getRemovedNodePropertyEntry(nodeId, data);
 				if (null != removedNodeProp && !removedNodeProp.isEmpty()) {
 					transactionData.put(Constants.GraphParams.properties.name(), removedNodeProp);
@@ -128,7 +128,8 @@ public class ProcessTransactionData {
 					map.put(Constants.GraphParams.operationType.name(), Constants.GraphParams.DELETE.name());
 					map.put(Constants.GraphParams.label.name(), getRemovedLabel(nodeId, data));
 					map.put(Constants.GraphParams.nodeId.name(), nodeId);
-					map.put(Constants.GraphParams.createdOn.name(), format(new Date()));
+					// map.put(Constants.GraphParams.createdOn.name(), format(new Date()));
+					map.put(Constants.GraphParams.createdOn.name(), new Date().getTime());
 					map.put(Constants.GraphParams.ets.name(), System.currentTimeMillis());
 					map.put(Constants.GraphParams.transactionData.name(), transactionData);
 					lstMessageMap.add(map);
@@ -154,7 +155,7 @@ public class ProcessTransactionData {
 	private String getLastUpdatedByValue(Long nodeId, TransactionData data) {
 		Iterable<org.neo4j.graphdb.event.PropertyEntry<Node>> assignedNodeProp = data.assignedNodeProperties();
 		for (org.neo4j.graphdb.event.PropertyEntry<Node> pe : assignedNodeProp) {
-			if (nodeId == pe.entity().getId() && StringUtils.equalsIgnoreCase("lastUpdatedBy", (String) pe.key())) {
+			if (nodeId == pe.entity().getId() && StringUtils.equalsIgnoreCase("lastUpdatedBy", pe.key())) {
 				String lastUpdatedBy = (String) pe.value();
 				return lastUpdatedBy;
 			}
@@ -169,18 +170,18 @@ public class ProcessTransactionData {
 
 	private Map<String, Object> getNodePropertyEntry(Long nodeId,
 			Iterable<org.neo4j.graphdb.event.PropertyEntry<Node>> nodeProp) {
-		Map<String, Object> map = new HashMap<String, Object>();
+		Map<String, Object> map = new HashMap<>();
 		for (org.neo4j.graphdb.event.PropertyEntry<Node> pe : nodeProp) {
 			if (nodeId == pe.entity().getId() && !compareValues(pe.previouslyCommitedValue(), pe.value())) {
-				Map<String, Object> valueMap = new HashMap<String, Object>();
+				Map<String, Object> valueMap = new HashMap<>();
 				valueMap.put("ov", pe.previouslyCommitedValue()); // old
 				// value
 				valueMap.put("nv", pe.value()); // new value
-				map.put((String) pe.key(), valueMap);
+				map.put(pe.key(), valueMap);
 			}
 		}
 		if (map.size() == 1 && null != map.get(Constants.AuditProperties.lastUpdatedOn.name()))
-			map = new HashMap<String, Object>();
+			map = new HashMap<>();
 		return map;
 	}
 	
@@ -196,13 +197,13 @@ public class ProcessTransactionData {
 
 	private Map<String, Object> getNodeRemovedPropertyEntry(Long nodeId,
 			Iterable<org.neo4j.graphdb.event.PropertyEntry<Node>> nodeProp) {
-		Map<String, Object> map = new HashMap<String, Object>();
+		Map<String, Object> map = new HashMap<>();
 		for (org.neo4j.graphdb.event.PropertyEntry<Node> pe : nodeProp) {
 			if (nodeId == pe.entity().getId()) {
-				Map<String, Object> valueMap = new HashMap<String, Object>();
+				Map<String, Object> valueMap = new HashMap<>();
 				valueMap.put("ov", pe.previouslyCommitedValue()); // old value
 				valueMap.put("nv", null); // new value
-				map.put((String) pe.key(), valueMap);
+				map.put(pe.key(), valueMap);
 			}
 		}
 		if (map.size() == 1 && null != map.get(Constants.AuditProperties.lastUpdatedOn.name()))
@@ -280,7 +281,7 @@ public class ProcessTransactionData {
 	private List<Map<String, Object>> getRelationShipMessages(Iterable<Relationship> relations, String operationType,
 			boolean delete, String requestId,
 			Iterable<org.neo4j.graphdb.event.PropertyEntry<Relationship>> removedRelationshipProp) {
-		List<Map<String, Object>> lstMessageMap = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> lstMessageMap = new ArrayList<>();
 		try {
 			if (null != relations) {
 				for (Relationship rel : relations) {
@@ -294,7 +295,7 @@ public class ProcessTransactionData {
 					String relationTypeName = rel.getType().name();
 					// start_node message
 					Map<String, Object> map = null;
-					Map<String, Object> transactionData = new HashMap<String, Object>();
+					Map<String, Object> transactionData = new HashMap<>();
 					Map<String, Object> startRelation = new HashMap<>();
 
 					startRelation.put("rel", relationTypeName);
@@ -316,7 +317,7 @@ public class ProcessTransactionData {
 						if (StringUtils.isBlank(userId))
 							userId = "ANONYMOUS";
 					}*/
-					List<Map<String, Object>> startRelations = new ArrayList<Map<String, Object>>();
+					List<Map<String, Object>> startRelations = new ArrayList<>();
 					startRelations.add(startRelation);
 					transactionData.put(Constants.GraphParams.properties.name(), new HashMap<String, Object>());
 					if (delete) {
@@ -333,14 +334,14 @@ public class ProcessTransactionData {
 
 					// end_node message
 					map = null;
-					transactionData = new HashMap<String, Object>();
+					transactionData = new HashMap<>();
 					Map<String, Object> endRelation = new HashMap<>();
 
 					endRelation.put("rel", relationTypeName);
 					endRelation.put("dir", "IN");
 					endRelation.put("label", getLabel(startNode));
 					endRelation.put("relMetadata", relMetadata);
-					List<Map<String, Object>> endRelations = new ArrayList<Map<String, Object>>();
+					List<Map<String, Object>> endRelations = new ArrayList<>();
 					endRelations.add(endRelation);
 					transactionData.put(Constants.GraphParams.properties.name(), new HashMap<String, Object>());
 					if (delete) {
@@ -365,11 +366,11 @@ public class ProcessTransactionData {
 
 	private Map<String, Object> getRelationShipPropertyEntry(Long relId,
 			Iterable<org.neo4j.graphdb.event.PropertyEntry<Relationship>> relProp) {
-		Map<String, Object> map = new HashMap<String, Object>();
+		Map<String, Object> map = new HashMap<>();
 		for (org.neo4j.graphdb.event.PropertyEntry<Relationship> pe : relProp) {
 			if (relId == pe.entity().getId()) {
 				if (pe.previouslyCommitedValue() != null) {
-					map.put((String) pe.key(), pe.previouslyCommitedValue());
+					map.put(pe.key(), pe.previouslyCommitedValue());
 				}
 			}
 		}
@@ -390,7 +391,7 @@ public class ProcessTransactionData {
 	}
 
 	private List<Long> getUpdatedNodeIds(TransactionData data) {
-		List<Long> lstNodeIds = new ArrayList<Long>();
+		List<Long> lstNodeIds = new ArrayList<>();
 		List<Long> lstCreatedNodeIds = getCreatedNodeIds(data);
 		List<Long> lstDeletedNodeIds = getDeletedNodeIds(data);
 		Iterable<org.neo4j.graphdb.event.PropertyEntry<Node>> assignedNodeProp = data.assignedNodeProperties();
@@ -405,11 +406,11 @@ public class ProcessTransactionData {
 				lstNodeIds.add(pe.entity().getId());
 			}
 		}
-		return new ArrayList<Long>(new HashSet<Long>(lstNodeIds));
+		return new ArrayList<>(new HashSet<>(lstNodeIds));
 	}
 
 	private List<Long> getCreatedNodeIds(TransactionData data) {
-		List<Long> lstNodeIds = new ArrayList<Long>();
+		List<Long> lstNodeIds = new ArrayList<>();
 		if (null != data.createdNodes()) {
 			Iterator<Node> nodes = data.createdNodes().iterator();
 			while (nodes.hasNext()) {
@@ -417,11 +418,11 @@ public class ProcessTransactionData {
 			}
 		}
 
-		return new ArrayList<Long>(new HashSet<Long>(lstNodeIds));
+		return new ArrayList<>(new HashSet<>(lstNodeIds));
 	}
 
 	private List<Long> getDeletedNodeIds(TransactionData data) {
-		List<Long> lstNodeIds = new ArrayList<Long>();
+		List<Long> lstNodeIds = new ArrayList<>();
 		if (null != data.deletedNodes()) {
 			Iterator<Node> nodes = data.deletedNodes().iterator();
 			while (nodes.hasNext()) {
@@ -429,33 +430,36 @@ public class ProcessTransactionData {
 			}
 		}
 
-		return new ArrayList<Long>(new HashSet<Long>(lstNodeIds));
+		return new ArrayList<>(new HashSet<>(lstNodeIds));
 	}
 
-	private Map<String, Object> setMessageData(GraphDatabaseService graphDb, Long nodeId, String requestId, String operationType, Map<String, Object> transactionData) {
-		Map<String, Object> map = new HashMap<String, Object>();
+	private Map<String, Object> setMessageData(GraphDatabaseService graphDb, Long nodeId, String requestId,
+											   String operationType, Map<String, Object> transactionData) {
+
+		Map<String, Object> map = new HashMap<>();
 		Node node = graphDb.getNodeById(nodeId);
 		map.put(Constants.GraphParams.requestId.name(), requestId);
 		map.put(Constants.GraphParams.userId.name(), getUserId(node));
 		map.put(Constants.GraphParams.operationType.name(), operationType);
 		map.put(Constants.GraphParams.label.name(), getLabel(node));
-		map.put(Constants.GraphParams.createdOn.name(), format(new Date()));
+		// map.put(Constants.GraphParams.createdOn.name(), format(new Date()));
+		map.put(Constants.GraphParams.createdOn.name(), new Date().getTime());
 		map.put(Constants.GraphParams.ets.name(), System.currentTimeMillis());
 		map.put(Constants.GraphParams.nodeId.name(), nodeId);
 		map.put(Constants.GraphParams.transactionData.name(), transactionData);
 		return map;
 
 	}
-	
-	public static String format(Date date) {
-        if (null != date) {
-            try {
-                return sdf.format(date);
-            } catch (Exception e) {
-            }
-        }
-        return null;
-    }
+
+	private static String format(Date date) {
+		if (null != date) {
+			try {
+				return sdf.format(date);
+			} catch (Exception e) {
+			}
+		}
+		return null;
+	}
 	
 	public String getUserId(Node node){
 		List<String> propertyKeys = Lists.newArrayList(node.getPropertyKeys());

@@ -77,21 +77,6 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
     }
 
     public void initialize() {
-
-        String body = "client_id=" + System.getenv("sunbird_sso_client_id") + "&username=" + System.getenv("sunbird_sso_username")
-                + "&password=" + System.getenv("sunbird_sso_password") + "&grant_type=password";
-        headers = new HttpHeaders();
-        headers.setCacheControl("no-cache");
-        headers.set("content-type", "application/x-www-form-urlencoded");
-        HttpEntity<String> request = new HttpEntity<String>(body, headers);
-
-        String url = System.getenv("sunbird_sso_url") + "realms/" + System.getenv("sunbird_sso_realm") + "/protocol/openid-connect/token ";
-        ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
-        Type type = new TypeToken<Map<String, String>>() {
-        }.getType();
-        Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
-        String accessToken = (String) myMap.get("access_token");
-
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
         restTemplate = new RestTemplate();
         restTemplate.setRequestFactory(requestFactory);

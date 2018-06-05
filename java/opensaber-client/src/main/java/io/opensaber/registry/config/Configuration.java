@@ -6,9 +6,9 @@ import com.typesafe.config.ConfigFactory;
 public class Configuration {
 
     private final static String environment =
-            System.getenv("OPENSABER_CLIENT_ENVIRONMENT") == null
+            System.getenv("opensaber_client_environment") == null
                     ? "dev"
-                    : System.getenv("OPENSABER_CLIENT_ENVIRONMENT");
+                    : System.getenv("opensaber_client_environment");
 
     private static Configuration instance = new Configuration();
     private Config config;
