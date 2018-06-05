@@ -21,7 +21,7 @@ import io.opensaber.registry.middleware.util.Constants;
 public class RDFValidationMappingInterceptor extends BaseRequestHandler implements HandlerInterceptor {
 
 	@Autowired
-	OpenSaberInstrumentation watch;
+	private OpenSaberInstrumentation watch;
 
 	private RDFValidationMapper rdfValidationMapper;
 	
@@ -38,10 +38,10 @@ public class RDFValidationMappingInterceptor extends BaseRequestHandler implemen
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {
 		try {
 		setRequest(request);
-		watch.start("RDFValidationMappingInterceptor performance monitoring !");
+		watch.start("RDFValidationMappingInterceptor.execute");
 		Map<String, Object> attributeMap = rdfValidationMapper.execute(getRequestAttributeMap());
 		mergeRequestAttributes(attributeMap);
-		watch.stop();
+		watch.stop("RDFValidationMappingInterceptor.execute");
 		request = getRequest();
 		if (request.getAttribute(Constants.RDF_VALIDATION_MAPPER_OBJECT) != null) {
 			logger.debug("RDF validator object mapped successfully !");

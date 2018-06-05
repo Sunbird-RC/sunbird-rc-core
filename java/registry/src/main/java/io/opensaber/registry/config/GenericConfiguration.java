@@ -67,7 +67,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private boolean authenticationEnabled;
 
 	@Value("${perf.monitoring.enabled}")
-	private boolean performance_monitoring;
+	private boolean performanceMonitoringEnabled;
 
 	@Bean
 	public ObjectMapper objectMapper() {
@@ -77,8 +77,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public OpenSaberInstrumentation customStopWatch() {
-		return new OpenSaberInstrumentation(performance_monitoring);
+	public OpenSaberInstrumentation instrumentationStopWatch() {
+		return new OpenSaberInstrumentation(performanceMonitoringEnabled);
 	}
 
 	@Bean
@@ -96,6 +96,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new RDFConverter();
 	}
 
+    @Bean
+    public AuthorizationInterceptor authorizationInterceptor() {
+        return new AuthorizationInterceptor(authorizationFilter(), gson());
+    }
+
 	@Bean
 	public RDFConversionInterceptor rdfConversionInterceptor() {
 		return new RDFConversionInterceptor(rdfConverter(), gson());
@@ -109,11 +114,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public RDFValidationInterceptor rdfValidationInterceptor() {
 		return new RDFValidationInterceptor(rdfValidator(), gson());
-	}
-
-	@Bean
-	public AuthorizationInterceptor authorizationInterceptor() {
-		return new AuthorizationInterceptor(authorizationFilter(), gson());
 	}
 
 	@Bean
@@ -133,10 +133,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			throw new CustomException(Constants.VALIDATION_CONFIGURATION_MISSING);
 		}
 
-		OpenSaberInstrumentation watch = customStopWatch();
-		watch.start("SchemaConfigurator performance monitoring !");
+		OpenSaberInstrumentation watch = instrumentationStopWatch();
+		watch.start("SchemaConfigurator.initialization");
 		SchemaConfigurator schemaConfigurator = new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate);
-		watch.stop();
+		watch.stop("SchemaConfigurator.initialization");
 		return schemaConfigurator ;
 	}
 
@@ -158,16 +158,16 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public AuditRecord auditRecord() {
 		return new AuditRecord();
 	}
-	
-	@Bean
-	public RestTemplate restTemaplteProvider() throws IOException{
-		HttpClient httpClient = HttpClientBuilder.create().build();
-		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-		requestFactory.setConnectTimeout(connectionTimeout);
-		requestFactory.setConnectionRequestTimeout(connectionRequestTimeout);
-		requestFactory.setReadTimeout(readTimeout);
-		return new RestTemplate(requestFactory);
-	}
+
+    @Bean
+    public RestTemplate restTemaplteProvider() throws IOException {
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        requestFactory.setConnectTimeout(connectionTimeout);
+        requestFactory.setConnectionRequestTimeout(connectionRequestTimeout);
+        requestFactory.setReadTimeout(readTimeout);
+        return new RestTemplate(requestFactory);
+    }
 
 	
 	@Bean

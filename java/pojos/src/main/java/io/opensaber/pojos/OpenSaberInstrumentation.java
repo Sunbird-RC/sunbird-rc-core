@@ -1,37 +1,43 @@
 package io.opensaber.pojos;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.StopWatch;
+import org.perf4j.slf4j.Slf4JStopWatch;
 
 public class OpenSaberInstrumentation {
-    private StopWatch sw = new StopWatch();
+    // private StopWatch sw = new StopWatch();
+    private org.perf4j.StopWatch perf4jStopWatch = new Slf4JStopWatch();
     private boolean performanceMonitoingEnabled;
-    private static Logger perfLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
+    // private static Logger perfLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 
-    public OpenSaberInstrumentation(boolean performance_monitoring) {
-        this.performanceMonitoingEnabled = performance_monitoring;
+    public OpenSaberInstrumentation(boolean performanceMonitoringEnabled) {
+        this.performanceMonitoingEnabled = performanceMonitoringEnabled;
     }
 
-    public OpenSaberInstrumentation(){}
+    // public OpenSaberInstrumentation(){}
 
-    public void start(String str) {
+    public void start(String tag) {
         if (performanceMonitoingEnabled) {
+            /*
             if (!sw.isRunning()) {
-                sw.start(str);
+                sw.start(tag);
             }
+            */
+            perf4jStopWatch.start(tag);
         }
     }
 
-    public void stop() {
+    public void stop(String tag) {
         if (performanceMonitoingEnabled) {
+            /*
             if (sw.isRunning()) {
                 sw.stop();
                 perfLogger.info(sw.prettyPrint());
             }
+            */
+            perf4jStopWatch.stop(tag);
         }
     }
 
+    /*
     public void prettyPrint() {
         if (performanceMonitoingEnabled) {
             perfLogger.info(sw.prettyPrint());
@@ -50,4 +56,5 @@ public class OpenSaberInstrumentation {
         }
         return Long.toString(sw.getTotalTimeMillis());
     }
+    */
 }

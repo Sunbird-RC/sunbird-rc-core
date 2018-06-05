@@ -30,17 +30,17 @@ public class RDFConversionInterceptor extends BaseRequestHandler implements Hand
 	}
 
 	@Autowired
-	OpenSaberInstrumentation watch ;
+	private OpenSaberInstrumentation watch ;
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		try{
 		setRequest(request);
-		watch.start("RDFConversionInterceptor performance monitoring !");
+		watch.start("RDFConversionInterceptor.execute");
 		Map<String, Object> attributeMap = rdfConverter.execute(getRequestBodyMap());
 		mergeRequestAttributes(attributeMap);
-		watch.stop();
+		watch.stop("RDFConversionInterceptor.execute");
 		request = getRequest();
 		if (request.getAttribute(Constants.RDF_OBJECT) != null) {
 			logger.debug("RDF object for conversion :" + request.getAttribute(Constants.RDF_OBJECT));

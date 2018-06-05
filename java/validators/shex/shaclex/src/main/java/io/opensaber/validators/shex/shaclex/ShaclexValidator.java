@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 import es.weso.rdf.PrefixMap;
 import es.weso.schema.*;
 import es.weso.shapeMaps.ResultShapeMap;
-import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.ValidationInfo;
 import io.opensaber.pojos.ValidationResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -35,10 +34,7 @@ public class ShaclexValidator {
 
 	public ValidationResponse validate(Model dataModel, Schema schema) {
 		RDFReader rdf = new RDFAsJenaModel(dataModel);
-		OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
-		watch.start("ShaclexValidator schema.validate() Performance Monitoring !");
 		Result result = schema.validate(rdf, "TARGETDECLS", null, none, none, rdf.getPrefixMap(), schema.pm());
-		watch.stop();
 		return parseValidationOutput(dataModel, result, schema.pm());
 	}
 

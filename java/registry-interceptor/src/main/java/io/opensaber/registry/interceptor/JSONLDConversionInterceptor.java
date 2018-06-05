@@ -43,9 +43,9 @@ public class JSONLDConversionInterceptor extends BaseResponseHandler implements 
 	  Object handler, ModelAndView modelAndView) throws Exception {
 		logger.info("RESPONSE COMMITTED : "+response.isCommitted());
 		setResponse(response);
-		watch.start("JSONLDConversionInterceptor performance monitoring !");
+		watch.start("JSONLDConversionInterceptor.execute");
 		Map<String,Object> responseMap = jsonldConverter.execute(getResponseBodyMap());
-		watch.stop();
+		watch.stop("JSONLDConversionInterceptor.execute");
 		if(responseMap.get(Constants.RESPONSE_ATTRIBUTE)!=null){
 			setFormattedResponse(responseMap.get(Constants.RESPONSE_ATTRIBUTE).toString());
 			writeResponseBody(getFormattedResponse());

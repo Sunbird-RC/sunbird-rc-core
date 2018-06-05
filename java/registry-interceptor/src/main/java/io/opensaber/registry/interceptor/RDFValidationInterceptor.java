@@ -33,16 +33,16 @@ public class RDFValidationInterceptor extends BaseRequestHandler implements Hand
 	}
 
 	@Autowired
-	OpenSaberInstrumentation watch ;
+	private OpenSaberInstrumentation watch ;
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {
 		try {
 			setRequest(request);
-			watch.start("RDFValidationInterceptor performance testing !");
+			watch.start("RDFValidationInterceptor.execute");
 			Map<String, Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
 			mergeRequestAttributes(attributeMap);
-			watch.stop();
+			watch.stop("RDFValidationInterceptor.execute");
 			request = getRequest();
 			ValidationResponse validationResponse = (ValidationResponse) request.getAttribute(Constants.RDF_VALIDATION_OBJECT);
 			if (validationResponse != null && validationResponse.isValid()) {

@@ -29,16 +29,16 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 	}
 
 	@Autowired
-	OpenSaberInstrumentation watch;
+	private OpenSaberInstrumentation watch;
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		try{
 			setRequest(request);
-			watch.start("AuthorizationInterceptor performance monitoring !");
+			watch.start("AuthorizationInterceptor.execute");
 			authorizationFilter.execute(getRequestHeaderMap());
-			watch.stop();
+			watch.stop("AuthorizationInterceptor.execute");
 			logger.debug(" Authentication successfull !");
 
 			return true;
