@@ -1,9 +1,7 @@
 package io.opensaber.registry.middleware.impl;
 
-
 import java.io.IOException;
 import java.util.Map;
-import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.apache.jena.rdf.model.Model;
 import es.weso.schema.Schema;
 import io.opensaber.registry.middleware.BaseMiddleware;
@@ -21,9 +19,6 @@ public class RDFValidator implements BaseMiddleware{
     private static final String SCHEMA_IS_NULL = "Schema for validation is missing";
 	private static final String INVALID_REQUEST_PATH = "Request URL is invalid";
 	private static final String ADD_REQUEST_PATH = "/add";
-	private String schemaFileName;
-
-	OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
 
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;
@@ -51,19 +46,13 @@ public class RDFValidator implements BaseMiddleware{
 			throw new MiddlewareHaltException(SCHEMA_IS_NULL);
 		} else {
 			ShaclexValidator validator = new ShaclexValidator();
-			watch.start("RDF Validator: mergeModels() Performance Testing !");
 			mergeModels((Model) RDF, (Model) validationRDF);
-
-			watch.stop();
-
-			watch.start("RDF Validator: validate() Performance Testing !");
 			ValidationResponse validationResponse = null;
 			if(ADD_REQUEST_PATH.equals((String)method)){
 				validationResponse = validator.validate((Model) validationRDF, schemaForCreate);
 			} else {
 				validationResponse = validator.validate((Model) validationRDF, schemaForUpdate);
 			}
-			watch.stop();
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
 			return mapData;
 		}

@@ -19,20 +19,20 @@ import io.opensaber.registry.middleware.util.Constants;
 
 @Component
 public class RDFValidationMappingInterceptor extends BaseRequestHandler implements HandlerInterceptor {
-	
+
+	@Autowired
+	OpenSaberInstrumentation watch;
+
 	private RDFValidationMapper rdfValidationMapper;
 	
 	private Gson gson;
 
 	private static Logger logger = LoggerFactory.getLogger(RDFValidationMappingInterceptor.class);
 
-	@Autowired
 	public RDFValidationMappingInterceptor(RDFValidationMapper rdfValidationMapper, Gson gson){
 		this.rdfValidationMapper = rdfValidationMapper;
 		this.gson = gson;
 	}
-
-	OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {

@@ -50,7 +50,7 @@ public class RegistryController {
 	@RequestMapping(value = "/add", method = RequestMethod.POST)
 	public ResponseEntity<Response> addToExistingEntity(@RequestAttribute Request requestModel, 
 			@RequestParam(value="id", required = false) String id, @RequestParam(value="prop", required = false) String property) {
-		watch.start("ADD Performance Monitoring !");
+		watch.start("ADD entity Performance Monitoring !");
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
@@ -80,7 +80,7 @@ public class RegistryController {
 
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> readEntity(@PathVariable("id") String id) {
-		watch.start("READ Performance Monitoring ! ");
+		watch.start("READ entity Performance Monitoring ! ");
 		String entityId = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
@@ -111,7 +111,7 @@ public class RegistryController {
 	@ResponseBody
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	public ResponseEntity<Response> update(@RequestAttribute Request requestModel) {
-		watch.start("UPDATE Performance Monitoring !");
+		watch.start("UPDATE entity Performance Monitoring !");
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);

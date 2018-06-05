@@ -1,7 +1,6 @@
 package io.opensaber.registry.config;
 
 import java.io.IOException;
-
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
@@ -77,7 +76,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return objectMapper;
 	}
 
-    @Bean
+	@Bean
 	public OpenSaberInstrumentation customStopWatch() {
 		return new OpenSaberInstrumentation(performance_monitoring);
 	}
@@ -98,6 +97,26 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
+	public RDFConversionInterceptor rdfConversionInterceptor() {
+		return new RDFConversionInterceptor(rdfConverter(), gson());
+	}
+
+	@Bean
+	public RDFValidationMappingInterceptor rdfValidationMappingInterceptor() {
+		return new RDFValidationMappingInterceptor(rdfValidationMapper(), gson());
+	}
+
+	@Bean
+	public RDFValidationInterceptor rdfValidationInterceptor() {
+		return new RDFValidationInterceptor(rdfValidator(), gson());
+	}
+
+	@Bean
+	public AuthorizationInterceptor authorizationInterceptor() {
+		return new AuthorizationInterceptor(authorizationFilter(), gson());
+	}
+
+	@Bean
 	public AuthorizationFilter authorizationFilter(){
 		return new AuthorizationFilter(new KeyCloakServiceImpl());
 	}
@@ -113,7 +132,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (validationConfigFileForCreate == null || validationConfigFileForUpdate == null) {
 			throw new CustomException(Constants.VALIDATION_CONFIGURATION_MISSING);
 		}
-		return new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate);
+
+		OpenSaberInstrumentation watch = customStopWatch();
+		watch.start("SchemaConfigurator performance monitoring !");
+		SchemaConfigurator schemaConfigurator = new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate);
+		watch.stop();
+		return schemaConfigurator ;
 	}
 
 	@Bean
@@ -170,7 +194,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-
 	public RDFValidationMapper rdfValidationMapper() {
 		Model validationConfig = null;
 		try{
@@ -184,14 +207,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 	    if(authenticationEnabled) {
-            registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
+            registry.addInterceptor(authorizationInterceptor())
                     .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
         }
-		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
+		registry.addInterceptor(rdfConversionInterceptor())
 				.addPathPatterns("/add", "/update").order(2);
-		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
+		registry.addInterceptor(rdfValidationMappingInterceptor())
 				.addPathPatterns("/add", "/update").order(3);
-		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(), gson()))
+		registry.addInterceptor(rdfValidationInterceptor())
 				.addPathPatterns("/add", "/update").order(4);
 	/*	registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
 				.addPathPatterns("/read/{id}").order(2);*/

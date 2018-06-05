@@ -2,7 +2,6 @@ package io.opensaber.registry.interceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +23,13 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 	
 	private Gson gson;
 	
-	@Autowired
 	public AuthorizationInterceptor(AuthorizationFilter authorizationFilter, Gson gson){
 		this.authorizationFilter = authorizationFilter;
 		this.gson = gson;
 	}
-	OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
+
+	@Autowired
+	OpenSaberInstrumentation watch;
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -39,7 +39,7 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 			watch.start("AuthorizationInterceptor performance monitoring !");
 			authorizationFilter.execute(getRequestHeaderMap());
 			watch.stop();
-			logger.info(" Authentication successfull !");
+			logger.debug(" Authentication successfull !");
 
 			return true;
 		}catch(MiddlewareHaltException e){
@@ -58,15 +58,13 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 
 	@Override
 	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
-			ModelAndView modelAndView) throws Exception {
-		// TODO Auto-generated method stub
+						   ModelAndView modelAndView) throws Exception {
 		HandlerInterceptor.super.postHandle(request, response, handler, modelAndView);
 	}
 
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
-		// TODO Auto-generated method stub
 		HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
 	}
 

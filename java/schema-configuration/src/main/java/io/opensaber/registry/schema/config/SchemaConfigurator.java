@@ -2,8 +2,6 @@ package io.opensaber.registry.schema.config;
 
 import java.io.IOException;
 import java.io.InputStream;
-
-import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -38,19 +36,11 @@ public class SchemaConfigurator {
 	private Option<String> none = Option.empty();
 
 	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile) throws IOException{
-		OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
-		watch.start("Schema Configurator loadSchemaConfigModel() Performance Monitoring !");
-		loadSchemaConfigModel(schemaFile);
-		watch.stop();
 
-		watch.start("Schema Configurator loadSchemaForValidation() Performance Monitoring !");
+		loadSchemaConfigModel(schemaFile);
 		loadSchemaForValidation(validationcreateFile, true);
 		loadSchemaForValidation(validationUpdateFile, false);
-		watch.stop();
-
-		watch.start("Schema Configurator loadValidationConfigModel() Performance Monitoring !");
 		loadValidationConfigModel();
-		watch.stop();
 	}
 
 	private void loadSchemaConfigModel(String schemaFile) throws IOException {

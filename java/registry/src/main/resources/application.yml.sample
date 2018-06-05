@@ -11,13 +11,10 @@ spring:
       enabled: ALWAYS
 name: dev-yaml
 enviroment: development
-logging:
-level:
-PERFORMANCE_INSTRUMENTATION: TRACE
 
 perf:
   monitoring:
-    enabled: true
+    enabled: false
 
 registry:
   context:
@@ -100,13 +97,10 @@ spring:
       enabled: ALWAYS
 name: staging-yaml
 enviroment: staging
-logging:
-level:
-PERFORMANCE_INSTRUMENTATION: TRACE
 
 perf:
   monitoring:
-    enabled: true
+    enabled: false
 
 registry:
   context:
@@ -189,13 +183,10 @@ spring:
       enabled: ALWAYS
 name: test-yaml
 enviroment: test
-logging:
-level:
-PERFORMANCE_INSTRUMENTATION: TRACE
 
 perf:
   monitoring:
-    enabled: true
+    enabled: false
 
 registry:
   context:

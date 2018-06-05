@@ -27,12 +27,13 @@ public class RDFValidationInterceptor extends BaseRequestHandler implements Hand
 	private RDFValidator rdfValidator;
 	private Gson gson;
 	
-	@Autowired
 	public RDFValidationInterceptor(RDFValidator rdfValidator, Gson gson){
 		this.rdfValidator = rdfValidator;
 		this.gson = gson;
 	}
-	OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
+
+	@Autowired
+	OpenSaberInstrumentation watch ;
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {

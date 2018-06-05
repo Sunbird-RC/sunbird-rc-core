@@ -17,7 +17,6 @@ public class OpenSaberInstrumentation {
 
     public void start(String str) {
         if (performanceMonitoingEnabled) {
-            perfLogger.info(str);
             if (!sw.isRunning()) {
                 sw.start(str);
             }

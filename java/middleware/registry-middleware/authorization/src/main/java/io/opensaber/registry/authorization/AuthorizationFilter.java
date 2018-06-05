@@ -8,9 +8,9 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.OpenSaberInstrumentation;
-import org.keycloak.common.VerificationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import io.jsonwebtoken.Jwts;
@@ -34,7 +34,8 @@ public class AuthorizationFilter implements BaseMiddleware {
         this.keyCloakServiceImpl = keyCloakServiceImpl;
     }
 
-    OpenSaberInstrumentation watch= new OpenSaberInstrumentation();
+    @Autowired
+    OpenSaberInstrumentation watch;
 
     /**
      * This method validates JWT access token against Sunbird Keycloak server and sets the valid access token to a map object
@@ -52,8 +53,11 @@ public class AuthorizationFilter implements BaseMiddleware {
           try {
 
               watch.start("KeyCloak Authentication Performance Monitoring !");
-              if (!keyCloakServiceImpl.verifyToken(token).trim().isEmpty()) {
-                  watch.stop();
+              String userId = keyCloakServiceImpl.verifyToken(token);
+              watch.stop();
+
+              if (!userId.trim().isEmpty()) {
+
                   if (mapObject.containsKey("userName")) {
                       logger.info("Access token for user {} verified successfully with KeyCloak server !", mapObject.get("userName"));
                   } else {

@@ -21,7 +21,9 @@ import io.opensaber.registry.middleware.util.Constants;
 public class JSONLDConversionInterceptor extends BaseResponseHandler implements HandlerInterceptor{
 	
 	private static Logger logger = LoggerFactory.getLogger(JSONLDConversionInterceptor.class);
-	OpenSaberInstrumentation watch = new OpenSaberInstrumentation();
+
+	@Autowired
+	OpenSaberInstrumentation watch;
 	
 	private JSONLDConverter jsonldConverter;
 	
