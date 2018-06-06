@@ -24,13 +24,13 @@ public class RDFConversionInterceptor extends BaseRequestHandler implements Hand
 	private RDFConverter rdfConverter;
 	private Gson gson;
 
+	@Autowired
+	private OpenSaberInstrumentation watch;
+
 	public RDFConversionInterceptor(RDFConverter rdfConverter, Gson gson){
 		this.rdfConverter = rdfConverter;
 		this.gson = gson;
 	}
-
-	@Autowired
-	private OpenSaberInstrumentation watch ;
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)

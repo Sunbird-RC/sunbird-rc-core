@@ -22,14 +22,14 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 	private AuthorizationFilter authorizationFilter;
 	
 	private Gson gson;
+
+	@Autowired
+	private OpenSaberInstrumentation watch;
 	
 	public AuthorizationInterceptor(AuthorizationFilter authorizationFilter, Gson gson){
 		this.authorizationFilter = authorizationFilter;
 		this.gson = gson;
 	}
-
-	@Autowired
-	private OpenSaberInstrumentation watch;
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)

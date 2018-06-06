@@ -22,18 +22,17 @@ import io.opensaber.registry.middleware.util.Constants;
 public class RDFValidationInterceptor extends BaseRequestHandler implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(RDFValidationInterceptor.class);
-	private static Logger prefLogger = LoggerFactory.getLogger("PERFORMANCE_INSTRUMENTATION");
 
 	private RDFValidator rdfValidator;
 	private Gson gson;
+
+	@Autowired
+	private OpenSaberInstrumentation watch ;
 	
 	public RDFValidationInterceptor(RDFValidator rdfValidator, Gson gson){
 		this.rdfValidator = rdfValidator;
 		this.gson = gson;
 	}
-
-	@Autowired
-	private OpenSaberInstrumentation watch ;
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {

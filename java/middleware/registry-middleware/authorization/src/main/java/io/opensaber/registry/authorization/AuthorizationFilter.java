@@ -35,7 +35,7 @@ public class AuthorizationFilter implements BaseMiddleware {
     }
 
     @Autowired
-    OpenSaberInstrumentation watch;
+    private OpenSaberInstrumentation watch;
 
     /**
      * This method validates JWT access token against Sunbird Keycloak server and sets the valid access token to a map object

@@ -23,7 +23,7 @@ public class JSONLDConversionInterceptor extends BaseResponseHandler implements 
 	private static Logger logger = LoggerFactory.getLogger(JSONLDConversionInterceptor.class);
 
 	@Autowired
-	OpenSaberInstrumentation watch;
+	private OpenSaberInstrumentation watch;
 	
 	private JSONLDConverter jsonldConverter;
 	
