@@ -38,8 +38,8 @@ import com.google.common.collect.Table;
 @Component
 public class RegistryDaoImpl implements RegistryDao {
 
-    private static final String META = "meta.";
-    private static final String EMPTY_STRING = StringUtils.EMPTY;
+    public static final String META = "meta.";
+    public static final String EMPTY_STRING = StringUtils.EMPTY;
     private static Logger logger = LoggerFactory.getLogger(RegistryDaoImpl.class);
     private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
@@ -64,16 +64,16 @@ public class RegistryDaoImpl implements RegistryDao {
     @Value("${authentication.enabled}")
     private boolean authenticationEnabled;
 
+    @Autowired
+    private OpenSaberInstrumentation watch;
+
     @Override
     public List getEntityList() {
         // TODO Auto-generated method stub
         return null;
     }
 
-    @Autowired
-    private OpenSaberInstrumentation watch;
-
-/*    @Override
+    /*@Override
     public String addEntity(Graph entity, String label) throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException {
         logger.debug("RegistryDaoImpl : Database Provider features: \n" + databaseProvider.getGraphStore().features());
         watch.start("getGraphStore() and traversal() in addEntity() Performance Monitoring !");
@@ -914,26 +914,16 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 
-	/*private void dump_graph(Graph parsedGraph, String filename) {
-		try {
-			parsedGraph.io(IoCore.graphson()).writeGraph(filename);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}*/
-
-
-	private void setAuditInfo(Vertex v, boolean isNew) {
-		if (authenticationEnabled) {
-			String username = ((AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getName();
-			// String timestamp = sdf.format(new Date());
+	public void setAuditInfo(Vertex v, boolean isNew){
+		if(authenticationEnabled){
+			String userId = ((AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getSub();
 			long timestamp = new Date().getTime();
-			if (isNew) {
-				v.property(registryContext + Constants.AuditProperties.createdBy.name(), username);
-				v.property(registryContext + Constants.AuditProperties.createdOn.name(), timestamp);
+			if(isNew){
+				v.property(registryContext+Constants.AuditProperties.createdBy.name(),userId);
+				v.property(registryContext+Constants.AuditProperties.createdOn.name(),timestamp);
 			}
-			v.property(registryContext + Constants.AuditProperties.lastUpdatedBy.name(), username);
-			v.property(registryContext + Constants.AuditProperties.lastUpdatedOn.name(), timestamp);
+			v.property(registryContext+Constants.AuditProperties.lastUpdatedBy.name(),userId);
+			v.property(registryContext+Constants.AuditProperties.lastUpdatedOn.name(),timestamp);
 		}
 	}
 
