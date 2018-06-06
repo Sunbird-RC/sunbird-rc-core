@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.keycloak.common.VerificationException;
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import io.jsonwebtoken.Jwts;
@@ -22,9 +23,7 @@ import org.apache.commons.codec.binary.Base64;
 public class AuthorizationFilter implements BaseMiddleware {
 
     private static Logger logger = LoggerFactory.getLogger(AuthorizationFilter.class);
-
     private static final String TOKEN_IS_MISSING = "Auth token is missing";
-    private static final String TOKEN_IS_INVALID = "Auth token is invalid";
     private static final String VERIFICATION_EXCEPTION = "Auth token is invalid";
 
     private KeyCloakServiceImpl keyCloakServiceImpl;
@@ -35,43 +34,52 @@ public class AuthorizationFilter implements BaseMiddleware {
         this.keyCloakServiceImpl = keyCloakServiceImpl;
     }
 
+    @Autowired
+    private OpenSaberInstrumentation watch;
+
     /**
      * This method validates JWT access token against Sunbird Keycloak server and sets the valid access token to a map object
      * @param mapObject
      * @throws MiddlewareHaltException
      */
-    public Map<String, Object> execute(Map<String, Object> mapObject) throws MiddlewareHaltException {
-        Object tokenObject = mapObject.get(Constants.TOKEN_OBJECT);
 
-        if (tokenObject == null || tokenObject.toString().trim().isEmpty()) {
-            throw new MiddlewareHaltException(TOKEN_IS_MISSING);
-        }
-        String token = tokenObject.toString();
-        try {
-            if (!keyCloakServiceImpl.verifyToken(token).trim().isEmpty()) {
+      public Map<String, Object> execute(Map<String, Object> mapObject) throws MiddlewareHaltException {
+          Object tokenObject = mapObject.get(Constants.TOKEN_OBJECT);
 
-                logger.debug("Access token verified successfully with KeyCloak server !");
-                AuthInfo authInfo = extractTokenIntoAuthInfo(token);
-                if (authInfo.getSub() == null || authInfo.getAud() == null || authInfo.getName() == null) {
-                    throw new MiddlewareHaltException(TOKEN_IS_INVALID);
-                }
-                List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
+          if (tokenObject == null || tokenObject.toString().trim().isEmpty()) {
+              throw new MiddlewareHaltException(TOKEN_IS_MISSING);
+          }
+          String token = tokenObject.toString();
+          try {
+              watch.start("KeycloakServiceImpl.verifyToken");
+              String userId = keyCloakServiceImpl.verifyToken(token);
+              watch.stop("KeycloakServiceImpl.verifyToken");
 
-                authorityList.add(new SimpleGrantedAuthority(authInfo.getAud()));
-                AuthorizationToken authorizationToken = new AuthorizationToken(authInfo, authorityList);
-                SecurityContextHolder.getContext().setAuthentication(authorizationToken);
-            } else {
-                throw new MiddlewareHaltException(TOKEN_IS_INVALID);
-            }
-        } catch (VerificationException e) {
-            logger.error("AuthorizationFilter: Invalid Auth token or Environment variable!", e);
-            throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
-        } catch (Exception e) {
-            logger.error("AuthorizationFilter: MiddlewareHaltException !", e);
-            throw new MiddlewareHaltException(TOKEN_IS_INVALID);
-        }
-        return mapObject;
-    }
+              if (!userId.trim().isEmpty()) {
+
+                  if (mapObject.containsKey("userName")) {
+                      logger.debug("Access token for user {} verified successfully with KeyCloak server !", mapObject.get("userName"));
+                  } else {
+                      logger.debug("Access token verified successfully with KeyCloak server !");
+                  }
+                  AuthInfo authInfo = extractTokenIntoAuthInfo(token);
+                  if (authInfo.getSub() == null || authInfo.getAud() == null || authInfo.getName() == null) {
+                      throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
+                  }
+                  List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
+
+                  authorityList.add(new SimpleGrantedAuthority(authInfo.getAud()));
+                  AuthorizationToken authorizationToken = new AuthorizationToken(authInfo, authorityList);
+                  SecurityContextHolder.getContext().setAuthentication(authorizationToken);
+              } else {
+                  throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
+              }
+          } catch (Exception e) {
+              logger.error("AuthorizationFilter: MiddlewareHaltException !");
+              throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
+          }
+          return mapObject;
+          }
 
     /**
      * This method extracts Authorisation information ,i.e. AuthInfo from input JWT access token
@@ -116,6 +124,4 @@ public class AuthorizationFilter implements BaseMiddleware {
         // TODO Auto-generated method stub
         return null;
     }
-
-
 }

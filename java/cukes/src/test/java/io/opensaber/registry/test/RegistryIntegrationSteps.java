@@ -201,12 +201,13 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 		assertTrue(expectedModel.isIsomorphicWith(actualModel));
 	}
 
-	private void setValidAuthHeader() {
+	private void setValidAuthHeader(){
 		headers = new HttpHeaders();
 		headers.add(AUTH_HEADER_NAME, accessToken);
 	}
 
 	public HttpHeaders getHeaders() {
+
 		return headers;
 	}
 

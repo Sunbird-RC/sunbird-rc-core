@@ -6,8 +6,15 @@ spring:
 ##################################################################
 spring:
   profiles: dev
+  output:
+    ansi:
+      enabled: ALWAYS
 name: dev-yaml
 enviroment: development
+
+perf:
+  monitoring:
+    enabled: false
 
 registry:
   context:
@@ -68,7 +75,7 @@ audit:
   enabled: false
 
 authentication:
-  enabled: false
+  enabled: true
 
 keycloak:
   sso:
@@ -85,8 +92,15 @@ keycloak:
 ##################################################################
 spring:
   profiles: staging
+  output:
+    ansi:
+      enabled: ALWAYS
 name: staging-yaml
 enviroment: staging
+
+perf:
+  monitoring:
+    enabled: false
 
 registry:
   context:
@@ -164,8 +178,15 @@ keycloak:
 ##################################################################
 spring:
   profiles: test
+  output:
+    ansi:
+      enabled: ALWAYS
 name: test-yaml
 enviroment: test
+
+perf:
+  monitoring:
+    enabled: false
 
 registry:
   context:

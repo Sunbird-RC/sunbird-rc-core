@@ -92,7 +92,7 @@ public class RegistryServiceImpl implements RegistryService {
 	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException, EncryptionException, AuditFailedException {
 		Graph graph = registryDao.getEntityById(label);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
-		logger.debug("Service layer rdf4j model :", model);
+		logger.debug("RegistryServiceImpl : rdf4j model :", model);
 		return model;
 	}
 
@@ -130,6 +130,7 @@ public class RegistryServiceImpl implements RegistryService {
 		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
 		Resource root = getRootNode(jenaEntityModel);
 		String rootLabelType = getTypeForRootLabel(jenaEntityModel, root);
+		logger.debug("RegistryServiceImpl : jenaEntityModel for framing: {} \n root : {}, \n rootLabelType: {}",jenaEntityModel,root,rootLabelType);
 		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
 		JsonLDWriteContext ctx = new JsonLDWriteContext();
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("frame.json");
@@ -142,12 +143,14 @@ public class RegistryServiceImpl implements RegistryService {
 		StringWriter sWriterJena = new StringWriter();
 		w.write(sWriterJena, g, pm, base, ctx);
 		String jenaJSON = sWriterJena.toString();
+		logger.debug("RegistryServiceImpl : jenaJSON for framing : {}", jenaJSON);
 		return jenaJSON;
 	}
 	
 	@Override
 	public String frameAuditEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException {
 		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
+		logger.debug("RegistryServiceImpl : jenaEntityModel for audit-framing: {} ",jenaEntityModel);
 		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
 		JsonLDWriteContext ctx = new JsonLDWriteContext();
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("audit_frame.json");
@@ -159,6 +162,7 @@ public class RegistryServiceImpl implements RegistryService {
 		StringWriter sWriterJena = new StringWriter();
 		w.write(sWriterJena, g, pm, base, ctx);
 		String jenaJSON = sWriterJena.toString();
+		logger.debug("RegistryServiceImpl : jenaJSON for audit-framing: {}", jenaJSON);
 		return jenaJSON;
 	}
 	
@@ -168,7 +172,7 @@ public class RegistryServiceImpl implements RegistryService {
 		String label = id + "-AUDIT";
 		Graph graph = registryDao.getEntityById(label);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
-		logger.debug("Audit Model : " + model);
+		logger.debug("RegistryServiceImpl : Audit Model : " + model);
 		return model;
 	}
 	

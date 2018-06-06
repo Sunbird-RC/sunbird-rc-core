@@ -2,11 +2,9 @@ package io.opensaber.registry.interceptor;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.stream.Collectors;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.ValidationResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
-
 import com.google.gson.Gson;
-
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.impl.RDFValidator;
@@ -26,22 +22,26 @@ import io.opensaber.registry.middleware.util.Constants;
 public class RDFValidationInterceptor extends BaseRequestHandler implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(RDFValidationInterceptor.class);
+
 	private RDFValidator rdfValidator;
 	private Gson gson;
-	
+
 	@Autowired
+	private OpenSaberInstrumentation watch ;
+	
 	public RDFValidationInterceptor(RDFValidator rdfValidator, Gson gson){
 		this.rdfValidator = rdfValidator;
 		this.gson = gson;
 	}
 
-
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {
 		try {
 			setRequest(request);
+			watch.start("RDFValidationInterceptor.execute");
 			Map<String, Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
 			mergeRequestAttributes(attributeMap);
+			watch.stop("RDFValidationInterceptor.execute");
 			request = getRequest();
 			ValidationResponse validationResponse = (ValidationResponse) request.getAttribute(Constants.RDF_VALIDATION_OBJECT);
 			if (validationResponse != null && validationResponse.isValid()) {

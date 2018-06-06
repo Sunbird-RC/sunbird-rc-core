@@ -26,6 +26,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -83,7 +85,7 @@ import java.util.*;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class EncryptionDaoImplTest extends RegistryTestBase {
-	
+	private static Logger logger = LoggerFactory.getLogger(EncryptionDaoImplTest.class);
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 
@@ -119,17 +121,17 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 	public TestRule watcher = new TestWatcher() {
 		@Override
 		protected void starting(Description description) {
-			System.out.println("Executing test: " + description.getMethodName());
+			logger.debug("Executing test: " + description.getMethodName());
 		}
 
 		@Override
 		protected void succeeded(Description description) {
-			System.out.println("Successfully executed test: " + description.getMethodName());
+			logger.debug("Successfully executed test: " + description.getMethodName());
 		}
 
 		@Override
 		protected void failed(Throwable e, Description description) {
-			System.out.println(String.format("Test %s failed. Error message: %s", description.getMethodName(), e.getMessage()));
+			logger.debug(String.format("Test %s failed. Error message: %s", description.getMethodName(), e.getMessage()));
 		}
 	};
 

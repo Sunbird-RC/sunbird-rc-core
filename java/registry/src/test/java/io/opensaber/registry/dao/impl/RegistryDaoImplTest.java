@@ -20,6 +20,8 @@ import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,9 +51,7 @@ import io.opensaber.utils.converters.RDF2Graph;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import java.io.IOException;
 import java.util.*;
@@ -63,7 +63,7 @@ import java.util.*;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryDaoImplTest extends RegistryTestBase {
-	
+	private static Logger logger = LoggerFactory.getLogger(RegistryDaoImplTest.class);
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 
@@ -92,17 +92,17 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	public TestRule watcher = new TestWatcher() {
 		@Override
 		protected void starting(Description description) {
-			System.out.println("Executing test: " + description.getMethodName());
+			logger.debug("Executing test: " + description.getMethodName());
 		}
 
 		@Override
 		protected void succeeded(Description description) {
-			System.out.println("Successfully executed test: " + description.getMethodName());
+			logger.debug("Successfully executed test: " + description.getMethodName());
 		}
 
 		@Override
 		protected void failed(Throwable e, Description description) {
-			System.out.println(String.format("Test %s failed. Error message: %s", description.getMethodName(), e.getMessage()));
+			logger.debug(String.format("Test %s failed. Error message: %s", description.getMethodName(), e.getMessage()));
 		}
 	};
 
@@ -281,14 +281,14 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = getNewValidRdf();
 		TinkerGraph graph = TinkerGraph.open();
 		String rootLabel = updateGraphFromRdf(rdfModel, graph);
-		System.out.println("PRINTING MODEL TO ADD");
+		logger.debug("-------- MODEL TO ADD----------");
         printModel(rdfModel);
         String newEntityResponse;
         newEntityResponse = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
         Graph entity = registryDao.getEntityById(newEntityResponse);
-        System.out.println("CHECKING AUDIT RECORDS");
+        logger.debug("-------- CHECKING AUDIT RECORDS-------");
         int count1 = checkIfAuditRecordsAreRight(entity, null);
-        System.out.println("AUDIT RECORDS "+count1);
+        logger.debug("--------- AUDIT RECORDS -------"+count1);
 		// Create a new TinkerGraph with the existing jsonld
 		Graph newEntityGraph = TinkerGraph.open();
 		Model newRdfModel = getNewValidRdf();
@@ -308,7 +308,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		newEntityResponse = registryDao.addEntity(newEntityGraph, String.format("_:%s", newRootLabel), null, null);
 		entity = registryDao.getEntityById(newEntityResponse);
         int count2 = checkIfAuditRecordsAreRight(entity, null);
-        System.out.println("AUDIT RECORDS "+count2);
+        logger.debug("------- AUDIT RECORDS ------"+count2);
 		String propertyValue = (String) entity.traversal().clone().V()
 			.properties("http://example.com/voc/teacher/1.0.0/districtAlias")
 			.next()
@@ -324,7 +324,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
     private void printModel(Model rdfModel) {
         Iterator iter = rdfModel.listStatements();
         while(iter.hasNext()){
-            System.out.println(iter.next());
+            logger.debug("-------next iterator in printModel() : {} ",iter.next());
 }
     }
 
@@ -504,7 +504,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
     private Model getModelwithOnlyUpdateFacts(Model rdfModel, Model updateRdfModel, List<String> predicatedToExclude) {
     	Model updatedFacts = updateRdfModel.difference(rdfModel);
-    	System.out.println("UPDATED FACTS are:"+updatedFacts);
+    	logger.debug("-------- UPDATED FACTS are: ----------"+updatedFacts);
        /* Property propertyToRemove;
         propertyToRemove=ResourceFactory.createProperty("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
         Model updateRdfModelWithoutType = restrictModel(updateRdfModel,propertyToRemove);
@@ -541,12 +541,12 @@ public class RegistryDaoImplTest extends RegistryTestBase {
     			}
     		}
     	}
-    	System.out.println("DELETED FACTS are:"+deletedFacts);
+    	logger.debug("------- DELETED FACTS are: --------"+deletedFacts);
         return deletedFacts;
     }
 
     private Model restrictModel(Model updateRdfModel,Property property) {
-	    System.out.println("Removing "+property);
+	    logger.debug("--------Removing property :  "+property);
         return updateRdfModel.difference(
                     updateRdfModel.listStatements(
                             null,
@@ -575,7 +575,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
                 map.put(subject,innerMap);
             }
         }
-        System.out.println("generateUpdateMapFromRDF "+map);
+        logger.debug("generateUpdateMapFromRDF "+map);
         return map;
     }
 
@@ -593,7 +593,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
             	encounteredSubPred.put(subject.toString(), predicate.toString());
     			StmtIterator diffIter = deletedFacts.listStatements(subject, predicate, (RDFNode)null);
     			deletedCount = (int)IteratorUtils.count(diffIter);
-    			System.out.println(String.format("Number of facts deleted for %s and %s : %d",subject.toString(), predicate.toString(),deletedCount));
+    			logger.debug(String.format("Number of facts deleted for %s and %s : %d",subject.toString(), predicate.toString(),deletedCount));
             }
             if(map.containsKey(subject.toString())){
                 Map<String, Integer> innerMap = map.get(subject.toString());
@@ -608,7 +608,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
                 map.put(subject.toString(),innerMap);
             }
         }
-        System.out.println("generateUpdateMapFromRDF "+map);
+       logger.debug("generateUpdateMapFromRDF "+map);
         return map;
     }
 
@@ -831,7 +831,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		try {
 			jsonldOutput = RDFUtil.frameEntity(model);
 		} catch (IOException ex) {
-			System.out.println("IO Exception = " + ex);
+			logger.debug("IO Exception = " + ex);
 		}
 		return jsonldOutput;
 	}
@@ -1116,12 +1116,17 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		registryDao.setAuditInfo(v, true);
 		assertTrue(v.property(registryContext +"createdBy").isPresent());
 		assertTrue(v.property(registryContext +"lastUpdatedBy").isPresent());
-		assertEquals(v.property(registryContext +"createdOn").value(), 
+		assertEquals(v.property(registryContext +"createdBy").value().toString(), "sub");
+		assertEquals(v.property(registryContext +"lastUpdatedBy").value().toString(), "sub");
+		assertThat(v.property(registryContext +"createdOn").value(), instanceOf(Long.class));
+		assertThat(v.property(registryContext +"lastUpdatedOn").value(), instanceOf(Long.class));
+		assertEquals(v.property(registryContext +"createdOn").value(),
 				v.property(registryContext +"lastUpdatedOn").value());
 		registryDao.setAuditInfo(v, false);
 		assertTrue(v.property(registryContext +"lastUpdatedBy").isPresent());
-		assertNotEquals(v.property(registryContext +"createdOn").value(), 
-				v.property(registryContext +"lastUpdatedOn").value());
+		assertEquals(v.property(registryContext +"lastUpdatedBy").value().toString(), "sub");
+		assertThat(v.property(registryContext +"createdOn").value(), instanceOf(Long.class));
+		assertThat(v.property(registryContext +"lastUpdatedOn").value(), instanceOf(Long.class));
 	}
 	
 }

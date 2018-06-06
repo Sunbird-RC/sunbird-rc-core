@@ -32,11 +32,11 @@ public class Neo4jTransactionEventHandler implements TransactionEventHandler {
 
 	@Override
 	public void afterCommit(TransactionData transactionData, Object o) {
-		logger.info("After Commit Executed.");
+		logger.debug("After Commit Executed.");
 	}
 
 	@Override
 	public void afterRollback(TransactionData transactionData, Object o) {
-		logger.info("After Rollback Executed.");
+		logger.debug("After Rollback Executed.");
 	}
 }

@@ -10,36 +10,29 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.junit.Ignore;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
 
-
 @RunWith(MockitoJUnitRunner.class)
 public class AuthorizationFilterTest {
-
-	// private BaseMiddleware baseM;
 
 	@Mock
 	private AuthorizationFilter authFilter;
@@ -53,7 +46,8 @@ public class AuthorizationFilterTest {
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 
-	private Type type = new TypeToken<Map<String, String>>() {}.getType();
+	private Type type = new TypeToken<Map<String, String>>() {
+	}.getType();
 
 	@Test
 	public void test_missing_auth_token() throws MiddlewareHaltException, IOException {
@@ -97,7 +91,7 @@ public class AuthorizationFilterTest {
 	}
 
 	@Test @Ignore
-    public void test_keycloak_token_validation() throws Exception {
+	public void test_keycloak_token_validation() throws Exception {
 		Map<String, Object> mapObject = new HashMap<>();
 		String body = "client_id=" + System.getenv("sunbird_sso_client_id") + "&username=" + System.getenv("sunbird_sso_username")
 				+ "&password=" + System.getenv("sunbird_sso_password") + "&grant_type=password";
@@ -164,7 +158,7 @@ public class AuthorizationFilterTest {
 
 			// baseM.execute(mapObject);
 			authFilter.execute(mapObject);
-		}finally {
+		} finally {
 
 			injectEnvironmentVariable("sunbird_sso_publickey", publicKey);
 			injectEnvironmentVariable("sunbird_sso_realm", realm);
@@ -175,7 +169,7 @@ public class AuthorizationFilterTest {
 		}
 	}
 
-	private static void injectEnvironmentVariable(String key, String value)	throws Exception {
+	private static void injectEnvironmentVariable(String key, String value) throws Exception {
 		Class<?> processEnvironment = Class.forName("java.lang.ProcessEnvironment");
 		Field unmodifiableMapField = getAccessibleField(processEnvironment, "theUnmodifiableEnvironment");
 		Object unmodifiableMap = unmodifiableMapField.get(null);
@@ -190,13 +184,14 @@ public class AuthorizationFilterTest {
 		field.setAccessible(true);
 		return field;
 	}
-	private static void injectIntoUnmodifiableMap(String key, String value, Object map)	throws ReflectiveOperationException {
+
+	private static void injectIntoUnmodifiableMap(String key, String value, Object map) throws ReflectiveOperationException {
 		Class unmodifiableMap = Class.forName("java.util.Collections$UnmodifiableMap");
 		Field field = getAccessibleField(unmodifiableMap, "m");
 		Object obj = field.get(map);
 		((Map<String, String>) obj).put(key, value);
 	}
-
 }
+
 
 

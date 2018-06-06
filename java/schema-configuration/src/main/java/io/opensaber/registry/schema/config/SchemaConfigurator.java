@@ -24,7 +24,7 @@ import scala.util.Either;
 public class SchemaConfigurator {
 	
 	private static Logger logger = LoggerFactory.getLogger(SchemaConfigurator.class);
-	
+
 	private static final String FORMAT = "JSON-LD";
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;
@@ -35,7 +35,8 @@ public class SchemaConfigurator {
 
 	private Option<String> none = Option.empty();
 
-	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile) throws IOException {
+	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile) throws IOException{
+
 		loadSchemaConfigModel(schemaFile);
 		loadSchemaForValidation(validationcreateFile, true);
 		loadSchemaForValidation(validationUpdateFile, false);

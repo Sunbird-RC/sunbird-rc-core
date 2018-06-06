@@ -3,6 +3,7 @@ package io.opensaber.registry.service.impl;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
@@ -48,13 +49,16 @@ public class EncryptionServiceImpl implements EncryptionService {
 	private String encryptionServiceHealthCheckUri;
 
 	@Autowired
-	RestTemplate restTemplate;
+	private RestTemplate restTemplate;
 	
 	@Autowired
 	private Gson gson;
 	
 	@Autowired
 	SchemaConfigurator schemaConfigurator;
+
+	@Autowired
+	private OpenSaberInstrumentation watch;
 		
 	private static Logger logger = LoggerFactory.getLogger(EncryptionServiceImpl.class);
 	
@@ -64,19 +68,18 @@ public class EncryptionServiceImpl implements EncryptionService {
 		map.add("value", propertyValue);
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map);
 		try {
-			ResponseEntity<String> response = restTemplate.postForEntity(encryptionUri, request, String.class);
-			logger.info("Property encrypted successfully !");
-			return response.getBody();
-		} catch (ResourceAccessException e) {
+			ResponseEntity<String> response = new RestTemplate().postForEntity(encryptionUri, request, String.class);
+		   	return response.getBody();
+		}catch(ResourceAccessException e) {
 			logger.error("ResourceAccessException while connecting enryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service! ");
-		} catch (ServiceUnavailableException e) {
-			logger.error("ServiceUnavailableException while connecting enryption service!: ", e);
-			throw new EncryptionException("Encryption service is not available !");
-		} catch (Exception e) {
-			logger.error("Exception in encryption servie !: ", e);
-			throw new EncryptionException("Exception in encryption service ! ");
-		}
+		}catch(ServiceUnavailableException e) {
+	    	logger.error("ServiceUnavailableException while connecting enryption service!: ", e);
+	  		throw new EncryptionException("Encryption service is not available !");
+		}catch(Exception e) {
+	    	logger.error("Exception in encryption servie !: ", e);
+	    	throw new EncryptionException("Exception in encryption service ! ");
+	    }	    
 	}
 
 	@Override
@@ -110,7 +113,9 @@ public class EncryptionServiceImpl implements EncryptionService {
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity<String> entity = new HttpEntity<>(gson.toJson(map), headers);
 		try {
+			watch.start("EncryptionServiceImpl.encryptBatch");
 			ResponseEntity<String> response = restTemplate.postForEntity(encryptionBatchUri, entity, String.class);
+			watch.stop("EncryptionServiceImpl.encryptBatch");
 			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {}.getType());
 		} catch (ResourceAccessException e) {
 			logger.error("Exception while connecting enryption service : ", e);
@@ -134,7 +139,9 @@ public class EncryptionServiceImpl implements EncryptionService {
 		HttpEntity<String> entity = new HttpEntity<>(gson.toJson(map), headers);
 
 		try {
+			watch.start("EncryptionServiceImpl.decryptBatch");
 			ResponseEntity<String> response = restTemplate.postForEntity(decryptionBatchUri, entity, String.class);
+			watch.stop("EncryptionServiceImpl.decryptBatch");
 			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {}.getType());
 		} catch (ResourceAccessException e) {
 			logger.error("Exception while connecting dcryption service : ", e);

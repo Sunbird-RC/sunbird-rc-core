@@ -1,11 +1,9 @@
 package io.opensaber.registry.middleware.impl;
 
-
 import java.io.IOException;
 import java.util.Map;
 import org.apache.jena.rdf.model.Model;
 import es.weso.schema.Schema;
-
 import io.opensaber.registry.middleware.BaseMiddleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -18,10 +16,9 @@ public class RDFValidator implements BaseMiddleware{
 	private static final String RDF_DATA_IS_INVALID = "Data validation failed!";
 	private static final String RDF_VALIDATION_MAPPING_IS_INVALID = "RDF validation mapping is invalid!";
 	private static final String RDF_VALIDATION_MAPPING_MISSING = "RDF validation mapping is missing!";
-	private static final String SCHEMA_IS_NULL = "Schema for validation is missing";
+    private static final String SCHEMA_IS_NULL = "Schema for validation is missing";
 	private static final String INVALID_REQUEST_PATH = "Request URL is invalid";
 	private static final String ADD_REQUEST_PATH = "/add";
-
 
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;

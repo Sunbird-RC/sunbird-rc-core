@@ -2,16 +2,14 @@ package io.opensaber.registry.interceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
-
 import com.google.gson.Gson;
-
 import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -24,8 +22,10 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 	private AuthorizationFilter authorizationFilter;
 	
 	private Gson gson;
-	
+
 	@Autowired
+	private OpenSaberInstrumentation watch;
+	
 	public AuthorizationInterceptor(AuthorizationFilter authorizationFilter, Gson gson){
 		this.authorizationFilter = authorizationFilter;
 		this.gson = gson;
@@ -36,8 +36,11 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 			throws Exception {
 		try{
 			setRequest(request);
+			watch.start("AuthorizationInterceptor.execute");
 			authorizationFilter.execute(getRequestHeaderMap());
+			watch.stop("AuthorizationInterceptor.execute");
 			logger.debug(" Authentication successfull !");
+
 			return true;
 		}catch(MiddlewareHaltException e){
 			logger.error(" Authentication Failed !", e);
@@ -55,15 +58,13 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 
 	@Override
 	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
-			ModelAndView modelAndView) throws Exception {
-		// TODO Auto-generated method stub
+						   ModelAndView modelAndView) throws Exception {
 		HandlerInterceptor.super.postHandle(request, response, handler, modelAndView);
 	}
 
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
 			throws Exception {
-		// TODO Auto-generated method stub
 		HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
 	}
 

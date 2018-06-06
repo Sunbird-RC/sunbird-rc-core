@@ -258,7 +258,6 @@
 			<version>2.7.13</version>
 			<scope>test</scope>
 		</dependency>
-
 	</dependencies>
 
 	<build>

@@ -1,19 +1,17 @@
 package io.opensaber.registry.interceptor;
 
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
-
 import com.google.gson.Gson;
-
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.impl.RDFConverter;
@@ -24,23 +22,25 @@ public class RDFConversionInterceptor extends BaseRequestHandler implements Hand
 
 	private static Logger logger = LoggerFactory.getLogger(RDFConversionInterceptor.class);
 	private RDFConverter rdfConverter;
-	
 	private Gson gson;
 
 	@Autowired
+	private OpenSaberInstrumentation watch;
+
 	public RDFConversionInterceptor(RDFConverter rdfConverter, Gson gson){
 		this.rdfConverter = rdfConverter;
 		this.gson = gson;
 	}
-
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		try{
 		setRequest(request);
+		watch.start("RDFConversionInterceptor.execute");
 		Map<String, Object> attributeMap = rdfConverter.execute(getRequestBodyMap());
 		mergeRequestAttributes(attributeMap);
+		watch.stop("RDFConversionInterceptor.execute");
 		request = getRequest();
 		if (request.getAttribute(Constants.RDF_OBJECT) != null) {
 			logger.debug("RDF object for conversion :" + request.getAttribute(Constants.RDF_OBJECT));

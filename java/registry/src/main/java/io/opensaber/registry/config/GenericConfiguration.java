@@ -1,7 +1,7 @@
 package io.opensaber.registry.config;
 
 import java.io.IOException;
-
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.Neo4jGraphProvider;
@@ -21,11 +21,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-
 import es.weso.schema.Schema;
 import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.exception.CustomException;
@@ -58,7 +56,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	
 	@Value("${connection.timeout}")
 	private int connectionTimeout;
-	
+
 	@Value("${read.timeout}")
 	private int readTimeout;
 	
@@ -68,11 +66,19 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${authentication.enabled}")
 	private boolean authenticationEnabled;
 
+	@Value("${perf.monitoring.enabled}")
+	private boolean performanceMonitoringEnabled;
+
 	@Bean
 	public ObjectMapper objectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
 		objectMapper.setSerializationInclusion(Include.NON_NULL);
 		return objectMapper;
+	}
+
+	@Bean
+	public OpenSaberInstrumentation instrumentationStopWatch() {
+		return new OpenSaberInstrumentation(performanceMonitoringEnabled);
 	}
 
 	@Bean
@@ -88,6 +94,26 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public RDFConverter rdfConverter(){
 		return new RDFConverter();
+	}
+
+    @Bean
+    public AuthorizationInterceptor authorizationInterceptor() {
+        return new AuthorizationInterceptor(authorizationFilter(), gson());
+    }
+
+	@Bean
+	public RDFConversionInterceptor rdfConversionInterceptor() {
+		return new RDFConversionInterceptor(rdfConverter(), gson());
+	}
+
+	@Bean
+	public RDFValidationMappingInterceptor rdfValidationMappingInterceptor() {
+		return new RDFValidationMappingInterceptor(rdfValidationMapper(), gson());
+	}
+
+	@Bean
+	public RDFValidationInterceptor rdfValidationInterceptor() {
+		return new RDFValidationInterceptor(rdfValidator(), gson());
 	}
 
 	@Bean
@@ -106,7 +132,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (validationConfigFileForCreate == null || validationConfigFileForUpdate == null) {
 			throw new CustomException(Constants.VALIDATION_CONFIGURATION_MISSING);
 		}
-		return new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate);
+
+		OpenSaberInstrumentation watch = instrumentationStopWatch();
+		watch.start("SchemaConfigurator.initialization");
+		SchemaConfigurator schemaConfigurator = new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate);
+		watch.stop("SchemaConfigurator.initialization");
+		return schemaConfigurator ;
 	}
 
 	@Bean
@@ -127,16 +158,16 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public AuditRecord auditRecord() {
 		return new AuditRecord();
 	}
-	
-	@Bean
-	public RestTemplate restTemaplteProvider() throws IOException{
-		HttpClient httpClient = HttpClientBuilder.create().build();
-		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-		requestFactory.setConnectTimeout(connectionTimeout);
-		requestFactory.setConnectionRequestTimeout(connectionRequestTimeout);
-		requestFactory.setReadTimeout(readTimeout);
-		return new RestTemplate(requestFactory);
-	}
+
+    @Bean
+    public RestTemplate restTemaplteProvider() throws IOException {
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        requestFactory.setConnectTimeout(connectionTimeout);
+        requestFactory.setConnectionRequestTimeout(connectionRequestTimeout);
+        requestFactory.setReadTimeout(readTimeout);
+        return new RestTemplate(requestFactory);
+    }
 
 	
 	@Bean
@@ -176,14 +207,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 	    if(authenticationEnabled) {
-            registry.addInterceptor(new AuthorizationInterceptor(authorizationFilter(), gson()))
+            registry.addInterceptor(authorizationInterceptor())
                     .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
         }
-		registry.addInterceptor(new RDFConversionInterceptor(rdfConverter(), gson()))
+		registry.addInterceptor(rdfConversionInterceptor())
 				.addPathPatterns("/add", "/update").order(2);
-		registry.addInterceptor(new RDFValidationMappingInterceptor(rdfValidationMapper(), gson()))
+		registry.addInterceptor(rdfValidationMappingInterceptor())
 				.addPathPatterns("/add", "/update").order(3);
-		registry.addInterceptor(new RDFValidationInterceptor(rdfValidator(), gson()))
+		registry.addInterceptor(rdfValidationInterceptor())
 				.addPathPatterns("/add", "/update").order(4);
 	/*	registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
 				.addPathPatterns("/read/{id}").order(2);*/
@@ -207,5 +238,4 @@ public class GenericConfiguration implements WebMvcConfigurer {
     public HandlerExceptionResolver customExceptionHandler () {
         return new CustomExceptionHandler(gson());
     }
-	
 }

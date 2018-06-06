@@ -7,34 +7,28 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import es.weso.rdf.PrefixMap;
 import es.weso.schema.*;
 import es.weso.shapeMaps.ResultShapeMap;
 import io.opensaber.pojos.ValidationInfo;
 import io.opensaber.pojos.ValidationResponse;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
 import scala.collection.JavaConverters;
 import scala.util.Either;
 import scala.Option;
-
 import es.weso.rdf.RDFReader;
 import es.weso.rdf.jena.RDFAsJenaModel;
 
 public class ShaclexValidator {
 
 	private static Logger logger = LoggerFactory.getLogger(ShaclexValidator.class);
-	
+
 	private static final String NON_CONFORMANT = "nonconformant";
 	private Option<String> none = Option.empty();
 

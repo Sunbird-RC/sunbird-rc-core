@@ -3,11 +3,9 @@ package io.opensaber.registry.controller;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
-
-import io.opensaber.pojos.HealthCheckResponse;
+import io.opensaber.pojos.*;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.JSONUtil;
-
 import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,13 +20,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
-import io.opensaber.pojos.Request;
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.exception.RecordNotFoundException;
@@ -38,7 +31,7 @@ import io.opensaber.registry.service.RegistryService;
 public class RegistryController {
 
 	private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
-	
+
 	@Autowired
 	private RegistryService registryService;
 
@@ -51,21 +44,26 @@ public class RegistryController {
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
 
-	
+	@Autowired
+	private OpenSaberInstrumentation watch;
+
 	@RequestMapping(value = "/add", method = RequestMethod.POST)
 	public ResponseEntity<Response> addToExistingEntity(@RequestAttribute Request requestModel, 
 			@RequestParam(value="id", required = false) String id, @RequestParam(value="prop", required = false) String property) {
+
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
 
 		try {
+			watch.start("RegistryController.addToExistingEntity");
 			String label = registryService.addEntity(rdf, id, property);
 			result.put("entity", label);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller : Entity with label {} added !", label);
+			watch.stop("RegistryController.addToExistingEntity");
+			logger.debug("RegistryController : Entity with label {} added !", label);
 		} catch (DuplicateRecordException | EntityCreationException e) {
 			logger.error("DuplicateRecordException|EntityCreationException in controller while adding entity !",e);
 			response.setResult(result);
@@ -88,19 +86,22 @@ public class RegistryController {
 		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
 
 		try {
+			watch.start("RegistryController.readEntity");
 			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(entityId);
 			logger.debug("FETCHED: " + entityModel);
 			String jenaJSON = registryService.frameEntity(entityModel);
 			response.setResult(gson.fromJson(jenaJSON, mapType));
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller: entity for {} read !", entityId);
+			watch.stop("RegistryController.readEntity");
+			logger.debug("RegistryController: entity for {} read !", entityId);
+
 		} catch (RecordNotFoundException e) {
-			logger.error("Controller: RecordNotFoundException while reading entity !", e);
+			logger.error("RegistryController: RecordNotFoundException while reading entity !", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
-			logger.error("Controller: Exception while reading entity!", e);
+			logger.error("RegistryController: Exception while reading entity!", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Ding! You encountered an error!");
@@ -111,23 +112,24 @@ public class RegistryController {
 	@ResponseBody
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	public ResponseEntity<Response> update(@RequestAttribute Request requestModel) {
-
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
 
 		try {
+			watch.start("RegistryController.update");
 			registryService.updateEntity(rdf);
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
-			logger.debug("Controller: entity updated !");
+			watch.stop("RegistryController.update");
+			logger.debug("RegistryController: entity updated !");
 		} catch (RecordNotFoundException | EntityCreationException e) {
-			logger.error("Controller: RecordNotFoundException|EntityCreationException while updating entity (without id)!", e);
+			logger.error("RegistryController: RecordNotFoundException|EntityCreationException while updating entity (without id)!", e);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
 
 		} catch (Exception e) {
-			logger.error("Controller: Exception while updating entity (without id)!", e);
+			logger.error("RegistryController: Exception while updating entity (without id)!", e);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Error occurred when updating Entity");
 		}
@@ -160,7 +162,6 @@ public class RegistryController {
 	@ResponseBody
 	@RequestMapping(value = "/fetchAudit/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> fetchAudit(@PathVariable("id") String id) {
-
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
 
@@ -168,11 +169,13 @@ public class RegistryController {
 			String entityId = registryContext + id;
 
 			try {
+				watch.start("RegistryController.fetchAudit");
 				org.eclipse.rdf4j.model.Model auditModel = registryService.getAuditNode(entityId);
 				logger.debug("Audit Record model :" + auditModel);
 				String jenaJSON = registryService.frameAuditEntity(auditModel);
 				response.setResult(gson.fromJson(jenaJSON, mapType));
 				responseParams.setStatus(Response.Status.SUCCCESSFUL);
+				watch.stop("RegistryController.fetchAudit");
 				logger.debug("Controller: audit records fetched !");
 			} catch (RecordNotFoundException e) {
 				logger.error("Controller: RecordNotFoundException while fetching audit !", e);
@@ -193,6 +196,4 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
-
 }
