@@ -61,7 +61,7 @@
             </Pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>logFile.%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>logs/registry_perf_instrumentation.%d{yyyy-MM-dd}.log</FileNamePattern>
         </rollingPolicy>
     </appender>
 
