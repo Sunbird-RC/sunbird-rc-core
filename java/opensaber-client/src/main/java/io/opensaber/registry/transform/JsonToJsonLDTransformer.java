@@ -226,7 +226,7 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
                     childElementNode.forEach(n -> arrayNode.addObject().put(JsonldConstants.ID, nodePrefix + n.asText()));
                 }
                 resultNode.putArray(nodeElementKey).addAll(arrayNode);
-            } else if (nodeType.startsWith(MappingConstants.XSD_ELEMENT)) {
+            } else if (nodeType.startsWith(MappingConstants.XSD_ELEMENT) || nodeType.startsWith(MappingConstants.SCHEMA_ELEMENT)) {
                 leafNode.put(JsonldConstants.TYPE, nodeType);
                 leafNode.put(JsonldConstants.VALUE, childElementNode.asText());
                 resultNode.set(nodeElementKey, leafNode.deepCopy());
