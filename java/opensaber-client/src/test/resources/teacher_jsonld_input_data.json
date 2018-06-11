@@ -111,6 +111,20 @@
         "@type":"xsd:gYear"
       },
       "teacher:nationalIdentifier":"1234567890123456",
+      "teacher:email": [
+        {
+          "@type": "schema:Text",
+          "@value": "test@gmail.com"
+        },
+        {
+          "@type": "schema:Text",
+          "@value": "test1@gmail.com"
+        }
+      ],
+      "teacher:telephone": {
+        "@type": "schema:Text",
+        "@value": "7366283723"
+      },
       "teacher:inServiceTeacherTrainingFromOthers":{
         "@type":"teacher:InServiceTeacherTrainingFromOthers",
         "teacher:daysOfInServiceTeacherTraining":{

@@ -20,6 +20,15 @@
         "prefix":"teacher",
         "type":"xsd:string"
       },
+      "email": {
+        "prefix": "teacher",
+        "collection": true,
+        "type": "schema:Text"
+      },
+      "telephone": {
+        "prefix": "teacher",
+        "type": "schema:Text"
+      },
       "gender":{
         "prefix":"teacher",
         "type":"opensaber:enumeration"

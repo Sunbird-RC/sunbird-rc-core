@@ -214,6 +214,7 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
             }
 
             String nodeType = mappingIsAComplexObject ? nodeMappingValues.get(MappingConstants.TYPE).toString() : nodeMapping.get(MappingConstants.TYPE).toString();
+            boolean isCollection = nodeMapping.containsKey(MappingConstants.COLLECTION) && Boolean.parseBoolean(nodeMapping.get(MappingConstants.COLLECTION).toString());
             String prefix = mappingIsAComplexObject ? nodeMappingValues.get(MappingConstants.PREFIX).toString() : nodeMapping.get(MappingConstants.PREFIX).toString();
             String nodePrefix = String.format("%s:", prefix);
 
@@ -227,9 +228,20 @@ public class JsonToJsonLDTransformer implements ITransformer<String> {
                 }
                 resultNode.putArray(nodeElementKey).addAll(arrayNode);
             } else if (nodeType.startsWith(MappingConstants.XSD_ELEMENT) || nodeType.startsWith(MappingConstants.SCHEMA_ELEMENT)) {
-                leafNode.put(JsonldConstants.TYPE, nodeType);
-                leafNode.put(JsonldConstants.VALUE, childElementNode.asText());
-                resultNode.set(nodeElementKey, leafNode.deepCopy());
+                if(isCollection && childElementNode.isArray()) {
+                    ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+                    for(JsonNode childNode: childElementNode) {
+                        ObjectNode childLeafNode = JsonUtils.createObjectNode();
+                        childLeafNode.put(JsonldConstants.TYPE, nodeType);
+                        childLeafNode.put(JsonldConstants.VALUE, childNode.asText());
+                        arrayNode.add(childLeafNode);
+                    }
+                    resultNode.putArray(nodeElementKey).addAll(arrayNode);
+                } else {
+                    leafNode.put(JsonldConstants.TYPE, nodeType);
+                    leafNode.put(JsonldConstants.VALUE, childElementNode.asText());
+                    resultNode.set(nodeElementKey, leafNode.deepCopy());
+                }
             } else {
                 logger.error("Child element node with no node type defined: " + childElementNode);
                 throw new NodeMappingNotDefinedException(String.format("Node type not defined for %s",

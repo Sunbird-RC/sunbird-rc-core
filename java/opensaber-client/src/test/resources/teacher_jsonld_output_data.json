@@ -45,6 +45,20 @@
     "@type":"xsd:string",
     "@value":"1234567890123456"
   },
+  "email": [
+    {
+      "@type": "schema:Text",
+      "@value": "test@gmail.com"
+    },
+    {
+      "@type": "schema:Text",
+      "@value": "test1@gmail.com"
+    }
+  ],
+  "telephone": {
+    "@type": "schema:Text",
+    "@value": "7366283723"
+  },
   "teachingRole":{
     "mainSubjectsTaught":[
       {

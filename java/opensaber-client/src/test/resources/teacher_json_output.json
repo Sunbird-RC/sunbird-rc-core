@@ -50,6 +50,11 @@
     "trainedForChildrenSpecialNeeds":"YesNoCode-YES",
     "yearOfJoiningService":2014,
     "nationalIdentifier":1234567890123456,
+    "email": [
+      "test@gmail.com",
+      "test1@gmail.com"
+    ],
+    "telephone": 7366283723,
     "inServiceTeacherTrainingFromOthers":{
       "daysOfInServiceTeacherTraining":3.5,
       "id":"http://localhost:8080/015ee812-b68e-4735-847a-8ad6c9954b2f"
