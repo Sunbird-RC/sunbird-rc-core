@@ -66,26 +66,26 @@ public class RDFValidationMapper implements BaseMiddleware{
 		return null;
 	}
 
-	public Model generateShapeModel(Model inputRdf) throws MiddlewareHaltException{
+	public Model generateShapeModel(Model inputRdf) throws MiddlewareHaltException {
 		Model model = ModelFactory.createDefaultModel();
 		List<Resource> labelNodes = RDFUtil.getRootLabels(inputRdf);
-		if(labelNodes.size() != 1){
-			throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_INVALID);
+		if (labelNodes.size() != 1) {
+			throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_INVALID);
 		}
 		Resource target = labelNodes.get(0);
 		List<String> typeList = RDFUtil.getTypeForSubject(inputRdf, target);
-		if(typeList.size() != 1){
-			throw new MiddlewareHaltException(this.getClass().getName()+RDF_DATA_IS_INVALID);
+		if (typeList.size() != 1) {
+			throw new MiddlewareHaltException(this.getClass().getName() + RDF_DATA_IS_INVALID);
 		}
 		String targetType = typeList.get(0);
 		String shapeName = shapeTypeMap.get(targetType);
-		if(shapeName == null){
-			throw new MiddlewareHaltException(this.getClass().getName()+VALIDATION_MISSING_FOR_TYPE);
+		if (shapeName == null) {
+			throw new MiddlewareHaltException(this.getClass().getName() + VALIDATION_MISSING_FOR_TYPE);
 		}
 
 		Resource subjectResource = ResourceFactory.createResource(shapeName);
 		Property predicate = ResourceFactory.createProperty(Constants.TARGET_NODE_IRI);
-		model.add(subjectResource,predicate, target);
+		model.add(subjectResource, predicate, target);
 		return model;
 	}
 

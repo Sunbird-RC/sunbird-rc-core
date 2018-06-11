@@ -127,7 +127,6 @@ public class JsonToJsonLdTransformerTest {
         ObjectNode result = transformer.constructJsonLd(inputJson, mappingJson);
         ObjectNode expectedTeacherJsonldOutput = (ObjectNode) mapper.readTree(CharStreams.toString(new InputStreamReader(
                 JsonToJsonLDTransformer.class.getClassLoader().getResourceAsStream("teacher_jsonld_output_data.json"))));
-
         assertEquals(expectedTeacherJsonldOutput, result);
     }
 
