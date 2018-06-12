@@ -24,7 +24,7 @@ public class RDFValidationMappingInterceptor implements HandlerInterceptor {
 	private OpenSaberInstrumentation watch;
 
 	private RDFValidationMapper rdfValidationMapper;
-	
+
 	private Gson gson;
 
 	private static Logger logger = LoggerFactory.getLogger(RDFValidationMappingInterceptor.class);
@@ -38,17 +38,16 @@ public class RDFValidationMappingInterceptor implements HandlerInterceptor {
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {
 		BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
 		try {
-			
 			baseRequestHandler.setRequest(request);
-		watch.start("RDFValidationMappingInterceptor.execute");
-		Map<String, Object> attributeMap = rdfValidationMapper.execute(baseRequestHandler.getRequestAttributeMap());
-		baseRequestHandler.mergeRequestAttributes(attributeMap);
-		watch.stop("RDFValidationMappingInterceptor.execute");
-		request = baseRequestHandler.getRequest();
-		if (request.getAttribute(Constants.RDF_VALIDATION_MAPPER_OBJECT) != null) {
-			logger.debug("RDF validator object mapped successfully !");
-			return true;
-		}
+			watch.start("RDFValidationMappingInterceptor.execute");
+			Map<String, Object> attributeMap = rdfValidationMapper.execute(baseRequestHandler.getRequestAttributeMap());
+			baseRequestHandler.mergeRequestAttributes(attributeMap);
+			watch.stop("RDFValidationMappingInterceptor.execute");
+			request = baseRequestHandler.getRequest();
+			if (request.getAttribute(Constants.RDF_VALIDATION_MAPPER_OBJECT) != null) {
+				logger.debug("RDF validator object mapped successfully !");
+				return true;
+			}
 		}catch(MiddlewareHaltException e){
 			logger.error("MiddlewareHaltException from RDFValidationMappingInterceptor !" + e);
 			baseRequestHandler.setResponse(response);
@@ -56,14 +55,13 @@ public class RDFValidationMappingInterceptor implements HandlerInterceptor {
 			response = baseRequestHandler.getResponse();
 		}catch(Exception e){
 			logger.error("Exception from RDFValidationMappingInterceptor !" + e);
-			e.printStackTrace();
 			baseRequestHandler.setResponse(response);
 			baseRequestHandler.writeResponseObj(gson, Constants.RDF_VALIDATION_MAPPING_ERROR);
 			response = baseRequestHandler.getResponse();
 		}
 		return false;
 	}
-	
+
 	@Override
 	public void afterCompletion(HttpServletRequest arg0, HttpServletResponse arg1, Object arg2, Exception arg3)
 			throws Exception {

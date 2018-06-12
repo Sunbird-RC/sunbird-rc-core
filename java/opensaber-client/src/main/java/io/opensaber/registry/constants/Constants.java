@@ -20,6 +20,7 @@ public class Constants {
         public static final String ENUMERATION = "opensaber:enumeration";
         public static final String ENUMERATION_ARRAY = "opensaber:enumeration_array";
         public static final String XSD_ELEMENT = "xsd";
+        public static final String SCHEMA_ELEMENT = "schema";
     }
 
     public static class ApiEndPoints {

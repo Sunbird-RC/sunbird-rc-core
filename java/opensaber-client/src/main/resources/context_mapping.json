@@ -20,6 +20,15 @@
         "prefix":"teacher",
         "type":"xsd:string"
       },
+      "email": {
+        "prefix": "teacher",
+        "collection": true,
+        "type": "schema:Text"
+      },
+      "telephone": {
+        "prefix": "teacher",
+        "type": "schema:Text"
+      },
       "gender":{
         "prefix":"teacher",
         "type":"opensaber:enumeration"
@@ -254,6 +263,7 @@
   "context": {
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "teacher":"http://localhost:8080/",
-    "@vocab":"http://localhost:8080/"
+    "@vocab":"http://localhost:8080/",
+    "schema": "http://schema.org/"
   }
 }

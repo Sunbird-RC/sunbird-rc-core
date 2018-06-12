@@ -58,6 +58,16 @@ public class JsonldToJsonTransformerTest {
     }
 
     @Test
+    public void testSchemaTextLiteral() throws ParseException {
+        JsonNode jsonNode = inputJson.path("@graph").get(0).path("teacher:telephone");
+        Map.Entry<String, JsonNode> node = new AbstractMap.SimpleEntry<>("teacher:telephone", jsonNode);
+        ObjectNode result = transformer.processLiteralsOrConstantsNode(node);
+        ObjectNode expectedResult = JsonUtils.createObjectNode();
+        expectedResult.put("telephone", 7366283723L);
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
     public void testXsdDate() throws ParseException {
         JsonNode jsonNode = inputJson.path("@graph").get(0).path("teacher:birthDate");
         Map.Entry<String, JsonNode> node = new AbstractMap.SimpleEntry<>("teacher:birthDate", jsonNode);

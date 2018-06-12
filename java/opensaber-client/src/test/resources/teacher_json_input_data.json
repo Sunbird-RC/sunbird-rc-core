@@ -13,6 +13,8 @@
     "trainedForChildrenSpecialNeeds":"YesNoCode-YES",
     "yearOfJoiningService":"2014",
     "nationalIdentifier":1234567890123456,
+    "email": ["test@gmail.com", "test1@gmail.com"],
+    "telephone": "7366283723",
     "teachingRole":{
       "mainSubjectsTaught":[
         "SubjectCode-PHYSICS",
