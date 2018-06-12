@@ -635,9 +635,10 @@ public class RegistryDaoImpl implements RegistryDao {
                 } else {
                     valueList.add(newValue);
                 }
-                newValue = valueList;
+                // newValue = valueList;
+                newValue = processVertexProperty(valueList);
             }
-            v.property(key, newValue);
+            v.property(key, processVertexProperty(newValue));
             if (!(key.endsWith(Constants.AuditProperties.createdBy.name())
                     || key.endsWith(Constants.AuditProperties.createdOn.name())
                     || key.endsWith(Constants.AuditProperties.lastUpdatedBy.name())
@@ -665,6 +666,16 @@ public class RegistryDaoImpl implements RegistryDao {
                     logger.debug("No change found for auditing !");
                 }
             }
+        }
+    }
+
+    private Object processVertexProperty(Object propertyValue) {
+        if (propertyValue instanceof List) {
+            List<Object> temp = ((List) propertyValue);
+            String[] strings = temp.toArray(new String[0]);
+            return strings;
+        } else {
+            return propertyValue;
         }
     }
 

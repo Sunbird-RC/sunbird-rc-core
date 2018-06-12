@@ -1,6 +1,7 @@
 PREFIX teacher: <http://example.com/voc/teacher/1.0.0/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX ex: <http://ex.example/#>
+PREFIX schema: <http://schema.org/>
 
 teacher:isAYear xsd:gYear
 teacher:isAString xsd:string
@@ -8,6 +9,7 @@ teacher:isAnInteger xsd:integer
 teacher:isADate xsd:date
 teacher:isURI xsd:uri
 teacher:isADecimal xsd:decimal
+teacher:isAText schema:Text
 
 teacher:TeacherShape {
 	a [teacher:Teacher] ;
@@ -15,6 +17,7 @@ teacher:TeacherShape {
     teacher:teacherCode @teacher:isAString * ;
     teacher:nationalIdentifier @teacher:isADecimal * ;
     teacher:teacherName @teacher:isAString *;
+    teacher:email @teacher:isAText *;
     teacher:gender [teacher:GenderTypeCode-MALE teacher:GenderTypeCode-FEMALE] *;
     teacher:birthDate @teacher:isADate *;
     teacher:socialCategory [teacher:SocialCategoryTypeCode-GENERAL teacher:SocialCategoryTypeCode-SC teacher:SocialCategoryTypeCode-ST teacher:SocialCategoryTypeCode-OBC teacher:SocialCategoryTypeCode-ORC teacher:SocialCategoryTypeCode-OTHERS] *;

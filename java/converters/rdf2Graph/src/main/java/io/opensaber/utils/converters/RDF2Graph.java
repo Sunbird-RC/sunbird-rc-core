@@ -118,37 +118,46 @@ public final class RDF2Graph
 		logger.debug("ADDING it as Subject");
 		builder.subject(s.label());
 		Iterator<VertexProperty<String>> propertyIter = s.properties();
-		while (propertyIter.hasNext()){
+		while (propertyIter.hasNext()) {
 			VertexProperty property = propertyIter.next();
-			logger.debug("ADDING Property "+property.label()+": "+property.value());
+			logger.debug("ADDING Property " + property.label() + ": " + property.value());
 			Object object = property.value();
 			Property<Object> metaProperty = property.property("@type");
 			String type = null;
-			if(metaProperty.isPresent()){
+			if (metaProperty.isPresent()) {
 				type = metaProperty.value().toString();
 			}
-			logger.debug("TYPE is: "+type);
+			logger.debug("TYPE is: " + type);
 			//Object object = literal;
-			if(object instanceof List){
-				for(Object ob:(List)object){
-					String literal = (String)ob;
+			if (object instanceof List) {
+				for (Object ob : (List) object) {
+					String literal = (String) ob;
 					Object finalObj = literal;
-					if(type!=null){
+					if (type != null) {
 						finalObj = matchAndAddStatements(type, literal, vf);
 					}
 					builder.add(property.label(), finalObj);
 
 				}
-			}else{
-				String literal = (String)object;
+			} else if(object instanceof String[]) {
+				for (String literal : (String[]) object) {
+					Object finalObj = literal;
+					if (type != null) {
+						finalObj = matchAndAddStatements(type, literal, vf);
+					}
+					builder.add(property.label(), finalObj);
+
+				}
+			} else {
+				String literal = (String) object;
 				Object finalObj = literal;
-				if(type!=null){
+				if (type != null) {
 					finalObj = matchAndAddStatements(type, literal, vf);
 				}
 				builder.add(property.label(), finalObj);
 			}
 
-			logger.debug("OBJECT ADDED is "+object+"-"+object.getClass().getName());
+			logger.debug("OBJECT ADDED is " + object + "-" + object.getClass().getName());
 			//builder.add(property.label(), object);
 
 		}

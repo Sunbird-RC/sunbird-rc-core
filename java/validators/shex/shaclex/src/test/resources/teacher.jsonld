@@ -4,6 +4,7 @@
     "rdfs":"http://www.w3.org/2000/01/rdf-schema#",
     "teacher":"http://example.com/voc/teacher/1.0.0/",
     "xsd":"http://www.w3.org/2001/XMLSchema#",
+    "schema": "http://schema.org/",
     "@vocab":"http://example.com/voc/teacher/1.0.0/"
   },
   "@type":"Teacher",
@@ -17,6 +18,14 @@
   "gender":{
     "@id":"teacher:GenderTypeCode-MALE"
   },
+  "email": [{
+    "@type": "schema:Text",
+    "@value": "test1@gmail.com"
+  },
+  {
+    "@type": "schema:Text",
+    "@value": "test2@gmail.com"
+  }],
   "birthDate": {
     "@value": "1990-12-06",
     "@type": "xsd:date"
