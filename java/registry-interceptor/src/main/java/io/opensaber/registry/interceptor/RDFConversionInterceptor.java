@@ -18,7 +18,7 @@ import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
 @Component
-public class RDFConversionInterceptor extends BaseRequestHandler implements HandlerInterceptor{
+public class RDFConversionInterceptor implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(RDFConversionInterceptor.class);
 	private RDFConverter rdfConverter;
@@ -35,28 +35,29 @@ public class RDFConversionInterceptor extends BaseRequestHandler implements Hand
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
+		BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
 		try{
-		setRequest(request);
-		watch.start("RDFConversionInterceptor.execute");
-		Map<String, Object> attributeMap = rdfConverter.execute(getRequestBodyMap());
-		mergeRequestAttributes(attributeMap);
-		watch.stop("RDFConversionInterceptor.execute");
-		request = getRequest();
-		if (request.getAttribute(Constants.RDF_OBJECT) != null) {
-			logger.debug("RDF object for conversion :" + request.getAttribute(Constants.RDF_OBJECT));
-			return true;
-		}
+			baseRequestHandler.setRequest(request);
+			watch.start("RDFConversionInterceptor.execute");
+			Map<String, Object> attributeMap = rdfConverter.execute(baseRequestHandler.getRequestBodyMap());
+			baseRequestHandler.mergeRequestAttributes(attributeMap);
+			watch.stop("RDFConversionInterceptor.execute");
+			request = baseRequestHandler.getRequest();
+			if (request.getAttribute(Constants.RDF_OBJECT) != null) {
+				logger.debug("RDF object for conversion :" + request.getAttribute(Constants.RDF_OBJECT));
+				return true;
+			}
 		}catch(MiddlewareHaltException e){
 			logger.error("MiddlewareHaltException from RDFConversionInterceptor !"+ e);
-			setResponse(response);
-			writeResponseObj(gson, e.getMessage());
-			response = getResponse();
+			baseRequestHandler.setResponse(response);
+			baseRequestHandler.writeResponseObj(gson, e.getMessage());
+			response = baseRequestHandler.getResponse();
 		}catch(Exception e){
 			logger.error("Exception from RDFConversionInterceptor!"+ e);
 			e.printStackTrace();
-			setResponse(response);
-			writeResponseObj(gson, Constants.JSONLD_PARSE_ERROR);
-			response = getResponse();
+			baseRequestHandler.setResponse(response);
+			baseRequestHandler.writeResponseObj(gson, Constants.JSONLD_PARSE_ERROR);
+			response = baseRequestHandler.getResponse();
 		}
 		return false;
 	}

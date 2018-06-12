@@ -18,7 +18,7 @@ import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.util.Constants;
 
 @Component
-public class RDFValidationMappingInterceptor extends BaseRequestHandler implements HandlerInterceptor {
+public class RDFValidationMappingInterceptor implements HandlerInterceptor {
 
 	@Autowired
 	private OpenSaberInstrumentation watch;
@@ -36,28 +36,30 @@ public class RDFValidationMappingInterceptor extends BaseRequestHandler implemen
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {
+		BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
 		try {
-		setRequest(request);
+			
+			baseRequestHandler.setRequest(request);
 		watch.start("RDFValidationMappingInterceptor.execute");
-		Map<String, Object> attributeMap = rdfValidationMapper.execute(getRequestAttributeMap());
-		mergeRequestAttributes(attributeMap);
+		Map<String, Object> attributeMap = rdfValidationMapper.execute(baseRequestHandler.getRequestAttributeMap());
+		baseRequestHandler.mergeRequestAttributes(attributeMap);
 		watch.stop("RDFValidationMappingInterceptor.execute");
-		request = getRequest();
+		request = baseRequestHandler.getRequest();
 		if (request.getAttribute(Constants.RDF_VALIDATION_MAPPER_OBJECT) != null) {
 			logger.debug("RDF validator object mapped successfully !");
 			return true;
 		}
 		}catch(MiddlewareHaltException e){
 			logger.error("MiddlewareHaltException from RDFValidationMappingInterceptor !" + e);
-			setResponse(response);
-			writeResponseObj(gson, e.getMessage());
-			response = getResponse();
+			baseRequestHandler.setResponse(response);
+			baseRequestHandler.writeResponseObj(gson, e.getMessage());
+			response = baseRequestHandler.getResponse();
 		}catch(Exception e){
 			logger.error("Exception from RDFValidationMappingInterceptor !" + e);
 			e.printStackTrace();
-			setResponse(response);
-			writeResponseObj(gson, Constants.RDF_VALIDATION_MAPPING_ERROR);
-			response = getResponse();
+			baseRequestHandler.setResponse(response);
+			baseRequestHandler.writeResponseObj(gson, Constants.RDF_VALIDATION_MAPPING_ERROR);
+			response = baseRequestHandler.getResponse();
 		}
 		return false;
 	}

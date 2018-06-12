@@ -16,7 +16,7 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 
 @Component
-public class AuthorizationInterceptor extends BaseRequestHandler implements HandlerInterceptor{
+public class AuthorizationInterceptor implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(AuthorizationInterceptor.class);
 	private AuthorizationFilter authorizationFilter;
@@ -34,24 +34,25 @@ public class AuthorizationInterceptor extends BaseRequestHandler implements Hand
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
+		BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
 		try{
-			setRequest(request);
+			baseRequestHandler.setRequest(request);
 			watch.start("AuthorizationInterceptor.execute");
-			authorizationFilter.execute(getRequestHeaderMap());
+			authorizationFilter.execute(baseRequestHandler.getRequestHeaderMap());
 			watch.stop("AuthorizationInterceptor.execute");
 			logger.debug(" Authentication successfull !");
 
 			return true;
 		}catch(MiddlewareHaltException e){
 			logger.error(" Authentication Failed !", e);
-			setResponse(response);
-			writeResponseObj(gson, e.getMessage());
-			response = getResponse();
+			baseRequestHandler.setResponse(response);
+			baseRequestHandler.writeResponseObj(gson, e.getMessage());
+			response = baseRequestHandler.getResponse();
 		}catch(Exception e){
 			logger.error(" Authentication Failed !", e);
-			setResponse(response);
-			writeResponseObj(gson, Constants.TOKEN_EXTRACTION_ERROR);
-			response = getResponse();
+			baseRequestHandler.setResponse(response);
+			baseRequestHandler.writeResponseObj(gson, Constants.TOKEN_EXTRACTION_ERROR);
+			response = baseRequestHandler.getResponse();
 		}
 		return false;
 	}
