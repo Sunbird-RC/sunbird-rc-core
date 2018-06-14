@@ -20,7 +20,7 @@ import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.util.Constants;
 
 @Component
-public class RDFValidationInterceptor extends BaseRequestHandler implements HandlerInterceptor{
+public class RDFValidationInterceptor implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(RDFValidationInterceptor.class);
 
@@ -37,33 +37,34 @@ public class RDFValidationInterceptor extends BaseRequestHandler implements Hand
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws IOException, MiddlewareHaltException {
+		BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
 		try {
-			setRequest(request);
+			baseRequestHandler.setRequest(request);
 			watch.start("RDFValidationInterceptor.execute");
-			Map<String, Object> attributeMap = rdfValidator.execute(getRequestAttributeMap());
-			mergeRequestAttributes(attributeMap);
+			Map<String, Object> attributeMap = rdfValidator.execute(baseRequestHandler.getRequestAttributeMap());
+			baseRequestHandler.mergeRequestAttributes(attributeMap);
 			watch.stop("RDFValidationInterceptor.execute");
-			request = getRequest();
+			request = baseRequestHandler.getRequest();
 			ValidationResponse validationResponse = (ValidationResponse) request.getAttribute(Constants.RDF_VALIDATION_OBJECT);
 			if (validationResponse != null && validationResponse.isValid()) {
 				logger.info("RDF Validated successfully !");
 				return true;
 			} else {
 				logger.info("RDF Validation failed!");
-				setResponse(response);
-				writeResponseObj(validationResponse.getError(), validationResponse);
-				response = getResponse();
+				baseRequestHandler.setResponse(response);
+				baseRequestHandler.writeResponseObj(validationResponse.getError(), validationResponse);
+				response = baseRequestHandler.getResponse();
 			}
 		} catch (MiddlewareHaltException e) {
 			logger.error("MiddlewareHaltException from RDFValidationInterceptor: ", e);
-			setResponse(response);
-			writeResponseObj(gson, e.getMessage());
-			response = getResponse();
+			baseRequestHandler.setResponse(response);
+			baseRequestHandler.writeResponseObj(gson, e.getMessage());
+			response = baseRequestHandler.getResponse();
 		} catch (Exception e) {
 			logger.error("Exception from RDFValidationInterceptor: ", e);
-			setResponse(response);
-			writeResponseObj(gson, Constants.RDF_VALIDATION_ERROR);
-			response = getResponse();
+			baseRequestHandler.setResponse(response);
+			baseRequestHandler.writeResponseObj(gson, Constants.RDF_VALIDATION_ERROR);
+			response = baseRequestHandler.getResponse();
 		}
 		return false;
 	}
