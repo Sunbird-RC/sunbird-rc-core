@@ -32,6 +32,7 @@ import io.opensaber.registry.interceptor.AuthorizationInterceptor;
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.impl.RDFValidator;
@@ -87,12 +88,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public JSONLDConverter jsonldConverter(){
+	public Middleware jsonldConverter(){
 		return new JSONLDConverter();
 	}
 
 	@Bean
-	public RDFConverter rdfConverter(){
+	public Middleware rdfConverter(){
 		return new RDFConverter();
 	}
 
@@ -117,7 +118,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public AuthorizationFilter authorizationFilter(){
+	public Middleware authorizationFilter(){
 		return new AuthorizationFilter(new KeyCloakServiceImpl());
 	}
 	
@@ -141,7 +142,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public RDFValidator rdfValidator() {
+	public Middleware rdfValidator() {
 		Schema schemaForCreate = null;
 		Schema schemaForUpdate = null;
 		try {
@@ -194,7 +195,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public RDFValidationMapper rdfValidationMapper() {
+	public Middleware rdfValidationMapper() {
 		Model validationConfig = null;
 		try{
 			validationConfig = schemaConfiguration().getValidationConfig();

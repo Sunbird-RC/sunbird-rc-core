@@ -14,12 +14,12 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
 
-import io.opensaber.registry.middleware.BaseMiddleware;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
 
-public class RDFValidationMapper implements BaseMiddleware{
+public class RDFValidationMapper implements Middleware{
 	
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing";
 	private static final String RDF_DATA_IS_INVALID = "RDF Data is invalid";

@@ -15,12 +15,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import io.jsonwebtoken.Jwts;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.middleware.BaseMiddleware;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.codec.binary.Base64;
 
-public class AuthorizationFilter implements BaseMiddleware {
+public class AuthorizationFilter implements Middleware {
 
     private static Logger logger = LoggerFactory.getLogger(AuthorizationFilter.class);
     private static final String TOKEN_IS_MISSING = "Auth token is missing";

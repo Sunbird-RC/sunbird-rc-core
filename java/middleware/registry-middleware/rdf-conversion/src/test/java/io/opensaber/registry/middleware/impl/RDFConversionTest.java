@@ -17,7 +17,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import io.opensaber.registry.middleware.BaseMiddleware;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 
@@ -29,7 +29,7 @@ public class RDFConversionTest {
 	public ExpectedException expectedEx = ExpectedException.none();
 	
 	Map<String, Object> mapData;
-	private BaseMiddleware m;
+	private Middleware m;
 	
 	private void setup() {
     		m = new RDFConverter();

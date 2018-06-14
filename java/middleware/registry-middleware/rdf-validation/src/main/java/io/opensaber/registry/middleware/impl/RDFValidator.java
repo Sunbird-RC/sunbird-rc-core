@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.util.Map;
 import org.apache.jena.rdf.model.Model;
 import es.weso.schema.Schema;
-import io.opensaber.registry.middleware.BaseMiddleware;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.Validator;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 import io.opensaber.pojos.ValidationResponse;
 
-public class RDFValidator implements BaseMiddleware{
+public class RDFValidator implements Middleware{
 
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing!";
 	private static final String RDF_DATA_IS_INVALID = "Data validation failed!";
@@ -45,14 +46,16 @@ public class RDFValidator implements BaseMiddleware{
 		}else if (schemaForCreate == null || schemaForUpdate == null) {
 			throw new MiddlewareHaltException(SCHEMA_IS_NULL);
 		} else {
-			ShaclexValidator validator = new ShaclexValidator();
+			Schema schema = null;
 			mergeModels((Model) RDF, (Model) validationRDF);
 			ValidationResponse validationResponse = null;
 			if(ADD_REQUEST_PATH.equals((String)method)){
-				validationResponse = validator.validate((Model) validationRDF, schemaForCreate);
+				schema = schemaForCreate;
 			} else {
-				validationResponse = validator.validate((Model) validationRDF, schemaForUpdate);
+				schema = schemaForUpdate;
 			}
+			Validator validator = new ShaclexValidator(schema, (Model) validationRDF);
+			validationResponse = validator.validate();
 			mapData.put(Constants.RDF_VALIDATION_OBJECT, validationResponse);
 			return mapData;
 		}

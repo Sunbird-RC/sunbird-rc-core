@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 import scala.Option;
 import scala.util.Either;
@@ -49,7 +50,7 @@ public class SchemaConfigurator {
 			throw new IOException(Constants.SCHEMA_CONFIGURATION_MISSING);
 		}
 		String contents = new String(ByteStreams.toByteArray(is));
-		schemaConfig = ShaclexValidator.parse(contents, FORMAT);
+		schemaConfig = RDFUtil.getRdfModelFromJsonld(contents, FORMAT);
 	}
 
 	private void loadSchemaForValidation(String validationFile, boolean isCreate) throws IOException {
@@ -70,7 +71,7 @@ public class SchemaConfigurator {
 	}
 
 	private void loadValidationConfigModel(){
-		validationConfig = ShaclexValidator.parse(schemaForUpdate.serialize(FORMAT).right().get(), FORMAT);
+		validationConfig = RDFUtil.getRdfModelFromJsonld(schemaForUpdate.serialize(FORMAT).right().get(), FORMAT);
 	}
 
 	public boolean isPrivate(String propertyName) {

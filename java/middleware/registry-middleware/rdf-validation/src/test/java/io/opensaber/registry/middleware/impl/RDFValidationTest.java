@@ -6,12 +6,15 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.Rule;
@@ -19,11 +22,16 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import es.weso.schema.Schema;
+import es.weso.schema.Schemas;
 import io.opensaber.pojos.ValidationResponse;
-import io.opensaber.registry.middleware.BaseMiddleware;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.Validator;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
+import scala.Option;
+import scala.util.Either;
 
 public class RDFValidationTest {
 	private static final String SIMPLE_SHEX = "good1.shex";
@@ -44,8 +52,8 @@ public class RDFValidationTest {
 	private String jsonld;
 	private static final String EMPTY_STRING = "";
 	private Map<String, Object> mapData;
-	private BaseMiddleware middleware;
-	
+	private Middleware middleware;
+	private Option<String> none = Option.empty();
 	
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
@@ -53,9 +61,8 @@ public class RDFValidationTest {
 	private boolean setup(String shexFileForCreate, String shexFileForUpdate) {
 		boolean successfulInitialization = true;
 		try {
-			ShaclexValidator validator = new ShaclexValidator();
-			Schema createSchema = validator.readSchema(shexFileForCreate, SCHEMAFORMAT, PROCESSOR);
-			Schema updateSchema = validator.readSchema(shexFileForUpdate, SCHEMAFORMAT, PROCESSOR);
+			Schema createSchema = readSchema(shexFileForCreate, SCHEMAFORMAT, PROCESSOR);
+			Schema updateSchema = readSchema(shexFileForUpdate, SCHEMAFORMAT, PROCESSOR);
 			middleware = new RDFValidator(createSchema,updateSchema);
 		} catch (Exception e) {
 			successfulInitialization = false;
@@ -298,13 +305,21 @@ public class RDFValidationTest {
 
 	private Model getValidRdf(String filename, String format) {
 		setJsonld(filename);
-		Model model = ShaclexValidator.parse(jsonld, format);
+		Model model = RDFUtil.getRdfModelFromJsonld(jsonld, format);
 		return model;
 	}
 	
 	private Model getValidRdf(String fileName){
 		setJsonld(fileName);
-		Model model = ShaclexValidator.parse(jsonld, TTL_FORMAT);
+		Model model = RDFUtil.getRdfModelFromJsonld(jsonld, TTL_FORMAT);
 		return model;
 	}
+	
+	public Schema readSchema(String schemaFileName, String format, String processor) throws IOException {
+		InputStream is = this.getClass().getClassLoader().getResourceAsStream(schemaFileName);
+		String contents = new String(ByteStreams.toByteArray(is));
+		Either<String, Schema> result = Schemas.fromString(contents,format,processor,none);
+		return result.right().get();
+	}
+	
 }

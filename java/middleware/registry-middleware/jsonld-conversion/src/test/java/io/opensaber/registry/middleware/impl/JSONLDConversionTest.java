@@ -20,9 +20,10 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import io.opensaber.converters.JenaRDF4J;
-import io.opensaber.registry.middleware.BaseMiddleware;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 
 public class JSONLDConversionTest {
@@ -34,7 +35,7 @@ public class JSONLDConversionTest {
 	public ExpectedException expectedEx = ExpectedException.none();
 	
 	Map<String, Object> mapData;
-	private BaseMiddleware m;
+	private Middleware m;
 	private Model rdfModel;
 	
 	private void setup() throws IOException, URISyntaxException{
@@ -42,7 +43,7 @@ public class JSONLDConversionTest {
     		String jsonLDData = Paths.get(getPath(TEACHER_JSONLD)).toString();
     		Path filePath = Paths.get(jsonLDData);
     		String jsonld = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
-    		org.apache.jena.rdf.model.Model model = ShaclexValidator.parse(jsonld, FORMAT);
+    		org.apache.jena.rdf.model.Model model = RDFUtil.getRdfModelFromJsonld(jsonld, FORMAT);
     		rdfModel = JenaRDF4J.asRDF4JModel(model);
     }
 	

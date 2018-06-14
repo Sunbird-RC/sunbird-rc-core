@@ -31,6 +31,7 @@ import org.springframework.core.env.Environment;
 
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.utils.converters.RDF2Graph;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 
@@ -92,24 +93,24 @@ public class RegistryTestBase {
 	public Model getNewValidRdf(String fileName, String contextConstant){
 		setJsonld(fileName);
 		setJsonldWithNewRootLabel(contextConstant+generateRandomId());
-		Model model = ShaclexValidator.parse(jsonld, FORMAT);
+		Model model = RDFUtil.getRdfModelFromJsonld(jsonld, FORMAT);
 		return model;
 	}
 	
 	public Model getNewValidRdf(String fileName){
 		setJsonld(fileName);
 		setJsonldWithNewRootLabel();
-		return ShaclexValidator.parse(jsonld, FORMAT);
+		return RDFUtil.getRdfModelFromJsonld(jsonld, FORMAT);
 	}
 	
 	public Model getNewValidRdfFromJsonString(String json){
-		return ShaclexValidator.parse(json, FORMAT);
+		return RDFUtil.getRdfModelFromJsonld(json, FORMAT);
 	}
 
 	public Model getNewValidRdf(String fileName, String contextConstant, String rootNodeLabel){
 		setJsonld(fileName);
 		setJsonldWithNewRootLabel(rootNodeLabel);
-		return ShaclexValidator.parse(jsonld, FORMAT);
+		return RDFUtil.getRdfModelFromJsonld(jsonld, FORMAT);
 	}
 	
 	public Model getRdfWithInvalidTpe(){
