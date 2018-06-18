@@ -43,7 +43,7 @@ public class JSONLDConversionTest {
     		String jsonLDData = Paths.get(getPath(TEACHER_JSONLD)).toString();
     		Path filePath = Paths.get(jsonLDData);
     		String jsonld = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
-    		org.apache.jena.rdf.model.Model model = RDFUtil.getRdfModelFromJsonld(jsonld, FORMAT);
+    		org.apache.jena.rdf.model.Model model = RDFUtil.getRdfModelBasedOnFormat(jsonld, FORMAT);
     		rdfModel = JenaRDF4J.asRDF4JModel(model);
     }
 	

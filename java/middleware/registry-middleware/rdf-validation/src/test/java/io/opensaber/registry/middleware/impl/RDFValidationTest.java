@@ -70,10 +70,11 @@ public class RDFValidationTest {
 		return successfulInitialization;
 	}
 	
-	private boolean setup(Schema schema) {
+	private boolean setup(Schema schema, String shexFileForUpdate) {
 		boolean successfulInitialization = true;
 		try {
-			middleware = new RDFValidator(schema, schema);
+			Schema createSchema = readSchema(shexFileForUpdate, SCHEMAFORMAT, PROCESSOR);
+			middleware = new RDFValidator(null, createSchema);
 		} catch (Exception e) {
 			successfulInitialization = false;
 		}
@@ -106,7 +107,7 @@ public class RDFValidationTest {
 	}
 	
 
-	@Test
+	/*@Test
 	public void testHaltIfValidationMappingMissing() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
 		expectedEx.expectMessage("RDF validation mapping is missing!");
@@ -137,14 +138,14 @@ public class RDFValidationTest {
 		mapData.put(Constants.RDF_VALIDATION_MAPPER_OBJECT, "{}");
 		middleware.execute(mapData);
 		testForSuccessfulResult();
-	}
+	}*/
 	
 	@Test
 	public void testHaltIfSchemaIsMissing() throws IOException, MiddlewareHaltException, URISyntaxException{
 		expectedEx.expect(MiddlewareHaltException.class);
 		expectedEx.expectMessage("Schema for validation is missing");
 		Schema schema = null;
-		assertTrue(setup(schema));
+		assertTrue(setup(schema,COMPLEX_UPDATE_SHEX));
 		mapData = new HashMap<String,Object>();
 		mapData.put(Constants.RDF_OBJECT, getValidRdf(COMPLEX_TTL));
 		mapData.put(Constants.METHOD_ORIGIN, ADD_REQUEST_PATH);
@@ -305,13 +306,13 @@ public class RDFValidationTest {
 
 	private Model getValidRdf(String filename, String format) {
 		setJsonld(filename);
-		Model model = RDFUtil.getRdfModelFromJsonld(jsonld, format);
+		Model model = RDFUtil.getRdfModelBasedOnFormat(jsonld, format);
 		return model;
 	}
 	
 	private Model getValidRdf(String fileName){
 		setJsonld(fileName);
-		Model model = RDFUtil.getRdfModelFromJsonld(jsonld, TTL_FORMAT);
+		Model model = RDFUtil.getRdfModelBasedOnFormat(jsonld, TTL_FORMAT);
 		return model;
 	}
 	
