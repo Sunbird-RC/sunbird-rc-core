@@ -14,19 +14,20 @@ import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.Middleware;
 
 @Component
 public class AuthorizationInterceptor implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(AuthorizationInterceptor.class);
-	private AuthorizationFilter authorizationFilter;
+	private Middleware authorizationFilter;
 	
 	private Gson gson;
 
 	@Autowired
 	private OpenSaberInstrumentation watch;
 	
-	public AuthorizationInterceptor(AuthorizationFilter authorizationFilter, Gson gson){
+	public AuthorizationInterceptor(Middleware authorizationFilter, Gson gson){
 		this.authorizationFilter = authorizationFilter;
 		this.gson = gson;
 	}

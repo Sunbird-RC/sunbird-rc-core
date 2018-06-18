@@ -13,6 +13,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 import com.google.gson.Gson;
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.util.Constants;
@@ -21,13 +22,13 @@ import io.opensaber.registry.middleware.util.Constants;
 public class RDFConversionInterceptor implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(RDFConversionInterceptor.class);
-	private RDFConverter rdfConverter;
+	private Middleware rdfConverter;
 	private Gson gson;
 
 	@Autowired
 	private OpenSaberInstrumentation watch;
 
-	public RDFConversionInterceptor(RDFConverter rdfConverter, Gson gson){
+	public RDFConversionInterceptor(Middleware rdfConverter, Gson gson){
 		this.rdfConverter = rdfConverter;
 		this.gson = gson;
 	}

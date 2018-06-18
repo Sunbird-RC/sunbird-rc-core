@@ -2,7 +2,6 @@ package io.opensaber.validators.shex.shaclex;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -12,6 +11,7 @@ import es.weso.schema.*;
 import es.weso.shapeMaps.ResultShapeMap;
 import io.opensaber.pojos.ValidationInfo;
 import io.opensaber.pojos.ValidationResponse;
+import io.opensaber.registry.middleware.Validator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.*;
@@ -25,14 +25,21 @@ import scala.Option;
 import es.weso.rdf.RDFReader;
 import es.weso.rdf.jena.RDFAsJenaModel;
 
-public class ShaclexValidator {
+public class ShaclexValidator implements Validator{
 
 	private static Logger logger = LoggerFactory.getLogger(ShaclexValidator.class);
 
 	private static final String NON_CONFORMANT = "nonconformant";
 	private Option<String> none = Option.empty();
+	private Model dataModel;
+	private Schema schema;
+	
+	public ShaclexValidator(Schema schema, Model dataModel){
+		this.schema = schema;
+		this.dataModel = dataModel;
+	}
 
-	public ValidationResponse validate(Model dataModel, Schema schema) {
+	public ValidationResponse validate() {
 		RDFReader rdf = new RDFAsJenaModel(dataModel);
 		Result result = schema.validate(rdf, "TARGETDECLS", null, none, none, rdf.getPrefixMap(), schema.pm());
 		return parseValidationOutput(dataModel, result, schema.pm());
@@ -237,13 +244,7 @@ public class ShaclexValidator {
 	private Optional<String> getNullableOptionalString(String input) {
 		return Optional.ofNullable(input).filter(s -> !s.isEmpty());
 	}
-	
-	public static Model parse(String rdfData, String format) {
-        Model m = ModelFactory.createDefaultModel();
-        StringReader reader = new StringReader(rdfData);
-        m.read(reader, null, format);
-        return m;
-	}
+
 
 	public Schema readSchema(String schemaFileName, String format, String processor) throws IOException {
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream(schemaFileName);

@@ -14,6 +14,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 import com.google.gson.Gson;
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.impl.RDFValidator;
 import io.opensaber.registry.middleware.util.Constants;
@@ -23,13 +24,13 @@ public class RDFValidationInterceptor implements HandlerInterceptor{
 
 	private static Logger logger = LoggerFactory.getLogger(RDFValidationInterceptor.class);
 
-	private RDFValidator rdfValidator;
+	private Middleware rdfValidator;
 	private Gson gson;
 
 	@Autowired
 	private OpenSaberInstrumentation watch ;
 	
-	public RDFValidationInterceptor(RDFValidator rdfValidator, Gson gson){
+	public RDFValidationInterceptor(Middleware rdfValidator, Gson gson){
 		this.rdfValidator = rdfValidator;
 		this.gson = gson;
 	}

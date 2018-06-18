@@ -4,6 +4,8 @@ import com.google.gson.*;
 import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.pojos.ValidationResponse;
+import io.opensaber.registry.middleware.Validator;
+import io.opensaber.registry.middleware.util.RDFUtil;
 
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.riot.Lang;
@@ -249,12 +251,12 @@ public class ShaclexValidatorTest {
 
 	private ValidationResponse validate(String data, String dataFormat, String schemaFile,
 									   String schemaFormat, String processor) throws Exception {
-		ShaclexValidator validator = new ShaclexValidator();
-		Model dataModel = ShaclexValidator.parse(data, dataFormat);
+		Model dataModel = RDFUtil.getRdfModelFromJsonld(data, dataFormat);
 		Model validationRDF = generateShapeModel(dataModel);
 		mergeModels(dataModel, validationRDF);
 		Schema schema = readSchema(Paths.get(schemaFile), schemaFormat, processor);
-		return validator.validate(validationRDF, schema);
+		Validator validator = new ShaclexValidator(schema, validationRDF);
+		return validator.validate();
 	}
 
 

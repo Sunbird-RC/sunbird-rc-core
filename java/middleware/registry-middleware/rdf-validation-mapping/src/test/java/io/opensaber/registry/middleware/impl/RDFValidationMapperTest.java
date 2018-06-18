@@ -38,9 +38,10 @@ import com.google.gson.JsonParser;
 
 import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
-import io.opensaber.registry.middleware.BaseMiddleware;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 import scala.Option;
 import scala.util.Either;
@@ -48,7 +49,7 @@ import scala.util.Either;
 public class RDFValidationMapperTest {
 	
 	Map<String, Object> mapData;
-	private BaseMiddleware m;
+	private Middleware m;
 	private String jsonld;
 	private Schema schema;
 	private Model validationConfig;
@@ -77,7 +78,7 @@ public class RDFValidationMapperTest {
 	}
 	
 	public void loadValidationConfigModel(){
-		validationConfig = ShaclexValidator.parse(schema.serialize(FORMAT).right().get(), FORMAT);
+		validationConfig = RDFUtil.getRdfModelFromJsonld(schema.serialize(FORMAT).right().get(), FORMAT);
 	}
 
 	private void setJsonld(String filename){
@@ -116,7 +117,7 @@ public class RDFValidationMapperTest {
 	
 	private Model getNewValidRdf(String fileName){
 		setJsonld(fileName);
-		Model model = ShaclexValidator.parse(jsonld, FORMAT);
+		Model model = RDFUtil.getRdfModelFromJsonld(jsonld, FORMAT);
 		return model;
 	}
 	
@@ -126,7 +127,7 @@ public class RDFValidationMapperTest {
 		JsonObject jsonObject = p.parse(jsonld).getAsJsonObject();
 		jsonObject.addProperty("@type", "School1");
 		String dataString = new Gson().toJson(jsonObject);
-		Model model = ShaclexValidator.parse(dataString, FORMAT);
+		Model model = RDFUtil.getRdfModelFromJsonld(dataString, FORMAT);
 		return model;
 	}
 	
@@ -136,7 +137,7 @@ public class RDFValidationMapperTest {
 		JsonObject jsonObject = p.parse(jsonld).getAsJsonObject();
 		jsonObject.remove("sample:address");
 		String dataString = new Gson().toJson(jsonObject);
-		Model model = ShaclexValidator.parse(dataString, FORMAT);
+		Model model = RDFUtil.getRdfModelFromJsonld(dataString, FORMAT);
 		return model;
 	}
 	

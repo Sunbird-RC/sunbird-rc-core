@@ -2,17 +2,17 @@ package io.opensaber.registry.middleware.impl;
 
 import java.io.IOException;
 import java.util.Map;
-
 import org.apache.jena.rdf.model.Model;
 
-import io.opensaber.registry.middleware.BaseMiddleware;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.validators.shex.shaclex.ShaclexValidator;
+import io.opensaber.registry.middleware.util.RDFUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RDFConverter implements BaseMiddleware {
+public class RDFConverter implements Middleware {
 
 	private static Logger logger = LoggerFactory.getLogger(RDFConverter.class);
 	private static final String JSONLD_DATA_IS_MISSING = "JSON-LD data is missing!";
@@ -23,8 +23,8 @@ public class RDFConverter implements BaseMiddleware {
 		if (jsonld == null) {
 			throw new MiddlewareHaltException(JSONLD_DATA_IS_MISSING);
 		} else if (jsonld instanceof String) {
-			Model model = ShaclexValidator.parse(jsonld.toString(), FORMAT);
-			mapData.put(Constants.RDF_OBJECT, model);
+			Model rdfModel = RDFUtil.getRdfModelFromJsonld(jsonld.toString(), FORMAT);
+			mapData.put(Constants.RDF_OBJECT, rdfModel);
 		} else {
 			throw new MiddlewareHaltException(this.getClass().getName() + "JSONLD data is invalid!");
 		}

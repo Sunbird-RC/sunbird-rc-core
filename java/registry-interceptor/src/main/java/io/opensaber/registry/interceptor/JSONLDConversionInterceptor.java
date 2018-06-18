@@ -14,6 +14,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 import io.opensaber.registry.interceptor.handler.BaseResponseHandler;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.impl.JSONLDConverter;
 import io.opensaber.registry.middleware.util.Constants;
 
@@ -25,10 +26,10 @@ public class JSONLDConversionInterceptor extends BaseResponseHandler implements 
 	@Autowired
 	private OpenSaberInstrumentation watch;
 	
-	private JSONLDConverter jsonldConverter;
+	private Middleware jsonldConverter;
 	
 	@Autowired
-	public JSONLDConversionInterceptor(JSONLDConverter jsonldConverter){
+	public JSONLDConversionInterceptor(Middleware jsonldConverter){
 		this.jsonldConverter = jsonldConverter;
 	}
 

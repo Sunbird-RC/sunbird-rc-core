@@ -8,7 +8,7 @@ import java.util.Map;
  * @author jyotsna
  *
  */
-public interface BaseMiddleware {
+public interface Middleware {
 	
 	/**
 	 * This method executes the middleware logic

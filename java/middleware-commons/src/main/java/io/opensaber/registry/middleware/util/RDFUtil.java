@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -31,6 +32,13 @@ public class RDFUtil {
 
     @Value("${registry.context.base}")
     private static String registryContext;
+    
+    
+    public static Model getRdfModelFromJsonld(String jsonldData, String format){
+    	Model m = ModelFactory.createDefaultModel();
+    	StringReader reader = new StringReader(jsonldData);
+    	return m.read(reader, null, format);
+    }
 
     /**
      * This method returns a List of RDFNodes which are blank nodes from a Jena Model

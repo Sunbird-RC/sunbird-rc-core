@@ -18,7 +18,7 @@ import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
 
 import io.opensaber.converters.JenaRDF4J;
-import io.opensaber.registry.middleware.BaseMiddleware;
+import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 
@@ -27,7 +27,7 @@ import io.opensaber.registry.middleware.util.Constants;
  * @author jyotsna
  *
  */
-public class JSONLDConverter implements BaseMiddleware{
+public class JSONLDConverter implements Middleware{
 	
 	private static final String INVALID_RDF_DATA = "RDF data is invalid!";
 
