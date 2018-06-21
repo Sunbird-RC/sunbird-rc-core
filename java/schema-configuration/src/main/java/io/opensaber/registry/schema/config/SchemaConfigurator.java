@@ -50,7 +50,7 @@ public class SchemaConfigurator {
 			throw new IOException(Constants.SCHEMA_CONFIGURATION_MISSING);
 		}
 		String contents = new String(ByteStreams.toByteArray(is));
-		schemaConfig = RDFUtil.getRdfModelFromJsonld(contents, FORMAT);
+		schemaConfig = RDFUtil.getRdfModelBasedOnFormat(contents, FORMAT);
 	}
 
 	private void loadSchemaForValidation(String validationFile, boolean isCreate) throws IOException {
@@ -71,7 +71,7 @@ public class SchemaConfigurator {
 	}
 
 	private void loadValidationConfigModel(){
-		validationConfig = RDFUtil.getRdfModelFromJsonld(schemaForUpdate.serialize(FORMAT).right().get(), FORMAT);
+		validationConfig = RDFUtil.getRdfModelBasedOnFormat(schemaForUpdate.serialize(FORMAT).right().get(), FORMAT);
 	}
 
 	public boolean isPrivate(String propertyName) {

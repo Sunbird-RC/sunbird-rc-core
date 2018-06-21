@@ -213,10 +213,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
         }
 		registry.addInterceptor(rdfConversionInterceptor())
 				.addPathPatterns("/add", "/update").order(2);
-		registry.addInterceptor(rdfValidationMappingInterceptor())
-				.addPathPatterns("/add", "/update").order(3);
+		/*registry.addInterceptor(rdfValidationMappingInterceptor())
+				.addPathPatterns("/add", "/update").order(3);*/
 		registry.addInterceptor(rdfValidationInterceptor())
-				.addPathPatterns("/add", "/update").order(4);
+				.addPathPatterns("/add", "/update").order(3);
 	/*	registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
 				.addPathPatterns("/read/{id}").order(2);*/
 	}

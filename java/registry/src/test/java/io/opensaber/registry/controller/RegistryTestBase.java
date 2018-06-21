@@ -93,24 +93,24 @@ public class RegistryTestBase {
 	public Model getNewValidRdf(String fileName, String contextConstant){
 		setJsonld(fileName);
 		setJsonldWithNewRootLabel(contextConstant+generateRandomId());
-		Model model = RDFUtil.getRdfModelFromJsonld(jsonld, FORMAT);
+		Model model = RDFUtil.getRdfModelBasedOnFormat(jsonld, FORMAT);
 		return model;
 	}
 	
 	public Model getNewValidRdf(String fileName){
 		setJsonld(fileName);
 		setJsonldWithNewRootLabel();
-		return RDFUtil.getRdfModelFromJsonld(jsonld, FORMAT);
+		return RDFUtil.getRdfModelBasedOnFormat(jsonld, FORMAT);
 	}
 	
 	public Model getNewValidRdfFromJsonString(String json){
-		return RDFUtil.getRdfModelFromJsonld(json, FORMAT);
+		return RDFUtil.getRdfModelBasedOnFormat(json, FORMAT);
 	}
 
 	public Model getNewValidRdf(String fileName, String contextConstant, String rootNodeLabel){
 		setJsonld(fileName);
 		setJsonldWithNewRootLabel(rootNodeLabel);
-		return RDFUtil.getRdfModelFromJsonld(jsonld, FORMAT);
+		return RDFUtil.getRdfModelBasedOnFormat(jsonld, FORMAT);
 	}
 	
 	public Model getRdfWithInvalidTpe(){

@@ -34,7 +34,7 @@ public class RDFUtil {
     private static String registryContext;
     
     
-    public static Model getRdfModelFromJsonld(String jsonldData, String format){
+    public static Model getRdfModelBasedOnFormat(String jsonldData, String format){
     	Model m = ModelFactory.createDefaultModel();
     	StringReader reader = new StringReader(jsonldData);
     	return m.read(reader, null, format);
