@@ -17,7 +17,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.Middleware;
 
 @Component
-public class AuthorizationInterceptor implements HandlerInterceptor{
+public class AuthorizationInterceptor implements HandlerInterceptor {
 
 	private static Logger logger = LoggerFactory.getLogger(AuthorizationInterceptor.class);
 	private Middleware authorizationFilter;

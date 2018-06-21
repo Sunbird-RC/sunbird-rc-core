@@ -25,11 +25,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <version>5.0.5.RELEASE</version>
-        </dependency>
-        <dependency>
             <groupId>org.perf4j</groupId>
             <artifactId>perf4j</artifactId>
             <version>0.9.16</version>

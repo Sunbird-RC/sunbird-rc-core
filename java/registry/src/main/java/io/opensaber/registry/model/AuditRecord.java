@@ -1,21 +1,18 @@
 package io.opensaber.registry.model;
 
+import com.google.gson.Gson;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
-
-import javax.annotation.PostConstruct;
 
 @Component
 public class AuditRecord {
@@ -30,6 +27,9 @@ public class AuditRecord {
 
     @Value("${authentication.enabled}")
     private boolean authenticationEnabled;
+
+    @Autowired
+    private Gson gson;
 	
 	public AuditRecord subject(String label) {
     	this.subject = label+"-AUDIT";
@@ -106,7 +106,7 @@ public class AuditRecord {
 
     private void updateUserInfo(Vertex vertex) {
 	    if(authenticationEnabled) {
-            String authinfo = new JSONObject(getCurrentUserInfo()).toString();
+            String authinfo = gson.toJson(getCurrentUserInfo());
             String authInfoLabel = registrySystemContext + "authInfo";
             vertex.property(authInfoLabel, authinfo);
         }

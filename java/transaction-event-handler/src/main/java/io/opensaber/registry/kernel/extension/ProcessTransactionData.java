@@ -128,8 +128,7 @@ public class ProcessTransactionData {
 					map.put(Constants.GraphParams.operationType.name(), Constants.GraphParams.DELETE.name());
 					map.put(Constants.GraphParams.label.name(), getRemovedLabel(nodeId, data));
 					map.put(Constants.GraphParams.nodeId.name(), nodeId);
-					// map.put(Constants.GraphParams.createdOn.name(), format(new Date()));
-					map.put(Constants.GraphParams.createdOn.name(), new Date().getTime());
+					map.put(Constants.GraphParams.createdAt.name(), new Date().getTime());
 					map.put(Constants.GraphParams.ets.name(), System.currentTimeMillis());
 					map.put(Constants.GraphParams.transactionData.name(), transactionData);
 					lstMessageMap.add(map);
@@ -180,7 +179,7 @@ public class ProcessTransactionData {
 				map.put(pe.key(), valueMap);
 			}
 		}
-		if (map.size() == 1 && null != map.get(Constants.AuditProperties.lastUpdatedOn.name()))
+		if (map.size() == 1 && null != map.get(Constants.AuditProperties.lastUpdatedAt.name()))
 			map = new HashMap<>();
 		return map;
 	}
@@ -206,7 +205,7 @@ public class ProcessTransactionData {
 				map.put(pe.key(), valueMap);
 			}
 		}
-		if (map.size() == 1 && null != map.get(Constants.AuditProperties.lastUpdatedOn.name()))
+		if (map.size() == 1 && null != map.get(Constants.AuditProperties.lastUpdatedAt.name()))
 			map = new HashMap<String, Object>();
 		return map;
 	}
@@ -304,8 +303,8 @@ public class ProcessTransactionData {
 					startRelation.put("relMetadata", relMetadata);
 
 					/*if (StringUtils.isEmpty(userId)) {
-						String startNodeLastUpdate = (String) getPropertyValue(startNode, "lastUpdatedOn");
-						String endNodeLastUpdate = (String) getPropertyValue(endNode, "lastUpdatedOn");
+						String startNodeLastUpdate = (String) getPropertyValue(startNode, "lastUpdatedAt");
+						String endNodeLastUpdate = (String) getPropertyValue(endNode, "lastUpdatedAt");
 
 						if (startNodeLastUpdate != null && endNodeLastUpdate != null) {
 							if (startNodeLastUpdate.compareTo(endNodeLastUpdate) > 0) {
@@ -442,8 +441,8 @@ public class ProcessTransactionData {
 		map.put(Constants.GraphParams.userId.name(), getUserId(node));
 		map.put(Constants.GraphParams.operationType.name(), operationType);
 		map.put(Constants.GraphParams.label.name(), getLabel(node));
-		// map.put(Constants.GraphParams.createdOn.name(), format(new Date()));
-		map.put(Constants.GraphParams.createdOn.name(), new Date().getTime());
+		// map.put(Constants.GraphParams.createdAt.name(), format(new Date()));
+		map.put(Constants.GraphParams.createdAt.name(), new Date().getTime());
 		map.put(Constants.GraphParams.ets.name(), System.currentTimeMillis());
 		map.put(Constants.GraphParams.nodeId.name(), nodeId);
 		map.put(Constants.GraphParams.transactionData.name(), transactionData);

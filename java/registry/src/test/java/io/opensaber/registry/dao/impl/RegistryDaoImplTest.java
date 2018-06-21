@@ -787,9 +787,9 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 					T.label,"identifier");
 			vertex.property("is", "108115c3-320c-43d6-aaa7-7aab72777575");
 			graph.addVertex(
-					T.label,"type").property("is", "teacher");
+					T.label,"mapType").property("is", "teacher");
 			getVertexForSubject("identifier","is", identifier, t);
-			getVertexForSubject("type","is", "teacher", t);
+			getVertexForSubject("mapType","is", "teacher", t);
 			getVertexForSubject("email","is", "consent driven");
 			boolean response = registryDao.updateEntity(graph);
 			assertFalse(response);
@@ -1105,8 +1105,8 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		registryDao.setAuditInfo(v, true);
 		assertTrue(v.property(registryContext +"createdBy").isPresent());
 		assertTrue(v.property(registryContext +"lastUpdatedBy").isPresent());
-		assertEquals(v.property(registryContext +"createdOn").value(), 
-				v.property(registryContext +"lastUpdatedOn").value());
+		assertEquals(v.property(registryContext +"createdAt").value(),
+				v.property(registryContext +"lastUpdatedAt").value());
 	}
 	
 	@Test
@@ -1118,15 +1118,15 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		assertTrue(v.property(registryContext +"lastUpdatedBy").isPresent());
 		assertEquals(v.property(registryContext +"createdBy").value().toString(), "sub");
 		assertEquals(v.property(registryContext +"lastUpdatedBy").value().toString(), "sub");
-		assertThat(v.property(registryContext +"createdOn").value(), instanceOf(Long.class));
-		assertThat(v.property(registryContext +"lastUpdatedOn").value(), instanceOf(Long.class));
-		assertEquals(v.property(registryContext +"createdOn").value(),
-				v.property(registryContext +"lastUpdatedOn").value());
+		assertThat(v.property(registryContext +"createdAt").value(), instanceOf(Long.class));
+		assertThat(v.property(registryContext +"lastUpdatedAt").value(), instanceOf(Long.class));
+		assertEquals(v.property(registryContext +"createdAt").value(),
+				v.property(registryContext +"lastUpdatedAt").value());
 		registryDao.setAuditInfo(v, false);
 		assertTrue(v.property(registryContext +"lastUpdatedBy").isPresent());
 		assertEquals(v.property(registryContext +"lastUpdatedBy").value().toString(), "sub");
-		assertThat(v.property(registryContext +"createdOn").value(), instanceOf(Long.class));
-		assertThat(v.property(registryContext +"lastUpdatedOn").value(), instanceOf(Long.class));
+		assertThat(v.property(registryContext +"createdAt").value(), instanceOf(Long.class));
+		assertThat(v.property(registryContext +"lastUpdatedAt").value(), instanceOf(Long.class));
 	}
 	
 }

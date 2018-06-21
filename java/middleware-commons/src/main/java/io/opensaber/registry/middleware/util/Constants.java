@@ -73,11 +73,11 @@ public class Constants {
 	}
 	
 	public enum AuditProperties {
-	    createdOn, lastUpdatedOn, createdBy, lastUpdatedBy;
+		createdAt, lastUpdatedAt, createdBy, lastUpdatedBy
 	}
 	
 	public enum GraphParams {
-		properties, userId, operationType, label, requestId, nodeId, removedRelations, addedRelations, ets, createdOn, transactionData, CREATE, UPDATE, DELETE
+		properties, userId, operationType, label, requestId, nodeId, removedRelations, addedRelations, ets, createdAt, transactionData, CREATE, UPDATE, DELETE
 	}
 
 }

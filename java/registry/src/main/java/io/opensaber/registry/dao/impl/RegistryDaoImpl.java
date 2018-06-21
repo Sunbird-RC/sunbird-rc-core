@@ -615,10 +615,7 @@ public class RegistryDaoImpl implements RegistryDao {
     }
 
     private void setProperty(Vertex v, String key, Object newValue, String methodOrigin) throws AuditFailedException {
-        if (!(methodOrigin.equalsIgnoreCase("read") && (key.endsWith(Constants.AuditProperties.createdBy.name())
-                || key.endsWith(Constants.AuditProperties.createdOn.name())
-                || key.endsWith(Constants.AuditProperties.lastUpdatedBy.name())
-                || key.endsWith(Constants.AuditProperties.lastUpdatedOn.name())))) {
+        if (!(methodOrigin.equalsIgnoreCase("read") && isAuditField(key))) {
             VertexProperty vp = v.property(key);
             Object oldValue = vp.isPresent() ? vp.value() : null;
             if (oldValue != null && !methodOrigin.equalsIgnoreCase("update") && !schemaConfigurator.isSingleValued(key)) {
@@ -639,10 +636,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 newValue = processVertexProperty(valueList);
             }
             v.property(key, processVertexProperty(newValue));
-            if (!(key.endsWith(Constants.AuditProperties.createdBy.name())
-                    || key.endsWith(Constants.AuditProperties.createdOn.name())
-                    || key.endsWith(Constants.AuditProperties.lastUpdatedBy.name())
-                    || key.endsWith(Constants.AuditProperties.lastUpdatedOn.name())) && auditEnabled) {
+            if (!isAuditField(key) && auditEnabled) {
                 if (!isaMetaProperty(key) && !Objects.equals(oldValue, newValue)) {
                     GraphTraversal<Vertex, Vertex> configTraversal =
                             v.graph().traversal().clone().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG);
@@ -667,6 +661,13 @@ public class RegistryDaoImpl implements RegistryDao {
                 }
             }
         }
+    }
+
+    private boolean isAuditField(String fieldValue) {
+        return fieldValue.endsWith(Constants.AuditProperties.createdBy.name())
+                || fieldValue.endsWith(Constants.AuditProperties.createdAt.name())
+                || fieldValue.endsWith(Constants.AuditProperties.lastUpdatedBy.name())
+                || fieldValue.endsWith(Constants.AuditProperties.lastUpdatedAt.name());
     }
 
     private Object processVertexProperty(Object propertyValue) {
@@ -931,10 +932,10 @@ public class RegistryDaoImpl implements RegistryDao {
 			long timestamp = new Date().getTime();
 			if(isNew){
 				v.property(registryContext+Constants.AuditProperties.createdBy.name(),userId);
-				v.property(registryContext+Constants.AuditProperties.createdOn.name(),timestamp);
+				v.property(registryContext+Constants.AuditProperties.createdAt.name(),timestamp);
 			}
 			v.property(registryContext+Constants.AuditProperties.lastUpdatedBy.name(),userId);
-			v.property(registryContext+Constants.AuditProperties.lastUpdatedOn.name(),timestamp);
+			v.property(registryContext+Constants.AuditProperties.lastUpdatedAt.name(),timestamp);
 		}
 	}
 
