@@ -248,6 +248,36 @@
 		<finalName>registry</finalName>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-resources</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<delimiters>
+								<delimiter>@</delimiter>
+							</delimiters>
+							<useDefaultDelimiters>false</useDefaultDelimiters>
+							<outputDirectory>../../target/</outputDirectory>
+							<resources>
+								<resource>
+									<includes>
+										<include>metadata.sh</include>
+									</includes>
+									<directory>../../</directory>
+									<filtering>true</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+
+			</plugin>
+			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
