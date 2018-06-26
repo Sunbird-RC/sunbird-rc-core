@@ -9,13 +9,10 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.pojos.ValidationResponseSerializer;
-import io.opensaber.registry.middleware.util.Constants;
 
-import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
@@ -32,8 +29,15 @@ import io.opensaber.pojos.ResponseParams;
 public class BaseResponseHandler {
 	
 	protected HttpServletResponse response;
-	protected ResponseWrapper responseWrapper;
-	protected Response formattedResponse;
+	private ResponseWrapper responseWrapper;
+	private Response formattedResponse;
+	protected Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
+
+	private static Gson gson() {
+		GsonBuilder builder = new GsonBuilder();
+		builder.registerTypeAdapter(ValidationResponse.class, new ValidationResponseSerializer());
+		return builder.create();
+	}
 
 	public void setResponse(HttpServletResponse response) throws IOException {
 		this.response = response;
@@ -60,13 +64,11 @@ public class BaseResponseHandler {
 	}
 	
 	public void setFormattedResponse(String json){
-		JSONObject jsonObj = new JSONObject(json);
-		formattedResponse.setResult(jsonObj.toMap());
+		formattedResponse.setResult(gson().fromJson(json, mapType));
 	}
 	
 	public String getFormattedResponse(){
-		Gson gson = new Gson();
-		return gson.toJson(formattedResponse);
+		return gson().toJson(formattedResponse);
 	}
 	
 	public Map<String, Object> getResponseBodyMap() throws IOException {
@@ -78,7 +80,7 @@ public class BaseResponseHandler {
 
 	public Map<String, Object> getResponseHeaderMap() throws IOException {
 		//setResponseWrapper();
-		Map<String, Object> responseHeaderMap = new HashMap<String, Object>();
+		Map<String, Object> responseHeaderMap = new HashMap<>();
 		Collection<String> headerNames = responseWrapper.getHeaderNames();
 		if (headerNames != null) {
 			for (String header : headerNames) {
@@ -99,16 +101,12 @@ public class BaseResponseHandler {
 
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.NONE, "OK", responseParams);
-		GsonBuilder builder = new GsonBuilder();
-		builder.registerTypeAdapter(ValidationResponse.class, new ValidationResponseSerializer());
-		Gson gson = builder.create();
-		String result = gson.toJson(responseObj);
-		Type type = new TypeToken<Map<String, Object>>(){}.getType();
-		response.setResult(gson.fromJson(result, type));
+		String result = gson().toJson(responseObj);
+		response.setResult(gson().fromJson(result, mapType));
 		responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 		responseParams.setErrmsg(errMessage);
 
-		writeResponseBody(new Gson().toJson(response));
+		writeResponseBody(gson().toJson(response));
 	}
 
 	public Response setErrorResponse(String message) {

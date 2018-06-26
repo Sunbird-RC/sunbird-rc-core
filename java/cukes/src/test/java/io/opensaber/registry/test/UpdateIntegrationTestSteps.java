@@ -12,37 +12,20 @@ import io.opensaber.pojos.ResponseParams;
 import io.opensaber.pojos.Response.Status;
 
 import org.apache.jena.rdf.model.StmtIterator;
-import org.json.JSONObject;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.jsonldjava.core.JsonLdProcessor;
-import com.github.jsonldjava.core.JsonLdTripleCallback;
-import com.github.jsonldjava.utils.JsonUtils;
 
 import org.springframework.http.ResponseEntity;
-import org.apache.jena.ext.com.google.common.collect.Maps;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.List;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 

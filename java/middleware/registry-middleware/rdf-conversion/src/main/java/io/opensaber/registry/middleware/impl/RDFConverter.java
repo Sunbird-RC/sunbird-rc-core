@@ -23,7 +23,7 @@ public class RDFConverter implements Middleware {
 		if (jsonld == null) {
 			throw new MiddlewareHaltException(JSONLD_DATA_IS_MISSING);
 		} else if (jsonld instanceof String) {
-			Model rdfModel = RDFUtil.getRdfModelFromJsonld(jsonld.toString(), FORMAT);
+			Model rdfModel = RDFUtil.getRdfModelBasedOnFormat(jsonld.toString(), FORMAT);
 			mapData.put(Constants.RDF_OBJECT, rdfModel);
 		} else {
 			throw new MiddlewareHaltException(this.getClass().getName() + "JSONLD data is invalid!");

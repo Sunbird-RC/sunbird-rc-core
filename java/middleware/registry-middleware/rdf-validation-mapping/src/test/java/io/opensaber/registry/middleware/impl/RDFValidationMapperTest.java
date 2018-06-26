@@ -78,7 +78,7 @@ public class RDFValidationMapperTest {
 	}
 	
 	public void loadValidationConfigModel(){
-		validationConfig = RDFUtil.getRdfModelFromJsonld(schema.serialize(FORMAT).right().get(), FORMAT);
+		validationConfig = RDFUtil.getRdfModelBasedOnFormat(schema.serialize(FORMAT).right().get(), FORMAT);
 	}
 
 	private void setJsonld(String filename){
@@ -117,7 +117,7 @@ public class RDFValidationMapperTest {
 	
 	private Model getNewValidRdf(String fileName){
 		setJsonld(fileName);
-		Model model = RDFUtil.getRdfModelFromJsonld(jsonld, FORMAT);
+		Model model = RDFUtil.getRdfModelBasedOnFormat(jsonld, FORMAT);
 		return model;
 	}
 	
@@ -127,7 +127,7 @@ public class RDFValidationMapperTest {
 		JsonObject jsonObject = p.parse(jsonld).getAsJsonObject();
 		jsonObject.addProperty("@type", "School1");
 		String dataString = new Gson().toJson(jsonObject);
-		Model model = RDFUtil.getRdfModelFromJsonld(dataString, FORMAT);
+		Model model = RDFUtil.getRdfModelBasedOnFormat(dataString, FORMAT);
 		return model;
 	}
 	
@@ -137,7 +137,7 @@ public class RDFValidationMapperTest {
 		JsonObject jsonObject = p.parse(jsonld).getAsJsonObject();
 		jsonObject.remove("sample:address");
 		String dataString = new Gson().toJson(jsonObject);
-		Model model = RDFUtil.getRdfModelFromJsonld(dataString, FORMAT);
+		Model model = RDFUtil.getRdfModelBasedOnFormat(dataString, FORMAT);
 		return model;
 	}
 	

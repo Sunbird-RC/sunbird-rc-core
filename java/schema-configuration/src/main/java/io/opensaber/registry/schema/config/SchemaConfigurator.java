@@ -18,7 +18,6 @@ import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 import scala.Option;
 import scala.util.Either;
 
@@ -36,7 +35,7 @@ public class SchemaConfigurator {
 
 	private Option<String> none = Option.empty();
 
-	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile) throws IOException{
+	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile) throws IOException {
 
 		loadSchemaConfigModel(schemaFile);
 		loadSchemaForValidation(validationcreateFile, true);
@@ -50,7 +49,7 @@ public class SchemaConfigurator {
 			throw new IOException(Constants.SCHEMA_CONFIGURATION_MISSING);
 		}
 		String contents = new String(ByteStreams.toByteArray(is));
-		schemaConfig = RDFUtil.getRdfModelFromJsonld(contents, FORMAT);
+		schemaConfig = RDFUtil.getRdfModelBasedOnFormat(contents, FORMAT);
 	}
 
 	private void loadSchemaForValidation(String validationFile, boolean isCreate) throws IOException {
@@ -70,8 +69,8 @@ public class SchemaConfigurator {
 		}
 	}
 
-	private void loadValidationConfigModel(){
-		validationConfig = RDFUtil.getRdfModelFromJsonld(schemaForUpdate.serialize(FORMAT).right().get(), FORMAT);
+	private void loadValidationConfigModel() {
+		validationConfig = RDFUtil.getRdfModelBasedOnFormat(schemaForUpdate.serialize(FORMAT).right().get(), FORMAT);
 	}
 
 	public boolean isPrivate(String propertyName) {

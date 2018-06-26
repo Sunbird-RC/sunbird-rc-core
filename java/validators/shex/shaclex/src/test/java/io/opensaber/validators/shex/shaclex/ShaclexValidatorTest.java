@@ -251,7 +251,7 @@ public class ShaclexValidatorTest {
 
 	private ValidationResponse validate(String data, String dataFormat, String schemaFile,
 									   String schemaFormat, String processor) throws Exception {
-		Model dataModel = RDFUtil.getRdfModelFromJsonld(data, dataFormat);
+		Model dataModel = RDFUtil.getRdfModelBasedOnFormat(data, dataFormat);
 		Model validationRDF = generateShapeModel(dataModel);
 		mergeModels(dataModel, validationRDF);
 		Schema schema = readSchema(Paths.get(schemaFile), schemaFormat, processor);
