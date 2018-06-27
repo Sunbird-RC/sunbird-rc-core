@@ -17,13 +17,9 @@ node('build-slave') {
             print "Environment will be : ${env.NODE_ENV}"
             sh('git pull origin master')
             sh('pwd')
-	        sh('cd java')
-            sh 'mvn clean install'
+	        sh('cd java && mvn clean install')
             sh('pwd')
-	        sh('cd registry')
-            sh 'mvn clean install'
-	        sh('cd ../../')
-            sh('chmod 777 ./build.sh')
+	        sh('cd java/registry && mvn clean install')
             sh('./build.sh')
 
         }
@@ -32,7 +28,6 @@ node('build-slave') {
 
             echo 'Push to Repo'
             sh 'ls -al ~/'
-            sh('chmod 777 ./dockerPushToRepo.sh')
             sh 'ARTIFACT_LABEL=bronze ./dockerPushToRepo.sh'
             sh './target/metadata.sh > metadata.json'
             sh 'cat metadata.json'
