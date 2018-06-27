@@ -30,6 +30,7 @@ node('build-slave') {
             echo 'Push to Repo'
             sh 'ls -al ~/'
             sh 'ARTIFACT_LABEL=bronze ./dockerPushToRepo.sh'
+            sh 'chmod 755 ./target/metadata.sh'
             sh './target/metadata.sh > metadata.json'
             sh 'cat metadata.json'
             archive includes: "metadata.json"
