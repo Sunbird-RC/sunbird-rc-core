@@ -5,7 +5,7 @@
 
 	<groupId>io.opensaber</groupId>
 	<artifactId>registry-interceptor</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<packaging>jar</packaging>
 
 	<name>registry-interceptors</name>
@@ -28,7 +28,7 @@
 			<dependency>
 				<groupId>io.opensaber</groupId>
 				<artifactId>middleware-bom</artifactId>
-				<version>0.0.1-SNAPSHOT</version>
+				<version>1.0.0</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>

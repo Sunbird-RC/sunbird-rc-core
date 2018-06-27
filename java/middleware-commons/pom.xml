@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.opensaber</groupId>
 	<artifactId>middleware-commons</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>middleware commons</name>
 	<description>Common utilities and interfaces</description>
 	<properties>
@@ -26,7 +26,7 @@
         <dependency>
 			<groupId>io.opensaber</groupId>
 			<artifactId>jenardf4j</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.jena</groupId>
@@ -42,7 +42,7 @@
 		<dependency>
 			<groupId>io.opensaber</groupId>
 			<artifactId>pojos</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
     </dependencies>
 </project>

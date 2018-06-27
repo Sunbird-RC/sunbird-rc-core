@@ -5,11 +5,11 @@
 	<parent>
 		<artifactId>converters</artifactId>
 		<groupId>io.opensaber</groupId>
-		<version>1.0.0-SNAPSHOT</version>
+		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>rdf2graph</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<packaging>jar</packaging>
 	<name>rdf2graph</name>
 
