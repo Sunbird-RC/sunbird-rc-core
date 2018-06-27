@@ -17,6 +17,7 @@ node('build-slave') {
             print "Environment will be : ${env.NODE_ENV}"
             sh('git pull origin master')
             sh('pwd')
+            sh ('sh configure-dependencies.sh')
 	        sh('cd java && mvn clean install')
             sh('pwd')
 	        sh('cd java/registry && mvn clean install')
