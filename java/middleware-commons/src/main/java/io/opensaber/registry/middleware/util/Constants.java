@@ -13,7 +13,6 @@ public class Constants {
 	public static final String SHEX_CREATE_PROPERTY_NAME = "validations.create.file";
 	public static final String SHEX_UPDATE_PROPERTY_NAME = "validations.update.file";
 	public static final String FIELD_CONFIG_SCEHEMA_FILE = "config.schema.file";
-	public static final String SUBJECT_LABEL_TYPE = "subject.label.type";
 	public static final String SHAPE_NAME = "validations.entity.shape.name";
 	public static final String SHAPE_TYPE = "validations.entity.shape.type";
 	public static final String FEATURE_TOGGLING = "feature.toggling";

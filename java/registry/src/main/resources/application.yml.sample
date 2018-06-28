@@ -22,14 +22,6 @@ registry:
   system:
     base: ${REGISTRY_SYSTEM_BASE:http://example.com/voc/opensaber/}
 
-# IRI of the datatype of the records issued/stored in registry, for e.g if namespace of the
-# teacher registry is http://example.com/voc/teacher/1.0.0/ and type is
-# Teacher, then configure this field as
-# http://example.com/voc/teacher/1.0.0/Teacher
-subject:
-  label:
-    type: ${SUBJECT_LABEL_TYPE:http://example.com/voc/teacher/1.0.0/Teacher}
-
 #This refers to the opensaber schema configuration JSON-LD file
 config:
   schema:
@@ -107,10 +99,6 @@ registry:
     base: http://example.com/voc/teacher/1.0.0/
   system:
     base: http://example.com/voc/opensaber/
-
-subject:
-  label:
-    type: http://example.com/voc/teacher/1.0.0/School
 
 #This refers to the opensaber schema configuration JSON-LD file
 config:

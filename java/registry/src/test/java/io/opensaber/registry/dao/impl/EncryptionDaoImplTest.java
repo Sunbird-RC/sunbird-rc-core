@@ -153,30 +153,9 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 
     public String updateGraphFromRdf(Model rdfModel) {
 		 
-        return updateGraphFromRdf(rdfModel, graph, environment.getProperty(Constants.SUBJECT_LABEL_TYPE));
+        return updateGraphFromRdf(rdfModel, graph);
     }
 
-    public String updateGraphFromRdf(Model rdfModel, Graph graph) {
-	 return updateGraphFromRdf(rdfModel, graph, environment.getProperty(Constants.SUBJECT_LABEL_TYPE));
- }
-
-    public String updateGraphFromRdf(Model rdfModel, Graph graph, String rootLabelType) {
-	StmtIterator iterator = rdfModel.listStatements();
-	boolean rootSubjectFound = false;
-	String label = null;
-	while (iterator.hasNext()) {
-		Statement rdfStatement = iterator.nextStatement();
-			if (!rootSubjectFound) {
-				label = RDF2Graph.getRootSubjectLabel(rdfStatement, rootLabelType);
-				if (label != null) {
-					rootSubjectFound = true;
-				}
-			}
-			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
-		}
-		return label;
-}
     private Map<String,Integer> getPropCounterMap(Graph entity) {
 	    Map<String,Integer> entityPropertyCountMap = new HashMap<>();
         Iterator<Vertex> iter = entity.traversal().clone().V().hasNot("@audit");

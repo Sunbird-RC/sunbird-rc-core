@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
@@ -142,8 +143,17 @@ public class RegistryTestBase {
 	public static String generateRandomId(){
 		return UUID.randomUUID().toString();
 	}
+	
+	public String updateGraphFromRdf(Model rdfModel, Graph graph) {
+    	StmtIterator iterator = rdfModel.listStatements();
+    	List<Resource> resList = RDFUtil.getRootLabels(rdfModel);
+    	while (iterator.hasNext()) {
+    		Statement rdfStatement = iterator.nextStatement();
+    		org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+    		graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+    	}
 
-	public String getSubjectType(){
-		return environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-	}
+    	return resList.get(0).toString();
+    }
+
 }
