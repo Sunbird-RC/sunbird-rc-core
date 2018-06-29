@@ -20,7 +20,7 @@ registry:
   context:
     base: ${REGISTRY_CONTEXR_BASE:http://localhost:8080/}
   system:
-    base: ${REGISTRY_SYSTEM_BASE:http://example.com/voc/opensaber/}
+    base: ${REGISTRY_SYSTEM_BASE:http://localhost:8080/opensaber/}
 
 #This refers to the opensaber schema configuration JSON-LD file
 config:
@@ -53,6 +53,7 @@ read:
   timeout: ${READ_TIMEOUT:5000}
 
 encryption:
+  enabled: true
   base: ${ENCRYPTION_BASE:https://dev.open-sunbird.org/encryption/}
   uri: ${ENCRYPTION_URI:https://dev.open-sunbird.org/encryption/encrypt}
   batch:
@@ -124,6 +125,7 @@ read:
   timeout: 5000
 
 encryption:
+  enabled: true
   base: https://dev.open-sunbird.org/encryption/
   uri: https://dev.open-sunbird.org/encryption/encrypt
   batch:
