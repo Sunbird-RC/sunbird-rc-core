@@ -1,11 +1,11 @@
 spring:
-  profiles.active: ${PROFILE:dev}
+  profiles.active: dev
 ---
 ##################################################################
 #                      DEVELOPMENT PROFILE                       #
 ##################################################################
 spring:
-  profiles: ${PROFILE:dev}
+  profiles: dev
   output:
     ansi:
       enabled: ${SPRING_OUTPUT_ANSI_ENABLED:ALWAYS}
@@ -18,7 +18,7 @@ perf:
 
 registry:
   context:
-    base: ${REGISTRY_CONTEXR_BASE:http://localhost:8080/}
+    base: ${REGISTRY_CONTEXT_BASE:http://localhost:8080/}
   system:
     base: ${REGISTRY_SYSTEM_BASE:http://example.com/voc/opensaber/}
 
@@ -51,6 +51,10 @@ validations:
     file: ${VALIDATIONS_CREATE_FILE:validations_create.shex}
   update:
     file: ${VALIDATIONS_UPDATE_FILE:validations_update.shex}
+    
+# File for framing the entity while reading
+frame:
+  file: ${FRAME_FILE:frame.json}
 
 # Http Connection Timeout Config
 connection:
@@ -73,6 +77,8 @@ decryption:
 
 audit:
   enabled: ${AUDIT_ENABLED:false}
+  frame:
+    file: ${AUDIT_FRAME_FILE:frame.json}
 
 authentication:
   enabled: ${AUTHENTICATION_ENABLED:true}
@@ -127,6 +133,10 @@ validations:
   update:
     file: good1.shex
 
+# File for framing the entity while reading
+frame:
+  file: frame.json
+  
 # Http Connection Timeout Config
 connection:
   timeout: 5000
@@ -148,6 +158,8 @@ decryption:
 
 audit:
   enabled: false
+  frame:
+    file: audit_frame.json
 
 authentication:
   enabled: true

@@ -27,6 +27,7 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.opensaber.converters.JenaRDF4J;
@@ -52,6 +53,12 @@ public class RegistryServiceImpl implements RegistryService {
 	
 	@Autowired
 	EncryptionService encryptionService;
+	
+	@Value("${frame.file}")
+	private String frameFile;
+	
+	@Value("${audit.frame.file}")
+	private String auditFrameFile;
 
 	@Override
 	public List getEntityList(){
@@ -133,7 +140,7 @@ public class RegistryServiceImpl implements RegistryService {
 		logger.debug("RegistryServiceImpl : jenaEntityModel for framing: {} \n root : {}, \n rootLabelType: {}",jenaEntityModel,root,rootLabelType);
 		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
 		JsonLDWriteContext ctx = new JsonLDWriteContext();
-		InputStream is = this.getClass().getClassLoader().getResourceAsStream("frame.json");
+		InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
 		String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
 		fileString = fileString.replace("<@type>", rootLabelType);
 		ctx.setFrame(fileString);
@@ -153,7 +160,7 @@ public class RegistryServiceImpl implements RegistryService {
 		logger.debug("RegistryServiceImpl : jenaEntityModel for audit-framing: {} ",jenaEntityModel);
 		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
 		JsonLDWriteContext ctx = new JsonLDWriteContext();
-		InputStream is = this.getClass().getClassLoader().getResourceAsStream("audit_frame.json");
+		InputStream is = this.getClass().getClassLoader().getResourceAsStream(auditFrameFile);
 		String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
 		ctx.setFrame(fileString);
 		WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT);
