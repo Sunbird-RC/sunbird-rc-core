@@ -48,7 +48,7 @@ public class RegistryController {
 	private OpenSaberInstrumentation watch;
 
 	@RequestMapping(value = "/add", method = RequestMethod.POST)
-	public ResponseEntity<Response> addToExistingEntity(@RequestAttribute Request requestModel, 
+	public ResponseEntity<Response> add(@RequestAttribute Request requestModel, 
 			@RequestParam(value="id", required = false) String id, @RequestParam(value="prop", required = false) String property) {
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");

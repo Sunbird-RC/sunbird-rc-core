@@ -24,11 +24,11 @@
 	<parent>
 		<artifactId>shex</artifactId>
 		<groupId>io.opensaber</groupId>
-		<version>1.0.0-SNAPSHOT</version>
+		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>shaclex</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<packaging>jar</packaging>
 	<name>shaclex</name>
 
@@ -65,7 +65,7 @@
 		<dependency>
 			<groupId>io.opensaber</groupId>
 			<artifactId>middleware-commons</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>

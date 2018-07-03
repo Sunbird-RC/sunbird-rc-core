@@ -24,6 +24,8 @@ local.properties
 logs
 *.log
 
+target
+
 # External tool builders
 .externalToolBuilders/
 

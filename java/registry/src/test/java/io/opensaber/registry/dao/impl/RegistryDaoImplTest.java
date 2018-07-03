@@ -163,30 +163,10 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
     public String updateGraphFromRdf(Model rdfModel) {
 		 
-        return updateGraphFromRdf(rdfModel, graph, environment.getProperty(Constants.SUBJECT_LABEL_TYPE));
+        return updateGraphFromRdf(rdfModel, graph);
     }
 
-    public String updateGraphFromRdf(Model rdfModel, Graph graph) {
-	 return updateGraphFromRdf(rdfModel, graph, environment.getProperty(Constants.SUBJECT_LABEL_TYPE));
- }
 
-    public String updateGraphFromRdf(Model rdfModel, Graph graph, String rootLabelType) {
-	StmtIterator iterator = rdfModel.listStatements();
-	boolean rootSubjectFound = false;
-	String label = null;
-	while (iterator.hasNext()) {
-		Statement rdfStatement = iterator.nextStatement();
-			if (!rootSubjectFound) {
-				label = RDF2Graph.getRootSubjectLabel(rdfStatement, rootLabelType);
-				if (label != null) {
-					rootSubjectFound = true;
-				}
-			}
-			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
-		}
-		return label;
-}
     private Map<String,Integer> getPropCounterMap(Graph entity) {
 	    Map<String,Integer> entityPropertyCountMap = new HashMap<>();
         Iterator<Vertex> iter = entity.traversal().clone().V().hasNot("@audit");
@@ -236,7 +216,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		try {
 			Model rdfModel1 = getNewValidRdf();
 			TinkerGraph graphEntity1 = TinkerGraph.open();
-			String rootLabelEntity1 = createGraphFromRdf(graphEntity1, rdfModel1);
+			String rootLabelEntity1 = updateGraphFromRdf(rdfModel1, graphEntity1);
 
 			String entity1Label = registryDao.addEntity(graphEntity1, "_:" + rootLabelEntity1, null, null);
 
@@ -248,7 +228,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 			Model rdfModel2 = getNewValidRdf();
 			TinkerGraph graphEntity2 = TinkerGraph.open();
-			String rootLabelEntity2 = createGraphFromRdf(graphEntity2, rdfModel2);
+			String rootLabelEntity2 = updateGraphFromRdf(rdfModel2, graphEntity2);
 			String entity2Label = registryDao.addEntity(graphEntity2, "_:" + rootLabelEntity2, null, null);
 
 			Graph entity2 = registryDao.getEntityById(entity2Label);
@@ -483,7 +463,8 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		removeStatementFromModel(updateRdfModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/address"));
 		updateNodeLabel(updateRdfModel, "http://example.com/voc/teacher/1.0.0/School");*/
 		Graph updateGraph = TinkerGraph.open();
-        createGraphFromRdf(updateGraph, updateRdfModel);
+        //createGraphFromRdf(updateGraph, updateRdfModel);
+		updateGraphFromRdf(updateRdfModel, updateGraph);
 		registryDao.updateEntity(updateGraph, response, "update");
 
 		Graph updatedGraphResult = registryDao.getEntityById(response);
@@ -638,7 +619,8 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		updateNodeLabel(updateRdfModel, "http://example.com/voc/teacher/1.0.0/School");
 		Graph updateGraph = TinkerGraph.open();
 
-		createGraphFromRdf(updateGraph, updateRdfModel);
+		//createGraphFromRdf(updateGraph, updateRdfModel);
+		updateGraphFromRdf(updateRdfModel, updateGraph);
 		registryDao.updateEntity(updateGraph, response, "update");
 
 		Graph updatedGraphResult = registryDao.getEntityById(response);
@@ -807,7 +789,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Test
 	public void savingMetaProperties() throws DuplicateRecordException, RecordNotFoundException, EncryptionException, AuditFailedException {
         Model inputModel = getNewValidRdf(RICH_LITERAL_TTL, "ex:");
-        String rootLabel = updateGraphFromRdf(inputModel, graph, "http://example.org/typeProperty");
+        String rootLabel = updateGraphFromRdf(inputModel, graph);
         registryDao.addEntity(graph, rootLabel, null, null);
         Graph entity = registryDao.getEntityById(rootLabel);
         org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(entity, rootLabel);
@@ -891,25 +873,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		return getNewValidRdf(jsonldFilename, CONTEXT_CONSTANT, rootNodeLabel);
 	}
 
-   private String createGraphFromRdf(Graph newGraph, Model rdfModel) {
-		StmtIterator iterator = rdfModel.listStatements();
-		boolean rootSubjectFound = false;
-		String label = null;
-		while (iterator.hasNext()) {
-			Statement rdfStatement = iterator.nextStatement();
-			if (!rootSubjectFound) {
-				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-				label = RDF2Graph.getRootSubjectLabel(rdfStatement, type);
-				if (label != null) {
-					rootSubjectFound = true;
-				}
-			}
-			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			newGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph);
-		}
-		return label;
-	}
-   
+
    private Graph generateGraphFromRDF(Graph newGraph, Model rdfModel) throws EntityCreationException, MultipleEntityException{
 		StmtIterator iterator = rdfModel.listStatements();
 		while (iterator.hasNext()) {
@@ -942,8 +906,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	private String updateGraphFromRdfWithFirstNodeAsBlankNode(Model rdfModel){
 		StmtIterator iterator = rdfModel.listStatements();
 		StmtIterator iterator2 = rdfModel.listStatements();
-		boolean rootSubjectFound = false;
-		String label = null;
+		List<Resource> resList = RDFUtil.getRootLabels(rdfModel);
 		while(iterator2.hasNext()){
 			Statement rdfStatement = iterator2.nextStatement();
 			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
@@ -954,15 +917,9 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 				break;
 			}
 		}
+		
 		while(iterator.hasNext()){
 			Statement rdfStatement = iterator.nextStatement();
-			if(!rootSubjectFound){
-				String type = environment.getProperty(Constants.SUBJECT_LABEL_TYPE);
-				label = RDF2Graph.getRootSubjectLabel(rdfStatement,type);
-				if(label!=null){
-					rootSubjectFound = true;
-				}
-			}
 			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
 			String subjectValue = rdf4jStatement.getSubject().toString();
 			String predicate = rdf4jStatement.getPredicate().toString();
@@ -971,7 +928,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			}
 			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
 	}
-		return label;
+		return resList.get(0).toString();
 	}
 
 	private long countGraphVertices(Graph graph) {

@@ -4,7 +4,7 @@
 
     <groupId>io.opensaber</groupId>
     <artifactId>opensaber</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>Software for Open Registries</name>
     <packaging>pom</packaging>
     <modules>

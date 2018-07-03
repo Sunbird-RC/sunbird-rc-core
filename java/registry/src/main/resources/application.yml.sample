@@ -20,15 +20,7 @@ registry:
   context:
     base: ${REGISTRY_CONTEXT_BASE:http://localhost:8080/}
   system:
-    base: ${REGISTRY_SYSTEM_BASE:http://example.com/voc/opensaber/}
-
-# IRI of the datatype of the records issued/stored in registry, for e.g if namespace of the
-# teacher registry is http://example.com/voc/teacher/1.0.0/ and type is
-# Teacher, then configure this field as
-# http://example.com/voc/teacher/1.0.0/Teacher
-subject:
-  label:
-    type: ${SUBJECT_LABEL_TYPE:http://example.com/voc/teacher/1.0.0/Teacher}
+    base: ${REGISTRY_SYSTEM_BASE:http://localhost:8080/opensaber/}
 
 #This refers to the opensaber schema configuration JSON-LD file
 config:
@@ -65,6 +57,7 @@ read:
   timeout: ${READ_TIMEOUT:5000}
 
 encryption:
+  enabled: true
   base: ${ENCRYPTION_BASE:https://dev.open-sunbird.org/encryption/}
   uri: ${ENCRYPTION_URI:https://dev.open-sunbird.org/encryption/encrypt}
   batch:
@@ -114,10 +107,6 @@ registry:
   system:
     base: http://example.com/voc/opensaber/
 
-subject:
-  label:
-    type: http://example.com/voc/teacher/1.0.0/School
-
 #This refers to the opensaber schema configuration JSON-LD file
 config:
   schema:
@@ -146,6 +135,7 @@ read:
   timeout: 5000
 
 encryption:
+  enabled: true
   base: https://dev.open-sunbird.org/encryption/
   uri: https://dev.open-sunbird.org/encryption/encrypt
   batch:
