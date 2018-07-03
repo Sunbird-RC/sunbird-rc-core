@@ -8,9 +8,9 @@ spring:
   profiles: dev
   output:
     ansi:
-      enabled: ${SPRING_OUTPUT_ANSI_ENABLED:ALWAYS}
-name: ${NAME:dev-yaml}
-enviroment: ${ENVIRONMENT:development}
+      enabled: ALWAYS
+name: dev-yaml
+enviroment: development
 
 perf:
   monitoring:
@@ -57,7 +57,7 @@ read:
   timeout: ${READ_TIMEOUT:5000}
 
 encryption:
-  enabled: true
+  enabled: ${ENCRYPTION_ENABLED:true}
   base: ${ENCRYPTION_BASE:https://dev.open-sunbird.org/encryption/}
   uri: ${ENCRYPTION_URI:https://dev.open-sunbird.org/encryption/encrypt}
   batch:
@@ -71,7 +71,7 @@ decryption:
 audit:
   enabled: ${AUDIT_ENABLED:false}
   frame:
-    file: ${AUDIT_FRAME_FILE:frame.json}
+    file: ${AUDIT_FRAME_FILE:audit_frame.json}
 
 authentication:
   enabled: ${AUTHENTICATION_ENABLED:true}
