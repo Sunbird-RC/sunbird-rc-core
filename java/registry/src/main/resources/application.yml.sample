@@ -64,7 +64,7 @@ encryption:
     uri: ${ENCRYPTION_BATCH_URI:https://dev.open-sunbird.org/encryption/encrypt/obj}
 
 decryption:
-  uri: ${DECRYPTION_BASE:https://dev.open-sunbird.org/encryption/decrypt}
+  uri: ${DECRYPTION_URI:https://dev.open-sunbird.org/encryption/decrypt}
   batch:
     uri: ${DECRYPTION_BATCH_URI:https://dev.open-sunbird.org/encryption/decrypt/obj}
 
