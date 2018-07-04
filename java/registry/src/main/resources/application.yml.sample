@@ -14,67 +14,67 @@ enviroment: development
 
 perf:
   monitoring:
-    enabled: ${PERF_MONITORING_ENABLED:true}
+    enabled: ${perf_monitoring_enabled:true}
 
 registry:
   context:
-    base: ${REGISTRY_CONTEXT_BASE:http://localhost:8080/}
+    base: ${registry_context_base:http://localhost:8080/}
   system:
-    base: ${REGISTRY_SYSTEM_BASE:http://localhost:8080/opensaber/}
+    base: ${registry_system_base:http://localhost:8080/opensaber/}
 
 #This refers to the opensaber schema configuration JSON-LD file
 config:
   schema:
-    file: ${CONFIG_SCHEMA_FILE:schema-configuration.jsonld}
+    file: ${config_schema_file:schema-configuration.jsonld}
 
 database:
-  provider: ${DATABASE_PROVIDER:NEO4J}
-  embedded: ${DATABASE_EMBEDDED:true}
+  provider: ${database_provider:NEO4J}
+  embedded: ${database_embedded:true}
   # Set an environment variable NEO4J_HOST if running Neo4J as a standalone host
   # This variable is set from the docker-compose.yml with the Neo4J service name
-  host: ${DATABASE_HOST:localhost}
-  port: ${DATABASE_PORT:7687}
-  neo4j-directory: ${DATABASE_DIRECTORY:/data/databases/graph.db}
-  neo4j-profiler-enabled: ${DATABASE_PROFILER_ENABLED:false}
+  host: ${database_host:localhost}
+  port: ${database_port:7687}
+  neo4j-directory: ${database_directory:/data/databases/graph.db}
+  neo4j-profiler-enabled: ${database_profiler_enabled:false}
 
 # RDF Validation Config
 validations:
   create:
-    file: ${VALIDATIONS_CREATE_FILE:validations_create.shex}
+    file: ${validations_create_file:validations_create.shex}
   update:
-    file: ${VALIDATIONS_UPDATE_FILE:validations_update.shex}
+    file: ${validations_update_file:validations_update.shex}
     
 # File for framing the entity while reading
 frame:
-  file: ${FRAME_FILE:frame.json}
+  file: ${frame_file:frame.json}
 
 # Http Connection Timeout Config
 connection:
-  timeout: ${CONNECTION_TIMEOUT:5000}
+  timeout: ${connection_timeout:5000}
   request:
-    timeout: ${CONNECTION_REQUEST_TIMEOUT:5000}
+    timeout: ${connection_request_timeout:5000}
 read:
-  timeout: ${READ_TIMEOUT:5000}
+  timeout: ${read_timeout:5000}
 
 encryption:
-  enabled: ${ENCRYPTION_ENABLED:true}
-  base: ${ENCRYPTION_BASE:https://dev.open-sunbird.org/encryption/}
-  uri: ${ENCRYPTION_URI:https://dev.open-sunbird.org/encryption/encrypt}
+  enabled: ${encryption_enabled:true}
+  base: ${encryption_base:https://dev.open-sunbird.org/encryption/}
+  uri: ${encryption_uri:https://dev.open-sunbird.org/encryption/encrypt}
   batch:
-    uri: ${ENCRYPTION_BATCH_URI:https://dev.open-sunbird.org/encryption/encrypt/obj}
+    uri: ${encryption_batch_uri:https://dev.open-sunbird.org/encryption/encrypt/obj}
 
 decryption:
-  uri: ${DECRYPTION_URI:https://dev.open-sunbird.org/encryption/decrypt}
+  uri: ${decryption_uri:https://dev.open-sunbird.org/encryption/decrypt}
   batch:
-    uri: ${DECRYPTION_BATCH_URI:https://dev.open-sunbird.org/encryption/decrypt/obj}
+    uri: ${decryption_batch_uri:https://dev.open-sunbird.org/encryption/decrypt/obj}
 
 audit:
-  enabled: ${AUDIT_ENABLED:false}
+  enabled: ${audit_enabled:false}
   frame:
-    file: ${AUDIT_FRAME_FILE:audit_frame.json}
+    file: ${audit_frame_file:audit_frame.json}
 
 authentication:
-  enabled: ${AUTHENTICATION_ENABLED:true}
+  enabled: ${authentication_enabled:true}
 
 keycloak:
   sso:
