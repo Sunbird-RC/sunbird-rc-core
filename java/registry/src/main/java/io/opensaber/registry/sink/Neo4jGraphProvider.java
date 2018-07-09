@@ -27,7 +27,7 @@ public class Neo4jGraphProvider extends DatabaseProvider {
     private Driver driver;
 
     public Neo4jGraphProvider(Environment environment) {
-        Boolean isDatabaseEmbedded = Boolean.parseBoolean(environment.getProperty("database.embedded"));
+        Boolean isDatabaseEmbedded = Boolean.parseBoolean(environment.getProperty("database.neo4j.embedded"));
         if (isDatabaseEmbedded) {
             String graphDbLocation = environment.getProperty(Constants.NEO4J_DIRECTORY);
             logger.info(String.format("Initializing graph db at %s ...", graphDbLocation));
@@ -37,9 +37,9 @@ public class Neo4jGraphProvider extends DatabaseProvider {
             graph = Neo4jGraph.open(config);
         } else {
             try {
-                String databaseHost = environment.getProperty("database.host");
-                String databasePort = environment.getProperty("database.port");
-                Boolean profilerEnabled = Boolean.parseBoolean(environment.getProperty("database.neo4j-profiler-enabled"));
+                String databaseHost = environment.getProperty("database.neo4j.host");
+                String databasePort = environment.getProperty("database.neo4j.port");
+                Boolean profilerEnabled = Boolean.parseBoolean(environment.getProperty("database.neo4j.profiler_enabled"));
                 driver = GraphDatabase.driver(String.format("bolt://%s:%s", databaseHost, databasePort), AuthTokens.none());
                 Neo4JElementIdProvider<?> idProvider = new Neo4JNativeElementIdProvider();
                 Neo4JGraph neo4JGraph = new Neo4JGraph(driver, idProvider, idProvider);

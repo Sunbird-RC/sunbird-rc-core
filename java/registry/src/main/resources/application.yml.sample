@@ -29,13 +29,30 @@ config:
 
 database:
   provider: ${database_provider:NEO4J}
-  embedded: ${database_embedded:true}
-  # Set an environment variable NEO4J_HOST if running Neo4J as a standalone host
-  # This variable is set from the docker-compose.yml with the Neo4J service name
-  host: ${database_host:localhost}
-  port: ${database_port:7687}
-  neo4j-directory: ${database_directory:/data/databases/graph.db}
-  neo4j-profiler-enabled: ${database_profiler_enabled:false}
+  neo4j:
+    embedded: ${database_embedded:true}
+    # Set an environment variable NEO4J_HOST if running Neo4J as a standalone host
+    # This variable is set from the docker-compose.yml with the Neo4J service name
+    host: ${database_host:localhost}
+    port: ${database_port:7687}
+    database_directory: ${database_directory:/data/databases/graph.db}
+    profiler_enabled: ${database_profiler_enabled:false}
+
+##################################################################################
+# Uncomment the following section to use Cassandra as backend store              #
+##################################################################################
+#  janus_cassandra:
+#    graphFactory: org.janusgraph.core.JanusGraphFactory
+#    storage.backend: "cassandrathrift"
+#    storage.hostname: ${cassandra_host:localhost}
+#    storage.keyspace: ${cassandra_keyspace:registry_db}
+#    db.cache.size: ${cassandra_db_cache_size:0.25}
+#    # wait time in milliseconds to clean the cache
+#    db.cache.clean.wait: ${cassandra_db_cache_clean_wait:60}
+#    index:
+#      storage.backend: ${cassandr_index_storage:elasticsearch}
+#      hostname: ${cassandra_index_hostname:localhost}
+
 
 # RDF Validation Config
 validations:

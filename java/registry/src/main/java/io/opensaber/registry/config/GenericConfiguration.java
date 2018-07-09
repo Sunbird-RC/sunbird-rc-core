@@ -3,11 +3,7 @@ package io.opensaber.registry.config;
 import java.io.IOException;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.sink.Neo4jGraphProvider;
-import io.opensaber.registry.sink.OrientDBGraphProvider;
-import io.opensaber.registry.sink.SqlgProvider;
-import io.opensaber.registry.sink.TinkerGraphProvider;
+import io.opensaber.registry.sink.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jena.rdf.model.Model;
@@ -186,6 +182,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			provider.initializeGlobalGraphConfiguration();
 		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName())) {
 			provider = new TinkerGraphProvider(environment);
+			provider.initializeGlobalGraphConfiguration();
+		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.CASSANDRA.getName())) {
+			provider = new JanusGraphStorage(environment);
 			provider.initializeGlobalGraphConfiguration();
 		} else {
 			throw new RuntimeException("No Database Provider is configured. Please configure a Database Provider");

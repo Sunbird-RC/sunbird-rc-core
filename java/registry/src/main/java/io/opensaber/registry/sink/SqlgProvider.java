@@ -18,9 +18,9 @@ public class SqlgProvider extends DatabaseProvider {
     private Graph graph;
 
     public SqlgProvider(Environment environment) {
-        String jdbcUrl = environment.getProperty("jdbc.url");
-        String jdbcUsername = environment.getProperty("jdbc.username");
-        String jdbcPassword = environment.getProperty("jdbc.password");
+        String jdbcUrl = environment.getProperty("database.jdbc.url");
+        String jdbcUsername = environment.getProperty("database.jdbc.username");
+        String jdbcPassword = environment.getProperty("database.jdbc.password");
         Configuration config = new BaseConfiguration();
         config.setProperty("jdbc.url", jdbcUrl);
         config.setProperty("jdbc.username", jdbcUsername);
