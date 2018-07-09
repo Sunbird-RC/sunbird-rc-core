@@ -1,20 +1,10 @@
 <?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <modelVersion>4.0.0</modelVersion>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-    <parent>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+		 xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
 		<artifactId>converters</artifactId>
 		<groupId>io.opensaber</groupId>
 		<version>1.0.0</version>
@@ -23,7 +13,7 @@
 	<artifactId>jenardf4j</artifactId>
 	<packaging>jar</packaging>
 	<name>jenardf4j</name>
-  	
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -35,22 +25,22 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-  <dependencies>
-  
-	<dependency>
-		<groupId>org.eclipse.rdf4j</groupId>
-		<artifactId>rdf4j-model</artifactId>
-	</dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-	<dependency>
-		<groupId>org.apache.jena</groupId>
-		<artifactId>jena-core</artifactId>
-		<version>3.6.0</version>
-	</dependency>
-  </dependencies>
+	<dependencies>
+
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-model</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-core</artifactId>
+			<version>3.6.0</version>
+		</dependency>
+	</dependencies>
 </project>

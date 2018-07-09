@@ -1,16 +1,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>io.opensaber</groupId>
+
+	<parent>
+		<groupId>io.opensaber</groupId>
+		<artifactId>opensaber</artifactId>
+		<version>1.0.0</version>
+	</parent>
+
 	<artifactId>middleware-commons</artifactId>
 	<version>1.0.0</version>
 	<name>middleware commons</name>
 	<description>Common utilities and interfaces</description>
 	<properties>
 		<tinkerpop.version>3.3.1</tinkerpop.version>
-		<java.version>1.8</java.version>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 	<dependencies>
 		<dependency>
