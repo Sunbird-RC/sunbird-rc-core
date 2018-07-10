@@ -115,4 +115,13 @@ public class OpensaberClientTest {
         assertEquals(response.getId(), Response.API_ID.READ.getId());
     }
 
+    @Test
+    public void testDeleteEntity() {
+        Response apiResponse = new Response(Response.API_ID.DELETE, "OK", new ResponseParams());
+        URI propertyPredicateUri = PowerMockito.mock(URI.class);
+        when(opensaberClient.deleteEntity(propertyPredicateUri, headers)).thenReturn(new ResponseData<>(gson.toJson(apiResponse)));
+        Response response = gson.fromJson(opensaberClient.deleteEntity(propertyPredicateUri, headers).getResponseData(), Response.class);
+        assertEquals(response.getResponseCode(), "OK");
+        assertEquals(response.getId(), Response.API_ID.DELETE.getId());
+    }
 }

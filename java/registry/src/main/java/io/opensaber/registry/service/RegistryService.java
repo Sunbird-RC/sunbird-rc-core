@@ -31,4 +31,6 @@ public interface RegistryService {
 
 	public org.eclipse.rdf4j.model.Model getAuditNode(String id) throws IOException, NoSuchElementException, RecordNotFoundException,
 	EncryptionException, AuditFailedException;
+
+	public boolean deleteEntityById(String id) throws AuditFailedException, RecordNotFoundException;
 }

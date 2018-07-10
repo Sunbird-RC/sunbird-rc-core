@@ -1085,5 +1085,54 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		assertThat(v.property(registryContext +"createdAt").value(), instanceOf(Long.class));
 		assertThat(v.property(registryContext +"lastUpdatedAt").value(), instanceOf(Long.class));
 	}
+
+	@Test
+	public void test_for_delete_root_node() throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
+		expectedEx.expect(UnsupportedOperationException.class);
+		expectedEx.expectMessage(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
+		registryDao.deleteEntityById(response);
+		registryDao.getEntityById(response);
+		//assertTrue(registryDao.deleteEntityById(response));
+	}
+
+	@Test
+	public void test_for_delete_child_node_with_root_status_active() throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
+		/*expectedEx.expect(UnsupportedOperationException.class);
+		expectedEx.expectMessage(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);*/
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
+		assertFalse(registryDao.deleteEntityById("http://example.com/voc/teacher/1.0.0/AreaTypeCode-URBAN"));
+		//registryDao.getEntityById(response);
+		//assertTrue(registryDao.deleteEntityById(response));
+	}
+
+	@Test
+	public void test_for_delete_root_node_child_node() throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
+		/*expectedEx.expect(UnsupportedOperationException.class);
+		expectedEx.expectMessage(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);*/
+		Model rdfModel = getNewValidRdf();
+		String rootLabel = updateGraphFromRdf(rdfModel);
+		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
+		registryDao.deleteEntityById(response);
+		assertTrue(registryDao.deleteEntityById("http://example.com/voc/teacher/1.0.0/AreaTypeCode-URBAN"));
+		//registryDao.getEntityById(response);
+		//assertTrue(registryDao.deleteEntityById(response));
+	}
+
+	@Test
+	public void test_for_delete_when_entity_not_exists() throws RecordNotFoundException, NoSuchElementException, AuditFailedException {
+
+		expectedEx.expect(RecordNotFoundException.class);
+		expectedEx.expectMessage(Constants.ENTITY_NOT_FOUND);
+
+		UUID label = getLabel();
+		registryDao.deleteEntityById(label.toString());
+	}
+
+
 	
 }

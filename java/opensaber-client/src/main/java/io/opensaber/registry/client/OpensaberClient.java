@@ -129,6 +129,13 @@ public class OpensaberClient implements Client<String> {
         return new ResponseData<>(responseJson.toString());
     }
 
+    public ResponseData<String> deleteEntity(URI property, Map<String, String> headers) {
+        ResponseEntity<Response> response = httpClient.post(Configuration.BASE_URL + ApiEndPoints.DELETE +property.toString(),
+                createHttpHeaders(headers),null);
+        String result = gson.toJson(response.getBody());
+        return new ResponseData<>(result);
+    }
+
     private Request createRequestEntity(String requestData) {
         return new Request(new RequestParams(), gson.fromJson(requestData, mapType));
     }

@@ -33,11 +33,12 @@ public class Constants {
 	public static final String XSD_SCHEMA = "http://www.w3.org/2001/XMLSchema#";
 	public static final String CONTEXT_KEYWORD = "@context";
 	public static final String TYPE_KEYWORD = "@type";
-	
+
 	public static final String DUPLICATE_RECORD_MESSAGE = "Cannot insert duplicate record";
 	public static final String FAILED_INSERTION_MESSAGE = "Failed to insert record";
 	public static final String NO_ENTITY_AVAILABLE_MESSAGE = "No entity available";
 	public static final String ENTITY_NOT_FOUND = "Entity does not exist";
+	public static final String DELETE_UNSUPPORTED_OPERATION_ON_ENTITY = "Delete operation not supports";
 	public static final String TOKEN_EXTRACTION_ERROR = "Unable to extract auth token";
 	public static final String JSONLD_PARSE_ERROR = "Unable to parse JSON-LD";
 	public static final String RDF_VALIDATION_ERROR = "Unable to validate RDF";

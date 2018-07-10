@@ -59,4 +59,14 @@ public interface Client<T> {
      * @return
      */
     ResponseData<T> readEntity(URI entity, Map<String, String> headers) throws TransformationException;
+
+    /**
+     * This method will take the FQ {@link java.net.URI} of an existing entity id that needs to be deleted.
+     * The method also takes the HttpHeaders as Map object. The return type will be
+     * {@link io.opensaber.registry.client.data.ResponseData} .
+     * @param property
+     * @param headers
+     * @return
+     */
+    ResponseData<T> deleteEntity(URI property, Map<String, String> headers) ;
 }
