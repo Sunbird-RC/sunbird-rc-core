@@ -63,20 +63,19 @@ validations:
 frame:
   file: ${frame_file:frame.json}
 
-# Http Connection Timeout Config
-connection:
-  timeout: ${connection_timeout:5000}
-  request:
-    timeout: ${connection_request_timeout:5000}
-read:
-  timeout: ${read_timeout:5000}
-
 encryption:
   enabled: ${encryption_enabled:true}
   base: ${encryption_base:https://dev.open-sunbird.org/encryption/}
   uri: ${encryption_uri:https://dev.open-sunbird.org/encryption/encrypt}
   batch:
     uri: ${encryption_batch_uri:https://dev.open-sunbird.org/encryption/encrypt/obj}
+  service:
+    connection:
+      timeout: ${encryption_service_connection_timeout:5000}
+      request:
+        timeout: ${encryption_service_connection_request_timeout:5000}
+    read:
+      timeout: ${encryption_service_read_timeout:5000}
 
 decryption:
   uri: ${decryption_uri:https://dev.open-sunbird.org/encryption/decrypt}
@@ -137,14 +136,6 @@ validations:
 # File for framing the entity while reading
 frame:
   file: frame.json
-  
-# Http Connection Timeout Config
-connection:
-  timeout: 5000
-  request:
-    timeout: 5000
-read:
-  timeout: 5000
 
 encryption:
   enabled: true
@@ -152,6 +143,13 @@ encryption:
   uri: https://dev.open-sunbird.org/encryption/encrypt
   batch:
     uri: https://dev.open-sunbird.org/encryption/encrypt/obj
+  service:
+    connection:
+      timeout: ${encryption_service_connection_timeout:5000}
+      request:
+        timeout: ${encryption_service_connection_request_timeout:5000}
+    read:
+      timeout: ${encryption_service_read_timeout:5000}
 
 decryption:
   uri: https://dev.open-sunbird.org/encryption/decrypt
