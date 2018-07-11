@@ -97,7 +97,6 @@ keycloak:
     realm:  ${sunbird_sso_realm}
     auth_server_url:  ${sunbird_sso_url}
 
-
 ---
 ##################################################################
 #                      TEST PROFILE                              #
