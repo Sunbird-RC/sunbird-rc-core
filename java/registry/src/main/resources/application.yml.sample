@@ -36,7 +36,6 @@ database:
     host: ${database_host:localhost}
     port: ${database_port:7687}
     database_directory: ${database_directory:/data/databases/graph.db}
-    profiler_enabled: ${database_profiler_enabled:false}
 
 ##################################################################################
 # Uncomment the following section to use Cassandra as backend store              #
@@ -52,7 +51,6 @@ database:
 #    index:
 #      storage.backend: ${cassandr_index_storage:elasticsearch}
 #      hostname: ${cassandra_index_hostname:localhost}
-
 
 # RDF Validation Config
 validations:
@@ -98,9 +96,7 @@ keycloak:
     publicKey:  ${sunbird_sso_publickey}
     realm:  ${sunbird_sso_realm}
     auth_server_url:  ${sunbird_sso_url}
-    username: ${sunbird_sso_username}
-    password: ${sunbird_sso_password}
-    clientId: ${sunbird_sso_client_id}
+
 
 ---
 ##################################################################
@@ -176,6 +172,3 @@ keycloak:
     publicKey:  ${sunbird_sso_publickey}
     realm:  ${sunbird_sso_realm}
     auth_server_url:  ${sunbird_sso_url}
-    username: ${sunbird_sso_username}
-    password: ${sunbird_sso_password}
-    clientId: ${sunbird_sso_client_id}
