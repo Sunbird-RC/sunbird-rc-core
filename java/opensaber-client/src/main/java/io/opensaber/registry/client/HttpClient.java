@@ -34,6 +34,20 @@ public class HttpClient {
         return post(url, headers, new HashMap<>(), payload);
     }
 
+    public ResponseEntity<Response> delete(String url, HttpHeaders headers, String payload) {
+        return delete(url, headers, new HashMap<>(), payload);
+    }
+
+    public ResponseEntity<Response> delete(String url,HttpHeaders headers, Map<String, String> queryParams, String payload){
+        System.out.println("url:::::"+url);
+        HttpEntity<String> entity =  new HttpEntity<>(payload, headers);
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(url);
+        queryParams.forEach((param, paramValue) -> uriBuilder.queryParam(param, paramValue));
+        System.out.println("uriBuilder.toUriString():::::"+uriBuilder.toUriString());
+        ResponseEntity<Response> response = restTemplate.exchange(uriBuilder.toUriString(), HttpMethod.DELETE, entity, Response.class);
+        return response;
+    }
+
     public ResponseEntity<Response> post(String url, HttpHeaders headers, Map<String, String> queryParams, String payload) {
         HttpEntity<String> entity = new HttpEntity<>(payload, headers);
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(url);

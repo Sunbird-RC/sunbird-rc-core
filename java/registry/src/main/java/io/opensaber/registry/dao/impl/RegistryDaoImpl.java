@@ -520,7 +520,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
 
                 watch.start("RegistryDaoImpl.deleteEntityById");
-                logger.info("Record exists for label : {}", idLabel);
+                logger.debug("Record exists for label : {}", idLabel);
                 Vertex s = hasLabel.next();
                 if(Constants.STATUS_INACTIVE.equals(s.value(registryContext+"@status"))){
                     throw new UnsupportedOperationException(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);

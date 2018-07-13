@@ -95,6 +95,15 @@ public class OpensaberClientIntegrationTestSteps extends RegistryTestBase implem
             ((ObjectNode) updateNode.path("teacher").path("teachingRole")).put("id", teachingRoleId);
             responseData = client.updateEntity(new RequestData<>(updateNode.toString()), headers);
         });
+
+        And("^delete the entity in the registry$" ,() -> {
+            entityId = new URI(mapper.readTree(responseData.getResponseData()).path("result").path("entity").asText());
+            responseData = deleteEntity();
+        });
+    }
+
+    private ResponseData<String> deleteEntity() {
+        return client.deleteEntity(entityId, headers);
     }
 
     private ResponseData<String> readEntity() throws TransformationException {
