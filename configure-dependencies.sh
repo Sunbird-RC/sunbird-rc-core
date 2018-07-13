@@ -7,4 +7,5 @@ cp java/registry/src/main/resources/validations_create.shex.sample java/registry
 cp java/registry/src/main/resources/validations_update.shex.sample java/registry/src/main/resources/validations_update.shex
 cp java/registry/src/main/resources/schema-configuration.jsonld.sample java/registry/src/main/resources/schema-configuration.jsonld
 cp java/registry/src/main/resources/frame.json.sample java/registry/src/main/resources/frame.json
+cp java/registry/src/main/resources/audit_frame.json.sample java/registry/src/main/resources/audit_frame.json
 echo "Configuration of dependencies completed"
