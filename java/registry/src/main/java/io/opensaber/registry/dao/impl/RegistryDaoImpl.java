@@ -486,8 +486,8 @@ public class RegistryDaoImpl implements RegistryDao {
         } else {
             logger.info("Record exists for label : {}", label);
             Vertex subject = hasLabel.next();
-            if("inactive".equals(subject.value(registryContext+"status"))){
-                throw new UnsupportedOperationException(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);
+            if(Constants.STATUS_INACTIVE.equals(subject.value(registryContext+"@status"))){
+                throw new UnsupportedOperationException(Constants.READ_ON_DELETE_ENTITY_NOT_SUPPORTED);
             }
             Vertex newSubject = parsedGraph.addVertex(subject.label());
             copyProperties(subject, newSubject, "read", encDecPropertyBuilder);
@@ -522,10 +522,10 @@ public class RegistryDaoImpl implements RegistryDao {
                 watch.start("RegistryDaoImpl.deleteEntityById");
                 logger.info("Record exists for label : {}", idLabel);
                 Vertex s = hasLabel.next();
-                if("inactive".equals(s.value(registryContext+"status"))){
+                if(Constants.STATUS_INACTIVE.equals(s.value(registryContext+"@status"))){
                     throw new UnsupportedOperationException(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);
                 } else {
-                    isEntityDeleted = deleteVertexWithOUTEdge(s);
+                    isEntityDeleted = deleteVertexWithInEdge(s);
                 }
 
                 tx.commit();
@@ -534,7 +534,7 @@ public class RegistryDaoImpl implements RegistryDao {
             } else {
                 logger.info("Record exists for label : {}", idLabel);
                 Vertex s = hasLabel.next();
-                isEntityDeleted = deleteVertexWithOUTEdge(s);
+                isEntityDeleted = deleteVertexWithInEdge(s);
             }
 
         }
@@ -542,7 +542,7 @@ public class RegistryDaoImpl implements RegistryDao {
     }
 
 
-    private boolean deleteVertexWithOUTEdge(Vertex s) {
+    private boolean deleteVertexWithInEdge(Vertex s) {
         Edge edge;
         Stack<Vertex> vStack = new Stack<Vertex>();
         Iterator<Edge> inEdgeIter = s.edges(Direction.IN);
@@ -551,13 +551,13 @@ public class RegistryDaoImpl implements RegistryDao {
                 Vertex o = edge.outVertex();
                 if (!vStack.contains(o)) {
                     vStack.push(o);
-                    if ("active".equals(o.value(registryContext + "status"))) {
+                    if (Constants.STATUS_ACTIVE.equals(o.value(registryContext + "@status"))) {
                         return false;
                     }
                 }
         }
-            s.property(registryContext+"status","inactive");
-            return true;
+        s.property(registryContext+"@status",Constants.STATUS_INACTIVE);
+        return true;
         /*Stack<Vertex> vStack = new Stack<Vertex>();
         while (edgeIter.hasNext()) {
             edge = edgeIter.next();
@@ -571,7 +571,7 @@ public class RegistryDaoImpl implements RegistryDao {
         Iterator<Edge> inEdgeIter = s.edges(Direction.IN);
         inEdgeIter.
         if (!(inEdgeIter.hasNext() && IteratorUtils.count(inEdgeIter) > 1)) {
-            s.property(registryContext+"status","inactive");
+            s.property(registryContext+"@status",Constants.STATUS_INACTIVE);
         }*/
         /*Iterator<Vertex> vIterator = vStack.iterator();
 
@@ -585,7 +585,9 @@ public class RegistryDaoImpl implements RegistryDao {
     private void copyProperties(Vertex subject, Vertex newSubject, String methodOrigin, ImmutableTable.Builder<Vertex, Vertex, Map<String, Object>> encDecPropertyBuilder)
             throws NoSuchElementException, EncryptionException, AuditFailedException {
         HashMap<String, HashMap<String, String>> propertyMetaPropertyMap = new HashMap<String, HashMap<String, String>>();
-        subject.property(registryContext+"status","active");
+        if(methodOrigin.equalsIgnoreCase("create")) {
+            subject.property(registryContext + "@status", Constants.STATUS_ACTIVE);
+        }
         Iterator<VertexProperty<Object>> iter = subject.properties();
         Map<String, Object> propertyMap = new HashMap<String, Object>();
 
@@ -608,7 +610,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 buildPropertyMetaMap(propertyMetaPropertyMap, property);
             } else {
                 if (!(methodOrigin.equalsIgnoreCase("read")
-                        && (property.key().contains("@audit") || property.key().contains("status")))) {
+                        && (property.key().contains("@audit") || property.key().contains("@status")))) {
                     setProperty(newSubject, property.key(), property.value(), methodOrigin);
                     setMetaProperty(subject, newSubject, property, methodOrigin);
                 }

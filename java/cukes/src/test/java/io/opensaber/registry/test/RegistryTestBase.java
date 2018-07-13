@@ -140,7 +140,7 @@ public class RegistryTestBase {
 
 	public ResponseEntity<Response> delete(String url,HttpHeaders headers){
 		HttpEntity<String> entity = new HttpEntity<>(headers);
-		ResponseEntity<Response> response = restTemplate.postForEntity(url, entity, Response.class);
+		ResponseEntity<Response> response = restTemplate.exchange(url,HttpMethod.DELETE, entity, Response.class);
 		return response;
 	}
 

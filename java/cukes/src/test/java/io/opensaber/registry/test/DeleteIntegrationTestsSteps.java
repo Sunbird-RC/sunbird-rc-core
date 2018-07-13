@@ -1,6 +1,7 @@
 package io.opensaber.registry.test;
 
 import cucumber.api.Scenario;
+import cucumber.api.java.en.Given;
 import cucumber.api.java8.En;
 import io.opensaber.pojos.Response;
 import org.springframework.http.HttpHeaders;
@@ -11,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 
 import static org.junit.Assert.assertEquals;
 
-class DeleteIntegrationTestsSteps extends RegistryTestBase implements En {
+public class DeleteIntegrationTestsSteps extends RegistryTestBase implements En {
 
     private String baseUrl;
     private String id;
@@ -19,7 +20,6 @@ class DeleteIntegrationTestsSteps extends RegistryTestBase implements En {
 
     private static final String VALID_JSONLD_FILE = "create_teacher.jsonld";
     private static final String CREATE_REST_ENDPOINT = "add";
-    private static final String DELETE_REST_ENDPOINT = "delete";
     private HttpHeaders headers;
 
     /**
@@ -48,21 +48,22 @@ class DeleteIntegrationTestsSteps extends RegistryTestBase implements En {
      * All the reusable step definitions should go here
      */
     private void initializeCommonSteps() {
-        When("^deleting the record in the registry$",() -> {
+        Given("^delete the record in the registry$",() -> {
             StringBuilder url = new StringBuilder();
-            url.append(baseUrl).append(DELETE_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
-            delete(url.toString(),headers);
+            url.append(baseUrl).append("/").append(extractIdWithoutContext(id));
+            response = delete(url.toString(),headers);
         });
 
-        Then("^deleting the record should be unsuccessful$", () -> checkUnsuccessfulResponse());
+        Then("^deleted record should be unsuccessful$", () -> checkUnsuccessfulResponse());
         And("^delete api error message is (.*)$", (String errorMsg) -> verifyUnsuccessfulMessage(errorMsg));
 
-        /*When("^an valid record for deleting a record with parent record status is active$", () -> {
+        /*Given("^delete record with connected nodes are active$", () -> {
             StringBuilder url = new StringBuilder();
-            url.append(baseUrl).append(DELETE_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
-            delete(url.toString(),headers);
+            url.append(baseUrl).append(DELETE_REST_ENDPOINT).append("/").append("DisabilityCode-NA");
+            response = delete(url.toString(),headers);
         });*/
-        And("^delete api error message is (.*)$", (String errorMsg) -> verifyUnsuccessfulMessageWhenParentNodeIsActive(errorMsg));
+        Then("^deleted record should be successful$", () -> checkSuccessfulResponse());
+        And("^delete api error message when parent record active is (.*)$", (String errorMsg) -> verifyUnsuccessfulMessageWhenParentNodeIsActive(errorMsg));
 
     }
 
@@ -70,10 +71,10 @@ class DeleteIntegrationTestsSteps extends RegistryTestBase implements En {
      * Cucumber Background steps which will be executed before each test
      */
     private void backgroundStepsForEachTest(){
-        Given("a valid entity record$",() -> {
+        Given("a valid create entity record$",() -> {
             setJsonld(VALID_JSONLD_FILE);
         });
-        And("the record is created in the registry$", ()->{
+        And("the record is inserted in the registry$", ()->{
             StringBuilder url = new StringBuilder();
             url.append(baseUrl).append(CREATE_REST_ENDPOINT);
             ResponseEntity<Response> response = createEntity(jsonld,url.toString(),headers);
@@ -86,6 +87,12 @@ class DeleteIntegrationTestsSteps extends RegistryTestBase implements En {
         assertEquals(Response.Status.UNSUCCESSFUL,responseStatus);
     }
 
+    private void checkSuccessfulResponse(){
+        Response.Status responseStatus = response.getBody().getParams().getStatus();
+        System.out.println("...."+responseStatus);
+        assertEquals(Response.Status.SUCCCESSFUL,responseStatus);
+    }
+
     private void verifyUnsuccessfulMessage(String message) {
         assertEquals(message, response.getBody().getParams().getErrmsg());
     }
@@ -96,18 +103,16 @@ class DeleteIntegrationTestsSteps extends RegistryTestBase implements En {
 
     private void testDeleteWithParentRecordIsActive() {
         After((Scenario scenario) -> response = null);
-        Given("^a existing record id while parent record status is active$", () -> {
+        Given("^delete record with connected nodes are active$", () -> {
             id = "DisabilityCode-NA";
         });
     }
 
     private void testDeleteWhenEntityDoesNotExist() {
-        After((Scenario scenario) -> response = null);
-
-        Given("^a non-existent record id$", () -> {
-            id = generateRandomId();
-           // setJsonldWithNewRootLabel(id);
-        });
+       After((Scenario scenario) -> response = null);
+       Given("^delete a non-existent record id$", () -> {
+           id = generateRandomId();
+       });
     }
 
 }

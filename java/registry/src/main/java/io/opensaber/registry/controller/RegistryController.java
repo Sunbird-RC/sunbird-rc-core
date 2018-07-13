@@ -202,8 +202,8 @@ public class RegistryController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@RequestMapping(value="/delete/{id}", method = RequestMethod.POST)
-	public ResponseEntity<Response> deleteFromEntity(@PathVariable("id") String id){
+	@RequestMapping(value="/{id}", method = RequestMethod.DELETE)
+	public ResponseEntity<Response> deleteEntity(@PathVariable("id") String id){
 		String entityId = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.DELETE, "OK", responseParams);
@@ -213,6 +213,11 @@ public class RegistryController {
 			responseParams.setStatus(Response.Status.SUCCCESSFUL);
 		} catch (UnsupportedOperationException e) {
 			logger.error("Controller: UnsupportedOperationException while deleting entity !", e);
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		} catch (RecordNotFoundException e){
+			logger.error("Controller: RecordNotFoundException while deleting entity !", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
