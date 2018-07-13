@@ -1089,7 +1089,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	@Test
 	public void test_for_delete_root_node() throws DuplicateRecordException, NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
 		expectedEx.expect(UnsupportedOperationException.class);
-		expectedEx.expectMessage(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);
+		expectedEx.expectMessage(Constants.READ_ON_DELETE_ENTITY_NOT_SUPPORTED);
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
 		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
