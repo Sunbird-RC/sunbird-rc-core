@@ -138,6 +138,12 @@ public class RegistryTestBase {
 		return response;
 	}
 
+	public ResponseEntity<Response> delete(String url,HttpHeaders headers){
+		HttpEntity<String> entity = new HttpEntity<>(headers);
+		ResponseEntity<Response> response = restTemplate.exchange(url,HttpMethod.DELETE, entity, Response.class);
+		return response;
+	}
+
 	public ResponseEntity<Response> readEntity(String url, HttpHeaders headers, String id) {
 		HttpEntity<String> entity = new HttpEntity<>(headers);
 		Map<String,String> queryParams = new HashMap<String,String>();

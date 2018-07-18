@@ -269,7 +269,7 @@ public class RegistryDaoImpl implements RegistryDao {
                     edgeVertexMatchList.add(edgeAdded);
                     if(auditEnabled) {
                         watch.start("RegistryDaoImpl.addOrUpdateVertexAndEdge.auditRecord");
-                        AuditRecord record = appContext.getBean(AuditRecord.class);
+                                AuditRecord record = appContext.getBean(AuditRecord.class);
                         record
                                 .subject(dbVertex.label())
                                 .predicate(e.label())
@@ -486,6 +486,9 @@ public class RegistryDaoImpl implements RegistryDao {
         } else {
             logger.info("Record exists for label : {}", label);
             Vertex subject = hasLabel.next();
+            if(Constants.STATUS_INACTIVE.equals(subject.value(registryContext+"@status"))){
+                throw new UnsupportedOperationException(Constants.READ_ON_DELETE_ENTITY_NOT_SUPPORTED);
+            }
             Vertex newSubject = parsedGraph.addVertex(subject.label());
             copyProperties(subject, newSubject, "read", encDecPropertyBuilder);
             watch.start("RegistryDaoImpl.getEntityById.extractGraphFromVertex");
@@ -501,10 +504,90 @@ public class RegistryDaoImpl implements RegistryDao {
         return parsedGraph;
     }
 
+    @Override
+    public boolean deleteEntityById(String idLabel) throws RecordNotFoundException {
+        boolean isEntityDeleted= false;
+        Graph graphFromStore = databaseProvider.getGraphStore();
+        GraphTraversalSource traversalSource = graphFromStore.traversal();
+        GraphTraversal<Vertex, Vertex> hasLabel = traversalSource.clone().V().hasLabel(idLabel);
+        //Graph parsedGraph = TinkerGraph.open();
+        if (!hasLabel.hasNext()) {
+            logger.info("Record not found  for label : {}", idLabel);
+            throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
+        } else {
+            if (graphFromStore.features().graph().supportsTransactions()) {
+                org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
+                tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
+
+                watch.start("RegistryDaoImpl.deleteEntityById");
+                logger.debug("Record exists for label : {}", idLabel);
+                Vertex s = hasLabel.next();
+                if(Constants.STATUS_INACTIVE.equals(s.value(registryContext+"@status"))){
+                    throw new UnsupportedOperationException(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);
+                } else {
+                    isEntityDeleted = deleteVertexWithInEdge(s);
+                }
+
+                tx.commit();
+                watch.stop("RegistryDaoImpl.deleteEntityById");
+                logger.debug("RegistryDaoImpl : Entity deleted for transactional DB with rootNodeLabel : {}", idLabel);
+            } else {
+                logger.info("Record exists for label : {}", idLabel);
+                Vertex s = hasLabel.next();
+                isEntityDeleted = deleteVertexWithInEdge(s);
+            }
+
+        }
+        return isEntityDeleted;
+    }
+
+
+    private boolean deleteVertexWithInEdge(Vertex s) {
+        Edge edge;
+        Stack<Vertex> vStack = new Stack<Vertex>();
+        Iterator<Edge> inEdgeIter = s.edges(Direction.IN);
+        while(inEdgeIter.hasNext()) {
+                edge = inEdgeIter.next();
+                Vertex o = edge.outVertex();
+                if (!vStack.contains(o)) {
+                    vStack.push(o);
+                    if (Constants.STATUS_ACTIVE.equals(o.value(registryContext + "@status"))) {
+                        return false;
+                    }
+                }
+        }
+        s.property(registryContext+"@status",Constants.STATUS_INACTIVE);
+        return true;
+        /*Stack<Vertex> vStack = new Stack<Vertex>();
+        while (edgeIter.hasNext()) {
+            edge = edgeIter.next();
+            Vertex o = edge.inVertex();
+            if(!vStack.contains(o)) {
+                vStack.push(o);
+            }
+            //edge.remove();
+        }
+        //if vertex has no incoming edges delete the node
+        Iterator<Edge> inEdgeIter = s.edges(Direction.IN);
+        inEdgeIter.
+        if (!(inEdgeIter.hasNext() && IteratorUtils.count(inEdgeIter) > 1)) {
+            s.property(registryContext+"@status",Constants.STATUS_INACTIVE);
+        }*/
+        /*Iterator<Vertex> vIterator = vStack.iterator();
+
+        while(vIterator.hasNext()){
+            s = vIterator.next();
+            deleteVertexWithOUTEdge(s);
+        }*/
+
+    }
 
     private void copyProperties(Vertex subject, Vertex newSubject, String methodOrigin, ImmutableTable.Builder<Vertex, Vertex, Map<String, Object>> encDecPropertyBuilder)
             throws NoSuchElementException, EncryptionException, AuditFailedException {
         HashMap<String, HashMap<String, String>> propertyMetaPropertyMap = new HashMap<String, HashMap<String, String>>();
+        if(methodOrigin.equalsIgnoreCase("create")) {
+            subject.property(registryContext + "@status", Constants.STATUS_ACTIVE);
+        }
         Iterator<VertexProperty<Object>> iter = subject.properties();
         Map<String, Object> propertyMap = new HashMap<String, Object>();
 
@@ -527,7 +610,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 buildPropertyMetaMap(propertyMetaPropertyMap, property);
             } else {
                 if (!(methodOrigin.equalsIgnoreCase("read")
-                        && property.key().contains("@audit"))) {
+                        && (property.key().contains("@audit") || property.key().contains("@status")))) {
                     setProperty(newSubject, property.key(), property.value(), methodOrigin);
                     setMetaProperty(subject, newSubject, property, methodOrigin);
                 }

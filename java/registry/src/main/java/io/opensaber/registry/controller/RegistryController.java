@@ -100,6 +100,11 @@ public class RegistryController {
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(e.getMessage());
+		} catch (UnsupportedOperationException e) {
+			logger.error("RegistryController: UnsupportedOperationException while reading entity !", e);
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
 		} catch (Exception e) {
 			logger.error("RegistryController: Exception while reading entity!", e);
 			response.setResult(null);
@@ -193,6 +198,34 @@ public class RegistryController {
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(Constants.AUDIT_IS_DISABLED);
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@RequestMapping(value="/delete/{id}", method = RequestMethod.DELETE)
+	public ResponseEntity<Response> deleteEntity(@PathVariable("id") String id){
+		String entityId = registryContext + id;
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.DELETE, "OK", responseParams);
+		try{
+			registryService.deleteEntityById(entityId);
+			responseParams.setErrmsg("");
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+		} catch (UnsupportedOperationException e) {
+			logger.error("Controller: UnsupportedOperationException while deleting entity !", e);
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		} catch (RecordNotFoundException e){
+			logger.error("Controller: RecordNotFoundException while deleting entity !", e);
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		} catch (Exception e) {
+			logger.error("Controller: Exception while deleting entity !", e);
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg("Meh ! You encountered an error!");
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

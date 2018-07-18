@@ -16,3 +16,9 @@ Feature: Invoke registry apis using client library
     And an existing entity in the registry
     When updating the entity in the registry
     Then response from the api should be successful
+
+  Scenario: Deleting a valid entity in the registry
+    Given a valid json input for a new entity
+    When creating the entity in the registry
+    And delete the entity in the registry
+    Then response from the api should be successful

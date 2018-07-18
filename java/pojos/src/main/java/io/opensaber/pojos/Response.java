@@ -27,6 +27,7 @@ public class Response {
 		UPDATE("open-saber.registry.update"),
 		AUDIT("open-saber.registry.audit"),
 		HEALTH("open-saber.registry.health"),
+		DELETE("open-saber.registry.delete"),
 		NONE("");
 		private String id;
 

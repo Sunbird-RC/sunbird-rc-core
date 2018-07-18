@@ -25,4 +25,6 @@ public interface RegistryDao {
 
 	public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException;
 
+	public boolean deleteEntityById (String id) throws RecordNotFoundException,AuditFailedException;
+
 }

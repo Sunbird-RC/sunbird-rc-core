@@ -182,7 +182,16 @@ public class RegistryServiceImpl implements RegistryService {
 		logger.debug("RegistryServiceImpl : Audit Model : " + model);
 		return model;
 	}
-	
+
+	@Override
+	public boolean deleteEntityById(String id) throws AuditFailedException, RecordNotFoundException {
+		boolean isDeleted = registryDao.deleteEntityById(id);
+		if(!isDeleted){
+			throw new UnsupportedOperationException(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);
+		}
+		return isDeleted;
+	}
+
 	private Graph generateGraphFromRDF(Model entity) throws EntityCreationException, MultipleEntityException{
 		Graph graph = GraphDBFactory.getEmptyGraph();
 		StmtIterator iterator = entity.listStatements();
