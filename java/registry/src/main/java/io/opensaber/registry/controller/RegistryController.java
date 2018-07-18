@@ -202,7 +202,7 @@ public class RegistryController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@RequestMapping(value="/{id}", method = RequestMethod.DELETE)
+	@RequestMapping(value="/delete/{id}", method = RequestMethod.DELETE)
 	public ResponseEntity<Response> deleteEntity(@PathVariable("id") String id){
 		String entityId = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();

@@ -97,7 +97,7 @@ public class OpensaberClientIntegrationTestSteps extends RegistryTestBase implem
         });
 
         And("^delete the entity in the registry$" ,() -> {
-            entityId = new URI(mapper.readTree(responseData.getResponseData()).path("result").path("entity").asText());
+            entityId = new URI(extractIdWithoutContext(mapper.readTree(responseData.getResponseData()).path("result").path("entity").asText()));
             responseData = deleteEntity();
         });
     }

@@ -20,6 +20,7 @@ public class DeleteIntegrationTestsSteps extends RegistryTestBase implements En 
 
     private static final String VALID_JSONLD_FILE = "create_teacher.jsonld";
     private static final String CREATE_REST_ENDPOINT = "add";
+    private static final String DELETE_REST_ENDPOINT = "delete";
     private HttpHeaders headers;
 
     /**
@@ -50,7 +51,7 @@ public class DeleteIntegrationTestsSteps extends RegistryTestBase implements En 
     private void initializeCommonSteps() {
         Given("^delete the record in the registry$",() -> {
             StringBuilder url = new StringBuilder();
-            url.append(baseUrl).append("/").append(extractIdWithoutContext(id));
+            url.append(baseUrl).append(DELETE_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
             response = delete(url.toString(),headers);
         });
 
