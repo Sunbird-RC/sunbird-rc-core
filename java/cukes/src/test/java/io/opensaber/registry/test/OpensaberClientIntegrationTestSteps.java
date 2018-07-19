@@ -86,12 +86,12 @@ public class OpensaberClientIntegrationTestSteps extends RegistryTestBase implem
                 responseData = client.addEntity(new RequestData<>(jsonInput.toString()), headers));
 
         When("^updating the entity in the registry$", () -> {
-            entityId = new URI(mapper.readTree(responseData.getResponseData()).path("result").path("entity").asText());
+            entityId = new URI(extractIdWithoutContext(mapper.readTree(responseData.getResponseData()).path("result").path("entity").asText()));
             responseData = readEntity();
             JsonNode teacherResponseNode = mapper.readTree(responseData.getResponseData()).path("result").path("teacher");
             String teachingRoleId = extractNodeId(teacherResponseNode, "teachingRole");
             ObjectNode updateNode = ((ObjectNode) mapper.readTree("{\"teacher\": {\"teachingRole\": {\"mainSubjectsTaught\": [\"SubjectCode-ENGLISH\",\"SubjectCode-MATH\"]}}}"));
-            ((ObjectNode) updateNode.path("teacher")).put("id", entityId.toString());
+            ((ObjectNode) updateNode.path("teacher")).put("id", mapper.readTree(responseData.getResponseData()).path("result").path("entity").asText());
             ((ObjectNode) updateNode.path("teacher").path("teachingRole")).put("id", teachingRoleId);
             responseData = client.updateEntity(new RequestData<>(updateNode.toString()), headers);
         });

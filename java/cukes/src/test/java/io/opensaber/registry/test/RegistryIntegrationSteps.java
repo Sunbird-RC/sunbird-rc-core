@@ -247,7 +247,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 
 	private ResponseEntity<Response> callRegistryReadAPI() {
 		HttpEntity<String> entity = new HttpEntity<>(headers);
-		ResponseEntity<Response> response = restTemplate.exchange(baseUrl+"/"+id, HttpMethod.GET,entity,Response.class);
+		ResponseEntity<Response> response = restTemplate.exchange(baseUrl+READ_ENTITY+"/"+id, HttpMethod.GET,entity,Response.class);
 		return response;
 		
 	}
