@@ -486,8 +486,10 @@ public class RegistryDaoImpl implements RegistryDao {
         } else {
             logger.info("Record exists for label : {}", label);
             Vertex subject = hasLabel.next();
-            if(Constants.STATUS_INACTIVE.equals(subject.value(registryContext+"@status"))){
-                throw new UnsupportedOperationException(Constants.READ_ON_DELETE_ENTITY_NOT_SUPPORTED);
+            if(subject.property(registryContext+"@status").isPresent()){
+                if (Constants.STATUS_INACTIVE.equals(subject.value(registryContext + "@status"))) {
+                    throw new UnsupportedOperationException(Constants.READ_ON_DELETE_ENTITY_NOT_SUPPORTED);
+                }
             }
             Vertex newSubject = parsedGraph.addVertex(subject.label());
             copyProperties(subject, newSubject, "read", encDecPropertyBuilder);
@@ -551,8 +553,10 @@ public class RegistryDaoImpl implements RegistryDao {
                 Vertex o = edge.outVertex();
                 if (!vStack.contains(o)) {
                     vStack.push(o);
-                    if (Constants.STATUS_ACTIVE.equals(o.value(registryContext + "@status"))) {
-                        return false;
+                    if(o.property(registryContext+"@status").isPresent()) {
+                        if (Constants.STATUS_ACTIVE.equals(o.value(registryContext + "@status"))) {
+                            return false;
+                        }
                     }
                 }
         }
