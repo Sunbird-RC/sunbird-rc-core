@@ -89,16 +89,16 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 
         Given("^valid data for updating a record$", () -> {
             StringBuilder url = new StringBuilder();
-            //url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
-            url.append(id);
+            url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            //url.append(id);
             response = fetchEntity(url.toString(), headers);
             jsonld = updateInputJsonldRootNodeId(response, "update_teacher.jsonld");
         });
         
         Given("^input for updating single record$", () -> {
             StringBuilder url = new StringBuilder();
-            //url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
-            url.append(id);
+            url.append(baseUrl).append(READ_REST_ENDPOINT).append("/").append(extractIdWithoutContext(id));
+            //url.append(id);
             response = fetchEntity(url.toString(), headers);
             jsonld = updateInputJsonldRootNodeId(response, "update_teacher_audit.jsonld");
         });

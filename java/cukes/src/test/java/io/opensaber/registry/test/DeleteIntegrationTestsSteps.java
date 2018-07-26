@@ -90,7 +90,6 @@ public class DeleteIntegrationTestsSteps extends RegistryTestBase implements En 
 
     private void checkSuccessfulResponse(){
         Response.Status responseStatus = response.getBody().getParams().getStatus();
-        System.out.println("...."+responseStatus);
         assertEquals(Response.Status.SUCCCESSFUL,responseStatus);
     }
 
