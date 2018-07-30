@@ -522,7 +522,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 watch.start("RegistryDaoImpl.deleteEntityById");
                 logger.debug("Record exists for label : {}", idLabel);
                 Vertex s = hasLabel.next();
-                if(Constants.STATUS_INACTIVE.equals(s.value(registryContext+"@status"))){
+                if(s.property(registryContext+"@status").isPresent() && Constants.STATUS_INACTIVE.equals(s.value(registryContext+"@status"))){
                     throw new UnsupportedOperationException(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);
                 } else {
                     isEntityDeleted = deleteVertexWithInEdge(s);
