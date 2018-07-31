@@ -190,6 +190,9 @@ public class RegistryDaoImpl implements RegistryDao {
             if (hasLabel.hasNext()) {
                 logger.info(String.format("Root node label {} already exists. Updating properties for the root node.", rootLabel));
                 Vertex existingVertex = hasLabel.next();
+                if(methodOrigin.equalsIgnoreCase("update") && existingVertex.property(registryContext+"@status").isPresent() && Constants.STATUS_INACTIVE.equals(existingVertex.value(registryContext + "@status"))){
+                    throw new UnsupportedOperationException(Constants.ENTITY_NOT_FOUND);
+                }
                 setAuditInfo(v, false);
                 copyProperties(v, existingVertex, methodOrigin, encDecPropertyBuilder);
                 // watch.start("RegistryDaoImpl.addOrUpdateVertexAndEdge()");
