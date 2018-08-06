@@ -4,6 +4,8 @@ import java.io.IOException;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
 import io.opensaber.registry.sink.*;
+
+import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jena.rdf.model.Model;
@@ -36,6 +38,7 @@ import io.opensaber.registry.middleware.impl.JSONLDConverter;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
+
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -65,6 +68,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${perf.monitoring.enabled}")
 	private boolean performanceMonitoringEnabled;
+	
+	@Value("${registry.system.base}")
+	private String registrySystemBase;
 
 	@Bean
 	public ObjectMapper objectMapper() {
@@ -132,7 +138,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 		OpenSaberInstrumentation watch = instrumentationStopWatch();
 		watch.start("SchemaConfigurator.initialization");
-		SchemaConfigurator schemaConfigurator = new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate);
+		SchemaConfigurator schemaConfigurator = new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate, registrySystemBase);
 		watch.stop("SchemaConfigurator.initialization");
 		return schemaConfigurator ;
 	}
@@ -194,6 +200,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
+	public UrlValidator urlValidator(){
+		return new UrlValidator(UrlValidator.ALLOW_LOCAL_URLS);
+	}
+
+	@Bean
 	public Middleware rdfValidationMapper() {
 		Model validationConfig = null;
 		try{
@@ -211,7 +222,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
                     .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
         }
 		registry.addInterceptor(rdfConversionInterceptor())
-				.addPathPatterns("/add", "/update").order(2);
+				.addPathPatterns("/add", "/update","/search").order(2);
 		/*registry.addInterceptor(rdfValidationMappingInterceptor())
 				.addPathPatterns("/add", "/update").order(3);*/
 		registry.addInterceptor(rdfValidationInterceptor())

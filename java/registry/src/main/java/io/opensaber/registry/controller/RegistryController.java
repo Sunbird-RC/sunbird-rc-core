@@ -22,10 +22,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.TypeNotProvidedException;
 import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.SearchService;
 
 @RestController
 public class RegistryController {
@@ -34,6 +38,9 @@ public class RegistryController {
 
 	@Autowired
 	private RegistryService registryService;
+	
+	@Autowired
+	private SearchService searchService;
 
 	@Value("${registry.context.base}")
 	private String registryContext;
@@ -110,6 +117,41 @@ public class RegistryController {
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Ding! You encountered an error!");
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/search", method = RequestMethod.POST)
+	public ResponseEntity<Response> searchEntity(@RequestAttribute Request requestModel) {
+
+		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
+		System.out.println("Printing incoming model:"+rdf);
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
+		Map<String, Object> result = new HashMap<>();
+
+		try {
+			watch.start("RegistryController.searchEntity");
+			org.eclipse.rdf4j.model.Model entityModel = searchService.search(rdf);
+			logger.debug("FETCHED: " + entityModel);
+			String jenaJSON = registryService.frameSearchEntity(entityModel);
+			if(jenaJSON.isEmpty()){
+				response.setResult(new HashMap<String,Object>());
+			}else{
+				response.setResult(gson.fromJson(jenaJSON, mapType));
+			}
+			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			watch.stop("RegistryController.searchEntity");
+		} catch (AuditFailedException | RecordNotFoundException | TypeNotProvidedException e) {
+			logger.error("AuditFailedException | RecordNotFoundException | TypeNotProvidedException in controller while adding entity !",e);
+			response.setResult(result);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		} catch (Exception e) {
+			logger.error("Exception in controller while searching entities !",e);
+			response.setResult(result);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

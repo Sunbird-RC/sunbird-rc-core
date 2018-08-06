@@ -15,6 +15,8 @@ import java.util.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -31,6 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 import io.opensaber.converters.JenaRDF4J;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.utils.converters.RDF2Graph;
@@ -155,5 +159,33 @@ public class RegistryTestBase {
 
     	return resList.get(0).toString();
     }
+	
+	public void removeStatementFromModel(Model rdfModel, Property predicate) {
+		StmtIterator blankNodeIterator =
+				rdfModel.listStatements(null, predicate, (RDFNode) null);
+
+		// Remove all the blank nodes from the existing model to create test data
+		while(blankNodeIterator.hasNext()) {
+			Statement parentStatement = blankNodeIterator.next();
+			if(parentStatement.getObject() instanceof Resource) {
+				StmtIterator childStatements = rdfModel.listStatements((Resource) parentStatement.getObject(), null, (RDFNode) null);
+				while (childStatements.hasNext()) {
+					childStatements.next();
+					childStatements.remove();
+				}
+			}
+			blankNodeIterator.remove();
+		}
+	}
+	
+	public Graph generateGraphFromRDF(Graph newGraph, Model rdfModel) throws EntityCreationException, MultipleEntityException{
+		StmtIterator iterator = rdfModel.listStatements();
+		while (iterator.hasNext()) {
+			Statement rdfStatement = iterator.nextStatement();
+			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
+			newGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph);
+		}
+		return newGraph;
+	}
 
 }

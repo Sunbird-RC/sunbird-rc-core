@@ -18,7 +18,7 @@ public class SchemaConfiguratorTest {
 	private static final String CONFIG_VALIDATION_FILE = "validations.shex";
 	
 	private void initialize(String file, String validationFile) throws IOException{
-		schemaConfigurator = new SchemaConfigurator(file, validationFile, validationFile);
+		schemaConfigurator = new SchemaConfigurator(file, validationFile, validationFile, "http://example.com/voc/opensaber/1.0.0/");
 	}
 
 	@Test

@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import io.opensaber.registry.exception.AuditFailedException;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
@@ -24,6 +26,8 @@ public interface RegistryDao {
 	//public boolean deleteEntity (Graph entity, String rootLabel) throws RecordNotFoundException,AuditFailedException;
 
 	public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException;
+	
+	public Graph getEntityByVertex(Vertex vertex) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException;
 
 	public boolean deleteEntityById (String id) throws RecordNotFoundException,AuditFailedException;
 

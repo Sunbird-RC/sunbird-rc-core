@@ -27,6 +27,8 @@ public interface RegistryService {
 
 	public String frameEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException, MultipleEntityException, EntityCreationException;
 	
+	public String frameSearchEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException, MultipleEntityException, EntityCreationException;
+	
 	public String frameAuditEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException;
 
 	public org.eclipse.rdf4j.model.Model getAuditNode(String id) throws IOException, NoSuchElementException, RecordNotFoundException,

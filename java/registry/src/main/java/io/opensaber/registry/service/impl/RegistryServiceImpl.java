@@ -155,6 +155,30 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 	
 	@Override
+	public String frameSearchEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException, MultipleEntityException, EntityCreationException {
+		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
+		String jenaJSON = "";
+		if(!jenaEntityModel.isEmpty()){
+			String rootLabelType = getTypeForSearch(jenaEntityModel);
+			logger.debug("RegistryServiceImpl : jenaEntityModel for framing: {} \n root : {}, \n rootLabelType: {}",jenaEntityModel,rootLabelType);
+			DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
+			JsonLDWriteContext ctx = new JsonLDWriteContext();
+			InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
+			String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+			fileString = fileString.replace("<@type>", rootLabelType);
+			ctx.setFrame(fileString);
+			WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT);
+			PrefixMap pm = RiotLib.prefixMap(g);
+			String base = null;
+			StringWriter sWriterJena = new StringWriter();
+			w.write(sWriterJena, g, pm, base, ctx);
+			jenaJSON = sWriterJena.toString();
+		}
+		logger.debug("RegistryServiceImpl : jenaJSON for framing : {}", jenaJSON);
+		return jenaJSON;
+	}
+	
+	@Override
 	public String frameAuditEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException {
 		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
 		logger.debug("RegistryServiceImpl : jenaEntityModel for audit-framing: {} ",jenaEntityModel);
@@ -229,6 +253,16 @@ public class RegistryServiceImpl implements RegistryService {
 			throw new MultipleEntityException(Constants.ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE);
 		} else {
 			return rootLabelType.get(0);
+		}
+	}
+	
+	
+	private String getTypeForSearch(Model entity) throws EntityCreationException, MultipleEntityException{
+		List<Resource> rootLabels = RDFUtil.getRootLabels(entity);
+		if (rootLabels.size() == 0) {
+			throw new EntityCreationException(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
+		} else {
+			return getTypeForRootLabel(entity, rootLabels.get(0));
 		}
 	}
 }
