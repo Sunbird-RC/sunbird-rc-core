@@ -53,7 +53,6 @@ public class SearchUtil {
 						}
 						objList.add(o);
 						filter.setValue(objList);
-						System.out.println("Printing predicate and value:"+predicate.toString()+":"+objList);
 					}
 				}
 

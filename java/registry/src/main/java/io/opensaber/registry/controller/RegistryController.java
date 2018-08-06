@@ -125,7 +125,6 @@ public class RegistryController {
 	public ResponseEntity<Response> searchEntity(@RequestAttribute Request requestModel) {
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
-		System.out.println("Printing incoming model:"+rdf);
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
