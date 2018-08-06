@@ -1,5 +1,6 @@
 package io.opensaber.registry.dao.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -59,20 +60,31 @@ public class SearchDaoImpl implements SearchDao {
 				while(graphLabelTraversal.hasNext()){
 					labels.add(graphLabelTraversal.next());
 				}
-				if(operator == null){
-					if(urlValidator.isValid(value.toString())){
-						if(value instanceof List){
-							graphtypeTraversal = graphtypeTraversal.asAdmin().clone().outE(property).inV().hasLabel(P.within((List)value)).dedup().inE(property).outV().hasLabel(P.within(labels));
+				List<String> valueIriList = new ArrayList<String>();
+				List valueList = new ArrayList();
+				if(value instanceof List){
+					for(Object o: (List)value){
+						if(urlValidator.isValid(o.toString())){
+							valueIriList.add(o.toString());
 						}else{
-							graphtypeTraversal = graphtypeTraversal.asAdmin().clone().outE(property).inV().hasLabel(value.toString()).dedup().inE(property).outV().hasLabel(P.within(labels));
-						}
-					}else{
-						if(value instanceof List){
-							graphtypeTraversal = graphtypeTraversal.asAdmin().clone().has(property, P.within((List)value));
-						}else{
-							graphtypeTraversal = graphtypeTraversal.asAdmin().clone().has(property, value);
+							valueList.add(o);
 						}
 					}
+				}else{
+					if(urlValidator.isValid(value.toString())){
+						valueIriList.add(value.toString());
+					}else{
+						valueList.add(value);
+					}
+				}
+				if(operator == null){
+					if(valueIriList.size() > 0){
+						graphtypeTraversal = graphtypeTraversal.asAdmin().clone().outE(property).inV().hasLabel(P.within((List)valueIriList)).dedup().inE(property).outV().hasLabel(P.within(labels));
+					}if(valueList.size() > 0){
+						graphtypeTraversal = graphtypeTraversal.asAdmin().clone().has(property, P.within((List)valueList));
+					}
+				}else{
+					// TODO
 				}
 			}
 			getGraphByTraversal(graphtypeTraversal, graphMap);
@@ -80,7 +92,6 @@ public class SearchDaoImpl implements SearchDao {
 		return graphMap;
 	}
 
-	
 	private void getGraphByTraversal(GraphTraversal graphVerticesTraversal, Map<String,Graph> graphMap) throws AuditFailedException, EncryptionException, RecordNotFoundException{
 		while(graphVerticesTraversal.hasNext()){
 			Vertex v = (Vertex)graphVerticesTraversal.next();
