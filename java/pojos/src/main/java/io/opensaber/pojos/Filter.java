@@ -1,6 +1,10 @@
 package io.opensaber.pojos;
 
+import java.util.List;
+
 public class Filter {
+	private List<String> path;
+	private String subject;
 	private String property;
 	private String operator;
 	private Object value;
@@ -23,11 +27,26 @@ public class Filter {
 	public void setValue(Object value) {
 		this.value = value;
 	}
+	
+	public List<String> getPath() {
+		return path;
+	}
+	public void setPath(List<String> path) {
+		this.path = path;
+	}
+	public String getSubject() {
+		return subject;
+	}
+	public void setSubject(String subject) {
+		this.subject = subject;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((property == null) ? 0 : property.hashCode());
+		result = prime * result + ((subject == null) ? 0 : subject.hashCode());
 		return result;
 	}
 	@Override
@@ -44,7 +63,18 @@ public class Filter {
 				return false;
 		} else if (!property.equals(other.property))
 			return false;
+		if (subject == null) {
+			if (other.subject != null)
+				return false;
+		} else if (!subject.equals(other.subject))
+			return false;
 		return true;
-	}	
+	}
+	
+	@Override
+	public String toString() {
+		return "Filter [path=" + path + ", property=" + property + ", operator=" + operator + ", value=" + value + "]";
+	}
+	
 	
 }
