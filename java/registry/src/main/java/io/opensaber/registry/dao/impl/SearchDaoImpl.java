@@ -67,18 +67,10 @@ public class SearchDaoImpl implements SearchDao {
 				List valueList = new ArrayList();
 				if(value instanceof List){
 					for(Object o: (List)value){
-						if(urlValidator.isValid(o.toString())){
-							valueIriList.add(o.toString());
-						}else{
-							valueList.add(o);
-						}
+						updateValueList(o, valueIriList, valueList);
 					}
 				}else{
-					if(urlValidator.isValid(value.toString())){
-						valueIriList.add(value.toString());
-					}else{
-						valueList.add(value);
-					}
+					updateValueList(value, valueIriList, valueList);
 				}
 				//Defaulting to "equals" operation
 				if(operator == null){
@@ -111,10 +103,18 @@ public class SearchDaoImpl implements SearchDao {
 		if(resultTraversal !=null){
 		while(resultTraversal.hasNext()){
 			Vertex v = (Vertex)resultTraversal.next();
-			if(v!=null && (!v.property(registryContext+"@status").isPresent() || Constants.STATUS_ACTIVE.equals(v.value(registryContext + "@status")))){
+			if(v!=null && (!v.property(registryContext+Constants.STATUS_KEYWORD).isPresent() || Constants.STATUS_ACTIVE.equals(v.value(registryContext + Constants.STATUS_KEYWORD)))){
 				graphMap.put(v.label(),registryDao.getEntityByVertex(v));
 			}
 		}
+		}
+	}
+	
+	private void updateValueList(Object value, List<String> valueIriList, List valueList){
+		if(urlValidator.isValid(value.toString())){
+			valueIriList.add(value.toString());
+		}else{
+			valueList.add(value);
 		}
 	}
 

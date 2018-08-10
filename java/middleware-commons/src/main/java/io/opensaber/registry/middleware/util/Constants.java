@@ -57,6 +57,11 @@ public class Constants {
 	public static final String PERSISTENT_GRAPH = "persisten_graph";
 	public static final String STATUS_INACTIVE = "false";
 	public static final String STATUS_ACTIVE = "true";
+	public static final String STATUS_KEYWORD = "@status";
+	public static final String CREATE_METHOD_ORIGIN = "create";
+	public static final String READ_METHOD_ORIGIN = "read";
+	public static final String UPDATE_METHOD_ORIGIN = "update";
+	public static final String SEARCH_METHOD_ORIGIN = "search";
 
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"),

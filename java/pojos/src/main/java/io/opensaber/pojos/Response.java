@@ -28,6 +28,7 @@ public class Response {
 		AUDIT("open-saber.registry.audit"),
 		HEALTH("open-saber.registry.health"),
 		DELETE("open-saber.registry.delete"),
+		SEARCH("open-saber.registry.search"),
 		NONE("");
 		private String id;
 

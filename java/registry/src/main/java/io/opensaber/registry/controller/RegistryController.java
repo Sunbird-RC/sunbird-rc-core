@@ -126,7 +126,7 @@ public class RegistryController {
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
+		Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
 
 		try {
