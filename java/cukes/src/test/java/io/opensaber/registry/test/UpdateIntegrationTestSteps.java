@@ -190,7 +190,7 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 
     private void checkSuccessfulResponse() {
         Response.Status responseStatus = response.getBody().getParams().getStatus();
-        assertEquals(Response.Status.SUCCCESSFUL, responseStatus);
+        assertEquals(Response.Status.SUCCESSFUL, responseStatus);
     }
 
     private void verifyUnsuccessfulMessage(String message) {

@@ -174,7 +174,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 
 	private void checkSuccessfulResponse() throws JsonParseException, JsonMappingException, IOException {
 		Status responseStatus = response.getBody().getParams().getStatus();
-		assertEquals(Response.Status.SUCCCESSFUL, responseStatus);
+		assertEquals(Response.Status.SUCCESSFUL, responseStatus);
 	}
 
 
@@ -313,7 +313,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 				&& response.getBody().getParams().getMsgid()!=null
 				&& response.getBody().getParams().getResmsgid()!=null
 				&& response.getBody().getParams().getStatus()!=null
-				&&(response.getBody().getParams().getStatus().equals(Response.Status.SUCCCESSFUL)?
+				&&(response.getBody().getParams().getStatus().equals(Response.Status.SUCCESSFUL)?
 						(response.getBody().getResult()!= null) : response.getBody().getResult()==null))
 	            && (response.getBody().getClass().getDeclaredFields().length == 6));
 	}

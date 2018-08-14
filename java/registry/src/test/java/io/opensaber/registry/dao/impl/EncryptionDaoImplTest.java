@@ -358,7 +358,6 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		JsonObject addressObject = jsonObject.getAsJsonObject("sample:address");
 		addressObject.addProperty("street", "1st main");
 		String dataString = gson.toJson(jsonObject);
-		System.out.println("dataString=="+dataString);
 		Model rdfModel = getNewValidRdfFromJsonString(dataString);
 		String rootLabel = updateGraphFromRdf(rdfModel);
 

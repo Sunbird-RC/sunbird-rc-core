@@ -42,7 +42,7 @@ public class Response {
 	}
 
 	public enum Status {
-		SUCCCESSFUL, UNSUCCESSFUL;
+		SUCCESSFUL, UNSUCCESSFUL;
 	}
 
 	private String responseCode;

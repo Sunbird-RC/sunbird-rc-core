@@ -151,6 +151,12 @@ public class RegistryTestBase {
 		ResponseEntity<Response> response = restTemplate.exchange(url, HttpMethod.GET, entity, Response.class,queryParams);
 		return response;
 	}
+	
+	public ResponseEntity<Response> search(String jsonldData, String url, HttpHeaders headers) {
+		HttpEntity<String> entity = new HttpEntity<>(jsonldData, headers);
+		ResponseEntity<Response> response = restTemplate.postForEntity(url, entity, Response.class);
+		return response;
+	}
 
 	private static String generateAuthToken() {
 		String ssoAuthBody = new StringBuilder()
