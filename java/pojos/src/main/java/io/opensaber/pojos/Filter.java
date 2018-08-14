@@ -58,16 +58,12 @@ public class Filter {
 		if (getClass() != obj.getClass())
 			return false;
 		Filter other = (Filter) obj;
-		if (property == null) {
-			if (other.property != null)
+		if ((property == null && other.property != null) || !property.equals(other.property)) {
 				return false;
-		} else if (!property.equals(other.property))
-			return false;
-		if (subject == null) {
-			if (other.subject != null)
+		}
+		if ((subject == null && other.subject != null) || !subject.equals(other.subject)) {
 				return false;
-		} else if (!subject.equals(other.subject))
-			return false;
+		}
 		return true;
 	}
 	

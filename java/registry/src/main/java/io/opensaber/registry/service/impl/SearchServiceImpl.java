@@ -34,14 +34,12 @@ public class SearchServiceImpl implements SearchService{
 		}
 		Map<String,Graph> graphMap = searchDao.search(searchQuery);
 		org.eclipse.rdf4j.model.Model result = new LinkedHashModel();
-		for(Map.Entry<String, Graph> entry : graphMap.entrySet()){
-			String label = entry.getKey();
-			Graph graph = entry.getValue();
+		graphMap.forEach((label,graph) -> {
 			org.eclipse.rdf4j.model.Model rdf4jModel = RDF2Graph.convertGraph2RDFModel(graph, label);
-			for (final org.eclipse.rdf4j.model.Statement aStmt : rdf4jModel) {
+			rdf4jModel.forEach(aStmt -> {
 				result.add(aStmt);
-			}	
-		}
+			});
+		});
 		return result;
 
 	}

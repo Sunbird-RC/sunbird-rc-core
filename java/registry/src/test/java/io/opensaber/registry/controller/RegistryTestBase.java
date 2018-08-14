@@ -168,11 +168,7 @@ public class RegistryTestBase {
 		while(blankNodeIterator.hasNext()) {
 			Statement parentStatement = blankNodeIterator.next();
 			if(parentStatement.getObject() instanceof Resource) {
-				StmtIterator childStatements = rdfModel.listStatements((Resource) parentStatement.getObject(), null, (RDFNode) null);
-				while (childStatements.hasNext()) {
-					childStatements.next();
-					childStatements.remove();
-				}
+				rdfModel.removeAll((Resource) parentStatement.getObject(), null, (RDFNode) null);
 			}
 			blankNodeIterator.remove();
 		}
