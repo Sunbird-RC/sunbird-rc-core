@@ -58,6 +58,7 @@ public class Constants {
 	public static final String STATUS_INACTIVE = "false";
 	public static final String STATUS_ACTIVE = "true";
 	public static final String STATUS_KEYWORD = "@status";
+	public static final String AUDIT_KEYWORD = "@audit";
 	public static final String CREATE_METHOD_ORIGIN = "create";
 	public static final String READ_METHOD_ORIGIN = "read";
 	public static final String UPDATE_METHOD_ORIGIN = "update";

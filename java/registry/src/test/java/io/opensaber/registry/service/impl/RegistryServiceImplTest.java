@@ -130,7 +130,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 		assertEquals(5,
 				IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
 						.filter(v -> !v.get().label().equalsIgnoreCase(Constants.GRAPH_GLOBAL_CONFIG))
-						.hasNot("@audit")));
+						.hasNot(Constants.AUDIT_KEYWORD)));
 	}
 	
 	@Test

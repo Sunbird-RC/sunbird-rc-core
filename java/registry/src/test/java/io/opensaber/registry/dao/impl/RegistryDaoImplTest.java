@@ -169,7 +169,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
     private Map<String,Integer> getPropCounterMap(Graph entity) {
 	    Map<String,Integer> entityPropertyCountMap = new HashMap<>();
-        Iterator<Vertex> iter = entity.traversal().clone().V().hasNot("@audit");
+        Iterator<Vertex> iter = entity.traversal().clone().V().hasNot(Constants.AUDIT_KEYWORD);
         while(iter.hasNext()){
             Vertex vertex = iter.next();
             entityPropertyCountMap.put(vertex.label(),0);
@@ -238,10 +238,10 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			long verticesCountAfterSharedNodesCreation =
 					IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
 							.filter(v -> !v.get().label().equalsIgnoreCase(Constants.GRAPH_GLOBAL_CONFIG))
-							.hasNot("@audit"));
+							.hasNot(Constants.AUDIT_KEYWORD));
 			long edgesCountAfterSharedNodesCreation =
 					IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E()
-							.hasNot("@audit"));
+							.hasNot(Constants.AUDIT_KEYWORD));
 
 			// Expected count of vertices is 6 with two entities with same address created
 			assertEquals(7, verticesCountAfterSharedNodesCreation);
