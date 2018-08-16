@@ -1,9 +1,6 @@
 language: java
 jdk:
 - openjdk8
-cache:
-  directories:
-  - "$HOME/.m2"
 before_script: "./configure-dependencies.sh"
 script:
 - cd ${TRAVIS_BUILD_DIR}/java && mvn clean install && cd ${TRAVIS_BUILD_DIR}/java/registry && mvn clean install
