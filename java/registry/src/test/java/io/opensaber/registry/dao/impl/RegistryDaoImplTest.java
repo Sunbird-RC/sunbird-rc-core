@@ -169,7 +169,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
     private Map<String,Integer> getPropCounterMap(Graph entity) {
 	    Map<String,Integer> entityPropertyCountMap = new HashMap<>();
-        Iterator<Vertex> iter = entity.traversal().clone().V().hasNot("@audit");
+        Iterator<Vertex> iter = entity.traversal().clone().V().hasNot(Constants.AUDIT_KEYWORD);
         while(iter.hasNext()){
             Vertex vertex = iter.next();
             entityPropertyCountMap.put(vertex.label(),0);
@@ -238,10 +238,10 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			long verticesCountAfterSharedNodesCreation =
 					IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
 							.filter(v -> !v.get().label().equalsIgnoreCase(Constants.GRAPH_GLOBAL_CONFIG))
-							.hasNot("@audit"));
+							.hasNot(Constants.AUDIT_KEYWORD));
 			long edgesCountAfterSharedNodesCreation =
 					IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().E()
-							.hasNot("@audit"));
+							.hasNot(Constants.AUDIT_KEYWORD));
 
 			// Expected count of vertices is 6 with two entities with same address created
 			assertEquals(7, verticesCountAfterSharedNodesCreation);
@@ -850,39 +850,11 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		}
 		return vertex;
 	}
-	
-	private void removeStatementFromModel(Model rdfModel, Property predicate) {
-		StmtIterator blankNodeIterator =
-				rdfModel.listStatements(null, predicate, (RDFNode) null);
-
-		// Remove all the blank nodes from the existing model to create test data
-		while(blankNodeIterator.hasNext()) {
-			Statement parentStatement = blankNodeIterator.next();
-			if(parentStatement.getObject() instanceof Resource) {
-				StmtIterator childStatements = rdfModel.listStatements((Resource) parentStatement.getObject(), null, (RDFNode) null);
-				while (childStatements.hasNext()) {
-					childStatements.next();
-					childStatements.remove();
-				}
-			}
-			blankNodeIterator.remove();
-		}
-	}
 
 	private Model createRdfFromFile(String jsonldFilename, String rootNodeLabel) {
 		return getNewValidRdf(jsonldFilename, CONTEXT_CONSTANT, rootNodeLabel);
 	}
 
-
-   private Graph generateGraphFromRDF(Graph newGraph, Model rdfModel) throws EntityCreationException, MultipleEntityException{
-		StmtIterator iterator = rdfModel.listStatements();
-		while (iterator.hasNext()) {
-			Statement rdfStatement = iterator.nextStatement();
-			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			newGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph);
-		}
-		return newGraph;
-	}
    	
    private String getRootLabel(Model entity) throws EntityCreationException, MultipleEntityException{
 		List<Resource> rootLabels = RDFUtil.getRootLabels(entity);

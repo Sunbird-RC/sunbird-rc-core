@@ -1,0 +1,28 @@
+{
+	"id": "open-saber.registry.search",
+	"ver": "1.0",
+	"ets": "11234",
+	"params": 
+	{
+		"did": "",
+		"key": "",
+		"msgid": ""
+	},
+
+	"request": 
+	{
+		"@context": 
+		{
+			"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+			"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+			"teacher": "http://localhost:8080/",
+			"xsd": "http://www.w3.org/2001/XMLSchema#",
+			"@vocab": "http://localhost:8080/",
+			"highestAcademicQualification":{
+	    	"@type":"@id"
+	    	}
+		},
+
+		"@type": "Teacher"
+	}
+}

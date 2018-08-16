@@ -69,6 +69,9 @@ public class RegistryDaoImpl implements RegistryDao {
 
     @Autowired
     private OpenSaberInstrumentation watch;
+    
+    @Autowired
+    private UrlValidator urlValidator;
 
     @Override
     public List getEntityList() {
@@ -95,9 +98,8 @@ public class RegistryDaoImpl implements RegistryDao {
         if (graphFromStore.features().graph().supportsTransactions()) {
             org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
             tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-            //label = createOrUpdateEntity(graph, label, "create");
             watch.start("RegistryDaoImpl.addOrUpdateVerticesAndEdges");
-            label = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
+            label = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, Constants.CREATE_METHOD_ORIGIN);
             watch.stop("RegistryDaoImpl.addOrUpdateVerticesAndEdges");
             if (rootNodeLabel != null && property != null) {
                 connectNodes(rootNodeLabel, label, property);
@@ -106,7 +108,7 @@ public class RegistryDaoImpl implements RegistryDao {
             logger.debug("RegistryDaoImpl : Entity added for transactional DB with rootNodeLabel : {},	label	:	{},	property	: 	{}", rootNodeLabel, label, property);
         } else {
             watch.start("RegistryDaoImpl.addOrUpdateVerticesAndEdges");
-            label = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, "create");
+            label = addOrUpdateVerticesAndEdges(dbGraphTraversalSource, traversal, label, Constants.CREATE_METHOD_ORIGIN);
             watch.stop("RegistryDaoImpl.addOrUpdateVerticesAndEdges");
             logger.debug("RegistryDaoImpl : Entity added for non-transactional DB with rootNodeLabel : {},	label	:	{},	property	: 	{}", rootNodeLabel, label, property);
             if (rootNodeLabel != null && property != null) {
@@ -199,7 +201,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 addOrUpdateVertexAndEdge(v, existingVertex, dbTraversalSource, methodOrigin, encDecPropertyBuilder);
                 // watch.stop();
             } else {
-                if (methodOrigin.equalsIgnoreCase("update")) {
+                if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)) {
                     throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
                 }
                 label = generateBlankNodeLabel(rootLabel);
@@ -285,7 +287,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 }
                 parsedVertices.push(new Pair<>(ver, existingV));
             } else {
-                if (methodOrigin.equalsIgnoreCase("update") && !isIRI(ver.label())) {
+                if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !isIRI(ver.label())) {
                     throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
                 }
                 String label = generateBlankNodeLabel(ver.label());
@@ -356,7 +358,7 @@ public class RegistryDaoImpl implements RegistryDao {
     private void verifyAndDelete(Vertex dbSourceVertex, Edge e, Optional<Edge> edgeAlreadyExists, List<Edge> edgeVertexMatchList, String methodOrigin)
             throws AuditFailedException {
         boolean isSingleValued = schemaConfigurator.isSingleValued(e.label());
-        if ((edgeAlreadyExists.isPresent() && methodOrigin.equalsIgnoreCase("update")) || isSingleValued) {
+        if ((edgeAlreadyExists.isPresent() && methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)) || isSingleValued) {
             Iterator<Edge> edgeIter = dbSourceVertex.edges(Direction.OUT, e.label());
             while (edgeIter.hasNext()) {
                 Edge edge = edgeIter.next();
@@ -430,11 +432,7 @@ public class RegistryDaoImpl implements RegistryDao {
     }
 
     private boolean isIRI(String label) {
-        UrlValidator urlValidator = new UrlValidator(UrlValidator.ALLOW_LOCAL_URLS);
-        if (urlValidator.isValid(label)) {
-            return true;
-        }
-        return false;
+        return urlValidator.isValid(label);
     }
 
     public static String generateRandomUUID() {
@@ -489,22 +487,36 @@ public class RegistryDaoImpl implements RegistryDao {
         } else {
             logger.info("Record exists for label : {}", label);
             Vertex subject = hasLabel.next();
-            if(subject.property(registryContext+"@status").isPresent() && Constants.STATUS_INACTIVE.equals(subject.value(registryContext + "@status"))){
+            if(subject.property(registryContext+Constants.STATUS_KEYWORD).isPresent() && Constants.STATUS_INACTIVE.equals(subject.value(registryContext + Constants.STATUS_KEYWORD))){
                 throw new UnsupportedOperationException(Constants.READ_ON_DELETE_ENTITY_NOT_SUPPORTED);
             }
             Vertex newSubject = parsedGraph.addVertex(subject.label());
-            copyProperties(subject, newSubject, "read", encDecPropertyBuilder);
+            copyProperties(subject, newSubject, Constants.READ_METHOD_ORIGIN, encDecPropertyBuilder);
             watch.start("RegistryDaoImpl.getEntityById.extractGraphFromVertex");
-            extractGraphFromVertex(parsedGraph, newSubject, subject, encDecPropertyBuilder);
+            extractGraphFromVertex(parsedGraph, newSubject, subject, encDecPropertyBuilder, Constants.READ_METHOD_ORIGIN);
             watch.stop("RegistryDaoImpl.getEntityById.extractGraphFromVertex");
             Table<Vertex, Vertex, Map<String, Object>> encDecPropertyTable = encDecPropertyBuilder.build();
             if (encDecPropertyTable.size() > 0) {
                 watch.start("RegistryDaoImpl.getEntityById.updateEncryptedDecryptedProperties");
-                updateEncryptedDecryptedProperties(encDecPropertyTable, "read");
+                updateEncryptedDecryptedProperties(encDecPropertyTable, Constants.READ_METHOD_ORIGIN);
                 watch.stop("RegistryDaoImpl.getEntityById.updateEncryptedDecryptedProperties");
             }
         }
         return parsedGraph;
+    }
+    
+    
+    @Override
+    public Graph getEntityByVertex(Vertex vertex) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
+    	Graph parsedGraph = TinkerGraph.open();
+    	Vertex newSubject = parsedGraph.addVertex(vertex.label());
+    	watch.start("RegistryDaoImpl.getEntityByVertex.copyProperties");
+    	copyProperties(vertex, newSubject, Constants.SEARCH_METHOD_ORIGIN, null);
+    	watch.stop("RegistryDaoImpl.getEntityByVertex.copyProperties");
+    	watch.start("RegistryDaoImpl.getEntityByVertex.extractGraphFromVertex");
+    	extractGraphFromVertex(parsedGraph, newSubject, vertex, null, Constants.SEARCH_METHOD_ORIGIN);
+    	watch.stop("RegistryDaoImpl.getEntityByVertex.extractGraphFromVertex");
+    	return parsedGraph;
     }
 
     @Override
@@ -525,7 +537,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 watch.start("RegistryDaoImpl.deleteEntityById");
                 logger.debug("Record exists for label : {}", idLabel);
                 Vertex s = hasLabel.next();
-                if(s.property(registryContext+"@status").isPresent() && Constants.STATUS_INACTIVE.equals(s.value(registryContext+"@status"))){
+                if(s.property(registryContext+Constants.STATUS_KEYWORD).isPresent() && Constants.STATUS_INACTIVE.equals(s.value(registryContext+Constants.STATUS_KEYWORD))){
                     throw new UnsupportedOperationException(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);
                 } else {
                     isEntityDeleted = deleteVertexWithInEdge(s);
@@ -535,7 +547,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 watch.stop("RegistryDaoImpl.deleteEntityById");
                 logger.debug("RegistryDaoImpl : Entity deleted for transactional DB with rootNodeLabel : {}", idLabel);
             } else {
-                logger.info("Record exists for label : {}", idLabel);
+            	logger.debug("Record exists for label : {}", idLabel);
                 Vertex s = hasLabel.next();
                 isEntityDeleted = deleteVertexWithInEdge(s);
             }
@@ -554,12 +566,12 @@ public class RegistryDaoImpl implements RegistryDao {
                 Vertex o = edge.outVertex();
                 if (!vStack.contains(o)) {
                     vStack.push(o);
-                    if(o.property(registryContext+"@status").isPresent() && Constants.STATUS_ACTIVE.equals(o.value(registryContext + "@status"))) {
+                    if(o.property(registryContext+Constants.STATUS_KEYWORD).isPresent() && Constants.STATUS_ACTIVE.equals(o.value(registryContext + Constants.STATUS_KEYWORD))) {
                         return false;
                     }
                 }
         }
-        s.property(registryContext+"@status",Constants.STATUS_INACTIVE);
+        s.property(registryContext+Constants.STATUS_KEYWORD,Constants.STATUS_INACTIVE);
         return true;
         /*Stack<Vertex> vStack = new Stack<Vertex>();
         while (edgeIter.hasNext()) {
@@ -574,7 +586,7 @@ public class RegistryDaoImpl implements RegistryDao {
         Iterator<Edge> inEdgeIter = s.edges(Direction.IN);
         inEdgeIter.
         if (!(inEdgeIter.hasNext() && IteratorUtils.count(inEdgeIter) > 1)) {
-            s.property(registryContext+"@status",Constants.STATUS_INACTIVE);
+            s.property(registryContext+Constants.STATUS_KEYWORD,Constants.STATUS_INACTIVE);
         }*/
         /*Iterator<Vertex> vIterator = vStack.iterator();
 
@@ -588,8 +600,8 @@ public class RegistryDaoImpl implements RegistryDao {
     private void copyProperties(Vertex subject, Vertex newSubject, String methodOrigin, ImmutableTable.Builder<Vertex, Vertex, Map<String, Object>> encDecPropertyBuilder)
             throws NoSuchElementException, EncryptionException, AuditFailedException {
         HashMap<String, HashMap<String, String>> propertyMetaPropertyMap = new HashMap<String, HashMap<String, String>>();
-        if(methodOrigin.equalsIgnoreCase("create")) {
-            subject.property(registryContext + "@status", Constants.STATUS_ACTIVE);
+        if(methodOrigin.equalsIgnoreCase(Constants.CREATE_METHOD_ORIGIN)) {
+            subject.property(registryContext + Constants.STATUS_KEYWORD, Constants.STATUS_ACTIVE);
         }
         Iterator<VertexProperty<Object>> iter = subject.properties();
         Map<String, Object> propertyMap = new HashMap<String, Object>();
@@ -597,30 +609,28 @@ public class RegistryDaoImpl implements RegistryDao {
         while (iter.hasNext()) {
             VertexProperty<Object> property = iter.next();
             String tailOfPropertyKey = property.key().substring(property.key().lastIndexOf("/") + 1).trim();
-            boolean existingEncyptedPropertyKey = tailOfPropertyKey
-                    .substring(0, Math.min(tailOfPropertyKey.length(), 9)).equalsIgnoreCase("encrypted");
-            if ((methodOrigin.equalsIgnoreCase("create") || methodOrigin.equalsIgnoreCase("update")) && existingEncyptedPropertyKey) {
+            boolean existingEncyptedPropertyKey = schemaConfigurator.isEncrypted(tailOfPropertyKey);
+            if ((methodOrigin.equalsIgnoreCase(Constants.CREATE_METHOD_ORIGIN) || methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)) && existingEncyptedPropertyKey) {
                 property.remove();
             }
-            if ((methodOrigin.equalsIgnoreCase("create") || methodOrigin.equalsIgnoreCase("update")) && schemaConfigurator.isPrivate(property.key()) 
+            if ((methodOrigin.equalsIgnoreCase(Constants.CREATE_METHOD_ORIGIN) || methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)) && schemaConfigurator.isPrivate(property.key()) 
             		&& encryptionEnabled && !existingEncyptedPropertyKey) {
                 propertyMap.put(property.key(), property.value());
-            } else if (methodOrigin.equalsIgnoreCase("read") && schemaConfigurator.isEncrypted(tailOfPropertyKey) && encryptionEnabled) {
+            } else if (methodOrigin.equalsIgnoreCase(Constants.READ_METHOD_ORIGIN) && existingEncyptedPropertyKey && encryptionEnabled) {
                 propertyMap.put(property.key(), property.value());
                 String decryptedKey = property.key().replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
                 setProperty(newSubject, decryptedKey, EMPTY_STRING, methodOrigin);
             } else if (isaMetaProperty(property.key())) {
                 buildPropertyMetaMap(propertyMetaPropertyMap, property);
-            } else {
-                if (!(methodOrigin.equalsIgnoreCase("read")
-                        && (property.key().contains("@audit") || property.key().contains("@status")))) {
+            } else if ((!(methodOrigin.equalsIgnoreCase(Constants.READ_METHOD_ORIGIN)
+                    && (property.key().contains(Constants.AUDIT_KEYWORD) || property.key().contains(Constants.STATUS_KEYWORD))) && !methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN))
+            		|| (methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN) && !existingEncyptedPropertyKey && !property.key().contains(Constants.AUDIT_KEYWORD))) {
                     setProperty(newSubject, property.key(), property.value(), methodOrigin);
                     setMetaProperty(subject, newSubject, property, methodOrigin);
-                }
             }
         }
         setMetaPropertyFromMap(newSubject, propertyMetaPropertyMap);
-        if (propertyMap.size() > 0) {
+        if (propertyMap.size() > 0 && encDecPropertyBuilder != null) {
             encDecPropertyBuilder.put(subject, newSubject, propertyMap);
         }
 
@@ -631,10 +641,10 @@ public class RegistryDaoImpl implements RegistryDao {
     }
 
     private void setProperty(Vertex v, String key, Object newValue, String methodOrigin) throws AuditFailedException {
-        if (!(methodOrigin.equalsIgnoreCase("read") && isAuditField(key))) {
+        if (!((methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN) || methodOrigin.equalsIgnoreCase(Constants.READ_METHOD_ORIGIN)) && isAuditField(key))) {
             VertexProperty vp = v.property(key);
             Object oldValue = vp.isPresent() ? vp.value() : null;
-            if (oldValue != null && !methodOrigin.equalsIgnoreCase("update") && !schemaConfigurator.isSingleValued(key)) {
+            if (oldValue != null && !methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !schemaConfigurator.isSingleValued(key)) {
                 List valueList = new ArrayList();
                 if (oldValue instanceof List) {
                     valueList = (List) oldValue;
@@ -786,7 +796,7 @@ public class RegistryDaoImpl implements RegistryDao {
     	return false;
     }*/
 
-	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s, ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder)
+	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s, ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder, String methodOrigin)
 			throws NoSuchElementException, EncryptionException, AuditFailedException {
 		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
 		Edge edge;
@@ -796,7 +806,9 @@ public class RegistryDaoImpl implements RegistryDao {
 			edge = edgeIter.next();
 			Vertex o = edge.inVertex();
 			Vertex newo = parsedGraph.addVertex(o.label());
-			copyProperties(o, newo,"read", encDecPropertyBuilder);
+			if(!methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN)){
+				copyProperties(o, newo, methodOrigin, encDecPropertyBuilder);
+			}
 			parsedGraphSubject.addEdge(edge.label(), newo);
 			vStack.push(o);
 			parsedVStack.push(newo);
@@ -806,7 +818,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		while(vIterator.hasNext()){
 			s = vIterator.next();
 			parsedGraphSubject = parsedVIterator.next();
-			extractGraphFromVertex(parsedGraph,parsedGraphSubject,s, encDecPropertyBuilder);
+			extractGraphFromVertex(parsedGraph,parsedGraphSubject,s, encDecPropertyBuilder, methodOrigin);
 		}
 	}
 
@@ -824,7 +836,7 @@ public class RegistryDaoImpl implements RegistryDao {
         listPropertyMap.forEach((k, v) -> propertyMap.remove(k));
         Map<String, Object> encDecMap = new HashMap<>();
 
-        if (methodOrigin.equalsIgnoreCase("create") || methodOrigin.equalsIgnoreCase("update")) {
+        if (methodOrigin.equalsIgnoreCase(Constants.CREATE_METHOD_ORIGIN) || methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)) {
             encDecMap = encryptionService.encrypt(propertyMap);
         } else {
             encDecMap = encryptionService.decrypt(propertyMap);
@@ -850,7 +862,7 @@ public class RegistryDaoImpl implements RegistryDao {
 				List encValues = new ArrayList();
 				for(Object listV : values){
 					String encDecValue = null;
-					if(methodOrigin.equalsIgnoreCase("create") || methodOrigin.equalsIgnoreCase("update")){
+					if(methodOrigin.equalsIgnoreCase(Constants.CREATE_METHOD_ORIGIN) || methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)){
 						encDecValue = encryptionService.encrypt(listV);
 					}else{
 						encDecValue = encryptionService.decrypt(listV);
@@ -873,7 +885,6 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	private void setEncryptedDecryptedProperty(Table<Vertex,Vertex,Map<String,Object>> encDecPropertyTable, String methodOrigin) throws AuditFailedException{
-
 		for(Table.Cell<Vertex,Vertex,Map<String,Object>> cell: encDecPropertyTable.cellSet()){
 			Vertex subject = cell.getRowKey();
 			Vertex newSubject = cell.getColumnKey();
@@ -882,12 +893,12 @@ public class RegistryDaoImpl implements RegistryDao {
 				String entryKey = entry.getKey();
 				String tailOfPropertyKey = entryKey.substring(entryKey.lastIndexOf("/") + 1).trim();
 				String newKey = null;
-				if (methodOrigin.equalsIgnoreCase("create") || methodOrigin.equalsIgnoreCase("update")){
+				if (methodOrigin.equalsIgnoreCase(Constants.CREATE_METHOD_ORIGIN) || methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)){
 					newKey = entryKey.replace(tailOfPropertyKey, "encrypted" + tailOfPropertyKey);
 					setProperty(newSubject, newKey, entryValue, methodOrigin);
 					VertexProperty property = subject.property(entryKey);
 					setMetaProperty(subject, newSubject, property, methodOrigin);
-				} else if(methodOrigin.equalsIgnoreCase("read")){
+				} else if(methodOrigin.equalsIgnoreCase(Constants.READ_METHOD_ORIGIN)){
 					newKey = entryKey.replace(tailOfPropertyKey, tailOfPropertyKey.substring(9));
 					Iterator<Property<Object>> propIter = newSubject.property(newKey).properties();
 					setProperty(newSubject, newKey, entryValue, methodOrigin);

@@ -14,6 +14,8 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+
 import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.registry.middleware.util.Constants;
@@ -22,6 +24,9 @@ import scala.Option;
 import scala.util.Either;
 
 public class SchemaConfigurator {
+	
+	
+	private String registrySystemBase;
 	
 	private static Logger logger = LoggerFactory.getLogger(SchemaConfigurator.class);
 
@@ -35,8 +40,9 @@ public class SchemaConfigurator {
 
 	private Option<String> none = Option.empty();
 
-	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile) throws IOException {
+	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile, String registrySystemBase) throws IOException {
 
+		this.registrySystemBase = registrySystemBase;
 		loadSchemaConfigModel(schemaFile);
 		loadSchemaForValidation(validationcreateFile, true);
 		loadSchemaForValidation(validationUpdateFile, false);
@@ -74,7 +80,7 @@ public class SchemaConfigurator {
 	}
 
 	public boolean isPrivate(String propertyName) {
-		Property property = ResourceFactory.createProperty(Constants.OPENSABER_CONTEXT_BASE + Constants.PRIVACY_PROPERTY);
+		Property property = ResourceFactory.createProperty(registrySystemBase + Constants.PRIVACY_PROPERTY);
 		RDFNode rdfNode = ResourceFactory.createResource(propertyName);
 		StmtIterator iter = schemaConfig.listStatements(null, property, rdfNode);
 		return iter.hasNext();

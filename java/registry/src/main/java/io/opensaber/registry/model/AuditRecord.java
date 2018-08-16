@@ -3,6 +3,7 @@ package io.opensaber.registry.model;
 import com.google.gson.Gson;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -82,7 +83,7 @@ public class AuditRecord {
         } else {	
         	/***AUDIT ROOT FOUND - NOT CREATING"**/
             rootVertex = _source.V().hasLabel(subject).next();
-            rootVertex.property("@audit","true");
+            rootVertex.property(Constants.AUDIT_KEYWORD,"true");
         }
      
         String uuid=UUID.randomUUID().toString();
@@ -95,13 +96,13 @@ public class AuditRecord {
         recordVertex.property(predicate,this.predicate);
         recordVertex.property(oldObject,this.oldObject);
         recordVertex.property(newObject,this.newObject);
-        recordVertex.property("@audit","true");
+        recordVertex.property(Constants.AUDIT_KEYWORD,"true");
         recordVertex.property("@auditRecord","true");
         updateUserInfo(recordVertex);
       
         String edgeLabel=registrySystemContext+"audit";
         
-        rootVertex.addEdge(edgeLabel,recordVertex).property("@audit",true);	
+        rootVertex.addEdge(edgeLabel,recordVertex).property(Constants.AUDIT_KEYWORD,true);	
      }
 
     private void updateUserInfo(Vertex vertex) {

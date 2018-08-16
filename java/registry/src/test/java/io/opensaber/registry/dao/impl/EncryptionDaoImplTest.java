@@ -137,7 +137,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 
 	private Map<String,Integer> getPropCounterMap(Graph entity) {
 		Map<String,Integer> entityPropertyCountMap = new HashMap<>();
-		Iterator<Vertex> iter = entity.traversal().clone().V().hasNot("@audit");
+		Iterator<Vertex> iter = entity.traversal().clone().V().hasNot(Constants.AUDIT_KEYWORD);
 		while(iter.hasNext()){
 			Vertex vertex = iter.next();
 			entityPropertyCountMap.put(vertex.label(),0);
@@ -358,7 +358,6 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		JsonObject addressObject = jsonObject.getAsJsonObject("sample:address");
 		addressObject.addProperty("street", "1st main");
 		String dataString = gson.toJson(jsonObject);
-		System.out.println("dataString=="+dataString);
 		Model rdfModel = getNewValidRdfFromJsonString(dataString);
 		String rootLabel = updateGraphFromRdf(rdfModel);
 

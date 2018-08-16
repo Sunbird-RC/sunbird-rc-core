@@ -22,10 +22,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.TypeNotProvidedException;
 import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.SearchService;
 
 @RestController
 public class RegistryController {
@@ -34,6 +38,9 @@ public class RegistryController {
 
 	@Autowired
 	private RegistryService registryService;
+	
+	@Autowired
+	private SearchService searchService;
 
 	@Value("${registry.context.base}")
 	private String registryContext;
@@ -61,7 +68,7 @@ public class RegistryController {
 			String label = registryService.addEntity(rdf, id, property);
 			result.put("entity", label);
 			response.setResult(result);
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			responseParams.setStatus(Response.Status.SUCCESSFUL);
 			watch.stop("RegistryController.addToExistingEntity");
 			logger.debug("RegistryController : Entity with label {} added !", label);
 		} catch (DuplicateRecordException | EntityCreationException e) {
@@ -91,7 +98,7 @@ public class RegistryController {
 			logger.debug("FETCHED: " + entityModel);
 			String jenaJSON = registryService.frameEntity(entityModel);
 			response.setResult(gson.fromJson(jenaJSON, mapType));
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			responseParams.setStatus(Response.Status.SUCCESSFUL);
 			watch.stop("RegistryController.readEntity");
 			logger.debug("RegistryController: entity for {} read !", entityId);
 
@@ -114,6 +121,40 @@ public class RegistryController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/search", method = RequestMethod.POST)
+	public ResponseEntity<Response> searchEntity(@RequestAttribute Request requestModel) {
+
+		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
+		Map<String, Object> result = new HashMap<>();
+
+		try {
+			watch.start("RegistryController.searchEntity");
+			org.eclipse.rdf4j.model.Model entityModel = searchService.search(rdf);
+			logger.debug("FETCHED: " + entityModel);
+			String jenaJSON = registryService.frameSearchEntity(entityModel);
+			if(jenaJSON.isEmpty()){
+				response.setResult(new HashMap<String,Object>());
+			}else{
+				response.setResult(gson.fromJson(jenaJSON, mapType));
+			}
+			responseParams.setStatus(Response.Status.SUCCESSFUL);
+			watch.stop("RegistryController.searchEntity");
+		} catch (AuditFailedException | RecordNotFoundException | TypeNotProvidedException e) {
+			logger.error("AuditFailedException | RecordNotFoundException | TypeNotProvidedException in controller while adding entity !",e);
+			response.setResult(result);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		} catch (Exception e) {
+			logger.error("Exception in controller while searching entities !",e);
+			response.setResult(result);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
 	@ResponseBody
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	public ResponseEntity<Response> update(@RequestAttribute Request requestModel) {
@@ -125,7 +166,7 @@ public class RegistryController {
 			watch.start("RegistryController.update");
 			registryService.updateEntity(rdf);
 			responseParams.setErrmsg("");
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			responseParams.setStatus(Response.Status.SUCCESSFUL);
 			watch.stop("RegistryController.update");
 			logger.debug("RegistryController: entity updated !");
 		} catch (RecordNotFoundException | EntityCreationException e) {
@@ -151,7 +192,7 @@ public class RegistryController {
 			HealthCheckResponse healthCheckResult = registryService.health();
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setErrmsg("");
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			responseParams.setStatus(Response.Status.SUCCESSFUL);
 			logger.debug("Application heath checked : ", healthCheckResult.toString());
 		} catch (Exception e) {
 			logger.error("Error in health checking!", e);
@@ -179,7 +220,7 @@ public class RegistryController {
 				logger.debug("Audit Record model :" + auditModel);
 				String jenaJSON = registryService.frameAuditEntity(auditModel);
 				response.setResult(gson.fromJson(jenaJSON, mapType));
-				responseParams.setStatus(Response.Status.SUCCCESSFUL);
+				responseParams.setStatus(Response.Status.SUCCESSFUL);
 				watch.stop("RegistryController.fetchAudit");
 				logger.debug("Controller: audit records fetched !");
 			} catch (RecordNotFoundException e) {
@@ -210,7 +251,7 @@ public class RegistryController {
 		try{
 			registryService.deleteEntityById(entityId);
 			responseParams.setErrmsg("");
-			responseParams.setStatus(Response.Status.SUCCCESSFUL);
+			responseParams.setStatus(Response.Status.SUCCESSFUL);
 		} catch (UnsupportedOperationException e) {
 			logger.error("Controller: UnsupportedOperationException while deleting entity !", e);
 			response.setResult(null);

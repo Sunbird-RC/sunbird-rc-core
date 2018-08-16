@@ -1,0 +1,12 @@
+{
+	"@context": 
+	{
+		"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+		"xsd": "http://www.w3.org/2001/XMLSchema#",
+		"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+		"sample": "http://example.com/voc/teacher/1.0.0/",
+		"@vocab": "http://example.com/voc/teacher/1.0.0/"
+	},
+
+	"@type": "School"
+}
