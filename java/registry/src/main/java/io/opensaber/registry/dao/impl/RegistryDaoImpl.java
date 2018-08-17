@@ -624,7 +624,8 @@ public class RegistryDaoImpl implements RegistryDao {
                 buildPropertyMetaMap(propertyMetaPropertyMap, property);
             } else if ((!(methodOrigin.equalsIgnoreCase(Constants.READ_METHOD_ORIGIN)
                     && (property.key().contains(Constants.AUDIT_KEYWORD) || property.key().contains(Constants.STATUS_KEYWORD))) && !methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN))
-            		|| (methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN) && !existingEncyptedPropertyKey && !property.key().contains(Constants.AUDIT_KEYWORD))) {
+            		|| (methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN) && !existingEncyptedPropertyKey && !property.key().contains(Constants.AUDIT_KEYWORD)
+            				&& !property.key().contains(Constants.STATUS_KEYWORD))) {
                     setProperty(newSubject, property.key(), property.value(), methodOrigin);
                     setMetaProperty(subject, newSubject, property, methodOrigin);
             }
