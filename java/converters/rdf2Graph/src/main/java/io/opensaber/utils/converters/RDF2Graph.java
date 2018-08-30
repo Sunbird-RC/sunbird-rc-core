@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
+import java.util.UUID;
 
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -23,6 +24,8 @@ import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.opensaber.registry.middleware.util.Constants;
 
 import javax.xml.XMLConstants;
 
@@ -48,21 +51,27 @@ public final class RDF2Graph
 		return label;
 	}
 
-	public static Graph convertRDFStatement2Graph(Statement rdfStatement, Graph graph) {
+	public static Graph convertRDFStatement2Graph(Statement rdfStatement, Graph graph, String context) {
 		Value subjectValue = rdfStatement.getSubject();
 		IRI property = rdfStatement.getPredicate();
 		Value objectValue = rdfStatement.getObject();
-		updateGraph(subjectValue, property, objectValue, graph);
+		updateGraph(subjectValue, property, objectValue, graph, context);
 		return graph;
 	}
 
-	private static void updateGraph(Value subjectValue, IRI property, Value objectValue, Graph graph) {
+	private static void updateGraph(Value subjectValue, IRI property, Value objectValue, Graph graph, String context) {
 		Vertex s = getExistingVertexOrAdd(subjectValue.toString(), graph);
+		Vertex subjectVertex = s;
+		if(property.toString().equalsIgnoreCase(context+Constants.SIGNATURES)){
+			Vertex proofVertex = getExistingSignatureVertexOrAdd(context, graph);
+			proofVertex.addEdge(context+Constants.SIGNATURE_OF, s);
+			subjectVertex = proofVertex;
+		}
 		if (objectValue instanceof Literal) {
 			Literal literal = (Literal)objectValue;
 			String datatype = literal.getDatatype().toString();
 			logger.debug("TYPE saved is "+datatype);
-			VertexProperty vp = s.property(property.toString());
+			VertexProperty vp = subjectVertex.property(property.toString());
 			if(vp.isPresent()){
 				Object value = vp.value();
 				List valueList = new ArrayList();
@@ -73,19 +82,29 @@ public final class RDF2Graph
 					valueList.add(valueStr);
 				}
 				valueList.add(literal.getLabel());
-				s.property(property.toString(), valueList).property("@type",datatype);
+				subjectVertex.property(property.toString(), valueList).property("@type",datatype);
 
 			}else{
-				s.property(property.toString(), literal.getLabel()).property("@type",datatype);
+				subjectVertex.property(property.toString(), literal.getLabel()).property("@type",datatype);
 			}
 		} else if (objectValue instanceof IRI) {
 			IRI objectIRI = (IRI)objectValue;
 			Vertex o = getExistingVertexOrAdd(objectIRI.toString(), graph);
-			s.addEdge(property.toString(), o);
+			subjectVertex.addEdge(property.toString(), o);
 		} else if (objectValue instanceof BNode) {
 			BNode objectBNode = (BNode)objectValue;
 			Vertex o = getExistingVertexOrAdd(objectBNode.toString(), graph);		
-			s.addEdge(property.toString(), o);
+			subjectVertex.addEdge(property.toString(), o);
+		}
+	}
+	
+	private static Vertex getExistingSignatureVertexOrAdd(String context, Graph graph){
+		GraphTraversalSource t = graph.traversal();
+		GraphTraversal<Edge, Edge> traversal = t.E().hasLabel(context+Constants.SIGNATURE_OF);
+		if(traversal.hasNext()){
+			return traversal.next().outVertex();
+		} else {
+			return graph.addVertex(T.label,context+UUID.randomUUID().toString());
 		}
 	}
 
