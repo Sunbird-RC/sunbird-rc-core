@@ -252,72 +252,65 @@ public class RegistryDaoImpl implements RegistryDao {
 
 
     }
-    
+
     private Stack<Pair<Vertex, Vertex>> addOrUpdateVertexAndEdgeIteratively(Iterator<Edge> edges, Iterator<Edge> edgeList, List<Edge> dbEdgesForVertex, 
     		List<Edge> edgeVertexMatchList, Direction direction, GraphTraversalSource dbGraph, String methodOrigin, Vertex dbVertex,
     		ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder) throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
     	Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
     	while (edgeList.hasNext()) {
-            Edge e = edgeList.next();
-            String edgeLabel = e.label();
-            if(methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)){
-            	Optional<Edge> edgeVertexAlreadyExists = doesEdgeAndVertexAlreadyExist(direction, e, dbEdgesForVertex, edgeLabel);
-            	if (edgeVertexAlreadyExists.isPresent()) {
-            		edgeVertexMatchList.add(edgeVertexAlreadyExists.get());
-            	}
-            }
-        }
-        logger.debug("RegistryDaoImpl : Matching list size:" + edgeVertexMatchList.size());
+    		Edge e = edgeList.next();
+    		String edgeLabel = e.label();
+    		if(methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)){
+    			Optional<Edge> edgeVertexAlreadyExists = doesEdgeAndVertexAlreadyExist(direction, e, dbEdgesForVertex, edgeLabel);
+    			if (edgeVertexAlreadyExists.isPresent()) {
+    				edgeVertexMatchList.add(edgeVertexAlreadyExists.get());
+    			}
+    		}
+    	}
+    	logger.debug("RegistryDaoImpl : Matching list size:" + edgeVertexMatchList.size());
 
-        while (edges.hasNext()) {
-        	Edge e = edges.next();
-        	if((direction.equals(Direction.OUT) && !e.label().equals(registryContext+Constants.SIGNATURE_OF)) ||
-        			direction.equals(Direction.IN)){
-        		Iterator<Vertex> verIter = e.vertices(direction.opposite());
-        		if(verIter.hasNext()){
-        			Vertex ver = verIter.next();
-        			String edgeLabel = e.label();
-        			Optional<Edge> edgeAlreadyExists =
-        					dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(e.label())).findFirst();
-        			Optional<Edge> edgeVertexAlreadyExists = doesEdgeAndVertexAlreadyExist(direction, e, dbEdgesForVertex, edgeLabel);
-        			verifyAndDelete(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
-        			if(methodOrigin.equalsIgnoreCase(Constants.CREATE_METHOD_ORIGIN) && edgeLabel.equalsIgnoreCase(Constants.SIGNATURE_OF)){
-        				String label = generateBlankNodeLabel(ver.label());
-    					Vertex newV = dbGraph.addV(label).next();
+    	while (edges.hasNext()) {
+    		Edge e = edges.next();
+    		if((direction.equals(Direction.OUT) && !e.label().equals(registryContext+Constants.SIGNATURE_OF)) ||
+    				direction.equals(Direction.IN)){
+    			Iterator<Vertex> verIter = e.vertices(direction.opposite());
+    			if(verIter.hasNext()){
+    				Vertex ver = verIter.next();
+    				String edgeLabel = e.label();
+    				Optional<Edge> edgeAlreadyExists =
+    						dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(e.label())).findFirst();
+    				Optional<Edge> edgeVertexAlreadyExists = doesEdgeAndVertexAlreadyExist(direction, e, dbEdgesForVertex, edgeLabel);
+    				verifyAndDelete(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
+    				GraphTraversal<Vertex, Vertex> gt = dbGraph.clone().V().hasLabel(ver.label());
+    				if (gt.hasNext()) {
+    					Vertex existingV = gt.next();
+    					logger.info(String.format("Vertex with label {} already exists. Updating properties for the vertex", existingV.label()));
     					//Existing logic moved to this method to avoid duplicate code
-        				parsedVertices = addEdgeForAVertex(ver, newV, dbGraph, methodOrigin, encDecPropertyBuilder, edgeLabel, direction,
-        						parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
-        			}else{
-        				Vertex v = ver;
-        				if(edgeLabel.equalsIgnoreCase(Constants.SIGNATURE_OF) && dbEdgesForVertex.size() > 0){
-        					Edge edgeForSignature = dbEdgesForVertex.get(0);
-        					v = edgeForSignature.outVertex();
-        				}
-        				GraphTraversal<Vertex, Vertex> gt = dbGraph.clone().V().hasLabel(v.label());
-        				if (gt.hasNext()) {
-        					Vertex existingV = gt.next();
-        					logger.info(String.format("Vertex with label {} already exists. Updating properties for the vertex", existingV.label()));
-        					//Existing logic moved to this method to avoid duplicate code
-        					parsedVertices = addEdgeForAVertex(v, existingV, dbGraph, methodOrigin, encDecPropertyBuilder, edgeLabel, direction, 
-        							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
-        				} else {
-        					if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !isIRI(v.label())) {
-        						throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
-        					}
-        					String label = generateBlankNodeLabel(v.label());
-        					Vertex newV = dbGraph.addV(label).next();
-        					//Existing logic moved to this method to avoid duplicate code
-        					parsedVertices = addEdgeForAVertex(v, newV, dbGraph, methodOrigin, encDecPropertyBuilder, edgeLabel, direction, 
-        							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
-        				}
-        			}
-
-        		}
-        	}
-        }
-        return parsedVertices;
+    					parsedVertices = addEdgeForAVertex(ver, existingV, dbGraph, methodOrigin, encDecPropertyBuilder, edgeLabel, direction, 
+    							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
+    				} else {
+    					if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !isIRI(ver.label())) {
+    						throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
+    					}
+    					Vertex newV = null;
+    					if(methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && edgeLabel.equalsIgnoreCase(Constants.SIGNATURE_OF)
+    							&& dbEdgesForVertex.size() > 0){
+    						Edge edgeForSignature = dbEdgesForVertex.get(0);
+    						newV = edgeForSignature.outVertex();
+    					}else{
+    						String label = generateBlankNodeLabel(ver.label());
+    						newV = dbGraph.addV(label).next();
+    					}
+    					//Existing logic moved to this method to avoid duplicate code
+    					parsedVertices = addEdgeForAVertex(ver, newV, dbGraph, methodOrigin, encDecPropertyBuilder, edgeLabel, direction, 
+    							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
+    				}
+    			}
+    		}
+    	}
+    	return parsedVertices;
     }
-    
+
     /**
      * This method takes existing database vertex, edge label and the new vertex
      *  to create the edge between these vertices in the database
