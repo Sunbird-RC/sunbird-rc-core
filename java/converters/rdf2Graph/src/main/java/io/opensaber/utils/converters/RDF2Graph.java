@@ -63,9 +63,7 @@ public final class RDF2Graph
 		Vertex s = getExistingVertexOrAdd(subjectValue.toString(), graph);
 		Vertex subjectVertex = s;
 		if(property.toString().equalsIgnoreCase(context+Constants.SIGNATURES)){
-			Vertex proofVertex = getExistingSignatureVertexOrAdd(context, graph);
-			proofVertex.addEdge(context+Constants.SIGNATURE_OF, s);
-			subjectVertex = proofVertex;
+			subjectVertex = getExistingSignatureVertexOrAdd(s, context, graph);
 		}
 		if (objectValue instanceof Literal) {
 			Literal literal = (Literal)objectValue;
@@ -98,13 +96,15 @@ public final class RDF2Graph
 		}
 	}
 	
-	private static Vertex getExistingSignatureVertexOrAdd(String context, Graph graph){
-		GraphTraversalSource t = graph.traversal();
-		GraphTraversal<Edge, Edge> traversal = t.E().hasLabel(context+Constants.SIGNATURE_OF);
-		if(traversal.hasNext()){
-			return traversal.next().outVertex();
+	private static Vertex getExistingSignatureVertexOrAdd(Vertex s, String context, Graph graph){
+		Iterator<Edge> existingSignatureEdges = s.edges(Direction.IN, context+Constants.SIGNATURE_OF);
+		if(existingSignatureEdges.hasNext()){
+			Edge e = existingSignatureEdges.next();
+			return e.outVertex();
 		} else {
-			return graph.addVertex(T.label,context+UUID.randomUUID().toString());
+			Vertex signatureVertex = graph.addVertex(T.label,context+UUID.randomUUID().toString());
+			signatureVertex.addEdge(context+Constants.SIGNATURE_OF, s);
+			return signatureVertex;
 		}
 	}
 
