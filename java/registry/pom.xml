@@ -36,6 +36,10 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.retry</groupId>
+			<artifactId>spring-retry</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>io.opensaber</groupId>
 			<artifactId>jenardf4j</artifactId>
 			<version>1.0.0</version>
