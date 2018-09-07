@@ -198,7 +198,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 setAuditInfo(v, false);
                 copyProperties(v, existingVertex, methodOrigin, encDecPropertyBuilder);
                 // watch.start("RegistryDaoImpl.addOrUpdateVertexAndEdge()");
-                addOrUpdateVertexAndEdge(v, existingVertex, dbTraversalSource, methodOrigin, encDecPropertyBuilder, Direction.OUT);
+                addOrUpdateVertexAndEdge(v, existingVertex.label(), existingVertex, dbTraversalSource, methodOrigin, encDecPropertyBuilder, Direction.OUT);
                 // watch.stop();
             } else {
                 if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)) {
@@ -210,7 +210,7 @@ public class RegistryDaoImpl implements RegistryDao {
                 setAuditInfo(v, true);
                 copyProperties(v, newVertex, methodOrigin, encDecPropertyBuilder);
                 // watch.start("RegistryDaoImpl.addOrUpdateVertexAndEdge()");
-                addOrUpdateVertexAndEdge(v, newVertex, dbTraversalSource, methodOrigin, encDecPropertyBuilder, Direction.OUT);
+                addOrUpdateVertexAndEdge(v, label, newVertex, dbTraversalSource, methodOrigin, encDecPropertyBuilder, Direction.OUT);
                 // watch.stop();
             }
             Table<Vertex,Vertex,Map<String,Object>>  encDecPropertyTable = encDecPropertyBuilder.build();
@@ -234,26 +234,27 @@ public class RegistryDaoImpl implements RegistryDao {
      * @throws EncryptionException
      * @throws NoSuchElementException
      */
-    private void addOrUpdateVertexAndEdge(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph, String methodOrigin, ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder, Direction direction)
+    private void addOrUpdateVertexAndEdge(Vertex v, String idForSignature, Vertex dbVertex, GraphTraversalSource dbGraph, String methodOrigin, ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder, Direction direction)
             throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException {
         Iterator<Edge> edges = v.edges(direction);
         Iterator<Edge> edgeList = v.edges(direction);
         List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(direction));
         List<Edge> edgeVertexMatchList = new ArrayList<Edge>();
-        Stack<Pair<Vertex, Vertex>> parsedVertices = addOrUpdateVertexAndEdgeIteratively(edges, edgeList, dbEdgesForVertex, edgeVertexMatchList, direction, dbGraph, methodOrigin, dbVertex, encDecPropertyBuilder);
+        Stack<Pair<Vertex, Vertex>> parsedVertices = addOrUpdateVertexAndEdgeIteratively(edges, idForSignature, edgeList, dbEdgesForVertex, 
+        		edgeVertexMatchList, direction, dbGraph, methodOrigin, dbVertex, encDecPropertyBuilder);
         
         if(v.edges(Direction.IN, (registryContext+Constants.SIGNATURE_OF)).hasNext()){
         	logger.info("Adding signature for label:"+dbVertex.label());
-        	addOrUpdateSignature(v, dbVertex, dbGraph, methodOrigin, encDecPropertyBuilder);
+        	addOrUpdateSignature(v, idForSignature, dbVertex, dbGraph, methodOrigin, encDecPropertyBuilder);
         }
         for (Pair<Vertex, Vertex> pv : parsedVertices) {
-        	addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph, methodOrigin, encDecPropertyBuilder, Direction.OUT);
+        	addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1().label(), pv.getValue1(), dbGraph, methodOrigin, encDecPropertyBuilder, Direction.OUT);
         }
 
 
     }
 
-    private Stack<Pair<Vertex, Vertex>> addOrUpdateVertexAndEdgeIteratively(Iterator<Edge> edges, Iterator<Edge> edgeList, List<Edge> dbEdgesForVertex, 
+    private Stack<Pair<Vertex, Vertex>> addOrUpdateVertexAndEdgeIteratively(Iterator<Edge> edges, String idForSignature, Iterator<Edge> edgeList, List<Edge> dbEdgesForVertex, 
     		List<Edge> edgeVertexMatchList, Direction direction, GraphTraversalSource dbGraph, String methodOrigin, Vertex dbVertex,
     		ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder) throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
     	Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
@@ -268,7 +269,6 @@ public class RegistryDaoImpl implements RegistryDao {
     		}
     	}
     	logger.debug("RegistryDaoImpl : Matching list size:" + edgeVertexMatchList.size());
-
     	while (edges.hasNext()) {
     		Edge e = edges.next();
     		if((direction.equals(Direction.OUT) && !e.label().equals(registryContext+Constants.SIGNATURE_OF)) ||
@@ -286,7 +286,7 @@ public class RegistryDaoImpl implements RegistryDao {
     					Vertex existingV = gt.next();
     					logger.info(String.format("Vertex with label {} already exists. Updating properties for the vertex", existingV.label()));
     					//Existing logic moved to this method to avoid duplicate code
-    					parsedVertices = addEdgeForAVertex(ver, existingV, dbGraph, methodOrigin, encDecPropertyBuilder, edgeLabel, direction, 
+    					parsedVertices = addEdgeForAVertex(ver, idForSignature, existingV, dbGraph, methodOrigin, encDecPropertyBuilder, edgeLabel, direction, 
     							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
     				} else {
     					if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !isIRI(ver.label())) {
@@ -302,7 +302,7 @@ public class RegistryDaoImpl implements RegistryDao {
     						newV = dbGraph.addV(label).next();
     					}
     					//Existing logic moved to this method to avoid duplicate code
-    					parsedVertices = addEdgeForAVertex(ver, newV, dbGraph, methodOrigin, encDecPropertyBuilder, edgeLabel, direction, 
+    					parsedVertices = addEdgeForAVertex(ver, idForSignature, newV, dbGraph, methodOrigin, encDecPropertyBuilder, edgeLabel, direction, 
     							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
     				}
     			}
@@ -330,12 +330,17 @@ public class RegistryDaoImpl implements RegistryDao {
      * @throws AuditFailedException
      * @throws EncryptionException
      */
-    private Stack<Pair<Vertex, Vertex>> addEdgeForAVertex(Vertex ver, Vertex newV, GraphTraversalSource dbGraph, String methodOrigin, 
+    private Stack<Pair<Vertex, Vertex>> addEdgeForAVertex(Vertex ver, String idForSignature, Vertex newV, GraphTraversalSource dbGraph, String methodOrigin, 
     		ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder,String edgeLabel, 
     		Direction direction, Stack<Pair<Vertex, Vertex>> parsedVertices, Vertex dbVertex, Edge e, List<Edge> edgeVertexMatchList, Optional<Edge> edgeVertexAlreadyExists) 
     				throws AuditFailedException, EncryptionException{
     	setAuditInfo(ver, true);
     	logger.debug(String.format("RegistryDaoImpl : Adding vertex with label {} and adding properties", newV.label()));
+    	//The below if condition is to encode the value for signatureFor field
+    	if(ver.property(registryContext+Constants.SIGNATURE_FOR).isPresent()){
+    		String newPropValue = encodeAttributeForSignature(ver.property(registryContext+Constants.SIGNATURE_FOR).value().toString(), idForSignature);
+    		ver.property(registryContext+Constants.SIGNATURE_FOR, newPropValue);
+    	}
     	copyProperties(ver, newV, methodOrigin, encDecPropertyBuilder);
     	logger.debug(String.format("RegistryDaoImpl : Adding edge with label {} for the vertex label {}.", e.label(), newV.label()));
     	if (!edgeVertexAlreadyExists.isPresent()) {
@@ -378,17 +383,25 @@ public class RegistryDaoImpl implements RegistryDao {
     }
     
     
-    private void addOrUpdateSignature(Vertex v, Vertex dbVertex, GraphTraversalSource dbGraph, String methodOrigin, ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder)
+    private void addOrUpdateSignature(Vertex v, String idForSignature, Vertex dbVertex, GraphTraversalSource dbGraph, String methodOrigin, ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder)
             throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException {
     	Iterator<Edge> edges = v.edges(Direction.IN, (registryContext+Constants.SIGNATURE_OF));
         Iterator<Edge> edgeList = v.edges(Direction.IN, (registryContext+Constants.SIGNATURE_OF));
         List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(Direction.IN, (registryContext+Constants.SIGNATURE_OF)));
         List<Edge> edgeVertexMatchList = new ArrayList<Edge>();
-        Stack<Pair<Vertex, Vertex>> parsedVertices = addOrUpdateVertexAndEdgeIteratively(edges, edgeList, dbEdgesForVertex, edgeVertexMatchList, Direction.IN, dbGraph, methodOrigin, dbVertex, encDecPropertyBuilder);
+        Stack<Pair<Vertex, Vertex>> parsedVertices = addOrUpdateVertexAndEdgeIteratively(edges, idForSignature, edgeList, dbEdgesForVertex, edgeVertexMatchList, 
+        		Direction.IN, dbGraph, methodOrigin, dbVertex, encDecPropertyBuilder);
         for (Pair<Vertex, Vertex> pv : parsedVertices) {
-        	addOrUpdateVertexAndEdge(pv.getValue0(), pv.getValue1(), dbGraph, methodOrigin, encDecPropertyBuilder, Direction.OUT);
+        	addOrUpdateVertexAndEdge(pv.getValue0(), idForSignature, pv.getValue1(), dbGraph, methodOrigin, encDecPropertyBuilder, Direction.OUT);
         }
 
+    }
+    
+    private String encodeAttributeForSignature(String value, String idForSignature){
+    	String uuid = idForSignature.substring(idForSignature.lastIndexOf(Constants.FORWARD_SLASH)+1);
+    	String encodedEnd = value.substring(value.lastIndexOf(Constants.FORWARD_SLASH));
+    	String encodedBegin = value.substring(0,value.lastIndexOf(Constants.FORWARD_SLASH)+1);
+    	return encodedBegin+uuid+encodedEnd;
     }
 
 	/*private void deleteEdgeAndNode(Vertex dbVertex, Edge e, Optional<Edge> edgeAlreadyExists,List<Edge> edgeVertexMatchList, String methodOrigin)
