@@ -1,33 +1,19 @@
 package io.opensaber.utils.converters;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Stack;
-import java.util.UUID;
-
+import io.opensaber.registry.middleware.util.Constants;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
-import org.eclipse.rdf4j.model.BNode;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Literal;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.datatypes.XMLDatatypeUtil;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.opensaber.registry.middleware.util.Constants;
-
-import javax.xml.XMLConstants;
+import java.util.*;
 
 public final class RDF2Graph 
 {
@@ -206,61 +192,7 @@ public final class RDF2Graph
 	}
 
 	private static Object matchAndAddStatements(String type, String literal, ValueFactory vf){
-		Object object = literal;
-		switch(type){
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#boolean":
-			logger.debug("Found boolean");
-
-		object=vf.createLiteral(XMLDatatypeUtil.parseBoolean(literal));
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#byte":
-			object=vf.createLiteral(XMLDatatypeUtil.parseByte(literal));
-		logger.debug("Found byte");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#short":
-			object=vf.createLiteral(XMLDatatypeUtil.parseShort(literal));
-		logger.debug("Found short");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#int":
-			object=vf.createLiteral(XMLDatatypeUtil.parseInt(literal));
-		logger.debug("Found int");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#long":
-			object=vf.createLiteral(XMLDatatypeUtil.parseLong(literal));
-		logger.debug("Found long");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#float":
-			object=vf.createLiteral(XMLDatatypeUtil.parseFloat(literal));
-		logger.debug("Found float");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#double":
-			object=vf.createLiteral(XMLDatatypeUtil.parseDouble(literal));
-		logger.debug("Found double");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#integer":
-			object=vf.createLiteral(XMLDatatypeUtil.parseInteger(literal));
-		logger.debug("Found integer");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#decimal":
-			object=vf.createLiteral(XMLDatatypeUtil.parseDecimal(literal));
-		logger.debug("Found decimal");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#dateTime":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#time":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#date":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gYearMonth":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonthDay":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gYear":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonth":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gDay":
-			object=vf.createLiteral(XMLDatatypeUtil.parseCalendar(literal));
-		logger.debug("Found date");
-		break;
-		//                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#duration":
-		//                        object=vf.createLiteral(XMLDatatypeUtil.parseDuration(literal));
-		//                        logger.info("Found duration");
-		//                        break;
-		}
+		Object object =vf.createLiteral(literal,vf.createIRI(type));
 		return object;
 	}
 }

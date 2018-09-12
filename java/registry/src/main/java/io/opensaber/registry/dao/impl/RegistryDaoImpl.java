@@ -1,16 +1,22 @@
 package io.opensaber.registry.dao.impl;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableTable;
+import com.google.common.collect.Table;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.sink.DatabaseProvider;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
@@ -24,16 +30,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.middleware.util.Constants;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.validator.routines.UrlValidator;
-import com.google.common.collect.ImmutableTable;
-import com.google.common.collect.Table;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class RegistryDaoImpl implements RegistryDao {
@@ -882,12 +883,13 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s, ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder, String methodOrigin)
 			throws NoSuchElementException, EncryptionException, AuditFailedException {
-		Iterator<Edge> edgeIter = s.edges(Direction.OUT);
+		Iterator<Edge> outEdgeIter = s.edges(Direction.OUT);
+        Iterator<Edge> inSigEdgeIter = s.edges(Direction.IN);
 		Edge edge;
 		Stack<Vertex> vStack = new Stack<Vertex>();
 		Stack<Vertex> parsedVStack = new Stack<Vertex>();
-		while(edgeIter.hasNext()){
-			edge = edgeIter.next();
+		while(outEdgeIter.hasNext()){
+			edge = outEdgeIter.next();
 			Vertex o = edge.inVertex();
 			Vertex newo = parsedGraph.addVertex(o.label());
 			if(!methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN)){
@@ -897,6 +899,28 @@ public class RegistryDaoImpl implements RegistryDao {
 			vStack.push(o);
 			parsedVStack.push(newo);
 		}
+		//Code-start added for getting signature part in read api
+		while(inSigEdgeIter.hasNext()){
+            edge = inSigEdgeIter.next();
+            if(edge.label().contains(Constants.SIGNATURE_OF)){
+                Vertex v = edge.outVertex();
+                Iterator<Edge> outSigEdgeIter = v.edges(Direction.OUT);
+                while(outSigEdgeIter.hasNext()){
+                    edge = outSigEdgeIter.next();
+                    if(edge.label().contains(Constants.SIGNATURES)){
+                        Vertex o = edge.inVertex();
+                        Vertex newo = parsedGraph.addVertex(o.label());
+                        if(!methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN)){
+                            copyProperties(o, newo, methodOrigin, encDecPropertyBuilder);
+                        }
+                        parsedGraphSubject.addEdge(edge.label(), newo);
+                        vStack.push(o);
+                        parsedVStack.push(newo);
+                    }
+                }
+            }
+        }
+        //Code-End added for getting signature part in read api
 		Iterator<Vertex> vIterator = vStack.iterator();
 		Iterator<Vertex> parsedVIterator = parsedVStack.iterator();
 		while(vIterator.hasNext()){
@@ -904,6 +928,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			parsedGraphSubject = parsedVIterator.next();
 			extractGraphFromVertex(parsedGraph,parsedGraphSubject,s, encDecPropertyBuilder, methodOrigin);
 		}
+
 	}
 
     private void updateEncryptedDecryptedProperties(Table<Vertex, Vertex, Map<String, Object>> encDecPropertyTable, String methodOrigin) throws EncryptionException, AuditFailedException {
