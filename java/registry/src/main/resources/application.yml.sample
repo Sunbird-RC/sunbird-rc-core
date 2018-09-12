@@ -59,6 +59,11 @@ validations:
   update:
     file: ${validations_update_file:validations_update.shex}
     
+signature:
+  schema:
+    config:
+      name: SignatureShape
+    
 # File for framing the entity while reading
 frame:
   file: ${frame_file:frame.json}
@@ -132,6 +137,11 @@ validations:
     file: good1.shex
   update:
     file: good1.shex
+    
+signature:
+  schema:
+    config:
+      name: SignatureShape
 
 # File for framing the entity while reading
 frame:

@@ -30,10 +30,12 @@ import io.opensaber.registry.interceptor.AuthorizationInterceptor;
 import io.opensaber.registry.interceptor.RDFConversionInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationInterceptor;
 import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
+import io.opensaber.registry.interceptor.SignaturePresenceValidationInterceptor;
 import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.impl.RDFValidator;
+import io.opensaber.registry.middleware.impl.SignaturePresenceValidator;
 import io.opensaber.registry.middleware.impl.JSONLDConverter;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
@@ -71,6 +73,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	
 	@Value("${registry.system.base}")
 	private String registrySystemBase;
+	
+	@Value("${registry.context.base}")
+	private String registryContextBase;
+	
+	@Value("${signature.schema.config.name}")
+	private String signatureSchemaConfigName;
 
 	@Bean
 	public ObjectMapper objectMapper() {
@@ -118,6 +126,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public RDFValidationInterceptor rdfValidationInterceptor() {
 		return new RDFValidationInterceptor(rdfValidator(), gson());
 	}
+	
+	@Bean
+	public SignaturePresenceValidationInterceptor signaturePresenceValidationInterceptor() {
+		return new SignaturePresenceValidationInterceptor(signaturePresenceValidator(), gson());
+	}
 
 	@Bean
 	public Middleware authorizationFilter(){
@@ -155,6 +168,18 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		}
 		return new RDFValidator(schemaForCreate, schemaForUpdate);
 	}
+	
+	@Bean
+	public Middleware signaturePresenceValidator(){
+		Schema schemaForCreate = null;
+		try {
+			schemaForCreate = schemaConfiguration().getSchemaForCreate();
+		} catch (Exception e) {
+			logger.error("Unable to retrieve schema for validations");
+		}
+		return new SignaturePresenceValidator(schemaForCreate, registryContextBase, signatureSchemaConfigName);
+	}
+
 
 	@Bean
 	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -220,7 +245,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	    if(authenticationEnabled) {
             registry.addInterceptor(authorizationInterceptor())
                     .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
-        }
+	    }
 		registry.addInterceptor(rdfConversionInterceptor())
 				.addPathPatterns("/add", "/update","/search").order(2);
 		/*registry.addInterceptor(rdfValidationMappingInterceptor())
@@ -229,6 +254,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 				.addPathPatterns("/add", "/update").order(3);
 	/*	registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
 				.addPathPatterns("/read/{id}").order(2);*/
+		registry.addInterceptor(signaturePresenceValidationInterceptor())
+		.addPathPatterns("/add", "/update").order(4);
 	}
 
 	@Override

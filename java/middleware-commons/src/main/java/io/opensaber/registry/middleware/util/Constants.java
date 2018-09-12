@@ -42,6 +42,7 @@ public class Constants {
 	public static final String TOKEN_EXTRACTION_ERROR = "Unable to extract auth token";
 	public static final String JSONLD_PARSE_ERROR = "Unable to parse JSON-LD";
 	public static final String RDF_VALIDATION_ERROR = "Unable to validate RDF";
+	public static final String SIGNATURE_VALIDATION_ERROR = "Unable to validate presence of signatures";
 	public static final String RDF_VALIDATION_MAPPING_ERROR = "Unable to map validations";
 	public static final String CUSTOM_EXCEPTION_ERROR = "Something went wrong!! Please try again later";
 	public static final String ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE = "Cannot add/update/view more than one entity";
@@ -63,6 +64,7 @@ public class Constants {
 	public static final String READ_METHOD_ORIGIN = "read";
 	public static final String UPDATE_METHOD_ORIGIN = "update";
 	public static final String SEARCH_METHOD_ORIGIN = "search";
+	public static final String SIGNATURE_FOR = "signatureFor";
 
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"),
