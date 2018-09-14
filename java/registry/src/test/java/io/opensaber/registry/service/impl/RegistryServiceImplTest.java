@@ -59,7 +59,8 @@ import java.util.List;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {OpenSaberApplication.class, RegistryController.class,
-		GenericConfiguration.class, EncryptionServiceImpl.class, RegistryDaoImpl.class, AuditRecord.class})
+		GenericConfiguration.class, EncryptionServiceImpl.class, RegistryDaoImpl.class,
+		AuditRecord.class, SignatureServiceImpl.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryServiceImplTest extends RegistryTestBase {
@@ -89,6 +90,9 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	private EncryptionServiceImpl encryptionService;
 
 	@Mock
+	private SignatureServiceImpl signatureService;
+
+	@Mock
 	private DatabaseProvider mockDatabaseProvider;
 
 	@InjectMocks
@@ -103,6 +107,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 			ReflectionTestUtils.setField(encryptionService, "encryptionServiceHealthCheckUri", "encHealthCheckUri");
 			ReflectionTestUtils.setField(encryptionService, "decryptionUri", "decryptionUri");
 			ReflectionTestUtils.setField(encryptionService, "encryptionUri", "encryptionUri");
+			ReflectionTestUtils.setField(signatureService, "healthCheckURL", "healthCheckURL");
 			isInitialized = true;
 		}
 	}
@@ -167,6 +172,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	public void test_health_check_up_scenario() throws Exception {
 		when(encryptionService.isEncryptionServiceUp()).thenReturn(true);
 		when(mockDatabaseProvider.isDatabaseServiceUp()).thenReturn(true);
+		when(signatureService.isServiceUp()).thenReturn(true);
 		HealthCheckResponse response = registryServiceForHealth.health();
 		assertTrue(response.isHealthy());
 		response.getChecks().forEach(ch -> assertTrue(ch.isHealthy()));
@@ -176,10 +182,15 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	public void test_health_check_down_scenario() throws Exception {
 		when(encryptionService.isEncryptionServiceUp()).thenReturn(false);
 		when(mockDatabaseProvider.isDatabaseServiceUp()).thenReturn(true);
+		when(signatureService.isServiceUp()).thenReturn(false);
 		HealthCheckResponse response = registryServiceForHealth.health();
+		System.out.println(response.toString());
+
 		assertFalse(response.isHealthy());
 		response.getChecks().forEach(ch -> {
 			if(ch.getName().equalsIgnoreCase(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME)) {
+				assertFalse(ch.isHealthy());
+			} if(ch.getName().equalsIgnoreCase(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME)) {
 				assertFalse(ch.isHealthy());
 			} else {
 				assertTrue(ch.isHealthy());

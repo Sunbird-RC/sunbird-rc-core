@@ -10,6 +10,7 @@ import java.util.NoSuchElementException;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.exception.*;
+import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
@@ -53,6 +54,15 @@ public class RegistryServiceImpl implements RegistryService {
 	
 	@Autowired
 	EncryptionService encryptionService;
+
+    @Autowired
+    SignatureService signatureService;
+
+	@Value("${encryption.enabled}")
+	private boolean encryptionEnabled;
+
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
 	
 	@Value("${frame.file}")
 	private String frameFile;
@@ -118,15 +128,27 @@ public class RegistryServiceImpl implements RegistryService {
 
 	public HealthCheckResponse health() throws Exception {
 		HealthCheckResponse healthCheck;
-		boolean encryptionServiceStatusUp = encryptionService.isEncryptionServiceUp();
 		boolean databaseServiceup = databaseProvider.isDatabaseServiceUp();
-		boolean overallHealthStatus = encryptionServiceStatusUp && databaseServiceup;
-
-		ComponentHealthInfo encryptionHealthInfo = new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, encryptionServiceStatusUp);
-		ComponentHealthInfo databaseServiceInfo = new ComponentHealthInfo(Constants.OPENSABER_DATABASE_NAME, databaseServiceup);
+		boolean overallHealthStatus = databaseServiceup;
 		List<ComponentHealthInfo> checks = new ArrayList<>();
-		checks.add(encryptionHealthInfo);
+
+		ComponentHealthInfo databaseServiceInfo = new ComponentHealthInfo(Constants.OPENSABER_DATABASE_NAME, databaseServiceup);
 		checks.add(databaseServiceInfo);
+
+		if (encryptionEnabled) {
+			boolean encryptionServiceStatusUp = encryptionService.isEncryptionServiceUp();
+			ComponentHealthInfo encryptionHealthInfo = new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, encryptionServiceStatusUp);
+			checks.add(encryptionHealthInfo);
+			overallHealthStatus = overallHealthStatus && encryptionServiceStatusUp;
+		}
+
+		if (signatureEnabled) {
+			boolean signatureServiceStatusUp = signatureService.isServiceUp();
+			ComponentHealthInfo signatureServiceInfo = new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, signatureServiceStatusUp);
+			checks.add(signatureServiceInfo);
+			overallHealthStatus = overallHealthStatus && signatureServiceStatusUp;
+		}
+
 		healthCheck = new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, overallHealthStatus, checks);
 		logger.info("Heath Check :  encryptionHealthInfo  {} \n\t  databaseServiceInfo {} ", checks.get(0), checks.get(1));
 		return healthCheck;
