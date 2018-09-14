@@ -177,7 +177,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		} catch (Exception e) {
 			logger.error("Unable to retrieve schema for validations");
 		}
-		return new SignaturePresenceValidator(schemaForCreate, registryContextBase, signatureSchemaConfigName);
+		return new SignaturePresenceValidator(schemaForCreate, registryContextBase, signatureSchemaConfigName, ((RDFValidator)rdfValidator()).getShapeTypeMap());
 	}
 
 

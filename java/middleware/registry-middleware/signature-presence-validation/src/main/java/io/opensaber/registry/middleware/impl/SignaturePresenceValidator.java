@@ -2,13 +2,18 @@ package io.opensaber.registry.middleware.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.xml.XMLConstants;
+
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.NodeIterator;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.ResIterator;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -18,31 +23,34 @@ import org.apache.jena.vocabulary.RDF;
 import es.weso.schema.Schema;
 import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.Validator;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.validators.shex.shaclex.ShaclexValidator;
-import io.opensaber.pojos.ValidationResponse;
 
 public class SignaturePresenceValidator implements Middleware{
 
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing!";
 	private static final String RDF_DATA_IS_INVALID = "Data validation failed!";
 	private static final String SCHEMA_IS_NULL = "Schema for validation is missing";
-	private static final String SX_EXPRESSION_IRI = "http://shex.io/ns/shex#expression";
-	private static final String SX_EXPRESSIONS_IRI = "http://shex.io/ns/shex#expressions";
-	private static final String SX_PREDICATE_IRI = "http://shex.io/ns/shex#predicate";
-	private static final String FORMAT = "JSON-LD";
+	private static final String SHAPE_EXPRESSION_IRI = "http://shex.io/ns/shex#expression";
+	private static final String SHAPE_EXPRESSIONS_IRI = "http://shex.io/ns/shex#expressions";
+	private static final String SHAPE_PREDICATE_IRI = "http://shex.io/ns/shex#predicate";
+	private static final String JSON_LD_FORMAT = "JSON-LD";
 	private static final String SIGNATURE_NOT_FOUND = "Signature not found for attribute %s";
 
 	private Schema schemaForCreate;
 	private String registryContext;
 	private String signatureConfigName;
-
-	public SignaturePresenceValidator(Schema schemaForCreate, String registryContext, String signatureConfigName) {
+	private List<String> signatureTypes = new ArrayList<String>();
+	
+	public SignaturePresenceValidator(Schema schemaForCreate, String registryContext, String signatureConfigName, Map<String,String> shapeTypeMap) {
 		this.schemaForCreate = schemaForCreate;
 		this.registryContext = registryContext;
 		this.signatureConfigName = signatureConfigName;
+		shapeTypeMap.forEach((type, shape)-> {
+			if(shape.equals(registryContext+signatureConfigName)){
+				signatureTypes.add(type);
+			}
+		});
 	}
 
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
@@ -60,7 +68,6 @@ public class SignaturePresenceValidator implements Middleware{
 	}
 
 	public Map<String, Object> next(Map<String, Object> mapData) throws IOException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -78,60 +85,86 @@ public class SignaturePresenceValidator implements Middleware{
 	}
 
 	private Model getSignatureConfigModel(){
-		return RDFUtil.getRdfModelBasedOnFormat(schemaForCreate.serialize(FORMAT).right().get(), FORMAT);
+		return RDFUtil.getRdfModelBasedOnFormat(schemaForCreate.serialize(JSON_LD_FORMAT).right().get(), JSON_LD_FORMAT);
 	}
 
+	/**
+	 * This method takes any shape as input and the schema which contains validation
+	 * and returns a list of attributes specified for that shape. 
+	 * @param shape
+	 * @param signatureConfigModel
+	 * @return
+	 */
 	private List<String> getAttributeListForShape(String shape, Model signatureConfigModel){
 		List<String> attributeList = new ArrayList<String>();
 		Resource shapeResource = ResourceFactory.createResource(shape);
-		RDFNode node = getObjectAfterFilter(shapeResource, SX_EXPRESSION_IRI, signatureConfigModel);
-		RDFNode firstNode = getObjectAfterFilter(node, SX_EXPRESSIONS_IRI, signatureConfigModel);
-		getOtherAttributes(firstNode, signatureConfigModel, attributeList);
+		//Getting the object by filtering the shape and the IRI
+		RDFNode node = getObjectAfterFilter(shapeResource, SHAPE_EXPRESSION_IRI, signatureConfigModel);
+		//Getting the object by filtering the node and the IRI
+		RDFNode firstNode = getObjectAfterFilter(node, SHAPE_EXPRESSIONS_IRI, signatureConfigModel);
+		addAttributesForShape(firstNode, signatureConfigModel, attributeList);
 		return attributeList;
 	}
 
-	private void getOtherAttributes(RDFNode firstNode, Model signatureConfigModel, List<String> attributeList){
+	/**
+	 * This method adds attributes of a shape to the attributeList
+	 * @param firstNode
+	 * @param signatureConfigModel
+	 * @param attributeList
+	 */
+	private void addAttributesForShape(RDFNode firstNode, Model signatureConfigModel, List<String> attributeList){
+		//Getting object nodes by filtering based on different predicates iteratively till all attributes for the shape are filtered
 		RDFNode secondNode = getObjectAfterFilter(firstNode, RDF.rest.getURI(), signatureConfigModel);
 		if(!secondNode.equals(RDF.nil)){
 			RDFNode thirdNode = getObjectAfterFilter(secondNode, RDF.first.getURI(), signatureConfigModel);
-			RDFNode fourthNode = getObjectAfterFilter(thirdNode, SX_PREDICATE_IRI, signatureConfigModel);
+			RDFNode fourthNode = getObjectAfterFilter(thirdNode, SHAPE_PREDICATE_IRI, signatureConfigModel);
 			attributeList.add(fourthNode.toString());
-			getOtherAttributes(secondNode, signatureConfigModel, attributeList);
+			addAttributesForShape(secondNode, signatureConfigModel, attributeList);
 		}
 	}
 	private void validateSignature(Model rdf) throws MiddlewareHaltException{
 		StmtIterator iter = rdf.listStatements();
 		Property prop = ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR);
-		List<String> predicateList = new ArrayList<String>();
 		List<String> signatureAttributes = getSignatureAttributes();
+		TypeMapper tm = TypeMapper.getInstance();
+		//This is the datatype for the signatureFor attribute
+		RDFDatatype rdt = tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI");
 		while(iter.hasNext()){
 			Statement s = iter.next();
 			RDFNode rNode = s.getObject();
-			if(!rNode.isAnon() && !s.getPredicate().equals(RDF.type)){
-				String predicate = s.getPredicate().toString();
-				if(!signatureAttributes.contains(predicate)){
-					predicateList.add(predicate);
-				}
-			}
-		}
-
-		for(String predicate: predicateList){
-			StmtIterator signatureIter = rdf.listStatements(null, prop, (RDFNode)null);
-			boolean signatureFoundFlag = false;
-			while(signatureIter.hasNext()){
-				Statement signatureStmt = signatureIter.next();
-				RDFNode signatureRNode = signatureStmt.getObject();
-				if(signatureRNode.isLiteral()){
-					String signatureForValue = signatureRNode.asLiteral().getLexicalForm();
-					if(signatureForValue.equalsIgnoreCase(predicate)){
-						signatureFoundFlag = true;
+			Property predicate = s.getPredicate(); 
+			String predicateStr = predicate.toString();
+			if(!rNode.isAnon() && !predicate.equals(RDF.type) && !signatureAttributes.contains(predicateStr)){
+					//Filtering statements based on the signatureFor attribute to check with signature exists for each attribute
+					ResIterator subjectIter = rdf.listSubjectsWithProperty(prop, ResourceFactory.createTypedLiteral(predicateStr, rdt));
+					if(!subjectIter.hasNext()){
+						throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
+					}else{
+						while(subjectIter.hasNext()){
+							Resource subject = subjectIter.next();
+							if(!rdf.contains(s.getSubject(), ResourceFactory.createProperty(Constants.SIGNATURES), subject)){
+								throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
+							}
+						}
+					}
+			}else if(predicate.equals(RDF.type) && !signatureTypes.contains(rNode.toString())){
+				NodeIterator nodeIter = rdf.listObjectsOfProperty(s.getSubject(), ResourceFactory.createProperty(Constants.SIGNATURES));
+				boolean entitySignatureFound = false;
+				while(nodeIter.hasNext()){
+					RDFNode node = nodeIter.next();
+					//Filtering statements to check if signature exists for entity
+					if(rdf.contains((Resource)node, prop,  ResourceFactory.createTypedLiteral(registryContext+Constants.HASH, rdt))){
+						entitySignatureFound = true;
+						break;
 					}
 				}
-			}
-			if(!signatureFoundFlag){
-				throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicate));
+				if(!entitySignatureFound){
+					throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, s.getObject().toString()));
+				}
+				
 			}
 		}
+		
 	}
 
 }
