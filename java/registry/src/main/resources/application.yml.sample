@@ -87,6 +87,7 @@ signature:
   healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
   signURL: ${sign_url:http://localhost:8013/sign}
   verifyURL: ${sign_url:http://localhost:8013/verify}
+  keysURL: ${keys_url:http://localhost:8013/keys}
 
 audit:
   enabled: ${audit_enabled:false}
@@ -167,6 +168,7 @@ signature:
   healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
   signURL: ${sign_url:http://localhost:8013/sign}
   verifyURL: ${sign_url:http://localhost:8013/verify}
+  keysURL: ${keys_url:http://localhost:8013/keys}
 
 audit:
   enabled: false

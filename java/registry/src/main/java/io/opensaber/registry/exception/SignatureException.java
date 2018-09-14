@@ -1,6 +1,9 @@
 package io.opensaber.registry.exception;
 
 public class SignatureException extends Exception {
+
+    private static final long serialVersionUID = -6315798195661762882L;
+
     public class CreationException extends CustomException {
         private static final long serialVersionUID = 6174717850058203376L;
 
@@ -24,6 +27,15 @@ public class SignatureException extends Exception {
 
         public UnreachableException(String message) {
             super("Unable to reach service: " + message);
+        }
+    }
+
+    public class KeyNotFoundException extends CustomException {
+
+        private static final long serialVersionUID = 8311355815972497247L;
+
+        public KeyNotFoundException(String message) {
+            super("Unable to get key: " + message);
         }
     }
 }

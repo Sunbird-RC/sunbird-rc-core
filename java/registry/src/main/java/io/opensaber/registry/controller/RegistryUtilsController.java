@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -72,7 +73,29 @@ public class RegistryUtilsController {
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
         } catch (Exception e) {
-            logger.error("Error in generating signature", e);
+            logger.error("Error in verifying signature", e);
+            HealthCheckResponse healthCheckResult =
+                    new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, false, null);
+            response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg("");
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/utils/keys/{id}", method = RequestMethod.GET)
+    public ResponseEntity<Response> getKey(@PathVariable String keyId) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.KEYS, "OK", responseParams);
+
+        try {
+            Gson gson = new Gson();
+            String result = signatureService.getKey(keyId);
+            response.setResult(result);
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+        } catch (Exception e) {
+            logger.error("Error in getting key ", e);
             HealthCheckResponse healthCheckResult =
                     new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, false, null);
             response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));

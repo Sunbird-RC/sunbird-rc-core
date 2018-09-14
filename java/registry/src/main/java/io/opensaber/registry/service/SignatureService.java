@@ -1,14 +1,18 @@
 package io.opensaber.registry.service;
 
 import io.opensaber.registry.exception.SignatureException;
-import java.util.Map;
 
 public interface SignatureService {
 
-    public Object sign(Object propertyValue) throws SignatureException;
+    Object sign(Object propertyValue) throws SignatureException.UnreachableException,
+            SignatureException.CreationException;
 
-    public Object verify(Object propertyValue) throws SignatureException;
+    Object verify(Object propertyValue) throws SignatureException.UnreachableException,
+            SignatureException.VerificationException;
 
-    public boolean isServiceUp();
+    String getKey(String keyId) throws SignatureException.UnreachableException,
+            SignatureException.KeyNotFoundException;
+
+    boolean isServiceUp() throws SignatureException.UnreachableException;
 
 }
