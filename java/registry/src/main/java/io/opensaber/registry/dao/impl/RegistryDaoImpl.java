@@ -56,6 +56,9 @@ public class RegistryDaoImpl implements RegistryDao {
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
 
+    @Value("${signature.enabled}")
+    private boolean signatureEnabled;
+
     @Autowired
     SchemaConfigurator schemaConfigurator;
 
@@ -900,22 +903,24 @@ public class RegistryDaoImpl implements RegistryDao {
 			parsedVStack.push(newo);
 		}
 		//Code-start added for getting signature part in read api
-		while(inSigEdgeIter.hasNext()){
-            edge = inSigEdgeIter.next();
-            if(edge.label().contains(Constants.SIGNATURE_OF)){
-                Vertex v = edge.outVertex();
-                Iterator<Edge> outSigEdgeIter = v.edges(Direction.OUT);
-                while(outSigEdgeIter.hasNext()){
-                    edge = outSigEdgeIter.next();
-                    if(edge.label().contains(Constants.SIGNATURES)){
-                        Vertex o = edge.inVertex();
-                        Vertex newo = parsedGraph.addVertex(o.label());
-                        if(!methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN)){
-                            copyProperties(o, newo, methodOrigin, encDecPropertyBuilder);
+        if(signatureEnabled){
+            while(inSigEdgeIter.hasNext()){
+                edge = inSigEdgeIter.next();
+                if(edge.label().contains(Constants.SIGNATURE_OF)){
+                    Vertex v = edge.outVertex();
+                    Iterator<Edge> outSigEdgeIter = v.edges(Direction.OUT);
+                    while(outSigEdgeIter.hasNext()){
+                        edge = outSigEdgeIter.next();
+                        if(edge.label().contains(Constants.SIGNATURES)){
+                            Vertex o = edge.inVertex();
+                            Vertex newo = parsedGraph.addVertex(o.label());
+                            if(!methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN)){
+                                copyProperties(o, newo, methodOrigin, encDecPropertyBuilder);
+                            }
+                            parsedGraphSubject.addEdge(edge.label(), newo);
+                            vStack.push(o);
+                            parsedVStack.push(newo);
                         }
-                        parsedGraphSubject.addEdge(edge.label(), newo);
-                        vStack.push(o);
-                        parsedVStack.push(newo);
                     }
                 }
             }
