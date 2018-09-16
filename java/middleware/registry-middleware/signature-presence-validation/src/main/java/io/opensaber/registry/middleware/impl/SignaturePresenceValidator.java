@@ -140,15 +140,19 @@ public class SignaturePresenceValidator implements Middleware{
 					if(!subjectIter.hasNext()){
 						throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
 					}else{
+						boolean attributeSignatureFound = false;
 						while(subjectIter.hasNext()){
 							Resource subject = subjectIter.next();
-							if(!rdf.contains(s.getSubject(), ResourceFactory.createProperty(Constants.SIGNATURES), subject)){
-								throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
+							if(rdf.contains(s.getSubject(), ResourceFactory.createProperty(registryContext+Constants.SIGNATURES), subject)){
+								attributeSignatureFound = true;
 							}
+						}
+						if(!attributeSignatureFound){
+							throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
 						}
 					}
 			}else if(predicate.equals(RDF.type) && !signatureTypes.contains(rNode.toString())){
-				NodeIterator nodeIter = rdf.listObjectsOfProperty(s.getSubject(), ResourceFactory.createProperty(Constants.SIGNATURES));
+				NodeIterator nodeIter = rdf.listObjectsOfProperty(s.getSubject(), ResourceFactory.createProperty(registryContext+Constants.SIGNATURES));
 				boolean entitySignatureFound = false;
 				while(nodeIter.hasNext()){
 					RDFNode node = nodeIter.next();
@@ -160,11 +164,8 @@ public class SignaturePresenceValidator implements Middleware{
 				}
 				if(!entitySignatureFound){
 					throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, s.getObject().toString()));
-				}
-				
+				}	
 			}
-		}
-		
+		}	
 	}
-
 }
