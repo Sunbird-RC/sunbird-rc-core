@@ -40,12 +40,16 @@ public class SignaturePresenceValidator implements Middleware{
 	private Schema schemaForCreate;
 	private String registryContext;
 	private String signatureConfigName;
+	private String registrySystemBase;
+	private Model schemaConfig;
 	private List<String> signatureTypes = new ArrayList<String>();
 	
-	public SignaturePresenceValidator(Schema schemaForCreate, String registryContext, String signatureConfigName, Map<String,String> shapeTypeMap) {
+	public SignaturePresenceValidator(Schema schemaForCreate, String registryContext, String registrySystemBase, String signatureConfigName, Map<String,String> shapeTypeMap, Model schemaConfig) {
 		this.schemaForCreate = schemaForCreate;
 		this.registryContext = registryContext;
 		this.signatureConfigName = signatureConfigName;
+		this.schemaConfig = schemaConfig;
+		this.registrySystemBase = registrySystemBase;
 		shapeTypeMap.forEach((type, shape)-> {
 			if(shape.equals(registryContext+signatureConfigName)){
 				signatureTypes.add(type);
@@ -123,41 +127,46 @@ public class SignaturePresenceValidator implements Middleware{
 		}
 	}
 	private void validateSignature(Model rdf) throws MiddlewareHaltException{
-		StmtIterator iter = rdf.listStatements();
+		Property property = ResourceFactory.createProperty(registrySystemBase + Constants.SIGNED_PROPERTY);
+		StmtIterator rdfIter = rdf.listStatements();
 		Property prop = ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR);
 		List<String> signatureAttributes = getSignatureAttributes();
 		TypeMapper tm = TypeMapper.getInstance();
 		//This is the datatype for the signatureFor attribute
 		RDFDatatype rdt = tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI");
-		while(iter.hasNext()){
-			Statement s = iter.next();
+		while(rdfIter.hasNext()){
+			Statement s = rdfIter.next();
 			RDFNode rNode = s.getObject();
+			String rNodeStr = rNode.toString();
 			Property predicate = s.getPredicate(); 
 			String predicateStr = predicate.toString();
-			if(!rNode.isAnon() && !predicate.equals(RDF.type) && !signatureAttributes.contains(predicateStr)){
-					//Filtering statements based on the signatureFor attribute to check with signature exists for each attribute
-					ResIterator subjectIter = rdf.listSubjectsWithProperty(prop, ResourceFactory.createTypedLiteral(predicateStr, rdt));
-					if(!subjectIter.hasNext()){
-						throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
-					}else{
-						boolean attributeSignatureFound = false;
-						while(subjectIter.hasNext()){
-							Resource subject = subjectIter.next();
-							if(rdf.contains(s.getSubject(), ResourceFactory.createProperty(registryContext+Constants.SIGNATURES), subject)){
-								attributeSignatureFound = true;
-							}
-						}
-						if(!attributeSignatureFound){
-							throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
+			RDFNode propertyResource = ResourceFactory.createResource(predicateStr);
+			if(!rNode.isAnon() && !predicate.equals(RDF.type) && !signatureAttributes.contains(predicateStr) 
+					&& schemaConfig.contains(null, property, propertyResource)){
+				//Filtering statements based on the signatureFor attribute to check with signature exists for each attribute
+				ResIterator subjectIter = rdf.listSubjectsWithProperty(prop, ResourceFactory.createTypedLiteral(predicateStr, rdt));
+				if(!subjectIter.hasNext()){
+					throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
+				}else{
+					boolean attributeSignatureFound = false;
+					while(subjectIter.hasNext()){
+						Resource subject = subjectIter.next();
+						if(rdf.contains(s.getSubject(), ResourceFactory.createProperty(registryContext+Constants.SIGNATURES), subject)){
+							attributeSignatureFound = true;
 						}
 					}
-			}else if(predicate.equals(RDF.type) && !signatureTypes.contains(rNode.toString())){
+					if(!attributeSignatureFound){
+						throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
+					}
+				}
+			}else if(predicate.equals(RDF.type) && !signatureTypes.contains(rNodeStr) 
+					&& schemaConfig.contains(null, property, rNode)){
 				NodeIterator nodeIter = rdf.listObjectsOfProperty(s.getSubject(), ResourceFactory.createProperty(registryContext+Constants.SIGNATURES));
 				boolean entitySignatureFound = false;
 				while(nodeIter.hasNext()){
 					RDFNode node = nodeIter.next();
 					//Filtering statements to check if signature exists for entity
-					if(rdf.contains((Resource)node, prop,  ResourceFactory.createTypedLiteral(registryContext+Constants.HASH, rdt))){
+					if(rdf.contains((Resource)node, prop,  ResourceFactory.createTypedLiteral(rNodeStr, rdt))){
 						entitySignatureFound = true;
 						break;
 					}
@@ -166,6 +175,6 @@ public class SignaturePresenceValidator implements Middleware{
 					throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, s.getObject().toString()));
 				}	
 			}
-		}	
-	}
+		}
+	}	
 }

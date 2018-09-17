@@ -19,6 +19,7 @@ public class Constants {
 	public static final String RDF_VALIDATION_MAPPER_OBJECT = "rdfValidationMapper";
 	public static final String REGISTRY_CONTEXT_BASE = "registry.base";
 	public static final String PRIVACY_PROPERTY = "privateProperties";
+	public static final String SIGNED_PROPERTY = "signedProperties";
 
 	public static final String DATABASE_PROVIDER = "database.provider";
 	public static final String NEO4J_DIRECTORY = "database.neo4j.database_directory";

@@ -170,14 +170,16 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 	
 	@Bean
-	public Middleware signaturePresenceValidator(){
+	public Middleware signaturePresenceValidator() {
 		Schema schemaForCreate = null;
+		Model schemaConfig = null;
 		try {
 			schemaForCreate = schemaConfiguration().getSchemaForCreate();
+			schemaConfig = schemaConfiguration().getSchemaConfig();
 		} catch (Exception e) {
-			logger.error("Unable to retrieve schema for validations");
+			logger.error("Unable to retrieve schema for signature validations");
 		}
-		return new SignaturePresenceValidator(schemaForCreate, registryContextBase, signatureSchemaConfigName, ((RDFValidator)rdfValidator()).getShapeTypeMap());
+		return new SignaturePresenceValidator(schemaForCreate, registryContextBase, registrySystemBase, signatureSchemaConfigName, ((RDFValidator)rdfValidator()).getShapeTypeMap(), schemaConfig);
 	}
 
 
