@@ -1,25 +1,21 @@
 package io.opensaber.registry.interceptor.handler;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import io.opensaber.pojos.Response;
+import io.opensaber.pojos.ResponseParams;
+import io.opensaber.pojos.ValidationResponse;
+import io.opensaber.pojos.ValidationResponseSerializer;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletResponse;
-
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import io.opensaber.pojos.ValidationResponse;
-import io.opensaber.pojos.ValidationResponseSerializer;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-
-import com.google.gson.Gson;
-
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.ResponseParams;
 
 /**
  * 
@@ -75,7 +71,9 @@ public class BaseResponseHandler {
 		Gson gson = new Gson();
 		String responseBody = getResponseContent();
 		formattedResponse = gson.fromJson(responseBody, Response.class);
-		return formattedResponse.getResult();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		resultMap.putIfAbsent("response", formattedResponse.getResult());
+		return resultMap;
 	}
 
 	public Map<String, Object> getResponseHeaderMap() throws IOException {

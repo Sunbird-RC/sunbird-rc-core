@@ -1,16 +1,18 @@
 package io.opensaber.registry.service.impl;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
+import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.*;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.service.EncryptionService;
+import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.util.GraphDBFactory;
+import io.opensaber.utils.converters.RDF2Graph;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -30,14 +32,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import io.opensaber.converters.JenaRDF4J;
-import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.registry.service.EncryptionService;
-import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.util.GraphDBFactory;
-import io.opensaber.utils.converters.RDF2Graph;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 
 @Component
@@ -53,6 +54,15 @@ public class RegistryServiceImpl implements RegistryService {
 	
 	@Autowired
 	EncryptionService encryptionService;
+
+    @Autowired
+    SignatureService signatureService;
+
+	@Value("${encryption.enabled}")
+	private boolean encryptionEnabled;
+
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
 	
 	@Value("${frame.file}")
 	private String frameFile;
@@ -121,17 +131,29 @@ public class RegistryServiceImpl implements RegistryService {
 
 	public HealthCheckResponse health() throws Exception {
 		HealthCheckResponse healthCheck;
-		boolean encryptionServiceStatusUp = encryptionService.isEncryptionServiceUp();
 		boolean databaseServiceup = databaseProvider.isDatabaseServiceUp();
-		boolean overallHealthStatus = encryptionServiceStatusUp && databaseServiceup;
-
-		ComponentHealthInfo encryptionHealthInfo = new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, encryptionServiceStatusUp);
-		ComponentHealthInfo databaseServiceInfo = new ComponentHealthInfo(Constants.OPENSABER_DATABASE_NAME, databaseServiceup);
+		boolean overallHealthStatus = databaseServiceup;
 		List<ComponentHealthInfo> checks = new ArrayList<>();
-		checks.add(encryptionHealthInfo);
+
+		ComponentHealthInfo databaseServiceInfo = new ComponentHealthInfo(Constants.OPENSABER_DATABASE_NAME, databaseServiceup);
 		checks.add(databaseServiceInfo);
+
+		if (encryptionEnabled) {
+			boolean encryptionServiceStatusUp = encryptionService.isEncryptionServiceUp();
+			ComponentHealthInfo encryptionHealthInfo = new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, encryptionServiceStatusUp);
+			checks.add(encryptionHealthInfo);
+			overallHealthStatus = overallHealthStatus && encryptionServiceStatusUp;
+		}
+
+		if (signatureEnabled) {
+			boolean signatureServiceStatusUp = signatureService.isServiceUp();
+			ComponentHealthInfo signatureServiceInfo = new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, signatureServiceStatusUp);
+			checks.add(signatureServiceInfo);
+			overallHealthStatus = overallHealthStatus && signatureServiceStatusUp;
+		}
+
 		healthCheck = new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, overallHealthStatus, checks);
-		logger.info("Heath Check :  encryptionHealthInfo  {} \n\t  databaseServiceInfo {} ", checks.get(0), checks.get(1));
+        logger.info("Heath Check :  ", checks.toArray().toString());
 		return healthCheck;
 	}
 

@@ -84,6 +84,10 @@ decryption:
 
 signature:
   enabled: ${signature_enabled:true}
+  healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
+  signURL: ${sign_url:http://localhost:8013/sign}
+  verifyURL: ${verify_url:http://localhost:8013/verify}
+  keysURL: ${keys_url:http://localhost:8013/keys}
 
 audit:
   enabled: ${audit_enabled:false}
@@ -161,6 +165,10 @@ decryption:
 
 signature:
   enabled: ${signature_enabled:true}
+  healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
+  signURL: ${sign_url:http://localhost:8013/sign}
+  verifyURL: ${verify_url:http://localhost:8013/verify}
+  keysURL: ${keys_url:http://localhost:8013/keys}
 
 audit:
   enabled: false

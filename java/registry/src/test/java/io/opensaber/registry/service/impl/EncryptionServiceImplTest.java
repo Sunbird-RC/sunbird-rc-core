@@ -53,9 +53,10 @@ public class EncryptionServiceImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_decrypted_value_as_expected() throws Exception {
-		String value = "v1|11|PKCS1|eYIVlw6o/KVl9LhbW+WmQJO3WHU8pUaQa5lRpggBPs/l9TThFA5tNzx2nO0mSlP0sgauSGdR+zEdHDzgIFw2yA==";
-		String decryptedValue = encryptionService.decrypt(value);
-		assertEquals("1234567890123456", decryptedValue);
+		String origValue = "1234567890123456";
+		String encryptedValue = encryptionService.encrypt(origValue);
+		String decryptedValue = encryptionService.decrypt(encryptedValue);
+		assertEquals(origValue, decryptedValue);
 	}
 
 	@Test
