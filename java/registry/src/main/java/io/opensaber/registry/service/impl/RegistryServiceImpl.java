@@ -69,6 +69,9 @@ public class RegistryServiceImpl implements RegistryService {
 	
 	@Value("${audit.frame.file}")
 	private String auditFrameFile;
+	
+	@Value("${registry.context.base}")
+	private String registryContextBase;
 
 	@Override
 	public List getEntityList(){
@@ -244,7 +247,7 @@ public class RegistryServiceImpl implements RegistryService {
 		while (iterator.hasNext()) {
 			Statement rdfStatement = iterator.nextStatement();
 			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph, registryContextBase);
 		}
 		return graph;
 	}

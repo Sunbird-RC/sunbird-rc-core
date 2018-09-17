@@ -885,7 +885,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			String subjectValue = rdf4jStatement.getSubject().toString();
 			String predicate = rdf4jStatement.getPredicate().toString();
 			if(subjectValue.startsWith("_:") && predicate.equals(RDF.TYPE.toString())){
-				graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+				graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph, registryContext);
 				break;
 			}
 		}
@@ -898,7 +898,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			if(subjectValue.startsWith("_:")&& predicate.equals(RDF.TYPE.toString())){
 				continue;
 			}
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph, registryContext);
 	}
 		return resList.get(0).toString();
 	}

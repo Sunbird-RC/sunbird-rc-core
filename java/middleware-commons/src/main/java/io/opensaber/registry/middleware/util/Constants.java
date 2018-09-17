@@ -64,6 +64,10 @@ public class Constants {
 	public static final String READ_METHOD_ORIGIN = "read";
 	public static final String UPDATE_METHOD_ORIGIN = "update";
 	public static final String SEARCH_METHOD_ORIGIN = "search";
+	public static final String SIGNATURES = "signatures";
+	public static final String SIGNATURE_OF = "signatureOf";
+	public static final String SIGNATURE_FOR = "signatureFor";
+	public static final String FORWARD_SLASH = "/";
 
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"),

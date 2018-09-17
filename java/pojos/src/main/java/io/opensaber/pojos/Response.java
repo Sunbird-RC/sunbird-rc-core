@@ -1,7 +1,5 @@
 package io.opensaber.pojos;
 
-import java.util.Map;
-
 public class Response {
 	private String id;
 	private String ver;

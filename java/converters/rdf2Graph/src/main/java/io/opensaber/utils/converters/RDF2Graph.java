@@ -1,30 +1,19 @@
 package io.opensaber.utils.converters;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Stack;
-
+import io.opensaber.registry.middleware.util.Constants;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
-import org.eclipse.rdf4j.model.BNode;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Literal;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.datatypes.XMLDatatypeUtil;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.XMLConstants;
+import java.util.*;
 
 public final class RDF2Graph 
 {
@@ -48,21 +37,25 @@ public final class RDF2Graph
 		return label;
 	}
 
-	public static Graph convertRDFStatement2Graph(Statement rdfStatement, Graph graph) {
+	public static Graph convertRDFStatement2Graph(Statement rdfStatement, Graph graph, String context) {
 		Value subjectValue = rdfStatement.getSubject();
 		IRI property = rdfStatement.getPredicate();
 		Value objectValue = rdfStatement.getObject();
-		updateGraph(subjectValue, property, objectValue, graph);
+		updateGraph(subjectValue, property, objectValue, graph, context);
 		return graph;
 	}
 
-	private static void updateGraph(Value subjectValue, IRI property, Value objectValue, Graph graph) {
+	private static void updateGraph(Value subjectValue, IRI property, Value objectValue, Graph graph, String context) {
 		Vertex s = getExistingVertexOrAdd(subjectValue.toString(), graph);
+		Vertex subjectVertex = s;
+		if(property.toString().equalsIgnoreCase(context+Constants.SIGNATURES)){
+			subjectVertex = getExistingSignatureVertexOrAdd(s, context, graph);
+		}
 		if (objectValue instanceof Literal) {
 			Literal literal = (Literal)objectValue;
 			String datatype = literal.getDatatype().toString();
 			logger.debug("TYPE saved is "+datatype);
-			VertexProperty vp = s.property(property.toString());
+			VertexProperty vp = subjectVertex.property(property.toString());
 			if(vp.isPresent()){
 				Object value = vp.value();
 				List valueList = new ArrayList();
@@ -73,19 +66,31 @@ public final class RDF2Graph
 					valueList.add(valueStr);
 				}
 				valueList.add(literal.getLabel());
-				s.property(property.toString(), valueList).property("@type",datatype);
+				subjectVertex.property(property.toString(), valueList).property("@type",datatype);
 
 			}else{
-				s.property(property.toString(), literal.getLabel()).property("@type",datatype);
+				subjectVertex.property(property.toString(), literal.getLabel()).property("@type",datatype);
 			}
 		} else if (objectValue instanceof IRI) {
 			IRI objectIRI = (IRI)objectValue;
 			Vertex o = getExistingVertexOrAdd(objectIRI.toString(), graph);
-			s.addEdge(property.toString(), o);
+			subjectVertex.addEdge(property.toString(), o);
 		} else if (objectValue instanceof BNode) {
 			BNode objectBNode = (BNode)objectValue;
 			Vertex o = getExistingVertexOrAdd(objectBNode.toString(), graph);		
-			s.addEdge(property.toString(), o);
+			subjectVertex.addEdge(property.toString(), o);
+		}
+	}
+	
+	private static Vertex getExistingSignatureVertexOrAdd(Vertex s, String context, Graph graph){
+		Iterator<Edge> existingSignatureEdges = s.edges(Direction.IN, context+Constants.SIGNATURE_OF);
+		if(existingSignatureEdges.hasNext()){
+			Edge e = existingSignatureEdges.next();
+			return e.outVertex();
+		} else {
+			Vertex signatureVertex = graph.addVertex(T.label,context+UUID.randomUUID().toString());
+			signatureVertex.addEdge(context+Constants.SIGNATURE_OF, s);
+			return signatureVertex;
 		}
 	}
 
@@ -187,61 +192,7 @@ public final class RDF2Graph
 	}
 
 	private static Object matchAndAddStatements(String type, String literal, ValueFactory vf){
-		Object object = literal;
-		switch(type){
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#boolean":
-			logger.debug("Found boolean");
-
-		object=vf.createLiteral(XMLDatatypeUtil.parseBoolean(literal));
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#byte":
-			object=vf.createLiteral(XMLDatatypeUtil.parseByte(literal));
-		logger.debug("Found byte");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#short":
-			object=vf.createLiteral(XMLDatatypeUtil.parseShort(literal));
-		logger.debug("Found short");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#int":
-			object=vf.createLiteral(XMLDatatypeUtil.parseInt(literal));
-		logger.debug("Found int");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#long":
-			object=vf.createLiteral(XMLDatatypeUtil.parseLong(literal));
-		logger.debug("Found long");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#float":
-			object=vf.createLiteral(XMLDatatypeUtil.parseFloat(literal));
-		logger.debug("Found float");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#double":
-			object=vf.createLiteral(XMLDatatypeUtil.parseDouble(literal));
-		logger.debug("Found double");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#integer":
-			object=vf.createLiteral(XMLDatatypeUtil.parseInteger(literal));
-		logger.debug("Found integer");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#decimal":
-			object=vf.createLiteral(XMLDatatypeUtil.parseDecimal(literal));
-		logger.debug("Found decimal");
-		break;
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#dateTime":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#time":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#date":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gYearMonth":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonthDay":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gYear":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gMonth":
-		case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#gDay":
-			object=vf.createLiteral(XMLDatatypeUtil.parseCalendar(literal));
-		logger.debug("Found date");
-		break;
-		//                    case XMLConstants.W3C_XML_SCHEMA_NS_URI+"#duration":
-		//                        object=vf.createLiteral(XMLDatatypeUtil.parseDuration(literal));
-		//                        logger.info("Found duration");
-		//                        break;
-		}
+		Object object =vf.createLiteral(literal,vf.createIRI(type));
 		return object;
 	}
 }
