@@ -244,7 +244,7 @@ public class RegistryDaoImpl implements RegistryDao {
         Iterator<Edge> edgeList = v.edges(direction);
         List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(direction));
         List<Edge> edgeVertexMatchList = new ArrayList<Edge>();
-        Stack<Pair<Vertex, Vertex>> parsedVertices = addOrUpdateVertexAndEdgeIteratively(edges, idForSignature, edgeList, dbEdgesForVertex, 
+        Stack<Pair<Vertex, Vertex>> parsedVertices = addOrUpdateVertexAndEdge(edges, idForSignature, edgeList, dbEdgesForVertex,
         		edgeVertexMatchList, direction, dbGraph, methodOrigin, dbVertex, encDecPropertyBuilder);
         
         if(v.edges(Direction.IN, (registryContext+Constants.SIGNATURE_OF)).hasNext()){
@@ -258,9 +258,9 @@ public class RegistryDaoImpl implements RegistryDao {
 
     }
 
-    private Stack<Pair<Vertex, Vertex>> addOrUpdateVertexAndEdgeIteratively(Iterator<Edge> edges, String idForSignature, Iterator<Edge> edgeList, List<Edge> dbEdgesForVertex, 
-    		List<Edge> edgeVertexMatchList, Direction direction, GraphTraversalSource dbGraph, String methodOrigin, Vertex dbVertex,
-    		ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder) throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
+    private Stack<Pair<Vertex, Vertex>> addOrUpdateVertexAndEdge(Iterator<Edge> edges, String idForSignature, Iterator<Edge> edgeList, List<Edge> dbEdgesForVertex,
+                                                                 List<Edge> edgeVertexMatchList, Direction direction, GraphTraversalSource dbGraph, String methodOrigin, Vertex dbVertex,
+                                                                 ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder) throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
     	Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
     	while (edgeList.hasNext()) {
     		Edge e = edgeList.next();
@@ -393,7 +393,7 @@ public class RegistryDaoImpl implements RegistryDao {
         Iterator<Edge> edgeList = v.edges(Direction.IN, (registryContext+Constants.SIGNATURE_OF));
         List<Edge> dbEdgesForVertex = ImmutableList.copyOf(dbVertex.edges(Direction.IN, (registryContext+Constants.SIGNATURE_OF)));
         List<Edge> edgeVertexMatchList = new ArrayList<Edge>();
-        Stack<Pair<Vertex, Vertex>> parsedVertices = addOrUpdateVertexAndEdgeIteratively(edges, idForSignature, edgeList, dbEdgesForVertex, edgeVertexMatchList, 
+        Stack<Pair<Vertex, Vertex>> parsedVertices = addOrUpdateVertexAndEdge(edges, idForSignature, edgeList, dbEdgesForVertex, edgeVertexMatchList,
         		Direction.IN, dbGraph, methodOrigin, dbVertex, encDecPropertyBuilder);
         for (Pair<Vertex, Vertex> pv : parsedVertices) {
         	addOrUpdateVertexAndEdge(pv.getValue0(), idForSignature, pv.getValue1(), dbGraph, methodOrigin, encDecPropertyBuilder, Direction.OUT);
@@ -849,45 +849,38 @@ public class RegistryDaoImpl implements RegistryDao {
         }
     }
 
-    /*@Override
-    public boolean deleteEntity (Graph entity, String rootLabel) throws RecordNotFoundException,AuditFailedException {
-    	Graph graphFromStore = databaseProvider.getGraphStore();
-    	GraphTraversalSource traversalSource = graphFromStore.traversal();
-    	GraphTraversal<Vertex, Vertex> dbHasLabel = traversalSource.clone().V().hasLabel(rootLabel);
-    	if (!dbHasLabel.hasNext()) {
-    		throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
-    	}
+    private void readSignatures(Graph parsedGraph, Vertex parsedGraphSubject, Vertex theVertex,
+                                ImmutableTable.Builder<Vertex, Vertex, Map<String, Object>> encDecPropertyBuilder,
+                                String methodOrigin, Stack<Vertex> vStack, Stack<Vertex> parsedVStack)
+            throws AuditFailedException, EncryptionException {
+        Iterator<Edge> inSigEdgeIter = theVertex.edges(Direction.IN);
+        while (inSigEdgeIter.hasNext()) {
+            Edge edge = inSigEdgeIter.next();
+            if (edge.label().contains(Constants.SIGNATURE_OF)) {
+                Vertex v = edge.outVertex();
+                Iterator<Edge> outSigEdgeIter = v.edges(Direction.OUT);
+                while (outSigEdgeIter.hasNext()) {
+                    edge = outSigEdgeIter.next();
+                    if (edge.label().contains(Constants.SIGNATURES)) {
+                        Vertex o = edge.inVertex();
+                        Vertex newo = parsedGraph.addVertex(o.label());
+                        if (!methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN)) {
+                            copyProperties(o, newo, methodOrigin, encDecPropertyBuilder);
+                        }
+                        parsedGraphSubject.addEdge(edge.label(), newo);
+                        vStack.push(o);
+                        parsedVStack.push(newo);
+                    }
+                }
+            }
+        }
+    }
 
-    	GraphTraversal<Vertex, Vertex> hasNestedLabel = traversalSource.clone().V().hasLabel(labelToBeDeleted);
-    	if (!hasNestedLabel.hasNext()) {
-			logger.info("Record not found to be deleted !");
-    		throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
-    	}
-    	TinkerGraph graph = (TinkerGraph) entity;
-		GraphTraversalSource traversal = graph.traversal();
-    	GraphTraversal<Vertex, Vertex> gts = traversal.clone().V().hasLabel(rootLabel);
-
-    	if (graphFromStore.features().graph().supportsTransactions()) {
-    		org.apache.tinkerpop.gremlin.structure.Transaction tx;
-    		tx = graphFromStore.tx();
-    		tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-    		deleteEdgeAndNode(dbHasLabel.next(), gts);
-    		tx.commit();
-    		tx.close();
-    		logger.info("Entity for {} deleted !", rootLabel);
-    		return true;
-    	} else {
-    		deleteEdgeAndNode(dbHasLabel.next(), gts);
-    		logger.info("Entity for {} deleted !", rootLabel);
-    	}
-
-    	return false;
-    }*/
-
-	private void extractGraphFromVertex(Graph parsedGraph,Vertex parsedGraphSubject,Vertex s, ImmutableTable.Builder<Vertex,Vertex,Map<String,Object>> encDecPropertyBuilder, String methodOrigin)
+    private void extractGraphFromVertex(Graph parsedGraph, Vertex parsedGraphSubject, Vertex theVertex,
+                                        ImmutableTable.Builder<Vertex, Vertex, Map<String, Object>> encDecPropertyBuilder,
+                                        String methodOrigin)
 			throws NoSuchElementException, EncryptionException, AuditFailedException {
-		Iterator<Edge> outEdgeIter = s.edges(Direction.OUT);
-        Iterator<Edge> inSigEdgeIter = s.edges(Direction.IN);
+        Iterator<Edge> outEdgeIter = theVertex.edges(Direction.OUT);
 		Edge edge;
 		Stack<Vertex> vStack = new Stack<Vertex>();
 		Stack<Vertex> parsedVStack = new Stack<Vertex>();
@@ -902,36 +895,17 @@ public class RegistryDaoImpl implements RegistryDao {
 			vStack.push(o);
 			parsedVStack.push(newo);
 		}
-		//Code-start added for getting signature part in read api
+
         if(signatureEnabled){
-            while(inSigEdgeIter.hasNext()){
-                edge = inSigEdgeIter.next();
-                if(edge.label().contains(Constants.SIGNATURE_OF)){
-                    Vertex v = edge.outVertex();
-                    Iterator<Edge> outSigEdgeIter = v.edges(Direction.OUT);
-                    while(outSigEdgeIter.hasNext()){
-                        edge = outSigEdgeIter.next();
-                        if(edge.label().contains(Constants.SIGNATURES)){
-                            Vertex o = edge.inVertex();
-                            Vertex newo = parsedGraph.addVertex(o.label());
-                            if(!methodOrigin.equalsIgnoreCase(Constants.SEARCH_METHOD_ORIGIN)){
-                                copyProperties(o, newo, methodOrigin, encDecPropertyBuilder);
-                            }
-                            parsedGraphSubject.addEdge(edge.label(), newo);
-                            vStack.push(o);
-                            parsedVStack.push(newo);
-                        }
-                    }
-                }
-            }
+            readSignatures(parsedGraph, parsedGraphSubject, theVertex, encDecPropertyBuilder, methodOrigin, vStack, parsedVStack);
         }
-        //Code-End added for getting signature part in read api
-		Iterator<Vertex> vIterator = vStack.iterator();
+
+        Iterator<Vertex> vIterator = vStack.iterator();
 		Iterator<Vertex> parsedVIterator = parsedVStack.iterator();
 		while(vIterator.hasNext()){
-			s = vIterator.next();
+            theVertex = vIterator.next();
 			parsedGraphSubject = parsedVIterator.next();
-			extractGraphFromVertex(parsedGraph,parsedGraphSubject,s, encDecPropertyBuilder, methodOrigin);
+            extractGraphFromVertex(parsedGraph, parsedGraphSubject, theVertex, encDecPropertyBuilder, methodOrigin);
 		}
 
 	}
