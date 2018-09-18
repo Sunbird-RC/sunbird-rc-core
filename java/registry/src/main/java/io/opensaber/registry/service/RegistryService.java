@@ -19,7 +19,7 @@ public interface RegistryService {
 	
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException;
 
-	public org.eclipse.rdf4j.model.Model getEntityById(String id, boolean withSignatures) throws RecordNotFoundException, EncryptionException, AuditFailedException;
+	public org.eclipse.rdf4j.model.Model getEntityById(String id, boolean includeSignatures) throws RecordNotFoundException, EncryptionException, AuditFailedException;
 
 	//public boolean deleteEntity(Model rdfModel) throws AuditFailedException, RecordNotFoundException;
 
