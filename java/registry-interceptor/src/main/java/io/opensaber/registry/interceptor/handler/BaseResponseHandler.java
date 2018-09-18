@@ -71,9 +71,9 @@ public class BaseResponseHandler {
 		Gson gson = new Gson();
 		String responseBody = getResponseContent();
 		formattedResponse = gson.fromJson(responseBody, Response.class);
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-		resultMap.putIfAbsent("response", formattedResponse.getResult());
-		return resultMap;
+        Map<String, Object> resultMap = new HashMap<String, Object>();
+        resultMap.putIfAbsent("response", formattedResponse.getResult());
+        return resultMap;
 	}
 
 	public Map<String, Object> getResponseHeaderMap() throws IOException {
