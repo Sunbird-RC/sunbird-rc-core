@@ -108,26 +108,23 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 
+	/**
+	 * Optionally gets signatures along with other information.
+	 *
+	 * @param label
+	 * @param includeSignatures
+	 * @return
+	 * @throws RecordNotFoundException
+	 * @throws EncryptionException
+	 * @throws AuditFailedException
+	 */
 	@Override
-	public org.eclipse.rdf4j.model.Model getEntityById(String label) throws RecordNotFoundException, EncryptionException, AuditFailedException {
-		Graph graph = registryDao.getEntityById(label);
+	public org.eclipse.rdf4j.model.Model getEntityById(String label, boolean includeSignatures) throws RecordNotFoundException, EncryptionException, AuditFailedException {
+		Graph graph = registryDao.getEntityById(label, includeSignatures);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
 		logger.debug("RegistryServiceImpl : rdf4j model :", model);
 		return model;
 	}
-
-	/*@Override
-	public boolean deleteEntity(Model rdfModel) throws AuditFailedException, RecordNotFoundException{
-		StmtIterator iterator = rdfModel.listStatements();
-		Graph graph = GraphDBFactory.getEmptyGraph();
-		while (iterator.hasNext()) {
-			Statement rdfStatement = iterator.nextStatement();
-			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
-		}
-
-		return registryDao.deleteEntity(graph, "");
-	}*/
 
 	public HealthCheckResponse health() throws Exception {
 		HealthCheckResponse healthCheck;
@@ -226,7 +223,7 @@ public class RegistryServiceImpl implements RegistryService {
 	public org.eclipse.rdf4j.model.Model getAuditNode(String id) throws IOException, NoSuchElementException, RecordNotFoundException,
 			EncryptionException, AuditFailedException {
 		String label = id + "-AUDIT";
-		Graph graph = registryDao.getEntityById(label);
+		Graph graph = registryDao.getEntityById(label, false);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
 		logger.debug("RegistryServiceImpl : Audit Model : " + model);
 		return model;

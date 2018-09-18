@@ -1,10 +1,12 @@
 package io.opensaber.registry.controller;
 
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.*;
+import io.opensaber.registry.exception.*;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.util.JSONUtil;
 import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
@@ -13,23 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import org.springframework.web.bind.annotation.*;
 
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EntityCreationException;
-import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.exception.TypeNotProvidedException;
-import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.service.SearchService;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 public class RegistryController {
@@ -86,7 +76,8 @@ public class RegistryController {
 	}
 
 	@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
-	public ResponseEntity<Response> readEntity(@PathVariable("id") String id) {
+    public ResponseEntity<Response> readEntity(@PathVariable("id") String id,
+                                               @RequestParam(required = false) boolean includeSignatures) {
 
 		String entityId = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
@@ -94,7 +85,7 @@ public class RegistryController {
 
 		try {
 			watch.start("RegistryController.readEntity");
-			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(entityId);
+            org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(entityId, includeSignatures);
 			logger.debug("FETCHED: " + entityModel);
 			String jenaJSON = registryService.frameEntity(entityModel);
 			response.setResult(gson.fromJson(jenaJSON, mapType));

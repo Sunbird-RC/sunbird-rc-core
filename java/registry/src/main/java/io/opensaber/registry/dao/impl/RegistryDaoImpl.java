@@ -562,7 +562,8 @@ public class RegistryDaoImpl implements RegistryDao {
 
 
     @Override
-    public Graph getEntityById(String label) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
+    public Graph getEntityById(String label, boolean includeSignatures)
+            throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
         Graph graphFromStore = databaseProvider.getGraphStore();
         GraphTraversalSource traversalSource = graphFromStore.traversal();
         GraphTraversal<Vertex, Vertex> hasLabel = traversalSource.clone().V().hasLabel(label);
@@ -580,7 +581,7 @@ public class RegistryDaoImpl implements RegistryDao {
             Vertex newSubject = parsedGraph.addVertex(subject.label());
             copyProperties(subject, newSubject, Constants.READ_METHOD_ORIGIN, encDecPropertyBuilder);
             watch.start("RegistryDaoImpl.getEntityById.extractGraphFromVertex");
-            extractGraphFromVertex(parsedGraph, newSubject, subject, encDecPropertyBuilder, Constants.READ_METHOD_ORIGIN);
+            extractGraphFromVertex(parsedGraph, newSubject, subject, includeSignatures, encDecPropertyBuilder, Constants.READ_METHOD_ORIGIN);
             watch.stop("RegistryDaoImpl.getEntityById.extractGraphFromVertex");
             Table<Vertex, Vertex, Map<String, Object>> encDecPropertyTable = encDecPropertyBuilder.build();
             if (encDecPropertyTable.size() > 0) {
@@ -601,7 +602,7 @@ public class RegistryDaoImpl implements RegistryDao {
     	copyProperties(vertex, newSubject, Constants.SEARCH_METHOD_ORIGIN, null);
     	watch.stop("RegistryDaoImpl.getEntityByVertex.copyProperties");
     	watch.start("RegistryDaoImpl.getEntityByVertex.extractGraphFromVertex");
-    	extractGraphFromVertex(parsedGraph, newSubject, vertex, null, Constants.SEARCH_METHOD_ORIGIN);
+        extractGraphFromVertex(parsedGraph, newSubject, vertex, false, null, Constants.SEARCH_METHOD_ORIGIN);
     	watch.stop("RegistryDaoImpl.getEntityByVertex.extractGraphFromVertex");
     	return parsedGraph;
     }
@@ -877,6 +878,7 @@ public class RegistryDaoImpl implements RegistryDao {
     }
 
     private void extractGraphFromVertex(Graph parsedGraph, Vertex parsedGraphSubject, Vertex theVertex,
+                                        boolean includeSignatures,
                                         ImmutableTable.Builder<Vertex, Vertex, Map<String, Object>> encDecPropertyBuilder,
                                         String methodOrigin)
 			throws NoSuchElementException, EncryptionException, AuditFailedException {
@@ -896,7 +898,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			parsedVStack.push(newo);
 		}
 
-        if(signatureEnabled){
+        if (includeSignatures) {
             readSignatures(parsedGraph, parsedGraphSubject, theVertex, encDecPropertyBuilder, methodOrigin, vStack, parsedVStack);
         }
 
@@ -905,7 +907,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		while(vIterator.hasNext()){
             theVertex = vIterator.next();
 			parsedGraphSubject = parsedVIterator.next();
-            extractGraphFromVertex(parsedGraph, parsedGraphSubject, theVertex, encDecPropertyBuilder, methodOrigin);
+            extractGraphFromVertex(parsedGraph, parsedGraphSubject, theVertex, includeSignatures, encDecPropertyBuilder, methodOrigin);
 		}
 
 	}
