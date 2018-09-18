@@ -30,6 +30,7 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 import io.opensaber.converters.JenaRDF4J;
@@ -43,8 +44,8 @@ import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 
 public class RegistryTestBase {
 	
-	@Autowired
-	private Environment environment;
+	@Value("${registry.context.base}")
+	private String registryContextBase;
 	
 	public String jsonld;
 	public static final String FORMAT = "JSON-LD";
@@ -154,7 +155,7 @@ public class RegistryTestBase {
     	while (iterator.hasNext()) {
     		Statement rdfStatement = iterator.nextStatement();
     		org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-    		graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+    		graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph, registryContextBase);
     	}
 
     	return resList.get(0).toString();
@@ -179,7 +180,7 @@ public class RegistryTestBase {
 		while (iterator.hasNext()) {
 			Statement rdfStatement = iterator.nextStatement();
 			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			newGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph);
+			newGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph, registryContextBase);
 		}
 		return newGraph;
 	}

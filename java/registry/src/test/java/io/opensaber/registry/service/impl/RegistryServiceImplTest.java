@@ -1,30 +1,36 @@
 package io.opensaber.registry.service.impl;
 
-import static org.junit.Assert.*;
-
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.app.OpenSaberApplication;
 import io.opensaber.registry.authorization.AuthorizationToken;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.controller.RegistryController;
+import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.dao.impl.RegistryDaoImpl;
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.service.impl.EncryptionServiceImpl;
-import io.opensaber.registry.service.impl.RegistryServiceImpl;
+import io.opensaber.registry.exception.*;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.model.AuditRecord;
+import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
-import io.opensaber.validators.shex.shaclex.ShaclexValidator;
-
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.assertj.core.util.Arrays;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,30 +42,16 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.controller.RegistryController;
-import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.exception.EntityCreationException;
-import io.opensaber.registry.exception.MultipleEntityException;
-import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.registry.model.AuditRecord;
-import io.opensaber.registry.schema.config.SchemaConfigurator;
-import io.opensaber.registry.service.RegistryService;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
-
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {OpenSaberApplication.class, RegistryController.class,
-		GenericConfiguration.class, EncryptionServiceImpl.class, RegistryDaoImpl.class, AuditRecord.class})
+		GenericConfiguration.class, EncryptionServiceImpl.class, RegistryDaoImpl.class,
+		AuditRecord.class, SignatureServiceImpl.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryServiceImplTest extends RegistryTestBase {
@@ -89,6 +81,9 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	private EncryptionServiceImpl encryptionService;
 
 	@Mock
+	private SignatureServiceImpl signatureService;
+
+	@Mock
 	private DatabaseProvider mockDatabaseProvider;
 
 	@InjectMocks
@@ -103,6 +98,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 			ReflectionTestUtils.setField(encryptionService, "encryptionServiceHealthCheckUri", "encHealthCheckUri");
 			ReflectionTestUtils.setField(encryptionService, "decryptionUri", "decryptionUri");
 			ReflectionTestUtils.setField(encryptionService, "encryptionUri", "encryptionUri");
+			ReflectionTestUtils.setField(signatureService, "healthCheckURL", "healthCheckURL");
 			isInitialized = true;
 		}
 	}
@@ -167,6 +163,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	public void test_health_check_up_scenario() throws Exception {
 		when(encryptionService.isEncryptionServiceUp()).thenReturn(true);
 		when(mockDatabaseProvider.isDatabaseServiceUp()).thenReturn(true);
+		when(signatureService.isServiceUp()).thenReturn(true);
 		HealthCheckResponse response = registryServiceForHealth.health();
 		assertTrue(response.isHealthy());
 		response.getChecks().forEach(ch -> assertTrue(ch.isHealthy()));
@@ -174,15 +171,20 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 
 	@Test
 	public void test_health_check_down_scenario() throws Exception {
-		when(encryptionService.isEncryptionServiceUp()).thenReturn(false);
-		when(mockDatabaseProvider.isDatabaseServiceUp()).thenReturn(true);
+		when(encryptionService.isEncryptionServiceUp()).thenReturn(true);
+		when(mockDatabaseProvider.isDatabaseServiceUp()).thenReturn(false);
+		when(signatureService.isServiceUp()).thenReturn(true);
 		HealthCheckResponse response = registryServiceForHealth.health();
+		System.out.println(response.toString());
+
 		assertFalse(response.isHealthy());
 		response.getChecks().forEach(ch -> {
 			if(ch.getName().equalsIgnoreCase(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME)) {
-				assertFalse(ch.isHealthy());
-			} else {
 				assertTrue(ch.isHealthy());
+			} if(ch.getName().equalsIgnoreCase(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME)) {
+				assertTrue(ch.isHealthy());
+			} else {
+				assertFalse(ch.isHealthy());
 			}
 		});
 	}
@@ -197,7 +199,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 			model.add(roots.get(0), ResourceFactory.createProperty(registryContextBase+"classesTaught"), (String)obj);
 		}
 		String response = registryService.addEntity(model,null,null);
-		org.eclipse.rdf4j.model.Model responseModel = registryService.getEntityById(response);
+        org.eclipse.rdf4j.model.Model responseModel = registryService.getEntityById(response, false);
 		Model jenaModel = JenaRDF4J.asJenaModel(responseModel);
 		assertTrue(jenaModel.isIsomorphicWith(model));
 		closeDB();
