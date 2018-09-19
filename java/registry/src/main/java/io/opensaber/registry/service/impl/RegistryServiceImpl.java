@@ -122,6 +122,9 @@ public class RegistryServiceImpl implements RegistryService {
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
 		Resource root = getRootNode(entity);
 		String label = getRootLabel(root);
+		if(encryptionEnabled){
+			setModelWithEncryptedOrDecryptedAttributes(entity, true);
+		}
 		Graph graph = generateGraphFromRDF(entity);
 		logger.debug("Service layer graph :", graph);
 		return registryDao.updateEntity(graph, label, "update");
