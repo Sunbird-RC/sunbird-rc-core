@@ -41,6 +41,7 @@ public class SignaturePresenceValidationInterceptor implements HandlerIntercepto
 			watch.start("SignaturePresenceValidationInterceptor.execute");
 			signaturePresenceValidator.execute(baseRequestHandler.getRequestAttributeMap());
 			watch.stop("SignaturePresenceValidationInterceptor.execute");
+			return true;
 		} catch (MiddlewareHaltException e) {
 			logger.error("MiddlewareHaltException from SignaturePresenceValidationInterceptor: ", e);
 			baseRequestHandler.setResponse(response);
