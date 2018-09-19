@@ -26,39 +26,40 @@ import java.util.Map;
 @RestController
 public class RegistryUtilsController {
 
-	private static Logger logger = LoggerFactory.getLogger(RegistryUtilsController.class);
+    private static Logger logger = LoggerFactory.getLogger(RegistryUtilsController.class);
 
-	private Gson gson = new Gson();
-	private Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
+    private Gson gson = new Gson();
+    private Type mapType = new TypeToken<Map<String, Object>>() {
+    }.getType();
 
-	@Autowired
-	private SignatureService signatureService;
+    @Autowired
+    private SignatureService signatureService;
 
-	@Autowired
-	private OpenSaberInstrumentation watch;
+    @Autowired
+    private OpenSaberInstrumentation watch;
 
-	@RequestMapping(value = "/utils/sign", method = RequestMethod.POST)
-	public ResponseEntity<Response> generateSignature(HttpServletRequest requestModel) {
-		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.SIGN, "OK", responseParams);
+    @RequestMapping(value = "/utils/sign", method = RequestMethod.POST)
+    public ResponseEntity<Response> generateSignature(HttpServletRequest requestModel) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SIGN, "OK", responseParams);
 
-		try {
-			Gson gson = new Gson();
-			Object payload = gson.fromJson(requestModel.getReader(), Object.class);
-			Object result = signatureService.sign(payload);
-			response.setResult(JSONUtil.convertObjectJsonMap(result));
-			responseParams.setErrmsg("");
-			responseParams.setStatus(Response.Status.SUCCESSFUL);
-		} catch (Exception e) {
-			logger.error("Error in generating signature", e);
-			HealthCheckResponse healthCheckResult =
-					new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, false, null);
-			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg("");
-		}
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+        try {
+            Gson gson = new Gson();
+            Object payload = gson.fromJson(requestModel.getReader(), Object.class);
+            Object result = signatureService.sign(payload);
+            response.setResult(JSONUtil.convertObjectJsonMap(result));
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+        } catch (Exception e) {
+            logger.error("Error in generating signature", e);
+            HealthCheckResponse healthCheckResult =
+                    new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, false, null);
+            response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg("");
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
     @RequestMapping(value = "/utils/verify", method = RequestMethod.POST)
     public ResponseEntity<Response> verifySignature(HttpServletRequest requestModel) {
@@ -105,26 +106,26 @@ public class RegistryUtilsController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-	@RequestMapping(value = "/utils/sign/health", method = RequestMethod.GET)
-	public ResponseEntity<Response> health() {
-		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.HEALTH, "OK", responseParams);
+    @RequestMapping(value = "/utils/sign/health", method = RequestMethod.GET)
+    public ResponseEntity<Response> health() {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.HEALTH, "OK", responseParams);
 
-		try {
-			boolean healthCheckResult = signatureService.isServiceUp();
-			HealthCheckResponse healthCheck = new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, healthCheckResult, null);
-			response.setResult(JSONUtil.convertObjectJsonMap(healthCheck));
-			responseParams.setErrmsg("");
-			responseParams.setStatus(Response.Status.SUCCESSFUL);
-			logger.debug("Application heath checked : ", healthCheckResult);
-		} catch (Exception e) {
-			logger.error("Error in health checking!", e);
+        try {
+            boolean healthCheckResult = signatureService.isServiceUp();
+            HealthCheckResponse healthCheck = new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, healthCheckResult, null);
+            response.setResult(JSONUtil.convertObjectJsonMap(healthCheck));
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            logger.debug("Application heath checked : ", healthCheckResult);
+        } catch (Exception e) {
+            logger.error("Error in health checking!", e);
             HealthCheckResponse healthCheckResult =
                     new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, false, null);
             response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg("Error during health check");
-		}
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg("Error during health check");
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

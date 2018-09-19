@@ -147,7 +147,7 @@ public class SearchDaoImplTest extends RegistryTestBase {
 		assertTrue(!responseGraph.isEmpty());
 		assertTrue(responseGraph.size() == 1);
 		assertTrue(responseGraph.containsKey(response));
-		Graph entity = registryDao.getEntityById(response, false);
+        Graph entity = registryDao.getEntityById(response, false);
 		Model addedModel = JenaRDF4J.asJenaModel(RDF2Graph.convertGraph2RDFModel(entity, response));
 		removeStatementFromModel(addedModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/schoolName"));
 		addedModel.add(ResourceFactory.createResource(response), 

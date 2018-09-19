@@ -181,7 +181,8 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 		response.getChecks().forEach(ch -> {
 			if(ch.getName().equalsIgnoreCase(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME)) {
 				assertTrue(ch.isHealthy());
-			} if(ch.getName().equalsIgnoreCase(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME)) {
+			}
+			if (ch.getName().equalsIgnoreCase(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME)) {
 				assertTrue(ch.isHealthy());
 			} else {
 				assertFalse(ch.isHealthy());
@@ -199,7 +200,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 			model.add(roots.get(0), ResourceFactory.createProperty(registryContextBase+"classesTaught"), (String)obj);
 		}
 		String response = registryService.addEntity(model,null,null);
-        org.eclipse.rdf4j.model.Model responseModel = registryService.getEntityById(response, false);
+		org.eclipse.rdf4j.model.Model responseModel = registryService.getEntityById(response, false);
 		Model jenaModel = JenaRDF4J.asJenaModel(responseModel);
 		assertTrue(jenaModel.isIsomorphicWith(model));
 		closeDB();

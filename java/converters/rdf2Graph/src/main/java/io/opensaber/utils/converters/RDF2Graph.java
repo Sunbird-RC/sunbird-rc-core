@@ -37,25 +37,25 @@ public final class RDF2Graph
 		return label;
 	}
 
-	public static Graph convertRDFStatement2Graph(Statement rdfStatement, Graph graph, String context) {
+    public static Graph convertRDFStatement2Graph(Statement rdfStatement, Graph graph, String context) {
 		Value subjectValue = rdfStatement.getSubject();
 		IRI property = rdfStatement.getPredicate();
 		Value objectValue = rdfStatement.getObject();
-		updateGraph(subjectValue, property, objectValue, graph, context);
+        updateGraph(subjectValue, property, objectValue, graph, context);
 		return graph;
 	}
 
-	private static void updateGraph(Value subjectValue, IRI property, Value objectValue, Graph graph, String context) {
+    private static void updateGraph(Value subjectValue, IRI property, Value objectValue, Graph graph, String context) {
 		Vertex s = getExistingVertexOrAdd(subjectValue.toString(), graph);
-		Vertex subjectVertex = s;
-		if(property.toString().equalsIgnoreCase(context+Constants.SIGNATURES)){
-			subjectVertex = getExistingSignatureVertexOrAdd(s, context, graph);
-		}
+        Vertex subjectVertex = s;
+        if (property.toString().equalsIgnoreCase(context + Constants.SIGNATURES)) {
+            subjectVertex = getExistingSignatureVertexOrAdd(s, context, graph);
+        }
 		if (objectValue instanceof Literal) {
 			Literal literal = (Literal)objectValue;
 			String datatype = literal.getDatatype().toString();
 			logger.debug("TYPE saved is "+datatype);
-			VertexProperty vp = subjectVertex.property(property.toString());
+            VertexProperty vp = subjectVertex.property(property.toString());
 			if(vp.isPresent()){
 				Object value = vp.value();
 				List valueList = new ArrayList();
@@ -66,31 +66,31 @@ public final class RDF2Graph
 					valueList.add(valueStr);
 				}
 				valueList.add(literal.getLabel());
-				subjectVertex.property(property.toString(), valueList).property("@type",datatype);
+                subjectVertex.property(property.toString(), valueList).property("@type", datatype);
 
 			}else{
-				subjectVertex.property(property.toString(), literal.getLabel()).property("@type",datatype);
+                subjectVertex.property(property.toString(), literal.getLabel()).property("@type", datatype);
 			}
 		} else if (objectValue instanceof IRI) {
 			IRI objectIRI = (IRI)objectValue;
 			Vertex o = getExistingVertexOrAdd(objectIRI.toString(), graph);
-			subjectVertex.addEdge(property.toString(), o);
+            subjectVertex.addEdge(property.toString(), o);
 		} else if (objectValue instanceof BNode) {
 			BNode objectBNode = (BNode)objectValue;
-			Vertex o = getExistingVertexOrAdd(objectBNode.toString(), graph);		
-			subjectVertex.addEdge(property.toString(), o);
-		}
-	}
-	
-	private static Vertex getExistingSignatureVertexOrAdd(Vertex s, String context, Graph graph){
-		Iterator<Edge> existingSignatureEdges = s.edges(Direction.IN, context+Constants.SIGNATURE_OF);
-		if(existingSignatureEdges.hasNext()){
-			Edge e = existingSignatureEdges.next();
-			return e.outVertex();
-		} else {
-			Vertex signatureVertex = graph.addVertex(T.label,context+UUID.randomUUID().toString());
-			signatureVertex.addEdge(context+Constants.SIGNATURE_OF, s);
-			return signatureVertex;
+            Vertex o = getExistingVertexOrAdd(objectBNode.toString(), graph);
+            subjectVertex.addEdge(property.toString(), o);
+        }
+    }
+
+    private static Vertex getExistingSignatureVertexOrAdd(Vertex s, String context, Graph graph) {
+        Iterator<Edge> existingSignatureEdges = s.edges(Direction.IN, context + Constants.SIGNATURE_OF);
+        if (existingSignatureEdges.hasNext()) {
+            Edge e = existingSignatureEdges.next();
+            return e.outVertex();
+        } else {
+            Vertex signatureVertex = graph.addVertex(T.label, context + UUID.randomUUID().toString());
+            signatureVertex.addEdge(context + Constants.SIGNATURE_OF, s);
+            return signatureVertex;
 		}
 	}
 
@@ -192,7 +192,7 @@ public final class RDF2Graph
 	}
 
 	private static Object matchAndAddStatements(String type, String literal, ValueFactory vf){
-		Object object =vf.createLiteral(literal,vf.createIRI(type));
+        Object object = vf.createLiteral(literal, vf.createIRI(type));
 		return object;
 	}
 }

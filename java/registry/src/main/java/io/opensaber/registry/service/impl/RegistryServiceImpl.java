@@ -58,20 +58,20 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     SignatureService signatureService;
 
-	@Value("${encryption.enabled}")
-	private boolean encryptionEnabled;
+    @Value("${encryption.enabled}")
+    private boolean encryptionEnabled;
 
-	@Value("${signature.enabled}")
-	private boolean signatureEnabled;
+    @Value("${signature.enabled}")
+    private boolean signatureEnabled;
 	
 	@Value("${frame.file}")
 	private String frameFile;
 	
 	@Value("${audit.frame.file}")
 	private String auditFrameFile;
-	
-	@Value("${registry.context.base}")
-	private String registryContextBase;
+
+    @Value("${registry.context.base}")
+    private String registryContextBase;
 
 	@Override
 	public List getEntityList(){
@@ -108,45 +108,45 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 
-	/**
-	 * Optionally gets signatures along with other information.
-	 *
-	 * @param label
-	 * @param includeSignatures
-	 * @return
-	 * @throws RecordNotFoundException
-	 * @throws EncryptionException
-	 * @throws AuditFailedException
-	 */
-	@Override
-	public org.eclipse.rdf4j.model.Model getEntityById(String label, boolean includeSignatures) throws RecordNotFoundException, EncryptionException, AuditFailedException {
-		Graph graph = registryDao.getEntityById(label, includeSignatures);
-		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
-		logger.debug("RegistryServiceImpl : rdf4j model :", model);
-		return model;
-	}
+    /**
+     * Optionally gets signatures along with other information.
+     *
+     * @param label
+     * @param includeSignatures
+     * @return
+     * @throws RecordNotFoundException
+     * @throws EncryptionException
+     * @throws AuditFailedException
+     */
+    @Override
+    public org.eclipse.rdf4j.model.Model getEntityById(String label, boolean includeSignatures) throws RecordNotFoundException, EncryptionException, AuditFailedException {
+        Graph graph = registryDao.getEntityById(label, includeSignatures);
+        org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
+        logger.debug("RegistryServiceImpl : rdf4j model :", model);
+        return model;
+    }
 
 	public HealthCheckResponse health() throws Exception {
 		HealthCheckResponse healthCheck;
 		boolean databaseServiceup = databaseProvider.isDatabaseServiceUp();
-		boolean overallHealthStatus = databaseServiceup;
+        boolean overallHealthStatus = databaseServiceup;
 		List<ComponentHealthInfo> checks = new ArrayList<>();
 
-		ComponentHealthInfo databaseServiceInfo = new ComponentHealthInfo(Constants.OPENSABER_DATABASE_NAME, databaseServiceup);
-		checks.add(databaseServiceInfo);
+        ComponentHealthInfo databaseServiceInfo = new ComponentHealthInfo(Constants.OPENSABER_DATABASE_NAME, databaseServiceup);
+        checks.add(databaseServiceInfo);
 
-		if (encryptionEnabled) {
-			boolean encryptionServiceStatusUp = encryptionService.isEncryptionServiceUp();
-			ComponentHealthInfo encryptionHealthInfo = new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, encryptionServiceStatusUp);
-			checks.add(encryptionHealthInfo);
-			overallHealthStatus = overallHealthStatus && encryptionServiceStatusUp;
-		}
+        if (encryptionEnabled) {
+            boolean encryptionServiceStatusUp = encryptionService.isEncryptionServiceUp();
+            ComponentHealthInfo encryptionHealthInfo = new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, encryptionServiceStatusUp);
+            checks.add(encryptionHealthInfo);
+            overallHealthStatus = overallHealthStatus && encryptionServiceStatusUp;
+        }
 
-		if (signatureEnabled) {
-			boolean signatureServiceStatusUp = signatureService.isServiceUp();
-			ComponentHealthInfo signatureServiceInfo = new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, signatureServiceStatusUp);
-			checks.add(signatureServiceInfo);
-			overallHealthStatus = overallHealthStatus && signatureServiceStatusUp;
+        if (signatureEnabled) {
+            boolean signatureServiceStatusUp = signatureService.isServiceUp();
+            ComponentHealthInfo signatureServiceInfo = new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, signatureServiceStatusUp);
+            checks.add(signatureServiceInfo);
+            overallHealthStatus = overallHealthStatus && signatureServiceStatusUp;
 		}
 
 		healthCheck = new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, overallHealthStatus, checks);
@@ -223,7 +223,7 @@ public class RegistryServiceImpl implements RegistryService {
 	public org.eclipse.rdf4j.model.Model getAuditNode(String id) throws IOException, NoSuchElementException, RecordNotFoundException,
 			EncryptionException, AuditFailedException {
 		String label = id + "-AUDIT";
-		Graph graph = registryDao.getEntityById(label, false);
+        Graph graph = registryDao.getEntityById(label, false);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
 		logger.debug("RegistryServiceImpl : Audit Model : " + model);
 		return model;
@@ -244,7 +244,7 @@ public class RegistryServiceImpl implements RegistryService {
 		while (iterator.hasNext()) {
 			Statement rdfStatement = iterator.nextStatement();
 			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph, registryContextBase);
+            graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph, registryContextBase);
 		}
 		return graph;
 	}

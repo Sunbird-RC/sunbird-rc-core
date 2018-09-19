@@ -19,8 +19,6 @@ import org.hamcrest.core.Every;
 import org.junit.*;
 
 import java.io.*;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.Set;
 
 import static org.hamcrest.Matchers.instanceOf;
@@ -30,7 +28,7 @@ public class RDF2GraphTest {
 
 	private static final String SUBJECT_LABEL = "ex:Picasso";
 	private static final String SUBJECT_EXPANDED_LABEL = "http://example.org/Picasso";
-	private static final String CONTEXT= "http://example.org/";
+	private static final String CONTEXT = "http://example.org/";
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
