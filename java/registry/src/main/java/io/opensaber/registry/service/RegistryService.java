@@ -19,13 +19,13 @@ public interface RegistryService {
 	
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException;
 	
-	public org.eclipse.rdf4j.model.Model getEntityById(String id) throws RecordNotFoundException, EncryptionException, AuditFailedException;
+	public Model getEntityById(String id) throws RecordNotFoundException, EncryptionException, AuditFailedException;
 	
 	//public boolean deleteEntity(Model rdfModel) throws AuditFailedException, RecordNotFoundException;
 
 	public HealthCheckResponse health() throws Exception;
 
-	public String frameEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException, MultipleEntityException, EntityCreationException;
+	public String frameEntity(Model entityModel) throws IOException, MultipleEntityException, EntityCreationException;
 	
 	public String frameSearchEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException, MultipleEntityException, EntityCreationException;
 	

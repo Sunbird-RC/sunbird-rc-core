@@ -68,6 +68,7 @@ public class Constants {
 	public static final String SIGNATURE_OF = "signatureOf";
 	public static final String SIGNATURE_FOR = "signatureFor";
 	public static final String FORWARD_SLASH = "/";
+	public static final String SIGNED_PROPERTY = "signedProperties";
 
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"),
