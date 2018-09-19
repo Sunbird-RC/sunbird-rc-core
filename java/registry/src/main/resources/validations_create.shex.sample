@@ -13,7 +13,6 @@ teacher:isADecimal xsd:decimal
 teacher:isACreator sc:creator
 teacher:isAnyURI xsd:anyURI
 teacher:isACreated sc:created
-teacher:isADomain sc:domain
 teacher:isANonce sc:nonce
 teacher:isASignatureValue sc:signatureValue
 
@@ -39,7 +38,7 @@ teacher:TeacherShape CLOSED {
     teacher:disabilityType [teacher:DisabilityCode-NA teacher:DisabilityCode-LOCOMOTOR teacher:DisabilityCode-VISUAL teacher:DisabilityCode-OTHERDISABILITY] ;
     teacher:trainedForChildrenSpecialNeeds [teacher:YesNoCode-YES teacher:YesNoCode-NO] ;
     teacher:trainedinUseOfComputer [teacher:YesNoCode-YES teacher:YesNoCode-NO] ;
-    teacher:signatures @teacher:SignatureShape *
+    teacher:signatures @teacher:SignatureShape * ;
 }
 
 teacher:TeacherRoleShape CLOSED {
@@ -50,26 +49,26 @@ teacher:TeacherRoleShape CLOSED {
     teacher:appointedForSubjects [teacher:SubjectCode-ALL teacher:SubjectCode-LANGUAGE teacher:SubjectCode-ENGLISH teacher:SubjectCode-MATH teacher:SubjectCode-ENVSTUDIES teacher:SubjectCode-SPORTS teacher:SubjectCode-MUSIC teacher:SubjectCode-SCIENCE teacher:SubjectCode-SOCIALSTUDIES teacher:SubjectCode-ACCOUNTANCY teacher:SubjectCode-BIOLOGY teacher:SubjectCode-BUSINESSSTUDIES teacher:SubjectCode-CHEMISTRY teacher:SubjectCode-COMPSC teacher:SubjectCode-ECONOMICS teacher:SubjectCode-FINEARTS teacher:SubjectCode-ENGDRAWING teacher:SubjectCode-GEOGRAPHY teacher:SubjectCode-HISTORY teacher:SubjectCode-HOMESCIENCE teacher:SubjectCode-PHILOSOPHY teacher:SubjectCode-PHYSICS teacher:SubjectCode-POLITICALSCIENCE teacher:SubjectCode-FOREIGNLANG teacher:SubjectCode-BOTONY teacher:SubjectCode-ZOOLOGY teacher:SubjectCode-HINDI teacher:SubjectCode-MARATHI teacher:SubjectCode-SANSKRIT teacher:SubjectCode-SINDHI teacher:SubjectCode-URDU teacher:SubjectCode-ENLISH teacher:SubjectCode-REGIONALLANGUAGE teacher:SubjectCode-ARTEDUCATION teacher:SubjectCode-PHYSICALEDUCATION teacher:SubjectCode-WORKEDUCATION teacher:SubjectCode-OTHER] * ;
     teacher:mainSubjectsTaught [teacher:SubjectCode-ALL teacher:SubjectCode-LANGUAGE teacher:SubjectCode-ENGLISH teacher:SubjectCode-MATH teacher:SubjectCode-ENVSTUDIES teacher:SubjectCode-SPORTS teacher:SubjectCode-MUSIC teacher:SubjectCode-SCIENCE teacher:SubjectCode-SOCIALSTUDIES teacher:SubjectCode-ACCOUNTANCY teacher:SubjectCode-BIOLOGY teacher:SubjectCode-BUSINESSSTUDIES teacher:SubjectCode-CHEMISTRY teacher:SubjectCode-COMPSC teacher:SubjectCode-ECONOMICS teacher:SubjectCode-FINEARTS teacher:SubjectCode-ENGDRAWING teacher:SubjectCode-GEOGRAPHY teacher:SubjectCode-HISTORY teacher:SubjectCode-HOMESCIENCE teacher:SubjectCode-PHILOSOPHY teacher:SubjectCode-PHYSICS teacher:SubjectCode-POLITICALSCIENCE teacher:SubjectCode-FOREIGNLANG teacher:SubjectCode-BOTONY teacher:SubjectCode-ZOOLOGY teacher:SubjectCode-HINDI teacher:SubjectCode-MARATHI teacher:SubjectCode-SANSKRIT teacher:SubjectCode-SINDHI teacher:SubjectCode-URDU teacher:SubjectCode-ENLISH teacher:SubjectCode-REGIONALLANGUAGE teacher:SubjectCode-ARTEDUCATION teacher:SubjectCode-PHYSICALEDUCATION teacher:SubjectCode-WORKEDUCATION teacher:SubjectCode-OTHER] * ;
     teacher:appointmentYear @teacher:isAYear ;
-    teacher:signatures @teacher:SignatureShape *
+    teacher:signatures @teacher:SignatureShape * ;
 }
 
 teacher:BasicProficiencyLevelShape CLOSED {
 	a [teacher:BasicProficiencyLevel] ;
 	teacher:proficiencySubject [teacher:SubjectCode-ALL teacher:SubjectCode-LANGUAGE teacher:SubjectCode-ENGLISH teacher:SubjectCode-MATH teacher:SubjectCode-ENVSTUDIES teacher:SubjectCode-SPORTS teacher:SubjectCode-MUSIC teacher:SubjectCode-SCIENCE teacher:SubjectCode-SOCIALSTUDIES teacher:SubjectCode-ACCOUNTANCY teacher:SubjectCode-BIOLOGY teacher:SubjectCode-BUSINESSSTUDIES teacher:SubjectCode-CHEMISTRY teacher:SubjectCode-COMPSC teacher:SubjectCode-ECONOMICS teacher:SubjectCode-FINEARTS teacher:SubjectCode-ENGDRAWING teacher:SubjectCode-GEOGRAPHY teacher:SubjectCode-HISTORY teacher:SubjectCode-HOMESCIENCE teacher:SubjectCode-PHILOSOPHY teacher:SubjectCode-PHYSICS teacher:SubjectCode-POLITICALSCIENCE teacher:SubjectCode-FOREIGNLANG teacher:SubjectCode-BOTONY teacher:SubjectCode-ZOOLOGY teacher:SubjectCode-HINDI teacher:SubjectCode-MARATHI teacher:SubjectCode-SANSKRIT teacher:SubjectCode-SINDHI teacher:SubjectCode-URDU teacher:SubjectCode-ENLISH teacher:SubjectCode-REGIONALLANGUAGE teacher:SubjectCode-ARTEDUCATION teacher:SubjectCode-PHYSICALEDUCATION teacher:SubjectCode-WORKEDUCATION teacher:SubjectCode-OTHER] ;
 	teacher:proficiencyAcademicQualification [teacher:AcademicQualificationTypeCode-BELOWSECONDARY teacher:AcademicQualificationTypeCode-SECONDARY teacher:AcademicQualificationTypeCode-HIGHERSECONDARY teacher:AcademicQualificationTypeCode-GRADUATE teacher:AcademicQualificationTypeCode-POSTGRADUATE teacher:AcademicQualificationTypeCode-MPHIL teacher:AcademicQualificationTypeCode-POSTDOC teacher:AcademicQualificationTypeCode-PHD] ;
-	teacher:signatures @teacher:SignatureShape *
+	teacher:signatures @teacher:SignatureShape * ;
 }
 
 teacher:InServiceTeacherTrainingShape CLOSED {
 	a [teacher:InServiceTeacherTrainingFromBlockResourceCentre teacher:InServiceTeacherTrainingFromClusterResourceCentre teacher:InServiceTeacherTrainingFromDIET teacher:InServiceTeacherTrainingFromOthers] ;
 	teacher:daysOfInServiceTeacherTraining @teacher:isADecimal ;
-	teacher:signatures @teacher:SignatureShape *
+	teacher:signatures @teacher:SignatureShape * ;
 }
 
 teacher:NonTeachingAssignmentsForAcademicCalendarShape CLOSED {
 	a [teacher:NonTeachingAssignmentsForAcademicCalendar] ;
 	teacher:daysOfNonTeachingAssignments @teacher:isADecimal ;
-	teacher:signatures @teacher:SignatureShape *
+	teacher:signatures @teacher:SignatureShape * ;
 }
 
 teacher:SignatureShape CLOSED {
@@ -77,7 +76,6 @@ teacher:SignatureShape CLOSED {
 	teacher:signatureFor @teacher:isAnyURI ;
 	teacher:creator @teacher:isACreator ;
 	teacher:created @teacher:isACreated ;
-	teacher:domain @teacher:isADomain ;
 	teacher:nonce @teacher:isANonce ;
-	teacher:signatureValue @teacher:isASignatureValue
+	teacher:signatureValue @teacher:isASignatureValue ;
 }
