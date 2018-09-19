@@ -1,10 +1,21 @@
 package io.opensaber.registry.config;
 
-import java.io.IOException;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import es.weso.schema.Schema;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
+import io.opensaber.registry.exception.CustomException;
+import io.opensaber.registry.exception.CustomExceptionHandler;
+import io.opensaber.registry.interceptor.*;
+import io.opensaber.registry.middleware.Middleware;
+import io.opensaber.registry.middleware.impl.*;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.model.AuditRecord;
+import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.sink.*;
-
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -19,34 +30,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import es.weso.schema.Schema;
-import io.opensaber.registry.authorization.AuthorizationFilter;
-import io.opensaber.registry.exception.CustomException;
-import io.opensaber.registry.exception.CustomExceptionHandler;
-import io.opensaber.registry.interceptor.AuthorizationInterceptor;
-import io.opensaber.registry.interceptor.RDFConversionInterceptor;
-import io.opensaber.registry.interceptor.RDFValidationInterceptor;
-import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
-import io.opensaber.registry.interceptor.SignaturePresenceValidationInterceptor;
-import io.opensaber.registry.middleware.Middleware;
-import io.opensaber.registry.middleware.impl.RDFConverter;
-import io.opensaber.registry.middleware.impl.RDFValidationMapper;
-import io.opensaber.registry.middleware.impl.RDFValidator;
-import io.opensaber.registry.middleware.impl.SignaturePresenceValidator;
-import io.opensaber.registry.middleware.impl.JSONLDConverter;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.model.AuditRecord;
-import io.opensaber.registry.schema.config.SchemaConfigurator;
-
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
+
+import java.io.IOException;
 
 @Configuration
 public class GenericConfiguration implements WebMvcConfigurer {
@@ -250,12 +241,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	    }
 		registry.addInterceptor(rdfConversionInterceptor())
 				.addPathPatterns("/add", "/update","/search").order(2);
-		/*registry.addInterceptor(rdfValidationMappingInterceptor())
-				.addPathPatterns("/add", "/update").order(3);*/
 		registry.addInterceptor(rdfValidationInterceptor())
 				.addPathPatterns("/add", "/update").order(3);
-	/*	registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
-				.addPathPatterns("/read/{id}").order(2);*/
 		registry.addInterceptor(signaturePresenceValidationInterceptor())
 		.addPathPatterns("/add", "/update").order(4);
 	}

@@ -1,30 +1,20 @@
 package io.opensaber.registry.middleware.impl;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import javax.xml.XMLConstants;
-
-import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.NodeIterator;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.ResIterator;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.vocabulary.RDF;
-
 import es.weso.schema.Schema;
 import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.vocabulary.RDF;
+
+import javax.xml.XMLConstants;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class SignaturePresenceValidator implements Middleware{
 
@@ -43,8 +33,12 @@ public class SignaturePresenceValidator implements Middleware{
 	private String registrySystemBase;
 	private Model schemaConfig;
 	private List<String> signatureTypes = new ArrayList<String>();
-	
-	public SignaturePresenceValidator(Schema schemaForCreate, String registryContext, String registrySystemBase, String signatureConfigName, Map<String,String> shapeTypeMap, Model schemaConfig) {
+
+    // TODO: Instead of passing the ShapeType everytime, there could be a good reason
+    // to read all the shapes at once and then start validating against what was read.
+    public SignaturePresenceValidator(Schema schemaForCreate, String registryContext,
+                                      String registrySystemBase, String signatureConfigName,
+                                      Map<String, String> shapeTypeMap, Model schemaConfig) {
 		this.schemaForCreate = schemaForCreate;
 		this.registryContext = registryContext;
 		this.signatureConfigName = signatureConfigName;
@@ -75,15 +69,6 @@ public class SignaturePresenceValidator implements Middleware{
 		return null;
 	}
 
-	private RDFNode getObjectAfterFilter(RDFNode node, String predicate, Model validationConfig){
-		Property property = ResourceFactory.createProperty(predicate);
-		List<RDFNode> nodeList = RDFUtil.getListOfObjectNodes((Resource)node, property,validationConfig);
-		if(nodeList.size() != 0){
-			return nodeList.get(0);
-		}
-		return null;
-	}
-
 	private List<String> getSignatureAttributes(){
 		return getAttributeListForShape(registryContext+signatureConfigName, getSignatureConfigModel());
 	}
@@ -103,9 +88,9 @@ public class SignaturePresenceValidator implements Middleware{
 		List<String> attributeList = new ArrayList<String>();
 		Resource shapeResource = ResourceFactory.createResource(shape);
 		//Getting the object by filtering the shape and the IRI
-		RDFNode node = getObjectAfterFilter(shapeResource, SHAPE_EXPRESSION_IRI, signatureConfigModel);
+        RDFNode node = RDFUtil.getFirstObject(shapeResource, SHAPE_EXPRESSION_IRI, signatureConfigModel);
 		//Getting the object by filtering the node and the IRI
-		RDFNode firstNode = getObjectAfterFilter(node, SHAPE_EXPRESSIONS_IRI, signatureConfigModel);
+        RDFNode firstNode = RDFUtil.getFirstObject((Resource) node, SHAPE_EXPRESSIONS_IRI, signatureConfigModel);
 		addAttributesForShape(firstNode, signatureConfigModel, attributeList);
 		return attributeList;
 	}
@@ -118,17 +103,19 @@ public class SignaturePresenceValidator implements Middleware{
 	 */
 	private void addAttributesForShape(RDFNode firstNode, Model signatureConfigModel, List<String> attributeList){
 		//Getting object nodes by filtering based on different predicates iteratively till all attributes for the shape are filtered
-		RDFNode secondNode = getObjectAfterFilter(firstNode, RDF.rest.getURI(), signatureConfigModel);
+        RDFNode secondNode = RDFUtil.getFirstObject((Resource) firstNode, RDF.rest.getURI(), signatureConfigModel);
 		if(!secondNode.equals(RDF.nil)){
-			RDFNode thirdNode = getObjectAfterFilter(secondNode, RDF.first.getURI(), signatureConfigModel);
-			RDFNode fourthNode = getObjectAfterFilter(thirdNode, SHAPE_PREDICATE_IRI, signatureConfigModel);
-			attributeList.add(fourthNode.toString());
+            RDFNode thirdNode = RDFUtil.getFirstObject((Resource) secondNode, RDF.first.getURI(), signatureConfigModel);
+            RDFNode fourthNode = RDFUtil.getFirstObject((Resource) thirdNode, SHAPE_PREDICATE_IRI, signatureConfigModel);
+
+            attributeList.add(fourthNode.toString());
 			addAttributesForShape(secondNode, signatureConfigModel, attributeList);
 		}
 	}
-	private void validateSignature(Model rdf) throws MiddlewareHaltException{
+
+    private void validateSignature(Model rdfModel) throws MiddlewareHaltException {
 		Property property = ResourceFactory.createProperty(registrySystemBase + Constants.SIGNED_PROPERTY);
-		StmtIterator rdfIter = rdf.listStatements();
+        StmtIterator rdfIter = rdfModel.listStatements();
 		Property prop = ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR);
 		List<String> signatureAttributes = getSignatureAttributes();
 		TypeMapper tm = TypeMapper.getInstance();
@@ -144,16 +131,16 @@ public class SignaturePresenceValidator implements Middleware{
 			if(!rNode.isAnon() && !predicate.equals(RDF.type) && !signatureAttributes.contains(predicateStr) 
 					&& schemaConfig.contains(null, property, propertyResource)){
 				//Filtering statements based on the signatureFor attribute to check with signature exists for each attribute
-				ResIterator subjectIter = rdf.listSubjectsWithProperty(prop, ResourceFactory.createTypedLiteral(predicateStr, rdt));
+                ResIterator subjectIter = rdfModel.listSubjectsWithProperty(prop, ResourceFactory.createTypedLiteral(predicateStr, rdt));
 				if(!subjectIter.hasNext()){
 					throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
 				}else{
 					boolean attributeSignatureFound = false;
+                    //subjectIter.filterDrop()
 					while(subjectIter.hasNext()){
 						Resource subject = subjectIter.next();
-						if(rdf.contains(s.getSubject(), ResourceFactory.createProperty(registryContext+Constants.SIGNATURES), subject)){
-							attributeSignatureFound = true;
-						}
+                        attributeSignatureFound = rdfModel.contains(s.getSubject(),
+                                ResourceFactory.createProperty(registryContext + Constants.SIGNATURES), subject);
 					}
 					if(!attributeSignatureFound){
 						throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, predicateStr));
@@ -161,16 +148,14 @@ public class SignaturePresenceValidator implements Middleware{
 				}
 			}else if(predicate.equals(RDF.type) && !signatureTypes.contains(rNodeStr) 
 					&& schemaConfig.contains(null, property, rNode)){
-				NodeIterator nodeIter = rdf.listObjectsOfProperty(s.getSubject(), ResourceFactory.createProperty(registryContext+Constants.SIGNATURES));
+                NodeIterator nodeIter = rdfModel.listObjectsOfProperty(s.getSubject(), ResourceFactory.createProperty(registryContext + Constants.SIGNATURES));
 				boolean entitySignatureFound = false;
-				while(nodeIter.hasNext()){
+                while (nodeIter.hasNext() && !entitySignatureFound) {
 					RDFNode node = nodeIter.next();
 					//Filtering statements to check if signature exists for entity
-					if(rdf.contains((Resource)node, prop,  ResourceFactory.createTypedLiteral(rNodeStr, rdt))){
-						entitySignatureFound = true;
-						break;
-					}
-				}
+                    entitySignatureFound = rdfModel.contains((Resource) node, prop, ResourceFactory.createTypedLiteral(rNodeStr, rdt));
+                }
+
 				if(!entitySignatureFound){
 					throw new MiddlewareHaltException(String.format(SIGNATURE_NOT_FOUND, s.getObject().toString()));
 				}	
