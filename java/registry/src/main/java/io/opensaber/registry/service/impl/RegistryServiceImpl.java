@@ -102,7 +102,7 @@ public class RegistryServiceImpl implements RegistryService {
 			Resource root = getRootNode(rdfModel);
 			String label = getRootLabel(root);	
 			if(encryptionEnabled){
-				setModelWithEncryptedOrDecryptedAttributes(rdfModel, true);
+				encryptModel(rdfModel);
 			}
 			Graph graph = generateGraphFromRDF(rdfModel);
 
@@ -123,7 +123,7 @@ public class RegistryServiceImpl implements RegistryService {
 		Resource root = getRootNode(entity);
 		String label = getRootLabel(root);
 		if(encryptionEnabled){
-			setModelWithEncryptedOrDecryptedAttributes(entity, true);
+			encryptModel(entity);
 		}
 		Graph graph = generateGraphFromRDF(entity);
 		logger.debug("Service layer graph :", graph);
@@ -137,7 +137,7 @@ public class RegistryServiceImpl implements RegistryService {
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
 		Model jenaEntityModel = JenaRDF4J.asJenaModel(model);
 		if(encryptionEnabled){
-			setModelWithEncryptedOrDecryptedAttributes(jenaEntityModel, false);
+			decryptModel(jenaEntityModel);
 		}
 		logger.debug("RegistryServiceImpl : rdf4j model :", model);
 		return jenaEntityModel;
@@ -316,6 +316,14 @@ public class RegistryServiceImpl implements RegistryService {
 		} else {
 			return getTypeForRootLabel(entity, rootLabels.get(0));
 		}
+	}
+	
+	private void encryptModel(Model rdfModel) throws EncryptionException {
+		setModelWithEncryptedOrDecryptedAttributes(rdfModel, true);
+	}
+	
+	private void decryptModel(Model rdfModel) throws EncryptionException{
+		setModelWithEncryptedOrDecryptedAttributes(rdfModel, false);
 	}
 	
 	private void setModelWithEncryptedOrDecryptedAttributes(Model rdfModel, boolean isEncryptionRequired) throws EncryptionException{
