@@ -199,7 +199,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 			model.add(roots.get(0), ResourceFactory.createProperty(registryContextBase+"classesTaught"), (String)obj);
 		}
 		String response = registryService.addEntity(model,null,null);
-		Model responseModel = registryService.getEntityById(response);
+		Model responseModel = registryService.getEntityById(response, false);
 		assertTrue(responseModel.isIsomorphicWith(model));
 		closeDB();
 	}
