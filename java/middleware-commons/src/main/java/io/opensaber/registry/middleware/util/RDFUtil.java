@@ -23,7 +23,8 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RDFUtil {
 
@@ -140,6 +141,16 @@ public class RDFUtil {
 		StmtIterator iter = resultModel.listStatements(subjectResource, predicate, objectResource);
 		return iter;
 	}
+
+    public static RDFNode getFirstObject(Resource node, String predicate, Model validationConfig) {
+        RDFNode result = null;
+        Property property = ResourceFactory.createProperty(predicate);
+        List<RDFNode> nodeList = getListOfObjectNodes(node, property, validationConfig);
+        if (nodeList.size() != 0) {
+            result = nodeList.get(0);
+        }
+        return result;
+    }
     
     public static List<Resource> getListOfSubjects(Property predicate, String object, Model resultModel){
 		RDFNode objectResource = object!=null? ResourceFactory.createResource(object) : null;
