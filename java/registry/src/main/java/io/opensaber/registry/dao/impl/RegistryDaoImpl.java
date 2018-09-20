@@ -240,8 +240,8 @@ public class RegistryDaoImpl implements RegistryDao {
     }
 
     private Stack<Pair<Vertex, Vertex>> addOrUpdateVertexAndEdge(Iterator<Edge> edges, String idForSignature, Iterator<Edge> edgeList, List<Edge> dbEdgesForVertex,
-                                                                 List<Edge> edgeVertexMatchList, Direction direction, GraphTraversalSource dbGraph, String methodOrigin, Vertex dbVertex)
-                                                                		 throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
+    		List<Edge> edgeVertexMatchList, Direction direction, GraphTraversalSource dbGraph, String methodOrigin, Vertex dbVertex)
+    				throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
     	Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
     	while (edgeList.hasNext()) {
     		Edge e = edgeList.next();
@@ -278,7 +278,7 @@ public class RegistryDaoImpl implements RegistryDao {
     						throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
     					}
     					Vertex newV = null;
-    					if(methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && edgeLabel.equalsIgnoreCase(Constants.SIGNATURE_OF)
+    					if(methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && edgeLabel.equalsIgnoreCase(registryContext+Constants.SIGNATURE_OF)
     							&& dbEdgesForVertex.size() > 0){
     						Edge edgeForSignature = dbEdgesForVertex.get(0);
     						newV = edgeForSignature.outVertex();
