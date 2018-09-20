@@ -51,7 +51,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
-
+@Ignore
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {RegistryDaoImpl.class, Environment.class, ObjectMapper.class,
 		GenericConfiguration.class, EncryptionServiceImpl.class, AuditRecordReader.class})
