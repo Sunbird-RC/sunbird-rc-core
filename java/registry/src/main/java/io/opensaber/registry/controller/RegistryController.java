@@ -76,8 +76,8 @@ public class RegistryController {
 	}
 
 	@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Response> readEntity(@PathVariable("id") String id,
-                                               @RequestParam(required = false) boolean includeSignatures) {
+	public ResponseEntity<Response> readEntity(@PathVariable("id") String id,
+											   @RequestParam(required = false) boolean includeSignatures) {
 
 		String entityId = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();

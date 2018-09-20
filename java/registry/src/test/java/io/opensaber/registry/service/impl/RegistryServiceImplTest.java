@@ -181,7 +181,8 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 		response.getChecks().forEach(ch -> {
 			if(ch.getName().equalsIgnoreCase(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME)) {
 				assertTrue(ch.isHealthy());
-			} if(ch.getName().equalsIgnoreCase(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME)) {
+			}
+			if (ch.getName().equalsIgnoreCase(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME)) {
 				assertTrue(ch.isHealthy());
 			} else {
 				assertFalse(ch.isHealthy());

@@ -34,11 +34,11 @@ public class RDFValidator implements Middleware{
 	private static final String VALIDATION_IS_MISSING = "Validation is missing";
 	private static final String VALIDATION_MISSING_FOR_TYPE = "Validation missing for type";
 	private static final String SX_SHAPE_IRI = "http://shex.io/ns/shex#Shape";
-	private static final String SX_EXPRESSION_IRI = "http://shex.io/ns/shex#expression";
-	private static final String SX_EXPRESSIONS_IRI = "http://shex.io/ns/shex#expressions";
-	private static final String SX_VALUES_IRI = "http://shex.io/ns/shex#values";
-	private static final String SX_VALUE_EXPR_IRI = "http://shex.io/ns/shex#valueExpr";
-	private static final String FORMAT = "JSON-LD";
+	private static final String SHAPE_EXPRESSION_IRI = "http://shex.io/ns/shex#expression";
+	private static final String SHAPE_EXPRESSIONS_IRI = "http://shex.io/ns/shex#expressions";
+	private static final String SHAPE_VALUES_IRI = "http://shex.io/ns/shex#values";
+	private static final String SHAPE_VALUE_EXPR_IRI = "http://shex.io/ns/shex#valueExpr";
+	private static final String JSON_LD_FORMAT = "JSON-LD";
 	
 	private Map<String,String> shapeTypeMap;
 	private Schema schemaForCreate;
@@ -131,24 +131,41 @@ public class RDFValidator implements Middleware{
 	 * @return
 	 */
 	private Map<String,String> getShapeMap(Property predicate, String object){
-		Map<String,String> shapeMap = new HashMap<String, String>();
+		Map<String,String> shapeTypeMap = new HashMap<String, String>();
 		Model validationConfig = getValidationConfigModel();
 		List<Resource> shapeList = RDFUtil.getListOfSubjects(predicate, object, validationConfig);
 		for(Resource shape: shapeList){
-			RDFNode node = getObjectAfterFilter(shape, SX_EXPRESSION_IRI, validationConfig);
-			RDFNode firstNode = getObjectAfterFilter(node, SX_EXPRESSIONS_IRI, validationConfig);
+			RDFNode node = getObjectAfterFilter(shape, SHAPE_EXPRESSION_IRI, validationConfig);
+			RDFNode firstNode = getObjectAfterFilter(node, SHAPE_EXPRESSIONS_IRI, validationConfig);
 			RDFNode secondNode = getObjectAfterFilter(firstNode, RDF.first.getURI(), validationConfig);
-			RDFNode thirdNode = getObjectAfterFilter(secondNode, SX_VALUES_IRI, validationConfig);
+			RDFNode thirdNode = getObjectAfterFilter(secondNode, SHAPE_VALUES_IRI, validationConfig);
 			if(thirdNode == null){
-				thirdNode = getObjectAfterFilter(secondNode, SX_VALUE_EXPR_IRI, validationConfig);
+				thirdNode = getObjectAfterFilter(secondNode, SHAPE_VALUE_EXPR_IRI, validationConfig);
 			}
-			RDFNode fourthNode = getObjectAfterFilter(thirdNode, SX_VALUES_IRI, validationConfig);
+			RDFNode fourthNode = getObjectAfterFilter(thirdNode, SHAPE_VALUES_IRI, validationConfig);
 			RDFNode typeNode = getObjectAfterFilter(fourthNode, RDF.first.getURI(), validationConfig);
 			if(typeNode!=null){
-				shapeMap.put(typeNode.toString(), shape.toString());
+				shapeTypeMap.put(typeNode.toString(), shape.toString());
+				addOtherTypesForShape(fourthNode, validationConfig, shapeTypeMap, shape);
 			}
 		}
-		return shapeMap;
+		return shapeTypeMap;
+	}
+	
+	/**
+	 * This method is created to include multiple types for a shape in the shapeMap.
+	 * @param subjectOfTypeNode
+	 * @param validationConfig
+	 * @param shapeMap
+	 * @param shape
+	 */
+	private void addOtherTypesForShape(RDFNode subjectOfTypeNode, Model validationConfig, Map<String,String> shapeTypeMap, Resource shape){
+		RDFNode node = getObjectAfterFilter(subjectOfTypeNode, RDF.rest.getURI(), validationConfig);
+		if(!node.equals(RDF.nil)){
+			RDFNode typeNode = getObjectAfterFilter(node, RDF.first.getURI(), validationConfig);
+			shapeTypeMap.put(typeNode.toString(), shape.toString());
+			addOtherTypesForShape(node, validationConfig, shapeTypeMap, shape);
+		}
 	}
 	
 	private RDFNode getObjectAfterFilter(RDFNode node, String predicate, Model validationConfig){
@@ -161,7 +178,7 @@ public class RDFValidator implements Middleware{
 	}
 	
 	private Model getValidationConfigModel(){
-		return RDFUtil.getRdfModelBasedOnFormat(schemaForUpdate.serialize(FORMAT).right().get(), FORMAT);
+		return RDFUtil.getRdfModelBasedOnFormat(schemaForUpdate.serialize(JSON_LD_FORMAT).right().get(), JSON_LD_FORMAT);
 	}
 
 }

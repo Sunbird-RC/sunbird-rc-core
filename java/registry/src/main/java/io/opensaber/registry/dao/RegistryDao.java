@@ -19,7 +19,7 @@ public interface RegistryDao {
 	public boolean updateEntity(Graph entityForUpdate, String rootNodeLabel, String methodOrigin)
 			throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException;
 
-	public Graph getEntityById(String label, boolean includeSignatures) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException;
+    public Graph getEntityById(String label, boolean includeSignatures) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException;
 	
 	public Graph getEntityByVertex(Vertex vertex) throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException;
 
