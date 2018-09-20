@@ -5,8 +5,11 @@ import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.*;
 import io.opensaber.registry.exception.*;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.model.RegistrySignature;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
+import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.util.JSONUtil;
 import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
@@ -32,6 +35,9 @@ public class RegistryController {
 	@Autowired
 	private SearchService searchService;
 
+	@Autowired
+	private SignatureService signatureService;
+
 	@Value("${registry.context.base}")
 	private String registryContext;
 
@@ -40,6 +46,9 @@ public class RegistryController {
 	
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
+
+	@Value("${signature.domain}")
+	private String signatureDomain;
 
 	@Autowired
 	private OpenSaberInstrumentation watch;
@@ -52,9 +61,16 @@ public class RegistryController {
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
+		RegistrySignature rs = new RegistrySignature();
 
 		try {
 			watch.start("RegistryController.addToExistingEntity");
+			Map signReq  = new HashMap<String, Object>();
+			signReq.put("entity",requestModel.getRequestMap().get("dataObject"));
+            Object entitySignObj = signatureService.sign(signReq);
+			Map entitySignMap = JSONUtil.convertObjectJsonMap(entitySignObj);
+			entitySignMap.put("createdDate",rs.getCreatedTimestamp());
+            rdf = RDFUtil.getUpdatedSignedModel(rdf,registryContext,signatureDomain,entitySignMap);
 			String label = registryService.addEntity(rdf, id, property);
 			result.put("entity", label);
 			response.setResult(result);

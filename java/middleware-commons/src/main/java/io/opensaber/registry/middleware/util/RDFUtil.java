@@ -1,6 +1,7 @@
 package io.opensaber.registry.middleware.util;
 
 import io.opensaber.converters.JenaRDF4J;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.*;
@@ -18,12 +19,15 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 
+import javax.xml.XMLConstants;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class RDFUtil {
 
@@ -157,5 +161,42 @@ public class RDFUtil {
 		RDFDataMgr.write(sw, validationRdf, Lang.TTL);
 		return sw.toString();
 	}
+
+	public static Model getUpdatedSignedModel(Model model, String registryContext, String signatureDomain, Map entitySignMap){
+        //model.add
+        TypeMapper tm = TypeMapper.getInstance();
+        List<Resource> rootLabelList= getRootLabels(model);
+        Resource target = rootLabelList.get(0);
+        Literal literal = ResourceFactory.createTypedLiteral(target.toString(), tm.getSafeTypeByName(signatureDomain+XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
+        ResIterator resIter = model.listSubjectsWithProperty(ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),literal);
+        if(!resIter.hasNext()){
+            Resource  r = ResourceFactory.createResource();
+            model.add(target,ResourceFactory.createProperty(registryContext+Constants.SIGNATURES),r);
+            model.add(r,RDF.type, ResourceFactory.createResource(signatureDomain+"GraphSignature2012"));
+            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR),
+                    "https://example.com/i/pat/keys/"+entitySignMap.get("keyId"),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATOR));
+            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATED_TIMESTAMP),
+                    String.valueOf(entitySignMap.get("createdDate")),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATED_TIMESTAMP));
+            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_NONCE),
+                    "",tm.getSafeTypeByName(signatureDomain+Constants.SIGN_NONCE));
+            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_SIGNATURE_VALUE),
+                    entitySignMap.get("signatureValue").toString(),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_SIGNATURE_VALUE));
+            if(target.isAnon())
+                model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),"#",tm.getSafeTypeByName(signatureDomain+XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
+        } else {
+            Resource  r = resIter.next();
+            model.removeAll(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR),null);
+            model.removeAll(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATED_TIMESTAMP),null);
+            model.removeAll(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_SIGNATURE_VALUE),null);
+            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR),
+                    "https://example.com/i/pat/keys/"+entitySignMap.get("keyId"),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATOR));
+            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATED_TIMESTAMP),
+                    String.valueOf(entitySignMap.get("createdDate")),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATED_TIMESTAMP));
+            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_SIGNATURE_VALUE),
+                    entitySignMap.get("signatureValue").toString(),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_SIGNATURE_VALUE));
+
+        }
+        return model;
+    }
 
 }

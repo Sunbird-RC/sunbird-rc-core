@@ -402,6 +402,9 @@ public class RegistryDaoImpl implements RegistryDao {
     }
     
     private String encodeAttributeForSignature(String value, String idForSignature){
+        if(value.endsWith("#")){
+            return idForSignature;
+        }
     	String uuid = idForSignature.substring(idForSignature.lastIndexOf(Constants.FORWARD_SLASH)+1);
     	String encodedEnd = value.substring(value.lastIndexOf(Constants.FORWARD_SLASH));
     	String encodedBegin = value.substring(0,value.lastIndexOf(Constants.FORWARD_SLASH)+1);
