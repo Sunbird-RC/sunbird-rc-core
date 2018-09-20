@@ -200,9 +200,8 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 			model.add(roots.get(0), ResourceFactory.createProperty(registryContextBase+"classesTaught"), (String)obj);
 		}
 		String response = registryService.addEntity(model,null,null);
-		org.eclipse.rdf4j.model.Model responseModel = registryService.getEntityById(response, false);
-		Model jenaModel = JenaRDF4J.asJenaModel(responseModel);
-		assertTrue(jenaModel.isIsomorphicWith(model));
+		Model responseModel = registryService.getEntityById(response, false);
+		assertTrue(responseModel.isIsomorphicWith(model));
 		closeDB();
 	}
 

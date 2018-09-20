@@ -7,16 +7,25 @@ import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.*;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
+
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.NodeIterator;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.JsonLDWriteContext;
@@ -37,7 +46,9 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 
@@ -57,6 +68,9 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     SignatureService signatureService;
+    
+    @Autowired
+    SchemaConfigurator schemaConfigurator;
 
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
@@ -69,9 +83,12 @@ public class RegistryServiceImpl implements RegistryService {
 	
 	@Value("${audit.frame.file}")
 	private String auditFrameFile;
-
-    @Value("${registry.context.base}")
-    private String registryContextBase;
+	
+	@Value("${registry.context.base}")
+	private String registryContextBase;
+	
+	@Value("${registry.system.base}")
+	private String registrySystemBase;
 
 	@Override
 	public List getEntityList(){
@@ -83,7 +100,10 @@ public class RegistryServiceImpl implements RegistryService {
 	EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException {
 		try {
 			Resource root = getRootNode(rdfModel);
-			String label = getRootLabel(root);
+			String label = getRootLabel(root);	
+			if(encryptionEnabled){
+				encryptModel(rdfModel);
+			}
 			Graph graph = generateGraphFromRDF(rdfModel);
 
 			// Append _: to the root node label to create the entity as Apache Jena removes the _: for the root node label
@@ -102,29 +122,38 @@ public class RegistryServiceImpl implements RegistryService {
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
 		Resource root = getRootNode(entity);
 		String label = getRootLabel(root);
+		if(encryptionEnabled){
+			encryptModel(entity);
+		}
 		Graph graph = generateGraphFromRDF(entity);
 		logger.debug("Service layer graph :", graph);
 		return registryDao.updateEntity(graph, label, "update");
 	}
 
 
-    /**
-     * Optionally gets signatures along with other information.
-     *
-     * @param label
-     * @param includeSignatures
-     * @return
-     * @throws RecordNotFoundException
-     * @throws EncryptionException
-     * @throws AuditFailedException
-     */
-    @Override
-    public org.eclipse.rdf4j.model.Model getEntityById(String label, boolean includeSignatures) throws RecordNotFoundException, EncryptionException, AuditFailedException {
-        Graph graph = registryDao.getEntityById(label, includeSignatures);
-        org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
-        logger.debug("RegistryServiceImpl : rdf4j model :", model);
-        return model;
-    }
+
+	/**
+	 * Optionally gets signatures along with other information.
+	 *
+	 * @param label
+	 * @param includeSignatures
+	 * @return
+	 * @throws RecordNotFoundException
+	 * @throws EncryptionException
+	 * @throws AuditFailedException
+	 */
+	@Override
+	public Model getEntityById(String label, boolean includeSignatures) throws RecordNotFoundException, EncryptionException, AuditFailedException {
+		Graph graph = registryDao.getEntityById(label, includeSignatures);
+		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
+		Model jenaEntityModel = JenaRDF4J.asJenaModel(model);
+		if(encryptionEnabled){
+			decryptModel(jenaEntityModel);
+		}
+		logger.debug("RegistryServiceImpl : rdf4j model :", model);
+		return jenaEntityModel;
+	}
+
 
 	public HealthCheckResponse health() throws Exception {
 		HealthCheckResponse healthCheck;
@@ -155,8 +184,8 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public String frameEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException, MultipleEntityException, EntityCreationException {
-		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
+	public String frameEntity(Model jenaEntityModel) throws IOException, MultipleEntityException, EntityCreationException {
+		//Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
 		Resource root = getRootNode(jenaEntityModel);
 		String rootLabelType = getTypeForRootLabel(jenaEntityModel, root);
 		logger.debug("RegistryServiceImpl : jenaEntityModel for framing: {} \n root : {}, \n rootLabelType: {}",jenaEntityModel,root,rootLabelType);
@@ -285,6 +314,112 @@ public class RegistryServiceImpl implements RegistryService {
 			throw new EntityCreationException(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
 		} else {
 			return getTypeForRootLabel(entity, rootLabels.get(0));
+		}
+	}
+	
+	private void encryptModel(Model rdfModel) throws EncryptionException {
+		setModelWithEncryptedOrDecryptedAttributes(rdfModel, true);
+	}
+	
+	private void decryptModel(Model rdfModel) throws EncryptionException{
+		setModelWithEncryptedOrDecryptedAttributes(rdfModel, false);
+	}
+	
+	private void setModelWithEncryptedOrDecryptedAttributes(Model rdfModel, boolean isEncryptionRequired) throws EncryptionException{
+		NodeIterator nodeIter = schemaConfigurator.getAllPrivateProperties();
+		Map<Resource,Map<String,Object>> toBeEncryptedOrDecryptedAttributes = new HashMap<Resource,Map<String,Object>>();
+		TypeMapper tm = TypeMapper.getInstance();
+		while(nodeIter.hasNext()){
+			RDFNode node = nodeIter.next();
+			String predicateStr = node.toString();
+			Property predicate = null;
+			if(!isEncryptionRequired){
+				String tailOfPredicateStr = predicateStr.substring(predicateStr.lastIndexOf("/") + 1).trim();
+				predicateStr = predicateStr.replace(tailOfPredicateStr, "encrypted" + tailOfPredicateStr);
+			}
+			predicate = ResourceFactory.createProperty(predicateStr);
+			StmtIterator stmtIter = rdfModel.listStatements(null, predicate, (RDFNode)null);
+			while(stmtIter.hasNext()){
+				Statement s = stmtIter.next();
+				Map<String,Object> propertyMap = new HashMap<String,Object>();
+				if(toBeEncryptedOrDecryptedAttributes.containsKey(s.getSubject())){
+					propertyMap = toBeEncryptedOrDecryptedAttributes.get(s.getSubject());
+				}
+				if(propertyMap.containsKey(predicateStr)){
+					Object value = propertyMap.get(predicateStr);
+					List valueList = new ArrayList();
+					if(value instanceof List){
+						valueList = (List)value;
+					}
+					valueList.add(s.getObject().asLiteral().getLexicalForm());
+				}
+				propertyMap.put(predicateStr,s.getObject().asLiteral().getLexicalForm());
+				toBeEncryptedOrDecryptedAttributes.put(s.getSubject(), propertyMap);
+			}
+		}
+		for(Map.Entry<Resource,Map<String,Object>> entry: toBeEncryptedOrDecryptedAttributes.entrySet()){
+			Map<String, Object> listPropertyMap = new HashMap<String, Object>();
+			Map<String, Object> propertyMap = entry.getValue();
+			entry.getValue().forEach((k, v) -> {
+				if (v instanceof List) {
+					listPropertyMap.put(k, v);
+				}
+			});
+			listPropertyMap.forEach((k, v) -> propertyMap.remove(k));
+			Map<String,Object> encAttributes = new HashMap<String, Object>();
+			if(isEncryptionRequired){
+				encAttributes = encryptionService.encrypt(propertyMap);
+			}else{
+				encAttributes = encryptionService.decrypt(propertyMap);
+			}
+			for(Map.Entry<String, Object> listEntry: listPropertyMap.entrySet()){
+				Resource k = entry.getKey();
+				Object v = entry.getValue();
+				List values = (List)v;
+				List encValues = new ArrayList();
+				String encDecValue = null;
+				for(Object listV : values){
+					if(isEncryptionRequired){
+						encDecValue = encryptionService.encrypt(listV);
+					}else{
+						encDecValue = encryptionService.decrypt(listV);
+					}
+					encValues.add(encDecValue);
+				}
+				listEntry.setValue(encValues);
+			}
+			encAttributes.putAll(listPropertyMap);
+			Resource encSubject = entry.getKey();
+			for(Map.Entry<String,Object> propEntry: encAttributes.entrySet()){
+				Property predicate = ResourceFactory.createProperty(propEntry.getKey());
+				StmtIterator stmtIter = rdfModel.listStatements(entry.getKey(), predicate, (RDFNode)null);
+				List<Statement> stmtList = stmtIter.toList();
+				if(stmtList.size()>0){
+					String datatype = stmtList.get(0).getObject().asLiteral().getDatatypeURI();
+					RDFDatatype rdt = tm.getSafeTypeByName(datatype);
+					rdfModel.remove(stmtList);
+					String predicateStr = predicate.toString();
+					String tailOfPredicateStr = predicateStr.substring(predicateStr.lastIndexOf("/") + 1).trim();
+					if(isEncryptionRequired){
+						predicateStr = predicateStr.replace(tailOfPredicateStr, "encrypted" + tailOfPredicateStr);
+					}else{
+						if(schemaConfigurator.isEncrypted(tailOfPredicateStr)){
+							predicateStr = predicateStr.replace(tailOfPredicateStr, tailOfPredicateStr.substring(9));
+						}
+					}
+					Property encPredicate = ResourceFactory.createProperty(predicateStr);
+					if(propEntry.getValue() instanceof List){
+						List values = (List)propEntry.getValue();
+						for(Object value: values){
+							Literal literal = ResourceFactory.createTypedLiteral((String)value, rdt);
+							rdfModel.add(encSubject, encPredicate, literal);
+						}
+					}else{
+						Literal literal = ResourceFactory.createTypedLiteral((String)propEntry.getValue(), rdt);
+						rdfModel.add(encSubject, encPredicate, literal);
+					}
+				}
+			}
 		}
 	}
 }
