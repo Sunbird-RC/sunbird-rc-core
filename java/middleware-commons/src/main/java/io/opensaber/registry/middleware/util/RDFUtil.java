@@ -161,6 +161,7 @@ public class RDFUtil {
 		RDFDataMgr.write(sw, validationRdf, Lang.TTL);
 		return sw.toString();
 	}
+    
 
 	public static Model getUpdatedSignedModel(Model model, String registryContext, String signatureDomain, Map entitySignMap){
         //model.add

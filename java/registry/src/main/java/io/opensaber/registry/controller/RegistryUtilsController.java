@@ -1,17 +1,23 @@
 package io.opensaber.registry.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.Request;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
+import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.util.JSONUtil;
+
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,8 +26,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 public class RegistryUtilsController {
@@ -36,6 +45,9 @@ public class RegistryUtilsController {
 
 	@Autowired
 	private OpenSaberInstrumentation watch;
+	
+	@Value("${registry.context.base}")
+    private String registryContext;
 
 	@RequestMapping(value = "/utils/sign", method = RequestMethod.POST)
 	public ResponseEntity<Response> generateSignature(HttpServletRequest requestModel) {
@@ -61,17 +73,27 @@ public class RegistryUtilsController {
 	}
 
     @RequestMapping(value = "/utils/verify", method = RequestMethod.POST)
-    public ResponseEntity<Response> verifySignature(HttpServletRequest requestModel) {
+    public ResponseEntity<Response> verifySignature(HttpServletRequest request) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.VERIFY, "OK", responseParams);
 
         try {
-            Gson gson = new Gson();
-            Object payload = gson.fromJson(requestModel.getReader(), Object.class);
-            Object result = signatureService.verify(payload);
-            response.setResult(JSONUtil.convertObjectJsonMap(result));
-            responseParams.setErrmsg("");
-            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
+            baseRequestHandler.setRequest(request);
+            Map<String,Object> map = baseRequestHandler.getRequestBodyMap();
+            if(map.containsKey(Constants.REQUEST_ATTRIBUTE) && map.containsKey(Constants.ATTRIBUTE_NAME)){
+            	String payload  = (String)map.get(Constants.ATTRIBUTE_NAME);
+            	payload = JSONUtil.getModifiedClaim(payload);
+                logger.info("Printing payload after removing ids"+payload);
+                Object result = signatureService.verify(gson.fromJson(payload, mapType));
+                response.setResult(result);
+                responseParams.setErrmsg("");
+                responseParams.setStatus(Response.Status.SUCCESSFUL);
+            }else{
+            	responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                responseParams.setErrmsg("");
+            }
+            
         } catch (Exception e) {
             logger.error("Error in verifying signature", e);
             HealthCheckResponse healthCheckResult =
@@ -127,4 +149,5 @@ public class RegistryUtilsController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+
 }

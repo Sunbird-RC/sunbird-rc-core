@@ -36,7 +36,7 @@ public class RegistryController {
 
 	@Autowired
 	private RegistryService registryService;
-	
+
 	@Autowired
 	private SearchService searchService;
 
@@ -51,8 +51,7 @@ public class RegistryController {
 
 	private Gson gson = new Gson();
 	private Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
-	private Type lstmapType = new TypeToken<List<Map<String, Object>>>(){}.getType();
-	
+
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
 
@@ -74,7 +73,6 @@ public class RegistryController {
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
 		RegistrySignature rs = new RegistrySignature();
-		Map signReq  = new HashMap<String, Object>();
 
 		try {
 			watch.start("RegistryController.addToExistingEntity");
@@ -82,12 +80,11 @@ public class RegistryController {
 			if(signatureEnabled){
 				JsonLdOptions options = new JsonLdOptions();
 				options.setCompactArrays(true);
-				Map<String, Object> reqMap = objectMapper.readValue(requestModel.getRequestMap().get("dataObject").toString(), new TypeReference<Map<String, Object>>() {
-				});
-				String expandedJsonLd = gson.toJson(JsonLdProcessor.expand(reqMap,options),lstmapType);
-				signReq.put("entity",expandedJsonLd);
-				Object entitySignObj = signatureService.sign(signReq);
-				Map entitySignMap = JSONUtil.convertObjectJsonMap(entitySignObj);
+				Map<String, Object> reqMap = gson.fromJson((String)requestModel.getRequestMap().get("dataObject"), mapType);
+				Map signReq  = new HashMap<String, Object>();
+				List<Object> expandedJsonldObject = JsonLdProcessor.expand(reqMap,options);
+				signReq.put("entity",expandedJsonldObject);
+				Map entitySignMap = (Map<String, Object>)signatureService.sign(signReq);
 				entitySignMap.put("createdDate",rs.getCreatedTimestamp());
 				rdf = RDFUtil.getUpdatedSignedModel(rdf,registryContext,signatureDomain,entitySignMap);
 			}
@@ -112,8 +109,8 @@ public class RegistryController {
 	}
 
 	@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Response> readEntity(@PathVariable("id") String id,
-                                               @RequestParam(required = false) boolean includeSignatures) {
+	public ResponseEntity<Response> readEntity(@PathVariable("id") String id,
+			@RequestParam(required = false) boolean includeSignatures) {
 
 		String entityId = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
@@ -121,7 +118,7 @@ public class RegistryController {
 
 		try {
 			watch.start("RegistryController.readEntity");
-            org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(entityId, includeSignatures);
+			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(entityId, includeSignatures);
 			logger.debug("FETCHED: " + entityModel);
 			String jenaJSON = registryService.frameEntity(entityModel);
 			response.setResult(gson.fromJson(jenaJSON, mapType));
@@ -147,7 +144,7 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@RequestMapping(value = "/search", method = RequestMethod.POST)
 	public ResponseEntity<Response> searchEntity(@RequestAttribute Request requestModel) {
 
@@ -181,7 +178,7 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@ResponseBody
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	public ResponseEntity<Response> update(@RequestAttribute Request requestModel) {
@@ -223,9 +220,9 @@ public class RegistryController {
 			logger.debug("Application heath checked : ", healthCheckResult.toString());
 		} catch (Exception e) {
 			logger.error("Error in health checking!", e);
-            HealthCheckResponse healthCheckResult =
-                    new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, false, null);
-            response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+			HealthCheckResponse healthCheckResult =
+					new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, false, null);
+			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Error during health check");
 		}

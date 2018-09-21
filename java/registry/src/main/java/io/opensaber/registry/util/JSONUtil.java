@@ -20,7 +20,7 @@ public class JSONUtil {
     }
     
     public static String getModifiedClaim(String payload){
-		String value = "\"@id\":\"[a-z]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",";
+		String value = "\"@id\"\\s*:\\s*\"[a-z]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",";
 		Pattern pattern = Pattern.compile(value);
 		Matcher matcher = pattern.matcher(payload);
 		return matcher.replaceAll(StringUtils.EMPTY);
