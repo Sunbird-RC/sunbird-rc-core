@@ -1,5 +1,7 @@
 package io.opensaber.registry.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
 import com.google.gson.Gson;
@@ -41,6 +43,9 @@ public class RegistryController {
 	@Autowired
 	private SignatureService signatureService;
 
+	@Autowired
+	private ObjectMapper objectMapper;
+
 	@Value("${registry.context.base}")
 	private String registryContext;
 
@@ -77,7 +82,9 @@ public class RegistryController {
 			if(signatureEnabled){
 				JsonLdOptions options = new JsonLdOptions();
 				options.setCompactArrays(true);
-				String expandedJsonLd = gson.toJson(JsonLdProcessor.expand(requestModel.getRequestMap().get("dataObject"),options),lstmapType);
+				Map<String, Object> reqMap = objectMapper.readValue(requestModel.getRequestMap().get("dataObject").toString(), new TypeReference<Map<String, Object>>() {
+				});
+				String expandedJsonLd = gson.toJson(JsonLdProcessor.expand(reqMap,options),lstmapType);
 				signReq.put("entity",expandedJsonLd);
 				Object entitySignObj = signatureService.sign(signReq);
 				Map entitySignMap = JSONUtil.convertObjectJsonMap(entitySignObj);
