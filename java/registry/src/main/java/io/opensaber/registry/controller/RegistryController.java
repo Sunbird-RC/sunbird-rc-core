@@ -1,5 +1,7 @@
 package io.opensaber.registry.controller;
 
+import com.github.jsonldjava.core.JsonLdOptions;
+import com.github.jsonldjava.core.JsonLdProcessor;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.*;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -43,12 +46,16 @@ public class RegistryController {
 
 	private Gson gson = new Gson();
 	private Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
+	private Type lstmapType = new TypeToken<List<Map<String, Object>>>(){}.getType();
 	
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
 
 	@Value("${signature.domain}")
 	private String signatureDomain;
+
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
 
 	@Autowired
 	private OpenSaberInstrumentation watch;
@@ -62,15 +69,21 @@ public class RegistryController {
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
 		RegistrySignature rs = new RegistrySignature();
+		Map signReq  = new HashMap<String, Object>();
 
 		try {
 			watch.start("RegistryController.addToExistingEntity");
-			Map signReq  = new HashMap<String, Object>();
-			signReq.put("entity",requestModel.getRequestMap().get("dataObject"));
-            Object entitySignObj = signatureService.sign(signReq);
-			Map entitySignMap = JSONUtil.convertObjectJsonMap(entitySignObj);
-			entitySignMap.put("createdDate",rs.getCreatedTimestamp());
-            rdf = RDFUtil.getUpdatedSignedModel(rdf,registryContext,signatureDomain,entitySignMap);
+			//added for signing the enitity
+			if(signatureEnabled){
+				JsonLdOptions options = new JsonLdOptions();
+				options.setCompactArrays(true);
+				String expandedJsonLd = gson.toJson(JsonLdProcessor.expand(requestModel.getRequestMap().get("dataObject"),options),lstmapType);
+				signReq.put("entity",expandedJsonLd);
+				Object entitySignObj = signatureService.sign(signReq);
+				Map entitySignMap = JSONUtil.convertObjectJsonMap(entitySignObj);
+				entitySignMap.put("createdDate",rs.getCreatedTimestamp());
+				rdf = RDFUtil.getUpdatedSignedModel(rdf,registryContext,signatureDomain,entitySignMap);
+			}
 			String label = registryService.addEntity(rdf, id, property);
 			result.put("entity", label);
 			response.setResult(result);
