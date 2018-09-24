@@ -85,6 +85,11 @@ public class SchemaConfigurator {
 		StmtIterator iter = schemaConfig.listStatements(null, property, rdfNode);
 		return iter.hasNext();
 	}
+	
+	public NodeIterator getAllPrivateProperties() {
+		Property property = ResourceFactory.createProperty(registrySystemBase + Constants.PRIVACY_PROPERTY);
+		return schemaConfig.listObjectsOfProperty(property);
+	}
 
 	public boolean isEncrypted(String tailPropertyKey) {
 		if (tailPropertyKey != null) {

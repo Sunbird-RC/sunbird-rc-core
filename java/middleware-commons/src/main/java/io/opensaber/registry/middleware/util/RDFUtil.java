@@ -144,6 +144,16 @@ public class RDFUtil {
 		StmtIterator iter = resultModel.listStatements(subjectResource, predicate, objectResource);
 		return iter;
 	}
+
+    public static RDFNode getFirstObject(Resource node, String predicate, Model validationConfig) {
+        RDFNode result = null;
+        Property property = ResourceFactory.createProperty(predicate);
+        List<RDFNode> nodeList = getListOfObjectNodes(node, property, validationConfig);
+        if (nodeList.size() != 0) {
+            result = nodeList.get(0);
+        }
+        return result;
+    }
     
     public static List<Resource> getListOfSubjects(Property predicate, String object, Model resultModel){
 		RDFNode objectResource = object!=null? ResourceFactory.createResource(object) : null;
@@ -168,7 +178,7 @@ public class RDFUtil {
         TypeMapper tm = TypeMapper.getInstance();
         List<Resource> rootLabelList= getRootLabels(model);
         Resource target = rootLabelList.get(0);
-        Literal literal = ResourceFactory.createTypedLiteral(target.toString(), tm.getSafeTypeByName(signatureDomain+XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
+        Literal literal = ResourceFactory.createTypedLiteral(target.toString(), tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
         ResIterator resIter = model.listSubjectsWithProperty(ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),literal);
         if(!resIter.hasNext()){
             Resource  r = ResourceFactory.createResource();
@@ -183,7 +193,7 @@ public class RDFUtil {
             model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_SIGNATURE_VALUE),
                     entitySignMap.get("signatureValue").toString(),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_SIGNATURE_VALUE));
             if(target.isAnon())
-                model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),"#",tm.getSafeTypeByName(signatureDomain+XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
+                model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),"#",tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
         } else {
             Resource  r = resIter.next();
             model.removeAll(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR),null);

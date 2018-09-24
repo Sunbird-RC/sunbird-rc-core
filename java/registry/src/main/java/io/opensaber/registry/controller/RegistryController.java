@@ -15,6 +15,8 @@ import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.util.JSONUtil;
+
+import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +26,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +37,8 @@ import java.util.Map;
 public class RegistryController {
 
 	private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
+	
+	private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"_:[a-z][0-9]+\",";
 
 	@Autowired
 	private RegistryService registryService;
@@ -60,6 +66,9 @@ public class RegistryController {
 
 	@Value("${signature.enabled}")
 	private boolean signatureEnabled;
+	
+	@Value("${frame.file}")
+    private String frameFile;
 
 	@Autowired
 	private OpenSaberInstrumentation watch;
@@ -78,13 +87,12 @@ public class RegistryController {
 			watch.start("RegistryController.addToExistingEntity");
 			//added for signing the enitity
 			if(signatureEnabled){
-				JsonLdOptions options = new JsonLdOptions();
-				options.setCompactArrays(true);
-				Map<String, Object> reqMap = gson.fromJson((String)requestModel.getRequestMap().get("dataObject"), mapType);
 				Map signReq  = new HashMap<String, Object>();
-				List<Object> expandedJsonldObject = JsonLdProcessor.expand(reqMap,options);
-				signReq.put("entity",expandedJsonldObject);
-				Map entitySignMap = (Map<String, Object>)signatureService.sign(signReq);
+				InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
+				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+            	Map<String, Object> reqMap = JSONUtil.frameJsonAndRemoveIds(ID_REGEX, (String)requestModel.getRequestMap().get("dataObject"), gson, fileString);
+				signReq.put("entity",reqMap);
+				Map<String, Object> entitySignMap = (Map<String, Object>)signatureService.sign(signReq);
 				entitySignMap.put("createdDate",rs.getCreatedTimestamp());
 				rdf = RDFUtil.getUpdatedSignedModel(rdf,registryContext,signatureDomain,entitySignMap);
 			}
@@ -118,7 +126,7 @@ public class RegistryController {
 
 		try {
 			watch.start("RegistryController.readEntity");
-			org.eclipse.rdf4j.model.Model entityModel = registryService.getEntityById(entityId, includeSignatures);
+			Model entityModel = registryService.getEntityById(entityId, includeSignatures);
 			logger.debug("FETCHED: " + entityModel);
 			String jenaJSON = registryService.frameEntity(entityModel);
 			response.setResult(gson.fromJson(jenaJSON, mapType));

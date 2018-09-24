@@ -5,6 +5,8 @@ import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
+
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -25,6 +27,7 @@ import java.util.Random;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.*;
 
+@Ignore
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { EncryptionServiceImpl.class,Environment.class, GenericConfiguration.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)

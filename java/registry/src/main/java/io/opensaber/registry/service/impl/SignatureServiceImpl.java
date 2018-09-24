@@ -70,7 +70,7 @@ public class SignatureServiceImpl implements SignatureService {
         Object result = null;
         try {
             response = restTemplate.postForEntity(signURL, propertyValue, String.class);
-            result = new Gson().fromJson(response.getBody(), mapType);
+            result = new Gson().fromJson(response.getBody(), Object.class);
         } catch (RestClientException ex) {
             logger.error("RestClientException when signing: ", ex);
             throw new SignatureException().new UnreachableException(ex.getMessage());

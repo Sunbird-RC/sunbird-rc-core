@@ -27,11 +27,11 @@ public class Response {
 		HEALTH("open-saber.registry.health"),
 		DELETE("open-saber.registry.delete"),
 		SEARCH("open-saber.registry.search"),
-		SIGN("open-saber.utils.sign"),
-		VERIFY("open-saber.utils.verify"),
-		KEYS("open-saber.utils.keys"),
-		ENCRYPT("open-saber.utils.encrypt"),
-		DECRYPT("open-saber.utils.decrypt"),
+        SIGN("open-saber.utils.sign"),
+        VERIFY("open-saber.utils.verify"),
+        KEYS("open-saber.utils.keys"),
+        ENCRYPT("open-saber.utils.encrypt"),
+        DECRYPT("open-saber.utils.decrypt"),
 		NONE("");
 		private String id;
 
@@ -49,7 +49,7 @@ public class Response {
 	}
 
 	private String responseCode;
-	private Object result;
+    private Object result;
 
 	public void setResponseCode(String responseCode) {
 		this.responseCode = responseCode;
@@ -78,12 +78,14 @@ public class Response {
 	public void setParams(ResponseParams params) {
 		this.params = params;
 	}
-	public Object getResult() {
+
+    public Object getResult() {
 		return result;
 	}
-	public void setResult(Object result) {
+
+    public void setResult(Object result) {
 		this.result = result;
-	}
+    }
 	public String getResponseCode() {
 		return responseCode;
 	}

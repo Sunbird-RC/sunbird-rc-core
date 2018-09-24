@@ -89,6 +89,9 @@ signature:
   verifyURL: ${verify_url:http://localhost:8013/verify}
   keysURL: ${keys_url:http://localhost:8013/keys}
   domain: ${domain_url:https://w3id.org/security/v1/}
+  schema:
+    config:
+      name: SignatureShape
 
 audit:
   enabled: ${audit_enabled:false}
@@ -171,6 +174,9 @@ signature:
   verifyURL: ${verify_url:http://localhost:8013/verify}
   keysURL: ${keys_url:http://localhost:8013/keys}
   domain: ${domain_url:https://w3id.org/security/v1/}
+  schema:
+    config:
+      name: SignatureShape
 
 audit:
   enabled: false
