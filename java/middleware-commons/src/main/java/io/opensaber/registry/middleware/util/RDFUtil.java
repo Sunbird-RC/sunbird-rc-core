@@ -183,7 +183,7 @@ public class RDFUtil {
        /* Literal literal = ResourceFactory.createTypedLiteral(target.toString(), tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
         ResIterator resIter = model.listSubjectsWithProperty(ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),literal);*/
         Property signCreator = ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR);
-        Property signCreated = ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR);
+        Property signCreated = ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATED_TIMESTAMP);
         Property signValue = ResourceFactory.createProperty(registryContext+Constants.SIGN_SIGNATURE_VALUE);
         RDFDatatype creatorDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATOR);
         RDFDatatype createdDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATED_TIMESTAMP);
@@ -209,7 +209,7 @@ public class RDFUtil {
         	Resource  r = ResourceFactory.createResource();
             model.add(target,ResourceFactory.createProperty(registryContext+Constants.SIGNATURES),r);
             model.add(r,RDF.type, ResourceFactory.createResource(signatureDomain+"GraphSignature2012"));
-            model.add(r, signCreator, keyUrl,creatorDtype);
+            model.add(r, signCreator, keyUrl, creatorDtype);
             model.add(r, signCreated, String.valueOf(entitySignMap.get("createdDate")),createdDtype);
             model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_NONCE), "",tm.getSafeTypeByName(signatureDomain+Constants.SIGN_NONCE));
             model.add(r, signValue, entitySignMap.get("signatureValue").toString(),signValueDtype);
