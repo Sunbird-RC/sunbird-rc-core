@@ -1,6 +1,8 @@
 package io.opensaber.registry.middleware.util;
 
 import io.opensaber.converters.JenaRDF4J;
+
+import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
@@ -173,27 +175,22 @@ public class RDFUtil {
 	}
     
 
-	public static Model getUpdatedSignedModel(Model model, String registryContext, String signatureDomain, Map entitySignMap){
+	public static Model getUpdatedSignedModel(Model model, String registryContext, String signatureDomain, Map entitySignMap, Model signatureModel){
         //model.add
         TypeMapper tm = TypeMapper.getInstance();
         List<Resource> rootLabelList= getRootLabels(model);
         Resource target = rootLabelList.get(0);
-        Literal literal = ResourceFactory.createTypedLiteral(target.toString(), tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
-        ResIterator resIter = model.listSubjectsWithProperty(ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),literal);
-        if(!resIter.hasNext()){
-            Resource  r = ResourceFactory.createResource();
-            model.add(target,ResourceFactory.createProperty(registryContext+Constants.SIGNATURES),r);
-            model.add(r,RDF.type, ResourceFactory.createResource(signatureDomain+"GraphSignature2012"));
-            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR),
-                    "https://example.com/i/pat/keys/"+entitySignMap.get("keyId"),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATOR));
-            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATED_TIMESTAMP),
-                    String.valueOf(entitySignMap.get("createdDate")),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATED_TIMESTAMP));
-            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_NONCE),
-                    "",tm.getSafeTypeByName(signatureDomain+Constants.SIGN_NONCE));
-            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_SIGNATURE_VALUE),
-                    entitySignMap.get("signatureValue").toString(),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_SIGNATURE_VALUE));
-            if(target.isAnon())
-                model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),"#",tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
+       /* Literal literal = ResourceFactory.createTypedLiteral(target.toString(), tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
+        ResIterator resIter = model.listSubjectsWithProperty(ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),literal);*/
+        Property signCreator = ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR);
+        Property signCreated = ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR);
+        Property signValue = ResourceFactory.createProperty(registryContext+Constants.SIGN_SIGNATURE_VALUE);
+        RDFDatatype creatorDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATOR);
+        RDFDatatype createdDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATED_TIMESTAMP);
+        RDFDatatype signValueDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_SIGNATURE_VALUE);
+        String keyUrl = "https://example.com/i/pat/keys/"+entitySignMap.get("keyId");
+        /*if(!resIter.hasNext()){
+            
         } else {
             Resource  r = resIter.next();
             model.removeAll(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR),null);
@@ -207,7 +204,54 @@ public class RDFUtil {
                     entitySignMap.get("signatureValue").toString(),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_SIGNATURE_VALUE));
 
         }
+        */
+        if(signatureModel.isEmpty()){
+        	Resource  r = ResourceFactory.createResource();
+            model.add(target,ResourceFactory.createProperty(registryContext+Constants.SIGNATURES),r);
+            model.add(r,RDF.type, ResourceFactory.createResource(signatureDomain+"GraphSignature2012"));
+            model.add(r, signCreator, keyUrl,creatorDtype);
+            model.add(r, signCreated, String.valueOf(entitySignMap.get("createdDate")),createdDtype);
+            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_NONCE), "",tm.getSafeTypeByName(signatureDomain+Constants.SIGN_NONCE));
+            model.add(r, signValue, entitySignMap.get("signatureValue").toString(),signValueDtype);
+            //if(target.isAnon())
+            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),"#",tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
+        }else{
+        	StmtIterator stmtIter = signatureModel.listStatements();
+        	while(stmtIter.hasNext()){
+        		Statement s = stmtIter.next();
+        		Property prop = s.getPredicate();
+        		Resource subject = s.getSubject();
+        		if(prop.equals(signCreator)){
+        			 model.add(subject, prop, keyUrl,creatorDtype);
+        		}else if(prop.equals(signCreated)){
+        			model.add(subject, prop,String.valueOf(entitySignMap.get("createdDate")),createdDtype);
+        		}else if(prop.equals(signValue)){
+        			model.add(subject, prop, entitySignMap.get("signatureValue").toString(),signValueDtype);
+        		}else{
+        			model.add(s);
+        		}
+        	}
+        }
         return model;
     }
+	
+	public static Model removeAndRetrieveSignature(Model model, String registryContext){
+		Model existingSignatureModel = ModelFactory.createDefaultModel();
+		TypeMapper tm = TypeMapper.getInstance();
+		List<Resource> rootLabelList= getRootLabels(model);
+        Resource target = rootLabelList.get(0);
+        Literal literal = ResourceFactory.createTypedLiteral(target.toString(), tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
+        ResIterator resIter = model.listSubjectsWithProperty(ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),literal);
+        if(resIter.hasNext()){
+        	Resource subject = resIter.next();
+        	StmtIterator iter = model.listStatements(subject, null, (RDFNode)null);
+        	existingSignatureModel = iter.toModel();
+        	model.remove(existingSignatureModel);
+        	Statement s = ResourceFactory.createStatement(target,ResourceFactory.createProperty(registryContext+Constants.SIGNATURES),subject);
+        	model.remove(s);
+        	existingSignatureModel.add(s);
+        }
+        return existingSignatureModel;
+	}
 
 }

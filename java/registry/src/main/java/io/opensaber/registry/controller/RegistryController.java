@@ -18,6 +18,7 @@ import io.opensaber.registry.util.JSONUtil;
 
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,7 +95,7 @@ public class RegistryController {
 				signReq.put("entity",reqMap);
 				Map<String, Object> entitySignMap = (Map<String, Object>)signatureService.sign(signReq);
 				entitySignMap.put("createdDate",rs.getCreatedTimestamp());
-				rdf = RDFUtil.getUpdatedSignedModel(rdf,registryContext,signatureDomain,entitySignMap);
+				rdf = RDFUtil.getUpdatedSignedModel(rdf,registryContext,signatureDomain,entitySignMap, ModelFactory.createDefaultModel());
 			}
 			String label = registryService.addEntity(rdf, id, property);
 			result.put("entity", label);
