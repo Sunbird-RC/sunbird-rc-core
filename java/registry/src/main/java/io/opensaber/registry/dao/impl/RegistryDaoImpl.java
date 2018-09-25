@@ -280,7 +280,7 @@ public class RegistryDaoImpl implements RegistryDao {
     						Edge edgeForSignature = dbEdgesForVertex.get(0);
     						newV = edgeForSignature.outVertex();
     					}else{
-    						if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !isIRI(ver.label())) {
+    						if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !edgeLabel.equalsIgnoreCase(registryContext+Constants.SIGNATURES)) {
         						throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
         					}
     						String label = generateBlankNodeLabel(ver.label());

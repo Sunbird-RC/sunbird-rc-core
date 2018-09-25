@@ -188,7 +188,7 @@ public class RDFUtil {
         RDFDatatype creatorDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATOR);
         RDFDatatype createdDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATED_TIMESTAMP);
         RDFDatatype signValueDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_SIGNATURE_VALUE);
-        String keyUrl = "https://example.com/i/pat/keys/"+entitySignMap.get("keyId");
+        String keyUrl =entitySignMap.get("keyUrl").toString()+entitySignMap.get("keyId");
         /*if(!resIter.hasNext()){
             
         } else {

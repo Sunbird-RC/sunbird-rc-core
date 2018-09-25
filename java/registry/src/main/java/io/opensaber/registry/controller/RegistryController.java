@@ -1,9 +1,6 @@
 package io.opensaber.registry.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.jsonldjava.core.JsonLdOptions;
-import com.github.jsonldjava.core.JsonLdProcessor;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.*;
@@ -15,7 +12,6 @@ import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.util.JSONUtil;
-
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -31,7 +27,6 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -67,6 +62,9 @@ public class RegistryController {
 
 	@Value("${signature.enabled}")
 	private boolean signatureEnabled;
+
+	@Value("${signature.keysURL}")
+	private String signatureKeyURl;
 	
 	@Value("${frame.file}")
     private String frameFile;
@@ -95,6 +93,7 @@ public class RegistryController {
 				signReq.put("entity",reqMap);
 				Map<String, Object> entitySignMap = (Map<String, Object>)signatureService.sign(signReq);
 				entitySignMap.put("createdDate",rs.getCreatedTimestamp());
+				entitySignMap.put("keyUrl",signatureKeyURl);
 				rdf = RDFUtil.getUpdatedSignedModel(rdf,registryContext,signatureDomain,entitySignMap, ModelFactory.createDefaultModel());
 			}
 			String label = registryService.addEntity(rdf, id, property);

@@ -17,7 +17,7 @@ public interface RegistryService {
 	public String addEntity(Model rdfModel, String subject, String property) throws DuplicateRecordException, EntityCreationException, 
 	EncryptionException, AuditFailedException, MultipleEntityException, RecordNotFoundException;
 	
-	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException;
+	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException, IOException, SignatureException.CreationException;
 	
 	public Model getEntityById(String id, boolean includeSignatures) throws RecordNotFoundException, EncryptionException, AuditFailedException;
 	

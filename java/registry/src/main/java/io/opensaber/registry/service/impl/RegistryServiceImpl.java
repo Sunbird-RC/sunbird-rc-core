@@ -7,27 +7,21 @@ import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.*;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.model.RegistrySignature;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.GraphDBFactory;
+import io.opensaber.registry.util.JSONUtil;
 import io.opensaber.utils.converters.RDF2Graph;
-
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.rdf.model.Literal;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.NodeIterator;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.*;
 import org.apache.jena.riot.JsonLDWriteContext;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WriterDatasetRIOT;
@@ -45,11 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 
 @Component
@@ -77,6 +67,12 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Value("${signature.enabled}")
     private boolean signatureEnabled;
+
+	@Value("${signature.domain}")
+	private String signatureDomain;
+
+	@Value("${signature.keysURL}")
+	private String signatureKeyURl;
 	
 	@Value("${frame.file}")
 	private String frameFile;
@@ -89,6 +85,9 @@ public class RegistryServiceImpl implements RegistryService {
 	
 	@Value("${registry.system.base}")
 	private String registrySystemBase;
+
+	@Value("${registry.rootEntity.type}")
+	private String registryRootEntityType;
 
 	@Override
 	public List getEntityList(){
@@ -119,15 +118,45 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException {
+	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException, EncryptionException, AuditFailedException, MultipleEntityException,
+			SignatureException.UnreachableException, IOException, SignatureException.CreationException {
+		boolean isUpdated;
 		Resource root = getRootNode(entity);
 		String label = getRootLabel(root);
-		if(encryptionEnabled){
-			encryptModel(entity);
+		String rootType = getTypeForRootLabel(entity,root);
+		if(rootType.equalsIgnoreCase(registryContextBase+registryRootEntityType)){
+			if(encryptionEnabled){
+				encryptModel(entity);
+			}
+			Graph graph = generateGraphFromRDF(entity);
+			logger.debug("Service layer graph :", graph);
+			isUpdated =  registryDao.updateEntity(graph, label, "update");
+			if(signatureEnabled) {
+				getEntityAndUpdateSign(entity, label);
+			}
+		} else {
+			logger.error("Exception while updating entity");
+			throw new UnsupportedOperationException();
 		}
-		Graph graph = generateGraphFromRDF(entity);
-		logger.debug("Service layer graph :", graph);
-		return registryDao.updateEntity(graph, label, "update");
+
+		return isUpdated;
+	}
+
+	void getEntityAndUpdateSign(Model entity,String label) throws EncryptionException, AuditFailedException, RecordNotFoundException, EntityCreationException, IOException,
+			MultipleEntityException, SignatureException.UnreachableException, SignatureException.CreationException {
+		final String ID_REGEX = "\"@id\"\\s*:\\s*\"[a-z]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",";
+		Map signReq  = new HashMap<String, Object>();
+		RegistrySignature rs = new RegistrySignature();
+		Model jenaEntityModel = getEntityById(label, true);
+		//remove sign part from model
+		Model signatureModel = RDFUtil.removeAndRetrieveSignature(jenaEntityModel,registryContextBase);
+		String jenaJSON = frameEntity(jenaEntityModel);
+		signReq.put("entity",JSONUtil.getStringWithReplacedText(jenaJSON,ID_REGEX, StringUtils.EMPTY));
+		Map<String, Object> entitySignMap = (Map<String, Object>) signatureService.sign(signReq);
+		entitySignMap.put("createdDate",rs.getCreatedTimestamp());
+		entitySignMap.put("keyUrl",signatureKeyURl);
+		Graph graph = generateGraphFromRDF(RDFUtil.getUpdatedSignedModel(entity,registryContextBase,signatureDomain,entitySignMap,signatureModel));
+		registryDao.updateEntity(graph, label, "update");
 	}
 
 

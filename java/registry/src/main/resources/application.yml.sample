@@ -21,6 +21,8 @@ registry:
     base: ${registry_context_base:http://localhost:8080/}
   system:
     base: ${registry_system_base:http://localhost:8080/opensaber/}
+  rootEntity:
+        type: ${registry_rootentity_type:Teacher}
 
 #This refers to the opensaber schema configuration JSON-LD file
 config:
@@ -128,6 +130,8 @@ registry:
     base: http://example.com/voc/teacher/1.0.0/
   system:
     base: http://example.com/voc/opensaber/
+  rootEntity:
+            type: ${registry_rootentity_type:Teacher}
 
 #This refers to the opensaber schema configuration JSON-LD file
 config:
