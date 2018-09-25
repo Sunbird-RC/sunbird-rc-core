@@ -279,16 +279,17 @@ public class RegistryDaoImpl implements RegistryDao {
     							&& dbEdgesForVertex.size() > 0){
     						Edge edgeForSignature = dbEdgesForVertex.get(0);
     						newV = edgeForSignature.outVertex();
+    						parsedVertices.push(new Pair<>(ver, newV));
     					}else{
     						if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !edgeLabel.equalsIgnoreCase(registryContext+Constants.SIGNATURES)) {
         						throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
         					}
     						String label = generateBlankNodeLabel(ver.label());
     						newV = dbGraph.addV(label).next();
+    						//Existing logic moved to this method to avoid duplicate code
+        					parsedVertices = addEdgeForAVertex(ver, idForSignature, newV, dbGraph, methodOrigin, edgeLabel, direction, 
+        							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
     					}
-    					//Existing logic moved to this method to avoid duplicate code
-    					parsedVertices = addEdgeForAVertex(ver, idForSignature, newV, dbGraph, methodOrigin, edgeLabel, direction, 
-    							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
     				}
     			}
     		}
