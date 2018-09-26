@@ -13,7 +13,6 @@ teacher:isADecimal xsd:decimal
 teacher:isACreator sc:creator
 teacher:isAnyURI xsd:anyURI
 teacher:isACreated sc:created
-teacher:isADomain sc:domain
 teacher:isANonce sc:nonce
 teacher:isASignatureValue sc:signatureValue
 
@@ -77,7 +76,6 @@ teacher:SignatureShape CLOSED {
 	teacher:signatureFor @teacher:isAnyURI ;
 	teacher:creator @teacher:isACreator ;
 	teacher:created @teacher:isACreated ;
-	teacher:domain @teacher:isADomain ;
 	teacher:nonce @teacher:isANonce ;
 	teacher:signatureValue @teacher:isASignatureValue
 }
