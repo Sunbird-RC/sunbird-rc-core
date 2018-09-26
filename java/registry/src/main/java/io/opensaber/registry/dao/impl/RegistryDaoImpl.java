@@ -60,6 +60,9 @@ public class RegistryDaoImpl implements RegistryDao {
     @Value("${authentication.enabled}")
     private boolean authenticationEnabled;
 
+    @Value("${registry.rootEntity.type}")
+    private String registryRootEntityType;
+
     @Autowired
     private OpenSaberInstrumentation watch;
     
@@ -642,6 +645,15 @@ public class RegistryDaoImpl implements RegistryDao {
                 watch.start("RegistryDaoImpl.deleteEntityById");
                 logger.debug("Record exists for label : {}", idLabel);
                 Vertex s = hasLabel.next();
+                //Temporary fix for allowing delete on parent entity node only, not on sub-entity nodes
+                Iterator<Edge> edges = s.edges(Direction.OUT,Constants.RDF_URL_SYNTAX_TYPE);
+                if(edges.hasNext()){
+                    Edge typeEdge =  edges.next();
+                    if(!typeEdge.inVertex().label().equalsIgnoreCase(registryContext+registryRootEntityType)){
+                        throw new UnsupportedOperationException(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);
+                    }
+                }
+
                 if(s.property(registryContext+Constants.STATUS_KEYWORD).isPresent() && Constants.STATUS_INACTIVE.equals(s.value(registryContext+Constants.STATUS_KEYWORD))){
                     throw new UnsupportedOperationException(Constants.DELETE_UNSUPPORTED_OPERATION_ON_ENTITY);
                 } else {
