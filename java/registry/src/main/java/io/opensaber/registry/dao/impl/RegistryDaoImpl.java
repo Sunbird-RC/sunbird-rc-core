@@ -286,7 +286,7 @@ public class RegistryDaoImpl implements RegistryDao {
     						newV = edgeForSignature.outVertex();
     						parsedVertices.push(new Pair<>(ver, newV));
     					}else{
-    						if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !edgeLabel.equalsIgnoreCase(registryContext+Constants.SIGNATURES)) {
+    						if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !edgeLabel.equalsIgnoreCase(registryContext+Constants.SIGNATURES) && !isIRI(ver.label())) {
     							throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
     						}
     						if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)){
