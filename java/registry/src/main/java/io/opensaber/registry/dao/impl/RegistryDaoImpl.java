@@ -243,6 +243,8 @@ public class RegistryDaoImpl implements RegistryDao {
     		List<Edge> edgeVertexMatchList, Direction direction, GraphTraversalSource dbGraph, String methodOrigin, Vertex dbVertex)
     				throws NoSuchElementException, EncryptionException, AuditFailedException, RecordNotFoundException{
     	Stack<Pair<Vertex, Vertex>> parsedVertices = new Stack<>();
+    	String signatureOf = registryContext+Constants.SIGNATURE_OF;
+    	String signatureFor = registryContext+Constants.SIGNATURE_FOR;
     	while (edgeList.hasNext()) {
     		Edge e = edgeList.next();
     		String edgeLabel = e.label();
@@ -256,7 +258,7 @@ public class RegistryDaoImpl implements RegistryDao {
     	logger.debug("RegistryDaoImpl : Matching list size:" + edgeVertexMatchList.size());
     	while (edges.hasNext()) {
     		Edge e = edges.next();
-    		if((direction.equals(Direction.OUT) && !e.label().equals(registryContext+Constants.SIGNATURE_OF)) ||
+    		if((direction.equals(Direction.OUT) && !e.label().equals(signatureOf)) ||
     				direction.equals(Direction.IN)){
     			Iterator<Vertex> verIter = e.vertices(direction.opposite());
     			if(verIter.hasNext()){
@@ -265,7 +267,10 @@ public class RegistryDaoImpl implements RegistryDao {
     				Optional<Edge> edgeAlreadyExists =
     						dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(e.label())).findFirst();
     				Optional<Edge> edgeVertexAlreadyExists = doesEdgeAndVertexAlreadyExist(direction, e, dbEdgesForVertex, edgeLabel);
-    				verifyAndDelete(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
+    				updateSignatureWithEncAttribute(ver, idForSignature);
+    				if(!e.label().equalsIgnoreCase(registryContext+Constants.SIGNATURES)){
+    					verifyAndDelete(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
+    				}
     				GraphTraversal<Vertex, Vertex> gt = dbGraph.clone().V().hasLabel(ver.label());
     				if (gt.hasNext()) {
     					Vertex existingV = gt.next();
@@ -275,20 +280,31 @@ public class RegistryDaoImpl implements RegistryDao {
     							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
     				} else {
     					Vertex newV = null;
-    					if(methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && edgeLabel.equalsIgnoreCase(registryContext+Constants.SIGNATURE_OF)
+    					if(methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && edgeLabel.equalsIgnoreCase(signatureOf)
     							&& dbEdgesForVertex.size() > 0){
     						Edge edgeForSignature = dbEdgesForVertex.get(0);
     						newV = edgeForSignature.outVertex();
     						parsedVertices.push(new Pair<>(ver, newV));
     					}else{
     						if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && !edgeLabel.equalsIgnoreCase(registryContext+Constants.SIGNATURES)) {
-        						throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
-        					}
-    						String label = generateBlankNodeLabel(ver.label());
-    						newV = dbGraph.addV(label).next();
-    						//Existing logic moved to this method to avoid duplicate code
-        					parsedVertices = addEdgeForAVertex(ver, idForSignature, newV, dbGraph, methodOrigin, edgeLabel, direction, 
-        							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
+    							throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
+    						}
+    						if (methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN)){
+    							VertexProperty vp = ver.property(signatureFor);
+    							if(vp.isPresent()){
+    								GraphTraversal<Vertex, Vertex> gtExistingSignature = dbGraph.clone().V().has(signatureFor, ver.property(signatureFor).value().toString());
+    								if(gtExistingSignature.hasNext()){
+    									newV = gtExistingSignature.next();
+    								}
+    							}
+    						}
+    						if(newV == null){
+    							String label = generateBlankNodeLabel(ver.label());
+    							newV = dbGraph.addV(label).next();
+    							//Existing logic moved to this method to avoid duplicate code
+    							parsedVertices = addEdgeForAVertex(ver, idForSignature, newV, dbGraph, methodOrigin, edgeLabel, direction, 
+    									parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
+    						}
     					}
     				}
     			}
@@ -321,7 +337,7 @@ public class RegistryDaoImpl implements RegistryDao {
     				throws AuditFailedException, EncryptionException{
     	setAuditInfo(ver, true);
     	logger.debug(String.format("RegistryDaoImpl : Adding vertex with label {} and adding properties", newV.label()));
-    	//The below if condition is to encode the value for signatureFor field
+    	/*//The below if condition is to encode the value for signatureFor field
     	if(ver.property(registryContext+Constants.SIGNATURE_FOR).isPresent()){
     		String vertexPropertValue = ver.property(registryContext+Constants.SIGNATURE_FOR).value().toString();
     		Iterator<Property<Object>> metaPropertyIter = ver.property(registryContext+Constants.SIGNATURE_FOR).properties();
@@ -332,7 +348,7 @@ public class RegistryDaoImpl implements RegistryDao {
     			vp.property(metaProp.key(), metaProp.value());
     		}
     		
-    	}
+    	}*/
     	copyProperties(ver, newV, methodOrigin);
     	logger.debug(String.format("RegistryDaoImpl : Adding edge with label {} for the vertex label {}.", e.label(), newV.label()));
     	if (!edgeVertexAlreadyExists.isPresent()) {
@@ -386,6 +402,20 @@ public class RegistryDaoImpl implements RegistryDao {
         	addOrUpdateVertexAndEdge(pv.getValue0(), idForSignature, pv.getValue1(), dbGraph, methodOrigin, Direction.OUT);
         }
 
+    }
+    
+    private void updateSignatureWithEncAttribute(Vertex ver, String idForSignature){
+    	//The below if condition is to encode the value for signatureFor field
+    	if(ver.property(registryContext+Constants.SIGNATURE_FOR).isPresent()){
+    		String vertexPropertValue = ver.property(registryContext+Constants.SIGNATURE_FOR).value().toString();
+    		Iterator<Property<Object>> metaPropertyIter = ver.property(registryContext+Constants.SIGNATURE_FOR).properties();
+    		String newPropValue = encodeAttributeForSignature(vertexPropertValue, idForSignature);
+    		VertexProperty vp = ver.property(registryContext+Constants.SIGNATURE_FOR, newPropValue);
+    		while(metaPropertyIter.hasNext()){
+    			Property metaProp = metaPropertyIter.next();
+    			vp.property(metaProp.key(), metaProp.value());
+    		}
+    	}
     }
     
     private String encodeAttributeForSignature(String value, String idForSignature){
