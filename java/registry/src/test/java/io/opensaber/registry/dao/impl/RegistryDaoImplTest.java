@@ -1019,7 +1019,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
         checkIfAuditRecordsAreRight(updatedGraphResult,generateUpdateMapFromRDF(updateRdfModelWithoutType, deletedFacts));
 
 		assertTrue(updatedGraphResult.traversal().E().hasLabel("http://example.com/voc/teacher/1.0.0/area").hasNext());
-		assertEquals(updatedGraphResult.traversal().E().hasLabel("http://example.com/voc/teacher/1.0.0/area").next().inVertex().label(),"http://example.com/voc/teacher/1.0.0/AreaTypeCode-RURAL");
+		assertEquals("http://example.com/voc/teacher/1.0.0/AreaTypeCode-RURAL", updatedGraphResult.traversal().E().hasLabel("http://example.com/voc/teacher/1.0.0/area").next().inVertex().label());
 	}
 	
 	@Test
