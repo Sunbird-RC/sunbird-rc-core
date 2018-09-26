@@ -1,30 +1,15 @@
 package io.opensaber.registry.controller;
 
-import com.github.jsonldjava.core.JsonLdOptions;
-import com.github.jsonldjava.core.JsonLdProcessor;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-
-import io.opensaber.pojos.Entity;
-import io.opensaber.pojos.HealthCheckResponse;
-import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.pojos.Request;
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.ResponseParams;
+import io.opensaber.pojos.*;
 import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.util.JSONUtil;
-
-import org.apache.commons.lang.StringUtils;
+import io.opensaber.registry.util.ResponseUtil;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,15 +22,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @RestController
 public class RegistryUtilsController {
@@ -79,12 +60,20 @@ public class RegistryUtilsController {
         Response response = new Response(Response.API_ID.SIGN, "OK", responseParams);
 
         try {
-            Gson gson = new Gson();
-            Object payload = gson.fromJson(requestModel.getReader(), Object.class);
-            Object result = signatureService.sign(payload);
-            response.setResult(JSONUtil.convertObjectJsonMap(result));
-            responseParams.setErrmsg("");
-            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
+            baseRequestHandler.setRequest(requestModel);
+            Map<String,Object> requestBodyMap = baseRequestHandler.getRequestBodyMap();
+           // Gson gson = new Gson();
+            if(requestBodyMap.containsKey(Constants.REQUEST_ATTRIBUTE) && requestBodyMap.containsKey(Constants.ATTRIBUTE_NAME)
+                    && ResponseUtil.checkApiId((Request)requestBodyMap.get(Constants.REQUEST_ATTRIBUTE),Response.API_ID.SIGN.getId())){
+                Object result = signatureService.sign(gson.fromJson(requestBodyMap.get(Constants.ATTRIBUTE_NAME).toString(),mapType));
+                response.setResult(JSONUtil.convertObjectJsonMap(result));
+                responseParams.setErrmsg("");
+                responseParams.setStatus(Response.Status.SUCCESSFUL);
+            } else {
+                responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                responseParams.setErrmsg("");
+            }
         } catch (Exception e) {
             logger.error("Error in generating signature", e);
             HealthCheckResponse healthCheckResult =
