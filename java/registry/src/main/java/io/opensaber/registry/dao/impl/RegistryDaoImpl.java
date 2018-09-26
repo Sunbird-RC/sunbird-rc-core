@@ -267,6 +267,7 @@ public class RegistryDaoImpl implements RegistryDao {
     				Optional<Edge> edgeAlreadyExists =
     						dbEdgesForVertex.stream().filter(ed -> ed.label().equalsIgnoreCase(e.label())).findFirst();
     				Optional<Edge> edgeVertexAlreadyExists = doesEdgeAndVertexAlreadyExist(direction, e, dbEdgesForVertex, edgeLabel);
+    				boolean edgeVertexExist = edgeVertexAlreadyExists.isPresent();
     				updateSignatureWithEncAttribute(ver, idForSignature);
     				if(!e.label().equalsIgnoreCase(registryContext+Constants.SIGNATURES)){
     					verifyAndDelete(dbVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
@@ -277,7 +278,7 @@ public class RegistryDaoImpl implements RegistryDao {
     					logger.info(String.format("Vertex with label {} already exists. Updating properties for the vertex", existingV.label()));
     					//Existing logic moved to this method to avoid duplicate code
     					parsedVertices = addEdgeForAVertex(ver, idForSignature, existingV, dbGraph, methodOrigin, edgeLabel, direction, 
-    							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
+    							parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexExist);
     				} else {
     					Vertex newV = null;
     					if(methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN) && edgeLabel.equalsIgnoreCase(signatureOf)
@@ -295,6 +296,9 @@ public class RegistryDaoImpl implements RegistryDao {
     								GraphTraversal<Vertex, Vertex> gtExistingSignature = dbGraph.clone().V().has(signatureFor, ver.property(signatureFor).value().toString());
     								if(gtExistingSignature.hasNext()){
     									newV = gtExistingSignature.next();
+    									//passing edgeVertexExist parameter below as true for signature based on the existence of same signatureFor field
+    									parsedVertices = addEdgeForAVertex(ver, idForSignature, newV, dbGraph, methodOrigin, edgeLabel, direction, 
+    	    									parsedVertices, dbVertex, e, edgeVertexMatchList, true);
     								}
     							}
     						}
@@ -303,7 +307,7 @@ public class RegistryDaoImpl implements RegistryDao {
     							newV = dbGraph.addV(label).next();
     							//Existing logic moved to this method to avoid duplicate code
     							parsedVertices = addEdgeForAVertex(ver, idForSignature, newV, dbGraph, methodOrigin, edgeLabel, direction, 
-    									parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexAlreadyExists);
+    									parsedVertices, dbVertex, e, edgeVertexMatchList, edgeVertexExist);
     						}
     					}
     				}
@@ -327,13 +331,13 @@ public class RegistryDaoImpl implements RegistryDao {
      * @param dbVertex
      * @param e
      * @param edgeVertexMatchList
-     * @param edgeVertexAlreadyExists
+     * @param edgeVertexExist
      * @return
      * @throws AuditFailedException
      * @throws EncryptionException
      */
     private Stack<Pair<Vertex, Vertex>> addEdgeForAVertex(Vertex ver, String idForSignature, Vertex newV, GraphTraversalSource dbGraph, String methodOrigin,String edgeLabel, 
-    		Direction direction, Stack<Pair<Vertex, Vertex>> parsedVertices, Vertex dbVertex, Edge e, List<Edge> edgeVertexMatchList, Optional<Edge> edgeVertexAlreadyExists) 
+    		Direction direction, Stack<Pair<Vertex, Vertex>> parsedVertices, Vertex dbVertex, Edge e, List<Edge> edgeVertexMatchList, boolean edgeVertexExist) 
     				throws AuditFailedException, EncryptionException{
     	setAuditInfo(ver, true);
     	logger.debug(String.format("RegistryDaoImpl : Adding vertex with label {} and adding properties", newV.label()));
@@ -351,7 +355,7 @@ public class RegistryDaoImpl implements RegistryDao {
     	}*/
     	copyProperties(ver, newV, methodOrigin);
     	logger.debug(String.format("RegistryDaoImpl : Adding edge with label {} for the vertex label {}.", e.label(), newV.label()));
-    	if (!edgeVertexAlreadyExists.isPresent()) {
+    	if (!edgeVertexExist) {
     		Edge edgeAdded;
     		if(direction.equals(Direction.IN)){
     			edgeAdded = newV.addEdge(edgeLabel, dbVertex);
