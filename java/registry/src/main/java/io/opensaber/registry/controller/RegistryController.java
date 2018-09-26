@@ -209,7 +209,7 @@ public class RegistryController {
 		} catch (Exception e) {
 			logger.error("RegistryController: Exception while updating entity (without id)!", e);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg("Error occurred when updating Entity");
+			responseParams.setErrmsg(e.getMessage());
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
