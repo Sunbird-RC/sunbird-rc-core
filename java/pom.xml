@@ -6,7 +6,7 @@
     <groupId>io.opensaber</groupId>
     <artifactId>opensaber</artifactId>
     <version>1.0.0</version>
-    <name>Software for Open Registries</name>
+    <name>Open Software Archetype for Building Electronic Registries</name>
     <packaging>pom</packaging>
 
     <properties>

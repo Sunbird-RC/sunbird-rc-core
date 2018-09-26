@@ -136,7 +136,7 @@ public class RegistryServiceImpl implements RegistryService {
 			}
 		} else {
 			logger.error("Exception while updating entity");
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Updates to child entity not supported");
 		}
 
 		return isUpdated;
