@@ -30,10 +30,8 @@ import java.util.Map;
 
 @RestController
 public class RegistryUtilsController {
-	
-	private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"[a-z]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",";
-	//private static final String ID_REGEX2 = "\"@id\"\\s*:\\s*\".*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",";
-	private static final String ID_REGEX2 = "\"@id\"\\s*:\\s*\"_:[a-z][0-9]+\",";
+
+    private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"[a-z]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",";
 
     private static Logger logger = LoggerFactory.getLogger(RegistryUtilsController.class);
 
@@ -44,13 +42,13 @@ public class RegistryUtilsController {
     @Autowired
     private SignatureService signatureService;
 
-	@Autowired
-	private OpenSaberInstrumentation watch;
-	
-	@Value("${registry.context.base}")
+    @Autowired
+    private OpenSaberInstrumentation watch;
+
+    @Value("${registry.context.base}")
     private String registryContext;
-	
-	@Value("${frame.file}")
+
+    @Value("${frame.file}")
     private String frameFile;
 
 
@@ -63,7 +61,6 @@ public class RegistryUtilsController {
             BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
             baseRequestHandler.setRequest(requestModel);
             Map<String,Object> requestBodyMap = baseRequestHandler.getRequestBodyMap();
-           // Gson gson = new Gson();
             if(requestBodyMap.containsKey(Constants.REQUEST_ATTRIBUTE) && requestBodyMap.containsKey(Constants.ATTRIBUTE_NAME)
                     && ResponseUtil.checkApiId((Request)requestBodyMap.get(Constants.REQUEST_ATTRIBUTE),Response.API_ID.SIGN.getId())){
                 Object result = signatureService.sign(gson.fromJson(requestBodyMap.get(Constants.ATTRIBUTE_NAME).toString(),mapType));
@@ -99,7 +96,6 @@ public class RegistryUtilsController {
             	JsonObject obj = gson.fromJson(payload, JsonObject.class);
             	Entity entity = gson.fromJson(obj.get("entity"), Entity.class);
             	String jsonldToExpand = gson.toJson(entity.getClaim());
-            	//jsonldToExpand = JSONUtil.getStringWithReplacedText(jsonldToExpand, ID_REGEX, StringUtils.EMPTY);
             	InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
 				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
             	Map<String,Object> framedJsonLD = JSONUtil.frameJsonAndRemoveIds(ID_REGEX, jsonldToExpand, gson, fileString);

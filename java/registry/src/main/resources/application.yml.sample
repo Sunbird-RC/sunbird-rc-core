@@ -89,7 +89,7 @@ signature:
   healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
   signURL: ${sign_url:http://localhost:8013/sign}
   verifyURL: ${verify_url:http://localhost:8013/verify}
-  keysURL: ${keys_url:http://localhost:8013/keys}
+  keysURL: ${keys_url:http://localhost:8013/keys/}
   domain: ${domain_url:https://w3id.org/security/v1/}
   schema:
     config:
@@ -176,7 +176,7 @@ signature:
   healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
   signURL: ${sign_url:http://localhost:8013/sign}
   verifyURL: ${verify_url:http://localhost:8013/verify}
-  keysURL: ${keys_url:http://localhost:8013/keys}
+  keysURL: ${keys_url:http://localhost:8013/keys/}
   domain: ${domain_url:https://w3id.org/security/v1/}
   schema:
     config:

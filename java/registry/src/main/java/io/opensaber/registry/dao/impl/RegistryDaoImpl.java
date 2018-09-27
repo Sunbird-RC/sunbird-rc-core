@@ -344,18 +344,6 @@ public class RegistryDaoImpl implements RegistryDao {
     				throws AuditFailedException, EncryptionException{
     	setAuditInfo(ver, true);
     	logger.debug(String.format("RegistryDaoImpl : Adding vertex with label {} and adding properties", newV.label()));
-    	/*//The below if condition is to encode the value for signatureFor field
-    	if(ver.property(registryContext+Constants.SIGNATURE_FOR).isPresent()){
-    		String vertexPropertValue = ver.property(registryContext+Constants.SIGNATURE_FOR).value().toString();
-    		Iterator<Property<Object>> metaPropertyIter = ver.property(registryContext+Constants.SIGNATURE_FOR).properties();
-    		String newPropValue = encodeAttributeForSignature(vertexPropertValue, idForSignature);
-    		VertexProperty vp = ver.property(registryContext+Constants.SIGNATURE_FOR, newPropValue);
-    		while(metaPropertyIter.hasNext()){
-    			Property metaProp = metaPropertyIter.next();
-    			vp.property(metaProp.key(), metaProp.value());
-    		}
-    		
-    	}*/
     	copyProperties(ver, newV, methodOrigin);
     	logger.debug(String.format("RegistryDaoImpl : Adding edge with label {} for the vertex label {}.", e.label(), newV.label()));
     	if (!edgeVertexExist) {
@@ -434,29 +422,6 @@ public class RegistryDaoImpl implements RegistryDao {
     	String encodedBegin = value.substring(0,value.lastIndexOf(Constants.FORWARD_SLASH)+1);
     	return encodedBegin+uuid+encodedEnd;
     }
-
-	/*private void deleteEdgeAndNode(Vertex dbVertex, Edge e, Optional<Edge> edgeAlreadyExists,List<Edge> edgeVertexMatchList, String methodOrigin)
-	 throws AuditFailedException, RecordNotFoundException{
-
-		Graph graphFromStore = databaseProvider.getGraphStore();
-    	GraphTraversalSource traversalSource = graphFromStore.traversal();
-    	GraphTraversal<Vertex, Vertex> dbHasLabel = traversalSource.clone().V().hasLabel(dbVertex.label());
-    	if (!dbHasLabel.hasNext()) {
-    		throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
-    	}
-    	boolean isSingleValued = schemaConfigurator.isSingleValued(e.label());
-    	if(dbHasLabel.hasNext()){
-    		Vertex dbSourceVertex = dbHasLabel.next();
-    		if (graphFromStore.features().graph().supportsTransactions()) {
-    			org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
-    			tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-    			deleteEdgeAndNode(isSingleValued, dbSourceVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
-    			tx.commit();
-    		}else{
-    			deleteEdgeAndNode(isSingleValued, dbSourceVertex, e, edgeAlreadyExists, edgeVertexMatchList, methodOrigin);
-    		}
-    	}
-	}*/
 
 
     /**

@@ -33,7 +33,7 @@ import java.util.Map;
 public class RegistryController {
 
 	private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
-	
+
 	private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"_:[a-z][0-9]+\",";
 
 	@Autowired
@@ -52,7 +52,8 @@ public class RegistryController {
 	private String registryContext;
 
 	private Gson gson = new Gson();
-	private Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
+	private Type mapType = new TypeToken<Map<String, Object>>() {
+	}.getType();
 
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
@@ -65,9 +66,9 @@ public class RegistryController {
 
 	@Value("${signature.keysURL}")
 	private String signatureKeyURl;
-	
+
 	@Value("${frame.file}")
-    private String frameFile;
+	private String frameFile;
 
 	@Autowired
 	private OpenSaberInstrumentation watch;

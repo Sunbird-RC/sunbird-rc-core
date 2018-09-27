@@ -173,38 +173,30 @@ public class RDFUtil {
 		RDFDataMgr.write(sw, validationRdf, Lang.TTL);
 		return sw.toString();
 	}
-    
 
+
+    /**
+     * This Method return updated model after adding signature statements if it not there else it will update existing signature value
+     * @param model
+     * @param registryContext
+     * @param signatureDomain
+     * @param entitySignMap
+     * @param signatureModel
+     * @return Model
+     */
 	public static Model getUpdatedSignedModel(Model model, String registryContext, String signatureDomain, Map entitySignMap, Model signatureModel){
-        //model.add
         TypeMapper tm = TypeMapper.getInstance();
         List<Resource> rootLabelList= getRootLabels(model);
         Resource target = rootLabelList.get(0);
-       /* Literal literal = ResourceFactory.createTypedLiteral(target.toString(), tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
-        ResIterator resIter = model.listSubjectsWithProperty(ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),literal);*/
         Property signCreator = ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR);
         Property signCreated = ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATED_TIMESTAMP);
         Property signValue = ResourceFactory.createProperty(registryContext+Constants.SIGN_SIGNATURE_VALUE);
         RDFDatatype creatorDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATOR);
         RDFDatatype createdDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATED_TIMESTAMP);
         RDFDatatype signValueDtype = tm.getSafeTypeByName(signatureDomain+Constants.SIGN_SIGNATURE_VALUE);
-        String keyUrl =entitySignMap.get("keyUrl").toString()+entitySignMap.get("keyId");
-        /*if(!resIter.hasNext()){
-            
-        } else {
-            Resource  r = resIter.next();
-            model.removeAll(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR),null);
-            model.removeAll(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATED_TIMESTAMP),null);
-            model.removeAll(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_SIGNATURE_VALUE),null);
-            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATOR),
-                    "https://example.com/i/pat/keys/"+entitySignMap.get("keyId"),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATOR));
-            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_CREATED_TIMESTAMP),
-                    String.valueOf(entitySignMap.get("createdDate")),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_CREATED_TIMESTAMP));
-            model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_SIGNATURE_VALUE),
-                    entitySignMap.get("signatureValue").toString(),tm.getSafeTypeByName(signatureDomain+Constants.SIGN_SIGNATURE_VALUE));
+        Double keyId = (Double)entitySignMap.get("keyId");
+        String keyUrl =entitySignMap.get("keyUrl").toString()+keyId.intValue();
 
-        }
-        */
         if(signatureModel.isEmpty()){
         	Resource  r = ResourceFactory.createResource();
             model.add(target,ResourceFactory.createProperty(registryContext+Constants.SIGNATURES),r);
@@ -213,7 +205,6 @@ public class RDFUtil {
             model.add(r, signCreated, String.valueOf(entitySignMap.get("createdDate")),createdDtype);
             model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGN_NONCE), "",tm.getSafeTypeByName(signatureDomain+Constants.SIGN_NONCE));
             model.add(r, signValue, entitySignMap.get("signatureValue").toString(),signValueDtype);
-            //if(target.isAnon())
             model.add(r, ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR),"#",tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI"));
         }else{
         	StmtIterator stmtIter = signatureModel.listStatements();
@@ -234,7 +225,13 @@ public class RDFUtil {
         }
         return model;
     }
-	
+
+    /**
+     * This Method filter Signature statements from the root model and returns root signature model separately
+     * @param model
+     * @param registryContext
+     * @return model
+     */
 	public static Model removeAndRetrieveSignature(Model model, String registryContext){
 		Model existingSignatureModel = ModelFactory.createDefaultModel();
 		TypeMapper tm = TypeMapper.getInstance();

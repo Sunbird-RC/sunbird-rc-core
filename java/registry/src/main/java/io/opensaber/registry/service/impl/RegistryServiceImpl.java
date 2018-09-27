@@ -142,6 +142,19 @@ public class RegistryServiceImpl implements RegistryService {
 		return isUpdated;
 	}
 
+	/**
+	 * This method will get entity details and sign the entity and will update
+	 * @param entity
+	 * @param label
+	 * @throws EncryptionException
+	 * @throws AuditFailedException
+	 * @throws RecordNotFoundException
+	 * @throws EntityCreationException
+	 * @throws IOException
+	 * @throws MultipleEntityException
+	 * @throws SignatureException.UnreachableException
+	 * @throws SignatureException.CreationException
+	 */
 	void getEntityAndUpdateSign(Model entity,String label) throws EncryptionException, AuditFailedException, RecordNotFoundException, EntityCreationException, IOException,
 			MultipleEntityException, SignatureException.UnreachableException, SignatureException.CreationException {
 		final String ID_REGEX = "\"@id\"\\s*:\\s*\"[a-z]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",";
