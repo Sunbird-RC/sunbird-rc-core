@@ -1,14 +1,20 @@
 package io.opensaber.registry.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.*;
 import io.opensaber.registry.exception.*;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.model.RegistrySignature;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
+import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.util.JSONUtil;
+import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +23,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,20 +34,41 @@ public class RegistryController {
 
 	private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
 
+	private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"_:[a-z][0-9]+\",";
+
 	@Autowired
 	private RegistryService registryService;
-	
+
 	@Autowired
 	private SearchService searchService;
+
+	@Autowired
+	private SignatureService signatureService;
+
+	@Autowired
+	private ObjectMapper objectMapper;
 
 	@Value("${registry.context.base}")
 	private String registryContext;
 
 	private Gson gson = new Gson();
-	private Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
-	
+	private Type mapType = new TypeToken<Map<String, Object>>() {
+	}.getType();
+
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
+
+	@Value("${signature.domain}")
+	private String signatureDomain;
+
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
+
+	@Value("${signature.keysURL}")
+	private String signatureKeyURl;
+
+	@Value("${frame.file}")
+	private String frameFile;
 
 	@Autowired
 	private OpenSaberInstrumentation watch;
@@ -52,9 +81,22 @@ public class RegistryController {
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
+		RegistrySignature rs = new RegistrySignature();
 
 		try {
 			watch.start("RegistryController.addToExistingEntity");
+			//added for signing the enitity
+			if(signatureEnabled){
+				Map signReq  = new HashMap<String, Object>();
+				InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
+				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+            	Map<String, Object> reqMap = JSONUtil.frameJsonAndRemoveIds(ID_REGEX, (String)requestModel.getRequestMap().get("dataObject"), gson, fileString);
+				signReq.put("entity",reqMap);
+				Map<String, Object> entitySignMap = (Map<String, Object>)signatureService.sign(signReq);
+				entitySignMap.put("createdDate",rs.getCreatedTimestamp());
+				entitySignMap.put("keyUrl",signatureKeyURl);
+				rdf = RDFUtil.getUpdatedSignedModel(rdf,registryContext,signatureDomain,entitySignMap, ModelFactory.createDefaultModel());
+			}
 			String label = registryService.addEntity(rdf, id, property);
 			result.put("entity", label);
 			response.setResult(result);
@@ -77,7 +119,7 @@ public class RegistryController {
 
 	@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> readEntity(@PathVariable("id") String id,
-											   @RequestParam(required = false) boolean includeSignatures) {
+			@RequestParam(required = false) boolean includeSignatures) {
 
 		String entityId = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
@@ -111,7 +153,7 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@RequestMapping(value = "/search", method = RequestMethod.POST)
 	public ResponseEntity<Response> searchEntity(@RequestAttribute Request requestModel) {
 
@@ -145,7 +187,7 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@ResponseBody
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	public ResponseEntity<Response> update(@RequestAttribute Request requestModel) {
@@ -168,7 +210,7 @@ public class RegistryController {
 		} catch (Exception e) {
 			logger.error("RegistryController: Exception while updating entity (without id)!", e);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg("Error occurred when updating Entity");
+			responseParams.setErrmsg(e.getMessage());
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -187,9 +229,9 @@ public class RegistryController {
 			logger.debug("Application heath checked : ", healthCheckResult.toString());
 		} catch (Exception e) {
 			logger.error("Error in health checking!", e);
-            HealthCheckResponse healthCheckResult =
-                    new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, false, null);
-            response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+			HealthCheckResponse healthCheckResult =
+					new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME, false, null);
+			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg("Error during health check");
 		}

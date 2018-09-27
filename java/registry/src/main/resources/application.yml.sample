@@ -21,6 +21,8 @@ registry:
     base: ${registry_context_base:http://localhost:8080/}
   system:
     base: ${registry_system_base:http://localhost:8080/opensaber/}
+  rootEntity:
+        type: ${registry_rootentity_type:Teacher}
 
 #This refers to the opensaber schema configuration JSON-LD file
 config:
@@ -59,11 +61,6 @@ validations:
   update:
     file: ${validations_update_file:validations_update.shex}
     
-signature:
-  schema:
-    config:
-      name: SignatureShape
-    
 # File for framing the entity while reading
 frame:
   file: ${frame_file:frame.json}
@@ -88,14 +85,15 @@ decryption:
     uri: ${decryption_batch_uri:https://dev.open-sunbird.org/encryption/decrypt/obj}
 
 signature:
-  schema:
-    config:
-      name: SignatureShape
   enabled: ${signature_enabled:true}
   healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
   signURL: ${sign_url:http://localhost:8013/sign}
   verifyURL: ${verify_url:http://localhost:8013/verify}
-  keysURL: ${keys_url:http://localhost:8013/keys}
+  keysURL: ${keys_url:http://localhost:8013/keys/}
+  domain: ${domain_url:https://w3id.org/security/v1/}
+  schema:
+    config:
+      name: SignatureShape
 
 audit:
   enabled: ${audit_enabled:false}
@@ -132,6 +130,8 @@ registry:
     base: http://example.com/voc/teacher/1.0.0/
   system:
     base: http://example.com/voc/opensaber/
+  rootEntity:
+            type: ${registry_rootentity_type:Teacher}
 
 #This refers to the opensaber schema configuration JSON-LD file
 config:
@@ -172,14 +172,15 @@ decryption:
     uri: https://dev.open-sunbird.org/encryption/decrypt/obj
 
 signature:
-  schema:
-    config:
-      name: SignatureShape
   enabled: ${signature_enabled:true}
   healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
   signURL: ${sign_url:http://localhost:8013/sign}
   verifyURL: ${verify_url:http://localhost:8013/verify}
-  keysURL: ${keys_url:http://localhost:8013/keys}
+  keysURL: ${keys_url:http://localhost:8013/keys/}
+  domain: ${domain_url:https://w3id.org/security/v1/}
+  schema:
+    config:
+      name: SignatureShape
 
 audit:
   enabled: false

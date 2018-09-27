@@ -1,17 +1,19 @@
 package io.opensaber.registry.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import io.opensaber.pojos.HealthCheckResponse;
-import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.ResponseParams;
+import io.opensaber.pojos.*;
+import io.opensaber.registry.interceptor.handler.BaseRequestHandler;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.util.JSONUtil;
+import io.opensaber.registry.util.ResponseUtil;
+import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,11 +22,16 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.InputStream;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 public class RegistryUtilsController {
+
+    private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"[a-z]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",";
 
     private static Logger logger = LoggerFactory.getLogger(RegistryUtilsController.class);
 
@@ -38,18 +45,32 @@ public class RegistryUtilsController {
     @Autowired
     private OpenSaberInstrumentation watch;
 
+    @Value("${registry.context.base}")
+    private String registryContext;
+
+    @Value("${frame.file}")
+    private String frameFile;
+
+
     @RequestMapping(value = "/utils/sign", method = RequestMethod.POST)
     public ResponseEntity<Response> generateSignature(HttpServletRequest requestModel) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SIGN, "OK", responseParams);
 
         try {
-            Gson gson = new Gson();
-            Object payload = gson.fromJson(requestModel.getReader(), Object.class);
-            Object result = signatureService.sign(payload);
-            response.setResult(JSONUtil.convertObjectJsonMap(result));
-            responseParams.setErrmsg("");
-            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
+            baseRequestHandler.setRequest(requestModel);
+            Map<String,Object> requestBodyMap = baseRequestHandler.getRequestBodyMap();
+            if(requestBodyMap.containsKey(Constants.REQUEST_ATTRIBUTE) && requestBodyMap.containsKey(Constants.ATTRIBUTE_NAME)
+                    && ResponseUtil.checkApiId((Request)requestBodyMap.get(Constants.REQUEST_ATTRIBUTE),Response.API_ID.SIGN.getId())){
+                Object result = signatureService.sign(gson.fromJson(requestBodyMap.get(Constants.ATTRIBUTE_NAME).toString(),mapType));
+                response.setResult(JSONUtil.convertObjectJsonMap(result));
+                responseParams.setErrmsg("");
+                responseParams.setStatus(Response.Status.SUCCESSFUL);
+            } else {
+                responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                responseParams.setErrmsg("");
+            }
         } catch (Exception e) {
             logger.error("Error in generating signature", e);
             HealthCheckResponse healthCheckResult =
@@ -62,17 +83,34 @@ public class RegistryUtilsController {
     }
 
     @RequestMapping(value = "/utils/verify", method = RequestMethod.POST)
-    public ResponseEntity<Response> verifySignature(HttpServletRequest requestModel) {
+    public ResponseEntity<Response> verifySignature(HttpServletRequest request) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.VERIFY, "OK", responseParams);
 
         try {
-            Gson gson = new Gson();
-            Object payload = gson.fromJson(requestModel.getReader(), Object.class);
-            Object result = signatureService.verify(payload);
-            response.setResult(JSONUtil.convertObjectJsonMap(result));
-            responseParams.setErrmsg("");
-            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
+            baseRequestHandler.setRequest(request);
+            Map<String,Object> map = baseRequestHandler.getRequestBodyMap();
+            if(map.containsKey(Constants.REQUEST_ATTRIBUTE) && map.containsKey(Constants.ATTRIBUTE_NAME)){
+            	String payload  = (String)map.get(Constants.ATTRIBUTE_NAME);
+            	JsonObject obj = gson.fromJson(payload, JsonObject.class);
+            	Entity entity = gson.fromJson(obj.get("entity"), Entity.class);
+            	String jsonldToExpand = gson.toJson(entity.getClaim());
+            	InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
+				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+            	Map<String,Object> framedJsonLD = JSONUtil.frameJsonAndRemoveIds(ID_REGEX, jsonldToExpand, gson, fileString);
+            	entity.setClaim(framedJsonLD);
+            	Map verifyReq  = new HashMap<String, Object>();
+            	verifyReq.put("entity", gson.fromJson(gson.toJson(entity),mapType));
+                Object result = signatureService.verify(verifyReq);
+                response.setResult(result);
+                responseParams.setErrmsg("");
+                responseParams.setStatus(Response.Status.SUCCESSFUL);
+            }else{
+            	responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                responseParams.setErrmsg("");
+            }
+            
         } catch (Exception e) {
             logger.error("Error in verifying signature", e);
             HealthCheckResponse healthCheckResult =
@@ -123,9 +161,9 @@ public class RegistryUtilsController {
             HealthCheckResponse healthCheckResult =
                     new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, false, null);
             response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
-            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg("Error during health check");
-        }
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg("Error during health check");
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 }

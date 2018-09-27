@@ -30,15 +30,7 @@
 		},
 
 		{
-			"@id": "teacher:teacherCode"
-		},
-
-		{
-			"@id": "teacher:birthDate"
-		},
-		
-		{
-			"@id": "teacher:Teacher"
+			"@id": "teacher:serialNum"
 		}
 	]
 }
