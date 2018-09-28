@@ -110,7 +110,7 @@ public class SignaturePresenceValidator implements Middleware{
             RDFNode thirdNode = RDFUtil.getFirstObject((Resource) secondNode, RDF.first.getURI(), signatureConfigModel);
             RDFNode fourthNode = RDFUtil.getFirstObject((Resource) thirdNode, SHAPE_PREDICATE_IRI, signatureConfigModel);
 
-            if (attributeList != null) {
+            if (attributeList != null && fourthNode != null) {
 				attributeList.add(fourthNode.toString());
 			}
 			addAttributesForShape(secondNode, signatureConfigModel, attributeList);

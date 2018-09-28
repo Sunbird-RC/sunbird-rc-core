@@ -248,6 +248,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 				.addPathPatterns("/add", "/update", "/search").order(orderIdx++);
 		registry.addInterceptor(rdfValidationInterceptor())
 				.addPathPatterns("/add", "/update").order(orderIdx++);
+
 		if (signatureEnabled) {
 			registry.addInterceptor(signaturePresenceValidationInterceptor())
 					.addPathPatterns("/add", "/update").order(orderIdx++);
