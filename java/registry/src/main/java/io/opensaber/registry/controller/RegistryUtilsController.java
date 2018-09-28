@@ -64,7 +64,7 @@ public class RegistryUtilsController {
             if(requestBodyMap.containsKey(Constants.REQUEST_ATTRIBUTE) && requestBodyMap.containsKey(Constants.ATTRIBUTE_NAME)
                     && ResponseUtil.checkApiId((Request)requestBodyMap.get(Constants.REQUEST_ATTRIBUTE),Response.API_ID.SIGN.getId())){
                 Object result = signatureService.sign(gson.fromJson(requestBodyMap.get(Constants.ATTRIBUTE_NAME).toString(),mapType));
-                response.setResult(JSONUtil.convertObjectJsonMap(result));
+                response.setResult(result);
                 responseParams.setErrmsg("");
                 responseParams.setStatus(Response.Status.SUCCESSFUL);
             } else {

@@ -16,13 +16,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JSONUtil {
-    private static Type type = new TypeToken<Map<String, Object>>() {
+    private static Type stringObjMapType = new TypeToken<Map<String, Object>>() {
     }.getType();
 
     public static Map<String, Object> convertObjectJsonMap(Object object) {
         Gson gson = new Gson();
         String result = gson.toJson(object);
-        return gson.fromJson(result, type);
+        return gson.fromJson(result, stringObjMapType);
     }
     
     public static String getStringWithReplacedText(String payload, String value, String replacement){
@@ -32,7 +32,7 @@ public class JSONUtil {
 	}
     
     public static Map<String,Object> frameJsonAndRemoveIds(String regex, String json, Gson gson, String frame) throws JsonLdError, IOException{
-    	Map<String, Object> reqMap = gson.fromJson(json, type);
+    	Map<String, Object> reqMap = gson.fromJson(json, stringObjMapType);
     	JsonObject jsonObj = gson.fromJson(json, JsonObject.class);
     	String rootType = null;
     	if(jsonObj.get("@graph")!=null){
@@ -48,7 +48,7 @@ public class JSONUtil {
     	json = gson.toJson(framedJsonLD);
     	json = JSONUtil.getStringWithReplacedText(json, regex, StringUtils.EMPTY);
     	System.out.println(json);
-    	return gson.fromJson(json, type);
+    	return gson.fromJson(json, stringObjMapType);
     }
 
 }
