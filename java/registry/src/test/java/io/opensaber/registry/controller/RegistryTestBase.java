@@ -1,6 +1,17 @@
 package io.opensaber.registry.controller;
 
-import static org.apache.commons.lang3.StringUtils.substringAfter;
+import io.opensaber.converters.JenaRDF4J;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.utils.converters.RDF2Graph;
+import org.apache.commons.lang.StringUtils;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.sparql.vocabulary.FOAF;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -12,39 +23,11 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.sparql.vocabulary.FOAF;
-import org.apache.jena.vocabulary.RDF;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.T;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-
-import io.opensaber.converters.JenaRDF4J;
-import io.opensaber.registry.exception.EntityCreationException;
-import io.opensaber.registry.exception.MultipleEntityException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.utils.converters.RDF2Graph;
-import io.opensaber.validators.shex.shaclex.ShaclexValidator;
-
 
 public class RegistryTestBase {
-	
-	@Autowired
-	private Environment environment;
+
+	@Value("${registry.context.base}")
+	private String registryContextBase;
 	
 	public String jsonld;
 	public static final String FORMAT = "JSON-LD";
@@ -154,7 +137,7 @@ public class RegistryTestBase {
     	while (iterator.hasNext()) {
     		Statement rdfStatement = iterator.nextStatement();
     		org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-    		graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph);
+			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph, registryContextBase);
     	}
 
     	return resList.get(0).toString();
@@ -179,7 +162,7 @@ public class RegistryTestBase {
 		while (iterator.hasNext()) {
 			Statement rdfStatement = iterator.nextStatement();
 			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			newGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph);
+			newGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph, registryContextBase);
 		}
 		return newGraph;
 	}

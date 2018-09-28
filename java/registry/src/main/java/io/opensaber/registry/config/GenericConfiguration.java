@@ -1,10 +1,21 @@
 package io.opensaber.registry.config;
 
-import java.io.IOException;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import es.weso.schema.Schema;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
+import io.opensaber.registry.exception.CustomException;
+import io.opensaber.registry.exception.CustomExceptionHandler;
+import io.opensaber.registry.interceptor.*;
+import io.opensaber.registry.middleware.Middleware;
+import io.opensaber.registry.middleware.impl.*;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.model.AuditRecord;
+import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.sink.*;
-
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -19,32 +30,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import es.weso.schema.Schema;
-import io.opensaber.registry.authorization.AuthorizationFilter;
-import io.opensaber.registry.exception.CustomException;
-import io.opensaber.registry.exception.CustomExceptionHandler;
-import io.opensaber.registry.interceptor.AuthorizationInterceptor;
-import io.opensaber.registry.interceptor.RDFConversionInterceptor;
-import io.opensaber.registry.interceptor.RDFValidationInterceptor;
-import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
-import io.opensaber.registry.middleware.Middleware;
-import io.opensaber.registry.middleware.impl.RDFConverter;
-import io.opensaber.registry.middleware.impl.RDFValidationMapper;
-import io.opensaber.registry.middleware.impl.RDFValidator;
-import io.opensaber.registry.middleware.impl.JSONLDConverter;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.model.AuditRecord;
-import io.opensaber.registry.schema.config.SchemaConfigurator;
-
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
+
+import java.io.IOException;
 
 @Configuration
 public class GenericConfiguration implements WebMvcConfigurer {
@@ -66,11 +59,20 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${authentication.enabled}")
 	private boolean authenticationEnabled;
 
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
+
 	@Value("${perf.monitoring.enabled}")
 	private boolean performanceMonitoringEnabled;
 	
 	@Value("${registry.system.base}")
 	private String registrySystemBase;
+	
+	@Value("${registry.context.base}")
+	private String registryContextBase;
+	
+	@Value("${signature.schema.config.name}")
+	private String signatureSchemaConfigName;
 
 	@Bean
 	public ObjectMapper objectMapper() {
@@ -118,6 +120,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public RDFValidationInterceptor rdfValidationInterceptor() {
 		return new RDFValidationInterceptor(rdfValidator(), gson());
 	}
+	
+	@Bean
+	public SignaturePresenceValidationInterceptor signaturePresenceValidationInterceptor() {
+		return new SignaturePresenceValidationInterceptor(signaturePresenceValidator(), gson());
+	}
 
 	@Bean
 	public Middleware authorizationFilter(){
@@ -155,6 +162,20 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		}
 		return new RDFValidator(schemaForCreate, schemaForUpdate);
 	}
+	
+	@Bean
+	public Middleware signaturePresenceValidator() {
+		Schema schemaForCreate = null;
+		Model schemaConfig = null;
+		try {
+			schemaForCreate = schemaConfiguration().getSchemaForCreate();
+			schemaConfig = schemaConfiguration().getSchemaConfig();
+		} catch (Exception e) {
+			logger.error("Unable to retrieve schema for signature validations");
+		}
+		return new SignaturePresenceValidator(schemaForCreate, registryContextBase, registrySystemBase, signatureSchemaConfigName, ((RDFValidator)rdfValidator()).getShapeTypeMap(), schemaConfig);
+	}
+
 
 	@Bean
 	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -217,18 +238,21 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-	    if(authenticationEnabled) {
+		int orderIdx = 1;
+		if(authenticationEnabled) {
             registry.addInterceptor(authorizationInterceptor())
-                    .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
-        }
-		registry.addInterceptor(rdfConversionInterceptor())
-				.addPathPatterns("/add", "/update","/search").order(2);
-		/*registry.addInterceptor(rdfValidationMappingInterceptor())
-				.addPathPatterns("/add", "/update").order(3);*/
+                    .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(orderIdx++);
+	    }
+
+	    registry.addInterceptor(rdfConversionInterceptor())
+				.addPathPatterns("/add", "/update", "/search").order(orderIdx++);
 		registry.addInterceptor(rdfValidationInterceptor())
-				.addPathPatterns("/add", "/update").order(3);
-	/*	registry.addInterceptor(new JSONLDConversionInterceptor(jsonldConverter()))
-				.addPathPatterns("/read/{id}").order(2);*/
+				.addPathPatterns("/add", "/update").order(orderIdx++);
+
+		if (signatureEnabled) {
+			registry.addInterceptor(signaturePresenceValidationInterceptor())
+					.addPathPatterns("/add", "/update").order(orderIdx++);
+		}
 	}
 
 	@Override

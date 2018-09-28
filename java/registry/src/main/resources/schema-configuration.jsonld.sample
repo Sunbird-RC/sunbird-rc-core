@@ -22,5 +22,15 @@
 		{
 			"@id": "teacher:birthDate"
 		}
+	],	
+	"opensaber:signedProperties": 
+	[
+		{
+			"@id": "teacher:nationalIdentifier"
+		},
+
+		{
+			"@id": "teacher:serialNum"
+		}
 	]
 }

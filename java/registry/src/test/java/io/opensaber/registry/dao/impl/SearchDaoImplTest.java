@@ -1,12 +1,20 @@
 package io.opensaber.registry.dao.impl;
 
-import static org.junit.Assert.*;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
+import io.opensaber.converters.JenaRDF4J;
+import io.opensaber.pojos.Filter;
+import io.opensaber.pojos.SearchQuery;
+import io.opensaber.registry.app.OpenSaberApplication;
+import io.opensaber.registry.authorization.AuthorizationToken;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.controller.RegistryTestBase;
+import io.opensaber.registry.dao.RegistryDao;
+import io.opensaber.registry.dao.SearchDao;
+import io.opensaber.registry.exception.*;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.tests.utility.TestHelper;
+import io.opensaber.utils.converters.RDF2Graph;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.RDF;
@@ -25,26 +33,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import io.opensaber.converters.JenaRDF4J;
-import io.opensaber.pojos.Filter;
-import io.opensaber.pojos.SearchQuery;
-import io.opensaber.registry.app.OpenSaberApplication;
-import io.opensaber.registry.authorization.AuthorizationToken;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.tests.utility.TestHelper;
-import io.opensaber.utils.converters.RDF2Graph;
-import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.dao.SearchDao;
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.exception.EntityCreationException;
-import io.opensaber.registry.exception.MultipleEntityException;
-import io.opensaber.registry.exception.RecordNotFoundException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {OpenSaberApplication.class,RegistryDao.class, SearchDao.class,
@@ -153,7 +147,7 @@ public class SearchDaoImplTest extends RegistryTestBase {
 		assertTrue(!responseGraph.isEmpty());
 		assertTrue(responseGraph.size() == 1);
 		assertTrue(responseGraph.containsKey(response));
-		Graph entity = registryDao.getEntityById(response);
+        Graph entity = registryDao.getEntityById(response, false);
 		Model addedModel = JenaRDF4J.asJenaModel(RDF2Graph.convertGraph2RDFModel(entity, response));
 		removeStatementFromModel(addedModel, ResourceFactory.createProperty("http://example.com/voc/teacher/1.0.0/schoolName"));
 		addedModel.add(ResourceFactory.createResource(response), 
