@@ -59,6 +59,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${authentication.enabled}")
 	private boolean authenticationEnabled;
 
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
+
 	@Value("${perf.monitoring.enabled}")
 	private boolean performanceMonitoringEnabled;
 	
@@ -235,16 +238,20 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-	    if(authenticationEnabled) {
+		int orderIdx = 1;
+		if(authenticationEnabled) {
             registry.addInterceptor(authorizationInterceptor())
-                    .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(1);
+                    .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(orderIdx++);
 	    }
-		registry.addInterceptor(rdfConversionInterceptor())
-				.addPathPatterns("/add", "/update","/search").order(2);
+
+	    registry.addInterceptor(rdfConversionInterceptor())
+				.addPathPatterns("/add", "/update", "/search").order(orderIdx++);
 		registry.addInterceptor(rdfValidationInterceptor())
-				.addPathPatterns("/add", "/update").order(3);
-		registry.addInterceptor(signaturePresenceValidationInterceptor())
-		.addPathPatterns("/add", "/update").order(4);
+				.addPathPatterns("/add", "/update").order(orderIdx++);
+		if (signatureEnabled) {
+			registry.addInterceptor(signaturePresenceValidationInterceptor())
+					.addPathPatterns("/add", "/update").order(orderIdx++);
+		}
 	}
 
 	@Override

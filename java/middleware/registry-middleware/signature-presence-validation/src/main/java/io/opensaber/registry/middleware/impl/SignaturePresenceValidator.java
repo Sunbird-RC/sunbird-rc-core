@@ -33,6 +33,7 @@ public class SignaturePresenceValidator implements Middleware{
 	private String registrySystemBase;
 	private Model schemaConfig;
 	private List<String> signatureTypes = new ArrayList<String>();
+	private List<String> signatureAttributes;
 
     // TODO: Instead of passing the ShapeType everytime, there could be a good reason
     // to read all the shapes at once and then start validating against what was read.
@@ -49,6 +50,7 @@ public class SignaturePresenceValidator implements Middleware{
 				signatureTypes.add(type);
 			}
 		});
+		signatureAttributes = getSignatureAttributes();
 	}
 
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
@@ -117,7 +119,6 @@ public class SignaturePresenceValidator implements Middleware{
 		Property property = ResourceFactory.createProperty(registrySystemBase + Constants.SIGNED_PROPERTY);
         StmtIterator rdfIter = rdfModel.listStatements();
 		Property prop = ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR);
-		List<String> signatureAttributes = getSignatureAttributes();
 		TypeMapper tm = TypeMapper.getInstance();
 		//This is the datatype for the signatureFor attribute
 		RDFDatatype rdt = tm.getSafeTypeByName(XMLConstants.W3C_XML_SCHEMA_NS_URI+"#anyURI");

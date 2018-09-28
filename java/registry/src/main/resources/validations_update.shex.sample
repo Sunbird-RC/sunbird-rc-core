@@ -72,7 +72,7 @@ teacher:NonTeachingAssignmentsForAcademicCalendarShape CLOSED {
 }
 
 teacher:SignatureShape CLOSED {
-	a [sc:RsaSignature2018] ;
+	a [sc:LinkedDataSignature2015 sc:GraphSignature2012 sc:Signature sc:RsaSignature2018] ;
 	teacher:signatureFor @teacher:isAnyURI ;
 	teacher:creator @teacher:isACreator ;
 	teacher:created @teacher:isACreated ;
