@@ -1,6 +1,8 @@
 package io.opensaber.registry.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.*;
@@ -25,7 +27,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -64,7 +68,7 @@ public class RegistryUtilsController {
             if(requestBodyMap.containsKey(Constants.REQUEST_ATTRIBUTE) && requestBodyMap.containsKey(Constants.ATTRIBUTE_NAME)
                     && ResponseUtil.checkApiId((Request)requestBodyMap.get(Constants.REQUEST_ATTRIBUTE),Response.API_ID.SIGN.getId())){
                 Object result = signatureService.sign(gson.fromJson(requestBodyMap.get(Constants.ATTRIBUTE_NAME).toString(),mapType));
-                response.setResult(JSONUtil.convertObjectJsonMap(result));
+                response.setResult(result);
                 responseParams.setErrmsg("");
                 responseParams.setStatus(Response.Status.SUCCESSFUL);
             } else {
@@ -92,16 +96,46 @@ public class RegistryUtilsController {
             baseRequestHandler.setRequest(request);
             Map<String,Object> map = baseRequestHandler.getRequestBodyMap();
             if(map.containsKey(Constants.REQUEST_ATTRIBUTE) && map.containsKey(Constants.ATTRIBUTE_NAME)){
-            	String payload  = (String)map.get(Constants.ATTRIBUTE_NAME);
-            	JsonObject obj = gson.fromJson(payload, JsonObject.class);
-            	Entity entity = gson.fromJson(obj.get("entity"), Entity.class);
-            	String jsonldToExpand = gson.toJson(entity.getClaim());
-            	InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
-				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
-            	Map<String,Object> framedJsonLD = JSONUtil.frameJsonAndRemoveIds(ID_REGEX, jsonldToExpand, gson, fileString);
-            	entity.setClaim(framedJsonLD);
-            	Map verifyReq  = new HashMap<String, Object>();
-            	verifyReq.put("entity", gson.fromJson(gson.toJson(entity),mapType));
+            	JsonObject obj = gson.fromJson(map.get(Constants.ATTRIBUTE_NAME).toString(),JsonObject.class);
+
+            	JsonArray arr = new JsonArray();
+            	JsonElement entityElement = obj.get("entity");
+            	if (!entityElement.isJsonArray()) {
+                    arr.add(entityElement);
+                } else {
+            	    arr = entityElement.getAsJsonArray();
+                }
+
+                Map verifyReq = new HashMap<String, Object>();
+                List<Entity> entityList = new ArrayList<Entity>();
+
+                for(int i = 0; i < arr.size(); i++) {
+                    JsonObject element = arr.get(i).getAsJsonObject();
+                    Entity entity = gson.fromJson(element, Entity.class);
+                    JsonElement claimObj = gson.fromJson(element.get("claim"), JsonElement.class);
+
+                    if (claimObj != null && claimObj.isJsonObject()) {
+                        String claimJson = claimObj.toString();
+                        if (claimJson.contains(Constants.CONTEXT_KEYWORD)) {
+                            InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
+                            String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+                            Map<String, Object> framedJsonLD = JSONUtil.frameJsonAndRemoveIds(ID_REGEX, claimJson, gson, fileString);
+                            entity.setClaim(framedJsonLD);
+                        } else {
+                            entity.setClaim(claimObj);
+                        }
+                    } else {
+                        entity.setClaim(claimObj.getAsString());
+                    }
+                    entityList.add(entity);
+                }
+                // We dont want the callers to be aware of the internal arr
+                if (entityList.size() == 1) {
+                    verifyReq.put("entity", gson.fromJson(gson.toJson(entityList.get(0)), mapType));
+                } else {
+                    verifyReq.put("entity", gson.fromJson(gson.toJson(entityList), ArrayList.class));
+                }
+
                 Object result = signatureService.verify(verifyReq);
                 response.setResult(result);
                 responseParams.setErrmsg("");

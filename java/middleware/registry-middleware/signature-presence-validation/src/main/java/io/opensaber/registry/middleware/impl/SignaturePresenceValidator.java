@@ -91,9 +91,11 @@ public class SignaturePresenceValidator implements Middleware{
 		Resource shapeResource = ResourceFactory.createResource(shape);
 		//Getting the object by filtering the shape and the IRI
         RDFNode node = RDFUtil.getFirstObject(shapeResource, SHAPE_EXPRESSION_IRI, signatureConfigModel);
-		//Getting the object by filtering the node and the IRI
-        RDFNode firstNode = RDFUtil.getFirstObject((Resource) node, SHAPE_EXPRESSIONS_IRI, signatureConfigModel);
-		addAttributesForShape(firstNode, signatureConfigModel, attributeList);
+        if(node != null){
+        	//Getting the object by filtering the node and the IRI
+        	RDFNode firstNode = RDFUtil.getFirstObject((Resource) node, SHAPE_EXPRESSIONS_IRI, signatureConfigModel);
+        	addAttributesForShape(firstNode, signatureConfigModel, attributeList);
+        }
 		return attributeList;
 	}
 
@@ -109,8 +111,9 @@ public class SignaturePresenceValidator implements Middleware{
 		if(!secondNode.equals(RDF.nil)){
             RDFNode thirdNode = RDFUtil.getFirstObject((Resource) secondNode, RDF.first.getURI(), signatureConfigModel);
             RDFNode fourthNode = RDFUtil.getFirstObject((Resource) thirdNode, SHAPE_PREDICATE_IRI, signatureConfigModel);
-
-            attributeList.add(fourthNode.toString());
+            if (attributeList != null) {
+				attributeList.add(fourthNode.toString());
+			}
 			addAttributesForShape(secondNode, signatureConfigModel, attributeList);
 		}
 	}

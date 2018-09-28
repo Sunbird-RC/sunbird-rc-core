@@ -4,17 +4,17 @@ import java.util.Map;
 
 public class Entity {
 	
-	private Map<String,Object> claim;
+	private Object claim;
 	
 	private String signatureValue;
 	
 	private Integer keyId;
 
-	public Map<String, Object> getClaim() {
+	public Object getClaim() {
 		return claim;
 	}
 
-	public void setClaim(Map<String, Object> claim) {
+	public void setClaim(Object claim) {
 		this.claim = claim;
 	}
 

@@ -1,5 +1,7 @@
 package io.opensaber.registry.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jsonldjava.core.JsonLdError;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
@@ -16,13 +18,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JSONUtil {
-    private static Type type = new TypeToken<Map<String, Object>>() {
+    private static Type stringObjMapType = new TypeToken<Map<String, Object>>() {
     }.getType();
 
     public static Map<String, Object> convertObjectJsonMap(Object object) {
         Gson gson = new Gson();
         String result = gson.toJson(object);
-        return gson.fromJson(result, type);
+        return gson.fromJson(result, stringObjMapType);
     }
     
     public static String getStringWithReplacedText(String payload, String value, String replacement){
@@ -32,7 +34,7 @@ public class JSONUtil {
 	}
     
     public static Map<String,Object> frameJsonAndRemoveIds(String regex, String json, Gson gson, String frame) throws JsonLdError, IOException{
-    	Map<String, Object> reqMap = gson.fromJson(json, type);
+    	Map<String, Object> reqMap = gson.fromJson(json, stringObjMapType);
     	JsonObject jsonObj = gson.fromJson(json, JsonObject.class);
     	String rootType = null;
     	if(jsonObj.get("@graph")!=null){
@@ -48,7 +50,26 @@ public class JSONUtil {
     	json = gson.toJson(framedJsonLD);
     	json = JSONUtil.getStringWithReplacedText(json, regex, StringUtils.EMPTY);
     	System.out.println(json);
-    	return gson.fromJson(json, type);
+    	return gson.fromJson(json, stringObjMapType);
     }
 
+	/**
+	 * Returns true if the passed in string is a valid json
+	 * @param str
+	 * @return
+	 */
+	public static boolean isJsonString(String str) {
+		boolean isJson = false;
+		try {
+			final ObjectMapper mapper = new ObjectMapper();
+			JsonNode node = mapper.readTree(str);
+			// At least one key is expected
+			if (node.fieldNames().hasNext()) {
+				isJson = true;
+			}
+		} catch(java.io.IOException e) {
+			isJson = false;
+		}
+		return isJson;
+	}
 }
