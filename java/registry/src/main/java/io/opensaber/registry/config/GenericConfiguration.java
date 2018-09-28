@@ -245,12 +245,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	    }
 
 	    registry.addInterceptor(rdfConversionInterceptor())
-				.addPathPatterns("/add", "/update","/search").order(orderIdx);
+				.addPathPatterns("/add", "/update", "/search").order(orderIdx++);
 		registry.addInterceptor(rdfValidationInterceptor())
-				.addPathPatterns("/add", "/update").order(orderIdx);
+				.addPathPatterns("/add", "/update").order(orderIdx++);
 		if (signatureEnabled) {
 			registry.addInterceptor(signaturePresenceValidationInterceptor())
-					.addPathPatterns("/add", "/update").order(orderIdx);
+					.addPathPatterns("/add", "/update").order(orderIdx++);
 		}
 	}
 
