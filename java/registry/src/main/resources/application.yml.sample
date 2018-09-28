@@ -67,10 +67,10 @@ frame:
 
 encryption:
   enabled: ${encryption_enabled:true}
-  base: ${encryption_base:https://dev.open-sunbird.org/encryption/}
-  uri: ${encryption_uri:https://dev.open-sunbird.org/encryption/encrypt}
+  base: ${encryption_base:http://localhost:8013}
+  uri: ${encryption_uri:http://localhost:8013/encrypt}
   batch:
-    uri: ${encryption_batch_uri:https://dev.open-sunbird.org/encryption/encrypt/obj}
+    uri: ${encryption_batch_uri:http://localhost:8013/encrypt/obj}
   service:
     connection:
       timeout: ${encryption_service_connection_timeout:5000}
@@ -80,9 +80,9 @@ encryption:
       timeout: ${encryption_service_read_timeout:5000}
 
 decryption:
-  uri: ${decryption_uri:https://dev.open-sunbird.org/encryption/decrypt}
+  uri: ${decryption_uri:http://localhost:8013/decrypt}
   batch:
-    uri: ${decryption_batch_uri:https://dev.open-sunbird.org/encryption/decrypt/obj}
+    uri: ${decryption_batch_uri:http://localhost:8013/decrypt/obj}
 
 signature:
   enabled: ${signature_enabled:true}
