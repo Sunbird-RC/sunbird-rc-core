@@ -1,5 +1,7 @@
 package io.opensaber.registry.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jsonldjava.core.JsonLdError;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
@@ -51,4 +53,23 @@ public class JSONUtil {
     	return gson.fromJson(json, stringObjMapType);
     }
 
+	/**
+	 * Returns true if the passed in string is a valid json
+	 * @param str
+	 * @return
+	 */
+	public static boolean isJsonString(String str) {
+		boolean isJson = false;
+		try {
+			final ObjectMapper mapper = new ObjectMapper();
+			JsonNode node = mapper.readTree(str);
+			// At least one key is expected
+			if (node.fieldNames().hasNext()) {
+				isJson = true;
+			}
+		} catch(java.io.IOException e) {
+			isJson = false;
+		}
+		return isJson;
+	}
 }

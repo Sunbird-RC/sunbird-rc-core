@@ -1,6 +1,7 @@
 package io.opensaber.registry.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.*;
@@ -92,14 +93,18 @@ public class RegistryUtilsController {
             baseRequestHandler.setRequest(request);
             Map<String,Object> map = baseRequestHandler.getRequestBodyMap();
             if(map.containsKey(Constants.REQUEST_ATTRIBUTE) && map.containsKey(Constants.ATTRIBUTE_NAME)){
-            	String payload  = (String)map.get(Constants.ATTRIBUTE_NAME);
-            	JsonObject obj = gson.fromJson(payload, JsonObject.class);
-            	Entity entity = gson.fromJson(obj.get("entity"), Entity.class);
-            	String jsonldToExpand = gson.toJson(entity.getClaim());
-            	InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
-				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
-            	Map<String,Object> framedJsonLD = JSONUtil.frameJsonAndRemoveIds(ID_REGEX, jsonldToExpand, gson, fileString);
-            	entity.setClaim(framedJsonLD);
+            	JsonObject obj = gson.fromJson(map.get(Constants.ATTRIBUTE_NAME).toString(),JsonObject.class);
+            	JsonElement element = obj.get("entity");
+                Entity entity = gson.fromJson(element, Entity.class);
+            	String jsonldToExpand = entity.getClaim().toString();
+            	if (JSONUtil.isJsonString((jsonldToExpand))) {
+                    InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
+                    String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+                    Map<String, Object> framedJsonLD = JSONUtil.frameJsonAndRemoveIds(ID_REGEX, jsonldToExpand, gson, fileString);
+                    entity.setClaim(framedJsonLD);
+                } else {
+            	    entity.setClaim(jsonldToExpand);
+                }
             	Map verifyReq  = new HashMap<String, Object>();
             	verifyReq.put("entity", gson.fromJson(gson.toJson(entity),mapType));
                 Object result = signatureService.verify(verifyReq);
