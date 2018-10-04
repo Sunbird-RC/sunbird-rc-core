@@ -6,11 +6,22 @@ cache:
   - "$HOME/.m2"
 before_script: "./configure-dependencies.sh"
 script:
-- cd ${TRAVIS_BUILD_DIR}/java && mvn clean install && cd ${TRAVIS_BUILD_DIR}/java/registry
-  && mvn clean install
+  - echo "Starting build of commons and dependencies..."
+  - cd ${TRAVIS_BUILD_DIR}/java && mvn clean install >> build.log 
+  - echo "Starting registry build"
+  - cd ${TRAVIS_BUILD_DIR}/java/registry && mvn clean install >> build.log
 notifications:
   slack:
-    secure: xCIJG1tgVz9V3dRFvf5ifPNQ8uf63MMloG6dPH0C12yDHABkXyP3DvhRG1uyqP32x9MifvqJJ5QIWq56cCZUPHnaYkJ+qzR/5qRjiy/EKp3FMWjnCxfJkQHTxRxeLjlcSa6l0rLV9apm+xMO4+Bltn3EntrX0xvk0AaO4ZOTJ3SESZMQJ6yjJG/dmuywOj5muRMmLeVik5GbgPh79/dvlvrheUhTcWYX+AtDis5AArIwyMXRi1oarVWW2hFTg77EeZqYBILSXqkae/c5Dj2Zt8DucRDRlrynx3hdKsfJ31QTJ65c7Jf6tIZyU9DNAby6PN1VtVllXgDRRNbKKs4gs6ikegscIUbtEmZ/QH5irXkOp5/XRRgU0PTghoLNcc5/7secvPOk4KA4BBdjN5yKhnm0IuZDVqWBnrrkOBH3arjG8aUm/IikG/9GwlFucikIC0affAiFNiQLXSrhJnS5UqBnpqePRhmWF+XJtJIsjOcn25kLdFkSWe3eKpgeLuPNBNGr0YUeNB8ebBbxxMM8+lbv4vm46neZiRMr0R20qWigthAAJc0UrPm0OTLiijKHh9jDU/+nonEwoJhtioG9+tHFg5WdLky7ysNdxKtGXy57zrO+HRXkthFnGL0aegfapHiGi/ODLfXErGTz5uNY9U8uxOrhQQ5ml4niXUqIVwg=
+    secure: v+VAY+2DCWiARkkjJByWz6dAfpUGPPmUDgph0jq2M+/T514TeYvyvHRjS40/Tq6/UwCdUhGccLMcs8Db4vkdRPhKFP7M3HeRePIxoAwfNrSutokVID+roEUx2hY4Fy97ypzgkerob523xWEHA9IRvqiPJOJWvkNrrTYb0x24HvVMNbKtzfMRZsgMNSBx/Syps/ZfihFEdK6m0nBIokx7gF2rNBhWljqA+MPyZ/KtqEW3KChl14Ln5IUi5qXEyXsjWI9IMyHI4YK+tIzpxHEErpAo9iMKumTmPjxcLb3srdpN81wCtCiPOTV5Ikd9gHO2D3o7QlxZeuwGj0LOyynsr70sHTNm44raDhYS1lsHFx0kaJ2T9Sq5wZdgj6oMjgMVV/h2HPnOGn9o0lAjq2WvzQbaVoKuwhg9ylNu6NK8ZbkqUJWVAoieCybbCEArEYji8QGOVYiqTa4Rmvk5wCrUX2hWhz/jAzB0ZrsQ9YilSyP0L5ojBd4Y6QwOX5myXg5URHuvI11jFF6+v6x+MuMM80mSkQan4DIcyw+qxQam51nKm3q8GZlh1xGiFuh7BT+xDdifnrEPXKAmMPupVrYCXgS8YhML+syqD5Is+/E/1U1EFHEen4PZHRU4DITTDkoPrKDN5grdCzWSGjU6LgUkgFwwfheXpfRl6fjjsTvbzAU=
+    on_success: change
+    on_failure: always
+after_failure:
+  # dump the last 4000 lines of our build, and hope the error is in that!
+  - tail --lines=4000 build.log
+  - echo "Build failure"
+after_success:
+  - tail --lines=2000 build.log
+  - echo "Build succeeded"
 env:
   global:
   - secure: 2axWz21RxRybSLvkHYIX+2agTzHtnAkOsYUMTfdFb4lgy8hqbTUdTQ19BmndTN8JwMAvgHaBxw3M+podDSCHvtUbKmPmP3NBzWA7oPvcpb514FKh1oKR0ncyoJsfqbR5sE7ye990S7hqODb+laml23RqYFN8WjGlNCuGmwA369xaGrH6zLtxt80NCsbiNOjxIowKXjZqSEm7EBEW2Q0baijh11yC5Fn+5uDO0C1MUS/3x/wO2FP9PvCJBJpz7rJzLqecySyieP0I3oJ/iCWnAWoXczCpNX83Lh8RO6IkrNDfbaixXqCWSmkpfA/ZLrm6vngdrsxlxWsh7/wcyKLggVRCaBReNb0pMrnuln38wqnJdohdulATuT8JE62sRCHmtcDRks8cSQbDEjfAz4/2sqeKyz1XjU8iuXUeCJ4ovn1GIImiTFUfdhp8GRbXkDXuboXAEvrpGd9LcPvPJEqrzbWg7IKMLwTpHpShK5dCGiof8qZ+ncQyixCc3+6Mh0Q3QxFOCF6M4/a+Y3GrvdM4rCkrEek+loHBpDnpDO8DHvmqzw2bOQY26cFE1Wd7YpT7dJMwe5acAeCDQrVfZ1KbIuC6Og+jEvgUnYtHq/X4XsPFLBDrN22ZNMxnEmwrGD7AZ6GjP/DD6ICxFJZ+1mLEoxIZSwX/kVuzhTOPM90rL0g=
