@@ -2,6 +2,7 @@ package io.opensaber.registry.transformation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -40,13 +41,15 @@ public class JsonToLdTransformer implements ITransformer<Object> {
 	private JsonNode getconstructedJson(ObjectNode rootDataNode, List<String> keysToPurge)
 			throws IOException, ParseException {
 
-		JsonNode graphNode = rootDataNode.path(JsonldConstants.GRAPH).get(0);
-		ObjectNode rootNode = addRootTypeNode(graphNode);
-
 		setPurgeData(keysToPurge);
-		if (keysToPurge.size() != 0)
-			purgedKeys(rootNode);
-		return rootNode;
+		ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+		for(JsonNode graphNode : rootDataNode.path(JsonldConstants.GRAPH)){
+			ObjectNode rootNode = addRootTypeNode(graphNode);
+			if (keysToPurge.size() != 0)
+				purgedKeys(rootNode);
+			arrayNode.add(rootNode);
+		}
+		return arrayNode;
 	}
 
 	private ObjectNode addRootTypeNode(JsonNode graphNode) {
@@ -65,7 +68,8 @@ public class JsonToLdTransformer implements ITransformer<Object> {
 			} else {
 				if (entry.getValue().isArray()) {
 					for (int i = 0; i < entry.getValue().size(); i++) {
-						purgedKeys((ObjectNode) entry.getValue().get(i));
+						if (entry.getValue().get(i).isObject()) 
+							purgedKeys((ObjectNode) entry.getValue().get(i));
 					}
 				} else if (entry.getValue().isObject()) {
 					purgedKeys((ObjectNode) entry.getValue());
