@@ -112,5 +112,9 @@ public class BaseRequestHandler extends BaseResponseHandler{
 	public String getRequestPath() throws IOException{
 		return request.getServletPath();
 	}
+	
+	public void setRequestBody(String requestBody){
+		requestWrapper.setBody(requestBody);
+	}
 
 }

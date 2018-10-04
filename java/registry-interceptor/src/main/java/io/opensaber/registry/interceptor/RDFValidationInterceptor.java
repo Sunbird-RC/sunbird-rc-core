@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 import com.google.gson.Gson;
@@ -41,6 +42,10 @@ public class RDFValidationInterceptor implements HandlerInterceptor{
 		try {
 			baseRequestHandler.setRequest(request);
 			watch.start("RDFValidationInterceptor.execute");
+			//added to  skip RDFVlidator for JSON request body.
+			if(request.getContentType().contains(MimeTypeUtils.APPLICATION_JSON_VALUE)){
+				return true;
+			}
 			Map<String, Object> attributeMap = rdfValidator.execute(baseRequestHandler.getRequestAttributeMap());
 			baseRequestHandler.mergeRequestAttributes(attributeMap);
 			watch.stop("RDFValidationInterceptor.execute");

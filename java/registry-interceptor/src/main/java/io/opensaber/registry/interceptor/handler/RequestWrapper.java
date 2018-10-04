@@ -73,7 +73,8 @@ public class RequestWrapper extends HttpServletRequestWrapper {
  
     //Use this method to read the request body any number of times
     public String getBody() throws IOException{
-    	 StringBuilder stringBuilder = new StringBuilder();
+    	if(this.body == null || this.body.isEmpty()){
+       	 StringBuilder stringBuilder = new StringBuilder();
          BufferedReader bufferedReader = null;
          try {
              InputStream inputStream = request.getInputStream();
@@ -91,6 +92,12 @@ public class RequestWrapper extends HttpServletRequestWrapper {
              throw ex;
          } 
          body = stringBuilder.toString();
+    	}
+
         return this.body;
+    }
+    
+    public void setBody(String body){
+    	this.body = body;
     }
 }
