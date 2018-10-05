@@ -1,7 +1,6 @@
 package io.opensaber.registry.test;
 
 import cucumber.api.Scenario;
-import cucumber.api.java.en.Given;
 import cucumber.api.java8.En;
 import io.opensaber.pojos.Response;
 import org.springframework.http.HttpHeaders;
@@ -9,6 +8,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -79,7 +80,7 @@ public class DeleteIntegrationTestsSteps extends RegistryTestBase implements En 
             StringBuilder url = new StringBuilder();
             url.append(baseUrl).append(CREATE_REST_ENDPOINT);
             ResponseEntity<Response> response = createEntity(jsonld,url.toString(),headers);
-            id = (String) response.getBody().getResult().get("entity");
+            id = (String) ((Map)response.getBody().getResult()).get("entity");
         });
     }
 

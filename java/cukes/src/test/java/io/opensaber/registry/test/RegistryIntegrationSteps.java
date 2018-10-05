@@ -1,25 +1,9 @@
 package io.opensaber.registry.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.HashMap;
-import java.util.Map;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.RDFDataMgr;
-import org.json.JSONObject;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.reflect.TypeToken;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
@@ -27,8 +11,20 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.Response.Status;
-import com.google.gson.reflect.TypeToken;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.RDFDataMgr;
+import org.json.JSONObject;
+import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.*;
 
 
 public class RegistryIntegrationSteps extends RegistryTestBase {
@@ -188,7 +184,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonldBody = mapper.readTree(jsonld).path("request").toString();
 		RDFDataMgr.read(expectedModel, new StringReader(jsonldBody), null, org.apache.jena.riot.RDFLanguages.JSONLD) ;
-		Map<String, Object> result = response.getBody().getResult();
+		Map<String, Object> result = (Map)response.getBody().getResult();
 		Model actualModel = ModelFactory.createDefaultModel();
 		String newJsonld = new JSONObject(result).toString(2);
 		RDFDataMgr.read(actualModel, new StringReader(newJsonld), null, org.apache.jena.riot.RDFLanguages.JSONLD);
@@ -326,7 +322,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 	@Then("^record should never have any associated audit info$")
 	public void test_audit_record_unexpected_in_read() throws Exception {
 		response = callRegistryReadAPI();
-		Map<String,Object> map=response.getBody().getResult();
+		Map<String,Object> map= (Map)response.getBody().getResult();
 		if(map.containsKey("(?i)(?<= |^)audit(?= |$)")) {
 			checkUnsuccessfulResponse();			
 		}else {

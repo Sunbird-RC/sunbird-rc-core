@@ -1,14 +1,16 @@
 package io.opensaber.registry.test;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.io.CharStreams;
+import com.google.gson.reflect.TypeToken;
+import cucumber.api.java.en.Then;
+import cucumber.api.java8.En;
+import io.opensaber.pojos.Response;
+import io.opensaber.registry.transform.JsonldToJsonTransformer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.HttpHeaders;
@@ -17,23 +19,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.io.CharStreams;
-import com.google.gson.reflect.TypeToken;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-import cucumber.api.Scenario;
-import cucumber.api.java.en.Then;
-import cucumber.api.java8.En;
-import io.opensaber.pojos.Response;
-import io.opensaber.registry.transform.JsonldToJsonTransformer;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class SearchIntegrationTestSteps extends RegistryTestBase implements En{
 	
@@ -81,7 +74,7 @@ public class SearchIntegrationTestSteps extends RegistryTestBase implements En{
             StringBuilder url = new StringBuilder();
             url.append(baseUrl).append(CREATE_REST_ENDPOINT);
             ResponseEntity<Response> response = createEntity(jsonld, url.toString(), headers);
-            id = (String) response.getBody().getResult().get("entity");
+            id = (String) ((Map)response.getBody().getResult()).get("entity");
         });
     }
     
@@ -98,7 +91,7 @@ public class SearchIntegrationTestSteps extends RegistryTestBase implements En{
     	Then("^search api message is unsuccessful", () -> checkUnsuccessfulResponse());
     	
     	And("^response must have atleast one record$", () -> {
-    		Map<String, Object> result = response.getBody().getResult();
+    		Map<String, Object> result = (Map)response.getBody().getResult();
     		JSONObject obj = new JSONObject(result);
     		JSONArray resultArray = (JSONArray)obj.get("@graph");
     		assertTrue(resultArray.length() >= 1);
@@ -154,7 +147,7 @@ public class SearchIntegrationTestSteps extends RegistryTestBase implements En{
     @cucumber.api.java.en.And("^result is empty$")
     public void responseWithEmptyResult()
     {
-		Map<String, Object> result = response.getBody().getResult();
+		Map<String, Object> result = (Map)response.getBody().getResult();
 		JSONObject obj = new JSONObject(result);
 		assertFalse(obj.has("@graph"));
 	};
