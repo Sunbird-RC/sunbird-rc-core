@@ -26,9 +26,6 @@ public interface RegistryService {
 
 	public String frameEntity(Model entityModel) throws IOException, MultipleEntityException, EntityCreationException;
 
-	public String frameSearchEntity(org.eclipse.rdf4j.model.Model entityModel)
-			throws IOException, MultipleEntityException, EntityCreationException;
-
 	public boolean deleteEntityById(String id) throws AuditFailedException, RecordNotFoundException;
 
 	public String getEntityFramedById(String id, boolean includeSignatures) throws RecordNotFoundException,

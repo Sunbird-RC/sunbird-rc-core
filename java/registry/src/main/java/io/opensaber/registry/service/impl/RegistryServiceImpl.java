@@ -260,32 +260,6 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public String frameSearchEntity(org.eclipse.rdf4j.model.Model entityModel)
-			throws IOException, MultipleEntityException, EntityCreationException {
-		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
-		String jenaJSON = "";
-		if (!jenaEntityModel.isEmpty()) {
-			String rootLabelType = getTypeForSearch(jenaEntityModel);
-			logger.debug("RegistryServiceImpl : jenaEntityModel for framing: {} \n root : {}, \n rootLabelType: {}",
-					jenaEntityModel, rootLabelType);
-			DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
-			JsonLDWriteContext ctx = new JsonLDWriteContext();
-			InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
-			String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
-			fileString = fileString.replace("<@type>", rootLabelType);
-			ctx.setFrame(fileString);
-			WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT);
-			PrefixMap pm = RiotLib.prefixMap(g);
-			String base = null;
-			StringWriter sWriterJena = new StringWriter();
-			w.write(sWriterJena, g, pm, base, ctx);
-			jenaJSON = sWriterJena.toString();
-		}
-		logger.debug("RegistryServiceImpl : jenaJSON for framing : {}", jenaJSON);
-		return jenaJSON;
-	}
-
-	@Override
 	public boolean deleteEntityById(String id) throws AuditFailedException, RecordNotFoundException {
 		boolean isDeleted = registryDao.deleteEntityById(id);
 		if (!isDeleted) {
