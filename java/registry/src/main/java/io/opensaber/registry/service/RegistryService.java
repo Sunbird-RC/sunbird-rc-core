@@ -6,7 +6,6 @@ import org.apache.jena.rdf.model.Model;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 public interface RegistryService {
 
@@ -30,17 +29,9 @@ public interface RegistryService {
 	public String frameSearchEntity(org.eclipse.rdf4j.model.Model entityModel)
 			throws IOException, MultipleEntityException, EntityCreationException;
 
-	public String frameAuditEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException;
-
-	public org.eclipse.rdf4j.model.Model getAuditNode(String id) throws IOException, NoSuchElementException,
-			RecordNotFoundException, EncryptionException, AuditFailedException;
-
 	public boolean deleteEntityById(String id) throws AuditFailedException, RecordNotFoundException;
 
 	public String getEntityFramedById(String id, boolean includeSignatures) throws RecordNotFoundException,
-			EncryptionException, AuditFailedException, IOException, MultipleEntityException, EntityCreationException;
-
-	public String getAuditNodeFramed(String id) throws IOException, NoSuchElementException, RecordNotFoundException,
 			EncryptionException, AuditFailedException, IOException, MultipleEntityException, EntityCreationException;
 
 }

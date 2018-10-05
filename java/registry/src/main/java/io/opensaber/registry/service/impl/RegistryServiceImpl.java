@@ -286,35 +286,6 @@ public class RegistryServiceImpl implements RegistryService {
 	}
 
 	@Override
-	public String frameAuditEntity(org.eclipse.rdf4j.model.Model entityModel) throws IOException {
-		Model jenaEntityModel = JenaRDF4J.asJenaModel(entityModel);
-		logger.debug("RegistryServiceImpl : jenaEntityModel for audit-framing: {} ", jenaEntityModel);
-		DatasetGraph g = DatasetFactory.create(jenaEntityModel).asDatasetGraph();
-		JsonLDWriteContext ctx = new JsonLDWriteContext();
-		InputStream is = this.getClass().getClassLoader().getResourceAsStream(auditFrameFile);
-		String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
-		ctx.setFrame(fileString);
-		WriterDatasetRIOT w = RDFDataMgr.createDatasetWriter(org.apache.jena.riot.RDFFormat.JSONLD_FRAME_FLAT);
-		PrefixMap pm = RiotLib.prefixMap(g);
-		String base = null;
-		StringWriter sWriterJena = new StringWriter();
-		w.write(sWriterJena, g, pm, base, ctx);
-		String jenaJSON = sWriterJena.toString();
-		logger.debug("RegistryServiceImpl : jenaJSON for audit-framing: {}", jenaJSON);
-		return jenaJSON;
-	}
-
-	@Override
-	public org.eclipse.rdf4j.model.Model getAuditNode(String id) throws IOException, NoSuchElementException,
-			RecordNotFoundException, EncryptionException, AuditFailedException {
-		String label = id + "-AUDIT";
-		Graph graph = registryDao.getEntityById(label, false);
-		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
-		logger.debug("RegistryServiceImpl : Audit Model : " + model);
-		return model;
-	}
-
-	@Override
 	public boolean deleteEntityById(String id) throws AuditFailedException, RecordNotFoundException {
 		boolean isDeleted = registryDao.deleteEntityById(id);
 		if (!isDeleted) {
@@ -487,16 +458,6 @@ public class RegistryServiceImpl implements RegistryService {
 		Graph graph = registryDao.getEntityById(id, includeSignatures);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, id);
 		logger.debug("RegistryServiceImpl : rdf4j model :", model);
-		return frameEntity.getContent(model);
-	}
-
-	@Override
-	public String getAuditNodeFramed(String id) throws IOException, NoSuchElementException, RecordNotFoundException,
-			EncryptionException, AuditFailedException, IOException, MultipleEntityException, EntityCreationException {
-		String label = id + "-AUDIT";
-		Graph graph = registryDao.getEntityById(label, false);
-		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, label);
-		logger.debug("RegistryServiceImpl : Audit Model : " + model);
 		return frameEntity.getContent(model);
 	}
 }
