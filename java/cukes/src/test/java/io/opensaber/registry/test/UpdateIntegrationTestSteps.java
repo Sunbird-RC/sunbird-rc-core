@@ -164,13 +164,13 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
             StringBuilder url = new StringBuilder();
             url.append(baseUrl).append(CREATE_REST_ENDPOINT);
             ResponseEntity<Response> response = createEntity(jsonld, url.toString(), headers);
-            id = (String) response.getBody().getResult().get("entity");
+            id = (String) ((Map)response.getBody().getResult()).get("entity");
         });
     }
 
     private String updateInputJsonldRootNodeId(ResponseEntity<Response> response, String updateJsonFilename) {
 
-        Map<String, Object> responseData = response.getBody().getResult();
+        Map<String, Object> responseData = (Map)response.getBody().getResult();
         Gson gson = new Gson();
         JsonParser parser = new JsonParser();
         JsonObject responseResult = parser.parse(gson.toJson(responseData)).getAsJsonObject();
@@ -198,7 +198,7 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
     }
 
     private void verifyValidationErrorMessage(String message) {
-        Map<String, Object> result = response.getBody().getResult();
+        Map<String, Object> result = (Map)response.getBody().getResult();
         Map<String, String> validationErrorData = (Map<String, String>) result.get("data");
         String validationError = validationErrorData.get(Constants.INTEGRATION_TEST_BASE_URL+"serialNum");
         assertEquals(message, validationError);
