@@ -78,7 +78,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 	    id=setJsonldWithNewRootLabel();
 		assertNotNull(jsonld);
 	}
-	
+
 	@And("^an invalid record")
 	public void invalidJsonldData(){
 		setJsonld(INVALID_NEWJSONLD);

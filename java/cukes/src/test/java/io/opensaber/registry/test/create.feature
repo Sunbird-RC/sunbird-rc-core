@@ -21,12 +21,12 @@ Feature: Inserting a record into the registry
     When another record issued into the registry
     Then record issuing should be successful
     And fetching the record from the registry should match the issued record
-  
+
    Scenario: Getting an expected response
-    Given a response 
+    Given a response
     When response matches expected format
     Then the response format should be successful
-  
+
   Scenario: Issuing a record with invalid auth token
     Given a valid record
     And an invalid auth token
@@ -40,7 +40,7 @@ Feature: Inserting a record into the registry
     When issuing the record into the registry
     Then record issuing should be unsuccessful
     And error message is Auth token is missing
-    
+
   Scenario: Issuing an invalid record
     Given an invalid record
     And a valid auth token
@@ -54,7 +54,7 @@ Feature: Inserting a record into the registry
     When an entity for the record is issued into the registry
     Then record issuing should be successful
     And fetching the record from the registry should match the issued record
-    
+
   Scenario: Adding a duplicate entity for an existing record
     Given a record issued into the registry
     And an entity for the record is issued into the registry
@@ -62,7 +62,7 @@ Feature: Inserting a record into the registry
     When the same entity for the record is issued into the registry
     Then record issuing should be unsuccessful
     And error message is Cannot insert duplicate record
-    
+
   Scenario: Adding an entity for an non-existent record
     Given an id for a non-existent record
     And a valid auth token

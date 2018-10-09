@@ -51,12 +51,11 @@ public class ResponseUtil {
 		return responseEntity;
 	}
 
-	public static boolean checkApiId(Request reqBody,String apiId){
+	public static boolean checkApiId(Request reqBody, String apiId){
 		if(null != reqBody.getId()){
 			return reqBody.getId().equalsIgnoreCase(apiId);
 		} else {
 			return false;
 		}
-
 	}
 }

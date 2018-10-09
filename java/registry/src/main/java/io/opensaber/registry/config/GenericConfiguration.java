@@ -262,6 +262,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new RDFValidationMapper(validationConfig);
 	}
 
+	/**
+	 * This method will process all the interceptors for each request
+	 * @param registry
+	 */
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		int orderIdx = 1;

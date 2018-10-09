@@ -77,11 +77,9 @@ public class RegistryUtilsController {
             }
         } catch (Exception e) {
             logger.error("Error in generating signature", e);
-            HealthCheckResponse healthCheckResult =
-                    new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, false, null);
-            response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+            response.setResult(null);
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg("");
+            responseParams.setErrmsg(Constants.SIGN_ERROR_MESSAGE);
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -147,11 +145,9 @@ public class RegistryUtilsController {
             
         } catch (Exception e) {
             logger.error("Error in verifying signature", e);
-            HealthCheckResponse healthCheckResult =
-                    new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, false, null);
-            response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+            response.setResult(null);
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg("");
+            responseParams.setErrmsg(Constants.VERIFY_SIGN_ERROR_MESSAGE);
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -169,11 +165,9 @@ public class RegistryUtilsController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
         } catch (Exception e) {
             logger.error("Error in getting key ", e);
-            HealthCheckResponse healthCheckResult =
-                    new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, false, null);
-            response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+            response.setResult(null);
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg("");
+            responseParams.setErrmsg(Constants.KEY_RETRIEVE_ERROR_MESSAGE);
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
