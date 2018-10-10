@@ -3,7 +3,6 @@ package io.opensaber.registry.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.opensaber.pojos.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,13 +48,5 @@ public class ResponseUtil {
 		}
 		ResponseEntity responseEntity = new ResponseEntity<>(response, HttpStatus.OK);
 		return responseEntity;
-	}
-
-	public static boolean checkApiId(Request reqBody, String apiId){
-		if(null != reqBody.getId()){
-			return reqBody.getId().equalsIgnoreCase(apiId);
-		} else {
-			return false;
-		}
 	}
 }

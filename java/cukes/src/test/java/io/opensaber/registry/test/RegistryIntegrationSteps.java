@@ -35,6 +35,7 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 	private static final String VALID_NEWJSONLD= "teacher.jsonld";
 	private static final String ENTITY_JSONLD= "basicProficiencyLevel.jsonld";
 	private static final String INVALID_LABEL_JSONLD = "invalid-label.jsonld";
+	private static final String INVALID_REQUESTID_JSONLD = "invalid_request_id_teacher.jsonld";
 	private static final String INVALID_NEWJSONLD= "invalid-teacher.jsonld";
 	private static final String ADD_ENTITY = "add";
 	private static final String READ_ENTITY = "read";
@@ -79,6 +80,13 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 		assertNotNull(jsonld);
 	}
 
+	@Given("^an invalid request id for record")
+	public void invalidRequestIdOfJsonldData(){
+		setJsonld(INVALID_REQUESTID_JSONLD);
+		id=setJsonldWithNewRootLabel();
+		assertNotNull(jsonld);
+	}
+	
 	@And("^an invalid record")
 	public void invalidJsonldData(){
 		setJsonld(INVALID_NEWJSONLD);

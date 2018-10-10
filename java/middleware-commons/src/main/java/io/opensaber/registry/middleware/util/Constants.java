@@ -1,5 +1,7 @@
 package io.opensaber.registry.middleware.util;
 
+import org.apache.jena.vocabulary.RDF;
+
 public class Constants {
 
     public static final String REQUEST_ATTRIBUTE_NAME = "dataObject";
@@ -51,6 +53,7 @@ public class Constants {
     public static final String VALIDATION_CONFIGURATION_MISSING = "Configuration for validation file is missing";
     public static final String SCHEMA_CONFIGURATION_MISSING = "Configuration for schema file is missing";
     public static final String ENTITY_TYPE_NOT_PROVIDED = "Entity type is not provided in the input";
+    public static final String ENTITY_ID_MISMATCH = "Entity id is wrongly provided in the input";
     public static final String SIGN_ERROR_MESSAGE = "Unable to get signature for data";
     public static final String VERIFY_SIGN_ERROR_MESSAGE = "Unable to verify signature for data";
     public static final String KEY_RETRIEVE_ERROR_MESSAGE = "Unable to retrieve key";
@@ -71,7 +74,7 @@ public class Constants {
     public static final String UPDATE_METHOD_ORIGIN = "update";
     public static final String SEARCH_METHOD_ORIGIN = "search";
     public static final String FORWARD_SLASH = "/";
-    public static final String RDF_URL_SYNTAX_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+    public static final String RDF_URL_SYNTAX_TYPE = RDF.uri+"type";
 
     // List of predicates introduced for digital signature.
     public static final String SIGNATURES = "signatures";
@@ -82,6 +85,13 @@ public class Constants {
     public static final String SIGN_NONCE = "nonce";
     public static final String SIGN_TYPE = "type";
     public static final String SIGN_SIGNATURE_VALUE = "signatureValue";
+
+    //List of request endpoints for post calls to validate request id
+    public static final String REGISTRY_ADD_ENDPOINT = "/add";
+    public static final String REGISTRY_UPDATE_ENDPOINT = "/update";
+    public static final String REGISTRY_SEARCH_ENDPOINT = "/search";
+    public static final String SIGNATURE_SIGN_ENDPOINT = "/utils/sign";
+    public static final String SIGNATURE_VERIFY_ENDPOINT = "/utils/verify";
 
 
     public enum GraphDatabaseProvider {

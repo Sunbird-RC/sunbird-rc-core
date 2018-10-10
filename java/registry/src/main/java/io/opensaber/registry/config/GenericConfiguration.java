@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import es.weso.schema.Schema;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.Response;
 import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
 import io.opensaber.registry.exception.CustomException;
@@ -43,6 +44,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 public class GenericConfiguration implements WebMvcConfigurer {
@@ -150,6 +154,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public SignaturePresenceValidationInterceptor signaturePresenceValidationInterceptor() {
 		return new SignaturePresenceValidationInterceptor(signaturePresenceValidator(), gson());
+	}
+
+	/**
+	 * This methos creates bean for RequestIdValidationInterceptor
+	 * @return RequestIdValidationInterceptor
+	 */
+	@Bean
+	public RequestIdValidationInterceptor requestIdValidationInterceptor() {
+		return new RequestIdValidationInterceptor(requestIdMap(), gson());
 	}
 
 	@Bean
@@ -263,12 +276,30 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	/**
+	 * This method create a Map of request endpoints with request id
+	 * @return Map
+	 */
+	@Bean
+	public Map<String, String> requestIdMap(){
+		Map<String, String> requestIdMap = new HashMap<>();
+		requestIdMap.put(Constants.REGISTRY_ADD_ENDPOINT,Response.API_ID.CREATE.getId());
+		requestIdMap.put(Constants.REGISTRY_SEARCH_ENDPOINT,Response.API_ID.SEARCH.getId());
+		requestIdMap.put(Constants.REGISTRY_UPDATE_ENDPOINT,Response.API_ID.UPDATE.getId());
+		requestIdMap.put(Constants.SIGNATURE_SIGN_ENDPOINT,Response.API_ID.SIGN.getId());
+		requestIdMap.put(Constants.SIGNATURE_VERIFY_ENDPOINT,Response.API_ID.VERIFY.getId());
+		return requestIdMap;
+	}
+
+	/**
 	 * This method will process all the interceptors for each request
 	 * @param registry
 	 */
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		int orderIdx = 1;
+		Map<String, String> requestMap =  requestIdMap();
+		registry.addInterceptor(requestIdValidationInterceptor()).
+				addPathPatterns(new ArrayList(requestMap.keySet())).order(orderIdx++);
 		if(authenticationEnabled) {
             registry.addInterceptor(authorizationInterceptor())
                     .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(orderIdx++);

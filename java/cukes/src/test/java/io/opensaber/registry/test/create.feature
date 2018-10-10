@@ -48,6 +48,13 @@ Feature: Inserting a record into the registry
     Then record issuing should be unsuccessful
     And error message is Data validation failed!
 
+  Scenario: Issuing an invalid request id for record
+    Given an invalid request id for record
+    And a valid auth token
+    When issuing the record into the registry
+    Then record issuing should be unsuccessful
+    And error message is Entity id is wrongly provided in the input
+
   Scenario: Adding an entity for an existing record
     Given a record issued into the registry
     And a valid auth token
