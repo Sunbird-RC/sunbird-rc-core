@@ -68,6 +68,9 @@ public class RegistryServiceImpl implements RegistryService {
 	@Value("${signature.enabled}")
 	private boolean signatureEnabled;
 
+	@Value("${persistence.enabled}")
+	private boolean persistenceEnabled;
+
 	@Value("${signature.domain}")
 	private String signatureDomain;
 
@@ -112,8 +115,11 @@ public class RegistryServiceImpl implements RegistryService {
 			// Append _: to the root node label to create the entity as Apache
 			// Jena removes the _: for the root node label
 			// if it is a blank node
-			return registryDao.addEntity(graph, label, subject, property);
-
+			String id = "entityIdPlaceholder";
+			if (persistenceEnabled) {
+				id = registryDao.addEntity(graph, label, subject, property);
+			}
+			return id;
 		} catch (EntityCreationException | EncryptionException | AuditFailedException | DuplicateRecordException
 				| MultipleEntityException ex) {
 			throw ex;
@@ -127,25 +133,26 @@ public class RegistryServiceImpl implements RegistryService {
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
 			EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
 			IOException, SignatureException.CreationException {
-		boolean isUpdated;
-		Resource root = getRootNode(entity);
-		String label = getRootLabel(root);
-		String rootType = getTypeForRootLabel(entity, root);
-		if (rootType.equalsIgnoreCase(registryContextBase + registryRootEntityType)) {
-			if (encryptionEnabled) {
-				encryptModel(entity);
+		boolean isUpdated = false;
+		if (persistenceEnabled) {
+			Resource root = getRootNode(entity);
+			String label = getRootLabel(root);
+			String rootType = getTypeForRootLabel(entity, root);
+			if (rootType.equalsIgnoreCase(registryContextBase + registryRootEntityType)) {
+				if (encryptionEnabled) {
+					encryptModel(entity);
+				}
+				Graph graph = generateGraphFromRDF(entity);
+				logger.debug("Service layer graph :", graph);
+				isUpdated = registryDao.updateEntity(graph, label, "update");
+				if (signatureEnabled) {
+					getEntityAndUpdateSign(entity, label);
+				}
+			} else {
+				logger.error("Exception while updating entity");
+				throw new UnsupportedOperationException("Updates to child entity not supported");
 			}
-			Graph graph = generateGraphFromRDF(entity);
-			logger.debug("Service layer graph :", graph);
-			isUpdated = registryDao.updateEntity(graph, label, "update");
-			if (signatureEnabled) {
-				getEntityAndUpdateSign(entity, label);
-			}
-		} else {
-			logger.error("Exception while updating entity");
-			throw new UnsupportedOperationException("Updates to child entity not supported");
 		}
-
 		return isUpdated;
 	}
 
