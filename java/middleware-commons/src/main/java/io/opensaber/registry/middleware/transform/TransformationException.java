@@ -1,4 +1,4 @@
-package io.opensaber.registry.middleware.transform.commons;
+package io.opensaber.registry.middleware.transform;
 
 
 
@@ -14,5 +14,9 @@ public class TransformationException extends Exception {
     public TransformationException(String message, ErrorCode errorCode) {
         super(message);
         this.errorCode = errorCode;
+    }
+    
+    public ErrorCode getErrorCode(){
+    	return errorCode;
     }
 }

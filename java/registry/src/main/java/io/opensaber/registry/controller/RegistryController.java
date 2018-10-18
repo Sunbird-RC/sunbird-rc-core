@@ -1,15 +1,15 @@
 package io.opensaber.registry.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.*;
 import io.opensaber.registry.exception.*;
-import io.opensaber.registry.middleware.transform.commons.Data;
-import io.opensaber.registry.middleware.transform.commons.ITransformer;
-import io.opensaber.registry.middleware.transform.commons.TransformationException;
-import io.opensaber.registry.middleware.transform.commons.Constants.JsonldConstants;
+import io.opensaber.registry.middleware.transform.Data;
+import io.opensaber.registry.middleware.transform.ITransformer;
+import io.opensaber.registry.middleware.transform.TransformationException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
+import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.model.RegistrySignature;
 import io.opensaber.registry.service.RegistryAuditService;
@@ -17,7 +17,6 @@ import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.transformation.ResponseTransformFactory;
-import io.opensaber.registry.util.JSONUtil;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -25,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -136,13 +135,13 @@ public class RegistryController {
 	 * 
 	 * @param id
 	 * @param accept,
-	 *            only one mime type is supported.
+	 *            only one mime type is supported at a time. Pick up the first
+	 *            mime type from the header.
 	 * @return
 	 */
 	@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> readEntity(@PathVariable("id") String id,
-			@RequestParam(required = false) boolean includeSignatures,
-			@RequestHeader(value = "Accept") MediaType accept) {
+			@RequestParam(required = false) boolean includeSignatures, @RequestHeader HttpHeaders header) {
 
 		String entityId = registryContext + id;
 		ResponseParams responseParams = new ResponseParams();
@@ -154,7 +153,8 @@ public class RegistryController {
 			logger.info("RegistryController: Json string " + content);
 
 			Data<Object> data = new Data<Object>(content);
-			ITransformer<Object> responseTransformer = responseTransformFactory.getInstance(accept);
+			ITransformer<Object> responseTransformer = responseTransformFactory
+					.getInstance(header.getAccept().iterator().next());
 			responseTransformer.setPurgeData(getKeysToPurge());
 			Data<Object> responseContent = responseTransformer.transform(data);
 			response.setResult(responseContent.getData());
@@ -180,12 +180,13 @@ public class RegistryController {
 	 * 
 	 * @param id
 	 * @param accept,
-	 *            only one mime type is supported.
+	 *            only one mime type is supported at a time. Pick up the first
+	 *            mime type from the header.
 	 * @return
 	 */
 	@RequestMapping(value = "/search", method = RequestMethod.POST)
 	public ResponseEntity<Response> searchEntity(@RequestAttribute Request requestModel,
-			@RequestHeader(value = "Accept") MediaType accept) {
+			@RequestHeader HttpHeaders header) {
 
 		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
 		ResponseParams responseParams = new ResponseParams();
@@ -196,7 +197,8 @@ public class RegistryController {
 			watch.start("RegistryController.searchEntity");
 			String jenaJson = searchService.searchFramed(rdf);
 			Data<Object> data = new Data<>(jenaJson);
-			ITransformer<Object> responseTransformer = responseTransformFactory.getInstance(accept);
+			ITransformer<Object> responseTransformer = responseTransformFactory
+					.getInstance(header.getAccept().iterator().next());
 			responseTransformer.setPurgeData(getKeysToPurge());
 			Data<Object> resultContent = responseTransformer.transform(data);
 			response.setResult(resultContent.getData());
@@ -338,10 +340,9 @@ public class RegistryController {
 	}
 
 	/*
-	 * To set the keys(like "@id" or @"@type" to be trim of a json
+	 * To set the keys(like @type to be trim of a json
 	 */
 	private List<String> getKeysToPurge() {
-		keyToPurge.add(JsonldConstants.ID);
 		keyToPurge.add(JsonldConstants.TYPE);
 		return keyToPurge;
 

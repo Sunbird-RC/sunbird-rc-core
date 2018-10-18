@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.opensaber.registry.middleware.transform.commons.Data;
-import io.opensaber.registry.middleware.transform.commons.ITransformer;
-import io.opensaber.registry.middleware.transform.commons.TransformationException;
+import io.opensaber.registry.middleware.transform.Data;
+import io.opensaber.registry.middleware.transform.ITransformer;
+import io.opensaber.registry.middleware.transform.TransformationException;
 
 @Component
 public class JsonldToLdTransformer implements ITransformer<Object> {

@@ -86,6 +86,15 @@ public class Constants {
     public static final String SIGN_TYPE = "type";
     public static final String SIGN_SIGNATURE_VALUE = "signatureValue";
 
+    public static class JsonldConstants {
+        public static final String CONTEXT = "@context";
+        public static final String ID = "@id";
+        public static final String TYPE = "@type";
+        public static final String VALUE = "@value";
+        public static final String GRAPH = "@graph";
+    }
+
+
     //List of request endpoints for post calls to validate request id
     public static final String REGISTRY_ADD_ENDPOINT = "/add";
     public static final String REGISTRY_UPDATE_ENDPOINT = "/update";

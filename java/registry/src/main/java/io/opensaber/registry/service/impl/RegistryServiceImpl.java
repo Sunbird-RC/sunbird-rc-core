@@ -7,6 +7,7 @@ import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.*;
 import io.opensaber.registry.frame.FrameEntity;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.model.RegistrySignature;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
@@ -15,7 +16,6 @@ import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.GraphDBFactory;
-import io.opensaber.registry.util.JSONUtil;
 import io.opensaber.utils.converters.RDF2Graph;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -432,6 +432,10 @@ public class RegistryServiceImpl implements RegistryService {
 		Graph graph = registryDao.getEntityById(id, includeSignatures);
 		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(graph, id);
 		logger.debug("RegistryServiceImpl : rdf4j model :", model);
-		return frameEntity.getContent(model);
+		Model jenaEntityModel = JenaRDF4J.asJenaModel(model);
+		if (encryptionEnabled) {
+			decryptModel(jenaEntityModel);
+		}
+		return frameEntity(jenaEntityModel);
 	}
 }

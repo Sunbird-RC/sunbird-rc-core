@@ -1,4 +1,4 @@
-package io.opensaber.registry.middleware.transform.commons;
+package io.opensaber.registry.middleware.transform;
 
 public class Data<T> {
 
