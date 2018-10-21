@@ -1,5 +1,6 @@
 package io.opensaber.registry.service;
 
+import com.github.jsonldjava.core.JsonLdError;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.exception.*;
 import org.apache.jena.rdf.model.Model;
@@ -15,9 +16,13 @@ public interface RegistryService {
 			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
 			MultipleEntityException, RecordNotFoundException;
 
+	public String addEntity(Model rdfModel, String dataObject, String subject, String property)
+			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
+			MultipleEntityException, RecordNotFoundException, IOException, SignatureException.UnreachableException, JsonLdError, SignatureException.CreationException, RDFValidationException;
+
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
 			EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
-			IOException, SignatureException.CreationException;
+			IOException, SignatureException.CreationException, RDFValidationException;
 
 	public Model getEntityById(String id, boolean includeSignatures)
 			throws RecordNotFoundException, EncryptionException, AuditFailedException;

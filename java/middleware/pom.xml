@@ -14,7 +14,6 @@
 	<properties>
 		<jsonldConversionVersion>1.0.0</jsonldConversionVersion>
 		<rdfConversionVersion>1.0.0</rdfConversionVersion>
-		<rdfValidationVersion>1.0.0</rdfValidationVersion>
 		<rdfValidationMapperVersion>1.0.0</rdfValidationMapperVersion>
 		<authorizationVersion>1.0.0</authorizationVersion>
 		<signaturePresenceValidationVersion>1.0.0</signaturePresenceValidationVersion>
@@ -30,11 +29,6 @@
 				<groupId>io.opensaber.middleware</groupId>
 				<artifactId>rdf-conversion</artifactId>
 				<version>${rdfConversionVersion}</version>
-			</dependency>
-			<dependency>
-				<groupId>io.opensaber.middleware</groupId>
-				<artifactId>rdf-validation</artifactId>
-				<version>${rdfValidationVersion}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.opensaber.middleware</groupId>

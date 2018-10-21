@@ -51,10 +51,6 @@
 		</dependency>
 		<dependency>
 			<groupId>io.opensaber.middleware</groupId>
-			<artifactId>rdf-validation</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.opensaber.middleware</groupId>
 			<artifactId>rdf-validation-mapping</artifactId>
 		</dependency>
 		<dependency>
