@@ -16,7 +16,6 @@ import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.transformation.ResponseTransformFactory;
-
 import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

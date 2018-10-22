@@ -91,8 +91,8 @@ public class SearchServiceImplTest extends RegistryTestBase{
 	}
 
 	@Test
-	public void test_search_valid_response() throws AuditFailedException, EncryptionException, RecordNotFoundException,
-			TypeNotProvidedException, EntityCreationException, MultipleEntityException, DuplicateRecordException {
+    public void test_search_valid_response() throws AuditFailedException, EncryptionException, RecordNotFoundException,
+            TypeNotProvidedException, EntityCreationException, MultipleEntityException, DuplicateRecordException {
 		String response = addEntity();
 		Model rdf = getNewValidRdf(BASE_SEARCH_JSONLD);
 		List<Resource> subjectList = RDFUtil.getRootLabels(rdf);
@@ -115,9 +115,9 @@ public class SearchServiceImplTest extends RegistryTestBase{
 		rdf.removeAll(null, RDF.type, ResourceFactory.createResource(CONTEXT_NAMESPACE+"School"));
 		searchService.search(rdf);
 	}
-	
-	private String addEntity() throws DuplicateRecordException, AuditFailedException,
-			EncryptionException, RecordNotFoundException, MultipleEntityException, EntityCreationException {
+
+    private String addEntity() throws DuplicateRecordException, AuditFailedException,
+            EncryptionException, RecordNotFoundException, MultipleEntityException, EntityCreationException {
 		Model rdfModel = getNewValidRdf();
 		return registryService.addEntity(rdfModel, null, null);
 	}

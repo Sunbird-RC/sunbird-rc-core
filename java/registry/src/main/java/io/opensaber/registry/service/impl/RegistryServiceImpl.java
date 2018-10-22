@@ -126,9 +126,9 @@ public class RegistryServiceImpl implements RegistryService {
 			RegistrySignature rs = new RegistrySignature();
 			Schema createSchema = schemaConfigurator.getSchemaForCreate();
 			Schema updateSchema = schemaConfigurator.getSchemaForUpdate();
-			RDFValidator rdfValidator = new RDFValidator(createSchema,updateSchema);
-			ValidationResponse validationResponse = rdfValidator.validateRDFWithSchema(rdfModel,Constants.CREATE_METHOD_ORIGIN);
-			if(!validationResponse.isValid()) {
+			RDFValidator rdfValidator = new RDFValidator(createSchema, updateSchema);
+			ValidationResponse validationResponse = rdfValidator.validateRDFWithSchema(rdfModel, Constants.CREATE_METHOD_ORIGIN);
+			if (!validationResponse.isValid()) {
 				throw new RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE);
 			}
 			if (signatureEnabled) {
