@@ -17,10 +17,14 @@ import io.opensaber.registry.interceptor.request.transform.JsonToLdRequestTransf
 import io.opensaber.registry.interceptor.request.transform.JsonldToLdRequestTransformer;
 import io.opensaber.registry.interceptor.request.transform.RequestTransformFactory;
 import io.opensaber.registry.middleware.Middleware;
-import io.opensaber.registry.middleware.impl.*;
+import io.opensaber.registry.middleware.impl.JSONLDConverter;
+import io.opensaber.registry.middleware.impl.RDFConverter;
+import io.opensaber.registry.middleware.impl.RDFValidationMapper;
+import io.opensaber.registry.middleware.impl.SignaturePresenceValidator;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
+import io.opensaber.registry.service.RDFValidator;
 import io.opensaber.registry.sink.*;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
@@ -147,11 +151,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public RDFValidationInterceptor rdfValidationInterceptor() {
-		return new RDFValidationInterceptor(rdfValidator(), gson());
-	}
-	
-	@Bean
 	public SignaturePresenceValidationInterceptor signaturePresenceValidationInterceptor() {
 		return new SignaturePresenceValidationInterceptor(signaturePresenceValidator(), gson());
 	}
@@ -190,7 +189,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public Middleware rdfValidator() {
+	public RDFValidator rdfValidator() {
 		Schema schemaForCreate = null;
 		Schema schemaForUpdate = null;
 		try {
@@ -307,8 +306,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	    registry.addInterceptor(rdfConversionInterceptor())
 				.addPathPatterns("/add", "/update", "/search").order(orderIdx++);
-		registry.addInterceptor(rdfValidationInterceptor())
-				.addPathPatterns("/add", "/update").order(orderIdx++);
+		/*registry.addInterceptor(rdfValidationInterceptor())
+				.addPathPatterns("/add", "/update").order(orderIdx++);*/
 
 		if (signatureEnabled) {
 			registry.addInterceptor(signaturePresenceValidationInterceptor())

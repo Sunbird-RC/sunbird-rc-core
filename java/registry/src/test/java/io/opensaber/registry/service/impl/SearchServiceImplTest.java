@@ -1,9 +1,19 @@
 package io.opensaber.registry.service.impl;
 
-import static org.junit.Assert.*;
-import java.util.Collections;
-import java.util.List;
-
+import io.opensaber.registry.app.OpenSaberApplication;
+import io.opensaber.registry.authorization.AuthorizationToken;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.controller.RegistryTestBase;
+import io.opensaber.registry.dao.RegistryDao;
+import io.opensaber.registry.dao.SearchDao;
+import io.opensaber.registry.exception.*;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.SearchService;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.tests.utility.TestHelper;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
@@ -27,26 +37,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import io.opensaber.registry.app.OpenSaberApplication;
-import io.opensaber.registry.authorization.AuthorizationToken;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.dao.SearchDao;
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.exception.EntityCreationException;
-import io.opensaber.registry.exception.MultipleEntityException;
-import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.exception.TypeNotProvidedException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.service.SearchService;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.tests.utility.TestHelper;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {OpenSaberApplication.class, RegistryDao.class,
@@ -94,10 +89,10 @@ public class SearchServiceImplTest extends RegistryTestBase{
 		org.eclipse.rdf4j.model.Model responseModel = searchService.search(rdf);
 		assertTrue(responseModel.isEmpty());
 	}
-	
+
 	@Test
-	public void test_search_valid_response() throws AuditFailedException, EncryptionException, RecordNotFoundException, 
-	TypeNotProvidedException, EntityCreationException, MultipleEntityException, DuplicateRecordException {
+	public void test_search_valid_response() throws AuditFailedException, EncryptionException, RecordNotFoundException,
+			TypeNotProvidedException, EntityCreationException, MultipleEntityException, DuplicateRecordException {
 		String response = addEntity();
 		Model rdf = getNewValidRdf(BASE_SEARCH_JSONLD);
 		List<Resource> subjectList = RDFUtil.getRootLabels(rdf);
@@ -121,8 +116,8 @@ public class SearchServiceImplTest extends RegistryTestBase{
 		searchService.search(rdf);
 	}
 	
-	private String addEntity() throws DuplicateRecordException, AuditFailedException, 
-	EncryptionException, RecordNotFoundException, MultipleEntityException, EntityCreationException{
+	private String addEntity() throws DuplicateRecordException, AuditFailedException,
+			EncryptionException, RecordNotFoundException, MultipleEntityException, EntityCreationException {
 		Model rdfModel = getNewValidRdf();
 		return registryService.addEntity(rdfModel, null, null);
 	}

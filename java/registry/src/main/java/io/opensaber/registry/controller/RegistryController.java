@@ -10,16 +10,14 @@ import io.opensaber.registry.middleware.transform.TransformationException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
 import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.model.RegistrySignature;
 import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.transformation.ResponseTransformFactory;
-import org.apache.jena.ext.com.google.common.io.ByteStreams;
+
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,20 +94,8 @@ public class RegistryController {
 
 		try {
 			watch.start("RegistryController.addToExistingEntity");
-			if (signatureEnabled) {
-				Map signReq = new HashMap<String, Object>();
-				InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
-				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
-				Map<String, Object> reqMap = JSONUtil.frameJsonAndRemoveIds(ID_REGEX,
-						(String) requestModel.getRequestMap().get("dataObject"), gson, fileString);
-				signReq.put("entity", reqMap);
-				Map<String, Object> entitySignMap = (Map<String, Object>) signatureService.sign(signReq);
-				entitySignMap.put("createdDate", rs.getCreatedTimestamp());
-				entitySignMap.put("keyUrl", signatureKeyURl);
-				rdf = RDFUtil.getUpdatedSignedModel(rdf, registryContext, signatureDomain, entitySignMap,
-						ModelFactory.createDefaultModel());
-			}
-			String label = registryService.addEntity(rdf, id, property);
+			String dataObject = (String) requestModel.getRequestMap().get("dataObject");
+			String label = registryService.addEntity(rdf, dataObject, id, property);
 			result.put("entity", label);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
