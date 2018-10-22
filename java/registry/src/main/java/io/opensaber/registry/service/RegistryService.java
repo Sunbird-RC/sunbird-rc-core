@@ -9,20 +9,19 @@ import java.io.IOException;
 import java.util.List;
 
 public interface RegistryService {
-
 	public List getEntityList();
 
 	public String addEntity(Model rdfModel, String subject, String property)
 			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
 			MultipleEntityException, RecordNotFoundException;
 
-	public String addEntity(Model rdfModel, String dataObject, String subject, String property)
-			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
-			MultipleEntityException, RecordNotFoundException, IOException, SignatureException.UnreachableException, JsonLdError, SignatureException.CreationException, RDFValidationException;
+    public String addEntity(Model rdfModel, String dataObject, String subject, String property)
+            throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
+            MultipleEntityException, RecordNotFoundException, IOException, SignatureException.UnreachableException, JsonLdError, SignatureException.CreationException, RDFValidationException;
 
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
 			EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
-			IOException, SignatureException.CreationException, RDFValidationException;
+            IOException, SignatureException.CreationException, RDFValidationException;
 
 	public Model getEntityById(String id, boolean includeSignatures)
 			throws RecordNotFoundException, EncryptionException, AuditFailedException;
