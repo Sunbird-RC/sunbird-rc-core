@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class RDFValidator {
+public class RdfValidator {
 
 	private static final String SX_SHAPE_IRI = "http://shex.io/ns/shex#Shape";
 	private static final String SHAPE_EXPRESSION_IRI = "http://shex.io/ns/shex#expression";
@@ -28,7 +28,7 @@ public class RDFValidator {
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;
 
-	public RDFValidator(Schema schemaForCreate, Schema schemaForUpdate) {
+	public RdfValidator(Schema schemaForCreate, Schema schemaForUpdate) {
 		this.schemaForCreate = schemaForCreate;
 		this.schemaForUpdate = schemaForUpdate;
 		this.shapeTypeMap = getShapeMap(RDF.type, SX_SHAPE_IRI);
@@ -38,30 +38,30 @@ public class RDFValidator {
 		return shapeTypeMap;
 	}
 
-    public ValidationResponse validateRDFWithSchema(Model rdf, String methodOrigin) throws RDFValidationException {
-        if (rdf == null) {
-            throw new RDFValidationException(ErrorConstants.RDF_DATA_IS_MISSING);
-        } else if (!(rdf instanceof Model)) {
-            throw new RDFValidationException(ErrorConstants.RDF_DATA_IS_INVALID);
-        } else if (methodOrigin == null) {
-            throw new RDFValidationException(ErrorConstants.INVALID_REQUEST_PATH);
+	public ValidationResponse validateRDFWithSchema(Model rdf, String methodOrigin) throws RDFValidationException {
+		if (rdf == null) {
+			throw new RDFValidationException(ErrorConstants.RDF_DATA_IS_MISSING);
+		}else if (!(rdf instanceof Model)) {
+			throw new RDFValidationException(ErrorConstants.RDF_DATA_IS_INVALID);
+		}else if (methodOrigin == null) {
+			throw new RDFValidationException(ErrorConstants.INVALID_REQUEST_PATH);
 		}else if (schemaForCreate == null || schemaForUpdate == null) {
-            throw new RDFValidationException(ErrorConstants.SCHEMA_IS_NULL);
+			throw new RDFValidationException(ErrorConstants.SCHEMA_IS_NULL);
 		}else if(shapeTypeMap == null){
-            throw new RDFValidationException(this.getClass().getName() + ErrorConstants.VALIDATION_IS_MISSING);
+			throw new RDFValidationException(this.getClass().getName()+ErrorConstants.VALIDATION_IS_MISSING);
 		} else {
 			Schema schema = null;
-            Model validationRdf = generateShapeModel(rdf);
-            mergeModels(rdf, validationRdf);
+			Model validationRdf = generateShapeModel(rdf);
+			mergeModels( rdf,  validationRdf);
 			ValidationResponse validationResponse = null;
-            if (Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)) {
+			if(Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)){
 				schema = schemaForCreate;
 			} else {
 				schema = schemaForUpdate;
 			}
-            Validator validator = new ShaclexValidator(schema, validationRdf);
+			Validator validator = new ShaclexValidator(schema, validationRdf);
 			validationResponse = validator.validate();
-            return validationResponse;
+			return validationResponse;
 		}
 	}
 
@@ -70,23 +70,23 @@ public class RDFValidator {
 			validationRDF.add(RDF.listStatements());
 		}
 	}
-
-
-    private Model generateShapeModel(Model inputRdf) throws RDFValidationException {
+	
+	
+	private Model generateShapeModel(Model inputRdf) throws RDFValidationException {
 		Model model = ModelFactory.createDefaultModel();
 		List<Resource> labelNodes = RDFUtil.getRootLabels(inputRdf);
 		if (labelNodes.size() != 1) {
-            throw new RDFValidationException(this.getClass().getName() + ErrorConstants.RDF_DATA_IS_INVALID);
+			throw new RDFValidationException(this.getClass().getName() + ErrorConstants.RDF_DATA_IS_INVALID);
 		}
 		Resource target = labelNodes.get(0);
 		List<String> typeList = RDFUtil.getTypeForSubject(inputRdf, target);
 		if (typeList.size() != 1) {
-            throw new RDFValidationException(this.getClass().getName() + ErrorConstants.RDF_DATA_IS_INVALID);
+			throw new RDFValidationException(this.getClass().getName() + ErrorConstants.RDF_DATA_IS_INVALID);
 		}
 		String targetType = typeList.get(0);
 		String shapeName = shapeTypeMap.get(targetType);
 		if (shapeName == null) {
-            throw new RDFValidationException(this.getClass().getName() + ErrorConstants.VALIDATION_MISSING_FOR_TYPE);
+			throw new RDFValidationException(this.getClass().getName() + ErrorConstants.VALIDATION_MISSING_FOR_TYPE);
 		}
 
 		Resource subjectResource = ResourceFactory.createResource(shapeName);

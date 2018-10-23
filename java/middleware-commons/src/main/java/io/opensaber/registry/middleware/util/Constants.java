@@ -8,6 +8,7 @@ public class Constants {
     public static final String RESPONSE_ATTRIBUTE = "responseModel";
     public static final String ATTRIBUTE_NAME = "dataObject";
     public static final String REQUEST_ATTRIBUTE = "requestModel";
+    public static final String REQUEST_OBJECT = "requestObject";
     public static final String RDF_OBJECT = "rdf";
     public static final String RDF_VALIDATION_OBJECT = "rdfValidationResult";
     public static final String METHOD_ORIGIN = "methodOrigin";
