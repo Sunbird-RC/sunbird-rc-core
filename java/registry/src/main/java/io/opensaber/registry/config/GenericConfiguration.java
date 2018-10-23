@@ -301,7 +301,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 				addPathPatterns(new ArrayList(requestMap.keySet())).order(orderIdx++);
 		if(authenticationEnabled) {
             registry.addInterceptor(authorizationInterceptor())
-                    .addPathPatterns("/**").excludePathPatterns("/health", "/error").order(orderIdx++);
+                    .addPathPatterns("/**").excludePathPatterns("/health", "/error", "/_schemas/**").order(orderIdx++);
 	    }
 
 	    registry.addInterceptor(rdfConversionInterceptor())

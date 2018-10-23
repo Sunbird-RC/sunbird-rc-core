@@ -1,0 +1,481 @@
+{
+  "$schema": "http://json-schema.org/draft-/schema",
+  "type": "object",
+  "properties": {
+    "teacher": {
+      "$ref": "#/definitions/Teacher"
+    }
+  },
+  "required": [ "teacher" ],
+  "definitions" : {
+    "Teacher": {
+      "$id": "#/properties/Teacher",
+      "type": "object",
+      "title": "The Teacher Schema",
+      "required": [
+        "signatures",
+        "serialNum",
+        "teacherCode",
+        "nationalIdentifier",
+        "teacherName",
+        "gender",
+        "birthDate",
+        "socialCategory",
+        "highestAcademicQualification",
+        "highestTeacherQualification",
+        "yearOfJoiningService",
+        "teachingRole",
+        "inServiceTeacherTrainingFromBRC",
+        "inServiceTeacherTrainingFromCRC",
+        "inServiceTeacherTrainingFromDIET",
+        "inServiceTeacherTrainingFromOthers",
+        "nonTeachingAssignmentsForAcademicCalendar",
+        "basicProficiencyLevel",
+        "disabilityType",
+        "trainedForChildrenSpecialNeeds",
+        "trainedinUseOfComputer"
+      ],
+      "properties": {
+        "signatures": {
+          "$id": "#/properties/signatures",
+          "type": "array",
+          "$ref": "Signature.json#/definitions/Signature"
+        }
+      }
+  }
+}
+
+
+
+                           },
+                         "serialNum": {
+                             "$id": "#/properties/request/properties/Teacher/properties/serialNum",
+                             "type": "integer",
+                             "title": "The Serialnum Schema",
+                             "default": ,
+                             "examples": [
+                                 
+                               ]
+                           },
+                         "teacherCode": {
+                             "$id": "#/properties/request/properties/Teacher/properties/teacherCode",
+                             "type": "string",
+                             "title": "The Teachercode Schema",
+                             "default": "",
+                             "examples": [
+                                 ""
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "nationalIdentifier": {
+                             "$id": "#/properties/request/properties/Teacher/properties/nationalIdentifier",
+                             "type": "string",
+                             "title": "The Nationalidentifier Schema",
+                             "default": "",
+                             "examples": [
+                                 ""
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "teacherName": {
+                             "$id": "#/properties/request/properties/Teacher/properties/teacherName",
+                             "type": "string",
+                             "title": "The Teachername Schema",
+                             "default": "",
+                             "examples": [
+                                 "Test"
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "gender": {
+                             "$id": "#/properties/request/properties/Teacher/properties/gender",
+                             "type": "string",
+                             "title": "The Gender Schema",
+                             "default": "",
+                             "examples": [
+                                 "teacher:GenderTypeCode-MALE"
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "birthDate": {
+                             "$id": "#/properties/request/properties/Teacher/properties/birthDate",
+                             "type": "string",
+                             "title": "The Birthdate Schema",
+                             "default": "",
+                             "examples": [
+                                 "--"
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "socialCategory": {
+                             "$id": "#/properties/request/properties/Teacher/properties/socialCategory",
+                             "type": "string",
+                             "title": "The Socialcategory Schema",
+                             "default": "",
+                             "examples": [
+                                 "teacher:SocialCategoryTypeCode-GENERAL"
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "highestAcademicQualification": {
+                             "$id": "#/properties/request/properties/Teacher/properties/highestAcademicQualification",
+                             "type": "string",
+                             "title": "The Highestacademicqualification Schema",
+                             "default": "",
+                             "examples": [
+                                 "teacher:AcademicQualificationTypeCode-PHD"
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "highestTeacherQualification": {
+                             "$id": "#/properties/request/properties/Teacher/properties/highestTeacherQualification",
+                             "type": "string",
+                             "title": "The Highestteacherqualification Schema",
+                             "default": "",
+                             "examples": [
+                                 "teacher:TeacherQualificationTypeCode-MED"
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "yearOfJoiningService": {
+                             "$id": "#/properties/request/properties/Teacher/properties/yearOfJoiningService",
+                             "type": "string",
+                             "title": "The Yearofjoiningservice Schema",
+                             "default": "",
+                             "examples": [
+                                 ""
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "teachingRole": {
+                             "$id": "#/properties/request/properties/Teacher/properties/teachingRole",
+                             "type": "object",
+                             "title": "The Teachingrole Schema",
+                             "required": [
+                                 "@type",
+                                 "teacherType",
+                                 "appointmentType",
+                                 "classesTaught",
+                                 "appointedForSubjects",
+                                 "mainSubjectsTaught",
+                                 "appointmentYear"
+                               ],
+                             "properties": {
+                                 "@type": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/teachingRole/properties/@type",
+                                     "type": "string",
+                                     "title": "The @type Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "TeachingRole"
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   },
+                                 "teacherType": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/teachingRole/properties/teacherType",
+                                     "type": "string",
+                                     "title": "The Teachertype Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "teacher:TeacherTypeCode-HEAD"
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   },
+                                 "appointmentType": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/teachingRole/properties/appointmentType",
+                                     "type": "string",
+                                     "title": "The Appointmenttype Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "teacher:TeacherAppointmentTypeCode-REGULAR"
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   },
+                                 "classesTaught": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/teachingRole/properties/classesTaught",
+                                     "type": "string",
+                                     "title": "The Classestaught Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "teacher:ClassTypeCode-SECONDARYANDHIGHERSECONDARY"
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   },
+                                 "appointedForSubjects": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/teachingRole/properties/appointedForSubjects",
+                                     "type": "string",
+                                     "title": "The Appointedforsubjects Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "teacher:SubjectCode-ENGLISH"
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   },
+                                 "mainSubjectsTaught": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/teachingRole/properties/mainSubjectsTaught",
+                                     "type": "array",
+                                     "title": "The Mainsubjectstaught Schema",
+                                     "items": {
+                                         "$id": "#/properties/request/properties/Teacher/properties/teachingRole/properties/mainSubjectsTaught/items",
+                                         "type": "string",
+                                         "title": "The Items Schema",
+                                         "default": "",
+                                         "examples": [
+                                             "teacher:SubjectCode-SOCIALSTUDIES",
+                                             "teacher:SubjectCode-ENGLISH"
+                                           ],
+                                         "pattern": "^(.*)$"
+                                       }
+                                   },
+                                 "appointmentYear": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/teachingRole/properties/appointmentYear",
+                                     "type": "string",
+                                     "title": "The Appointmentyear Schema",
+                                     "default": "",
+                                     "examples": [
+                                         ""
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   }
+                               }
+                           },
+                         "inServiceTeacherTrainingFromBRC": {
+                             "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromBRC",
+                             "type": "object",
+                             "title": "The Inserviceteachertrainingfrombrc Schema",
+                             "required": [
+                                 "@type",
+                                 "daysOfInServiceTeacherTraining"
+                               ],
+                             "properties": {
+                                 "@type": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromBRC/properties/@type",
+                                     "type": "string",
+                                     "title": "The @type Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "InServiceTeacherTrainingFromBlockResourceCentre"
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   },
+                                 "daysOfInServiceTeacherTraining": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromBRC/properties/daysOfInServiceTeacherTraining",
+                                     "type": "string",
+                                     "title": "The Daysofinserviceteachertraining Schema",
+                                     "default": "",
+                                     "examples": [
+                                         ""
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   }
+                               }
+                           },
+                         "inServiceTeacherTrainingFromCRC": {
+                             "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromCRC",
+                             "type": "object",
+                             "title": "The Inserviceteachertrainingfromcrc Schema",
+                             "required": [
+                                 "@type",
+                                 "daysOfInServiceTeacherTraining"
+                               ],
+                             "properties": {
+                                 "@type": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromCRC/properties/@type",
+                                     "type": "string",
+                                     "title": "The @type Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "InServiceTeacherTrainingFromClusterResourceCentre"
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   },
+                                 "daysOfInServiceTeacherTraining": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromCRC/properties/daysOfInServiceTeacherTraining",
+                                     "type": "string",
+                                     "title": "The Daysofinserviceteachertraining Schema",
+                                     "default": "",
+                                     "examples": [
+                                         ""
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   }
+                               }
+                           },
+                         "inServiceTeacherTrainingFromDIET": {
+                             "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromDIET",
+                             "type": "object",
+                             "title": "The Inserviceteachertrainingfromdiet Schema",
+                             "required": [
+                                 "@type",
+                                 "daysOfInServiceTeacherTraining"
+                               ],
+                             "properties": {
+                                 "@type": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromDIET/properties/@type",
+                                     "type": "string",
+                                     "title": "The @type Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "InServiceTeacherTrainingFromDIET"
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   },
+                                 "daysOfInServiceTeacherTraining": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromDIET/properties/daysOfInServiceTeacherTraining",
+                                     "type": "string",
+                                     "title": "The Daysofinserviceteachertraining Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "."
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   }
+                               }
+                           },
+                         "inServiceTeacherTrainingFromOthers": {
+                             "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromOthers",
+                             "type": "object",
+                             "title": "The Inserviceteachertrainingfromothers Schema",
+                             "required": [
+                                 "@type",
+                                 "daysOfInServiceTeacherTraining"
+                               ],
+                             "properties": {
+                                 "@type": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromOthers/properties/@type",
+                                     "type": "string",
+                                     "title": "The @type Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "InServiceTeacherTrainingFromOthers"
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   },
+                                 "daysOfInServiceTeacherTraining": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/inServiceTeacherTrainingFromOthers/properties/daysOfInServiceTeacherTraining",
+                                     "type": "string",
+                                     "title": "The Daysofinserviceteachertraining Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "."
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   }
+                               }
+                           },
+                         "nonTeachingAssignmentsForAcademicCalendar": {
+                             "$id": "#/properties/request/properties/Teacher/properties/nonTeachingAssignmentsForAcademicCalendar",
+                             "type": "object",
+                             "title": "The Nonteachingassignmentsforacademiccalendar Schema",
+                             "required": [
+                                 "@type",
+                                 "daysOfNonTeachingAssignments"
+                               ],
+                             "properties": {
+                                 "@type": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/nonTeachingAssignmentsForAcademicCalendar/properties/@type",
+                                     "type": "string",
+                                     "title": "The @type Schema",
+                                     "default": "",
+                                     "examples": [
+                                         "NonTeachingAssignmentsForAcademicCalendar"
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   },
+                                 "daysOfNonTeachingAssignments": {
+                                     "$id": "#/properties/request/properties/Teacher/properties/nonTeachingAssignmentsForAcademicCalendar/properties/daysOfNonTeachingAssignments",
+                                     "type": "string",
+                                     "title": "The Daysofnonteachingassignments Schema",
+                                     "default": "",
+                                     "examples": [
+                                         ""
+                                       ],
+                                     "pattern": "^(.*)$"
+                                   }
+                               }
+                           },
+                         "basicProficiencyLevel": {
+                             "$id": "#/properties/request/properties/Teacher/properties/basicProficiencyLevel",
+                             "type": "array",
+                             "title": "The Basicproficiencylevel Schema",
+                             "items": {
+                                 "$id": "#/properties/request/properties/Teacher/properties/basicProficiencyLevel/items",
+                                 "type": "object",
+                                 "title": "The Items Schema",
+                                 "required": [
+                                     "@type",
+                                     "proficiencySubject",
+                                     "proficiencyAcademicQualification"
+                                   ],
+                                 "properties": {
+                                     "@type": {
+                                         "$id": "#/properties/request/properties/Teacher/properties/basicProficiencyLevel/items/properties/@type",
+                                         "type": "string",
+                                         "title": "The @type Schema",
+                                         "default": "",
+                                         "examples": [
+                                             "BasicProficiencyLevel"
+                                           ],
+                                         "pattern": "^(.*)$"
+                                       },
+                                     "proficiencySubject": {
+                                         "$id": "#/properties/request/properties/Teacher/properties/basicProficiencyLevel/items/properties/proficiencySubject",
+                                         "type": "string",
+                                         "title": "The Proficiencysubject Schema",
+                                         "default": "",
+                                         "examples": [
+                                             "teacher:SubjectCode-MATH"
+                                           ],
+                                         "pattern": "^(.*)$"
+                                       },
+                                     "proficiencyAcademicQualification": {
+                                         "$id": "#/properties/request/properties/Teacher/properties/basicProficiencyLevel/items/properties/proficiencyAcademicQualification",
+                                         "type": "string",
+                                         "title": "The Proficiencyacademicqualification Schema",
+                                         "default": "",
+                                         "examples": [
+                                             "teacher:AcademicQualificationTypeCode-PHD"
+                                           ],
+                                         "pattern": "^(.*)$"
+                                       }
+                                   }
+                               }
+                           },
+                         "disabilityType": {
+                             "$id": "#/properties/request/properties/Teacher/properties/disabilityType",
+                             "type": "string",
+                             "title": "The Disabilitytype Schema",
+                             "default": "",
+                             "examples": [
+                                 "teacher:DisabilityCode-NA"
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "trainedForChildrenSpecialNeeds": {
+                             "$id": "#/properties/request/properties/Teacher/properties/trainedForChildrenSpecialNeeds",
+                             "type": "string",
+                             "title": "The Trainedforchildrenspecialneeds Schema",
+                             "default": "",
+                             "examples": [
+                                 "teacher:YesNoCode-YES"
+                               ],
+                             "pattern": "^(.*)$"
+                           },
+                         "trainedinUseOfComputer": {
+                             "$id": "#/properties/request/properties/Teacher/properties/trainedinUseOfComputer",
+                             "type": "string",
+                             "title": "The Trainedinuseofcomputer Schema",
+                             "default": "",
+                             "examples": [
+                                 "teacher:YesNoCode-YES"
+                               ],
+                             "pattern": "^(.*)$"
+                           }
+                       }
+                   }
+               }
+           }
+       }
+   }
+
+
