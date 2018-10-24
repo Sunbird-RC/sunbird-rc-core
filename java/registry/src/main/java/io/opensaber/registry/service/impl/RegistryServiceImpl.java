@@ -128,13 +128,13 @@ public class RegistryServiceImpl implements RegistryService {
 		try {
 			Model signedRdfModel = null;
 			RegistrySignature rs = new RegistrySignature();
-			ValidationResponse validationResponse = rdfValidator.validateRDFWithSchema(rdfModel,Constants.CREATE_METHOD_ORIGIN);
+			ValidationResponse validationResponse = rdfValidator.validateRDFAndSignature(rdfModel,Constants.CREATE_METHOD_ORIGIN);
+			//ValidationResponse validationResponse = rdfValidator.validateRDFWithSchema(rdfModel,Constants.CREATE_METHOD_ORIGIN);
 			if(!validationResponse.isValid()) {
 				throw new RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE);
 			}
 			//Validating Sign Mandatory data
 			if (signatureEnabled) {
-				signatureValidator.validateMandatorySignatureFields(rdfModel);
 				Map signReq = new HashMap<String, Object>();
 				InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
 				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
@@ -190,13 +190,13 @@ public class RegistryServiceImpl implements RegistryService {
 	@Override
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
 			EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
-			IOException, SignatureException.CreationException, RDFValidationException {
+			IOException, SignatureException.CreationException, RDFValidationException, MiddlewareHaltException {
 		boolean isUpdated = false;
 		if (persistenceEnabled) {
 			Schema createSchema = schemaConfigurator.getSchemaForCreate();
 			Schema updateSchema = schemaConfigurator.getSchemaForUpdate();
 			RdfValidator rdfValidator = new RdfValidator(createSchema, updateSchema);
-			ValidationResponse validationResponse = rdfValidator.validateRDFWithSchema(entity, Constants.UPDATE_METHOD_ORIGIN);
+			ValidationResponse validationResponse = rdfValidator.validateRDFAndSignature(entity, Constants.UPDATE_METHOD_ORIGIN);
 			if (!validationResponse.isValid()) {
 				throw new RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE);
 			}
