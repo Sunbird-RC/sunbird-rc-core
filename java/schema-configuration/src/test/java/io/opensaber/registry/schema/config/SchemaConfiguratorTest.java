@@ -47,7 +47,7 @@ public class SchemaConfiguratorTest {
 	@Test
 	public void test_single_valued_property() throws IOException {
 		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
-		// assertNotNull(schemaConfigurator.getValidationConfig());
+	    assertNotNull(schemaLoader.getValidationConfig());
 		assertTrue(schemaConfigurator.isSingleValued("http://example.com/voc/teacher/1.0.0/serialNum"));
 	}
 
