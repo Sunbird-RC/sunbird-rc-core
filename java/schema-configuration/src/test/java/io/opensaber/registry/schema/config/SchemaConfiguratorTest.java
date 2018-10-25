@@ -16,13 +16,16 @@ public class SchemaConfiguratorTest {
 	private SchemaConfigurator schemaConfigurator;
 	private static final String CONFIG_SCHEMA_FILE = "opensaber-schema-configuration.jsonld";
 	private static final String CONFIG_VALIDATION_FILE = "validations.shex";
+	private SchemaLoader schemaLoader;
 	
 	private void initialize(String file, String validationFile) throws IOException{
-		schemaConfigurator = new SchemaConfigurator(file, validationFile, validationFile, "http://example.com/voc/opensaber/1.0.0/");
+		schemaLoader = new SchemaLoader(validationFile, validationFile);
+		schemaConfigurator = new SchemaConfigurator(file, "http://example.com/voc/opensaber/1.0.0/",schemaLoader);
 	}
 
 	@Test
 	public void test_privacy_check_for_private_field() throws IOException{
+		
 		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
 		assertNotNull(schemaConfigurator.getSchemaConfig());
 		assertTrue(schemaConfigurator.isPrivate("http://example.com/voc/teacher/1.0.0/birthDate"));
@@ -45,21 +48,21 @@ public class SchemaConfiguratorTest {
 	@Test
 	public void test_single_valued_property() throws IOException{
 		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
-		assertNotNull(schemaConfigurator.getValidationConfig());
+		//assertNotNull(schemaConfigurator.getValidationConfig());
 		assertTrue(schemaConfigurator.isSingleValued("http://example.com/voc/teacher/1.0.0/serialNum"));
 	}
 	
 	@Test
 	public void test_multi_valued_property() throws IOException{
 		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
-		assertNotNull(schemaConfigurator.getValidationConfig());
+		assertNotNull(schemaLoader.getValidationConfig());
 		assertFalse(schemaConfigurator.isSingleValued("http://example.com/voc/teacher/1.0.0/mainSubjectsTaught"));
 	}
 	
 	@Test
 	public void test_non_configured_property() throws IOException{
 		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
-		assertNotNull(schemaConfigurator.getValidationConfig());
+		assertNotNull(schemaLoader.getValidationConfig());
 		assertTrue(schemaConfigurator.isSingleValued("http://example.com/voc/teacher/1.0.0/predicate"));
 	}
 	

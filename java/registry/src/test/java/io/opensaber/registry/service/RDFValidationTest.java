@@ -1,26 +1,33 @@
 package io.opensaber.registry.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+import java.util.Map;
+
+import org.apache.jena.ext.com.google.common.io.ByteStreams;
+import org.apache.jena.rdf.model.Model;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.exception.RDFValidationException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
-import org.apache.jena.ext.com.google.common.io.ByteStreams;
-import org.apache.jena.rdf.model.Model;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import scala.Option;
 import scala.util.Either;
-
-import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
-import java.util.Map;
-
-import static org.junit.Assert.*;
 
 public class RDFValidationTest {
 	private static final String SIMPLE_SHEX = "good1.shex";

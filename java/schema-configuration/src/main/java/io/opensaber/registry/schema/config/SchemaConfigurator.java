@@ -25,28 +25,36 @@ import scala.util.Either;
 
 public class SchemaConfigurator {
 	
-	
+	private SchemaLoader schemaLoader;
 	private String registrySystemBase;
 	
 	private static Logger logger = LoggerFactory.getLogger(SchemaConfigurator.class);
 
 	private static final String FORMAT = "JSON-LD";
-	private Schema schemaForCreate;
-	private Schema schemaForUpdate;
+	//private Schema schemaForCreate;
+	//private Schema schemaForUpdate;
 	private Model schemaConfig;
-	private Model validationConfig;
-	private static final String SCHEMAFORMAT = "SHEXC";
+	//private Model validationConfig;
+/*	private static final String SCHEMAFORMAT = "SHEXC";
 	private static final String PROCESSOR 	= "shex";
 
-	private Option<String> none = Option.empty();
+	private Option<String> none = Option.empty();*/
 
-	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile, String registrySystemBase) throws IOException {
+/*	public SchemaConfigurator(String schemaFile, String validationcreateFile, String validationUpdateFile, String registrySystemBase) throws IOException {
 
 		this.registrySystemBase = registrySystemBase;
 		loadSchemaConfigModel(schemaFile);
+		
 		loadSchemaForValidation(validationcreateFile, true);
 		loadSchemaForValidation(validationUpdateFile, false);
 		loadValidationConfigModel();
+	}*/
+	
+	public SchemaConfigurator(String schemaFile, String registrySystemBase, SchemaLoader schemaLoader) throws IOException {
+
+		this.registrySystemBase = registrySystemBase;
+		loadSchemaConfigModel(schemaFile);
+		this.schemaLoader = schemaLoader;
 	}
 
 	private void loadSchemaConfigModel(String schemaFile) throws IOException {
@@ -58,7 +66,7 @@ public class SchemaConfigurator {
 		schemaConfig = RDFUtil.getRdfModelBasedOnFormat(contents, FORMAT);
 	}
 
-	private void loadSchemaForValidation(String validationFile, boolean isCreate) throws IOException {
+/*	private void loadSchemaForValidation(String validationFile, boolean isCreate) throws IOException {
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream(validationFile);
 		if (is == null) {
 			throw new IOException(Constants.VALIDATION_CONFIGURATION_MISSING);
@@ -77,7 +85,7 @@ public class SchemaConfigurator {
 
 	private void loadValidationConfigModel() {
 		validationConfig = RDFUtil.getRdfModelBasedOnFormat(schemaForUpdate.serialize(FORMAT).right().get(), FORMAT);
-	}
+	}*/
 
 	public boolean isPrivate(String propertyName) {
 		Property property = ResourceFactory.createProperty(registrySystemBase + Constants.PRIVACY_PROPERTY);
@@ -102,7 +110,9 @@ public class SchemaConfigurator {
 		logger.debug("Property being verified for single-valued, multi-valued:" + property);
 		Property predicate = ResourceFactory.createProperty("http://shex.io/ns/shex#predicate");
 		RDFNode rdfNode = ResourceFactory.createResource(property);
-		ResIterator resIter = validationConfig.listSubjectsWithProperty(predicate, rdfNode);
+//		ResIterator resIter = validationConfig.listSubjectsWithProperty(predicate, rdfNode);
+		ResIterator resIter = schemaLoader.getValidationConfig().listSubjectsWithProperty(predicate, rdfNode);
+
 		while (resIter.hasNext()) {
 			Resource subject = resIter.next();
 			Long minValue = getValueConstraint("http://shex.io/ns/shex#min", subject);
@@ -128,7 +138,9 @@ public class SchemaConfigurator {
 
 	private Long getValueConstraint(String constraint, Resource subject) {
 		Property predicate = ResourceFactory.createProperty(constraint);
-		NodeIterator nodeIter = validationConfig.listObjectsOfProperty(subject, predicate);
+		//NodeIterator nodeIter = validationConfig.listObjectsOfProperty(subject, predicate);
+		NodeIterator nodeIter = schemaLoader.getValidationConfig().listObjectsOfProperty(subject, predicate);
+
 		while (nodeIter.hasNext()) {
 			RDFNode node = nodeIter.next();
 			if (node.isLiteral()) {
@@ -145,7 +157,7 @@ public class SchemaConfigurator {
 		return schemaConfig;
 	}
 	
-	public Model getValidationConfig(){
+/*	public Model getValidationConfig(){
 		return validationConfig;
 	}
 
@@ -155,6 +167,6 @@ public class SchemaConfigurator {
 
 	public Schema getSchemaForUpdate() {
 		return schemaForUpdate;
-	}
+	}*/
 
 }
