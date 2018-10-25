@@ -29,7 +29,7 @@ public class JSONUtilsTest {
 	private final ObjectMapper mapper = new ObjectMapper();
 
 	@Test
-	public void test_remove_node() throws IOException {
+	public void testRemoveNode() throws IOException {
 		ObjectNode actualNode = (ObjectNode) mapper.readTree(getContent(ACTUAL_DATA));
 		ObjectNode expectedNode = (ObjectNode) mapper.readTree(getContent(EXPECTED_DATA));
 
@@ -38,7 +38,7 @@ public class JSONUtilsTest {
 	}
 
 	@Test
-	public void test_replace_field() throws IOException {
+	public void testReplaceField() throws IOException {
 		ObjectNode actualNode = (ObjectNode) mapper.readTree(getContent(ACTUAL_DATA));
 		ObjectNode expectedNode = (ObjectNode) mapper.readTree(getContent(EXPECTED_REPLACE_FIELD_DATA));
 
@@ -47,7 +47,7 @@ public class JSONUtilsTest {
 	}
 
 	@Test
-	public void test_add_node() throws IOException {
+	public void testAddNode() throws IOException {
 		ObjectNode actualNode = (ObjectNode) mapper.readTree(getContent(ACTUAL_DATA));
 		ObjectNode expectedNode = (ObjectNode) mapper.readTree(getContent(EXPECTED_ADDED_NODE_DATA));
 
@@ -60,13 +60,13 @@ public class JSONUtilsTest {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void test_add_node_Exception() throws IOException {
+	public void testAddNodeException() throws IOException {
 		ObjectNode actualNode = (ObjectNode) mapper.readTree(getContent(ACTUAL_DATA));
 		JSONUtil.addNode(actualNode, "", JsonNodeFactory.instance.objectNode());
 	}
 
 	@Test
-	public void test_add_prefix() throws IOException {
+	public void testAddPrefix() throws IOException {
 		ObjectNode actualNode = (ObjectNode) mapper.readTree(getContent(ACTUAL_DATA));
 		ObjectNode expectedNode = (ObjectNode) mapper.readTree(getContent(EXPECTED_ADDED_PREFIX_DATA));
 		List<String> keys = new ArrayList<String>();
