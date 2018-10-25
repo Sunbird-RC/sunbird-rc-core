@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class SignatureValidator {
+public class RdfSignatureValidator {
 
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing!";
 	private static final String RDF_DATA_IS_INVALID = "Data validation failed!";
@@ -36,9 +36,9 @@ public class SignatureValidator {
 
     // TODO: Instead of passing the ShapeType everytime, there could be a good reason
     // to read all the shapes at once and then start validating against what was read.
-    public SignatureValidator(Schema schemaForCreate, String registryContext,
-							  String registrySystemBase, String signatureConfigName,
-							  Map<String, String> shapeTypeMap, Model schemaConfig) {
+    public RdfSignatureValidator(Schema schemaForCreate, String registryContext,
+								 String registrySystemBase, String signatureConfigName,
+								 Map<String, String> shapeTypeMap, Model schemaConfig) {
 		this.schemaForCreate = schemaForCreate;
 		this.registryContext = registryContext;
 		this.signatureConfigName = signatureConfigName;

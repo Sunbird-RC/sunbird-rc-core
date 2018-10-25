@@ -86,6 +86,8 @@ public class Constants {
     public static final String SIGN_NONCE = "nonce";
     public static final String SIGN_TYPE = "type";
     public static final String SIGN_SIGNATURE_VALUE = "signatureValue";
+    public static final String ENABLE_RDF_VALIDATION = "enableRdfValidation";
+    public static final String ENABLE_JSON_VALIDATION = "enableJsonValidation";
 
     public static class JsonldConstants {
         public static final String CONTEXT = "@context";

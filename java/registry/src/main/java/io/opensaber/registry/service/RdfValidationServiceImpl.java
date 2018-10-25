@@ -19,10 +19,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class RdfValidator {
+//@Component
+public class RdfValidationServiceImpl implements ValidationService {
 
 	@Autowired
-	SignatureValidator signatureValidator;
+	RdfSignatureValidator signatureValidator;
 
 	@Value("${signature.enabled}")
 	private boolean signatureEnabled;
@@ -38,7 +39,7 @@ public class RdfValidator {
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;
 
-	public RdfValidator(Schema schemaForCreate, Schema schemaForUpdate) {
+	public RdfValidationServiceImpl(Schema schemaForCreate, Schema schemaForUpdate) {
 		this.schemaForCreate = schemaForCreate;
 		this.schemaForUpdate = schemaForUpdate;
 		this.shapeTypeMap = getShapeMap(RDF.type, SX_SHAPE_IRI);
@@ -49,38 +50,48 @@ public class RdfValidator {
 	}
 
 	public ValidationResponse validateRDFWithSchema(Model rdf, String methodOrigin) throws RDFValidationException{
-		if (rdf == null) {
-			throw new RDFValidationException(ErrorConstants.RDF_DATA_IS_MISSING);
-		}else if (!(rdf instanceof Model)) {
-			throw new RDFValidationException(ErrorConstants.RDF_DATA_IS_INVALID);
-		}else if (methodOrigin == null) {
-			throw new RDFValidationException(ErrorConstants.INVALID_REQUEST_PATH);
-		}else if (schemaForCreate == null || schemaForUpdate == null) {
-			throw new RDFValidationException(ErrorConstants.SCHEMA_IS_NULL);
-		}else if(shapeTypeMap == null){
-			throw new RDFValidationException(this.getClass().getName()+ErrorConstants.VALIDATION_IS_MISSING);
+		Schema schema = null;
+		Model validationRdf = generateShapeModel(rdf);
+		mergeModels( rdf,  validationRdf);
+		ValidationResponse validationResponse = null;
+		if(Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)){
+			schema = schemaForCreate;
 		} else {
-			Schema schema = null;
-			Model validationRdf = generateShapeModel(rdf);
-			mergeModels( rdf,  validationRdf);
-			ValidationResponse validationResponse = null;
-			if(Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)){
-				schema = schemaForCreate;
-			} else {
-				schema = schemaForUpdate;
-			}
-			Validator validator = new ShaclexValidator(schema, validationRdf);
-			validationResponse = validator.validate();
-			return validationResponse;
+			schema = schemaForUpdate;
 		}
+		Validator validator = new ShaclexValidator(schema, validationRdf);
+		validationResponse = validator.validate();
+		return validationResponse;
 	}
 
-	public ValidationResponse validateRDFAndSignature(Model rdf, String methodOrigin) throws RDFValidationException, MiddlewareHaltException, IOException {
+	/*public ValidationResponse validateRDFAndSignature(Model rdf, String methodOrigin) throws RDFValidationException, MiddlewareHaltException, IOException {
 		ValidationResponse validationResponse = validateRDFWithSchema( rdf,  methodOrigin);
 		if(signatureEnabled && Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)) {
 			signatureValidator.validateMandatorySignatureFields(rdf);
 		}
 		return validationResponse;
+	}*/
+
+	public ValidationResponse validateData(Object rdf, String methodOrigin) throws RDFValidationException, MiddlewareHaltException, IOException {
+		Model rdfModel = null;
+		if (rdf == null) {
+			throw new RDFValidationException(ErrorConstants.RDF_DATA_IS_MISSING);
+		} else if (!(rdf instanceof Model)) {
+			throw new RDFValidationException(ErrorConstants.RDF_DATA_IS_INVALID);
+		} else if (methodOrigin == null) {
+			throw new RDFValidationException(ErrorConstants.INVALID_REQUEST_PATH);
+		} else if (schemaForCreate == null || schemaForUpdate == null) {
+			throw new RDFValidationException(ErrorConstants.SCHEMA_IS_NULL);
+		} else if (shapeTypeMap == null) {
+			throw new RDFValidationException(this.getClass().getName() + ErrorConstants.VALIDATION_IS_MISSING);
+		} else {
+			rdfModel = (Model) rdf;
+			ValidationResponse validationResponse = validateRDFWithSchema(rdfModel, methodOrigin);
+			if (signatureEnabled && Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)) {
+				signatureValidator.validateMandatorySignatureFields(rdfModel);
+			}
+			return validationResponse;
+		}
 	}
 
 	private void mergeModels(Model RDF, Model validationRDF){

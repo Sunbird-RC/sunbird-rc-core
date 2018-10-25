@@ -10,6 +10,7 @@ import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.*;
 import io.opensaber.registry.exception.errorconstants.ErrorConstants;
+import io.opensaber.registry.factory.ValidateFactory;
 import io.opensaber.registry.frame.FrameEntity;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -72,10 +73,13 @@ public class RegistryServiceImpl implements RegistryService {
 	SchemaConfigurator schemaConfigurator;
 
 	@Autowired
-	RdfValidator rdfValidator;
+	RdfValidationServiceImpl rdfValidator;
 
 	@Autowired
-	SignatureValidator signatureValidator;
+	RdfSignatureValidator signatureValidator;
+
+	@Autowired
+	ValidateFactory validateFactory;
 
 	@Autowired
 	Gson gson;
@@ -113,6 +117,12 @@ public class RegistryServiceImpl implements RegistryService {
 	@Value("${registry.context.base}")
 	private String registryContext;
 
+	@Value("${validation.enabled}")
+	private boolean isValidationEnabled;
+
+	@Value("${validation.type}")
+	private String validationType;
+
 	@Autowired
 	private FrameEntity frameEntity;
 
@@ -128,25 +138,35 @@ public class RegistryServiceImpl implements RegistryService {
 		try {
 			Model signedRdfModel = null;
 			RegistrySignature rs = new RegistrySignature();
-			ValidationResponse validationResponse = rdfValidator.validateRDFAndSignature(rdfModel,Constants.CREATE_METHOD_ORIGIN);
-			//ValidationResponse validationResponse = rdfValidator.validateRDFWithSchema(rdfModel,Constants.CREATE_METHOD_ORIGIN);
-			if(!validationResponse.isValid()) {
-				throw new RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE);
+			//
+			if(isValidationEnabled){
+				if(Constants.RDF_OBJECT.equalsIgnoreCase(validationType)){
+					ValidationService validationService = validateFactory.getInstance(Constants.ENABLE_RDF_VALIDATION);
+					ValidationResponse validationResponse = validationService.validateData(rdfModel,Constants.CREATE_METHOD_ORIGIN);
+					//ValidationResponse validationResponse = rdfValidator.validateRDFAndSignature(rdfModel,Constants.CREATE_METHOD_ORIGIN);
+					//ValidationResponse validationResponse = rdfValidator.validateRDFWithSchema(rdfModel,Constants.CREATE_METHOD_ORIGIN);
+					if(!validationResponse.isValid()) {
+						throw new RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE);
+					}
+					//Validating Sign Mandatory data
+					if (signatureEnabled) {
+						Map signReq = new HashMap<String, Object>();
+						InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
+						String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+						Map<String, Object> reqMap = JSONUtil.frameJsonAndRemoveIds(ID_REGEX,
+								dataObject, gson, fileString);
+						signReq.put("entity", reqMap);
+						Map<String, Object> entitySignMap = (Map<String, Object>) signatureService.sign(signReq);
+						entitySignMap.put("createdDate", rs.getCreatedTimestamp());
+						entitySignMap.put("keyUrl", signatureKeyURl);
+						signedRdfModel = RDFUtil.getUpdatedSignedModel(rdfModel, registryContext, signatureDomain, entitySignMap,
+								ModelFactory.createDefaultModel());
+					}
+				}
+				//else part for json validation
+
 			}
-			//Validating Sign Mandatory data
-			if (signatureEnabled) {
-				Map signReq = new HashMap<String, Object>();
-				InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
-				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
-				Map<String, Object> reqMap = JSONUtil.frameJsonAndRemoveIds(ID_REGEX,
-						dataObject, gson, fileString);
-				signReq.put("entity", reqMap);
-				Map<String, Object> entitySignMap = (Map<String, Object>) signatureService.sign(signReq);
-				entitySignMap.put("createdDate", rs.getCreatedTimestamp());
-				entitySignMap.put("keyUrl", signatureKeyURl);
-				signedRdfModel = RDFUtil.getUpdatedSignedModel(rdfModel, registryContext, signatureDomain, entitySignMap,
-						ModelFactory.createDefaultModel());
-			}
+
 			return addEntity(signedRdfModel, subject, property);
 
 		} catch (EntityCreationException | EncryptionException | AuditFailedException | DuplicateRecordException
@@ -195,8 +215,10 @@ public class RegistryServiceImpl implements RegistryService {
 		if (persistenceEnabled) {
 			Schema createSchema = schemaConfigurator.getSchemaForCreate();
 			Schema updateSchema = schemaConfigurator.getSchemaForUpdate();
-			RdfValidator rdfValidator = new RdfValidator(createSchema, updateSchema);
-			ValidationResponse validationResponse = rdfValidator.validateRDFAndSignature(entity, Constants.UPDATE_METHOD_ORIGIN);
+			/*RdfValidationServiceImpl rdfValidator = new RdfValidationServiceImpl(createSchema, updateSchema);
+			ValidationResponse validationResponse = rdfValidator.validateRDFAndSignature(entity, Constants.UPDATE_METHOD_ORIGIN);*/
+			ValidationService validationService = validateFactory.getInstance(Constants.ENABLE_RDF_VALIDATION);
+			ValidationResponse validationResponse = validationService.validateData(entity,Constants.UPDATE_METHOD_ORIGIN);
 			if (!validationResponse.isValid()) {
 				throw new RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE);
 			}

@@ -23,8 +23,8 @@ import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaConfigurator;
-import io.opensaber.registry.service.RdfValidator;
-import io.opensaber.registry.service.SignatureValidator;
+import io.opensaber.registry.service.RdfSignatureValidator;
+import io.opensaber.registry.service.RdfValidationServiceImpl;
 import io.opensaber.registry.sink.*;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
@@ -181,7 +181,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public RdfValidator rdfValidator() {
+	public RdfValidationServiceImpl rdfValidator() {
 		Schema schemaForCreate = null;
 		Schema schemaForUpdate = null;
 		try {
@@ -190,11 +190,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		} catch (Exception e) {
 			logger.error("Unable to retrieve schema for validations");
 		}
-		return new RdfValidator(schemaForCreate, schemaForUpdate);
+		return new RdfValidationServiceImpl(schemaForCreate, schemaForUpdate);
 	}
 	
 	@Bean
-	public SignatureValidator signatureValidator() {
+	public RdfSignatureValidator signatureValidator() {
 		Schema schemaForCreate = null;
 		Model schemaConfig = null;
 		try {
@@ -203,7 +203,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		} catch (Exception e) {
 			logger.error("Unable to retrieve schema for signature validations");
 		}
-		return new SignatureValidator(schemaForCreate, registryContextBase, registrySystemBase, signatureSchemaConfigName, ((RdfValidator)rdfValidator()).getShapeTypeMap(), schemaConfig);
+		return new RdfSignatureValidator(schemaForCreate, registryContextBase, registrySystemBase, signatureSchemaConfigName, ((RdfValidationServiceImpl)rdfValidator()).getShapeTypeMap(), schemaConfig);
 	}
 
 
