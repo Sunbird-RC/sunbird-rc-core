@@ -1,5 +1,17 @@
 package io.opensaber.registry.service;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.vocabulary.RDF;
+
 import es.weso.schema.Schema;
 import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.exception.RDFValidationException;
@@ -8,12 +20,6 @@ import io.opensaber.registry.middleware.Validator;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
-import org.apache.jena.rdf.model.*;
-import org.apache.jena.vocabulary.RDF;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class RdfValidator {
 

@@ -30,7 +30,7 @@ registry:
 #This refers to the opensaber schema configuration JSON-LD file
 config:
   schema:
-    file: ${config_schema_file:schema-configuration.jsonld}
+    file: ${config_schema_file:schema-configuration.json}
 
 database:
   provider: ${database_provider:NEO4J}

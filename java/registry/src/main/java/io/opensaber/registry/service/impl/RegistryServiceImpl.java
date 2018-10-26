@@ -1,32 +1,29 @@
 package io.opensaber.registry.service.impl;
 
-import com.github.jsonldjava.core.JsonLdError;
-import com.google.gson.Gson;
-import es.weso.schema.Schema;
-import io.opensaber.converters.JenaRDF4J;
-import io.opensaber.pojos.ComponentHealthInfo;
-import io.opensaber.pojos.HealthCheckResponse;
-import io.opensaber.pojos.ValidationResponse;
-import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.exception.*;
-import io.opensaber.registry.exception.errorconstants.ErrorConstants;
-import io.opensaber.registry.frame.FrameEntity;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.registry.model.RegistrySignature;
-import io.opensaber.registry.schema.config.SchemaConfigurator;
-import io.opensaber.registry.service.*;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.util.GraphDBFactory;
-import io.opensaber.utils.converters.RDF2Graph;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.rdf.model.*;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.NodeIterator;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.JsonLDWriteContext;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WriterDatasetRIOT;
@@ -40,14 +37,38 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.github.jsonldjava.core.JsonLdError;
+import com.google.gson.Gson;
+
+import io.opensaber.converters.JenaRDF4J;
+import io.opensaber.pojos.ComponentHealthInfo;
+import io.opensaber.pojos.HealthCheckResponse;
+import io.opensaber.pojos.ValidationResponse;
+import io.opensaber.registry.dao.RegistryDao;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RDFValidationException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.SignatureException;
+import io.opensaber.registry.exception.errorconstants.ErrorConstants;
+import io.opensaber.registry.frame.FrameEntity;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.model.RegistrySignature;
+import io.opensaber.registry.schema.config.SchemaConfigurator;
+import io.opensaber.registry.service.EncryptionService;
+import io.opensaber.registry.service.RdfValidator;
+import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.SignatureService;
+import io.opensaber.registry.service.SignatureValidator;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.util.GraphDBFactory;
+import io.opensaber.utils.converters.RDF2Graph;
 
 @Component
 public class RegistryServiceImpl implements RegistryService {
@@ -146,8 +167,10 @@ public class RegistryServiceImpl implements RegistryService {
 				entitySignMap.put("keyUrl", signatureKeyURl);
 				signedRdfModel = RDFUtil.getUpdatedSignedModel(rdfModel, registryContext, signatureDomain, entitySignMap,
 						ModelFactory.createDefaultModel());
+				return addEntity(signedRdfModel, subject, property);
+
 			}
-			return addEntity(signedRdfModel, subject, property);
+			return addEntity(rdfModel, subject, property);
 
 		} catch (EntityCreationException | EncryptionException | AuditFailedException | DuplicateRecordException
 				| MultipleEntityException ex) {
@@ -193,9 +216,6 @@ public class RegistryServiceImpl implements RegistryService {
 			IOException, SignatureException.CreationException, RDFValidationException {
 		boolean isUpdated = false;
 		if (persistenceEnabled) {
-			Schema createSchema = schemaConfigurator.getSchemaForCreate();
-			Schema updateSchema = schemaConfigurator.getSchemaForUpdate();
-			RdfValidator rdfValidator = new RdfValidator(createSchema, updateSchema);
 			ValidationResponse validationResponse = rdfValidator.validateRDFWithSchema(entity, Constants.UPDATE_METHOD_ORIGIN);
 			if (!validationResponse.isValid()) {
 				throw new RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE);

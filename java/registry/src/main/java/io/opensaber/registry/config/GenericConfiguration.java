@@ -1,31 +1,10 @@
 package io.opensaber.registry.config;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import es.weso.schema.Schema;
-import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.pojos.Response;
-import io.opensaber.registry.authorization.AuthorizationFilter;
-import io.opensaber.registry.authorization.KeyCloakServiceImpl;
-import io.opensaber.registry.exception.CustomException;
-import io.opensaber.registry.exception.CustomExceptionHandler;
-import io.opensaber.registry.frame.FrameEntity;
-import io.opensaber.registry.frame.FrameEntityImpl;
-import io.opensaber.registry.interceptor.*;
-import io.opensaber.registry.interceptor.request.transform.JsonToLdRequestTransformer;
-import io.opensaber.registry.interceptor.request.transform.JsonldToLdRequestTransformer;
-import io.opensaber.registry.interceptor.request.transform.RequestTransformFactory;
-import io.opensaber.registry.middleware.Middleware;
-import io.opensaber.registry.middleware.impl.JSONLDConverter;
-import io.opensaber.registry.middleware.impl.RDFConverter;
-import io.opensaber.registry.middleware.impl.RDFValidationMapper;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.model.AuditRecord;
-import io.opensaber.registry.schema.config.SchemaConfigurator;
-import io.opensaber.registry.service.RdfValidator;
-import io.opensaber.registry.service.SignatureValidator;
-import io.opensaber.registry.sink.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -47,10 +26,42 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+
+import es.weso.schema.Schema;
+import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.Response;
+import io.opensaber.registry.authorization.AuthorizationFilter;
+import io.opensaber.registry.authorization.KeyCloakServiceImpl;
+import io.opensaber.registry.exception.CustomException;
+import io.opensaber.registry.exception.CustomExceptionHandler;
+import io.opensaber.registry.frame.FrameEntity;
+import io.opensaber.registry.frame.FrameEntityImpl;
+import io.opensaber.registry.interceptor.AuthorizationInterceptor;
+import io.opensaber.registry.interceptor.RDFConversionInterceptor;
+import io.opensaber.registry.interceptor.RDFValidationMappingInterceptor;
+import io.opensaber.registry.interceptor.RequestIdValidationInterceptor;
+import io.opensaber.registry.interceptor.request.transform.JsonToLdRequestTransformer;
+import io.opensaber.registry.interceptor.request.transform.JsonldToLdRequestTransformer;
+import io.opensaber.registry.interceptor.request.transform.RequestTransformFactory;
+import io.opensaber.registry.middleware.Middleware;
+import io.opensaber.registry.middleware.impl.JSONLDConverter;
+import io.opensaber.registry.middleware.impl.RDFConverter;
+import io.opensaber.registry.middleware.impl.RDFValidationMapper;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.model.AuditRecord;
+import io.opensaber.registry.schema.config.SchemaConfigurator;
+import io.opensaber.registry.schema.config.SchemaLoader;
+import io.opensaber.registry.service.RdfValidator;
+import io.opensaber.registry.service.SignatureValidator;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.sink.JanusGraphStorage;
+import io.opensaber.registry.sink.Neo4jGraphProvider;
+import io.opensaber.registry.sink.OrientDBGraphProvider;
+import io.opensaber.registry.sink.SqlgProvider;
+import io.opensaber.registry.sink.TinkerGraphProvider;
 
 @Configuration
 public class GenericConfiguration implements WebMvcConfigurer {
@@ -162,31 +173,40 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 	
 	@Bean
-	public SchemaConfigurator schemaConfiguration() throws IOException, CustomException {
-		String fieldConfigFileName = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
+	public SchemaLoader schemaLoader() throws CustomException, IOException{
 		String validationConfigFileForCreate = environment.getProperty(Constants.SHEX_CREATE_PROPERTY_NAME);
 		String validationConfigFileForUpdate = environment.getProperty(Constants.SHEX_UPDATE_PROPERTY_NAME);
-		if (fieldConfigFileName == null) {
-			throw new CustomException(Constants.SCHEMA_CONFIGURATION_MISSING);
-		}
 		if (validationConfigFileForCreate == null || validationConfigFileForUpdate == null) {
 			throw new CustomException(Constants.VALIDATION_CONFIGURATION_MISSING);
+		}
+		
+		SchemaLoader schemaLoader = new SchemaLoader(validationConfigFileForCreate, validationConfigFileForUpdate);
+		return schemaLoader;
+	}
+
+	
+	@Bean
+	public SchemaConfigurator schemaConfiguration() throws IOException, CustomException {
+		String fieldConfigFileName = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
+		if (fieldConfigFileName == null) {
+			throw new CustomException(Constants.SCHEMA_CONFIGURATION_MISSING);
 		}
 
 		OpenSaberInstrumentation watch = instrumentationStopWatch();
 		watch.start("SchemaConfigurator.initialization");
-		SchemaConfigurator schemaConfigurator = new SchemaConfigurator(fieldConfigFileName, validationConfigFileForCreate, validationConfigFileForUpdate, registrySystemBase);
+		SchemaConfigurator schemaConfigurator = new SchemaConfigurator(fieldConfigFileName, registrySystemBase, schemaLoader());
 		watch.stop("SchemaConfigurator.initialization");
 		return schemaConfigurator ;
 	}
 
 	@Bean
 	public RdfValidator rdfValidator() {
+
 		Schema schemaForCreate = null;
 		Schema schemaForUpdate = null;
 		try {
-			schemaForCreate = schemaConfiguration().getSchemaForCreate();
-			schemaForUpdate = schemaConfiguration().getSchemaForUpdate();
+			schemaForCreate = schemaLoader().getSchemaForCreate();
+			schemaForUpdate = schemaLoader().getSchemaForUpdate();
 		} catch (Exception e) {
 			logger.error("Unable to retrieve schema for validations");
 		}
@@ -198,14 +218,13 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		Schema schemaForCreate = null;
 		Model schemaConfig = null;
 		try {
-			schemaForCreate = schemaConfiguration().getSchemaForCreate();
+			schemaForCreate = schemaLoader().getSchemaForCreate();
 			schemaConfig = schemaConfiguration().getSchemaConfig();
 		} catch (Exception e) {
 			logger.error("Unable to retrieve schema for signature validations");
 		}
 		return new SignatureValidator(schemaForCreate, registryContextBase, registrySystemBase, signatureSchemaConfigName, ((RdfValidator)rdfValidator()).getShapeTypeMap(), schemaConfig);
 	}
-
 
 	@Bean
 	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -259,7 +278,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public Middleware rdfValidationMapper() {
 		Model validationConfig = null;
 		try{
-			validationConfig = schemaConfiguration().getValidationConfig();
+			//validationConfig = schemaConfiguration().getValidationConfig();
+			validationConfig = schemaLoader().getValidationConfig();
 		}catch(Exception e){
 			logger.error("Unable to get validation configuration");
 		}
