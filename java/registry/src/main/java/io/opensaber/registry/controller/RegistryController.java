@@ -18,6 +18,9 @@ import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.transformation.ResponseTransformFactory;
 
 import org.apache.jena.rdf.model.Model;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,7 +97,7 @@ public class RegistryController {
 
 		try {
 			watch.start("RegistryController.addToExistingEntity");
-			String dataObject = (String) requestModel.getRequestMap().get("dataObject");
+			String dataObject = requestModel.getRequestMap().get("dataObject").toString();
 			String label = registryService.addEntity(rdf, dataObject, id, property);
 			result.put("entity", label);
 			response.setResult(result);
@@ -123,7 +126,50 @@ public class RegistryController {
 	 *            mime type from the header.
 	 * @return
 	 */
-	@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
+	@RequestMapping(value = "/read", method = RequestMethod.POST)
+	public ResponseEntity<Response> readEntity(@RequestAttribute Request requestModel,
+			@RequestHeader HttpHeaders header){
+
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
+		
+		String dataObject = (String) requestModel.getRequestMap().get(Constants.REQUEST_ATTRIBUTE_NAME);
+		JSONParser parser = new JSONParser();
+		try {
+			JSONObject json = (JSONObject) parser.parse(dataObject);
+			String entityId = registryContext + json.get("id").toString();
+			boolean includeSign = Boolean.parseBoolean(json.get("includeSignatures").toString());
+			
+			watch.start("RegistryController.readEntity");
+			String content = registryService.getEntityFramedById(entityId, includeSign);
+			logger.info("RegistryController: Json string " + content);
+
+			Data<Object> data = new Data<Object>(content);
+			ITransformer<Object> responseTransformer = responseTransformFactory
+					.getInstance(header.getAccept().iterator().next());
+			responseTransformer.setPurgeData(getKeysToPurge());
+			Data<Object> responseContent = responseTransformer.transform(data);
+			response.setResult(responseContent.getData());
+			responseParams.setStatus(Response.Status.SUCCESSFUL);
+			watch.stop("RegistryController.readEntity");
+			logger.debug("RegistryController: entity for {} read !", entityId);
+		} catch (ParseException | RecordNotFoundException | UnsupportedOperationException | TransformationException e) {
+
+			logger.error("RegistryController: Exception while reading entity !", e);
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg(e.getMessage());
+		}catch (Exception e) {
+			logger.error("RegistryController: Exception while reading entity!", e);
+			response.setResult(null);
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg("Ding! You encountered an error!");
+		}		
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	/*@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Response> readEntity(@PathVariable("id") String id,
 			@RequestParam(required = false) boolean includeSignatures, @RequestHeader HttpHeaders header) {
 
@@ -159,7 +205,7 @@ public class RegistryController {
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-
+*/
 	/**
 	 * 
 	 * @param id
