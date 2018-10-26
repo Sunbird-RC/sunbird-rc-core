@@ -169,43 +169,6 @@ public class RegistryController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	/*@RequestMapping(value = "/read/{id}", method = RequestMethod.GET)
-	public ResponseEntity<Response> readEntity(@PathVariable("id") String id,
-			@RequestParam(required = false) boolean includeSignatures, @RequestHeader HttpHeaders header) {
-
-		String entityId = registryContext + id;
-		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
-
-		try {
-			watch.start("RegistryController.readEntity");
-			String content = registryService.getEntityFramedById(entityId, includeSignatures);
-			logger.info("RegistryController: Json string " + content);
-
-			Data<Object> data = new Data<Object>(content);
-			ITransformer<Object> responseTransformer = responseTransformFactory
-					.getInstance(header.getAccept().iterator().next());
-			responseTransformer.setPurgeData(getKeysToPurge());
-			Data<Object> responseContent = responseTransformer.transform(data);
-			response.setResult(responseContent.getData());
-			responseParams.setStatus(Response.Status.SUCCESSFUL);
-			watch.stop("RegistryController.readEntity");
-			logger.debug("RegistryController: entity for {} read !", entityId);
-
-		} catch (RecordNotFoundException | UnsupportedOperationException | TransformationException e) {
-			logger.error("RegistryController: Exception while reading entity !", e);
-			response.setResult(null);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		} catch (Exception e) {
-			logger.error("RegistryController: Exception while reading entity!", e);
-			response.setResult(null);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg("Ding! You encountered an error!");
-		}
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
-*/
 	/**
 	 * 
 	 * @param id
