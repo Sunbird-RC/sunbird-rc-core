@@ -309,7 +309,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	    }
 
 	    registry.addInterceptor(rdfConversionInterceptor())
-				.addPathPatterns("/add", "/update", "/search").order(orderIdx++);
+				.addPathPatterns("/add", "/update", "/search", "/read").order(orderIdx++);
 	}
 
 	@Override
