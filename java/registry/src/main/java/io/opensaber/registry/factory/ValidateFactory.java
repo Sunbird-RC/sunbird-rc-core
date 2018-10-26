@@ -1,5 +1,7 @@
 package io.opensaber.registry.factory;
 
+import io.opensaber.registry.exception.ValidationFactoryException;
+import io.opensaber.registry.exception.errorconstants.ErrorConstants;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RdfValidationServiceImpl;
 import io.opensaber.registry.service.ValidationService;
@@ -12,7 +14,7 @@ public class ValidateFactory {
     @Autowired
     RdfValidationServiceImpl validationServiceImpl;
 
-    public ValidationService getInstance(String type) {
+    public ValidationService getInstance(String type) throws ValidationFactoryException {
         ValidationService validationService = null;
 
         switch (type) {
@@ -24,6 +26,10 @@ public class ValidateFactory {
             case Constants.ENABLE_JSON_VALIDATION:
 
                 break;
+
+            default:
+
+                throw new ValidationFactoryException(ErrorConstants.VALIDATION_IMPLEMENTATION_NOT_PROVIDED);
 
         }
         return validationService;

@@ -23,7 +23,7 @@ import java.util.Map;
 public class RdfValidationServiceImpl implements ValidationService {
 
 	@Autowired
-	RdfSignatureValidator signatureValidator;
+	private RdfSignatureValidator signatureValidator;
 
 	@Value("${signature.enabled}")
 	private boolean signatureEnabled;
@@ -63,14 +63,6 @@ public class RdfValidationServiceImpl implements ValidationService {
 		validationResponse = validator.validate();
 		return validationResponse;
 	}
-
-	/*public ValidationResponse validateRDFAndSignature(Model rdf, String methodOrigin) throws RDFValidationException, MiddlewareHaltException, IOException {
-		ValidationResponse validationResponse = validateRDFWithSchema( rdf,  methodOrigin);
-		if(signatureEnabled && Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)) {
-			signatureValidator.validateMandatorySignatureFields(rdf);
-		}
-		return validationResponse;
-	}*/
 
 	public ValidationResponse validateData(Object rdf, String methodOrigin) throws RDFValidationException, MiddlewareHaltException, IOException {
 		Model rdfModel = null;
