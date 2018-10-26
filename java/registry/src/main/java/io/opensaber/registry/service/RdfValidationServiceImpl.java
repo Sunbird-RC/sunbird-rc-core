@@ -49,7 +49,7 @@ public class RdfValidationServiceImpl implements ValidationService {
 		return shapeTypeMap;
 	}
 
-	private ValidationResponse validateRDFWithSchema(Model rdf, String methodOrigin) throws RDFValidationException{
+	public ValidationResponse validateRDFWithSchema(Model rdf, String methodOrigin) throws RDFValidationException{
 		Schema schema = null;
 		Model validationRdf = generateShapeModel(rdf);
 		mergeModels( rdf,  validationRdf);
