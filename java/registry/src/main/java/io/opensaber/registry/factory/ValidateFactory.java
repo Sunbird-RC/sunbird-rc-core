@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class ValidateFactory {
 
     @Autowired
-    RdfValidationServiceImpl validationServiceImpl;
+    private RdfValidationServiceImpl validationServiceImpl;
 
     public ValidationService getInstance(String type) throws ValidationFactoryException {
         ValidationService validationService = null;

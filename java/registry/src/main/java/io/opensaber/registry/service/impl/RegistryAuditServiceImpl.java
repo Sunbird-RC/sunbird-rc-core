@@ -1,11 +1,11 @@
 package io.opensaber.registry.service.impl;
 
-import io.opensaber.converters.JenaRDF4J;
-import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.exception.*;
-import io.opensaber.registry.frame.FrameEntity;
-import io.opensaber.registry.service.RegistryAuditService;
-import io.opensaber.utils.converters.RDF2Graph;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.NoSuchElementException;
+
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -22,11 +22,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.NoSuchElementException;
+import io.opensaber.converters.JenaRDF4J;
+import io.opensaber.registry.dao.RegistryDao;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.frame.FrameEntity;
+import io.opensaber.registry.service.RegistryAuditService;
+import io.opensaber.utils.converters.RDF2Graph;
 
 @Component
 public class RegistryAuditServiceImpl implements RegistryAuditService {
