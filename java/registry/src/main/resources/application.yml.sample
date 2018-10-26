@@ -112,6 +112,10 @@ keycloak:
     realm:  ${sunbird_sso_realm}
     auth_server_url:  ${sunbird_sso_url}
 
+validation:
+  enabled: ${validation_enabled:true}
+  type: ${validation_type:rdf}
+
 ---
 ##################################################################
 #                      TEST PROFILE                              #
@@ -201,3 +205,7 @@ keycloak:
     publicKey:  ${sunbird_sso_publickey}
     realm:  ${sunbird_sso_realm}
     auth_server_url:  ${sunbird_sso_url}
+
+validation:
+  enabled: ${validation_enabled:true}
+  type: ${validation_type:rdf}

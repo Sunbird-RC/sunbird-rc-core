@@ -1,27 +1,32 @@
 package io.opensaber.registry.service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.vocabulary.RDF;
-
 import es.weso.schema.Schema;
 import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.exception.RDFValidationException;
 import io.opensaber.registry.exception.errorconstants.ErrorConstants;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.Validator;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.vocabulary.RDF;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
-public class RdfValidator {
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+//@Component
+public class RdfValidationServiceImpl implements ValidationService {
+
+	@Autowired
+	private RdfSignatureValidator signatureValidator;
+
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
 
 	private static final String SX_SHAPE_IRI = "http://shex.io/ns/shex#Shape";
 	private static final String SHAPE_EXPRESSION_IRI = "http://shex.io/ns/shex#expression";
@@ -34,7 +39,7 @@ public class RdfValidator {
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;
 
-	public RdfValidator(Schema schemaForCreate, Schema schemaForUpdate) {
+	public RdfValidationServiceImpl(Schema schemaForCreate, Schema schemaForUpdate) {
 		this.schemaForCreate = schemaForCreate;
 		this.schemaForUpdate = schemaForUpdate;
 		this.shapeTypeMap = getShapeMap(RDF.type, SX_SHAPE_IRI);
@@ -44,29 +49,39 @@ public class RdfValidator {
 		return shapeTypeMap;
 	}
 
-	public ValidationResponse validateRDFWithSchema(Model rdf, String methodOrigin) throws RDFValidationException {
+	public ValidationResponse validateRDFWithSchema(Model rdf, String methodOrigin) throws RDFValidationException{
+		Schema schema = null;
+		Model validationRdf = generateShapeModel(rdf);
+		mergeModels( rdf,  validationRdf);
+		ValidationResponse validationResponse = null;
+		if(Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)){
+			schema = schemaForCreate;
+		} else {
+			schema = schemaForUpdate;
+		}
+		Validator validator = new ShaclexValidator(schema, validationRdf);
+		validationResponse = validator.validate();
+		return validationResponse;
+	}
+
+	public ValidationResponse validateData(Object rdf, String methodOrigin) throws RDFValidationException, MiddlewareHaltException, IOException {
+		Model rdfModel = null;
 		if (rdf == null) {
 			throw new RDFValidationException(ErrorConstants.RDF_DATA_IS_MISSING);
-		}else if (!(rdf instanceof Model)) {
+		} else if (!(rdf instanceof Model)) {
 			throw new RDFValidationException(ErrorConstants.RDF_DATA_IS_INVALID);
-		}else if (methodOrigin == null) {
+		} else if (methodOrigin == null) {
 			throw new RDFValidationException(ErrorConstants.INVALID_REQUEST_PATH);
-		}else if (schemaForCreate == null || schemaForUpdate == null) {
+		} else if (schemaForCreate == null || schemaForUpdate == null) {
 			throw new RDFValidationException(ErrorConstants.SCHEMA_IS_NULL);
-		}else if(shapeTypeMap == null){
-			throw new RDFValidationException(this.getClass().getName()+ErrorConstants.VALIDATION_IS_MISSING);
+		} else if (shapeTypeMap == null) {
+			throw new RDFValidationException(this.getClass().getName() + ErrorConstants.VALIDATION_IS_MISSING);
 		} else {
-			Schema schema = null;
-			Model validationRdf = generateShapeModel(rdf);
-			mergeModels( rdf,  validationRdf);
-			ValidationResponse validationResponse = null;
-			if(Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)){
-				schema = schemaForCreate;
-			} else {
-				schema = schemaForUpdate;
+			rdfModel = (Model) rdf;
+			ValidationResponse validationResponse = validateRDFWithSchema(rdfModel, methodOrigin);
+			if (signatureEnabled && Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)) {
+				signatureValidator.validateMandatorySignatureFields(rdfModel);
 			}
-			Validator validator = new ShaclexValidator(schema, validationRdf);
-			validationResponse = validator.validate();
 			return validationResponse;
 		}
 	}

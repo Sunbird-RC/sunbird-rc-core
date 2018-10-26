@@ -43,7 +43,7 @@ public class RDFValidationTest {
 	private String jsonld;
 	private static final String EMPTY_STRING = "";
 
-	private RdfValidator rdfValidator;
+	private RdfValidationServiceImpl rdfValidationServiceImpl;
 
 	private Option<String> none = Option.empty();
 	
@@ -55,7 +55,7 @@ public class RDFValidationTest {
 		try {
 			Schema createSchema = readSchema(shexFileForCreate, SCHEMAFORMAT, PROCESSOR);
 			Schema updateSchema = readSchema(shexFileForUpdate, SCHEMAFORMAT, PROCESSOR);
-			rdfValidator = new RdfValidator(createSchema,updateSchema);
+			rdfValidationServiceImpl = new RdfValidationServiceImpl(createSchema,updateSchema);
 		} catch (Exception e) {
 			successfulInitialization = false;
 		}
@@ -66,7 +66,7 @@ public class RDFValidationTest {
 		boolean successfulInitialization = true;
 		try {
 			Schema createSchema = readSchema(shexFileForUpdate, SCHEMAFORMAT, PROCESSOR);
-			rdfValidator = new RdfValidator(null, createSchema);
+			rdfValidationServiceImpl = new RdfValidationServiceImpl(null, createSchema);
 		} catch (Exception e) {
 			successfulInitialization = false;
 		}
@@ -82,7 +82,7 @@ public class RDFValidationTest {
 		assertTrue(setup(SIMPLE_SHEX, SIMPLE_SHEX));
 		expectedEx.expect(RDFValidationException.class);
 		expectedEx.expectMessage("RDF Data is missing!");
-		rdfValidator.validateRDFWithSchema(null,null);
+		rdfValidationServiceImpl.validateRDFWithSchema(null,null);
 	}
 
 	@Test
@@ -90,7 +90,7 @@ public class RDFValidationTest {
 		expectedEx.expect(RDFValidationException.class);
 		expectedEx.expectMessage("Schema for validation is missing");
 		assertTrue(setup(COMPLEX_UPDATE_SHEX));
-		rdfValidator.validateRDFWithSchema(getValidRdf(COMPLEX_TTL), Constants.CREATE_METHOD_ORIGIN);
+		rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_TTL), Constants.CREATE_METHOD_ORIGIN);
 	}
 
 	@Test
@@ -98,27 +98,27 @@ public class RDFValidationTest {
 		expectedEx.expect(RDFValidationException.class);
 		expectedEx.expectMessage("Request URL is invalid");
 		assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
-		rdfValidator.validateRDFWithSchema(getValidRdf(COMPLEX_TTL),null);
+		rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_TTL),null);
 	}
 
 	@Test
 	public void testIfComplexJSONLDIsSupportedForAdd() throws RDFValidationException {
 		assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
-		ValidationResponse validationResponse =  rdfValidator.validateRDFWithSchema(getValidRdf(COMPLEX_TTL),Constants.CREATE_METHOD_ORIGIN);
+		ValidationResponse validationResponse =  rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_TTL),Constants.CREATE_METHOD_ORIGIN);
 		testForSuccessfulResult(validationResponse);
 	}
 
 	@Test
 	public void testIfComplexJSONLDIsSupportedForUpdate() throws RDFValidationException {
 		assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
-		ValidationResponse validationResponse = rdfValidator.validateRDFWithSchema(getValidRdf(COMPLEX_TTL), Constants.UPDATE_METHOD_ORIGIN);
+		ValidationResponse validationResponse = rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_TTL), Constants.UPDATE_METHOD_ORIGIN);
 		testForSuccessfulResult(validationResponse);
 	}
 
 	@Test
 	public void testIfaRealValidationFailsForAdd() throws Exception {
 		assertTrue(setup(COMPLEX_CREATE_SHEX,COMPLEX_UPDATE_SHEX));
-		ValidationResponse response = rdfValidator.validateRDFWithSchema(getValidRdf(COMPLEX_INVALID_JSONLD_ADD, JSONLD_FORMAT), Constants.CREATE_METHOD_ORIGIN);
+		ValidationResponse response = rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_INVALID_JSONLD_ADD, JSONLD_FORMAT), Constants.CREATE_METHOD_ORIGIN);
 		assertFalse(response.isValid());
 	}
 
@@ -126,7 +126,7 @@ public class RDFValidationTest {
 	public void testIfaRealValidationFailsForUpdate() throws Exception {
 		assertTrue(setup(COMPLEX_CREATE_SHEX,COMPLEX_UPDATE_SHEX));
 		Model dataModel = getValidRdf(COMPLEX_INVALID_JSONLD_UPDATE, JSONLD_FORMAT);
-		ValidationResponse response = rdfValidator.validateRDFWithSchema(dataModel, Constants.UPDATE_METHOD_ORIGIN);
+		ValidationResponse response = rdfValidationServiceImpl.validateRDFWithSchema(dataModel, Constants.UPDATE_METHOD_ORIGIN);
 
 		assertFalse(response.isValid());
 		Map<String, String> errorFields = response.getFields();

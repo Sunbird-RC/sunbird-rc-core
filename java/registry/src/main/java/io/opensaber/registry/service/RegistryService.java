@@ -19,11 +19,11 @@ public interface RegistryService {
 
 	public String addEntity(Model rdfModel, String dataObject, String subject, String property)
             throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
-            MultipleEntityException, RecordNotFoundException, IOException, SignatureException.UnreachableException, JsonLdError, SignatureException.CreationException, RDFValidationException, MiddlewareHaltException;
+            MultipleEntityException, RecordNotFoundException, IOException, SignatureException.UnreachableException, JsonLdError, SignatureException.CreationException, RDFValidationException, MiddlewareHaltException, ValidationFactoryException;
 
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
 			EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
-			IOException, SignatureException.CreationException, RDFValidationException, MiddlewareHaltException;
+			IOException, SignatureException.CreationException, RDFValidationException, MiddlewareHaltException, ValidationFactoryException;
 
 	public Model getEntityById(String id, boolean includeSignatures)
 			throws RecordNotFoundException, EncryptionException, AuditFailedException;
