@@ -13,7 +13,6 @@
     "InServiceTeacherTraining": {
       "type": "object",
       "required": [
-        "type",
         "daysOfInServiceTeacherTraining"
       ],
       "properties": {

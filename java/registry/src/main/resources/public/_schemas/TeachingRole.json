@@ -24,11 +24,11 @@
       "properties": {
         "teacherType": {
           "$id": "#/properties/teacherType",
-          "$ref": "Common.json#/definitions/TeacherType",
+          "$ref": "Common.json#/definitions/TeacherType"
         },
         "appointmentType": {
           "$id": "#/properties/appointmentType",
-          "$ref": "Common.json#/definitions/AppointmentType",
+          "$ref": "Common.json#/definitions/AppointmentType"
         },
         "classesTaught": {
           "$id": "#/properties/classesTaught",
@@ -43,7 +43,9 @@
         "mainSubjectsTaught": {
           "$id": "#/properties/mainSubjectsTaught",
           "type": "array",
-          "$ref": "Common.json#/definitions/Subjects"
+          "items": {
+            "$ref": "Common.json#/definitions/Subjects"
+          }
         },
         "appointmentYear": {
           "$id": "#/properties/appointmentYear",

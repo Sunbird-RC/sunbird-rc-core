@@ -33,7 +33,7 @@
         "SocialCategoryTypeCode-ORC",
         "SocialCategoryTypeCode-OTHERS"
       ]
-    }
+    },
     "AcademicQualification": {
       "type": "string",
       "enum": [

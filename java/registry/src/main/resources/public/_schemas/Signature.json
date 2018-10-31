@@ -1,6 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$comment": "Signature schema definition"
+  "type": "object",
+  "$comment": "Signature schema definition",
+  "properties": {
+    "signatures": {
+      "$ref": "#/definitions/Signature"
+    }
+  },
   "definitions": {
     "Signature": {
       "$id": "#/properties/Signature",
@@ -27,7 +33,7 @@
         "signatureFor": {
           "$id": "#/properties/signatureFor",
           "type": "string",
-          "$comment": "The attribute name or entity id you for which this is the signature"
+          "$comment": "The attribute name or entity id you for which this is the signature",
           "examples": [
             "http://localhost:8080/serialNum",
             "http://localhost:8080/9cba6ddd-330c-4a0d-929a-771bb12cb0d3"
@@ -36,7 +42,7 @@
         "creator": {
           "$id": "#/properties/creator",
           "type": "string",
-          "format": "uri"
+          "format": "uri",
           "$comment": "IRI where the public key associated could be retrieved",
           "examples": [
             "https://example.com/i/pat/keys/"

@@ -41,7 +41,9 @@
         "signatures": {
           "$id": "#/properties/signatures",
           "type": "array",
-          "$ref": "Signature.json#/definitions/Signature",
+          "items": {
+            "$ref": "Signature.json#/definitions/Signature"
+          },
           "$comment": "Placeholder for all verifiable claims"
         },
         "serialNum": {
@@ -113,10 +115,12 @@
           "$ref": "NonTeachingAssignments.json#/definitions/NonTeachingAssignments"
         },
         "basicProficiencyLevel": {
-          "$id": "#/properties/nonTeachingAssignmentsForAcademicCalendar",
-          "$ref": "BasicProficiencyLevel.json#/definitions/BasicProficiencyLevel",
-          "minimum": 0,
-          "maximum": 3
+          "$id": "#/properties/basicProficiencyLevel",
+          "type": "array",
+          "items": {
+            "$ref": "BasicProficiencyLevel.json#/definitions/BasicProficiencyLevel"
+          },
+          "minItems": 3
         },
         "disabilityType": {
           "$id": "#/properties/disabilityType",
@@ -126,13 +130,12 @@
           "$id": "#/properties/trainedForChildrenSpecialNeeds",
           "$ref": "Common.json#/definitions/YesNoCode"
         },
-        "trainedForChildrenSpecialNeeds": {
-          "$id": "#/properties/trainedForChildrenSpecialNeeds",
-          "$ref": "Common.json#/definitions/YesNoCode"
-        },
         "trainedinUseOfComputer": {
           "$id": "#/properties/trainedinUseOfComputer",
           "$ref": "Common.json#/definitions/YesNoCode"
+        },
+        "___encryptedFields": {
+
         }
       }
     }
