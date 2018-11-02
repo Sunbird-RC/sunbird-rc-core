@@ -1,24 +1,17 @@
 package io.opensaber.registry.service.impl;
 
-import io.opensaber.pojos.HealthCheckResponse;
-import io.opensaber.registry.app.OpenSaberApplication;
-import io.opensaber.registry.authorization.AuthorizationToken;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.controller.RegistryController;
-import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.dao.impl.RegistryDaoImpl;
-import io.opensaber.registry.exception.*;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.registry.model.AuditRecord;
-import io.opensaber.registry.schema.config.SchemaConfigurator;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.tests.utility.TestHelper;
-import org.apache.jena.rdf.model.Resource;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.assertj.core.util.Arrays;
@@ -42,11 +35,26 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.when;
+import io.opensaber.pojos.HealthCheckResponse;
+import io.opensaber.registry.app.OpenSaberApplication;
+import io.opensaber.registry.authorization.AuthorizationToken;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.controller.RegistryController;
+import io.opensaber.registry.controller.RegistryTestBase;
+import io.opensaber.registry.dao.impl.RegistryDaoImpl;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.model.AuditRecord;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.tests.utility.TestHelper;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {OpenSaberApplication.class, RegistryController.class,
@@ -70,9 +78,6 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	
 	@Autowired
 	private DatabaseProvider databaseProvider;
-
-	@Mock
-	private SchemaConfigurator mockSchemaConfigurator;
 
 	@Mock
 	private RestTemplate mockRestTemplate;

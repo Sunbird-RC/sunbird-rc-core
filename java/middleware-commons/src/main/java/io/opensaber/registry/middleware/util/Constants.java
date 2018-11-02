@@ -58,7 +58,7 @@ public class Constants {
     public static final String SIGN_ERROR_MESSAGE = "Unable to get signature for data";
     public static final String VERIFY_SIGN_ERROR_MESSAGE = "Unable to verify signature for data";
     public static final String KEY_RETRIEVE_ERROR_MESSAGE = "Unable to retrieve key";
-
+    public static final String SCHEMA_TYPE_INVALID = "Invalid schema type";
 
     public static final String OPENSABER_REGISTRY_API_NAME = "opensaber-registry-api";
     public static final String SUNBIRD_ENCRYPTION_SERVICE_NAME = "sunbird.encryption.service";

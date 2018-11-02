@@ -27,7 +27,6 @@ import com.google.gson.reflect.TypeToken;
 
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
 
 @Component
@@ -54,8 +53,8 @@ public class EncryptionServiceImpl implements EncryptionService {
 	@Autowired
 	private Gson gson;
 	
-	@Autowired
-	SchemaConfigurator schemaConfigurator;
+/*	@Autowired
+	SchemaConfigurator schemaConfigurator;*/
 
 	@Autowired
 	private OpenSaberInstrumentation watch;

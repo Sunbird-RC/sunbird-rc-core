@@ -1,19 +1,33 @@
 package io.opensaber.registry.service;
 
-import es.weso.schema.Schema;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.rdf.model.*;
-import org.apache.jena.vocabulary.RDF;
-
-import javax.xml.XMLConstants;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import javax.xml.XMLConstants;
+
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.NodeIterator;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.vocabulary.RDF;
+
+import es.weso.schema.Schema;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.schema.config.SchemaLoader;
+import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
+import io.opensaber.registry.schema.configurator.SchemaConfiguratorFactory;
+import io.opensaber.registry.schema.configurator.SchemaType;
 
 public class RdfSignatureValidator {
 
@@ -35,17 +49,18 @@ public class RdfSignatureValidator {
 	private List<String> signatureAttributes;
 
     // TODO: Instead of passing the ShapeType everytime, there could be a good reason
-    // to read all the shapes at once and then start validating against what was read.
-    public RdfSignatureValidator(Schema schemaForCreate, String registryContext,
-								 String registrySystemBase, String signatureConfigName,
-								 Map<String, String> shapeTypeMap, Model schemaConfig) {
-		this.schemaForCreate = schemaForCreate;
+    // to read all the shapes at once and then start validating against what was read.   
+	public RdfSignatureValidator(SchemaLoader schemaLoader, SchemaConfiguratorFactory schemaConfiguratorFactory, String registryContext, String registrySystemBase,
+			String signatureConfigName, Map<String, String> shapeTypeMap) {
+		this.schemaForCreate = schemaLoader.getSchemaForCreate();
 		this.registryContext = registryContext;
 		this.signatureConfigName = signatureConfigName;
-		this.schemaConfig = schemaConfig;
+		ISchemaConfigurator schemaConfigartor = schemaConfiguratorFactory.getInstance(SchemaType.SHEX);
+		schemaConfig = RDFUtil.getRdfModelBasedOnFormat(schemaConfigartor.getSchemaContent(), JSON_LD_FORMAT);
 		this.registrySystemBase = registrySystemBase;
-		shapeTypeMap.forEach((type, shape)-> {
-			if(shape.equals(registryContext+signatureConfigName)){
+				
+		shapeTypeMap.forEach((type, shape) -> {
+			if (shape.equals(registryContext + signatureConfigName)) {
 				signatureTypes.add(type);
 			}
 		});

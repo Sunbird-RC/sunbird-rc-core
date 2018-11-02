@@ -8,6 +8,7 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.Validator;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.schema.config.SchemaLoader;
 import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.vocabulary.RDF;
@@ -38,10 +39,11 @@ public class RdfValidationServiceImpl implements ValidationService {
 	private Map<String,String> shapeTypeMap;
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;
+	
 
-	public RdfValidationServiceImpl(Schema schemaForCreate, Schema schemaForUpdate) {
-		this.schemaForCreate = schemaForCreate;
-		this.schemaForUpdate = schemaForUpdate;
+	public RdfValidationServiceImpl(SchemaLoader schemaLoader) {
+		this.schemaForCreate = schemaLoader.getSchemaForCreate();
+		this.schemaForUpdate = schemaLoader.getSchemaForUpdate();
 		this.shapeTypeMap = getShapeMap(RDF.type, SX_SHAPE_IRI);
 	}
 	

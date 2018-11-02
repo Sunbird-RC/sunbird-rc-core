@@ -26,6 +26,7 @@ import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.exception.RDFValidationException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.schema.config.SchemaLoader;
 import scala.Option;
 import scala.util.Either;
 
@@ -38,11 +39,10 @@ public class RDFValidationTest {
 	private static final String COMPLEX_UPDATE_SHEX = "teacher_update.shex";
 	public static final String TTL_FORMAT = "TTL";
 	public static final String JSONLD_FORMAT = "JSONLD";
-	private static final String SCHEMAFORMAT = "SHEXC";
-	private static final String PROCESSOR 	= "shex";
 	private String jsonld;
 	private static final String EMPTY_STRING = "";
 
+	
 	private RdfValidationServiceImpl rdfValidationServiceImpl;
 
 	private Option<String> none = Option.empty();
@@ -53,20 +53,8 @@ public class RDFValidationTest {
 	private boolean setup(String shexFileForCreate, String shexFileForUpdate) {
 		boolean successfulInitialization = true;
 		try {
-			Schema createSchema = readSchema(shexFileForCreate, SCHEMAFORMAT, PROCESSOR);
-			Schema updateSchema = readSchema(shexFileForUpdate, SCHEMAFORMAT, PROCESSOR);
-			rdfValidationServiceImpl = new RdfValidationServiceImpl(createSchema,updateSchema);
-		} catch (Exception e) {
-			successfulInitialization = false;
-		}
-		return successfulInitialization;
-	}
-	
-	private boolean setup( String shexFileForUpdate) {
-		boolean successfulInitialization = true;
-		try {
-			Schema createSchema = readSchema(shexFileForUpdate, SCHEMAFORMAT, PROCESSOR);
-			rdfValidationServiceImpl = new RdfValidationServiceImpl(null, createSchema);
+			SchemaLoader schemaLoader = new SchemaLoader(shexFileForCreate, shexFileForUpdate);
+			rdfValidationServiceImpl = new RdfValidationServiceImpl(schemaLoader);
 		} catch (Exception e) {
 			successfulInitialization = false;
 		}
@@ -89,7 +77,7 @@ public class RDFValidationTest {
 	public void testHaltIfSchemaIsMissing() throws IOException, RDFValidationException {
 		expectedEx.expect(RDFValidationException.class);
 		expectedEx.expectMessage("Schema for validation is missing");
-		assertTrue(setup(COMPLEX_UPDATE_SHEX));
+		assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
 		rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_TTL), Constants.CREATE_METHOD_ORIGIN);
 	}
 

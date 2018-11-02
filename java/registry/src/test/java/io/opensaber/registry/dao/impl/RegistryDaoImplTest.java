@@ -1,30 +1,56 @@
 package io.opensaber.registry.dao.impl;
 
-import io.opensaber.converters.JenaRDF4J;
-import io.opensaber.registry.authorization.AuthorizationToken;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.exception.*;
-import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.registry.model.AuditRecordReader;
-import io.opensaber.registry.service.impl.EncryptionServiceImpl;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.tests.utility.TestHelper;
-import io.opensaber.utils.converters.RDF2Graph;
-import org.apache.jena.rdf.model.*;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.T;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
@@ -43,13 +69,25 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
-import java.util.*;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import io.opensaber.converters.JenaRDF4J;
+import io.opensaber.registry.authorization.AuthorizationToken;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.controller.RegistryTestBase;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.model.AuditRecordReader;
+import io.opensaber.registry.service.impl.EncryptionServiceImpl;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.tests.utility.TestHelper;
+import io.opensaber.utils.converters.RDF2Graph;
 
 
 @RunWith(SpringRunner.class)
@@ -742,38 +780,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		assertThat(result, contains("updated block", "Updated Cluster Resource", "Updated Sector 14", "Updated MCG"));
 		assertThat(result, hasSize(4));
 	}
-		
 	
-/*		@Test
-		public void testGetEntity(){
-			EntityDto entityDto = new EntityDto();
-			entityDto.setId(identifier);
-			Object entity = registryDao.getEntityById(entityDto);
-			assertFalse((entity!=null));
-		}
-		@Test
-		public void testGetNonExistingEntity(){
-			EntityDto entityDto = new EntityDto();
-			entityDto.setId(generateRandomId());
-			Object entity = registryDao.getEntityById(entityDto);
-			assertFalse((entity!=null));
-		}
-		@Test
-		public void testModifyEntity(){
-			Vertex vertex = graph.addVertex(
-					T.label,"identifier");
-			vertex.property("is", "108115c3-320c-43d6-aaa7-7aab72777575");
-			graph.addVertex(
-					T.label,"mapType").property("is", "teacher");
-			getVertexForSubject("identifier","is", identifier, t);
-			getVertexForSubject("mapType","is", "teacher", t);
-			getVertexForSubject("email","is", "consent driven");
-			boolean response = registryDao.updateEntity(graph);
-			assertFalse(response);
-		}
-*/
-	
-
 	@After
 	public void shutDown() throws Exception{
 		if(graph!=null){
@@ -919,7 +926,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		}
 	}
 	
-	/*@Test
+/*	@Test
 	public void test_delete_non_existing_root_node() throws Exception {
 		expectedEx.expect(RecordNotFoundException.class);
 		expectedEx.expectMessage(Constants.ENTITY_NOT_FOUND);
@@ -927,7 +934,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		Model rdfModel = ModelFactory.createDefaultModel();
 		rdfModel.add(ResourceFactory.createResource(id), null, (RDFNode)null);
 		String rootLabel = updateGraphFromRdf(rdfModel);
-		//registryDao.deleteEntity(graph,rootLabel);
+		registryDao.deleteEntity(graph,rootLabel);
 	}
 	
 	@Test
@@ -958,8 +965,8 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		//registryDao.deleteEntity(graph,response);
 		Graph updatedGraphResult = registryDao.getEntityById(response);
 		assertFalse(updatedGraphResult.traversal().E().hasLabel("http://example.com/voc/teacher/1.0.0/area").hasNext());
-	}*/
-	
+	}
+	*/
 	@Test
 	public void test_update_properties() throws Exception {
 		Model rdfModel = getNewValidRdf();
@@ -1062,7 +1069,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
 		registryDao.deleteEntityById(response);
         registryDao.getEntityById(response, false);
-		//assertTrue(registryDao.deleteEntityById(response));
+		assertTrue(registryDao.deleteEntityById(response));
 	}
 
 	@Test

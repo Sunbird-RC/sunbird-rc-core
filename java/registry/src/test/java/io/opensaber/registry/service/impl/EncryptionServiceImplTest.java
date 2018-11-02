@@ -1,10 +1,14 @@
 package io.opensaber.registry.service.impl;
 
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.schema.config.SchemaConfigurator;
-import io.opensaber.registry.service.EncryptionService;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -19,13 +23,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.*;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.controller.RegistryTestBase;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.service.EncryptionService;
 
 @Ignore
 @RunWith(SpringRunner.class)
@@ -36,9 +37,6 @@ public class EncryptionServiceImplTest extends RegistryTestBase {
 
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
-
-	@Mock
-	private SchemaConfigurator mockSchemaConfigurator;
 	
 	@Mock
 	private RestTemplate mockRestTemplate;
