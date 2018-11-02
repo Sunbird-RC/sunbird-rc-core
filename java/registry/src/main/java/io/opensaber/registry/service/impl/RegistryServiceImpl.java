@@ -177,6 +177,8 @@ public class RegistryServiceImpl implements RegistryService {
 						entitySignMap.put("keyUrl", signatureKeyURl);
 						signedRdfModel = RDFUtil.getUpdatedSignedModel(rdfModel, registryContext, signatureDomain,
 								entitySignMap, ModelFactory.createDefaultModel());
+						return addEntity(signedRdfModel, subject, property);
+
 					}
 				} else {
 					// else part for json validation
@@ -184,7 +186,7 @@ public class RegistryServiceImpl implements RegistryService {
 
 			}
 
-			return addEntity(signedRdfModel, subject, property);
+			return addEntity(rdfModel, subject, property);
 
 		} catch (EntityCreationException | EncryptionException | AuditFailedException | DuplicateRecordException
 				| MultipleEntityException ex) {
