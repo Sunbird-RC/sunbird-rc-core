@@ -8,6 +8,7 @@ public class Constants {
     public static final String RESPONSE_ATTRIBUTE = "responseModel";
     public static final String ATTRIBUTE_NAME = "dataObject";
     public static final String REQUEST_ATTRIBUTE = "requestModel";
+    public static final String REQUEST_OBJECT = "requestObject";
     public static final String RDF_OBJECT = "rdf";
     public static final String RDF_VALIDATION_OBJECT = "rdfValidationResult";
     public static final String METHOD_ORIGIN = "methodOrigin";
@@ -57,7 +58,7 @@ public class Constants {
     public static final String SIGN_ERROR_MESSAGE = "Unable to get signature for data";
     public static final String VERIFY_SIGN_ERROR_MESSAGE = "Unable to verify signature for data";
     public static final String KEY_RETRIEVE_ERROR_MESSAGE = "Unable to retrieve key";
-
+    public static final String SCHEMA_TYPE_INVALID = "Invalid schema type";
 
     public static final String OPENSABER_REGISTRY_API_NAME = "opensaber-registry-api";
     public static final String SUNBIRD_ENCRYPTION_SERVICE_NAME = "sunbird.encryption.service";
@@ -85,6 +86,8 @@ public class Constants {
     public static final String SIGN_NONCE = "nonce";
     public static final String SIGN_TYPE = "type";
     public static final String SIGN_SIGNATURE_VALUE = "signatureValue";
+    public static final String ENABLE_RDF_VALIDATION = "enableRdfValidation";
+    public static final String ENABLE_JSON_VALIDATION = "enableJsonValidation";
 
     public static class JsonldConstants {
         public static final String CONTEXT = "@context";

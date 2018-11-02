@@ -112,12 +112,13 @@ public class SearchServiceImplTest extends RegistryTestBase{
 		List<Resource> subjectList = RDFUtil.getRootLabels(rdf);
 		Property property = ResourceFactory.createProperty(CONTEXT_NAMESPACE + "schoolName");
 		rdf.add(subjectList.get(0), property, "Bluebells");
-		rdf.removeAll(null, RDF.type, ResourceFactory.createResource(CONTEXT_NAMESPACE+"School"));
+		rdf.removeAll(null, RDF.type, ResourceFactory.createResource(CONTEXT_NAMESPACE + "School"));
 		searchService.search(rdf);
 	}
 
     private String addEntity() throws DuplicateRecordException, AuditFailedException,
             EncryptionException, RecordNotFoundException, MultipleEntityException, EntityCreationException {
+
 		Model rdfModel = getNewValidRdf();
 		return registryService.addEntity(rdfModel, null, null);
 	}

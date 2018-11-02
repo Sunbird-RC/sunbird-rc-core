@@ -3,7 +3,6 @@ package io.opensaber.registry.service.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.opensaber.pojos.OpenSaberInstrumentation;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
@@ -26,8 +25,8 @@ import org.springframework.web.client.RestTemplate;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.schema.config.SchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
 
 @Component
@@ -54,8 +53,8 @@ public class EncryptionServiceImpl implements EncryptionService {
 	@Autowired
 	private Gson gson;
 	
-	@Autowired
-	SchemaConfigurator schemaConfigurator;
+/*	@Autowired
+	SchemaConfigurator schemaConfigurator;*/
 
 	@Autowired
 	private OpenSaberInstrumentation watch;

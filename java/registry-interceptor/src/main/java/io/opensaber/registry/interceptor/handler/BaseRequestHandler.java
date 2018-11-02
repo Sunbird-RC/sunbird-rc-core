@@ -1,24 +1,15 @@
 package io.opensaber.registry.interceptor.handler;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
+import io.opensaber.pojos.Request;
+import io.opensaber.registry.middleware.util.Constants;
+
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-import java.util.Map.Entry;
-
-import javax.servlet.http.HttpServletRequest;
-
-import com.google.gson.JsonParser;
-import org.apache.jena.rdf.model.Model;
-
-import com.google.gson.Gson;
-import io.opensaber.pojos.Request;
-import io.opensaber.pojos.RequestParams;
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.ResponseParams;
-import io.opensaber.registry.middleware.util.Constants;
-import static org.apache.commons.lang3.StringUtils.*;
 
 public class BaseRequestHandler extends BaseResponseHandler{
 
@@ -66,6 +57,7 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		String requestObject = new JsonParser().parse(requestBody)
 				.getAsJsonObject().getAsJsonObject("request").toString();
 		requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestObject);
+		requestBodyMap.put(Constants.REQUEST_OBJECT,requestBody);
 		requestModel.setRequestMap(requestBodyMap);
 		return requestBodyMap;
 	}

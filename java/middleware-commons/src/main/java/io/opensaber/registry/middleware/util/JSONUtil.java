@@ -107,7 +107,8 @@ public class JSONUtil {
 			JsonNode entryValue = entry.getValue();
 			if (entryValue.isArray()) {
 				for (int i = 0; i < entryValue.size(); i++) {
-					replaceField((ObjectNode) entry.getValue(), fieldName, newValue);
+					if(entry.getValue().get(i).isObject())
+						replaceField((ObjectNode) entry.getValue().get(i), fieldName, newValue);
 				}
 			} else if (entryValue.isObject()) {
 				replaceField((ObjectNode) entry.getValue(), fieldName, newValue);
@@ -176,7 +177,7 @@ public class JSONUtil {
 	 * @param childKey
 	 * @param child
 	 */
-	public static void addNode(ObjectNode parent, String childKey, JsonNode child) {
+	public static void addNode(ObjectNode parent, String childKey, ObjectNode child) {
 		parent.fields().forEachRemaining(entry -> {
 			JsonNode entryValue = entry.getValue();
 			if (entryValue.isObject()) {
@@ -184,7 +185,8 @@ public class JSONUtil {
 			}
 			if (entryValue.isArray()) {
 				for (int i = 0; i < entryValue.size(); i++) {
-					addNode((ObjectNode) entry.getValue(), childKey, child);
+					if(entry.getValue().get(i).isObject())
+						addNode((ObjectNode) entry.getValue().get(i), childKey, child);
 				}
 			}
 

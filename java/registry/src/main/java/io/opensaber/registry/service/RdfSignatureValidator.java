@@ -1,22 +1,35 @@
-package io.opensaber.registry.middleware.impl;
+package io.opensaber.registry.service;
 
-import es.weso.schema.Schema;
-import io.opensaber.registry.middleware.Middleware;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.rdf.model.*;
-import org.apache.jena.vocabulary.RDF;
-
-import javax.xml.XMLConstants;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class SignaturePresenceValidator implements Middleware{
+import javax.xml.XMLConstants;
+
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.NodeIterator;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.vocabulary.RDF;
+
+import es.weso.schema.Schema;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.schema.config.SchemaLoader;
+import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
+import io.opensaber.registry.schema.configurator.SchemaConfiguratorFactory;
+import io.opensaber.registry.schema.configurator.SchemaType;
+
+public class RdfSignatureValidator {
 
 	private static final String RDF_DATA_IS_MISSING = "RDF Data is missing!";
 	private static final String RDF_DATA_IS_INVALID = "Data validation failed!";
@@ -36,25 +49,26 @@ public class SignaturePresenceValidator implements Middleware{
 	private List<String> signatureAttributes;
 
     // TODO: Instead of passing the ShapeType everytime, there could be a good reason
-    // to read all the shapes at once and then start validating against what was read.
-    public SignaturePresenceValidator(Schema schemaForCreate, String registryContext,
-                                      String registrySystemBase, String signatureConfigName,
-                                      Map<String, String> shapeTypeMap, Model schemaConfig) {
-		this.schemaForCreate = schemaForCreate;
+    // to read all the shapes at once and then start validating against what was read.   
+	public RdfSignatureValidator(SchemaLoader schemaLoader, SchemaConfiguratorFactory schemaConfiguratorFactory, String registryContext, String registrySystemBase,
+			String signatureConfigName, Map<String, String> shapeTypeMap) {
+		this.schemaForCreate = schemaLoader.getSchemaForCreate();
 		this.registryContext = registryContext;
 		this.signatureConfigName = signatureConfigName;
-		this.schemaConfig = schemaConfig;
+		ISchemaConfigurator schemaConfigartor = schemaConfiguratorFactory.getInstance(SchemaType.SHEX);
+		schemaConfig = RDFUtil.getRdfModelBasedOnFormat(schemaConfigartor.getSchemaContent(), JSON_LD_FORMAT);
 		this.registrySystemBase = registrySystemBase;
-		shapeTypeMap.forEach((type, shape)-> {
-			if(shape.equals(registryContext+signatureConfigName)){
+				
+		shapeTypeMap.forEach((type, shape) -> {
+			if (shape.equals(registryContext + signatureConfigName)) {
 				signatureTypes.add(type);
 			}
 		});
 		signatureAttributes = getSignatureAttributes();
 	}
 
-	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
-		Object RDF = mapData.get(Constants.RDF_OBJECT);
+	public void validateMandatorySignatureFields(Model RDF) throws IOException, MiddlewareHaltException {
+		//Object RDF = mapData.get(Constants.RDF_OBJECT);
 		if (RDF == null) {
 			throw new MiddlewareHaltException(RDF_DATA_IS_MISSING);
 		}else if (!(RDF instanceof Model)) {
@@ -62,13 +76,8 @@ public class SignaturePresenceValidator implements Middleware{
 		}else if (schemaForCreate == null) {
 			throw new MiddlewareHaltException(SCHEMA_IS_NULL);
 		}else {
-			validateSignature((Model)RDF);
-			return mapData;
+			validateSignatureFields((Model)RDF);
 		}
-	}
-
-	public Map<String, Object> next(Map<String, Object> mapData) throws IOException {
-		return null;
 	}
 
 	private List<String> getSignatureAttributes(){
@@ -118,7 +127,7 @@ public class SignaturePresenceValidator implements Middleware{
 		}
 	}
 
-    private void validateSignature(Model rdfModel) throws MiddlewareHaltException {
+    private void validateSignatureFields(Model rdfModel) throws MiddlewareHaltException {
 		Property property = ResourceFactory.createProperty(registrySystemBase + Constants.SIGNED_PROPERTY);
         StmtIterator rdfIter = rdfModel.listStatements();
 		Property prop = ResourceFactory.createProperty(registryContext+Constants.SIGNATURE_FOR);

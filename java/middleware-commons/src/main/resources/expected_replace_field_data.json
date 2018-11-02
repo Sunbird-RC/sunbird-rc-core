@@ -1,0 +1,67 @@
+{
+  "Teacher": {
+    "@id": "newValue",
+    "basicProficiencyLevel": [
+      {
+        "@id": "newValue",
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-HIGHERSECONDARY",
+        "proficiencySubject": "SubjectCode-ENGLISH"
+      },
+      {
+        "@id": "newValue",
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-SECONDARY",
+        "proficiencySubject": "SubjectCode-SOCIALSTUDIES"
+      },
+      {
+        "@id": "newValue",
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-PHD",
+        "proficiencySubject": "SubjectCode-MATH"
+      }
+    ],
+    "birthDate": "1990-12-06",
+    "disabilityType": "DisabilityCode-NA",
+    "gender": "GenderTypeCode-MALE",
+    "highestAcademicQualification": "AcademicQualificationTypeCode-PHD",
+    "highestTeacherQualification": "TeacherQualificationTypeCode-MED",
+    "inServiceTeacherTrainingFromBRC": {
+      "@id": "newValue",
+      "daysOfInServiceTeacherTraining": "10"
+    },
+    "inServiceTeacherTrainingFromCRC": {
+      "@id": "newValue",
+      "daysOfInServiceTeacherTraining": "2"
+    },
+    "inServiceTeacherTrainingFromDIET": {
+      "@id": "newValue",
+      "daysOfInServiceTeacherTraining": "5.5"
+    },
+    "inServiceTeacherTrainingFromOthers": {
+      "@id": "newValue",
+      "daysOfInServiceTeacherTraining": "3.5"
+    },
+    "nationalIdentifier": "1234567890123456",
+    "nonTeachingAssignmentsForAcademicCalendar": {
+      "@id": "newValue",
+      "daysOfNonTeachingAssignments": "6"
+    },
+    "serialNum": 5,
+    "socialCategory": "SocialCategoryTypeCode-GENERAL",
+    "teacherCode": "12234",
+    "teacherName": "Marvin Pande",
+    "teachingRole": {
+      "@id": "newValue",
+      "appointedForSubjects": "SubjectCode-ENGLISH",
+      "appointmentType": "TeacherAppointmentTypeCode-REGULAR",
+      "appointmentYear": "2015",
+      "classesTaught": "ClassTypeCode-SECONDARYANDHIGHERSECONDARY",
+      "mainSubjectsTaught": [
+        "teacher:SubjectCode-SOCIALSTUDIES",
+        "teacher:SubjectCode-ENGLISH"
+      ],
+      "teacherType": "TeacherTypeCode-HEAD"
+    },
+    "trainedForChildrenSpecialNeeds": "YesNoCode-YES",
+    "trainedinUseOfComputer": "YesNoCode-YES",
+    "yearOfJoiningService": "2014"
+  }
+}

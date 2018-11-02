@@ -1,0 +1,100 @@
+{
+  "Teacher": {
+    "@id": "09cc3c83-6180-4e74-aba9-f015bbaa95f1",
+    "basicProficiencyLevel": [
+      {
+        "@id": "4a496e92-7886-44e2-abfa-1a40c3337d1e",
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-HIGHERSECONDARY",
+        "proficiencySubject": "SubjectCode-ENGLISH",
+        "addedKey": {
+          "newNodeKey": "newNodeValue"
+        }
+      },
+      {
+        "@id": "eee5e9d0-f36c-461d-8f62-1010f8b11137",
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-SECONDARY",
+        "proficiencySubject": "SubjectCode-SOCIALSTUDIES",
+        "addedKey": {
+          "newNodeKey": "newNodeValue"
+        }
+      },
+      {
+        "@id": "099b7fa0-bbcf-47e9-82cb-a56581384ce5",
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-PHD",
+        "proficiencySubject": "SubjectCode-MATH",
+        "addedKey": {
+          "newNodeKey": "newNodeValue"
+        }
+      }
+    ],
+    "birthDate": "1990-12-06",
+    "disabilityType": "DisabilityCode-NA",
+    "gender": "GenderTypeCode-MALE",
+    "highestAcademicQualification": "AcademicQualificationTypeCode-PHD",
+    "highestTeacherQualification": "TeacherQualificationTypeCode-MED",
+    "inServiceTeacherTrainingFromBRC": {
+      "@id": "c02f135b-7260-4b97-b9aa-e68ca4bc7c5f",
+      "daysOfInServiceTeacherTraining": "10",
+      "addedKey": {
+        "newNodeKey": "newNodeValue"
+      }
+    },
+    "inServiceTeacherTrainingFromCRC": {
+      "@id": "b0f46c6c-48c0-47e9-8687-de547a5d8139",
+      "daysOfInServiceTeacherTraining": "2",
+      "addedKey": {
+        "newNodeKey": "newNodeValue"
+      }
+    },
+    "inServiceTeacherTrainingFromDIET": {
+      "@id": "4a5cb2a6-5fa3-498d-82b8-d6be371049fb",
+      "daysOfInServiceTeacherTraining": "5.5",
+      "addedKey": {
+        "newNodeKey": "newNodeValue"
+      }
+    },
+    "inServiceTeacherTrainingFromOthers": {
+      "@id": "176fe667-3079-46d6-88a3-99c861b7b1e1",
+      "daysOfInServiceTeacherTraining": "3.5",
+      "addedKey": {
+        "newNodeKey": "newNodeValue"
+      }
+    },
+    "nationalIdentifier": "1234567890123456",
+    "nonTeachingAssignmentsForAcademicCalendar": {
+      "@id": "1e2f7194-5035-487c-b83c-11b3d7ad83cc",
+      "daysOfNonTeachingAssignments": "6",
+      "addedKey": {
+        "newNodeKey": "newNodeValue"
+      }
+    },
+    "serialNum": 5,
+    "socialCategory": "SocialCategoryTypeCode-GENERAL",
+    "teacherCode": "12234",
+    "teacherName": "Marvin Pande",
+    "teachingRole": {
+      "@id": "e3cc89c2-fa61-4e29-b6fc-0079b5688c9b",
+      "appointedForSubjects": "SubjectCode-ENGLISH",
+      "appointmentType": "TeacherAppointmentTypeCode-REGULAR",
+      "appointmentYear": "2015",
+      "classesTaught": "ClassTypeCode-SECONDARYANDHIGHERSECONDARY",
+      "mainSubjectsTaught": [
+        "teacher:SubjectCode-SOCIALSTUDIES",
+        "teacher:SubjectCode-ENGLISH"
+      ],
+      "teacherType": "TeacherTypeCode-HEAD",
+      "addedKey": {
+        "newNodeKey": "newNodeValue"
+      }
+    },
+    "trainedForChildrenSpecialNeeds": "YesNoCode-YES",
+    "trainedinUseOfComputer": "YesNoCode-YES",
+    "yearOfJoiningService": "2014",
+    "addedKey": {
+      "newNodeKey": "newNodeValue"
+    }
+  },
+  "addedKey": {
+    "newNodeKey": "newNodeValue"
+  }
+}

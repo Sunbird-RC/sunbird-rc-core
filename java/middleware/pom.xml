@@ -40,11 +40,6 @@
 				<artifactId>authorization</artifactId>
 				<version>${authorizationVersion}</version>
 			</dependency>
-			<dependency>
-				<groupId>io.opensaber.middleware</groupId>
-				<artifactId>signature-presence-validation</artifactId>
-				<version>${signaturePresenceValidationVersion}</version>
-			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	<modules>
