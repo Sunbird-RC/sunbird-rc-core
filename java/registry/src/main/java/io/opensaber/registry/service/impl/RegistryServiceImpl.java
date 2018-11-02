@@ -49,12 +49,8 @@ import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.exception.MultipleEntityException;
-import io.opensaber.registry.exception.RDFValidationException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.exception.SignatureException;
-import io.opensaber.registry.exception.ValidationFactoryException;
-import io.opensaber.registry.exception.errorconstants.ErrorConstants;
-import io.opensaber.registry.factory.ValidateFactory;
 import io.opensaber.registry.frame.FrameEntity;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -66,10 +62,14 @@ import io.opensaber.registry.schema.configurator.SchemaType;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SignatureService;
-import io.opensaber.registry.service.ValidationService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
+import io.opensaber.validators.core.ValidateFactory;
+import io.opensaber.validators.core.ValidationService;
+import io.opensaber.validators.exception.ErrorConstants;
+import io.opensaber.validators.exception.RDFValidationException;
+import io.opensaber.validators.exception.ValidationFactoryException;
 
 @Component
 public class RegistryServiceImpl implements RegistryService {

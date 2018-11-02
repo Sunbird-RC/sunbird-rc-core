@@ -23,10 +23,11 @@ import org.junit.rules.ExpectedException;
 import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.pojos.ValidationResponse;
-import io.opensaber.registry.exception.RDFValidationException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.schema.config.SchemaLoader;
+import io.opensaber.validators.exception.RDFValidationException;
+import io.opensaber.validators.rdf.shex.RdfValidationServiceImpl;
 import scala.Option;
 import scala.util.Either;
 
@@ -54,7 +55,7 @@ public class RDFValidationTest {
 		boolean successfulInitialization = true;
 		try {
 			SchemaLoader schemaLoader = new SchemaLoader(shexFileForCreate, shexFileForUpdate);
-			rdfValidationServiceImpl = new RdfValidationServiceImpl(schemaLoader);
+			rdfValidationServiceImpl = new RdfValidationServiceImpl(schemaLoader.getSchemaForCreate(),schemaLoader.getSchemaForUpdate());
 		} catch (Exception e) {
 			successfulInitialization = false;
 		}

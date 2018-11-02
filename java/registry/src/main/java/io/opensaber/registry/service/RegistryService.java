@@ -1,13 +1,23 @@
 package io.opensaber.registry.service;
 
-import com.github.jsonldjava.core.JsonLdError;
-import io.opensaber.pojos.HealthCheckResponse;
-import io.opensaber.registry.exception.*;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
-import org.apache.jena.rdf.model.Model;
-
 import java.io.IOException;
 import java.util.List;
+
+import org.apache.jena.rdf.model.Model;
+
+import com.github.jsonldjava.core.JsonLdError;
+
+import io.opensaber.pojos.HealthCheckResponse;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.SignatureException;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.validators.exception.RDFValidationException;
+import io.opensaber.validators.exception.ValidationFactoryException;
 
 public interface RegistryService {
 

@@ -54,15 +54,17 @@ import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaLoader;
 import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
 import io.opensaber.registry.schema.configurator.SchemaConfiguratorFactory;
+import io.opensaber.registry.schema.configurator.SchemaType;
 import io.opensaber.registry.schema.configurator.ShexSchemaConfigurator;
-import io.opensaber.registry.service.RdfSignatureValidator;
-import io.opensaber.registry.service.RdfValidationServiceImpl;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.JanusGraphStorage;
 import io.opensaber.registry.sink.Neo4jGraphProvider;
 import io.opensaber.registry.sink.OrientDBGraphProvider;
 import io.opensaber.registry.sink.SqlgProvider;
 import io.opensaber.registry.sink.TinkerGraphProvider;
+import io.opensaber.validators.core.ValidateFactory;
+import io.opensaber.validators.rdf.shex.RdfSignatureValidator;
+import io.opensaber.validators.rdf.shex.RdfValidationServiceImpl;
 
 @Configuration
 public class GenericConfiguration implements WebMvcConfigurer {
@@ -182,12 +184,17 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Bean
 	public RdfValidationServiceImpl rdfValidator() throws CustomException, IOException {
-		return new RdfValidationServiceImpl(schemaLoader());
+		return new RdfValidationServiceImpl(schemaLoader().getSchemaForCreate(),schemaLoader().getSchemaForUpdate());
 	}
 
 	@Bean
 	public SchemaConfiguratorFactory schemaConfiguratorFactory() {
 		return new SchemaConfiguratorFactory();
+	}
+	
+	@Bean
+	public ValidateFactory validateFactory(){
+		return new ValidateFactory();
 	}
 
 	@Bean
@@ -210,7 +217,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Bean
 	public RdfSignatureValidator signatureValidator() throws CustomException, IOException {
-		return new RdfSignatureValidator(schemaLoader(), schemaConfiguratorFactory(), registryContextBase,
+		String schemaContent = schemaConfiguratorFactory().getInstance(SchemaType.SHEX).getSchemaContent();
+		return new RdfSignatureValidator(schemaLoader().getSchemaForCreate(),schemaContent , registryContextBase,
 				registrySystemBase, signatureSchemaConfigName,
 				((RdfValidationServiceImpl) rdfValidator()).getShapeTypeMap());
 	}
