@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "basicProficiencyLevel": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/BasicProficiencyLevel"
+      }
+    }
+  },
+  "required": [
+    "basicProficiencyLevel"
+  ],
+  "definitions": {
+    "BasicProficiencyLevel": {
+      "$id": "#/properties/basicProficiencyLevel",
+      "required": [
+        "proficiencySubject",
+        "proficiencyAcademicQualification"
+      ],
+      "properties": {
+        "proficiencySubject": {
+          "$id": "#/properties/proficiencySubject",
+          "$ref": "Common.json#/definitions/Subjects"
+        },
+        "proficiencyAcademicQualification": {
+          "$id": "#/properties/proficiencyAcademicQualification",
+          "$ref": "Common.json#/definitions/AcademicQualification"
+        }
+      }
+    }
+  }
+}
