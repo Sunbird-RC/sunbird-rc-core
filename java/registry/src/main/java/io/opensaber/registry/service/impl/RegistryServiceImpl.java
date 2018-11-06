@@ -65,11 +65,7 @@ import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
-import io.opensaber.validators.core.ValidateFactory;
-import io.opensaber.validators.core.ValidationService;
-import io.opensaber.validators.exception.ErrorConstants;
-import io.opensaber.validators.exception.RDFValidationException;
-import io.opensaber.validators.exception.ValidationFactoryException;
+
 
 @Component
 public class RegistryServiceImpl implements RegistryService {
@@ -89,9 +85,6 @@ public class RegistryServiceImpl implements RegistryService {
 
 	@Autowired
 	SignatureService signatureService;
-	
-	@Autowired
-	ValidateFactory validateFactory;
 
 	@Autowired
 	private SchemaConfiguratorFactory schemaConfiguratorFactory;
@@ -150,20 +143,19 @@ public class RegistryServiceImpl implements RegistryService {
 	public String addEntity(Model rdfModel, String dataObject, String subject, String property)
 			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
 			MultipleEntityException, RecordNotFoundException, IOException, SignatureException.UnreachableException,
-			JsonLdError, SignatureException.CreationException, RDFValidationException, MiddlewareHaltException,
-			ValidationFactoryException {
+			JsonLdError, SignatureException.CreationException, MiddlewareHaltException {
 		try {
 			Model signedRdfModel = null;
 			RegistrySignature rs = new RegistrySignature();
 			//
 			if (isValidationEnabled) {
 				if (Constants.RDF_OBJECT.equalsIgnoreCase(validationType)) {
-					ValidationService validationService = validateFactory.getInstance(Constants.ENABLE_RDF_VALIDATION);
+					/*ValidationService validationService = validateFactory.getInstance(Constants.ENABLE_RDF_VALIDATION);
 					ValidationResponse validationResponse = validationService.validateData(rdfModel,
 							Constants.CREATE_METHOD_ORIGIN);
 					if (!validationResponse.isValid()) {
 						throw new RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE);
-					}
+					}*/
 					// Validating Sign Mandatory data
 					if (signatureEnabled) {
 						Map signReq = new HashMap<String, Object>();
@@ -229,17 +221,16 @@ public class RegistryServiceImpl implements RegistryService {
 	@Override
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
 			EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
-			IOException, SignatureException.CreationException, RDFValidationException, MiddlewareHaltException,
-			ValidationFactoryException {
+			IOException, SignatureException.CreationException, MiddlewareHaltException {
 		boolean isUpdated = false;
 		if (persistenceEnabled && isValidationEnabled) {
 				if (Constants.RDF_OBJECT.equalsIgnoreCase(validationType)) {
-					ValidationService validationService = validateFactory.getInstance(Constants.ENABLE_RDF_VALIDATION);
+					/*ValidationService validationService = validateFactory.getInstance(Constants.ENABLE_RDF_VALIDATION);
 					ValidationResponse validationResponse = validationService.validateData(entity,
 							Constants.UPDATE_METHOD_ORIGIN);
 					if (!validationResponse.isValid()) {
 						throw new RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE);
-					}
+					}*/
 					Resource root = getRootNode(entity);
 					String label = getRootLabel(root);
 					String rootType = getTypeForRootLabel(entity, root);

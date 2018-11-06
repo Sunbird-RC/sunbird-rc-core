@@ -1,0 +1,19 @@
+@prefix sample: <http://example.com/voc/teacher/1.0.0/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+sample:1234 a sample:School ;
+    sample:udiseNumber 23456789876 ;
+    sample:academicCalendarYearStart "2017"^^xsd:gYear ;
+    sample:academicCalendarYearEnd "2018"^^xsd:gYear ;
+    sample:schoolName "DAV Public School" ;
+    sample:area sample:AreaTypeCode-URBAN ;
+    sample:address sample:urbanaddress .
+
+sample:urbanaddress a sample:IndianUrbanPostalAddress ;
+    sample:mohalla "Sector 14" ;
+    sample:wardNumber "456" ;
+    sample:municipality "MCG" ;
+    sample:city "Gurgaon" ;
+    sample:pinCode 122001 ;
+    sample:district "Gurgaon" .

@@ -16,6 +16,7 @@
 		<rdfConversionVersion>1.0.0</rdfConversionVersion>
 		<rdfValidationMapperVersion>1.0.0</rdfValidationMapperVersion>
 		<authorizationVersion>1.0.0</authorizationVersion>
+		<validationVersion>1.0.0</validationVersion>
 		<signaturePresenceValidationVersion>1.0.0</signaturePresenceValidationVersion>
 	</properties>
 	<dependencyManagement>
@@ -39,6 +40,11 @@
 				<groupId>io.opensaber</groupId>
 				<artifactId>authorization</artifactId>
 				<version>${authorizationVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.opensaber</groupId>
+				<artifactId>validation</artifactId>
+				<version>${validationVersion}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

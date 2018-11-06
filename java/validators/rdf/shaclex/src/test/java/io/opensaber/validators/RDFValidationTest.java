@@ -1,35 +1,27 @@
-package io.opensaber.registry.service;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
-import java.util.Map;
-
-import org.apache.jena.ext.com.google.common.io.ByteStreams;
-import org.apache.jena.rdf.model.Model;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+package io.opensaber.validators;
 
 import es.weso.schema.Schema;
 import es.weso.schema.Schemas;
 import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.registry.schema.config.SchemaLoader;
-import io.opensaber.validators.exception.RDFValidationException;
+import io.opensaber.validators.rdf.shex.ErrorConstants;
 import io.opensaber.validators.rdf.shex.RdfValidationServiceImpl;
+import org.apache.jena.ext.com.google.common.io.ByteStreams;
+import org.apache.jena.rdf.model.Model;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import scala.Option;
 import scala.util.Either;
+
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+import java.util.Map;
 
 public class RDFValidationTest {
 	private static final String SIMPLE_SHEX = "good1.shex";
@@ -51,11 +43,21 @@ public class RDFValidationTest {
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 
+	private Schema loadSchemaForValidation(String validationFile) throws IOException {
+		InputStream is = this.getClass().getClassLoader().getResourceAsStream(validationFile);
+		if (is == null) {
+			throw new IOException(Constants.VALIDATION_CONFIGURATION_MISSING);
+		}
+		String contents = new String(ByteStreams.toByteArray(is));
+		Either<String, Schema> result = Schemas.fromString(contents, "SHEXC", "shex", Option.empty());
+		return result.right().get();
+	}
+
 	private boolean setup(String shexFileForCreate, String shexFileForUpdate) {
 		boolean successfulInitialization = true;
 		try {
-			SchemaLoader schemaLoader = new SchemaLoader(shexFileForCreate, shexFileForUpdate);
-			rdfValidationServiceImpl = new RdfValidationServiceImpl(schemaLoader.getSchemaForCreate(),schemaLoader.getSchemaForUpdate());
+			rdfValidationServiceImpl = new RdfValidationServiceImpl(
+								loadSchemaForValidation(shexFileForCreate),loadSchemaForValidation(shexFileForUpdate));
 		} catch (Exception e) {
 			successfulInitialization = false;
 		}
@@ -67,66 +69,67 @@ public class RDFValidationTest {
 	}
 
 	@Test
-	public void testHaltIfNoRDFToValidate() throws IOException, RDFValidationException {
-		assertTrue(setup(SIMPLE_SHEX, SIMPLE_SHEX));
-		expectedEx.expect(RDFValidationException.class);
-		expectedEx.expectMessage("RDF Data is missing!");
+	public void testHaltIfNoRDFToValidate() throws IOException, ValidationException {
+		Assert.assertTrue(setup(SIMPLE_SHEX, SIMPLE_SHEX));
+		expectedEx.expect(ValidationException.class);
+		expectedEx.expectMessage(ErrorConstants.RDF_DATA_IS_MISSING);
 		rdfValidationServiceImpl.validateRDFWithSchema(null,null);
 	}
 
+	@Ignore("Looks not a valid test anymore")
 	@Test
-	public void testHaltIfSchemaIsMissing() throws IOException, RDFValidationException {
-		expectedEx.expect(RDFValidationException.class);
-		expectedEx.expectMessage("Schema for validation is missing");
-		assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
+	public void testHaltIfSchemaIsMissing() throws IOException, ValidationException {
+		expectedEx.expect(ValidationException.class);
+		expectedEx.expectMessage(ErrorConstants.SCHEMA_IS_NULL);
+		Assert.assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
 		rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_TTL), Constants.CREATE_METHOD_ORIGIN);
 	}
 
 	@Test
-	public void testHaltIfMethodOriginIsMissing() throws IOException, RDFValidationException {
-		expectedEx.expect(RDFValidationException.class);
-		expectedEx.expectMessage("Request URL is invalid");
-		assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
+	public void testHaltIfMethodOriginIsMissing() throws IOException, ValidationException {
+		expectedEx.expect(ValidationException.class);
+		expectedEx.expectMessage(ErrorConstants.INVALID_REQUEST_PATH);
+		Assert.assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
 		rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_TTL),null);
 	}
 
 	@Test
-	public void testIfComplexJSONLDIsSupportedForAdd() throws RDFValidationException {
-		assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
+	public void testIfComplexJSONLDIsSupportedForAdd() throws ValidationException {
+		Assert.assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
 		ValidationResponse validationResponse =  rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_TTL),Constants.CREATE_METHOD_ORIGIN);
 		testForSuccessfulResult(validationResponse);
 	}
 
 	@Test
-	public void testIfComplexJSONLDIsSupportedForUpdate() throws RDFValidationException {
-		assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
+	public void testIfComplexJSONLDIsSupportedForUpdate() throws ValidationException {
+		Assert.assertTrue(setup(COMPLEX_CREATE_SHEX, COMPLEX_UPDATE_SHEX));
 		ValidationResponse validationResponse = rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_TTL), Constants.UPDATE_METHOD_ORIGIN);
 		testForSuccessfulResult(validationResponse);
 	}
 
 	@Test
 	public void testIfaRealValidationFailsForAdd() throws Exception {
-		assertTrue(setup(COMPLEX_CREATE_SHEX,COMPLEX_UPDATE_SHEX));
+		Assert.assertTrue(setup(COMPLEX_CREATE_SHEX,COMPLEX_UPDATE_SHEX));
 		ValidationResponse response = rdfValidationServiceImpl.validateRDFWithSchema(getValidRdf(COMPLEX_INVALID_JSONLD_ADD, JSONLD_FORMAT), Constants.CREATE_METHOD_ORIGIN);
-		assertFalse(response.isValid());
+		Assert.assertFalse(response.isValid());
 	}
 
 	@Test
 	public void testIfaRealValidationFailsForUpdate() throws Exception {
-		assertTrue(setup(COMPLEX_CREATE_SHEX,COMPLEX_UPDATE_SHEX));
+		Assert.assertTrue(setup(COMPLEX_CREATE_SHEX,COMPLEX_UPDATE_SHEX));
 		Model dataModel = getValidRdf(COMPLEX_INVALID_JSONLD_UPDATE, JSONLD_FORMAT);
 		ValidationResponse response = rdfValidationServiceImpl.validateRDFWithSchema(dataModel, Constants.UPDATE_METHOD_ORIGIN);
 
-		assertFalse(response.isValid());
+		Assert.assertFalse(response.isValid());
 		Map<String, String> errorFields = response.getFields();
 		errorFields.forEach((key, value) -> {
-			assertEquals("http://example.com/voc/teacher/1.0.0/academicCalendarYearStart", key);
-			assertEquals("2014 does not have datatype xsd:gYear", value);
+			Assert.assertEquals("http://example.com/voc/teacher/1.0.0/academicCalendarYearStart", key);
+			Assert.assertEquals("2014 does not have datatype xsd:gYear", value);
 		});
 	}
 
 	private void testForSuccessfulResult(ValidationResponse validationResponse) {
-		assertTrue(validationResponse.isValid());
+		Assert.assertTrue(validationResponse.isValid());
 	}
 	
 	private void setJsonld(String filename){

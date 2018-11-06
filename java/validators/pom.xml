@@ -2,41 +2,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<repositories>
-		<repository>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-			<id>bintray-labra-maven</id>
-			<name>bintray</name>
-			<url>https://dl.bintray.com/labra/maven</url>
-		</repository>
-	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-			<id>bintray-labra-maven</id>
-			<name>bintray-plugins</name>
-			<url>https://dl.bintray.com/labra/maven</url>
-		</pluginRepository>
-	</pluginRepositories>
 
-	<parent>
-		<groupId>io.opensaber</groupId>
-		<artifactId>opensaber</artifactId>
-		<version>1.0.0</version>
-	</parent>
+	<groupId>io.opensaber</groupId>
 	<artifactId>validators</artifactId>
 	<version>1.0.0</version>
-	<packaging>jar</packaging>
+	<packaging>pom</packaging>
 	<name>validators</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
+
+    <modules>
+        <module>rdf</module>
+    </modules>
 
 	<dependencies>
 		<dependency>
@@ -45,23 +27,23 @@
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
-			<groupId>es.weso</groupId>
-			<artifactId>shaclex_2.12</artifactId>
-			<version>0.0.66</version>
-			<exclusions>
-				<exclusion>
-					<groupId>ch.qos.logback</groupId>
-					<artifactId>logback-classic</artifactId>
-				</exclusion>
-			</exclusions>
-			<type>pom</type>
+			<groupId>io.opensaber.middleware</groupId>
+			<artifactId>validation</artifactId>
+			<version>1.0.0</version>
 		</dependency>
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>3.8.1</version>
 			<scope>test</scope>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 </project>
