@@ -1,6 +1,14 @@
 package io.opensaber.registry.middleware.impl;
 
-import static org.junit.Assert.*;
+import io.opensaber.converters.JenaRDF4J;
+import io.opensaber.registry.middleware.Middleware;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import org.eclipse.rdf4j.model.Model;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,20 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.impl.TreeModel;
-import org.eclipse.rdf4j.model.util.ModelBuilder;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import io.opensaber.converters.JenaRDF4J;
-import io.opensaber.registry.middleware.Middleware;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.validators.shex.shaclex.ShaclexValidator;
 
 public class JSONLDConversionTest {
 	
