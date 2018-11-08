@@ -1,8 +1,5 @@
 package io.opensaber.registry.service.impl;
 
-import java.lang.reflect.Type;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +10,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.exception.SignatureException;

@@ -72,6 +72,7 @@ public class AuditRecordReaderTest {
 
 	@After
 	public void tearDown() throws Exception {
+		// Nothing to do.
 	}
 
 	@Test
