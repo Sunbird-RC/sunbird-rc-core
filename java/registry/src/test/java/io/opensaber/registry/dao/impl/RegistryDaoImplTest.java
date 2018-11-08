@@ -1100,4 +1100,19 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		registryDao.deleteEntityById(label.toString());
 	}
 
+	@Test
+	public void test_single_valued_property() throws IOException {
+		assertTrue(registryDao.isSingleValued("http://example.com/voc/teacher/1.0.0/serialNum"));
+	}
+
+	@Test
+	public void test_multi_valued_property() throws IOException {
+		assertFalse(registryDao.isSingleValued("http://example.com/voc/teacher/1.0.0/mainSubjectsTaught"));
+	}
+
+	@Test
+	public void test_non_configured_property() throws IOException {
+		assertTrue(registryDao.isSingleValued("http://example.com/voc/teacher/1.0.0/predicate"));
+	}
+
 }

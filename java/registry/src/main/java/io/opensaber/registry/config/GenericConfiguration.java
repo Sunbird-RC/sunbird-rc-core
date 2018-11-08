@@ -46,17 +46,16 @@ import io.opensaber.registry.interceptor.request.transform.JsonToLdRequestTransf
 import io.opensaber.registry.interceptor.request.transform.JsonldToLdRequestTransformer;
 import io.opensaber.registry.interceptor.request.transform.RequestTransformFactory;
 import io.opensaber.registry.middleware.Middleware;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.impl.JSONLDConverter;
 import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaLoader;
-import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
-import io.opensaber.registry.schema.configurator.SchemaConfiguratorFactory;
-import io.opensaber.registry.schema.configurator.SchemaType;
-import io.opensaber.registry.schema.configurator.ShexSchemaConfigurator;
+import io.opensaber.registry.schema.configurator.*;
 import io.opensaber.registry.sink.*;
+import io.opensaber.validators.IValidate;
 import io.opensaber.validators.rdf.shex.RdfSignatureValidator;
 import io.opensaber.validators.rdf.shex.RdfValidationServiceImpl;
 
@@ -177,17 +176,17 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public RdfValidationServiceImpl rdfValidator() throws CustomException, IOException {
+	public IValidate validator() throws MiddlewareHaltException, IOException, CustomException {
 		return new RdfValidationServiceImpl(schemaLoader().getSchemaForCreate(), schemaLoader().getSchemaForUpdate());
 	}
 
 	@Bean
 	public SchemaConfiguratorFactory schemaConfiguratorFactory() {
-		return new SchemaConfiguratorFactory();
+		return new SchemaConfiguratorFactory(environment);
 	}
 
 	@Bean
-	public ShexSchemaConfigurator shexSchemaConfigurator() throws CustomException, IOException {
+	public ISchemaConfigurator shexSchemaConfigurator() throws CustomException, IOException {
 		String schemaFile = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
 		if (schemaFile == null) {
 			throw new CustomException(Constants.SCHEMA_CONFIGURATION_MISSING);
@@ -196,7 +195,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public JsonSchemaConfigurator jsonSchemaConfigurator() throws CustomException, IOException {
+	public ISchemaConfigurator jsonSchemaConfigurator() throws CustomException, IOException {
 		String schemaFile = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
 		if (schemaFile == null) {
 			throw new CustomException(Constants.SCHEMA_CONFIGURATION_MISSING);
@@ -205,11 +204,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public RdfSignatureValidator signatureValidator() throws CustomException, IOException {
+	public RdfSignatureValidator signatureValidator() throws CustomException, IOException, MiddlewareHaltException {
 		String schemaContent = schemaConfiguratorFactory().getInstance(SchemaType.SHEX).getSchemaContent();
 		return new RdfSignatureValidator(schemaLoader().getSchemaForCreate(), schemaContent, registryContextBase,
 				registrySystemBase, signatureSchemaConfigName,
-				((RdfValidationServiceImpl) rdfValidator()).getShapeTypeMap());
+				((RdfValidationServiceImpl) validator()).getShapeTypeMap());
 	}
 
 	@Bean

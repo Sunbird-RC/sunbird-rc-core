@@ -2,6 +2,7 @@ package io.opensaber.registry.schema.config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.rdf.model.Model;
@@ -34,7 +35,7 @@ public class SchemaLoader {
 		if (is == null) {
 			throw new IOException(Constants.VALIDATION_CONFIGURATION_MISSING);
 		}
-		String contents = new String(ByteStreams.toByteArray(is));
+		String contents = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
 		Either<String, Schema> result = Schemas.fromString(contents, SCHEMAFORMAT, PROCESSOR, Option.empty());
 		return result.right().get();
 	}

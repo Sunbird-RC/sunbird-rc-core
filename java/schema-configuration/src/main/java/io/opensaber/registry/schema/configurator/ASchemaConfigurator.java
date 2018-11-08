@@ -2,6 +2,7 @@ package io.opensaber.registry.schema.configurator;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,7 @@ public abstract class ASchemaConfigurator implements ISchemaConfigurator {
 
 	public static final String OPENSABER_PRIVACY_PROPERTY = "opensaber:privateProperties";
 	private final static String PREFIX = "teacher:";
-	private static List<String> foundProperties = new ArrayList<>();
+	private List<String> foundProperties = new ArrayList<>();
 	private final ObjectMapper mapper = new ObjectMapper();
 	private ObjectNode schemaConfigurationNode;
 	private String schemaContent;
@@ -57,7 +58,7 @@ public abstract class ASchemaConfigurator implements ISchemaConfigurator {
 		if (is == null) {
 			throw new IOException(Constants.SCHEMA_CONFIGURATION_MISSING);
 		}
-		schemaContent = new String(ByteStreams.toByteArray(is));
+		schemaContent = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
 		return (ObjectNode) mapper.readTree(schemaContent);
 	}
 

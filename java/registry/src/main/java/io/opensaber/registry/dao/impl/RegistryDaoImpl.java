@@ -950,7 +950,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 	}
 
-	private boolean isSingleValued(String property) {
+	public boolean isSingleValued(String property) {
 		logger.debug("Property being verified for single-valued, multi-valued:" + property);
 		RDFNode rdfNode = ResourceFactory.createResource(property);
 		ResIterator resIter = schemaLoader.getValidationConfig()

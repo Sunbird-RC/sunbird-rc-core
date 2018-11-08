@@ -1,27 +1,43 @@
 package io.opensaber.registry.schema.configurator;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+
+import io.opensaber.registry.middleware.util.Constants;
 
 @Component
 public class SchemaConfiguratorFactory {
 
-	@Autowired
-	private JsonSchemaConfigurator jsonSchemaConfigurator;
+	private Environment environment;
 
-	@Autowired
-	private ShexSchemaConfigurator shexSchemaConfigurator;
+	private static Logger logger = LoggerFactory.getLogger(SchemaConfiguratorFactory.class);
 
-	public ISchemaConfigurator getInstance(SchemaType type) {
+	public SchemaConfiguratorFactory(Environment environment) {
+		this.environment = environment;
+	}
 
+	public ISchemaConfigurator getInstance(SchemaType schemaType) {
 		ISchemaConfigurator schemaConfigurator = null;
-
-		if (type == SchemaType.JSON) {
-			schemaConfigurator = jsonSchemaConfigurator;
-		} else if (type == SchemaType.SHEX) {
-			schemaConfigurator = shexSchemaConfigurator;
+		try {
+			String schemaFile = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
+			if (schemaFile == null) {
+				throw new IOException(Constants.SCHEMA_CONFIGURATION_MISSING);
+			}
+			switch (schemaType) {
+			case JSON:
+				schemaConfigurator = new JsonSchemaConfigurator(schemaFile);
+				break;
+			case SHEX:
+				schemaConfigurator = new ShexSchemaConfigurator(schemaFile);
+				break;
+			}
+		} catch (IOException ioe) {
+			logger.error("Missing config schema file {%s}", ioe);
 		}
-
 		return schemaConfigurator;
 	}
 
