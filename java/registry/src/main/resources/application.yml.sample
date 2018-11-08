@@ -200,6 +200,6 @@ validation:
   enabled: ${validation_enabled:true}
   type: ${validation_type:shex}
   create:
-    file: ${validations_create_file:validations_create.shex}
+    file: good1.shex
   update:
-    file: ${validations_update_file:validations_update.shex}
+    file: good1.shex
