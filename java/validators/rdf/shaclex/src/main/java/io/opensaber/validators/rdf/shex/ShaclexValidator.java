@@ -37,16 +37,15 @@ import scala.Option;
 import scala.collection.JavaConverters;
 import scala.util.Either;
 
-public class ShaclexValidator implements Validator{
-
-	private static Logger logger = LoggerFactory.getLogger(ShaclexValidator.class);
+public class ShaclexValidator implements Validator {
 
 	private static final String NON_CONFORMANT = "nonconformant";
+	private static Logger logger = LoggerFactory.getLogger(ShaclexValidator.class);
 	private Option<String> none = Option.empty();
 	private Model dataModel;
 	private Schema schema;
-	
-	public ShaclexValidator(Schema schema, Model dataModel){
+
+	public ShaclexValidator(Schema schema, Model dataModel) {
 		this.schema = schema;
 		this.dataModel = dataModel;
 	}
@@ -58,8 +57,9 @@ public class ShaclexValidator implements Validator{
 	}
 
 	/**
-	 * Method to parse the Validation error message from the Shaclex library to find out which field failed
-	 * the shex validation
+	 * Method to parse the Validation error message from the Shaclex library to find
+	 * out which field failed the shex validation
+	 * 
 	 * @param dataModel
 	 * @param result
 	 * @return
@@ -79,10 +79,11 @@ public class ShaclexValidator implements Validator{
 
 			List<ResultShapeMap> validationOutput = JavaConverters.seqAsJavaList(result.shapeMaps());
 
-			for(ResultShapeMap validationResult: validationOutput) {
+			for (ResultShapeMap validationResult : validationOutput) {
 				Type collectionType = new TypeToken<Collection<ValidationInfo>>() {
 				}.getType();
-				Collection<ValidationInfo> validationInfoList = gson.fromJson(validationResult.toJson().toString(), collectionType);
+				Collection<ValidationInfo> validationInfoList = gson.fromJson(validationResult.toJson().toString(),
+						collectionType);
 
 				if (validationInfoList != null) {
 					for (ValidationInfo validationInfo : validationInfoList) {
@@ -90,7 +91,8 @@ public class ShaclexValidator implements Validator{
 							logger.info("Result Shapemap: " + validationResult.toJson().toString());
 							validationResponse.setValid(false);
 							validationResponse.setError("Data validation failed!");
-							HashMap<String, String> errorList = extractValidationNodeInfo(dataModel, validationInfo, pm);
+							HashMap<String, String> errorList = extractValidationNodeInfo(dataModel, validationInfo,
+									pm);
 							validationResponse.getFields().putAll(errorList);
 						}
 					}
@@ -108,42 +110,45 @@ public class ShaclexValidator implements Validator{
 		return validationResponse;
 	}
 
-	private HashMap<String, String> extractValidationNodeInfo(Model dataModel, ValidationInfo validationInfo, PrefixMap pm) {
+	private HashMap<String, String> extractValidationNodeInfo(Model dataModel, ValidationInfo validationInfo,
+			PrefixMap pm) {
 
-		System.out.println(String.format("Node Id: %s is NON-CONFORMANT with reason: %s"
-				, validationInfo.getNode(), validationInfo.getReason()));
+		System.out.println(String.format("Node Id: %s is NON-CONFORMANT with reason: %s", validationInfo.getNode(),
+				validationInfo.getReason()));
 
-		// Remove the _: from the root node id if it is a blank node. If it is a URI (in the case of an update),
+		// Remove the _: from the root node id if it is a blank node. If it is a URI (in
+		// the case of an update),
 		// remove the <> from the URI in the error result node element.
-		String errorNode = validationInfo.getNode().replace("_:", "")
-				.replace("<", "").replace(">", "");
+		String errorNode = validationInfo.getNode().replace("_:", "").replace("<", "").replace(">", "");
 
 		/*
-		 * The Shaclex library error message has three parts split by a \n newline character
-		 * The last part of the message has a readable error message. The second last part has
-		 * mapping between the node and the shape which failed the validation. We will be
-		 * extracting these two parts from the error message.
+		 * The Shaclex library error message has three parts split by a \n newline
+		 * character The last part of the message has a readable error message. The
+		 * second last part has mapping between the node and the shape which failed the
+		 * validation. We will be extracting these two parts from the error message.
 		 */
 		String[] errorInfo = validationInfo.getReason().trim().split("\n");
 		ShaclexErrorData errorData;
 		logger.info("Size of String[] by splitting Error message by newline: " + errorInfo.length);
 
-		if(errorInfo.length > 1) {
+		if (errorInfo.length > 1) {
 			String readableErrorMsg = errorInfo[errorInfo.length - 1];
-			String nodeValueWithError = extractErrorNodeValue(validationInfo.getReason(), "Error: Attempt: node:([^,]*)");
+			String nodeValueWithError = extractErrorNodeValue(validationInfo.getReason(),
+					"Error: Attempt: node:([^,]*)");
 			if (StringUtils.isEmpty(nodeValueWithError)) {
-				nodeValueWithError = extractErrorNodeValue(validationInfo.getReason(), "Errors: Error: (.*?) does not belong to");
+				nodeValueWithError = extractErrorNodeValue(validationInfo.getReason(),
+						"Errors: Error: (.*?) does not belong to");
 			}
 			if (nodeValueWithError.contains(":")) {
 				nodeValueWithError = replaceContextPrefixWithContextUri(nodeValueWithError, pm);
 			}
 			Optional<String> nodeDataType = getNullableOptionalString(extractErrorNodeValue(validationInfo.getReason(),
 					Pattern.quote("Datatype[") + "(.*?)" + Pattern.quote("->")));
-			Optional<String> iriNodeIdentifier = getNullableOptionalString(extractErrorNodeValue(validationInfo.getReason(),
-					"^Error: Node (.*?) has no shape"));
+			Optional<String> iriNodeIdentifier = getNullableOptionalString(
+					extractErrorNodeValue(validationInfo.getReason(), "^Error: Node (.*?) has no shape"));
 			// Remove the _: generated by Apache Jena library for Blank Nodes
 			Optional<String> iriNode = iriNodeIdentifier.map(s -> {
-				if(s.contains("_:")) {
+				if (s.contains("_:")) {
 					return s.substring(2);
 				} else {
 					return s;
@@ -154,46 +159,52 @@ public class ShaclexValidator implements Validator{
 			String readableErrorMsg = validationInfo.getReason();
 			String nodeValueWithError = extractErrorNodeValue(validationInfo.getReason(), "^Error: (?s)(.*) does not");
 
-			// If the error node contains the domain prefix, it needs to be replaced with the appropriate domain context URI.
-			// For e.g., if the error node contains teacher:InServiceTeacherTrainingFromDIET, it needs to be translated to
-			// http://example.com/voc/teacher/1.0.0/InServiceTeacherTrainingFromDIET. The prefix man contains the prefix URI
-			// as <http://example.com/voc/teacher/1.0.0/> and hence the angled brackets need to be pruned.
-			if(nodeValueWithError.contains(":")) {
+			// If the error node contains the domain prefix, it needs to be replaced with
+			// the appropriate domain context URI.
+			// For e.g., if the error node contains
+			// teacher:InServiceTeacherTrainingFromDIET, it needs to be translated to
+			// http://example.com/voc/teacher/1.0.0/InServiceTeacherTrainingFromDIET. The
+			// prefix man contains the prefix URI
+			// as <http://example.com/voc/teacher/1.0.0/> and hence the angled brackets need
+			// to be pruned.
+			if (nodeValueWithError.contains(":")) {
 				/*
-				String contextPrefix = nodeValueWithError.substring(0, nodeValueWithError.indexOf(":"));
-				String contextUri = pm.getIRI(contextPrefix).get().toString()
-						.replace("<", "").replace(">", "");
-				String nodeValue = nodeValueWithError.substring(nodeValueWithError.indexOf(":") + 1);
-				nodeValueWithError = contextUri + nodeValue;
-				*/
+				 * String contextPrefix = nodeValueWithError.substring(0,
+				 * nodeValueWithError.indexOf(":")); String contextUri =
+				 * pm.getIRI(contextPrefix).get().toString() .replace("<", "").replace(">", "");
+				 * String nodeValue =
+				 * nodeValueWithError.substring(nodeValueWithError.indexOf(":") + 1);
+				 * nodeValueWithError = contextUri + nodeValue;
+				 */
 				nodeValueWithError = replaceContextPrefixWithContextUri(nodeValueWithError, pm);
 			}
 			Optional<String> iriNode = Optional.empty();
 			Optional<String> nodeDataType = Optional.empty();
 			errorData = new ShaclexErrorData(nodeValueWithError, readableErrorMsg, nodeDataType, iriNode);
 		}
-		HashMap<String, String> errorList =
-				new HashMap<>(extractFieldInfoFromRDF(dataModel, errorNode, errorData));
+		HashMap<String, String> errorList = new HashMap<>(extractFieldInfoFromRDF(dataModel, errorNode, errorData));
 		return errorList;
 	}
 
 	private String replaceContextPrefixWithContextUri(String nodeValueWithError, PrefixMap pm) {
 		String contextPrefix = nodeValueWithError.substring(0, nodeValueWithError.indexOf(":"));
-		String contextUri = pm.getIRI(contextPrefix).get().toString()
-				.replace("<", "").replace(">", "");
+		String contextUri = pm.getIRI(contextPrefix).get().toString().replace("<", "").replace(">", "");
 		String nodeValue = nodeValueWithError.substring(nodeValueWithError.indexOf(":") + 1);
 		nodeValueWithError = contextUri + nodeValue;
 		return nodeValueWithError;
 	}
 
 	/**
-	 * This method iterates through the RDF facts to extract the field information for which validation failed.
+	 * This method iterates through the RDF facts to extract the field information
+	 * for which validation failed.
+	 * 
 	 * @param dataModel
 	 * @param parentErrorNode
 	 * @param errorData
 	 * @return
 	 */
-	private HashMap<String, String> extractFieldInfoFromRDF(Model dataModel, String parentErrorNode, ShaclexErrorData errorData) {
+	private HashMap<String, String> extractFieldInfoFromRDF(Model dataModel, String parentErrorNode,
+			ShaclexErrorData errorData) {
 		StmtIterator iterator = dataModel.listStatements();
 		HashMap<String, String> errorList = new HashMap<>();
 
@@ -203,17 +214,19 @@ public class ShaclexValidator implements Validator{
 		logger.info("Error node datatype, if present: " + errorData.getNodeDataType());
 
 		/*
-		 * Iterate through the RDF statements to find the Node Id, Node Value combination which
-		 * failed the validation.
+		 * Iterate through the RDF statements to find the Node Id, Node Value
+		 * combination which failed the validation.
 		 */
 		while (iterator.hasNext()) {
 			Statement stmt = iterator.next();
-			if (errorData.getIriNode().isPresent() && stmt.getSubject().toString().equals(errorData.getIriNode().get())) {
-				String nodeMatchString = errorData.getNodeDataType().isPresent() ?
-						errorData.getNodeValueWithError() + "^^" + errorData.getNodeDataType().get()
+			if (errorData.getIriNode().isPresent()
+					&& stmt.getSubject().toString().equals(errorData.getIriNode().get())) {
+				String nodeMatchString = errorData.getNodeDataType().isPresent()
+						? errorData.getNodeValueWithError() + "^^" + errorData.getNodeDataType().get()
 						: errorData.getNodeValueWithError();
 				if (stmt.getObject().toString().equals(nodeMatchString)) {
-					logger.info(String.format("Field %s failed with validation error: %s", stmt.getPredicate(), errorData.getReadableErrorMessage()));
+					logger.info(String.format("Field %s failed with validation error: %s", stmt.getPredicate(),
+							errorData.getReadableErrorMessage()));
 					errorList.put(stmt.getPredicate().toString(), errorData.getReadableErrorMessage());
 					break;
 				}
@@ -221,11 +234,12 @@ public class ShaclexValidator implements Validator{
 			} else {
 				if (stmt.getSubject().toString().equals(parentErrorNode)) {
 					RDFNode object = stmt.getObject();
-					String nodeMatchString = errorData.getNodeDataType().isPresent() ?
-							errorData.getNodeValueWithError() + "^^" + errorData.getNodeDataType().get()
+					String nodeMatchString = errorData.getNodeDataType().isPresent()
+							? errorData.getNodeValueWithError() + "^^" + errorData.getNodeDataType().get()
 							: errorData.getNodeValueWithError();
 					if (object.toString().equals(nodeMatchString)) {
-						logger.info(String.format("Field %s failed with validation error: %s", stmt.getPredicate(), errorData.getReadableErrorMessage()));
+						logger.info(String.format("Field %s failed with validation error: %s", stmt.getPredicate(),
+								errorData.getReadableErrorMessage()));
 						errorList.put(stmt.getPredicate().toString(), errorData.getReadableErrorMessage());
 						break;
 					}
@@ -236,10 +250,11 @@ public class ShaclexValidator implements Validator{
 	}
 
 	/**
-	 * The error message from the Shaclex library will have a pattern like
-	 * "Errors: Error: Attempt: node: 06-12-1990, shape: teacher:isADate". We use a regex to parse
-	 * the node value from the error message string so that we can find the node in the RDF statement list
-	 * which has this node value
+	 * The error message from the Shaclex library will have a pattern like "Errors:
+	 * Error: Attempt: node: 06-12-1990, shape: teacher:isADate". We use a regex to
+	 * parse the node value from the error message string so that we can find the
+	 * node in the RDF statement list which has this node value
+	 * 
 	 * @param errorMessage
 	 * @return
 	 */
@@ -257,15 +272,14 @@ public class ShaclexValidator implements Validator{
 		return Optional.ofNullable(input).filter(s -> !s.isEmpty());
 	}
 
-
 	public Schema readSchema(String schemaFileName, String format, String processor) throws IOException {
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream(schemaFileName);
 		String contents = new String(ByteStreams.toByteArray(is));
-		Either<String, Schema> result = Schemas.fromString(contents,format,processor,none);
-		if(result.isLeft()){
-		logger.info("Error from schema validation = " + result.left().get());
+		Either<String, Schema> result = Schemas.fromString(contents, format, processor, none);
+		if (result.isLeft()) {
+			logger.info("Error from schema validation = " + result.left().get());
 		}
-		return Schemas.fromString(contents,format,processor,none).right().get();
+		return Schemas.fromString(contents, format, processor, none).right().get();
 	}
 
 }

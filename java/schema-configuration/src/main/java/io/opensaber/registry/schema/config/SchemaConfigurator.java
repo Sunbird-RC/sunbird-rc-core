@@ -4,15 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
-import org.apache.jena.rdf.model.Literal;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.NodeIterator;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.ResIterator;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,11 +13,10 @@ import io.opensaber.registry.middleware.util.RDFUtil;
 
 public class SchemaConfigurator {
 
+	private static final String FORMAT = "JSON-LD";
+	private static Logger logger = LoggerFactory.getLogger(SchemaConfigurator.class);
 	private SchemaLoader schemaLoader;
 	private String registrySystemBase;
-
-	private static Logger logger = LoggerFactory.getLogger(SchemaConfigurator.class);
-	private static final String FORMAT = "JSON-LD";
 	private Model schemaConfig;
 
 	public SchemaConfigurator(String schemaFile, String registrySystemBase, SchemaLoader schemaLoader)

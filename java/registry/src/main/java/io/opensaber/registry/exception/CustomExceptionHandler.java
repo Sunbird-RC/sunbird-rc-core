@@ -19,19 +19,19 @@ public class CustomExceptionHandler extends BaseResponseHandler implements Handl
 
 	private Gson gson;
 
-	public CustomExceptionHandler(Gson gson){
+	public CustomExceptionHandler(Gson gson) {
 		this.gson = gson;
 	}
 
 	@Override
 	public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler,
 			Exception ex) {
-		try{
-			logger.info("Exception thrown-"+ex.getMessage());
+		try {
+			logger.info("Exception thrown-" + ex.getMessage());
 			setResponse(response);
 			writeResponseObj(gson, Constants.CUSTOM_EXCEPTION_ERROR);
 			response = getResponse();
-		}catch(Exception e){
+		} catch (Exception e) {
 			logger.error("Error in sending response");
 		}
 		return null;

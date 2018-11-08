@@ -11,22 +11,22 @@ import org.junit.Test;
 import io.opensaber.registry.schema.configurator.ShexSchemaConfigurator;
 
 public class ShexSchemaConfiguratorTest {
-	
+
 	private static final String CONFIG_SCHEMA_FILE = "opensaber-schema-configuration.jsonld";
 	private ShexSchemaConfigurator shexSchemaConfigurator;
-	
-	private void initialize(String schemaConfigFile) throws IOException{
+
+	private void initialize(String schemaConfigFile) throws IOException {
 		shexSchemaConfigurator = new ShexSchemaConfigurator(schemaConfigFile);
 	}
-	
+
 	@Test
-	public void testIsPrivate() throws IOException{
+	public void testIsPrivate() throws IOException {
 		initialize(CONFIG_SCHEMA_FILE);
 		assertNotNull(shexSchemaConfigurator);
 		assertTrue(shexSchemaConfigurator.isPrivate("nationalIdentifier"));
-		assertFalse(shexSchemaConfigurator.isPrivate("teacherName"));		
+		assertFalse(shexSchemaConfigurator.isPrivate("teacherName"));
 	}
-	
+
 	@Test
 	public void testIsEncrypted() throws Exception {
 		byte[] array = new byte[7];

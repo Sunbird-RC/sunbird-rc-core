@@ -5,24 +5,24 @@ import java.util.List;
 
 public class ClientExceptions {
 
-    private boolean exceptException;
-    private List<Throwable> exceptions = new ArrayList<>();
+	private boolean exceptException;
+	private List<Throwable> exceptions = new ArrayList<>();
 
-    public void expectException() {
-        exceptException = true;
-    }
+	public void expectException() {
+		exceptException = true;
+	}
 
-    public boolean isExceptException() {
-        return exceptException;
-    }
+	public boolean isExceptException() {
+		return exceptException;
+	}
 
-    public void add(Throwable t) {
-        if(!exceptException) {
-            exceptions.add(t);
-        }
-    }
+	public void add(Throwable t) {
+		if (!exceptException) {
+			exceptions.add(t);
+		}
+	}
 
-    public List<Throwable> getExceptions() {
-        return exceptions;
-    }
+	public List<Throwable> getExceptions() {
+		return exceptions;
+	}
 }

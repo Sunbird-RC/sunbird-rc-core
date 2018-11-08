@@ -1,19 +1,11 @@
 package io.opensaber.registry.service.impl;
 
-import io.opensaber.registry.app.OpenSaberApplication;
-import io.opensaber.registry.authorization.AuthorizationToken;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.dao.SearchDao;
-import io.opensaber.registry.exception.*;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.service.SearchService;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.tests.utility.TestHelper;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
@@ -37,51 +29,57 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import io.opensaber.registry.app.OpenSaberApplication;
+import io.opensaber.registry.authorization.AuthorizationToken;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.controller.RegistryTestBase;
+import io.opensaber.registry.dao.RegistryDao;
+import io.opensaber.registry.dao.SearchDao;
+import io.opensaber.registry.exception.*;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.SearchService;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.tests.utility.TestHelper;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {OpenSaberApplication.class, RegistryDao.class,
-		SearchDao.class, SearchService.class, GenericConfiguration.class})
+@SpringBootTest(classes = { OpenSaberApplication.class, RegistryDao.class, SearchDao.class, SearchService.class,
+		GenericConfiguration.class })
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class SearchServiceImplTest extends RegistryTestBase{
-	
+public class SearchServiceImplTest extends RegistryTestBase {
+
 	private static final String BASE_SEARCH_JSONLD = "base_search_context.jsonld";
-	private static final String CONTEXT_NAMESPACE =  "http://example.com/voc/teacher/1.0.0/";
-	
-	@Autowired
-	private SearchService searchService;
-	
-	@Autowired
-	private RegistryService registryService;
-	
+	private static final String CONTEXT_NAMESPACE = "http://example.com/voc/teacher/1.0.0/";
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
-	
+	@Autowired
+	private SearchService searchService;
+	@Autowired
+	private RegistryService registryService;
 	@Autowired
 	private DatabaseProvider databaseProvider;
-	
+
 	@Before
 	public void initialize() {
 		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);
-		databaseProvider.getGraphStore().addVertex(Constants.GRAPH_GLOBAL_CONFIG).property(Constants.PERSISTENT_GRAPH, true);
-        AuthInfo authInfo = new AuthInfo();
-        authInfo.setAud("aud");
-        authInfo.setName("name");
-        authInfo.setSub("sub");
-        AuthorizationToken authorizationToken = new AuthorizationToken(
-                authInfo,
-                Collections.singletonList(new SimpleGrantedAuthority("blah")));
-        SecurityContextHolder.getContext().setAuthentication(authorizationToken);
+		databaseProvider.getGraphStore().addVertex(Constants.GRAPH_GLOBAL_CONFIG).property(Constants.PERSISTENT_GRAPH,
+				true);
+		AuthInfo authInfo = new AuthInfo();
+		authInfo.setAud("aud");
+		authInfo.setName("name");
+		authInfo.setSub("sub");
+		AuthorizationToken authorizationToken = new AuthorizationToken(authInfo,
+				Collections.singletonList(new SimpleGrantedAuthority("blah")));
+		SecurityContextHolder.getContext().setAuthentication(authorizationToken);
 	}
 
 	@Test
-	public void test_search_no_response() throws AuditFailedException, EncryptionException, RecordNotFoundException, TypeNotProvidedException {
+	public void test_search_no_response()
+			throws AuditFailedException, EncryptionException, RecordNotFoundException, TypeNotProvidedException {
 		Model rdf = getNewValidRdf(BASE_SEARCH_JSONLD);
 		List<Resource> subjectList = RDFUtil.getRootLabels(rdf);
 		Property property = ResourceFactory.createProperty(CONTEXT_NAMESPACE + "schoolName");
@@ -91,8 +89,8 @@ public class SearchServiceImplTest extends RegistryTestBase{
 	}
 
 	@Test
-    public void test_search_valid_response() throws AuditFailedException, EncryptionException, RecordNotFoundException,
-            TypeNotProvidedException, EntityCreationException, MultipleEntityException, DuplicateRecordException {
+	public void test_search_valid_response() throws AuditFailedException, EncryptionException, RecordNotFoundException,
+			TypeNotProvidedException, EntityCreationException, MultipleEntityException, DuplicateRecordException {
 		String response = addEntity();
 		Model rdf = getNewValidRdf(BASE_SEARCH_JSONLD);
 		List<Resource> subjectList = RDFUtil.getRootLabels(rdf);
@@ -101,11 +99,12 @@ public class SearchServiceImplTest extends RegistryTestBase{
 		org.eclipse.rdf4j.model.Model responseModel = searchService.search(rdf);
 		assertFalse(responseModel.isEmpty());
 		ValueFactory vf = SimpleValueFactory.getInstance();
-		assertTrue(responseModel.contains(vf.createIRI(response), (IRI)null, (org.eclipse.rdf4j.model.Resource)null));
+		assertTrue(responseModel.contains(vf.createIRI(response), (IRI) null, (org.eclipse.rdf4j.model.Resource) null));
 	}
-	
+
 	@Test
-	public void test_search_with_no_type_provided() throws AuditFailedException, EncryptionException, RecordNotFoundException, TypeNotProvidedException {
+	public void test_search_with_no_type_provided()
+			throws AuditFailedException, EncryptionException, RecordNotFoundException, TypeNotProvidedException {
 		expectedEx.expect(TypeNotProvidedException.class);
 		expectedEx.expectMessage(Constants.ENTITY_TYPE_NOT_PROVIDED);
 		Model rdf = getNewValidRdf(BASE_SEARCH_JSONLD);
@@ -116,8 +115,8 @@ public class SearchServiceImplTest extends RegistryTestBase{
 		searchService.search(rdf);
 	}
 
-    private String addEntity() throws DuplicateRecordException, AuditFailedException,
-            EncryptionException, RecordNotFoundException, MultipleEntityException, EntityCreationException {
+	private String addEntity() throws DuplicateRecordException, AuditFailedException, EncryptionException,
+			RecordNotFoundException, MultipleEntityException, EntityCreationException {
 
 		Model rdfModel = getNewValidRdf();
 		return registryService.addEntity(rdfModel, null, null);

@@ -11,26 +11,20 @@ import org.springframework.stereotype.Component;
 
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.dao.SearchDao;
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.exception.EntityCreationException;
-import io.opensaber.registry.exception.MultipleEntityException;
-import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.exception.TypeNotProvidedException;
+import io.opensaber.registry.exception.*;
 import io.opensaber.registry.frame.FrameEntity;
-import io.opensaber.registry.service.SearchService;
-import io.opensaber.utils.converters.RDF2Graph;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.SearchUtil;
+import io.opensaber.registry.service.SearchService;
+import io.opensaber.utils.converters.RDF2Graph;
 
 @Component
 public class SearchServiceImpl implements SearchService {
 
 	@Autowired
-	private SearchDao searchDao;
-	
-	@Autowired
 	FrameEntity frameEntity;
+	@Autowired
+	private SearchDao searchDao;
 
 	@Override
 	public org.eclipse.rdf4j.model.Model search(Model model)

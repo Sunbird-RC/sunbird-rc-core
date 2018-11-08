@@ -10,7 +10,6 @@ import io.opensaber.registry.middleware.transform.Data;
 import io.opensaber.registry.middleware.transform.ITransformer;
 import io.opensaber.registry.middleware.transform.TransformationException;
 
-
 public class JsonldToLdRequestTransformer implements ITransformer<Object> {
 
 	@Override
@@ -21,7 +20,7 @@ public class JsonldToLdRequestTransformer implements ITransformer<Object> {
 
 	@Override
 	public void setPurgeData(List<String> keyToPruge) {
-		
+
 	}
 
 }

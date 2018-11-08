@@ -5,5 +5,5 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 
 public interface IValidate {
 
-    public ValidationResponse validate(Object input, String methodOrigin) throws MiddlewareHaltException;
+	public ValidationResponse validate(Object input, String methodOrigin) throws MiddlewareHaltException;
 }

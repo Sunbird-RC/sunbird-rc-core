@@ -1,43 +1,43 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>io.opensaber</groupId>
-	<artifactId>validators</artifactId>
-	<version>1.0.0</version>
-	<packaging>pom</packaging>
-	<name>validators</name>
-	<url>http://maven.apache.org</url>
+    <groupId>io.opensaber</groupId>
+    <artifactId>validators</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>validators</name>
+    <url>http://maven.apache.org</url>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-	</properties>
+    <parent>
+        <groupId>io.opensaber</groupId>
+        <artifactId>opensaber</artifactId>
+        <version>1.0.0</version>
+    </parent>
 
     <modules>
         <module>rdf</module>
     </modules>
 
-	<dependencies>
-		<dependency>
-			<groupId>io.opensaber</groupId>
-			<artifactId>middleware-commons</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>io.opensaber.middleware</groupId>
-			<artifactId>validation</artifactId>
-			<version>1.0.0</version>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>io.opensaber</groupId>
+            <artifactId>middleware-commons</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.opensaber.middleware</groupId>
+            <artifactId>validation</artifactId>
+            <version>1.0.0</version>
+        </dependency>
 
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

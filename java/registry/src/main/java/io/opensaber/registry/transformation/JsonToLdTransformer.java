@@ -1,5 +1,14 @@
 package io.opensaber.registry.transformation;
 
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -13,21 +22,13 @@ import io.opensaber.registry.middleware.transform.TransformationException;
 import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.*;
-
 @Component
 public class JsonToLdTransformer implements ITransformer<Object> {
 
+	private static final String SEPERATOR = ":";
 	private static Logger logger = LoggerFactory.getLogger(JsonToLdTransformer.class);
 	private List<String> keysToPurge = new ArrayList<>();
 	private String prefix = "";
-	private static final String SEPERATOR = ":";
 
 	public Data<Object> transform(Data<Object> data) throws TransformationException {
 		try {

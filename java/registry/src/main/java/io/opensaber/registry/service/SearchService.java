@@ -4,12 +4,7 @@ import java.io.IOException;
 
 import org.apache.jena.rdf.model.Model;
 
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.exception.EntityCreationException;
-import io.opensaber.registry.exception.MultipleEntityException;
-import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.exception.TypeNotProvidedException;
+import io.opensaber.registry.exception.*;
 
 public interface SearchService {
 

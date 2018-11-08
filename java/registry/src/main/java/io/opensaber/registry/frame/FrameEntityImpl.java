@@ -1,10 +1,6 @@
 package io.opensaber.registry.frame;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -24,14 +20,11 @@ import org.springframework.beans.factory.annotation.Value;
 
 import com.google.common.io.CharStreams;
 
-
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.exception.MultipleEntityException;
-import io.opensaber.registry.frame.FrameEntity;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
-
 
 public class FrameEntityImpl implements FrameEntity {
 
@@ -41,12 +34,13 @@ public class FrameEntityImpl implements FrameEntity {
 	private String frameFile;
 
 	@Override
-	public String getContent(org.eclipse.rdf4j.model.Model entityModel) throws IOException, MultipleEntityException, EntityCreationException {
+	public String getContent(org.eclipse.rdf4j.model.Model entityModel)
+			throws IOException, MultipleEntityException, EntityCreationException {
 		String jenaJson = frameEntity2Json(entityModel);
 		logger.info("JsonldResponseContent: Framed Jena JSON- " + jenaJson);
 		return jenaJson;
 	}
-	
+
 	/**
 	 * Helper method to convert the RDF4j model to JSONLD
 	 * 
@@ -108,20 +102,20 @@ public class FrameEntityImpl implements FrameEntity {
 		w.write(sWriter, g, pm, base, ctx);
 		return sWriter;
 	}
-	
-/**
- * Frame json specific.
- */
-	public String getContent(){				
+
+	/**
+	 * Frame json specific.
+	 */
+	public String getContent() {
 		InputStreamReader in;
-		try {			
+		try {
 			in = new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(frameFile));
 			return CharStreams.toString(in);
-			
-		} catch (FileNotFoundException  e1) {
+
+		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
 			logger.info(e1.getLocalizedMessage());
-		
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			logger.info(e.getLocalizedMessage());

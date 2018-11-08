@@ -19,24 +19,27 @@ public class RequestParams {
 		this.did = did;
 		this.key = key;
 	}
-	
+
 	public String getDid() {
 		return did;
 	}
+
 	public void setDid(String did) {
 		this.did = did;
 	}
-	
+
 	public String getKey() {
 		return key;
 	}
+
 	public void setKey(String key) {
 		this.key = key;
 	}
-	
+
 	public String getMsgid() {
 		return msgid;
 	}
+
 	public void setMsgid(String msgid) {
 		this.msgid = msgid;
 	}

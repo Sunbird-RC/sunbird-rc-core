@@ -6,7 +6,7 @@ package io.opensaber.registry.model.dto;
  *
  */
 public class EntityDto {
-	
+
 	private String id;
 
 	public String getId() {

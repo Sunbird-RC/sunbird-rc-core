@@ -1,8 +1,8 @@
 package io.opensaber.pojos;
 
-import com.google.gson.annotations.Expose;
-
 import java.util.HashMap;
+
+import com.google.gson.annotations.Expose;
 
 public class ValidationResponse extends BaseErrorResponse {
 
@@ -19,6 +19,7 @@ public class ValidationResponse extends BaseErrorResponse {
 	public boolean isValid() {
 		return isValid;
 	}
+
 	public void setValid(boolean isValid) {
 		this.isValid = isValid;
 	}
