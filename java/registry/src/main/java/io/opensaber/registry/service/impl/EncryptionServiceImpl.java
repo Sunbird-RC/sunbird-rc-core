@@ -31,36 +31,29 @@ import io.opensaber.registry.service.EncryptionService;
 
 @Component
 public class EncryptionServiceImpl implements EncryptionService {
-	
+
+	private static Logger logger = LoggerFactory.getLogger(EncryptionServiceImpl.class);
 	@Value("${encryption.uri}")
 	private String encryptionUri;
-
 	@Value("${decryption.uri}")
 	private String decryptionUri;
-	
 	@Value("${encryption.batch.uri}")
 	private String encryptionBatchUri;
-
 	@Value("${decryption.batch.uri}")
 	private String decryptionBatchUri;
-
 	@Value("${encryption.base}")
 	private String encryptionServiceHealthCheckUri;
-
 	@Autowired
 	private RestTemplate restTemplate;
-	
+
+	/*
+	 * @Autowired SchemaConfigurator schemaConfigurator;
+	 */
 	@Autowired
 	private Gson gson;
-	
-/*	@Autowired
-	SchemaConfigurator schemaConfigurator;*/
-
 	@Autowired
 	private OpenSaberInstrumentation watch;
-		
-	private static Logger logger = LoggerFactory.getLogger(EncryptionServiceImpl.class);
-	
+
 	@Override
 	public String encrypt(Object propertyValue) throws EncryptionException {
 		MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
@@ -68,17 +61,17 @@ public class EncryptionServiceImpl implements EncryptionService {
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map);
 		try {
 			ResponseEntity<String> response = new RestTemplate().postForEntity(encryptionUri, request, String.class);
-		   	return response.getBody();
-		}catch(ResourceAccessException e) {
+			return response.getBody();
+		} catch (ResourceAccessException e) {
 			logger.error("ResourceAccessException while connecting enryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service! ");
-		}catch(ServiceUnavailableException e) {
-	    	logger.error("ServiceUnavailableException while connecting enryption service!: ", e);
-	  		throw new EncryptionException("Encryption service is not available !");
-		}catch(Exception e) {
-	    	logger.error("Exception in encryption servie !: ", e);
-	    	throw new EncryptionException("Exception in encryption service ! ");
-	    }	    
+		} catch (ServiceUnavailableException e) {
+			logger.error("ServiceUnavailableException while connecting enryption service!: ", e);
+			throw new EncryptionException("Encryption service is not available !");
+		} catch (Exception e) {
+			logger.error("Exception in encryption servie !: ", e);
+			throw new EncryptionException("Exception in encryption service ! ");
+		}
 	}
 
 	@Override
@@ -115,7 +108,8 @@ public class EncryptionServiceImpl implements EncryptionService {
 			watch.start("EncryptionServiceImpl.encryptBatch");
 			ResponseEntity<String> response = restTemplate.postForEntity(encryptionBatchUri, entity, String.class);
 			watch.stop("EncryptionServiceImpl.encryptBatch");
-			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {}.getType());
+			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
+			}.getType());
 		} catch (ResourceAccessException e) {
 			logger.error("Exception while connecting enryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service! ");
@@ -141,7 +135,8 @@ public class EncryptionServiceImpl implements EncryptionService {
 			watch.start("EncryptionServiceImpl.decryptBatch");
 			ResponseEntity<String> response = restTemplate.postForEntity(decryptionBatchUri, entity, String.class);
 			watch.stop("EncryptionServiceImpl.decryptBatch");
-			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {}.getType());
+			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
+			}.getType());
 		} catch (ResourceAccessException e) {
 			logger.error("Exception while connecting dcryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service ! ");
@@ -153,9 +148,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			throw new EncryptionException("Exception in encryption service ! ");
 		}
 	}
-	
+
 	/**
 	 * This method is used to check if the sunbird encryption service is up
+	 * 
 	 * @return
 	 */
 	@Override

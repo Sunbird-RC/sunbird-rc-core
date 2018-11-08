@@ -8,13 +8,11 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import io.opensaber.registry.schema.config.SchemaConfigurator;
-
 public class SchemaConfiguratorTest {
 
-	private SchemaConfigurator schemaConfigurator;
 	private static final String CONFIG_SCHEMA_FILE = "opensaber-schema-configuration.jsonld";
 	private static final String CONFIG_VALIDATION_FILE = "validations.shex";
+	private SchemaConfigurator schemaConfigurator;
 	private SchemaLoader schemaLoader;
 
 	private void initialize(String file, String validationFile) throws IOException {
@@ -47,7 +45,7 @@ public class SchemaConfiguratorTest {
 	@Test
 	public void test_single_valued_property() throws IOException {
 		initialize(CONFIG_SCHEMA_FILE, CONFIG_VALIDATION_FILE);
-	    assertNotNull(schemaLoader.getValidationConfig());
+		assertNotNull(schemaLoader.getValidationConfig());
 		assertTrue(schemaConfigurator.isSingleValued("http://example.com/voc/teacher/1.0.0/serialNum"));
 	}
 

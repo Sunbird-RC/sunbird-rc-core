@@ -4,6 +4,7 @@ import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+
 import org.keycloak.RSATokenVerifier;
 import org.keycloak.common.VerificationException;
 import org.keycloak.representations.AccessToken;
@@ -23,16 +24,19 @@ public class KeyCloakServiceImpl {
 	}
 
 	/**
-	 * This method verifies input JWT access token using RSATokenVerifier of Sunbird keycloak server
+	 * This method verifies input JWT access token using RSATokenVerifier of Sunbird
+	 * keycloak server
 	 *
 	 * @param accessToken
 	 * @throws VerificationException
 	 * @throws Exception
 	 */
 	public String verifyToken(String accessToken) throws VerificationException, Exception {
-		AccessToken token = RSATokenVerifier.verifyToken(accessToken, publicKey,ssoUrl + "realms/" + ssoRealm, true, true);
+		AccessToken token = RSATokenVerifier.verifyToken(accessToken, publicKey, ssoUrl + "realms/" + ssoRealm, true,
+				true);
 		String userId = token.getSubject();
-		logger.debug("Authentication token \n TokenId: {} \t isActive: {} \t isExpired: {} \t",token.getId(), token.isActive(), token.isExpired());
+		logger.debug("Authentication token \n TokenId: {} \t isActive: {} \t isExpired: {} \t", token.getId(),
+				token.isActive(), token.isExpired());
 		return userId;
 	}
 

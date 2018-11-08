@@ -15,12 +15,12 @@ import scala.util.Either;
 
 public class SchemaLoader {
 
-	private Schema schemaForCreate;
-	private Schema schemaForUpdate;
-	private Model validationConfig;
 	private static final String SCHEMAFORMAT = "SHEXC";
 	private static final String PROCESSOR = "shex";
 	private static final String JSON_LD = "JSON-LD";
+	private Schema schemaForCreate;
+	private Schema schemaForUpdate;
+	private Model validationConfig;
 
 	public SchemaLoader(String validationcreateFile, String validationUpdateFile) throws IOException {
 

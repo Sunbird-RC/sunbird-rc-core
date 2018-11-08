@@ -1,6 +1,8 @@
 package io.opensaber.registry.util;
 
-import io.opensaber.registry.middleware.util.Constants;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
@@ -12,8 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import io.opensaber.registry.middleware.util.Constants;
 
 public class GraphDBFactory {
 
@@ -29,6 +30,10 @@ public class GraphDBFactory {
 		initializeGraphDb();
 	}
 
+	public static Graph getEmptyGraph() {
+		return TinkerGraph.open();
+	}
+
 	private void initializeGraphDb() {
 		String graphDbLocation = environment.getProperty(Constants.NEO4J_DIRECTORY);
 		logger.info(String.format("Initializing graph db at %s ...", graphDbLocation));
@@ -38,20 +43,15 @@ public class GraphDBFactory {
 		graph = Neo4jGraph.open(config);
 	}
 
-	private Neo4jGraph getGraphDB(){
+	private Neo4jGraph getGraphDB() {
 		return graph;
 	}
 
-
 	public GraphDatabaseService getGraphDatabaseService() {
-		if(graphDBService == null || !graphDBService.isAvailable(0)){
+		if (graphDBService == null || !graphDBService.isAvailable(0)) {
 			graphDBService = ((Neo4jGraphAPIImpl) getGraphDB().getBaseGraph()).getGraphDatabase();
 		}
 		return graphDBService;
-	}
-	
-	public static Graph getEmptyGraph(){
-		return TinkerGraph.open();
 	}
 
 	@PostConstruct
@@ -66,7 +66,7 @@ public class GraphDBFactory {
 		logger.info("**************************************************************************");
 		logger.info("Gracefully shutting down GraphDBFactory instance ...");
 		logger.info("**************************************************************************");
-        graphDBService.shutdown();
+		graphDBService.shutdown();
 		graph.close();
 	}
 }

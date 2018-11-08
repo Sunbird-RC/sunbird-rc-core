@@ -1,33 +1,33 @@
 package io.opensaber.registry.interceptor.handler;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonParser;
-import io.opensaber.pojos.Request;
-import io.opensaber.registry.middleware.util.Constants;
-
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BaseRequestHandler extends BaseResponseHandler{
+import javax.servlet.http.HttpServletRequest;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
+
+import io.opensaber.pojos.Request;
+import io.opensaber.registry.middleware.util.Constants;
+
+public class BaseRequestHandler extends BaseResponseHandler {
 
 	protected RequestWrapper requestWrapper;
 	protected HttpServletRequest request;
-
-	public void setRequest(HttpServletRequest request) throws IOException {
-		this.request = request;
-		setRequestWrapper();
-	}
-
 
 	public void setRequestWrapper() throws IOException {
 		requestWrapper = new RequestWrapper(request);
 	}
 
-	public String getRequestBody() throws IOException{
+	public String getRequestBody() throws IOException {
 		return requestWrapper.getBody();
+	}
+
+	public void setRequestBody(String requestBody) {
+		requestWrapper.setBody(requestBody);
 	}
 
 	public String getRequestHeaderByName(String name) throws IOException {
@@ -44,8 +44,13 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		}
 	}
 
-	public HttpServletRequest getRequest(){
+	public HttpServletRequest getRequest() {
 		return request;
+	}
+
+	public void setRequest(HttpServletRequest request) throws IOException {
+		this.request = request;
+		setRequestWrapper();
 	}
 
 	public Map<String, Object> getRequestBodyMap() throws IOException {
@@ -54,10 +59,10 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		String requestBody = getRequestBody();
 		Request requestModel = gson.fromJson(requestBody, Request.class);
 		requestBodyMap.put(Constants.REQUEST_ATTRIBUTE, requestModel);
-		String requestObject = new JsonParser().parse(requestBody)
-				.getAsJsonObject().getAsJsonObject("request").toString();
+		String requestObject = new JsonParser().parse(requestBody).getAsJsonObject().getAsJsonObject("request")
+				.toString();
 		requestBodyMap.put(Constants.ATTRIBUTE_NAME, requestObject);
-		requestBodyMap.put(Constants.REQUEST_OBJECT,requestBody);
+		requestBodyMap.put(Constants.REQUEST_OBJECT, requestBody);
 		requestModel.setRequestMap(requestBodyMap);
 		return requestBodyMap;
 	}
@@ -74,23 +79,22 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		return requestHeaderMap;
 	}
 
-
-	public Map<String,Object> getRequestAttributeMap() throws IOException{
+	public Map<String, Object> getRequestAttributeMap() throws IOException {
 		boolean isMethodOriginAdded = false;
-		Map<String,Object> requestAttributeMap = new HashMap<String,Object>();
+		Map<String, Object> requestAttributeMap = new HashMap<String, Object>();
 		Enumeration<String> attributeNames = request.getAttributeNames();
 		if (attributeNames != null) {
 			while (attributeNames.hasMoreElements()) {
 				String attribute = attributeNames.nextElement();
-				if(attribute.equalsIgnoreCase(Constants.METHOD_ORIGIN)){
+				if (attribute.equalsIgnoreCase(Constants.METHOD_ORIGIN)) {
 					isMethodOriginAdded = true;
 				}
 				requestAttributeMap.put(attribute, request.getAttribute(attribute));
 			}
-			if(!isMethodOriginAdded){
+			if (!isMethodOriginAdded) {
 				requestAttributeMap.put(Constants.METHOD_ORIGIN, getRequestPath());
 			}
-			
+
 		}
 		return requestAttributeMap;
 	}
@@ -100,13 +104,9 @@ public class BaseRequestHandler extends BaseResponseHandler{
 		requestParameterMap.putAll(request.getParameterMap());
 		return requestParameterMap;
 	}
-	
-	public String getRequestPath() throws IOException{
+
+	public String getRequestPath() throws IOException {
 		return request.getServletPath();
-	}
-	
-	public void setRequestBody(String requestBody){
-		requestWrapper.setBody(requestBody);
 	}
 
 }

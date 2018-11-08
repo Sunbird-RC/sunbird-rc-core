@@ -1,36 +1,16 @@
 package io.opensaber.registry.dao.impl;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Stack;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
-import org.apache.jena.rdf.model.Literal;
-import org.apache.jena.rdf.model.NodeIterator;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.ResIterator;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.Property;
-import org.apache.tinkerpop.gremlin.structure.T;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.javatuples.Pair;
@@ -64,25 +44,18 @@ public class RegistryDaoImpl implements RegistryDao {
 	public static final String META = "meta.";
 	public static final String EMPTY_STRING = StringUtils.EMPTY;
 	private static Logger logger = LoggerFactory.getLogger(RegistryDaoImpl.class);
-
-	@Autowired
-	private DatabaseProvider databaseProvider;
-
-	@Value("${registry.context.base}")
-	private String registryContext;
-
-	@Value("${signature.enabled}")
-	private boolean signatureEnabled;
-
-	@Autowired
-	private SchemaLoader schemaLoader;
-
-	@Autowired
-	private SchemaConfiguratorFactory schemaConfiguratorFactory;
-
 	@Autowired
 	ApplicationContext appContext;
-
+	@Autowired
+	private DatabaseProvider databaseProvider;
+	@Value("${registry.context.base}")
+	private String registryContext;
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
+	@Autowired
+	private SchemaLoader schemaLoader;
+	@Autowired
+	private SchemaConfiguratorFactory schemaConfiguratorFactory;
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
 
@@ -98,11 +71,21 @@ public class RegistryDaoImpl implements RegistryDao {
 	@Autowired
 	private UrlValidator urlValidator;
 
+	public static String generateRandomUUID() {
+		return UUID.randomUUID().toString();
+	}
+
 	@Override
 	public List getEntityList() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	/*
+	 * private void closeGraph(Graph graph) { try { graph.close(); } catch
+	 * (Exception ex) { logger.error("Exception when closing the database graph" ,
+	 * ex); } }
+	 */
 
 	@Override
 	public String addEntity(Graph entity, String label, String rootNodeLabel, String property)
@@ -153,12 +136,6 @@ public class RegistryDaoImpl implements RegistryDao {
 		return label;
 	}
 
-	/*
-	 * private void closeGraph(Graph graph) { try { graph.close(); } catch
-	 * (Exception ex) { logger.error("Exception when closing the database graph"
-	 * , ex); } }
-	 */
-
 	private void connectNodes(String rootLabel, String label, String property)
 			throws RecordNotFoundException, NoSuchElementException, EncryptionException, AuditFailedException {
 		Graph graphFromStore = databaseProvider.getGraphStore();
@@ -198,10 +175,9 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	/**
-	 * This method creates the root node of the entity if it already isn't
-	 * present in the graph store or updates the properties of the root node or
-	 * adds new properties if the properties are not already present in the
-	 * node.
+	 * This method creates the root node of the entity if it already isn't present
+	 * in the graph store or updates the properties of the root node or adds new
+	 * properties if the properties are not already present in the node.
 	 *
 	 * @param dbTraversalSource
 	 * @param entitySource
@@ -252,8 +228,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	/**
-	 * This method takes the root node of an entity and then recursively creates
-	 * or updates child vertices and edges.
+	 * This method takes the root node of an entity and then recursively creates or
+	 * updates child vertices and edges.
 	 *
 	 * @param v
 	 * @param dbVertex
@@ -376,8 +352,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	/**
-	 * This method takes existing database vertex, edge label and the new vertex
-	 * to create the edge between these vertices in the database
+	 * This method takes existing database vertex, edge label and the new vertex to
+	 * create the edge between these vertices in the database
 	 *
 	 * @param ver
 	 * @param newV
@@ -484,8 +460,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	/**
-	 * This method checks if deletion of edge and node is required based on
-	 * criteria and invokes deleteEdgeAndNode method
+	 * This method checks if deletion of edge and node is required based on criteria
+	 * and invokes deleteEdgeAndNode method
 	 *
 	 * @param dbSourceVertex
 	 * @param e
@@ -514,8 +490,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	/**
-	 * This method deletes the edge and node if the node is an orphan node and
-	 * if not, deletes only the edge
+	 * This method deletes the edge and node if the node is an orphan node and if
+	 * not, deletes only the edge
 	 *
 	 * @param v
 	 * @param dbEdgeToBeRemoved
@@ -558,8 +534,8 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	/**
 	 * Blank nodes are no longer supported. If the input data has a blank node,
-	 * which is identified by the node's label which starts with :_, then a
-	 * random UUID is used as the label for the blank node.
+	 * which is identified by the node's label which starts with :_, then a random
+	 * UUID is used as the label for the blank node.
 	 *
 	 * @param label
 	 * @return
@@ -573,10 +549,6 @@ public class RegistryDaoImpl implements RegistryDao {
 
 	private boolean isIRI(String label) {
 		return urlValidator.isValid(label);
-	}
-
-	public static String generateRandomUUID() {
-		return UUID.randomUUID().toString();
 	}
 
 	@Override
@@ -723,11 +695,10 @@ public class RegistryDaoImpl implements RegistryDao {
 		s.property(registryContext + Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
 		return true;
 		/*
-		 * Stack<Vertex> vStack = new Stack<Vertex>(); while
-		 * (edgeIter.hasNext()) { edge = edgeIter.next(); Vertex o =
-		 * edge.inVertex(); if(!vStack.contains(o)) { vStack.push(o); }
-		 * //edge.remove(); } //if vertex has no incoming edges delete the node
-		 * Iterator<Edge> inEdgeIter = s.edges(Direction.IN); inEdgeIter. if
+		 * Stack<Vertex> vStack = new Stack<Vertex>(); while (edgeIter.hasNext()) { edge
+		 * = edgeIter.next(); Vertex o = edge.inVertex(); if(!vStack.contains(o)) {
+		 * vStack.push(o); } //edge.remove(); } //if vertex has no incoming edges delete
+		 * the node Iterator<Edge> inEdgeIter = s.edges(Direction.IN); inEdgeIter. if
 		 * (!(inEdgeIter.hasNext() && IteratorUtils.count(inEdgeIter) > 1)) {
 		 * s.property(registryContext+Constants.STATUS_KEYWORD,Constants.
 		 * STATUS_INACTIVE); }
@@ -735,8 +706,8 @@ public class RegistryDaoImpl implements RegistryDao {
 		/*
 		 * Iterator<Vertex> vIterator = vStack.iterator();
 		 * 
-		 * while(vIterator.hasNext()){ s = vIterator.next();
-		 * deleteVertexWithOUTEdge(s); }
+		 * while(vIterator.hasNext()){ s = vIterator.next(); deleteVertexWithOUTEdge(s);
+		 * }
 		 */
 
 	}

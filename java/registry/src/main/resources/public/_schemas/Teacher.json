@@ -135,7 +135,6 @@
           "$ref": "Common.json#/definitions/YesNoCode"
         },
         "___encryptedFields": {
-
         }
       }
     }

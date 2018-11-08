@@ -143,7 +143,10 @@
     },
     "YesNoCode": {
       "type": "string",
-      "enum": ["YesNoCode-YES", "YesNoCode-NO"]
+      "enum": [
+        "YesNoCode-YES",
+        "YesNoCode-NO"
+      ]
     }
   }
 }

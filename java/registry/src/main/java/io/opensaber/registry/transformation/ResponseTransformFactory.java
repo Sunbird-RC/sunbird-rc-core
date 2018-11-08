@@ -7,8 +7,6 @@ import org.springframework.stereotype.Component;
 import io.opensaber.registry.middleware.transform.ErrorCode;
 import io.opensaber.registry.middleware.transform.ITransformer;
 import io.opensaber.registry.middleware.transform.TransformationException;
-import io.opensaber.registry.transformation.JsonToLdTransformer;
-import io.opensaber.registry.transformation.JsonldToLdTransformer;
 
 @Component
 public class ResponseTransformFactory {
@@ -34,10 +32,10 @@ public class ResponseTransformFactory {
 		case MediaType.APPLICATION_JSON_VALUE:
 			responseTransformer = jsonTransformer;
 			break;
-			
+
 		case MediaType.ALL_VALUE:
 			responseTransformer = jsonTransformer;
-			break;	
+			break;
 
 		default:
 			throw new TransformationException(EXCEPTION_MESSAGE, ErrorCode.UNSUPPOTERTED_TYPE);

@@ -12,19 +12,17 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
+import io.opensaber.registry.middleware.util.JSONUtil;
 
-public abstract class ASchemaConfigurator implements ISchemaConfigurator{
-	
-	private final static String PREFIX = "teacher:";
+public abstract class ASchemaConfigurator implements ISchemaConfigurator {
+
 	public static final String OPENSABER_PRIVACY_PROPERTY = "opensaber:privateProperties";
-
+	private final static String PREFIX = "teacher:";
+	private static List<String> foundProperties = new ArrayList<>();
 	private final ObjectMapper mapper = new ObjectMapper();
 	private ObjectNode schemaConfigurationNode;
 	private String schemaContent;
-
-	private static List<String> foundProperties = new ArrayList<>();
 
 	public ASchemaConfigurator(String schemaFile) throws IOException {
 		schemaConfigurationNode = loadSchemaConfig(schemaFile);
@@ -43,7 +41,7 @@ public abstract class ASchemaConfigurator implements ISchemaConfigurator{
 		} else
 			return false;
 	}
-	
+
 	@Override
 	public List<String> getAllPrivateProperties() {
 		return foundProperties;
@@ -74,6 +72,5 @@ public abstract class ASchemaConfigurator implements ISchemaConfigurator{
 		}
 		return foundProperties;
 	}
-
 
 }

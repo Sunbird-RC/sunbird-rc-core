@@ -1,7 +1,6 @@
 package io.opensaber.pojos;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import io.opensaber.pojos.Response.Status;

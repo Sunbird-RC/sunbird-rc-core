@@ -1,10 +1,8 @@
 package io.opensaber.registry.model;
 
-import com.google.gson.Gson;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.sink.DatabaseProvider;
+import java.util.List;
+import java.util.UUID;
+
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,130 +10,128 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
+import com.google.gson.Gson;
+
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.sink.DatabaseProvider;
 
 @Component
 public class AuditRecord {
 	private String subject;
-    private String predicate;
-    private Object oldObject;
-    private Object newObject;
-    private String readOnlyAuthInfo;
-    
-    @Value("${registry.system.base}")
+	private String predicate;
+	private Object oldObject;
+	private Object newObject;
+	private String readOnlyAuthInfo;
+
+	@Value("${registry.system.base}")
 	private String registrySystemContext;
 
-    @Value("${authentication.enabled}")
-    private boolean authenticationEnabled;
+	@Value("${authentication.enabled}")
+	private boolean authenticationEnabled;
 
-    @Autowired
-    private Gson gson;
-	
+	@Autowired
+	private Gson gson;
+
 	public AuditRecord subject(String label) {
-    	this.subject = label+"-AUDIT";
-        return this;
-    }
+		this.subject = label + "-AUDIT";
+		return this;
+	}
 
-    public AuditRecord predicate(String key) {
-        this.predicate = key;
-        return this;
-    }
+	public AuditRecord predicate(String key) {
+		this.predicate = key;
+		return this;
+	}
 
-    public AuditRecord oldObject(Object oldValue) {
-    	if(oldValue instanceof List){
-    		this.oldObject = (List)oldValue;
-    	}else {
-    		this.oldObject = String.valueOf(oldValue);
-    	}
-        return this;
-    }
+	public AuditRecord oldObject(Object oldValue) {
+		if (oldValue instanceof List) {
+			this.oldObject = (List) oldValue;
+		} else {
+			this.oldObject = String.valueOf(oldValue);
+		}
+		return this;
+	}
 
-    public AuditRecord newObject(Object newValue) {
-        if(newValue instanceof List){
-    		this.newObject = (List)newValue;
-    	}else {
-    		this.newObject = String.valueOf(newValue);
-    	}
-        return this;
-    }
+	public AuditRecord newObject(Object newValue) {
+		if (newValue instanceof List) {
+			this.newObject = (List) newValue;
+		} else {
+			this.newObject = String.valueOf(newValue);
+		}
+		return this;
+	}
 
-    @Override
-    public String toString() {
-        return "AuditRecord{" +
-        	    "  subject='" + subject + '\'' +
-                ", predicate='" + predicate + '\'' +
-                ", oldObject=" + oldObject +
-                ", newObject=" + newObject +
-                ", readOnlyAuthInfo=" + readOnlyAuthInfo +
-                '}';
-    }
+	@Override
+	public String toString() {
+		return "AuditRecord{" + "  subject='" + subject + '\'' + ", predicate='" + predicate + '\'' + ", oldObject="
+				+ oldObject + ", newObject=" + newObject + ", readOnlyAuthInfo=" + readOnlyAuthInfo + '}';
+	}
 
-    public void record(DatabaseProvider provider) throws AuditFailedException {
+	public void record(DatabaseProvider provider) throws AuditFailedException {
 
-        GraphTraversalSource _source = provider.getGraphStore().traversal().clone();
-        boolean rootNodeExists = _source.V().hasLabel(subject).hasNext();
-        Vertex rootVertex;
-        if(!rootNodeExists){
-        	/***"AUDIT ROOT NOT FOUND - CREATING"***/
-            rootVertex = _source.addV(subject).next();
-            updateUserInfo(rootVertex);
-        } else {	
-        	/***AUDIT ROOT FOUND - NOT CREATING"**/
-            rootVertex = _source.V().hasLabel(subject).next();
-            rootVertex.property(Constants.AUDIT_KEYWORD,"true");
-        }
-     
-        String uuid=UUID.randomUUID().toString();
-        String auditLabel=registrySystemContext+uuid;
-        String predicate=registrySystemContext+ "predicate";
-        String oldObject=registrySystemContext+"oldObject";
-        String newObject=registrySystemContext+"newObject";
-                 
-        Vertex recordVertex = _source.addV(auditLabel).next();
-        recordVertex.property(predicate,this.predicate);
-        recordVertex.property(oldObject,this.oldObject);
-        recordVertex.property(newObject,this.newObject);
-        recordVertex.property(Constants.AUDIT_KEYWORD,"true");
-        recordVertex.property("@auditRecord","true");
-        updateUserInfo(recordVertex);
-      
-        String edgeLabel=registrySystemContext+"audit";
-        
-        rootVertex.addEdge(edgeLabel,recordVertex).property(Constants.AUDIT_KEYWORD,true);	
-     }
+		GraphTraversalSource _source = provider.getGraphStore().traversal().clone();
+		boolean rootNodeExists = _source.V().hasLabel(subject).hasNext();
+		Vertex rootVertex;
+		if (!rootNodeExists) {
+			/*** "AUDIT ROOT NOT FOUND - CREATING" ***/
+			rootVertex = _source.addV(subject).next();
+			updateUserInfo(rootVertex);
+		} else {
+			/*** AUDIT ROOT FOUND - NOT CREATING" **/
+			rootVertex = _source.V().hasLabel(subject).next();
+			rootVertex.property(Constants.AUDIT_KEYWORD, "true");
+		}
 
-    private void updateUserInfo(Vertex vertex) {
-	    if(authenticationEnabled) {
-            String authinfo = gson.toJson(getCurrentUserInfo());
-            String authInfoLabel = registrySystemContext + "authInfo";
-            vertex.property(authInfoLabel, authinfo);
-        }
-    }
-    
-    public String getPredicate() {
-        return predicate;
-    }
+		String uuid = UUID.randomUUID().toString();
+		String auditLabel = registrySystemContext + uuid;
+		String predicate = registrySystemContext + "predicate";
+		String oldObject = registrySystemContext + "oldObject";
+		String newObject = registrySystemContext + "newObject";
 
-    public Object getOldObject() {
-        return oldObject;
-    }
+		Vertex recordVertex = _source.addV(auditLabel).next();
+		recordVertex.property(predicate, this.predicate);
+		recordVertex.property(oldObject, this.oldObject);
+		recordVertex.property(newObject, this.newObject);
+		recordVertex.property(Constants.AUDIT_KEYWORD, "true");
+		recordVertex.property("@auditRecord", "true");
+		updateUserInfo(recordVertex);
 
-    public Object getNewObject() {
-        return newObject;
-    }
+		String edgeLabel = registrySystemContext + "audit";
 
-    public String getSubject() {
-        return subject;
-    }
+		rootVertex.addEdge(edgeLabel, recordVertex).property(Constants.AUDIT_KEYWORD, true);
+	}
 
-    private AuthInfo getCurrentUserInfo(){
-        return (AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    }
+	private void updateUserInfo(Vertex vertex) {
+		if (authenticationEnabled) {
+			String authinfo = gson.toJson(getCurrentUserInfo());
+			String authInfoLabel = registrySystemContext + "authInfo";
+			vertex.property(authInfoLabel, authinfo);
+		}
+	}
 
-    public void readOnlyAuthInfo(String authInfo) {
-        this.readOnlyAuthInfo=authInfo;
-    }
+	public String getPredicate() {
+		return predicate;
+	}
+
+	public Object getOldObject() {
+		return oldObject;
+	}
+
+	public Object getNewObject() {
+		return newObject;
+	}
+
+	public String getSubject() {
+		return subject;
+	}
+
+	private AuthInfo getCurrentUserInfo() {
+		return (AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+	}
+
+	public void readOnlyAuthInfo(String authInfo) {
+		this.readOnlyAuthInfo = authInfo;
+	}
 
 }
-
