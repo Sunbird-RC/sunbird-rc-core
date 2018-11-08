@@ -55,7 +55,7 @@ import io.opensaber.registry.schema.config.SchemaLoader;
 import io.opensaber.registry.schema.configurator.*;
 import io.opensaber.registry.sink.*;
 import io.opensaber.validators.IValidate;
-import io.opensaber.validators.json.JsonValidationServiceImpl;
+import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
 import io.opensaber.validators.rdf.shex.RdfSignatureValidator;
 import io.opensaber.validators.rdf.shex.RdfValidationServiceImpl;
 
@@ -91,10 +91,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${signature.schema.config.name}")
 	private String signatureSchemaConfigName;
 
-	@Value("${validation_type}")
+	@Value("${validation.type}")
 	private String validationType = "json";
 
-	@Value("${validation_enabled}")
+	@Value("${validation.enabled}")
 	private boolean validationEnabled = true;
 
 	@Bean
@@ -136,7 +136,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Bean
 	public SchemaType getValidationType() {
-		String validationMechanism = validationType.toLowerCase();
+		String validationMechanism = validationType.toUpperCase();
 		SchemaType st = SchemaType.valueOf(validationMechanism);
 		switch (st) {
 			case SHEX:
@@ -144,6 +144,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			case JSON:
 				return SchemaType.JSON;
 		}
+		return st;
 	}
 
 	@Bean

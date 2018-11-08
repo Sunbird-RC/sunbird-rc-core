@@ -107,7 +107,7 @@ keycloak:
 
 validation:
   enabled: ${validation_enabled:true}
-  type: ${validation_type:rdf}
+  type: ${validation_type:shex}
   create:
     file: ${validations_create_file:validations_create.shex}
   update:
@@ -198,8 +198,8 @@ keycloak:
 
 validation:
   enabled: ${validation_enabled:true}
-  type: ${validation_type:rdf}
+  type: ${validation_type:shex}
   create:
-    file: good1.shex
+    file: ${validations_create_file:validations_create.shex}
   update:
-    file: good1.shex
+    file: ${validations_update_file:validations_update.shex}

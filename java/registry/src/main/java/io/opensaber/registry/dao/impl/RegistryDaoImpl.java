@@ -951,6 +951,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	}
 
 	public boolean isSingleValued(String property) {
+		boolean singleValued = true;
 		logger.debug("Property being verified for single-valued, multi-valued:" + property);
 		RDFNode rdfNode = ResourceFactory.createResource(property);
 		ResIterator resIter = schemaLoader.getValidationConfig()
@@ -960,23 +961,11 @@ public class RegistryDaoImpl implements RegistryDao {
 			Resource subject = resIter.next();
 			Long minValue = getValueConstraint("http://shex.io/ns/shex#min", subject);
 			Long maxValue = getValueConstraint("http://shex.io/ns/shex#max", subject);
-			if (minValue == null || maxValue == null) {
-				logger.debug("Single-valued");
-				return true;
-			}
-			if (minValue > 1) {
-				logger.debug("Multi-valued");
-				return false;
-			} else if (maxValue > 1) {
-				logger.debug("Multi-valued");
-				return false;
-			} else {
-				logger.debug("Single-valued");
-				return true;
-			}
+
+			singleValued = (minValue > 1 || maxValue > 1);
 		}
 		logger.debug("Property not matching any condition:" + property);
-		return true;
+		return singleValued;
 	}
 
 	private Long getValueConstraint(String constraint, Resource subject) {

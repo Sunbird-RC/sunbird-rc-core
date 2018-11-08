@@ -1,43 +1,20 @@
-<?xml version="1.0"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>io.opensaber</groupId>
-    <artifactId>validators</artifactId>
-    <version>1.0.0</version>
-    <packaging>pom</packaging>
-    <name>validators</name>
-    <url>http://maven.apache.org</url>
-
     <parent>
-        <groupId>io.opensaber</groupId>
-        <artifactId>opensaber</artifactId>
+        <artifactId>validators</artifactId>
         <version>1.0.0</version>
+        <groupId>io.opensaber</groupId>
     </parent>
 
+    <artifactId>jsonvalidator</artifactId>
+    <version>1.0.0</version>
+    <name>Json based Validation</name>
+    <packaging>pom</packaging>
     <modules>
-        <module>rdf</module>
-        <module>json/jsonschema</module>
+        <module>jsonschema</module>
     </modules>
-
-    <dependencies>
-        <dependency>
-            <groupId>io.opensaber</groupId>
-            <artifactId>middleware-commons</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.opensaber.middleware</groupId>
-            <artifactId>validation</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 
 </project>

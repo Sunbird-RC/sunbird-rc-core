@@ -19,10 +19,9 @@
         </repository>
     </repositories>
 
-    <artifactId>jsonvalidator</artifactId>
+    <artifactId>jsonschemavalidator</artifactId>
     <version>1.0.0</version>
-    <name>JSON based validation</name>
-    <packaging>pom</packaging>
+    <name>JSON schema based validation</name>
 
     <dependencies>
         <dependency>

@@ -1,4 +1,4 @@
-package io.opensaber.validators.json;
+package io.opensaber.validators.json.jsonschema;
 
 import java.io.InputStream;
 
