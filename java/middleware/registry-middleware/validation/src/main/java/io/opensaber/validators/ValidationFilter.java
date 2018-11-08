@@ -18,10 +18,15 @@ public class ValidationFilter implements Middleware {
 
 	@Override
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
-		Model rdf = (Model) mapData.get("rdf");
+		Model rdfModel = (Model) mapData.get(Constants.RDF_OBJECT);
+		String method = mapData.get(Constants.METHOD_ORIGIN).toString().replace("/", "");
 
-		validationService.validate(mapData.get("rdf"),
-				mapData.get(Constants.METHOD_ORIGIN).toString().replace("/", ""));
+		if (null == rdfModel) {
+			// json based validation likely
+			validationService.validate(mapData.get(Constants.ATTRIBUTE_NAME), method);
+		} else {
+			validationService.validate(mapData.get("rdf"), method);
+		}
 		return mapData;
 	}
 

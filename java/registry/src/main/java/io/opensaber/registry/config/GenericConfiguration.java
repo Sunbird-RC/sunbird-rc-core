@@ -29,7 +29,6 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.Response;
 import io.opensaber.registry.authorization.AuthorizationFilter;
@@ -56,6 +55,7 @@ import io.opensaber.registry.schema.config.SchemaLoader;
 import io.opensaber.registry.schema.configurator.*;
 import io.opensaber.registry.sink.*;
 import io.opensaber.validators.IValidate;
+import io.opensaber.validators.json.JsonValidationServiceImpl;
 import io.opensaber.validators.rdf.shex.RdfSignatureValidator;
 import io.opensaber.validators.rdf.shex.RdfValidationServiceImpl;
 
@@ -90,6 +90,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${signature.schema.config.name}")
 	private String signatureSchemaConfigName;
+
+	@Value("${validation_type}")
+	private String validationType = "json";
+
+	@Value("${validation_enabled}")
+	private boolean validationEnabled = true;
 
 	@Bean
 	public ObjectMapper objectMapper() {
@@ -126,6 +132,18 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public FrameEntity frameEntity() {
 		return new FrameEntityImpl();
+	}
+
+	@Bean
+	public SchemaType getValidationType() {
+		String validationMechanism = validationType.toLowerCase();
+		SchemaType st = SchemaType.valueOf(validationMechanism);
+		switch (st) {
+			case SHEX:
+				return SchemaType.SHEX;
+			case JSON:
+				return SchemaType.JSON;
+		}
 	}
 
 	@Bean
@@ -176,8 +194,16 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public IValidate validator() throws MiddlewareHaltException, IOException, CustomException {
-		return new RdfValidationServiceImpl(schemaLoader().getSchemaForCreate(), schemaLoader().getSchemaForUpdate());
+	public IValidate validator() throws IOException, CustomException {
+		IValidate validator = null;
+		if (getValidationType() == SchemaType.SHEX) {
+			validator = new RdfValidationServiceImpl(schemaLoader().getSchemaForCreate(), schemaLoader().getSchemaForUpdate());
+		} else if (getValidationType() == SchemaType.JSON) {
+			validator = new JsonValidationServiceImpl();
+		} else {
+		    logger.error("Fatal - not a known validator mentioned in the application configuration.");
+        }
+		return validator;
 	}
 
 	@Bean

@@ -56,13 +56,6 @@ database:
 #    index:
 #      storage.backend: ${cassandr_index_storage:elasticsearch}
 #      hostname: ${cassandra_index_hostname:localhost}
-
-# RDF Validation Config
-validations:
-  create:
-    file: ${validations_create_file:validations_create.shex}
-  update:
-    file: ${validations_update_file:validations_update.shex}
     
 # File for framing the entity while reading
 frame:
@@ -115,6 +108,10 @@ keycloak:
 validation:
   enabled: ${validation_enabled:true}
   type: ${validation_type:rdf}
+  create:
+    file: ${validations_create_file:validations_create.shex}
+  update:
+    file: ${validations_update_file:validations_update.shex}
 
 ---
 ##################################################################
@@ -150,13 +147,6 @@ config:
 
 database:
   provider: TINKERGRAPH
-
-# RDF Validation Config
-validations:
-  create:
-    file: good1.shex
-  update:
-    file: good1.shex
 
 # File for framing the entity while reading
 frame:
@@ -209,3 +199,7 @@ keycloak:
 validation:
   enabled: ${validation_enabled:true}
   type: ${validation_type:rdf}
+  create:
+    file: good1.shex
+  update:
+    file: good1.shex

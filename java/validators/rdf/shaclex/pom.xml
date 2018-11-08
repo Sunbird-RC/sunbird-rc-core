@@ -30,12 +30,6 @@
     <artifactId>shaclex</artifactId>
     <version>1.0.0</version>
     <name>shaclex</name>
-    <properties>
-        <jacoco.version>0.8.1</jacoco.version>
-        <junit.version>4.12</junit.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
 
     <dependencies>
         <dependency>
