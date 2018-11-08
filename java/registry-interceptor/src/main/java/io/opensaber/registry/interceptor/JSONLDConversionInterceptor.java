@@ -56,7 +56,7 @@ public class JSONLDConversionInterceptor extends BaseResponseHandler implements 
 	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
 			Exception ex) {
-
+		// Nothing to do.
 	}
 
 }

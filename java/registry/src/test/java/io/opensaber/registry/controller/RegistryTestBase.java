@@ -156,13 +156,14 @@ public class RegistryTestBase {
 
 	public Graph generateGraphFromRDF(Graph newGraph, Model rdfModel)
 			throws EntityCreationException, MultipleEntityException {
+		Graph generatedGraph = null;
 		StmtIterator iterator = rdfModel.listStatements();
 		while (iterator.hasNext()) {
 			Statement rdfStatement = iterator.nextStatement();
 			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			newGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph, registryContextBase);
+			generatedGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph, registryContextBase);
 		}
-		return newGraph;
+		return generatedGraph;
 	}
 
 }

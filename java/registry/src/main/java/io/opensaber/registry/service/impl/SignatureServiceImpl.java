@@ -23,8 +23,6 @@ import io.opensaber.registry.service.SignatureService;
 public class SignatureServiceImpl implements SignatureService {
 
 	private static Logger logger = LoggerFactory.getLogger(SignatureService.class);
-	private Type mapType = new TypeToken<Map<String, Object>>() {
-	}.getType();
 	@Value("${signature.healthCheckURL}")
 	private String healthCheckURL;
 	@Value("${signature.signURL}")
