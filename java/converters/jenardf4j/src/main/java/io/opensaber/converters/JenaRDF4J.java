@@ -35,7 +35,7 @@ public class JenaRDF4J {
 	 *            the jena resource to convert
 	 * @return the jena resource as a rdf4j resource
 	 */
-	public static org.eclipse.rdf4j.model.Resource asrdf4jResource(org.apache.jena.rdf.model.Resource theRes) {
+	public static org.eclipse.rdf4j.model.Resource asrdf4jResource(Resource theRes) {
 		if (theRes == null) {
 			return null;
 		} else if (theRes.canAs(Property.class)) {
