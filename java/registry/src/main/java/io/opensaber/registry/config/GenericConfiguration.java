@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.opensaber.registry.schema.configurator.*;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -53,10 +54,6 @@ import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaLoader;
-import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
-import io.opensaber.registry.schema.configurator.SchemaConfiguratorFactory;
-import io.opensaber.registry.schema.configurator.SchemaType;
-import io.opensaber.registry.schema.configurator.ShexSchemaConfigurator;
 import io.opensaber.registry.sink.*;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
