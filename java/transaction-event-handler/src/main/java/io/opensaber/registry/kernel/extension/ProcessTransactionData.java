@@ -32,16 +32,6 @@ public class ProcessTransactionData {
 		this.graphDb = graphDb;
 	}
 
-	private static String format(Date date) {
-		if (null != date) {
-			try {
-				return sdf.format(date);
-			} catch (Exception e) {
-			}
-		}
-		return null;
-	}
-
 	public void processTxnData(TransactionData data) {
 		try {
 			List<Map<String, Object>> kafkaMessages = getMessageObj(data);

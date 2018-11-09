@@ -92,9 +92,6 @@ public class RegistryServiceImpl implements RegistryService {
 	@Value("${registry.context.base}")
 	private String registryContextBase;
 
-	@Value("${registry.system.base}")
-	private String registrySystemBase;
-
 	@Value("${registry.rootEntity.type}")
 	private String registryRootEntityType;
 
@@ -214,17 +211,19 @@ public class RegistryServiceImpl implements RegistryService {
 				Resource root = getRootNode(entity);
 				String label = getRootLabel(root);
 				String rootType = getTypeForRootLabel(entity, root);
-				if (rootType.equalsIgnoreCase(registryContextBase + registryRootEntityType)) {
-					if (encryptionEnabled) {
-						encryptModel(entity);
-					}
-					Graph graph = generateGraphFromRDF(entity);
-					logger.debug("Service layer graph :", graph);
-					isUpdated = registryDao.updateEntity(graph, label, Constants.UPDATE_METHOD_ORIGIN);
-					if (signatureEnabled) {
-						getEntityAndUpdateSign(entity, label);
-					}
+				if (encryptionEnabled) {
+					encryptModel(entity);
 				}
+				Graph graph = generateGraphFromRDF(entity);
+				logger.debug("Service layer graph :", graph);
+				isUpdated = registryDao.updateEntity(graph, label, Constants.UPDATE_METHOD_ORIGIN);
+				if (signatureEnabled) {
+					if (!rootType.equalsIgnoreCase(registryContextBase + registryRootEntityType)) {
+						label = registryDao.getRootLabelForNodeLabel(label);
+					}
+					getEntityAndUpdateSign(label);
+				}
+
 			} else {
 				// else part for json validation
 			}
@@ -235,7 +234,7 @@ public class RegistryServiceImpl implements RegistryService {
 
 	/**
 	 * This method will get entity details and sign the entity and will update
-	 * 
+	 *
 	 * @param entity
 	 * @param label
 	 * @throws EncryptionException
@@ -247,9 +246,9 @@ public class RegistryServiceImpl implements RegistryService {
 	 * @throws SignatureException.UnreachableException
 	 * @throws SignatureException.CreationException
 	 */
-	void getEntityAndUpdateSign(Model entity, String label) throws EncryptionException, AuditFailedException,
-			RecordNotFoundException, EntityCreationException, IOException, MultipleEntityException,
-			SignatureException.UnreachableException, SignatureException.CreationException {
+	void getEntityAndUpdateSign(String label) throws EncryptionException, AuditFailedException, RecordNotFoundException,
+			EntityCreationException, IOException, MultipleEntityException, SignatureException.UnreachableException,
+			SignatureException.CreationException {
 		final String ID_REGEX = "\"@id\"\\s*:\\s*\"[a-z]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\",";
 		Map signReq = new HashMap<String, Object>();
 		RegistrySignature rs = new RegistrySignature();
@@ -261,8 +260,8 @@ public class RegistryServiceImpl implements RegistryService {
 		Map<String, Object> entitySignMap = (Map<String, Object>) signatureService.sign(signReq);
 		entitySignMap.put("createdDate", rs.getCreatedTimestamp());
 		entitySignMap.put("keyUrl", signatureKeyURl);
-		Graph graph = generateGraphFromRDF(RDFUtil.getUpdatedSignedModel(entity, registryContextBase, signatureDomain,
-				entitySignMap, signatureModel));
+		Graph graph = generateGraphFromRDF(RDFUtil.getUpdatedSignedModel(jenaEntityModel, registryContextBase,
+				signatureDomain, entitySignMap, signatureModel));
 		registryDao.updateEntity(graph, label, "update");
 	}
 

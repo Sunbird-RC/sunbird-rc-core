@@ -79,6 +79,7 @@ public class Constants {
 	public static final String REGISTRY_SEARCH_ENDPOINT = "/search";
 	public static final String SIGNATURE_SIGN_ENDPOINT = "/utils/sign";
 	public static final String SIGNATURE_VERIFY_ENDPOINT = "/utils/verify";
+
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH");
 

@@ -51,9 +51,6 @@ public class RegistryUtilsController {
 	@Autowired
 	private OpenSaberInstrumentation watch;
 
-	@Value("${registry.context.base}")
-	private String registryContext;
-
 	@Value("${frame.file}")
 	private String frameFile;
 
