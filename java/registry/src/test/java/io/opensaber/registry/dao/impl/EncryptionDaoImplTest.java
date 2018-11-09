@@ -212,7 +212,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		getVertexWithMultipleProperties(label, map);
 		String response = registryDao.addEntity(graph, label, null, null);
 		registryDao.getEntityById(response, false);
-		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
+		verify(encryptionMock, times(1)).encrypt(anyMap());
 	}
 
 	@Test

@@ -5,6 +5,7 @@ import java.util.Vector;
 import org.apache.jena.rdf.model.*;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -29,12 +30,12 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert the given Jena Resource into a rdf4j Resource
-	 * 
+	 *
 	 * @param theRes
 	 *            the jena resource to convert
 	 * @return the jena resource as a rdf4j resource
 	 */
-	public static org.eclipse.rdf4j.model.Resource asrdf4jResource(org.apache.jena.rdf.model.Resource theRes) {
+	public static org.eclipse.rdf4j.model.Resource asrdf4jResource(Resource theRes) {
 		if (theRes == null) {
 			return null;
 		} else if (theRes.canAs(Property.class)) {
@@ -46,7 +47,7 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert the given Jena Property instance to a rdf4j IRI instance
-	 * 
+	 *
 	 * @param theProperty
 	 *            the Jena Property to convert
 	 * @return the Jena property as a rdf4j Instance
@@ -61,7 +62,7 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert the given Jena Literal to a rdf4j Literal
-	 * 
+	 *
 	 * @param theLiteral
 	 *            the Jena Literal to convert
 	 * @return the Jena Literal as a rdf4j Literal
@@ -80,29 +81,29 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert the given Jena node as a rdf4j Value
-	 * 
+	 *
 	 * @param theNode
 	 *            the Jena node to convert
 	 * @return the jena node as a rdf4j Value
 	 */
-	public static org.eclipse.rdf4j.model.Value asrdf4jValue(org.apache.jena.rdf.model.RDFNode theNode) {
+	public static Value asrdf4jValue(RDFNode theNode) {
 		if (theNode == null) {
 			return null;
 		} else if (theNode.canAs(Literal.class)) {
-			return asrdf4jLiteral(theNode.as(org.apache.jena.rdf.model.Literal.class));
+			return asrdf4jLiteral(theNode.as(Literal.class));
 		} else {
-			return asrdf4jResource(theNode.as(org.apache.jena.rdf.model.Resource.class));
+			return asrdf4jResource(theNode.as(Resource.class));
 		}
 	}
 
 	/**
 	 * Convert the given rdf4j Resource to a Jena Resource
-	 * 
+	 *
 	 * @param theRes
 	 *            the rdf4j resource to convert
 	 * @return the rdf4j resource as a jena resource
 	 */
-	public static org.apache.jena.rdf.model.Resource asJenaResource(org.eclipse.rdf4j.model.Resource theRes) {
+	public static Resource asJenaResource(org.eclipse.rdf4j.model.Resource theRes) {
 		if (theRes == null) {
 			return null;
 		} else if (theRes instanceof IRI) {
@@ -114,12 +115,12 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert the rdf4j value to a Jena Node
-	 * 
+	 *
 	 * @param theValue
 	 *            the rdf4j value
 	 * @return the rdf4j value as a Jena node
 	 */
-	public static org.apache.jena.rdf.model.RDFNode asJenaNode(org.eclipse.rdf4j.model.Value theValue) {
+	public static RDFNode asJenaNode(org.eclipse.rdf4j.model.Value theValue) {
 		if (theValue instanceof org.eclipse.rdf4j.model.Literal) {
 			return asJenaLiteral((org.eclipse.rdf4j.model.Literal) theValue);
 		} else {
@@ -129,7 +130,7 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert the rdf4j URI to a Jena Property
-	 * 
+	 *
 	 * @param theIRI
 	 *            the rdf4j URI
 	 * @return the URI as a Jena property
@@ -144,7 +145,7 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert a rdf4j Literal to a Jena Literal
-	 * 
+	 *
 	 * @param theLiteral
 	 *            the rdf4j literal
 	 * @return the rdf4j literal converted to Jena
@@ -163,13 +164,13 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert the rdf4j Graph to a Jena Model
-	 * 
+	 *
 	 * @param theModel
 	 *            the Model to convert
 	 * @return the set of statements in the rdf4j Model converted and saved in a
 	 *         Jena Model
 	 */
-	public static org.apache.jena.rdf.model.Model asJenaModel(org.eclipse.rdf4j.model.Model theModel) {
+	public static Model asJenaModel(org.eclipse.rdf4j.model.Model theModel) {
 		Model aModel = ModelFactory.createDefaultModel();
 
 		for (final org.eclipse.rdf4j.model.Statement aStmt : theModel) {
@@ -181,7 +182,7 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert the Jena Model to a rdf4j Model
-	 * 
+	 *
 	 * @param theModel
 	 *            the model to convert
 	 * @return the set of statements in the Jena model saved in a rdf4j Graph
@@ -199,7 +200,7 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert a Jena Statement to a rdf4j statement
-	 * 
+	 *
 	 * @param theStatement
 	 *            the statement to convert
 	 * @return the equivalent rdf4j statement
@@ -212,7 +213,7 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert a rdf4j statement to a Jena statement
-	 * 
+	 *
 	 * @param theStatement
 	 *            the statement to convert
 	 * @return the equivalent Jena statement

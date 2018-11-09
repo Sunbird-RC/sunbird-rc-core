@@ -92,9 +92,6 @@ public class RegistryServiceImpl implements RegistryService {
 	@Value("${registry.context.base}")
 	private String registryContextBase;
 
-	@Value("${registry.system.base}")
-	private String registrySystemBase;
-
 	@Value("${registry.rootEntity.type}")
 	private String registryRootEntityType;
 

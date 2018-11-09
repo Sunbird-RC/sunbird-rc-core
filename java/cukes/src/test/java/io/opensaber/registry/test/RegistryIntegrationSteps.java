@@ -45,7 +45,6 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 	private RestTemplate restTemplate;
 	private String baseUrl;
 	private ResponseEntity<Response> response;
-	private Response responseObj;
 	private String labelToFetch;
 	private String id;
 	private HttpHeaders headers;
