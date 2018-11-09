@@ -19,6 +19,7 @@ public class RDFConverter implements Middleware {
 	private static Logger logger = LoggerFactory.getLogger(RDFConverter.class);
 
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
+		logger.info("LD converting to RDF");
 		Object jsonld = mapData.get(Constants.ATTRIBUTE_NAME);
 		if (jsonld == null) {
 			throw new MiddlewareHaltException(JSONLD_DATA_IS_MISSING);

@@ -15,8 +15,9 @@ public class TinkerGraphProvider extends DatabaseProvider {
 	private Graph graph;
 	private Object environment;
 
-	public TinkerGraphProvider(Environment environment2) {
+	public TinkerGraphProvider(Environment inputEnv) {
 		graph = TinkerGraph.open();
+		environment = inputEnv;
 	}
 
 	@Override

@@ -34,7 +34,6 @@ public class RegistryTestBase {
 	public String jsonld;
 	@Value("${registry.context.base}")
 	private String registryContextBase;
-	private Graph graph;
 
 	public static String generateRandomId() {
 		return UUID.randomUUID().toString();

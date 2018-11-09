@@ -35,16 +35,13 @@ public class SearchIntegrationTestSteps extends RegistryTestBase implements En {
 	private static final String CREATE_REST_ENDPOINT = "add";
 	private static final String SEARCH_REST_ENDPOINT = "search";
 	private static final String VALID_JSONLD_FILE = "create_teacher.jsonld";
-	private static final String SEARCH_REQUEST_FILE = "base_search_context.jsonld";
 	private static ObjectMapper mapper = new ObjectMapper();
 	Type type = new TypeToken<Map<String, String>>() {
 	}.getType();
 	private String baseUrl;
 	private ResponseEntity<Response> response, auditBeforeUpdate, auditAfterUpdate;
-	private String id;
 	private HttpHeaders headers;
 	private ObjectNode baseJson;
-	private ObjectNode inputJson;
 
 	public SearchIntegrationTestSteps() throws IOException {
 		initialize();

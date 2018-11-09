@@ -18,8 +18,6 @@ public class ValidationFilter implements Middleware {
 
 	@Override
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
-		Model rdf = (Model) mapData.get("rdf");
-
 		validationService.validate(mapData.get("rdf"),
 				mapData.get(Constants.METHOD_ORIGIN).toString().replace("/", ""));
 		return mapData;

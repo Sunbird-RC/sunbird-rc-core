@@ -60,8 +60,6 @@ public class RegistryController {
 	private boolean auditEnabled;
 	@Value("${signature.domain}")
 	private String signatureDomain;
-	@Value("${signature.enabled}")
-	private boolean signatureEnabled;
 	@Value("${signature.keysURL}")
 	private String signatureKeyURl;
 	@Value("${frame.file}")
@@ -79,7 +77,6 @@ public class RegistryController {
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
-		RegistrySignature rs = new RegistrySignature();
 
 		try {
 			watch.start("RegistryController.addToExistingEntity");
