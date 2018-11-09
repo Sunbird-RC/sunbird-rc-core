@@ -3,8 +3,6 @@ package io.opensaber.validators;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.jena.rdf.model.Model;
-
 import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;

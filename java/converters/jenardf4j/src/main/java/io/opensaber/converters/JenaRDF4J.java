@@ -213,7 +213,7 @@ public class JenaRDF4J {
 
 	/**
 	 * Convert a rdf4j statement to a Jena statement
-	 * 
+	 *
 	 * @param theStatement
 	 *            the statement to convert
 	 * @return the equivalent Jena statement
