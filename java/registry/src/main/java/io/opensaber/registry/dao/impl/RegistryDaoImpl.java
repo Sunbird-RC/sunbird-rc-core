@@ -962,7 +962,8 @@ public class RegistryDaoImpl implements RegistryDao {
 			Long minValue = getValueConstraint("http://shex.io/ns/shex#min", subject);
 			Long maxValue = getValueConstraint("http://shex.io/ns/shex#max", subject);
 
-			singleValued = (minValue > 1 || maxValue > 1);
+			singleValued = (minValue == null || maxValue == null) ||
+							(minValue > 1 || maxValue > 1);
 		}
 		logger.debug("Property not matching any condition:" + property);
 		return singleValued;

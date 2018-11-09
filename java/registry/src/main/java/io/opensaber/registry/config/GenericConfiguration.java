@@ -183,7 +183,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public SchemaLoader schemaLoader() throws CustomException, IOException {
+	public SchemaLoader shexSchemaLoader() throws CustomException, IOException {
 		String validationConfigFileForCreate = environment.getProperty(Constants.SHEX_CREATE_PROPERTY_NAME);
 		String validationConfigFileForUpdate = environment.getProperty(Constants.SHEX_UPDATE_PROPERTY_NAME);
 		if (validationConfigFileForCreate == null || validationConfigFileForUpdate == null) {
@@ -198,7 +198,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public IValidate validator() throws IOException, CustomException {
 		IValidate validator = null;
 		if (getValidationType() == SchemaType.SHEX) {
-			validator = new RdfValidationServiceImpl(schemaLoader().getSchemaForCreate(), schemaLoader().getSchemaForUpdate());
+			validator = new RdfValidationServiceImpl(shexSchemaLoader().getSchemaForCreate(), shexSchemaLoader().getSchemaForUpdate());
 		} else if (getValidationType() == SchemaType.JSON) {
 			validator = new JsonValidationServiceImpl();
 		} else {
@@ -232,10 +232,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Bean
 	public RdfSignatureValidator signatureValidator() throws CustomException, IOException, MiddlewareHaltException {
-		String schemaContent = schemaConfiguratorFactory().getInstance(SchemaType.SHEX).getSchemaContent();
-		return new RdfSignatureValidator(schemaLoader().getSchemaForCreate(), schemaContent, registryContextBase,
-				registrySystemBase, signatureSchemaConfigName,
-				((RdfValidationServiceImpl) validator()).getShapeTypeMap());
+		if (validationType.toUpperCase().compareTo(SchemaType.SHEX.name()) == 0) {
+			String schemaContent = schemaConfiguratorFactory().getInstance(SchemaType.SHEX).getSchemaContent();
+			return new RdfSignatureValidator(shexSchemaLoader().getSchemaForCreate(), schemaContent, registryContextBase,
+					registrySystemBase, signatureSchemaConfigName,
+					((RdfValidationServiceImpl) validator()).getShapeTypeMap());
+		} else {
+			return null;
+		}
 	}
 
 	@Bean
@@ -289,7 +293,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public Middleware rdfValidationMapper() {
 		Model validationConfig = null;
 		try {
-			validationConfig = schemaLoader().getValidationConfig();
+			validationConfig = shexSchemaLoader().getValidationConfig();
 		} catch (Exception e) {
 			logger.error("Unable to get validation configuration");
 		}
