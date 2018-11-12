@@ -12,8 +12,9 @@ script:
 - cd ${TRAVIS_BUILD_DIR}/java/registry && mvn clean install >> build.log
 notifications:
   slack:
-    secure: jpGKuDLl1gi9k5iy+ZrK4V/rY0zk1OPC6078zV9YcHf3FjBsMwqM/MTtCPujCeLdIEQzYtPphCJXlUXKBsMDmi31uNKy55e9LpcE41gbVmDN0GQFMjNSFVHQpD+83XZHlTYetiXHxO+MzUet6ahSWC/zUAzCfoLP+5uvRO7+huFl1fFQKzP2pM03tU4CzOVNa6hmN+rtsukIYWebqLtOBqg2HMdX0s9IgOzIKVAPffode/aqyGOeEZseAjV+7RaiSyVa8wjmcpDbAaLSzfWs9dT+MrPtIRrR71ufbkTyJsGDvzbpZJWlkWZ/wUpA8ewUw5t01o9kwb0ldzCUWgsY+Bg9lD7f49yFFekDVI7rL8FPTfrgg0/vam/8CRyGvcwjGVSfnkP7j2U9D81SRlS9/1wX2fWYkJQvDTtXEP2UXPS7ut4pE51BY7uj815rQI/hLe/oeRJbVdUOYYHEpfLt2h7MXzjpbwHCM/KuLnVSSE6ZofQlkPyfm+QK5OwbL+uqE+CWSiXOymy/3eEn687gvVE2djdHgxk/RPUSov8PwtoQP2/V2OBocdUStNsgPbZgC8YYIcG93xovKMmXTtordo+orYLKYTuTOHcNwhW1S5lRaD80g9XRlbLtUz6BPVO/beiJT7499+hlHpFutPr4gyH5lNFqY8uPx7iRzkC5Io8=
-    on_success: change
+    rooms:
+      secure: jpGKuDLl1gi9k5iy+ZrK4V/rY0zk1OPC6078zV9YcHf3FjBsMwqM/MTtCPujCeLdIEQzYtPphCJXlUXKBsMDmi31uNKy55e9LpcE41gbVmDN0GQFMjNSFVHQpD+83XZHlTYetiXHxO+MzUet6ahSWC/zUAzCfoLP+5uvRO7+huFl1fFQKzP2pM03tU4CzOVNa6hmN+rtsukIYWebqLtOBqg2HMdX0s9IgOzIKVAPffode/aqyGOeEZseAjV+7RaiSyVa8wjmcpDbAaLSzfWs9dT+MrPtIRrR71ufbkTyJsGDvzbpZJWlkWZ/wUpA8ewUw5t01o9kwb0ldzCUWgsY+Bg9lD7f49yFFekDVI7rL8FPTfrgg0/vam/8CRyGvcwjGVSfnkP7j2U9D81SRlS9/1wX2fWYkJQvDTtXEP2UXPS7ut4pE51BY7uj815rQI/hLe/oeRJbVdUOYYHEpfLt2h7MXzjpbwHCM/KuLnVSSE6ZofQlkPyfm+QK5OwbL+uqE+CWSiXOymy/3eEn687gvVE2djdHgxk/RPUSov8PwtoQP2/V2OBocdUStNsgPbZgC8YYIcG93xovKMmXTtordo+orYLKYTuTOHcNwhW1S5lRaD80g9XRlbLtUz6BPVO/beiJT7499+hlHpFutPr4gyH5lNFqY8uPx7iRzkC5Io8=
+    on_success: always
     on_failure: always
 after_failure:
   # dump the last 4000 lines of our build, and hope the error is in that!
