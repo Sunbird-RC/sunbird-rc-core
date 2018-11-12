@@ -143,13 +143,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public SchemaType getValidationType() {
 		String validationMechanism = validationType.toUpperCase();
-		SchemaType st = SchemaType.valueOf(validationMechanism);
-		switch (st) {
-			case SHEX:
-				return SchemaType.SHEX;
-			case JSON:
-				return JSON;
-		}
+		SchemaType st = SchemaType.valueOf("ad");
+
 		return st;
 	}
 
@@ -204,18 +199,20 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public IValidate validator() throws IOException, CustomException {
 		IValidate validator = null;
 		if (getValidationType() == SchemaType.SHEX) {
-			validator = new RdfValidationServiceImpl(shexSchemaLoader().getSchemaForCreate(), shexSchemaLoader().getSchemaForUpdate());
+			validator = new RdfValidationServiceImpl(shexSchemaLoader().getSchemaForCreate(),
+					shexSchemaLoader().getSchemaForUpdate());
 		} else if (getValidationType() == JSON) {
 			validator = new JsonValidationServiceImpl();
 		} else {
-		    logger.error("Fatal - not a known validator mentioned in the application configuration.");
-        }
+			logger.error("Fatal - not a known validator mentioned in the application configuration.");
+		}
 		return validator;
 	}
 
 	/**
-	 * Reads the application configuration for validation type to generate an appropriate
-	 * schemaConfigurator object
+	 * Reads the application configuration for validation type to generate an
+	 * appropriate schemaConfigurator object
+	 * 
 	 * @return
 	 * @throws CustomException
 	 * @throws IOException
@@ -234,6 +231,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			break;
 		case SHEX:
 			schemaConfigurator = shexSchemaConfigurator();
+			break;
+		default:
+			schemaConfigurator = null;
 			break;
 		}
 
@@ -262,8 +262,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public RdfSignatureValidator signatureValidator() throws CustomException, IOException, MiddlewareHaltException {
 		if (validationType.toUpperCase().compareTo(SchemaType.SHEX.name()) == 0) {
 			String schemaContent = schemaConfigurator().getSchemaContent();
-			return new RdfSignatureValidator(shexSchemaLoader().getSchemaForCreate(), schemaContent, registryContextBase,
-					registrySystemBase, signatureSchemaConfigName,
+			return new RdfSignatureValidator(shexSchemaLoader().getSchemaForCreate(), schemaContent,
+					registryContextBase, registrySystemBase, signatureSchemaConfigName,
 					((RdfValidationServiceImpl) validator()).getShapeTypeMap());
 		} else {
 			return null;
@@ -345,7 +345,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	/**
-	 * This method will process all the interceptors for each request
+	 * This method attaches the required interceptors. The flags that control the
+	 * attachment are read from application configuration.
 	 * 
 	 * @param registry
 	 */
@@ -353,8 +354,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public void addInterceptors(InterceptorRegistry registry) {
 		int orderIdx = 1;
 		Map<String, String> requestMap = requestIdMap();
-		registry.addInterceptor(requestIdValidationInterceptor()).addPathPatterns(new ArrayList(requestMap.keySet()))
-				.order(orderIdx++);
+		if (validationEnabled) {
+			registry.addInterceptor(requestIdValidationInterceptor())
+					.addPathPatterns(new ArrayList(requestMap.keySet())).order(orderIdx++);
+		}
+
 		if (authenticationEnabled) {
 			registry.addInterceptor(authorizationInterceptor()).addPathPatterns("/**")
 					.excludePathPatterns("/health", "/error", "/_schemas/**").order(orderIdx++);

@@ -12,9 +12,11 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.validators.IValidate;
 
 public class JsonValidationServiceImpl implements IValidate {
-	private Schema schema;
 
 	private void entity() {
+		// TODO: This can move to be a member when we want to validate.
+		// Stubbing for now.
+		Schema schema;
 		InputStream schemaStream = JsonValidationServiceImpl.class.getResourceAsStream("public/_schemas/Teacher.json");
 		JSONObject rawSchema = new JSONObject(new JSONTokener(schemaStream));
 		SchemaLoader schemaLoader = SchemaLoader.builder().schemaJson(rawSchema).draftV7Support()
@@ -26,7 +28,6 @@ public class JsonValidationServiceImpl implements IValidate {
 	public ValidationResponse validate(Object input, String methodOrigin) throws MiddlewareHaltException {
 	    entity();
 		String inputStr = input.toString();
-		return null;
-
+		return new ValidationResponse(inputStr);
 	}
 }

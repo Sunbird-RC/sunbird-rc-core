@@ -17,7 +17,7 @@ public class ShexSchemaConfiguratorTest {
 	private static ShexSchemaConfigurator shexSchemaConfigurator;
 
 	@BeforeClass
-	public static void setup() throws IOException {
+	public static void setUp() throws IOException {
 		shexSchemaConfigurator = new ShexSchemaConfigurator(CONFIG_SCHEMA_FILE);
 	}
 
