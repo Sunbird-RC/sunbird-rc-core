@@ -35,6 +35,10 @@ public class RdfValidationServiceImpl implements IValidate {
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;
 
+	private RdfValidationServiceImpl() {
+		// Disallow without schema
+	}
+
 	public RdfValidationServiceImpl(Schema createSchema, Schema updateSchema) {
 		this.schemaForCreate = createSchema;
 		this.schemaForUpdate = updateSchema;

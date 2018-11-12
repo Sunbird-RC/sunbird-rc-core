@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.jena.rdf.model.*;
@@ -34,8 +35,6 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaLoader;
-import io.opensaber.registry.schema.configurator.SchemaConfiguratorFactory;
-import io.opensaber.registry.schema.configurator.SchemaType;
 import io.opensaber.registry.sink.DatabaseProvider;
 
 @Component
@@ -55,7 +54,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	@Autowired
 	private SchemaLoader schemaLoader;
 	@Autowired
-	private SchemaConfiguratorFactory schemaConfiguratorFactory;
+	private ISchemaConfigurator schemaConfigurator;
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
 
@@ -741,8 +740,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		while (iter.hasNext()) {
 			VertexProperty<Object> property = iter.next();
 			String tailOfPropertyKey = property.key().substring(property.key().lastIndexOf("/") + 1).trim();
-			boolean existingEncyptedPropertyKey = schemaConfiguratorFactory.getInstance(SchemaType.SHEX)
-					.isEncrypted(tailOfPropertyKey);
+			boolean existingEncyptedPropertyKey = schemaConfigurator.isEncrypted(tailOfPropertyKey);
 			if ((methodOrigin.equalsIgnoreCase(Constants.CREATE_METHOD_ORIGIN)
 					|| methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN))) {
 				setProperty(newSubject, property.key(), property.value(), methodOrigin);
@@ -969,7 +967,8 @@ public class RegistryDaoImpl implements RegistryDao {
 		}
 	}
 
-	private boolean isSingleValued(String property) {
+	public boolean isSingleValued(String property) {
+		boolean singleValued = true;
 		logger.debug("Property being verified for single-valued, multi-valued:" + property);
 		RDFNode rdfNode = ResourceFactory.createResource(property);
 		ResIterator resIter = schemaLoader.getValidationConfig()
@@ -979,23 +978,12 @@ public class RegistryDaoImpl implements RegistryDao {
 			Resource subject = resIter.next();
 			Long minValue = getValueConstraint("http://shex.io/ns/shex#min", subject);
 			Long maxValue = getValueConstraint("http://shex.io/ns/shex#max", subject);
-			if (minValue == null || maxValue == null) {
-				logger.debug("Single-valued");
-				return true;
-			}
-			if (minValue > 1) {
-				logger.debug("Multi-valued");
-				return false;
-			} else if (maxValue > 1) {
-				logger.debug("Multi-valued");
-				return false;
-			} else {
-				logger.debug("Single-valued");
-				return true;
-			}
+
+			singleValued = (minValue == null || maxValue == null) ||
+							(minValue > 1 || maxValue > 1);
 		}
 		logger.debug("Property not matching any condition:" + property);
-		return true;
+		return singleValued;
 	}
 
 	private Long getValueConstraint(String constraint, Resource subject) {
