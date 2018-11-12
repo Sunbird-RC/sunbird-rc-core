@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
@@ -42,8 +43,6 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.model.RegistrySignature;
-import io.opensaber.registry.schema.configurator.SchemaConfiguratorFactory;
-import io.opensaber.registry.schema.configurator.SchemaType;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SignatureService;
@@ -67,7 +66,7 @@ public class RegistryServiceImpl implements RegistryService {
 	@Autowired
 	private RegistryDao registryDao;
 	@Autowired
-	private SchemaConfiguratorFactory schemaConfiguratorFactory;
+	private ISchemaConfigurator schemaConfigurator;
 	@Value("${encryption.enabled}")
 	private boolean encryptionEnabled;
 
@@ -235,7 +234,6 @@ public class RegistryServiceImpl implements RegistryService {
 	/**
 	 * This method will get entity details and sign the entity and will update
 	 *
-	 * @param entity
 	 * @param label
 	 * @throws EncryptionException
 	 * @throws AuditFailedException
@@ -412,8 +410,7 @@ public class RegistryServiceImpl implements RegistryService {
 
 	private void setModelWithEncryptedOrDecryptedAttributes(Model rdfModel, boolean isEncryptionRequired)
 			throws EncryptionException {
-		List<String> privateProperties = schemaConfiguratorFactory.getInstance(SchemaType.SHEX)
-				.getAllPrivateProperties();
+		List<String> privateProperties = schemaConfigurator.getAllPrivateProperties();
 
 		Map<Resource, Map<String, Object>> toBeEncryptedOrDecryptedAttributes = new HashMap<Resource, Map<String, Object>>();
 		TypeMapper tm = TypeMapper.getInstance();
@@ -491,7 +488,7 @@ public class RegistryServiceImpl implements RegistryService {
 					if (isEncryptionRequired) {
 						predicateStr = predicateStr.replace(tailOfPredicateStr, "encrypted" + tailOfPredicateStr);
 					} else {
-						if (schemaConfiguratorFactory.getInstance(SchemaType.SHEX).isEncrypted(tailOfPredicateStr)) {
+						if (schemaConfigurator.isEncrypted(tailOfPredicateStr)) {
 							predicateStr = predicateStr.replace(tailOfPredicateStr, tailOfPredicateStr.substring(9));
 						}
 					}

@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.jena.rdf.model.*;
@@ -34,8 +35,6 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaLoader;
-import io.opensaber.registry.schema.configurator.SchemaConfiguratorFactory;
-import io.opensaber.registry.schema.configurator.SchemaType;
 import io.opensaber.registry.sink.DatabaseProvider;
 
 @Component
@@ -55,7 +54,7 @@ public class RegistryDaoImpl implements RegistryDao {
 	@Autowired
 	private SchemaLoader schemaLoader;
 	@Autowired
-	private SchemaConfiguratorFactory schemaConfiguratorFactory;
+	private ISchemaConfigurator schemaConfigurator;
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
 
@@ -741,8 +740,7 @@ public class RegistryDaoImpl implements RegistryDao {
 		while (iter.hasNext()) {
 			VertexProperty<Object> property = iter.next();
 			String tailOfPropertyKey = property.key().substring(property.key().lastIndexOf("/") + 1).trim();
-			boolean existingEncyptedPropertyKey = schemaConfiguratorFactory.getInstance(SchemaType.SHEX)
-					.isEncrypted(tailOfPropertyKey);
+			boolean existingEncyptedPropertyKey = schemaConfigurator.isEncrypted(tailOfPropertyKey);
 			if ((methodOrigin.equalsIgnoreCase(Constants.CREATE_METHOD_ORIGIN)
 					|| methodOrigin.equalsIgnoreCase(Constants.UPDATE_METHOD_ORIGIN))) {
 				setProperty(newSubject, property.key(), property.value(), methodOrigin);

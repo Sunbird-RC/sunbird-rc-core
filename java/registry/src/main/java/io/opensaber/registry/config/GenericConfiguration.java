@@ -1,11 +1,12 @@
 package io.opensaber.registry.config;
 
+import static io.opensaber.registry.schema.configurator.SchemaType.JSON;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.opensaber.registry.schema.configurator.*;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -54,6 +55,10 @@ import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaLoader;
+import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
+import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
+import io.opensaber.registry.schema.configurator.SchemaType;
+import io.opensaber.registry.schema.configurator.ShexSchemaConfigurator;
 import io.opensaber.registry.sink.*;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
@@ -143,7 +148,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			case SHEX:
 				return SchemaType.SHEX;
 			case JSON:
-				return SchemaType.JSON;
+				return JSON;
 		}
 		return st;
 	}
@@ -200,7 +205,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		IValidate validator = null;
 		if (getValidationType() == SchemaType.SHEX) {
 			validator = new RdfValidationServiceImpl(shexSchemaLoader().getSchemaForCreate(), shexSchemaLoader().getSchemaForUpdate());
-		} else if (getValidationType() == SchemaType.JSON) {
+		} else if (getValidationType() == JSON) {
 			validator = new JsonValidationServiceImpl();
 		} else {
 		    logger.error("Fatal - not a known validator mentioned in the application configuration.");
@@ -208,9 +213,31 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return validator;
 	}
 
+	/**
+	 * Reads the application configuration for validation type to generate an appropriate
+	 * schemaConfigurator object
+	 * @return
+	 * @throws CustomException
+	 * @throws IOException
+	 */
 	@Bean
-	public SchemaConfiguratorFactory schemaConfiguratorFactory() {
-		return new SchemaConfiguratorFactory(environment);
+	public ISchemaConfigurator schemaConfigurator() throws CustomException, IOException {
+		SchemaType schemaType = SchemaType.valueOf(validationType.toUpperCase());
+		ISchemaConfigurator schemaConfigurator = null;
+		String schemaFile = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
+		if (schemaFile == null) {
+			throw new IOException(Constants.SCHEMA_CONFIGURATION_MISSING);
+		}
+		switch (schemaType) {
+		case JSON:
+			schemaConfigurator = jsonSchemaConfigurator();
+			break;
+		case SHEX:
+			schemaConfigurator = shexSchemaConfigurator();
+			break;
+		}
+
+		return schemaConfigurator;
 	}
 
 	@Bean
@@ -234,7 +261,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public RdfSignatureValidator signatureValidator() throws CustomException, IOException, MiddlewareHaltException {
 		if (validationType.toUpperCase().compareTo(SchemaType.SHEX.name()) == 0) {
-			String schemaContent = schemaConfiguratorFactory().getInstance(SchemaType.SHEX).getSchemaContent();
+			String schemaContent = schemaConfigurator().getSchemaContent();
 			return new RdfSignatureValidator(shexSchemaLoader().getSchemaForCreate(), schemaContent, registryContextBase,
 					registrySystemBase, signatureSchemaConfigName,
 					((RdfValidationServiceImpl) validator()).getShapeTypeMap());
