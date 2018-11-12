@@ -140,10 +140,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new FrameEntityImpl();
 	}
 
+	/**
+	 * Gets the type of validation configured in the application.yml
+	 * @return
+	 * @throws IllegalArgumentException when value is not in known SchemaType enum
+	 */
 	@Bean
-	public SchemaType getValidationType() {
+	public SchemaType getValidationType() throws IllegalArgumentException{
 		String validationMechanism = validationType.toUpperCase();
-		SchemaType st = SchemaType.valueOf("ad");
+		SchemaType st = SchemaType.valueOf(validationMechanism);
 
 		return st;
 	}
