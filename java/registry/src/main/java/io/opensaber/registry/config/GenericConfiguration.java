@@ -38,6 +38,7 @@ import io.opensaber.registry.authorization.AuthorizationFilter;
 import io.opensaber.registry.authorization.KeyCloakServiceImpl;
 import io.opensaber.registry.exception.CustomException;
 import io.opensaber.registry.exception.CustomExceptionHandler;
+import io.opensaber.registry.frame.FrameContext;
 import io.opensaber.registry.frame.FrameEntity;
 import io.opensaber.registry.frame.FrameEntityImpl;
 import io.opensaber.registry.interceptor.AuthorizationInterceptor;
@@ -59,7 +60,12 @@ import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
 import io.opensaber.registry.schema.configurator.SchemaType;
 import io.opensaber.registry.schema.configurator.ShexSchemaConfigurator;
-import io.opensaber.registry.sink.*;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.sink.JanusGraphStorage;
+import io.opensaber.registry.sink.Neo4jGraphProvider;
+import io.opensaber.registry.sink.OrientDBGraphProvider;
+import io.opensaber.registry.sink.SqlgProvider;
+import io.opensaber.registry.sink.TinkerGraphProvider;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
 import io.opensaber.validators.rdf.shex.RdfSignatureValidator;
@@ -93,6 +99,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${registry.context.base}")
 	private String registryContextBase;
+	
+	@Value("${frame.file}")
+	private String frameFile;
 
 	@Value("${signature.schema.config.name}")
 	private String signatureSchemaConfigName;
@@ -139,6 +148,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public FrameEntity frameEntity() {
 		return new FrameEntityImpl();
 	}
+	
+	@Bean 
+	public FrameContext frameContext(){
+		return new FrameContext(frameFile, registryContextBase);
+	}
 
 	/**
 	 * Gets the type of validation configured in the application.yml
@@ -155,7 +169,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Bean
 	public JsonToLdRequestTransformer jsonToLdRequestTransformer() {
-		return new JsonToLdRequestTransformer(frameEntity().getContent());
+		String domain = frameContext().getDomain();
+		return new JsonToLdRequestTransformer(frameEntity().getContent(), domain);
 	}
 
 	@Bean

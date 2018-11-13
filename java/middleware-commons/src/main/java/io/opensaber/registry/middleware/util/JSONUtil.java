@@ -3,6 +3,7 @@ package io.opensaber.registry.middleware.util;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -31,6 +32,7 @@ public class JSONUtil {
 	private static Logger logger = LoggerFactory.getLogger(JSONUtil.class);
 	private static Type stringObjMapType = new TypeToken<Map<String, Object>>() {
 	}.getType();
+	private static String key = "";
 
 	public static Map<String, Object> convertObjectJsonMap(Object object) {
 		Gson gson = new Gson();
@@ -240,6 +242,25 @@ public class JSONUtil {
 			}
 		});
 		parent.remove(removeKeyNames);
+	}
+	/**
+	 * Find a key from hierarchy of JsonNode of given value
+	 * @param node
+	 * @param value
+	 * @return
+	 */
+	public static String findKey(JsonNode node, String value) {
+		Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+		while (fields.hasNext()) {
+			Map.Entry<String, JsonNode> entry = fields.next();
+			if (entry.getValue().isTextual() && entry.getValue().textValue().equalsIgnoreCase(value)) {
+				key = entry.getKey();
+				break;
+			} else if (entry.getValue().isObject()) {
+				findKey(entry.getValue(), value);
+			}
+		}
+		return key;
 	}
 
 }

@@ -14,6 +14,7 @@ import io.opensaber.registry.middleware.transform.Data;
 import io.opensaber.registry.middleware.transform.ErrorCode;
 import io.opensaber.registry.middleware.transform.ITransformer;
 import io.opensaber.registry.middleware.transform.TransformationException;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 
@@ -25,9 +26,11 @@ public class JsonToLdRequestTransformer implements ITransformer<Object> {
 	private String context;
 	private List<String> nodeTypes = new ArrayList<>();
 	private String prefix = "";
+	private String domain = "";
 
-	public JsonToLdRequestTransformer(String context) {
+	public JsonToLdRequestTransformer(String context, String domain){
 		this.context = context;
+		this.domain = domain;
 	}
 
 	@Override
@@ -40,18 +43,22 @@ public class JsonToLdRequestTransformer implements ITransformer<Object> {
 			ObjectNode requestnode = (ObjectNode) input.path(REQUEST);
 
 			String type = getTypeFromNode(requestnode);
-			setPrefix(type);
+			//setPrefix(type);
+			if(domain.isEmpty())
+				throw new TransformationException(Constants.INVALID_FRAME, ErrorCode.JSON_TO_JSONLD_TRANFORMATION_ERROR);
+			setPrefix(domain);
 			JSONUtil.addPrefix(requestnode, prefix, nodeTypes);
 			logger.info("Appending prefix to requestNode " + requestnode);
+			logger.info("Domain  value "+domain);
 
 			requestnode = (ObjectNode) requestnode.path(type);
 			requestnode.setAll(fieldObjects);
 			input.set(REQUEST, requestnode);
 			logger.info("Object requestnode " + requestnode);
 			String jsonldResult = mapper.writeValueAsString(input);
-			return new Data<>(jsonldResult.replace("<@type>", type));
+			return new Data<>(jsonldResult.replace("<@type>", domain));
 		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+			logger.error("Error trnsx : "+ex.getMessage(), ex);
 			throw new TransformationException(ex.getMessage(), ex, ErrorCode.JSON_TO_JSONLD_TRANFORMATION_ERROR);
 		}
 	}
