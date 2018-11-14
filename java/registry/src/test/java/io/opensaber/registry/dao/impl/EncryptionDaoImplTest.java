@@ -244,7 +244,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		String response = registryDao.addEntity(graph, label, null, null);
 		registryDao.getEntityById(response, false);
 
-		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
+		verify(encryptionMock, times(1)).encrypt(anyMap());
 	}
 
 	@Test
@@ -421,7 +421,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 	public void test_encryption_EncryptionError() throws Exception {
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
-		when(encryptionMock.encrypt(Mockito.anyString())).thenThrow(EncryptionException.class);
+		when(encryptionMock.encrypt(anyString())).thenThrow(EncryptionException.class);
 
 		try {
 			registryDao.addEntity(graph, rootLabel, null, null);

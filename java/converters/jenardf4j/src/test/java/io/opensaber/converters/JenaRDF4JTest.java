@@ -63,12 +63,4 @@ public class JenaRDF4JTest {
 				.add(RDF.TYPE, "ex:AggregateRating");
 	}
 
-	private void printInputStream(InputStream inputStream) throws IOException {
-		String readLine;
-		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-		while (((readLine = br.readLine()) != null)) {
-			System.out.println(readLine);
-		}
-	}
-
 }

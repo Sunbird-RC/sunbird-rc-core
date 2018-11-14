@@ -29,10 +29,6 @@ public class SignatureServiceImpl implements SignatureService {
 	private String keysURL;
 	@Autowired
 	private RestTemplate restTemplate;
-	@Autowired
-	private Gson gson;
-	@Autowired
-	private OpenSaberInstrumentation watch;
 
 	@Override
 	public boolean isServiceUp() throws SignatureException.UnreachableException {

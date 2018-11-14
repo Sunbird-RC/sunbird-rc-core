@@ -32,7 +32,6 @@ import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
-import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.transformation.ResponseTransformFactory;
 
 @RestController
@@ -48,8 +47,6 @@ public class RegistryController {
 	private RegistryAuditService registryAuditService;
 	@Autowired
 	private SearchService searchService;
-	@Autowired
-	private SignatureService signatureService;
 	@Value("${registry.context.base}")
 	private String registryContext;
 	private Gson gson = new Gson();
@@ -59,8 +56,6 @@ public class RegistryController {
 	private boolean auditEnabled;
 	@Value("${signature.domain}")
 	private String signatureDomain;
-	@Value("${signature.keysURL}")
-	private String signatureKeyURl;
 	@Value("${frame.file}")
 	private String frameFile;
 	@Autowired

@@ -29,7 +29,6 @@ import io.opensaber.pojos.Response.Status;
 
 public class RegistryIntegrationSteps extends RegistryTestBase {
 
-	private static final String VALID_JSONLD = "school.jsonld";
 	// private static final String VALID_NEWJSONLD= "newSchool.jsonld";
 	private static final String VALID_NEWJSONLD = "teacher.jsonld";
 	private static final String ENTITY_JSONLD = "basicProficiencyLevel.jsonld";
@@ -39,13 +38,11 @@ public class RegistryIntegrationSteps extends RegistryTestBase {
 	private static final String ADD_ENTITY = "add";
 	private static final String READ_ENTITY = "read";
 	private static final String AUTH_HEADER_NAME = "x-authenticated-user-token";
-	private static String duplicateLabel;
 	Type type = new TypeToken<Map<String, String>>() {
 	}.getType();
 	private RestTemplate restTemplate;
 	private String baseUrl;
 	private ResponseEntity<Response> response;
-	private String labelToFetch;
 	private String id;
 	private HttpHeaders headers;
 	private String updateId;

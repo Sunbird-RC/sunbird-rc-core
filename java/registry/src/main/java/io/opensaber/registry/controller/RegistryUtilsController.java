@@ -60,6 +60,7 @@ public class RegistryUtilsController {
 		Response response = new Response(Response.API_ID.SIGN, "OK", responseParams);
 
 		try {
+			watch.start("RegistryUtilsController.generateSignature");
 			BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
 			baseRequestHandler.setRequest(requestModel);
 			Map<String, Object> requestBodyMap = baseRequestHandler.getRequestBodyMap();
@@ -80,6 +81,9 @@ public class RegistryUtilsController {
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(Constants.SIGN_ERROR_MESSAGE);
 		}
+		finally {
+			watch.stop("RegistryUtilsController.generateSignature");
+		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -89,6 +93,7 @@ public class RegistryUtilsController {
 		Response response = new Response(Response.API_ID.VERIFY, "OK", responseParams);
 
 		try {
+			watch.start("RegistryUtilsController.verifySignature");
 			BaseRequestHandler baseRequestHandler = new BaseRequestHandler();
 			baseRequestHandler.setRequest(request);
 			Map<String, Object> map = baseRequestHandler.getRequestBodyMap();
@@ -142,12 +147,14 @@ public class RegistryUtilsController {
 				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 				responseParams.setErrmsg("");
 			}
-
 		} catch (Exception e) {
 			logger.error("Error in verifying signature", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(Constants.VERIFY_SIGN_ERROR_MESSAGE);
+		}
+		finally {
+			watch.stop("RegistryUtilsController.verifySignature");
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -158,7 +165,7 @@ public class RegistryUtilsController {
 		Response response = new Response(Response.API_ID.KEYS, "OK", responseParams);
 
 		try {
-			Gson gson = new Gson();
+			watch.start("RegistryUtilsController.getKey");
 			String result = signatureService.getKey(keyId);
 			response.setResult(result);
 			responseParams.setErrmsg("");
@@ -168,6 +175,9 @@ public class RegistryUtilsController {
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(Constants.KEY_RETRIEVE_ERROR_MESSAGE);
+		}
+		finally {
+			watch.stop("RegistryUtilsController.getKey");
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}

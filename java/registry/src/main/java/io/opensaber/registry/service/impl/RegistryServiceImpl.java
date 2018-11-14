@@ -85,9 +85,6 @@ public class RegistryServiceImpl implements RegistryService {
 	@Value("${frame.file}")
 	private String frameFile;
 
-	@Value("${audit.frame.file}")
-	private String auditFrameFile;
-
 	@Value("${registry.context.base}")
 	private String registryContextBase;
 
@@ -102,9 +99,6 @@ public class RegistryServiceImpl implements RegistryService {
 
 	@Value("${validation.type}")
 	private String validationType;
-
-	@Autowired
-	private FrameEntity frameEntity;
 
 	@Override
 	public List getEntityList() {
@@ -431,7 +425,6 @@ public class RegistryServiceImpl implements RegistryService {
 				encAttributes = encryptionService.decrypt(propertyMap);
 			}
 			for (Map.Entry<String, Object> listEntry : listPropertyMap.entrySet()) {
-				Resource k = entry.getKey();
 				Object v = entry.getValue();
 				List values = (List) v;
 				List encValues = new ArrayList();

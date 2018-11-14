@@ -477,7 +477,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		 * updateRdfModelWithoutType));
 		 */
 		Model addedModel = JenaRDF4J.asJenaModel(RDF2Graph.convertGraph2RDFModel(entity, response));
-		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel, Arrays.asList());
+		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel);
 		Model deletedFacts = getModelwithDeletedFacts(addedModel, updateRdfModel, updateRdfModelWithoutType);
 		checkIfAuditRecordsAreRight(updatedGraphResult,
 				generateUpdateMapFromRDF(updateRdfModelWithoutType, deletedFacts));
@@ -488,7 +488,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		assertEquals("updated block", result.toString());
 	}
 
-	private Model getModelwithOnlyUpdateFacts(Model rdfModel, Model updateRdfModel, List<String> predicatedToExclude) {
+	private Model getModelwithOnlyUpdateFacts(Model rdfModel, Model updateRdfModel) {
 		Model updatedFacts = updateRdfModel.difference(rdfModel);
 		logger.debug("-------- UPDATED FACTS are: ----------" + updatedFacts);
 		/*
@@ -534,30 +534,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	private Model restrictModel(Model updateRdfModel, Property property) {
 		logger.debug("--------Removing property :  " + property);
 		return updateRdfModel.difference(updateRdfModel.listStatements(null, property, (RDFNode) null).toModel());
-	}
-
-	private Map<String, Map<String, Integer>> generateUpdateMapFromRDF(Model updateRdfModelWithoutType) {
-		Map<String, Map<String, Integer>> map = new HashMap<>();
-		Iterator<Statement> iter = updateRdfModelWithoutType.listStatements();
-		while (iter.hasNext()) {
-			Statement statement = iter.next();
-			String subject = statement.getSubject().toString();
-			String predicate = statement.getPredicate().toString();
-			if (map.containsKey(subject)) {
-				Map<String, Integer> innerMap = map.get(subject);
-				if (innerMap.containsKey(predicate)) {
-					int currentCount = innerMap.get(predicate);
-					innerMap.put(predicate, currentCount + 1);
-				} else {
-					innerMap.put(predicate, 1);
-				}
-			} else {
-				Map<String, Integer> innerMap = setInnerMap(predicate);
-				map.put(subject, innerMap);
-			}
-		}
-		logger.debug("generateUpdateMapFromRDF " + map);
-		return map;
 	}
 
 	private Map<String, Map<String, Integer>> generateUpdateMapFromRDF(Model updateRdfModelWithoutType,
@@ -635,7 +611,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		 * updateRdfModelWithoutType));
 		 */
 		Model addedModel = JenaRDF4J.asJenaModel(RDF2Graph.convertGraph2RDFModel(entity, response));
-		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel, Arrays.asList());
+		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel);
 		Model deletedFacts = getModelwithDeletedFacts(addedModel, updateRdfModel, updateRdfModelWithoutType);
 		checkIfAuditRecordsAreRight(updatedGraphResult,
 				generateUpdateMapFromRDF(updateRdfModelWithoutType, deletedFacts));
@@ -681,7 +657,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		 * updateRdfModelWithoutType));
 		 */
 		Model addedModel = JenaRDF4J.asJenaModel(RDF2Graph.convertGraph2RDFModel(entity, response));
-		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel, Arrays.asList());
+		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel);
 		Model deletedFacts = getModelwithDeletedFacts(addedModel, updateRdfModel, updateRdfModelWithoutType);
 		checkIfAuditRecordsAreRight(updatedGraphResult,
 				generateUpdateMapFromRDF(updateRdfModelWithoutType, deletedFacts));
@@ -746,7 +722,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		 * updateRdfModelWithoutType));
 		 */
 
-		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel, Arrays.asList());
+		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel);
 		Model deletedFacts = getModelwithDeletedFacts(addedModel, updateRdfModel, updateRdfModelWithoutType);
 		checkIfAuditRecordsAreRight(updatedGraphResult,
 				generateUpdateMapFromRDF(updateRdfModelWithoutType, deletedFacts));
@@ -899,7 +875,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 			Iterator<VertexProperty<Object>> iter = v.properties();
 			while (iter.hasNext()) {
 				VertexProperty<Object> property = iter.next();
-				Assert.assertThat(property.key(), not(containsString("@")));
+				assertThat(property.key(), not(containsString("@")));
 			}
 		}
 	}
@@ -969,7 +945,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		 * updateRdfModelWithoutType));
 		 */
 		Model addedModel = JenaRDF4J.asJenaModel(RDF2Graph.convertGraph2RDFModel(entity, response));
-		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel, Arrays.asList());
+		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel);
 		Model deletedFacts = getModelwithDeletedFacts(addedModel, updateRdfModel, updateRdfModelWithoutType);
 		checkIfAuditRecordsAreRight(updatedGraphResult,
 				generateUpdateMapFromRDF(updateRdfModelWithoutType, deletedFacts));
@@ -1004,7 +980,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 
 		Graph updatedGraphResult = registryDao.getEntityById(response, false);
 		Model addedModel = JenaRDF4J.asJenaModel(RDF2Graph.convertGraph2RDFModel(entity, response));
-		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel, Arrays.asList());
+		Model updateRdfModelWithoutType = getModelwithOnlyUpdateFacts(addedModel, updateRdfModel);
 		Model deletedFacts = getModelwithDeletedFacts(addedModel, updateRdfModel, updateRdfModelWithoutType);
 		checkIfAuditRecordsAreRight(updatedGraphResult,
 				generateUpdateMapFromRDF(updateRdfModelWithoutType, deletedFacts));

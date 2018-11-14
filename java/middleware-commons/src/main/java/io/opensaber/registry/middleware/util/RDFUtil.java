@@ -60,7 +60,6 @@ public class RDFUtil {
 		Property predicate = statement.getPredicate();
 		RDFNode object = statement.getObject();
 
-		Resource res = object.asResource();
 		Resource objectCopy = ResourceFactory.createResource(label);
 		BeanWrapper bw = new BeanWrapperImpl(object);
 		BeanUtils.copyProperties(bw.getWrappedInstance(), objectCopy);

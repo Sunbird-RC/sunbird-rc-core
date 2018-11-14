@@ -120,7 +120,7 @@ public class JenaRDF4J {
 	 *            the rdf4j value
 	 * @return the rdf4j value as a Jena node
 	 */
-	public static RDFNode asJenaNode(org.eclipse.rdf4j.model.Value theValue) {
+	public static RDFNode asJenaNode(Value theValue) {
 		if (theValue instanceof org.eclipse.rdf4j.model.Literal) {
 			return asJenaLiteral((org.eclipse.rdf4j.model.Literal) theValue);
 		} else {
@@ -135,7 +135,7 @@ public class JenaRDF4J {
 	 *            the rdf4j URI
 	 * @return the URI as a Jena property
 	 */
-	public static org.apache.jena.rdf.model.Property asJenaURI(org.eclipse.rdf4j.model.IRI theIRI) {
+	public static Property asJenaURI(org.eclipse.rdf4j.model.IRI theIRI) {
 		if (theIRI == null) {
 			return null;
 		} else {

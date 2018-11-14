@@ -172,9 +172,9 @@ public class RDF2GraphTest {
 		editGraph(graph, expectedModel);
 		Model convertedModel = RDF2Graph.convertGraph2RDFModel(graph, SUBJECT_EXPANDED_LABEL);
 		IRI blankPred = vf.createIRI("http://example.org/creatorOf");
-		checkNodes(graph, expectedModel, blankPred, convertedModel, BNode.class);
+		checkNodes(expectedModel, blankPred, convertedModel, BNode.class);
 		IRI iriPred = vf.createIRI("http://example.org/homeAddress");
-		checkNodes(graph, expectedModel, iriPred, convertedModel, IRI.class);
+		checkNodes(expectedModel, iriPred, convertedModel, IRI.class);
 		assertEquals(expectedModel.size(), convertedModel.size());
 		System.out.println(expectedModel);
 		System.out.println(convertedModel);
@@ -188,14 +188,14 @@ public class RDF2GraphTest {
 		Model _model = RDF2Graph.convertGraph2RDFModel(graph, "http://example.org/someSubject");
 		Rio.write(model, System.out, RDFFormat.TURTLE);
 		Rio.write(_model, System.out, RDFFormat.TURTLE);
-		Assert.assertTrue(Models.isomorphic(model, _model));
+		assertTrue(Models.isomorphic(model, _model));
 	}
 
-	private void checkNodes(Graph graph, Model rdfModel, IRI iriPred, Model expectedModel, Class _class) {
+	private void checkNodes(Model rdfModel, IRI iriPred, Model expectedModel, Class _class) {
 		Set<Value> actualObjects = rdfModel.filter(null, iriPred, null).objects();
 		Set<Value> expectedObjects = expectedModel.filter(null, iriPred, null).objects();
-		Assert.assertThat(expectedObjects, (Every.everyItem(instanceOf(_class))));
-		Assert.assertThat(actualObjects, (Every.everyItem(instanceOf(_class))));
+		assertThat(expectedObjects, (Every.everyItem(instanceOf(_class))));
+		assertThat(actualObjects, (Every.everyItem(instanceOf(_class))));
 	}
 
 	private long countGraphVertices(Graph graph) {
