@@ -9,7 +9,6 @@ import com.github.jsonldjava.core.JsonLdError;
 
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.exception.*;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
 
 public interface RegistryService {
 
@@ -22,11 +21,11 @@ public interface RegistryService {
 	public String addEntity(Model rdfModel, String dataObject, String subject, String property)
 			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
 			MultipleEntityException, RecordNotFoundException, IOException, SignatureException.UnreachableException,
-			JsonLdError, SignatureException.CreationException, MiddlewareHaltException;
+			JsonLdError, SignatureException.CreationException;
 
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
 			EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
-			IOException, SignatureException.CreationException, MiddlewareHaltException;
+			IOException, SignatureException.CreationException;
 
 	public Model getEntityById(String id, boolean includeSignatures)
 			throws RecordNotFoundException, EncryptionException, AuditFailedException;

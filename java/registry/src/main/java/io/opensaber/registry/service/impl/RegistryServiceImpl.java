@@ -115,44 +115,31 @@ public class RegistryServiceImpl implements RegistryService {
 	public String addEntity(Model rdfModel, String dataObject, String subject, String property)
 			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
 			MultipleEntityException, RecordNotFoundException, IOException, SignatureException.UnreachableException,
-			JsonLdError, SignatureException.CreationException, MiddlewareHaltException {
+			JsonLdError, SignatureException.CreationException {
 		try {
 			Model signedRdfModel = null;
 			RegistrySignature rs = new RegistrySignature();
-			//
-			if (isValidationEnabled) {
-				if (Constants.RDF_OBJECT.equalsIgnoreCase(validationType)) {
-					/*
-					 * ValidationService validationService =
-					 * validateFactory.getInstance(Constants.ENABLE_RDF_VALIDATION);
-					 * ValidationResponse validationResponse =
-					 * validationService.validateData(rdfModel, Constants.CREATE_METHOD_ORIGIN); if
-					 * (!validationResponse.isValid()) { throw new
-					 * RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE); }
-					 */
-					// Validating Sign Mandatory data
-					if (signatureEnabled) {
-						Map signReq = new HashMap<String, Object>();
-						InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
-						String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
-						Map<String, Object> reqMap = JSONUtil.frameJsonAndRemoveIds(ID_REGEX, dataObject, gson,
-								fileString);
-						signReq.put("entity", reqMap);
-						Map<String, Object> entitySignMap = (Map<String, Object>) signatureService.sign(signReq);
-						entitySignMap.put("createdDate", rs.getCreatedTimestamp());
-						entitySignMap.put("keyUrl", signatureKeyURl);
-						signedRdfModel = RDFUtil.getUpdatedSignedModel(rdfModel, registryContext, signatureDomain,
-								entitySignMap, ModelFactory.createDefaultModel());
-						return addEntity(signedRdfModel, subject, property);
+			String rootLabel = null;
 
-					}
-				} else {
-					// else part for json validation
-				}
+			// Validating Sign Mandatory data
+			if (signatureEnabled) {
+				Map signReq = new HashMap<String, Object>();
+				InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
+				String fileString = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+				Map<String, Object> reqMap = JSONUtil.frameJsonAndRemoveIds(ID_REGEX, dataObject, gson,
+						fileString);
+				signReq.put("entity", reqMap);
+				Map<String, Object> entitySignMap = (Map<String, Object>) signatureService.sign(signReq);
+				entitySignMap.put("createdDate", rs.getCreatedTimestamp());
+				entitySignMap.put("keyUrl", signatureKeyURl);
+				signedRdfModel = RDFUtil.getUpdatedSignedModel(rdfModel, registryContext, signatureDomain,
+						entitySignMap, ModelFactory.createDefaultModel());
+				rootLabel = addEntity(signedRdfModel, subject, property);
 
+			} else {
+				rootLabel = addEntity(rdfModel, subject, property);
 			}
-
-			return addEntity(rdfModel, subject, property);
+			return rootLabel;
 
 		} catch (EntityCreationException | EncryptionException | AuditFailedException | DuplicateRecordException
 				| MultipleEntityException ex) {
@@ -195,38 +182,24 @@ public class RegistryServiceImpl implements RegistryService {
 	@Override
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
 			EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
-			IOException, SignatureException.CreationException, MiddlewareHaltException {
+			IOException, SignatureException.CreationException {
 		boolean isUpdated = false;
-		if (persistenceEnabled && isValidationEnabled) {
-			if (Constants.RDF_OBJECT.equalsIgnoreCase(validationType)) {
-				/*
-				 * ValidationService validationService =
-				 * validateFactory.getInstance(Constants.ENABLE_RDF_VALIDATION);
-				 * ValidationResponse validationResponse =
-				 * validationService.validateData(entity, Constants.UPDATE_METHOD_ORIGIN); if
-				 * (!validationResponse.isValid()) { throw new
-				 * RDFValidationException(ErrorConstants.RDF_VALIDATION_ERROR_MESSAGE); }
-				 */
-				Resource root = getRootNode(entity);
-				String label = getRootLabel(root);
-				String rootType = getTypeForRootLabel(entity, root);
-				if (encryptionEnabled) {
-					encryptModel(entity);
-				}
-				Graph graph = generateGraphFromRDF(entity);
-				logger.debug("Service layer graph :", graph);
-				isUpdated = registryDao.updateEntity(graph, label, Constants.UPDATE_METHOD_ORIGIN);
-				if (signatureEnabled) {
-					if (!rootType.equalsIgnoreCase(registryContextBase + registryRootEntityType)) {
-						label = registryDao.getRootLabelForNodeLabel(label);
-					}
-					getEntityAndUpdateSign(label);
-				}
-
-			} else {
-				// else part for json validation
+		if (persistenceEnabled) {
+			Resource root = getRootNode(entity);
+			String label = getRootLabel(root);
+			String rootType = getTypeForRootLabel(entity, root);
+			if (encryptionEnabled) {
+				encryptModel(entity);
 			}
-
+			Graph graph = generateGraphFromRDF(entity);
+			logger.debug("Service layer graph :", graph);
+			isUpdated = registryDao.updateEntity(graph, label, Constants.UPDATE_METHOD_ORIGIN);
+			if (signatureEnabled) {
+				if (!rootType.equalsIgnoreCase(registryContextBase + registryRootEntityType)) {
+					label = registryDao.getRootLabelForNodeLabel(label);
+				}
+				getEntityAndUpdateSign(label);
+			}
 		}
 		return isUpdated;
 	}
