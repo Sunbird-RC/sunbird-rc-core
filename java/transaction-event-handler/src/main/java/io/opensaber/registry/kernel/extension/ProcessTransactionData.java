@@ -1,6 +1,5 @@
 package io.opensaber.registry.kernel.extension;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;

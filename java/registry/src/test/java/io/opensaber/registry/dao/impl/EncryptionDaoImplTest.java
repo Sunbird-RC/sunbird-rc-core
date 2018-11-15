@@ -123,26 +123,6 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		return updateGraphFromRdf(rdfModel, graph);
 	}
 
-	private Map<String, Integer> getPropCounterMap(Graph entity) {
-		Map<String, Integer> entityPropertyCountMap = new HashMap<>();
-		Iterator<Vertex> iter = entity.traversal().clone().V().hasNot(Constants.AUDIT_KEYWORD);
-		while (iter.hasNext()) {
-			Vertex vertex = iter.next();
-			entityPropertyCountMap.put(vertex.label(), 0);
-			Iterator<VertexProperty<Object>> propIter = vertex.properties();
-			while (propIter.hasNext()) {
-				entityPropertyCountMap.put(vertex.label(), entityPropertyCountMap.get(vertex.label()) + 1);
-				propIter.next();
-			}
-			Iterator<Edge> edgesIter = vertex.edges(Direction.OUT);
-			while (edgesIter.hasNext()) {
-				entityPropertyCountMap.put(vertex.label(), entityPropertyCountMap.get(vertex.label()) + 1);
-				edgesIter.next();
-			}
-		}
-		return entityPropertyCountMap;
-	}
-
 	public void closeDB() throws Exception {
 		databaseProvider.shutdown();
 	}
@@ -292,8 +272,8 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		String response = registryDao.addEntity(graph, "_:" + rootLabel, null, null);
 		registryDao.getEntityById(response, false);
 
-		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
-		verify(encryptionMock, times(3)).encrypt(Mockito.anyString());
+		verify(encryptionMock, times(1)).encrypt(anyMap());
+		verify(encryptionMock, times(3)).encrypt(anyString());
 	}
 
 	/*
@@ -358,8 +338,8 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		String response = registryDao.addEntity(graph, label, null, null);
 		registryDao.getEntityById(response, false);
 
-		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
-		verify(encryptionMock, times(1)).decrypt(Mockito.anyMap());
+		verify(encryptionMock, times(1)).encrypt(anyMap());
+		verify(encryptionMock, times(1)).decrypt(anyMap());
 	}
 
 	@Test
@@ -434,7 +414,7 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 	public void test_decryption_EncryptionException() throws Exception {
 		Model rdfModel = getNewValidRdf();
 		String label = updateGraphFromRdf(rdfModel);
-		when(encryptionMock.decrypt(Mockito.anyString())).thenThrow(EncryptionException.class);
+		when(encryptionMock.decrypt(anyString())).thenThrow(EncryptionException.class);
 
 		try {
 			String response = registryDao.addEntity(graph, String.format("_:%s", label), null, null);

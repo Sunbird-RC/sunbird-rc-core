@@ -37,8 +37,6 @@ import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.exception.*;
-import io.opensaber.registry.frame.FrameEntity;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.RDFUtil;
@@ -115,7 +113,6 @@ public class RegistryServiceImpl implements RegistryService {
 			RegistrySignature rs = new RegistrySignature();
 			String rootLabel = null;
 
-			// Validating Sign Mandatory data
 			if (signatureEnabled) {
 				Map signReq = new HashMap<String, Object>();
 				InputStream is = this.getClass().getClassLoader().getResourceAsStream(frameFile);
@@ -355,15 +352,6 @@ public class RegistryServiceImpl implements RegistryService {
 			throw new MultipleEntityException(Constants.ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE);
 		} else {
 			return rootLabelType.get(0);
-		}
-	}
-
-	private String getTypeForSearch(Model entity) throws EntityCreationException, MultipleEntityException {
-		List<Resource> rootLabels = RDFUtil.getRootLabels(entity);
-		if (rootLabels.size() == 0) {
-			throw new EntityCreationException(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
-		} else {
-			return getTypeForRootLabel(entity, rootLabels.get(0));
 		}
 	}
 

@@ -39,7 +39,7 @@ public class SearchIntegrationTestSteps extends RegistryTestBase implements En {
 	Type type = new TypeToken<Map<String, String>>() {
 	}.getType();
 	private String baseUrl;
-	private ResponseEntity<Response> response, auditBeforeUpdate, auditAfterUpdate;
+	private ResponseEntity<Response> response;
 	private HttpHeaders headers;
 	private ObjectNode baseJson;
 

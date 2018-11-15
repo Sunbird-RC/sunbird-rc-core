@@ -37,7 +37,6 @@ import io.opensaber.registry.transformation.ResponseTransformFactory;
 @RestController
 public class RegistryController {
 
-	private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"_:[a-z][0-9]+\",";
 	private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
 	@Autowired
 	ResponseTransformFactory responseTransformFactory;
@@ -54,10 +53,6 @@ public class RegistryController {
 	}.getType();
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
-	@Value("${signature.domain}")
-	private String signatureDomain;
-	@Value("${frame.file}")
-	private String frameFile;
 	@Autowired
 	private OpenSaberInstrumentation watch;
 	private List<String> keyToPurge = new java.util.ArrayList<>();

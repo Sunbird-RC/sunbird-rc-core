@@ -368,10 +368,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		registryDao.getEntityById(label2, false);
 	}
 
-	private void dump_graph(Graph g, String filename) throws IOException {
-		g.io(IoCore.graphson()).writeGraph(filename);
-	}
-
 	@Test
 	public void test_read_single_node() throws RecordNotFoundException, DuplicateRecordException, IOException,
 			EncryptionException, AuditFailedException {
@@ -531,11 +527,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		return deletedFacts;
 	}
 
-	private Model restrictModel(Model updateRdfModel, Property property) {
-		logger.debug("--------Removing property :  " + property);
-		return updateRdfModel.difference(updateRdfModel.listStatements(null, property, (RDFNode) null).toModel());
-	}
-
 	private Map<String, Map<String, Integer>> generateUpdateMapFromRDF(Model updateRdfModelWithoutType,
 			Model deletedFacts) {
 		Map<String, Map<String, Integer>> map = new HashMap<>();
@@ -574,12 +565,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 	private Map<String, Integer> setInnerMap(String predicate, int deletedCount) {
 		Map<String, Integer> innerMap = new HashMap<>();
 		innerMap.put(predicate, 1 + deletedCount);
-		return innerMap;
-	}
-
-	private Map<String, Integer> setInnerMap(String predicate) {
-		Map<String, Integer> innerMap = new HashMap<>();
-		innerMap.put(predicate, 1);
 		return innerMap;
 	}
 
@@ -768,17 +753,6 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		String labelForUpdate = databaseProvider.getGraphStore().traversal().clone().V().has(T.label, nodeLabel).next()
 				.vertices(Direction.IN).next().label();
 		RDFUtil.updateRdfModelNodeId(rdfModel, ResourceFactory.createResource(nodeLabel), labelForUpdate);
-	}
-
-	private String getJsonldFromGraph(Graph entity, String rootLabel) {
-		org.eclipse.rdf4j.model.Model model = RDF2Graph.convertGraph2RDFModel(entity, rootLabel);
-		String jsonldOutput = "";
-		try {
-			jsonldOutput = RDFUtil.frameEntity(model);
-		} catch (IOException ex) {
-			logger.debug("IO Exception = " + ex);
-		}
-		return jsonldOutput;
 	}
 
 	public Vertex getVertexForSubject(String subjectValue, String property, String objectValue) {
@@ -1043,7 +1017,7 @@ public class RegistryDaoImplTest extends RegistryTestBase {
 		 */
 		Model rdfModel = getNewValidRdf();
 		String rootLabel = updateGraphFromRdf(rdfModel);
-		String response = registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
+		registryDao.addEntity(graph, String.format("_:%s", rootLabel), null, null);
 		assertFalse(registryDao.deleteEntityById("http://example.com/voc/teacher/1.0.0/AreaTypeCode-URBAN"));
 		// registryDao.getEntityById(response);
 		// assertTrue(registryDao.deleteEntityById(response));
