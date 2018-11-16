@@ -31,4 +31,6 @@ public interface RegistryDao {
 	public boolean deleteEntityById(String id) throws RecordNotFoundException, AuditFailedException;
 
 	public String getRootLabelForNodeLabel(String nodeLabel);
+
+    public String getTypeForNodeLabel(String label);
 }

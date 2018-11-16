@@ -173,23 +173,28 @@ public class RegistryServiceImpl implements RegistryService {
 	@Override
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
 			EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
-			IOException, SignatureException.CreationException {
+			IOException, SignatureException.CreationException, UpdateException {
 		boolean isUpdated = false;
 		if (persistenceEnabled) {
 			Resource root = getRootNode(entity);
 			String label = getRootLabel(root);
 			String rootType = getTypeForRootLabel(entity, root);
-			if (encryptionEnabled) {
-				encryptModel(entity);
-			}
-			Graph graph = generateGraphFromRDF(entity);
-			logger.debug("Service layer graph :", graph);
-			isUpdated = registryDao.updateEntity(graph, label, Constants.UPDATE_METHOD_ORIGIN);
-			if (signatureEnabled) {
-				if (!rootType.equalsIgnoreCase(registryContextBase + registryRootEntityType)) {
-					label = registryDao.getRootLabelForNodeLabel(label);
+			String actualNodeType = registryDao.getTypeForNodeLabel(label);
+			if(rootType.equalsIgnoreCase(actualNodeType)){
+				if (encryptionEnabled) {
+					encryptModel(entity);
 				}
-				getEntityAndUpdateSign(label);
+				Graph graph = generateGraphFromRDF(entity);
+				logger.debug("Service layer graph :", graph);
+				isUpdated = registryDao.updateEntity(graph, label, Constants.UPDATE_METHOD_ORIGIN);
+				if (signatureEnabled) {
+					if (!rootType.equalsIgnoreCase(registryContextBase + registryRootEntityType)) {
+						label = registryDao.getRootLabelForNodeLabel(label);
+					}
+					getEntityAndUpdateSign(label);
+				}
+			} else {
+				throw new UpdateException(Constants.NODE_TYPE_WRONG_MAPPED_ERROR_MSG);
 			}
 		}
 		return isUpdated;

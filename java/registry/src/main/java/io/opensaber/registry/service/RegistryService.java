@@ -24,8 +24,8 @@ public interface RegistryService {
 			JsonLdError, SignatureException.CreationException;
 
 	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
-			EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
-			IOException, SignatureException.CreationException;
+            EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
+            IOException, SignatureException.CreationException, UpdateException;
 
 	public Model getEntityById(String id, boolean includeSignatures)
 			throws RecordNotFoundException, EncryptionException, AuditFailedException;

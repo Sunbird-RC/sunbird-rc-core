@@ -83,6 +83,9 @@ public class Constants {
 	public static final String SIGNATURE_SIGN_ENDPOINT = "/utils/sign";
 	public static final String SIGNATURE_VERIFY_ENDPOINT = "/utils/verify";
 
+	//Error Messages
+	public static final String NODE_TYPE_WRONG_MAPPED_ERROR_MSG = "Updation failed, entity type wrongly mapped with node";
+
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH");
 

@@ -691,6 +691,22 @@ public class RegistryDaoImpl implements RegistryDao {
 		return rootLabel;
 	}
 
+	@Override
+	public String getTypeForNodeLabel(String nodeLabel) {
+		String nodeLabelType = null;
+		Graph graphFromStore = databaseProvider.getGraphStore();
+		GraphTraversalSource traversalSource = graphFromStore.traversal();
+		GraphTraversal<Vertex, Vertex> hasLabel = traversalSource.clone().V().hasLabel(nodeLabel);
+		Vertex s = hasLabel.next();
+		Iterator<Edge> edges = s.edges(Direction.OUT, Constants.RDF_URL_SYNTAX_TYPE);
+		if (edges.hasNext()) {
+			Edge typeEdge = edges.next();
+			Vertex inVertex = typeEdge.inVertex();
+			nodeLabelType = inVertex.label();
+		}
+		return nodeLabelType;
+	}
+
 	private boolean deleteVertexWithInEdge(Vertex s) {
 		Edge edge;
 		Stack<Vertex> vStack = new Stack<Vertex>();
