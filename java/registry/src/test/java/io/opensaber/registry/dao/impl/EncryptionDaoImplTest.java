@@ -393,8 +393,8 @@ public class EncryptionDaoImplTest extends RegistryTestBase {
 		String response = registryDao.addEntity(graph, "_:" + rootLabel, null, null);
 		registryDao.getEntityById(response, false);
 
-		verify(encryptionMock, times(1)).encrypt(Mockito.anyMap());
-		verify(encryptionMock, times(1)).decrypt(Mockito.anyMap());
+		verify(encryptionMock, times(1)).encrypt(anyMap());
+		verify(encryptionMock, times(1)).decrypt(anyMap());
 	}
 
 	@Test

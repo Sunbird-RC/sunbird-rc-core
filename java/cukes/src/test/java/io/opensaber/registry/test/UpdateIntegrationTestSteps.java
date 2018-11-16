@@ -33,7 +33,6 @@ public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 	private static final String CREATE_REST_ENDPOINT = "add";
 	private static final String UPDATE_REST_ENDPOINT = "update";
 	private static final String READ_REST_ENDPOINT = "read";
-	private static final String CONTEXT_CONSTANT = "sample:";
 	private static final String AUDIT_REST_ENDPOINT = "fetchAudit";
 	Type type = new TypeToken<Map<String, String>>() {
 	}.getType();

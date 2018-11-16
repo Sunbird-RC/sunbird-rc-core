@@ -92,12 +92,6 @@ public class RegistryServiceImpl implements RegistryService {
 	@Value("${registry.context.base}")
 	private String registryContext;
 
-	@Value("${validation.enabled}")
-	private boolean isValidationEnabled;
-
-	@Value("${validation.type}")
-	private String validationType;
-
 	@Override
 	public List getEntityList() {
 		return registryDao.getEntityList();

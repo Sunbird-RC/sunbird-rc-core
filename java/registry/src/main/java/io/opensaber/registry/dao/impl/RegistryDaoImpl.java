@@ -560,7 +560,7 @@ public class RegistryDaoImpl implements RegistryDao {
 			throw new RecordNotFoundException(Constants.ENTITY_NOT_FOUND);
 		} else {
 			if (graphFromStore.features().graph().supportsTransactions()) {
-				org.apache.tinkerpop.gremlin.structure.Transaction tx = graphFromStore.tx();
+				Transaction tx = graphFromStore.tx();
 				tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
 				// createOrUpdateEntity(graphForUpdate, rootNodeLabel,
 				// methodOrigin);

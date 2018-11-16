@@ -52,7 +52,7 @@ public class JenaRDF4J {
 	 *            the Jena Property to convert
 	 * @return the Jena property as a rdf4j Instance
 	 */
-	public static org.eclipse.rdf4j.model.IRI asrdf4jURI(Property theProperty) {
+	public static IRI asrdf4jURI(Property theProperty) {
 		if (theProperty == null) {
 			return null;
 		} else {
@@ -150,7 +150,7 @@ public class JenaRDF4J {
 	 *            the rdf4j literal
 	 * @return the rdf4j literal converted to Jena
 	 */
-	public static org.apache.jena.rdf.model.Literal asJenaLiteral(org.eclipse.rdf4j.model.Literal theLiteral) {
+	public static Literal asJenaLiteral(org.eclipse.rdf4j.model.Literal theLiteral) {
 		if (theLiteral == null) {
 			return null;
 		} else if (theLiteral.getLanguage().isPresent()) {
@@ -187,7 +187,7 @@ public class JenaRDF4J {
 	 *            the model to convert
 	 * @return the set of statements in the Jena model saved in a rdf4j Graph
 	 */
-	public static org.eclipse.rdf4j.model.Model asRDF4JModel(org.apache.jena.rdf.model.Model theModel) {
+	public static org.eclipse.rdf4j.model.Model asRDF4JModel(Model theModel) {
 		org.eclipse.rdf4j.model.Model aModel = new LinkedHashModel();
 
 		StmtIterator sIter = theModel.listStatements();
