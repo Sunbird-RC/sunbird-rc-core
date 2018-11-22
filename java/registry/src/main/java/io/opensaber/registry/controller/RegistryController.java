@@ -48,6 +48,8 @@ public class RegistryController {
 	private SearchService searchService;
 	@Value("${registry.context.base}")
 	private String registryContext;
+	@Autowired
+	private APIMessage apiMessage;
 	private Gson gson = new Gson();
 	private Type mapType = new TypeToken<Map<String, Object>>() {
 	}.getType();
@@ -58,18 +60,17 @@ public class RegistryController {
 	private List<String> keyToPurge = new java.util.ArrayList<>();
 
 	@RequestMapping(value = "/add", method = RequestMethod.POST)
-	public ResponseEntity<Response> add(@RequestAttribute Request requestModel,
-			@RequestParam(value = "id", required = false) String id,
+	public ResponseEntity<Response> add(@RequestParam(value = "id", required = false) String id,
 			@RequestParam(value = "prop", required = false) String property) {
 
-		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
+		Model rdf = (Model) apiMessage.getLocalMap(Constants.RDF_OBJECT);
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
 
 		try {
 			watch.start("RegistryController.addToExistingEntity");
-			String dataObject = requestModel.getRequestMap().get("dataObject").toString();
+			String dataObject = apiMessage.getLocalMap(Constants.LD_OBJECT).toString();
 			String label = registryService.addEntity(rdf, dataObject, id, property);
 			result.put("entity", label);
 			response.setResult(result);
@@ -92,29 +93,25 @@ public class RegistryController {
 
 	/**
 	 * 
-	 * @param id
-	 * @param accept,
-	 *            only one mime type is supported at a time. Pick up the first mime
+	 * Note: Only one mime type is supported at a time. Picks up the first mime
 	 *            type from the header.
 	 * @return
 	 */
 	@RequestMapping(value = "/read", method = RequestMethod.POST)
-	public ResponseEntity<Response> readEntity(@RequestAttribute Request requestModel,
-			@RequestHeader HttpHeaders header) {
+	public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header) {
 
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
-
-		String dataObject = (String) requestModel.getRequestMap().get(Constants.REQUEST_ATTRIBUTE_NAME);
+		String dataObject = apiMessage.getRequest().getRequestMapAsString();
 		JSONParser parser = new JSONParser();
 		try {
 			JSONObject json = (JSONObject) parser.parse(dataObject);
 			String entityId = registryContext + json.get("id").toString();
-			boolean includeSign = Boolean.parseBoolean(json.get("includeSignatures").toString());
+			boolean includeSign = Boolean.parseBoolean(json.getOrDefault("includeSignatures", false).toString());
 
 			watch.start("RegistryController.readEntity");
 			String content = registryService.getEntityFramedById(entityId, includeSign);
-			logger.info("RegistryController: Json string " + content);
+			logger.info("RegistryController: Framed content " + content);
 
 			Data<Object> data = new Data<Object>(content);
 			ITransformer<Object> responseTransformer = responseTransformFactory
@@ -126,7 +123,6 @@ public class RegistryController {
 			watch.stop("RegistryController.readEntity");
 			logger.debug("RegistryController: entity for {} read !", entityId);
 		} catch (ParseException | RecordNotFoundException | UnsupportedOperationException | TransformationException e) {
-
 			logger.error("RegistryController: Exception while reading entity !", e);
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
@@ -142,18 +138,15 @@ public class RegistryController {
 	}
 
 	/**
-	 * 
-	 * @param id
-	 * @param accept,
-	 *            only one mime type is supported at a time. Pick up the first mime
+	 *
+	 * Note: Only one mime type is supported at a time. Pick up the first mime
 	 *            type from the header.
 	 * @return
 	 */
 	@RequestMapping(value = "/search", method = RequestMethod.POST)
-	public ResponseEntity<Response> searchEntity(@RequestAttribute Request requestModel,
-			@RequestHeader HttpHeaders header) {
+	public ResponseEntity<Response> searchEntity(@RequestHeader HttpHeaders header) {
 
-		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
+		Model rdf = (Model) apiMessage.getLocalMap(Constants.RDF_OBJECT);
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
@@ -188,8 +181,8 @@ public class RegistryController {
 
 	@ResponseBody
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
-	public ResponseEntity<Response> update(@RequestAttribute Request requestModel) {
-		Model rdf = (Model) requestModel.getRequestMap().get("rdf");
+	public ResponseEntity<Response> update() {
+		Model rdf = (Model) apiMessage.getLocalMap(Constants.RDF_OBJECT);
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
 

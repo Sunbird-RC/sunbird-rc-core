@@ -1,4 +1,4 @@
-package io.opensaber.registry.interceptor.handler;
+package io.opensaber.pojos;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 

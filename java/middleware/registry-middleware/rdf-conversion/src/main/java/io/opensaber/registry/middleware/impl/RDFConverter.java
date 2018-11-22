@@ -13,22 +13,20 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
 
 public class RDFConverter implements Middleware {
-
-	private static final String JSONLD_DATA_IS_MISSING = "JSON-LD data is missing!";
-	private static final String FORMAT = "JSON-LD";
 	private static Logger logger = LoggerFactory.getLogger(RDFConverter.class);
 
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
-		logger.info("LD converting to RDF");
-		Object jsonld = mapData.get(Constants.ATTRIBUTE_NAME);
+		logger.debug("Attempting to convert LD to RDF");
+		Object jsonld = mapData.get(Constants.LD_OBJECT);
 		if (jsonld == null) {
-			throw new MiddlewareHaltException(JSONLD_DATA_IS_MISSING);
+			throw new MiddlewareHaltException(Constants.JSONLD_DATA_IS_MISSING);
 		} else if (jsonld instanceof String) {
-			Model rdfModel = RDFUtil.getRdfModelBasedOnFormat(jsonld.toString(), FORMAT);
+			Model rdfModel = RDFUtil.getRdfModelBasedOnFormat(jsonld.toString(), Constants.JENA_LD_FORMAT);
 			mapData.put(Constants.RDF_OBJECT, rdfModel);
 		} else {
-			throw new MiddlewareHaltException(this.getClass().getName() + "JSONLD data is invalid!");
+			throw new MiddlewareHaltException(Constants.JSONLD_PARSE_ERROR);
 		}
+		logger.debug("Converted to RDF success");
 		return mapData;
 	}
 

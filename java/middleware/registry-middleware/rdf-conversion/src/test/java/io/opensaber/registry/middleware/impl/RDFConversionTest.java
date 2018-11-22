@@ -54,9 +54,9 @@ public class RDFConversionTest {
 		setup();
 		mapData = new HashMap<String, Object>();
 		Object object = new Object();
-		mapData.put(Constants.ATTRIBUTE_NAME, object);
+		mapData.put(Constants.LD_OBJECT, object);
 		expectedEx.expect(MiddlewareHaltException.class);
-		expectedEx.expectMessage("JSONLD data is invalid!");
+		expectedEx.expectMessage(Constants.JSONLD_PARSE_ERROR);
 		m.execute(mapData);
 	}
 
@@ -67,7 +67,7 @@ public class RDFConversionTest {
 		String jsonLDData = Paths.get(getPath(SIMPLE_JSONLD)).toString();
 		Path filePath = Paths.get(jsonLDData);
 		String jsonld = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
-		mapData.put(Constants.ATTRIBUTE_NAME, jsonld);
+		mapData.put(Constants.LD_OBJECT, jsonld);
 		m.execute(mapData);
 		testForSuccessfulResult();
 	}

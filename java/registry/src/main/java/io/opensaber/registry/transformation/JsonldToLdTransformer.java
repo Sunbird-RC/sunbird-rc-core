@@ -15,6 +15,7 @@ import io.opensaber.registry.middleware.transform.TransformationException;
 @Component
 public class JsonldToLdTransformer implements ITransformer<Object> {
 
+	// The incoming data is a String and we need to convert to JSON.
 	@Override
 	public Data<Object> transform(Data<Object> data) throws TransformationException, IOException {
 		JsonNode input = new ObjectMapper().readTree(data.getData().toString());
@@ -22,8 +23,8 @@ public class JsonldToLdTransformer implements ITransformer<Object> {
 	}
 
 	@Override
-	public void setPurgeData(List<String> keyToPruge) {
-
+	public void setPurgeData(List<String> keyToPurge) {
+		// Nothing to purge
 	}
 
 }

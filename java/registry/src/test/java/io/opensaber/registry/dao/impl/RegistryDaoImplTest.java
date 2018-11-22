@@ -8,6 +8,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.util.*;
 
+import io.opensaber.pojos.APIMessage;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdf.model.Property;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -53,7 +54,7 @@ import io.opensaber.utils.converters.RDF2Graph;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { RegistryDaoImpl.class, Environment.class, ObjectMapper.class, GenericConfiguration.class,
-		EncryptionServiceImpl.class, AuditRecordReader.class })
+		EncryptionServiceImpl.class, AuditRecordReader.class, APIMessage.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryDaoImplTest extends RegistryTestBase {

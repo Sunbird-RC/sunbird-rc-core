@@ -11,7 +11,6 @@ import org.springframework.web.servlet.ModelAndView;
 import com.google.gson.Gson;
 
 import io.opensaber.registry.interceptor.handler.BaseResponseHandler;
-import io.opensaber.registry.middleware.util.Constants;
 
 public class CustomExceptionHandler extends BaseResponseHandler implements HandlerExceptionResolver {
 
@@ -29,8 +28,7 @@ public class CustomExceptionHandler extends BaseResponseHandler implements Handl
 		try {
 			logger.info("Exception thrown-" + ex.getMessage());
 			setResponse(response);
-			writeResponseObj(gson, Constants.CUSTOM_EXCEPTION_ERROR);
-			response = getResponse();
+			writeResponseObj(gson, ex.getMessage());
 		} catch (Exception e) {
 			logger.error("Error in sending response");
 		}

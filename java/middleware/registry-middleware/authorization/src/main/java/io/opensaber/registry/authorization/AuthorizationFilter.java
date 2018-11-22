@@ -25,8 +25,8 @@ import io.opensaber.registry.middleware.util.Constants;
 
 public class AuthorizationFilter implements Middleware {
 
-	private static final String TOKEN_IS_MISSING = "Auth token is missing";
-	private static final String VERIFICATION_EXCEPTION = "Auth token is invalid";
+	private static final String TOKEN_IS_MISSING = "Authentication header is missing";
+	private static final String VERIFICATION_EXCEPTION = "Authentication token is invalid";
 	private static Logger logger = LoggerFactory.getLogger(AuthorizationFilter.class);
 	private KeyCloakServiceImpl keyCloakServiceImpl;
 	@Autowired

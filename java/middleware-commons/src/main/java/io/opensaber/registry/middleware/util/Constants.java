@@ -9,7 +9,8 @@ public class Constants {
 	public static final String ATTRIBUTE_NAME = "dataObject";
 	public static final String REQUEST_ATTRIBUTE = "requestModel";
 	public static final String REQUEST_OBJECT = "requestObject";
-	public static final String RDF_OBJECT = "rdf";
+	public static final String RDF_OBJECT = "rdfObject";
+	public static final String LD_OBJECT = "ldObject";
 	public static final String METHOD_ORIGIN = "methodOrigin";
 	public static final String TOKEN_OBJECT = "x-authenticated-user-token";
 	public static final String SHEX_CREATE_PROPERTY_NAME = "validation.create.file";
@@ -27,6 +28,9 @@ public class Constants {
 	public static final String TARGET_NODE_IRI = "http://www.w3.org/ns/shacl#targetNode";
 	public static final String CONTEXT_KEYWORD = "@context";
 
+	public static final String JENA_LD_FORMAT = "JSON-LD";
+
+	public static final String JSONLD_DATA_IS_MISSING = "JSON-LD data is missing!";
 	public static final String DUPLICATE_RECORD_MESSAGE = "Cannot insert duplicate record";
 	public static final String NO_ENTITY_AVAILABLE_MESSAGE = "No entity available";
 	public static final String ENTITY_NOT_FOUND = "Entity does not exist";
@@ -65,6 +69,7 @@ public class Constants {
 	public static final String SEARCH_METHOD_ORIGIN = "search";
 	public static final String FORWARD_SLASH = "/";
 	public static final String RDF_URL_SYNTAX_TYPE = RDF.uri + "type";
+	public static final String TYPE_STR_JSON_LD = "@type";
 
 	// List of predicates introduced for digital signature.
 	public static final String SIGNATURES = "signatures";
@@ -79,6 +84,7 @@ public class Constants {
 	// List of request endpoints for post calls to validate request id
 	public static final String REGISTRY_ADD_ENDPOINT = "/add";
 	public static final String REGISTRY_UPDATE_ENDPOINT = "/update";
+	public static final String REGISTRY_READ_ENDPOINT = "/read";
 	public static final String REGISTRY_SEARCH_ENDPOINT = "/search";
 	public static final String SIGNATURE_SIGN_ENDPOINT = "/utils/sign";
 	public static final String SIGNATURE_VERIFY_ENDPOINT = "/utils/verify";
