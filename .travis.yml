@@ -6,10 +6,9 @@ cache:
   - "$HOME/.m2"
 before_script: "./configure-dependencies.sh"
 script:
-- echo "Starting build of commons and dependencies..."
+- echo "Starting build of commons and the registry..."
 - cd ${TRAVIS_BUILD_DIR}/java && mvn clean install >> build.log 
-- echo "Starting registry build"
-- cd ${TRAVIS_BUILD_DIR}/java/registry && mvn clean install >> build.log
+- echo "Completed"
 notifications:
   slack:
     rooms:
