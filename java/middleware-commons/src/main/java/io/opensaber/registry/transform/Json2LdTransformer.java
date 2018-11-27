@@ -1,4 +1,4 @@
-package io.opensaber.registry.interceptor.request.transform;
+package io.opensaber.registry.transform;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,24 +10,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.opensaber.registry.middleware.transform.Data;
-import io.opensaber.registry.middleware.transform.ErrorCode;
-import io.opensaber.registry.middleware.transform.ITransformer;
-import io.opensaber.registry.middleware.transform.TransformationException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 
-public class JsonToLdRequestTransformer implements ITransformer<Object> {
+public class Json2LdTransformer implements ITransformer<Object> {
 
 	private static final String SEPERATOR = ":";
-	private static Logger logger = LoggerFactory.getLogger(JsonToLdRequestTransformer.class);
+	private static Logger logger = LoggerFactory.getLogger(Json2LdTransformer.class);
 	private String context;
 	private List<String> nodeTypes = new ArrayList<>();
 	private String prefix = "";
 	private String domain = "";
 
-	public JsonToLdRequestTransformer(String context, String domain){
+	public Json2LdTransformer(String context, String domain){
 		this.context = context;
 		this.domain = domain;
 	}
@@ -91,7 +87,7 @@ public class JsonToLdRequestTransformer implements ITransformer<Object> {
 
 	@Override
 	public void setPurgeData(List<String> keyToPruge) {
-
+		// Nothing to purge
 	}
 
 }

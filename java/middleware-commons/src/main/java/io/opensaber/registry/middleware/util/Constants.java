@@ -114,6 +114,10 @@ public class Constants {
 		properties, userId, operationType, label, requestId, nodeId, removedRelations, addedRelations, ets, createdAt, transactionData, CREATE, UPDATE, DELETE
 	}
 
+	public enum Direction {	
+		IN, OUT
+	}
+
 	public static class JsonldConstants {
 		public static final String CONTEXT = "@context";
 		public static final String ID = "@id";

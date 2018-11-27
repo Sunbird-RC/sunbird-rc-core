@@ -13,10 +13,12 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.registry.interceptor.request.transform.RequestTransformFactory;
 import io.opensaber.registry.middleware.Middleware;
-import io.opensaber.registry.middleware.transform.Data;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.Constants.Direction;
+import io.opensaber.registry.transform.Configuration;
+import io.opensaber.registry.transform.Data;
+import io.opensaber.registry.transform.Transformer;
 
 @Component
 public class RDFConversionInterceptor implements HandlerInterceptor {
@@ -30,11 +32,11 @@ public class RDFConversionInterceptor implements HandlerInterceptor {
 	@Autowired
 	private APIMessage apiMessage;
 
-	@Autowired
-	private RequestTransformFactory requestTransformFactory;
+	private Transformer transformer;
 
-	public RDFConversionInterceptor(Middleware rdfConverter) {
+	public RDFConversionInterceptor(Middleware rdfConverter, Transformer transformer) {
 		this.rdfConverter = rdfConverter;
+		this.transformer = transformer;
 	}
 
 	@Override
@@ -44,16 +46,17 @@ public class RDFConversionInterceptor implements HandlerInterceptor {
 		String dataFromRequest = apiMessage.getRequest().getRequestMapAsString();
 		String contentType = request.getContentType();
 		logger.debug("ContentType {0} requestBody {1}", contentType, dataFromRequest);
+		Configuration config = transformer.getConfiguration(contentType, Direction.IN);
+		Data<Object> transformedData = transformer.getInstance(config)
+				.transform(new Data<Object>(dataFromRequest));
 
-		Data<Object> transformedData = requestTransformFactory.getInstance(contentType).transform(new Data<Object>(dataFromRequest));
 		logger.debug("After transformation {0}", transformedData.getData());
 
-		apiMessage.addLocalMap(Constants.LD_OBJECT, transformedData.getData());
+		apiMessage.addLocalMap(Constants.LD_OBJECT, transformedData.getData().toString());
 
 		watch.start("RDFConversionInterceptor.execute");
 		Map<String, Object> attributeMap = rdfConverter.execute(apiMessage.getLocalMap());
 		watch.stop("RDFConversionInterceptor.execute");
-
 
 		if (attributeMap.get(Constants.RDF_OBJECT) != null) {
 			apiMessage.addLocalMap(Constants.RDF_OBJECT, attributeMap.get(Constants.RDF_OBJECT));
@@ -64,4 +67,5 @@ public class RDFConversionInterceptor implements HandlerInterceptor {
 
 		return result;
 	}
+
 }

@@ -16,30 +16,46 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import io.opensaber.pojos.*;
-import io.opensaber.registry.exception.*;
-import io.opensaber.registry.middleware.transform.Data;
-import io.opensaber.registry.middleware.transform.ITransformer;
-import io.opensaber.registry.middleware.transform.TransformationException;
+import io.opensaber.pojos.APIMessage;
+import io.opensaber.pojos.HealthCheckResponse;
+import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.Response;
+import io.opensaber.pojos.ResponseParams;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.TypeNotProvidedException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.Constants.Direction;
 import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
-import io.opensaber.registry.transformation.ResponseTransformFactory;
+import io.opensaber.registry.transform.Configuration;
+import io.opensaber.registry.transform.Data;
+import io.opensaber.registry.transform.ITransformer;
+import io.opensaber.registry.transform.TransformationException;
+import io.opensaber.registry.transform.Transformer;
 
 @RestController
 public class RegistryController {
 
 	private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
 	@Autowired
-	ResponseTransformFactory responseTransformFactory;
+	Transformer transformer;
 	@Autowired
 	private RegistryService registryService;
 	@Autowired
@@ -94,7 +110,8 @@ public class RegistryController {
 	/**
 	 * 
 	 * Note: Only one mime type is supported at a time. Picks up the first mime
-	 *            type from the header.
+	 * type from the header.
+	 * 
 	 * @return
 	 */
 	@RequestMapping(value = "/read", method = RequestMethod.POST)
@@ -113,9 +130,10 @@ public class RegistryController {
 			String content = registryService.getEntityFramedById(entityId, includeSign);
 			logger.info("RegistryController: Framed content " + content);
 
+			Configuration config = transformer.getConfiguration(header.getAccept().iterator().next().toString(),
+					Direction.OUT);
 			Data<Object> data = new Data<Object>(content);
-			ITransformer<Object> responseTransformer = responseTransformFactory
-					.getInstance(header.getAccept().iterator().next());
+			ITransformer<Object> responseTransformer = transformer.getInstance(config);
 			responseTransformer.setPurgeData(getKeysToPurge());
 			Data<Object> responseContent = responseTransformer.transform(data);
 			response.setResult(responseContent.getData());
@@ -140,7 +158,8 @@ public class RegistryController {
 	/**
 	 *
 	 * Note: Only one mime type is supported at a time. Pick up the first mime
-	 *            type from the header.
+	 * type from the header.
+	 * 
 	 * @return
 	 */
 	@RequestMapping(value = "/search", method = RequestMethod.POST)
@@ -155,8 +174,10 @@ public class RegistryController {
 			watch.start("RegistryController.searchEntity");
 			String jenaJson = searchService.searchFramed(rdf);
 			Data<Object> data = new Data<>(jenaJson);
-			ITransformer<Object> responseTransformer = responseTransformFactory
-					.getInstance(header.getAccept().iterator().next());
+			Configuration config = transformer.getConfiguration(header.getAccept().iterator().next().toString(),
+					Direction.OUT);
+
+			ITransformer<Object> responseTransformer = transformer.getInstance(config);
 			responseTransformer.setPurgeData(getKeysToPurge());
 			Data<Object> resultContent = responseTransformer.transform(data);
 			response.setResult(resultContent.getData());
@@ -305,4 +326,5 @@ public class RegistryController {
 		return keyToPurge;
 
 	}
+
 }
