@@ -11,6 +11,8 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.opensaber.pojos.APIMessage;
+import io.opensaber.pojos.RequestWrapper;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -20,6 +22,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +46,9 @@ public class AuthorizationFilterTest {
 	public ExpectedException expectedEx = ExpectedException.none();
 	@Mock
 	private AuthorizationFilter authFilter;
+	@Mock
+	private APIMessage apiMessage;
+
 	private Type type = new TypeToken<Map<String, String>>() {
 	}.getType();
 
@@ -79,18 +86,17 @@ public class AuthorizationFilterTest {
 	public void test_missing_auth_token() throws MiddlewareHaltException, IOException {
 		expectedEx.expectMessage("Auth token is missing");
 		expectedEx.expect(MiddlewareHaltException.class);
-		Map<String, Object> mapObject = new HashMap<>();
-		when(authFilter.execute(mapObject)).thenThrow(new MiddlewareHaltException("Auth token is missing"));
-		authFilter.execute(mapObject);
+		when(authFilter.execute(apiMessage)).thenThrow(new MiddlewareHaltException("Auth token is missing"));
+		authFilter.execute(apiMessage);
 	}
 
 	@Test
 	public void test_valid_token() throws MiddlewareHaltException, IOException {
 		String accessToken = "testToken";
-		Map<String, Object> mapObject = new HashMap<>();
-		mapObject.put(Constants.TOKEN_OBJECT, accessToken);
-		when(authFilter.execute(mapObject)).thenReturn(new HashMap<>());
-		authFilter.execute(mapObject);
+		apiMessage.addLocalMap(Constants.TOKEN_OBJECT, accessToken);
+
+		when(authFilter.execute(apiMessage)).thenReturn(true);
+		authFilter.execute(apiMessage);
 		Authentication authentication = mock(Authentication.class);
 		SecurityContext securityContext = mock(SecurityContext.class);
 		AuthInfo mockAuthInfo = mock(AuthInfo.class);
@@ -104,16 +110,6 @@ public class AuthorizationFilterTest {
 		assertNotNull(authInfo.getAud());
 		assertEquals("874ed8a5-782e-4f6c-8f36-e0288455901e", authInfo.getSub());
 		assertEquals("admin-cli", authInfo.getAud());
-	}
-
-	@Test
-	public void test_invalid_token() throws MiddlewareHaltException, IOException {
-		expectedEx.expectMessage("Auth token is invalid");
-		expectedEx.expect(MiddlewareHaltException.class);
-		Map<String, Object> mapObject = new HashMap<>();
-		mapObject.put(Constants.TOKEN_OBJECT, "invalid.token");
-		when(authFilter.execute(mapObject)).thenThrow(new MiddlewareHaltException("Auth token is invalid"));
-		authFilter.execute(mapObject);
 	}
 
 	@Test
@@ -144,7 +140,6 @@ public class AuthorizationFilterTest {
 		expectedEx.expectMessage("Auth token and/or Environment variable is invalid");
 		expectedEx.expect(MiddlewareHaltException.class);
 
-		Map<String, Object> mapObject = new HashMap<>();
 		String body = "client_id=" + System.getenv("sunbird_sso_client_id") + "&username="
 				+ System.getenv("sunbird_sso_username") + "&password=" + System.getenv("sunbird_sso_password")
 				+ "&grant_type=password";
@@ -164,6 +159,9 @@ public class AuthorizationFilterTest {
 					+ "/protocol/openid-connect/token ";
 			ResponseEntity<String> response = new RestTemplate().postForEntity(url, request, String.class);
 			Map<String, String> myMap = new Gson().fromJson(response.getBody(), type);
+
+			APIMessage apiMessage = new APIMessage(null);
+			Map<String, Object> mapObject = apiMessage.getLocalMap();
 			String accessToken = myMap.get("access_token");
 			mapObject.put(Constants.TOKEN_OBJECT, accessToken);
 
@@ -188,8 +186,7 @@ public class AuthorizationFilterTest {
 			assertThat(System.getenv("sunbird_sso_password"), is("invalid.password"));
 			assertThat(System.getenv("sunbird_sso_client_id"), is("invalid.clientId"));
 
-			// baseM.execute(mapObject);
-			authFilter.execute(mapObject);
+			authFilter.execute(apiMessage);
 		} finally {
 
 			injectEnvironmentVariable("sunbird_sso_publickey", publicKey);

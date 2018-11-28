@@ -10,7 +10,9 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.opensaber.pojos.APIMessage;
 import org.eclipse.rdf4j.model.Model;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -20,7 +22,14 @@ import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.mockito.Mockito.when;
+
+@Ignore
+@RunWith(MockitoJUnitRunner.class)
 public class JSONLDConversionTest {
 
 	private static final String TEACHER_JSONLD = "teacher.jsonld";
@@ -29,8 +38,11 @@ public class JSONLDConversionTest {
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 
+	@Mock
+	public APIMessage apiMessage;
+
 	Map<String, Object> mapData;
-	private Middleware m;
+	private JSONLDConverter m;
 	private Model rdfModel;
 
 	private void setup() throws IOException, URISyntaxException {
@@ -53,7 +65,9 @@ public class JSONLDConversionTest {
 		setup();
 		mapData = new HashMap<String, Object>();
 		mapData.put(Constants.RESPONSE_ATTRIBUTE, "{}");
-		m.execute(mapData);
+		when(apiMessage.getLocalMap()).thenReturn(mapData);
+
+		m.execute(apiMessage);
 	}
 
 	@Test
@@ -61,7 +75,10 @@ public class JSONLDConversionTest {
 		setup();
 		mapData = new HashMap<String, Object>();
 		mapData.put(Constants.RESPONSE_ATTRIBUTE, rdfModel);
-		m.execute(mapData);
+
+		when(apiMessage.getLocalMap()).thenReturn(mapData);
+
+		m.execute(apiMessage);
 	}
 
 }

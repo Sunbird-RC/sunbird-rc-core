@@ -16,16 +16,11 @@ import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.Validator;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.Constants.Direction;
 import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.transform.*;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationException;
-
-import io.opensaber.registry.transform.Transformer;
-import io.opensaber.registry.middleware.util.Constants.Direction;
-import io.opensaber.registry.transform.Configuration;
-import io.opensaber.registry.transform.Data;
-import io.opensaber.registry.transform.ConfigurationHelper;
-import io.opensaber.registry.transform.TransformationException;
 
 public class RdfValidationServiceImpl implements IValidate {
 
@@ -86,9 +81,12 @@ public class RdfValidationServiceImpl implements IValidate {
 		return validationResponse;
 	}
 
-	public ValidationResponse validate(Object rdf, String methodOrigin) throws MiddlewareHaltException {
+	public boolean validate(APIMessage apiMessage) throws MiddlewareHaltException {
 		Model rdfModel = null;
-		
+		Object rdf = apiMessage.getLocalMap(Constants.RDF_OBJECT);
+		String uri = apiMessage.getRequestWrapper().getRequestURI();
+		String methodOrigin = uri.replace("/", "");
+
 		String dataFromRequest = apiMessage.getRequest().getRequestMapAsString();
 		String contentType = apiMessage.getRequestWrapper().getContentType();
 		Data<Object> rdfData = null;
@@ -118,7 +116,7 @@ public class RdfValidationServiceImpl implements IValidate {
 				if (signatureEnabled && Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)) {
 					signatureValidator.validateMandatorySignatureFields(rdfModel);
 				}
-				return validationResponse;
+				return true;
 			}
 		}catch (TransformationException te){
 			throw new MiddlewareHaltException(te.getMessage());

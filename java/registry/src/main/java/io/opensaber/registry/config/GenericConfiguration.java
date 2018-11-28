@@ -10,7 +10,6 @@ import java.util.Map;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,11 +42,10 @@ import io.opensaber.registry.frame.FrameEntity;
 import io.opensaber.registry.frame.FrameEntityImpl;
 import io.opensaber.registry.interceptor.AuthorizationInterceptor;
 import io.opensaber.registry.interceptor.RequestIdValidationInterceptor;
+import io.opensaber.registry.interceptor.ValidationInterceptor;
 import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.impl.JSONLDConverter;
 import io.opensaber.registry.middleware.impl.RDFConverter;
-import io.opensaber.registry.middleware.impl.RDFValidationMapper;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.schema.config.SchemaLoader;
@@ -55,18 +53,8 @@ import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
 import io.opensaber.registry.schema.configurator.SchemaType;
 import io.opensaber.registry.schema.configurator.ShexSchemaConfigurator;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.sink.JanusGraphStorage;
-import io.opensaber.registry.sink.Neo4jGraphProvider;
-import io.opensaber.registry.sink.OrientDBGraphProvider;
-import io.opensaber.registry.sink.SqlgProvider;
-import io.opensaber.registry.sink.TinkerGraphProvider;
-import io.opensaber.registry.transform.ConfigurationHelper;
-import io.opensaber.registry.transform.Json2LdTransformer;
-import io.opensaber.registry.transform.Ld2JsonTransformer;
-import io.opensaber.registry.transform.Ld2LdTransformer;
-import io.opensaber.registry.transform.Ld2RdfTransformer;
-import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.sink.*;
+import io.opensaber.registry.transform.*;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
@@ -133,11 +121,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public Middleware jsonldConverter() {
-		return new JSONLDConverter();
-	}
-
-	@Bean
 	public Middleware rdfConverter() {
 		return new RDFConverter();
 	}
@@ -170,7 +153,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		String domain = frameContext().getDomain();
 		return new Json2LdTransformer(frameEntity().getContent(), domain);
 	}
-	
+
 	@Bean
 	public Ld2JsonTransformer ld2JsonTransformer(){
 		return new Ld2JsonTransformer();
@@ -206,13 +189,13 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public Middleware authorizationFilter() {
-		return new AuthorizationFilter(new KeyCloakServiceImpl());
+	public ValidationInterceptor validationInterceptor() throws IOException, CustomException {
+		return new ValidationInterceptor(new ValidationFilter(validationServiceImpl()));
 	}
 
 	@Bean
-	public Middleware validationFilter() throws IOException, CustomException{
-		return new ValidationFilter(validator());
+	public Middleware authorizationFilter() {
+		return new AuthorizationFilter(new KeyCloakServiceImpl());
 	}
 
 	@Bean
@@ -228,7 +211,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public IValidate validator() throws IOException, CustomException {
+	public IValidate validationServiceImpl() throws IOException, CustomException {
 		IValidate validator = null;
 		if (getValidationType() == SchemaType.SHEX) {
 			validator = new RdfValidationServiceImpl(shexSchemaLoader().getSchemaForCreate(),
@@ -296,7 +279,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			String schemaContent = schemaConfigurator().getSchemaContent();
 			return new RdfSignatureValidator(shexSchemaLoader().getSchemaForCreate(), schemaContent,
 					registryContextBase, registrySystemBase, signatureSchemaConfigName,
-					((RdfValidationServiceImpl) validator()).getShapeTypeMap());
+					((RdfValidationServiceImpl) validationServiceImpl()).getShapeTypeMap());
 		} else {
 			return null;
 		}
@@ -349,17 +332,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new UrlValidator(UrlValidator.ALLOW_LOCAL_URLS);
 	}
 
-	@Bean
-	public Middleware rdfValidationMapper() {
-		Model validationConfig = null;
-		try {
-			validationConfig = shexSchemaLoader().getValidationConfig();
-		} catch (Exception e) {
-			logger.error("Unable to get validation configuration");
-		}
-		return new RDFValidationMapper(validationConfig);
-	}
-
 	/**
 	 * This method create a Map of request endpoints with request id
 	 * 
@@ -389,14 +361,27 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		Map<String, String> requestMap = requestIdMap();
 
 		// Verifying our API identifiers and populating the APIMessage bean
+		// Do not remove this.
 		registry.addInterceptor(requestIdValidationInterceptor())
 					.addPathPatterns(new ArrayList(requestMap.keySet())).order(orderIdx++);
 
+		// Authenticate and authorization check
 		if (authenticationEnabled) {
 			registry.addInterceptor(authorizationInterceptor()).addPathPatterns("/**")
 					.excludePathPatterns("/health", "/error", "/_schemas/**").order(orderIdx++);
 		}
 
+		// Validate the input against the defined schema
+		if (validationEnabled) {
+			try {
+				registry.addInterceptor(validationInterceptor())
+						.addPathPatterns("/add", "/update").order(orderIdx++);
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (CustomException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override

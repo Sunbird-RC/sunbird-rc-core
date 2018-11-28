@@ -3,6 +3,7 @@ package io.opensaber.registry.middleware.impl;
 import java.io.IOException;
 import java.util.Map;
 
+import io.opensaber.pojos.APIMessage;
 import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +16,10 @@ import io.opensaber.registry.middleware.util.RDFUtil;
 public class RDFConverter implements Middleware {
 	private static Logger logger = LoggerFactory.getLogger(RDFConverter.class);
 
-	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
+	@Override
+	public boolean execute(APIMessage apiMessage) throws IOException, MiddlewareHaltException {
 		logger.debug("Attempting to convert LD to RDF");
+		Map<String, Object> mapData = apiMessage.getLocalMap();
 		Object jsonld = mapData.get(Constants.LD_OBJECT);
 		if (jsonld == null) {
 			throw new MiddlewareHaltException(Constants.JSONLD_DATA_IS_MISSING);
@@ -27,12 +30,6 @@ public class RDFConverter implements Middleware {
 			throw new MiddlewareHaltException(Constants.JSONLD_PARSE_ERROR);
 		}
 		logger.debug("Converted to RDF success");
-		return mapData;
+		return true;
 	}
-
-	public Map<String, Object> next(Map<String, Object> mapData) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

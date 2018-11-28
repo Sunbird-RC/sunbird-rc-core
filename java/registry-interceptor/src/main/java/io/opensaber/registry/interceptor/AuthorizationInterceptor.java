@@ -33,7 +33,7 @@ public class AuthorizationInterceptor implements HandlerInterceptor {
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		watch.start("AuthorizationInterceptor.execute");
-		authorizationFilter.execute(apiMessage.getRequestWrapper().getRequestHeaderMap());
+		authorizationFilter.execute(apiMessage);
 		watch.stop("AuthorizationInterceptor.execute");
 		logger.debug(" Authentication successful !");
 

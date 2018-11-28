@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.opensaber.pojos.APIMessage;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
@@ -27,11 +28,14 @@ import io.opensaber.registry.middleware.util.Constants;
  * @author jyotsna
  *
  */
+
 public class JSONLDConverter implements Middleware {
 
 	private static final String INVALID_RDF_DATA = "RDF data is invalid!";
 
-	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
+	public boolean execute(APIMessage apiMessage) throws IOException, MiddlewareHaltException {
+		// TODO: We are likely to remove this as an interceptor and move to Transformation.
+		Map<String, Object> mapData = new HashMap<>();
 		Object responseData = mapData.get(Constants.RESPONSE_ATTRIBUTE);
 		if (responseData != null) {
 			if (responseData instanceof org.eclipse.rdf4j.model.Model) {
@@ -53,7 +57,7 @@ public class JSONLDConverter implements Middleware {
 			}
 		}
 
-		return mapData;
+		return true;
 	}
 
 	public Map<String, Object> next(Map<String, Object> mapData) throws IOException {

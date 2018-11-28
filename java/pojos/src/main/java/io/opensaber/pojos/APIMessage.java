@@ -31,6 +31,8 @@ public class APIMessage {
 	/* A temporary map to pass data cooked up in the interceptors, modules */
 	private Map<String, Object> localMap = new HashMap<>();
 
+	public APIMessage() {}
+
 	@Autowired
 	public APIMessage(HttpServletRequest servletRequest) {
 		request = new Request();

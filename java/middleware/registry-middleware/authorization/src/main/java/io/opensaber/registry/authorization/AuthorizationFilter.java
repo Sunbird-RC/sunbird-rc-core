@@ -1,11 +1,14 @@
 package io.opensaber.registry.authorization;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import io.jsonwebtoken.Jwts;
+import io.opensaber.pojos.APIMessage;
+import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.middleware.Middleware;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,15 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import io.jsonwebtoken.Jwts;
-import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.middleware.Middleware;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.util.Constants;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AuthorizationFilter implements Middleware {
 
@@ -43,18 +41,19 @@ public class AuthorizationFilter implements Middleware {
 	 * This method validates JWT access token against Sunbird Keycloak server and
 	 * sets the valid access token to a map object
 	 * 
-	 * @param mapObject
+	 * @param apiMessage
 	 * @throws MiddlewareHaltException
 	 */
-
-	public Map<String, Object> execute(Map<String, Object> mapObject) throws MiddlewareHaltException {
-		Object tokenObject = mapObject.get(Constants.TOKEN_OBJECT);
-
-		if (tokenObject == null || tokenObject.toString().trim().isEmpty()) {
-			throw new MiddlewareHaltException(TOKEN_IS_MISSING);
-		}
-		String token = tokenObject.toString();
+	@Override
+	public boolean execute(APIMessage apiMessage) throws MiddlewareHaltException {
 		try {
+			Map<String, Object> mapObject = apiMessage.getRequestWrapper().getRequestHeaderMap();
+			Object tokenObject = mapObject.get(Constants.TOKEN_OBJECT);
+
+			if (tokenObject == null || tokenObject.toString().trim().isEmpty()) {
+				throw new MiddlewareHaltException(TOKEN_IS_MISSING);
+			}
+			String token = tokenObject.toString();
 			watch.start("KeycloakServiceImpl.verifyToken");
 			String userId = keyCloakServiceImpl.verifyToken(token);
 			watch.stop("KeycloakServiceImpl.verifyToken");
@@ -83,7 +82,7 @@ public class AuthorizationFilter implements Middleware {
 			logger.error("AuthorizationFilter: MiddlewareHaltException !");
 			throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
 		}
-		return mapObject;
+		return true;
 	}
 
 	/**
@@ -122,13 +121,4 @@ public class AuthorizationFilter implements Middleware {
 		return authInfo;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see io.opensaber.registry.middleware.BaseMiddleware#next(java.util.Map)
-	 */
-	public Map<String, Object> next(Map<String, Object> mapData) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
