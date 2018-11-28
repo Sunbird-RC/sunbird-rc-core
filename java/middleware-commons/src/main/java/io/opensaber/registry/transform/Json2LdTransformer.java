@@ -49,7 +49,7 @@ public class Json2LdTransformer implements ITransformer<Object> {
 			resultNode.setAll(fieldObjects);
 			logger.info("Object requestnode " + resultNode);
 			String jsonldResult = mapper.writeValueAsString(resultNode);
-			return new Data<>(jsonldResult.replace("<@type>", domain));
+			return new Data<>(jsonldResult.replace("<@type>", rootType));
 		} catch (Exception ex) {
 			logger.error("Error trnsx : "+ex.getMessage(), ex);
 			throw new TransformationException(ex.getMessage(), ex, ErrorCode.JSON_TO_JSONLD_TRANFORMATION_ERROR);

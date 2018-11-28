@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import es.weso.schema.Schema;
+import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.ValidationResponse;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.Validator;
@@ -18,6 +19,13 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationException;
+
+import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.middleware.util.Constants.Direction;
+import io.opensaber.registry.transform.Configuration;
+import io.opensaber.registry.transform.Data;
+import io.opensaber.registry.transform.ConfigurationHelper;
+import io.opensaber.registry.transform.TransformationException;
 
 public class RdfValidationServiceImpl implements IValidate {
 
@@ -34,6 +42,15 @@ public class RdfValidationServiceImpl implements IValidate {
 	private Map<String, String> shapeTypeMap;
 	private Schema schemaForCreate;
 	private Schema schemaForUpdate;
+	
+	@Autowired
+	private APIMessage apiMessage;
+
+	@Autowired
+	private Transformer transformer;
+	
+	@Autowired
+	private ConfigurationHelper configurationHelper;
 
 	private RdfValidationServiceImpl() {
 		// Disallow without schema
@@ -71,10 +88,23 @@ public class RdfValidationServiceImpl implements IValidate {
 
 	public ValidationResponse validate(Object rdf, String methodOrigin) throws MiddlewareHaltException {
 		Model rdfModel = null;
+		
+		String dataFromRequest = apiMessage.getRequest().getRequestMapAsString();
+		String contentType = apiMessage.getRequestWrapper().getContentType();
+		Data<Object> rdfData = null;
+
 		try {
-			if (rdf == null) {
+			Configuration config = configurationHelper.getConfiguration(contentType, Direction.IN);
+			Data<Object> ldData = transformer.getInstance(config).transform(new Data<Object>(dataFromRequest));
+			rdfData = transformer.getInstance(Configuration.LD2RDF).transform(ldData);
+
+			apiMessage.addLocalMap(Constants.LD_OBJECT, ldData.getData().toString());
+			apiMessage.addLocalMap(Constants.RDF_OBJECT, rdfData.getData());
+			apiMessage.addLocalMap(Constants.CONTROLLER_INPUT, rdfData.getData());
+			
+			if (rdfData.getData() == null) {
 				throw new ValidationException(ErrorConstants.RDF_DATA_IS_MISSING);
-			} else if (!(rdf instanceof Model)) {
+			} else if (!(rdfData.getData() instanceof Model)) {
 				throw new ValidationException(ErrorConstants.RDF_DATA_IS_INVALID);
 			} else if (methodOrigin == null) {
 				throw new ValidationException(ErrorConstants.INVALID_REQUEST_PATH);
@@ -83,13 +113,15 @@ public class RdfValidationServiceImpl implements IValidate {
 			} else if (shapeTypeMap == null) {
 				throw new ValidationException(this.getClass().getName() + ErrorConstants.VALIDATION_IS_MISSING);
 			} else {
-				rdfModel = (Model) rdf;
+				rdfModel = (Model) rdfData.getData();
 				ValidationResponse validationResponse = validateRDFWithSchema(rdfModel, methodOrigin);
 				if (signatureEnabled && Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)) {
 					signatureValidator.validateMandatorySignatureFields(rdfModel);
 				}
 				return validationResponse;
 			}
+		}catch (TransformationException te){
+			throw new MiddlewareHaltException(te.getMessage());
 		} catch (ValidationException ve) {
 			throw new MiddlewareHaltException(ve.getMessage());
 		} catch (IOException ioe) {

@@ -42,7 +42,6 @@ import io.opensaber.registry.frame.FrameContext;
 import io.opensaber.registry.frame.FrameEntity;
 import io.opensaber.registry.frame.FrameEntityImpl;
 import io.opensaber.registry.interceptor.AuthorizationInterceptor;
-import io.opensaber.registry.interceptor.RDFConversionInterceptor;
 import io.opensaber.registry.interceptor.RequestIdValidationInterceptor;
 import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -62,15 +61,18 @@ import io.opensaber.registry.sink.Neo4jGraphProvider;
 import io.opensaber.registry.sink.OrientDBGraphProvider;
 import io.opensaber.registry.sink.SqlgProvider;
 import io.opensaber.registry.sink.TinkerGraphProvider;
+import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Json2LdTransformer;
 import io.opensaber.registry.transform.Ld2JsonTransformer;
 import io.opensaber.registry.transform.Ld2LdTransformer;
+import io.opensaber.registry.transform.Ld2RdfTransformer;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
 import io.opensaber.validators.rdf.shex.RdfSignatureValidator;
 import io.opensaber.validators.rdf.shex.RdfValidationServiceImpl;
+
 
 @Configuration
 public class GenericConfiguration implements WebMvcConfigurer {
@@ -183,15 +185,19 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public Transformer transformer(){
 		return new Transformer();
 	}
+	
+	@Bean
+	public Ld2RdfTransformer ld2RdfTransformer(){
+		return new Ld2RdfTransformer();
+	}
+	@Bean
+	public ConfigurationHelper configurationHelper(){
+		return new ConfigurationHelper();
+	}
 
 	@Bean
 	public AuthorizationInterceptor authorizationInterceptor() {
 		return new AuthorizationInterceptor(authorizationFilter());
-	}
-
-	@Bean
-	public RDFConversionInterceptor rdfConversionInterceptor() {
-		return new RDFConversionInterceptor(rdfConverter(),transformer());
 	}
 
 	@Bean
@@ -390,9 +396,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			registry.addInterceptor(authorizationInterceptor()).addPathPatterns("/**")
 					.excludePathPatterns("/health", "/error", "/_schemas/**").order(orderIdx++);
 		}
-
-		registry.addInterceptor(rdfConversionInterceptor()).addPathPatterns("/add", "/update", "/search")
-				.order(orderIdx++);
 
 	}
 

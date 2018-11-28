@@ -45,6 +45,7 @@ import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.transform.Configuration;
+import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Data;
 import io.opensaber.registry.transform.ITransformer;
 import io.opensaber.registry.transform.TransformationException;
@@ -56,6 +57,8 @@ public class RegistryController {
 	private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
 	@Autowired
 	Transformer transformer;
+	@Autowired
+	private ConfigurationHelper configurationHelper;
 	@Autowired
 	private RegistryService registryService;
 	@Autowired
@@ -79,7 +82,7 @@ public class RegistryController {
 	public ResponseEntity<Response> add(@RequestParam(value = "id", required = false) String id,
 			@RequestParam(value = "prop", required = false) String property) {
 
-		Model rdf = (Model) apiMessage.getLocalMap(Constants.RDF_OBJECT);
+		Model rdf = (Model) apiMessage.getLocalMap(Constants.CONTROLLER_INPUT);
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
@@ -130,7 +133,7 @@ public class RegistryController {
 			String content = registryService.getEntityFramedById(entityId, includeSign);
 			logger.info("RegistryController: Framed content " + content);
 
-			Configuration config = transformer.getConfiguration(header.getAccept().iterator().next().toString(),
+			Configuration config = configurationHelper.getConfiguration(header.getAccept().iterator().next().toString(),
 					Direction.OUT);
 			Data<Object> data = new Data<Object>(content);
 			ITransformer<Object> responseTransformer = transformer.getInstance(config);
@@ -174,7 +177,7 @@ public class RegistryController {
 			watch.start("RegistryController.searchEntity");
 			String jenaJson = searchService.searchFramed(rdf);
 			Data<Object> data = new Data<>(jenaJson);
-			Configuration config = transformer.getConfiguration(header.getAccept().iterator().next().toString(),
+			Configuration config = configurationHelper.getConfiguration(header.getAccept().iterator().next().toString(),
 					Direction.OUT);
 
 			ITransformer<Object> responseTransformer = transformer.getInstance(config);

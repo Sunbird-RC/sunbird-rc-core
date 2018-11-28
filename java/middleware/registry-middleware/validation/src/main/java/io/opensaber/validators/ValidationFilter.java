@@ -18,7 +18,7 @@ public class ValidationFilter implements Middleware {
 
 	@Override
 	public Map<String, Object> execute(Map<String, Object> mapData) throws IOException, MiddlewareHaltException {
-		Model rdfModel = (Model) mapData.get(Constants.RDF_OBJECT);
+		Model rdfModel = (Model) mapData.get(Constants.CONTROLLER_INPUT);
 		String method = mapData.get(Constants.METHOD_ORIGIN).toString().replace("/", "");
 
 		if (null == rdfModel) {
