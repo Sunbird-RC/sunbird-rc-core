@@ -53,8 +53,18 @@ import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
 import io.opensaber.registry.schema.configurator.SchemaType;
 import io.opensaber.registry.schema.configurator.ShexSchemaConfigurator;
-import io.opensaber.registry.sink.*;
-import io.opensaber.registry.transform.*;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.sink.JanusGraphStorage;
+import io.opensaber.registry.sink.Neo4jGraphProvider;
+import io.opensaber.registry.sink.OrientDBGraphProvider;
+import io.opensaber.registry.sink.SqlgProvider;
+import io.opensaber.registry.sink.TinkerGraphProvider;
+import io.opensaber.registry.transform.ConfigurationHelper;
+import io.opensaber.registry.transform.Json2LdTransformer;
+import io.opensaber.registry.transform.Ld2JsonTransformer;
+import io.opensaber.registry.transform.Ld2LdTransformer;
+import io.opensaber.registry.transform.Ld2RdfTransformer;
+import io.opensaber.registry.transform.Transformer;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
@@ -375,7 +385,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (validationEnabled) {
 			try {
 				registry.addInterceptor(validationInterceptor())
-						.addPathPatterns("/add", "/update").order(orderIdx++);
+						.addPathPatterns("/add", "/update", "/search").order(orderIdx++);
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (CustomException e) {

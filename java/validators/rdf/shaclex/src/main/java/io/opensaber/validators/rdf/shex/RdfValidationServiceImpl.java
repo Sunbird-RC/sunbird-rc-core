@@ -71,7 +71,7 @@ public class RdfValidationServiceImpl implements IValidate {
 		ValidationResponse validationResponse = null;
 		if (Constants.CREATE_METHOD_ORIGIN.equals(methodOrigin)) {
 			schema = schemaForCreate;
-		} else if (Constants.UPDATE_METHOD_ORIGIN.equals(methodOrigin)) {
+		} else if (Constants.UPDATE_METHOD_ORIGIN.equals(methodOrigin) || Constants.SEARCH_METHOD_ORIGIN.equals(methodOrigin)) {
 			schema = schemaForUpdate;
 		} else {
 			throw new ValidationException(ErrorConstants.INVALID_REQUEST_PATH);

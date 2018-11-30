@@ -3,6 +3,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <artifactId>opensaber</artifactId>
+        <groupId>io.opensaber</groupId>
+        <version>1.0.0</version>
+    </parent>
     <groupId>io.opensaber</groupId>
     <artifactId>registry-interceptor</artifactId>
     <version>1.0.0</version>
@@ -11,21 +16,15 @@
     <name>registry-interceptors</name>
     <description>Interceptor package</description>
 
-    <parent>
-        <groupId>io.opensaber</groupId>
-        <artifactId>middleware-bom</artifactId>
-        <version>1.0.0</version>
-    </parent>
-
     <dependencyManagement>
         <dependencies>
-            <dependency>
+             <dependency>
                 <groupId>io.opensaber</groupId>
                 <artifactId>middleware-bom</artifactId>
                 <version>1.0.0</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
+            </dependency> 
         </dependencies>
 
     </dependencyManagement>
@@ -58,11 +57,7 @@
             <artifactId>pojos</artifactId>
             <version>1.0.0</version>
         </dependency>
-        <dependency>
-            <groupId>io.opensaber</groupId>
-            <artifactId>middleware-commons</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+        
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
