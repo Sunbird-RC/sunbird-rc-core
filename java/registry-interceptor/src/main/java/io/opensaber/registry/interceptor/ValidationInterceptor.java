@@ -40,7 +40,7 @@ public class ValidationInterceptor implements HandlerInterceptor {
 			throws Exception {
 		boolean result = true;
 		watch.start("ValidationInterceptor.execute");
-		validationFilter.execute(apiMessage);
+		result = validationFilter.execute(apiMessage);
 		watch.stop("ValidationInterceptor.execute");
 		return result;
 	}
