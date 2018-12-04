@@ -5,16 +5,15 @@
     <parent>
         <groupId>io.opensaber</groupId>
         <artifactId>opensaber</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
+        <relativePath>../</relativePath>
     </parent>
 
     <artifactId>middleware-commons</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <name>middleware commons</name>
     <description>Common utilities and interfaces</description>
-    <properties>
-        <tinkerpop.version>3.3.1</tinkerpop.version>
-    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.jsonld-java</groupId>
@@ -29,7 +28,7 @@
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>jenardf4j</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.jena</groupId>
@@ -45,7 +44,7 @@
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>pojos</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

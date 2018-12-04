@@ -6,11 +6,11 @@
     <parent>
         <artifactId>opensaber</artifactId>
         <groupId>io.opensaber</groupId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
     </parent>
     <groupId>io.opensaber</groupId>
     <artifactId>registry-interceptor</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <name>registry-interceptors</name>
@@ -21,7 +21,7 @@
              <dependency>
                 <groupId>io.opensaber</groupId>
                 <artifactId>middleware-bom</artifactId>
-                <version>1.0.0</version>
+                <version>1.1.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency> 
@@ -55,7 +55,7 @@
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>pojos</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
         </dependency>
         
         <dependency>

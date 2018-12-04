@@ -5,19 +5,13 @@
     <parent>
         <artifactId>opensaber</artifactId>
         <groupId>io.opensaber</groupId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
     </parent>
 
     <artifactId>middleware-bom</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>pom</packaging>
-    <properties>
-        <jsonldConversionVersion>1.0.0</jsonldConversionVersion>
-        <rdfConversionVersion>1.0.0</rdfConversionVersion>
-        <authorizationVersion>1.0.0</authorizationVersion>
-        <validationVersion>1.0.0</validationVersion>
-        <signaturePresenceValidationVersion>1.0.0</signaturePresenceValidationVersion>
-    </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
