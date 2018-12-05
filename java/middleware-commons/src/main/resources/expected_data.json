@@ -1,0 +1,57 @@
+{
+  "Teacher": {
+    "basicProficiencyLevel": [
+      {
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-HIGHERSECONDARY",
+        "proficiencySubject": "SubjectCode-ENGLISH"
+      },
+      {
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-SECONDARY",
+        "proficiencySubject": "SubjectCode-SOCIALSTUDIES"
+      },
+      {
+        "proficiencyAcademicQualification": "AcademicQualificationTypeCode-PHD",
+        "proficiencySubject": "SubjectCode-MATH"
+      }
+    ],
+    "birthDate": "1990-12-06",
+    "disabilityType": "DisabilityCode-NA",
+    "gender": "GenderTypeCode-MALE",
+    "highestAcademicQualification": "AcademicQualificationTypeCode-PHD",
+    "highestTeacherQualification": "TeacherQualificationTypeCode-MED",
+    "inServiceTeacherTrainingFromBRC": {
+      "daysOfInServiceTeacherTraining": "10"
+    },
+    "inServiceTeacherTrainingFromCRC": {
+      "daysOfInServiceTeacherTraining": "2"
+    },
+    "inServiceTeacherTrainingFromDIET": {
+      "daysOfInServiceTeacherTraining": "5.5"
+    },
+    "inServiceTeacherTrainingFromOthers": {
+      "daysOfInServiceTeacherTraining": "3.5"
+    },
+    "nationalIdentifier": "1234567890123456",
+    "nonTeachingAssignmentsForAcademicCalendar": {
+      "daysOfNonTeachingAssignments": "6"
+    },
+    "serialNum": 5,
+    "socialCategory": "SocialCategoryTypeCode-GENERAL",
+    "teacherCode": "12234",
+    "teacherName": "Marvin Pande",
+    "teachingRole": {
+      "appointedForSubjects": "SubjectCode-ENGLISH",
+      "appointmentType": "TeacherAppointmentTypeCode-REGULAR",
+      "appointmentYear": "2015",
+      "classesTaught": "ClassTypeCode-SECONDARYANDHIGHERSECONDARY",
+      "mainSubjectsTaught": [
+        "teacher:SubjectCode-SOCIALSTUDIES",
+        "teacher:SubjectCode-ENGLISH"
+      ],
+      "teacherType": "TeacherTypeCode-HEAD"
+    },
+    "trainedForChildrenSpecialNeeds": "YesNoCode-YES",
+    "trainedinUseOfComputer": "YesNoCode-YES",
+    "yearOfJoiningService": "2014"
+  }
+}

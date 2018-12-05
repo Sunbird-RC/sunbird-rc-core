@@ -1,15 +1,5 @@
 package io.opensaber.registry.service.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.registry.exception.SignatureException;
-import io.opensaber.registry.service.SignatureService;
-
-import java.lang.reflect.Type;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,101 +9,93 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.google.gson.Gson;
+
+import io.opensaber.registry.exception.SignatureException;
+import io.opensaber.registry.service.SignatureService;
+
 @Component
 public class SignatureServiceImpl implements SignatureService {
-	
-	private Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
 
-    @Value("${signature.healthCheckURL}")
-    private String healthCheckURL;
+	private static Logger logger = LoggerFactory.getLogger(SignatureService.class);
+	@Value("${signature.healthCheckURL}")
+	private String healthCheckURL;
+	@Value("${signature.signURL}")
+	private String signURL;
+	@Value("${signature.verifyURL}")
+	private String verifyURL;
+	@Value("${signature.keysURL}")
+	private String keysURL;
+	@Autowired
+	private RestTemplate restTemplate;
 
-    @Value("${signature.signURL}")
-    private String signURL;
+	@Override
+	public boolean isServiceUp() throws SignatureException.UnreachableException {
+		boolean isSignServiceUp = false;
+		try {
+			ResponseEntity<String> response = restTemplate.getForEntity(healthCheckURL, String.class);
+			if (response.getBody().equalsIgnoreCase("UP")) {
+				isSignServiceUp = true;
+				logger.debug("Signature service running !");
+			}
+		} catch (RestClientException ex) {
+			logger.error("RestClientException when checking the health of the Sunbird encryption service: ", ex);
+			throw new SignatureException().new UnreachableException(ex.getMessage());
+		}
+		return isSignServiceUp;
+	}
 
-    @Value("${signature.verifyURL}")
-    private String verifyURL;
+	@Override
+	public Object sign(Object propertyValue)
+			throws SignatureException.UnreachableException, SignatureException.CreationException {
+		ResponseEntity<String> response = null;
+		Object result = null;
+		try {
+			response = restTemplate.postForEntity(signURL, propertyValue, String.class);
+			result = new Gson().fromJson(response.getBody(), Object.class);
+		} catch (RestClientException ex) {
+			logger.error("RestClientException when signing: ", ex);
+			throw new SignatureException().new UnreachableException(ex.getMessage());
+		} catch (Exception e) {
+			logger.error("RestClientException when signing: ", e);
+			throw new SignatureException().new CreationException(e.getMessage());
+		}
+		return result;
+	}
 
-    @Value("${signature.keysURL}")
-    private String keysURL;
+	@Override
+	public Object verify(Object propertyValue)
+			throws SignatureException.UnreachableException, SignatureException.VerificationException {
+		ResponseEntity<String> response = null;
+		Object result = null;
+		try {
+			response = restTemplate.postForEntity(verifyURL, propertyValue, String.class);
+			result = new Gson().fromJson(response.getBody(), Object.class);
+		} catch (RestClientException ex) {
+			logger.error("RestClientException when verifying: ", ex);
+			throw new SignatureException().new UnreachableException(ex.getMessage());
+		} catch (Exception e) {
+			logger.error("RestClientException when verifying: ", e);
+			throw new SignatureException().new VerificationException(e.getMessage());
+		}
+		return result;
+	}
 
-    @Autowired
-    private RestTemplate restTemplate;
-
-    @Autowired
-    private Gson gson;
-
-    @Autowired
-    private OpenSaberInstrumentation watch;
-
-    private static Logger logger = LoggerFactory.getLogger(SignatureService.class);
-
-    @Override
-    public boolean isServiceUp() throws SignatureException.UnreachableException {
-        boolean isSignServiceUp = false;
-        try {
-            ResponseEntity<String> response = restTemplate.getForEntity(healthCheckURL, String.class);
-            if (response.getBody().equalsIgnoreCase("UP")) {
-                isSignServiceUp = true;
-                logger.debug("Signature service running !");
-            }
-        } catch (RestClientException ex) {
-            logger.error("RestClientException when checking the health of the Sunbird encryption service: ", ex);
-            throw new SignatureException().new UnreachableException(ex.getMessage());
-        }
-        return isSignServiceUp;
-    }
-
-    @Override
-    public Object sign(Object propertyValue) throws SignatureException.UnreachableException,
-            SignatureException.CreationException {
-        ResponseEntity<String> response = null;
-        Object result = null;
-        try {
-            response = restTemplate.postForEntity(signURL, propertyValue, String.class);
-            result = new Gson().fromJson(response.getBody(), Object.class);
-        } catch (RestClientException ex) {
-            logger.error("RestClientException when signing: ", ex);
-            throw new SignatureException().new UnreachableException(ex.getMessage());
-        } catch (Exception e) {
-            logger.error("RestClientException when signing: ", e);
-            throw new SignatureException().new CreationException(e.getMessage());
-        }
-        return result;
-    }
-
-    @Override
-    public Object verify(Object propertyValue) throws SignatureException.UnreachableException,
-            SignatureException.VerificationException {
-        ResponseEntity<String> response = null;
-        Object result = null;
-        try {
-            response = restTemplate.postForEntity(verifyURL, propertyValue, String.class);
-            result = new Gson().fromJson(response.getBody(), Object.class);
-        } catch (RestClientException ex) {
-            logger.error("RestClientException when verifying: ", ex);
-            throw new SignatureException().new UnreachableException(ex.getMessage());
-        } catch (Exception e) {
-            logger.error("RestClientException when verifying: ", e);
-            throw new SignatureException().new VerificationException(e.getMessage());
-        }
-        return result;
-    }
-
-    @Override
-    public String getKey(String keyId) throws SignatureException.UnreachableException,
-            SignatureException.KeyNotFoundException {
-        ResponseEntity<String> response = null;
-        String result = null;
-        try {
-            response = restTemplate.getForEntity(keysURL + "/" + keyId, String.class);
-            result = new Gson().fromJson(response.getBody(), String.class);
-        } catch (RestClientException ex) {
-            logger.error("RestClientException when verifying: ", ex);
-            throw new SignatureException().new UnreachableException(ex.getMessage());
-        } catch (Exception e) {
-            logger.error("RestClientException when verifying: ", e);
-            throw new SignatureException().new KeyNotFoundException(e.getMessage());
-        }
-        return result;
-    }
+	@Override
+	public String getKey(String keyId)
+			throws SignatureException.UnreachableException, SignatureException.KeyNotFoundException {
+		ResponseEntity<String> response = null;
+		String result = null;
+		try {
+			response = restTemplate.getForEntity(keysURL + "/" + keyId, String.class);
+			result = new Gson().fromJson(response.getBody(), String.class);
+		} catch (RestClientException ex) {
+			logger.error("RestClientException when verifying: ", ex);
+			throw new SignatureException().new UnreachableException(ex.getMessage());
+		} catch (Exception e) {
+			logger.error("RestClientException when verifying: ", e);
+			throw new SignatureException().new KeyNotFoundException(e.getMessage());
+		}
+		return result;
+	}
 }

@@ -1,13 +1,11 @@
 package io.opensaber.pojos;
 
-import java.util.Map;
-
 public class Entity {
-	
+
 	private Object claim;
-	
+
 	private String signatureValue;
-	
+
 	private Integer keyId;
 
 	public Object getClaim() {
@@ -33,7 +31,5 @@ public class Entity {
 	public void setKeyId(Integer keyId) {
 		this.keyId = keyId;
 	}
-	
-	
 
 }

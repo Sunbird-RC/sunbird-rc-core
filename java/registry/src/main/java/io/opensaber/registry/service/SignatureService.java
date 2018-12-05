@@ -4,15 +4,14 @@ import io.opensaber.registry.exception.SignatureException;
 
 public interface SignatureService {
 
-    Object sign(Object propertyValue) throws SignatureException.UnreachableException,
-            SignatureException.CreationException;
+	Object sign(Object propertyValue)
+			throws SignatureException.UnreachableException, SignatureException.CreationException;
 
-    Object verify(Object propertyValue) throws SignatureException.UnreachableException,
-            SignatureException.VerificationException;
+	Object verify(Object propertyValue)
+			throws SignatureException.UnreachableException, SignatureException.VerificationException;
 
-    String getKey(String keyId) throws SignatureException.UnreachableException,
-            SignatureException.KeyNotFoundException;
+	String getKey(String keyId) throws SignatureException.UnreachableException, SignatureException.KeyNotFoundException;
 
-    boolean isServiceUp() throws SignatureException.UnreachableException;
+	boolean isServiceUp() throws SignatureException.UnreachableException;
 
 }

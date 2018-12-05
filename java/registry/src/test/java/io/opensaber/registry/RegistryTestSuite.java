@@ -13,16 +13,16 @@ import io.opensaber.registry.service.impl.SearchServiceImplTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-@SuiteClasses({RegistryDaoImplTest.class, RegistryServiceImplTest.class, 
-	EncryptionDaoImplTest.class, EncryptionServiceImplTest.class, SearchServiceImplTest.class, SearchDaoImplTest.class})
+@SuiteClasses({ RegistryDaoImplTest.class, RegistryServiceImplTest.class, EncryptionDaoImplTest.class,
+		EncryptionServiceImplTest.class, SearchServiceImplTest.class, SearchDaoImplTest.class })
 @RunWith(Suite.class)
 public class RegistryTestSuite {
 
 	public static Test suite() {
 		TestSuite suite = new TestSuite(RegistryTestSuite.class.getName());
-		//$JUnit-BEGIN$
+		// $JUnit-BEGIN$
 
-		//$JUnit-END$
+		// $JUnit-END$
 		return suite;
 	}
 

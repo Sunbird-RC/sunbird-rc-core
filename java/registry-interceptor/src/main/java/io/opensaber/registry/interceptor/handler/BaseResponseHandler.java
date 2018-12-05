@@ -1,21 +1,20 @@
 package io.opensaber.registry.interceptor.handler;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.ResponseParams;
-import io.opensaber.pojos.ValidationResponse;
-import io.opensaber.pojos.ValidationResponseSerializer;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletResponse;
+
+import io.opensaber.pojos.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * 
@@ -23,11 +22,12 @@ import java.util.Map;
  *
  */
 public class BaseResponseHandler {
-	
+
 	protected HttpServletResponse response;
+	protected Type mapType = new TypeToken<Map<String, Object>>() {
+	}.getType();
 	private ResponseWrapper responseWrapper;
 	private Response formattedResponse;
-	protected Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
 
 	private static Gson gson() {
 		GsonBuilder builder = new GsonBuilder();
@@ -35,49 +35,49 @@ public class BaseResponseHandler {
 		return builder.create();
 	}
 
-	public void setResponse(HttpServletResponse response) throws IOException {
-		this.response = response;
-		setResponseWrapper();
-	}
-
 	public void setResponseWrapper() throws IOException {
 		responseWrapper = new ResponseWrapper(response);
 	}
 
 	public void writeResponseBody(String content) throws IOException {
-		//setResponseWrapper();
+		// setResponseWrapper();
 		responseWrapper.writeResponseBody(content);
 		response = (HttpServletResponse) responseWrapper.getResponse();
 	}
 
-	public HttpServletResponse getResponse(){
+	public HttpServletResponse getResponse() {
 		return response;
+	}
+
+	public void setResponse(HttpServletResponse response) throws IOException {
+		this.response = response;
+		setResponseWrapper();
 	}
 
 	public String getResponseContent() throws IOException {
 		setResponseWrapper();
 		return responseWrapper.getResponseContent();
 	}
-	
-	public void setFormattedResponse(String json){
-		formattedResponse.setResult(gson().fromJson(json, mapType));
-	}
-	
-	public String getFormattedResponse(){
+
+	public String getFormattedResponse() {
 		return gson().toJson(formattedResponse);
 	}
-	
+
+	public void setFormattedResponse(String json) {
+		formattedResponse.setResult(gson().fromJson(json, mapType));
+	}
+
 	public Map<String, Object> getResponseBodyMap() throws IOException {
 		Gson gson = new Gson();
 		String responseBody = getResponseContent();
 		formattedResponse = gson.fromJson(responseBody, Response.class);
-        Map<String, Object> resultMap = new HashMap<String, Object>();
-        resultMap.putIfAbsent("response", formattedResponse.getResult());
-        return resultMap;
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		resultMap.putIfAbsent("response", formattedResponse.getResult());
+		return resultMap;
 	}
 
 	public Map<String, Object> getResponseHeaderMap() throws IOException {
-		//setResponseWrapper();
+		// setResponseWrapper();
 		Map<String, Object> responseHeaderMap = new HashMap<>();
 		Collection<String> headerNames = responseWrapper.getHeaderNames();
 		if (headerNames != null) {

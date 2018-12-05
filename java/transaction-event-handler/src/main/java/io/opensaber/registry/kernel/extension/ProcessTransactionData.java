@@ -1,18 +1,8 @@
 package io.opensaber.registry.kernel.extension;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
-import io.opensaber.registry.kernel.util.LogGraphEvent;
-import io.opensaber.registry.middleware.util.Constants;
-
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -24,11 +14,11 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
+import io.opensaber.registry.kernel.util.LogGraphEvent;
+import io.opensaber.registry.middleware.util.Constants;
+
 public class ProcessTransactionData {
 
-	
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-	
 	private static Logger logger = LoggerFactory.getLogger(ProcessTransactionData.class);
 
 	protected String graphId;
@@ -51,8 +41,8 @@ public class ProcessTransactionData {
 	}
 
 	private List<Map<String, Object>> getMessageObj(TransactionData data) {
-		//User id and request id needs to be set here
-		//String userId = "";
+		// User id and request id needs to be set here
+		// String userId = "";
 		String requestId = "";
 		List<Map<String, Object>> messageMap = new ArrayList<>();
 		messageMap.addAll(getCretedNodeMessages(data, graphDb, requestId));
@@ -63,7 +53,8 @@ public class ProcessTransactionData {
 		return messageMap;
 	}
 
-	private List<Map<String, Object>> getCretedNodeMessages(TransactionData data, GraphDatabaseService graphDb, String requestId) {
+	private List<Map<String, Object>> getCretedNodeMessages(TransactionData data, GraphDatabaseService graphDb,
+			String requestId) {
 		List<Map<String, Object>> lstMessageMap = new ArrayList<>();
 		try {
 			List<Long> createdNodeIds = getCreatedNodeIds(data);
@@ -84,7 +75,8 @@ public class ProcessTransactionData {
 		return lstMessageMap;
 	}
 
-	private List<Map<String, Object>> getUpdatedNodeMessages(TransactionData data, GraphDatabaseService graphDb, String requestId) {
+	private List<Map<String, Object>> getUpdatedNodeMessages(TransactionData data, GraphDatabaseService graphDb,
+			String requestId) {
 		List<Map<String, Object>> lstMessageMap = new ArrayList<>();
 		try {
 			List<Long> updatedNodeIds = getUpdatedNodeIds(data);
@@ -116,14 +108,12 @@ public class ProcessTransactionData {
 				if (null != removedNodeProp && !removedNodeProp.isEmpty()) {
 					transactionData.put(Constants.GraphParams.properties.name(), removedNodeProp);
 					map.put(Constants.GraphParams.requestId.name(), requestId);
-					/*if (StringUtils.isEmpty(userId)) {
-						if (removedNodeProp.containsKey("lastUpdatedBy"))
-							// oldvalue of lastUpdatedBy from the transaction
-							// data as node is deleted
-							userId = (String) ((Map) removedNodeProp.get("lastUpdatedBy")).get("ov");
-						else
-							userId = "ANONYMOUS";
-					}*/
+					/*
+					 * if (StringUtils.isEmpty(userId)) { if
+					 * (removedNodeProp.containsKey("lastUpdatedBy")) // oldvalue of lastUpdatedBy
+					 * from the transaction // data as node is deleted userId = (String) ((Map)
+					 * removedNodeProp.get("lastUpdatedBy")).get("ov"); else userId = "ANONYMOUS"; }
+					 */
 					map.put(Constants.GraphParams.userId.name(), getUserId(removedNodeProp));
 					map.put(Constants.GraphParams.operationType.name(), Constants.GraphParams.DELETE.name());
 					map.put(Constants.GraphParams.label.name(), getRemovedLabel(nodeId, data));
@@ -183,11 +173,11 @@ public class ProcessTransactionData {
 			map = new HashMap<>();
 		return map;
 	}
-	
-	private String getRemovedLabel(Long nodeId, TransactionData data){
+
+	private String getRemovedLabel(Long nodeId, TransactionData data) {
 		Iterable<LabelEntry> removedLabels = data.removedLabels();
 		for (LabelEntry le : removedLabels) {
-			if(nodeId == le.node().getId()){
+			if (nodeId == le.node().getId()) {
 				return le.label().toString();
 			}
 		}
@@ -263,7 +253,6 @@ public class ProcessTransactionData {
 		return true;
 	}
 
-
 	private List<Map<String, Object>> getAddedRelationShipMessages(TransactionData data, String requestId) {
 		Iterable<Relationship> createdRelations = data.createdRelationships();
 		return getRelationShipMessages(createdRelations, Constants.GraphParams.UPDATE.name(), false, requestId, null);
@@ -302,26 +291,24 @@ public class ProcessTransactionData {
 					startRelation.put("label", getLabel(endNode));
 					startRelation.put("relMetadata", relMetadata);
 
-					/*if (StringUtils.isEmpty(userId)) {
-						String startNodeLastUpdate = (String) getPropertyValue(startNode, "lastUpdatedAt");
-						String endNodeLastUpdate = (String) getPropertyValue(endNode, "lastUpdatedAt");
-
-						if (startNodeLastUpdate != null && endNodeLastUpdate != null) {
-							if (startNodeLastUpdate.compareTo(endNodeLastUpdate) > 0) {
-								userId = (String) getPropertyValue(startNode, "lastUpdatedBy");
-							} else {
-								userId = (String) getPropertyValue(endNode, "lastUpdatedBy");
-							}
-						}
-						if (StringUtils.isBlank(userId))
-							userId = "ANONYMOUS";
-					}*/
+					/*
+					 * if (StringUtils.isEmpty(userId)) { String startNodeLastUpdate = (String)
+					 * getPropertyValue(startNode, "lastUpdatedAt"); String endNodeLastUpdate =
+					 * (String) getPropertyValue(endNode, "lastUpdatedAt");
+					 *
+					 * if (startNodeLastUpdate != null && endNodeLastUpdate != null) { if
+					 * (startNodeLastUpdate.compareTo(endNodeLastUpdate) > 0) { userId = (String)
+					 * getPropertyValue(startNode, "lastUpdatedBy"); } else { userId = (String)
+					 * getPropertyValue(endNode, "lastUpdatedBy"); } } if
+					 * (StringUtils.isBlank(userId)) userId = "ANONYMOUS"; }
+					 */
 					List<Map<String, Object>> startRelations = new ArrayList<>();
 					startRelations.add(startRelation);
 					transactionData.put(Constants.GraphParams.properties.name(), new HashMap<String, Object>());
 					if (delete) {
 						transactionData.put(Constants.GraphParams.removedRelations.name(), startRelations);
-						transactionData.put(Constants.GraphParams.addedRelations.name(), new ArrayList<Map<String, Object>>());
+						transactionData.put(Constants.GraphParams.addedRelations.name(),
+								new ArrayList<Map<String, Object>>());
 					} else {
 						transactionData.put(Constants.GraphParams.addedRelations.name(), startRelations);
 						transactionData.put(Constants.GraphParams.removedRelations.name(),
@@ -345,7 +332,8 @@ public class ProcessTransactionData {
 					transactionData.put(Constants.GraphParams.properties.name(), new HashMap<String, Object>());
 					if (delete) {
 						transactionData.put(Constants.GraphParams.removedRelations.name(), endRelations);
-						transactionData.put(Constants.GraphParams.addedRelations.name(), new ArrayList<Map<String, Object>>());
+						transactionData.put(Constants.GraphParams.addedRelations.name(),
+								new ArrayList<Map<String, Object>>());
 					} else {
 						transactionData.put(Constants.GraphParams.addedRelations.name(), endRelations);
 						transactionData.put(Constants.GraphParams.removedRelations.name(),
@@ -377,16 +365,10 @@ public class ProcessTransactionData {
 	}
 
 	private String getLabel(Node node) {
-		for(Label label: node.getLabels()){
+		for (Label label : node.getLabels()) {
 			return label.toString();
 		}
 		return "";
-	}
-
-	private Object getPropertyValue(Node node, String propertyName) {
-		if (node.hasProperty(propertyName))
-			return node.getProperty(propertyName);
-		return null;
 	}
 
 	private List<Long> getUpdatedNodeIds(TransactionData data) {
@@ -433,7 +415,7 @@ public class ProcessTransactionData {
 	}
 
 	private Map<String, Object> setMessageData(GraphDatabaseService graphDb, Long nodeId, String requestId,
-											   String operationType, Map<String, Object> transactionData) {
+			String operationType, Map<String, Object> transactionData) {
 
 		Map<String, Object> map = new HashMap<>();
 		Node node = graphDb.getNodeById(nodeId);
@@ -450,40 +432,30 @@ public class ProcessTransactionData {
 
 	}
 
-	private static String format(Date date) {
-		if (null != date) {
-			try {
-				return sdf.format(date);
-			} catch (Exception e) {
-			}
-		}
-		return null;
-	}
-	
-	public String getUserId(Node node){
+	public String getUserId(Node node) {
 		List<String> propertyKeys = Lists.newArrayList(node.getPropertyKeys());
-		for(String property: propertyKeys){
-			if(property.endsWith("lastUpdatedBy")){
+		for (String property : propertyKeys) {
+			if (property.endsWith("lastUpdatedBy")) {
 				return (String) node.getProperty(property);
 			}
 		}
-		/*if (node.hasProperty("lastUpdatedBy")){
-			return (String) node.getProperty("lastUpdatedBy");
-		}*/
+		/*
+		 * if (node.hasProperty("lastUpdatedBy")){ return (String)
+		 * node.getProperty("lastUpdatedBy"); }
+		 */
 		return "ANONYMOUS";
 	}
-	
-	public String getUserId(Long nodeId, TransactionData data){
+
+	public String getUserId(Long nodeId, TransactionData data) {
 		String lastUpdatedBy = getLastUpdatedByValue(nodeId, data);
 		if (StringUtils.isNotBlank(lastUpdatedBy)) {
 			return lastUpdatedBy;
 		}
 		return "ANONYMOUS";
 	}
-	
-	public String getUserId(Map<String, Object> removedNodeProp){
-		if (removedNodeProp.containsKey("lastUpdatedBy"))
-		{
+
+	public String getUserId(Map<String, Object> removedNodeProp) {
+		if (removedNodeProp.containsKey("lastUpdatedBy")) {
 			return (String) ((Map) removedNodeProp.get("lastUpdatedBy")).get("ov");
 		}
 		return "ANONYMOUS";

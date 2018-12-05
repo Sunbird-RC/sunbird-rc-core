@@ -16,6 +16,9 @@ perf:
   monitoring:
     enabled: ${perf_monitoring_enabled:true}
 
+persistence:
+  enabled: ${persistence_enabled:true}
+
 registry:
   context:
     base: ${registry_context_base:http://localhost:8080/}
@@ -27,7 +30,7 @@ registry:
 #This refers to the opensaber schema configuration JSON-LD file
 config:
   schema:
-    file: ${config_schema_file:schema-configuration.jsonld}
+    file: ${config_schema_file:schema-configuration.json}
 
 database:
   provider: ${database_provider:NEO4J}
@@ -53,13 +56,6 @@ database:
 #    index:
 #      storage.backend: ${cassandr_index_storage:elasticsearch}
 #      hostname: ${cassandra_index_hostname:localhost}
-
-# RDF Validation Config
-validations:
-  create:
-    file: ${validations_create_file:validations_create.shex}
-  update:
-    file: ${validations_update_file:validations_update.shex}
     
 # File for framing the entity while reading
 frame:
@@ -109,6 +105,14 @@ keycloak:
     realm:  ${sunbird_sso_realm}
     auth_server_url:  ${sunbird_sso_url}
 
+validation:
+  enabled: ${validation_enabled:true}
+  type: ${validation_type:shex}
+  create:
+    file: ${validations_create_file:validations_create.shex}
+  update:
+    file: ${validations_update_file:validations_update.shex}
+
 ---
 ##################################################################
 #                      TEST PROFILE                              #
@@ -125,6 +129,9 @@ perf:
   monitoring:
     enabled: false
 
+persistence:
+  enabled: ${persistence_enabled:true}
+
 registry:
   context:
     base: http://example.com/voc/teacher/1.0.0/
@@ -140,13 +147,6 @@ config:
 
 database:
   provider: TINKERGRAPH
-
-# RDF Validation Config
-validations:
-  create:
-    file: good1.shex
-  update:
-    file: good1.shex
 
 # File for framing the entity while reading
 frame:
@@ -195,3 +195,11 @@ keycloak:
     publicKey:  ${sunbird_sso_publickey}
     realm:  ${sunbird_sso_realm}
     auth_server_url:  ${sunbird_sso_url}
+
+validation:
+  enabled: ${validation_enabled:true}
+  type: ${validation_type:shex}
+  create:
+    file: good1.shex
+  update:
+    file: good1.shex
