@@ -33,14 +33,20 @@ config:
     file: ${config_schema_file:schema-configuration.json}
 
 database:
+  #provider available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
+  #Note: Please avoid repeating the shardId.
   provider: ${database_provider:NEO4J}
-  neo4j:
-    embedded: ${database_embedded:true}
-    # Set an environment variable NEO4J_HOST if running Neo4J as a standalone host
-    # This variable is set from the docker-compose.yml with the Neo4J service name
-    host: ${database_host:localhost}
-    port: ${database_port:7687}
-    database_directory: ${database_directory:/data/databases/graph.db}
+  connectionInfo:
+    - 
+      shardId: shard1
+      uri: bolt://localhost:7688
+      username: neo4j
+      password: neo4j@tt
+    - 
+      shardId: shard2
+      uri: bolt://localhost:7689
+      username: neo4j
+      password: neo4j@tt
 
 ##################################################################################
 # Uncomment the following section to use Cassandra as backend store              #

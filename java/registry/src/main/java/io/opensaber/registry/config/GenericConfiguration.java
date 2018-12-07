@@ -48,17 +48,14 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
+import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.schema.config.SchemaLoader;
 import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
 import io.opensaber.registry.schema.configurator.SchemaType;
 import io.opensaber.registry.schema.configurator.ShexSchemaConfigurator;
+import io.opensaber.registry.sink.DBShard;
 import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.sink.JanusGraphStorage;
-import io.opensaber.registry.sink.Neo4jGraphProvider;
-import io.opensaber.registry.sink.OrientDBGraphProvider;
-import io.opensaber.registry.sink.SqlgProvider;
-import io.opensaber.registry.sink.TinkerGraphProvider;
 import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Json2LdTransformer;
 import io.opensaber.registry.transform.Ld2JsonTransformer;
@@ -310,32 +307,21 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		requestFactory.setReadTimeout(readTimeout);
 		return new RestTemplate(requestFactory);
 	}
-
+	@Bean 
+	public DBShard dbshard(){
+		return new DBShard();
+	}
+	
+	@Bean 
+	public DBConnectionInfoMgr dBConnectionInfoMgr(){
+		return new DBConnectionInfoMgr();
+	}
+	
 	@Bean
 	public DatabaseProvider databaseProvider() {
-		String dbProvider = environment.getProperty(Constants.DATABASE_PROVIDER);
-		DatabaseProvider provider;
-		if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.ORIENTDB.getName())) {
-			provider = new OrientDBGraphProvider(environment);
-			provider.initializeGlobalGraphConfiguration();
-		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.NEO4J.getName())) {
-			provider = new Neo4jGraphProvider(environment);
-			provider.initializeGlobalGraphConfiguration();
-		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.SQLG.getName())) {
-			provider = new SqlgProvider(environment);
-			provider.initializeGlobalGraphConfiguration();
-		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName())) {
-			provider = new TinkerGraphProvider(environment);
-			provider.initializeGlobalGraphConfiguration();
-		} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.CASSANDRA.getName())) {
-			provider = new JanusGraphStorage(environment);
-			provider.initializeGlobalGraphConfiguration();
-		} else {
-			throw new RuntimeException("No Database Provider is configured. Please configure a Database Provider");
-		}
-
-		return provider;
+		return dbshard().getInstance("shard1");
 	}
+	
 
 	@Bean
 	public UrlValidator urlValidator() {
