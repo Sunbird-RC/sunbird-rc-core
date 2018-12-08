@@ -40,21 +40,29 @@ public abstract class DatabaseProvider {
 	 * This method is used to initialize some global graph level configuration
 	 */
 	public void initializeGlobalGraphConfiguration() {
-		if (IteratorUtils.count(getGraphStore().traversal().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG)) == 0) {
+		Graph graph = getGraphStore();
+		if (IteratorUtils.count(graph.traversal().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG)) == 0) {
 			logger.info("Adding GRAPH_GLOBAL_CONFIG node...");
-			if (getGraphStore().features().graph().supportsTransactions()) {
+			if (graph.features().graph().supportsTransactions()) {
 				org.apache.tinkerpop.gremlin.structure.Transaction tx;
-				tx = getGraphStore().tx();
+				tx = graph.tx();
 				tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-				Vertex globalConfig = getGraphStore().traversal().clone().addV(Constants.GRAPH_GLOBAL_CONFIG).next();
+				Vertex globalConfig = graph.traversal().clone().addV(Constants.GRAPH_GLOBAL_CONFIG).next();
 				globalConfig.property(Constants.PERSISTENT_GRAPH, true);
 				tx.commit();
-				logger.debug("Graph initialised using transaction !");
+				logger.info("Graph initialised using transaction !");
 			} else {
-				Vertex globalConfig = getGraphStore().traversal().clone().addV(Constants.GRAPH_GLOBAL_CONFIG).next();
+				Vertex globalConfig = graph.traversal().clone().addV(Constants.GRAPH_GLOBAL_CONFIG).next();
 				globalConfig.property(Constants.PERSISTENT_GRAPH, true);
-				logger.debug("Graph initialised without transaction !");
+				logger.info("Graph initialised without transaction !");
 			}
+		}
+		try {
+			graph.close();
+		} catch (Exception e) {
+			// This function is called at boot time and any exception thrown here indicates very serious
+			// problem.
+			logger.error("Can't close graph " + e.getMessage());
 		}
 	}
 

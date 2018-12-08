@@ -6,6 +6,7 @@ public class DBConnectionInfo {
 	private String uri;
 	private String username;
 	private String password;
+	private boolean profilerEnabled = false;
 	
 	public String getShardId() {
 		return shardId;
@@ -31,5 +32,14 @@ public class DBConnectionInfo {
 	}
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+
+	public boolean isProfilerEnabled() {
+		return profilerEnabled;
+	}
+
+	public void setProfilerEnabled(boolean profilerEnabled) {
+		this.profilerEnabled = profilerEnabled;
 	}
 }

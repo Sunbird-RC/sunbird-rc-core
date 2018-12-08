@@ -37,16 +37,16 @@ database:
   #Note: Please avoid repeating the shardId.
   provider: ${database_provider:NEO4J}
   connectionInfo:
-    - 
+    -
       shardId: shard1
-      uri: bolt://localhost:7688
-      username: neo4j
-      password: neo4j@tt
-    - 
+      uri: ${connectionInfo_uri:bolt://localhost:7687}
+      username: ${connectionInfo_username:neo4j}
+      password: ${connectionInfo_password:test123}
+    -
       shardId: shard2
-      uri: bolt://localhost:7689
-      username: neo4j
-      password: neo4j@tt
+      uri: ${connectionInfo_uri:bolt://localhost:7688}
+      username: ${connectionInfo_username:neo4j}
+      password: ${connectionInfo_password:test123}
 
 ##################################################################################
 # Uncomment the following section to use Cassandra as backend store              #
@@ -152,6 +152,7 @@ config:
     file: schema-configuration-school-test.jsonld
 
 database:
+  # Any other provider breaks the unit tests, needs a work-item
   provider: TINKERGRAPH
 
 # File for framing the entity while reading

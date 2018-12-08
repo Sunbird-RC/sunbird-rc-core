@@ -43,11 +43,11 @@ public class Json2LdTransformer implements ITransformer<Object> {
 				throw new TransformationException(Constants.INVALID_FRAME, ErrorCode.JSON_TO_JSONLD_TRANFORMATION_ERROR);
 			setPrefix(domain);
 			JSONUtil.addPrefix(resultNode, prefix, nodeTypes);
-			logger.info("Appending prefix to requestNode " + resultNode);
+			logger.debug("Appended prefix to requestNode.");
 
 			resultNode = (ObjectNode) resultNode.path(rootType);
 			resultNode.setAll(fieldObjects);
-			logger.info("Object requestnode " + resultNode);
+
 			String jsonldResult = mapper.writeValueAsString(resultNode);
 			return new Data<>(jsonldResult.replace("<@type>", rootType));
 		} catch (Exception ex) {
@@ -78,7 +78,6 @@ public class Json2LdTransformer implements ITransformer<Object> {
 				nodeTypes.add(entry.getKey());
 			}
 		});
-		logger.info("nodeType size " + nodeTypes.size());
 	}
 
 	private void setPrefix(String type) {
