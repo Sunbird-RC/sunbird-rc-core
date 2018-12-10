@@ -1,5 +1,6 @@
 package io.opensaber.registry.sink;
 
+import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -14,6 +15,8 @@ public abstract class DatabaseProvider {
 	private static Logger logger = LoggerFactory.getLogger(DatabaseProvider.class);
 
 	public abstract Graph getGraphStore();
+
+	public abstract Neo4JGraph getNeo4JGraph();
 
 	public abstract void shutdown() throws Exception;
 
@@ -65,5 +68,4 @@ public abstract class DatabaseProvider {
 			logger.error("Can't close graph " + e.getMessage());
 		}
 	}
-
 }

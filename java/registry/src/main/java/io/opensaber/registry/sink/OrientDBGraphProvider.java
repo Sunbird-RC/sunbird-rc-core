@@ -3,6 +3,7 @@ package io.opensaber.registry.sink;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
@@ -29,6 +30,11 @@ public class OrientDBGraphProvider extends DatabaseProvider {
 	@Override
 	public Graph getGraphStore() {
 		return graph;
+	}
+
+	@Override
+	public Neo4JGraph getNeo4JGraph() {
+		return null;
 	}
 
 	@PostConstruct

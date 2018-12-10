@@ -17,7 +17,6 @@
     </parent>
 
     <modules>
-        <module>rdf</module>
         <module>json</module>
     </modules>
 

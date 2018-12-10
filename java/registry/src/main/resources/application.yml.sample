@@ -113,7 +113,7 @@ keycloak:
 
 validation:
   enabled: ${validation_enabled:true}
-  type: ${validation_type:shex}
+  type: ${validation_type:json}
   create:
     file: ${validations_create_file:validations_create.shex}
   update:
@@ -205,7 +205,7 @@ keycloak:
 
 validation:
   enabled: ${validation_enabled:true}
-  type: ${validation_type:shex}
+  type: ${validation_type:json}
   create:
     file: good1.shex
   update:

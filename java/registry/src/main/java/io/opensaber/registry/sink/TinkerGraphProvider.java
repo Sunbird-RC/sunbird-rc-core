@@ -3,6 +3,7 @@ package io.opensaber.registry.sink;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.slf4j.Logger;
@@ -23,6 +24,11 @@ public class TinkerGraphProvider extends DatabaseProvider {
 	@Override
 	public Graph getGraphStore() {
 		return graph;
+	}
+
+	@Override
+	public Neo4JGraph getNeo4JGraph() {
+		return null;
 	}
 
 	@PostConstruct
