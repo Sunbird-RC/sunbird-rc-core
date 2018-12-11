@@ -1,8 +1,9 @@
 package io.opensaber.registry.sink;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
+import com.steelbridgelabs.oss.neo4j.structure.Neo4JElementIdProvider;
+import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
+import com.steelbridgelabs.oss.neo4j.structure.providers.Neo4JNativeElementIdProvider;
+import io.opensaber.registry.model.DBConnectionInfo;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Driver;
@@ -10,11 +11,8 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.steelbridgelabs.oss.neo4j.structure.Neo4JElementIdProvider;
-import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
-import com.steelbridgelabs.oss.neo4j.structure.providers.Neo4JNativeElementIdProvider;
-
-import io.opensaber.registry.model.DBConnectionInfo;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 public class Neo4jGraphProvider extends DatabaseProvider {
 
@@ -48,7 +46,7 @@ public class Neo4jGraphProvider extends DatabaseProvider {
 
 	// TODO: We must have an abstract class to allow this possibility.
 	@Override
-	public Neo4JGraph getNeo4JGraph() {
+	public Neo4JGraph getRawGraph() {
 		return getGraph();
 	}
 

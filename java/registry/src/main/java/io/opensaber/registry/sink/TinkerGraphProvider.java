@@ -1,19 +1,18 @@
 package io.opensaber.registry.sink;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
-import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 public class TinkerGraphProvider extends DatabaseProvider {
 
 	private Logger logger = LoggerFactory.getLogger(TinkerGraphProvider.class);
-	private Graph graph;
+	private TinkerGraph graph;
 	private Object environment;
 
 	public TinkerGraphProvider(Environment inputEnv) {
@@ -27,8 +26,8 @@ public class TinkerGraphProvider extends DatabaseProvider {
 	}
 
 	@Override
-	public Neo4JGraph getNeo4JGraph() {
-		return null;
+	public TinkerGraph getRawGraph() {
+		return graph;
 	}
 
 	@PostConstruct

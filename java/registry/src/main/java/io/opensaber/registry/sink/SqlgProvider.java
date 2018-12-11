@@ -1,9 +1,5 @@
 package io.opensaber.registry.sink;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
-import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -12,10 +8,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.umlg.sqlg.structure.SqlgGraph;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 public class SqlgProvider extends DatabaseProvider {
 
 	private Logger logger = LoggerFactory.getLogger(SqlgProvider.class);
-	private Graph graph;
+	private SqlgGraph graph;
 
 	public SqlgProvider(Environment environment) {
 		String jdbcUrl = environment.getProperty("database.jdbc.url");
@@ -34,8 +33,8 @@ public class SqlgProvider extends DatabaseProvider {
 	}
 
 	@Override
-	public Neo4JGraph getNeo4JGraph() {
-		return null;
+	public SqlgGraph getRawGraph() {
+		return graph;
 	}
 
 	@PostConstruct

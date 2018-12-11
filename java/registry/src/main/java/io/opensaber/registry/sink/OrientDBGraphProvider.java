@@ -1,9 +1,6 @@
 package io.opensaber.registry.sink;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
-import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
+import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
@@ -12,12 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
-import io.opensaber.registry.middleware.util.Constants;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 public class OrientDBGraphProvider extends DatabaseProvider {
 
 	private Logger logger = LoggerFactory.getLogger(OrientDBGraphProvider.class);
-	private Graph graph;
+	private OrientGraph graph;
 
 	public OrientDBGraphProvider(Environment environment) {
 		String graphDbLocation = environment.getProperty(Constants.ORIENTDB_DIRECTORY);
@@ -33,8 +31,8 @@ public class OrientDBGraphProvider extends DatabaseProvider {
 	}
 
 	@Override
-	public Neo4JGraph getNeo4JGraph() {
-		return null;
+	public OrientGraph getRawGraph() {
+		return graph;
 	}
 
 	@PostConstruct

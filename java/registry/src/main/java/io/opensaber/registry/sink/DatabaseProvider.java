@@ -16,7 +16,7 @@ public abstract class DatabaseProvider {
 
 	public abstract Graph getGraphStore();
 
-	public abstract Neo4JGraph getNeo4JGraph();
+	public abstract <T> T getRawGraph();
 
 	public abstract void shutdown() throws Exception;
 

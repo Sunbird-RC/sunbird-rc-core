@@ -2,6 +2,7 @@ package io.opensaber.registry.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.middleware.util.LogMarkers;
@@ -147,7 +148,8 @@ public class TPGraphMain {
         Map map = new HashMap();
         Graph graph = dbProvider.getGraphStore();
         Transaction tx = graph.tx();
-        StatementResult sr = dbProvider.getNeo4JGraph().execute("match (n) where n.osid='" + osid + "' return n");
+        Neo4JGraph neo4JGraph = dbProvider.getRawGraph();
+        StatementResult sr = neo4JGraph.execute("match (n) where n.osid='" + osid + "' return n");
         while(sr.hasNext()){
             Record record = sr.single();
             InternalNode internalNode = (InternalNode) record.get("n").asNode();
