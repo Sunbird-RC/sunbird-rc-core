@@ -365,6 +365,4 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public HandlerExceptionResolver customExceptionHandler() {
 		return new CustomExceptionHandler(gson());
 	}
-
-
 }

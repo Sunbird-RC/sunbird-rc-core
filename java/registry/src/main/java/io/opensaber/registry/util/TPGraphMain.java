@@ -64,9 +64,13 @@ public class TPGraphMain {
                 createVertex(graph, entry.getKey(), vertex, entryValue);
             } else if(entryValue.isArray()){
                 entry.getValue().forEach(jsonNode -> {
-                    createVertex(graph, entry.getKey(), vertex, jsonNode);
+                    if(jsonNode.isObject()){
+                        createVertex(graph, entry.getKey(), vertex, jsonNode);
+                    } else {
+                        vertex.property(entry.getKey(),entryValue.toString());
+                        return;
+                    }
                 });
-
             }
         });
         addEdge(graph, label, parentVertex, vertex);
@@ -113,9 +117,16 @@ public class TPGraphMain {
 
             } else if (entry.getValue().isArray()) {
                 // TODO
-                entry.getValue().forEach(jsonNode -> {
-                    createVertex(graph, entry.getKey(), parentVertex, jsonNode);
-                });
+                    entry.getValue().forEach(jsonNode -> {
+                        System.out.println(jsonNode);
+                        if(jsonNode.isObject()){
+                            createVertex(graph, entry.getKey(), parentVertex, jsonNode);
+                        } else {
+                            parentVertex.property(entry.getKey(),jsonNode);
+                            return;
+                        }
+                    });
+
             }
         }
     }
