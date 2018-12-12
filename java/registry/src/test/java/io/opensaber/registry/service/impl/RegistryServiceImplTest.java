@@ -1,6 +1,8 @@
 package io.opensaber.registry.service.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -22,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,12 +43,19 @@ import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryController;
 import io.opensaber.registry.controller.RegistryTestBase;
+import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.dao.impl.RegistryDaoImpl;
-import io.opensaber.registry.exception.*;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.model.AuditRecord;
+import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 
@@ -66,18 +76,22 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	private String registryContextBase;
 	@Autowired
 	private RegistryServiceImpl registryService;
-	@Autowired
+	
 	private DatabaseProvider databaseProvider;
 	@Mock
 	private RestTemplate mockRestTemplate;
 	@Mock
 	private EncryptionServiceImpl encryptionService;
 	@Mock
-	private SignatureServiceImpl signatureService;
-	@Mock
+	private SignatureServiceImpl signatureService;	
 	private DatabaseProvider mockDatabaseProvider;
+	@Mock
+	private RegistryDao registryDao;
 	@InjectMocks
 	private RegistryServiceImpl registryServiceForHealth;
+	@Autowired
+	private DBProviderFactory dbProviderFactory;
+	
 
 	public void setup() {
 		if (!isInitialized) {
@@ -91,7 +105,11 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	}
 
 	@Before
-	public void initialize() {
+	public void initialize() throws IOException {
+	    databaseProvider = dbProviderFactory.getInstance(null);
+	    registryService.setDatabaseProvider(databaseProvider);
+	    mockDatabaseProvider = Mockito.mock(DatabaseProvider.class);
+	    registryServiceForHealth.setDatabaseProvider(mockDatabaseProvider);
 		setup();
 		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);

@@ -2,6 +2,7 @@ package io.opensaber.registry.dao.impl;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,8 +36,14 @@ import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.dao.SearchDao;
-import io.opensaber.registry.exception.*;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 import io.opensaber.utils.converters.RDF2Graph;
@@ -53,11 +60,17 @@ public class SearchDaoImplTest extends RegistryTestBase {
 	private RegistryDao registryDao;
 	@Autowired
 	private SearchDao searchDao;
-	@Autowired
 	private DatabaseProvider databaseProvider;
+	@Autowired
+	private DBProviderFactory dbProviderFactory;
+
 
 	@Before
-	public void initializeGraph() {
+	public void initializeGraph() throws IOException {
+	    databaseProvider = dbProviderFactory.getInstance(null);
+	    registryDao.setDatabaseProvider(databaseProvider);
+	    searchDao.setDatabaseProvider(databaseProvider);
+
 		graph = TinkerGraph.open();
 		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);

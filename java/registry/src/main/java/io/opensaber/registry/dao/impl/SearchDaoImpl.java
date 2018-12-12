@@ -1,6 +1,11 @@
 package io.opensaber.registry.dao.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
@@ -25,7 +30,6 @@ import io.opensaber.registry.sink.DatabaseProvider;
 @Component
 public class SearchDaoImpl implements SearchDao {
 
-	@Autowired
 	private DatabaseProvider databaseProvider;
 
 	@Autowired
@@ -115,6 +119,12 @@ public class SearchDaoImpl implements SearchDao {
 		} else {
 			valueList.add(value);
 		}
+	}
+
+	@Override
+	public void setDatabaseProvider(DatabaseProvider databaseProvider) {
+		this.databaseProvider = databaseProvider;
+		
 	}
 
 }

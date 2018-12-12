@@ -8,7 +8,15 @@ import org.apache.jena.rdf.model.Model;
 import com.github.jsonldjava.core.JsonLdError;
 
 import io.opensaber.pojos.HealthCheckResponse;
-import io.opensaber.registry.exception.*;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.SignatureException;
+import io.opensaber.registry.exception.UpdateException;
+import io.opensaber.registry.sink.DatabaseProvider;
 
 public interface RegistryService {
 
@@ -38,5 +46,7 @@ public interface RegistryService {
 
 	public String getEntityFramedById(String id, boolean includeSignatures) throws RecordNotFoundException,
 			EncryptionException, AuditFailedException, IOException, MultipleEntityException, EntityCreationException;
+	
+	public void setDatabaseProvider(DatabaseProvider databaseProvider);
 
 }

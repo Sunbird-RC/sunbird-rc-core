@@ -21,6 +21,10 @@ public class DBConnectionInfoMgr {
 	 */
 	private String provider;
 	/**
+	 * Only one property is allowed.
+	 */
+	private String shardProperty;
+	/**
 	 * Each DBConnectionInfo is a shard connection information.
 	 */
 	private List<DBConnectionInfo> connectionInfo = new ArrayList<>();
@@ -56,6 +60,14 @@ public class DBConnectionInfoMgr {
 				return con;
 		}
 		return null;
+	}
+
+	public String getShardProperty() {
+		return shardProperty;
+	}
+
+	public void setShardProperty(String shardProperty) {
+		this.shardProperty = shardProperty;
 	}
 
 

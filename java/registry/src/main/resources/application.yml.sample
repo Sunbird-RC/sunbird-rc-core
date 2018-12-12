@@ -36,17 +36,18 @@ database:
   #provider available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
   #Note: Please avoid repeating the shardId.
   provider: ${database_provider:NEO4J}
+  shardProperty: ${database_shardProperty:serialNum}
   connectionInfo:
     -
       shardId: shard1
       uri: ${connectionInfo_uri:bolt://localhost:7687}
       username: ${connectionInfo_username:neo4j}
-      password: ${connectionInfo_password:test123}
+      password: ${connectionInfo_password:}
     -
       shardId: shard2
       uri: ${connectionInfo_uri:bolt://localhost:7688}
       username: ${connectionInfo_username:neo4j}
-      password: ${connectionInfo_password:test123}
+      password: ${connectionInfo_password:}
 
 ##################################################################################
 # Uncomment the following section to use Cassandra as backend store              #
@@ -161,10 +162,10 @@ frame:
 
 encryption:
   enabled: true
-  base: https://dev.open-sunbird.org/encryption/
-  uri: https://dev.open-sunbird.org/encryption/encrypt
+  base: https://dev.sunbirded.org/encryption/
+  uri: https://dev.sunbirded.org/encryption/encrypt
   batch:
-    uri: https://dev.open-sunbird.org/encryption/encrypt/obj
+    uri: https://dev.sunbirded.org/encryption/encrypt/obj
   service:
     connection:
       timeout: ${encryption_service_connection_timeout:5000}
@@ -174,16 +175,16 @@ encryption:
       timeout: ${encryption_service_read_timeout:5000}
 
 decryption:
-  uri: https://dev.open-sunbird.org/encryption/decrypt
+  uri: https://dev.sunbirded.org/encryption/decrypt
   batch:
-    uri: https://dev.open-sunbird.org/encryption/decrypt/obj
+    uri: https://dev.sunbirded.org/encryption/decrypt/obj
 
 signature:
   enabled: ${signature_enabled:true}
-  healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
-  signURL: ${sign_url:http://localhost:8013/sign}
-  verifyURL: ${verify_url:http://localhost:8013/verify}
-  keysURL: ${keys_url:http://localhost:8013/keys/}
+  healthCheckURL: ${sign_health_check_url:https://dev.sunbirded.org/encryption/}
+  signURL: ${sign_url:https://dev.sunbirded.org/encryption/sign}
+  verifyURL: ${verify_url:https://dev.sunbirded.org/encryption/verify}
+  keysURL: ${keys_url:https://dev.sunbirded.org/encryption/keys/}
   domain: ${domain_url:https://w3id.org/security/v1/}
   schema:
     config:

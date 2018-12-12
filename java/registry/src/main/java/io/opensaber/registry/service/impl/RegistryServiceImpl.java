@@ -9,13 +9,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
-import org.apache.jena.rdf.model.*;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.JsonLDWriteContext;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WriterDatasetRIOT;
@@ -36,11 +43,19 @@ import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.exception.*;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.SignatureException;
+import io.opensaber.registry.exception.UpdateException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.model.RegistrySignature;
+import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SignatureService;
@@ -53,8 +68,8 @@ public class RegistryServiceImpl implements RegistryService {
 
 	private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"_:[a-z][0-9]+\",";
 	private static Logger logger = LoggerFactory.getLogger(RegistryServiceImpl.class);
-	@Autowired
-	DatabaseProvider databaseProvider;
+	private DatabaseProvider databaseProvider;
+
 	@Autowired
 	EncryptionService encryptionService;
 	@Autowired
@@ -472,5 +487,11 @@ public class RegistryServiceImpl implements RegistryService {
 			decryptModel(jenaEntityModel);
 		}
 		return frameEntity(jenaEntityModel);
+	}
+
+	@Override
+	public void setDatabaseProvider(DatabaseProvider databaseProvider) {
+		this.databaseProvider = databaseProvider;
+		registryDao.setDatabaseProvider(this.databaseProvider);		
 	}
 }

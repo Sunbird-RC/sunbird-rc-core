@@ -3,6 +3,7 @@ package io.opensaber.registry.service.impl;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,11 +37,18 @@ import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.dao.RegistryDao;
 import io.opensaber.registry.dao.SearchDao;
-import io.opensaber.registry.exception.*;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.TypeNotProvidedException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
+import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
 
@@ -59,11 +67,15 @@ public class SearchServiceImplTest extends RegistryTestBase {
 	private SearchService searchService;
 	@Autowired
 	private RegistryService registryService;
-	@Autowired
 	private DatabaseProvider databaseProvider;
+	@Autowired
+	private DBProviderFactory dbProviderFactory;
 
 	@Before
-	public void initialize() {
+	public void initialize() throws IOException {
+		databaseProvider = dbProviderFactory.getInstance(null);
+		registryService.setDatabaseProvider(databaseProvider);
+		searchService.setDatabaseProvider(databaseProvider);
 		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);
 		databaseProvider.getGraphStore().addVertex(Constants.GRAPH_GLOBAL_CONFIG).property(Constants.PERSISTENT_GRAPH,

@@ -7,12 +7,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.opensaber.registry.util.TPGraphMain;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,8 +52,10 @@ import io.opensaber.registry.schema.config.SchemaLoader;
 import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
 import io.opensaber.registry.schema.configurator.SchemaType;
-import io.opensaber.registry.sink.DBShard;
-import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.shard.advisory.IShardAdvisor;
+import io.opensaber.registry.shard.advisory.SerialNumberShardAdvisor;
+import io.opensaber.registry.shard.advisory.ShardAdvisor;
+import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Json2LdTransformer;
 import io.opensaber.registry.transform.Ld2JsonTransformer;
@@ -72,7 +71,7 @@ import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
 public class GenericConfiguration implements WebMvcConfigurer {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
-
+	
 	@Autowired
 	private Environment environment;
 
@@ -275,8 +274,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new RestTemplate(requestFactory);
 	}
 	@Bean 
-	public DBShard dbshard(){
-		return new DBShard();
+	public DBProviderFactory dbProviderFactory(){
+		return new DBProviderFactory();
 	}
 	
 	@Bean 
@@ -285,10 +284,13 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 	
 	@Bean
-	public DatabaseProvider databaseProvider() {
-		return dbshard().getInstance("shard1");
+	public IShardAdvisor shardAdvisor() throws IOException{
+		ShardAdvisor shardAdvisor = new ShardAdvisor();
+		DBConnectionInfoMgr connectionInforMgr = dBConnectionInfoMgr();
+		shardAdvisor.registerAdvisor(connectionInforMgr.getShardProperty(), new SerialNumberShardAdvisor(connectionInforMgr));
+		return shardAdvisor.getShardAdvisor(connectionInforMgr.getShardProperty());	
 	}
-	
+
 
 	@Bean
 	public UrlValidator urlValidator() {
@@ -358,21 +360,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		}
 
 	}
-
+	
 	@Bean
 	public HandlerExceptionResolver customExceptionHandler() {
 		return new CustomExceptionHandler(gson());
 	}
 
-	@Bean
-	public Vertex parentVertex() {
-		Graph g = databaseProvider().getGraphStore();
-		Vertex parentV = TPGraphMain.createParentVertex(g);
-		try {
-			g.close();
-		} catch (Exception e) {
-			logger.info(e.getMessage());
-		}
-		return parentV;
-	}
+
 }

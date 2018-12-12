@@ -11,11 +11,17 @@ import org.springframework.stereotype.Component;
 
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.dao.SearchDao;
-import io.opensaber.registry.exception.*;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.MultipleEntityException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.TypeNotProvidedException;
 import io.opensaber.registry.frame.FrameEntity;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.SearchUtil;
 import io.opensaber.registry.service.SearchService;
+import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.utils.converters.RDF2Graph;
 
 @Component
@@ -61,6 +67,11 @@ public class SearchServiceImpl implements SearchService {
 			});
 		});
 		return frameEntity.getContent(resultModel);
+	}
+
+	@Override
+	public void setDatabaseProvider(DatabaseProvider databaseProvider) {
+		searchDao.setDatabaseProvider(databaseProvider);		
 	}
 
 }

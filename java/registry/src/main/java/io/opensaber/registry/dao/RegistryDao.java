@@ -10,6 +10,7 @@ import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.sink.DatabaseProvider;
 
 public interface RegistryDao {
 
@@ -33,4 +34,7 @@ public interface RegistryDao {
 	public String getRootLabelForNodeLabel(String nodeLabel);
 
     public String getTypeForNodeLabel(String label);
+    
+	public void setDatabaseProvider(DatabaseProvider databaseProvider);
+
 }

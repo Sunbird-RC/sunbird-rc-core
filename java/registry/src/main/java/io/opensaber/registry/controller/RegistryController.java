@@ -6,12 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
-import io.opensaber.registry.service.EncryptionService;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.util.TPGraphMain;
 import org.apache.jena.rdf.model.Model;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -23,21 +19,45 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import io.opensaber.pojos.*;
-import io.opensaber.registry.exception.*;
+import io.opensaber.pojos.APIMessage;
+import io.opensaber.pojos.HealthCheckResponse;
+import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.Response;
+import io.opensaber.pojos.ResponseParams;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.registry.exception.RecordNotFoundException;
+import io.opensaber.registry.exception.TypeNotProvidedException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.Direction;
 import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
+import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
-import io.opensaber.registry.transform.*;
+import io.opensaber.registry.shard.advisory.ShardManager;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.transform.Configuration;
+import io.opensaber.registry.transform.ConfigurationHelper;
+import io.opensaber.registry.transform.Data;
+import io.opensaber.registry.transform.ITransformer;
+import io.opensaber.registry.transform.TransformationException;
+import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.util.TPGraphMain;
 
 @RestController
 public class RegistryController {
@@ -58,8 +78,6 @@ public class RegistryController {
 	@Autowired
 	private APIMessage apiMessage;
 	@Autowired
-	private DatabaseProvider databaseProvider;
-	@Autowired
 	private ISchemaConfigurator schemaConfigurator;
 	@Autowired
 	private EncryptionService encryptionService;
@@ -71,89 +89,9 @@ public class RegistryController {
 	@Autowired
 	private OpenSaberInstrumentation watch;
 	private List<String> keyToPurge = new java.util.ArrayList<>();
+
 	@Autowired
-	private Vertex parentVertex;
-
-	@RequestMapping(value = "/add2", method = RequestMethod.POST)
-	public ResponseEntity<Response> add(@RequestParam(value = "id", required = false) String id,
-			@RequestParam(value = "prop", required = false) String property) {
-
-		Model rdf = (Model) apiMessage.getLocalMap(Constants.CONTROLLER_INPUT);
-		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
-		Map<String, Object> result = new HashMap<>();
-
-		try {
-			watch.start("RegistryController.addToExistingEntity");
-			String dataObject = apiMessage.getLocalMap(Constants.LD_OBJECT).toString();
-			String label = registryService.addEntity(rdf, dataObject, id, property);
-			result.put("entity", label);
-			response.setResult(result);
-			responseParams.setStatus(Response.Status.SUCCESSFUL);
-			watch.stop("RegistryController.addToExistingEntity");
-			logger.debug("RegistryController : Entity with label {} added !", label);
-		} catch (DuplicateRecordException | EntityCreationException e) {
-			logger.error("DuplicateRecordException|EntityCreationException in controller while adding entity !", e);
-			response.setResult(result);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		} catch (Exception e) {
-			logger.error("Exception in controller while adding entity !", e);
-			response.setResult(result);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		}
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
-
-	/**
-	 * 
-	 * Note: Only one mime type is supported at a time. Picks up the first mime
-	 * type from the header.
-	 * 
-	 * @return
-	 */
-	@RequestMapping(value = "/read2", method = RequestMethod.POST)
-	public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header) {
-
-		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
-		String dataObject = apiMessage.getRequest().getRequestMapAsString();
-		JSONParser parser = new JSONParser();
-		try {
-			JSONObject json = (JSONObject) parser.parse(dataObject);
-			String entityId = registryContext + json.get("id").toString();
-			boolean includeSign = Boolean.parseBoolean(json.getOrDefault("includeSignatures", false).toString());
-
-			watch.start("RegistryController.readEntity");
-			String content = registryService.getEntityFramedById(entityId, includeSign);
-			logger.info("RegistryController: Framed content " + content);
-
-			Configuration config = configurationHelper.getConfiguration(header.getAccept().iterator().next().toString(),
-					Direction.OUT);
-			Data<Object> data = new Data<Object>(content);
-			ITransformer<Object> responseTransformer = transformer.getInstance(config);
-			responseTransformer.setPurgeData(getKeysToPurge());
-			Data<Object> responseContent = responseTransformer.transform(data);
-			response.setResult(responseContent.getData());
-			responseParams.setStatus(Response.Status.SUCCESSFUL);
-			watch.stop("RegistryController.readEntity");
-			logger.debug("RegistryController: entity for {} read !", entityId);
-		} catch (ParseException | RecordNotFoundException | UnsupportedOperationException | TransformationException e) {
-			logger.error("RegistryController: Exception while reading entity !", e);
-			response.setResult(null);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		} catch (Exception e) {
-			logger.error("RegistryController: Exception while reading entity!", e);
-			response.setResult(null);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg("Ding! You encountered an error!");
-		}
-
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
-
+	ShardManager shardManager;
 	/**
 	 *
 	 * Note: Only one mime type is supported at a time. Pick up the first mime
@@ -327,10 +265,16 @@ public class RegistryController {
 		Map<String, Object> result = new HashMap<>();
 		String jsonString = apiMessage.getRequest().getRequestMapAsString();
 		List<String> privateProperties = schemaConfigurator.getAllPrivateProperties();
-		//String jsonString = "{\"Teacher\":{\"signatures\":{\"@type\":\"sc:GraphSignature2012\",\"signatureFor\":\"http://localhost:8080/serialNum\",\"creator\":\"https://example.com/i/pat/keys/5\",\"created\":\"2017-09-23T20:21:34Z\",\"nonce\":\"2bbgh3dgjg2302d-d2b3gi423d42\",\"signatureValue\":\"eyiOiJKJ0eXA...OEjgFWFXk\"},\"serialNum\":6,\"teacherCode\":\"12234\",\"nationalIdentifier\":\"1234567890123456\",\"teacherName\":\"FromRajeshLaptop\",\"gender\":\"GenderTypeCode-MALE\",\"birthDate\":\"1990-12-06\",\"socialCategory\":\"SocialCategoryTypeCode-GENERAL\",\"highestAcademicQualification\":\"AcademicQualificationTypeCode-PHD\",\"highestTeacherQualification\":\"TeacherQualificationTypeCode-MED\",\"yearOfJoiningService\":\"2014\",\"teachingRole\":{\"@type\":\"TeachingRole\",\"teacherType\":\"TeacherTypeCode-HEAD\",\"appointmentType\":\"TeacherAppointmentTypeCode-REGULAR\",\"classesTaught\":\"ClassTypeCode-SECONDARYANDHIGHERSECONDARY\",\"appointedForSubjects\":\"SubjectCode-ENGLISH\",\"mainSubjectsTaught\":\"SubjectCode-SOCIALSTUDIES\",\"appointmentYear\":\"2015\"},\"inServiceTeacherTrainingFromBRC\":{\"@type\":\"InServiceTeacherTrainingFromBlockResourceCentre\",\"daysOfInServiceTeacherTraining\":\"10\"},\"inServiceTeacherTrainingFromCRC\":{\"@type\":\"InServiceTeacherTrainingFromClusterResourceCentre\",\"daysOfInServiceTeacherTraining\":\"2\"},\"inServiceTeacherTrainingFromDIET\":{\"@type\":\"InServiceTeacherTrainingFromDIET\",\"daysOfInServiceTeacherTraining\":\"5.5\"},\"inServiceTeacherTrainingFromOthers\":{\"@type\":\"InServiceTeacherTrainingFromOthers\",\"daysOfInServiceTeacherTraining\":\"3.5\"},\"nonTeachingAssignmentsForAcademicCalendar\":{\"@type\":\"NonTeachingAssignmentsForAcademicCalendar\",\"daysOfNonTeachingAssignments\":\"6\"},\"basicProficiencyLevel\":{\"@type\":\"BasicProficiencyLevel\",\"proficiencySubject\":\"SubjectCode-MATH\",\"proficiencyAcademicQualification\":\"AcademicQualificationTypeCode-PHD\"},\"disabilityType\":\"DisabilityCode-NA\",\"trainedForChildrenSpecialNeeds\":\"YesNoCode-YES\",\"trainedinUseOfComputer\":\"YesNoCode-YES\"}}}";
-		TPGraphMain tpGraph = new TPGraphMain(databaseProvider, parentVertex, privateProperties, encryptionService);
+		String entityType = apiMessage.getRequest().getEntityType();
+		int slNum = (int) ((HashMap<String, Object>) apiMessage.getRequest().getRequestMap().get(entityType))
+				.get(shardManager.getShardProperty());
 
 		try {
+		    shardManager.activateDbShard(slNum);
+		    DatabaseProvider databaseProvider = shardManager.getDatabaseProvider();
+		    Vertex parentVertex = parentVertex(databaseProvider);
+			TPGraphMain tpGraph = new TPGraphMain(databaseProvider, parentVertex, privateProperties, encryptionService);
+			
 			watch.start("RegistryController.addToExistingEntity");
 			JsonNode rootNode = tpGraph.createEncryptedJson(jsonString);
 			tpGraph.createTPGraph(rootNode);
@@ -357,6 +301,8 @@ public class RegistryController {
 		String osIdVal =  json.get("id").toString();
 		ResponseParams responseParams = new ResponseParams();
 		List<String> privateProperties = schemaConfigurator.getAllPrivateProperties();
+		DatabaseProvider databaseProvider = shardManager.getDatabaseProvider();
+	    Vertex parentVertex = parentVertex(databaseProvider);
 		TPGraphMain tpGraph = new TPGraphMain(databaseProvider, parentVertex, privateProperties, encryptionService);
 		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
 		response.setResult(tpGraph.readGraph2Json(osIdVal));
@@ -371,6 +317,17 @@ public class RegistryController {
 		keyToPurge.add(JsonldConstants.TYPE);
 		return keyToPurge;
 
+	}
+	
+	private Vertex parentVertex(DatabaseProvider databaseProvider) {		
+		Graph g = databaseProvider.getGraphStore();
+		Vertex parentV = TPGraphMain.createParentVertex(g);
+		try {
+			g.close();
+		} catch (Exception e) {
+			logger.info(e.getMessage());
+		}
+		return parentV;
 	}
 
 }
