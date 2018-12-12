@@ -273,24 +273,23 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		requestFactory.setReadTimeout(readTimeout);
 		return new RestTemplate(requestFactory);
 	}
-	@Bean 
+	@Bean
 	public DBProviderFactory dbProviderFactory(){
 		return new DBProviderFactory();
 	}
-	
-	@Bean 
+
+	@Bean
 	public DBConnectionInfoMgr dBConnectionInfoMgr(){
 		return new DBConnectionInfoMgr();
 	}
-	
+
 	@Bean
 	public IShardAdvisor shardAdvisor() throws IOException{
 		ShardAdvisor shardAdvisor = new ShardAdvisor();
-		DBConnectionInfoMgr connectionInforMgr = dBConnectionInfoMgr();
-		shardAdvisor.registerAdvisor(connectionInforMgr.getShardProperty(), new SerialNumberShardAdvisor(connectionInforMgr));
-		return shardAdvisor.getShardAdvisor(connectionInforMgr.getShardProperty());	
+		DBConnectionInfoMgr dbConnectionInfoMgr = dBConnectionInfoMgr();
+		shardAdvisor.registerAdvisor(dbConnectionInfoMgr.getShardProperty(), new SerialNumberShardAdvisor(dbConnectionInfoMgr));
+		return shardAdvisor.getShardAdvisor(dbConnectionInfoMgr.getShardProperty());
 	}
-
 
 	@Bean
 	public UrlValidator urlValidator() {

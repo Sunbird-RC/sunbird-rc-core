@@ -85,16 +85,14 @@ public class TPGraphMain {
         return v1.addEdge(label, v2);
     }
 
-    public static Vertex createParentVertex(Graph graph) {
-        String personsStr = "Persons";
-        String personsId = "ParentEntity_Persons";
+    public static Vertex createParentVertex(Graph graph, String parentLabel) {
         GraphTraversalSource gtRootTraversal = graph.traversal();
-        GraphTraversal<Vertex, Vertex> rootVertex = gtRootTraversal.V().hasLabel(personsStr);
+        GraphTraversal<Vertex, Vertex> rootVertex = gtRootTraversal.V().hasLabel(parentLabel);
         Vertex parentVertex = null;
         if (!rootVertex.hasNext()) {
-            parentVertex = graph.addVertex(personsStr);
-            parentVertex.property("id", personsId);
-            parentVertex.property("label", personsStr);
+            parentVertex = graph.addVertex(parentLabel);
+            // TODO: this could be parentVertex.id() after we make our own Neo4jIdProvider
+            parentVertex.property("osid", parentLabel + "osid");
         } else {
             parentVertex = rootVertex.next();
         }

@@ -1,42 +1,9 @@
 package io.opensaber.registry.controller;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.jena.rdf.model.Model;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
-import io.opensaber.pojos.APIMessage;
-import io.opensaber.pojos.HealthCheckResponse;
-import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.ResponseParams;
+import io.opensaber.pojos.*;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.exception.RecordNotFoundException;
@@ -52,13 +19,28 @@ import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.shard.advisory.ShardManager;
 import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.transform.Configuration;
-import io.opensaber.registry.transform.ConfigurationHelper;
-import io.opensaber.registry.transform.Data;
-import io.opensaber.registry.transform.ITransformer;
-import io.opensaber.registry.transform.TransformationException;
-import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.transform.*;
 import io.opensaber.registry.util.TPGraphMain;
+import org.apache.jena.rdf.model.Model;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 public class RegistryController {
@@ -322,7 +304,8 @@ public class RegistryController {
 	
 	private Vertex parentVertex(DatabaseProvider databaseProvider) {		
 		Graph g = databaseProvider.getGraphStore();
-		Vertex parentV = TPGraphMain.createParentVertex(g);
+		// TODO: Apply default grouping - to be removed.
+		Vertex parentV = TPGraphMain.createParentVertex(g, "Persons");
 		try {
 			g.close();
 		} catch (Exception e) {

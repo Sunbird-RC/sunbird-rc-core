@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * Auto populates/binds the field values from yaml properties.
  *
  */
-@Component
+@Component("dbConnectionInfoMgr")
 @ConfigurationProperties(prefix = "database")
 public class DBConnectionInfoMgr {
 	

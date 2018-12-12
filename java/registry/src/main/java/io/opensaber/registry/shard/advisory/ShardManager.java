@@ -16,7 +16,7 @@ import io.opensaber.registry.sink.DatabaseProvider;
 public class ShardManager {
 	
 	@Autowired
-	private DBConnectionInfoMgr dBConnectionInfoMgr;
+	private DBConnectionInfoMgr dbConnectionInfoMgr;
 	@Autowired
 	private DBProviderFactory dbProviderFactory;
 	@Autowired
@@ -41,7 +41,7 @@ public class ShardManager {
 	}
 
 	public String getShardProperty() {
-		return dBConnectionInfoMgr.getShardProperty();
+		return dbConnectionInfoMgr.getShardProperty();
 	}
 
 	public DatabaseProvider getDatabaseProvider(){
