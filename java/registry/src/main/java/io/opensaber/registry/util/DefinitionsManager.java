@@ -1,16 +1,18 @@
 package io.opensaber.registry.util;
 
-import io.opensaber.registry.middleware.util.LogMarkers;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import io.opensaber.registry.middleware.util.LogMarkers;
 
 @Component("definitionsManager")
 public class DefinitionsManager {
@@ -26,7 +28,8 @@ public class DefinitionsManager {
             try {
                 Resource[] resources = definitionsReader.getResources("classpath:public/_schemas/*.json");
                 for (Resource resource : resources) {
-                    definitionResourceMap.put(resource.getFilename(), resource);
+                	String fileNameWithoutExt = FilenameUtils.getBaseName(resource.getFilename());
+                    definitionResourceMap.put(fileNameWithoutExt, resource);
                 }
             } catch (IOException ioe) {
                 logger.error(LogMarkers.FATAL, "Cannot load json resources. Validation can't work");

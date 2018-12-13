@@ -1,13 +1,13 @@
 package io.opensaber.registry.util;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
-import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.middleware.util.LogMarkers;
-import io.opensaber.registry.service.EncryptionService;
-import io.opensaber.registry.sink.DatabaseProvider;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Edge;
@@ -20,8 +20,15 @@ import org.neo4j.driver.v1.StatementResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
+
+import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.middleware.util.LogMarkers;
+import io.opensaber.registry.service.EncryptionService;
+import io.opensaber.registry.sink.DatabaseProvider;
 
 public class TPGraphMain {
     private static List<String> privatePropertyLst;
@@ -86,13 +93,14 @@ public class TPGraphMain {
     }
 
     public static Vertex createParentVertex(Graph graph, String parentLabel) {
+    	
         GraphTraversalSource gtRootTraversal = graph.traversal();
         GraphTraversal<Vertex, Vertex> rootVertex = gtRootTraversal.V().hasLabel(parentLabel);
         Vertex parentVertex = null;
         if (!rootVertex.hasNext()) {
             parentVertex = graph.addVertex(parentLabel);
             // TODO: this could be parentVertex.id() after we make our own Neo4jIdProvider
-            parentVertex.property("osid", parentLabel + "osid");
+            parentVertex.property("osid", UUID.randomUUID().toString());           
         } else {
             parentVertex = rootVertex.next();
         }
@@ -151,6 +159,22 @@ public class TPGraphMain {
                 populateObject(entryValue);
             }
         });
+    }
+    /**
+     * Retrieves all UUID of a given all labels.
+     */
+    public static List<String> getUUIDs(List<String> parentLabels, DatabaseProvider dbProvider){
+    	List<String> uuids = new ArrayList<>();
+    	Graph graph = dbProvider.getGraphStore();
+        GraphTraversal<Vertex, Vertex> graphTraversal = graph.traversal().V();
+        for(String label: parentLabels){
+        	 GraphTraversal<Vertex, Vertex> gvs = graphTraversal.hasLabel(label);
+        	 Vertex v = gvs.hasNext()? gvs.next():null;
+        	 if(v!=null){
+        		 uuids.add(v.property("osid").value().toString());
+        	 }       	 
+        }      	
+    	return uuids;	
     }
 
     public Map readGraph2Json(String osid) throws IOException, Exception {
