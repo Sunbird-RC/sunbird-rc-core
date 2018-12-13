@@ -2,6 +2,7 @@ package io.opensaber.registry.shard.advisory;
 
 import java.io.IOException;
 
+import io.opensaber.registry.exception.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,8 +25,7 @@ public class ShardManager {
 	@Autowired
 	private RegistryService registryService;
 	@Autowired
-	private SearchService searchService;	
-	private DatabaseProvider databaseProvider;
+	private SearchService searchService;
 	
 	/**
 	 * intiatiate a DBShard and ensure activating a databaseProvider.
@@ -33,20 +33,24 @@ public class ShardManager {
 	 * @param attributeValue
 	 * @throws IOException
 	 */
-	public void activateDbShard(Object attributeValue) throws IOException{
+	private DatabaseProvider activateDbShard(Object attributeValue) throws CustomException {
 		DBConnectionInfo connectionInfo = shardAdvisor.getShard(attributeValue);
-	    databaseProvider = dbProviderFactory.getInstance(connectionInfo);
+	    DatabaseProvider databaseProvider = dbProviderFactory.getInstance(connectionInfo);
 		registryService.setDatabaseProvider(databaseProvider);
 		searchService.setDatabaseProvider(databaseProvider);
+		return databaseProvider;
 	}
 
 	public String getShardProperty() {
 		return dbConnectionInfoMgr.getShardProperty();
 	}
 
-	public DatabaseProvider getDatabaseProvider(){
-		return databaseProvider;
+	public DatabaseProvider getDatabaseProvider(Object attributeValue) throws CustomException {
+		return activateDbShard(attributeValue);
 	}
-	
+
+	public DatabaseProvider getDefaultDatabaseProvider() throws CustomException {
+		return activateDbShard(null);
+	}
 
 }

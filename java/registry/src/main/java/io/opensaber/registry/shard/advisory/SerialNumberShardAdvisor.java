@@ -5,10 +5,12 @@ import org.springframework.stereotype.Component;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 
+/**
+ * This is an example advisor class.
+ * This advisor chooses shards based on the serial number even/odd'ness.
+ */
 @Component
 public class SerialNumberShardAdvisor implements IShardAdvisor {
-
-	private String shardId;
 	private DBConnectionInfoMgr dBConnectionInfoMgr;
 
 	public SerialNumberShardAdvisor(DBConnectionInfoMgr dBConnectionInfoMgr) {
@@ -22,7 +24,6 @@ public class SerialNumberShardAdvisor implements IShardAdvisor {
 	 */
 	@Override
 	public DBConnectionInfo getShard(Object serialNumber) {
-
 		DBConnectionInfo connectionInfo = null;
 		if (serialNumber instanceof Integer) {
 			Integer serNo = (Integer) serialNumber;
@@ -34,16 +35,9 @@ public class SerialNumberShardAdvisor implements IShardAdvisor {
 				connectionInfo = dBConnectionInfoMgr.getDBConnectionInfo("shard2");
 				break;
 			default:
-				connectionInfo = dBConnectionInfoMgr.getDBConnectionInfo("shard1");
 				break;
 			}
 		}
-		shardId = connectionInfo.getShardId();
 		return connectionInfo;
-	}
-
-	@Override
-	public String shardId() {
-		return shardId;
 	}
 }

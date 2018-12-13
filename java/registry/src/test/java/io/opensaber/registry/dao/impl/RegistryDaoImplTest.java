@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import io.opensaber.registry.model.DBConnectionInfo;
+import io.opensaber.registry.model.DBConnectionInfoMgr;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -92,7 +94,7 @@ import io.opensaber.utils.converters.RDF2Graph;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { RegistryDaoImpl.class, Environment.class, ObjectMapper.class, GenericConfiguration.class,
-		EncryptionServiceImpl.class, APIMessage.class})
+		EncryptionServiceImpl.class, APIMessage.class, DBConnectionInfoMgr.class})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RegistryDaoImplTest extends RegistryTestBase {

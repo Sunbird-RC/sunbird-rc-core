@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.opensaber.registry.shard.advisory.DefaultShardAdvisor;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -287,7 +288,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public IShardAdvisor shardAdvisor() throws IOException{
 		ShardAdvisor shardAdvisor = new ShardAdvisor();
 		DBConnectionInfoMgr dbConnectionInfoMgr = dBConnectionInfoMgr();
-		shardAdvisor.registerAdvisor(dbConnectionInfoMgr.getShardProperty(), new SerialNumberShardAdvisor(dbConnectionInfoMgr));
+		String shardProperty = environment.getProperty("database.shardProperty");
+		if (shardProperty.compareToIgnoreCase(Constants.NONE_STR) == 0) {
+			shardAdvisor.registerAdvisor(shardProperty, new DefaultShardAdvisor(dbConnectionInfoMgr));
+		} else {
+			shardAdvisor.registerAdvisor(shardProperty, new SerialNumberShardAdvisor(dbConnectionInfoMgr));
+		}
 		return shardAdvisor.getShardAdvisor(dbConnectionInfoMgr.getShardProperty());
 	}
 

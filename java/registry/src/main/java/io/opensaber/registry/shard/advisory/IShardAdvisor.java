@@ -2,8 +2,9 @@ package io.opensaber.registry.shard.advisory;
 
 import io.opensaber.registry.model.DBConnectionInfo;
 
+/**
+ * This interface must be implemented by all shard advisors.
+ */
 public interface IShardAdvisor {
-	
-	public DBConnectionInfo getShard(Object attribute);
-	public String shardId();
+	DBConnectionInfo getShard(Object attribute);
 }

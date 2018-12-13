@@ -10,6 +10,7 @@ import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -20,7 +21,10 @@ public class Neo4jGraphProvider extends DatabaseProvider {
 	private Driver driver;
 	private boolean profilerEnabled;
 	private DBConnectionInfo connectionInfo;
-	private Neo4JElementIdProvider<?> idProvider = new Neo4JNativeElementIdProvider();
+	private Neo4jIdProvider neo4jIdProvider = new Neo4jIdProvider();
+
+	@Value("${database.uuidPropertyName}")
+	public String uuidPropertyName = "osid";
 
 	public Neo4jGraphProvider(DBConnectionInfo connection) {
 		connectionInfo = connection;
@@ -28,14 +32,17 @@ public class Neo4jGraphProvider extends DatabaseProvider {
 		// TODO: Check with auth
 		driver = GraphDatabase.driver(connection.getUri(),
 				AuthTokens.none());
-		logger.info("Initialized db at ", connectionInfo.getUri());
+		neo4jIdProvider.setUuidPropertyName(uuidPropertyName);
+		logger.info("Initialized db driver at {}", connectionInfo.getUri());
 	}
 
 
 	private Neo4JGraph getGraph() {
 		Neo4JGraph neo4jGraph;
+		Neo4JElementIdProvider<?> idProvider = neo4jIdProvider;
+
 		neo4jGraph = new Neo4JGraph(driver, idProvider, idProvider);
-		logger.info("Initialized db at {}", connectionInfo.getUri());
+		logger.debug("Getting a new graph unit of work");
 		return neo4jGraph;
 	}
 

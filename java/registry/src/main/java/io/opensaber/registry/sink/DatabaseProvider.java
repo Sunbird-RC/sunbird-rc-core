@@ -1,14 +1,13 @@
 package io.opensaber.registry.sink;
 
-import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
+import io.opensaber.registry.middleware.util.Constants;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.opensaber.registry.middleware.util.Constants;
 
 public abstract class DatabaseProvider {
 
@@ -66,6 +65,24 @@ public abstract class DatabaseProvider {
 			// This function is called at boot time and any exception thrown here indicates very serious
 			// problem.
 			logger.error("Can't close graph " + e.getMessage());
+		}
+	}
+
+	private boolean supportsTransaction(Graph graph) {
+		return graph.features().graph().supportsTransactions();
+	}
+
+	public Transaction startTransaction(Graph graph) {
+		Transaction tx = null;
+		if (supportsTransaction(graph)) {
+			tx = graph.tx();
+		}
+		return tx;
+	}
+
+	public void commitTransaction(Graph graph, Transaction tx) {
+		if (null != tx && supportsTransaction(graph)) {
+			tx.commit();
 		}
 	}
 }

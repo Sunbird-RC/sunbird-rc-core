@@ -26,6 +26,7 @@ public class Constants {
 	public static final String ORIENTDB_DIRECTORY = "orientdb.directory";
 
 	public static final String TEST_ENVIRONMENT = "test";
+	public static final String NONE_STR = "none";
 	public static final String INTEGRATION_TEST_BASE_URL = "http://localhost:8080/";
 	public static final String TARGET_NODE_IRI = "http://www.w3.org/ns/shacl#targetNode";
 	public static final String CONTEXT_KEYWORD = "@context";

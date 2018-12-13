@@ -33,10 +33,20 @@ config:
     file: ${config_schema_file:schema-configuration.json}
 
 database:
-  #provider available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
-  #Note: Please avoid repeating the shardId.
+  # This property is internal and not to be confused with the schema definition.
+  # Clients use this property to perform read/update operation.
+  # NOTE: Once a name is chosen it must not be changed, unless you're ready to let go the
+  #       existing data in the database.
+  uuidPropertyName: ${database_uuidPropertyName:osid}
+
+  # Providers available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
+  # NOTE: Values given against 'shardId' must be unique
   provider: ${database_provider:NEO4J}
-  shardProperty: ${database_shardProperty:serialNum}
+
+  # Choose "none" as the propertyName if you don't want any shards. Otherwise
+  # implement IShardAdvisor interface in your own ways. An example, SerialNumShardAdvisor
+  # has been provided for reference. If you'd like to use it, set value "serialNum" here.
+  shardProperty: ${database_shardProperty:none}
   connectionInfo:
     -
       shardId: shard1
@@ -153,6 +163,21 @@ config:
     file: schema-configuration-school-test.jsonld
 
 database:
+  # This property is internal and not to be confused with the schema definition.
+  # Clients use this property to perform read/update operation.
+  # NOTE: Once a name is chosen it must not be changed, unless you're ready to let go the
+  #       existing data in the database.
+  uuidPropertyName: ${database_uuidPropertyName:osid}
+
+  # Providers available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
+  # NOTE: Values given against 'shardId' must be unique
+  provider: ${database_provider:NEO4J}
+
+  # Choose "none" as the propertyName if you don't want any shards. Otherwise
+  # implement IShardAdvisor interface in your own ways. An example, SerialNumShardAdvisor
+  # has been provided for reference. If you'd like to use it, set value "serialNum" here.
+  shardProperty: ${database_shardProperty:none}
+
   # Any other provider breaks the unit tests, needs a work-item
   provider: TINKERGRAPH
 

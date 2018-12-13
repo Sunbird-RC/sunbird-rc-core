@@ -507,7 +507,7 @@ public class RegistryServiceImpl implements RegistryService {
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode rootNode = mapper.readTree(jsonString);
 		rootNode = encryptionHelper.getEncryptedJson(rootNode);
-		return tpGraph.createTPGraph(rootNode,parentVertex);
+		return tpGraph.createTPGraph(rootNode);
 	}
 
 }

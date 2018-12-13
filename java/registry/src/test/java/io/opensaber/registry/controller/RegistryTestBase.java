@@ -23,7 +23,9 @@ import io.opensaber.registry.exception.MultipleEntityException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.utils.converters.RDF2Graph;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
+@EnableConfigurationProperties
 public class RegistryTestBase {
 
 	public static final String FORMAT = "JSON-LD";
