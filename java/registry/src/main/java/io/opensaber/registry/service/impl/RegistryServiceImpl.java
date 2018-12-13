@@ -9,6 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
+import io.opensaber.registry.util.TPGraphMain;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
@@ -30,6 +34,7 @@ import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,10 +60,10 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.model.RegistrySignature;
-import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SignatureService;
+import io.opensaber.registry.service.EncryptionHelper;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.utils.converters.RDF2Graph;
@@ -80,6 +85,8 @@ public class RegistryServiceImpl implements RegistryService {
 	private RegistryDao registryDao;
 	@Autowired
 	private ISchemaConfigurator schemaConfigurator;
+	@Autowired
+	private EncryptionHelper encryptionHelper;
 	@Value("${encryption.enabled}")
 	private boolean encryptionEnabled;
 
@@ -494,4 +501,13 @@ public class RegistryServiceImpl implements RegistryService {
 		this.databaseProvider = databaseProvider;
 		registryDao.setDatabaseProvider(this.databaseProvider);		
 	}
+
+	public String createTP2Graph(String jsonString, Vertex parentVertex, TPGraphMain tpGraph) throws Exception {
+
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode rootNode = mapper.readTree(jsonString);
+		rootNode = encryptionHelper.getEncryptedJson(rootNode);
+		return tpGraph.createTPGraph(rootNode,parentVertex);
+	}
+
 }

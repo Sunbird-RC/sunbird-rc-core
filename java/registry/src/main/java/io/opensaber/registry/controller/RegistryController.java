@@ -1,6 +1,5 @@
 package io.opensaber.registry.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.*;
@@ -12,8 +11,6 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.Direction;
 import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
 import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
-import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
@@ -26,7 +23,6 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +32,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
@@ -60,10 +55,6 @@ public class RegistryController {
 	private String registryContext;
 	@Autowired
 	private APIMessage apiMessage;
-	@Autowired
-	private ISchemaConfigurator schemaConfigurator;
-	@Autowired
-	private EncryptionService encryptionService;
 	private Gson gson = new Gson();
 	private Type mapType = new TypeToken<Map<String, Object>>() {
 	}.getType();
@@ -247,7 +238,6 @@ public class RegistryController {
 		Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
 		String jsonString = apiMessage.getRequest().getRequestMapAsString();
-		List<String> privateProperties = schemaConfigurator.getAllPrivateProperties();
 		String entityType = apiMessage.getRequest().getEntityType();
 		int slNum = (int) ((HashMap<String, Object>) apiMessage.getRequest().getRequestMap().get(entityType))
 				.get(shardManager.getShardProperty());
@@ -256,12 +246,13 @@ public class RegistryController {
 		    shardManager.activateDbShard(slNum);
 		    DatabaseProvider databaseProvider = shardManager.getDatabaseProvider();
 		    Vertex parentVertex = parentVertex(databaseProvider);
-			TPGraphMain tpGraph = new TPGraphMain(databaseProvider, parentVertex, privateProperties, encryptionService);
+			TPGraphMain tpGraph = new TPGraphMain(databaseProvider);
 			
 			watch.start("RegistryController.addToExistingEntity");
-			JsonNode rootNode = tpGraph.createEncryptedJson(jsonString);
-			tpGraph.createTPGraph(rootNode);
-			result.put("entity", "");
+			String osid = registryService.createTP2Graph(jsonString,parentVertex,tpGraph);
+			Map resultMap = new HashMap();
+			resultMap.put("id",osid);
+			result.put("entity", resultMap);
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
 			watch.stop("RegistryController.addToExistingEntity");
@@ -276,20 +267,16 @@ public class RegistryController {
 	}
 
 	@RequestMapping(value = "/read", method = RequestMethod.POST)
-	public ResponseEntity<Response> readGraph2Json(@RequestHeader HttpHeaders header) throws ParseException,
-			IOException, Exception {
+	public ResponseEntity<Response> readGraph2Json(@RequestHeader HttpHeaders header) throws Exception {
 		String dataObject = apiMessage.getRequest().getRequestMapAsString();
 		JSONParser parser = new JSONParser();
 		JSONObject json = (JSONObject) parser.parse(dataObject);
 		String osIdVal =  json.get("id").toString();
 		ResponseParams responseParams = new ResponseParams();
-		List<String> privateProperties = schemaConfigurator.getAllPrivateProperties();
 		DatabaseProvider databaseProvider = shardManager.getDatabaseProvider();
-	    Vertex parentVertex = parentVertex(databaseProvider);
-		TPGraphMain tpGraph = new TPGraphMain(databaseProvider, parentVertex, privateProperties, encryptionService);
+		TPGraphMain tpGraph = new TPGraphMain(databaseProvider);
 		Response response = new Response(Response.API_ID.READ, "OK", responseParams);
 		response.setResult(tpGraph.readGraph2Json(osIdVal));
-
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -302,7 +289,7 @@ public class RegistryController {
 
 	}
 	
-	private Vertex parentVertex(DatabaseProvider databaseProvider) {		
+	private Vertex parentVertex(DatabaseProvider databaseProvider) {
 		Graph g = databaseProvider.getGraphStore();
 		// TODO: Apply default grouping - to be removed.
 		Vertex parentV = TPGraphMain.createParentVertex(g, "Persons");
