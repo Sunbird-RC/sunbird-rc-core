@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.jena.rdf.model.Literal;
@@ -104,6 +105,8 @@ public class RegistryDaoImpl implements RegistryDao {
 	 * ex); } }
 	 */
 
+	// This is a soon to be invalid test.
+	@Ignore
 	@Override
 	public String addEntity(Graph entity, String label, String rootNodeLabel, String property)
 			throws DuplicateRecordException, RecordNotFoundException, NoSuchElementException, EncryptionException,

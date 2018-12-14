@@ -1,12 +1,11 @@
 package io.opensaber.registry.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jsonldjava.core.JsonLdError;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.exception.*;
 import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.util.TPGraphMain;
 import org.apache.jena.rdf.model.Model;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,8 +38,10 @@ public interface RegistryService {
 
 	public String getEntityFramedById(String id, boolean includeSignatures) throws RecordNotFoundException,
 			EncryptionException, AuditFailedException, IOException, MultipleEntityException, EntityCreationException;
-	
+
 	public void setDatabaseProvider(DatabaseProvider databaseProvider);
 
-	public String createTP2Graph(String jsonString, Vertex parentVertex, TPGraphMain tpGraph) throws Exception;
+	public String addEntity(String shardId, String jsonString) throws Exception;
+
+	JsonNode getEntity(String id);
 }

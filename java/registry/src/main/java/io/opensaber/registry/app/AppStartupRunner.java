@@ -16,7 +16,5 @@ public class AppStartupRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
     	entityParenter.ensureKnownParenters();
-    	entityParenter.identifyKnownParents();
-    	
     }
 }

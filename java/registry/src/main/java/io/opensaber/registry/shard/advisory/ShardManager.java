@@ -36,7 +36,6 @@ public class ShardManager {
 	private DatabaseProvider activateDbShard(Object attributeValue) throws CustomException {
 		DBConnectionInfo connectionInfo = shardAdvisor.getShard(attributeValue);
 	    DatabaseProvider databaseProvider = dbProviderFactory.getInstance(connectionInfo);
-		registryService.setDatabaseProvider(databaseProvider);
 		searchService.setDatabaseProvider(databaseProvider);
 		return databaseProvider;
 	}

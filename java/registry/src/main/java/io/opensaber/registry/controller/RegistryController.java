@@ -16,8 +16,9 @@ import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.shard.advisory.ShardManager;
 import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.sink.DatabaseProviderWrapper;
 import io.opensaber.registry.transform.*;
-import io.opensaber.registry.util.TPGraphMain;
+import io.opensaber.registry.dao.TPGraphMain;
 import org.apache.jena.rdf.model.Model;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -56,6 +57,9 @@ public class RegistryController {
     private String registryContext;
     @Autowired
     private APIMessage apiMessage;
+    @Autowired
+    private DatabaseProviderWrapper databaseProviderWrapper;
+
     private Gson gson = new Gson();
     private Type mapType = new TypeToken<Map<String, Object>>() {
     }.getType();
@@ -241,22 +245,17 @@ public class RegistryController {
         String jsonString = apiMessage.getRequest().getRequestMapAsString();
         String entityType = apiMessage.getRequest().getEntityType();
 
-        DatabaseProvider databaseProvider;
         try {
             if (shardManager.getShardProperty().compareToIgnoreCase(Constants.NONE_STR) != 0) {
                 int slNum = (int) ((HashMap<String, Object>) apiMessage.getRequest().getRequestMap().get(entityType))
                         .get(shardManager.getShardProperty());
-                databaseProvider = shardManager.getDatabaseProvider(slNum);
+                databaseProviderWrapper.setDatabaseProvider(shardManager.getDatabaseProvider(slNum));
             } else {
-                databaseProvider = shardManager.getDefaultDatabaseProvider();
+                databaseProviderWrapper.setDatabaseProvider(shardManager.getDefaultDatabaseProvider());
             }
 
-            // TODO - fetch this from some cache
-            Vertex parentVertex = parentVertex(databaseProvider);
-            TPGraphMain tpGraph = new TPGraphMain(databaseProvider, (String) parentVertex.id());
-
             watch.start("RegistryController.addToExistingEntity");
-            String resultId = registryService.createTP2Graph(jsonString, parentVertex, tpGraph);
+            String resultId = registryService.addEntity("shard1", jsonString);
             Map resultMap = new HashMap();
             resultMap.put("id", resultId);
 
@@ -275,41 +274,24 @@ public class RegistryController {
     }
 
     @RequestMapping(value = "/read", method = RequestMethod.POST)
-    public ResponseEntity<Response> readGraph2Json(@RequestHeader HttpHeaders header) throws Exception {
-        String dataObject = apiMessage.getRequest().getRequestMapAsString();
-        JSONParser parser = new JSONParser();
-        JSONObject json = (JSONObject) parser.parse(dataObject);
-        String osIdVal = json.get("id").toString();
-        ResponseParams responseParams = new ResponseParams();
-
-        // TODO
-        // Until we implement the cache for the shard, lets use the default.
-        DatabaseProvider databaseProvider = shardManager.getDefaultDatabaseProvider();
-        Vertex parentVertex = parentVertex(databaseProvider);
-        TPGraphMain tpGraph = new TPGraphMain(databaseProvider, (String) parentVertex.id());
-        Response response = new Response(Response.API_ID.READ, "OK", responseParams);
-        response.setResult(tpGraph.readGraph2Json_neo4j(osIdVal));
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    @RequestMapping(value = "/readg", method = RequestMethod.POST)
     public ResponseEntity<Response> greadGraph2Json(@RequestHeader HttpHeaders header) throws Exception {
         String dataObject = apiMessage.getRequest().getRequestMapAsString();
         JSONParser parser = new JSONParser();
         JSONObject json = (JSONObject) parser.parse(dataObject);
         String osIdVal = json.get("id").toString();
         ResponseParams responseParams = new ResponseParams();
-
-        // TODO
-        // Until we implement the cache for the shard, lets use the default.
-        DatabaseProvider databaseProvider = shardManager.getDefaultDatabaseProvider();
-        TPGraphMain tpGraph = new TPGraphMain(databaseProvider, null);
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
 
-        try (Graph graph = databaseProvider.getGraphStore()) {
-            response.setResult(tpGraph.readGraph2Json(graph, osIdVal));
+        // TODO: The shard id must be fetched from the cache for this uuid and supplied.
+        databaseProviderWrapper.setDatabaseProvider(shardManager.getDefaultDatabaseProvider());
+
+        try {
+            response.setResult(registryService.getEntity(osIdVal));
+        } catch (Exception e) {
+            responseParams.setErr(e.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         }
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -322,17 +304,20 @@ public class RegistryController {
 
     }
 
-    private Vertex parentVertex(DatabaseProvider databaseProvider) {
-        Graph g = databaseProvider.getGraphStore();
-        // TODO: Apply default grouping - to be removed.
-        Transaction tx = databaseProvider.startTransaction(g);
-        Vertex parentV = new TPGraphMain().createParentVertex(g, "Teacher_GROUP");
+    private Vertex parentVertex() {
+        Vertex parentV=null;
         try {
-            g.close();
+            DatabaseProvider databaseProvider = databaseProviderWrapper.getDatabaseProvider();
+            Graph g = databaseProvider.getGraphStore();
+
+            // TODO: Apply default grouping - to be removed.
+            Transaction tx = databaseProvider.startTransaction(g);
+            parentV = new TPGraphMain().ensureParentVertex(g, "Teacher_GROUP");
+            databaseProvider.commitTransaction(g, tx);
+
         } catch (Exception e) {
             logger.info(e.getMessage());
         }
-        databaseProvider.commitTransaction(g, tx);
 
         return parentV;
     }

@@ -80,9 +80,10 @@ public abstract class DatabaseProvider {
 		return tx;
 	}
 
-	public void commitTransaction(Graph graph, Transaction tx) {
+	public void commitTransaction(Graph graph, Transaction tx) throws Exception {
 		if (null != tx && supportsTransaction(graph)) {
 			tx.commit();
 		}
+		graph.close();
 	}
 }

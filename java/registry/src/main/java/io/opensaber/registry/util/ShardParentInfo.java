@@ -1,20 +1,26 @@
 package io.opensaber.registry.util;
 
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+
 public class ShardParentInfo {
-    private String shardId;
+    /**
+     * The definition
+     */
+    private String name;
     private String uuid;
+    private Vertex vertex;
 
-    public ShardParentInfo(String shardId, String uuid) {
-        this.shardId = shardId;
-        this.uuid = uuid;
+    public ShardParentInfo(String name, Vertex vertex) {
+        this.name = name;
+        this.vertex = vertex;
     }
 
-    public String getShardId() {
-        return shardId;
+    public String getName() {
+        return name;
     }
 
-    public void setShardId(String shardId) {
-        this.shardId = shardId;
+    public void setName(String shardId) {
+        this.name = shardId;
     }
 
     public String getUuid() {
@@ -23,5 +29,13 @@ public class ShardParentInfo {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public Vertex getVertex() {
+        return vertex;
+    }
+
+    public void setVertex(Vertex vertex) {
+        this.vertex = vertex;
     }
 }
