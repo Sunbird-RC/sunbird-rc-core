@@ -1,4 +1,4 @@
-package io.opensaber.registry.shard.advisory;
+package io.opensaber.registry.sink.shard;
 
 import org.springframework.stereotype.Component;
 

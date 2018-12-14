@@ -1,8 +1,6 @@
 package io.opensaber.registry.dao;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,6 +9,10 @@ import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.DatabaseProviderWrapper;
 import io.opensaber.registry.util.EntityParenter;
 import io.opensaber.registry.util.RefLabelHelper;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -23,8 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
 
 @Component("tpGraphMain")
 public class TPGraphMain {
@@ -166,6 +166,19 @@ public class TPGraphMain {
         }
         return uuids;
     }
+    /**
+	 * Retrieves all UUID of a given label(example: Teacher, Signature).
+	 */
+	public List<String> getUUIDs(String label, DatabaseProvider dbProvider) {
+		List<String> uuids = new ArrayList<>();
+		Graph graph = dbProvider.getGraphStore();
+		GraphTraversal<Vertex, Vertex> graphTraversal = graph.traversal().V().hasLabel(label);
+		while (graphTraversal.hasNext()) {
+			Vertex v = graphTraversal.next();
+			uuids.add(v.property("osid").value().toString());
+		}
+		return uuids;
+	}
 
     public JsonNode readGraph2Json(Graph graph, String osid) {
         ObjectNode objectNode = JsonNodeFactory.instance.objectNode();

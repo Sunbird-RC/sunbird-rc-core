@@ -2,18 +2,17 @@ package io.opensaber.registry.sink;
 
 import com.steelbridgelabs.oss.neo4j.structure.Neo4JElementIdProvider;
 import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
-import com.steelbridgelabs.oss.neo4j.structure.providers.Neo4JNativeElementIdProvider;
 import io.opensaber.registry.model.DBConnectionInfo;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 public class Neo4jGraphProvider extends DatabaseProvider {
 
@@ -30,12 +29,10 @@ public class Neo4jGraphProvider extends DatabaseProvider {
 		connectionInfo = connection;
 		profilerEnabled = connection.isProfilerEnabled();
 		// TODO: Check with auth
-		driver = GraphDatabase.driver(connection.getUri(),
-				AuthTokens.none());
+		driver = GraphDatabase.driver(connection.getUri(), AuthTokens.none());
 		neo4jIdProvider.setUuidPropertyName(uuidPropertyName);
 		logger.info("Initialized db driver at {}", connectionInfo.getUri());
 	}
-
 
 	private Neo4JGraph getGraph() {
 		Neo4JGraph neo4jGraph;
@@ -73,5 +70,10 @@ public class Neo4jGraphProvider extends DatabaseProvider {
 		if (driver != null) {
 			driver.close();
 		}
+	}
+
+	@Override
+	public void commitTransaction(Graph graph, Transaction tx) {
+		commitTransaction(graph, tx, true);
 	}
 }

@@ -3,13 +3,11 @@ package io.opensaber.registry.sink;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import org.h2.engine.Database;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Component("dbProviderFactory")
 public class DBProviderFactory {
@@ -37,7 +35,7 @@ public class DBProviderFactory {
 			} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.NEO4J.getName())) {
 				provider = new Neo4jGraphProvider(connectionInfo);
 			} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.SQLG.getName())) {
-				provider = new SqlgProvider(environment);
+				provider = new SqlgProvider(connectionInfo);
 				provider.initializeGlobalGraphConfiguration();
 			} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName())) {
 				provider = new TinkerGraphProvider(environment);
