@@ -11,34 +11,38 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class EntityCache {
-	
-    private static Logger logger = LoggerFactory.getLogger(EntityCache.class);
-    private final static String RECORD_NOT_FOUND ="Record not found" ;	
+
+	private static Logger logger = LoggerFactory.getLogger(EntityCache.class);
+	private final static String RECORD_NOT_FOUND = "Record not found";
 	private Map<String, List<String>> recordShardMap;
+
 	@Autowired
-	public EntityCache(EntityCacheManager entityCacheManager){
+	public EntityCache(EntityCacheManager entityCacheManager) {
 		this.recordShardMap = entityCacheManager.getShardUUIDs();
 	}
-	
+
 	/**
-	 * Provide the shard only for a given record.
+	 * Provide shard identifier for a given record.
+	 * 
 	 * @param recordId
 	 * @return
 	 * @throws IOException
 	 */
-	public String getShard(String recordId) throws IOException{		
-		 for (Entry<String, List<String>> entry : recordShardMap.entrySet()) {
-		        String shardId = entry.getKey();
-		        if(entry.getValue().contains(recordId)){
-		        	logger.info("Record "+recordId+" found a match in cache for shard "+shardId);
-		        	return shardId;
-		        }else{
-		        	logger.error("Record "+recordId+" not found in cache");
-		        	throw new IOException(RECORD_NOT_FOUND); 
-		        }
-		    }		 
-		return null;
+
+	public String getShard(String recordId) throws IOException {
+		String shardId = "";
+		for (Entry<String, List<String>> entry : recordShardMap.entrySet()) {
+			if (entry.getValue().contains(recordId)) {
+				shardId = entry.getKey();
+				logger.info("Record " + recordId + " found a match in cache for shard " + shardId);
+				break;
+			}
+		}
+		if (shardId.isEmpty()) {
+			logger.error("Record " + recordId + " not found in cache");
+			throw new IOException(RECORD_NOT_FOUND);
+		}
+		return shardId;
 	}
-	
 
 }

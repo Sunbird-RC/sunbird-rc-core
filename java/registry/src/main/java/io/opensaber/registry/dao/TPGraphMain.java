@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -150,35 +151,20 @@ public class TPGraphMain {
     }
 
     /**
-     * Retrieves all UUID of a given all labels.
+     * Retrieves all vertex UUID for given all labels.
      */
-    public List<String> getUUIDs(Graph graph, List<String> parentLabels) {
+    public List<String> getUUIDs(Graph graph, Set<String> labels) {
         List<String> uuids = new ArrayList<>();;
-        P<String> predicateStr = P.within(parentLabels);
-        GraphTraversal<Vertex, Vertex> graphTraversal = graph.traversal().V();
-        GraphTraversal<Vertex, Vertex> gvs = graphTraversal.hasLabel(predicateStr);
-
-        while (gvs.hasNext()){
-            Vertex v = gvs.next();
+        P<String> predicateStr = P.within(labels);
+        GraphTraversal<Vertex, Vertex> graphTraversal = graph.traversal().V().hasLabel(predicateStr);
+        while (graphTraversal.hasNext()){
+            Vertex v = graphTraversal.next();
             if (v != null) {
                 uuids.add(v.value(uuidPropertyName).toString());
             }
         }
         return uuids;
     }
-    /**
-	 * Retrieves all UUID of a given label(example: Teacher, Signature).
-	 */
-	public List<String> getUUIDs(String label, DatabaseProvider dbProvider) {
-		List<String> uuids = new ArrayList<>();
-		Graph graph = dbProvider.getGraphStore();
-		GraphTraversal<Vertex, Vertex> graphTraversal = graph.traversal().V().hasLabel(label);
-		while (graphTraversal.hasNext()) {
-			Vertex v = graphTraversal.next();
-			uuids.add(v.property("osid").value().toString());
-		}
-		return uuids;
-	}
 
     public JsonNode readGraph2Json(Graph graph, String osid) {
         ObjectNode objectNode = JsonNodeFactory.instance.objectNode();

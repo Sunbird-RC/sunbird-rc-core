@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,8 @@ public class EntityCacheManager {
 
 	private static Logger logger = LoggerFactory.getLogger(EntityCacheManager.class);
 
+	@Autowired
+	private TPGraphMain tpGraphMain;
 	@Autowired
 	private DBProviderFactory dbProviderFactory;
 	private Set<String> defintionNames;
@@ -35,17 +38,14 @@ public class EntityCacheManager {
 
 	/**
 	 * Retrive Ids for all vertices of each shard and creates the mapping
-	 * between the shard and its vertices. 
-	 * Loads at application start up
+	 * between the shard and its vertices. Loads at application start up
 	 */
 	public void loadShardUUIDS() {
-		TPGraphMain tpGraphMain = new TPGraphMain();
 		dbConnectionInfoList.forEach(dbConnectionInfo -> {
 			DatabaseProvider dbProvider = dbProviderFactory.getInstance(dbConnectionInfo);
+			Graph graph = dbProvider.getGraphStore();
 			List<String> uuids = new ArrayList<>();
-			defintionNames.forEach(defintionName -> {
-				uuids.addAll(tpGraphMain.getUUIDs(defintionName, dbProvider));
-			});
+			uuids.addAll(tpGraphMain.getUUIDs(graph, defintionNames));
 			shardUUIDSMap.put(dbConnectionInfo.getShardId(), uuids);
 		});
 
