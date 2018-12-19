@@ -9,7 +9,7 @@ public class ResponseParams {
 	public String resmsgid;
 	private String msgid;
 	private String err;
-	private Status status = Status.UNSUCCESSFUL;
+	private Status status;
 	private String errmsg;
 	private List<Object> resultList;
 
@@ -18,6 +18,7 @@ public class ResponseParams {
 		this.resmsgid = "";
 		this.err = "";
 		this.errmsg = "";
+		this.status = Status.SUCCESSFUL; // When there is no error, treat status as success
 	}
 
 	public String getResmsgid() {

@@ -23,6 +23,7 @@ import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.DatabaseProviderWrapper;
 import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.registry.dao.TPGraphMain;
+import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.utils.converters.RDF2Graph;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.datatypes.RDFDatatype;
@@ -505,8 +506,8 @@ public class RegistryServiceImpl implements RegistryService {
         return entityId;
     }
 
-    public JsonNode getEntity(String id) {
-        JsonNode result = tpGraphMain.getEntity("", id);
+    public JsonNode getEntity(String id, ReadConfigurator configurator) {
+        JsonNode result = tpGraphMain.getEntity("", id, configurator);
         return result;
     }
 }

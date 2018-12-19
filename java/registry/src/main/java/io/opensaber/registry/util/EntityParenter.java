@@ -103,6 +103,7 @@ public class EntityParenter {
         for (ShardParentInfo shardParentInfo : shardParentInfoList.getParentInfos()) {
             if (shardParentInfo.getName().compareToIgnoreCase(definition) == 0) {
                 id = shardParentInfo.getUuid();
+                break;
             }
         }
         return id;
@@ -119,6 +120,7 @@ public class EntityParenter {
         for (ShardParentInfo shardParentInfo : shardParentInfoList.getParentInfos()) {
             if (shardParentInfo.getName().compareToIgnoreCase(definition) == 0) {
                 vertex = shardParentInfo.getVertex();
+                break;
             }
         }
         return vertex;
