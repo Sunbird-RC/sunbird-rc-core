@@ -1,5 +1,6 @@
 package io.opensaber.registry.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.APIMessage;
@@ -309,11 +310,22 @@ public class RegistryController {
 		logger.info("Read Api: shard id: "+shardId+" for record id: "+osIdVal);
 		shardManager.activateShard(shardId);
 
-        ReadConfigurator configurator = new ReadConfigurator();
-        boolean includeSignatures = (boolean) apiMessage.getRequest().getRequestMap().getOrDefault("includeSignatures", false);
-        configurator.setIncludeSignatures(includeSignatures);
+		ReadConfigurator configurator = new ReadConfigurator();
+		boolean includeSignatures = (boolean) apiMessage.getRequest().getRequestMap().getOrDefault("includeSignatures",
+				false);
+		configurator.setIncludeSignatures(includeSignatures);
 		try {
-			response.setResult(registryService.getEntity(osIdVal, configurator));
+			JsonNode resultNode = registryService.getEntity(osIdVal, configurator);
+			// Transformation based on the mediaType
+			Data<Object> data = new Data<>(resultNode);
+			Configuration config = configurationHelper.getConfiguration(header.getAccept().iterator().next().toString(),
+					Direction.OUT);
+			logger.info("config : " + config);
+			ITransformer<Object> responseTransformer = transformer.getInstance(config);
+			Data<Object> resultContent = responseTransformer.transform(data);
+			logger.info("JSON LD: " + resultContent.getData());
+			response.setResult(resultContent.getData());
+
 		} catch (Exception e) {
 			logger.error("Read Api Exception occoured ", e);
 			responseParams.setErr(e.getMessage());

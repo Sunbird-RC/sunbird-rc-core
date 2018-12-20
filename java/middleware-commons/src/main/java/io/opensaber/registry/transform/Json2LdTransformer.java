@@ -1,18 +1,13 @@
 package io.opensaber.registry.transform;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import java.util.ArrayList;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Json2LdTransformer implements ITransformer<Object> {
 
@@ -21,46 +16,45 @@ public class Json2LdTransformer implements ITransformer<Object> {
 	private String context;
 	private List<String> nodeTypes = new ArrayList<>();
 	private String prefix = "";
-	private String domain = "";
+	private final ObjectMapper mapper = new ObjectMapper();
 
-	public Json2LdTransformer(String context, String domain){
+	public Json2LdTransformer(String context, String domain) {
 		this.context = context;
-		this.domain = domain;
+		prefix = domain + SEPERATOR;
+
 	}
 
 	@Override
 	public Data<Object> transform(Data<Object> data) throws TransformationException {
 		try {
-			ObjectMapper mapper = new ObjectMapper();
-			ObjectNode input = (ObjectNode) mapper.readTree(data.getData().toString());
-			ObjectNode fieldObjects = (ObjectNode) mapper.readTree(context);
-			setNodeTypeToAppend(fieldObjects);
-			ObjectNode resultNode = input;
-
+			ObjectNode resultNode = (ObjectNode) mapper.readTree(data.getData().toString());
 			String rootType = getTypeFromNode(resultNode);
-			logger.debug("Domain  value "+domain);
-			if(domain.isEmpty())
-				throw new TransformationException(Constants.INVALID_FRAME, ErrorCode.JSON_TO_JSONLD_TRANFORMATION_ERROR);
-			setPrefix(domain);
+			resultNode = (ObjectNode) resultNode.path(rootType);
+
+			// Set the generic context to this entity type
+			String modifiedContext = context.replace("<@type>", rootType);
+			ObjectNode contextNode = (ObjectNode) mapper.readTree(modifiedContext);
+			setNodeTypeToAppend(contextNode);
+
+			// Add prefix to all content
 			JSONUtil.addPrefix(resultNode, prefix, nodeTypes);
 			logger.debug("Appended prefix to requestNode.");
 
-			resultNode = (ObjectNode) resultNode.path(rootType);
-			resultNode.setAll(fieldObjects);
+			// Insert context to the result
+			resultNode.setAll(contextNode);
 
-			String jsonldResult = mapper.writeValueAsString(resultNode);
-			return new Data<>(jsonldResult.replace("<@type>", rootType));
+			return new Data<>(resultNode);
 		} catch (Exception ex) {
-			logger.error("Error trnsx : "+ex.getMessage(), ex);
+			logger.error("Error trnsx : " + ex.getMessage(), ex);
 			throw new TransformationException(ex.getMessage(), ex, ErrorCode.JSON_TO_JSONLD_TRANFORMATION_ERROR);
 		}
 	}
 
 	/*
-	 * Given a input like the following, {entity:{"a":1, "b":1}}
-	 * returns "entity" being the type of the json object.
+	 * Given a input like the following, {entity:{"a":1, "b":1}} returns
+	 * "entity" being the type of the json object.
 	 */
-	private String getTypeFromNode(ObjectNode requestNode) throws JsonProcessingException {
+	private String getTypeFromNode(ObjectNode requestNode) {
 		String rootValue = "";
 		if (requestNode.isObject()) {
 			logger.info("root node to set as type " + requestNode.fields().next().getKey());
@@ -69,8 +63,13 @@ public class Json2LdTransformer implements ITransformer<Object> {
 		return rootValue;
 	}
 
-	private void setNodeTypeToAppend(ObjectNode fieldObjects) {
-		ObjectNode context = (ObjectNode) fieldObjects.path(JsonldConstants.CONTEXT);
+	/**
+	 * Extracting the sub entities from context.
+	 * 
+	 * @param contextNode
+	 */
+	private void setNodeTypeToAppend(ObjectNode contextNode) {
+		ObjectNode context = (ObjectNode) contextNode.path(JsonldConstants.CONTEXT);
 		nodeTypes.add(JsonldConstants.ID);
 		context.fields().forEachRemaining(entry -> {
 			if (entry.getValue().has(JsonldConstants.TYPE)
@@ -78,10 +77,6 @@ public class Json2LdTransformer implements ITransformer<Object> {
 				nodeTypes.add(entry.getKey());
 			}
 		});
-	}
-
-	private void setPrefix(String type) {
-		prefix = type.toLowerCase() + SEPERATOR;
 	}
 
 	@Override
