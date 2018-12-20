@@ -1,22 +1,5 @@
 package io.opensaber.registry.dao.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.validator.routines.UrlValidator;
-import org.apache.tinkerpop.gremlin.process.traversal.P;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.dao.RegistryDao;
@@ -26,6 +9,22 @@ import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.sink.shard.Shard;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.apache.commons.validator.routines.UrlValidator;
+import org.apache.tinkerpop.gremlin.process.traversal.P;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Component
 public class SearchDaoImpl implements SearchDao {
@@ -40,11 +39,14 @@ public class SearchDaoImpl implements SearchDao {
 
 	@Value("${registry.context.base}")
 	private String registryContext;
+	
+	@Autowired
+	Shard shard;
 
 	public Map<String, Graph> search(SearchQuery searchQuery)
 			throws AuditFailedException, EncryptionException, RecordNotFoundException {
 
-		Graph graphFromStore = databaseProvider.getGraphStore();
+		Graph graphFromStore = shard.getDatabaseProvider().getGraphStore();
 		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal();
 		List<Filter> filterList = searchQuery.getFilters();
 		Map<String, Graph> graphMap = new HashMap<String, Graph>();

@@ -45,11 +45,13 @@ public class EntityCacheManager {
 			DatabaseProvider dbProvider = dbProviderFactory.getInstance(dbConnectionInfo);
 			Graph graph = dbProvider.getGraphStore();
 			List<String> uuids = new ArrayList<>();
+			logger.info("defintionNames for getting UUIDS: " + defintionNames);
 			uuids.addAll(tpGraphMain.getUUIDs(graph, defintionNames));
+			logger.info("UUIDS for definationNames: " + tpGraphMain.getUUIDs(graph, defintionNames));
 			shardUUIDSMap.put(dbConnectionInfo.getShardId(), uuids);
+			logger.info("cache added shard: " + dbConnectionInfo.getShardId() + " with " + uuids.size() + " uuids");
 		});
 
-		logger.info("shard's UUIDS map size: " + shardUUIDSMap.size());
 	}
 
 	public Map<String, List<String>> getShardUUIDs() {

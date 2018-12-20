@@ -6,7 +6,6 @@ import io.opensaber.registry.model.DBConnectionInfo;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
@@ -21,6 +20,7 @@ public class Neo4jGraphProvider extends DatabaseProvider {
 	private boolean profilerEnabled;
 	private DBConnectionInfo connectionInfo;
 	private Neo4jIdProvider neo4jIdProvider = new Neo4jIdProvider();
+	private Graph graph;
 
 	@Value("${database.uuidPropertyName}")
 	public String uuidPropertyName = "osid";
@@ -45,7 +45,8 @@ public class Neo4jGraphProvider extends DatabaseProvider {
 
 	@Override
 	public Graph getGraphStore() {
-		return getGraph();
+		graph = getGraph();
+		return graph;
 	}
 
 	// TODO: We must have an abstract class to allow this possibility.
@@ -72,8 +73,4 @@ public class Neo4jGraphProvider extends DatabaseProvider {
 		}
 	}
 
-	@Override
-	public void commitTransaction(Graph graph, Transaction tx) {
-		commitTransaction(graph, tx, true);
-	}
 }
