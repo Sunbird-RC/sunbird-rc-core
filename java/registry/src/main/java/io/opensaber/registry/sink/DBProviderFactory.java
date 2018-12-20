@@ -23,6 +23,7 @@ public class DBProviderFactory {
 	public DatabaseProvider getInstance(DBConnectionInfo connectionInfo) {
 		DatabaseProvider provider = null;
 		String dbProvider = environment.getProperty(Constants.DATABASE_PROVIDER);
+		String uuidPropertyName = dbConnectionInfoMgr.getUuidPropertyName();
 
 		// In tests, we use TinkerGraph presently.
 		if (!dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName()) &&
@@ -33,9 +34,9 @@ public class DBProviderFactory {
 				provider = new OrientDBGraphProvider(environment);
 				provider.initializeGlobalGraphConfiguration();
 			} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.NEO4J.getName())) {
-				provider = new Neo4jGraphProvider(connectionInfo);
+				provider = new Neo4jGraphProvider(connectionInfo, uuidPropertyName);
 			} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.SQLG.getName())) {
-				provider = new SqlgProvider(connectionInfo);
+				provider = new SqlgProvider(connectionInfo, uuidPropertyName);
 				provider.initializeGlobalGraphConfiguration();
 			} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName())) {
 				provider = new TinkerGraphProvider(environment);

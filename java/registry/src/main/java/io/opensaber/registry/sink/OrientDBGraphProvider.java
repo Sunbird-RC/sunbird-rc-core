@@ -1,6 +1,7 @@
 package io.opensaber.registry.sink;
 
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.transform.Data;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
@@ -16,6 +17,7 @@ public class OrientDBGraphProvider extends DatabaseProvider {
 
 	private Logger logger = LoggerFactory.getLogger(OrientDBGraphProvider.class);
 	private OrientGraph graph;
+	private OSGraph customGraph;
 
 	public OrientDBGraphProvider(Environment environment) {
 		String graphDbLocation = environment.getProperty(Constants.ORIENTDB_DIRECTORY);
@@ -23,16 +25,7 @@ public class OrientDBGraphProvider extends DatabaseProvider {
 		config.setProperty(OrientGraph.CONFIG_URL, String.format("embedded:%s", graphDbLocation));
 		config.setProperty(OrientGraph.CONFIG_TRANSACTIONAL, true);
 		graph = OrientGraph.open(config);
-	}
-
-	@Override
-	public Graph getGraphStore() {
-		return graph;
-	}
-
-	@Override
-	public OrientGraph getRawGraph() {
-		return graph;
+		customGraph = new OSGraph(graph, false);
 	}
 
 	@PostConstruct
@@ -48,5 +41,10 @@ public class OrientDBGraphProvider extends DatabaseProvider {
 		logger.info("Gracefully shutting down OrientGraph DB instance ...");
 		logger.info("**************************************************************************");
 		graph.close();
+	}
+
+	@Override
+	public OSGraph getOSGraph() {
+		return customGraph;
 	}
 }

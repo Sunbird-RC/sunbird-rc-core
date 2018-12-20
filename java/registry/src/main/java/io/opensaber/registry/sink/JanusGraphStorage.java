@@ -2,7 +2,6 @@ package io.opensaber.registry.sink;
 
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.janusgraph.core.JanusGraph;
 import org.janusgraph.core.JanusGraphFactory;
 import org.slf4j.Logger;
@@ -16,6 +15,7 @@ public class JanusGraphStorage extends DatabaseProvider {
 
 	private Logger logger = LoggerFactory.getLogger(JanusGraphStorage.class);
 	private JanusGraph graph;
+	private OSGraph osGraph;
 
 	public JanusGraphStorage(Environment environment) {
 		String graphFactory = environment.getProperty("database.janus_cassandra.graphFactory");
@@ -37,16 +37,13 @@ public class JanusGraphStorage extends DatabaseProvider {
 		config.setProperty("cache.db-cache-size", Float.parseFloat(dbCacheSize));
 		config.setProperty("cache.db-cache-clean-wait", Integer.parseInt(dbCacheCleanUpWaitTime));
 		graph = JanusGraphFactory.open(config);
+		osGraph = new OSGraph(graph, false);
 	}
 
-	@Override
-	public Graph getGraphStore() {
-		return graph;
-	}
 
 	@Override
-	public JanusGraph getRawGraph() {
-		return graph;
+	public OSGraph getOSGraph() {
+		return osGraph;
 	}
 
 	@PostConstruct

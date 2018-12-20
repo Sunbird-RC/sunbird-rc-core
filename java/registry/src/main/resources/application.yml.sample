@@ -39,20 +39,39 @@ database:
   #       existing data in the database.
   uuidPropertyName: ${database_uuidPropertyName:osid}
 
-  # Providers available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
+  # Providers available are NEO4J, SQLG, CASSANDRA, ORIENTDB, TINKERGRAPH (in-memory).
   # NOTE: Values given against 'shardId' must be unique
   provider: ${database_provider:NEO4J}
 
   # Choose "none" as the propertyName if you don't want any shards. Otherwise
   # implement IShardAdvisor interface in your own ways. An example, SerialNumShardAdvisor
   # has been provided for reference. If you'd like to use it, set value "serialNum" here.
+  # Note that "serialNum" must then be part of the payload.
   shardProperty: ${database_shardProperty:none}
+
   connectionInfo:
     -
+      # shardId must be a unique identifier to each connection.
       shardId: shard1
+
+      # The format of the URI can be learnt from the following links -
+      #     * 1. Graph database (Neo4J)
+      #     ** https://github.com/SteelBridgeLabs/neo4j-gremlin-bolt
+      #     ** Example : bolt://localhost:7687
+      #     * 2. Relational databases (Postgresql, HSQLDB, H2, MariaDB, MySQL, MSSQLServer)
+      #     ** http://sqlg.org/docs/2.0.0-SNAPSHOT/
+      #     ** Example - Postgres - jdbc:postgresql://localhost:5432/yourdb
       uri: ${connectionInfo_uri:bolt://localhost:7687}
+
       username: ${connectionInfo_username:neo4j}
       password: ${connectionInfo_password:}
+
+      # Any other shard information follows...
+    #-
+      #shardId: shard2
+      #uri: ${connectionInfo_uri:bolt://localhost:7688}
+      #username: ${connectionInfo_username:neo4j}
+      #password: ${connectionInfo_password:}
 
 ##################################################################################
 # Uncomment the following section to use Cassandra as backend store              #

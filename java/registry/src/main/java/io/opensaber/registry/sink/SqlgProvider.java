@@ -1,36 +1,30 @@
 package io.opensaber.registry.sink;
 
 import io.opensaber.registry.model.DBConnectionInfo;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
-import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.umlg.sqlg.structure.SqlgGraph;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 public class SqlgProvider extends DatabaseProvider {
 
 	private Logger logger = LoggerFactory.getLogger(SqlgProvider.class);
 	private SqlgGraph graph;
+	private OSGraph customGraph;
 
-	public SqlgProvider(DBConnectionInfo connectionInfo) {
+	public SqlgProvider(DBConnectionInfo connectionInfo, String uuidPropertyName) {
 		Configuration config = new BaseConfiguration();
 		config.setProperty("jdbc.url", connectionInfo.getUri());
 		config.setProperty("jdbc.username", connectionInfo.getUsername());
 		config.setProperty("jdbc.password", connectionInfo.getPassword());
+		setUuidPropertyName(uuidPropertyName);
 		graph = SqlgGraph.open(config);
-	}
-
-	@Override
-	public Graph getGraphStore() {
-		return graph;
-	}
-
-	@Override
-	public SqlgGraph getRawGraph() {
-		return graph;
+		customGraph = new OSGraph(graph, false);
 	}
 
 	@PostConstruct
@@ -48,4 +42,13 @@ public class SqlgProvider extends DatabaseProvider {
 		graph.close();
 	}
 
+	@Override
+	public OSGraph getOSGraph() {
+		return customGraph;
+	}
+
+	@Override
+	public String getId(Vertex vertex) {
+		return (String) vertex.property(getUuidPropertyName()).value();
+	}
 }

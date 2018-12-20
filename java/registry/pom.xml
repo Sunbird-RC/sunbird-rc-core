@@ -225,11 +225,12 @@
             <artifactId>sqlg-h2-dialect</artifactId>
             <version>1.5.0</version>
         </dependency>
-        <!--
+
+        <!-- Include this dependency for Postgres support -->
 		<dependency>
 			<groupId>org.umlg</groupId>
 			<artifactId>sqlg-postgres</artifactId>
-			<version>1.5.1</version>
+			<version>1.5.2</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -237,7 +238,7 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		-->
+        <!-- End dependency for Postgres support -->
 
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>

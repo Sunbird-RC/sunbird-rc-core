@@ -1,11 +1,10 @@
 package io.opensaber.validators;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Component
 public class ValidationFilter implements Middleware {
@@ -23,7 +22,7 @@ public class ValidationFilter implements Middleware {
 	public boolean execute(APIMessage apiMessage) throws MiddlewareHaltException {
 		String entityType = apiMessage.getRequest().getEntityType();
 		String payload = apiMessage.getRequest().getRequestMapAsString();
-		if(!validationService.validate(entityType, payload)){
+		if (!validationService.validate(entityType, payload)) {
 			throw new MiddlewareHaltException(VALIDATION_FAILURE_MSG);
 		}
 		return true;

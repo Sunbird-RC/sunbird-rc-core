@@ -5,6 +5,7 @@ import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.sink.OSGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -57,8 +58,8 @@ public class EntityParenter {
             logger.info("Starting to parents for {} definitions in shard {}", defintionNames.size(), dbConnectionInfo.getShardId());
             DatabaseProvider dbProvider = dbProviderFactory.getInstance(dbConnectionInfo);
             try {
-                try (Graph graph = dbProvider.getGraphStore()) {
-
+                try (OSGraph osGraph = dbProvider.getOSGraph()) {
+                    Graph graph = osGraph.getGraphStore();
                     List<ShardParentInfo> shardParentInfoList = new ArrayList<>();
                     try (Transaction tx = dbProvider.startTransaction(graph)) {
 

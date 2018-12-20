@@ -61,7 +61,7 @@ public class JsonValidationServiceImpl implements IValidate {
 	}
 
 	@Override
-	public boolean validate(String objString, String entityType) throws MiddlewareHaltException {
+	public boolean validate(String entityType, String objString) throws MiddlewareHaltException {
 		boolean result = false;
 		Schema schema = getEntitySchema(entityType);
 		JSONObject obj = new JSONObject(objString);

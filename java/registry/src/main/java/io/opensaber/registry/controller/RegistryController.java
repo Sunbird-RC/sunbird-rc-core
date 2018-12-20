@@ -292,7 +292,7 @@ public class RegistryController {
 			response.setResult(result);
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
 			watch.stop("RegistryController.addToExistingEntity");
-			logger.debug("RegistryController : Entity with label {} added !", "");
+			logger.debug("RegistryController : Entity {} added !", resultId);
 		} catch (Exception e) {
 			logger.error("Exception in controller while adding entity !", e);
 			response.setResult(result);
@@ -387,24 +387,6 @@ public class RegistryController {
 		keyToPurge.add(JsonldConstants.TYPE);
 		return keyToPurge;
 
-	}
-
-	private Vertex parentVertex() {
-		Vertex parentV = null;
-		try {
-			DatabaseProvider databaseProvider = databaseProviderWrapper.getDatabaseProvider();
-			Graph g = databaseProvider.getGraphStore();
-
-			// TODO: Apply default grouping - to be removed.
-			Transaction tx = databaseProvider.startTransaction(g);
-			parentV = new TPGraphMain().ensureParentVertex(g, "Teacher_GROUP");
-			databaseProvider.commitTransaction(g, tx);
-
-		} catch (Exception e) {
-			logger.info(e.getMessage());
-		}
-
-		return parentV;
 	}
 
 }
