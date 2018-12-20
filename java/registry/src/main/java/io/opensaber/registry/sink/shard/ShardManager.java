@@ -12,25 +12,26 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-
 @Component("shardManager")
 public class ShardManager {
+
     private static Logger logger = LoggerFactory.getLogger(ShardManager.class);
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 	@Autowired
 	private DBProviderFactory dbProviderFactory;
 	@Autowired
-	private IShardAdvisor shardAdvisor;	
+	private IShardAdvisor shardAdvisor;
 	@Autowired
 	private SearchService searchService;
-	
+
 	@Autowired
 	private Shard shard;
-	
+
 	/**
-	 * intiatiate a DBShard and ensure activating a databaseProvider.
-	 * used for add end point. 
+	 * intiatiate a DBShard and ensure activating a databaseProvider. used for
+	 * add end point.
+	 * 
 	 * @param attributeValue
 	 * @throws IOException
 	 */
@@ -54,6 +55,7 @@ public class ShardManager {
 	 * @throws CustomException
 	 */
 	public Shard getShard(Object attributeValue) throws CustomException {
+
 		if(attributeValue != null){
 			activateDbShard(attributeValue);
 		}else{
@@ -61,10 +63,9 @@ public class ShardManager {
 		}
 		return shard;
 	}
-	
 	/**
 	 * Default shard return first shard.
-	 * Atlease one shard configuration is mandatory.
+	 * Atleast one shard configuration is mandatory.
 	 * @return
 	 * @throws CustomException
 	 */
@@ -72,22 +73,25 @@ public class ShardManager {
 		activateDbShard(null);
 		return shard;
 	}
+
 	/**
-	 * activate a shard given a shardId from entity cache
+	 * activate a shard given a shardId from entity cache 
+	 * use this for read operation
 	 * @param shardId
 	 * @return
+	 * @throws CustomException 
 	 */
 	public void activateShard(String shardId) throws CustomException{
 		DBConnectionInfo connectionInfo = dbConnectionInfoMgr.getDBConnectionInfo(shardId);
-		if(connectionInfo != null){
+		if (connectionInfo != null) {
 			DatabaseProvider databaseProvider = dbProviderFactory.getInstance(connectionInfo);
 			shard.setShardId(connectionInfo.getShardId());
-		    shard.setDatabaseProvider(databaseProvider);
-		}else{
-			logger.error("Exception thrown:"+shardId+" ShardId is invalid");
-			throw new CustomException(shardId+" shardId is invalid");
+			shard.setDatabaseProvider(databaseProvider);
+		} else {
+			logger.info("Default shard is activated");
+			activateDbShard(null);
+
 		}
 	}
-
 
 }

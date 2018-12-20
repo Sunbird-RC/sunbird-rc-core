@@ -1,6 +1,7 @@
 package io.opensaber.registry.util;
 
 import io.opensaber.registry.dao.TPGraphMain;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.sink.DBProviderFactory;
@@ -14,6 +15,7 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,6 +23,8 @@ public class EntityCacheManager {
 
 	private static Logger logger = LoggerFactory.getLogger(EntityCacheManager.class);
 
+	@Autowired
+	private Environment environment;
 	@Autowired
 	private TPGraphMain tpGraphMain;
 	@Autowired
@@ -41,17 +45,22 @@ public class EntityCacheManager {
 	 * between the shard and its vertices. Loads at application start up
 	 */
 	public void loadShardUUIDS() {
-		dbConnectionInfoList.forEach(dbConnectionInfo -> {
-			DatabaseProvider dbProvider = dbProviderFactory.getInstance(dbConnectionInfo);
-			Graph graph = dbProvider.getGraphStore();
-			List<String> uuids = new ArrayList<>();
-			logger.info("defintionNames for getting UUIDS: " + defintionNames);
-			uuids.addAll(tpGraphMain.getUUIDs(graph, defintionNames));
-			logger.info("UUIDS for definationNames: " + tpGraphMain.getUUIDs(graph, defintionNames));
-			shardUUIDSMap.put(dbConnectionInfo.getShardId(), uuids);
-			logger.info("cache added shard: " + dbConnectionInfo.getShardId() + " with " + uuids.size() + " uuids");
-		});
+		String shardProperty = environment.getProperty("database.shardProperty");
+		if (!(shardProperty.compareToIgnoreCase(Constants.NONE_STR) == 0)) {
+			dbConnectionInfoList.forEach(dbConnectionInfo -> {
+				DatabaseProvider dbProvider = dbProviderFactory.getInstance(dbConnectionInfo);
+				Graph graph = dbProvider.getGraphStore();
+				List<String> uuids = new ArrayList<>();
+				logger.info("defintionNames for getting UUIDS: " + defintionNames);
+				uuids.addAll(tpGraphMain.getUUIDs(graph, defintionNames));
+				logger.info("UUIDS for definationNames: " + tpGraphMain.getUUIDs(graph, defintionNames));
+				shardUUIDSMap.put(dbConnectionInfo.getShardId(), uuids);
+				logger.info("cache added shard: " + dbConnectionInfo.getShardId() + " with " + uuids.size() + " uuids");
+			});
+		} else {
+			logger.info("cache not loaded !");
 
+		}
 	}
 
 	public Map<String, List<String>> getShardUUIDs() {
