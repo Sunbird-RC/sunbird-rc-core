@@ -53,11 +53,6 @@ database:
       uri: ${connectionInfo_uri:bolt://localhost:7687}
       username: ${connectionInfo_username:neo4j}
       password: ${connectionInfo_password:}
-    -
-      shardId: shard2
-      uri: ${connectionInfo_uri:bolt://localhost:7688}
-      username: ${connectionInfo_username:neo4j}
-      password: ${connectionInfo_password:}
 
 ##################################################################################
 # Uncomment the following section to use Cassandra as backend store              #

@@ -1,6 +1,9 @@
 package io.opensaber.registry.sink;
 
 import io.opensaber.registry.middleware.util.Constants;
+
+import java.util.Optional;
+
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -12,6 +15,8 @@ import org.slf4j.LoggerFactory;
 public abstract class DatabaseProvider {
 
 	private static Logger logger = LoggerFactory.getLogger(DatabaseProvider.class);
+
+    private Optional<Boolean> supportsTransaction = Optional.empty();
 
 	public abstract Graph getGraphStore();
 
@@ -70,8 +75,11 @@ public abstract class DatabaseProvider {
 		}
 	}
 
-	private boolean supportsTransaction(Graph graph) {
-		return graph.features().graph().supportsTransactions();
+	public boolean supportsTransaction(Graph graph) {
+	    if(!supportsTransaction.isPresent()){
+            supportsTransaction = Optional.ofNullable(graph.features().graph().supportsTransactions());
+        }
+		return supportsTransaction.get();
 	}
 
 	public Transaction startTransaction(Graph graph) {

@@ -23,8 +23,10 @@ public class EncryptionHelper {
         List<String> privatePropertyLst = schemaConfigurator.getAllPrivateProperties();
         if (rootNode.isObject()) {
             Map<String, Object> plainMap = getToBeEncryptedMap(rootNode, privatePropertyLst);
-            Map<String, Object> encodedMap = encryptionService.encrypt(plainMap);
-            encryptedRoot  = replaceWithEncryptedValues(rootNode, privatePropertyLst, encodedMap);
+            if(null != plainMap){
+                Map<String, Object> encodedMap = encryptionService.encrypt(plainMap);
+                encryptedRoot  = replaceWithEncryptedValues(rootNode, privatePropertyLst, encodedMap);
+            }
         }
         return encryptedRoot;
     }

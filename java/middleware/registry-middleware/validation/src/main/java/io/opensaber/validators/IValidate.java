@@ -5,5 +5,5 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 
 public interface IValidate {
 
-	boolean validate(APIMessage apiMessage) throws MiddlewareHaltException;
+	public boolean validate(String objString, String entityType) throws MiddlewareHaltException;
 }

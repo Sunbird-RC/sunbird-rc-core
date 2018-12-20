@@ -1,0 +1,37 @@
+{
+	"Teacher": {
+		"teacherCode": "12234",
+		"nationalIdentifier": "1234567890123456",
+		"teacherName": "Marvin Pande",
+		"gender": "GenderTypeCode-MALE",
+		"teachingRole": {
+			"@type": "TeachingRole",
+			"teacherType": "TeacherTypeCode-HEAD",
+			"appointmentType": "TeacherAppointmentTypeCode-REGULAR",
+			"classesTaught": "ClassTypeCode-SECONDARYANDHIGHERSECONDARY",
+			"appointedForSubjects": "SubjectCode-ENGLISH",
+			"mainSubjectsTaught": [
+				"SubjectCode-SOCIALSTUDIES",
+				"SubjectCode-ENGLISH"
+			],
+			"appointmentYear": "2015"
+		},
+		"basicProficiencyLevel": [
+			{
+				"@type": "BasicProficiencyLevel",
+				"proficiencySubject": "SubjectCode-MATH",
+				"proficiencyAcademicQualification": "AcademicQualificationTypeCode-PHD"
+			},
+			{
+				"@type": "BasicProficiencyLevel",
+				"proficiencySubject": "SubjectCode-ENGLISH",
+				"proficiencyAcademicQualification": "AcademicQualificationTypeCode-HIGHERSECONDARY"
+			},
+			{
+				"@type": "BasicProficiencyLevel",
+				"proficiencySubject": "SubjectCode-SOCIALSTUDIES",
+				"proficiencyAcademicQualification": "AcademicQualificationTypeCode-SECONDARY"
+			}
+		]
+	}
+}

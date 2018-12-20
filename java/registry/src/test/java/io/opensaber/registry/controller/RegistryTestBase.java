@@ -10,11 +10,15 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.springframework.beans.factory.annotation.Value;
 
 import io.opensaber.converters.JenaRDF4J;
@@ -81,6 +85,11 @@ public class RegistryTestBase {
 
 	public String generateBaseUrl() {
 		return Constants.INTEGRATION_TEST_BASE_URL;
+	}
+
+	public String getValidJsonString(String fileName) {
+		setJsonld(fileName);
+		return jsonld;
 	}
 
 	public Model getNewValidRdf(String fileName, String contextConstant) {
@@ -165,6 +174,27 @@ public class RegistryTestBase {
 			generatedGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph, registryContextBase);
 		}
 		return generatedGraph;
+	}
+
+	/*protected Vertex parentVertex(DatabaseProvider databaseProvider) {
+		Graph g = databaseProvider.getGraphStore();
+		// TODO: Apply default grouping - to be removed.
+		Vertex parentV = new TPGraphMain().createParentVertex(g, "Teacher_GROUP");
+		try {
+			g.close();
+		} catch (Exception e) {
+			//logger.info(e.getMessage());
+		}
+		return parentV;
+	}*/
+
+	public String getValidStringForUpdate(String reqId){
+		ObjectNode childnode = JsonNodeFactory.instance.objectNode();
+		ObjectNode parentNode = JsonNodeFactory.instance.objectNode();
+		childnode.put("id",reqId);
+		childnode.put("gender","GenderTypeCode-FEMALE");
+		parentNode.set("Teacher",childnode);
+		return parentNode.toString();
 	}
 
 }

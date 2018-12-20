@@ -38,7 +38,7 @@ public class JsonValidationServiceImpl implements IValidate {
 		this.resourceLoader = resourceLoader;
 	}
 
-	private Schema getEntitySchema(String entityType) throws MiddlewareHaltException{
+	private Schema getEntitySchema(String entityType) throws MiddlewareHaltException {
 
 		if (entitySchemaMap.containsKey(entityType)) {
 			return entitySchemaMap.get(entityType);
@@ -61,10 +61,10 @@ public class JsonValidationServiceImpl implements IValidate {
 	}
 
 	@Override
-	public boolean validate(APIMessage apiMessage) throws MiddlewareHaltException {
-	    boolean result = false;
-		Schema schema = getEntitySchema(apiMessage.getRequest().getEntityType());
-		JSONObject obj = new JSONObject(new JSONTokener(apiMessage.getRequest().getRequestMapAsString()));
+	public boolean validate(String objString, String entityType) throws MiddlewareHaltException {
+		boolean result = false;
+		Schema schema = getEntitySchema(entityType);
+		JSONObject obj = new JSONObject(objString);
 		try {
 			schema.validate(obj); // throws a ValidationException if this object is invalid
 			result = true;
@@ -75,6 +75,6 @@ public class JsonValidationServiceImpl implements IValidate {
 					.forEach(logger::error);
 		}
 		return result;
-
 	}
+
 }

@@ -3,7 +3,9 @@ package io.opensaber.registry.dao;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.shard.Shard;
@@ -12,11 +14,14 @@ import io.opensaber.registry.util.ParentLabelGenerator;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.RefLabelHelper;
 import io.opensaber.registry.util.TypePropertyHelper;
+import io.opensaber.validators.IValidate;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -229,6 +234,8 @@ public class TPGraphMain {
                 entityId = writeNodeEntity(graph, rootNode);
                 databaseProvider.commitTransaction(graph, tx);
             }
+        } catch (Exception e) {
+            logger.error("Can't close graph",e);
         }
         return entityId;
     }
@@ -260,4 +267,51 @@ public class TPGraphMain {
         }
         return result;
     }
+
+    /** Updates a record to the database
+     * @param inputJsonNode
+     */
+    /*public ObjectNode updateEntity(JsonNode inputJsonNode) {
+        Iterator<Vertex> vertexIterator = null;
+        Vertex rootVertex = null;
+        ObjectNode entityObjectNode = null;
+        try {
+            DatabaseProvider databaseProvider = databaseProviderWrapper.getDatabaseProvider();
+            Graph graph = databaseProvider.getGraphStore();
+            boolean isTransactionEnabled = databaseProvider.supportsTransaction(graph);
+            String idProp = inputJsonNode.elements().next().get("id").asText();
+            JsonNode node = inputJsonNode.elements().next();
+            watch.start("Add Transaction");
+            if(isTransactionEnabled){
+                try (Transaction tx = graph.tx()) {
+                    vertexIterator = graph.vertices(idProp);
+                    rootVertex = vertexIterator.hasNext() ? vertexIterator.next(): null;
+                    entityObjectNode =  mergeAndUpdateGraph(rootVertex,inputJsonNode);
+                    tx.commit();
+                }
+            } else {
+                vertexIterator = graph.vertices(new Long(idProp));
+                rootVertex = vertexIterator.hasNext() ? vertexIterator.next(): null;
+                entityObjectNode =  mergeAndUpdateGraph(rootVertex, inputJsonNode);
+            }
+            watch.stop("Add Transaction");
+        } catch (Exception e) {
+            logger.error("Exception occurred during updating entity",e);
+        }
+        return entityObjectNode;
+    }*/
+
+
+    /** This method update the vertex with inputJsonNode
+     * @param rootVertex
+     * @param inputJsonNode
+     */
+    public void updateVertex(Vertex rootVertex, JsonNode inputJsonNode) {
+        inputJsonNode.fields().forEachRemaining(record -> {
+            if(record.getValue().isValueNode()){
+                rootVertex.property(record.getKey(),record.getValue().asText());
+            }
+        });
+    }
+
 }

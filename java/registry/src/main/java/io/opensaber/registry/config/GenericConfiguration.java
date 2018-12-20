@@ -343,7 +343,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (validationEnabled) {
 			try {
 				registry.addInterceptor(validationInterceptor())
-						.addPathPatterns("/add", "/update", "/search").order(orderIdx++);
+						.addPathPatterns("/add", "/search").order(orderIdx++);
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (CustomException e) {

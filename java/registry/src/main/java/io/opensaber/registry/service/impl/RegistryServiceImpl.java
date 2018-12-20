@@ -2,17 +2,22 @@ package io.opensaber.registry.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.jsonldjava.core.JsonLdError;
 import com.google.gson.Gson;
 import io.opensaber.converters.JenaRDF4J;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.dao.RegistryDao;
+import io.opensaber.registry.dao.VertexReader;
 import io.opensaber.registry.exception.*;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.RDFUtil;
+import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.RegistrySignature;
 import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.service.EncryptionHelper;
@@ -25,33 +30,33 @@ import io.opensaber.registry.util.GraphDBFactory;
 import io.opensaber.registry.dao.TPGraphMain;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.utils.converters.RDF2Graph;
+import io.opensaber.validators.IValidate;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ext.com.google.common.io.ByteStreams;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.riot.JsonLDWriteContext;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.WriterDatasetRIOT;
 import org.apache.jena.riot.system.PrefixMap;
 import org.apache.jena.riot.system.RiotLib;
 import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.naming.spi.ObjectFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class RegistryServiceImpl implements RegistryService {
@@ -72,8 +77,13 @@ public class RegistryServiceImpl implements RegistryService {
     private ISchemaConfigurator schemaConfigurator;
     @Autowired
     private EncryptionHelper encryptionHelper;
+    @Autowired
+    private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
+
+    @Value("${database.uuidPropertyName}")
+    public String uuidPropertyName;
 
     @Value("${signature.enabled}")
     private boolean signatureEnabled;
@@ -104,6 +114,12 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     DatabaseProviderWrapper databaseProviderWrapper;
+    
+    @Autowired
+    DBConnectionInfoMgr dbConnectionInfoMgr;
+
+    @Autowired
+    private IValidate iValidate;
 
     @Override
     public List getEntityList() {
@@ -510,4 +526,80 @@ public class RegistryServiceImpl implements RegistryService {
         JsonNode result = tpGraphMain.getEntity("", id, configurator);
         return result;
     }
+
+    @Override
+    public void updateEntity(String jsonString) throws Exception {
+        Iterator<Vertex> vertexIterator = null;
+        Vertex rootVertex = null;
+        List<String> privatePropertyList = schemaConfigurator.getAllPrivateProperties();
+
+        JsonNode rootNode = objectMapper.readTree(jsonString);
+        rootNode = encryptionHelper.getEncryptedJson(rootNode);
+        String idProp = rootNode.elements().next().get("id").asText();
+        JsonNode childElementNode = rootNode.elements().next();
+        DatabaseProvider databaseProvider = databaseProviderWrapper.getDatabaseProvider();
+        Graph graph = databaseProvider.getGraphStore();
+        ReadConfigurator readConfigurator = new ReadConfigurator();
+        readConfigurator.setIncludeSignatures(false);
+        VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, privatePropertyList);
+        boolean isTransactionEnabled = databaseProvider.supportsTransaction(graph);
+        if(isTransactionEnabled){
+            try (Transaction tx = graph.tx()) {
+                vertexIterator = graph.vertices(idProp);
+                rootVertex = vertexIterator.hasNext() ? vertexIterator.next(): null;
+                ObjectNode entityNode = (ObjectNode) vr.read(rootVertex.id().toString());
+                //merge with entitynode
+                entityNode =  merge(entityNode,rootNode);
+                //TO-DO validation is failing
+                boolean isValidate = iValidate.validate(entityNode.toString(),"Teacher");
+                tpGraphMain.updateVertex(rootVertex,childElementNode);
+                tx.commit();
+            }
+        } else {
+            vertexIterator = graph.vertices(new Long(idProp));
+            rootVertex = vertexIterator.hasNext() ? vertexIterator.next(): null;
+            ObjectNode entityNode = (ObjectNode) vr.read(rootVertex.id().toString());
+            entityNode =  merge(entityNode,rootNode);
+            //TO-DO validation is failing
+            boolean isValidate = iValidate.validate(entityNode.toString(),"Teacher");
+            tpGraphMain.updateVertex(rootVertex,childElementNode);
+        }
+    }
+
+    /** Merging input json node to DB entity node, this method in turn calls mergeDestinationWithSourceNode method for deep copy of properties and objects
+     * @param entityNode
+     * @param rootNode
+     * @return
+     */
+    private ObjectNode merge(ObjectNode entityNode, JsonNode rootNode) {
+        rootNode.fields().forEachRemaining(entryJsonNode -> {
+            ObjectNode propKeyValue = (ObjectNode) entryJsonNode.getValue();
+            mergeDestinationWithSourceNode(propKeyValue, entityNode, entryJsonNode.getKey());
+        });
+        return entityNode;
+    }
+
+    /**
+     * @param propKeyValue
+     * @param entityNode
+     * @param entityKey
+     */
+    private void mergeDestinationWithSourceNode(ObjectNode propKeyValue, ObjectNode entityNode, String entityKey) {
+        ObjectNode subEntity = (ObjectNode) entityNode.get(entityKey);
+        propKeyValue.fields().forEachRemaining(prop -> {
+            if(prop.getValue().isValueNode()){
+                subEntity.set(prop.getKey(),prop.getValue());
+            } else if(prop.getValue().isObject()){
+                if(subEntity.get(prop.getKey()).size() == 0) {
+                    subEntity.set(prop.getKey(),prop.getValue());
+                } else if (subEntity.get(prop.getKey()).isObject()) {
+                    ArrayNode arrnode = JsonNodeFactory.instance.arrayNode();
+                    arrnode.add(subEntity.get(prop.getKey()));
+                    arrnode.add(prop.getValue());
+                    subEntity.set(prop.getKey(),arrnode);
+                }
+            }
+        });
+    }
+
 }
