@@ -4,11 +4,19 @@
     "@type": {
       "type": "string"
     },
-    "Gender": {
+    "TeacherGender": {
       "type": "string",
       "enum": [
         "GenderTypeCode-MALE",
         "GenderTypeCode-FEMALE"
+      ]
+    },
+    "Gender": {
+      "type": "string",
+      "enum": [
+        "MALE",
+        "FEMALE",
+        "OTHER"
       ]
     },
     "Date": {

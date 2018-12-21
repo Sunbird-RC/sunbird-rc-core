@@ -68,7 +68,7 @@
         },
         "gender": {
           "$id": "#/properties/gender",
-          "$ref": "Common.json#/definitions/Gender"
+          "$ref": "Common.json#/definitions/TeacherGender"
         },
         "birthDate": {
           "$id": "#/properties/birthDate",

@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "Vehicle": {
+      "$ref": "#/definitions/Vehicle"
+    }
+  },
+  "required": [
+    "Vehicle"
+  ],
+  "definitions": {
+    "Vehicle": {
+      "$id": "#/properties/Vehicle",
+      "type": "object",
+      "title": "The Vehicle Schema",
+      "required": [
+        "registrationNumber",
+        "yearManufactured",
+        "model",
+        "manufacturer"
+      ],
+      "properties": {
+        "signatures": {
+          "$id": "#/properties/signatures",
+          "type": "array",
+          "items": {
+            "$ref": "Signature.json#/definitions/Signature"
+          },
+          "$comment": "Placeholder for all verifiable claims"
+        },
+        "registrationNumber": {
+          "$id": "#/properties/registrationNumber",
+          "type": "string",
+          "$comment": "Registration number"
+        },
+        "model": {
+          "$id": "#/properties/model",
+          "type": "string",
+          "title": "Model"
+        },
+        "manufacturer": {
+          "$id": "#/properties/manufacturer",
+          "type": "string",
+          "enum": [
+            "Hero",
+            "Honda",
+            "Bajaj",
+            "Suzuki",
+            "Kawasakhi",
+            "Other"
+          ]
+        },
+        "yearManufactured": {
+          "$id": "#/properties/yearManufactured",
+          "$ref": "Common.json#/definitions/Year"
+        }
+      }
+    }
+  }
+}
