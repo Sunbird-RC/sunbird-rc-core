@@ -82,8 +82,8 @@ public class ShardManager {
 	 * @throws CustomException 
 	 */
 	public void activateShard(String shardId) throws CustomException{
-		DBConnectionInfo connectionInfo = dbConnectionInfoMgr.getDBConnectionInfo(shardId);
-		if (connectionInfo != null) {
+		if (shardId != null) {
+			DBConnectionInfo connectionInfo = dbConnectionInfoMgr.getDBConnectionInfo(shardId);
 			DatabaseProvider databaseProvider = dbProviderFactory.getInstance(connectionInfo);
 			shard.setShardId(connectionInfo.getShardId());
 			shard.setDatabaseProvider(databaseProvider);

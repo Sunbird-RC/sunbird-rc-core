@@ -55,7 +55,7 @@ public class EntityCache {
 	 */
 	public boolean addEntity(String shardId, String recordId) {
 		boolean added = false;
-		if (recordShardMap.entrySet().contains(shardId)) {
+		if (recordShardMap.keySet().contains(shardId)) {
 			recordShardMap.get(shardId).add(recordId);
 			logger.info("Existing shard id " + shardId + " added with record id " + recordId + " in cache");
 			added = true;

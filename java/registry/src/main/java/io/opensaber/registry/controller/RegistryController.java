@@ -8,7 +8,6 @@ import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
-import io.opensaber.registry.dao.TPGraphMain;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.CustomException;
 import io.opensaber.registry.exception.EntityCreationException;
@@ -22,7 +21,6 @@ import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
-import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.DatabaseProviderWrapper;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
@@ -40,9 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.jena.rdf.model.Model;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -360,10 +355,10 @@ public class RegistryController {
 		try {
 			shardId = entityCache.getShard(osIdVal);
 		} catch (Exception e1) {
-			logger.error("Read Api Exception occoured ", e1);
+			logger.error("Update Api Exception occoured ", e1);
 		}
 		shardManager.activateShard(shardId);
-		logger.info("Read Api: shard id: " + shardId + " for record id: " + osIdVal);
+		logger.info("Update Api: shard id: " + shardId + " for record id: " + osIdVal);
 		
         try {
             watch.start("RegistryController.update");
