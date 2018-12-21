@@ -12,8 +12,6 @@ import org.neo4j.graphdb.event.TransactionData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-
 import io.opensaber.registry.kernel.util.LogGraphEvent;
 import io.opensaber.registry.middleware.util.Constants;
 
@@ -433,7 +431,7 @@ public class ProcessTransactionData {
 	}
 
 	public String getUserId(Node node) {
-		List<String> propertyKeys = Lists.newArrayList(node.getPropertyKeys());
+		Iterable<String> propertyKeys = node.getPropertyKeys();
 		for (String property : propertyKeys) {
 			if (property.endsWith("lastUpdatedBy")) {
 				return (String) node.getProperty(property);

@@ -50,10 +50,10 @@ public class FrameContext {
 	public String getDomain() {
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode frameNode = null;
-		logger.info(
+		logger.debug(
 				"for FrameContext registryContextBase: " + registryContextBase + " and frame content: " + frameContent);
 		try {
-			frameNode = (ObjectNode) mapper.readTree(getContent());
+			frameNode = mapper.readTree(getContent());
 		} catch (IOException e) {
 			e.printStackTrace();
 			logger.error(e.getLocalizedMessage());

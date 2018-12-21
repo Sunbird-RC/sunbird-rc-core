@@ -107,62 +107,37 @@ public class RegistryController {
 		Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
 		Map<String, Object> result = new HashMap<>();
 
-		try {
-			watch.start("RegistryController.searchEntity");
-			String jenaJson = searchService.searchFramed(rdf);
-			Data<Object> data = new Data<>(jenaJson);
-			Configuration config = configurationHelper.getConfiguration(header.getAccept().iterator().next().toString(),
-					Direction.OUT);
+		response.setResult("API to be supported soon");
+		responseParams.setStatus(Response.Status.SUCCESSFUL);
 
-			ITransformer<Object> responseTransformer = transformer.getInstance(config);
-			responseTransformer.setPurgeData(getKeysToPurge());
-			Data<Object> resultContent = responseTransformer.transform(data);
-			response.setResult(resultContent.getData());
-			responseParams.setStatus(Response.Status.SUCCESSFUL);
-			watch.stop("RegistryController.searchEntity");
-		} catch (AuditFailedException | RecordNotFoundException | TypeNotProvidedException
-				| TransformationException e) {
-			logger.error(
-					"AuditFailedException | RecordNotFoundException | TypeNotProvidedException in controller while adding entity !",
-					e);
-			response.setResult(result);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		} catch (Exception e) {
-			logger.error("Exception in controller while searching entities !", e);
-			response.setResult(result);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		}
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
-
-	@ResponseBody
-	@RequestMapping(value = "/update2", method = RequestMethod.POST)
-	public ResponseEntity<Response> update() {
-		Model rdf = (Model) apiMessage.getLocalMap(Constants.RDF_OBJECT);
-		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
-
-		try {
-			watch.start("RegistryController.update");
-			registryService.updateEntity(rdf);
-			responseParams.setErrmsg("");
-			responseParams.setStatus(Response.Status.SUCCESSFUL);
-			watch.stop("RegistryController.update");
-			logger.debug("RegistryController: entity updated !");
-		} catch (RecordNotFoundException | EntityCreationException e) {
-			logger.error(
-					"RegistryController: RecordNotFoundException|EntityCreationException while updating entity (without id)!",
-					e);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-
-		} catch (Exception e) {
-			logger.error("RegistryController: Exception while updating entity (without id)!", e);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(e.getMessage());
-		}
+//		try {
+//			watch.start("RegistryController.searchEntity");
+//			String jenaJson = searchService.searchFramed(rdf);
+//			Data<Object> data = new Data<>(jenaJson);
+//			Configuration config = configurationHelper.getConfiguration(header.getAccept().iterator().next().toString(),
+//					Direction.OUT);
+//
+//			ITransformer<Object> responseTransformer = transformer.getInstance(config);
+//			responseTransformer.setPurgeData(getKeysToPurge());
+//			Data<Object> resultContent = responseTransformer.transform(data);
+//			response.setResult(resultContent.getData());
+//			response.setResult("API to be supported soon");
+//			responseParams.setStatus(Response.Status.SUCCESSFUL);
+//			watch.stop("RegistryController.searchEntity");
+//		} catch (AuditFailedException | RecordNotFoundException | TypeNotProvidedException
+//				| TransformationException e) {
+//			logger.error(
+//					"AuditFailedException | RecordNotFoundException | TypeNotProvidedException in controller while adding entity !",
+//					e);
+//			response.setResult(result);
+//			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+//			responseParams.setErrmsg(e.getMessage());
+//		} catch (Exception e) {
+//			logger.error("Exception in controller while searching entities !", e);
+//			response.setResult(result);
+//			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+//			responseParams.setErrmsg(e.getMessage());
+//		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -194,36 +169,9 @@ public class RegistryController {
 	public ResponseEntity<Response> fetchAudit(@PathVariable("id") String id) {
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
+		// if (auditEnabled) {
 
-		if (auditEnabled) {
-			String entityId = registryContext + id;
-
-			try {
-				watch.start("RegistryController.fetchAudit");
-				org.eclipse.rdf4j.model.Model auditModel = registryAuditService.getAuditNode(entityId);
-				logger.debug("Audit Record model :" + auditModel);
-				String jenaJSON = registryAuditService.frameAuditEntity(auditModel);
-				response.setResult(gson.fromJson(jenaJSON, mapType));
-				responseParams.setStatus(Response.Status.SUCCESSFUL);
-				watch.stop("RegistryController.fetchAudit");
-				logger.debug("Controller: audit records fetched !");
-			} catch (RecordNotFoundException e) {
-				logger.error("Controller: RecordNotFoundException while fetching audit !", e);
-				response.setResult(null);
-				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-				responseParams.setErrmsg(e.getMessage());
-			} catch (Exception e) {
-				logger.error("Controller: Exception while fetching audit !", e);
-				response.setResult(null);
-				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-				responseParams.setErrmsg("Meh ! You encountered an error!");
-			}
-		} else {
-			logger.info("Controller: Audit is disabled");
-			response.setResult(null);
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg(Constants.AUDIT_IS_DISABLED);
-		}
+		response.setResult("To be implemented soon...");
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 

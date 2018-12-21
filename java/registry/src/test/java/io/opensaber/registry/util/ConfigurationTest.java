@@ -1,6 +1,6 @@
 package io.opensaber.registry.util;
 
-import io.opensaber.registry.dao.TPGraphMain;
+import io.opensaber.registry.dao.RegistryDaoImpl;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.sink.DBProviderFactory;
@@ -41,8 +41,8 @@ public class ConfigurationTest {
 
 	}
 	@Bean
-	TPGraphMain tpGraphMain(){
-		return Mockito.mock(TPGraphMain.class); 
+    RegistryDaoImpl tpGraphMain(){
+		return Mockito.mock(RegistryDaoImpl.class);
 
 	}
 	@Bean

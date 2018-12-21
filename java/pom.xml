@@ -22,7 +22,6 @@
         <revision>1.1.0</revision>
 
         <jsonldConversionVersion>${revision}</jsonldConversionVersion>
-        <rdfConversionVersion>${revision}</rdfConversionVersion>
         <authorizationVersion>${revision}</authorizationVersion>
         <validationVersion>${revision}</validationVersion>
         <signaturePresenceValidationVersion>${revision}</signaturePresenceValidationVersion>
@@ -31,7 +30,6 @@
 
     <modules>
         <module>pojos</module>
-        <module>converters</module>
         <module>middleware-commons</module>
         <module>middleware</module>
         <module>validators</module>

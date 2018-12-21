@@ -198,7 +198,7 @@ public class JSONUtil {
 	 * Remove a node of given key from parent's hierarchy(including nested objects)
 	 * 
 	 * @param parent
-	 * @param removeKeys
+	 * @param removeKey
 	 */
 	public static void removeNode(ObjectNode parent, String removeKey) {
 		parent.fields().forEachRemaining(entry -> {

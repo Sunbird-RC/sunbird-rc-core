@@ -14,38 +14,13 @@ import java.util.List;
 
 public interface RegistryService {
 
-	public List getEntityList();
+	 HealthCheckResponse health() throws Exception;
 
-	public String addEntity(Model rdfModel, String subject, String property)
-			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
-			MultipleEntityException, RecordNotFoundException;
+	 boolean deleteEntityById(String id) throws AuditFailedException, RecordNotFoundException;
 
-	public String addEntity(Model rdfModel, String dataObject, String subject, String property)
-			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
-			MultipleEntityException, RecordNotFoundException, IOException, SignatureException.UnreachableException,
-			JsonLdError, SignatureException.CreationException;
+	 String addEntity(String shardId, String jsonString) throws Exception;
 
-	public boolean updateEntity(Model entity) throws RecordNotFoundException, EntityCreationException,
-            EncryptionException, AuditFailedException, MultipleEntityException, SignatureException.UnreachableException,
-            IOException, SignatureException.CreationException, UpdateException;
+     JsonNode getEntity(String id, ReadConfigurator configurator);
 
-	public Model getEntityById(String id, boolean includeSignatures)
-			throws RecordNotFoundException, EncryptionException, AuditFailedException;
-
-	public HealthCheckResponse health() throws Exception;
-
-	public String frameEntity(Model entityModel) throws IOException, MultipleEntityException, EntityCreationException;
-
-	public boolean deleteEntityById(String id) throws AuditFailedException, RecordNotFoundException;
-
-	public String getEntityFramedById(String id, boolean includeSignatures) throws RecordNotFoundException,
-			EncryptionException, AuditFailedException, IOException, MultipleEntityException, EntityCreationException;
-
-	public void setDatabaseProvider(DatabaseProvider databaseProvider);
-
-	public String addEntity(String shardId, String jsonString) throws Exception;
-
-	JsonNode getEntity(String id, ReadConfigurator configurator);
-
-	public void updateEntity(String jsonString) throws Exception;
+	 void updateEntity(String jsonString) throws Exception;
 }

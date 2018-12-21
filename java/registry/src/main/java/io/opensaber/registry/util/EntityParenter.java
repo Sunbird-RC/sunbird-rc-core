@@ -1,6 +1,6 @@
 package io.opensaber.registry.util;
 
-import io.opensaber.registry.dao.TPGraphMain;
+import io.opensaber.registry.dao.RegistryDaoImpl;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.sink.DBProviderFactory;
@@ -24,7 +24,7 @@ public class EntityParenter {
     private DBProviderFactory dbProviderFactory;
 
     @Autowired
-    private TPGraphMain tpGraphMain;
+    private RegistryDaoImpl tpGraphMain;
 
     private DefinitionsManager definitionsManager;
     private DBConnectionInfoMgr dbConnectionInfoMgr;

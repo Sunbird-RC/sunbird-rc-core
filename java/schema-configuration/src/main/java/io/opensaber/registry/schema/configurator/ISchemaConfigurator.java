@@ -4,12 +4,12 @@ import java.util.List;
 
 public interface ISchemaConfigurator {
 
-	public boolean isPrivate(String propertyName);
+	boolean isPrivate(String propertyName);
 
-	public boolean isEncrypted(String tailPropertyKey);
+	boolean isEncrypted(String tailPropertyKey);
 
-	public List<String> getAllPrivateProperties();
+	List<String> getAllPrivateProperties();
 
-	public String getSchemaContent();
+	String getSchemaContent();
 
 }

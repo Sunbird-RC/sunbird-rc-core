@@ -7,18 +7,10 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.registry.util.ReadConfigurator;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
-import org.assertj.core.util.Arrays;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
@@ -44,17 +36,9 @@ import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryController;
 import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.dao.RegistryDao;
-import io.opensaber.registry.dao.impl.RegistryDaoImpl;
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.exception.EntityCreationException;
-import io.opensaber.registry.exception.MultipleEntityException;
-import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.dao.IRegistryDao;
+import io.opensaber.registry.dao.RegistryDaoImpl;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
@@ -78,8 +62,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	private String registryContextBase;
 	@Autowired
 	private RegistryServiceImpl registryService;
-	
-	private DatabaseProvider databaseProvider;
+
 	@Mock
 	private RestTemplate mockRestTemplate;
 	@Mock
@@ -88,12 +71,10 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	private SignatureServiceImpl signatureService;	
 	private DatabaseProvider mockDatabaseProvider;
 	@Mock
-	private RegistryDao registryDao;
+	private IRegistryDao registryDao;
 	@InjectMocks
 	private RegistryServiceImpl registryServiceForHealth;
-	@Autowired
-	private DBProviderFactory dbProviderFactory;
-	
+
 
 	public void setup() {
 		if (!isInitialized) {
@@ -108,66 +89,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 
 	@Before
 	public void initialize() throws IOException {
-	    databaseProvider = dbProviderFactory.getInstance(null);
-	    registryService.setDatabaseProvider(databaseProvider);
-	    mockDatabaseProvider = Mockito.mock(DatabaseProvider.class);
-	    registryServiceForHealth.setDatabaseProvider(mockDatabaseProvider);
-		setup();
-		MockitoAnnotations.initMocks(this);
-		TestHelper.clearData(databaseProvider);
-		databaseProvider.getGraphStore().addVertex(Constants.GRAPH_GLOBAL_CONFIG).property(Constants.PERSISTENT_GRAPH,
-				true);
-		AuthInfo authInfo = new AuthInfo();
-		authInfo.setAud("aud");
-		authInfo.setName("name");
-		authInfo.setSub("sub");
-		AuthorizationToken authorizationToken = new AuthorizationToken(authInfo,
-				Collections.singletonList(new SimpleGrantedAuthority("blah")));
-		SecurityContextHolder.getContext().setAuthentication(authorizationToken);
-	}
-
-	@Test
-	public void test_adding_a_new_record()
-			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
-			MultipleEntityException, RecordNotFoundException, IOException, MiddlewareHaltException {
-		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
-		registryService.addEntity(model, null, null);
-		assertEquals(5,
-				IteratorUtils.count(databaseProvider.getGraphStore().traversal().clone().V()
-						.filter(v -> !v.get().label().equalsIgnoreCase(Constants.GRAPH_GLOBAL_CONFIG))
-						.hasNot(Constants.AUDIT_KEYWORD)));
-	}
-
-	@Test
-	public void test_adding_duplicate_record()
-			throws DuplicateRecordException, EntityCreationException, EncryptionException, AuditFailedException,
-			MultipleEntityException, RecordNotFoundException, IOException, MiddlewareHaltException {
-		expectedEx.expect(DuplicateRecordException.class);
-		expectedEx.expectMessage(Constants.DUPLICATE_RECORD_MESSAGE);
-		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
-		String entityId = registryService.addEntity(model, null, null);
-		RDFUtil.updateRdfModelNodeId(model,
-				ResourceFactory.createResource("http://example.com/voc/teacher/1.0.0/School"), entityId);
-		registryService.addEntity(model, null, null);
-	}
-
-	@Test
-	public void test_adding_record_with_no_entity() throws Exception {
-		Model model = ModelFactory.createDefaultModel();
-		expectedEx.expect(EntityCreationException.class);
-		expectedEx.expectMessage(Constants.NO_ENTITY_AVAILABLE_MESSAGE);
-		registryService.addEntity(model, null, null);
-		closeDB();
-	}
-
-	@Test
-	public void test_adding_record_with_more_than_one_entity() throws Exception {
-		Model model = getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
-		model.add(getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT));
-		expectedEx.expect(MultipleEntityException.class);
-		expectedEx.expectMessage(Constants.ADD_UPDATE_MULTIPLE_ENTITIES_MESSAGE);
-		registryService.addEntity(model, null, null);
-		closeDB();
+	    setup();
 	}
 
 	@Test
@@ -201,29 +123,13 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 		});
 	}
 
-	@Test
-	public void test_adding_record_with_multi_valued_literal_properties() throws Exception {
-		Model model = getNewValidRdf(VALIDNEW_JSONLD);
-		List<Resource> roots = RDFUtil.getRootLabels(model);
-		String[] ct = { "I", "II", "III", "IV" };
-		List classesTaught = Arrays.asList(ct);
-		for (Object obj : classesTaught) {
-			model.add(roots.get(0), ResourceFactory.createProperty(registryContextBase + "classesTaught"),
-					(String) obj);
-		}
-		String response = registryService.addEntity(model, null, null);
-		Model responseModel = registryService.getEntityById(response, false);
-		assertTrue(responseModel.isIsomorphicWith(model));
-		closeDB();
-	}
-
     @Ignore
 	@Test
 	public void test_update_parent_entity_after_creating() throws Exception {
 
 		String validJsonString = getValidJsonString(VALID_TEST_INPUT_JSON);
 		//Vertex parentVertex = parentVertex(databaseProvider);
-		//TPGraphMain tpGraph = new TPGraphMain(databaseProvider, String.valueOf(parentVertex.id()));
+		//RegistryDaoImpl tpGraph = new RegistryDaoImpl(databaseProvider, String.valueOf(parentVertex.id()));
 		/*String resultId = registryService.createTP2Graph(validJsonString, parentVertex, tpGraph);
         String updatedInput = getValidStringForUpdate(resultId);
         registryService.updateEntity(updatedInput, tpGraph);

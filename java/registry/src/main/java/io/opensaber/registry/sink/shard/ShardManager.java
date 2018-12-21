@@ -40,7 +40,6 @@ public class ShardManager {
 	    DatabaseProvider databaseProvider = dbProviderFactory.getInstance(connectionInfo);
 	    shard.setShardId(connectionInfo.getShardId());
 	    shard.setDatabaseProvider(databaseProvider);
-	    searchService.setDatabaseProvider(databaseProvider);
 		logger.info("Activated shard "+connectionInfo.getShardId()+" for attribute value "+attributeValue);
 	}
 

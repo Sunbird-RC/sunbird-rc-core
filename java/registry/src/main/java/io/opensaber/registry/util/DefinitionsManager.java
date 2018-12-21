@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import io.opensaber.registry.middleware.util.LogMarkers;
 
 @Component("definitionsManager")
 public class DefinitionsManager {
@@ -32,7 +31,7 @@ public class DefinitionsManager {
                     definitionResourceMap.put(fileNameWithoutExt, resource);
                 }
             } catch (IOException ioe) {
-                logger.error(LogMarkers.FATAL, "Cannot load json resources. Validation can't work");
+                logger.error("Cannot load json resources. Validation can't work");
             }
         }
         return definitionResourceMap.keySet();

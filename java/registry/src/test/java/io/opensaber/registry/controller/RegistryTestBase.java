@@ -7,27 +7,28 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.Collections;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.registry.authorization.AuthorizationToken;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.tests.utility.TestHelper;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.RDF;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import io.opensaber.converters.JenaRDF4J;
-import io.opensaber.registry.exception.EntityCreationException;
-import io.opensaber.registry.exception.MultipleEntityException;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.RDFUtil;
-import io.opensaber.utils.converters.RDF2Graph;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @EnableConfigurationProperties
 public class RegistryTestBase {
@@ -40,6 +41,26 @@ public class RegistryTestBase {
 	public String jsonld;
 	@Value("${registry.context.base}")
 	private String registryContextBase;
+
+	public DatabaseProvider databaseProvider;
+	@Autowired
+	public DBProviderFactory dbProviderFactory;
+
+
+	public RegistryTestBase() {
+		databaseProvider = dbProviderFactory.getInstance(null);
+		MockitoAnnotations.initMocks(this);
+		TestHelper.clearData(databaseProvider);
+		databaseProvider.getGraphStore().addVertex(Constants.GRAPH_GLOBAL_CONFIG).property(Constants.PERSISTENT_GRAPH,
+				true);
+		AuthInfo authInfo = new AuthInfo();
+		authInfo.setAud("aud");
+		authInfo.setName("name");
+		authInfo.setSub("sub");
+		AuthorizationToken authorizationToken = new AuthorizationToken(authInfo,
+				Collections.singletonList(new SimpleGrantedAuthority("blah")));
+		SecurityContextHolder.getContext().setAuthentication(authorizationToken);
+	}
 
 	public static String generateRandomId() {
 		return UUID.randomUUID().toString();
@@ -92,29 +113,6 @@ public class RegistryTestBase {
 		return jsonld;
 	}
 
-	public Model getNewValidRdf(String fileName, String contextConstant) {
-		setJsonld(fileName);
-		setJsonldWithNewRootLabel(contextConstant + generateRandomId());
-		Model model = RDFUtil.getRdfModelBasedOnFormat(jsonld, FORMAT);
-		return model;
-	}
-
-	public Model getNewValidRdf(String fileName) {
-		setJsonld(fileName);
-		setJsonldWithNewRootLabel();
-		return RDFUtil.getRdfModelBasedOnFormat(jsonld, FORMAT);
-	}
-
-	public Model getNewValidRdfFromJsonString(String json) {
-		return RDFUtil.getRdfModelBasedOnFormat(json, FORMAT);
-	}
-
-	public Model getNewValidRdf(String fileName, String contextConstant, String rootNodeLabel) {
-		setJsonld(fileName);
-		setJsonldWithNewRootLabel(rootNodeLabel);
-		return RDFUtil.getRdfModelBasedOnFormat(jsonld, FORMAT);
-	}
-
 	public Model getRdfWithInvalidTpe() {
 		Resource resource = ResourceFactory.createResource(INVALID_SUBJECT_LABEL);
 		Model model = ModelFactory.createDefaultModel();
@@ -122,11 +120,6 @@ public class RegistryTestBase {
 		model.add(resource, RDF.type, "ex:Artist");
 		model.add(resource, FOAF.depiction, "ex:Image");
 		return model;
-	}
-
-	public Model getNewValidRdf() {
-		return getNewValidRdf(VALID_JSONLD, CONTEXT_CONSTANT);
-
 	}
 
 	public void setJsonldWithNewRootLabel(String label) {
@@ -138,55 +131,6 @@ public class RegistryTestBase {
 			jsonld = jsonld.replaceFirst(REPLACING_SUBJECT_LABEL, CONTEXT_CONSTANT + generateRandomId());
 		}
 	}
-
-	public String updateGraphFromRdf(Model rdfModel, Graph graph) {
-		StmtIterator iterator = rdfModel.listStatements();
-		List<Resource> resList = RDFUtil.getRootLabels(rdfModel);
-		while (iterator.hasNext()) {
-			Statement rdfStatement = iterator.nextStatement();
-			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			graph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, graph, registryContextBase);
-		}
-
-		return resList.get(0).toString();
-	}
-
-	public void removeStatementFromModel(Model rdfModel, Property predicate) {
-		StmtIterator blankNodeIterator = rdfModel.listStatements(null, predicate, (RDFNode) null);
-
-		// Remove all the blank nodes from the existing model to create test data
-		while (blankNodeIterator.hasNext()) {
-			Statement parentStatement = blankNodeIterator.next();
-			if (parentStatement.getObject() instanceof Resource) {
-				rdfModel.removeAll((Resource) parentStatement.getObject(), null, (RDFNode) null);
-			}
-			blankNodeIterator.remove();
-		}
-	}
-
-	public Graph generateGraphFromRDF(Graph newGraph, Model rdfModel)
-			throws EntityCreationException, MultipleEntityException {
-		Graph generatedGraph = null;
-		StmtIterator iterator = rdfModel.listStatements();
-		while (iterator.hasNext()) {
-			Statement rdfStatement = iterator.nextStatement();
-			org.eclipse.rdf4j.model.Statement rdf4jStatement = JenaRDF4J.asrdf4jStatement(rdfStatement);
-			generatedGraph = RDF2Graph.convertRDFStatement2Graph(rdf4jStatement, newGraph, registryContextBase);
-		}
-		return generatedGraph;
-	}
-
-	/*protected Vertex parentVertex(DatabaseProvider databaseProvider) {
-		Graph g = databaseProvider.getGraphStore();
-		// TODO: Apply default grouping - to be removed.
-		Vertex parentV = new TPGraphMain().createParentVertex(g, "Teacher_GROUP");
-		try {
-			g.close();
-		} catch (Exception e) {
-			//logger.info(e.getMessage());
-		}
-		return parentV;
-	}*/
 
 	public String getValidStringForUpdate(String reqId){
 		ObjectNode childnode = JsonNodeFactory.instance.objectNode();

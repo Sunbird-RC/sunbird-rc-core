@@ -36,7 +36,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 @Component("tpGraphMain")
-public class TPGraphMain {
+public class RegistryDaoImpl implements IRegistryDao {
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
 
@@ -51,7 +51,7 @@ public class TPGraphMain {
 
     private List<String> privatePropertyList;
 
-    private Logger logger = LoggerFactory.getLogger(TPGraphMain.class);
+    private Logger logger = LoggerFactory.getLogger(RegistryDaoImpl.class);
 
     private OpenSaberInstrumentation watch = new OpenSaberInstrumentation(true);
 
@@ -235,7 +235,7 @@ public class TPGraphMain {
      * @param rootNode
      * @return
      */
-    public String addEntity(String shardId, JsonNode rootNode) throws Exception {
+    public String addEntity(String shardId, JsonNode rootNode) {
         String entityId = "";
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -245,7 +245,7 @@ public class TPGraphMain {
                 databaseProvider.commitTransaction(graph, tx);
             }
         } catch (Exception e) {
-            logger.error("Can't close graph",e);
+            logger.error("Can't close graph", e);
         }
         return entityId;
     }

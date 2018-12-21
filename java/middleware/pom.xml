@@ -20,11 +20,6 @@
                 <version>${jsonldConversionVersion}</version>
             </dependency>
             <dependency>
-                <groupId>io.opensaber.middleware</groupId>
-                <artifactId>rdf-conversion</artifactId>
-                <version>${rdfConversionVersion}</version>
-            </dependency>
-            <dependency>
                 <groupId>io.opensaber</groupId>
                 <artifactId>authorization</artifactId>
                 <version>${authorizationVersion}</version>

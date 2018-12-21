@@ -14,8 +14,6 @@
 
     <modules>
         <module>authorization</module>
-        <module>rdf-conversion</module>
-        <module>jsonld-conversion</module>
         <module>validation</module>
     </modules>
 </project>

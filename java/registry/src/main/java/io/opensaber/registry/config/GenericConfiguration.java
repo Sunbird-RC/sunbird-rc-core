@@ -18,11 +18,9 @@ import io.opensaber.registry.interceptor.AuthorizationInterceptor;
 import io.opensaber.registry.interceptor.RequestIdValidationInterceptor;
 import io.opensaber.registry.interceptor.ValidationInterceptor;
 import io.opensaber.registry.middleware.Middleware;
-import io.opensaber.registry.middleware.impl.RDFConverter;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.schema.config.SchemaLoader;
 import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
 import io.opensaber.registry.schema.configurator.SchemaType;
@@ -35,7 +33,6 @@ import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Json2LdTransformer;
 import io.opensaber.registry.transform.Ld2JsonTransformer;
 import io.opensaber.registry.transform.Ld2LdTransformer;
-import io.opensaber.registry.transform.Ld2RdfTransformer;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
@@ -118,11 +115,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public Middleware rdfConverter() {
-		return new RDFConverter();
-	}
-
-	@Bean
 	public FrameEntity frameEntity() {
 		return new FrameEntityImpl();
 	}
@@ -165,11 +157,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public Transformer transformer(){
 		return new Transformer();
 	}
-	
-	@Bean
-	public Ld2RdfTransformer ld2RdfTransformer(){
-		return new Ld2RdfTransformer();
-	}
+
 	@Bean
 	public ConfigurationHelper configurationHelper(){
 		return new ConfigurationHelper();
@@ -193,18 +181,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public Middleware authorizationFilter() {
 		return new AuthorizationFilter(new KeyCloakServiceImpl());
-	}
-
-	@Bean
-	public SchemaLoader shexSchemaLoader() throws CustomException, IOException {
-		String validationConfigFileForCreate = environment.getProperty(Constants.SHEX_CREATE_PROPERTY_NAME);
-		String validationConfigFileForUpdate = environment.getProperty(Constants.SHEX_UPDATE_PROPERTY_NAME);
-		if (validationConfigFileForCreate == null || validationConfigFileForUpdate == null) {
-			throw new CustomException(Constants.VALIDATION_CONFIGURATION_MISSING);
-		}
-
-		SchemaLoader schemaLoader = new SchemaLoader(validationConfigFileForCreate, validationConfigFileForUpdate);
-		return schemaLoader;
 	}
 
 	@Bean

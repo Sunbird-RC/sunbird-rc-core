@@ -2,18 +2,18 @@ package io.opensaber.registry.middleware.utils;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.io.CharStreams;
 
 import io.opensaber.registry.middleware.util.Constants.JsonldConstants;
 import io.opensaber.registry.middleware.util.JSONUtil;
@@ -77,10 +77,16 @@ public class JSONUtilsTest {
 	}
 
 	private String getContent(String fileName) {
-		InputStreamReader in;
+		InputStream in;
 		try {
-			in = new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(fileName));
-			return CharStreams.toString(in);
+			in = this.getClass().getClassLoader().getResourceAsStream(fileName);
+			ByteArrayOutputStream result = new ByteArrayOutputStream();
+			byte[] buffer = new byte[1024];
+			int length;
+			while ((length = in.read(buffer)) != -1) {
+				result.write(buffer, 0, length);
+			}
+			return result.toString(StandardCharsets.UTF_8.name());
 
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();

@@ -2,12 +2,11 @@ package io.opensaber.registry.dao.impl;
 
 import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.SearchQuery;
-import io.opensaber.registry.dao.RegistryDao;
+import io.opensaber.registry.dao.IRegistryDao;
 import io.opensaber.registry.dao.SearchDao;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.shard.Shard;
 import java.util.ArrayList;
@@ -35,7 +34,7 @@ public class SearchDaoImpl implements SearchDao {
 	private UrlValidator urlValidator;
 
 	@Autowired
-	private RegistryDao registryDao;
+	private IRegistryDao registryDao;
 
 	@Value("${registry.context.base}")
 	private String registryContext;
@@ -78,7 +77,7 @@ public class SearchDaoImpl implements SearchDao {
 				if (operator == null) {
 					if (valueIriList.size() > 0) {
 						resultGraphTraversal = dbGraphTraversalSource.clone().V()
-								.hasLabel(P.within((List) valueIriList)).inE(property).outV().dedup();
+								.hasLabel(P.within(valueIriList)).inE(property).outV().dedup();
 					} else if (valueList.size() > 0) {
 						resultGraphTraversal = dbGraphTraversalSource.clone().V().has(property,
 								P.within((List) valueList));
@@ -97,22 +96,9 @@ public class SearchDaoImpl implements SearchDao {
 					// TODO for other operators
 				}
 			}
-			getGraphByTraversal(resultGraphTraversal, graphMap);
+			//getGraphByTraversal(resultGraphTraversal, graphMap);
 		}
 		return graphMap;
-	}
-
-	private void getGraphByTraversal(GraphTraversal resultTraversal, Map<String, Graph> graphMap)
-			throws AuditFailedException, EncryptionException, RecordNotFoundException {
-		if (resultTraversal != null) {
-			while (resultTraversal.hasNext()) {
-				Vertex v = (Vertex) resultTraversal.next();
-				if (v != null && (!v.property(registryContext + Constants.STATUS_KEYWORD).isPresent()
-						|| Constants.STATUS_ACTIVE.equals(v.value(registryContext + Constants.STATUS_KEYWORD)))) {
-					graphMap.put(v.label(), registryDao.getEntityByVertex(v));
-				}
-			}
-		}
 	}
 
 	private void updateValueList(Object value, List<String> valueIriList, List valueList) {
