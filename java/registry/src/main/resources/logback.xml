@@ -108,7 +108,7 @@
         <appender-ref ref="RegistryAuditAppender"/>
     </logger>
 
-    <root level="DEBUG" additivity="FALSE">
+    <root level="INFO" additivity="FALSE">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </root>

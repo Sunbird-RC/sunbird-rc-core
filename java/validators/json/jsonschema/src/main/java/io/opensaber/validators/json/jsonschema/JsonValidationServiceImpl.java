@@ -73,6 +73,7 @@ public class JsonValidationServiceImpl implements IValidate {
 			e.getCausingExceptions().stream()
 					.map(ValidationException::getMessage)
 					.forEach(logger::error);
+			throw new MiddlewareHaltException(e.getMessage());
 		}
 		return result;
 	}

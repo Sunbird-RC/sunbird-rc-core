@@ -38,7 +38,7 @@ public class RequestIdValidationInterceptor implements HandlerInterceptor {
 		RequestWrapper wrapper = apiMessage.getRequestWrapper();
 		String expectedAPI = requestIdMap.getOrDefault(wrapper.getRequestURI(), "");
 
-		return !expectedAPI.isEmpty();
+		return !expectedAPI.isEmpty() && (apiMessage.getRequest().getId().compareTo(expectedAPI) == 0);
 	}
 
 }
