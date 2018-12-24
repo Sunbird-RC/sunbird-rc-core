@@ -62,10 +62,9 @@ public class RegistryUtilsController {
 		try {
 			watch.start("RegistryUtilsController.generateSignature");
 			Map<String, Object> requestBodyMap = apiMessage.getRequest().getRequestMap();
-			if (requestBodyMap.containsKey(Constants.REQUEST_ATTRIBUTE)
-					&& requestBodyMap.containsKey(Constants.ATTRIBUTE_NAME)) {
+			if (null !=requestBodyMap && (requestBodyMap.containsKey(Constants.SIGN_ENTITY) || requestBodyMap.containsKey(Constants.SIGN_VALUE))){
 				Object result = signatureService
-						.sign(gson.fromJson(requestBodyMap.get(Constants.ATTRIBUTE_NAME).toString(), mapType));
+						.sign(requestBodyMap);
 				response.setResult(result);
 				responseParams.setErrmsg("");
 				responseParams.setStatus(Response.Status.SUCCESSFUL);
@@ -93,11 +92,11 @@ public class RegistryUtilsController {
 		try {
 			watch.start("RegistryUtilsController.verifySignature");
 			Map<String, Object> map = apiMessage.getRequest().getRequestMap();
-			if (map.containsKey(Constants.REQUEST_ATTRIBUTE) && map.containsKey(Constants.ATTRIBUTE_NAME)) {
-				JsonObject obj = gson.fromJson(map.get(Constants.ATTRIBUTE_NAME).toString(), JsonObject.class);
-
+			String inputEntity = apiMessage.getRequest().getRequestMapAsString();
+			if (null != inputEntity && null != map && map.containsKey(Constants.SIGN_ENTITY)) {
+				JsonObject obj = gson.fromJson(inputEntity, JsonObject.class);
 				JsonArray arr = new JsonArray();
-				JsonElement entityElement = obj.get("entity");
+				JsonElement entityElement = obj.get(Constants.SIGN_ENTITY);
 				if (!entityElement.isJsonArray()) {
 					arr.add(entityElement);
 				} else {
@@ -156,7 +155,7 @@ public class RegistryUtilsController {
 	}
 
 	@RequestMapping(value = "/utils/keys/{id}", method = RequestMethod.GET)
-	public ResponseEntity<Response> getKey(@PathVariable String keyId) {
+	public ResponseEntity<Response> getKey( @PathVariable("id") String keyId) {
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.KEYS, "OK", responseParams);
 

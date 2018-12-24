@@ -11,6 +11,8 @@ public class Constants {
 	public static final String REQUEST_OBJECT = "requestObject";
 	public static final String RDF_OBJECT = "rdfObject";
 	public static final String CONTROLLER_INPUT = "controllerInput";
+	public static final String SIGN_ENTITY = "entity";
+	public static final String SIGN_VALUE = "value";
 
 	public static final String LD_OBJECT = "ldObject";
 	public static final String METHOD_ORIGIN = "methodOrigin";
