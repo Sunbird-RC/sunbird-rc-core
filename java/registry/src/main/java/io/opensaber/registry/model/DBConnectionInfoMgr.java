@@ -1,10 +1,9 @@
 package io.opensaber.registry.model;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Pritha Chattopadhyay
@@ -35,6 +34,11 @@ public class DBConnectionInfoMgr {
      * Each DBConnectionInfo is a shard connection information.
      */
     private List<DBConnectionInfo> connectionInfo = new ArrayList<>();
+    /**
+     * Instructs which advisor to pick up across each connectionInfo
+     * Only one advisor allowed
+     */
+    private String shardAdvisorClassName;
 
     public DBConnectionInfoMgr() {
 
@@ -85,4 +89,12 @@ public class DBConnectionInfoMgr {
     public void setConnectionInfo(List<DBConnectionInfo> connectionInfo) {
         this.connectionInfo = connectionInfo;
     }
+
+	public String getShardAdvisorClassName() {
+		return shardAdvisorClassName;
+	}
+
+	public void setShardAdvisorClassName(String shardAdvisorClassName) {
+		this.shardAdvisorClassName = shardAdvisorClassName;
+	}
 }

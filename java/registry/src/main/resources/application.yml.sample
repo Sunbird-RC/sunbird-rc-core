@@ -48,6 +48,11 @@ database:
   # has been provided for reference. If you'd like to use it, set value "serialNum" here.
   # Note that "serialNum" must then be part of the payload.
   shardProperty: ${database_shardProperty:none}
+  
+  # This property is instruction to use the shard advisor.
+  # Values could be DefaultShardAdvisor, SerialNumberShardAdvisor
+  # If this property not provided, advisor is set to DefaultShardAdvisor
+  shardAdvisor: SerialNumberShardAdvisor
 
   connectionInfo:
     -

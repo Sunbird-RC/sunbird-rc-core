@@ -1,31 +1,42 @@
 package io.opensaber.registry.sink.shard;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
+import java.lang.reflect.InvocationTargetException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ShardAdvisor {
-    private Map<String, IShardAdvisor> advisors = new HashMap<String, IShardAdvisor>();
+	private static Logger logger = LoggerFactory.getLogger(ShardAdvisor.class);
 
-    /**
-     * Registers the shardAdvisory by property
-     *
-     * @param propertyName
-     * @param shardAdvisory
-     */
-    public void registerAdvisor(String propertyName, IShardAdvisor shardAdvisory) {
-        advisors.put(propertyName, shardAdvisory);
-    }
+	/**
+	 * Return ShardAdvice invoked by given a ShardAdvisorClassName
+	 *
+	 * @return
+	 * @throws IOException
+	 */
+	public IShardAdvisor getInstance(String advisorClassName) {
 
-    /**
-     * Return ShardAdvice registered with the property
-     *
-     * @return
-     * @throws IOException
-     */
-    public IShardAdvisor getShardAdvisor(String property) throws IOException {
-        IShardAdvisor advisory = advisors.getOrDefault(property, null);
-        return advisory;
-    }
+		IShardAdvisor advisor = new DefaultShardAdvisor();
+		try {
+			if (advisorClassName != null) {
+				advisor = instantiateAdvisor(advisorClassName);
+				logger.info("Invoked shard advisor class with classname: " + advisorClassName);
+			}
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
+				| IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			logger.error("Shard advisor class {} cannot be instantiate with exception:", advisorClassName, e);
+		}
+
+		return advisor;
+	}
+
+	private IShardAdvisor instantiateAdvisor(String advisorClassName)
+			throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException,
+			IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		Class<?> advisorClass = Class.forName(advisorClassName);
+		IShardAdvisor advisor = (IShardAdvisor) advisorClass.newInstance();
+		return advisor;
+
+	}
+
 }
