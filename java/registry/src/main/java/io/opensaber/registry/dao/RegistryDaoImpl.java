@@ -13,14 +13,12 @@ import io.opensaber.registry.util.ParentLabelGenerator;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.RefLabelHelper;
 import io.opensaber.registry.util.TypePropertyHelper;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -235,7 +233,7 @@ public class RegistryDaoImpl implements IRegistryDao {
      * @param rootNode
      * @return
      */
-    public String addEntity(String shardId, JsonNode rootNode) {
+    public String addEntity(JsonNode rootNode) {
         String entityId = "";
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -258,7 +256,7 @@ public class RegistryDaoImpl implements IRegistryDao {
      * @param readConfigurator
      * @return
      */
-    public JsonNode getEntity(String shardId, String uuid, ReadConfigurator readConfigurator) {
+    public JsonNode getEntity(String uuid, ReadConfigurator readConfigurator) {
         if (null == privatePropertyList) {
             privatePropertyList = new ArrayList<>();
             setPrivatePropertyList(schemaConfigurator.getAllPrivateProperties());

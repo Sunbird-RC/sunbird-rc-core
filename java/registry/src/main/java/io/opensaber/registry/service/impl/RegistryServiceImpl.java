@@ -21,12 +21,13 @@ import io.opensaber.registry.service.EncryptionService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.sink.DatabaseProviderWrapper;
 import io.opensaber.registry.sink.OSGraph;
+import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.validators.IValidate;
-import org.apache.jena.ext.com.google.common.io.ByteStreams;
-import org.apache.jena.rdf.model.ModelFactory;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -36,16 +37,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-
 @Component
 public class RegistryServiceImpl implements RegistryService {
 
     private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"_:[a-z][0-9]+\",";
     private static Logger logger = LoggerFactory.getLogger(RegistryServiceImpl.class);
-    private DatabaseProvider databaseProvider;
 
     @Autowired
     EncryptionService encryptionService;
@@ -93,10 +89,10 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     RegistryDaoImpl tpGraphMain;
-
-    @Autowired
-    DatabaseProviderWrapper databaseProviderWrapper;
     
+    @Autowired 
+    private Shard shard;
+
     @Autowired
     DBConnectionInfoMgr dbConnectionInfoMgr;
 
@@ -106,7 +102,7 @@ public class RegistryServiceImpl implements RegistryService {
     public HealthCheckResponse health() throws Exception {
         HealthCheckResponse healthCheck;
         // TODO
-        boolean databaseServiceup = databaseProvider.isDatabaseServiceUp();
+        boolean databaseServiceup = shard.getDatabaseProvider().isDatabaseServiceUp();
         boolean overallHealthStatus = databaseServiceup;
         List<ComponentHealthInfo> checks = new ArrayList<>();
 
@@ -140,7 +136,7 @@ public class RegistryServiceImpl implements RegistryService {
         return false;
     }
 
-    public String addEntity(String shardId, String jsonString) throws Exception {
+    public String addEntity(String jsonString) throws Exception {
         String entityId = "entityPlaceholderId";
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(jsonString);
@@ -165,14 +161,14 @@ public class RegistryServiceImpl implements RegistryService {
         }
 
         if (persistenceEnabled) {
-            entityId = tpGraphMain.addEntity(shardId, rootNode);
+            entityId = tpGraphMain.addEntity(rootNode);
         }
 
         return entityId;
     }
 
     public JsonNode getEntity(String id, ReadConfigurator configurator) {
-        JsonNode result = tpGraphMain.getEntity("", id, configurator);
+        JsonNode result = tpGraphMain.getEntity(id, configurator);
         return result;
     }
 
@@ -186,7 +182,7 @@ public class RegistryServiceImpl implements RegistryService {
         rootNode = encryptionHelper.getEncryptedJson(rootNode);
         String idProp = rootNode.elements().next().get(uuidPropertyName).asText();
         JsonNode childElementNode = rootNode.elements().next();
-        DatabaseProvider databaseProvider = databaseProviderWrapper.getDatabaseProvider();
+        DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         ReadConfigurator readConfigurator = new ReadConfigurator();
         readConfigurator.setIncludeSignatures(false);
 

@@ -7,7 +7,6 @@ import io.opensaber.registry.dao.SearchDao;
 import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.shard.Shard;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,8 +26,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SearchDaoImpl implements SearchDao {
-
-	private DatabaseProvider databaseProvider;
 
 	@Autowired
 	private UrlValidator urlValidator;
@@ -109,10 +106,5 @@ public class SearchDaoImpl implements SearchDao {
 		}
 	}
 
-	@Override
-	public void setDatabaseProvider(DatabaseProvider databaseProvider) {
-		this.databaseProvider = databaseProvider;
-		
-	}
 
 }

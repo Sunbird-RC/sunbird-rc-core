@@ -218,7 +218,7 @@ public class RegistryController {
 			Shard shard = shardManager.getShard(attribute);
 
 			watch.start("RegistryController.addToExistingEntity");
-			String resultId = registryService.addEntity("shard1", jsonString);
+			String resultId = registryService.addEntity(jsonString);
 			// adds cache for new shard and record map
 			entityCache.addEntity(shard.getShardId(), resultId);
 			Map resultMap = new HashMap();
