@@ -95,4 +95,11 @@ public class Request {
 		this.requestMap = requestMap;
 	}
 
+	public JsonNode getRequestMapNode() {
+		if (requestMapNode == null || requestMapNode.isNull()) {
+			requestMapNode = new ObjectMapper().valueToTree(requestMap);
+		}
+		return requestMapNode;
+	}
+
 }

@@ -18,6 +18,7 @@ import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
+
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.transform.Configuration;
@@ -27,6 +28,7 @@ import io.opensaber.registry.transform.ITransformer;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.EntityCache;
 import io.opensaber.registry.util.ReadConfigurator;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -77,6 +79,8 @@ public class RegistryController {
 	}.getType();
 	@Value("${audit.enabled}")
 	private boolean auditEnabled;
+	@Value("${database.uuidPropertyName}")
+	public String uuidPropertyName;
 	@Autowired
 	private OpenSaberInstrumentation watch;
 	private List<String> keyToPurge = new java.util.ArrayList<>();
@@ -286,12 +290,14 @@ public class RegistryController {
     public ResponseEntity<Response> updateTP2Graph() throws ParseException, IOException, CustomException {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        Map<String, Object> result = new HashMap<>();
+       /* String jsonString = apiMessage.getRequest().getRequestMapAsString();*/
+
 
 		String dataObject = apiMessage.getRequest().getRequestMapAsString();
-		JSONParser parser = new JSONParser();
-		JSONObject json = (JSONObject) parser.parse(dataObject);
-		String osIdVal = json.get(dbConnectionInfoMgr.getUuidPropertyName()).toString();
-
+		String entityType = apiMessage.getRequest().getEntityType();
+		JsonNode reqJsonNode = apiMessage.getRequest().getRequestMapNode();
+		String osIdVal = reqJsonNode.get(entityType).get(uuidPropertyName).asText();
 		String shardId = null;
 		try {
 			shardId = entityCache.getShard(osIdVal);

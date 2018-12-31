@@ -48,6 +48,9 @@ public class RegistryTestBase {
 
 
 	public RegistryTestBase() {
+		/*/shardManager.activateShard(null);
+		databaseProvider = shard.getDatabaseProvider();
+		DBConnectionInfo connectionInfo = shardAdvisor.getShard(attributeValue);*/
 		databaseProvider = dbProviderFactory.getInstance(null);
 		MockitoAnnotations.initMocks(this);
 		TestHelper.clearData(databaseProvider);

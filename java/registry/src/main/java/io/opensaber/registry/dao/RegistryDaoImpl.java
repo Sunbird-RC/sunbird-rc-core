@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
@@ -22,10 +23,7 @@ import java.util.UUID;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -228,8 +226,6 @@ public class RegistryDaoImpl implements IRegistryDao {
 
     /**
      * Entry point to the dao layer to write a JsonNode entity.
-     *
-     * @param shardId
      * @param rootNode
      * @return
      */
@@ -250,8 +246,6 @@ public class RegistryDaoImpl implements IRegistryDao {
 
     /**
      * Retrieves a record from the database
-     *
-     * @param shardId
      * @param uuid    entity identifier to retrieve
      * @param readConfigurator
      * @return
@@ -278,16 +272,120 @@ public class RegistryDaoImpl implements IRegistryDao {
     }
 
 
-    /** This method update the vertex with inputJsonNode
+    /** This method update the inputJsonNode related vertices in the database
      * @param rootVertex
      * @param inputJsonNode
      */
-    public void updateVertex(Vertex rootVertex, JsonNode inputJsonNode) {
-        inputJsonNode.fields().forEachRemaining(record -> {
-            if(record.getValue().isValueNode()){
-                rootVertex.property(record.getKey(),record.getValue().asText());
+    public void updateVertex( Vertex rootVertex, JsonNode inputJsonNode) {
+        DatabaseProvider databaseProvider = shard.getDatabaseProvider();
+        try(OSGraph osGraph = databaseProvider.getOSGraph()){
+            Graph graph = osGraph.getGraphStore();
+            try (Transaction tx = databaseProvider.startTransaction(graph)) {
+                inputJsonNode.fields().forEachRemaining(subEntityField -> {
+                    String fieldKey = subEntityField.getKey();
+                    JsonNode subEntityNode = subEntityField.getValue();
+                    if (subEntityNode.isValueNode()) {
+                        rootVertex.property(fieldKey,subEntityField.getValue().asText());
+                    } else if (subEntityNode.isObject()) {
+                        parseJsonObject(subEntityNode,graph,rootVertex,fieldKey,false);
+                    } else if(subEntityNode.isArray()){
+                        List<String> osidList = new ArrayList<String>();
+                        subEntityNode.forEach(arrayElementNode -> {
+                            if(arrayElementNode.isObject()){
+                                String updatedOsid = parseJsonObject(arrayElementNode,graph,rootVertex,fieldKey, true);
+                                osidList.add(updatedOsid);
+                            }
+                        });
+                        deleteVertices(graph,rootVertex,fieldKey,osidList);
+                        String updatedOisdValue = String.join(",",osidList);
+                        rootVertex.property(RefLabelHelper.getLabel(fieldKey, uuidPropertyName),updatedOisdValue);
+                    }
+                });
+                databaseProvider.commitTransaction(graph, tx);
+            }
+        } catch (Exception e) {
+            logger.error("Exception occurred during update entity ", e);
+        }
+    }
+
+
+    /** Parse the json data to vertex properties, creates new vertex if the node is new else updates the existing vertex
+     * @param elementNode
+     * @param graph
+     * @param rootVertex
+     * @param parentNodeLabel
+     * @param isArrayElement
+     * @return
+     */
+    private String parseJsonObject(JsonNode elementNode, Graph graph, Vertex rootVertex, String parentNodeLabel, boolean isArrayElement) {
+        if(null == elementNode.get(uuidPropertyName)){
+            if(!isArrayElement){
+                deleteVertices(graph, rootVertex, parentNodeLabel, null);
+            }
+            //Add new vertex
+            Vertex newChildVertex = createVertex(graph, parentNodeLabel);
+            updateProperties(elementNode,newChildVertex);
+            String nodeOsidLabel = RefLabelHelper.getLabel(parentNodeLabel, uuidPropertyName);
+            VertexProperty<Object> vertexProperty =  rootVertex.property(nodeOsidLabel);
+            if(isArrayElement && vertexProperty.isPresent()){
+                String existingValue = (String)vertexProperty.value();
+                rootVertex.property(nodeOsidLabel,existingValue+","+newChildVertex.id().toString());
+            } else {
+                rootVertex.property(nodeOsidLabel, newChildVertex.id().toString());
+            }
+            addEdge(parentNodeLabel, rootVertex, newChildVertex);
+            return newChildVertex.id().toString();
+        } else {
+            Vertex updateVertex = graph.vertices(elementNode.get(uuidPropertyName).asText()).next();
+            updateProperties(elementNode,updateVertex);
+            return updateVertex.id().toString();
+        }
+    }
+
+    /** updates the vertex properties with given json node elements
+     * @param elementNode
+     * @param vertex
+     */
+    private void updateProperties(JsonNode elementNode, Vertex vertex){
+        elementNode.fields().forEachRemaining(subElementNode -> {
+            JsonNode value = subElementNode.getValue();
+            String keyType = subElementNode.getKey();
+            if (value.isObject()) {
+
+            } else if (value.isValueNode() && !keyType.equals("@type") && !keyType.equals(uuidPropertyName)) {
+                    vertex.property(keyType, value.asText());
             }
         });
     }
 
+    /**This method is called while updating the entity. If any non-necessary vertex is there, it will be removed from the database
+     * TO-DO need to do soft delete
+     * @param graph
+     * @param rootVertex
+     * @param label
+     * @param activeOsid
+     */
+    private void deleteVertices(Graph graph, Vertex rootVertex, String label, List<String> activeOsid) {
+        String[] osidArray = null;
+        VertexProperty vp = rootVertex.property(label+"_"+uuidPropertyName);
+        String osidPropValue = (String) vp.value();
+        if(osidPropValue.contains(",")){
+            osidArray = osidPropValue.split(",");
+        } else {
+            osidArray = new String[]{osidPropValue};
+        }
+        Iterator<Vertex> vertices = graph.vertices(osidArray);
+        //deleting existing vertices
+        vertices.forEachRemaining(deleteVertex -> {
+            if(activeOsid == null || (activeOsid != null && !activeOsid.contains(deleteVertex.id()))){
+                deleteVertex.property(Constants.STATUS_KEYWORD,Constants.STATUS_INACTIVE);
+                Edge edge = deleteVertex.edges(Direction.IN,label).next();
+                edge.remove();
+                //deleteVertex.edges(Direction.IN,label).next().remove();
+                //deleteVertex.remove();
+                //addEdge(label,deleteVertex,rootVertex);
+
+            }
+        });
+    }
 }
