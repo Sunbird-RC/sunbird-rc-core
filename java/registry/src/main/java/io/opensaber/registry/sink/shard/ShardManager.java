@@ -3,7 +3,6 @@ package io.opensaber.registry.sink.shard;
 import io.opensaber.registry.exception.CustomException;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
 import java.io.IOException;
@@ -23,9 +22,6 @@ public class ShardManager {
 	@Autowired
 	private IShardAdvisor shardAdvisor;
 	@Autowired
-	private SearchService searchService;
-
-	@Autowired
 	private Shard shard;
 
 
@@ -40,6 +36,7 @@ public class ShardManager {
 		DBConnectionInfo connectionInfo = shardAdvisor.getShard(attributeValue);
 	    DatabaseProvider databaseProvider = dbProviderFactory.getInstance(connectionInfo);
 	    shard.setShardId(connectionInfo.getShardId());
+	    shard.setShardLabel(connectionInfo.getShardLabel());
 	    shard.setDatabaseProvider(databaseProvider);
 		logger.info("Activated shard "+connectionInfo.getShardId()+" for attribute value "+attributeValue);
 	}
@@ -84,7 +81,8 @@ public class ShardManager {
 		if (shardId != null) {
 			DBConnectionInfo connectionInfo = dbConnectionInfoMgr.getDBConnectionInfo(shardId);
 			DatabaseProvider databaseProvider = dbProviderFactory.getInstance(connectionInfo);
-			shard.setShardId(connectionInfo.getShardId());
+			shard.setShardId(shardId);
+			shard.setShardLabel(connectionInfo.getShardLabel());
 			shard.setDatabaseProvider(databaseProvider);
 		} else {
 			logger.info("Default shard is activated");

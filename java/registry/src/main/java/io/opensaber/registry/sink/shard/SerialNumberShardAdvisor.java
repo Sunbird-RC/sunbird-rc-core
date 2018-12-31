@@ -12,24 +12,17 @@ public class SerialNumberShardAdvisor extends DefaultShardAdvisor {
 
 	/**
 	 * Based on serialNum, choosing the shard.
-	 * If serialNum is even, choose shard with id ‘shard1’ 
-	 * If serialNum is odd , choose shard with id 'shard2'
+	 * If serialNum is even, choose first shard  
+	 * If serialNum is odd , choose second shard
 	 */
 	@Override
 	public DBConnectionInfo getShard(Object serialNumber) {
 		DBConnectionInfo connectionInfo = null;
 		if (serialNumber instanceof Integer) {
 			Integer serNo = (Integer) serialNumber;
-			switch (serNo % 2) {
-			case 0:
-				connectionInfo = dBConnectionInfoMgr.getDBConnectionInfo("shard1");
-				break;
-			case 1:
-				connectionInfo = dBConnectionInfoMgr.getDBConnectionInfo("shard2");
-				break;
-			default:
-				break;
-			}
+			int mod = serNo % 2;
+			connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(mod);
+
 		}
 		return connectionInfo;
 	}
