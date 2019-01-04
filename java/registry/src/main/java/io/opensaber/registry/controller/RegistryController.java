@@ -18,6 +18,12 @@ import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.transform.*;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.RecordIdentifier;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.jena.rdf.model.Model;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
@@ -29,11 +35,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 public class RegistryController {
@@ -265,22 +266,19 @@ public class RegistryController {
     public ResponseEntity<Response> updateTP2Graph() throws ParseException, IOException, CustomException {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
-        Map<String, Object> result = new HashMap<>();
 
-        String dataObject = apiMessage.getRequest().getRequestMapAsString();
-        String entityType = apiMessage.getRequest().getEntityType();
-        JsonNode reqJsonNode = apiMessage.getRequest().getRequestMapNode();
-        String label = apiMessage.getRequest().getRequestMap().get(dbConnectionInfoMgr.getUuidPropertyName()).toString();
-
-        RecordIdentifier recordId = RecordIdentifier.parse(label);
-        String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
-
+		String jsonString = apiMessage.getRequest().getRequestMapAsString();
+		String entityType = apiMessage.getRequest().getEntityType();
+		JsonNode reqJsonNode = apiMessage.getRequest().getRequestMapNode();
+		String osIdVal = reqJsonNode.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
+		RecordIdentifier recordId = RecordIdentifier.parse(osIdVal);
+		String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         shardManager.activateShard(shardId);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
 
         try {
             watch.start("RegistryController.update");
-            registryService.updateEntity(dataObject);
+            registryService.updateEntity(jsonString);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.update");
