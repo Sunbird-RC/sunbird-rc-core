@@ -5,6 +5,7 @@ package io.opensaber.registry.util;
  */
 public class RefLabelHelper {
     private static String SEPARATOR = "_";
+    private static String ARRAY_SEPARATOR = "_arr_";
 
     /**
      * Generates the key that could be persisted for a given reference
@@ -15,6 +16,28 @@ public class RefLabelHelper {
      */
     public static String getLabel(String referenceName, String id) {
         return referenceName + SEPARATOR + id;
+    }
+
+    /**
+     * Generates the key that could be persisted for a given reference
+     * and id
+     * @param referenceName - the other reference
+     * @param id - the id to suffix
+     * @return
+     */
+    public static String getArrayLabel(String referenceName, String id) {
+        return referenceName + ARRAY_SEPARATOR + id;
+    }
+
+    /**
+     * Given a label and id, identifies if the label was
+     * generated using this class.
+     * @param lbl
+     * @param id
+     * @return
+     */
+    public static boolean isArrayLabel(String lbl, String id) {
+        return lbl.contains(ARRAY_SEPARATOR) && lbl.contains(id);
     }
 
     /**

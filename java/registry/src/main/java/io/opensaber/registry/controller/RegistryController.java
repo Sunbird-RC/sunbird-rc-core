@@ -227,25 +227,28 @@ public class RegistryController {
 
     @RequestMapping(value = "/read", method = RequestMethod.POST)
     public ResponseEntity<Response> greadGraph2Json(@RequestHeader HttpHeaders header) throws Exception {
-        String label = apiMessage.getRequest().getRequestMap().get(dbConnectionInfoMgr.getUuidPropertyName()).toString();
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
 
+        String label = apiMessage.getRequest().getRequestMap().get(dbConnectionInfoMgr.getUuidPropertyName()).toString();
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         shardManager.activateShard(shardId);
         logger.info("Read Api: shard id: " + recordId.getShardLabel() + " for label: " + label);
 
+        String acceptType = header.getAccept().iterator().next().toString();
+
         ReadConfigurator configurator = new ReadConfigurator();
         boolean includeSignatures = (boolean) apiMessage.getRequest().getRequestMap().getOrDefault("includeSignatures",
                 false);
         configurator.setIncludeSignatures(includeSignatures);
+        configurator.setIncludeTypeAttributes(acceptType.equals(Constants.LD_JSON_MEDIA_TYPE));
+
         try {
             JsonNode resultNode = registryService.getEntity(recordId.getUuid(), configurator);
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
-            Configuration config = configurationHelper.getConfiguration(header.getAccept().iterator().next().toString(),
-                    Direction.OUT);
+            Configuration config = configurationHelper.getConfiguration(acceptType, Direction.OUT);
             logger.info("config : " + config);
             ITransformer<Object> responseTransformer = transformer.getInstance(config);
             Data<Object> resultContent = responseTransformer.transform(data);
@@ -253,7 +256,7 @@ public class RegistryController {
             response.setResult(resultContent.getData());
 
         } catch (Exception e) {
-            logger.error("Read Api Exception occoured ", e);
+            logger.error("Read Api Exception occurred ", e);
             responseParams.setErr(e.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         }

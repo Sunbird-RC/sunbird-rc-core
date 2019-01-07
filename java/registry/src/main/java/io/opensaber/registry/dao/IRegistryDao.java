@@ -11,11 +11,9 @@ public interface IRegistryDao {
 
 	void setPrivatePropertyList(List<String> privatePropertyList);
 	Vertex ensureParentVertex(Graph graph, String parentLabel);
-	String getParentName(JsonNode node);
-	String writeNodeEntity(Graph graph, JsonNode node);
 	List<String> getUUIDs(Graph graph, Set<String> labels);
 	String addEntity(JsonNode rootNode);
-	JsonNode getEntity(String uuid, ReadConfigurator readConfigurator);
+	JsonNode getEntity(String uuid, ReadConfigurator readConfigurator) throws Exception;
 	void updateVertex(Vertex rootVertex, JsonNode inputJsonNode);
 
 }

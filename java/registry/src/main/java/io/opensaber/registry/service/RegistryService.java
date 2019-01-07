@@ -14,8 +14,8 @@ public interface RegistryService {
 
 	 String addEntity(String jsonString) throws Exception;
 
-     JsonNode getEntity(String id, ReadConfigurator configurator);
+     JsonNode getEntity(String id, ReadConfigurator configurator) throws Exception;
 
-	 public void updateEntity(String jsonString) throws Exception;
+     void updateEntity(String jsonString) throws Exception;
 
 }

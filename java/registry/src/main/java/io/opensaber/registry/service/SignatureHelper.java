@@ -35,7 +35,7 @@ public class SignatureHelper {
         Map signReq = new HashMap<String, Object>();
         signReq.put("entity", rootNode);
         Map<String, Object> signMap = (Map<String, Object>) signatureService.sign(signReq);
-        mergeSign(rootNode.get(registryRootEntityType).get(Constants.SIGNATURES), signMap);
+        mergeSign(rootNode.get(registryRootEntityType).get(Constants.SIGNATURES_STR), signMap);
         return signedRoot;
     }
 

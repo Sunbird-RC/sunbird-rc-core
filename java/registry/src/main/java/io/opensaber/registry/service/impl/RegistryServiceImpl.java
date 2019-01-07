@@ -160,7 +160,7 @@ public class RegistryServiceImpl implements RegistryService {
         return entityId;
     }
 
-    public JsonNode getEntity(String id, ReadConfigurator configurator) {
+    public JsonNode getEntity(String id, ReadConfigurator configurator) throws Exception {
         JsonNode result = tpGraphMain.getEntity(id, configurator);
         return result;
     }
@@ -206,11 +206,11 @@ public class RegistryServiceImpl implements RegistryService {
                     //sign the entitynode
                     if (signatureEnabled) {
                         signatureHelper.signJson(entityNode);
-                        JsonNode signNode = entityNode.get(registryRootEntityType).get(Constants.SIGNATURES);
+                        JsonNode signNode = entityNode.get(registryRootEntityType).get(Constants.SIGNATURES_STR);
                         if (signNode.isArray()) {
                             signNode = getEntitySignNode(signNode);
                         }
-                        Iterator<Vertex> vertices = rootVertex.vertices(Direction.OUT,Constants.SIGNATURES);
+                        Iterator<Vertex> vertices = rootVertex.vertices(Direction.OUT,Constants.SIGNATURES_STR);
                         while (null != vertices && vertices.hasNext()) {
                             Vertex signVertex = vertices.next();
                             if (signVertex.property(Constants.SIGNATURE_FOR).value().equals(registryRootEntityType)) {
@@ -231,11 +231,11 @@ public class RegistryServiceImpl implements RegistryService {
                     //sign the entitynode
                     if (signatureEnabled) {
                         signatureHelper.signJson(entityNode);
-                        JsonNode signNode = entityNode.get(registryRootEntityType).get(Constants.SIGNATURES);
+                        JsonNode signNode = entityNode.get(registryRootEntityType).get(Constants.SIGNATURES_STR);
                         if (signNode.isArray()) {
                             signNode = getEntitySignNode(signNode);
                         }
-                        Iterator<Vertex> vertices = rootVertex.vertices(Direction.OUT,Constants.SIGNATURES);
+                        Iterator<Vertex> vertices = rootVertex.vertices(Direction.OUT,Constants.SIGNATURES_STR);
                         while (null != vertices && vertices.hasNext()) {
                             Vertex signVertex = vertices.next();
                             if (signVertex.property(Constants.SIGNATURE_FOR).value().equals(registryRootEntityType)) {

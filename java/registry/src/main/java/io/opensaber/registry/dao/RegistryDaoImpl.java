@@ -59,88 +59,6 @@ public class RegistryDaoImpl implements IRegistryDao {
         this.privatePropertyList = privatePropertyList;
     }
 
-    private Vertex createVertex(Graph graph, String label) {
-        Vertex vertex = graph.addVertex(label);
-
-        vertex.property(TypePropertyHelper.getTypeName(), label);
-        try {
-            UUID uuid = UUID.fromString(vertex.id().toString());
-        } catch (IllegalArgumentException e) {
-            // Must be not a neo4j store. Create an explicit osid property.
-            // Note this will be OS unique record, but the database provider might choose to use only
-            // id field.
-            vertex.property(uuidPropertyName, shard.getDatabaseProvider().generateId(vertex));
-        }
-
-        return vertex;
-    }
-
-    /**
-     * Writes an array into the database. For each array item, if it is an object
-     * creates/populates a new vertex/table and stores the reference
-     *
-     * @param graph
-     * @param vertex
-     * @param entryKey
-     * @param arrayNode
-     */
-    private void writeArrayNode(Graph graph, Vertex vertex, String entryKey, ArrayNode arrayNode) {
-        List<String> uidList = new ArrayList<>();
-        boolean isArrayItemObject = arrayNode.get(0).isObject();
-
-        for(JsonNode jsonNode : arrayNode) {
-            if (jsonNode.isObject()) {
-                Vertex createdV = processNode(graph, entryKey, jsonNode);
-                uidList.add(createdV.id().toString());
-                addEdge(entryKey, vertex, createdV);
-            } else {
-                uidList.add(jsonNode.asText());
-            }
-        }
-
-        String label = entryKey;
-        if (isArrayItemObject) {
-            label = RefLabelHelper.getLabel(entryKey, uuidPropertyName);
-        }
-        vertex.property(label, StringUtils.arrayToCommaDelimitedString(uidList.toArray()));
-    }
-
-    private Vertex processNode(Graph graph, String label, JsonNode jsonObject) {
-        Vertex vertex = createVertex(graph, label);
-
-        jsonObject.fields().forEachRemaining(entry -> {
-            JsonNode entryValue = entry.getValue();
-            logger.debug("Processing {} -> {}", entry.getKey(), entry.getValue());
-
-            if (entryValue.isValueNode()) {
-                // Directly add under the vertex as a property
-                vertex.property(entry.getKey(), entryValue.asText());
-            } else if (entryValue.isObject()) {
-                // Recursive calls
-                Vertex v = processNode(graph, entry.getKey(), entryValue);
-                addEdge(entry.getKey(), vertex, v);
-                //String idToSet = databaseProviderWrapper.getDatabaseProvider().generateId(v);
-                vertex.property(RefLabelHelper.getLabel(entry.getKey(), uuidPropertyName), v.id().toString());
-                logger.debug("Added edge between {} and {}", vertex.label(), v.label());
-            } else if (entryValue.isArray()) {
-                writeArrayNode(graph, vertex, entry.getKey(), (ArrayNode) entry.getValue());
-            }
-        });
-        return vertex;
-    }
-
-    /**
-     * Adds an edge between two vertices
-     *
-     * @param label
-     * @param v1    the source
-     * @param v2    the target
-     * @return
-     */
-    private Edge addEdge(String label, Vertex v1, Vertex v2) {
-        return v1.addEdge(label, v2);
-    }
-
     /**
      * Ensures a parent vertex existence at the exit of this function
      *
@@ -155,7 +73,8 @@ public class RegistryDaoImpl implements IRegistryDao {
         GraphTraversalSource gtRootTraversal = graph.traversal().clone();
         Iterator<Vertex> iterVertex = gtRootTraversal.V().hasLabel(lblPredicate);
         if (!iterVertex.hasNext()) {
-            parentVertex = createVertex(graph, parentLabel);
+            VertexWriter vertexWriter = new VertexWriter(uuidPropertyName, shard, entityParenter);
+            parentVertex = vertexWriter.createVertex(graph, parentLabel);
             logger.info("Parent label {} created {}", parentLabel, parentVertex.id().toString());
         } else {
             parentVertex = iterVertex.next();
@@ -165,48 +84,6 @@ public class RegistryDaoImpl implements IRegistryDao {
         return parentVertex;
     }
 
-    /**
-     * Fetches the parent. In the current use cases, we expect only one
-     * top level parent is passed.
-     *
-     * @param node
-     * @return
-     */
-    public String getParentName(JsonNode node) {
-        return node.fieldNames().next();
-    }
-
-    /**
-     * Writes the node entity into the database.
-     *
-     * @param graph
-     * @param node
-     * @return
-     */
-    public String writeNodeEntity(Graph graph, JsonNode node) {
-        String parentName = getParentName(node);
-        String parentGroupName = ParentLabelGenerator.getLabel(parentName);
-        Vertex parentVertex = entityParenter.getKnownParentVertex(parentName, "shard1");
-
-        Vertex resultVertex = null;
-        Iterator<Map.Entry<String, JsonNode>> entryIterator = node.fields();
-        while (entryIterator.hasNext()) {
-            Map.Entry<String, JsonNode> entry = entryIterator.next();
-
-            // It is expected that node is wrapped under a root, which is the parent name/definition
-            if (entry.getValue().isObject()) {
-                resultVertex = processNode(graph, entry.getKey(), entry.getValue());
-                // The parentVertex and the entity are connected. The parentVertex doesn't have
-                // identifiers set on itself, whereas the entity just created has reference to parent.
-                //String idToSet = databaseProviderWrapper.getDatabaseProvider().generateId(parentVertex);
-                resultVertex.property(RefLabelHelper.getLabel(parentGroupName, uuidPropertyName), parentVertex.id().toString());
-
-                addEdge(entry.getKey(), resultVertex, parentVertex);
-            }
-        }
-
-        return resultVertex.id().toString();
-    }
 
     /**
      * Retrieves all vertex UUID for given all labels.
@@ -235,7 +112,8 @@ public class RegistryDaoImpl implements IRegistryDao {
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
-                entityId = writeNodeEntity(graph, rootNode);
+                VertexWriter vertexWriter = new VertexWriter(uuidPropertyName, shard, entityParenter);
+                entityId = vertexWriter.writeNodeEntity(graph, rootNode);
                 databaseProvider.commitTransaction(graph, tx);
             }
         } catch (Exception e) {
@@ -250,7 +128,7 @@ public class RegistryDaoImpl implements IRegistryDao {
      * @param readConfigurator
      * @return
      */
-    public JsonNode getEntity(String uuid, ReadConfigurator readConfigurator) {
+    public JsonNode getEntity(String uuid, ReadConfigurator readConfigurator) throws Exception {
         if (null == privatePropertyList) {
             privatePropertyList = new ArrayList<>();
             setPrivatePropertyList(schemaConfigurator.getAllPrivateProperties());
@@ -265,8 +143,6 @@ public class RegistryDaoImpl implements IRegistryDao {
                 result = vr.read(uuid);
                 databaseProvider.commitTransaction(graph, tx);
             }
-        } catch (Exception e) {
-            logger.error("Exception occurred during read entity ", e);
         }
         return result;
     }
@@ -322,8 +198,11 @@ public class RegistryDaoImpl implements IRegistryDao {
             if(!isArrayElement){
                 deleteVertices(graph, rootVertex, parentNodeLabel, null);
             }
+
+            VertexWriter vertexWriter = new VertexWriter(uuidPropertyName, shard, entityParenter);
+
             //Add new vertex
-            Vertex newChildVertex = createVertex(graph, parentNodeLabel);
+            Vertex newChildVertex = vertexWriter.createVertex(graph, parentNodeLabel);
             updateProperties(elementNode,newChildVertex);
             String nodeOsidLabel = RefLabelHelper.getLabel(parentNodeLabel, uuidPropertyName);
             VertexProperty<Object> vertexProperty =  rootVertex.property(nodeOsidLabel);
@@ -333,7 +212,7 @@ public class RegistryDaoImpl implements IRegistryDao {
             } else {
                 rootVertex.property(nodeOsidLabel, newChildVertex.id().toString());
             }
-            addEdge(parentNodeLabel, rootVertex, newChildVertex);
+            vertexWriter.addEdge(parentNodeLabel, rootVertex, newChildVertex);
             return newChildVertex.id().toString();
         } else {
             Vertex updateVertex = graph.vertices(elementNode.get(uuidPropertyName).asText()).next();
