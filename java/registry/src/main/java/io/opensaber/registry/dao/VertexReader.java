@@ -45,7 +45,7 @@ public class VertexReader {
      * @param currVertex
      * @return
      */
-    private ObjectNode constructObject(Vertex currVertex) {
+    public ObjectNode constructObject(Vertex currVertex) {
 
         ObjectNode contentNode = JsonNodeFactory.instance.objectNode();
         Iterator<VertexProperty<Object>> properties = currVertex.properties();
@@ -299,5 +299,4 @@ public class VertexReader {
 
         return entityNode;
     }
-
 }

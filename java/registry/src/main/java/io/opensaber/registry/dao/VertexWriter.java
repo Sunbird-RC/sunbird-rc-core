@@ -20,15 +20,13 @@ import java.util.*;
 public class VertexWriter {
     private String uuidPropertyName;
     private Shard shard;
-    private EntityParenter entityParenter;
     private String parentOSid;
 
     private Logger logger = LoggerFactory.getLogger(VertexWriter.class);
 
-    public VertexWriter(String uuidPropertyName, Shard shard, EntityParenter entityParent) {
+    public VertexWriter(String uuidPropertyName, Shard shard) {
         this.uuidPropertyName = uuidPropertyName;
         this.shard = shard;
-        this.entityParenter = entityParent;
     }
 
 

@@ -311,7 +311,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		// Validate the input against the defined schema
 		if (validationEnabled) {
 			try {
-				registry.addInterceptor(validationInterceptor()).addPathPatterns("/add", "/search").order(orderIdx++);
+				registry.addInterceptor(validationInterceptor()).addPathPatterns("/add").order(orderIdx++);
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (CustomException e) {

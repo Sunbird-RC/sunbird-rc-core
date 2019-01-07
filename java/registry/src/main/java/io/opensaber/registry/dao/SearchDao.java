@@ -1,16 +1,13 @@
 package io.opensaber.registry.dao;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.opensaber.pojos.SearchQuery;
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.exception.EncryptionException;
-import io.opensaber.registry.exception.RecordNotFoundException;
-import java.util.Map;
+
 import org.apache.tinkerpop.gremlin.structure.Graph;
+
 
 public interface SearchDao {
 
-	public Map<String, Graph> search(SearchQuery searchQuery)
-			throws AuditFailedException, EncryptionException, RecordNotFoundException;
-	
+    JsonNode search(Graph graphFromStore, SearchQuery searchQuery);
 
 }

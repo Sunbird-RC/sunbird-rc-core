@@ -1,6 +1,8 @@
 package io.opensaber.registry.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 public interface SearchService {
 
-	// Need to write this.
+    JsonNode search(JsonNode inputQueryNode);
 }

@@ -5,11 +5,16 @@ import java.util.List;
 public class SearchQuery {
 
 	private List<Filter> filters;
-	private int limit;
+
+	// default limit of 100 records at a time
+	private int limit = 100;
 	private int offset;
 	private List<String> fields;
-	private String type;
-	private String typeIRI;
+	private String rootLabel;
+
+	public SearchQuery(String rootLabel) {
+		this.rootLabel = rootLabel;
+	}
 
 	public List<Filter> getFilters() {
 		return filters;
@@ -43,20 +48,11 @@ public class SearchQuery {
 		this.fields = fields;
 	}
 
-	public String getType() {
-		return type;
+	public String getRootLabel() {
+		return rootLabel;
 	}
 
-	public void setType(String type) {
-		this.type = type;
+	public void setRootLabel(String rootLabel) {
+		this.rootLabel = rootLabel;
 	}
-
-	public String getTypeIRI() {
-		return typeIRI;
-	}
-
-	public void setTypeIRI(String typeIRI) {
-		this.typeIRI = typeIRI;
-	}
-
 }

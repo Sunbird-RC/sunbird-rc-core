@@ -10,7 +10,7 @@ public interface RegistryService {
 
 	 HealthCheckResponse health() throws Exception;
 
-	 boolean deleteEntityById(String id) throws AuditFailedException, RecordNotFoundException;
+	 boolean deleteEntityById(String id);
 
 	 String addEntity(String jsonString) throws Exception;
 

@@ -3,9 +3,13 @@ package io.opensaber.registry.sink.shard;
 import io.opensaber.registry.exception.CustomException;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
+import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +26,8 @@ public class ShardManager {
 	@Autowired
 	private IShardAdvisor shardAdvisor;
 	@Autowired
+	private SearchService searchService;
+	@Autowired
 	private Shard shard;
 
 
@@ -32,7 +38,7 @@ public class ShardManager {
 	 * @param attributeValue
 	 * @throws IOException
 	 */
-	private void activateDbShard(Object attributeValue) throws CustomException {
+	private void activateDbShard(Object attributeValue) {
 		DBConnectionInfo connectionInfo = shardAdvisor.getShard(attributeValue);
 	    DatabaseProvider databaseProvider = dbProviderFactory.getInstance(connectionInfo);
 	    shard.setShardId(connectionInfo.getShardId());
@@ -50,7 +56,7 @@ public class ShardManager {
 	 * @return
 	 * @throws CustomException
 	 */
-	public Shard getShard(Object attributeValue) throws CustomException {
+	public Shard getShard(Object attributeValue) {
 
 		if(attributeValue != null){
 			activateDbShard(attributeValue);
@@ -65,7 +71,7 @@ public class ShardManager {
 	 * @return
 	 * @throws CustomException
 	 */
-	public Shard getDefaultShard() throws CustomException {
+	public Shard getDefaultShard() {
 		activateDbShard(null);
 		return shard;
 	}
@@ -77,7 +83,7 @@ public class ShardManager {
 	 * @return
 	 * @throws CustomException 
 	 */
-	public void activateShard(String shardId) throws CustomException{
+	public void activateShard(String shardId) {
 		if (shardId != null) {
 			DBConnectionInfo connectionInfo = dbConnectionInfoMgr.getDBConnectionInfo(shardId);
 			DatabaseProvider databaseProvider = dbProviderFactory.getInstance(connectionInfo);
@@ -89,6 +95,18 @@ public class ShardManager {
 			activateDbShard(null);
 
 		}
+	}
+
+	public Shard getShardInstance(String shardId) {
+		Shard thisShard = new Shard();
+		if (shardId != null) {
+			DBConnectionInfo connectionInfo = dbConnectionInfoMgr.getDBConnectionInfo(shardId);
+			DatabaseProvider databaseProvider = dbProviderFactory.getInstance(connectionInfo);
+			thisShard.setShardId(connectionInfo.getShardId());
+			thisShard.setDatabaseProvider(databaseProvider);
+		}
+
+		return thisShard;
 	}
 
 }

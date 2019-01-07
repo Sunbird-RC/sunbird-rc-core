@@ -21,6 +21,10 @@ public class RecordIdentifier {
 		return uuid;
 	}
 
+	private static String format(String shardLabel, String uuid) {
+		return shardLabel + SEPARATOR + uuid;
+	}
+
 	/**
 	 * Returns spring representation of RecordIdentifier. Example: shard
 	 * SEPARATOR uuid
@@ -29,7 +33,7 @@ public class RecordIdentifier {
 	public String toString() {
 		String result;
 		if (this.getShardLabel() != null && !this.getShardLabel().isEmpty()) {
-			result = this.getShardLabel() + SEPARATOR + this.getUuid();
+			result = format(this.getShardLabel(), this.getUuid());
 		} else {
 			result = this.getUuid();
 		}
@@ -40,7 +44,7 @@ public class RecordIdentifier {
 	/**
 	 * Creates RecordIdentifier object from a string representation
 	 * 
-	 * @param label
+	 * @param input
 	 * @return
 	 */
 	public static RecordIdentifier parse(String input) {
@@ -70,6 +74,10 @@ public class RecordIdentifier {
 
 	private static boolean isValid(String uuid) {
 		return uuid.matches(REGEX_RECORDID);
+	}
+
+	public static final String getSeparator() {
+		return SEPARATOR;
 	}
 
 }
