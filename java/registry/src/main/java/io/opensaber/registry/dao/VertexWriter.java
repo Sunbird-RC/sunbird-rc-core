@@ -95,7 +95,11 @@ public class VertexWriter {
 
         // Set up references on a blank node.
         label = RefLabelHelper.getLabel(entryKey, uuidPropertyName);
-        blankNode.property(label, StringUtils.arrayToCommaDelimitedString(uidList.toArray()));
+        if (isArrayItemObject) {
+            blankNode.property(label, StringUtils.arrayToCommaDelimitedString(uidList.toArray()));
+        } else {
+            blankNode.property(entryKey, StringUtils.arrayToCommaDelimitedString(uidList.toArray()));
+        }
     }
 
     private Vertex processNode(Graph graph, String label, JsonNode jsonObject) {

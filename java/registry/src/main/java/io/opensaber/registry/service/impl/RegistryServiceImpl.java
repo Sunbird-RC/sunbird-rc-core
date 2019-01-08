@@ -10,7 +10,6 @@ import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.dao.IRegistryDao;
 import io.opensaber.registry.dao.RegistryDaoImpl;
 import io.opensaber.registry.dao.VertexReader;
-import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
@@ -135,9 +134,32 @@ public class RegistryServiceImpl implements RegistryService {
         return healthCheck;
     }
 
+    /**delete the vertex and changing the status
+     * @param uuid
+     * @throws Exception
+     */
     @Override
-    public boolean deleteEntityById(String id) {
-        return false;
+    public void deleteEntityById(String uuid) throws Exception {
+        DatabaseProvider databaseProvider = shard.getDatabaseProvider();
+        try(OSGraph osGraph = databaseProvider.getOSGraph()){
+            Graph graph = osGraph.getGraphStore();
+            try (Transaction tx = databaseProvider.startTransaction(graph)) {
+                Iterator<Vertex> vertexItr = graph.vertices(uuid);
+                if (vertexItr.hasNext()) {
+                    Vertex vertex = vertexItr.next();
+                    if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent() && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
+                        tpGraphMain.deleteEntity(vertex);
+                        tx.commit();
+                    } else {
+                        //throw exception node already deleted
+                        throw new RecordNotFoundException("Cannot perform the operation");
+                    }
+                } else {
+                    throw new RecordNotFoundException("No such record found");
+                }
+
+            }
+        }
     }
 
     public String addEntity(String jsonString) throws Exception {
@@ -205,6 +227,10 @@ public class RegistryServiceImpl implements RegistryService {
                     ObjectNode entityNode = null;
                     vertexIterator = graph.vertices(idProp);
                     inputNodeVertex = vertexIterator.hasNext() ? vertexIterator.next(): null;
+                    if ((inputNodeVertex.property(Constants.STATUS_KEYWORD).isPresent() &&
+                            inputNodeVertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
+                        throw new RecordNotFoundException("Cannot perform the operation");
+                    }
                     if(registryRootEntityType.equalsIgnoreCase(inputNodeVertex.label())){
                         rootVertex = inputNodeVertex;
                         entityNode = (ObjectNode) vr.read(inputNodeVertex.id().toString());

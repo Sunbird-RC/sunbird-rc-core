@@ -44,8 +44,6 @@ public class RegistryController {
     private RegistryAuditService registryAuditService;
     @Autowired
     private SearchService searchService;
-    @Value("${registry.context.base}")
-    private String registryContext;
     @Autowired
     private APIMessage apiMessage;
     @Autowired
@@ -135,12 +133,15 @@ public class RegistryController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Response> deleteEntity(@PathVariable("id") String id) {
-        String entityId = registryContext + id;
+    @RequestMapping(value = "/delete", method = RequestMethod.POST)
+    public ResponseEntity<Response> deleteEntity(@RequestHeader HttpHeaders header) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.DELETE, "OK", responseParams);
         try {
+            String entityId = apiMessage.getRequest().getRequestMap().get(dbConnectionInfoMgr.getUuidPropertyName()).toString();
+            RecordIdentifier recordId = RecordIdentifier.parse(entityId);
+            String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
+            shardManager.activateShard(shardId);
             registryService.deleteEntityById(entityId);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);

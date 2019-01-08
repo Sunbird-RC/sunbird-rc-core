@@ -116,7 +116,6 @@ public class RegistryDaoImpl implements IRegistryDao {
             privatePropertyList = new ArrayList<>();
             setPrivatePropertyList(schemaConfigurator.getAllPrivateProperties());
         }
-
         VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, privatePropertyList);
         JsonNode result = vr.read(uuid);
 
@@ -263,5 +262,9 @@ public class RegistryDaoImpl implements IRegistryDao {
 
             }
         });
+    }
+
+    public void deleteEntity(Vertex vertex){
+        vertex.property(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
     }
 }

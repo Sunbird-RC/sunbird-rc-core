@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.util.ReadConfigurator;
@@ -81,7 +83,17 @@ public class VertexReader {
                     }
 
                     if (canAdd) {
-                        contentNode.put(prop.key(), prop.value().toString());
+                        String propValue = prop.value().toString();
+                        if(propValue.contains(",")){
+                            ArrayNode stringArray = JsonNodeFactory.instance.arrayNode();
+                            String[] valArray = propValue.split(",");
+                            for(String val :valArray){
+                                stringArray.add(val);
+                            }
+                            contentNode.set(prop.key(),stringArray);
+                        } else {
+                            contentNode.put(prop.key(), propValue);
+                        }
                     }
                 }
             } else {
@@ -112,7 +124,8 @@ public class VertexReader {
                 signatures = JsonNodeFactory.instance.arrayNode();
                 while (signatureVertices.hasNext()) {
                     Vertex oneSignature = signatureVertices.next();
-                    if (!oneSignature.label().equals(entityType)) {
+                    if(oneSignature.property(Constants.SIGNATURE_FOR).isPresent() &&
+                            !oneSignature.property(Constants.SIGNATURE_FOR).value().toString().equalsIgnoreCase(entityType)) {
                         ObjectNode signatureNode = constructObject(oneSignature);
                         signatures.add(signatureNode);
                         logger.debug("Added signature node for " + signatureNode.get(Constants.SIGNATURE_FOR));
@@ -264,6 +277,9 @@ public class VertexReader {
         Vertex rootVertex = itrV.next();
 
         int currLevel = 0;
+        if(rootVertex.property(Constants.STATUS_KEYWORD).isPresent() && rootVertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE)){
+            throw new RecordNotFoundException("entity status is inactive");
+        }
         ObjectNode rootNode = constructObject(rootVertex);
         entityType = rootNode.get(TypePropertyHelper.getTypeName()).textValue();
 

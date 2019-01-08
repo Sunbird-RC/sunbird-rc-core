@@ -10,7 +10,7 @@ public interface RegistryService {
 
 	 HealthCheckResponse health() throws Exception;
 
-	 boolean deleteEntityById(String id);
+	 void deleteEntityById(String id) throws Exception;
 
 	 String addEntity(String jsonString) throws Exception;
 

@@ -154,9 +154,9 @@ public class JSONUtil {
 			} else if (entryValue.isArray()) {
 				ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
 				for (int i = 0; i < entryValue.size(); i++) {
-					if (entryValue.get(i).isTextual())
+					if (entryValue.get(i).isTextual() && keys.contains(entry.getKey()))
 						arrayNode.add(prefix + entryValue.get(i).asText());
-					else
+					else if(entryValue.get(i).isObject())
 						addPrefix((ObjectNode) entryValue.get(i), prefix, keys);
 				}
 				if (arrayNode.size() > 0)

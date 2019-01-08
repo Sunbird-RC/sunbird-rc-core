@@ -55,8 +55,8 @@
       "appointmentYear": "2015",
       "classesTaught": "ClassTypeCode-SECONDARYANDHIGHERSECONDARY",
       "mainSubjectsTaught": [
-        "prefix-teacher:SubjectCode-SOCIALSTUDIES",
-        "prefix-teacher:SubjectCode-ENGLISH"
+        "teacher:SubjectCode-SOCIALSTUDIES",
+        "teacher:SubjectCode-ENGLISH"
       ],
       "teacherType": "TeacherTypeCode-HEAD"
     },
