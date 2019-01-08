@@ -1,5 +1,6 @@
 package io.opensaber.registry.model;
 
+import io.opensaber.registry.config.validation.ValidDatabaseConfig;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,9 +8,12 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
 @Component("dbConnectionInfoMgr")
 @ConfigurationProperties(prefix = "database")
+@Validated
+@ValidDatabaseConfig
 public class DBConnectionInfoMgr {
 
 	/**
@@ -42,14 +46,7 @@ public class DBConnectionInfoMgr {
 	@PostConstruct
 	public void init() {
 		for (DBConnectionInfo connInfo : connectionInfo) {
-			boolean shardIdExists = shardLabelIdMap.containsValue(connInfo.getShardId());
-			String shardId = shardLabelIdMap.putIfAbsent(connInfo.getShardLabel(), connInfo.getShardId());
-			if (shardId!=null) {
-				throw new RuntimeException("Exception: Configured shards must have unique label. Offending label = " + connInfo.getShardLabel());
-			}
-			if (shardIdExists) {
-				throw new RuntimeException("Exception: Configured shards must have unique id. Offending id = " + connInfo.getShardId());
-			}
+			shardLabelIdMap.putIfAbsent(connInfo.getShardLabel(), connInfo.getShardId());
 		}
 	}
 
