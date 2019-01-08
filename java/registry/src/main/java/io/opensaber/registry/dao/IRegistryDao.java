@@ -15,7 +15,7 @@ public interface IRegistryDao {
 	String addEntity(Graph graph, JsonNode rootNode);
 	JsonNode getEntity(Graph graph, String uuid, ReadConfigurator readConfigurator) throws Exception;
 	JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator) throws Exception;
-	void updateVertex(Graph graph, Vertex rootVertex, JsonNode inputJsonNode);
+	void updateVertex(Graph graph, Vertex rootVertex, JsonNode inputJsonNode) throws Exception;
     void deleteEntity(Vertex uuid);
 
 }

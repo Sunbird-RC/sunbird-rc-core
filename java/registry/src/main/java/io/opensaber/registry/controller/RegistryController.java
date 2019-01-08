@@ -141,7 +141,7 @@ public class RegistryController {
             RecordIdentifier recordId = RecordIdentifier.parse(entityId);
             String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
             shardManager.activateShard(shardId);
-            registryService.deleteEntityById(entityId);
+            registryService.deleteEntityById(recordId.getUuid());
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
         } catch (UnsupportedOperationException e) {
@@ -243,18 +243,20 @@ public class RegistryController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
 
-		String jsonString = apiMessage.getRequest().getRequestMapAsString();
-		String entityType = apiMessage.getRequest().getEntityType();
-		JsonNode reqJsonNode = apiMessage.getRequest().getRequestMapNode();
-		String osIdVal = reqJsonNode.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
-		RecordIdentifier recordId = RecordIdentifier.parse(osIdVal);
-		String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
+        String jsonString = apiMessage.getRequest().getRequestMapAsString();
+        String entityType = apiMessage.getRequest().getEntityType();
+
+        String label = apiMessage.getRequest().getRequestMapNode().get(entityType).get(uuidPropertyName).asText();
+        RecordIdentifier recordId = RecordIdentifier.parse(label);
+        String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         shardManager.activateShard(shardId);
+        logger.info("Read Api: shard id: " + recordId.getShardLabel() + " for label: " + label);
+
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
 
         try {
             watch.start("RegistryController.update");
-            registryService.updateEntity(jsonString);
+            registryService.updateEntity(recordId.getUuid(), jsonString);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.update");

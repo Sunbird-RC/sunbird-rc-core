@@ -21,6 +21,8 @@ import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.ReadConfigurator;
 
 import java.io.IOException;
+
+import io.opensaber.registry.util.RecordIdentifier;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
@@ -67,7 +69,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	@Mock
 	private EncryptionServiceImpl encryptionService;
 	@Mock
-	private SignatureServiceImpl signatureService;	
+	private SignatureServiceImpl signatureService;
 	private DatabaseProvider mockDatabaseProvider;
 	@Mock
 	private IRegistryDao registryDao;
@@ -88,7 +90,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 
 	@Before
 	public void initialize() throws IOException {
-	    setup();
+		setup();
 	}
 
 	@Test
@@ -122,21 +124,21 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 		});
 	}
 
-    @Ignore
+	@Ignore
 	@Test
 	public void test_update_parent_entity_after_creating() throws Exception {
 
 		String validJsonString = getValidJsonString(VALID_TEST_INPUT_JSON);
 		shardManager.activateShard("");
 		ReadConfigurator configurator = new ReadConfigurator();
-        String resultId = registryService.addEntity(validJsonString);
-        String updatedInput = getValidStringForUpdate(resultId);
-        registryService.updateEntity(updatedInput);
-        JsonNode readJson = registryService.getEntity(resultId,configurator);
+		String resultId = registryService.addEntity(validJsonString);
+		RecordIdentifier recordIdentifier = RecordIdentifier.parse(resultId);
+		String updatedInput = getValidStringForUpdate(resultId);
+		registryService.updateEntity(recordIdentifier.getUuid(), updatedInput);
+		JsonNode readJson = registryService.getEntity(resultId,configurator);
 		JsonNode updateInputJson = new ObjectMapper().readTree(updatedInput);
 		assertEquals(readJson.get("gender"),updateInputJson.get("Teacher").get("gender"));
 		System.out.println("graph::::"+readJson.toString());
-
 		closeDB();
 	}
 

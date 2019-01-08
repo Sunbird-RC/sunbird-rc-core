@@ -8,14 +8,14 @@ import io.opensaber.registry.util.ReadConfigurator;
 
 public interface RegistryService {
 
-	 HealthCheckResponse health() throws Exception;
+	HealthCheckResponse health() throws Exception;
 
-	 void deleteEntityById(String id) throws Exception;
+	void deleteEntityById(String id) throws Exception;
 
-	 String addEntity(String jsonString) throws Exception;
+	String addEntity(String jsonString) throws Exception;
 
-     JsonNode getEntity(String id, ReadConfigurator configurator) throws Exception;
+	JsonNode getEntity(String id, ReadConfigurator configurator) throws Exception;
 
-     void updateEntity(String jsonString) throws Exception;
+	void updateEntity(String id, String jsonString) throws Exception;
 
 }

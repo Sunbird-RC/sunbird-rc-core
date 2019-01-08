@@ -211,7 +211,9 @@ public class RegistryDaoImpl implements IRegistryDao {
             vertexWriter.addEdge(parentNodeLabel, rootVertex, newChildVertex);
             return newChildVertex.id().toString();
         } else {
-            Vertex updateVertex = graph.vertices(elementNode.get(uuidPropertyName).asText()).next();
+            String shardOsid = elementNode.get(uuidPropertyName).asText();
+            RecordIdentifier ri = RecordIdentifier.parse(shardOsid);
+            Vertex updateVertex = graph.vertices(ri.getUuid()).next();
             updateProperties(elementNode, updateVertex);
             return updateVertex.id().toString();
         }
