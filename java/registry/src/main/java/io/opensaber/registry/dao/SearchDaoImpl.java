@@ -43,7 +43,7 @@ public class SearchDaoImpl implements SearchDao {
 				//List valueList = getValueList(value);
 
 				// Defaulting to "equals" operation
-				if (operator == null) {
+				if (operator == null || operator == "=") {
 					resultGraphTraversal = resultGraphTraversal.has(property,
 							P.eq(genericValue));
 				}
