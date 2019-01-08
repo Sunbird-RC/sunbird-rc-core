@@ -119,9 +119,11 @@ public class RegistryDaoImpl implements IRegistryDao {
         VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, privatePropertyList);
         JsonNode result = vr.read(uuid);
 
-        // Replace osid with shard details
-        String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
-        JSONUtil.addPrefix((ObjectNode) result, prefix, new ArrayList<String>(Arrays.asList(uuidPropertyName)));
+        if (!shard.getShardLabel().isEmpty()) {
+            // Replace osid with shard details
+            String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
+            JSONUtil.addPrefix((ObjectNode) result, prefix, new ArrayList<String>(Arrays.asList(uuidPropertyName)));
+        }
 
         return result;
     }
@@ -135,9 +137,11 @@ public class RegistryDaoImpl implements IRegistryDao {
         VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, privatePropertyList);
         JsonNode result = vr.constructObject(vertex);
 
-        // Replace osid with shard details
-        String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
-        JSONUtil.addPrefix((ObjectNode) result, prefix, new ArrayList<String>(Arrays.asList(uuidPropertyName)));
+        if (!shard.getShardLabel().isEmpty()) {
+            // Replace osid with shard details
+            String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
+            JSONUtil.addPrefix((ObjectNode) result, prefix, new ArrayList<String>(Arrays.asList(uuidPropertyName)));
+        }
 
         return result;
     }
@@ -264,7 +268,7 @@ public class RegistryDaoImpl implements IRegistryDao {
         });
     }
 
-    public void deleteEntity(Vertex vertex){
+    public void deleteEntity(Vertex vertex) {
         vertex.property(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
     }
 }

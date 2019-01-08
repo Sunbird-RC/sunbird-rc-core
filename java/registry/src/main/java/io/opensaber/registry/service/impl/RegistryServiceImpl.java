@@ -37,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-
 @Component
 public class RegistryServiceImpl implements RegistryService {
 
@@ -139,6 +138,7 @@ public class RegistryServiceImpl implements RegistryService {
      * @throws Exception
      */
     @Override
+
     public void deleteEntityById(String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         try(OSGraph osGraph = databaseProvider.getOSGraph()){

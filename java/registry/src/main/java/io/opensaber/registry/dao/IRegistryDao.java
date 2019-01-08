@@ -2,6 +2,7 @@ package io.opensaber.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.opensaber.registry.util.ReadConfigurator;
+
 import java.util.List;
 import java.util.Set;
 import org.apache.tinkerpop.gremlin.structure.Graph;

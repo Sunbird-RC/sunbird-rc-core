@@ -1,11 +1,9 @@
 package io.opensaber.registry.dao.impl;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 
 import io.opensaber.registry.dao.RegistryDaoImpl;
-import org.apache.jena.rdf.model.Model;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -27,7 +25,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,10 +1,7 @@
 package io.opensaber.registry.middleware.util;
 
-import org.apache.jena.vocabulary.RDF;
-
 public class Constants {
 
-	public static final String RDF_OBJECT = "rdfObject";
 	public static final String SIGN_ENTITY = "entity";
 	public static final String SIGN_VALUE = "value";
 	public static final String TOKEN_OBJECT = "x-authenticated-user-token";

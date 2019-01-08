@@ -19,6 +19,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.ReadConfigurator;
+
 import java.io.IOException;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -57,6 +58,7 @@ public class RegistryServiceImplTest extends RegistryTestBase {
 	private String registryContextBase;
 	@Autowired
 	private RegistryServiceImpl registryService;
+
 	@Autowired
 	private ShardManager shardManager;
 

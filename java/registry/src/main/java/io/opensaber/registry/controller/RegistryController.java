@@ -32,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class RegistryController {
-
     private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
     @Autowired
     Transformer transformer;
