@@ -47,13 +47,17 @@
             "Honda",
             "Bajaj",
             "Suzuki",
-            "Kawasakhi",
+            "Kawasaki",
             "Other"
           ]
         },
         "yearManufactured": {
           "$id": "#/properties/yearManufactured",
           "$ref": "Common.json#/definitions/Year"
+        },
+        "kerbWeight": {
+          "$id": "#/properties/kerbWeight",
+          "$type": "double"
         }
       }
     }

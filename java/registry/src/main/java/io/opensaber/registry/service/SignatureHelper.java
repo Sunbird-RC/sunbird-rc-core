@@ -19,8 +19,6 @@ public class SignatureHelper {
     private SignatureService signatureService;
     @Autowired
     private ObjectMapper objectMapper;
-    @Value("${registry.rootEntity.type}")
-    private String registryRootEntityType;
     @Value("${signature.keysURL}")
     private String signatureKeyURl;
 
@@ -35,7 +33,9 @@ public class SignatureHelper {
         Map signReq = new HashMap<String, Object>();
         signReq.put("entity", rootNode);
         Map<String, Object> signMap = (Map<String, Object>) signatureService.sign(signReq);
-        mergeSign(rootNode.get(registryRootEntityType).get(Constants.SIGNATURES_STR), signMap);
+
+        String entityType = rootNode.fieldNames().next();
+        mergeSign(entityType, rootNode.get(entityType).get(Constants.SIGNATURES_STR), signMap);
         return signedRoot;
     }
 
@@ -43,9 +43,9 @@ public class SignatureHelper {
      * @param signNode
      * @param signMap
      */
-    private void mergeSign(JsonNode signNode, Map<String, Object> signMap) {
+    private void mergeSign(String entityType, JsonNode signNode, Map<String, Object> signMap) {
         ArrayNode parentSignNode = null;
-        if(signNode.isArray()){
+        if(signNode != null && signNode.isArray()){
             parentSignNode = (ArrayNode) signNode;
         } else {
             parentSignNode = JsonNodeFactory.instance.arrayNode();
@@ -53,7 +53,7 @@ public class SignatureHelper {
         Map<String, Object> entitySignMap = new HashMap<>();
         entitySignMap.put(Constants.SIGN_SIGNATURE_VALUE, signMap.get(Constants.SIGN_SIGNATURE_VALUE));
         entitySignMap.put(Constants.SIGN_CREATOR, signatureKeyURl + signMap.get("keyId"));
-        entitySignMap.put(Constants.SIGNATURE_FOR, registryRootEntityType);
+        entitySignMap.put(Constants.SIGNATURE_FOR, entityType);
         entitySignMap.put(Constants.TYPE_STR_JSON_LD, "RSASignature2018");
         entitySignMap.put(Constants.SIGN_CREATED_TIMESTAMP, "");
         entitySignMap.put(Constants.SIGN_NONCE, "");

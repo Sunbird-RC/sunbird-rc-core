@@ -2,6 +2,7 @@ package io.opensaber.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ValueNode;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.util.EntityParenter;
@@ -114,7 +115,7 @@ public class VertexWriter {
 
             if (entryValue.isValueNode()) {
                 // Directly add under the vertex as a property
-                vertex.property(entry.getKey(), entryValue.asText());
+                vertex.property(entry.getKey(), ValueType.getValue(entryValue));
             } else if (entryValue.isObject()) {
                 // Recursive calls
                 Vertex v = processNode(graph, entry.getKey(), entryValue);
