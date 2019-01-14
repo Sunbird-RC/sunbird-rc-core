@@ -40,11 +40,12 @@ public class SignatureHelper {
     }
 
     /** Merges sign data to entity json
+     * @param entityType
      * @param signNode
      * @param signMap
      */
     private void mergeSign(String entityType, JsonNode signNode, Map<String, Object> signMap) {
-        ArrayNode parentSignNode = null;
+        ArrayNode parentSignNode;
         if(signNode != null && signNode.isArray()){
             parentSignNode = (ArrayNode) signNode;
         } else {

@@ -2,11 +2,8 @@ package io.opensaber.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ValueNode;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.shard.Shard;
-import io.opensaber.registry.util.EntityParenter;
-import io.opensaber.registry.util.ParentLabelGenerator;
 import io.opensaber.registry.util.RefLabelHelper;
 import io.opensaber.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.structure.Edge;
