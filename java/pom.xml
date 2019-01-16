@@ -34,7 +34,6 @@
         <module>middleware</module>
         <module>validators</module>
         <module>registry-interceptor</module>
-        <module>schema-configuration</module>
         <module>transaction-event-handler</module>
         <module>registry</module>
     </modules>

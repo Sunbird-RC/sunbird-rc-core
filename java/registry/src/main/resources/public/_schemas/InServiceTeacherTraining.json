@@ -6,6 +6,12 @@
       "$ref": "#/definitions/InServiceTeacherTraining"
     }
   },
+  "title":"inServiceTeacherTraining",
+  "_osConfig": {
+         "osComment": "Refer to _osconfig $comment section of Teacher.json",
+         "privateFields": [],
+         "signedFields": []
+  },
   "required": [
     "inServiceTeacherTraining"
   ],

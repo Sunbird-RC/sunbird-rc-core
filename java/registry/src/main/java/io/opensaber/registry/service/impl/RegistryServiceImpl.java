@@ -3,7 +3,6 @@ package io.opensaber.registry.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.google.gson.Gson;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
@@ -14,20 +13,23 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
-import io.opensaber.registry.service.*;
+import io.opensaber.registry.service.EncryptionHelper;
+import io.opensaber.registry.service.EncryptionService;
+import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.SignatureHelper;
+import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
 import io.opensaber.registry.sink.shard.Shard;
+import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
+import io.opensaber.registry.util.Definition;
 import io.opensaber.validators.IValidate;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -52,7 +54,7 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private IRegistryDao registryDao;
     @Autowired
-    private ISchemaConfigurator schemaConfigurator;
+    private DefinitionsManager definitionsManager;
     @Autowired
     private EncryptionHelper encryptionHelper;
     @Autowired
@@ -203,9 +205,9 @@ public class RegistryServiceImpl implements RegistryService {
         Iterator<Vertex> vertexIterator = null;
         Vertex inputNodeVertex = null;
         Vertex rootVertex = null;
-        List<String> privatePropertyList = schemaConfigurator.getAllPrivateProperties();
 
         JsonNode rootNode = objectMapper.readTree(jsonString);
+
         if (encryptionEnabled) {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
@@ -220,7 +222,7 @@ public class RegistryServiceImpl implements RegistryService {
         try(OSGraph osGraph = databaseProvider.getOSGraph()){
             Graph graph = osGraph.getGraphStore();
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
-                VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, privatePropertyList);
+                VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, definitionsManager);
                 String entityNodeType;
 
                 if(null != tx) {
