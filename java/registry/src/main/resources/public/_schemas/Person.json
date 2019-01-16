@@ -56,6 +56,11 @@
           "$id": "#/properties/birthDate",
           "$ref": "Common.json#/definitions/Date"
         },
+        "hasDrivingLicense": {
+          "$id": "#/properties/hasDrivingLicense",
+          "type": "boolean",
+          "title": "Driving license is present"
+        },
         "vehicles": {
           "$id": "#/properties/vehicles",
           "type": "array",

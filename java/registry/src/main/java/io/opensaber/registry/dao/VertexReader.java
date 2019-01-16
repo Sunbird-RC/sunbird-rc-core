@@ -96,15 +96,15 @@ public class VertexReader {
 
                     if (canAdd) {
                         String propValue = prop.value().toString();
-                        if(propValue.contains(",")){
+                        if (propValue.contains(",")) {
                             ArrayNode stringArray = JsonNodeFactory.instance.arrayNode();
                             String[] valArray = propValue.split(",");
-                            for(String val :valArray){
+                            for (String val : valArray) {
                                 stringArray.add(val);
                             }
-                            contentNode.set(prop.key(),stringArray);
+                            contentNode.set(prop.key(), stringArray);
                         } else {
-                            contentNode.put(prop.key(), propValue);
+                            ValueType.setValue(contentNode, prop.key(), prop.value());
                         }
                     }
                 }
