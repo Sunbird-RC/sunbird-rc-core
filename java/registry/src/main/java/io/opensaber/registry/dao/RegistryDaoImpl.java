@@ -3,25 +3,33 @@ package io.opensaber.registry.dao;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.frame.FrameContext;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.sink.shard.Shard;
+import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.EntityParenter;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.RefLabelHelper;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
 
 @Component("tpGraphMain")
 public class RegistryDaoImpl implements IRegistryDao {
@@ -32,7 +40,9 @@ public class RegistryDaoImpl implements IRegistryDao {
     EntityParenter entityParenter;
 
     @Autowired
-    private ISchemaConfigurator schemaConfigurator;
+    private DefinitionsManager definitionsManager;
+    @Autowired
+    private FrameContext frameContext; 
 
     @Autowired
     private Shard shard;
@@ -112,11 +122,8 @@ public class RegistryDaoImpl implements IRegistryDao {
      * @return
      */
     public JsonNode getEntity(Graph graph, String uuid, ReadConfigurator readConfigurator) throws Exception {
-        if (null == privatePropertyList) {
-            privatePropertyList = new ArrayList<>();
-            setPrivatePropertyList(schemaConfigurator.getAllPrivateProperties());
-        }
-        VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, privatePropertyList);
+
+        VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, definitionsManager);
         JsonNode result = vr.read(uuid);
 
         if (!shard.getShardLabel().isEmpty()) {
@@ -130,11 +137,8 @@ public class RegistryDaoImpl implements IRegistryDao {
 
 
     public JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator) {
-        if (null == privatePropertyList) {
-            privatePropertyList = new ArrayList<>();
-            setPrivatePropertyList(schemaConfigurator.getAllPrivateProperties());
-        }
-        VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, privatePropertyList);
+
+        VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, definitionsManager);
         JsonNode result = vr.constructObject(vertex);
 
         if (!shard.getShardLabel().isEmpty()) {

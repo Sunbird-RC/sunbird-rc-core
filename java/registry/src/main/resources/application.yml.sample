@@ -26,12 +26,7 @@ registry:
     base: ${registry_system_base:http://localhost:8080/opensaber/}
   rootEntity:
         type: ${registry_rootentity_type:Teacher}
-
-#This refers to the opensaber schema configuration JSON-LD file
-config:
-  schema:
-    file: ${config_schema_file:schema-configuration.json}
-
+        
 database:
   # This property is internal and not to be confused with the schema definition.
   # Clients use this property to perform read/update operation.
@@ -151,10 +146,6 @@ keycloak:
 validation:
   enabled: ${validation_enabled:true}
   type: ${validation_type:json}
-  create:
-    file: ${validations_create_file:validations_create.shex}
-  update:
-    file: ${validations_update_file:validations_update.shex}
 
 ---
 ##################################################################
@@ -182,11 +173,6 @@ registry:
     base: http://example.com/voc/opensaber/
   rootEntity:
             type: ${registry_rootentity_type:Teacher}
-
-#This refers to the opensaber schema configuration JSON-LD file
-config:
-  schema:
-    file: schema-configuration-school-test.jsonld
 
 database:
   # This property is internal and not to be confused with the schema definition.
@@ -258,7 +244,4 @@ keycloak:
 validation:
   enabled: ${validation_enabled:true}
   type: ${validation_type:json}
-  create:
-    file: good1.shex
-  update:
-    file: good1.shex
+  

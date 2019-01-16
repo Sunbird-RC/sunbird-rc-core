@@ -13,11 +13,11 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
 import io.opensaber.registry.sink.shard.Shard;
+import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.validators.IValidate;
 import org.apache.tinkerpop.gremlin.structure.Direction;
@@ -50,7 +50,7 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private IRegistryDao registryDao;
     @Autowired
-    private ISchemaConfigurator schemaConfigurator;
+    private DefinitionsManager definitionsManager;
     @Autowired
     private EncryptionHelper encryptionHelper;
     @Autowired
@@ -128,7 +128,9 @@ public class RegistryServiceImpl implements RegistryService {
         return healthCheck;
     }
 
-    /**delete the vertex and changing the status
+    /**
+     * delete the vertex and changing the status
+     *
      * @param uuid
      * @throws Exception
      */
@@ -201,9 +203,9 @@ public class RegistryServiceImpl implements RegistryService {
         Iterator<Vertex> vertexIterator = null;
         Vertex inputNodeVertex = null;
         Vertex rootVertex = null;
-        List<String> privatePropertyList = schemaConfigurator.getAllPrivateProperties();
 
         JsonNode rootNode = objectMapper.readTree(jsonString);
+
         if (encryptionEnabled) {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
@@ -219,7 +221,7 @@ public class RegistryServiceImpl implements RegistryService {
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             Transaction tx = databaseProvider.startTransaction(graph);
-            VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, privatePropertyList);
+            VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, definitionsManager);
             String entityNodeType;
 
             if (null != tx) {
@@ -295,17 +297,19 @@ public class RegistryServiceImpl implements RegistryService {
 
     }
 
-    /** filters entity sign node from the signatures json array
+    /**
+     * filters entity sign node from the signatures json array
+     *
      * @param signatures
      * @return
      */
     private JsonNode getEntitySignNode(JsonNode signatures, String registryRootEntityType) {
         JsonNode entitySignNode = null;
         Iterator<JsonNode> signItr = signatures.elements();
-        while(signItr.hasNext()){
+        while (signItr.hasNext()) {
             JsonNode signNode = signItr.next();
-            if(signNode.get(Constants.SIGNATURE_FOR).asText().equals(registryRootEntityType) &&
-                    null == signNode.get(uuidPropertyName)){
+            if (signNode.get(Constants.SIGNATURE_FOR).asText().equals(registryRootEntityType) &&
+                    null == signNode.get(uuidPropertyName)) {
                 entitySignNode = signNode;
                 break;
             }
@@ -313,7 +317,9 @@ public class RegistryServiceImpl implements RegistryService {
         return entitySignNode;
     }
 
-    /** Merging input json node to DB entity node, this method in turn calls mergeDestinationWithSourceNode method for deep copy of properties and objects
+    /**
+     * Merging input json node to DB entity node, this method in turn calls mergeDestinationWithSourceNode method for deep copy of properties and objects
+     *
      * @param entityNode
      * @param rootNode
      * @return
@@ -328,35 +334,35 @@ public class RegistryServiceImpl implements RegistryService {
 
     /**
      * @param propKeyValue - user given entity node
-     * @param entityNode - read from the database
-     * @param entityKey - user given entity key (wrapper node supplied by the user)
+     * @param entityNode   - read from the database
+     * @param entityKey    - user given entity key (wrapper node supplied by the user)
      */
     private void mergeDestinationWithSourceNode(ObjectNode propKeyValue, ObjectNode entityNode, String entityKey) {
         ObjectNode subEntity = (ObjectNode) entityNode.findValue(entityKey);
         propKeyValue.fields().forEachRemaining(prop -> {
             String propKey = prop.getKey();
             JsonNode propValue = prop.getValue();
-            if(propValue.isValueNode() && !uuidPropertyName.equalsIgnoreCase(propKey)){
-                subEntity.set(propKey,propValue);
-            } else if(propValue.isObject()){
-                if(subEntity.get(propKey).size() == 0) {
-                    subEntity.set(propKey,propValue);
-                } else if(subEntity.get(propKey).isObject()) {
+            if (propValue.isValueNode() && !uuidPropertyName.equalsIgnoreCase(propKey)) {
+                subEntity.set(propKey, propValue);
+            } else if (propValue.isObject()) {
+                if (subEntity.get(propKey).size() == 0) {
+                    subEntity.set(propKey, propValue);
+                } else if (subEntity.get(propKey).isObject()) {
                     //As of now filtering only @type
                     List<String> filterKeys = Arrays.asList(Constants.JsonldConstants.TYPE);
                     //removing keys with name osid and type
-                    JSONUtil.removeNodes((ObjectNode) subEntity.get(propKey),filterKeys);
+                    JSONUtil.removeNodes((ObjectNode) subEntity.get(propKey), filterKeys);
                     //constructNewNodeToParent
-                    subEntity.set(propKey,propValue);
+                    subEntity.set(propKey, propValue);
                 }
-            } else if(subEntity.get(propKey).isArray()){
+            } else if (subEntity.get(propKey).isArray()) {
                 List<String> filterKeys = Arrays.asList(Constants.JsonldConstants.TYPE);
                 propValue.forEach(arrayElement -> {
                     //removing keys with name @type
-                    JSONUtil.removeNodes((ObjectNode) arrayElement,filterKeys);
+                    JSONUtil.removeNodes((ObjectNode) arrayElement, filterKeys);
                 });
                 //constructNewNodeToParent
-                subEntity.set(propKey,propValue);
+                subEntity.set(propKey, propValue);
             }
         });
     }

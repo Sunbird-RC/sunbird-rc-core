@@ -88,6 +88,10 @@ public class Constants {
 	public enum Direction {	
 		IN, OUT
 	}
+	
+	public enum SchemaType {
+	    JSON
+	}
 
 	public static class JsonldConstants {
 		public static final String CONTEXT = "@context";

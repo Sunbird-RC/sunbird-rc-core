@@ -7,17 +7,23 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.util.Definition;
+import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.RefLabelHelper;
 import io.opensaber.registry.util.TypePropertyHelper;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
 
 /**
  * Given a vertex from the graph, constructs a json out it
@@ -26,17 +32,17 @@ public class VertexReader {
     private Graph graph;
     private ReadConfigurator configurator;
     private String uuidPropertyName;
-    private List<String> privatePropertyList;
     private HashMap<String, ObjectNode> uuidNodeMap = new HashMap<>();
     private String entityType;
+    private DefinitionsManager definitionsManager;
 
     private Logger logger = LoggerFactory.getLogger(VertexReader.class);
 
-    public VertexReader(Graph graph, ReadConfigurator configurator, String uuidPropertyName, List<String> pvtPropertyList) {
+    public VertexReader(Graph graph, ReadConfigurator configurator, String uuidPropertyName, DefinitionsManager definitionsManager) {
         this.graph = graph;
         this.configurator = configurator;
         this.uuidPropertyName = uuidPropertyName;
-        this.privatePropertyList = pvtPropertyList;
+        this.definitionsManager = definitionsManager;
     }
 
     /**
@@ -49,6 +55,13 @@ public class VertexReader {
     public ObjectNode constructObject(Vertex currVertex) {
 
         ObjectNode contentNode = JsonNodeFactory.instance.objectNode();
+        String entityType = currVertex.property(TypePropertyHelper.getTypeName()).value().toString();
+        Definition definition = definitionsManager.getDefinition(entityType);
+        List<String> privatePropertyList = new ArrayList<>();
+        if(definition != null){
+            privatePropertyList = definition.getOsSchemaConfiguration().getPrivateFields();
+        }
+
         Iterator<VertexProperty<Object>> properties = currVertex.properties();
         while (properties.hasNext()) {
             VertexProperty<Object> prop = properties.next();

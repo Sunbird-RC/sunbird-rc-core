@@ -7,6 +7,12 @@
       "$ref": "#/definitions/Signature"
     }
   },
+  "title":"signatures",
+  "_osConfig": {
+         "osComment": "Refer to _osconfig $comment section of Teacher.json",
+         "privateFields": [],
+         "signedFields": []
+  },
   "definitions": {
     "Signature": {
       "$id": "#/properties/Signature",

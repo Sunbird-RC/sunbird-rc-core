@@ -1,7 +1,5 @@
 package io.opensaber.registry.config;
 
-import static io.opensaber.registry.schema.configurator.SchemaType.JSON;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -12,18 +10,14 @@ import io.opensaber.registry.authorization.KeyCloakServiceImpl;
 import io.opensaber.registry.exception.CustomException;
 import io.opensaber.registry.exception.CustomExceptionHandler;
 import io.opensaber.registry.frame.FrameContext;
-import io.opensaber.registry.frame.FrameEntity;
-import io.opensaber.registry.frame.FrameEntityImpl;
 import io.opensaber.registry.interceptor.AuthorizationInterceptor;
 import io.opensaber.registry.interceptor.RequestIdValidationInterceptor;
 import io.opensaber.registry.interceptor.ValidationInterceptor;
 import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.Constants.SchemaType;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.schema.configurator.ISchemaConfigurator;
-import io.opensaber.registry.schema.configurator.JsonSchemaConfigurator;
-import io.opensaber.registry.schema.configurator.SchemaType;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.shard.IShardAdvisor;
 import io.opensaber.registry.sink.shard.ShardAdvisor;
@@ -93,7 +87,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${validation.enabled}")
 	private boolean validationEnabled = true;
-
+	
 	@Bean
 	public ObjectMapper objectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -112,34 +106,29 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public FrameEntity frameEntity() {
-		return new FrameEntityImpl();
-	}
-
-	@Bean
 	public FrameContext frameContext() {
 		return new FrameContext(frameFile, registryContextBase);
 	}
+	
+    /**
+     * Gets the type of validation configured in the application.yml
+     * 
+     * @return
+     * @throws IllegalArgumentException
+     *             when value is not in known SchemaType enum
+     */
+    @Bean
+    public SchemaType getValidationType() throws IllegalArgumentException {
+        String validationMechanism = validationType.toUpperCase();
+        SchemaType st = SchemaType.valueOf(validationMechanism);
 
-	/**
-	 * Gets the type of validation configured in the application.yml
-	 * 
-	 * @return
-	 * @throws IllegalArgumentException
-	 *             when value is not in known SchemaType enum
-	 */
-	@Bean
-	public SchemaType getValidationType() throws IllegalArgumentException {
-		String validationMechanism = validationType.toUpperCase();
-		SchemaType st = SchemaType.valueOf(validationMechanism);
-
-		return st;
-	}
+        return st;
+    }
 
 	@Bean
 	public Json2LdTransformer json2LdTransformer() {
 		String domain = frameContext().getDomain();
-		return new Json2LdTransformer(frameEntity().getContent(), domain);
+		return new Json2LdTransformer(frameContext().getContent(), domain);
 	}
 
 	@Bean
@@ -182,55 +171,18 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new AuthorizationFilter(new KeyCloakServiceImpl());
 	}
 
-	@Bean
-	public IValidate validationServiceImpl() throws IOException, CustomException {
-		IValidate validator = null;
-		// depends on input type,we need to implement validation
-		if (getValidationType() == JSON) {
-			validator = new JsonValidationServiceImpl();
-		} else {
-			logger.error("Fatal - not a known validator mentioned in the application configuration.");
-		}
-		return validator;
-	}
-
-	/**
-	 * Reads the application configuration for validation type to generate an
-	 * appropriate schemaConfigurator object
-	 * 
-	 * @return
-	 * @throws CustomException
-	 * @throws IOException
-	 */
-	@Bean
-	public ISchemaConfigurator schemaConfigurator() throws CustomException, IOException {
-		SchemaType schemaType = SchemaType.valueOf(validationType.toUpperCase());
-		ISchemaConfigurator schemaConfigurator = null;
-		String schemaFile = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
-		if (schemaFile == null) {
-			throw new IOException(Constants.SCHEMA_CONFIGURATION_MISSING);
-		}
-		switch (schemaType) {
-		case JSON:
-			schemaConfigurator = jsonSchemaConfigurator();
-			break;
-		default:
-			schemaConfigurator = null;
-			break;
-		}
-
-		return schemaConfigurator;
-	}
-
-	@Bean
-	public ISchemaConfigurator jsonSchemaConfigurator() throws CustomException, IOException {
-		String schemaFile = environment.getProperty(Constants.FIELD_CONFIG_SCEHEMA_FILE);
-		if (schemaFile == null) {
-			throw new CustomException(Constants.SCHEMA_CONFIGURATION_MISSING);
-		}
-		return new JsonSchemaConfigurator(schemaFile);
-	}
-
+    @Bean
+    public IValidate validationServiceImpl() throws IOException, CustomException {
+        IValidate validator = null;
+        // depends on input type,we need to implement validation
+        if (getValidationType() == SchemaType.JSON) {
+            validator = new JsonValidationServiceImpl();
+        } else {
+            logger.error("Fatal - not a known validator mentioned in the application configuration.");
+        }
+        return validator;
+    }
+    
 	@Bean
 	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 	public AuditRecord auditRecord() {
