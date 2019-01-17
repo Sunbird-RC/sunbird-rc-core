@@ -1,30 +1,34 @@
 package io.opensaber.registry.util;
 
-import io.opensaber.registry.dao.RegistryDaoImpl;
+import io.opensaber.registry.dao.VertexWriter;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
 
 @Component("entityParenter")
 public class EntityParenter {
     private static Logger logger = LoggerFactory.getLogger(EntityParenter.class);
 
+    @Value("${database.uuidPropertyName}")
+    public String uuidPropertyName;
+    
     @Autowired
     private DBProviderFactory dbProviderFactory;
-
-    @Autowired
-    private RegistryDaoImpl tpGraphMain;
 
     private DefinitionsManager definitionsManager;
     private DBConnectionInfoMgr dbConnectionInfoMgr;
@@ -67,7 +71,8 @@ public class EntityParenter {
                         defintionNames.forEach(defintionName -> {
                             String parentLabel = ParentLabelGenerator.getLabel(defintionName);
                             parentLabels.add(parentLabel);
-                            Vertex v = tpGraphMain.ensureParentVertex(graph, parentLabel);
+                            VertexWriter vertexWriter = new VertexWriter(uuidPropertyName, dbProvider);
+                            Vertex v = vertexWriter.ensureParentVertex(graph, parentLabel);
 
                             ShardParentInfo shardParentInfo = new ShardParentInfo(defintionName, v);
                             shardParentInfo.setUuid(v.id().toString());

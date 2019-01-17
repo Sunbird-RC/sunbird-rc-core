@@ -3,9 +3,16 @@ package io.opensaber.registry.dao;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.sink.shard.Shard;
+import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.RefLabelHelper;
 import io.opensaber.registry.util.TypePropertyHelper;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.apache.tinkerpop.gremlin.process.traversal.P;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -13,40 +20,62 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
-
 public class VertexWriter {
     private String uuidPropertyName;
-    private Shard shard;
+    private DatabaseProvider databaseProvider;
     private String parentOSid;
 
     private Logger logger = LoggerFactory.getLogger(VertexWriter.class);
 
-    public VertexWriter(String uuidPropertyName, Shard shard) {
+    public VertexWriter(String uuidPropertyName, DatabaseProvider databaseProvider) {
         this.uuidPropertyName = uuidPropertyName;
-        this.shard = shard;
+        this.databaseProvider = databaseProvider;
     }
 
+    /**
+     * Ensures a parent vertex existence at the exit of this function
+     *
+     * @param graph
+     * @param parentLabel
+     * @return
+     */
+    public Vertex ensureParentVertex(Graph graph, String parentLabel) {
+        Vertex parentVertex = null;
+        P<String> lblPredicate = P.eq(parentLabel);
 
+        GraphTraversalSource gtRootTraversal = graph.traversal().clone();
+        Iterator<Vertex> iterVertex = gtRootTraversal.V().hasLabel(lblPredicate);
+        if (!iterVertex.hasNext()) {
+            parentVertex = createVertex(graph, parentLabel);
+            logger.info("Parent label {} created {}", parentLabel, parentVertex.id().toString());
+        } else {
+            parentVertex = iterVertex.next();
+            logger.info("Parent label {} already existing {}", parentLabel, parentVertex.id().toString());
+        }
+
+        return parentVertex;
+    }
+    
     public Vertex createVertex(Graph graph, String label) {
         Vertex vertex = graph.addVertex(label);
 
         vertex.property(TypePropertyHelper.getTypeName(), label);
         try {
-            UUID uuid = UUID.fromString(vertex.id().toString());
+            UUID.fromString(vertex.id().toString());
         } catch (IllegalArgumentException e) {
             // Must be not a neo4j store. Create an explicit osid property.
-            // Note this will be OS unique record, but the database provider might choose to use only
+            // Note this will be OS unique record, but the database provider
+            // might choose to use only
             // id field.
-            vertex.property(uuidPropertyName, shard.getDatabaseProvider().generateId(vertex));
+            vertex.property(uuidPropertyName, databaseProvider.generateId(vertex));
         }
 
         return vertex;
     }
 
     /**
-     * Writes an array into the database. For each array item, if it is an object
-     * creates/populates a new vertex/table and stores the reference
+     * Writes an array into the database. For each array item, if it is an
+     * object creates/populates a new vertex/table and stores the reference
      *
      * @param graph
      * @param vertex
@@ -76,7 +105,7 @@ public class VertexWriter {
             blankNode.property(Constants.ROOT_KEYWORD, parentOSid);
         }
 
-        for(JsonNode jsonNode : arrayNode) {
+        for (JsonNode jsonNode : arrayNode) {
             if (jsonNode.isObject()) {
                 Vertex createdV = processNode(graph, entryKey, jsonNode);
                 createdV.property(Constants.ROOT_KEYWORD, parentOSid);
@@ -117,7 +146,8 @@ public class VertexWriter {
                 // Recursive calls
                 Vertex v = processNode(graph, entry.getKey(), entryValue);
                 addEdge(entry.getKey(), vertex, v);
-                //String idToSet = databaseProviderWrapper.getDatabaseProvider().generateId(v);
+                // String idToSet =
+                // databaseProviderWrapper.getDatabaseProvider().generateId(v);
                 vertex.property(RefLabelHelper.getLabel(entry.getKey(), uuidPropertyName), v.id().toString());
                 v.property(Constants.ROOT_KEYWORD, parentOSid);
 
@@ -133,8 +163,10 @@ public class VertexWriter {
      * Adds an edge between two vertices
      *
      * @param label
-     * @param v1    the source
-     * @param v2    the target
+     * @param v1
+     *            the source
+     * @param v2
+     *            the target
      * @return
      */
     public Edge addEdge(String label, Vertex v1, Vertex v2) {
@@ -142,8 +174,8 @@ public class VertexWriter {
     }
 
     /**
-     * Fetches the parent. In the current use cases, we expect only one
-     * top level parent is passed.
+     * Fetches the parent. In the current use cases, we expect only one top
+     * level parent is passed.
      *
      * @param node
      * @return
@@ -151,7 +183,6 @@ public class VertexWriter {
     private String getParentName(JsonNode node) {
         return node.fieldNames().next();
     }
-
 
     private void setParentId(String id) {
         this.parentOSid = id;
@@ -170,7 +201,8 @@ public class VertexWriter {
         while (entryIterator.hasNext()) {
             Map.Entry<String, JsonNode> entry = entryIterator.next();
 
-            // It is expected that node is wrapped under a root, which is the parent name/definition
+            // It is expected that node is wrapped under a root, which is the
+            // parent name/definition
             if (entry.getValue().isObject()) {
                 resultVertex = processNode(graph, entry.getKey(), entry.getValue());
             }
