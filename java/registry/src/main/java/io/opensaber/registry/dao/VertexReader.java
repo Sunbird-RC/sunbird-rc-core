@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * Given a vertex from the graph, constructs a json out it
  */
 public class VertexReader {
+    private DatabaseProvider databaseProvider;
     private Graph graph;
     private ReadConfigurator configurator;
     private String uuidPropertyName;
@@ -40,8 +42,9 @@ public class VertexReader {
 
     private Logger logger = LoggerFactory.getLogger(VertexReader.class);
 
-    public VertexReader(Graph graph, ReadConfigurator configurator, String uuidPropertyName,
+    public VertexReader(DatabaseProvider databaseProvider, Graph graph, ReadConfigurator configurator, String uuidPropertyName,
             DefinitionsManager definitionsManager) {
+        this.databaseProvider = databaseProvider;
         this.graph = graph;
         this.configurator = configurator;
         this.uuidPropertyName = uuidPropertyName;
@@ -132,8 +135,8 @@ public class VertexReader {
             }
         }
 
-        // Here we set the id
-        contentNode.put(uuidPropertyName, currVertex.id().toString());
+        // Here we set the id - in neo4j this is must.
+        contentNode.put(uuidPropertyName, databaseProvider.getId(currVertex));
 
         return contentNode;
     }
@@ -298,6 +301,35 @@ public class VertexReader {
     }
 
     /**
+     * Neo4j supports custom ids and so we can directly query vertex with id - without client side filtering.
+     * SqlG does not support custom id, but the result is direct from the database without client side filtering
+     *      unlike Neo4j.
+     * @param osid the osid of vertex to be loaded
+     * @return the vertex associated with osid passed
+     */
+    private Vertex getRootVertex(String osid) {
+        Vertex rootVertex = null;
+        Iterator<Vertex> itrV = null;
+        switch (databaseProvider.getProvider()) {
+            case NEO4J:
+                itrV = graph.vertices(osid);
+                break;
+            case SQLG:
+                itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
+                break;
+            default:
+                itrV = graph.vertices(osid);
+                break;
+        }
+
+        if (itrV.hasNext()) {
+            rootVertex = itrV.next();
+        }
+
+        return rootVertex;
+    }
+
+    /**
      * Hits the database to read contents
      *
      * @param osid
@@ -306,11 +338,10 @@ public class VertexReader {
      * @throws Exception
      */
     public JsonNode read(String osid) throws Exception {
-        Iterator<Vertex> itrV = graph.vertices(osid);
-        if (!itrV.hasNext()) {
+        Vertex rootVertex = getRootVertex(osid);
+        if (null == rootVertex) {
             throw new Exception("Invalid id");
         }
-        Vertex rootVertex = itrV.next();
 
         int currLevel = 0;
         if (rootVertex.property(Constants.STATUS_KEYWORD).isPresent()

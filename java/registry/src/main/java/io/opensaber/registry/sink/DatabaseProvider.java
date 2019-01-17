@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 public abstract class DatabaseProvider {
+    private Constants.GraphDatabaseProvider provider;
     private String uuidPropertyName;
     private Optional<Boolean> supportsTransaction = Optional.empty();
 
@@ -146,7 +147,15 @@ public abstract class DatabaseProvider {
         return uuidPropertyName;
     }
 
-    public void setUuidPropertyName(String uuidPropertyName) {
+    protected void setUuidPropertyName(String uuidPropertyName) {
         this.uuidPropertyName = uuidPropertyName;
+    }
+
+    public Constants.GraphDatabaseProvider getProvider() {
+        return this.provider;
+    }
+
+    protected void setProvider(Constants.GraphDatabaseProvider provider) {
+        this.provider = provider;
     }
 }

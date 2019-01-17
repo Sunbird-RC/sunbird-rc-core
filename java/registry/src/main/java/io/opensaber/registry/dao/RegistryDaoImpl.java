@@ -75,7 +75,7 @@ public class RegistryDaoImpl implements IRegistryDao {
      */
     public JsonNode getEntity(Graph graph, String uuid, ReadConfigurator readConfigurator) throws Exception {
 
-        VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, definitionsManager);
+        VertexReader vr = new VertexReader(shard.getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
         JsonNode result = vr.read(uuid);
 
         if (!shard.getShardLabel().isEmpty()) {
@@ -90,7 +90,7 @@ public class RegistryDaoImpl implements IRegistryDao {
 
     public JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator) {
 
-        VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, definitionsManager);
+        VertexReader vr = new VertexReader(shard.getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
         JsonNode result = vr.constructObject(vertex);
 
         if (!shard.getShardLabel().isEmpty()) {

@@ -1,5 +1,6 @@
 package io.opensaber.registry.sink;
 
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfo;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
@@ -22,6 +23,7 @@ public class SqlgProvider extends DatabaseProvider {
 		config.setProperty("jdbc.url", connectionInfo.getUri());
 		config.setProperty("jdbc.username", connectionInfo.getUsername());
 		config.setProperty("jdbc.password", connectionInfo.getPassword());
+		setProvider(Constants.GraphDatabaseProvider.SQLG);
 		setUuidPropertyName(uuidPropertyName);
 		graph = SqlgGraph.open(config);
 		customGraph = new OSGraph(graph, false);

@@ -209,19 +209,16 @@ public class RegistryServiceImpl implements RegistryService {
         if (encryptionEnabled) {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
+
         JsonNode childElementNode = rootNode.elements().next();
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         ReadConfigurator readConfigurator = new ReadConfigurator();
-        if (signatureEnabled) {
-            readConfigurator.setIncludeSignatures(true);
-        } else {
-            readConfigurator.setIncludeSignatures(false);
-        }
+        readConfigurator.setIncludeSignatures(signatureEnabled);
 
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             Transaction tx = databaseProvider.startTransaction(graph);
-            VertexReader vr = new VertexReader(graph, readConfigurator, uuidPropertyName, definitionsManager);
+            VertexReader vr = new VertexReader(databaseProvider, graph, readConfigurator, uuidPropertyName, definitionsManager);
             String entityNodeType;
 
             if (null != tx) {
