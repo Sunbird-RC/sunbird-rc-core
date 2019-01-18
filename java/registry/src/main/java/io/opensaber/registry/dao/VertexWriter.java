@@ -195,7 +195,6 @@ public class VertexWriter {
         Iterator<Map.Entry<String, JsonNode>> entryIterator = node.fields();
         while (entryIterator.hasNext()) {
             Map.Entry<String, JsonNode> entry = entryIterator.next();
-
             // It is expected that node is wrapped under a root, which is the
             // parent name/definition
             if (entry.getValue().isObject()) {
