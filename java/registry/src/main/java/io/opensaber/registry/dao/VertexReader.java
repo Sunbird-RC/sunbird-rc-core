@@ -199,6 +199,10 @@ public class VertexReader {
         int tempCurrLevel = currLevel;
         while (otherVertices.hasNext()) {
             Vertex currVertex = otherVertices.next();
+            if(currVertex.property(Constants.STATUS_KEYWORD).isPresent() &&
+                    currVertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE)){
+                continue;
+            }
             VertexProperty internalTypeProp = currVertex.property(Constants.INTERNAL_TYPE_KEYWORD);
             String internalType = internalTypeProp.isPresent() ? internalTypeProp.value().toString() : "";
 
@@ -268,6 +272,7 @@ public class VertexReader {
                 if (temp == null) {
                     // No node loaded for this.
                     // No action required.
+                    entityNode.remove(field);
                 } else if (!isArray) {
                     logger.debug("Field {} Not an array type", field);
                     entityNode.setAll(uuidNodeMap.get(uuidVal));
@@ -292,6 +297,9 @@ public class VertexReader {
             } else if (entry.isObject()) {
                 logger.debug("Field {} is an object. Expanding further.", entry);
                 ArrayNode expandChildObject = expandChildObject((ObjectNode) entry);
+                if(expandChildObject.size() == 0 && entityNode.get(field).size() == 0){
+                    entityNode.remove(field);
+                }
                 if (expandChildObject != null && expandChildObject.size() > 0) {
                     entityNode.set(field, expandChildObject);
                 }
