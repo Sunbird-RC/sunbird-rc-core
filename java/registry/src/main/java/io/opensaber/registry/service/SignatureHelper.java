@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.registry.exception.SignatureException;
 import io.opensaber.registry.middleware.util.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,10 @@ public class SignatureHelper {
         Map<String, Object> signMap = (Map<String, Object>) signatureService.sign(signReq);
 
         String entityType = rootNode.fieldNames().next();
-        mergeSign(entityType, rootNode.get(entityType).get(Constants.SIGNATURES_STR), signMap);
+        ObjectNode entityNode = (ObjectNode) rootNode.get(entityType);
+        JsonNode signNode = entityNode.get(Constants.SIGNATURES_STR);
+        signNode = mergeSign(entityType, signNode, signMap);
+        entityNode.set(Constants.SIGNATURES_STR,signNode);
         return signedRoot;
     }
 
@@ -44,7 +48,7 @@ public class SignatureHelper {
      * @param signNode
      * @param signMap
      */
-    private void mergeSign(String entityType, JsonNode signNode, Map<String, Object> signMap) {
+    private ArrayNode mergeSign(String entityType, JsonNode signNode, Map<String, Object> signMap) {
         ArrayNode parentSignNode;
         if(signNode != null && signNode.isArray()){
             parentSignNode = (ArrayNode) signNode;
@@ -60,6 +64,8 @@ public class SignatureHelper {
         entitySignMap.put(Constants.SIGN_NONCE, "");
         JsonNode entitySignNode = objectMapper.convertValue(entitySignMap, JsonNode.class);
         parentSignNode.add(entitySignNode);
+        return parentSignNode;
     }
+
 
 }
