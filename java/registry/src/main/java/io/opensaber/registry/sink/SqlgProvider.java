@@ -2,15 +2,20 @@ package io.opensaber.registry.sink;
 
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfo;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.umlg.sqlg.structure.SqlgGraph;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import org.umlg.sqlg.structure.topology.Index;
+import org.umlg.sqlg.structure.topology.IndexType;
+import org.umlg.sqlg.structure.topology.PropertyColumn;
+import org.umlg.sqlg.structure.topology.VertexLabel;
 
 public class SqlgProvider extends DatabaseProvider {
 
@@ -52,5 +57,32 @@ public class SqlgProvider extends DatabaseProvider {
 	@Override
 	public String getId(Vertex vertex) {
 		return (String) vertex.property(getUuidPropertyName()).value();
+	}
+	
+	@Override
+	public void createIndex(String label, List<String> propertyNames){	  
+	    createIndexByIndexType(IndexType.NON_UNIQUE, label, propertyNames);
+	}
+	
+	@Override
+	public void createUniqueIndex(String label, List<String> propertyNames){
+	    createIndexByIndexType(IndexType.UNIQUE, label, propertyNames);
+	}
+	/**
+	 * creates sqlg index for a given index type(unique/non-unique)
+	 * @param indexType
+	 * @param label
+	 * @param propertyNames
+	 */
+	private void createIndexByIndexType(IndexType indexType, String label, List<String> propertyNames){
+        VertexLabel vertexLabel = graph.getTopology().ensureVertexLabelExist(label);  
+        List<PropertyColumn> properties = new ArrayList<>();
+        for (String propertyName : propertyNames) {
+            properties.add(vertexLabel.getProperty(propertyName).get());
+        }
+        if(properties.size()>0){
+            Index index = vertexLabel.ensureIndexExists(indexType, properties);
+            logger.info(indexType + "index created for " + label + " - "+index.getName());
+        }
 	}
 }

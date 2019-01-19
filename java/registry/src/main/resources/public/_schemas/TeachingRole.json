@@ -7,10 +7,6 @@
     }
   },
   "title":"teachingRole",
-  "_osConfig": {
-         "osComment": "Refer to _osconfig $comment section of Teacher.json",
-         "privateFields": []
-  },
   "required": [
     "teachingRole"
   ],
@@ -58,5 +54,9 @@
         }
       }
     }
+  },
+  "_osConfig": {
+         "osComment": "Refer to _osconfig $comment section of Teacher.json",
+         "privateFields": []
   }
 }

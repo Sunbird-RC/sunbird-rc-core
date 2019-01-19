@@ -17,6 +17,14 @@ public class OSSchemaConfiguration {
      * Holds field name(s) to be used for signature
      */
     private List<String> signedFields =  new ArrayList<>();
+    /**
+     * Holds field name(s) to be used for index
+     */
+    private List<String> indexFields =  new ArrayList<>();
+    /**
+     * Holds field name(s) to be used for unique index
+     */
+    private List<String> uniqueIndexFields =  new ArrayList<>();
 
     public List<String> getPrivateFields() {
         return privateFields;
@@ -33,5 +41,22 @@ public class OSSchemaConfiguration {
     public void setSignedFields(List<String> signedFields) {
         this.signedFields = signedFields;
     }
+
+    public List<String> getIndexFields() {
+        return indexFields;
+    }
+
+    public void setIndexFields(List<String> indexFields) {
+        this.indexFields = indexFields;
+    }
+
+    public List<String> getUniqueIndexFields() {
+        return uniqueIndexFields;
+    }
+
+    public void setUniqueIndexFields(List<String> uniqueIndexFields) {
+        this.uniqueIndexFields = uniqueIndexFields;
+    }
+    
     
 }

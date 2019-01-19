@@ -7,11 +7,6 @@
     }
   },
   "title":"nonTeachingAssignments",
-  "_osConfig": {
-         "osComment": "Refer to _osconfig $comment section of Teacher.json",
-         "privateFields": [],
-         "signedFields": []
-  },
   "required": [
     "nonTeachingAssignments"
   ],
@@ -29,5 +24,10 @@
         }
       }
     }
+  },
+  "_osConfig": {
+         "osComment": "Refer to _osconfig $comment section of Teacher.json",
+         "privateFields": [],
+         "signedFields": []
   }
 }

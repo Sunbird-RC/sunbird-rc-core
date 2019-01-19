@@ -1,10 +1,9 @@
 package io.opensaber.registry.sink;
 
 import io.opensaber.registry.middleware.util.Constants;
-
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
@@ -13,7 +12,6 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 public abstract class DatabaseProvider {
     private Constants.GraphDatabaseProvider provider;
@@ -150,7 +148,20 @@ public abstract class DatabaseProvider {
     protected void setUuidPropertyName(String uuidPropertyName) {
         this.uuidPropertyName = uuidPropertyName;
     }
-
+   
+    /**
+     * Creates index
+     */
+    public void createIndex(String label, List<String> propertyNames){
+        //Does nothing, suppose to be overridden by extended classes.
+    }
+    /**
+     * Creates unique index
+     */
+    public void createUniqueIndex(String label, List<String> propertyNames){
+        //Does nothing, suppose to be overridden by extended classes.
+    }
+        
     public Constants.GraphDatabaseProvider getProvider() {
         return this.provider;
     }

@@ -10,13 +10,6 @@
     "Teacher"
   ],
   "title":"Teacher",
-  "_osConfig": {
-         "osComment": ["This section contains the OpenSABER specific configuration information", 
-                      "privateFields: Optional; list of field names to be encrypted and stored in database", 
-                      "signedFields: Optional; list of field names that must be pre-signed"],                     
-         "privateFields": ["nationalIdentifier", "teacherCode", "birthDate"],
-         "signedFields": ["serialNum"]
-  },
   "definitions": {
     "Teacher": {
       "$id": "#/properties/Teacher",
@@ -146,5 +139,14 @@
         }
       }
     }
+  },
+  "_osConfig": {
+         "osComment": ["This section contains the OpenSABER specific configuration information", 
+                      "privateFields: Optional; list of field names to be encrypted and stored in database", 
+                      "signedFields: Optional; list of field names that must be pre-signed"],                     
+         "privateFields": ["nationalIdentifier", "teacherCode", "birthDate"],
+         "signedFields": ["serialNum"],
+         "indexFields": ["nationalIdentifier", "serialNum"],
+         "uniqueIndexFields": ["birthDate"]
   }
 }

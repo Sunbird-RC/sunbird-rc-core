@@ -315,7 +315,7 @@ public class VertexReader {
      * @param osid the osid of vertex to be loaded
      * @return the vertex associated with osid passed
      */
-    private Vertex getRootVertex(String osid) {
+    public Vertex getVertex(String osid) {
         Vertex rootVertex = null;
         Iterator<Vertex> itrV = null;
         switch (databaseProvider.getProvider()) {
@@ -346,7 +346,7 @@ public class VertexReader {
      * @throws Exception
      */
     public JsonNode read(String osid) throws Exception {
-        Vertex rootVertex = getRootVertex(osid);
+        Vertex rootVertex = getVertex(osid);
         if (null == rootVertex) {
             throw new Exception("Invalid id");
         }
