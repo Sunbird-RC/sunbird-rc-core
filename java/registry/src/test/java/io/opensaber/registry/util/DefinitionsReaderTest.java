@@ -25,7 +25,7 @@ public class DefinitionsReaderTest {
     public void whenAtLeastOneDefinitionPresent_Then_ok() {
         Resource[] resources = null;
         try {
-            resources = definitionsReader.getResources("classpath:public/_schemas/*.json");
+            resources = definitionsReader.getResources(Constants.RESOURCE_LOCATION);
         } catch (IOException ioe) {
             assertFalse(true);
         }

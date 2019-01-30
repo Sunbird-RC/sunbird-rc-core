@@ -28,7 +28,7 @@ public class DefinitionsManagerTest {
         boolean flag = false;
         try {
             int nDefinitions = definitionsManager.getAllKnownDefinitions().size();
-            int nResources = definitionsReader.getResources("classpath:public/_schemas/*.json").length;
+            int nResources = definitionsReader.getResources(Constants.RESOURCE_LOCATION).length;
             flag = (nDefinitions == nResources);
         } catch (IOException ioe) {
 

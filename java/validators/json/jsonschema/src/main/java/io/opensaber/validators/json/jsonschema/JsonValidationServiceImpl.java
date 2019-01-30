@@ -1,42 +1,21 @@
 package io.opensaber.validators.json.jsonschema;
 
-import java.io.IOException;
-import java.io.InputStream;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.validators.IValidate;
 import java.util.HashMap;
 import java.util.Map;
-
-import io.opensaber.pojos.APIMessage;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
-
-
-import io.opensaber.pojos.ValidationResponse;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.validators.IValidate;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.mail.MailProperties;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.web.context.support.ServletContextResource;
-
-import javax.servlet.ServletContext;
 
 public class JsonValidationServiceImpl implements IValidate {
 	private static Logger logger = LoggerFactory.getLogger(JsonValidationServiceImpl.class);
 
-	private ResourceLoader resourceLoader;
 	private Map<String, Schema> entitySchemaMap = new HashMap<>();
-
-	@Autowired
-	public void setResourceLoader(ResourceLoader resourceLoader) {
-		this.resourceLoader = resourceLoader;
-	}
+	private Map<String, String> definitionMap = new HashMap<>();;
 
 	private Schema getEntitySchema(String entityType) throws MiddlewareHaltException {
 
@@ -45,16 +24,16 @@ public class JsonValidationServiceImpl implements IValidate {
 		} else {
 			Schema schema;
 			try {
-				Resource resource = resourceLoader.getResource("classpath:/public/_schemas/" + entityType + ".json");
-				InputStream schemaStream = resource.getInputStream();
+				String definitionContent = definitionMap.get(entityType);
+                JSONObject rawSchema = new JSONObject(definitionContent);
 
-				JSONObject rawSchema = new JSONObject(new JSONTokener(schemaStream));
 				SchemaLoader schemaLoader = SchemaLoader.builder().schemaJson(rawSchema).draftV7Support()
 						.resolutionScope("http://localhost:8080/_schemas/").build();
 				schema = schemaLoader.load().build();
 				entitySchemaMap.put(entityType, schema);
-			} catch (IOException ioe) {
-				throw new MiddlewareHaltException("can't validate");
+			} catch (Exception ioe) {
+			    ioe.printStackTrace();
+				throw new MiddlewareHaltException("can't validate, "+ entityType + ": schema has a problem!");
 			}
 			return schema;
 		}
@@ -77,5 +56,17 @@ public class JsonValidationServiceImpl implements IValidate {
 		}
 		return result;
 	}
+    /**
+     * Store all list of known definitions as definitionMap.
+     * Must get populated before creating the schema.
+     * 
+     * @param definitionTitle
+     * @param definitionContent
+     */
+    @Override
+    public void addDefinitions(String definitionTitle, String definitionContent) {
+        definitionMap.put(definitionTitle, definitionContent);
+       
+    }
 
 }

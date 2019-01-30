@@ -2,9 +2,10 @@ package io.opensaber.registry.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
+import io.opensaber.registry.middleware.util.Constants;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import javax.annotation.PostConstruct;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +23,6 @@ import org.springframework.stereotype.Component;
 @Component("definitionsManager")
 public class DefinitionsManager {
     private static Logger logger = LoggerFactory.getLogger(DefinitionsManager.class);
-    private final static String TITLE = "title";
 
     @Autowired
     private DefinitionsReader definitionsReader;
@@ -33,8 +34,11 @@ public class DefinitionsManager {
     @PostConstruct
     public void loadDefinition() throws Exception {
 
+        
         final ObjectMapper mapper = new ObjectMapper();
-        Resource[] resources = definitionsReader.getResources("classpath:public/_schemas/*.json");
+        Resource[] resources = definitionsReader.getResources(Constants.RESOURCE_LOCATION);
+        logger.info("Count of definitions loaded: " + resources.length);
+
         for (Resource resource : resources) {
             String jsonContent = getContent(resource);
             JsonNode jsonNode = mapper.readTree(jsonContent);
@@ -89,8 +93,10 @@ public class DefinitionsManager {
     private String getContent(Resource resource) {
         String content = null;
         try {
-            File file = resource.getFile();
-            content = new String(Files.readAllBytes(file.toPath()));
+            InputStream is = resource.getInputStream();
+            byte[] encoded = IOUtils.toByteArray(is);
+            content = new String(encoded, Charset.forName("UTF-8"));
+            
         } catch (IOException e) {
             logger.error("Cannot load resource " + resource.getFilename());
 

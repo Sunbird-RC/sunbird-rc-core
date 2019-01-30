@@ -26,6 +26,7 @@ import io.opensaber.registry.transform.Json2LdTransformer;
 import io.opensaber.registry.transform.Ld2JsonTransformer;
 import io.opensaber.registry.transform.Ld2LdTransformer;
 import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
@@ -57,6 +58,8 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 public class GenericConfiguration implements WebMvcConfigurer {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
+	@Autowired
+	private DefinitionsManager definitionsManager;
 
 	@Autowired
 	private Environment environment;
@@ -170,17 +173,22 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public Middleware authorizationFilter() {
 		return new AuthorizationFilter(new KeyCloakServiceImpl());
 	}
-
+	
     @Bean
     public IValidate validationServiceImpl() throws IOException, CustomException {
-        IValidate validator = null;
         // depends on input type,we need to implement validation
         if (getValidationType() == SchemaType.JSON) {
-            validator = new JsonValidationServiceImpl();
+            IValidate validator = new JsonValidationServiceImpl();
+            definitionsManager.getAllDefinitions().forEach(definition->{
+                logger.debug("Definition: title-" + definition.getTitle() + " , content-" + definition.getContent());
+                validator.addDefinitions(definition.getTitle(), definition.getContent());  
+            });
+            logger.info(definitionsManager.getAllDefinitions().size() + " definitions added to validator service ");
+            return validator;
         } else {
             logger.error("Fatal - not a known validator mentioned in the application configuration.");
         }
-        return validator;
+        return null; 
     }
     
 	@Bean
