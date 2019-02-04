@@ -6,11 +6,13 @@ import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.sink.shard.Shard;
-import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.EntityParenter;
+import io.opensaber.registry.util.ArrayHelper;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.RefLabelHelper;
+import io.opensaber.registry.util.EntityParenter;
+import io.opensaber.registry.util.DefinitionsManager;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -18,7 +20,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
@@ -121,21 +122,29 @@ public class RegistryDaoImpl implements IRegistryDao {
                 parseJsonObject(subEntityNode, graph, rootVertex, fieldKey, false);
             } else if (subEntityNode.isArray()) {
                 Vertex arrayNodeVertex = null;
-                if(fieldKey.equalsIgnoreCase(Constants.SIGNATURES_STR)){
-                    arrayNodeVertex = rootVertex.vertices(Direction.IN,fieldKey).next();
-                } else {
-                    arrayNodeVertex = rootVertex.vertices(Direction.OUT,fieldKey).next();
-                }
-                Set<String> osidSet = new HashSet<String>();
-                for (JsonNode arrayElementNode : subEntityNode) {
-                    if (arrayElementNode.isObject()) {
-                        String updatedOsid = parseJsonObject(arrayElementNode, graph, arrayNodeVertex, fieldKey, true);
-                        osidSet.add(updatedOsid);
+                if(subEntityNode.get(0).isObject()){
+                    if(fieldKey.equalsIgnoreCase(Constants.SIGNATURES_STR)){
+                        arrayNodeVertex = rootVertex.vertices(Direction.IN,fieldKey).next();
+                    } else {
+                        arrayNodeVertex = rootVertex.vertices(Direction.OUT,fieldKey).next();
                     }
+                    Set<String> osidSet = new HashSet<String>();
+                    for (JsonNode arrayElementNode : subEntityNode) {
+                        if (arrayElementNode.isObject()) {
+                            String updatedOsid = parseJsonObject(arrayElementNode, graph, arrayNodeVertex, fieldKey, true);
+                            osidSet.add(updatedOsid);
+                        }
+                    }
+                    osidSet = deleteVertices(graph, arrayNodeVertex, fieldKey, osidSet);
+                    arrayNodeVertex.property(RefLabelHelper.getLabel(fieldKey, uuidPropertyName), osidSet.toString());
+                } else {
+                    Set<String> valueSet = new HashSet<>();
+                    subEntityNode.forEach( textElement -> {
+                        valueSet.add(textElement.asText());
+                    });
+                    rootVertex.property(fieldKey,valueSet.toString());
                 }
-                osidSet = deleteVertices(graph, arrayNodeVertex, fieldKey, osidSet);
-                String updatedOisdValue = String.join(",", osidSet);
-                arrayNodeVertex.property(RefLabelHelper.getLabel(fieldKey, uuidPropertyName), updatedOisdValue);
+
             }
         });
 
@@ -168,15 +177,19 @@ public class RegistryDaoImpl implements IRegistryDao {
             String nodeOsidLabel = RefLabelHelper.getLabel(parentNodeLabel, uuidPropertyName);
             VertexProperty<Object> vertexProperty = rootVertex.property(nodeOsidLabel);
             if (isArrayElement && vertexProperty.isPresent()) {
-                String existingValue = (String) vertexProperty.value();
-                rootVertex.property(nodeOsidLabel, existingValue + "," + newChildVertex.id().toString());
+                String existingValue = ArrayHelper.removeSquareBraces((String) vertexProperty.value());
+                existingValue = existingValue + "," + newChildVertex.id().toString();
+                String[] newOsidArray = existingValue.split(",");
+                rootVertex.property(nodeOsidLabel, ArrayHelper.formatToString(Arrays.asList(newOsidArray)));
             } else {
                 rootVertex.property(nodeOsidLabel, newChildVertex.id().toString());
             }
             if(rootVertex.label().equalsIgnoreCase(Constants.ARRAY_NODE_KEYWORD)){
-                vertexWriter.addEdge(newChildVertex.property(Constants.SIGNATURE_FOR).value().toString(), rootVertex, newChildVertex);
-            } else {
-                vertexWriter.addEdge(parentNodeLabel, rootVertex, newChildVertex);
+                if(newChildVertex.property(Constants.SIGNATURE_FOR).isPresent()){
+                    vertexWriter.addEdge(newChildVertex.property(Constants.SIGNATURE_FOR).value().toString(), rootVertex, newChildVertex);
+                } else {
+                    vertexWriter.addEdge(parentNodeLabel, rootVertex, newChildVertex);
+                }
             }
             return newChildVertex.id().toString();
         } else {
@@ -191,8 +204,8 @@ public class RegistryDaoImpl implements IRegistryDao {
     /**
      * updates the vertex properties with given json node elements
      *
-     * @param elementNode
-     * @param vertex
+     * @param elementNode - the elementNode contains the new values
+     * @param vertex - the target vertex where the new values will be copied
      */
     private void updateProperties(JsonNode elementNode, Vertex vertex) {
         elementNode.fields().forEachRemaining(subElementNode -> {
@@ -218,7 +231,7 @@ public class RegistryDaoImpl implements IRegistryDao {
     private Set<String> deleteVertices(Graph graph, Vertex rootVertex, String label, Set<String> activeOsid) {
         String[] osidArray = null;
         VertexProperty vp = rootVertex.property(label + "_" + uuidPropertyName);
-        String osidPropValue = (String) vp.value();
+        String osidPropValue = ArrayHelper.removeSquareBraces((String) vp.value());
         if (osidPropValue.contains(",")) {
             osidArray = osidPropValue.split(",");
         } else {

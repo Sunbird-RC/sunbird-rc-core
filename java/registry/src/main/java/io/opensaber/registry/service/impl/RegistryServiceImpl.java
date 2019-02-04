@@ -445,8 +445,10 @@ public class RegistryServiceImpl implements RegistryService {
             } else if (subEntity.get(propKey).isArray()) {
                 List<String> filterKeys = Arrays.asList(Constants.JsonldConstants.TYPE);
                 propValue.forEach(arrayElement -> {
-                    // removing keys with name @type
-                    JSONUtil.removeNodes((ObjectNode) arrayElement, filterKeys);
+                    if(arrayElement.isObject()){
+                        // removing keys with name @type
+                        JSONUtil.removeNodes((ObjectNode) arrayElement, filterKeys);
+                    }
                 });
                 // constructNewNodeToParent
                 subEntity.set(propKey, propValue);

@@ -4,12 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.util.RefLabelHelper;
-import io.opensaber.registry.util.TypePropertyHelper;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import io.opensaber.registry.util.*;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Edge;
@@ -17,7 +12,13 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
+
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+
 
 public class VertexWriter {
     private String uuidPropertyName;
@@ -117,9 +118,9 @@ public class VertexWriter {
         // Set up references on a blank node.
         label = RefLabelHelper.getLabel(entryKey, uuidPropertyName);
         if (isArrayItemObject) {
-            blankNode.property(label, StringUtils.arrayToCommaDelimitedString(uidList.toArray()));
+            blankNode.property( label, ArrayHelper.formatToString(uidList));
         } else {
-            blankNode.property(entryKey, StringUtils.arrayToCommaDelimitedString(uidList.toArray()));
+            blankNode.property( entryKey, ArrayHelper.formatToString(uidList));
         }
     }
 

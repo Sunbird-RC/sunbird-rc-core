@@ -13,6 +13,8 @@ import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.RefLabelHelper;
 import io.opensaber.registry.util.TypePropertyHelper;
+import io.opensaber.registry.util.ArrayHelper;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -74,7 +77,6 @@ public class VertexReader {
      * @return
      */
     public ObjectNode constructObject(Vertex currVertex) {
-
         ObjectNode contentNode = JsonNodeFactory.instance.objectNode();
         String entityType = currVertex.property(TypePropertyHelper.getTypeName()).value().toString();
         Definition definition = definitionsManager.getDefinition(entityType);
@@ -86,6 +88,7 @@ public class VertexReader {
         Iterator<VertexProperty<Object>> properties = currVertex.properties();
         while (properties.hasNext()) {
             VertexProperty<Object> prop = properties.next();
+            String propValue = ArrayHelper.removeSquareBraces(prop.value().toString());
             if (!RefLabelHelper.isParentLabel(prop.key())) {
                 if (RefLabelHelper.isRefLabel(prop.key(), uuidPropertyName)) {
                     logger.debug("{} is a referenced entity", prop.key());
@@ -93,7 +96,7 @@ public class VertexReader {
                     // otherwise.
 
                     String refEntityName = RefLabelHelper.getRefEntityName(prop.key());
-                    String[] valueArr = prop.value().toString().split("\\s*,\\s*");
+                    String[] valueArr = propValue.split("\\s*,\\s*");
                     boolean isObjectNode = valueArr.length == 1;
 
                     ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
@@ -117,7 +120,6 @@ public class VertexReader {
                     }
 
                     if (canAdd) {
-                        String propValue = prop.value().toString();
                         if (propValue.contains(",")) {
                             ArrayNode stringArray = JsonNodeFactory.instance.arrayNode();
                             String[] valArray = propValue.split(",");
