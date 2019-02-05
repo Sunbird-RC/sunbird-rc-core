@@ -228,6 +228,7 @@ public class EntityParenter {
     private void asyncAddIndex(DatabaseProvider dbProvider, String shardId, Vertex parentVertex, Definition definition) {
         new Thread(() -> {
           try{
+                boolean createIndexSkipped = false;
                 OSGraph osGraph = dbProvider.getOSGraph();
                 Graph graph = osGraph.getGraphStore();
                 Transaction tx = dbProvider.startTransaction(graph);           
@@ -242,14 +243,24 @@ public class EntityParenter {
                     Indexer indexer = new Indexer(dbProvider);
                     indexer.setIndexFields(newIndexFields);
                     indexer.setUniqueIndexFields(newUniqueIndexFields);
-                    indexer.createIndex(graph, definition.getTitle(), parentVertex);
+                    if ((newIndexFields.size() != 0 && newIndexFields.size() != indexFields.size()) ||
+                        (newUniqueIndexFields.size() != 0 && newUniqueIndexFields.size() != indexUniqueFields.size())) {
+                        // Dont attempt create index on a fresh database
+                        indexer.createIndex(graph, definition.getTitle(), parentVertex);
+                    } else { 
+                        createIndexSkipped = true;
+                    }
                 } else {
                     logger.info("No definition found for create index");
                 }               
                 dbProvider.commitTransaction(graph, tx);
-                indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), true);
+                if (!createIndexSkipped) {
+                    indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), true);
+                }
           } catch (Exception e) {
+              logger.error(e.getMessage());
               logger.error("Failed to create index {}", definition.getTitle());
+             
           }      
         }).start();           
     }

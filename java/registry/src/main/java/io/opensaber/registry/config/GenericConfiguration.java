@@ -91,6 +91,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${validation.enabled}")
 	private boolean validationEnabled = true;
 	
+	@Autowired
+	private DBConnectionInfoMgr dbConnectionInfoMgr;
+	
 	@Bean
 	public ObjectMapper objectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -213,14 +216,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public DBConnectionInfoMgr dBConnectionInfoMgr() {
-		return new DBConnectionInfoMgr();
-	}
-
-	@Bean
 	public IShardAdvisor shardAdvisor() {		
 		ShardAdvisor shardAdvisor = new ShardAdvisor();
-		return shardAdvisor.getInstance(dBConnectionInfoMgr().getShardAdvisorClassName());
+		return shardAdvisor.getInstance(dbConnectionInfoMgr.getShardAdvisorClassName());
 	}
 
 	@Bean
