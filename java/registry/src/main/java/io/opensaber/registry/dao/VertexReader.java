@@ -8,6 +8,7 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.util.ArrayHelper;
 import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
@@ -106,6 +107,7 @@ public class VertexReader {
         Iterator<VertexProperty<Object>> properties = currVertex.properties();
         while (properties.hasNext()) {
             VertexProperty<Object> prop = properties.next();
+            String propValue = ArrayHelper.removeSquareBraces(prop.value().toString());
             if (!RefLabelHelper.isParentLabel(prop.key())) {
                 if (RefLabelHelper.isRefLabel(prop.key(), uuidPropertyName)) {
                     logger.debug("{} is a referenced entity", prop.key());
@@ -113,7 +115,7 @@ public class VertexReader {
                     // otherwise.
 
                     String refEntityName = RefLabelHelper.getRefEntityName(prop.key());
-                    String[] valueArr = prop.value().toString().split("\\s*,\\s*");
+                    String[] valueArr = propValue.split("\\s*,\\s*");
                     boolean isObjectNode = valueArr.length == 1;
 
                     ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
@@ -130,7 +132,6 @@ public class VertexReader {
                 } else {
                     logger.debug("{} is a simple value", prop.key());
                     if (canAdd(prop.key(), privatePropertyList)) {
-                        String propValue = prop.value().toString();
                         if (propValue.contains(",")) {
                             ArrayNode stringArray = JsonNodeFactory.instance.arrayNode();
                             String[] valArray = propValue.split(",");

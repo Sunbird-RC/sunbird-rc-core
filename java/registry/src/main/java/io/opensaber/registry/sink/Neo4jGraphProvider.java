@@ -27,17 +27,17 @@ public class Neo4jGraphProvider extends DatabaseProvider {
     private DBConnectionInfo connectionInfo;
     private Neo4jIdProvider neo4jIdProvider = new Neo4jIdProvider();
 
-	public Neo4jGraphProvider(DBConnectionInfo connection, String uuidPropName) {
-		connectionInfo = connection;
-		profilerEnabled = connection.isProfilerEnabled();
-		setProvider(Constants.GraphDatabaseProvider.NEO4J);
-		setUuidPropertyName(uuidPropName);
+    public Neo4jGraphProvider(DBConnectionInfo connection, String uuidPropName) {
+        connectionInfo = connection;
+        profilerEnabled = connection.isProfilerEnabled();
+        setProvider(Constants.GraphDatabaseProvider.NEO4J);
+        setUuidPropertyName(uuidPropName);
 
-		// TODO: Check with auth
-		driver = GraphDatabase.driver(connection.getUri(), AuthTokens.none());
-		neo4jIdProvider.setUuidPropertyName(getUuidPropertyName());
-		logger.info("Initialized db driver at {}", connectionInfo.getUri());
-	}
+        // TODO: Check with auth
+        driver = GraphDatabase.driver(connection.getUri(), AuthTokens.none());
+        neo4jIdProvider.setUuidPropertyName(getUuidPropertyName());
+        logger.info("Initialized db driver at {}", connectionInfo.getUri());
+    }
 
     private Neo4JGraph getGraph() {
         Neo4JGraph neo4jGraph;
@@ -48,62 +48,68 @@ public class Neo4jGraphProvider extends DatabaseProvider {
         return neo4jGraph;
     }
 
-	@PostConstruct
-	public void init() {
-		logger.info("**************************************************************************");
-		logger.info("Initializing Neo4J GraphDB instance ...");
-		logger.info("**************************************************************************");
-	}
+    @PostConstruct
+    public void init() {
+        logger.info("**************************************************************************");
+        logger.info("Initializing Neo4J GraphDB instance ...");
+        logger.info("**************************************************************************");
+    }
 
     @PreDestroy
     public void shutdown() throws Exception {
-		logger.info("**************************************************************************");
-		logger.info("Gracefully shutting down Neo4J GraphDB instance ...");
-		logger.info("**************************************************************************");
-	}
+        logger.info("**************************************************************************");
+        logger.info("Gracefully shutting down Neo4J GraphDB instance ...");
+        logger.info("**************************************************************************");
+    }
 
-	@Override
-	public OSGraph getOSGraph() {
-		Graph graph = getGraph();
-		return new OSGraph(graph, true);
-	}
+    @Override
+    public OSGraph getOSGraph() {
+        Graph graph = getGraph();
+        return new OSGraph(graph, true);
+    }
 
-	@Override
-	public void commitTransaction(Graph graph, Transaction tx) {
-		commitTransaction(graph, tx, true);
-	}
+    @Override
+    public void commitTransaction(Graph graph, Transaction tx) {
+        commitTransaction(graph, tx, true);
+    }
 
-	/**
-	 * For neo4j, we would like to use the Neo4JIdProvider
-	 * @param o - any record object
-	 * @return
-	 */
-	@Override
-	public String generateId(Object o) {
-		if (o instanceof Neo4JVertex) {
-			return ((Neo4JVertex) o).id().toString();
-		} else if (o instanceof Neo4JEdge) {
-			return ((Neo4JEdge) o).id().toString();
-		}
+    /**
+     * For neo4j, we would like to use the Neo4JIdProvider
+     * 
+     * @param o
+     *            - any record object
+     * @return
+     */
+    @Override
+    public String generateId(Object o) {
+        if (o instanceof Neo4JVertex) {
+            return ((Neo4JVertex) o).id().toString();
+        } else if (o instanceof Neo4JEdge) {
+            return ((Neo4JEdge) o).id().toString();
+        }
 
-		throw new RuntimeException(o.getClass().getTypeName() + " cannot have an id");
-	}
+        throw new RuntimeException(o.getClass().getTypeName() + " cannot have an id");
+    }
 
-	@Override
-	public String getId(Vertex vertex) {
-		return vertex.id().toString();
-	}
+    @Override
+    public String getId(Vertex vertex) {
+        return vertex.id().toString();
+    }
 
-	@Override
-	public String getId(Edge edge) {
-		return edge.id().toString();
-	}
-	
-	@Override
-	public void createIndex(String label, List<String> propertyNames){
-	    Neo4JGraph neo4jGraph = getGraph();
-	    for(String propertyName : propertyNames){
-	        neo4jGraph.createIndex(label, propertyName);
-	    }
-	}
+    @Override
+    public String getId(Edge edge) {
+        return edge.id().toString();
+    }
+
+    @Override
+    public void createIndex(Graph graph,String label, List<String> propertyNames) {
+
+        Neo4JGraph neo4jGraph = (Neo4JGraph) graph;
+        
+        for (String propertyName : propertyNames) {
+            neo4jGraph.createIndex(label, propertyName);
+            logger.info("Neo4jGraph index created for " + label);
+        }
+        
+    }
 }

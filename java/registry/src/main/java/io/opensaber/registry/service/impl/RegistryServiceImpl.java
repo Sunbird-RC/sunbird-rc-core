@@ -7,7 +7,6 @@ import com.google.gson.Gson;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.dao.IRegistryDao;
-import io.opensaber.registry.dao.RegistryDaoImpl;
 import io.opensaber.registry.dao.VertexReader;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -21,8 +20,11 @@ import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
 import io.opensaber.registry.sink.shard.Shard;
-import io.opensaber.registry.util.*;
-
+import io.opensaber.registry.util.Definition;
+import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.EntityParenter;
+import io.opensaber.registry.util.ReadConfigurator;
+import io.opensaber.registry.util.ReadConfiguratorFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -172,6 +174,7 @@ public class RegistryServiceImpl implements RegistryService {
         }
 
         if (persistenceEnabled) {
+            String vertexLabel = null;
             DatabaseProvider dbProvider = shard.getDatabaseProvider();
             try (OSGraph osGraph = dbProvider.getOSGraph()) {
                 Graph graph = osGraph.getGraphStore();
@@ -180,85 +183,17 @@ public class RegistryServiceImpl implements RegistryService {
                 shard.getDatabaseProvider().commitTransaction(graph, tx);
                 dbProvider.commitTransaction(graph, tx);
 
-                String vertexLabel = rootNode.fieldNames().next();
-                // creates/updates indices for the vertex or table gets persists)
-                //ensureIndexExists(dbProvider, graph, vertexLabel);
+                vertexLabel = rootNode.fieldNames().next();
+
             }
+            //Add indices: executes only once.
+            String shardId = shard.getShardId();
+            Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
+            Definition definition = definitionsManager.getDefinition(vertexLabel);
+            entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
         }
 
         return entityId;
-    }
-
-    /**
-     * Ensures index for a vertex exists 
-     * Unique index and non-unique index is supported
-     * @param dbProvider
-     * @param graph
-     * @param label   a type vertex label (example:Teacher)
-     */
-    private void ensureIndexExists(DatabaseProvider dbProvider, Graph graph, String label) {
-
-        Vertex parentVertex = entityParenter.getKnownParentVertex(label, shard.getShardId());
-        Definition definition = definitionsManager.getDefinition(label);
-        List<String> indexFields = definition.getOsSchemaConfiguration().getIndexFields();
-        List<String> indexUniqueFields = definition.getOsSchemaConfiguration().getUniqueIndexFields();
-
-        try {
-            Transaction tx = dbProvider.startTransaction(graph);
-            if (!indexFieldsExists(parentVertex, indexFields)){
-                dbProvider.createIndex(label, indexFields);
-                setPropertyValuesOnParentVertex(parentVertex, indexFields);
-
-            }
-            if(!indexFieldsExists(parentVertex, indexUniqueFields)){
-                dbProvider.createUniqueIndex(label, indexUniqueFields);
-                setPropertyValuesOnParentVertex(parentVertex, indexUniqueFields);
-
-            }
-            logger.debug("after creating index property value "
-                    + parentVertex.property(Constants.INDEX_FIELDS).value());
-            dbProvider.commitTransaction(graph, tx);
- 
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.error("On index creation while add api " + e);
-        }
-
-    }
-    
-    /**
-     * Checks if fields exist for parent vertex property
-     * @param parentVertex
-     * @param fields
-     * @return
-     */
-    private boolean indexFieldsExists(Vertex parentVertex, List<String> fields) {
-        String[] indexFields = null;
-        boolean contains = false;
-        if (parentVertex.property(Constants.INDEX_FIELDS).isPresent()) {
-            String values = (String) parentVertex.property(Constants.INDEX_FIELDS).value();
-            indexFields = values.split(",");
-            for (String field : fields) {
-                contains = Arrays.stream(indexFields).anyMatch(field::equals);
-            }
-        }
-        return contains;
-    }
-    
-    /**
-     * Append the values to parent vertex INDEX_FIELDS property
-     * @param parentVertex
-     * @param values
-     */
-    private void setPropertyValuesOnParentVertex(Vertex parentVertex, List<String> values) {
-        String existingValue = (String) parentVertex.property(Constants.INDEX_FIELDS).value();
-        for (String value : values) {
-            existingValue = existingValue.isEmpty() ? value : (existingValue + "," + value);
-            parentVertex.property(Constants.INDEX_FIELDS, existingValue);
-        }
-        logger.debug("After setting the index values to parent vertex property "
-                + (String) parentVertex.property(Constants.INDEX_FIELDS).value());
-
     }
 
     @Override

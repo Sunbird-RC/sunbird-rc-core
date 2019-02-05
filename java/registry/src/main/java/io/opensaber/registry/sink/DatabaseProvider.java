@@ -152,13 +152,13 @@ public abstract class DatabaseProvider {
     /**
      * Creates index
      */
-    public void createIndex(String label, List<String> propertyNames){
+    public void createIndex(Graph graph, String label, List<String> propertyNames){
         //Does nothing, suppose to be overridden by extended classes.
     }
     /**
      * Creates unique index
      */
-    public void createUniqueIndex(String label, List<String> propertyNames){
+    public void createUniqueIndex(Graph graph, String label, List<String> propertyNames){
         //Does nothing, suppose to be overridden by extended classes.
     }
         

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.util.ArrayHelper;
 import io.opensaber.registry.util.RefLabelHelper;
 import io.opensaber.registry.util.TypePropertyHelper;
 import java.util.ArrayList;
@@ -17,14 +18,13 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 
 public class VertexWriter {
     private String uuidPropertyName;
     private Graph graph;
     private DatabaseProvider databaseProvider;
     private String parentOSid;
-    private static final String EMPTY = "";
+    private static final String EMPTY_STR = "";
 
     private Logger logger = LoggerFactory.getLogger(VertexWriter.class);
 
@@ -50,7 +50,8 @@ public class VertexWriter {
             parentVertex = createVertex(parentLabel);
 
             //added a property to track vertices belong to parent are indexed
-            parentVertex.property(Constants.INDEX_FIELDS, EMPTY);
+            parentVertex.property(Constants.INDEX_FIELDS, EMPTY_STR);
+            parentVertex.property(Constants.UNIQUE_INDEX_FIELDS, EMPTY_STR);
             logger.info("Parent label {} created {}", parentLabel, parentVertex.id().toString());
         } else {
             parentVertex = iterVertex.next();
@@ -118,9 +119,9 @@ public class VertexWriter {
         // Set up references on a blank node.
         label = RefLabelHelper.getLabel(entryKey, uuidPropertyName);
         if (isArrayItemObject) {
-            blankNode.property(label, StringUtils.arrayToCommaDelimitedString(uidList.toArray()));
+            blankNode.property(label, ArrayHelper.formatToString(uidList));
         } else {
-            blankNode.property(entryKey, StringUtils.arrayToCommaDelimitedString(uidList.toArray()));
+            blankNode.property(entryKey, ArrayHelper.formatToString(uidList));
         }
     }
 
