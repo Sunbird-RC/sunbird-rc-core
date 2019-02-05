@@ -13,8 +13,6 @@ import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.RefLabelHelper;
 import io.opensaber.registry.util.TypePropertyHelper;
-import io.opensaber.registry.util.ArrayHelper;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -42,11 +39,13 @@ public class VertexReader {
     private HashMap<String, ObjectNode> uuidNodeMap = new HashMap<>();
     private String entityType;
     private DefinitionsManager definitionsManager;
+    private Vertex rootVertex;
+    private HashMap<String, Vertex> uuidVertexMap = new HashMap<>();
 
     private Logger logger = LoggerFactory.getLogger(VertexReader.class);
 
     public VertexReader(DatabaseProvider databaseProvider, Graph graph, ReadConfigurator configurator, String uuidPropertyName,
-            DefinitionsManager definitionsManager) {
+                        DefinitionsManager definitionsManager) {
         this.databaseProvider = databaseProvider;
         this.graph = graph;
         this.configurator = configurator;
@@ -57,15 +56,33 @@ public class VertexReader {
     /**
      * Retrieves all vertex UUID for given all labels.
      */
-    public List<String> getUUIDs(Graph graph, Set<String> labels) {
+    public List<String> getUUIDs(Set<String> labels) {
         List<String> uuids = new ArrayList<>();
         GraphTraversal<Vertex, Vertex> graphTraversal = graph.traversal().V();
         while (graphTraversal.hasNext()) {
             Vertex v = graphTraversal.next();
-            uuids.add(v.id().toString());
+            uuids.add(databaseProvider.getId(v));
             logger.debug("vertex info- label :" + v.label() + " id: " + v.id());
         }
         return uuids;
+    }
+
+    /**
+     * Returns whether or not the given key could be added in response or not.
+     * @param key
+     * @param privatePropertyList
+     * @return
+     */
+    private boolean canAdd(String key, List<String> privatePropertyList) {
+        boolean canAdd = true;
+        if (privatePropertyList.contains(key)) {
+            canAdd &= configurator.isIncludeEncryptedProp();
+        } else if (key.equals(Constants.ROOT_KEYWORD)) {
+            canAdd &= configurator.isIncludeRootIdentifiers();
+        } else if (key.equals(uuidPropertyName)){
+            canAdd &= configurator.isIncludeIdentifiers();
+        }
+        return canAdd;
     }
 
     /**
@@ -77,8 +94,9 @@ public class VertexReader {
      * @return
      */
     public ObjectNode constructObject(Vertex currVertex) {
+
         ObjectNode contentNode = JsonNodeFactory.instance.objectNode();
-        String entityType = currVertex.property(TypePropertyHelper.getTypeName()).value().toString();
+        String entityType = currVertex.label();
         Definition definition = definitionsManager.getDefinition(entityType);
         List<String> privatePropertyList = new ArrayList<>();
         if (definition != null) {
@@ -88,7 +106,6 @@ public class VertexReader {
         Iterator<VertexProperty<Object>> properties = currVertex.properties();
         while (properties.hasNext()) {
             VertexProperty<Object> prop = properties.next();
-            String propValue = ArrayHelper.removeSquareBraces(prop.value().toString());
             if (!RefLabelHelper.isParentLabel(prop.key())) {
                 if (RefLabelHelper.isRefLabel(prop.key(), uuidPropertyName)) {
                     logger.debug("{} is a referenced entity", prop.key());
@@ -96,7 +113,7 @@ public class VertexReader {
                     // otherwise.
 
                     String refEntityName = RefLabelHelper.getRefEntityName(prop.key());
-                    String[] valueArr = propValue.split("\\s*,\\s*");
+                    String[] valueArr = prop.value().toString().split("\\s*,\\s*");
                     boolean isObjectNode = valueArr.length == 1;
 
                     ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
@@ -112,14 +129,8 @@ public class VertexReader {
                     }
                 } else {
                     logger.debug("{} is a simple value", prop.key());
-                    boolean canAdd = true;
-                    if (privatePropertyList.contains(prop.key())) {
-                        canAdd &= configurator.isIncludeEncryptedProp();
-                    } else if (prop.key().equals(Constants.ROOT_KEYWORD)) {
-                        canAdd = false;
-                    }
-
-                    if (canAdd) {
+                    if (canAdd(prop.key(), privatePropertyList)) {
+                        String propValue = prop.value().toString();
                         if (propValue.contains(",")) {
                             ArrayNode stringArray = JsonNodeFactory.instance.arrayNode();
                             String[] valArray = propValue.split(",");
@@ -130,6 +141,8 @@ public class VertexReader {
                         } else {
                             ValueType.setValue(contentNode, prop.key(), prop.value());
                         }
+                    } else {
+                        logger.debug("-- Not adding");
                     }
                 }
             } else {
@@ -137,7 +150,8 @@ public class VertexReader {
             }
         }
 
-        // Here we set the id - in neo4j this is must.
+        // In Neo4j, the uuidPropertyName is given a special handling
+        // It is not part of the list of attributes, even though it is persisted
         contentNode.put(uuidPropertyName, databaseProvider.getId(currVertex));
 
         return contentNode;
@@ -160,13 +174,18 @@ public class VertexReader {
                 signatures = JsonNodeFactory.instance.arrayNode();
                 while (signatureVertices.hasNext()) {
                     Vertex oneSignature = signatureVertices.next();
-                    if( oneSignature.label().equalsIgnoreCase(Constants.SIGNATURES_STR)
-                            && !(oneSignature.property(Constants.STATUS_KEYWORD).isPresent() && oneSignature.property(Constants.STATUS_KEYWORD).value().toString().equalsIgnoreCase(Constants.STATUS_INACTIVE))) {
+                    if( oneSignature.label().equalsIgnoreCase(Constants.SIGNATURES_STR) &&
+                            !(oneSignature.property(Constants.STATUS_KEYWORD).isPresent() &&
+                            oneSignature.property(Constants.STATUS_KEYWORD).value().toString().equalsIgnoreCase(Constants.STATUS_INACTIVE))) {
                         ObjectNode signatureNode = constructObject(oneSignature);
                         signatures.add(signatureNode);
                         logger.debug("Added signature node for " + signatureNode.get(Constants.SIGNATURE_FOR));
+                        if (configurator.isIncludeIdentifiers()) {
+                            uuidVertexMap.put(oneSignature.property(uuidPropertyName).toString(), oneSignature);
+                        }
                     }
                 }
+                uuidVertexMap.put(Constants.SIGNATURES_STR, signatureArrayV);
             } catch (NoSuchElementException e) {
                 logger.debug("There are no signatures found for " + currVertex.label());
             }
@@ -184,6 +203,17 @@ public class VertexReader {
      */
     private boolean canLoadVertex(int currLevel, int maxLevel) {
         return currLevel < maxLevel;
+    }
+
+    /**
+     * Populates the internal maps with uuid, Node and uuid, Vertex pairs
+     * @param node
+     * @param vertex
+     */
+    private void populateMaps(ObjectNode node, Vertex vertex) {
+        String uuid = node.get(uuidPropertyName).textValue();
+        uuidNodeMap.put(uuid, node);
+        uuidVertexMap.put(uuid, vertex);
     }
 
     /**
@@ -213,7 +243,7 @@ public class VertexReader {
                 logger.debug("Reading vertex label {} and internal type {}", currVertex.label(), internalType);
 
                 ObjectNode node = constructObject(currVertex);
-                uuidNodeMap.put(node.get(uuidPropertyName).textValue(), node);
+                populateMaps(node, currVertex);
 
                 // Load any signatures within child entity
                 ArrayNode signatureNode = loadSignatures(currVertex);
@@ -231,7 +261,7 @@ public class VertexReader {
                 if (canLoadVertex(++tempCurrLevel, configurator.getDepth())) {
                     loadOtherVertices(currVertex, tempCurrLevel);
                     tempCurrLevel = currLevel; // After loading reset for other
-                                               // vertices.
+                    // vertices.
                 }
             }
         }
@@ -317,15 +347,19 @@ public class VertexReader {
      * @param osid the osid of vertex to be loaded
      * @return the vertex associated with osid passed
      */
-    public Vertex getVertex(String osid) {
-        Vertex rootVertex = null;
+    public Vertex getVertex(String entityType, String osid) {
+        Vertex vertex = null;
         Iterator<Vertex> itrV = null;
         switch (databaseProvider.getProvider()) {
             case NEO4J:
                 itrV = graph.vertices(osid);
                 break;
             case SQLG:
-                itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
+                if (null != entityType) {
+                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
+                } else {
+                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
+                }
                 break;
             default:
                 itrV = graph.vertices(osid);
@@ -333,22 +367,39 @@ public class VertexReader {
         }
 
         if (itrV.hasNext()) {
-            rootVertex = itrV.next();
+            vertex = itrV.next();
         }
 
-        return rootVertex;
+        return vertex;
+    }
+
+    /**
+     * Returns the root vertex of the entity.
+     * @return
+     */
+    public Vertex getRootVertex() {
+        return this.rootVertex;
     }
 
     /**
      * Hits the database to read contents
-     *
+     * This is the entry function to read contents of a given entity
      * @param osid
      *            the id to be read
      * @return
      * @throws Exception
      */
-    public JsonNode read(String osid) throws Exception {
-        Vertex rootVertex = getVertex(osid);
+    public JsonNode read(String entityType, String osid) throws Exception {
+        rootVertex = getVertex(entityType, osid);
+        return readInternal(rootVertex);
+    }
+
+    public JsonNode read(String osid) throws  Exception {
+        rootVertex = getVertex(null, osid);
+        return readInternal(rootVertex);
+    }
+
+    private JsonNode readInternal(Vertex rootVertex) throws Exception {
         if (null == rootVertex) {
             throw new Exception("Invalid id");
         }
@@ -359,10 +410,10 @@ public class VertexReader {
             throw new RecordNotFoundException("entity status is inactive");
         }
         ObjectNode rootNode = constructObject(rootVertex);
-        entityType = rootNode.get(TypePropertyHelper.getTypeName()).textValue();
+        entityType = (String) ValueType.getValue(rootNode.get(TypePropertyHelper.getTypeName()));
 
         // Set the type for the root node, so as to wrap.
-        uuidNodeMap.put(rootNode.get(uuidPropertyName).textValue(), rootNode);
+        populateMaps(rootNode, rootVertex);
 
         ArrayNode signatureNode = loadSignatures(rootVertex);
         if (signatureNode != null) {
@@ -388,10 +439,31 @@ public class VertexReader {
         entityNode.set(entityType, rootNode);
 
         // After reading the entire type, now trim the @type property
+        trimAttributes(entityNode);
+        return entityNode;
+    }
+
+    /**
+     * Trims out local helper attributes like the type, uuid depending on the
+     * ReadConfigurator
+     * @param entityNode
+     */
+    private void trimAttributes(ObjectNode entityNode) {
         if (!configurator.isIncludeTypeAttributes()) {
             JSONUtil.removeNode(entityNode, Constants.TYPE_STR_JSON_LD);
         }
 
-        return entityNode;
+        if (!configurator.isIncludeIdentifiers()) {
+            JSONUtil.removeNode(entityNode, uuidPropertyName);
+        }
+    }
+
+    /**
+     * Returns the map of uuid and vertices read.
+     * Using this without executing the read function is not advised.
+     * @return
+     */
+    public HashMap<String, Vertex> getUuidVertexMap() {
+        return this.uuidVertexMap;
     }
 }

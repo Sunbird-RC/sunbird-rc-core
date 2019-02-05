@@ -28,6 +28,18 @@ public class ReadConfigurator {
      */
     private boolean includeSignatures = false;
 
+    /**
+     * Whether or not to include identifiers
+     * True by default
+     */
+    private boolean includeIdentifiers = true;
+
+    /**
+     * Whether or not to include root identifiers
+     * False, by default
+     */
+    private boolean includeRootIdentifiers = false;
+
     public boolean isIncludeTypeAttributes() {
         return includeTypeAttributes;
     }
@@ -58,5 +70,21 @@ public class ReadConfigurator {
 
     public void setDepth(int depth) {
         this.depth = depth;
+    }
+
+    public boolean isIncludeIdentifiers() {
+        return includeIdentifiers;
+    }
+
+    public void setIncludeIdentifiers(boolean includeIdentifiers) {
+        this.includeIdentifiers = includeIdentifiers;
+    }
+
+    public boolean isIncludeRootIdentifiers() {
+        return includeRootIdentifiers;
+    }
+
+    public void setIncludeRootIdentifiers(boolean includeRootIdentifiers) {
+        this.includeRootIdentifiers = includeRootIdentifiers;
     }
 }

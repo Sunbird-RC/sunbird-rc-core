@@ -29,7 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-@Component("tpGraphMain")
+@Component("registryDao")
 public class RegistryDaoImpl implements IRegistryDao {
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
@@ -64,8 +64,8 @@ public class RegistryDaoImpl implements IRegistryDao {
      * @return
      */
     public String addEntity(Graph graph, JsonNode rootNode) {
-        VertexWriter vertexWriter = new VertexWriter(uuidPropertyName, shard.getDatabaseProvider());
-        String entityId = vertexWriter.writeNodeEntity(graph, rootNode);
+        VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
+        String entityId = vertexWriter.writeNodeEntity(rootNode);
         return entityId;
     }
 
@@ -108,7 +108,7 @@ public class RegistryDaoImpl implements IRegistryDao {
 
     /**
      * This method update the inputJsonNode related vertices in the database
-     *
+     * This works but a TODO - Re-write required
      * @param rootVertex
      * @param inputJsonNode
      */
@@ -117,7 +117,7 @@ public class RegistryDaoImpl implements IRegistryDao {
             String fieldKey = subEntityField.getKey();
             JsonNode subEntityNode = subEntityField.getValue();
             if (subEntityNode.isValueNode()) {
-                rootVertex.property(fieldKey, subEntityField.getValue().asText());
+                rootVertex.property(fieldKey, ValueType.getValue(subEntityField.getValue()));
             } else if (subEntityNode.isObject()) {
                 parseJsonObject(subEntityNode, graph, rootVertex, fieldKey, false);
             } else if (subEntityNode.isArray()) {
@@ -139,10 +139,8 @@ public class RegistryDaoImpl implements IRegistryDao {
                     arrayNodeVertex.property(RefLabelHelper.getLabel(fieldKey, uuidPropertyName), osidSet.toString());
                 } else {
                     Set<String> valueSet = new HashSet<>();
-                    subEntityNode.forEach( textElement -> {
-                        valueSet.add(textElement.asText());
-                    });
-                    rootVertex.property(fieldKey,valueSet.toString());
+                    subEntityNode.forEach(textElement -> valueSet.add(textElement.asText()));
+                    rootVertex.property(fieldKey, valueSet.toString());
                 }
 
             }
@@ -168,10 +166,10 @@ public class RegistryDaoImpl implements IRegistryDao {
                 deleteVertices(graph, rootVertex, parentNodeLabel, null);
             }
 
-            VertexWriter vertexWriter = new VertexWriter(uuidPropertyName, shard.getDatabaseProvider());
+            VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
 
             //Add new vertex
-            Vertex newChildVertex = vertexWriter.createVertex(graph, parentNodeLabel);
+            Vertex newChildVertex = vertexWriter.createVertex(parentNodeLabel);
             newChildVertex.property(Constants.ROOT_KEYWORD,rootVertex.property(Constants.ROOT_KEYWORD).value());
             updateProperties(elementNode, newChildVertex);
             String nodeOsidLabel = RefLabelHelper.getLabel(parentNodeLabel, uuidPropertyName);
@@ -214,7 +212,7 @@ public class RegistryDaoImpl implements IRegistryDao {
             if (value.isObject()) {
 
             } else if (value.isValueNode() && !keyType.equals("@type") && !keyType.equals(uuidPropertyName)) {
-                vertex.property(keyType, value.asText());
+                vertex.property(keyType, ValueType.getValue(value));
             }
         });
     }

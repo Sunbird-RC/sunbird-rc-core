@@ -21,17 +21,6 @@
         </encoder>
     </appender>
 
-    <!--
-    <appender name="PERF_FILE_OUT" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/performance_instrumentation.log</file>
-        <append>true</append>
-        <immediateFlush>true</immediateFlush>
-        <encoder>
-            # Pattern of log message for file appender
-             <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
-        </encoder>
-    </appender>
-    -->
 
     <appender name="RegistryAuditAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/registry_neo4j.log</file>
@@ -65,17 +54,6 @@
         </rollingPolicy>
     </appender>
 
-    <!--
-    <appender name="Perf4JConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>debug</level>
-        </filter>
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%date %-5level %logger{36} %msg%n
-            </pattern>
-        </layout>
-    </appender>
-    -->
 
     <appender name="CoalescingStatistics" class="org.perf4j.logback.AsyncCoalescingStatisticsAppender">
         <param name="TimeSlice" value="600000"/>
@@ -94,16 +72,15 @@
         <!-- <appender-ref ref="Perf4JConsoleAppender"/> -->
     </logger>
 
-    <logger name="io.opensaber.validators.shex.shaclex" level="ERROR"/>
     <logger name="es.weso" level="ERROR"/>
-    <logger name="io.opensaber.utils.converters" level="ERROR"/>
-    <logger name="io.opensaber.registry.dao.impl.RegistryDaoImpl" level="ERROR"/>
     <logger name="org.springframework" level="ERROR"/>
-    <!--
-    <logger name="PERFORMANCE_INSTRUMENTATION" level="TRACE" additivity="false">
-        <appender-ref ref="PERF_FILE_OUT"/>
-    </logger>
-    -->
+
+    <!-- OpenSABER specific loggers. Turn these to INFO in production -->
+    <logger name="io.opensaber.registry.service" level="DEBUG"/>
+    <logger name="com.steelbridgelabs.oss.neo4j.structure.Neo4JSession" level="DEBUG"/>
+    <logger name="io.opensaber.registry.dao.RegistryDaoImpl" level="DEBUG"/>
+    <logger name="com.mchange.v2.c3p0.impl.NewProxyPreparedStatement" level="DEBUG"/>
+
     <logger name="GraphEventLogger" level="DEBUG" additivity="FALSE">
         <appender-ref ref="RegistryAuditAppender"/>
     </logger>

@@ -21,10 +21,8 @@ import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
 import io.opensaber.registry.sink.shard.Shard;
-import io.opensaber.registry.util.Definition;
-import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.EntityParenter;
-import io.opensaber.registry.util.ReadConfigurator;
+import io.opensaber.registry.util.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -92,9 +90,6 @@ public class RegistryServiceImpl implements RegistryService {
     private Shard shard;
 
     @Autowired
-    RegistryDaoImpl tpGraphMain;
-
-    @Autowired
     DBConnectionInfoMgr dbConnectionInfoMgr;
 
     @Autowired
@@ -149,7 +144,7 @@ public class RegistryServiceImpl implements RegistryService {
                 Vertex vertex = vertexItr.next();
                 if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
                         && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
-                    tpGraphMain.deleteEntity(vertex);
+                    registryDao.deleteEntity(vertex);
                     tx.commit();
                 } else {
                     // throw exception node already deleted
@@ -181,13 +176,13 @@ public class RegistryServiceImpl implements RegistryService {
             try (OSGraph osGraph = dbProvider.getOSGraph()) {
                 Graph graph = osGraph.getGraphStore();
                 Transaction tx = dbProvider.startTransaction(graph);
-                entityId = tpGraphMain.addEntity(graph, rootNode);
+                entityId = registryDao.addEntity(graph, rootNode);
                 shard.getDatabaseProvider().commitTransaction(graph, tx);
                 dbProvider.commitTransaction(graph, tx);
 
                 String vertexLabel = rootNode.fieldNames().next();
                 // creates/updates indices for the vertex or table gets persists)
-                ensureIndexExists(dbProvider, graph, vertexLabel);
+                //ensureIndexExists(dbProvider, graph, vertexLabel);
             }
         }
 
@@ -272,7 +267,7 @@ public class RegistryServiceImpl implements RegistryService {
         try (OSGraph osGraph = dbProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             Transaction tx = dbProvider.startTransaction(graph);
-            JsonNode result = tpGraphMain.getEntity(graph, id, configurator);
+            JsonNode result = registryDao.getEntity(graph, id, configurator);
             shard.getDatabaseProvider().commitTransaction(graph, tx);
             dbProvider.commitTransaction(graph, tx);
             return result;
@@ -293,8 +288,7 @@ public class RegistryServiceImpl implements RegistryService {
 
         JsonNode childElementNode = rootNode.elements().next();
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
-        ReadConfigurator readConfigurator = new ReadConfigurator();
-        readConfigurator.setIncludeSignatures(signatureEnabled);
+        ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
 
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
@@ -325,23 +319,21 @@ public class RegistryServiceImpl implements RegistryService {
                 // TO-DO validation is failing
                 // boolean isValidate =
                 // iValidate.validate("Teacher",entityNode.toString());
-                tpGraphMain.updateVertex(graph, inputNodeVertex, childElementNode);
+                registryDao.updateVertex(graph, inputNodeVertex, childElementNode);
                 // sign the entitynode
                 if (signatureEnabled) {
                     signatureHelper.signJson(entityNode);
-                    JsonNode signNode = entityNode.get(entityNodeType).get(Constants.SIGNATURES_STR);
-                    if (signNode.isArray()) {
-                        signNode = getEntitySignNode(signNode, entityNodeType);
-                    }
+                    JsonNode signNode = signatureHelper.getItemSignature(entityNodeType,
+                            entityNode.get(entityNodeType).get(Constants.SIGNATURES_STR));
 
                     Iterator<Vertex> vertices = rootVertex.vertices(Direction.IN, Constants.SIGNATURES_STR);
                     if (null != vertices && vertices.hasNext()) {
                         Vertex signArrayNode = vertices.next();
-                        Iterator<Vertex> sign = signArrayNode.vertices(Direction.OUT, entityNodeType);
+                        Iterator<Vertex> sign = signArrayNode.vertices(Direction.OUT, signatureHelper.getEntitySignaturePrefix() + entityNodeType);
                         Vertex signVertex = sign.next();
                         // Other signatures are not updated, only the entity
                         // level signature.
-                        tpGraphMain.updateVertex(graph, signVertex, signNode);
+                        registryDao.updateVertex(graph, signVertex, signNode);
                     }
                 }
                 databaseProvider.commitTransaction(graph, tx);
@@ -356,20 +348,18 @@ public class RegistryServiceImpl implements RegistryService {
                 // TO-DO validation is failing
                 // boolean isValidate =
                 // iValidate.validate("Teacher",entityNode.toString());
-                tpGraphMain.updateVertex(graph, inputNodeVertex, childElementNode);
+                registryDao.updateVertex(graph, inputNodeVertex, childElementNode);
 
                 // sign the entitynode
                 if (signatureEnabled) {
                     signatureHelper.signJson(entityNode);
-                    JsonNode signNode = entityNode.get(entityNodeType).get(Constants.SIGNATURES_STR);
-                    if (signNode.isArray()) {
-                        signNode = getEntitySignNode(signNode, entityNodeType);
-                    }
+                    JsonNode signNode = signatureHelper.getItemSignature(entityNodeType,
+                            entityNode.get(entityNodeType).get(Constants.SIGNATURES_STR));
                     Iterator<Vertex> vertices = rootVertex.vertices(Direction.IN, Constants.SIGNATURES_STR);
                     while (null != vertices && vertices.hasNext()) {
                         Vertex signVertex = vertices.next();
                         if (signVertex.property(Constants.SIGNATURE_FOR).value().equals(entityNodeType)) {
-                            tpGraphMain.updateVertex(graph, signVertex, signNode);
+                            registryDao.updateVertex(graph, signVertex, signNode);
                         }
                     }
 
@@ -377,26 +367,6 @@ public class RegistryServiceImpl implements RegistryService {
             }
         }
 
-    }
-
-    /**
-     * filters entity sign node from the signatures json array
-     *
-     * @param signatures
-     * @return
-     */
-    private JsonNode getEntitySignNode(JsonNode signatures, String registryRootEntityType) {
-        JsonNode entitySignNode = null;
-        Iterator<JsonNode> signItr = signatures.elements();
-        while (signItr.hasNext()) {
-            JsonNode signNode = signItr.next();
-            if (signNode.get(Constants.SIGNATURE_FOR).asText().equals(registryRootEntityType)
-                    && null == signNode.get(uuidPropertyName)) {
-                entitySignNode = signNode;
-                break;
-            }
-        }
-        return entitySignNode;
     }
 
     /**

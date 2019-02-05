@@ -71,8 +71,8 @@ public class EntityParenter {
                         defintionNames.forEach(defintionName -> {
                             String parentLabel = ParentLabelGenerator.getLabel(defintionName);
                             parentLabels.add(parentLabel);
-                            VertexWriter vertexWriter = new VertexWriter(uuidPropertyName, dbProvider);
-                            Vertex v = vertexWriter.ensureParentVertex(graph, parentLabel);
+                            VertexWriter vertexWriter = new VertexWriter(graph, dbProvider, uuidPropertyName);
+                            Vertex v = vertexWriter.ensureParentVertex(parentLabel);
 
                             ShardParentInfo shardParentInfo = new ShardParentInfo(defintionName, v);
                             shardParentInfo.setUuid(v.id().toString());
