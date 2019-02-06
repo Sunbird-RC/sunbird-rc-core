@@ -375,6 +375,39 @@ public class VertexReader {
     }
 
     /**
+     * Neo4j supports custom ids and so we can directly query vertex with id - without client side filtering.
+     * SqlG does not support custom id, but the result is direct from the database without client side filtering
+     *      unlike Neo4j.
+     * @param osid the osid of vertex to be loaded
+     * @return the vertex associated with osid passed
+     */
+    public Vertex getVertex(String entityType, String[] osid) {
+        Vertex vertex = null;
+        Iterator<Vertex> itrV = null;
+        switch (databaseProvider.getProvider()) {
+            case NEO4J:
+                itrV = graph.vertices(osid);
+                break;
+            case SQLG:
+                if (null != entityType) {
+                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
+                } else {
+                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
+                }
+                break;
+            default:
+                itrV = graph.vertices(osid);
+                break;
+        }
+
+        if (itrV.hasNext()) {
+            vertex = itrV.next();
+        }
+
+        return vertex;
+    }
+
+    /**
      * Returns the root vertex of the entity.
      * @return
      */

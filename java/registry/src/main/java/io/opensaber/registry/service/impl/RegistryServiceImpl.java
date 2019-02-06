@@ -1,43 +1,23 @@
 package io.opensaber.registry.service.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.Gson;
-import io.opensaber.pojos.ComponentHealthInfo;
-import io.opensaber.pojos.HealthCheckResponse;
-import io.opensaber.registry.dao.IRegistryDao;
-import io.opensaber.registry.dao.VertexReader;
-import io.opensaber.registry.exception.RecordNotFoundException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.service.EncryptionHelper;
-import io.opensaber.registry.service.EncryptionService;
-import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.service.SignatureHelper;
-import io.opensaber.registry.service.SignatureService;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.sink.OSGraph;
-import io.opensaber.registry.sink.shard.Shard;
-import io.opensaber.registry.util.Definition;
-import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.EntityParenter;
-import io.opensaber.registry.util.ReadConfigurator;
-import io.opensaber.registry.util.ReadConfiguratorFactory;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.node.*;
+import com.google.gson.*;
+import io.opensaber.pojos.*;
+import io.opensaber.registry.dao.*;
+import io.opensaber.registry.exception.*;
+import io.opensaber.registry.middleware.util.*;
+import io.opensaber.registry.model.*;
+import io.opensaber.registry.service.*;
+import io.opensaber.registry.sink.*;
+import io.opensaber.registry.sink.shard.*;
+import io.opensaber.registry.util.*;
+import org.apache.tinkerpop.gremlin.structure.*;
+import org.slf4j.*;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.stereotype.*;
+
+import java.util.*;
 
 @Component
 public class RegistryServiceImpl implements RegistryService {
@@ -141,21 +121,14 @@ public class RegistryServiceImpl implements RegistryService {
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             Transaction tx = databaseProvider.startTransaction(graph);
-            Iterator<Vertex> vertexItr = graph.vertices(uuid);
-            if (vertexItr.hasNext()) {
-                Vertex vertex = vertexItr.next();
-                if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
-                        && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
-                    registryDao.deleteEntity(vertex);
-                    tx.commit();
-                } else {
-                    // throw exception node already deleted
-                    throw new RecordNotFoundException("Cannot perform the operation");
-                }
-            } else {
-                throw new RecordNotFoundException("No such record found");
+            ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
+            VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager);
+            Vertex vertex  = vertexReader.getVertex(null, uuid);
+            if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
+                    && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
+                registryDao.deleteEntity(vertex);
             }
-
+            logger.info("Entity {} marked deleted", uuid);
             databaseProvider.commitTransaction(graph, tx);
         }
     }
@@ -234,19 +207,20 @@ public class RegistryServiceImpl implements RegistryService {
 
             if (null != tx) {
                 ObjectNode entityNode = null;
-                vertexIterator = graph.vertices(id);
-                inputNodeVertex = vertexIterator.hasNext() ? vertexIterator.next() : null;
+                ReadConfigurator configurator = ReadConfiguratorFactory.getOne(true);
+                VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager);
+                inputNodeVertex = vertexReader.getVertex(null, id);
                 if ((inputNodeVertex.property(Constants.STATUS_KEYWORD).isPresent() && inputNodeVertex
                         .property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
                     throw new RecordNotFoundException("Cannot perform the operation");
                 }
                 if (inputNodeVertex.property(Constants.ROOT_KEYWORD).isPresent()) {
-                    rootVertex = graph.vertices(inputNodeVertex.property(Constants.ROOT_KEYWORD).value()).next();
+                    rootVertex = vertexReader.getVertex(null, inputNodeVertex.property(Constants.ROOT_KEYWORD).value().toString());
                 } else {
                     rootVertex = inputNodeVertex;
                 }
 
-                entityNode = (ObjectNode) vr.read(rootVertex.id().toString());
+                entityNode = (ObjectNode) vr.read(shard.getDatabaseProvider().getId(rootVertex));
 
                 // merge with entitynode
                 entityNode = merge(entityNode, rootNode);

@@ -55,7 +55,13 @@ public class IndexHelper {
     public List<String> getNewFields(Vertex parentVertex, List<String> fields, boolean isUnique) {
         List<String> newFields = new ArrayList<>();
         String propertyName = isUnique ? Constants.UNIQUE_INDEX_FIELDS : Constants.INDEX_FIELDS;
-        String values = (String) parentVertex.property(propertyName).value();
+        String values = "";
+        try {
+            values = (String) parentVertex.property(propertyName).value();
+        } catch (java.lang.IllegalStateException ise) {
+            // The property doesn't exist.
+            values = "";
+        }
         for (String field : fields) {
             if (!values.contains(field) && !newFields.contains(field))
                 newFields.add(field);

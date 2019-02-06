@@ -6,12 +6,7 @@ import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.sink.shard.Shard;
-import io.opensaber.registry.util.ArrayHelper;
-import io.opensaber.registry.util.ReadConfigurator;
-import io.opensaber.registry.util.RecordIdentifier;
-import io.opensaber.registry.util.RefLabelHelper;
-import io.opensaber.registry.util.EntityParenter;
-import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -193,7 +188,10 @@ public class RegistryDaoImpl implements IRegistryDao {
         } else {
             String shardOsid = elementNode.get(uuidPropertyName).asText();
             RecordIdentifier ri = RecordIdentifier.parse(shardOsid);
-            Vertex updateVertex = graph.vertices(ri.getUuid()).next();
+            ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
+            VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), graph, configurator,
+                    uuidPropertyName, definitionsManager);
+            Vertex updateVertex = vertexReader.getVertex(null, ri.getUuid());
             updateProperties(elementNode, updateVertex);
             return updateVertex.id().toString();
         }
@@ -235,15 +233,20 @@ public class RegistryDaoImpl implements IRegistryDao {
         } else {
             osidArray = new String[]{osidPropValue};
         }
-        Iterator<Vertex> vertices = graph.vertices(osidArray);
-        //deleting existing vertices
-        vertices.forEachRemaining(deleteVertex -> {
-            if (activeOsid == null || (activeOsid != null && !activeOsid.contains(deleteVertex.id()) && deleteVertex.edges(Direction.IN).hasNext())) {
+        ReadConfigurator configurator = ReadConfiguratorFactory.getOne(true);
+        VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), graph,
+                configurator, uuidPropertyName, definitionsManager);
+
+        for(int itr = 0; itr < osidArray.length; itr++) {
+            Vertex deleteVertex = vertexReader.getVertex(null, osidArray[itr]);
+            if (activeOsid == null || (activeOsid != null &&
+                    !activeOsid.contains(shard.getDatabaseProvider().getId(deleteVertex)) &&
+                    deleteVertex.edges(Direction.IN).hasNext())) {
                 deleteVertex.property(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             } else {
-                activeOsid.add(deleteVertex.id().toString());
+                activeOsid.add(shard.getDatabaseProvider().getId(deleteVertex));
             }
-        });
+        }
         return activeOsid;
     }
 
