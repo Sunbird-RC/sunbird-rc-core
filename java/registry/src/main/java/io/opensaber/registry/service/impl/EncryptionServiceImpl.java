@@ -3,8 +3,6 @@ package io.opensaber.registry.service.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,13 +12,11 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -44,23 +40,27 @@ public class EncryptionServiceImpl implements EncryptionService {
 	@Value("${encryption.base}")
 	private String encryptionServiceHealthCheckUri;
 	@Autowired
-	private RestTemplate restTemplate;
+	private RetryRestTemplate retryRestTemplate;
 
-	/*
-	 * @Autowired SchemaConfigurator schemaConfigurator;
-	 */
 	@Autowired
 	private Gson gson;
 	@Autowired
 	private OpenSaberInstrumentation watch;
 
+
+	/** encrypts the input
+	 * @param propertyValue - single value or object as input for encryption
+	 * @return - encrypted value
+	 * @throws EncryptionException
+	 */
 	@Override
 	public String encrypt(Object propertyValue) throws EncryptionException {
+		logger.debug("encrypt starts with value {}", propertyValue);
 		MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 		map.add("value", propertyValue);
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map);
 		try {
-			ResponseEntity<String> response = new RestTemplate().postForEntity(encryptionUri, request, String.class);
+			ResponseEntity<String> response = retryRestTemplate.postForEntity(encryptionUri, request);
 			return response.getBody();
 		} catch (ResourceAccessException e) {
 			logger.error("ResourceAccessException while connecting enryption service : ", e);
@@ -74,14 +74,19 @@ public class EncryptionServiceImpl implements EncryptionService {
 		}
 	}
 
+	/** decrypts the input
+	 * @param propertyValue - single value or object as input for decryption
+	 * @return - decrypted value
+	 * @throws EncryptionException
+	 */
 	@Override
 	public String decrypt(Object propertyValue) throws EncryptionException {
-
+		logger.debug("decrypt starts with value {}", propertyValue);
 		MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 		map.add("value", propertyValue);
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map);
 		try {
-			ResponseEntity<String> response = restTemplate.postForEntity(decryptionUri, request, String.class);
+			ResponseEntity<String> response = retryRestTemplate.postForEntity(decryptionUri,request);
 			logger.info("Property decrypted successfully !");
 			return response.getBody();
 		} catch (ResourceAccessException e) {
@@ -96,8 +101,14 @@ public class EncryptionServiceImpl implements EncryptionService {
 		}
 	}
 
+	/** encrypts the input which is in Map format
+	 * @param propertyValue - input is in format Map<String, Object>
+	 * @return Map<String, Object>
+	 * @throws EncryptionException
+	 */
 	@Override
 	public Map<String, Object> encrypt(Map<String, Object> propertyValue) throws EncryptionException {
+		logger.debug("encrypt starts with value {}", propertyValue);
 		Map<String, Object> map = new HashMap<>();
 		map.put("value", propertyValue);
 
@@ -106,7 +117,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 		HttpEntity<String> entity = new HttpEntity<>(gson.toJson(map), headers);
 		try {
 			watch.start("EncryptionServiceImpl.encryptBatch");
-			ResponseEntity<String> response = restTemplate.postForEntity(encryptionBatchUri, entity, String.class);
+			ResponseEntity<String> response = retryRestTemplate.postForEntity(encryptionBatchUri,entity);
 			watch.stop("EncryptionServiceImpl.encryptBatch");
 			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
 			}.getType());
@@ -122,8 +133,14 @@ public class EncryptionServiceImpl implements EncryptionService {
 		}
 	}
 
+	/** decrypts the input which is in Map format
+	 * @param propertyValue - input is in format Map<String, Object>
+	 * @return Map<String, Object>
+	 * @throws EncryptionException
+	 */
 	@Override
 	public Map<String, Object> decrypt(Map<String, Object> propertyValue) throws EncryptionException {
+		logger.debug("decrypt starts with value {}", propertyValue);
 		Map<String, Object> map = new HashMap<>();
 		map.put("value", propertyValue);
 
@@ -133,7 +150,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 
 		try {
 			watch.start("EncryptionServiceImpl.decryptBatch");
-			ResponseEntity<String> response = restTemplate.postForEntity(decryptionBatchUri, entity, String.class);
+			ResponseEntity<String> response = retryRestTemplate.postForEntity(decryptionBatchUri,entity);
 			watch.stop("EncryptionServiceImpl.decryptBatch");
 			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
 			}.getType());
@@ -152,16 +169,13 @@ public class EncryptionServiceImpl implements EncryptionService {
 	/**
 	 * This method is used to check if the sunbird encryption service is up
 	 * 
-	 * @return
+	 * @return boolean true/false
 	 */
 	@Override
 	public boolean isEncryptionServiceUp() {
 		boolean isEncryptionServiceUp = false;
-		HttpClient httpClient = HttpClientBuilder.create().build();
-		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-		RestTemplate restTemplate = new RestTemplate(requestFactory);
 		try {
-			ResponseEntity<String> response = restTemplate.getForEntity(encryptionServiceHealthCheckUri, String.class);
+			ResponseEntity<String> response = retryRestTemplate.getForEntity(encryptionServiceHealthCheckUri);
 			if (response.getBody().equalsIgnoreCase("UP")) {
 				isEncryptionServiceUp = true;
 				logger.debug("Encryption service running !");

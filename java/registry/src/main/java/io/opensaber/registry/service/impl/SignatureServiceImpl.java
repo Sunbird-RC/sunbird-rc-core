@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
 
@@ -27,13 +26,17 @@ public class SignatureServiceImpl implements SignatureService {
 	@Value("${signature.keysURL}")
 	private String keysURL;
 	@Autowired
-	private RestTemplate restTemplate;
+	private RetryRestTemplate retryRestTemplate;
 
+	/** This method checks signature service is available or not
+	 * @return - true or false
+	 * @throws SignatureException.UnreachableException
+	 */
 	@Override
 	public boolean isServiceUp() throws SignatureException.UnreachableException {
 		boolean isSignServiceUp = false;
 		try {
-			ResponseEntity<String> response = restTemplate.getForEntity(healthCheckURL, String.class);
+			ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckURL);
 			if (response.getBody().equalsIgnoreCase("UP")) {
 				isSignServiceUp = true;
 				logger.debug("Signature service running !");
@@ -45,13 +48,20 @@ public class SignatureServiceImpl implements SignatureService {
 		return isSignServiceUp;
 	}
 
+	/** This method calls signature service for signing the object
+	 * @param propertyValue - contains input need to be signed
+	 * @return - signed data with key
+	 * @throws SignatureException.UnreachableException
+	 * @throws SignatureException.CreationException
+	 */
 	@Override
 	public Object sign(Object propertyValue)
 			throws SignatureException.UnreachableException, SignatureException.CreationException {
+		logger.debug("sign method starts with value {}",propertyValue);
 		ResponseEntity<String> response = null;
 		Object result = null;
 		try {
-			response = restTemplate.postForEntity(signURL, propertyValue, String.class);
+			response = retryRestTemplate.postForEntity(signURL, propertyValue);
 			result = new Gson().fromJson(response.getBody(), Object.class);
 		} catch (RestClientException ex) {
 			logger.error("RestClientException when signing: ", ex);
@@ -60,16 +70,24 @@ public class SignatureServiceImpl implements SignatureService {
 			logger.error("RestClientException when signing: ", e);
 			throw new SignatureException().new CreationException(e.getMessage());
 		}
+		logger.debug("sign method ends with value {}",result);
 		return result;
 	}
 
+	/** This method verifies the sign value with request input object
+	 * @param propertyValue - contains input along with signed value
+	 * @return true/false
+	 * @throws SignatureException.UnreachableException
+	 * @throws SignatureException.VerificationException
+	 */
 	@Override
 	public Object verify(Object propertyValue)
 			throws SignatureException.UnreachableException, SignatureException.VerificationException {
+		logger.debug("verify method starts with value {}",propertyValue);
 		ResponseEntity<String> response = null;
 		Object result = null;
 		try {
-			response = restTemplate.postForEntity(verifyURL, propertyValue, String.class);
+			response = retryRestTemplate.postForEntity(verifyURL, propertyValue);
 			result = new Gson().fromJson(response.getBody(), Object.class);
 		} catch (RestClientException ex) {
 			logger.error("RestClientException when verifying: ", ex);
@@ -78,16 +96,24 @@ public class SignatureServiceImpl implements SignatureService {
 			logger.error("RestClientException when verifying: ", e);
 			throw new SignatureException().new VerificationException(e.getMessage());
 		}
+		logger.debug("verify method ends with value {}",result);
 		return result;
 	}
 
+	/** This medhod gives public key based on keyId
+	 * @param keyId
+	 * @return public key
+	 * @throws SignatureException.UnreachableException
+	 * @throws SignatureException.KeyNotFoundException
+	 */
 	@Override
 	public String getKey(String keyId)
 			throws SignatureException.UnreachableException, SignatureException.KeyNotFoundException {
+		logger.debug("getKey method starts with value {}",keyId);
 		ResponseEntity<String> response = null;
 		String result = null;
 		try {
-			response = restTemplate.getForEntity(keysURL + "/" + keyId, String.class);
+			response = retryRestTemplate.getForEntity(keysURL + "/" + keyId);
 			result = response.getBody();
 		} catch (RestClientException ex) {
 			logger.error("RestClientException when verifying: ", ex);
@@ -96,6 +122,7 @@ public class SignatureServiceImpl implements SignatureService {
 			logger.error("RestClientException when verifying: ", e);
 			throw new SignatureException().new KeyNotFoundException(e.getMessage());
 		}
+		logger.debug("getKey method ends with value {}",result);
 		return result;
 	}
 }

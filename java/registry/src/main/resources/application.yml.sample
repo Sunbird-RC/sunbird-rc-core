@@ -147,6 +147,13 @@ validation:
   enabled: ${validation_enabled:true}
   type: ${validation_type:json}
 
+retry:
+  # The number of times an attempt must be made to reach to the service.
+  maxAttempts: ${retry_maxAttempts:5}
+  backoff:
+    # The fixed time interval, in milliseconds, between each such attempt.
+    delay: ${retry_backoff_delay:1000}
+
 ---
 ##################################################################
 #                      TEST PROFILE                              #
@@ -244,4 +251,11 @@ keycloak:
 validation:
   enabled: ${validation_enabled:true}
   type: ${validation_type:json}
+
+retry:
+  # The number of times an attempt must be made to reach to the service.
+  maxAttempts: ${retry_maxAttempts:5}
+  backoff:
+    # The fixed time interval, in milliseconds, between each such attempt.
+    delay: ${retry_backoff_delay:1000}
   

@@ -1,14 +1,17 @@
 package io.opensaber.registry.service.impl;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
+import com.google.gson.Gson;
+import io.opensaber.pojos.OpenSaberInstrumentation;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -16,21 +19,29 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.EncryptionService;
 
-@Ignore
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { EncryptionServiceImpl.class, Environment.class, GenericConfiguration.class })
+@SpringBootTest(classes = { EncryptionServiceImpl.class, Environment.class, Gson.class, RetryRestTemplate.class,RestTemplate.class,
+		EncryptionServiceImplTest.ContextConfiguration.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class EncryptionServiceImplTest extends RegistryTestBase {
+public class EncryptionServiceImplTest {
+
+	@TestConfiguration
+	static class ContextConfiguration {
+		@Bean
+		public OpenSaberInstrumentation instrumentationStopWatch() {
+			return new OpenSaberInstrumentation(false);
+		}
+	}
 
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
