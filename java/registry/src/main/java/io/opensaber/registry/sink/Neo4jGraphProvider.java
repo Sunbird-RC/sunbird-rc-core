@@ -7,6 +7,7 @@ import com.steelbridgelabs.oss.neo4j.structure.Neo4JVertex;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfo;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import org.apache.tinkerpop.gremlin.structure.Edge;
@@ -16,6 +17,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
+import org.neo4j.driver.v1.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,13 +105,24 @@ public class Neo4jGraphProvider extends DatabaseProvider {
 
     @Override
     public void createIndex(Graph graph,String label, List<String> propertyNames) {
-
-        Neo4JGraph neo4jGraph = (Neo4JGraph) graph;
-        
+        Neo4JGraph neo4jGraph = (Neo4JGraph) graph;       
         for (String propertyName : propertyNames) {
             neo4jGraph.createIndex(label, propertyName);
             logger.info("Neo4jGraph index created for " + label);
-        }
-        
+        }        
+    }
+    
+    @Override
+    public void createCompositeIndex(Graph graph, String label, List<String> propertyNames){
+        Neo4JGraph neo4jGraph = (Neo4JGraph) graph;
+        String properties = "";
+        for (String propertyName : propertyNames) {
+            properties = properties.isEmpty() ? propertyName : (properties + "," + propertyName);
+            logger.info("composite key properties values "+properties);
+        }       
+        Objects.requireNonNull(label, "label cannot be null");
+        Objects.requireNonNull(properties, "propertyName cannot be null");
+        neo4jGraph.execute(new Statement("CREATE INDEX ON :`" + label + "`(" + properties + ")"));
+
     }
 }

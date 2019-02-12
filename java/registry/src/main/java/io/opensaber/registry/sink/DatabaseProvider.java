@@ -161,6 +161,12 @@ public abstract class DatabaseProvider {
     public void createUniqueIndex(Graph graph, String label, List<String> propertyNames){
         //Does nothing, suppose to be overridden by extended classes.
     }
+    /**
+     * Creates composite index
+     */
+    public void createCompositeIndex(Graph graph, String label, List<String> propertyNames){
+        //Does nothing, suppose to be overridden by extended classes.
+    }
         
     public Constants.GraphDatabaseProvider getProvider() {
         return this.provider;

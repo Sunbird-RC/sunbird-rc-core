@@ -1,6 +1,5 @@
 package io.opensaber.registry.util;
 
-import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -18,26 +17,21 @@ public class Indexer {
     private static Logger logger = LoggerFactory.getLogger(Indexer.class);
 
     /**
-     * Non unique index fields 
-     */
-    private List<String> indexFields;
-    /**
      * Unique index fields
      */
     private List<String> indexUniqueFields;
+    /**
+     * Composite index fields
+     */
+    private List<String> compositeIndexFields;
+    /**
+     * Single index fields
+     */
+    private List<String> singleIndexFields;
     private DatabaseProvider databaseProvider;
 
     public Indexer(DatabaseProvider databaseProvider) {
         this.databaseProvider = databaseProvider;
-    }
-
-    /**
-     * Required to set non-unique fields to create
-     * 
-     * @param indexFields
-     */
-    public void setIndexFields(List<String> indexFields) {
-        this.indexFields = indexFields;
     }
 
     /**
@@ -48,6 +42,22 @@ public class Indexer {
     public void setUniqueIndexFields(List<String> indexUniqueFields) {
         this.indexUniqueFields = indexUniqueFields;
     }
+    /**
+     * Required to set single fields to create
+     * 
+     * @param indexUniqueFields
+     */
+    public void setSingleIndexFields(List<String> singleIndexFields) {
+        this.singleIndexFields = singleIndexFields;
+    }
+    /**
+     * Required to set composite fields to create
+     * 
+     * @param indexUniqueFields
+     */
+    public void setCompositeIndexFields(List<String> compositeIndexFields) {
+        this.compositeIndexFields = compositeIndexFields;
+    }
 
     /**
      * Creates index for a given label
@@ -56,50 +66,54 @@ public class Indexer {
      * @param label     type vertex label (example:Teacher) and table in rdbms           
      * @param parentVertex
      */
-    public void createIndex(Graph graph, String label, Vertex parentVertex) throws NoSuchElementException {
+    public boolean createIndex(Graph graph, String label, Vertex parentVertex) {
+        boolean isCreated = false;
         if (label != null && !label.isEmpty()) {
-            createNonUniqueIndex(graph, label, parentVertex);
-            createUniqueIndex(graph, label, parentVertex);
+            try {
+                createSingleIndex(graph, label, parentVertex);
+                createCompositeIndex(graph, label, parentVertex);
+                createUniqueIndex(graph, label, parentVertex);
+                isCreated = true;
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+                logger.error("Failed to create index {}", label);
+            }
         } else {
             logger.info("label is required for creating indexing");
         }
+        return isCreated;
     }
-
-    private void createNonUniqueIndex(Graph graph, String label, Vertex parentVertex) throws NoSuchElementException {
-
-        databaseProvider.createIndex(graph, label, indexFields);
-        updateIndices(parentVertex, indexFields, false);
-
-    }
-
-    private void createUniqueIndex(Graph graph, String label, Vertex parentVertex) throws NoSuchElementException {
-
-        databaseProvider.createUniqueIndex(graph, label, indexUniqueFields);
-        updateIndices(parentVertex, indexUniqueFields, true);
-
-    }
-
     /**
-     * Append the values to parent vertex INDEX_FIELDS and UNIQUE_INDEX_FIELDS
-     * property
-     * 
+     * Creates single indices
+     * @param graph
+     * @param label
      * @param parentVertex
-     * @param values
-     * @param isUnique
+     * @throws NoSuchElementException
      */
-    private void updateIndices(Vertex parentVertex, List<String> values, boolean isUnique) {
-        String propertyName = isUnique ? Constants.UNIQUE_INDEX_FIELDS : Constants.INDEX_FIELDS;
+    private void createSingleIndex(Graph graph, String label, Vertex parentVertex) throws NoSuchElementException {
+        databaseProvider.createIndex(graph, label, singleIndexFields);        
 
-        if (values.size() > 0) {
-            String existingValue = (String) parentVertex.property(propertyName).value();
-            for (String value : values) {
-                existingValue = existingValue.isEmpty() ? value : (existingValue + "," + value);
-                parentVertex.property(propertyName, existingValue);
-            }
-            logger.info("parent vertex property {}:{}", propertyName, existingValue);
-        } else {
-            logger.info("no values to set for parent vertex property for {}", propertyName);
-        }
     }
-
+    /**
+     * Creates composite indices
+     * @param graph
+     * @param label
+     * @param parentVertex
+     * @throws NoSuchElementException
+     */
+    private void createCompositeIndex(Graph graph, String label, Vertex parentVertex) throws NoSuchElementException {
+        databaseProvider.createCompositeIndex(graph, label, compositeIndexFields);
+    }
+    
+    /**
+     * Creates only unique indices
+     * @param graph
+     * @param label
+     * @param parentVertex
+     * @throws NoSuchElementException
+     */
+    private void createUniqueIndex(Graph graph, String label, Vertex parentVertex) throws NoSuchElementException {
+        databaseProvider.createUniqueIndex(graph, label, indexUniqueFields);
+    }
+    
 }
