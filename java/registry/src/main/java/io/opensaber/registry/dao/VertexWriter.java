@@ -69,6 +69,22 @@ public class VertexWriter {
 
         return vertex;
     }
+    
+    /**
+     * Updates index fields property of parent vertex for a given propertyName
+     * 
+     * @param parentVertex
+     * @param propertyName
+     * @param indexFields
+     */
+    public void updateParentIndexProperty(Vertex parentVertex, String propertyName, List<String> indexFields){
+        if (indexFields.size() > 0) {
+            StringBuilder properties = new StringBuilder(String.join(",", indexFields));        
+            parentVertex.property(propertyName, properties.toString());
+            logger.info("parent vertex property {}:{}", propertyName, properties);
+
+        }            
+    }
 
     /**
      * Writes an array into the database. For each array item, if it is an

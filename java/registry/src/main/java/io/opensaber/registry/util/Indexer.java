@@ -66,22 +66,15 @@ public class Indexer {
      * @param label     type vertex label (example:Teacher) and table in rdbms           
      * @param parentVertex
      */
-    public boolean createIndex(Graph graph, String label, Vertex parentVertex) {
-        boolean isCreated = false;
+    public void createIndex(Graph graph, String label, Vertex parentVertex) throws Exception{
+
         if (label != null && !label.isEmpty()) {
-            try {
-                createSingleIndex(graph, label, parentVertex);
-                createCompositeIndex(graph, label, parentVertex);
-                createUniqueIndex(graph, label, parentVertex);
-                isCreated = true;
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-                logger.error("Failed to create index {}", label);
-            }
+            createUniqueIndex(graph, label, parentVertex);
+            createSingleIndex(graph, label, parentVertex);
+            createCompositeIndex(graph, label, parentVertex);
         } else {
             logger.info("label is required for creating indexing");
         }
-        return isCreated;
     }
     /**
      * Creates single indices

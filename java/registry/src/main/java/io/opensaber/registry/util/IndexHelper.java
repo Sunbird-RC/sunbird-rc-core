@@ -46,36 +46,6 @@ public class IndexHelper {
         logger.debug("isIndexPresent flag for {}: {}", defTitle, isIndexPresent);
         return isIndexPresent;
     }
-    
-    /**
-     * Updates INDEX_FIELDS(single, composite) and UNIQUE_INDEX_FIELDS property of parent vertex
-     * @param parentVertex
-     */
-    public void updateParentIndexProperty(Vertex parentVertex, List<String> indexFields, List<String> uniqueIndexFields) { 
-
-        //Non-unique
-        if (indexFields.size() > 0) {
-            replaceVertexProperty(parentVertex, indexFields, false);
-        }
-        //unique
-        if(uniqueIndexFields.size() > 0){
-            replaceVertexProperty(parentVertex, uniqueIndexFields, true);
-  
-        }
-    }
-    /**
-     * Replace the INDEX_FIELDS and UNIQUE_INDEX_FIELDS of parent vertex
-     * @param parentVertex
-     * @param properties
-     * @param isUnique
-     */
-    private void replaceVertexProperty(Vertex parentVertex, List<String> indexFields, boolean isUnique){
-        String propertyName = isUnique ? Constants.UNIQUE_INDEX_FIELDS : Constants.INDEX_FIELDS;
-        StringBuilder properties = new StringBuilder(String.join(",", indexFields));
-        parentVertex.property(propertyName, properties.toString());
-        logger.info("parent vertex property {}:{}", propertyName, properties);
-    }
-
 
     /**
      * Identifies new fields for creating index. Parent vertex are always have

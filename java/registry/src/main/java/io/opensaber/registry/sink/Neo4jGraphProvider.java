@@ -115,14 +115,25 @@ public class Neo4jGraphProvider extends DatabaseProvider {
     @Override
     public void createCompositeIndex(Graph graph, String label, List<String> propertyNames){
         Neo4JGraph neo4jGraph = (Neo4JGraph) graph;
-        String properties = "";
-        for (String propertyName : propertyNames) {
-            properties = properties.isEmpty() ? propertyName : (properties + "," + propertyName);
-            logger.info("composite key properties values "+properties);
-        }       
+        StringBuilder properties = new StringBuilder(String.join(",", propertyNames));
+        logger.info("composite key properties values "+properties);
+        
         Objects.requireNonNull(label, "label cannot be null");
-        Objects.requireNonNull(properties, "propertyName cannot be null");
+        Objects.requireNonNull(properties, "properties cannot be null");
         neo4jGraph.execute(new Statement("CREATE INDEX ON :`" + label + "`(" + properties + ")"));
+
+    }
+    
+    @Override
+    public void createUniqueIndex(Graph graph, String label, List<String> propertyNames) {
+        Neo4JGraph neo4jGraph = (Neo4JGraph) graph;
+        for (String propertyName : propertyNames) {
+            Objects.requireNonNull(label, "label cannot be null");
+            Objects.requireNonNull(propertyName, "propertyName cannot be null");
+            neo4jGraph.execute(new Statement("CREATE CONSTRAINT ON (n:" + label + ") ASSERT n." + propertyName + " IS UNIQUE"));
+            logger.info("Neo4jGraph unique index created for " + label);
+
+        }       
 
     }
 }
