@@ -1,9 +1,13 @@
 package io.opensaber.pojos;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+
 import java.lang.reflect.Type;
 import java.util.Map;
-
-import com.google.gson.*;
 
 public class ResponseSerializer implements JsonSerializer<Response> {
 	private static Gson gson = new Gson();

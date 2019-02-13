@@ -3,7 +3,11 @@ package io.opensaber.registry.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import io.opensaber.pojos.*;
+import io.opensaber.pojos.APIMessage;
+import io.opensaber.pojos.HealthCheckResponse;
+import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.Response;
+import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
@@ -12,15 +16,14 @@ import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
-import io.opensaber.registry.transform.*;
+import io.opensaber.registry.transform.Configuration;
+import io.opensaber.registry.transform.ConfigurationHelper;
+import io.opensaber.registry.transform.Data;
+import io.opensaber.registry.transform.ITransformer;
+import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.ReadConfiguratorFactory;
 import io.opensaber.registry.util.RecordIdentifier;
-
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +31,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 public class RegistryController {
@@ -48,9 +60,6 @@ public class RegistryController {
     @Autowired
     private DBConnectionInfoMgr dbConnectionInfoMgr;
 
-    private Gson gson = new Gson();
-    private Type mapType = new TypeToken<Map<String, Object>>() {
-    }.getType();
     @Value("${audit.enabled}")
     private boolean auditEnabled;
     @Value("${database.uuidPropertyName}")

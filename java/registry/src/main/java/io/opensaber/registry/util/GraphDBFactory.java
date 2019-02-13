@@ -1,8 +1,6 @@
 package io.opensaber.registry.util;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
+import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.neo4j.structure.Neo4jGraph;
@@ -14,7 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
-import io.opensaber.registry.middleware.util.Constants;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 public class GraphDBFactory {
 

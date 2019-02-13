@@ -6,10 +6,6 @@ import com.steelbridgelabs.oss.neo4j.structure.Neo4JGraph;
 import com.steelbridgelabs.oss.neo4j.structure.Neo4JVertex;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfo;
-import java.util.List;
-import java.util.Objects;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -20,6 +16,11 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.List;
+import java.util.Objects;
 
 public class Neo4jGraphProvider extends DatabaseProvider {
 

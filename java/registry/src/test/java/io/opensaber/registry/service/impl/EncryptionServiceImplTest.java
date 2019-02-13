@@ -4,9 +4,6 @@ import com.google.gson.Gson;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.middleware.util.Constants;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,6 +19,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
+
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsNull.notNullValue;

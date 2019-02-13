@@ -1,14 +1,16 @@
 package io.opensaber.registry.test;
 
-import static org.junit.Assert.*;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.io.CharStreams;
+import com.google.gson.reflect.TypeToken;
+import cucumber.api.java.en.Then;
+import cucumber.api.java8.En;
+import io.opensaber.pojos.Response;
+import io.opensaber.registry.transform.JsonldToJsonTransformer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.HttpHeaders;
@@ -17,18 +19,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.io.CharStreams;
-import com.google.gson.reflect.TypeToken;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-import cucumber.api.java.en.Then;
-import cucumber.api.java8.En;
-import io.opensaber.pojos.Response;
-import io.opensaber.registry.transform.JsonldToJsonTransformer;
+import static org.junit.Assert.*;
 
 public class SearchIntegrationTestSteps extends RegistryTestBase implements En {
 

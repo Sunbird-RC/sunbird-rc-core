@@ -1,9 +1,10 @@
 package io.opensaber.registry.sink.shard;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 public class ShardAdvisor {
 	private static Logger logger = LoggerFactory.getLogger(ShardAdvisor.class);

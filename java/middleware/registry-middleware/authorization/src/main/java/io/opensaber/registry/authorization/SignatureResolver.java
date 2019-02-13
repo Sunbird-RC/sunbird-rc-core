@@ -1,10 +1,10 @@
 package io.opensaber.registry.authorization;
 
-import java.security.Key;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
+
+import java.security.Key;
 
 public class SignatureResolver extends SigningKeyResolverAdapter {
 

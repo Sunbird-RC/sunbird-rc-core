@@ -1,11 +1,9 @@
 package io.opensaber.registry.sink;
 
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.transform.Data;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;

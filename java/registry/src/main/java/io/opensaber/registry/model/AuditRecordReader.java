@@ -1,8 +1,7 @@
 package io.opensaber.registry.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
+import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -13,8 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 
-import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
-import io.opensaber.registry.sink.DatabaseProvider;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AuditRecordReader {
 

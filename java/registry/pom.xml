@@ -280,6 +280,12 @@
             <artifactId>jsonschemavalidator</artifactId>
             <version>2.0.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.googlecode.junit-toolbox</groupId>
+            <artifactId>junit-toolbox</artifactId>
+            <version>1.5</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -360,11 +366,32 @@
                             <outputDirectory>target/jacoco-ut</outputDirectory>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>jacoco-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.15</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
                 </executions>
                 <configuration>
-                    <systemPropertyVariables>
-                        <jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>
-                    </systemPropertyVariables>
+                    <excludes>
+                        <exclude>io/opensaber/pojos/*</exclude>
+                        <exclude>**/I*.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>

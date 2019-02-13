@@ -5,11 +5,12 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 @Component
 public class EncryptionHelper {

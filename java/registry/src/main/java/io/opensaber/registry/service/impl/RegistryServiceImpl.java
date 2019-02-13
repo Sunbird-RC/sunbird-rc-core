@@ -2,19 +2,31 @@ package io.opensaber.registry.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.*;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
-import io.opensaber.registry.dao.*;
+import io.opensaber.registry.dao.IRegistryDao;
+import io.opensaber.registry.dao.RegistryDaoImpl;
+import io.opensaber.registry.dao.VertexReader;
+import io.opensaber.registry.dao.VertexWriter;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.service.*;
+import io.opensaber.registry.service.EncryptionHelper;
+import io.opensaber.registry.service.EncryptionService;
+import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.SignatureHelper;
+import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
 import io.opensaber.registry.sink.shard.Shard;
-import io.opensaber.registry.util.*;
-import io.opensaber.validators.IValidate;
+import io.opensaber.registry.util.Definition;
+import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.EntityParenter;
+import io.opensaber.registry.util.ReadConfigurator;
+import io.opensaber.registry.util.ReadConfiguratorFactory;
+import io.opensaber.registry.util.RecordIdentifier;
+import io.opensaber.registry.util.RefLabelHelper;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -24,7 +36,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 public class RegistryServiceImpl implements RegistryService {
@@ -57,26 +76,15 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${persistence.enabled}")
     private boolean persistenceEnabled;
 
-    @Value("${signature.domain}")
-    private String signatureDomain;
-
-    @Value("${signature.keysURL}")
-    private String signatureKeyURl;
-
-    @Value("${frame.file}")
-    private String frameFile;
-
-    @Value("${registry.context.base}")
-    private String registryContextBase;
-
-    @Value("${registry.context.base}")
-    private String registryContext;
-
     @Autowired
     private Shard shard;
 
     @Autowired
     private EntityParenter entityParenter;
+
+    public void setShard(Shard shard) {
+        this.shard = shard;
+    }
 
     public HealthCheckResponse health() throws Exception {
         HealthCheckResponse healthCheck;

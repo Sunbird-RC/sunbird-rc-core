@@ -1,16 +1,14 @@
 package io.opensaber.registry.exception;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.google.gson.Gson;
+import io.opensaber.registry.interceptor.handler.BaseResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.google.gson.Gson;
-
-import io.opensaber.registry.interceptor.handler.BaseResponseHandler;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class CustomExceptionHandler extends BaseResponseHandler implements HandlerExceptionResolver {
 

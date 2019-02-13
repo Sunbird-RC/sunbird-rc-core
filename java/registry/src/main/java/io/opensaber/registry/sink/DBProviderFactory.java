@@ -3,11 +3,12 @@ package io.opensaber.registry.sink;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import java.util.HashMap;
-import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Component("dbProviderFactory")
 public class DBProviderFactory {
@@ -52,6 +53,7 @@ public class DBProviderFactory {
 				dbProviderInstances.putIfAbsent(connectionInfo.getShardId(), provider);
 			}
 		}
+		provider.setUuidPropertyName(uuidPropertyName);
 		return provider;
 	}
 

@@ -1,10 +1,11 @@
 package io.opensaber.registry.util;
 
-import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class creates util methods for String modification and replacing
@@ -30,7 +31,7 @@ public class ArrayHelper {
      * @param inputList - which contains list of Strings
      * @return - String, in array format
      */
-    public static String formatToString(List<String> inputList){
+    public static String formatToString(List<String> inputList) {
         List<String> quotedStr = new ArrayList<>();
         inputList.forEach(input -> {
             input = "\"" + input + "\"";

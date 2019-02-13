@@ -7,13 +7,6 @@ import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -23,6 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component("entityParenter")
 public class EntityParenter {
@@ -249,7 +250,7 @@ public class EntityParenter {
                     indexer.setCompositeIndexFields(cIndexFields);
 
                     indexer.setUniqueIndexFields(newUniqueIndexFields);
-                    indexer.createIndex(graph, definition.getTitle(), parentVertex);
+                    indexer.createIndex(graph, definition.getTitle());
                     dbProvider.commitTransaction(graph, tx);
 
                     updateParentVertexIndexProperties(dbProvider, parentVertex, indexFields, indexUniqueFields);

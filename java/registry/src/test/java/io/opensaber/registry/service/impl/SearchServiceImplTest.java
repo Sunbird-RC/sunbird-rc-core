@@ -1,7 +1,14 @@
 package io.opensaber.registry.service.impl;
 
 
-import java.io.IOException;
+import io.opensaber.registry.app.OpenSaberApplication;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.controller.RegistryTestBase;
+import io.opensaber.registry.dao.IRegistryDao;
+import io.opensaber.registry.dao.SearchDao;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.SearchService;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
@@ -14,14 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import io.opensaber.registry.app.OpenSaberApplication;
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.dao.IRegistryDao;
-import io.opensaber.registry.dao.SearchDao;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.service.SearchService;
+import java.io.IOException;
 
 @Ignore
 @RunWith(SpringRunner.class)

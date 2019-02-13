@@ -2,10 +2,11 @@ package io.opensaber.registry.config.validation;
 
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import java.util.List;
+import org.springframework.stereotype.Component;
+
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
-import org.springframework.stereotype.Component;
+import java.util.List;
 
 @Component
 public class DatabaseConfigValidator implements ConstraintValidator<ValidDatabaseConfig, DBConnectionInfoMgr> {

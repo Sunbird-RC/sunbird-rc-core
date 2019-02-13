@@ -1,7 +1,7 @@
 package io.opensaber.registry.kernel.extension;
 
-import java.util.*;
-
+import io.opensaber.registry.kernel.util.LogGraphEvent;
+import io.opensaber.registry.middleware.util.Constants;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
@@ -12,8 +12,13 @@ import org.neo4j.graphdb.event.TransactionData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.opensaber.registry.kernel.util.LogGraphEvent;
-import io.opensaber.registry.middleware.util.Constants;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class ProcessTransactionData {
 

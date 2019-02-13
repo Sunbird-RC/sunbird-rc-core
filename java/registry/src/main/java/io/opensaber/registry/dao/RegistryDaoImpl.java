@@ -4,9 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.middleware.util.Constants;
-
-import java.util.List;
-
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
@@ -16,6 +13,8 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public class RegistryDaoImpl implements IRegistryDao {
     public String uuidPropertyName;

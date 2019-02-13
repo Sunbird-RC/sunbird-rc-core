@@ -1,20 +1,20 @@
 package io.opensaber.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.*;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.SearchQuery;
-import io.opensaber.registry.middleware.util.*;
-import io.opensaber.registry.util.*;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.util.ReadConfigurator;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SearchDaoImpl implements SearchDao {
     private IRegistryDao registryDao;
@@ -29,7 +29,6 @@ public class SearchDaoImpl implements SearchDao {
 		List<Filter> filterList = searchQuery.getFilters();
 		GraphTraversal<Vertex, Vertex> resultGraphTraversal = dbGraphTraversalSource.clone().V().hasLabel(searchQuery.getRootLabel());
 
-		List<P> predicates = new ArrayList<>();
 		// Ensure the root label is correct
 		if (filterList != null) {
 			for (Filter filter : filterList) {

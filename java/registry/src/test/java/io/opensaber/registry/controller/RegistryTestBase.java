@@ -8,6 +8,15 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.tests.utility.TestHelper;
+import org.apache.commons.lang.StringUtils;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.ActiveProfiles;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -17,16 +26,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.UUID;
-import org.apache.commons.lang.StringUtils;
-import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 
-@EnableConfigurationProperties
-public class RegistryTestBase {
+@SpringBootTest
+@ActiveProfiles(Constants.TEST_ENVIRONMENT)
+abstract public class RegistryTestBase {
 
 	public static final String FORMAT = "JSON-LD";
 	private static final String INVALID_SUBJECT_LABEL = "ex:Picasso";
@@ -40,7 +43,6 @@ public class RegistryTestBase {
 	public DatabaseProvider databaseProvider;
 	@Autowired
 	public DBProviderFactory dbProviderFactory;
-
 
 	public RegistryTestBase() {
 		databaseProvider = dbProviderFactory.getInstance(null);

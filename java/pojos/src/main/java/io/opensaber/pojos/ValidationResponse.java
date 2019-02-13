@@ -1,8 +1,8 @@
 package io.opensaber.pojos;
 
-import java.util.HashMap;
-
 import com.google.gson.annotations.Expose;
+
+import java.util.HashMap;
 
 public class ValidationResponse extends BaseErrorResponse {
 

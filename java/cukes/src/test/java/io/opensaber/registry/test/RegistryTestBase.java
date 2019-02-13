@@ -1,5 +1,10 @@
 package io.opensaber.registry.test;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import io.opensaber.pojos.Response;
+import org.springframework.web.client.RestTemplate;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -13,13 +18,6 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import org.springframework.web.client.RestTemplate;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import io.opensaber.pojos.Response;
 
 public class RegistryTestBase {
 

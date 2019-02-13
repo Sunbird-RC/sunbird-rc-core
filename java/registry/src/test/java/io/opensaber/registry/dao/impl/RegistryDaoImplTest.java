@@ -1,14 +1,20 @@
 package io.opensaber.registry.dao.impl;
 
-import java.util.Collections;
+import io.opensaber.pojos.APIMessage;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.controller.RegistryTestBase;
 import io.opensaber.registry.dao.RegistryDaoImpl;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.model.AuditRecordReader;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
+import io.opensaber.registry.service.impl.EncryptionServiceImpl;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TestRule;
@@ -16,30 +22,16 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
-import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import io.opensaber.pojos.APIMessage;
-import io.opensaber.registry.authorization.AuthorizationToken;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.controller.RegistryTestBase;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.model.AuditRecordReader;
-import io.opensaber.registry.service.impl.EncryptionServiceImpl;
-import io.opensaber.registry.sink.DBProviderFactory;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.tests.utility.TestHelper;
-
+@Ignore
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { RegistryDaoImpl.class, Environment.class, ObjectMapper.class, GenericConfiguration.class,
 		EncryptionServiceImpl.class, APIMessage.class, DBConnectionInfoMgr.class})

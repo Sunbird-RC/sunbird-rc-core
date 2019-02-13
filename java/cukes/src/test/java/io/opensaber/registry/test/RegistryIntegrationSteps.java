@@ -1,21 +1,9 @@
 package io.opensaber.registry.test;
 
-import static org.junit.Assert.*;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.json.JSONObject;
-import org.springframework.web.client.RestTemplate;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.reflect.TypeToken;
-
 import cucumber.api.java.Before;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
@@ -23,6 +11,16 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.Response.Status;
+import org.json.JSONObject;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.*;
 
 public class RegistryIntegrationSteps extends RegistryTestBase {
 

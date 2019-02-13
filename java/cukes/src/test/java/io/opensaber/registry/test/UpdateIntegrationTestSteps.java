@@ -1,12 +1,14 @@
 package io.opensaber.registry.test;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.lang.reflect.Type;
-import java.util.Map;
-
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+import cucumber.api.Scenario;
+import cucumber.api.java8.En;
+import io.opensaber.pojos.Response;
+import io.opensaber.pojos.Response.Status;
+import io.opensaber.pojos.ResponseParams;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -15,16 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.lang.reflect.Type;
+import java.util.Map;
 
-import cucumber.api.Scenario;
-import cucumber.api.java8.En;
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.Response.Status;
-import io.opensaber.pojos.ResponseParams;
+import static org.junit.Assert.assertEquals;
 
 public class UpdateIntegrationTestSteps extends RegistryTestBase implements En {
 

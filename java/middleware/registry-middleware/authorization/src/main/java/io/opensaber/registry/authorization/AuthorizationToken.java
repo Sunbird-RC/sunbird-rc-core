@@ -1,11 +1,10 @@
 package io.opensaber.registry.authorization;
 
-import java.util.List;
-
+import io.opensaber.registry.authorization.pojos.AuthInfo;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import io.opensaber.registry.authorization.pojos.AuthInfo;
+import java.util.List;
 
 public class AuthorizationToken extends AbstractAuthenticationToken {
 

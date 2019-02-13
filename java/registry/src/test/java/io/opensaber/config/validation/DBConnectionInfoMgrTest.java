@@ -1,18 +1,19 @@
 package io.opensaber.config.validation;
 
-import static org.junit.Assert.assertEquals;
-
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import org.junit.Before;
+import org.junit.Test;
+
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
-import org.junit.Before;
-import org.junit.Test;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
 
 public class DBConnectionInfoMgrTest {
 

@@ -2,7 +2,6 @@ package io.opensaber.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.opensaber.pojos.SearchQuery;
-
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 

@@ -1,12 +1,10 @@
 package io.opensaber.registry.model;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.config.GenericConfiguration;
+import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -14,6 +12,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -27,12 +26,14 @@ import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.config.GenericConfiguration;
-import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.sink.DatabaseProvider;
+import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+@Ignore
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { Environment.class, GenericConfiguration.class, AuditRecordReader.class })
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)

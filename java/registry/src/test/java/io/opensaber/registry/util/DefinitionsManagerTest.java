@@ -10,7 +10,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {DefinitionsReader.class, DefinitionsManager.class})
@@ -29,7 +29,7 @@ public class DefinitionsManagerTest {
         try {
             int nDefinitions = definitionsManager.getAllKnownDefinitions().size();
             int nResources = definitionsReader.getResources(Constants.RESOURCE_LOCATION).length;
-            flag = (nDefinitions == nResources);
+            flag = (2*nDefinitions == nResources);
         } catch (IOException ioe) {
 
         }

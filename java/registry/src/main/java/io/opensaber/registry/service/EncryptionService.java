@@ -1,8 +1,8 @@
 package io.opensaber.registry.service;
 
-import java.util.Map;
-
 import io.opensaber.registry.exception.EncryptionException;
+
+import java.util.Map;
 
 public interface EncryptionService {
 

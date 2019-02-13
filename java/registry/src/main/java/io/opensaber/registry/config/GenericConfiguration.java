@@ -22,18 +22,14 @@ import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.shard.IShardAdvisor;
 import io.opensaber.registry.sink.shard.ShardAdvisor;
 import io.opensaber.registry.transform.ConfigurationHelper;
+import io.opensaber.registry.transform.Json2JsonTransformer;
 import io.opensaber.registry.transform.Json2LdTransformer;
 import io.opensaber.registry.transform.Ld2JsonTransformer;
-import io.opensaber.registry.transform.Json2JsonTransformer;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -45,7 +41,6 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import org.springframework.core.env.Environment;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.retry.annotation.EnableRetry;
@@ -58,6 +53,11 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 @Configuration
 @EnableRetry
 @EnableAsync
@@ -66,9 +66,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
 	@Autowired
 	private DefinitionsManager definitionsManager;
-
-	@Autowired
-	private Environment environment;
 
 	@Value("${service.connection.timeout}")
 	private int connectionTimeout;

@@ -1,9 +1,9 @@
 package io.opensaber.pojos;
 
+import io.opensaber.pojos.Response.Status;
+
 import java.util.List;
 import java.util.UUID;
-
-import io.opensaber.pojos.Response.Status;
 
 public class ResponseParams {
 	public String resmsgid;

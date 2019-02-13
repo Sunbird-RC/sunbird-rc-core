@@ -1,9 +1,11 @@
 package io.opensaber.registry.util;
 
-import java.util.*;
-import org.junit.*;
-import org.junit.runner.*;
-import org.springframework.test.context.junit4.*;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
@@ -24,7 +26,7 @@ public class ArrayHelperTest {
 
     @Test
     public void testFormatToString(){
-        String expectedString = "[\" hari\",\"sri ram\",\"giri\"]";;
+        String expectedString = "[\" hari\",\"sri ram\",\"giri\"]";
         List<String> inputLst = new ArrayList<>();
         inputLst.add(" hari");
         inputLst.add("sri ram");

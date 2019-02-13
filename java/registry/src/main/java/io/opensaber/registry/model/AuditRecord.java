@@ -1,8 +1,10 @@
 package io.opensaber.registry.model;
 
-import java.util.List;
-import java.util.UUID;
-
+import com.google.gson.Gson;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.exception.AuditFailedException;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,12 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import com.google.gson.Gson;
-
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.sink.DatabaseProvider;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 public class AuditRecord {

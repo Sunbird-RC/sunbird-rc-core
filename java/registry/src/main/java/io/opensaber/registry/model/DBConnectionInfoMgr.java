@@ -1,14 +1,15 @@
 package io.opensaber.registry.model;
 
 import io.opensaber.registry.config.validation.ValidDatabaseConfig;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
+
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.PostConstruct;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
-import org.springframework.validation.annotation.Validated;
 
 @Component("dbConnectionInfoMgr")
 @ConfigurationProperties(prefix = "database")

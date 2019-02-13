@@ -1,16 +1,14 @@
 package io.opensaber.registry.interceptor;
 
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import io.opensaber.pojos.APIMessage;
+import io.opensaber.pojos.RequestWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import io.opensaber.pojos.APIMessage;
-import io.opensaber.pojos.RequestWrapper;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 @Component
 public class RequestIdValidationInterceptor implements HandlerInterceptor {

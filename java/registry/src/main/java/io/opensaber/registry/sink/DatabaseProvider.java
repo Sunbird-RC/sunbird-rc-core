@@ -1,9 +1,6 @@
 package io.opensaber.registry.sink;
 
 import io.opensaber.registry.middleware.util.Constants;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
@@ -12,6 +9,10 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public abstract class DatabaseProvider {
     private Constants.GraphDatabaseProvider provider;
@@ -32,18 +33,18 @@ public abstract class DatabaseProvider {
      * @return
      */
     public boolean isDatabaseServiceUp() {
-        boolean databaseStautsUp = false;
+        boolean databaseStatusUp = false;
         try {
             try (OSGraph osGraph = getOSGraph()) {
                 Graph graph = osGraph.getGraphStore();
 
-                long count = IteratorUtils.count(getOSGraph().getGraphStore().traversal().clone().V().has(T.label, "HealthCheckLabel"));
-                databaseStautsUp = count >= 0;
+                long count = IteratorUtils.count(graph.traversal().clone().V().has(T.label, "HealthCheckLabel"));
+                databaseStatusUp = count >= 0;
             }
         } catch (Exception ex) {
-            databaseStautsUp = false;
+            logger.error("Database service is not running. " + ex);
         }
-        return databaseStautsUp;
+        return databaseStatusUp;
     }
 
     /**
@@ -55,19 +56,10 @@ public abstract class DatabaseProvider {
                 Graph graph = osGraph.getGraphStore();
                 if (IteratorUtils.count(graph.traversal().V().has(T.label, Constants.GRAPH_GLOBAL_CONFIG)) == 0) {
                     logger.info("Adding GRAPH_GLOBAL_CONFIG node...");
-                    if (graph.features().graph().supportsTransactions()) {
-                        org.apache.tinkerpop.gremlin.structure.Transaction tx;
-                        tx = graph.tx();
-                        tx.onReadWrite(org.apache.tinkerpop.gremlin.structure.Transaction.READ_WRITE_BEHAVIOR.AUTO);
-                        Vertex globalConfig = graph.traversal().clone().addV(Constants.GRAPH_GLOBAL_CONFIG).next();
-                        globalConfig.property(Constants.PERSISTENT_GRAPH, true);
-                        tx.commit();
-                        logger.info("Graph initialised using transaction !");
-                    } else {
-                        Vertex globalConfig = graph.traversal().clone().addV(Constants.GRAPH_GLOBAL_CONFIG).next();
-                        globalConfig.property(Constants.PERSISTENT_GRAPH, true);
-                        logger.info("Graph initialised without transaction !");
-                    }
+                    Transaction tx = startTransaction(graph);
+                    Vertex globalConfig = graph.traversal().clone().addV(Constants.GRAPH_GLOBAL_CONFIG).next();
+                    globalConfig.property(Constants.PERSISTENT_GRAPH, true);
+                    commitTransaction(graph, tx);
                 }
             }
         } catch (Exception closeException) {

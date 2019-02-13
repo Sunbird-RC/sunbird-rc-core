@@ -2,14 +2,15 @@ package io.opensaber.validators.json.jsonschema;
 
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.validators.IValidate;
-import java.util.HashMap;
-import java.util.Map;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class JsonValidationServiceImpl implements IValidate {
 	private static Logger logger = LoggerFactory.getLogger(JsonValidationServiceImpl.class);

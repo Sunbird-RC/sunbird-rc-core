@@ -2,13 +2,10 @@ package io.opensaber.registry.sink;
 
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfo;
-import java.util.ArrayList;
-import java.util.List;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
-import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.umlg.sqlg.structure.SqlgGraph;
@@ -16,6 +13,11 @@ import org.umlg.sqlg.structure.topology.Index;
 import org.umlg.sqlg.structure.topology.IndexType;
 import org.umlg.sqlg.structure.topology.PropertyColumn;
 import org.umlg.sqlg.structure.topology.VertexLabel;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SqlgProvider extends DatabaseProvider {
 

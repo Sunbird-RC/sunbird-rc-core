@@ -1,18 +1,17 @@
 package io.opensaber.pojos;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.util.ContentCachingResponseWrapper;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * 

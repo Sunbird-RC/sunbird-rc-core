@@ -1,18 +1,11 @@
 package io.opensaber.registry.authorization;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.APIMessage;
-import io.opensaber.pojos.RequestWrapper;
+import io.opensaber.registry.authorization.pojos.AuthInfo;
+import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.util.Constants;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -22,8 +15,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -32,12 +23,18 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.util.Constants;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AuthorizationFilterTest {
