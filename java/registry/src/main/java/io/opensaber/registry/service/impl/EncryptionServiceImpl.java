@@ -3,7 +3,6 @@ package io.opensaber.registry.service.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,9 +64,6 @@ public class EncryptionServiceImpl implements EncryptionService {
 		} catch (ResourceAccessException e) {
 			logger.error("ResourceAccessException while connecting enryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service! ");
-		} catch (ServiceUnavailableException e) {
-			logger.error("ServiceUnavailableException while connecting enryption service!: ", e);
-			throw new EncryptionException("Encryption service is not available !");
 		} catch (Exception e) {
 			logger.error("Exception in encryption servie !: ", e);
 			throw new EncryptionException("Exception in encryption service ! ");
@@ -92,9 +88,6 @@ public class EncryptionServiceImpl implements EncryptionService {
 		} catch (ResourceAccessException e) {
 			logger.error("ResourceAccessException while connecting dcryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service ! ");
-		} catch (ServiceUnavailableException e) {
-			logger.error("ServiceUnavailableException while connecting enryption service!", e);
-			throw new EncryptionException("Encryption service is not available !");
 		} catch (Exception e) {
 			logger.error("Exception in decryption service !: ", e);
 			throw new EncryptionException("Exception in encryption service ! ");
@@ -124,9 +117,6 @@ public class EncryptionServiceImpl implements EncryptionService {
 		} catch (ResourceAccessException e) {
 			logger.error("Exception while connecting enryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service! ");
-		} catch (ServiceUnavailableException e) {
-			logger.error("Service not available exception !: ", e);
-			throw new EncryptionException("Encryption service is not available !");
 		} catch (Exception e) {
 			logger.error("Exception in encryption servie !: ", e);
 			throw new EncryptionException("Exception in encryption service ! ");
@@ -157,9 +147,6 @@ public class EncryptionServiceImpl implements EncryptionService {
 		} catch (ResourceAccessException e) {
 			logger.error("Exception while connecting dcryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service ! ");
-		} catch (ServiceUnavailableException e) {
-			logger.error("Service not available exception ! ", e);
-			throw new EncryptionException("Encryption service is not available !");
 		} catch (Exception e) {
 			logger.error("Exception in decryption service !: ", e);
 			throw new EncryptionException("Exception in encryption service ! ");

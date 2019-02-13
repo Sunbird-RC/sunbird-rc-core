@@ -4,6 +4,7 @@ package io.opensaber.registry.service.impl;
 import java.io.IOException;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
@@ -22,6 +23,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SearchService;
 
+@Ignore
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = { OpenSaberApplication.class, IRegistryDao.class, SearchDao.class, SearchService.class,
 		GenericConfiguration.class })

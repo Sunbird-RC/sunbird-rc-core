@@ -42,7 +42,7 @@ public class SignatureServiceImpl implements SignatureService {
 				logger.debug("Signature service running !");
 			}
 		} catch (RestClientException ex) {
-			logger.error("RestClientException when checking the health of the Sunbird encryption service: ", ex);
+			logger.error("RestClientException when checking the health of the Sunbird signature service: ", ex);
 			throw new SignatureException().new UnreachableException(ex.getMessage());
 		}
 		return isSignServiceUp;
@@ -120,7 +120,7 @@ public class SignatureServiceImpl implements SignatureService {
 			throw new SignatureException().new UnreachableException(ex.getMessage());
 		} catch (Exception e) {
 			logger.error("RestClientException when verifying: ", e);
-			throw new SignatureException().new KeyNotFoundException(e.getMessage());
+			throw new SignatureException().new KeyNotFoundException(keyId);
 		}
 		logger.debug("getKey method ends with value {}",result);
 		return result;

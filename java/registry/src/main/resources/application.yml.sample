@@ -105,13 +105,6 @@ encryption:
   uri: ${encryption_uri:http://localhost:8013/encrypt}
   batch:
     uri: ${encryption_batch_uri:http://localhost:8013/encrypt/obj}
-  service:
-    connection:
-      timeout: ${encryption_service_connection_timeout:5000}
-      request:
-        timeout: ${encryption_service_connection_request_timeout:5000}
-    read:
-      timeout: ${encryption_service_read_timeout:5000}
 
 decryption:
   uri: ${decryption_uri:http://localhost:8013/decrypt}
@@ -147,12 +140,23 @@ validation:
   enabled: ${validation_enabled:true}
   type: ${validation_type:json}
 
-retry:
-  # The number of times an attempt must be made to reach to the service.
-  maxAttempts: ${retry_maxAttempts:5}
-  backoff:
-    # The fixed time interval, in milliseconds, between each such attempt.
-    delay: ${retry_backoff_delay:1000}
+# Sets the service request and retry related configuration
+service:
+  connection:
+    # Set the connection timeout for the underlying request configuration
+    timeout: ${service_connection_timeout:5000}
+    # Set the timeout in milliseconds used when requesting a connection from the connection manager using the underlying request Configuration
+    request:
+      timeout: ${service_connection_request_timeout:5000}
+  # Set the socket read timeout for the underlying request configuration
+  read:
+    timeout: ${service_read_timeout:5000}
+  retry:
+    # The number of times an attempt must be made to reach to the service.
+    maxAttempts: ${service_retry_maxAttempts:5}
+    backoff:
+      # The fixed time interval, in milliseconds, between each such attempt.
+      delay: ${service_retry_backoff_delay:1000}
 
 ---
 ##################################################################
@@ -210,13 +214,6 @@ encryption:
   uri: https://dev.sunbirded.org/encryption/encrypt
   batch:
     uri: https://dev.sunbirded.org/encryption/encrypt/obj
-  service:
-    connection:
-      timeout: ${encryption_service_connection_timeout:5000}
-      request:
-        timeout: ${encryption_service_connection_request_timeout:5000}
-    read:
-      timeout: ${encryption_service_read_timeout:5000}
 
 decryption:
   uri: https://dev.sunbirded.org/encryption/decrypt
@@ -252,10 +249,21 @@ validation:
   enabled: ${validation_enabled:true}
   type: ${validation_type:json}
 
-retry:
-  # The number of times an attempt must be made to reach to the service.
-  maxAttempts: ${retry_maxAttempts:5}
-  backoff:
-    # The fixed time interval, in milliseconds, between each such attempt.
-    delay: ${retry_backoff_delay:1000}
+# Sets the service request and retry related configuration
+service:
+  connection:
+    # Set the connection timeout for the underlying request configuration
+    timeout: ${service_connection_timeout:5000}
+    # Set the timeout in milliseconds used when requesting a connection from the connection manager using the underlying request Configuration
+    request:
+      timeout: ${service_connection_request_timeout:5000}
+  # Set the socket read timeout for the underlying request configuration
+  read:
+    timeout: ${service_read_timeout:5000}
+  retry:
+    # The number of times an attempt must be made to reach to the service.
+    maxAttempts: ${service_retry_maxAttempts:5}
+    backoff:
+      # The fixed time interval, in milliseconds, between each such attempt.
+      delay: ${service_retry_backoff_delay:1000}
   

@@ -16,14 +16,14 @@ public class RetryRestTemplate {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${retry.maxAttempts}}",
-            backoff = @Backoff(delayExpression = "#{${retry.backoff.delay}}"))
+    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+            backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public ResponseEntity<String> postForEntity(String url, Object propertyValue){
         return restTemplate.postForEntity(url, propertyValue, String.class);
     }
-
-    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${retry.maxAttempts}}",
-            backoff = @Backoff(delayExpression = "#{${retry.backoff.delay}}"))
+    
+    @Retryable(value ={SignatureException.UnreachableException.class,ResourceAccessException.class,ServiceUnavailableException.class }, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+            backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public ResponseEntity<String> getForEntity(String url){
         return restTemplate.getForEntity(url, String.class);
     }

@@ -66,13 +66,13 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Autowired
 	private Environment environment;
 
-	@Value("${encryption.service.connection.timeout}")
+	@Value("${service.connection.timeout}")
 	private int connectionTimeout;
 
-	@Value("${encryption.service.read.timeout}")
+	@Value("${service.read.timeout}")
 	private int readTimeout;
 
-	@Value("${encryption.service.connection.request.timeout}")
+	@Value("${service.connection.request.timeout}")
 	private int connectionRequestTimeout;
 
 	@Value("${authentication.enabled}")
