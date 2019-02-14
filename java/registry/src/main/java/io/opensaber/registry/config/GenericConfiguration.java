@@ -46,8 +46,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.env.Environment;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -57,6 +60,7 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 
 @Configuration
 @EnableRetry
+@EnableAsync
 public class GenericConfiguration implements WebMvcConfigurer {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
@@ -92,6 +96,18 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${validation.enabled}")
 	private boolean validationEnabled = true;
+
+	@Value("${taskExecutor.index.threadPoolName}")
+	private String indexThreadName;
+
+	@Value("${taskExecutor.index.corePoolSize}")
+	private int indexCorePoolSize;
+
+	@Value("${taskExecutor.index.maxPoolSize}")
+	private int indexMaxPoolSize;
+
+	@Value("${taskExecutor.index.queueCapacity}")
+	private int indexQueueCapacity;
 	
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
@@ -292,5 +308,19 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public HandlerExceptionResolver customExceptionHandler() {
 		return new CustomExceptionHandler(gson());
+	}
+
+	/** This method creates ThreadPool task-executor
+	 * @return - TaskExecutor
+	 */
+	@Bean(name = "taskExecutor")
+	public TaskExecutor taskExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(indexCorePoolSize);
+		executor.setMaxPoolSize(indexMaxPoolSize);
+		executor.setQueueCapacity(indexQueueCapacity);
+		executor.setThreadNamePrefix(indexThreadName);
+		executor.initialize();
+		return executor;
 	}
 }

@@ -158,6 +158,18 @@ service:
       # The fixed time interval, in milliseconds, between each such attempt.
       delay: ${service_retry_backoff_delay:1000}
 
+# Sets the task-executor configuration for threads
+taskExecutor:
+  index:
+    # Specify the prefix to use for the names of newly created threads.
+    threadPoolName: ${taskExecutor_index_threadPoolName:IndexThread-}
+    # Set the ThreadPoolExecutor's core pool size.
+    corePoolSize: ${taskExecutor_index_corePoolSize:2}
+    # Set the ThreadPoolExecutor's maximum pool size.
+    maxPoolSize: ${taskExecutor_index_maxPoolSize:2}
+    # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
+    queueCapacity: ${taskExecutor_index_queueCapacity:3}
+
 ---
 ##################################################################
 #                      TEST PROFILE                              #
@@ -266,4 +278,15 @@ service:
     backoff:
       # The fixed time interval, in milliseconds, between each such attempt.
       delay: ${service_retry_backoff_delay:1000}
-  
+
+# Sets the task-executor configuration for threads
+taskExecutor:
+  index:
+    # Specify the prefix to use for the names of newly created threads.
+    threadPoolName: ${taskExecutor_index_threadPoolName:IndexThread-}
+    # Set the ThreadPoolExecutor's core pool size.
+    corePoolSize: ${taskExecutor_index_corePoolSize:2}
+    # Set the ThreadPoolExecutor's maximum pool size.
+    maxPoolSize: ${taskExecutor_index_maxPoolSize:2}
+    # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
+    queueCapacity: ${taskExecutor_index_queueCapacity:3}

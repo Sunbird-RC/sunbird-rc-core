@@ -68,5 +68,5 @@ public class Definition {
     public OSSchemaConfiguration getOsSchemaConfiguration() {
         return osSchemaConfiguration;
     }
-
+    
 }
