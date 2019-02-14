@@ -24,10 +24,21 @@ public class ArrayHelperTest {
 
     @Test
     public void testFormatToString(){
-        String expectedString = "[ hari,sri ram,giri]";
+        String expectedString = "[\" hari\",\"sri ram\",\"giri\"]";;
         List<String> inputLst = new ArrayList<>();
         inputLst.add(" hari");
         inputLst.add("sri ram");
+        inputLst.add("giri");
+
+        String actualString = ArrayHelper.formatToString(inputLst);
+        assertTrue(expectedString.equalsIgnoreCase(actualString));
+
+    }
+
+    @Test
+    public void testFormatToStringSingle(){
+        String expectedString = "[\"giri\"]";
+        List<String> inputLst = new ArrayList<>();
         inputLst.add("giri");
 
         String actualString = ArrayHelper.formatToString(inputLst);

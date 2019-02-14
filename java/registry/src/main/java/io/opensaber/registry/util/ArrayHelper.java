@@ -1,5 +1,7 @@
 package io.opensaber.registry.util;
 
+import org.apache.commons.lang3.*;
+
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -29,7 +31,12 @@ public class ArrayHelper {
      * @return - String, in array format
      */
     public static String formatToString(List<String> inputList){
-        StringBuilder sb = new StringBuilder(String.join(",",inputList));
+        List<String> quotedStr = new ArrayList<>();
+        inputList.forEach(input -> {
+            input = "\"" + input + "\"";
+            quotedStr.add(input);
+        });
+        StringBuilder sb = new StringBuilder(StringUtils.join(quotedStr, ','));
         return sb.insert(0,'[').append(']').toString();
     }
 }

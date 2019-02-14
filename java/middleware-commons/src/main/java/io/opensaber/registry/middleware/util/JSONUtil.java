@@ -125,7 +125,7 @@ public class JSONUtil {
 		parent.fields().forEachRemaining(entry -> {
 			JsonNode entryValue = entry.getValue();
 			if (entryValue.isValueNode() && entryValue.toString().contains(prefix)) {
-				parent.put(entry.getKey(), entry.getValue().asText().replace(prefix, ""));
+				parent.put(entry.getKey(), entry.getValue().asText().replaceFirst(prefix, ""));
 			} else if (entryValue.isArray()) {
 				for (int i = 0; i < entryValue.size(); i++) {
 					if (entry.getValue().get(i).isObject())

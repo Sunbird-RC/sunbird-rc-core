@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
+import org.apache.commons.collections4.*;
+import org.apache.tinkerpop.gremlin.process.traversal.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -28,6 +31,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.*;
 
 /**
  * Given a vertex from the graph, constructs a json out it
@@ -181,8 +185,9 @@ public class VertexReader {
                         ObjectNode signatureNode = constructObject(oneSignature);
                         signatures.add(signatureNode);
                         logger.debug("Added signature node for " + signatureNode.get(Constants.SIGNATURE_FOR));
+
                         if (configurator.isIncludeIdentifiers()) {
-                            uuidVertexMap.put(oneSignature.property(uuidPropertyName).toString(), oneSignature);
+                            uuidVertexMap.put(databaseProvider.getId(oneSignature), oneSignature);
                         }
                     }
                 }
@@ -413,6 +418,23 @@ public class VertexReader {
      */
     public Vertex getRootVertex() {
         return this.rootVertex;
+    }
+
+    /**
+     * Given the array node root vertex, returns a set of string of item uuids
+     * @param blankArrayVertex
+     * @return
+     */
+    public Set<String> getArrayItemUuids(Vertex blankArrayVertex) {
+        String arrayOfType = blankArrayVertex.value(Constants.INTERNAL_TYPE_KEYWORD).toString();
+        String propName = RefLabelHelper.getLabel(arrayOfType, uuidPropertyName);
+        String allItemUuids = ArrayHelper.removeSquareBraces(blankArrayVertex.value(propName).toString());
+        return StringUtils.commaDelimitedListToSet(allItemUuids);
+    }
+
+    public String getInternalType(Vertex vertex) {
+        String intType = vertex.value(Constants.INTERNAL_TYPE_KEYWORD);
+        return intType;
     }
 
     /**

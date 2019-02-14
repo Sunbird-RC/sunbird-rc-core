@@ -21,7 +21,6 @@
         </encoder>
     </appender>
 
-
     <appender name="RegistryAuditAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/registry_neo4j.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
@@ -54,11 +53,9 @@
         </rollingPolicy>
     </appender>
 
-
     <appender name="CoalescingStatistics" class="org.perf4j.logback.AsyncCoalescingStatisticsAppender">
         <param name="TimeSlice" value="600000"/>
         <appender-ref ref="Perf4jFileAppender"/>
-        <!-- <appender-ref ref="Perf4JConsoleAppender"/> -->
     </appender>
 
     <!-- Loggers -->
@@ -69,7 +66,6 @@
     <logger name="org.perf4j.TimingLogger" level="DEBUG" additivity="FALSE">
         <appender-ref ref="CoalescingStatistics"/>
         <appender-ref ref="Perf4jFileAppender"/>
-        <!-- <appender-ref ref="Perf4JConsoleAppender"/> -->
     </logger>
 
     <logger name="es.weso" level="ERROR"/>

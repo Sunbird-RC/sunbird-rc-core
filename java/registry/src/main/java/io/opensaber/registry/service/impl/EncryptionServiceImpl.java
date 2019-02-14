@@ -65,8 +65,8 @@ public class EncryptionServiceImpl implements EncryptionService {
 			logger.error("ResourceAccessException while connecting enryption service : ", e);
 			throw new EncryptionException("Exception while connecting enryption service! ");
 		} catch (Exception e) {
-			logger.error("Exception in encryption servie !: ", e);
-			throw new EncryptionException("Exception in encryption service ! ");
+			logger.error("Exception in encryption service !: ", e);
+			throw new EncryptionException("Exception in encryption service");
 		}
 	}
 
@@ -119,7 +119,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 			throw new EncryptionException("Exception while connecting enryption service! ");
 		} catch (Exception e) {
 			logger.error("Exception in encryption servie !: ", e);
-			throw new EncryptionException("Exception in encryption service ! ");
+			throw new EncryptionException("Exception in encryption service.");
 		}
 	}
 

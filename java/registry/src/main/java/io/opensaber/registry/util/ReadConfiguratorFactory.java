@@ -5,7 +5,6 @@ public class ReadConfiguratorFactory {
         ReadConfigurator configurator = new ReadConfigurator();
         configurator.setIncludeSignatures(false);
         configurator.setIncludeTypeAttributes(false);
-        configurator.setDepth(0);
         return configurator;
     }
 
@@ -40,5 +39,4 @@ public class ReadConfiguratorFactory {
 
         return configurator;
     }
-
 }

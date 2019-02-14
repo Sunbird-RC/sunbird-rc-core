@@ -1,13 +1,11 @@
 package io.opensaber.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.*;
 import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.SearchQuery;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.util.ReadConfigurator;
+import io.opensaber.registry.middleware.util.*;
+import io.opensaber.registry.util.*;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -16,14 +14,14 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-@Component
 public class SearchDaoImpl implements SearchDao {
+    private IRegistryDao registryDao;
 
-	@Autowired
-	IRegistryDao registryDao;
+    public SearchDaoImpl(IRegistryDao registryDaoImpl) {
+        registryDao = registryDaoImpl;
+    }
 
 	public JsonNode search(Graph graphFromStore, SearchQuery searchQuery) {
 

@@ -3,24 +3,29 @@ package io.opensaber.registry.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.SearchQuery;
-import io.opensaber.registry.dao.SearchDao;
-import io.opensaber.registry.dao.SearchDaoImpl;
+import io.opensaber.registry.dao.*;
+import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.sink.OSGraph;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
+import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.RecordIdentifier;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -34,13 +39,16 @@ public class SearchServiceImpl implements SearchService {
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 
 	@Autowired
+	private DefinitionsManager definitionsManager;
+
+	@Autowired
 	private ShardManager shardManager;
 
 	@Autowired
-	private SearchDao searchDao;
-
-	@Autowired
 	private Shard shard;
+
+	@Value("${database.uuidPropertyName}")
+	public String uuidPropertyName;
 
 	private SearchQuery getSearchQuery(JsonNode inputQueryNode) {
 		String rootLabel = inputQueryNode.fieldNames().next();
@@ -87,15 +95,21 @@ public class SearchServiceImpl implements SearchService {
 		// Now, search across all shards and return the results.
 		for (DBConnectionInfo dbConnection : dbConnectionInfoMgr.getConnectionInfo()) {
 
-			// TODO: Note this is presently linked to shard and is therefore preventing
-			// parallel search.
+			// TODO: parallel search.
 			shardManager.activateShard(dbConnection.getShardId());
-
+			IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName);
+			SearchDaoImpl searchDao = new SearchDaoImpl(registryDao);
 			try (OSGraph osGraph = shard.getDatabaseProvider().getOSGraph()) {
 				Graph graph = osGraph.getGraphStore();
 				try (Transaction tx = shard.getDatabaseProvider().startTransaction(graph)) {
 					ArrayNode oneShardResult = (ArrayNode) searchDao.search(graph, searchQuery);
 					for (JsonNode jsonNode: oneShardResult) {
+						if (!shard.getShardLabel().isEmpty()) {
+							// Replace osid with shard details
+							String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
+							JSONUtil.addPrefix((ObjectNode) jsonNode, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
+						}
+
 						result.add(jsonNode);
 					}
 				}

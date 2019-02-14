@@ -24,7 +24,7 @@ import io.opensaber.registry.sink.shard.ShardAdvisor;
 import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Json2LdTransformer;
 import io.opensaber.registry.transform.Ld2JsonTransformer;
-import io.opensaber.registry.transform.Ld2LdTransformer;
+import io.opensaber.registry.transform.Json2JsonTransformer;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.validators.IValidate;
@@ -145,14 +145,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public Ld2LdTransformer ld2LdTransformer() {
-		return new Ld2LdTransformer();
-	}
-
-	@Bean
 	public Transformer transformer() {
 		return new Transformer();
 	}
+
+	@Bean
+	public Json2JsonTransformer json2JsonTransformer() {return new Json2JsonTransformer();}
 
 	@Bean
 	public ConfigurationHelper configurationHelper() {

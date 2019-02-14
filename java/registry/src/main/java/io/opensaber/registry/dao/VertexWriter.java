@@ -61,6 +61,7 @@ public class VertexWriter {
         return parentVertex;
     }
 
+
     public Vertex createVertex(String label) {
         Vertex vertex = graph.addVertex(label);
 
@@ -94,9 +95,9 @@ public class VertexWriter {
      * @param entryKey
      * @param arrayNode
      */
-    private void writeArrayNode(Vertex vertex, String entryKey, ArrayNode arrayNode) {
+    private void writeArrayNode(Vertex vertex, String entryKey, ArrayNode arrayNode, boolean isUpdate) {
         List<String> uidList = new ArrayList<>();
-        boolean isArrayItemObject = arrayNode.get(0).isObject();
+        boolean isArrayItemObject = (arrayNode !=null && arrayNode.size() > 0 && arrayNode.get(0).isObject());
         boolean isSignature = entryKey.equals(Constants.SIGNATURES_STR);
 
         Vertex blankNode = vertex;
@@ -141,6 +142,22 @@ public class VertexWriter {
         }
     }
 
+    private void createArrayNode(Vertex vertex, String entryKey, ArrayNode arrayNode) {
+        writeArrayNode(vertex, entryKey, arrayNode, false);
+    }
+
+    public void writeSingleNode(Vertex parentVertex, String label, JsonNode entryValue) {
+        Vertex v = processNode(label, entryValue);
+        addEdge(label, parentVertex, v);
+
+        String idToSet = databaseProvider.getId(v);
+        parentVertex.property(RefLabelHelper.getLabel(label, uuidPropertyName), idToSet);
+
+        v.property(Constants.ROOT_KEYWORD, parentOSid);
+
+        logger.debug("Added edge between {} and {}", parentVertex.label(), v.label());
+    }
+
     private Vertex processNode(String label, JsonNode jsonObject) {
         Vertex vertex = createVertex(label);
 
@@ -158,17 +175,9 @@ public class VertexWriter {
                 vertex.property(entry.getKey(), ValueType.getValue(entryValue));
             } else if (entryValue.isObject()) {
                 // Recursive calls
-                Vertex v = processNode(entry.getKey(), entryValue);
-                addEdge(entry.getKey(), vertex, v);
-
-                String idToSet = databaseProvider.getId(v);
-                vertex.property(RefLabelHelper.getLabel(entry.getKey(), uuidPropertyName), idToSet);
-
-                v.property(Constants.ROOT_KEYWORD, parentOSid);
-
-                logger.debug("Added edge between {} and {}", vertex.label(), v.label());
+                writeSingleNode(vertex, entry.getKey(), entryValue);
             } else if (entryValue.isArray()) {
-                writeArrayNode(vertex, entry.getKey(), (ArrayNode) entry.getValue());
+                createArrayNode(vertex, entry.getKey(), (ArrayNode) entry.getValue());
             }
         });
         return vertex;

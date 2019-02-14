@@ -117,7 +117,7 @@ public class EntityParenter {
                             Vertex v = vertexWriter.ensureParentVertex(parentLabel);
 
                             ShardParentInfo shardParentInfo = new ShardParentInfo(defintionName, v);
-                            shardParentInfo.setUuid(v.id().toString());
+                            shardParentInfo.setUuid(dbProvider.getId(v));
                             shardParentInfoList.add(shardParentInfo);
                         });
 
@@ -270,7 +270,6 @@ public class EntityParenter {
      * Updates the group/parent vertex index properties.
      * 
      * @param dbProvider
-     * @param parentlabel
      * @param indexFields
      * @param indexUniqueFields
      */
@@ -290,5 +289,4 @@ public class EntityParenter {
             }
         }
     }
-
 }

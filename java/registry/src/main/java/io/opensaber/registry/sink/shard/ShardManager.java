@@ -26,8 +26,6 @@ public class ShardManager {
 	@Autowired
 	private IShardAdvisor shardAdvisor;
 	@Autowired
-	private SearchService searchService;
-	@Autowired
 	private Shard shard;
 
 

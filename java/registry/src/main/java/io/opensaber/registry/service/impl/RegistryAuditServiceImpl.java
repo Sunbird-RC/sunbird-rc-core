@@ -13,7 +13,7 @@ public class RegistryAuditServiceImpl implements RegistryAuditService {
 
 	private static Logger logger = LoggerFactory.getLogger(RegistryServiceImpl.class);
 
-	@Autowired
+	// TODO - how audit happens and where it is written to needs some thought
 	private IRegistryDao registryDao;
 
 	@Value("${audit.frame.file}")

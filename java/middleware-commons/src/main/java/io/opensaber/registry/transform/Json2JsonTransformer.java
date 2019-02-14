@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class Ld2LdTransformer implements ITransformer<Object> {
+public class Json2JsonTransformer implements ITransformer<Object> {
 
 	@Override
 	public Data<Object> transform(Data<Object> data) throws TransformationException, IOException {

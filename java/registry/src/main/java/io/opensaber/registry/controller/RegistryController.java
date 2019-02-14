@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.*;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.Constants.Direction;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.RegistryAuditService;
@@ -14,7 +13,9 @@ import io.opensaber.registry.service.SearchService;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.transform.*;
-import io.opensaber.registry.util.*;
+import io.opensaber.registry.util.ReadConfigurator;
+import io.opensaber.registry.util.ReadConfiguratorFactory;
+import io.opensaber.registry.util.RecordIdentifier;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -158,9 +159,7 @@ public class RegistryController {
     }
 
     @RequestMapping(value = "/add", method = RequestMethod.POST)
-    public ResponseEntity<Response> addEntity(@RequestParam(value = "id", required = false) String id,
-                                                @RequestParam(value = "prop", required = false) String property) {
-
+    public ResponseEntity<Response> addEntity() {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
         Map<String, Object> result = new HashMap<>();
@@ -168,7 +167,6 @@ public class RegistryController {
         String entityType = apiMessage.getRequest().getEntityType();
 
         try {
-
             Map requestMap = ((HashMap<String, Object>) apiMessage.getRequest().getRequestMap().get(entityType));
             logger.info("Add api: entity type " + requestMap + " and shard propery: " + shardManager.getShardProperty());
             logger.info("request: " + requestMap.get(shardManager.getShardProperty()));
@@ -197,6 +195,12 @@ public class RegistryController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    /**
+     * Reads the entity. If there is application/ld+json used in the header,
+     * then read will respect this. Defaults to application/json otherwise.
+     * @param header
+     * @return
+     */
     @RequestMapping(value = "/read", method = RequestMethod.POST)
     public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header) {
         boolean requireLDResponse = header.getAccept().contains(Constants.LD_JSON_MEDIA_TYPE);
@@ -210,8 +214,6 @@ public class RegistryController {
         shardManager.activateShard(shardId);
         logger.info("Read Api: shard id: " + recordId.getShardLabel() + " for label: " + label);
 
-        String acceptType = header.getAccept().iterator().next().toString();
-
         boolean includeSignatures = (boolean) apiMessage.getRequest().getRequestMap().getOrDefault("includeSignatures",
                 false);
         ReadConfigurator configurator = ReadConfiguratorFactory.getOne(includeSignatures);
@@ -221,7 +223,7 @@ public class RegistryController {
             JsonNode resultNode = registryService.getEntity(recordId.getUuid(), configurator);
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
-            Configuration config = configurationHelper.getConfiguration(acceptType, Direction.OUT);
+            Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
             logger.info("config : " + config);
             ITransformer<Object> responseTransformer = transformer.getInstance(config);
             Data<Object> resultContent = responseTransformer.transform(data);
