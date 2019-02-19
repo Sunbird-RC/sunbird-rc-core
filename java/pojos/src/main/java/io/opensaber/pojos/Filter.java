@@ -8,18 +8,18 @@ public class Filter {
 	private String property;
 
 	// The operator
-	private String operator;
+	private FilterOperators operator;
 
 	// The value that needs to be searched
-	private String value;
+	private Object value;
 
 	public Filter(String path) {
 		this.path = path;
 	}
 
-	public Filter(String property, String operator, String value) {
+	public Filter(String property, FilterOperators operator, Object value) {
 		this.property = property;
-		//this.operator = operator;
+		this.operator = operator;
 		this.value = value;
 	}
 
@@ -33,11 +33,11 @@ public class Filter {
 		return operator;
 	}*/
 
-	public String getValue() {
+	public Object getValue() {
 		return value;
 	}
 
-	public void setValue(String value) { this.value = value; }
+	public void setValue(Object object) { this.value = object; }
 
 	public String getPath() {
 		return path;
@@ -47,7 +47,7 @@ public class Filter {
 		this.path = path;
 	}
 
-	public String getOperator() { return this.operator;}
+	public FilterOperators getOperator() { return this.operator;}
 
-	public void setOperator(String operator) { this.operator = operator; }
+	public void setOperator(FilterOperators operator) { this.operator = operator; }
 }

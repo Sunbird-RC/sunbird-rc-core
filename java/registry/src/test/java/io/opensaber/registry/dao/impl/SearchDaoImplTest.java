@@ -1,7 +1,10 @@
 package io.opensaber.registry.dao.impl;
 
+import static org.junit.Assert.assertTrue;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import io.opensaber.pojos.Filter;
+import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.app.OpenSaberApplication;
 import io.opensaber.registry.config.GenericConfiguration;
@@ -12,6 +15,9 @@ import io.opensaber.registry.exception.AuditFailedException;
 import io.opensaber.registry.exception.EncryptionException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.junit.Before;
@@ -24,12 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertTrue;
 
 @Ignore
 @RunWith(SpringRunner.class)
@@ -70,7 +70,7 @@ public class SearchDaoImplTest extends RegistryTestBase {
 	}
 
 	private Filter getFilterEqual(String property, String value) {
-		Filter filter = new Filter(property, "=", value);
+		Filter filter = new Filter(property, FilterOperators.eq, value);
 		return filter;
 	}
 }

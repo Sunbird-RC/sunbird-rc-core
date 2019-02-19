@@ -4,17 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.opensaber.pojos.Filter;
+import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.ReadConfigurator;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class SearchDaoImpl implements SearchDao {
     private IRegistryDao registryDao;
@@ -29,21 +29,42 @@ public class SearchDaoImpl implements SearchDao {
 		List<Filter> filterList = searchQuery.getFilters();
 		GraphTraversal<Vertex, Vertex> resultGraphTraversal = dbGraphTraversalSource.clone().V().hasLabel(searchQuery.getRootLabel());
 
+		List<P> predicates = new ArrayList<>();
 		// Ensure the root label is correct
 		if (filterList != null) {
 			for (Filter filter : filterList) {
 				String property = filter.getProperty();
-				String genericValue = filter.getValue();
-				String operator = filter.getOperator();
+				Object genericValue = filter.getValue();
+				FilterOperators operator = filter.getOperator();
 				String path = filter.getPath();
 
 				//List valueList = getValueList(value);
 
-				// Defaulting to "equals" operation
-				if (operator == null || operator == "=") {
-					resultGraphTraversal = resultGraphTraversal.has(property,
-							P.eq(genericValue));
-				}
+                switch (operator) {
+                case eq:
+                    resultGraphTraversal = resultGraphTraversal.has(property, P.eq(genericValue));
+                    break;
+                case gt:
+                    resultGraphTraversal = resultGraphTraversal.has(property, P.gt(genericValue));
+                    break;
+                case lt:
+                    resultGraphTraversal = resultGraphTraversal.has(property, P.lt(genericValue));
+                    break;
+                case gte:
+                    resultGraphTraversal = resultGraphTraversal.has(property, P.gte(genericValue));
+                    break;
+                case lte:
+                    resultGraphTraversal = resultGraphTraversal.has(property, P.lte(genericValue));
+                    break;
+                case between:
+                    List<Object> objects = (List<Object>) genericValue;
+                    resultGraphTraversal = resultGraphTraversal.has(property, P.between(objects.get(0), objects.get(objects.size() - 1)));
+                    break;
+                default:
+                    resultGraphTraversal = resultGraphTraversal.has(property, P.eq(genericValue));
+                    break;
+                }
+
 				if (path != null) {
 					if (resultGraphTraversal.asAdmin().clone().hasNext()) {
 						resultGraphTraversal = resultGraphTraversal.asAdmin().clone().outE(path).outV();
