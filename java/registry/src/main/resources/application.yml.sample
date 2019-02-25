@@ -26,6 +26,13 @@ registry:
     base: ${registry_system_base:http://localhost:8080/opensaber/}
   rootEntity:
         type: ${registry_rootentity_type:Teacher}
+ 
+# This property is to be used for search request/query 
+# offset: search result starts from value provided as default        
+# limits: search result to value provided as default 
+search:
+  offset: ${search_offset:0}
+  limit: ${search_limit:100}
         
 database:
   # This property is internal and not to be confused with the schema definition.

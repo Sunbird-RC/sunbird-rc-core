@@ -10,6 +10,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.ReadConfigurator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiPredicate;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -23,26 +24,35 @@ public class SearchDaoImpl implements SearchDao {
         registryDao = registryDaoImpl;
     }
 
-	public JsonNode search(Graph graphFromStore, SearchQuery searchQuery) {
+    public JsonNode search(Graph graphFromStore, SearchQuery searchQuery) {
 
-		GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal().clone();
-		List<Filter> filterList = searchQuery.getFilters();
-		GraphTraversal<Vertex, Vertex> resultGraphTraversal = dbGraphTraversalSource.clone().V().hasLabel(searchQuery.getRootLabel());
+        GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal().clone();
+        List<Filter> filterList = searchQuery.getFilters();
+        int offset = searchQuery.getOffset();
+        GraphTraversal<Vertex, Vertex> resultGraphTraversal = dbGraphTraversalSource.clone().V()
+                .hasLabel(searchQuery.getRootLabel()).range(offset, offset + searchQuery.getLimit())
+                .limit(searchQuery.getLimit());
+        GraphTraversal<Vertex, Vertex> parentTraversal = resultGraphTraversal.asAdmin().clone();
 
-		List<P> predicates = new ArrayList<>();
-		// Ensure the root label is correct
-		if (filterList != null) {
-			for (Filter filter : filterList) {
-				String property = filter.getProperty();
-				Object genericValue = filter.getValue();
-				FilterOperators operator = filter.getOperator();
-				String path = filter.getPath();
+        BiPredicate<String, String> condition = null;
+        // Ensure the root label is correct
+        if (filterList != null) {
+            for (Filter filter : filterList) {
+                String property = filter.getProperty();
+                Object genericValue = filter.getValue();
 
-				//List valueList = getValueList(value);
+                FilterOperators operator = filter.getOperator();
+                String path = filter.getPath();
+                if (path != null) {
+                    resultGraphTraversal = resultGraphTraversal.outE(path).inV();
+                }
 
                 switch (operator) {
                 case eq:
                     resultGraphTraversal = resultGraphTraversal.has(property, P.eq(genericValue));
+                    break;
+                case neq:
+                    resultGraphTraversal = resultGraphTraversal.has(property, P.neq(genericValue));
                     break;
                 case gt:
                     resultGraphTraversal = resultGraphTraversal.has(property, P.gt(genericValue));
@@ -58,23 +68,55 @@ public class SearchDaoImpl implements SearchDao {
                     break;
                 case between:
                     List<Object> objects = (List<Object>) genericValue;
-                    resultGraphTraversal = resultGraphTraversal.has(property, P.between(objects.get(0), objects.get(objects.size() - 1)));
+                    resultGraphTraversal = resultGraphTraversal.has(property,
+                            P.between(objects.get(0), objects.get(objects.size() - 1)));
+                    break;
+                case or:
+                    List<Object> values = (List<Object>) genericValue;
+                    resultGraphTraversal = resultGraphTraversal.has(property,
+                            P.within(values));
+                    break;
+
+                case contains:
+                    condition = (s1, s2) -> (s1.contains(s2));
+                    resultGraphTraversal = resultGraphTraversal.has(property,
+                            new P<String>(condition, genericValue.toString()));
+                    break;
+                case startsWith:
+                    condition = (s1, s2) -> (s1.startsWith(s2));
+                    resultGraphTraversal = resultGraphTraversal.has(property,
+                            new P<String>(condition, genericValue.toString()));
+                    break;
+                case endsWith:
+                    condition = (s1, s2) -> (s1.endsWith(s2));
+                    resultGraphTraversal = resultGraphTraversal.has(property,
+                            new P<String>(condition, genericValue.toString()));
+                    break;
+                case notContains:
+                    condition = (s1, s2) -> (s1.contains(s2));
+                    resultGraphTraversal = resultGraphTraversal.has(property,
+                            new P<String>(condition, genericValue.toString()));
+                    break;
+                case notStartsWith:
+                    condition = (s1, s2) -> (!s1.startsWith(s2));
+                    resultGraphTraversal = resultGraphTraversal.has(property,
+                            new P<String>(condition, genericValue.toString()));
+                    break;
+                case notEndsWith:
+                    condition = (s1, s2) -> (!s1.endsWith(s2));
+                    resultGraphTraversal = resultGraphTraversal.has(property,
+                            new P<String>(condition, genericValue.toString()));
                     break;
                 default:
                     resultGraphTraversal = resultGraphTraversal.has(property, P.eq(genericValue));
                     break;
                 }
 
-				if (path != null) {
-					if (resultGraphTraversal.asAdmin().clone().hasNext()) {
-						resultGraphTraversal = resultGraphTraversal.asAdmin().clone().outE(path).outV();
-					}
-				}
-			}
-		}
+            }
+        }
 
-		return getResult(graphFromStore, resultGraphTraversal);
-	}
+        return getResult(graphFromStore, resultGraphTraversal, parentTraversal);
+    }
 
 	private void updateValueList(Object value, List valueList) {
 		valueList.add(value);
@@ -92,9 +134,10 @@ public class SearchDaoImpl implements SearchDao {
 		return valueList;
 	}
 
-	private JsonNode getResult (Graph graph, GraphTraversal resultTraversal) {
+	private JsonNode getResult (Graph graph, GraphTraversal resultTraversal, GraphTraversal parentTraversal) {
 		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		if (resultTraversal != null) {
+            //parentTraversal.map(resultTraversal);
 			while (resultTraversal.hasNext()) {
 				Vertex v = (Vertex) resultTraversal.next();
 				if ((!v.property(Constants.STATUS_KEYWORD).isPresent() ||
@@ -116,4 +159,5 @@ public class SearchDaoImpl implements SearchDao {
 		}
 		return result;
 	}
+
 }

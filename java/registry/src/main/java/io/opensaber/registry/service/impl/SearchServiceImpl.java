@@ -52,19 +52,33 @@ public class SearchServiceImpl implements SearchService {
 
 	@Value("${database.uuidPropertyName}")
 	public String uuidPropertyName;
+	
+	@Value("${search.offset}")
+	private int offset;
+	
+	@Value("${search.limit}")
+	private int limit;
+	
+    private SearchQuery getSearchQuery(JsonNode inputQueryNode) {
+        String rootLabel = inputQueryNode.fieldNames().next();
 
-	private SearchQuery getSearchQuery(JsonNode inputQueryNode) {
-		String rootLabel = inputQueryNode.fieldNames().next();
+        SearchQuery searchQuery = new SearchQuery(rootLabel, offset, limit);
+        List<Filter> filterList = new ArrayList<>();
+        JsonNode rootNode = inputQueryNode.get(rootLabel);
+        if (rootLabel != null && !rootLabel.isEmpty()) {
+            addToFilterList(null, rootNode, filterList);
+        }
+        // populates limit & offset
+        try {
+            searchQuery.setLimit(inputQueryNode.get("limit").asInt());
+            searchQuery.setOffset(inputQueryNode.get("offset").asInt());
+        } catch (Exception e) {
+            logger.error("Populates SearchQuery for limit/offset: {}", e.getMessage());
+        }
 
-		SearchQuery searchQuery = new SearchQuery(rootLabel);
-		List<Filter> filterList = new ArrayList<>();
-		if (rootLabel != null && !rootLabel.isEmpty()) {
-			addToFilterList(null, inputQueryNode.get(rootLabel), filterList);
-		}
-
-		searchQuery.setFilters(filterList);
-		return searchQuery;
-	}
+        searchQuery.setFilters(filterList);
+        return searchQuery;
+    }
 
 	/**
 	 * For a given path filter, iterate through the fields given and set the filterList
@@ -74,7 +88,7 @@ public class SearchServiceImpl implements SearchService {
 	 */
     private void addToFilterList(String path, JsonNode inputQueryNode, List<Filter> filterList) {
         Iterator<Map.Entry<String, JsonNode>> searchFields = inputQueryNode.fields();
-              
+     
         // Iterate and get the fields.
         while (searchFields.hasNext()) {
             Map.Entry<String, JsonNode> entry = searchFields.next();
@@ -89,30 +103,31 @@ public class SearchServiceImpl implements SearchService {
                 } else {
                     Object value = null;
                     if (entryValMap.getValue().isArray()) {
-                        value = getRange(entryValMap.getValue());
+                        value = getObjects(entryValMap.getValue());
 
                     } else if (entryValMap.getValue().isValueNode()) {
                         value = ValueType.getValue(entryValMap.getValue());
                     }
                     FilterOperators operator = FilterOperators.get(operatorStr);
+                    if(operator == null)
+                        throw new IllegalArgumentException("Search query cannot perform without operator!");
+
                     Filter filter = new Filter(property, operator, value);
                     filter.setPath(path);
                     filterList.add(filter);
                 }
+            } else {
+                 throw new IllegalArgumentException("Search query is invalid!");
             }
         }
     }
     /**
-     * Return 2 values always
-     * First value = min
-     * Second value = max
+     * Return all values
      * 
      * @param node
      * @return
      */
-    private List<Object> getRange(JsonNode node) {
-        if(node.size() != 2)
-            throw new IllegalArgumentException("Range must have 2 values(min and max) only");
+    private List<Object> getObjects(JsonNode node) {
             
         List<Object> rangeValues = new ArrayList<>();
         for (int i = 0; i < node.size(); i++) {

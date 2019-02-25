@@ -29,10 +29,6 @@ public class Filter {
 		return property;
 	}
 
-	/*public String getOperator() {
-		return operator;
-	}*/
-
 	public Object getValue() {
 		return value;
 	}
