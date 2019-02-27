@@ -7,10 +7,8 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
-import io.opensaber.registry.util.RefLabelHelper;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,11 +89,19 @@ public class RegistryDaoImpl implements IRegistryDao {
      */
     public void updateVertex(Graph graph, Vertex vertex, JsonNode inputJsonNode) {
         if (inputJsonNode.isObject()) {
-            updateObject(graph, vertex, (ObjectNode) inputJsonNode);
+            String objectName = inputJsonNode.fields().next().getKey();
+            if (vertex.property(objectName).isPresent()) {
+                updateObject(graph, vertex, (ObjectNode) inputJsonNode);
+            } else {
+                VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName);
+                vertexWriter.writeSingleNode(vertex, objectName, inputJsonNode.get(objectName));
+            }
         } else {
             logger.error("Unexpected input passed here.");
         }
     }
+
+
 
     private void updateObject(Graph graph, Vertex vertex, ObjectNode inputJsonNode) {
         inputJsonNode.fields().forEachRemaining(field -> {
@@ -105,56 +111,11 @@ public class RegistryDaoImpl implements IRegistryDao {
                     fieldValue.isValueNode() && !fieldKey.equals(Constants.TYPE_STR_JSON_LD)) {
                 vertex.property(fieldKey, ValueType.getValue(fieldValue));
             } else {
-                logger.debug("Not updating non-value types here");
+                logger.debug("Not updating non-value object types here");
             }
         });
     }
 
-    /**
-     * Parse the json data to vertex properties, creates new vertex if the node is new else updates the existing vertex
-     *
-     * @param elementNode
-     * @param graph
-     * @param vertex
-     * @param parentNodeLabel
-     * @param isArrayElement
-     * @return
-     */
-    private String addNewEntity(JsonNode elementNode, Graph graph, Vertex vertex, String parentNodeLabel,
-                                   boolean isArrayElement) {
-        String newChildVertexIdStr = "";
-        if (null == elementNode.get(uuidPropertyName)) {
-            // Adding a new entity
-
-            VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName);
-            Vertex newChildVertex = vertexWriter.createVertex(parentNodeLabel);
-            newChildVertexIdStr = getDatabaseProvider().getId(newChildVertex);
-            String rootId = vertex.property(uuidPropertyName).toString();
-
-            if (null == rootId) {
-                rootId = vertex.property(Constants.ROOT_KEYWORD).value().toString();
-            }
-            newChildVertex.property(Constants.ROOT_KEYWORD, rootId);
-            updateVertex(graph, newChildVertex, elementNode);
-
-            String nodeOsidLabel = RefLabelHelper.getLabel(parentNodeLabel, uuidPropertyName);
-            VertexProperty<Object> vertexProperty = vertex.property(nodeOsidLabel);
-            if (isArrayElement && vertexProperty.isPresent()) {
-                String existingValue = (String) vertexProperty.value();
-                vertex.property(nodeOsidLabel, existingValue + "," + newChildVertexIdStr);
-            } else {
-                vertex.property(nodeOsidLabel, newChildVertexIdStr);
-            }
-
-            if(vertex.label().equalsIgnoreCase(Constants.ARRAY_NODE_KEYWORD)){
-                vertexWriter.addEdge(newChildVertex.property(Constants.SIGNATURE_FOR).value().toString(), vertex, newChildVertex);
-            } else {
-                vertexWriter.addEdge(parentNodeLabel, vertex, newChildVertex);
-            }
-
-        }
-        return newChildVertexIdStr;
-    }
 
     public void deleteEntity(Vertex vertex) {
         if (null != vertex) {

@@ -1,8 +1,6 @@
 package io.opensaber.registry.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.pojos.OpenSaberInstrumentation;
@@ -38,7 +36,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 

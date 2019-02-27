@@ -262,4 +262,52 @@ public class JSONUtil {
 		return key;
 	}
 
+	/**
+	 * Returns the Json Node associated with the key
+	 * It may be that the specified key is not found in the input. If so, searches for
+	 * the next higher key parent and returns node.
+	 * Example:
+	 *  Consider inputNode as {a:{b:{c:d}}}
+	 *  key = a/b/c, will return c
+	 *  key = a/b/e, will return b, so that callers can set b to include e (addition).
+	 *
+	 * @param inputNode
+	 * @param key
+	 * @return
+	 */
+	private static ObjectNode getNode(ObjectNode inputNode, String key) {
+		JsonNode result = inputNode.at(key);
+		if (result.isMissingNode()) {
+			return getNode(inputNode, key.substring(0, key.lastIndexOf("/")));
+		}
+		return (ObjectNode) result;
+	}
+
+	/**
+	 * Iterates the inputNode and merges values with the result node. Takes care to add
+	 * new elements that are found in inputNode, but missing in the result.
+	 * @param entityTypeJsonPtr - the entity type
+	 * @param result - existing
+	 * @param inputNode - new to be updated
+	 * @param ignoreFields - fields that must not be updated
+	 */
+	public static void merge(String entityTypeJsonPtr, ObjectNode result, ObjectNode inputNode, List<String> ignoreFields) {
+		inputNode.fields().forEachRemaining(prop -> {
+			String propKey = prop.getKey();
+			JsonNode propValue = prop.getValue();
+
+			if ((propValue.isValueNode() && !ignoreFields.contains(propKey)) ||
+					propValue.isArray()) {
+				// Must be a value node and not a uuidPropertyName key pair
+				//((ObjectNode)result.get(entityType)).set(propKey, propValue);
+				getNode(result, entityTypeJsonPtr).set(propKey, propValue);
+			} else if (propValue.isObject()) {
+				if (result.at(entityTypeJsonPtr + "/" + propKey).isMissingNode()) {
+					((ObjectNode) result.at(entityTypeJsonPtr)).set(propKey, propValue);
+				} else {
+					merge(entityTypeJsonPtr + "/" + propKey, result, (ObjectNode) propValue, ignoreFields);
+				}
+			}
+		});
+	}
 }

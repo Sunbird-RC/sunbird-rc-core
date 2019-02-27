@@ -105,12 +105,14 @@ public class VertexWriter {
      * @param arrayNode
      */
     private void writeArrayNode(Vertex vertex, String entryKey, ArrayNode arrayNode, boolean isUpdate) {
-        List<String> uidList = new ArrayList<>();
+        List<Object> uidList = new ArrayList<>();
         boolean isArrayItemObject = (arrayNode !=null && arrayNode.size() > 0 && arrayNode.get(0).isObject());
         boolean isSignature = entryKey.equals(Constants.SIGNATURES_STR);
-
         Vertex blankNode = vertex;
-        String label = entryKey;
+        String label;
+
+        identifyParentOSid(vertex);
+
         if (isArrayItemObject) {
             label = RefLabelHelper.getArrayLabel(entryKey, uuidPropertyName);
 
@@ -133,12 +135,13 @@ public class VertexWriter {
                 createdV.property(Constants.ROOT_KEYWORD, parentOSid);
                 uidList.add(databaseProvider.getId(createdV));
                 if (isSignature) {
-                    addEdge(jsonNode.get(Constants.SIGNATURE_FOR).textValue(), blankNode, createdV);
+                    Edge e = addEdge(Constants.SIGNATURE_FOR, blankNode, createdV);
+                    e.property(Constants.SIGNATURE_FOR, jsonNode.get(Constants.SIGNATURE_FOR).textValue());
                 } else {
                     addEdge(entryKey + Constants.ARRAY_ITEM, blankNode, createdV);
                 }
             } else {
-                uidList.add(jsonNode.asText());
+                uidList.add(ValueType.getValue(jsonNode));
             }
         }
 
@@ -151,7 +154,7 @@ public class VertexWriter {
         }
     }
 
-    private void createArrayNode(Vertex vertex, String entryKey, ArrayNode arrayNode) {
+    public void createArrayNode(Vertex vertex, String entryKey, ArrayNode arrayNode) {
         writeArrayNode(vertex, entryKey, arrayNode, false);
     }
 
@@ -162,18 +165,22 @@ public class VertexWriter {
         String idToSet = databaseProvider.getId(v);
         parentVertex.property(RefLabelHelper.getLabel(label, uuidPropertyName), idToSet);
 
+        identifyParentOSid(parentVertex);
         v.property(Constants.ROOT_KEYWORD, parentOSid);
 
         logger.debug("Added edge between {} and {}", parentVertex.label(), v.label());
     }
 
-    private Vertex processNode(String label, JsonNode jsonObject) {
-        Vertex vertex = createVertex(label);
-
+    private void identifyParentOSid(Vertex vertex) {
         // This attribute will help identify the root from any child
         if (parentOSid == null || parentOSid.isEmpty()) {
             parentOSid = databaseProvider.getId(vertex);
         }
+    }
+
+    private Vertex processNode(String label, JsonNode jsonObject) {
+        Vertex vertex = createVertex(label);
+        identifyParentOSid(vertex);
 
         jsonObject.fields().forEachRemaining(entry -> {
             JsonNode entryValue = entry.getValue();

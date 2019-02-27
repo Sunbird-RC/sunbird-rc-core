@@ -109,8 +109,9 @@ public class VertexReader {
         Iterator<VertexProperty<Object>> properties = currVertex.properties();
         while (properties.hasNext()) {
             VertexProperty<Object> prop = properties.next();
-            String propValue = ArrayHelper.removeSquareBraces(prop.value().toString());
             if (!RefLabelHelper.isParentLabel(prop.key())) {
+                boolean isArrayType = ArrayHelper.isArray(prop.value().toString());
+                String propValue = ArrayHelper.removeSquareBraces(prop.value().toString());
                 if (RefLabelHelper.isRefLabel(prop.key(), uuidPropertyName)) {
                     logger.debug("{} is a referenced entity", prop.key());
                     // There is a chance that it may have been already read or
@@ -134,13 +135,9 @@ public class VertexReader {
                 } else {
                     logger.debug("{} is a simple value", prop.key());
                     if (canAdd(prop.key(), privatePropertyList)) {
-                        if (propValue.contains(",")) {
-                            ArrayNode stringArray = JsonNodeFactory.instance.arrayNode();
-                            String[] valArray = propValue.split(",");
-                            for (String val : valArray) {
-                                stringArray.add(val);
-                            }
-                            contentNode.set(prop.key(), stringArray);
+                        if (isArrayType) {
+                            ArrayNode arrayNode = ArrayHelper.constructArrayNode(propValue);
+                            contentNode.set(prop.key(), arrayNode);
                         } else {
                             ValueType.setValue(contentNode, prop.key(), prop.value());
                         }
@@ -172,7 +169,7 @@ public class VertexReader {
             try {
                 Iterator<Vertex> signatureArrayIter = currVertex.vertices(Direction.IN, Constants.SIGNATURES_STR);
                 Vertex signatureArrayV = signatureArrayIter.next();
-                Iterator<Vertex> signatureVertices = signatureArrayV.vertices(Direction.OUT);
+                Iterator<Vertex> signatureVertices = signatureArrayV.vertices(Direction.OUT, Constants.SIGNATURE_FOR);
 
                 signatures = JsonNodeFactory.instance.arrayNode();
                 while (signatureVertices.hasNext()) {
@@ -264,8 +261,7 @@ public class VertexReader {
 
                 if (canLoadVertex(++tempCurrLevel, configurator.getDepth())) {
                     loadOtherVertices(currVertex, tempCurrLevel);
-                    tempCurrLevel = currLevel; // After loading reset for other
-                    // vertices.
+                    tempCurrLevel = currLevel;
                 }
             }
         }
@@ -321,7 +317,8 @@ public class VertexReader {
                         Map.Entry<String, JsonNode> item = entryIterator.next();
                         JsonNode ar = item.getValue();
                         for (JsonNode node : ar) {
-                            ObjectNode ovalue = uuidNodeMap.getOrDefault(node.get(uuidPropertyName).asText(), null);
+                            String osidVal = ArrayHelper.unquoteString(node.get(uuidPropertyName).asText());
+                            ObjectNode ovalue = uuidNodeMap.getOrDefault(osidVal, null);
                             if (ovalue != null) {
                                 resultArr.add(ovalue);
                             } else {
@@ -344,37 +341,8 @@ public class VertexReader {
         return resultArr;
     }
 
-    /**
-     * Neo4j supports custom ids and so we can directly query vertex with id - without client side filtering.
-     * SqlG does not support custom id, but the result is direct from the database without client side filtering
-     *      unlike Neo4j.
-     * @param osid the osid of vertex to be loaded
-     * @return the vertex associated with osid passed
-     */
     public Vertex getVertex(String entityType, String osid) {
-        Vertex vertex = null;
-        Iterator<Vertex> itrV = null;
-        switch (databaseProvider.getProvider()) {
-            case NEO4J:
-                itrV = graph.vertices(osid);
-                break;
-            case SQLG:
-                if (null != entityType) {
-                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
-                } else {
-                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
-                }
-                break;
-            default:
-                itrV = graph.vertices(osid);
-                break;
-        }
-
-        if (itrV.hasNext()) {
-            vertex = itrV.next();
-        }
-
-        return vertex;
+        return getVertex(entityType, new String[] {osid});
     }
 
     /**

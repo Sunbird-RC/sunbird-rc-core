@@ -40,6 +40,7 @@ public class ValueType {
         return result;
     }
 
+
     /**
      * Sets the contentNode to the corresponding value.
      * This is needed to appropriately identify the value types - long, double, string
@@ -58,6 +59,8 @@ public class ValueType {
             contentNode.put(fieldName, (Double) readVal);
         } else if (readVal instanceof String) {
             contentNode.put(fieldName, (String) readVal);
+        } else if (readVal instanceof JsonNode) {
+            contentNode.set(fieldName, (JsonNode) readVal);
         }
     }
 }
