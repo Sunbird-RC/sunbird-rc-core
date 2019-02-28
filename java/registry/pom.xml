@@ -26,7 +26,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <jacoco.version>0.8.1</jacoco.version>
-        <elastic.search.version>6.6.0</elastic.search.version>
+        <!-- this version is in sync with elastic-search.jar which here added as dependency-->
+        <elasticsearch.version>6.6.0</elasticsearch.version>
         <revision>2.0.1</revision>
         <runSuite>**/RegistryTestSuite.class</runSuite>
         <basePath>../../</basePath>
@@ -62,6 +63,12 @@
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>registry-interceptor</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.opensaber</groupId>
+            <artifactId>elastic-search</artifactId>
             <version>2.0.1</version>
         </dependency>
 
@@ -256,18 +263,6 @@
             <groupId>io.opensaber</groupId>
             <artifactId>transaction-event-handler</artifactId>
             <version>2.0.1</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.elasticsearch/elasticsearch -->
-        <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${elastic.search.version}</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-high-level-client -->
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>${elastic.search.version}</version>
         </dependency>
 
 

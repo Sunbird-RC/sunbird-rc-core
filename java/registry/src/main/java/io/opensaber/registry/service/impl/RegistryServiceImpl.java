@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.elastic.IElasticService;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.dao.IRegistryDao;
@@ -65,6 +66,8 @@ public class RegistryServiceImpl implements RegistryService {
     private SignatureHelper signatureHelper;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private IElasticService elasticService;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
 
@@ -174,6 +177,8 @@ public class RegistryServiceImpl implements RegistryService {
             Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
             Definition definition = definitionsManager.getDefinition(vertexLabel);
             entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
+            //call to elastic search
+            elasticService.addEntity(vertexLabel.toLowerCase(), entityId, JSONUtil.convertJsonNodeToMap(rootNode));
         }
 
         return entityId;

@@ -39,6 +39,12 @@ public class JSONUtil {
 		return gson.fromJson(result, stringObjMapType);
 	}
 
+	public static Map<String, Object> convertJsonNodeToMap(JsonNode object) {
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> mapObject = mapper.convertValue(object, Map.class);
+		return mapObject;
+	}
+
 	public static String getStringWithReplacedText(String payload, String value, String replacement) {
 		Pattern pattern = Pattern.compile(value);
 		Matcher matcher = pattern.matcher(payload);

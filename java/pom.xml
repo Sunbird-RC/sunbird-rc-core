@@ -36,6 +36,7 @@
         <module>registry-interceptor</module>
         <module>transaction-event-handler</module>
         <module>registry</module>
+        <module>elastic-search</module>
     </modules>
 
     <build>

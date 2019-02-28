@@ -3,6 +3,8 @@ package io.opensaber.registry.config;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import io.opensaber.elastic.ElasticServiceImpl;
+import io.opensaber.elastic.IElasticService;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.Response;
 import io.opensaber.registry.authorization.AuthorizationFilter;
@@ -106,6 +108,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${taskExecutor.index.queueCapacity}")
 	private int indexQueueCapacity;
+
+	@Value("${elastic.search.connection_url}")
+	private String elasticConnInfo;
 	
     @Value("${search.advisor}")
     private String searchAdvisorName;	
@@ -329,5 +334,18 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		executor.setThreadNamePrefix(indexThreadName);
 		executor.initialize();
 		return executor;
+	}
+
+	/** creates elastic-service bean and instanstiates the indices
+	 * @return - IElasticService
+	 * @throws IOException
+	 */
+	@Bean
+	public IElasticService elasticService() throws IOException {
+		ElasticServiceImpl elasticService = new ElasticServiceImpl();
+		elasticService.setType(Constants.ES_DOC_TYPE);
+		elasticService.setConnectionInfo(elasticConnInfo);
+        elasticService.init(definitionsManager.getAllKnownDefinitions());
+		return elasticService;
 	}
 }

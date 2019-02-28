@@ -70,6 +70,9 @@ public class Constants {
 	//class path for json resources from _schemas folder
 	public static final String RESOURCE_LOCATION = "classpath*:public/_schemas/*.json";
 
+	//elastic search document type
+	public static final String ES_DOC_TYPE = "_doc";
+
 
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH");
