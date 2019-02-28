@@ -8,7 +8,7 @@ import io.opensaber.registry.dao.IRegistryDao;
 import io.opensaber.registry.dao.SearchDao;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.service.SearchService;
+import io.opensaber.registry.service.ISearchService;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
@@ -25,18 +25,18 @@ import java.io.IOException;
 
 @Ignore
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { OpenSaberApplication.class, IRegistryDao.class, SearchDao.class, SearchService.class,
+@SpringBootTest(classes = { OpenSaberApplication.class, IRegistryDao.class, SearchDao.class, ISearchService.class,
 		GenericConfiguration.class })
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class SearchServiceImplTest extends RegistryTestBase {
+public class NativeSearchServiceTest extends RegistryTestBase {
 
 	private static final String BASE_SEARCH_JSONLD = "base_search_context.jsonld";
 	private static final String CONTEXT_NAMESPACE = "http://example.com/voc/teacher/1.0.0/";
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
 	@Autowired
-	private SearchService searchService;
+	private ISearchService searchService;
 	@Autowired
 	private RegistryService registryService;
 

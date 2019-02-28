@@ -18,6 +18,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.SchemaType;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
+import io.opensaber.registry.service.ISearchService;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.shard.IShardAdvisor;
 import io.opensaber.registry.sink.shard.ShardAdvisor;
@@ -27,9 +28,14 @@ import io.opensaber.registry.transform.Json2LdTransformer;
 import io.opensaber.registry.transform.Ld2JsonTransformer;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.SearchAdvisor;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -52,11 +58,6 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 @Configuration
 @EnableRetry
@@ -105,6 +106,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${taskExecutor.index.queueCapacity}")
 	private int indexQueueCapacity;
+	
+    @Value("${search.advisor}")
+    private String searchAdvisorName;	
 	
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
@@ -233,6 +237,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		ShardAdvisor shardAdvisor = new ShardAdvisor();
 		return shardAdvisor.getInstance(dbConnectionInfoMgr.getShardAdvisorClassName());
 	}
+    @Bean
+    public ISearchService searchService() {       
+        SearchAdvisor searchAdvisor = new SearchAdvisor();
+        return searchAdvisor.getInstance(searchAdvisorName);
+    }	
+	
 
 	@Bean
 	public UrlValidator urlValidator() {

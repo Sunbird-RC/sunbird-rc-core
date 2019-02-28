@@ -11,7 +11,7 @@ import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.service.SearchService;
+import io.opensaber.registry.service.ISearchService;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.transform.Configuration;
@@ -51,7 +51,7 @@ public class RegistryController {
     @Autowired
     private RegistryAuditService registryAuditService;
     @Autowired
-    private SearchService searchService;
+    private ISearchService searchService;
     @Autowired
     private APIMessage apiMessage;
     @Autowired
