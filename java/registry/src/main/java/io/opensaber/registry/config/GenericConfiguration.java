@@ -30,7 +30,7 @@ import io.opensaber.registry.transform.Json2LdTransformer;
 import io.opensaber.registry.transform.Ld2JsonTransformer;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.SearchAdvisor;
+import io.opensaber.registry.util.SearchProvider;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
@@ -112,8 +112,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${elastic.search.connection_url}")
 	private String elasticConnInfo;
 	
-    @Value("${search.advisor}")
-    private String searchAdvisorName;	
+    @Value("${search.providerName}")
+    private String searchProviderName;	
 	
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
@@ -244,8 +244,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
     @Bean
     public ISearchService searchService() {       
-        SearchAdvisor searchAdvisor = new SearchAdvisor();
-        return searchAdvisor.getInstance(searchAdvisorName);
+        SearchProvider searchProvider = new SearchProvider();
+        return searchProvider.getInstance(searchProviderName);
     }	
 	
 

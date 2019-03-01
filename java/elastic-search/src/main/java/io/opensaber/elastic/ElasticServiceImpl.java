@@ -1,5 +1,11 @@
 package io.opensaber.elastic;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import io.opensaber.pojos.Filter;
+import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,12 +18,18 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -169,8 +181,85 @@ public class ElasticServiceImpl implements IElasticService {
     }
 
     @Override
-    public Map<String, Object> search(String index, SearchQuery searchQuery) {
-        return null;
+    public JsonNode search(String index, SearchQuery searchQuery) {
+        List<Filter> filters = searchQuery.getFilters();
+        BoolQueryBuilder query = QueryBuilders.boolQuery();
+
+        for (Filter filter : filters) {
+            String field = filter.getProperty();
+            Object value = filter.getValue();
+            FilterOperators operator = filter.getOperator();
+
+            switch (operator) {
+            case eq:
+                query = query.must(QueryBuilders.matchQuery(field, value));
+                break;
+            case neq:
+                query = query.mustNot(QueryBuilders.matchQuery(field, value));
+                break;
+            case gt:
+                query = query.must(QueryBuilders.rangeQuery(field).gt(value));
+                break;
+            case lt:
+                query = query.must(QueryBuilders.rangeQuery(field).lt(value));
+                break;
+            case gte:
+                query = query.must(QueryBuilders.rangeQuery(field).gte(value));
+                break;
+            case lte:
+                query = query.must(QueryBuilders.rangeQuery(field).lte(value));
+                break;
+            case between:
+                List<Object> objects = (List<Object>) value;
+                query = query
+                        .must(QueryBuilders.rangeQuery(field).from(objects.get(0)).to(objects.get(objects.size() - 1)));
+                break;
+            case or:
+                List<Object> values = (List<Object>) value;
+                query = query.must(QueryBuilders.termsQuery(field, values));
+                break;
+
+            case contains:
+                query = query.must(QueryBuilders.matchPhraseQuery(field, value));
+                break;
+            case startsWith:
+                query = query.must(QueryBuilders.matchPhrasePrefixQuery(field, value.toString()));
+                break;
+            case endsWith:
+                query = query.must(QueryBuilders.wildcardQuery(field, "*" + value));
+                break;
+            case notContains:
+                query = query.mustNot(QueryBuilders.matchPhraseQuery(field, value));
+                break;
+            case notStartsWith:
+                query = query.mustNot(QueryBuilders.matchPhrasePrefixQuery(field, value.toString()));
+                break;
+            case notEndsWith:
+                query = query.mustNot(QueryBuilders.wildcardQuery(field, "*" + value));
+                break;
+            default:
+                query = query.must(QueryBuilders.matchQuery(field, value));
+                break;
+            }
+        }
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query);
+        SearchRequest searchRequest = new SearchRequest(index).source(sourceBuilder);
+        ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            SearchResponse searchResponse = getClient(index).search(searchRequest, RequestOptions.DEFAULT);
+            for (SearchHit hit : searchResponse.getHits()) {
+                JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
+                resultArray.add(node);
+            }
+            logger.info("Total search recordds found " + resultArray.size());
+        } catch (IOException e) {
+            logger.error("Elastic search operation - {}", e);
+        }
+
+        return resultArray;
+
     }
 
 }

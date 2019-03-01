@@ -29,15 +29,6 @@ import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.ReadConfiguratorFactory;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.RefLabelHelper;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -46,6 +37,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Component
 public class RegistryServiceImpl implements RegistryService {
@@ -178,7 +177,8 @@ public class RegistryServiceImpl implements RegistryService {
             Definition definition = definitionsManager.getDefinition(vertexLabel);
             entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             //call to elastic search
-            elasticService.addEntity(vertexLabel.toLowerCase(), entityId, JSONUtil.convertJsonNodeToMap(rootNode));
+            JsonNode node = rootNode.get(vertexLabel);
+            elasticService.addEntity(vertexLabel.toLowerCase(), entityId, JSONUtil.convertJsonNodeToMap(node));
         }
 
         return entityId;

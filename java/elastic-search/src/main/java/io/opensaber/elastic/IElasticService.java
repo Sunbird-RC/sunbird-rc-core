@@ -1,5 +1,6 @@
 package io.opensaber.elastic;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.opensaber.pojos.SearchQuery;
 import java.util.Map;
 import org.elasticsearch.rest.RestStatus;
@@ -43,5 +44,5 @@ public interface IElasticService {
      * @param searchQuery - which contains details for search
      * @return
      */
-    Map<String, Object> search(String index, SearchQuery searchQuery);
+    JsonNode search(String index, SearchQuery searchQuery);
 }
