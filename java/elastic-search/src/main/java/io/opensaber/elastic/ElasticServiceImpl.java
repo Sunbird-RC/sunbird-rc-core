@@ -16,10 +16,16 @@ import java.util.Set;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
@@ -167,17 +173,37 @@ public class ElasticServiceImpl implements IElasticService {
 
     @Override
     public Map<String, Object> readEntity(String index, String osid) {
-        return null;
+        logger.debug("readEntity starts with index {} and entityId {}", index, osid);
+        GetResponse response = null;
+        try{
+            response = getClient(index).get(new GetRequest(index, searchType, osid), RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("Exception in reading a record from ElasticSearch", e);
+        }
+        return response.getSourceAsMap();
     }
 
     @Override
-    public boolean updateEntity(String index, Map<String, Object> inputEntity, String osid) {
-        return false;
+    public RestStatus updateEntity(String index, Map<String, Object> inputEntity, String osid) {
+        logger.debug("updateEntity starts with index {} and entityId {}", index, osid);
+        UpdateResponse response = null;
+        try{
+            response = getClient(index).update(new UpdateRequest(index, searchType, osid).doc(inputEntity), RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("Exception in updating a record to ElasticSearch", e);
+        }
+        return response.status();
     }
 
     @Override
-    public void deleteEntity(String index, String osid) {
-
+    public RestStatus deleteEntity(String index, String osid) {
+        DeleteResponse response = null;
+        try{
+            response = getClient(index).delete(new DeleteRequest(index, searchType, osid), RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            logger.error("Exception in delete a record from ElasticSearch", e);
+        }
+        return response.status();
     }
 
     @Override

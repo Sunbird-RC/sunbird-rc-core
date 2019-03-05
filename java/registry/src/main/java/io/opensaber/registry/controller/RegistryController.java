@@ -9,6 +9,7 @@ import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
+import io.opensaber.registry.service.IReadService;
 import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.ISearchService;
@@ -52,6 +53,8 @@ public class RegistryController {
     private RegistryAuditService registryAuditService;
     @Autowired
     private ISearchService searchService;
+    @Autowired
+    private IReadService readService;
     @Autowired
     private APIMessage apiMessage;
     @Autowired
@@ -213,8 +216,8 @@ public class RegistryController {
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
-
-        String label = apiMessage.getRequest().getRequestMap().get(dbConnectionInfoMgr.getUuidPropertyName()).toString();
+        String entityType = apiMessage.getRequest().getEntityType();
+        String label = apiMessage.getRequest().getRequestMapNode().get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         shardManager.activateShard(shardId);
@@ -226,7 +229,7 @@ public class RegistryController {
         configurator.setIncludeTypeAttributes(requireLDResponse);
 
         try {
-            JsonNode resultNode = registryService.getEntity(recordId.getUuid(), configurator);
+            JsonNode resultNode = readService.getEntity(recordId.getUuid(), entityType, configurator);
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
             Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
@@ -238,7 +241,7 @@ public class RegistryController {
 
         } catch (Exception e) {
             logger.error("Read Api Exception occurred ", e);
-            responseParams.setErr(e.getMessage());
+            responseParams.setErrmsg(e.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         }
 

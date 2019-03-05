@@ -20,6 +20,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.SchemaType;
 import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
+import io.opensaber.registry.service.IReadService;
 import io.opensaber.registry.service.ISearchService;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.shard.IShardAdvisor;
@@ -30,7 +31,7 @@ import io.opensaber.registry.transform.Json2LdTransformer;
 import io.opensaber.registry.transform.Ld2JsonTransformer;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.SearchProvider;
+import io.opensaber.registry.util.ServiceProvider;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
@@ -113,7 +114,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String elasticConnInfo;
 	
     @Value("${search.providerName}")
-    private String searchProviderName;	
+    private String searchProviderName;
+
+	@Value("${read.providerName}")
+	private String readProviderName;
 	
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
@@ -244,9 +248,18 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
     @Bean
     public ISearchService searchService() {       
-        SearchProvider searchProvider = new SearchProvider();
-        return searchProvider.getInstance(searchProviderName);
-    }	
+        ServiceProvider searchProvider = new ServiceProvider();
+        return searchProvider.getSearchInstance(searchProviderName);
+    }
+
+	/** This method creates read provider implementation bean
+	 * @return
+	 */
+	@Bean
+	public IReadService readService() {
+		ServiceProvider searchProvider = new ServiceProvider();
+		return searchProvider.getReadInstance(readProviderName);
+	}
 	
 
 	@Bean

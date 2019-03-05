@@ -2,6 +2,7 @@ package io.opensaber.elastic;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.opensaber.pojos.SearchQuery;
+import java.io.IOException;
 import java.util.Map;
 import org.elasticsearch.rest.RestStatus;
 
@@ -31,13 +32,13 @@ public interface IElasticService {
      * @param osid - which maps to document
      * @return
      */
-    boolean updateEntity(String index, Map<String, Object> inputEntity, String osid);
+    RestStatus updateEntity(String index, Map<String, Object> inputEntity, String osid);
 
     /** deletes document with respect to input osid from ES
      * @param index - ElasticSearch Index
      * @param osid - which maps to document
      */
-    void deleteEntity(String index, String osid);
+    RestStatus deleteEntity(String index, String osid);
 
     /** searches documents from ES based on query
      * @param index - ElasticSearch Index

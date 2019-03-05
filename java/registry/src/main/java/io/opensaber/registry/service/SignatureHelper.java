@@ -98,8 +98,6 @@ public class SignatureHelper {
             existingSignatures = JsonNodeFactory.instance.arrayNode();
         }
         existingSignatures.add(toAdd);
-
-        ((ObjectNode) entityNode).set(Constants.SIGNATURES_STR, existingSignatures);
     }
 
     /**
