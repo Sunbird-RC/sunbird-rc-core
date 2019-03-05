@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.JSONUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,8 +18,6 @@ import java.util.Set;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -54,7 +54,9 @@ public class ElasticServiceImpl implements IElasticService {
         searchType = type;
     }
 
-    /** This method runs when the application is started in order to add all the indcies to the elastic search
+    /**
+     * This method runs when the application is started in order to add all the indcies to the elastic search
+     *
      * @param indices
      * @throws RuntimeException
      */
@@ -160,22 +162,30 @@ public class ElasticServiceImpl implements IElasticService {
      * @return
      */
     @Override
-    public RestStatus addEntity(String index, String entityId, Map<String, Object> inputEntity) {
+    public RestStatus addEntity(String index, String entityId, JsonNode inputEntity) {
         logger.debug("addEntity starts with index {} and entityId {}", index, entityId);
         IndexResponse response = null;
         try {
-            response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputEntity), RequestOptions.DEFAULT);
+            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
+            response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in adding record to ElasticSearch", e);
         }
         return response.status();
     }
 
+    /**
+     * Reads the document from Elastic search
+     *
+     * @param index - ElasticSearch Index
+     * @param osid  - which maps to document
+     * @return
+     */
     @Override
     public Map<String, Object> readEntity(String index, String osid) {
         logger.debug("readEntity starts with index {} and entityId {}", index, osid);
         GetResponse response = null;
-        try{
+        try {
             response = getClient(index).get(new GetRequest(index, searchType, osid), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in reading a record from ElasticSearch", e);
@@ -183,25 +193,46 @@ public class ElasticServiceImpl implements IElasticService {
         return response.getSourceAsMap();
     }
 
+    /**
+     * Updates the document with updated inputEntity
+     *
+     * @param index       - ElasticSearch Index
+     * @param osid        - which maps to document
+     * @param inputEntity - input json document for updating
+     * @return
+     */
     @Override
-    public RestStatus updateEntity(String index, Map<String, Object> inputEntity, String osid) {
+    public RestStatus updateEntity(String index, String osid, JsonNode inputEntity) {
         logger.debug("updateEntity starts with index {} and entityId {}", index, osid);
         UpdateResponse response = null;
-        try{
-            response = getClient(index).update(new UpdateRequest(index, searchType, osid).doc(inputEntity), RequestOptions.DEFAULT);
+        try {
+            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
+            response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in updating a record to ElasticSearch", e);
         }
         return response.status();
     }
 
+    /**
+     * Updates the document status to inactive into elastic-search
+     *
+     * @param index - ElasticSearch Index
+     * @param osid  - which maps to document
+     * @return
+     */
     @Override
     public RestStatus deleteEntity(String index, String osid) {
-        DeleteResponse response = null;
-        try{
-            response = getClient(index).delete(new DeleteRequest(index, searchType, osid), RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            logger.error("Exception in delete a record from ElasticSearch", e);
+        UpdateResponse response = null;
+        try {
+            String indexL = index.toLowerCase();
+            Map<String, Object> readMap = readEntity(indexL, osid);
+            Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
+            entityMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
+            response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
+        } catch (NullPointerException | IOException e) {
+            logger.error("exception in deleteEntity {}", e);
+            return RestStatus.NOT_FOUND;
         }
         return response.status();
     }

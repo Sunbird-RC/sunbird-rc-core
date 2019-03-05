@@ -3,7 +3,6 @@ package io.opensaber.registry.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.elastic.IElasticService;
 import io.opensaber.pojos.ComponentHealthInfo;
@@ -139,9 +138,11 @@ public class RegistryServiceImpl implements RegistryService {
             if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
                     && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
                 registryDao.deleteEntity(vertex);
+                databaseProvider.commitTransaction(graph, tx);
+                String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
+                elasticService.deleteEntity(index, uuid);
             }
             logger.info("Entity {} marked deleted", uuid);
-            databaseProvider.commitTransaction(graph, tx);
         }
     }
 
@@ -177,8 +178,7 @@ public class RegistryServiceImpl implements RegistryService {
             Definition definition = definitionsManager.getDefinition(vertexLabel);
             entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             //call to elastic search
-            JsonNode node = rootNode.get(vertexLabel);
-            elasticService.addEntity(vertexLabel.toLowerCase(), entityId, JSONUtil.convertJsonNodeToMap(node));
+            elasticService.addEntity(vertexLabel.toLowerCase(), entityId, rootNode);
         }
 
         return entityId;
@@ -264,6 +264,7 @@ public class RegistryServiceImpl implements RegistryService {
                 logger.debug("Removing earlier signature and adding new one");
                 String entitySignUUID = signatureHelper.removeEntitySignature(parentEntityType, (ObjectNode) mergedNode);
                 JsonNode newSignature = signatureHelper.signJson(mergedNode);
+                ((ObjectNode) newSignature).put(uuidPropertyName, entitySignUUID);
                 Vertex oldEntitySignatureVertex = uuidVertexMap.get(entitySignUUID);
 
                 registryDao.updateVertex(graph, oldEntitySignatureVertex, newSignature);
@@ -287,6 +288,9 @@ public class RegistryServiceImpl implements RegistryService {
             doUpdate(graph, registryDao, vr, inputNode.get(entityType));
 
             databaseProvider.commitTransaction(graph, tx);
+            // elastic-search updation starts here
+            logger.info("updating node {} " ,mergedNode);
+            elasticService.updateEntity(parentEntityType,rootId,mergedNode);
         }
     }
 
@@ -381,9 +385,7 @@ public class RegistryServiceImpl implements RegistryService {
                     }
                 } else if (oneElementNode.isObject()) {
                     logger.info("Object node {}", oneElement.toString());
-                    JsonNode entireObject = JsonNodeFactory.instance.objectNode();
-                    ((ObjectNode) entireObject).set(oneElement.getKey(), oneElementNode);
-                    doUpdate(graph, registryDao, vr, entireObject);
+                    doUpdate(graph, registryDao, vr, oneElementNode);
                 }
             }
         } else {

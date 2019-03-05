@@ -90,7 +90,13 @@ public class RegistryDaoImpl implements IRegistryDao {
     public void updateVertex(Graph graph, Vertex vertex, JsonNode inputJsonNode) {
         if (inputJsonNode.isObject()) {
             String objectName = inputJsonNode.fields().next().getKey();
-            if (vertex.property(objectName).isPresent()) {
+            logger.debug("Going to update objectName {}", objectName);
+            JsonNode osidJsonNode = inputJsonNode.get(uuidPropertyName);
+            String osidVal = "";
+            if (osidJsonNode != null) {
+                osidVal = osidJsonNode.textValue();
+            }
+            if (databaseProvider.getId(vertex).equals(osidVal)) {
                 updateObject(graph, vertex, (ObjectNode) inputJsonNode);
             } else {
                 VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName);

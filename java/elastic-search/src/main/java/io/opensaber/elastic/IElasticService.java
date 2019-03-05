@@ -14,10 +14,10 @@ public interface IElasticService {
     /** Saves document into ES(ElasticSearch)
      * @param index - ElasticSearch Index
      * @param id - document id
-     * @param inputEntity - input document for adding
+     * @param inputEntity - input json document for adding
      * @return
      */
-    RestStatus addEntity(String index, String id, Map<String, Object> inputEntity);
+    RestStatus addEntity(String index, String id, JsonNode inputEntity);
 
     /** Reads document with respect to input osid from ES
      * @param index - ElasticSearch Index
@@ -28,11 +28,11 @@ public interface IElasticService {
 
     /** updates document with respect to input osid to ES
      * @param index - ElasticSearch Index
-     * @param inputEntity - input document for updating
+     * @param inputEntity - input json document for updating
      * @param osid - which maps to document
      * @return
      */
-    RestStatus updateEntity(String index, Map<String, Object> inputEntity, String osid);
+    RestStatus updateEntity(String index, String osid, JsonNode inputEntity);
 
     /** deletes document with respect to input osid from ES
      * @param index - ElasticSearch Index
