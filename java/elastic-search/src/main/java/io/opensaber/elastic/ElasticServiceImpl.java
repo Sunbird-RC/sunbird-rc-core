@@ -215,13 +215,17 @@ public class ElasticServiceImpl implements IElasticService {
             String field = filter.getProperty();
             Object value = filter.getValue();
             FilterOperators operator = filter.getOperator();
+            String path = filter.getPath();
 
+            if (path != null) {
+                field = path + "." + field;
+            }
             switch (operator) {
             case eq:
-                query = query.must(QueryBuilders.matchQuery(field, value));
+                query = query.must(QueryBuilders.matchPhraseQuery(field, value));
                 break;
             case neq:
-                query = query.mustNot(QueryBuilders.matchQuery(field, value));
+                query = query.mustNot(QueryBuilders.matchPhraseQuery(field, value));
                 break;
             case gt:
                 query = query.must(QueryBuilders.rangeQuery(field).gt(value));
@@ -279,7 +283,7 @@ public class ElasticServiceImpl implements IElasticService {
                 JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
                 resultArray.add(node);
             }
-            logger.info("Total search recordds found " + resultArray.size());
+            logger.debug("Total search records found " + resultArray.size());
         } catch (IOException e) {
             logger.error("Elastic search operation - {}", e);
         }
