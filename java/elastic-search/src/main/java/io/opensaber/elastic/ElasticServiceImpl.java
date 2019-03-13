@@ -239,6 +239,33 @@ public class ElasticServiceImpl implements IElasticService {
 
     @Override
     public JsonNode search(String index, SearchQuery searchQuery) {
+        BoolQueryBuilder query = buildQuery(searchQuery);
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query);
+        SearchRequest searchRequest = new SearchRequest(index).source(sourceBuilder);
+        ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            SearchResponse searchResponse = getClient(index).search(searchRequest, RequestOptions.DEFAULT);
+            for (SearchHit hit : searchResponse.getHits()) {
+                JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
+                resultArray.add(node);
+            }
+            logger.debug("Total search records found " + resultArray.size());
+        } catch (IOException e) {
+            logger.error("Elastic search operation - {}", e);
+        }
+
+        return resultArray;
+
+    }
+    /**
+     * Builds the final query builder for given searchQuery
+     * @param searchQuery
+     * @return
+     */
+    private BoolQueryBuilder buildQuery(SearchQuery searchQuery){
         List<Filter> filters = searchQuery.getFilters();
         BoolQueryBuilder query = QueryBuilders.boolQuery();
 
@@ -297,30 +324,17 @@ public class ElasticServiceImpl implements IElasticService {
                 break;
             case notEndsWith:
                 query = query.mustNot(QueryBuilders.wildcardQuery(field, "*" + value));
+                break;                
+            case queryString:
+                query = query.must(QueryBuilders.queryStringQuery(value.toString()));
                 break;
             default:
                 query = query.must(QueryBuilders.matchQuery(field, value));
                 break;
             }
         }
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query);
-        SearchRequest searchRequest = new SearchRequest(index).source(sourceBuilder);
-        ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
-        ObjectMapper mapper = new ObjectMapper();
 
-        try {
-            SearchResponse searchResponse = getClient(index).search(searchRequest, RequestOptions.DEFAULT);
-            for (SearchHit hit : searchResponse.getHits()) {
-                JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
-                resultArray.add(node);
-            }
-            logger.debug("Total search records found " + resultArray.size());
-        } catch (IOException e) {
-            logger.error("Elastic search operation - {}", e);
-        }
-
-        return resultArray;
-
+        return query;
     }
 
 }

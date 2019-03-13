@@ -1,6 +1,8 @@
 package io.opensaber.registry.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.elastic.IElasticService;
 import io.opensaber.pojos.SearchQuery;
 import org.slf4j.Logger;
@@ -32,8 +34,12 @@ public class ElasticSearchService implements ISearchService {
     public JsonNode search(JsonNode inputQueryNode) {
         logger.debug("search request body = " + inputQueryNode);
         SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
-        String indexName = inputQueryNode.fieldNames().next().toLowerCase();
-        return elasticService.search(indexName, searchQuery);
+        ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
+        for(String indexName : searchQuery.getEntityTypes()){
+            JsonNode node = elasticService.search(indexName.toLowerCase(), searchQuery);
+            resultNode.set(indexName, node);
+        }
+        return resultNode;
 
     }
 

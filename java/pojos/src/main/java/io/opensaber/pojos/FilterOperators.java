@@ -5,7 +5,8 @@ public enum FilterOperators {
     gt(">"), lt("<"), eq("="), neq("!="),
     between("range"), or("or"),
     startsWith("startsWith"), endsWith("endsWith"), 
-    notContains("notContains"), notStartsWith("notStartsWith"), notEndsWith("notEndsWith");
+    notContains("notContains"), notStartsWith("notStartsWith"), notEndsWith("notEndsWith"),
+    queryString("queryString");
     
 
     private String value;

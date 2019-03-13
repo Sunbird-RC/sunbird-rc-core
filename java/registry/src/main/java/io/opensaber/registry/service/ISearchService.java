@@ -1,6 +1,7 @@
 package io.opensaber.registry.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
@@ -26,14 +27,35 @@ public interface ISearchService {
      * @return
      */
     default SearchQuery getSearchQuery(JsonNode inputQueryNode, int offset, int limit) {
-        String rootLabel = inputQueryNode.fieldNames().next();
+        // get entityType array values
+        JsonNode typeNode = inputQueryNode.get("entityType");
+        if (!typeNode.isArray() || typeNode.size() == 0)
+            throw new IllegalArgumentException("entityType invalid!");
 
-        SearchQuery searchQuery = new SearchQuery(rootLabel, offset, limit);
-        List<Filter> filterList = new ArrayList<>();
-        JsonNode rootNode = inputQueryNode.get(rootLabel);
-        if (rootLabel != null && !rootLabel.isEmpty()) {
-            addToFilterList(null, rootNode, filterList);
+        ArrayNode types = (ArrayNode) typeNode;
+        List<String> entites = new ArrayList<>();
+        for (JsonNode node : types) {
+            entites.add(node.asText());
         }
+        SearchQuery searchQuery = new SearchQuery(entites, offset, limit);
+
+        List<Filter> filterList = new ArrayList<>();
+        // get common filter/queries to apply
+        JsonNode queryNode = inputQueryNode.has("filters") ? inputQueryNode.get("filters")
+                : inputQueryNode.get("queries");
+
+        if (queryNode == null) {
+            throw new IllegalArgumentException("filters or queries missing from search request!");
+
+        } else if (queryNode.isObject()) {
+            addToFilterList(null, queryNode, filterList);
+
+        } else if (queryNode.isTextual()) {
+            // adding queries free text as filter
+            Filter freeTextFilter = new Filter("*", FilterOperators.queryString, queryNode.asText());
+            filterList.add(freeTextFilter);
+        }
+
         try {
             searchQuery.setLimit(inputQueryNode.get("limit").asInt());
             searchQuery.setOffset(inputQueryNode.get("offset").asInt());

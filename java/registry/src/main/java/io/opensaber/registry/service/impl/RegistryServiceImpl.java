@@ -178,7 +178,8 @@ public class RegistryServiceImpl implements RegistryService {
             Definition definition = definitionsManager.getDefinition(vertexLabel);
             entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             //call to elastic search
-            elasticService.addEntity(vertexLabel.toLowerCase(), entityId, rootNode);
+            JsonNode inputNode = rootNode.get(vertexLabel);
+            elasticService.addEntity(vertexLabel.toLowerCase(), entityId, inputNode);
         }
 
         return entityId;
@@ -289,8 +290,9 @@ public class RegistryServiceImpl implements RegistryService {
 
             databaseProvider.commitTransaction(graph, tx);
             // elastic-search updation starts here
-            logger.info("updating node {} " ,mergedNode);
-            elasticService.updateEntity(parentEntityType,rootId,mergedNode);
+            JsonNode updateNode = mergedNode.get(parentEntityType);
+            logger.info("updating node {} " ,updateNode);
+            elasticService.updateEntity(parentEntityType,rootId,updateNode);
         }
     }
 

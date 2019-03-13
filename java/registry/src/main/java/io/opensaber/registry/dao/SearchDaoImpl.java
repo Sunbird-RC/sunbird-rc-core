@@ -3,6 +3,7 @@ package io.opensaber.registry.dao;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
@@ -29,10 +30,22 @@ public class SearchDaoImpl implements SearchDao {
         GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal().clone();
         List<Filter> filterList = searchQuery.getFilters();
         int offset = searchQuery.getOffset();
-        GraphTraversal<Vertex, Vertex> resultGraphTraversal = dbGraphTraversalSource.clone().V()
-                .hasLabel(searchQuery.getRootLabel()).range(offset, offset + searchQuery.getLimit())
-                .limit(searchQuery.getLimit());
-        GraphTraversal<Vertex, Vertex> parentTraversal = resultGraphTraversal.asAdmin().clone();
+        ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
+        for (String entity : searchQuery.getEntityTypes()) {
+            GraphTraversal<Vertex, Vertex> resultGraphTraversal = dbGraphTraversalSource.clone().V().hasLabel(entity)
+                    .range(offset, offset + searchQuery.getLimit()).limit(searchQuery.getLimit());
+            GraphTraversal<Vertex, Vertex> parentTraversal = resultGraphTraversal.asAdmin().clone();
+
+            resultGraphTraversal = getFilteredResultTraversal(resultGraphTraversal, filterList);
+            JsonNode result = getResult(graphFromStore, resultGraphTraversal, parentTraversal);
+            resultNode.set(entity, result);
+        }
+
+        return resultNode;
+    }
+    
+    private GraphTraversal<Vertex, Vertex> getFilteredResultTraversal(
+            GraphTraversal<Vertex, Vertex> resultGraphTraversal, List<Filter> filterList) {
 
         BiPredicate<String, String> condition = null;
         // Ensure the root label is correct
@@ -73,8 +86,7 @@ public class SearchDaoImpl implements SearchDao {
                     break;
                 case or:
                     List<Object> values = (List<Object>) genericValue;
-                    resultGraphTraversal = resultGraphTraversal.has(property,
-                            P.within(values));
+                    resultGraphTraversal = resultGraphTraversal.has(property, P.within(values));
                     break;
 
                 case contains:
@@ -107,6 +119,8 @@ public class SearchDaoImpl implements SearchDao {
                     resultGraphTraversal = resultGraphTraversal.has(property,
                             new P<String>(condition, genericValue.toString()));
                     break;
+                case queryString:
+                    throw new IllegalArgumentException("queryString not supported for native search!");
                 default:
                     resultGraphTraversal = resultGraphTraversal.has(property, P.eq(genericValue));
                     break;
@@ -114,8 +128,7 @@ public class SearchDaoImpl implements SearchDao {
 
             }
         }
-
-        return getResult(graphFromStore, resultGraphTraversal, parentTraversal);
+        return resultGraphTraversal;
     }
 
 	private void updateValueList(Object value, List valueList) {

@@ -55,7 +55,9 @@ public class SearchDaoImplTest {
     private final static String VALUE_NOT_PRESENT = "valueNotPresent";
     private final static int offset = 0;
     private final static int limit = 1;
+    private List<String> entities = new ArrayList<>();
 
+    
     @Before
     public void initializeGraph() throws IOException {
         dbConnectionInfoMgr.setUuidPropertyName("tid");
@@ -66,28 +68,30 @@ public class SearchDaoImplTest {
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, "tid");
         searchDao = new SearchDaoImpl(registryDao);
         populateGraph();
+        
+        entities.add("Teacher");
 
     }
 
     @Test
     public void test_search_no_response() throws AuditFailedException, EncryptionException, RecordNotFoundException {
-        SearchQuery searchQuery = new SearchQuery("", 0, 0);
+        SearchQuery searchQuery = getSearchQuery(entities, "", "", FilterOperators.eq);//new SearchQuery("", 0, 0);
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 0);
+        assertTrue(result.get("Teacher").size() == 0);
     }
 
     @Test
     public void testEqOperator() {
-        SearchQuery searchQuery = getSearchQuery("Teacher", "teacherName", "marko", FilterOperators.eq);
+        SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "marko", FilterOperators.eq);
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 1);
+        assertTrue(result.get("Teacher").size() == 1);
     }
 
     @Test
     public void testNeqOperator() {
-        SearchQuery searchQuery = getSearchQuery("Teacher", "teacherName", "marko", FilterOperators.neq);
+        SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "marko", FilterOperators.neq);
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 2);
+        assertTrue(result.get("Teacher").size() == 2);
     }
 
     @Test
@@ -95,9 +99,9 @@ public class SearchDaoImplTest {
         List<Object> range = new ArrayList<>();
         range.add(1);
         range.add(3);
-        SearchQuery searchQuery = getSearchQuery("Teacher", "serialNum", range, FilterOperators.between);
+        SearchQuery searchQuery = getSearchQuery(entities, "serialNum", range, FilterOperators.between);
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 2);
+        assertTrue(result.get("Teacher").size() == 2);
     }
     
     @Test
@@ -106,39 +110,39 @@ public class SearchDaoImplTest {
         values.add("marko");
         values.add("vedas");
         values.add(VALUE_NOT_PRESENT); 
-        SearchQuery searchQuery = getSearchQuery("Teacher", "teacherName", values, FilterOperators.or);
+        SearchQuery searchQuery = getSearchQuery(entities, "teacherName", values, FilterOperators.or);
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 2);
+        assertTrue(result.get("Teacher").size() == 2);
     }
 
     @Test
     public void testStartsWithOperator() {
-        SearchQuery searchQuery = getSearchQuery("Teacher", "teacherName", "ma", FilterOperators.startsWith);
+        SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.startsWith);
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 1);
+        assertTrue(result.get("Teacher").size() == 1);
     }
     @Test
     public void testNotStartsWithOperator() {
-        SearchQuery searchQuery = getSearchQuery("Teacher", "teacherName", "ma", FilterOperators.notStartsWith);
+        SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.notStartsWith);
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 2);
+        assertTrue(result.get("Teacher").size() == 2);
     }
 
     @Test
     public void testEndsWithOperator() {
-        SearchQuery searchQuery = getSearchQuery("Teacher", "teacherName", "as", FilterOperators.endsWith);
+        SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.endsWith);
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 2);
+        assertTrue(result.get("Teacher").size() == 2);
     }
     @Test
     public void testNotEndsWithOperator() {
-        SearchQuery searchQuery = getSearchQuery("Teacher", "teacherName", "as", FilterOperators.notEndsWith);
+        SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.notEndsWith);
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 1);
+        assertTrue(result.get("Teacher").size() == 1);
     }
     @Test
     public void testMultiOperators() {
-        SearchQuery searchQuery = getSearchQuery("Teacher", "teacherName", "a", FilterOperators.contains);
+        SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "a", FilterOperators.contains);
         //addes other filter
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.lte, 1));
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.lt, 3));
@@ -146,14 +150,14 @@ public class SearchDaoImplTest {
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.gt, 1));
 
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 0);
+        assertTrue(result.get("Teacher").size() == 0);
     }
 
     @Test
     public void testResponseLimit() {
-        SearchQuery searchQuery = new SearchQuery("Teacher", offset, limit);
+        SearchQuery searchQuery = new SearchQuery(entities, offset, limit);
         JsonNode result = searchDao.search(graph, searchQuery);
-        assertTrue(result.size() == 1);
+        assertTrue(result.get("Teacher").size() == 1);
     }
 
     @PreDestroy
@@ -161,8 +165,8 @@ public class SearchDaoImplTest {
         graph.close();
     }
 
-    private SearchQuery getSearchQuery(String rootType, String property, Object value, FilterOperators op) {
-        SearchQuery searchQuery = new SearchQuery(rootType, 0, 100);
+    private SearchQuery getSearchQuery(List<String> rootTypes, String property, Object value, FilterOperators op) {
+        SearchQuery searchQuery = new SearchQuery(rootTypes, 0, 100);
         List<Filter> filterList = new ArrayList<>();
         Filter filter = new Filter(property, op, value);
         filterList.add(filter);

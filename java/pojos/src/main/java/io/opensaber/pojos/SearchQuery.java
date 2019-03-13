@@ -9,12 +9,19 @@ public class SearchQuery {
 	private int offset;
 	private List<String> fields;
 	private String rootLabel;
+	private List<String> entityTypes;
 
 	public SearchQuery(String rootLabel, int offset, int limit) {
 		this.rootLabel = rootLabel;
 		this.offset = offset;
 		this.limit = limit;
 	}
+	
+   public SearchQuery(List<String> entityTypes, int offset, int limit) {
+        this.entityTypes = entityTypes;
+        this.offset = offset;
+        this.limit = limit;
+    }
 
 	public List<Filter> getFilters() {
 		return filters;
@@ -57,4 +64,9 @@ public class SearchQuery {
 	public void setRootLabel(String rootLabel) {
 		this.rootLabel = rootLabel;
 	}
+
+    public List<String> getEntityTypes() {
+        return entityTypes;
+    }
+	
 }
