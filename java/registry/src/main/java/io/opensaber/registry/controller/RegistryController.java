@@ -10,7 +10,6 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.IReadService;
-import io.opensaber.registry.service.RegistryAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.ISearchService;
 import io.opensaber.registry.sink.shard.Shard;
@@ -49,8 +48,6 @@ public class RegistryController {
     private ConfigurationHelper configurationHelper;
     @Autowired
     private RegistryService registryService;
-    @Autowired
-    private RegistryAuditService registryAuditService;
     @Autowired
     private ISearchService searchService;
     @Autowired

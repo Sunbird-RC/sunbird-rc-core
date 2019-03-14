@@ -58,6 +58,20 @@
         <appender-ref ref="Perf4jFileAppender"/>
     </appender>
 
+    <appender name="AuditFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>audit-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>3MB</maxFileSize>
+        </triggeringPolicy>
+        <encoder>
+            <pattern>[%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!-- Loggers -->
     <!-- The Perf4J logger. Note that org.perf4j.TimingLogger is the value of
         the org.perf4j.StopWatch.DEFAULT_LOGGER_NAME constant. Also, note that additivity
@@ -79,6 +93,10 @@
 
     <logger name="GraphEventLogger" level="DEBUG" additivity="FALSE">
         <appender-ref ref="RegistryAuditAppender"/>
+    </logger>
+
+    <logger name="io.opensaber.registry.service.impl.AuditServiceImpl" level="DEBUG" additivity="FALSE">
+        <appender-ref ref="AuditFileAppender"/>
     </logger>
 
     <root level="INFO" additivity="FALSE">

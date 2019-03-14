@@ -10,11 +10,11 @@ public class ServiceProvider {
     private static final String DEFAULT_SEARCH_ADVISOR = "io.opensaber.registry.service.NativeSearchService";
     private static final String DEFAULT_READ_ADVISOR = "io.opensaber.registry.service.NativeReadService";
 
-    public ISearchService getSearchInstance(String advisorProviderName) {
+    public ISearchService getSearchInstance(String advisorProviderName, boolean elasticSearchEnabled) {
 
         ISearchService searchService = null;
         try {
-            if (advisorProviderName == null || advisorProviderName.isEmpty()) {
+            if (elasticSearchEnabled || advisorProviderName == null || advisorProviderName.isEmpty()) {
                 // default is set to native search service
                 advisorProviderName = DEFAULT_SEARCH_ADVISOR;
             }
@@ -30,11 +30,11 @@ public class ServiceProvider {
         return searchService;
     }
 
-    public IReadService getReadInstance(String advisorProviderName) {
+    public IReadService getReadInstance(String advisorProviderName, boolean elasticSearchEnabled) {
 
         IReadService readService = null;
         try {
-            if (advisorProviderName == null || advisorProviderName.isEmpty()) {
+            if (elasticSearchEnabled || advisorProviderName == null || advisorProviderName.isEmpty()) {
                 // default is set to native search service
                 advisorProviderName = DEFAULT_READ_ADVISOR;
             }

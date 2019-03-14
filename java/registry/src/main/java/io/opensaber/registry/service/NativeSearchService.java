@@ -4,12 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.dao.IRegistryDao;
 import io.opensaber.registry.dao.RegistryDaoImpl;
 import io.opensaber.registry.dao.SearchDaoImpl;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.model.AuditInfo;
+import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.sink.OSGraph;
@@ -17,8 +21,11 @@ import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.RecordIdentifier;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.slf4j.Logger;
@@ -48,6 +55,12 @@ public class NativeSearchService implements ISearchService {
 	@Autowired
 	private Shard shard;
 
+	@Autowired
+	private IAuditService auditService;
+
+	@Autowired
+	private APIMessage apiMessage;
+
 	@Value("${database.uuidPropertyName}")
 	public String uuidPropertyName;
 	
@@ -58,7 +71,10 @@ public class NativeSearchService implements ISearchService {
 	private int limit;
 
 	@Override
-	public JsonNode search(JsonNode inputQueryNode) {
+	public JsonNode search(JsonNode inputQueryNode) throws IOException {
+		AuditRecord auditRecord = null;
+		List<Integer> transaction = new LinkedList<>();
+		List<AuditInfo> auditInfoLst = new LinkedList<>();
 		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
 
@@ -82,12 +98,22 @@ public class NativeSearchService implements ISearchService {
                         JSONUtil.addPrefix((ObjectNode) shardResult, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
                     }
                     result.add(shardResult);
+					transaction.add(tx.hashCode());
 				}
 			} catch (Exception e) {
 				logger.error("search operation failed: {}", e);
 			}
 		}
-
+		auditRecord = new AuditRecord();
+		for (String entity : searchQuery.getEntityTypes()) {
+			AuditInfo auditInfo = new AuditInfo();
+			auditInfo.setOp(Constants.AUDIT_ACTION_SEARCH_OP);
+			auditInfo.setPath(entity);
+			auditInfoLst.add(auditInfo);
+		}
+		auditRecord.setAuditInfo(auditInfoLst);
+		auditRecord.setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_SEARCH).setTransactionId(transaction);
+		auditService.audit(auditRecord);
 		return result;
 	}
 }

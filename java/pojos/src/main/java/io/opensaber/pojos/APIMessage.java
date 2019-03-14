@@ -29,6 +29,8 @@ public class APIMessage {
 	/* A temporary map to pass data cooked up in the interceptors, modules */
 	private Map<String, Object> localMap = new HashMap<>();
 
+	private String userID;
+
 	public APIMessage() {}
 
 	@Autowired
@@ -88,5 +90,13 @@ public class APIMessage {
 	 */
 	public Map<String, Object> getLocalMap() {
 		return localMap;
+	}
+
+	public String getUserID() {
+		return userID;
+	}
+
+	public void setUserID(String userID) {
+		this.userID = userID;
 	}
 }

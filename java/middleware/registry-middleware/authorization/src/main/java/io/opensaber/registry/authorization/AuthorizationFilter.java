@@ -59,7 +59,7 @@ public class AuthorizationFilter implements Middleware {
 			watch.stop("KeycloakServiceImpl.verifyToken");
 
 			if (!userId.trim().isEmpty()) {
-
+				apiMessage.setUserID(userId);
 				if (mapObject.containsKey("userName")) {
 					logger.debug("Access token for user {} verified successfully with KeyCloak server !",
 							mapObject.get("userName"));

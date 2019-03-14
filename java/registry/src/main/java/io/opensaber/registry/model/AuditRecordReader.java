@@ -44,11 +44,11 @@ public class AuditRecordReader {
 		while (traversal.hasNext()) {
 			Vertex auditVertex = traversal.next();
 			AuditRecord record = appContext.getBean(AuditRecord.class);
-			record.subject(label);
+			/*record.subject(label);
 			record.predicate(getValue(auditVertex, registrySystemContext + "predicate"));
 			record.oldObject(getValue(auditVertex, registrySystemContext + "oldObject"));
 			record.newObject(getValue(auditVertex, registrySystemContext + "newObject"));
-			record.readOnlyAuthInfo(getValue(auditVertex, registrySystemContext + "authInfo"));
+			record.readOnlyAuthInfo(getValue(auditVertex, registrySystemContext + "authInfo"));*/
 			records.add(record);
 			logger.debug("AuditRecordReader - AuditRecord {}  : {} ", recordCount++, record);
 		}

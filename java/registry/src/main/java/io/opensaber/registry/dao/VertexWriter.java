@@ -2,6 +2,7 @@ package io.opensaber.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.ArrayHelper;
@@ -132,6 +133,8 @@ public class VertexWriter {
         for (JsonNode jsonNode : arrayNode) {
             if (jsonNode.isObject()) {
                 Vertex createdV = processNode(entryKey, jsonNode);
+                ObjectNode objectNode = (ObjectNode) jsonNode;
+                objectNode.put(uuidPropertyName,databaseProvider.getId(createdV));
                 createdV.property(Constants.ROOT_KEYWORD, parentOSid);
                 uidList.add(databaseProvider.getId(createdV));
                 if (isSignature) {
@@ -160,9 +163,11 @@ public class VertexWriter {
 
     public void writeSingleNode(Vertex parentVertex, String label, JsonNode entryValue) {
         Vertex v = processNode(label, entryValue);
+        ObjectNode object = (ObjectNode) entryValue;
         addEdge(label, parentVertex, v);
 
         String idToSet = databaseProvider.getId(v);
+        object.put(uuidPropertyName,idToSet);
         parentVertex.property(RefLabelHelper.getLabel(label, uuidPropertyName), idToSet);
 
         identifyParentOSid(parentVertex);
@@ -221,16 +226,19 @@ public class VertexWriter {
      */
     public String writeNodeEntity(JsonNode node) {
         Vertex resultVertex = null;
+        String rootOsid = null;
         Iterator<Map.Entry<String, JsonNode>> entryIterator = node.fields();
         while (entryIterator.hasNext()) {
             Map.Entry<String, JsonNode> entry = entryIterator.next();
+            ObjectNode entryObject = (ObjectNode) entry.getValue();
             // It is expected that node is wrapped under a root, which is the
             // parent name/definition
             if (entry.getValue().isObject()) {
                 resultVertex = processNode(entry.getKey(), entry.getValue());
+                rootOsid = databaseProvider.getId(resultVertex);
+                entryObject.put(uuidPropertyName,rootOsid);
             }
         }
-
-        return databaseProvider.getId(resultVertex);
+        return rootOsid;
     }
 }

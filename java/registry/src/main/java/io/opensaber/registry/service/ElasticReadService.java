@@ -4,23 +4,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.elastic.IElasticService;
-import io.opensaber.pojos.SearchQuery;
-import io.opensaber.registry.dao.IRegistryDao;
-import io.opensaber.registry.dao.RegistryDaoImpl;
+import io.opensaber.pojos.APIMessage;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.DateUtil;
 import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.sink.OSGraph;
+import io.opensaber.registry.model.AuditInfo;
+import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.util.ReadConfigurator;
-import io.opensaber.registry.util.RecordIdentifier;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -37,6 +32,11 @@ public class ElasticReadService implements IReadService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private IAuditService auditService;
+    @Autowired
+    private APIMessage apiMessage;
+
     /**
      * This method interacts with the Elasticsearch and reads the record
      *
@@ -49,6 +49,7 @@ public class ElasticReadService implements IReadService {
     @Override
     public JsonNode getEntity(String id, String entityType, ReadConfigurator configurator) throws Exception {
         JsonNode result = null;
+        AuditRecord auditRecord = null;
         Map<String, Object> response = elasticService.readEntity(entityType.toLowerCase(), id);
         if(response == null) {
             throw new RecordNotFoundException("Record with " +id+ " not found");
@@ -57,6 +58,14 @@ public class ElasticReadService implements IReadService {
         if(!configurator.isIncludeSignatures()) {
             JSONUtil.removeNode((ObjectNode) result, Constants.SIGNATURES_STR);
         }
+        auditRecord = new AuditRecord();
+        auditRecord.setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_READ).setRecordId(id).setLatestNode(result).setExistingNode(result).
+                setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());
+        AuditInfo auditInfo = new AuditInfo();
+        auditInfo.setOp(Constants.AUDIT_ACTION_READ_OP);
+        auditInfo.setPath("/"+entityType);
+        auditRecord.setAuditInfo(Arrays.asList(auditInfo));
+        auditService.audit(auditRecord);
         return result;
     }
 

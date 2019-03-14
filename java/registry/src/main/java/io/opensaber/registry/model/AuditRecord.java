@@ -1,135 +1,101 @@
 package io.opensaber.registry.model;
 
-import com.google.gson.Gson;
-import io.opensaber.registry.authorization.pojos.AuthInfo;
-import io.opensaber.registry.exception.AuditFailedException;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.sink.DatabaseProvider;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
-import java.util.UUID;
 
-@Component
 public class AuditRecord {
-	private String subject;
-	private String predicate;
-	private Object oldObject;
-	private Object newObject;
-	private String readOnlyAuthInfo;
 
-	@Value("${registry.system.base}")
-	private String registrySystemContext;
+	private JsonNode existingNode;
+	private JsonNode latestNode;
+	private String action;
+	private String recordId;
+	private List<Integer> transactionId;
+	private String userId;
+	private String auditId;
+	private String timeStamp;
+	private List<AuditInfo> auditInfo;
 
-	@Value("${authentication.enabled}")
-	private boolean authenticationEnabled;
+    @JsonIgnore
+	public JsonNode getExistingNode() {
+		return existingNode;
+	}
 
-	@Autowired
-	private Gson gson;
+	public AuditRecord setExistingNode(JsonNode existingNode) {
+		this.existingNode = existingNode;
+		return this;
+	}
+    @JsonIgnore
+	public JsonNode getLatestNode() {
+		return latestNode;
+	}
 
-	public AuditRecord subject(String label) {
-		this.subject = label + "-AUDIT";
+	public AuditRecord setLatestNode(JsonNode latestNode) {
+		this.latestNode = latestNode;
 		return this;
 	}
 
-	public AuditRecord predicate(String key) {
-		this.predicate = key;
+	public String getAction() {
+		return action;
+	}
+
+	public AuditRecord setAction(String action) {
+		this.action = action;
 		return this;
 	}
 
-	public AuditRecord oldObject(Object oldValue) {
-		if (oldValue instanceof List) {
-			this.oldObject = (List) oldValue;
-		} else {
-			this.oldObject = String.valueOf(oldValue);
-		}
-		return this;
-	}
+    public List<Integer> getTransactionId() {
+        return transactionId;
+    }
 
-	public AuditRecord newObject(Object newValue) {
-		if (newValue instanceof List) {
-			this.newObject = (List) newValue;
-		} else {
-			this.newObject = String.valueOf(newValue);
-		}
-		return this;
-	}
+    public AuditRecord setTransactionId(List<Integer> transactionId) {
+        this.transactionId = transactionId;
+        return this;
+    }
 
-	@Override
-	public String toString() {
-		return "AuditRecord{" + "  subject='" + subject + '\'' + ", predicate='" + predicate + '\'' + ", oldObject="
-				+ oldObject + ", newObject=" + newObject + ", readOnlyAuthInfo=" + readOnlyAuthInfo + '}';
-	}
+    public String getUserId() {
+        return userId;
+    }
 
-	public void record(DatabaseProvider provider) throws AuditFailedException {
+    public AuditRecord setUserId(String userId) {
+        this.userId = userId;
+        return this;
+    }
 
-		GraphTraversalSource _source = provider.getGraphStore().traversal().clone();
-		boolean rootNodeExists = _source.V().hasLabel(subject).hasNext();
-		Vertex rootVertex;
-		if (!rootNodeExists) {
-			/*** "AUDIT ROOT NOT FOUND - CREATING" ***/
-			rootVertex = _source.addV(subject).next();
-			updateUserInfo(rootVertex);
-		} else {
-			/*** AUDIT ROOT FOUND - NOT CREATING" **/
-			rootVertex = _source.V().hasLabel(subject).next();
-			rootVertex.property(Constants.AUDIT_KEYWORD, "true");
-		}
+    public List<AuditInfo> getAuditInfo() {
+        return auditInfo;
+    }
 
-		String uuid = UUID.randomUUID().toString();
-		String auditLabel = registrySystemContext + uuid;
-		String predicate = registrySystemContext + "predicate";
-		String oldObject = registrySystemContext + "oldObject";
-		String newObject = registrySystemContext + "newObject";
+    public AuditRecord setAuditInfo(List<AuditInfo> auditInfo) {
+        this.auditInfo = auditInfo;
+        return this;
+    }
 
-		Vertex recordVertex = _source.addV(auditLabel).next();
-		recordVertex.property(predicate, this.predicate);
-		recordVertex.property(oldObject, this.oldObject);
-		recordVertex.property(newObject, this.newObject);
-		recordVertex.property(Constants.AUDIT_KEYWORD, "true");
-		recordVertex.property("@auditRecord", "true");
-		updateUserInfo(recordVertex);
+    public String getRecordId() {
+        return recordId;
+    }
 
-		String edgeLabel = registrySystemContext + "audit";
+    public AuditRecord setRecordId(String recordId) {
+        this.recordId = recordId;
+        return this;
+    }
 
-		rootVertex.addEdge(edgeLabel, recordVertex).property(Constants.AUDIT_KEYWORD, true);
-	}
+    public String getAuditId() {
+        return auditId;
+    }
 
-	private void updateUserInfo(Vertex vertex) {
-		if (authenticationEnabled) {
-			String authinfo = gson.toJson(getCurrentUserInfo());
-			String authInfoLabel = registrySystemContext + "authInfo";
-			vertex.property(authInfoLabel, authinfo);
-		}
-	}
+    public AuditRecord setAuditId(String auditId) {
+        this.auditId = auditId;
+        return this;
+    }
 
-	public String getPredicate() {
-		return predicate;
-	}
+    public String getTimeStamp() {
+        return timeStamp;
+    }
 
-	public Object getOldObject() {
-		return oldObject;
-	}
-
-	public Object getNewObject() {
-		return newObject;
-	}
-
-	public String getSubject() {
-		return subject;
-	}
-
-	private AuthInfo getCurrentUserInfo() {
-		return (AuthInfo) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-	}
-
-	public void readOnlyAuthInfo(String authInfo) {
-		this.readOnlyAuthInfo = authInfo;
-	}
-
+    public AuditRecord setTimeStamp(String timeStamp) {
+        this.timeStamp = timeStamp;
+        return this;
+    }
 }

@@ -187,9 +187,22 @@ taskExecutor:
     # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
     queueCapacity: ${taskExecutor_index_queueCapacity:3}
 
+# Sets the task-executor configuration for threads while auditing
+auditTaskExecutor:
+  # Specify the prefix to use for the names of newly created threads.
+  threadPoolName: ${auditTaskExecutor_threadPoolName:AuditThread-}
+  # Set the ThreadPoolExecutor's core pool size.
+  corePoolSize: ${auditTaskExecutor_corePoolSize:2}
+  # Set the ThreadPoolExecutor's maximum pool size.
+  maxPoolSize: ${auditTaskExecutor_maxPoolSize:2}
+  # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
+  queueCapacity: ${auditTaskExecutor_queueCapacity:3}
+
 # elastic-search configuration details
 elastic:
   search:
+    # elastic-search can be enable and disable through this flag
+    enabled: ${elastic_search_enabled:true}
     # elastic-search connection info
     connection_url: ${elastic_search_connection_url:localhost:9200}
 
@@ -319,8 +332,21 @@ taskExecutor:
     # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
     queueCapacity: ${taskExecutor_index_queueCapacity:3}
 
+# Sets the task-executor configuration for threads while auditing
+auditTaskExecutor:
+  # Specify the prefix to use for the names of newly created threads.
+  threadPoolName: ${auditTaskExecutor_threadPoolName:AuditThread-}
+  # Set the ThreadPoolExecutor's core pool size.
+  corePoolSize: ${auditTaskExecutor_corePoolSize:2}
+  # Set the ThreadPoolExecutor's maximum pool size.
+  maxPoolSize: ${auditTaskExecutor_maxPoolSize:2}
+  # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
+  queueCapacity: ${auditTaskExecutor_queueCapacity:3}
+
 # elastic-search configuration details
 elastic:
   search:
+    # elastic-search can be enable and disable through this flag
+    enabled: ${elastic_search_enabled:true}
     # elastic-search connection info
     connection_url: ${elastic_search_connection_url:localhost:9200}

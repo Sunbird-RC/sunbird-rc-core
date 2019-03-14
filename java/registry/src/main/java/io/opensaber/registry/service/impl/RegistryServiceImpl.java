@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.elastic.IElasticService;
+import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.dao.IRegistryDao;
@@ -12,9 +13,13 @@ import io.opensaber.registry.dao.RegistryDaoImpl;
 import io.opensaber.registry.dao.VertexReader;
 import io.opensaber.registry.dao.VertexWriter;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.DateUtil;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.model.AuditInfo;
+import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.service.EncryptionHelper;
 import io.opensaber.registry.service.EncryptionService;
+import io.opensaber.registry.service.IAuditService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SignatureHelper;
 import io.opensaber.registry.service.SignatureService;
@@ -33,9 +38,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -66,6 +73,10 @@ public class RegistryServiceImpl implements RegistryService {
     private ObjectMapper objectMapper;
     @Autowired
     private IElasticService elasticService;
+    @Autowired
+    private IAuditService auditService;
+    @Autowired
+    private APIMessage apiMessage;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
 
@@ -78,11 +89,16 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${persistence.enabled}")
     private boolean persistenceEnabled;
 
+    @Value("${elastic.search.enabled}")
+    private boolean elasticSearchEnabled;
+
     @Autowired
     private Shard shard;
 
     @Autowired
     private EntityParenter entityParenter;
+
+    private AuditRecord auditRecord;
 
     public void setShard(Shard shard) {
         this.shard = shard;
@@ -120,7 +136,7 @@ public class RegistryServiceImpl implements RegistryService {
     }
 
     /**
-     * delete the vertex and changing the status
+     * delete the vertex and changes the status
      *
      * @param uuid
      * @throws Exception
@@ -140,13 +156,31 @@ public class RegistryServiceImpl implements RegistryService {
                 registryDao.deleteEntity(vertex);
                 databaseProvider.commitTransaction(graph, tx);
                 String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
-                elasticService.deleteEntity(index, uuid);
+                if(elasticSearchEnabled) {
+                    elasticService.deleteEntity(index, uuid);
+                }
+                auditRecord = new AuditRecord();
+                AuditInfo auditInfo = new AuditInfo();
+                auditInfo.setOp(Constants.AUDIT_ACTION_REMOVE_OP);
+                auditInfo.setPath("/"+vertex.label());
+                auditRecord.setAction(Constants.AUDIT_ACTION_DELETE).setUserId(apiMessage.getUserID()).setTransactionId(new LinkedList<>(Arrays.asList(tx.hashCode()))).
+                        setRecordId(uuid).setAuditInfo(Arrays.asList(auditInfo)).setAuditId(UUID.randomUUID().toString()).
+                        setTimeStamp(DateUtil.getTimeStamp());
+                auditService.audit(auditRecord);
             }
             logger.info("Entity {} marked deleted", uuid);
         }
     }
 
+    /**
+     * This method adds the entity into db, calls elastic and audit asynchronously
+     *
+     * @param jsonString - input value as string
+     * @return
+     * @throws Exception
+     */
     public String addEntity(String jsonString) throws Exception {
+        Transaction tx = null;
         String entityId = "entityPlaceholderId";
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(jsonString);
@@ -165,7 +199,7 @@ public class RegistryServiceImpl implements RegistryService {
             IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
             try (OSGraph osGraph = dbProvider.getOSGraph()) {
                 Graph graph = osGraph.getGraphStore();
-                Transaction tx = dbProvider.startTransaction(graph);
+                tx = dbProvider.startTransaction(graph);
                 entityId = registryDao.addEntity(graph, rootNode);
                 shard.getDatabaseProvider().commitTransaction(graph, tx);
                 dbProvider.commitTransaction(graph, tx);
@@ -178,8 +212,13 @@ public class RegistryServiceImpl implements RegistryService {
             Definition definition = definitionsManager.getDefinition(vertexLabel);
             entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             //call to elastic search
-            JsonNode inputNode = rootNode.get(vertexLabel);
-            elasticService.addEntity(vertexLabel.toLowerCase(), entityId, inputNode);
+            if(elasticSearchEnabled) {
+                elasticService.addEntity(vertexLabel.toLowerCase(), entityId, rootNode);
+            }
+            auditRecord = new AuditRecord();
+            auditRecord.setAction(Constants.AUDIT_ACTION_ADD).setUserId(apiMessage.getUserID()).setLatestNode(rootNode).setTransactionId(new LinkedList<>(Arrays.asList(tx.hashCode()))).
+                    setRecordId(entityId).setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());
+            auditService.audit(auditRecord);
         }
 
         return entityId;
@@ -265,7 +304,10 @@ public class RegistryServiceImpl implements RegistryService {
                 logger.debug("Removing earlier signature and adding new one");
                 String entitySignUUID = signatureHelper.removeEntitySignature(parentEntityType, (ObjectNode) mergedNode);
                 JsonNode newSignature = signatureHelper.signJson(mergedNode);
-                ((ObjectNode) newSignature).put(uuidPropertyName, entitySignUUID);
+                String rootOsid = mergedNode.get(entityType).get(uuidPropertyName).asText();
+                ObjectNode objectSignNode = (ObjectNode) newSignature;
+                objectSignNode.put(uuidPropertyName, entitySignUUID);
+                objectSignNode.put(Constants.ROOT_KEYWORD, rootOsid);
                 Vertex oldEntitySignatureVertex = uuidVertexMap.get(entitySignUUID);
 
                 registryDao.updateVertex(graph, oldEntitySignatureVertex, newSignature);
@@ -273,7 +315,10 @@ public class RegistryServiceImpl implements RegistryService {
 
             // TODO - Validate before update
             JsonNode validationNode = mergedNode.deepCopy();
-            JSONUtil.removeNode((ObjectNode) validationNode, uuidPropertyName);
+            List<String> removeKeys = new LinkedList<>();
+            removeKeys.add(uuidPropertyName);
+            removeKeys.add(Constants.TYPE_STR_JSON_LD);
+            JSONUtil.removeNodes((ObjectNode) validationNode, removeKeys);
 //            iValidate.validate(entityNodeType, mergedNode.toString());
 //            logger.debug("Validated payload before update");
 
@@ -290,9 +335,15 @@ public class RegistryServiceImpl implements RegistryService {
 
             databaseProvider.commitTransaction(graph, tx);
             // elastic-search updation starts here
-            JsonNode updateNode = mergedNode.get(parentEntityType);
-            logger.info("updating node {} " ,updateNode);
-            elasticService.updateEntity(parentEntityType,rootId,updateNode);
+            logger.info("updating node {} " ,mergedNode);
+            if(elasticSearchEnabled) {
+                elasticService.updateEntity(parentEntityType,rootId,mergedNode);
+            }
+            auditRecord = new AuditRecord();
+            auditRecord.setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_UPDATE).setExistingNode(readNode)
+                    .setLatestNode(mergedNode).setTransactionId(new LinkedList<>(Arrays.asList(tx.hashCode()))).setUserId(id).setRecordId(id).
+                    setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());
+            auditService.audit(auditRecord);
         }
     }
 

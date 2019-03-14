@@ -29,7 +29,7 @@ public class ReadConfiguratorFactory {
         configurator.setIncludeSignatures(true);
 
         // Get rid of type attributes, which would fail validation
-        configurator.setIncludeTypeAttributes(false);
+        configurator.setIncludeTypeAttributes(true);
 
         // Load uuidPropertyNames too and remove before validation
         configurator.setIncludeIdentifiers(true);

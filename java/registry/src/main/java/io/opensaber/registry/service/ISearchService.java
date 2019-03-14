@@ -6,6 +6,7 @@ import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.dao.ValueType;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -17,7 +18,7 @@ public interface ISearchService {
 
     static Logger logger = LoggerFactory.getLogger(ISearchService.class);
 
-    JsonNode search(JsonNode inputQueryNode);
+    JsonNode search(JsonNode inputQueryNode) throws IOException;
     
     /**
      * Building SearchQuery from given input search json

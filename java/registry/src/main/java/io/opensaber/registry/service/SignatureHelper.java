@@ -38,8 +38,8 @@ public class SignatureHelper {
      */
     public JsonNode signJson(JsonNode rootNode) throws SignatureException.UnreachableException, SignatureException.CreationException {
         String entityType = rootNode.fieldNames().next();
-
         Map signRes = generateSignature(rootNode);
+
         JsonNode newSignatureNode = convertMapToNode(entityType, signRes);
         addSignature(rootNode, entityType, newSignatureNode);
 

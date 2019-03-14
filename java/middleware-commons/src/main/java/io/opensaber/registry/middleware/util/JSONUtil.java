@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.flipkart.zjsonpatch.JsonDiff;
 import com.github.jsonldjava.core.JsonLdError;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
@@ -315,5 +316,24 @@ public class JSONUtil {
 				}
 			}
 		});
+	}
+
+	/** This method checks difference between 2 json-nodes and filter out patch as json node
+	 *
+	 * @param existingNode
+	 * @param latestNode
+	 * @return
+	 */
+	public static JsonNode diffJsonNode(JsonNode existingNode, JsonNode latestNode) {
+		ObjectMapper objectMapper = new ObjectMapper();
+		if(existingNode == null) {
+			existingNode = objectMapper.createObjectNode();
+		}
+		if(latestNode == null) {
+			latestNode = objectMapper.createObjectNode();
+		}
+		JsonNode patchNode = JsonDiff.asJson(existingNode, latestNode);
+		logger.info("diffJsonNode is : "+ patchNode.toString());
+		return patchNode;
 	}
 }

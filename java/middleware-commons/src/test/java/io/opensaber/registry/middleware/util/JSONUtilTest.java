@@ -1,5 +1,6 @@
 package io.opensaber.registry.middleware.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -13,7 +14,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class JSONUtilTest {
 
@@ -140,5 +143,48 @@ public class JSONUtilTest {
 
         }
         return null;
+    }
+
+    @Test
+    public void diffJsonNode_test() throws IOException {
+        String beforeJsonStr = "{\"a\":{\"b1\":\"c\"}}";
+		String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
+		JsonNode beforeNode = mapper.readTree(beforeJsonStr);
+		JsonNode afterNode = mapper.readTree(afterJsonStr);
+		JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode,afterNode);
+		assertThat(patchNode.get(0).get("op").asText(), is("replace"));
+        assertThat(patchNode.get(0).get("value").asText(), is("d"));
+        assertThat(patchNode.get(1).get("op").asText(), is("add"));
+        assertThat(patchNode.get(1).get("value").asText(), is("d"));
+    }
+
+    @Test
+    public void diffJsonNode_WithExistingValueAsEmpty() throws IOException {
+        String beforeJsonStr = "";
+        String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
+        JsonNode beforeNode = mapper.readTree(beforeJsonStr);
+        JsonNode afterNode = mapper.readTree(afterJsonStr);
+        JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode,afterNode);
+        assertThat(patchNode.get(0).get("op").asText(), is("add"));
+    }
+
+    @Test
+    public void diffJsonNode_WithBothValuesAreSame() throws IOException {
+        String beforeJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
+        String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
+        JsonNode beforeNode = mapper.readTree(beforeJsonStr);
+        JsonNode afterNode = mapper.readTree(afterJsonStr);
+        JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode,afterNode);
+        assertThat(patchNode.size(), is(0) );
+    }
+
+    @Test
+    public void diffJsonNode_WithBothValuesempty() throws IOException {
+        String beforeJsonStr = "";
+        String afterJsonStr = "";
+        JsonNode beforeNode = mapper.readTree(beforeJsonStr);
+        JsonNode afterNode = mapper.readTree(afterJsonStr);
+        JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode,afterNode);
+        assertThat(patchNode.size(), is(0) );
     }
 }
