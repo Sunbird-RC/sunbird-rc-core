@@ -13,9 +13,6 @@ import com.github.jsonldjava.utils.JsonUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -24,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JSONUtil {
 
@@ -199,6 +198,31 @@ public class JSONUtil {
 		parent.set(childKey, child);
 
 	}
+	/**
+	 * Adding field(key, value) to Parent's hierarchy 
+	 * 
+	 * @param parent
+	 * @param childKey      field key
+	 * @param child         field value
+	 */
+    public static void addField(ObjectNode parent, String childKey, String child) {
+        parent.fields().forEachRemaining(entry -> {
+            JsonNode entryValue = entry.getValue();
+            if (entryValue.isObject()) {
+                addField((ObjectNode) entry.getValue(), childKey, child);
+            }
+            if (entryValue.isArray()) {
+                for (int i = 0; i < entryValue.size(); i++) {
+                    if (entry.getValue().get(i).isObject())
+                        addField((ObjectNode) entry.getValue().get(i), childKey, child);
+                }
+            }
+        });
+        if (childKey == null || childKey.isEmpty())
+            throw new IllegalArgumentException(KEY_NULL_ERROR);
+        parent.put(childKey, child);
+
+    }
 
 	/**
 	 * Remove a node of given key from parent's hierarchy(including nested objects)

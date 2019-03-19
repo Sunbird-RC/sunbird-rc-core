@@ -66,8 +66,11 @@
   "_osConfig": {
          "osComment": ["This section contains the OpenSABER specific configuration information", 
                       "privateFields: Optional; list of field names to be encrypted and stored in database", 
-                      "signedFields: Optional; list of field names that must be pre-signed"], 
+                      "signedFields: Optional; list of field names that must be pre-signed",
+                      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"], 
          "privateFields": [],                                 
-         "signedFields": []
+         "signedFields": [],
+         "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"]
+         
   }
 }

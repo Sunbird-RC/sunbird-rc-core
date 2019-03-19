@@ -1,7 +1,6 @@
 package io.opensaber.registry.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import java.util.ArrayList;
 import java.util.List;
 /**
@@ -26,6 +25,10 @@ public class OSSchemaConfiguration {
      * Holds field name(s) to be used for unique index
      */
     private List<String> uniqueIndexFields =  new ArrayList<>();
+    /**
+     * Holds fields name(s) to be used for auditing
+     */
+    private List<String> systemFields =  new ArrayList<>();
 
     public List<String> getPrivateFields() {
         return privateFields;
@@ -58,6 +61,12 @@ public class OSSchemaConfiguration {
     public void setUniqueIndexFields(List<String> uniqueIndexFields) {
         this.uniqueIndexFields = uniqueIndexFields;
     }
-    
-    
+
+    public List<String> getSystemFields() {
+        return systemFields;
+    }
+
+    public void setSystemFields(List<String> systemFields) {
+        this.systemFields = systemFields;
+    }
 }
