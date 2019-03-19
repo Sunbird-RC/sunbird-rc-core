@@ -169,7 +169,7 @@ public class VertexReader {
             try {
                 Iterator<Vertex> signatureArrayIter = currVertex.vertices(Direction.IN, Constants.SIGNATURES_STR);
                 Vertex signatureArrayV = signatureArrayIter.next();
-                Iterator<Vertex> signatureVertices = signatureArrayV.vertices(Direction.OUT, Constants.SIGNATURE_FOR);
+                Iterator<Vertex> signatureVertices = signatureArrayV.vertices(Direction.OUT, Constants.SIGNATURE_FOR+Constants.ARRAY_ITEM);
 
                 signatures = JsonNodeFactory.instance.arrayNode();
                 while (signatureVertices.hasNext()) {
@@ -365,6 +365,9 @@ public class VertexReader {
                 } else {
                     itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
                 }
+                break;
+            case CASSANDRA:
+                itrV = graph.traversal().clone().V().has(uuidPropertyName, osid[0]);
                 break;
             default:
                 itrV = graph.vertices(osid);

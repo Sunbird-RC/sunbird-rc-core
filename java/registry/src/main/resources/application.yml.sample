@@ -84,9 +84,11 @@ database:
       #     * 2. Relational databases (Postgresql, HSQLDB, H2, MariaDB, MySQL, MSSQLServer)
       #     ** http://sqlg.org/docs/2.0.0-SNAPSHOT/
       #     ** Example - Postgres - jdbc:postgresql://localhost:5432/yourdb
+      #     * 3. NoSQL  databases (Cassandra)
+      #     ** Example - cassandra - jdbc:cassandra://localhost:9160/yourdb
       uri: ${connectionInfo_uri:bolt://localhost:7687}
 
-      username: ${connectionInfo_username:neo4j}
+      username: ${connectionInfo_username:}
       password: ${connectionInfo_password:}
 
       # Any other shard information follows...
@@ -100,17 +102,17 @@ database:
 ##################################################################################
 # Uncomment the following section to use Cassandra as backend store              #
 ##################################################################################
-#  janus_cassandra:
-#    graphFactory: org.janusgraph.core.JanusGraphFactory
-#    storage.backend: "cassandrathrift"
-#    storage.hostname: ${cassandra_host:localhost}
-#    storage.keyspace: ${cassandra_keyspace:registry_db}
-#    db.cache.size: ${cassandra_db_cache_size:0.25}
-#    # wait time in milliseconds to clean the cache
-#    db.cache.clean.wait: ${cassandra_db_cache_clean_wait:60}
-#    index:
-#      storage.backend: ${cassandr_index_storage:elasticsearch}
-#      hostname: ${cassandra_index_hostname:localhost}
+janus_cassandra:
+    graphFactory: org.janusgraph.core.JanusGraphFactory
+    storage.backend: "cassandrathrift"
+    storage.hostname: ${cassandra_host:localhost}
+    storage.keyspace: ${cassandra_keyspace:registry_db}
+    db.cache.size: ${cassandra_db_cache_size:0.25}
+    # wait time in milliseconds to clean the cache
+    db.cache.clean.wait: ${cassandra_db_cache_clean_wait:60}
+    index:
+      storage.backend: ${cassandr_index_storage:elasticsearch}
+      hostname: ${cassandra_index_hostname:localhost}
     
 # File for framing the entity while reading
 frame:

@@ -16,7 +16,7 @@
       "type": "object",
       "title": "The Teacher Schema",
       "required": [
-        "signatures",
+
         "serialNum",
         "teacherCode",
         "nationalIdentifier",

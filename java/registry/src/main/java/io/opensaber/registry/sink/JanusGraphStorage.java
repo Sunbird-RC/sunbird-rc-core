@@ -1,5 +1,7 @@
 package io.opensaber.registry.sink;
 
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.model.DBConnectionInfo;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.janusgraph.core.JanusGraph;
@@ -17,6 +19,19 @@ public class JanusGraphStorage extends DatabaseProvider {
 	private JanusGraph graph;
 	private OSGraph osGraph;
 
+	public JanusGraphStorage(DBConnectionInfo connectionInfo, String uuidPropertyName) {
+		Configuration config = new BaseConfiguration();
+		config.setProperty("jdbc.url", connectionInfo.getUri());
+		config.setProperty("jdbc.username", connectionInfo.getUsername());
+		config.setProperty("jdbc.password", connectionInfo.getPassword());
+		config.setProperty("storage.backend", "cassandrathrift");
+
+		setProvider(Constants.GraphDatabaseProvider.CASSANDRA);
+		setUuidPropertyName(uuidPropertyName);
+		graph = JanusGraphFactory.open(config);
+		osGraph = new OSGraph(graph, false);
+	}
+
 	public JanusGraphStorage(Environment environment) {
 		String graphFactory = environment.getProperty("database.janus_cassandra.graphFactory");
 		String storageBackend = environment.getProperty("database.janus_cassandra.storage.backend");
@@ -26,6 +41,7 @@ public class JanusGraphStorage extends DatabaseProvider {
 		String dbCacheCleanUpWaitTime = environment.getProperty("database.janus_cassandra.db.cache.clean.wait");
 		String searchIndex = environment.getProperty("database.janus_cassandra.index.storage.backend");
 		String searchHostname = environment.getProperty("database.janus_cassandra.index.hostname");
+		setProvider(Constants.GraphDatabaseProvider.CASSANDRA);
 
 		Configuration config = new BaseConfiguration();
 		config.setProperty("gremlin.graph", graphFactory);
