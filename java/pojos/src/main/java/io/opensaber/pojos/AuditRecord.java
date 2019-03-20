@@ -1,14 +1,9 @@
-package io.opensaber.registry.model;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
+package io.opensaber.pojos;
 
 import java.util.List;
 
 public class AuditRecord {
 
-	private JsonNode existingNode;
-	private JsonNode latestNode;
 	private String action;
 	private String recordId;
 	private List<Integer> transactionId;
@@ -16,25 +11,6 @@ public class AuditRecord {
 	private String auditId;
 	private String timeStamp;
 	private List<AuditInfo> auditInfo;
-
-    @JsonIgnore
-	public JsonNode getExistingNode() {
-		return existingNode;
-	}
-
-	public AuditRecord setExistingNode(JsonNode existingNode) {
-		this.existingNode = existingNode;
-		return this;
-	}
-    @JsonIgnore
-	public JsonNode getLatestNode() {
-		return latestNode;
-	}
-
-	public AuditRecord setLatestNode(JsonNode latestNode) {
-		this.latestNode = latestNode;
-		return this;
-	}
 
 	public String getAction() {
 		return action;

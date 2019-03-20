@@ -2,14 +2,15 @@ package io.opensaber.registry.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.audit.IAuditService;
 import io.opensaber.pojos.APIMessage;
+import io.opensaber.pojos.AuditInfo;
+import io.opensaber.pojos.AuditRecord;
 import io.opensaber.registry.dao.IRegistryDao;
 import io.opensaber.registry.dao.RegistryDaoImpl;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.DateUtil;
 import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.model.AuditInfo;
-import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
 import io.opensaber.registry.sink.shard.Shard;
@@ -81,8 +82,8 @@ public class NativeReadService implements IReadService {
 			shard.getDatabaseProvider().commitTransaction(graph, tx);
 			dbProvider.commitTransaction(graph, tx);
             auditRecord =  new AuditRecord();
-            auditRecord.setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_READ).setRecordId(id).setTransactionId(new LinkedList<>(Arrays.asList(tx.hashCode()))).setLatestNode(result).
-                    setExistingNode(result).setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());
+            auditRecord.setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_READ).setRecordId(id).setTransactionId(new LinkedList<>(Arrays.asList(tx.hashCode())))
+					.setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());
 			AuditInfo auditInfo = new AuditInfo();
 			auditInfo.setOp(Constants.AUDIT_ACTION_READ_OP);
 			auditInfo.setPath("/"+entityType);

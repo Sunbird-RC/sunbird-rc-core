@@ -1,5 +1,6 @@
 package io.opensaber.registry.model;
 
+import io.opensaber.pojos.AuditRecord;
 import io.opensaber.registry.exception.audit.LabelCannotBeNullException;
 import io.opensaber.registry.sink.DatabaseProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;

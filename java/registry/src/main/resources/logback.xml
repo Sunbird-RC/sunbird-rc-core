@@ -95,7 +95,7 @@
         <appender-ref ref="RegistryAuditAppender"/>
     </logger>
 
-    <logger name="io.opensaber.registry.service.impl.AuditServiceImpl" level="DEBUG" additivity="FALSE">
+    <logger name="io.opensaber.audit.AuditServiceImpl" level="DEBUG" additivity="FALSE">
         <appender-ref ref="AuditFileAppender"/>
     </logger>
 

@@ -1,12 +1,11 @@
-package io.opensaber.registry.service.impl;
+package io.opensaber.audit;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opensaber.pojos.AuditInfo;
+import io.opensaber.pojos.AuditRecord;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.model.AuditInfo;
-import io.opensaber.registry.model.AuditRecord;
-import io.opensaber.registry.service.IAuditService;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Component;
 /**
  * Audit service implementation for audit layer in the application, as of now audits save details to file system
  */
-@Component
 public class AuditServiceImpl implements IAuditService {
 
 	private static Logger logger = LoggerFactory.getLogger(AuditServiceImpl.class);
@@ -35,12 +33,7 @@ public class AuditServiceImpl implements IAuditService {
 	@Override
 	@Async("auditExecutor")
 	public void audit(AuditRecord auditRecord) throws IOException {
-		List<AuditInfo> auditItemDetails = null;
-		if (!(auditRecord.getAction().equalsIgnoreCase(Constants.AUDIT_ACTION_READ) || auditRecord.getAction().equalsIgnoreCase(Constants.AUDIT_ACTION_DELETE))) {
-			JsonNode differenceJson = JSONUtil.diffJsonNode(auditRecord.getExistingNode(), auditRecord.getLatestNode());
-			auditItemDetails = Arrays.asList(objectMapper.treeToValue(differenceJson, AuditInfo[].class));
-			auditRecord.setAuditInfo(auditItemDetails);
-		}
+		objectMapper = new ObjectMapper();
 		String auditString = objectMapper.writeValueAsString(auditRecord);
 		logger.info("{}", auditString);
 	}

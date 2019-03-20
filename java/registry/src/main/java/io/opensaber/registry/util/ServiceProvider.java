@@ -5,6 +5,9 @@ import io.opensaber.registry.service.ISearchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class provides methods that instantiates the class providers, either elastic-search or native that perform read/search operations
+ */
 public class ServiceProvider {
     private static Logger logger = LoggerFactory.getLogger(ServiceProvider.class);
     private static final String DEFAULT_SEARCH_ADVISOR = "io.opensaber.registry.service.NativeSearchService";
@@ -14,7 +17,7 @@ public class ServiceProvider {
 
         ISearchService searchService = null;
         try {
-            if (elasticSearchEnabled || advisorProviderName == null || advisorProviderName.isEmpty()) {
+            if (!elasticSearchEnabled || advisorProviderName == null || advisorProviderName.isEmpty()) {
                 // default is set to native search service
                 advisorProviderName = DEFAULT_SEARCH_ADVISOR;
             }
@@ -34,7 +37,7 @@ public class ServiceProvider {
 
         IReadService readService = null;
         try {
-            if (elasticSearchEnabled || advisorProviderName == null || advisorProviderName.isEmpty()) {
+            if (!elasticSearchEnabled || advisorProviderName == null || advisorProviderName.isEmpty()) {
                 // default is set to native search service
                 advisorProviderName = DEFAULT_READ_ADVISOR;
             }

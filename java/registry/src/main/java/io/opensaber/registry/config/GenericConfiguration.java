@@ -3,8 +3,13 @@ package io.opensaber.registry.config;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import io.opensaber.audit.AuditServiceImpl;
+import io.opensaber.audit.IAuditService;
 import io.opensaber.elastic.ElasticServiceImpl;
 import io.opensaber.elastic.IElasticService;
+import io.opensaber.pojos.AuditRecord;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.Response;
 import io.opensaber.registry.authorization.AuthorizationFilter;
@@ -18,7 +23,6 @@ import io.opensaber.registry.interceptor.ValidationInterceptor;
 import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.SchemaType;
-import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.IReadService;
 import io.opensaber.registry.service.ISearchService;
@@ -35,10 +39,6 @@ import io.opensaber.registry.util.ServiceProvider;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -62,6 +62,12 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
+import org.sunbird.akka.core.SunbirdActorFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableRetry
@@ -135,6 +141,13 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${elastic.search.enabled}")
 	private boolean elasticSearchEnabled;
 	
+	static {
+		Config config = ConfigFactory.parseResources("opensaber-actors.conf");
+
+		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "io.opensaber.actors");
+		sunbirdActorFactory.init("opensaber-actors");
+	}
+
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 	
@@ -393,5 +406,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		elasticService.setConnectionInfo(elasticConnInfo);
         elasticService.init(definitionsManager.getAllKnownDefinitions());
 		return elasticService;
+	}
+
+	/** creates elastic-service bean and instanstiates the indices
+	 * @return - IElasticService
+	 * @throws IOException
+	 */
+	@Bean
+	public IAuditService auditService() throws IOException {
+		IAuditService auditService = new AuditServiceImpl();
+		return auditService;
 	}
 }

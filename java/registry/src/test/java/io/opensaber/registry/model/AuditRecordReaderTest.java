@@ -1,5 +1,6 @@
 package io.opensaber.registry.model;
 
+import io.opensaber.pojos.AuditRecord;
 import io.opensaber.registry.authorization.pojos.AuthInfo;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.exception.audit.LabelCannotBeNullException;

@@ -1,12 +1,12 @@
 package io.opensaber.registry.service.impl;
 
+import io.opensaber.pojos.AuditRecord;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.app.OpenSaberApplication;
 import io.opensaber.registry.config.GenericConfiguration;
 import io.opensaber.registry.controller.RegistryController;
 import io.opensaber.registry.dao.IRegistryDao;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.model.AuditRecord;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.sink.DBProviderFactory;

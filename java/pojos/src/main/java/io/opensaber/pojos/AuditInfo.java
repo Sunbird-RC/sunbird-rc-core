@@ -1,4 +1,4 @@
-package io.opensaber.registry.model;
+package io.opensaber.pojos;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
