@@ -38,7 +38,7 @@ public abstract class BaseActor extends UntypedAbstractActor {
      * @param request
      * @return
      */
-    public final void tellToSource(MessageProtos.Message request) {
+    public void tellToSource(MessageProtos.Message request) {
         logger.info("REPLY ok to Source actor {}", sender().path().toSerializationFormat());
         sender().tell(request, getSelf());
     }

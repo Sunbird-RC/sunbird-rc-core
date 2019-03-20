@@ -361,9 +361,9 @@ public class VertexReader {
                 break;
             case SQLG:
                 if (null != entityType) {
-                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
+                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid[0]);
                 } else {
-                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
+                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid[0]);
                 }
                 break;
             case CASSANDRA:

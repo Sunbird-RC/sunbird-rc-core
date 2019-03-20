@@ -38,6 +38,8 @@
         <module>registry</module>
         <module>elastic-search</module>
         <module>opensaber-actors</module>
+        <module>opensaber-audit</module>
+        <module>sunbird-actor</module>
     </modules>
 
     <build>
