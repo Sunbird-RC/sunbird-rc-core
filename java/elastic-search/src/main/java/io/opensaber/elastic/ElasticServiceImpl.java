@@ -10,6 +10,7 @@ import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,8 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 
 public class ElasticServiceImpl implements IElasticService {
     private static Map<String, RestHighLevelClient> esClient = new HashMap<String, RestHighLevelClient>();
@@ -116,6 +119,8 @@ public class ElasticServiceImpl implements IElasticService {
      * @return
      * @throws IOException
      */
+    @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+            backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public static boolean addIndex(String indexName, String documentType) throws IOException {
         boolean response = false;
         //To do need to analysis regarding settings and analysis and modify this code later
@@ -182,14 +187,12 @@ public class ElasticServiceImpl implements IElasticService {
      * @return
      */
     @Override
-    public Map<String, Object> readEntity(String index, String osid) {
+    @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+            backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
+    public Map<String, Object> readEntity(String index, String osid) throws IOException {
         logger.debug("readEntity starts with index {} and entityId {}", index, osid);
         GetResponse response = null;
-        try {
-            response = getClient(index).get(new GetRequest(index, searchType, osid), RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            logger.error("Exception in reading a record from ElasticSearch", e);
-        }
+        response = getClient(index).get(new GetRequest(index, searchType, osid), RequestOptions.DEFAULT);
         return response.getSourceAsMap();
     }
 
@@ -238,34 +241,33 @@ public class ElasticServiceImpl implements IElasticService {
     }
 
     @Override
-    public JsonNode search(String index, SearchQuery searchQuery) {
+    @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
+            backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
+    public JsonNode search(String index, SearchQuery searchQuery) throws IOException {
         BoolQueryBuilder query = buildQuery(searchQuery);
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query);
         SearchRequest searchRequest = new SearchRequest(index).source(sourceBuilder);
         ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
         ObjectMapper mapper = new ObjectMapper();
-
-        try {
             SearchResponse searchResponse = getClient(index).search(searchRequest, RequestOptions.DEFAULT);
             for (SearchHit hit : searchResponse.getHits()) {
                 JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
                 resultArray.add(node);
             }
             logger.debug("Total search records found " + resultArray.size());
-        } catch (IOException e) {
-            logger.error("Elastic search operation - {}", e);
-        }
 
         return resultArray;
 
     }
+
     /**
      * Builds the final query builder for given searchQuery
+     *
      * @param searchQuery
      * @return
      */
-    private BoolQueryBuilder buildQuery(SearchQuery searchQuery){
+    private BoolQueryBuilder buildQuery(SearchQuery searchQuery) {
         List<Filter> filters = searchQuery.getFilters();
         BoolQueryBuilder query = QueryBuilders.boolQuery();
 

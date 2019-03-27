@@ -17,7 +17,7 @@ public class ServiceProvider {
 
         ISearchService searchService = null;
         try {
-            if (!elasticSearchEnabled || advisorProviderName == null || advisorProviderName.isEmpty()) {
+            if (advisorProviderName == null || advisorProviderName.isEmpty()) {
                 // default is set to native search service
                 advisorProviderName = DEFAULT_SEARCH_ADVISOR;
             }
@@ -37,7 +37,7 @@ public class ServiceProvider {
 
         IReadService readService = null;
         try {
-            if (!elasticSearchEnabled || advisorProviderName == null || advisorProviderName.isEmpty()) {
+            if (advisorProviderName == null || advisorProviderName.isEmpty()) {
                 // default is set to native search service
                 advisorProviderName = DEFAULT_READ_ADVISOR;
             }

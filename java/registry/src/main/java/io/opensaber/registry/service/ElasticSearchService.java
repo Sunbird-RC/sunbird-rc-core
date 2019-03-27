@@ -53,14 +53,20 @@ public class ElasticSearchService implements ISearchService {
         SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
         ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
         for(String indexName : searchQuery.getEntityTypes()){
-            JsonNode node = elasticService.search(indexName.toLowerCase(), searchQuery);
-            resultNode.set(indexName, node);
-            if(node !=  null) {
-                AuditInfo auditInfo = new AuditInfo();
-                auditInfo.setOp(Constants.AUDIT_ACTION_SEARCH_OP);
-                auditInfo.setPath(indexName);
-                auditInfoLst.add(auditInfo);
+            try{
+                JsonNode node = elasticService.search(indexName.toLowerCase(), searchQuery);
+                resultNode.set(indexName, node);
+                if(node !=  null) {
+                    AuditInfo auditInfo = new AuditInfo();
+                    auditInfo.setOp(Constants.AUDIT_ACTION_SEARCH_OP);
+                    auditInfo.setPath(indexName);
+                    auditInfoLst.add(auditInfo);
+                }
             }
+            catch (Exception e) {
+                logger.error("Elastic search operation - {}", e);
+            }
+
         }
         auditRecord.setAuditInfo(auditInfoLst).setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_SEARCH).
                 setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());

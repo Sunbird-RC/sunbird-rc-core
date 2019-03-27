@@ -24,7 +24,7 @@ public interface IElasticService {
      * @param osid - which maps to document
      * @return
      */
-    Map<String, Object> readEntity(String index, String osid);
+    Map<String, Object> readEntity(String index, String osid) throws IOException;
 
     /** updates document with respect to input osid to ES
      * @param index - ElasticSearch Index
@@ -45,5 +45,5 @@ public interface IElasticService {
      * @param searchQuery - which contains details for search
      * @return
      */
-    JsonNode search(String index, SearchQuery searchQuery);
+    JsonNode search(String index, SearchQuery searchQuery) throws IOException;
 }

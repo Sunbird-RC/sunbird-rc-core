@@ -30,11 +30,11 @@ import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.EntityParenter;
+import io.opensaber.registry.util.OSSystemFieldsHelper;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.ReadConfiguratorFactory;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.RefLabelHelper;
-import io.opensaber.registry.util.OSSystemFieldsHelper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -90,8 +90,11 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${signature.enabled}")
     private boolean signatureEnabled;
 
-    @Value("${persistence.enabled}")
+    @Value("${persistence.enabled:true}")
     private boolean persistenceEnabled;
+
+    @Value("${persistence.commit.enabled:true}")
+    private boolean commitEnabled;
 
     @Value("${elastic.search.enabled}")
     private boolean elasticSearchEnabled;
@@ -182,7 +185,7 @@ public class RegistryServiceImpl implements RegistryService {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(jsonString);
         String vertexLabel = rootNode.fieldNames().next();
-        
+
         systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), apiMessage.getUserID());
 
         if (encryptionEnabled) {
@@ -200,55 +203,20 @@ public class RegistryServiceImpl implements RegistryService {
                 Graph graph = osGraph.getGraphStore();
                 tx = dbProvider.startTransaction(graph);
                 entityId = registryDao.addEntity(graph, rootNode);
-                shard.getDatabaseProvider().commitTransaction(graph, tx);
-                dbProvider.commitTransaction(graph, tx);
-
+                if (commitEnabled) {
+                    dbProvider.commitTransaction(graph, tx);
+                }
+            } finally {
+                tx.close();
             }
-
             // Add indices: executes only once.
             String shardId = shard.getShardId();
             Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
             Definition definition = definitionsManager.getDefinition(vertexLabel);
             entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
-            callAuditESActors(null,rootNode,"add", Constants.AUDIT_ACTION_ADD,entityId,vertexLabel.toLowerCase(),entityId,tx);
+            callAuditESActors(null, rootNode, "add", Constants.AUDIT_ACTION_ADD, entityId, vertexLabel.toLowerCase(), entityId, tx);
         }
-
         return entityId;
-    }
-
-    /**
-     * This method interacts with the Elasticsearch and reads the record, if the record not found call is shifted to native db
-     *
-     * @param id           - osid
-     * @param entityType   - elastic-search index
-     * @param configurator
-     * @return
-     * @throws Exception
-     */
-    @Override
-    public JsonNode getEntity(String id, String entityType, ReadConfigurator configurator) throws Exception {
-        JsonNode result = null;
-        Map<String, Object> response = elasticService.readEntity(entityType.toLowerCase(), id);
-        result = response != null ? objectMapper.convertValue(response, JsonNode.class) : null;
-        if (result == null) {
-            DatabaseProvider dbProvider = shard.getDatabaseProvider();
-            IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
-            try (OSGraph osGraph = dbProvider.getOSGraph()) {
-                Graph graph = osGraph.getGraphStore();
-                Transaction tx = dbProvider.startTransaction(graph);
-                result = registryDao.getEntity(graph, id, configurator);
-
-                if (!shard.getShardLabel().isEmpty()) {
-                    // Replace osid with shard details
-                    String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
-                    JSONUtil.addPrefix((ObjectNode) result, prefix, new ArrayList<String>(Arrays.asList(uuidPropertyName)));
-                }
-
-                shard.getDatabaseProvider().commitTransaction(graph, tx);
-                dbProvider.commitTransaction(graph, tx);
-            }
-        }
-        return result;
     }
 
     @Override

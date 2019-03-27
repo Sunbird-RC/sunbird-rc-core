@@ -16,9 +16,6 @@ perf:
   monitoring:
     enabled: ${perf_monitoring_enabled:true}
 
-persistence:
-  enabled: ${persistence_enabled:true}
-
 registry:
   context:
     base: ${registry_context_base:http://localhost:8080/}
@@ -223,9 +220,6 @@ enviroment: test
 perf:
   monitoring:
     enabled: false
-
-persistence:
-  enabled: ${persistence_enabled:true}
 
 registry:
   context:

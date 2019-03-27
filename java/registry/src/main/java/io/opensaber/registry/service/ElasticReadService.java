@@ -13,9 +13,12 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.DateUtil;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.util.ReadConfigurator;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +29,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ElasticReadService implements IReadService {
+
+    private static Logger logger = LoggerFactory.getLogger(ElasticReadService.class);
 
     @Autowired
     private IElasticService elasticService;
@@ -51,7 +56,12 @@ public class ElasticReadService implements IReadService {
     public JsonNode getEntity(String id, String entityType, ReadConfigurator configurator) throws Exception {
         JsonNode result = null;
         AuditRecord auditRecord = null;
-        Map<String, Object> response = elasticService.readEntity(entityType.toLowerCase(), id);
+        Map<String, Object> response = null;
+        try{
+            response = elasticService.readEntity(entityType.toLowerCase(), id);
+        } catch (IOException e) {
+            logger.error("Exception in reading a record to ElasticSearch", e);
+        }
         if(response == null) {
             throw new RecordNotFoundException("Record with " +id+ " not found");
         }
