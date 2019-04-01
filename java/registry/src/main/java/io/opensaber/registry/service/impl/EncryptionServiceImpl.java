@@ -52,7 +52,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 	 */
 	@Override
 	public String encrypt(Object propertyValue) throws EncryptionException {
-		logger.debug("encrypt starts with value {}", propertyValue);
+		logger.debug("encrypt starts with value");
 		MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 		map.add("value", propertyValue);
 		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map);

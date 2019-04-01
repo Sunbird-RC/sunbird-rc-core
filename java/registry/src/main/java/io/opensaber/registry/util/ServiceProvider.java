@@ -24,7 +24,6 @@ public class ServiceProvider {
             Class<?> advisorClass = Class.forName(advisorProviderName);
             searchService = (ISearchService) advisorClass.newInstance();
             logger.info("Invoked search provider class with classname: " + advisorProviderName);
-
         } catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
                 | IllegalArgumentException e) {
             logger.error("Search provider class {} cannot be instantiate with exception:", advisorProviderName, e);

@@ -13,6 +13,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.DateUtil;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.util.ReadConfigurator;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
@@ -57,16 +58,17 @@ public class ElasticReadService implements IReadService {
         JsonNode result = null;
         AuditRecord auditRecord = null;
         Map<String, Object> response = null;
-        try{
+        //TODO - URGENT - Fix this error
+        try {
             response = elasticService.readEntity(entityType.toLowerCase(), id);
         } catch (IOException e) {
             logger.error("Exception in reading a record to ElasticSearch", e);
         }
-        if(response == null) {
-            throw new RecordNotFoundException("Record with " +id+ " not found");
+        if (response == null) {
+            throw new RecordNotFoundException("Record with " + id + " not found");
         }
         result = objectMapper.convertValue(response, JsonNode.class);
-        if(!configurator.isIncludeSignatures()) {
+        if (!configurator.isIncludeSignatures()) {
             JSONUtil.removeNode((ObjectNode) result, Constants.SIGNATURES_STR);
         }
         auditRecord = new AuditRecord();
@@ -74,7 +76,7 @@ public class ElasticReadService implements IReadService {
                 setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());
         AuditInfo auditInfo = new AuditInfo();
         auditInfo.setOp(Constants.AUDIT_ACTION_READ_OP);
-        auditInfo.setPath("/"+entityType);
+        auditInfo.setPath("/" + entityType);
         auditRecord.setAuditInfo(Arrays.asList(auditInfo));
         auditService.audit(auditRecord);
         return result;

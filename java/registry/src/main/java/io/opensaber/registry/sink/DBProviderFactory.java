@@ -43,7 +43,7 @@ public class DBProviderFactory {
 				provider = new TinkerGraphProvider(environment);
 				provider.initializeGlobalGraphConfiguration();
 			} else if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.CASSANDRA.getName())) {
-				provider = new JanusGraphStorage(connectionInfo, uuidPropertyName);
+				provider = new JanusGraphStorage(environment, connectionInfo, uuidPropertyName);
 				provider.initializeGlobalGraphConfiguration();
 			} else {
 				throw new RuntimeException("No Database Provider is configured. Please configure a Database Provider");

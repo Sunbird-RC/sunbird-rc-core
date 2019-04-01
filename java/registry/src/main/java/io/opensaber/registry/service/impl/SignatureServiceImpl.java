@@ -55,7 +55,6 @@ public class SignatureServiceImpl implements SignatureService {
 	@Override
 	public Object sign(Object propertyValue)
 			throws SignatureException.UnreachableException, SignatureException.CreationException {
-		logger.debug("sign method starts with value {}",propertyValue);
 		ResponseEntity<String> response = null;
 		Object result = null;
 		try {
@@ -68,7 +67,6 @@ public class SignatureServiceImpl implements SignatureService {
 			logger.error("RestClientException when signing: ", e);
 			throw new SignatureException().new CreationException(e.getMessage());
 		}
-		logger.debug("sign method ends with value {}",result);
 		return result;
 	}
 

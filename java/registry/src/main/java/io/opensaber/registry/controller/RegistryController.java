@@ -175,10 +175,8 @@ public class RegistryController {
 
         try {
             Map requestMap = ((HashMap<String, Object>) apiMessage.getRequest().getRequestMap().get(entityType));
-            logger.info("Add api: entity type " + requestMap + " and shard propery: " + shardManager.getShardProperty());
-            logger.info("request: " + requestMap.get(shardManager.getShardProperty()));
+            logger.info("Add api: entity type and shard propery: {}", shardManager.getShardProperty());
             Object attribute = requestMap.getOrDefault(shardManager.getShardProperty(), null);
-            logger.info("attribute " + attribute);
             Shard shard = shardManager.getShard(attribute);
 
             watch.start("RegistryController.addToExistingEntity");
@@ -192,7 +190,7 @@ public class RegistryController {
             response.setResult(result);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.addToExistingEntity");
-            logger.debug("RegistryController : Entity {} added !", resultId);
+            logger.info("AddEntity,{}", resultId);
         } catch (Exception e) {
             logger.error("Exception in controller while adding entity !", e);
             response.setResult(result);
@@ -231,12 +229,11 @@ public class RegistryController {
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
             Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
-            logger.info("config : " + config);
+
             ITransformer<Object> responseTransformer = transformer.getInstance(config);
             Data<Object> resultContent = responseTransformer.transform(data);
-            logger.info("JSON LD: " + resultContent.getData());
             response.setResult(resultContent.getData());
-
+            logger.info("ReadEntity,{},{}", recordId.getUuid(), config);
         } catch (Exception e) {
             logger.error("Read Api Exception occurred ", e);
             responseParams.setErrmsg(e.getMessage());
@@ -259,8 +256,6 @@ public class RegistryController {
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         shardManager.activateShard(shardId);
-        logger.info("Read Api: shard id: " + recordId.getShardLabel() + " for label: " + label);
-
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
 
         try {
@@ -269,7 +264,7 @@ public class RegistryController {
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.update");
-            logger.debug("RegistryController: entity updated !");
+            logger.info("UpdateEntity,{}", recordId.getUuid());
         } catch (Exception e) {
             logger.error("RegistryController: Exception while updating entity (without id)!", e);
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);

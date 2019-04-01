@@ -78,8 +78,6 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
-    private IElasticService elasticService;
-    @Autowired
     private APIMessage apiMessage;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
@@ -96,8 +94,8 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${persistence.commit.enabled:true}")
     private boolean commitEnabled;
 
-    @Value("${elastic.search.enabled}")
-    private boolean elasticSearchEnabled;
+    @Value("${search.providerName}")
+    private String searchProvider;
 
     @Autowired
     private Shard shard;
@@ -302,8 +300,9 @@ public class RegistryServiceImpl implements RegistryService {
     }
 
     @Async("auditExecutor")
-    public void callAuditESActors(JsonNode readNode, JsonNode mergedNode, String operation, String auditAction, String id, String parentEntityType, String entityRootId, Transaction tx) throws JsonProcessingException {
-        logger.info("callAuditESActors started");
+    public void callAuditESActors(JsonNode readNode, JsonNode mergedNode, String operation, String auditAction, String id,
+                                  String parentEntityType, String entityRootId, Transaction tx) throws JsonProcessingException {
+        logger.debug("callAuditESActors started");
         List<AuditInfo> auditItemDetails = null;
         auditRecord = new AuditRecord();
         auditRecord.setUserId(apiMessage.getUserID()).setAction(auditAction)
@@ -320,9 +319,11 @@ public class RegistryServiceImpl implements RegistryService {
             auditItemDetails = Arrays.asList(objectMapper.treeToValue(differenceJson, AuditInfo[].class));
         }
         auditRecord.setAuditInfo(auditItemDetails);
-        MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled,operation, parentEntityType, entityRootId, mergedNode, auditRecord);
+        boolean elasticSearchEnabled = (searchProvider == "io.opensaber.registry.service.ElasticSearchService");
+        MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, operation,
+                                parentEntityType, entityRootId, mergedNode, auditRecord);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
-        logger.info("callAuditESActors ends");
+        logger.debug("callAuditESActors ends");
     }
 
     private void doUpdateArray(Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode) {

@@ -137,9 +137,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${read.providerName}")
 	private String readProviderName;
-
-	@Value("${elastic.search.enabled}")
-	private boolean elasticSearchEnabled;
 	
 	static {
 		Config config = ConfigFactory.parseResources("opensaber-actors.conf");
@@ -279,7 +276,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
     @Bean
     public ISearchService searchService() {       
         ServiceProvider searchProvider = new ServiceProvider();
-        return searchProvider.getSearchInstance(searchProviderName, elasticSearchEnabled);
+        return searchProvider.getSearchInstance(searchProviderName, isElasticSearchEnabled());
     }
 
 	/** This method creates read provider implementation bean
@@ -288,9 +285,13 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public IReadService readService() {
 		ServiceProvider searchProvider = new ServiceProvider();
-		return searchProvider.getReadInstance(readProviderName, elasticSearchEnabled);
+		return searchProvider.getReadInstance(readProviderName, isElasticSearchEnabled());
 	}
-	
+
+	@Bean
+	public boolean isElasticSearchEnabled() {
+		return (searchProviderName.equals("io.opensaber.registry.service.ElasticSearchService"));
+	}
 
 	@Bean
 	public UrlValidator urlValidator() {
@@ -402,9 +403,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public IElasticService elasticService() throws IOException {
 		ElasticServiceImpl elasticService = new ElasticServiceImpl();
-		elasticService.setType(Constants.ES_DOC_TYPE);
-		elasticService.setConnectionInfo(elasticConnInfo);
-        elasticService.init(definitionsManager.getAllKnownDefinitions());
+
+		if (isElasticSearchEnabled()) {
+			elasticService.setType(Constants.ES_DOC_TYPE);
+			elasticService.setConnectionInfo(elasticConnInfo);
+			elasticService.init(definitionsManager.getAllKnownDefinitions());
+		}
 		return elasticService;
 	}
 
