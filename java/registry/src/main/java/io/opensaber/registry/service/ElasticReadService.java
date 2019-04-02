@@ -2,6 +2,7 @@ package io.opensaber.registry.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.audit.IAuditService;
 import io.opensaber.elastic.IElasticService;
@@ -79,7 +80,9 @@ public class ElasticReadService implements IReadService {
         auditInfo.setPath("/" + entityType);
         auditRecord.setAuditInfo(Arrays.asList(auditInfo));
         auditService.audit(auditRecord);
-        return result;
+		ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
+        resultNode.set(entityType, result);
+        return resultNode;
     }
 
 }

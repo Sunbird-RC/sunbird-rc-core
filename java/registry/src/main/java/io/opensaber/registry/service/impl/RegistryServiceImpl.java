@@ -212,7 +212,9 @@ public class RegistryServiceImpl implements RegistryService {
             Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
             Definition definition = definitionsManager.getDefinition(vertexLabel);
             entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
-            callAuditESActors(null, rootNode, "add", Constants.AUDIT_ACTION_ADD, entityId, vertexLabel.toLowerCase(), entityId, tx);
+
+            callAuditESActors(null,rootNode,"add", Constants.AUDIT_ACTION_ADD,entityId,vertexLabel,entityId,tx);
+
         }
         return entityId;
     }
@@ -319,9 +321,10 @@ public class RegistryServiceImpl implements RegistryService {
             auditItemDetails = Arrays.asList(objectMapper.treeToValue(differenceJson, AuditInfo[].class));
         }
         auditRecord.setAuditInfo(auditItemDetails);
+
         boolean elasticSearchEnabled = (searchProvider == "io.opensaber.registry.service.ElasticSearchService");
         MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, operation,
-                                parentEntityType, entityRootId, mergedNode, auditRecord);
+                                parentEntityType.toLowerCase(), entityRootId, mergedNode.get(parentEntityType), auditRecord);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
         logger.debug("callAuditESActors ends");
     }

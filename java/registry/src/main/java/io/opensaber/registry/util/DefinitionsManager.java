@@ -3,54 +3,49 @@ package io.opensaber.registry.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.registry.middleware.util.Constants;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import javax.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Component;
 
 @Component("definitionsManager")
 public class DefinitionsManager {
     private static Logger logger = LoggerFactory.getLogger(DefinitionsManager.class);
 
-    @Autowired
-    private DefinitionsReader definitionsReader;
     private Map<String, Definition> definitionMap = new HashMap<>();
+    
+    private OSResourceLoader osResourceLoader;
+    
+    @Autowired
+    private ResourceLoader resourceLoader;
 
     /**
      * Loads the definitions from the _schemas folder
      */
     @PostConstruct
     public void loadDefinition() throws Exception {
-
         
         final ObjectMapper mapper = new ObjectMapper();
-        Resource[] resources = definitionsReader.getResources(Constants.RESOURCE_LOCATION);
-        logger.info("Count of definitions loaded: " + resources.length);
+        osResourceLoader = new OSResourceLoader(resourceLoader);
+        osResourceLoader.loadResource(Constants.RESOURCE_LOCATION);
 
-        for (Resource resource : resources) {
-            String jsonContent = getContent(resource);
-            JsonNode jsonNode = mapper.readTree(jsonContent);
+        for(Entry<String, String> entry : osResourceLoader.getNameContent().entrySet()){
+            JsonNode jsonNode = mapper.readTree(entry.getValue());
             Definition definition = new Definition(jsonNode);
-            logger.info("loading resource:" + resource.getFilename() + " with private field size:"
+            logger.info("loading resource:" + entry.getKey() + " with private field size:"
                     + definition.getOsSchemaConfiguration().getPrivateFields().size() + " & signed fields size:"
                     + definition.getOsSchemaConfiguration().getSignedFields().size());
             definitionMap.putIfAbsent(definition.getTitle(), definition);
-        }
-        logger.info("loaded resource(s): " + definitionMap.size());
-
+        }        
+        logger.info("loaded schema resource(s): " + definitionMap.size());
     }
 
     /**
@@ -85,23 +80,4 @@ public class DefinitionsManager {
         return definitionMap.getOrDefault(title, null);
     }
 
-    /**
-     * Returns a content of resource
-     * 
-     * @param resource
-     * @return
-     */
-    private String getContent(Resource resource) {
-        String content = null;
-        try {
-            InputStream is = resource.getInputStream();
-            byte[] encoded = IOUtils.toByteArray(is);
-            content = new String(encoded, Charset.forName("UTF-8"));
-            
-        } catch (IOException e) {
-            logger.error("Cannot load resource " + resource.getFilename());
-
-        }
-        return content;
-    }
 }

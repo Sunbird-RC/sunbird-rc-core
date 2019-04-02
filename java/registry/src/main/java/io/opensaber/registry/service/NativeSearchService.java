@@ -1,5 +1,6 @@
 package io.opensaber.registry.service;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -98,6 +99,7 @@ public class NativeSearchService implements ISearchService {
                         String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                         JSONUtil.addPrefix((ObjectNode) shardResult, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
                     }
+                   
                     result.add(shardResult);
 					transaction.add(tx.hashCode());
 				}
@@ -105,6 +107,7 @@ public class NativeSearchService implements ISearchService {
 				logger.error("search operation failed: {}", e);
 			}
 		}
+		
 		auditRecord = new AuditRecord();
 		for (String entity : searchQuery.getEntityTypes()) {
 			AuditInfo auditInfo = new AuditInfo();
@@ -115,6 +118,34 @@ public class NativeSearchService implements ISearchService {
 		auditRecord.setAuditInfo(auditInfoLst);
 		auditRecord.setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_SEARCH).setTransactionId(transaction);
 		auditService.audit(auditRecord);
-		return result;
+		return buildResultNode(searchQuery, result);
+	}
+	
+	/**
+	 * combines all the nodes for an entity
+	 * @param entity
+	 * @param allShardResult
+	 * @return
+	 */
+	private ArrayNode getEntityAttibute(String entity, ArrayNode allShardResult) {
+		ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
+		for (int i = 0; i < allShardResult.size(); i++) {
+			resultArray.addAll((ArrayNode) allShardResult.get(i).get(entity));
+		}
+		return resultArray;
+	}
+	/**
+	 * Builds result node from given array of shard nodes 
+	 * @param searchQuery
+	 * @param allShardResult
+	 * @return
+	 */
+	private JsonNode buildResultNode(SearchQuery searchQuery, ArrayNode allShardResult) {
+		ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
+		for (String entity : searchQuery.getEntityTypes()) {
+			ArrayNode entityResult = getEntityAttibute(entity, allShardResult);
+			resultNode.set(entity, entityResult);
+		}
+		return resultNode;
 	}
 }

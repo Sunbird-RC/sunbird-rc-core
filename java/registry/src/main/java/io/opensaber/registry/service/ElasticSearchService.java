@@ -36,6 +36,7 @@ public class ElasticSearchService implements ISearchService {
     @Autowired
     private APIMessage apiMessage;
 
+    @Autowired
     private IAuditService auditService;
 
     @Value("${search.offset}")

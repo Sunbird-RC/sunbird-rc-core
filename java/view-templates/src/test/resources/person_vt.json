@@ -1,0 +1,55 @@
+{
+  "id": "personDefaultView1",
+  "subject": "Person",
+  "fields": [
+    {
+        "name": "firstName",
+        "title": "NAME"
+    },
+    {
+      "name": "lastName",
+      "display": true
+    },
+    {
+        "name": "nationalIdentifier",
+        "title": "OS number",
+        "display": false,
+        "$comment": "This field is not displayable, but needed for internal referencing"
+    },
+    {
+        "title": "Name in passport",
+        "function": "#/functionDefinitions/concat($lastName, $firstName)",
+        "$comment": "This is a virtual field not defined in the schema"
+    },
+    {
+        "title": "Name as in DL",
+        "function": "#/functionDefinitions/userDefinedConcat($firstName, $lastName)",
+        "$comment": "This is a virtual field not defined in the schema"
+    },
+
+    {
+        "name": "vehicles",
+        "$comment": "Nested child entity which may be of interest",
+        "fetchType": "eager",
+        "viewTemplateName": "vehicleNameView.json",
+        "display": false
+    }
+  ],
+  "functionDefinitions": [
+      {
+            "name" : "concat",
+            "result": "arg1 + \", \" + arg2",
+            "$comment": "arg1 and arg2 will be populated with parameter values at runtime"
+      },
+      {
+            "name" : "userDefinedConcat",
+            "provider": "org.example.provider.SampleViewFunctionProvider",
+            "$comment" : "Complex operations that cannot be expressed easily in an in-line function definition can be implemented as a class. "
+      },
+      {
+            "name" : "customDefinedConcat",
+            "$ref": "person_ref.json#functionDefinitions/customDefinedConcat",
+            "$comment": "The functions defined in another template can be reused"
+      }
+  ]
+}

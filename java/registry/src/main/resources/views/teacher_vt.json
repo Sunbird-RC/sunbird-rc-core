@@ -1,0 +1,41 @@
+{
+  "subject": "Teacher",
+  "fields": [
+    {
+        "name": "serialNum",
+        "title": "SERIALNUM"
+    },
+    {
+      "name": "teacherName",
+      "display": true
+    },
+    {
+        "name": "nationalIdentifier",
+        "title": "OS number",
+        "display": false,
+        "$comment": "This field is not displayable, but needed for internal referencing"
+    },
+    {
+        "title": "serial Number",
+        "function": "#/functionDefinitions/concat($serialNum, $teacherName)",
+        "$comment": "This is a virtual field not defined in the schema"
+    }
+  ],
+  "functionDefinitions": [
+      {
+            "name" : "concat",
+            "result": "arg1 + \", \" + arg2",
+            "$comment": "arg1 and arg2 will be populated with parameter values at runtime"
+      },
+      {
+            "name" : "userDefinedConcat",
+            "provider": "org.example.provider.SampleViewFunctionProvider",
+            "$comment" : "Complex operations that cannot be expressed easily in an in-line function definition can be implemented as a class. "
+      },
+      {
+            "name" : "customDefinedConcat",
+            "$ref": "person_ref.json#functionDefinitions/customDefinedConcat",
+            "$comment": "The functions defined in another template can be reused"
+      }
+  ]
+}

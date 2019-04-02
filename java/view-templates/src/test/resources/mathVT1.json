@@ -1,0 +1,25 @@
+{
+  "subject": "MathProblem",
+  "fields": [
+    {
+        "name": "a",
+        "title": "addend_A"
+    },
+    {
+      "name": "b",
+      "title": "addend_B"
+    },
+    {
+        "title": "SUM",
+        "function": "#/functionDefinitions/mathOperation($a, $b)",
+        "$comment": "This is a virtual field not defined in the schema"
+    }
+  ],
+  "functionDefinitions": [
+      {
+            "name" : "mathOperation",
+            "result": "arg1 + arg2",
+            "$comment": "arg1 and arg2 will be populated with parameter values at runtime"
+      }
+  ]
+}

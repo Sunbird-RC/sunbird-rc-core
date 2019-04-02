@@ -22,6 +22,10 @@ import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.ReadConfiguratorFactory;
 import io.opensaber.registry.util.RecordIdentifier;
+import io.opensaber.registry.util.ViewTemplateManager;
+import io.opensaber.views.ViewTemplate;
+import io.opensaber.views.ViewTransformer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +60,6 @@ public class RegistryController {
     private APIMessage apiMessage;
     @Autowired
     private DBConnectionInfoMgr dbConnectionInfoMgr;
-
     @Value("${audit.enabled}")
     private boolean auditEnabled;
     @Value("${database.uuidPropertyName}")
@@ -66,6 +69,9 @@ public class RegistryController {
 
     @Autowired
     private ShardManager shardManager;
+    
+    @Autowired
+    private ViewTemplateManager viewTemplateManager;
 
     /**
      * Note: Only one mime type is supported at a time. Pick up the first mime
@@ -89,6 +95,12 @@ public class RegistryController {
             watch.start("RegistryController.searchEntity");
             JsonNode result = searchService.search(payload);
 
+			// applying view-templates to response
+			ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(apiMessage.getRequest().getRequestMapNode());
+			if (viewTemplate != null) {
+				ViewTransformer vTransformer = new ViewTransformer();
+				result = vTransformer.transform(viewTemplate, result);
+			}
             // Search is tricky to support LD. Needs a revisit here.
 
             response.setResult(result);
@@ -226,6 +238,14 @@ public class RegistryController {
 
         try {
             JsonNode resultNode = readService.getEntity(recordId.getUuid(), entityType, configurator);
+			// applying view-templates to response
+			ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(apiMessage.getRequest().getRequestMapNode());
+			
+			if (viewTemplate != null) {
+				ViewTransformer vTransformer = new ViewTransformer();
+				resultNode = vTransformer.transform(viewTemplate, resultNode);
+			}
+
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
             Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);

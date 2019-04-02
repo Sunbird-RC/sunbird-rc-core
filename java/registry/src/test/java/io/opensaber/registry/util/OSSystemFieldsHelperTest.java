@@ -18,7 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { OSSystemFieldsHelper.class, DefinitionsManager.class, DefinitionsReader.class })
+@SpringBootTest(classes = { OSSystemFieldsHelper.class, DefinitionsManager.class, OSResourceLoader.class })
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class OSSystemFieldsHelperTest {
 
