@@ -61,10 +61,10 @@ public class RegistryDaoImpl implements IRegistryDao {
      * @param readConfigurator
      * @return
      */
-    public JsonNode getEntity(Graph graph, String uuid, ReadConfigurator readConfigurator) throws Exception {
+    public JsonNode getEntity(Graph graph, String entityType, String uuid, ReadConfigurator readConfigurator) throws Exception {
 
         VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
-        JsonNode result = vr.read(uuid);
+        JsonNode result = vr.read(entityType, uuid);
 
         return result;
     }

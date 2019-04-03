@@ -341,9 +341,7 @@ public class VertexReader {
         return resultArr;
     }
 
-    public Vertex getVertex(String entityType, String osid) {
-        return getVertex(entityType, new String[] {osid});
-    }
+
 
     /**
      * Neo4j supports custom ids and so we can directly query vertex with id - without client side filtering.
@@ -352,7 +350,7 @@ public class VertexReader {
      * @param osid the osid of vertex to be loaded
      * @return the vertex associated with osid passed
      */
-    public Vertex getVertex(String entityType, String[] osid) {
+    public Vertex getVertex(String entityType, String osid) {
         Vertex vertex = null;
         Iterator<Vertex> itrV = null;
         switch (databaseProvider.getProvider()) {
@@ -361,16 +359,16 @@ public class VertexReader {
                 break;
             case SQLG:
                 if (null != entityType) {
-                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid[0]);
+                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
                 } else {
-                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid[0]);
+                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
                 }
                 break;
             case CASSANDRA:
                 if (null != entityType) {
-                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid[0]);
+                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
                 } else {
-                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid[0]);
+                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
                 }
                 break;
             default:
