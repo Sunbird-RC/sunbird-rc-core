@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.opensaber</groupId>
     <artifactId>registry</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.2</version>
     <packaging>jar</packaging>
 
     <name>registry</name>
@@ -28,7 +28,7 @@
         <jacoco.version>0.8.1</jacoco.version>
         <!-- this version is in sync with elastic-search.jar which here added as dependency-->
         <elasticsearch.version>6.6.0</elasticsearch.version>
-        <revision>2.0.1</revision>
+        <revision>2.0.2</revision>
         <runSuite>**/RegistryTestSuite.class</runSuite>
         <basePath>../../</basePath>
     </properties>
@@ -38,7 +38,7 @@
             <dependency>
                 <groupId>io.opensaber</groupId>
                 <artifactId>validators</artifactId>
-                <version>2.0.1</version>
+                <version>2.0.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -63,7 +63,7 @@
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>registry-interceptor</artifactId>
-            <version>2.0.1</version>
+            <version>2.0.2</version>
         </dependency>
 
         <dependency>
@@ -75,7 +75,7 @@
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>opensaber-actors</artifactId>
-            <version>2.0.1</version>
+            <version>2.0.2</version>
         </dependency>
 
         <dependency>
@@ -278,7 +278,7 @@
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>transaction-event-handler</artifactId>
-            <version>2.0.1</version>
+            <version>2.0.2</version>
         </dependency>
         <!-- End dependency for Neo4j support -->
 
@@ -304,7 +304,7 @@
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>jsonschemavalidator</artifactId>
-            <version>2.0.1</version>
+            <version>2.0.2</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.junit-toolbox</groupId>
