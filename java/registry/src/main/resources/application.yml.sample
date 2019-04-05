@@ -138,10 +138,10 @@ signature:
     config:
       name: SignatureShape
 
-audit:
-  enabled: ${audit_enabled:false}
-  frame:
-    file: ${audit_frame_file:audit_frame.json}
+#audit:
+  #enabled: ${audit_enabled:false}
+  #frame:
+    #file: ${audit_frame_file:audit_frame.json}
 
 authentication:
   enabled: ${authentication_enabled:true}

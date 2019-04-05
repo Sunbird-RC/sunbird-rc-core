@@ -63,19 +63,19 @@
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>registry-interceptor</artifactId>
-            <version>2.0.2</version>
+            <version>${revision}</version>
         </dependency>
 
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>elastic-search</artifactId>
-            <version>2.0.1</version>
+            <version>${revision}</version>
         </dependency>
 
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>opensaber-actors</artifactId>
-            <version>2.0.2</version>
+            <version>${revision}</version>
         </dependency>
 
         <dependency>

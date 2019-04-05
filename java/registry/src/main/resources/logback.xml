@@ -7,7 +7,7 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/registry-app.log</file>
+        <file>logs/app.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
             <fileNamePattern>logFile.%d{yyyy-MM-dd}.log</fileNamePattern>
@@ -21,35 +21,31 @@
         </encoder>
     </appender>
 
-    <appender name="RegistryAuditAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/registry_neo4j.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <fileNamePattern>logFile.%d{yyyy-MM-dd-hh}-%i.log</fileNamePattern>
-            <minIndex>1</minIndex>
-            <maxIndex>10</maxIndex>
-        </rollingPolicy>
+    <!--<appender name="RegistryAuditAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+        <!--<file>logs/audit.log</file>-->
+        <!--<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">-->
+            <!--<fileNamePattern>auditlog.%d{yyyy-MM-dd-hh}-%i.log</fileNamePattern>-->
+        <!--</rollingPolicy>-->
+        <!--<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">-->
+            <!--<maxFileSize>10KB</maxFileSize>-->
+        <!--</triggeringPolicy>-->
 
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>10MB</maxFileSize>
-        </triggeringPolicy>
-
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>
-                %d %msg%n
-            </Pattern>
-        </encoder>
-    </appender>
+        <!--<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">-->
+            <!--<Pattern>-->
+                <!--%d %msg%n-->
+            <!--</Pattern>-->
+        <!--</encoder>-->
+    <!--</appender>-->
 
 
     <appender name="Perf4jFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>logs/registry_perf_instrumentation.log</File>
+        <file>logs/perf.log</file>
         <encoder>
             <!-- <Pattern>%date %-5level [%thread] %logger{36} [%file:%line] %msg%n -->
-            <Pattern>%date %-5level %msg%n
-            </Pattern>
+            <Pattern>%date %-5level %msg%n</Pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>logs/registry_perf_instrumentation.%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>logs/perf.%d{yyyy-MM-dd}.log</FileNamePattern>
         </rollingPolicy>
     </appender>
 
@@ -59,16 +55,17 @@
     </appender>
 
     <appender name="AuditFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/audit.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>audit-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>logs/audit-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
             <totalSizeCap>5GB</totalSizeCap>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>3MB</maxFileSize>
+            <maxFileSize>10MB</maxFileSize>
         </triggeringPolicy>
         <encoder>
-            <pattern>[%thread] %-5level %logger{50} - %msg%n</pattern>
+            <pattern>%msg%n</pattern>
         </encoder>
     </appender>
 
@@ -91,15 +88,15 @@
     <logger name="io.opensaber.registry.dao.RegistryDaoImpl" level="DEBUG"/>
     <logger name="com.mchange.v2.c3p0.impl.NewProxyPreparedStatement" level="DEBUG"/>
 
-    <logger name="GraphEventLogger" level="DEBUG" additivity="FALSE">
-        <appender-ref ref="RegistryAuditAppender"/>
-    </logger>
+    <!--<logger name="GraphEventLogger" level="DEBUG" additivity="FALSE">-->
+        <!--<appender-ref ref="RegistryAuditAppender"/>-->
+    <!--</logger>-->
 
     <logger name="io.opensaber.audit.AuditServiceImpl" level="DEBUG" additivity="FALSE">
         <appender-ref ref="AuditFileAppender"/>
     </logger>
 
-    <root level="DEBUG" additivity="FALSE">
+    <root level="INFO" additivity="FALSE">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </root>
