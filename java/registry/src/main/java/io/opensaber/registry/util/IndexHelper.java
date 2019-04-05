@@ -1,6 +1,7 @@
 package io.opensaber.registry.util;
 
 import io.opensaber.registry.middleware.util.Constants;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
@@ -28,6 +29,8 @@ public class IndexHelper {
     public void setDefinitionIndexMap(Map<String, Boolean> definitionIndexMap) {
         this.definitionIndexMap.putAll(definitionIndexMap);
     }
+    
+    
 
     public void updateDefinitionIndex(String label, String definitionName, boolean flag) {
         String key = label + definitionName;
@@ -79,15 +82,25 @@ public class IndexHelper {
      * @return
      */
     public static List<String> getCompositeIndexFields(List<String> fields) {
-        if (fields.size() > 0) {
-            StringBuilder list = new StringBuilder(String.join(",", fields));
-            String subString = StringUtils.substringBetween(list.toString(), "(", ")").replaceAll("'", "");
-            String[] commaSeparatedArr = subString.split("\\s*,\\s*");
-            List<String> result = Arrays.stream(commaSeparatedArr).collect(Collectors.toList());
-            return result;
-        } else {
-            return new ArrayList<>();
-        }
+		List<String> result = new ArrayList<String>();
+		if (fields.size() > 0) {
+
+			String[] commaSeparatedArr = null;
+			for (String field : fields) {
+
+				boolean containsCompositeValues = (field.indexOf("(") == 0)
+						&& (field.indexOf(")") == field.length() - 1);
+				if (containsCompositeValues) {
+					String commaSeperatedValues = field.substring(1, field.length() - 1);
+					commaSeparatedArr = commaSeperatedValues.split("\\s*,\\s*");
+
+				}
+			}
+			if (commaSeparatedArr != null) {
+				result = Arrays.stream(commaSeparatedArr).collect(Collectors.toList());
+			}
+		}
+		return result;
 
     }
     /**
@@ -96,18 +109,17 @@ public class IndexHelper {
      * @return
      */
     public static List<String> getSingleIndexFields(List<String> fields) {
-        if (fields.size() > 0) {
-            StringBuilder list = new StringBuilder(String.join(",", fields));
-            String subString = (StringUtils.substringBetween(list.toString(), "(", ")"));
-            String orginal = list.toString().replaceAll(subString, "").replaceAll(Pattern.quote("()"), "");
-
-            String[] commaSeparatedArr = orginal.split(",");
-            List<String> result = Arrays.stream(commaSeparatedArr).collect(Collectors.toList());
-            return result;
-        } else {
-            return new ArrayList<>();
-
-        }
+		List<String> result = new ArrayList<String>();
+		if (fields.size() > 0) {
+			for (String field : fields) {
+				boolean containsCompositeValues = (field.indexOf("(") == 0)
+						&& (field.indexOf(")") == field.length() - 1);
+				if (!containsCompositeValues) {
+					result.add(field);
+				}
+			}
+		}
+		return result;
 
     }
 

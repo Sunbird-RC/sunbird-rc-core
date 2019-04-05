@@ -4,6 +4,7 @@ import io.opensaber.registry.dao.VertexWriter;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfo;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
+import io.opensaber.registry.model.IndexFields;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
@@ -48,6 +49,11 @@ public class EntityParenter {
      * Holds information about a shard and a list of definitionParents
      */
     private HashMap<String, ShardParentInfoList> shardParentMap = new HashMap<>();
+    /**
+     * Holds information for all definitions and it's indices 
+     */
+    private Map<String, IndexFields> definitionIndexFields = new ConcurrentHashMap<String, IndexFields>();
+
 
     @Autowired
     public EntityParenter(DefinitionsManager definitionsManager, DBConnectionInfoMgr dbConnectionInfoMgr) {
@@ -63,6 +69,7 @@ public class EntityParenter {
      */
     public void loadDefinitionIndex() {
         Map<String, Boolean> indexMap = new ConcurrentHashMap<String, Boolean>();
+        
 
         for (Map.Entry<String, ShardParentInfoList> entry : shardParentMap.entrySet()) {
             String shardId = entry.getKey();
@@ -71,19 +78,32 @@ public class EntityParenter {
                 Definition definition = definitionsManager.getDefinition(shardParentInfo.getName());
                 Vertex parentVertex = shardParentInfo.getVertex();
                 List<String> indexFields = definition.getOsSchemaConfiguration().getIndexFields();
+                if (!indexFields.contains(uuidPropertyName)) {
+                    indexFields.add(uuidPropertyName); // adds default field
+                    // (uuid)
+                }
                 List<String> indexUniqueFields = definition.getOsSchemaConfiguration().getUniqueIndexFields();
-
                 List<String> compositeIndexFields = IndexHelper.getCompositeIndexFields(indexFields);
                 List<String> singleIndexFields = IndexHelper.getSingleIndexFields(indexFields);
-
-                int nNewIndices = indexHelper.getNewFields(parentVertex, singleIndexFields, false).size();
-                int nNewUniqIndices = indexHelper.getNewFields(parentVertex, indexUniqueFields, true).size();
-                int nNewCompIndices = indexHelper.getNewFields(parentVertex, compositeIndexFields, false).size();
+                
+                IndexFields indicesByDefinition = new IndexFields();
+                indicesByDefinition.setDefinitionName(definition.getTitle());
+                indicesByDefinition.setIndexFields(indexFields);
+                indicesByDefinition.setUniqueIndexFields(indexUniqueFields);
+                indicesByDefinition.setNewSingleIndexFields(indexHelper.getNewFields(parentVertex, singleIndexFields, false));
+                indicesByDefinition.setNewCompositeIndexFields(indexHelper.getNewFields(parentVertex, compositeIndexFields, false));
+                indicesByDefinition.setNewUniqueIndexFields(indexHelper.getNewFields(parentVertex, indexUniqueFields, true));
+                
+                int nNewIndices = indicesByDefinition.getNewSingleIndexFields().size();
+                int nNewUniqIndices = indicesByDefinition.getNewUniqueIndexFields().size();
+                int nNewCompIndices = indicesByDefinition.getNewCompositeIndexFields().size();
 
                 boolean indexingComplete = (nNewIndices == 0 && nNewUniqIndices == 0 && nNewCompIndices == 0);
                 indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), indexingComplete);
                 logger.info("On loadDefinitionIndex for Shard:" + shardId + " definition: {} updated index to {} ",
                         definition.getTitle(), indexingComplete);
+                
+                definitionIndexFields.put(indicesByDefinition.getDefinitionName(), indicesByDefinition);
 
             });
 
@@ -230,30 +250,21 @@ public class EntityParenter {
             Definition definition) {
         logger.debug("asyncAddIndex starts");
         if (parentVertex != null && definition != null) {
-            List<String> indexFields = definition.getOsSchemaConfiguration().getIndexFields();
-            if (!indexFields.contains(uuidPropertyName)) {
-                indexFields.add(uuidPropertyName); // adds default field
-                // (uuid)
-            }
-            List<String> indexUniqueFields = definition.getOsSchemaConfiguration().getUniqueIndexFields();
+
+            IndexFields inxFields = definitionIndexFields.get(definition.getTitle());
             try (OSGraph osGraph = dbProvider.getOSGraph()) {
                 Graph graph = osGraph.getGraphStore();
                 try (Transaction tx = dbProvider.startTransaction(graph)) {
 
-                    List<String> cIndexFields = IndexHelper.getCompositeIndexFields(indexFields);
-                    List<String> sIndexFields = IndexHelper.getSingleIndexFields(indexFields);
-                    List<String> newSIndexFields = indexHelper.getNewFields(parentVertex, sIndexFields, false);
-                    List<String> newUniqueIndexFields = indexHelper.getNewFields(parentVertex, indexUniqueFields,
-                            true);
-                    Indexer indexer = new Indexer(dbProvider);
-                    indexer.setSingleIndexFields(newSIndexFields);
-                    indexer.setCompositeIndexFields(cIndexFields);
+					Indexer indexer = new Indexer(dbProvider);
+					indexer.setSingleIndexFields(inxFields.getNewSingleIndexFields());
+					indexer.setCompositeIndexFields(inxFields.getNewCompositeIndexFields());
 
-                    indexer.setUniqueIndexFields(newUniqueIndexFields);
+					indexer.setUniqueIndexFields(inxFields.getNewUniqueIndexFields());
                     indexer.createIndex(graph, definition.getTitle());
                     dbProvider.commitTransaction(graph, tx);
 
-                    updateParentVertexIndexProperties(dbProvider, parentVertex, indexFields, indexUniqueFields);
+                    updateParentVertexIndexProperties(dbProvider, parentVertex, inxFields.getIndexFields(), inxFields.getUniqueIndexFields());
                     indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), true);
                 }
             } catch (Exception e) {

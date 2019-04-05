@@ -76,35 +76,51 @@ public class JanusGraphStorage extends DatabaseProvider {
 
 	@Override
 	public void createUniqueIndex(Graph graph, String label, List<String> propertyNames) {
-		List<JanusGraphIndex> graphIndexList = new ArrayList<>();
-		VertexLabel vlabel = ((JanusGraph) graph).getVertexLabel(label);
-		graph.tx().commit();
-		JanusGraphManagement janusGraphManagement = ((JanusGraph) graph).openManagement();
-		propertyNames.forEach(propertyName -> {
-			PropertyKey propertyKey = janusGraphManagement.getPropertyKey(propertyName);
-			JanusGraphIndex graphIndex = janusGraphManagement.buildIndex(vlabel.name() + propertyKey.toString(), Vertex.class).addKey(propertyKey).unique().buildCompositeIndex();
-			graphIndexList.add(graphIndex);
-		});
-		janusGraphManagement.commit();
+		if (propertyNames.size() > 0) {
+			List<JanusGraphIndex> graphIndexList = new ArrayList<>();
+			VertexLabel vlabel = ((JanusGraph) graph).getVertexLabel(label);
+			graph.tx().commit();
+			JanusGraphManagement janusGraphManagement = ((JanusGraph) graph).openManagement();
+			propertyNames.forEach(propertyName -> {
+				PropertyKey propertyKey = janusGraphManagement.getPropertyKey(propertyName);
+				JanusGraphIndex graphIndex = janusGraphManagement.buildIndex(vlabel.name() + propertyKey.toString(), Vertex.class).addKey(propertyKey).unique().buildCompositeIndex();
+				graphIndexList.add(graphIndex);
+			});
+			janusGraphManagement.commit();
+		} else {
+			logger.info("Could not create unique index for empty properties");
+		}
+
 	}
 
 	@Override
 	public void createIndex(Graph graph, String label, List<String> propertyNames) {
-		List<JanusGraphIndex> graphIndexList = new ArrayList<>();
-		VertexLabel vlabel = ((JanusGraph) graph).getVertexLabel(label);
-		graph.tx().commit();
-		JanusGraphManagement janusGraphManagement = ((JanusGraph) graph).openManagement();
-		propertyNames.forEach(propertyName -> {
-			PropertyKey propertyKey = janusGraphManagement.getPropertyKey(propertyName);
-			JanusGraphIndex graphIndex = janusGraphManagement.buildIndex(vlabel.name() + propertyKey.toString(), Vertex.class).addKey(propertyKey).buildCompositeIndex();
-			graphIndexList.add(graphIndex);
-		});
-		janusGraphManagement.commit();
+		if (propertyNames.size() > 0) {
+			List<JanusGraphIndex> graphIndexList = new ArrayList<>();
+			VertexLabel vlabel = ((JanusGraph) graph).getVertexLabel(label);
+			graph.tx().commit();
+			JanusGraphManagement janusGraphManagement = ((JanusGraph) graph).openManagement();
+			propertyNames.forEach(propertyName -> {
+				PropertyKey propertyKey = janusGraphManagement.getPropertyKey(propertyName);
+				JanusGraphIndex graphIndex = janusGraphManagement.buildIndex(vlabel.name() + propertyKey.toString(), Vertex.class).addKey(propertyKey).buildCompositeIndex();
+				graphIndexList.add(graphIndex);
+			});
+			janusGraphManagement.commit();
+			
+		} else {
+			logger.info("Could not create single index for empty properties");
+		}
 	}
 
 	@Override
 	public void createCompositeIndex(Graph graph, String label, List<String> propertyNames) {
-		createIndex(graph, label, propertyNames);
+		if (propertyNames.size() > 0) {
+			createIndex(graph, label, propertyNames);
+		} else {
+			logger.info("Could not create composite index for empty properties");
+
+		}
+
 	}
 
 

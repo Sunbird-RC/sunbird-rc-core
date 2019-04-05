@@ -106,35 +106,48 @@ public class Neo4jGraphProvider extends DatabaseProvider {
 
     @Override
     public void createIndex(Graph graph,String label, List<String> propertyNames) {
-        Neo4JGraph neo4jGraph = (Neo4JGraph) graph;       
-        for (String propertyName : propertyNames) {
-            neo4jGraph.createIndex(label, propertyName);
-            logger.info("Neo4jGraph index created for " + label);
-        }        
+        Neo4JGraph neo4jGraph = (Neo4JGraph) graph;  
+		if (propertyNames.size() > 0) {
+			for (String propertyName : propertyNames) {
+				neo4jGraph.createIndex(label, propertyName);
+				logger.info("Neo4jGraph index created for " + label);
+			}
+		} else {
+			logger.info("Could not create single index for empty properties");
+		}
+      
     }
     
     @Override
     public void createCompositeIndex(Graph graph, String label, List<String> propertyNames){
         Neo4JGraph neo4jGraph = (Neo4JGraph) graph;
-        StringBuilder properties = new StringBuilder(String.join(",", propertyNames));
-        logger.info("composite key properties values "+properties);
-        
-        Objects.requireNonNull(label, "label cannot be null");
-        Objects.requireNonNull(properties, "properties cannot be null");
-        neo4jGraph.execute(new Statement("CREATE INDEX ON :`" + label + "`(" + properties + ")"));
+		if (propertyNames.size() > 0) {
+			StringBuilder properties = new StringBuilder(String.join(",", propertyNames));
+			logger.info("composite key properties values " + properties);
 
+			Objects.requireNonNull(label, "label cannot be null");
+			Objects.requireNonNull(properties, "properties cannot be null");
+			neo4jGraph.execute(new Statement("CREATE INDEX ON :`" + label + "`(" + properties + ")"));
+		} else {
+			logger.info("Could not create composite index for empty properties");
+		}
     }
     
     @Override
     public void createUniqueIndex(Graph graph, String label, List<String> propertyNames) {
         Neo4JGraph neo4jGraph = (Neo4JGraph) graph;
-        for (String propertyName : propertyNames) {
-            Objects.requireNonNull(label, "label cannot be null");
-            Objects.requireNonNull(propertyName, "propertyName cannot be null");
-            neo4jGraph.execute(new Statement("CREATE CONSTRAINT ON (n:" + label + ") ASSERT n." + propertyName + " IS UNIQUE"));
-            logger.info("Neo4jGraph unique index created for " + label);
+		if (propertyNames.size() > 0) {
 
-        }       
+			for (String propertyName : propertyNames) {
+				Objects.requireNonNull(label, "label cannot be null");
+				Objects.requireNonNull(propertyName, "propertyName cannot be null");
+				neo4jGraph.execute(new Statement(
+						"CREATE CONSTRAINT ON (n:" + label + ") ASSERT n." + propertyName + " IS UNIQUE"));
+				logger.info("Neo4jGraph unique index created for " + label);
 
+			}
+		} else {
+			logger.info("Could not create unique index for empty properties");
+		}
     }
 }

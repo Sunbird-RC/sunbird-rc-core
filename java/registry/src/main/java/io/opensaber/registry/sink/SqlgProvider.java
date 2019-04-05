@@ -62,17 +62,30 @@ public class SqlgProvider extends DatabaseProvider {
 
     @Override
     public void createIndex(Graph graph, String label, List<String> propertyNames) {
-        createIndexByIndexType(graph, IndexType.NON_UNIQUE, label, propertyNames);
+		if (propertyNames.size() > 0) {
+	        createIndexByIndexType(graph, IndexType.NON_UNIQUE, label, propertyNames);
+		} else {
+			logger.info("Could not create single index for empty properties");
+		}
+
     }
 
     @Override
     public void createCompositeIndex(Graph graph, String label, List<String> propertyNames) {
-        ensureCompositeIndex(graph, label, propertyNames);
+		if (propertyNames.size() > 0) {
+	        ensureCompositeIndex(graph, label, propertyNames);
+		} else {
+			logger.info("Could not create composite index for empty properties");
+		}
     }
 
     @Override
     public void createUniqueIndex(Graph graph, String label, List<String> propertyNames) {
-        createIndexByIndexType(graph, IndexType.UNIQUE, label, propertyNames);
+		if (propertyNames.size() > 0) {
+	        createIndexByIndexType(graph, IndexType.UNIQUE, label, propertyNames);
+		} else {
+			logger.info("Could not create unique index for empty properties");
+		}
     }
 
     /**
