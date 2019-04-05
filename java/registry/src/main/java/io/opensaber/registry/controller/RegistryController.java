@@ -60,8 +60,6 @@ public class RegistryController {
     private APIMessage apiMessage;
     @Autowired
     private DBConnectionInfoMgr dbConnectionInfoMgr;
-    @Value("${audit.enabled}")
-    private boolean auditEnabled;
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
     @Autowired
