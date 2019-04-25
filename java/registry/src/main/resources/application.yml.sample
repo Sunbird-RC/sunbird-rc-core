@@ -12,9 +12,18 @@ spring:
 name: dev-yaml
 enviroment: development
 
+server:
+  # Change this port number if you want to run it on another.
+  port: ${server_port:8080}
+
+cors:
+  # By default, allowing all domains to access this service. Choose a particular domain,
+  # in production. For example, http://otherservice.com:9090, to allow requests from otherservice.com.
+  allowedOrigin: ${cors_allowedOrigin:*}
+
 perf:
   monitoring:
-    enabled: ${perf_monitoring_enabled:true}
+    enabled: ${perf_monitoring_enabled:false}
 
 registry:
   context:
@@ -59,9 +68,11 @@ database:
   shardProperty: ${database_shardProperty:none}
   
   # This property is instruction to use the shard advisor.
-  # Values could be DefaultShardAdvisor, SerialNumberShardAdvisor
+  # Values could be io.opensaber.registry.sink.shard.DefaultShardAdvisor, OR
+  # io.opensaber.registry.sink.shard.SerialNumberShardAdvisor OR
+  # absolute class name of your advisor class.
   # If this property not provided, advisor is set to DefaultShardAdvisor
-  shardAdvisor: io.opensaber.registry.sink.shard.SerialNumberShardAdvisor
+  shardAdvisorClassName: io.opensaber.registry.sink.shard.DefaultShardAdvisor
 
   connectionInfo:
     -

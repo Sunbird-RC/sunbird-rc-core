@@ -27,6 +27,7 @@ import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.IReadService;
 import io.opensaber.registry.service.ISearchService;
 import io.opensaber.registry.sink.DBProviderFactory;
+import io.opensaber.registry.sink.shard.DefaultShardAdvisor;
 import io.opensaber.registry.sink.shard.IShardAdvisor;
 import io.opensaber.registry.sink.shard.ShardAdvisor;
 import io.opensaber.registry.transform.ConfigurationHelper;
@@ -75,6 +76,8 @@ import java.util.Map;
 public class GenericConfiguration implements WebMvcConfigurer {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
+	private final String NONE_STR = "none";
+
 	@Autowired
 	private DefinitionsManager definitionsManager;
 
@@ -271,7 +274,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public IShardAdvisor shardAdvisor() {		
 		ShardAdvisor shardAdvisor = new ShardAdvisor();
-		return shardAdvisor.getInstance(dbConnectionInfoMgr.getShardAdvisorClassName());
+		if (dbConnectionInfoMgr.getShardProperty().equals(NONE_STR)) {
+			return shardAdvisor.getInstance(DefaultShardAdvisor.class.getName());
+		} else {
+			return shardAdvisor.getInstance(dbConnectionInfoMgr.getShardAdvisorClassName());
+		}
 	}
     @Bean
     public ISearchService searchService() {       
