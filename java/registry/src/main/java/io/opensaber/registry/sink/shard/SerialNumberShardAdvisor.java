@@ -17,7 +17,7 @@ public class SerialNumberShardAdvisor extends DefaultShardAdvisor {
 	 */
 	@Override
 	public DBConnectionInfo getShard(Object serialNumber) {
-		DBConnectionInfo connectionInfo = null;
+		DBConnectionInfo connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(0);
 		if (serialNumber instanceof Integer) {
 			Integer serNo = (Integer) serialNumber;
 			int mod = serNo % 2;

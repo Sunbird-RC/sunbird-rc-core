@@ -88,7 +88,7 @@ public class RegistryController {
         responseParams.setStatus(Response.Status.SUCCESSFUL);
 
         try {
-            shardManager.activateShard(null);
+            //shardManager.activateShard(null);
 
             watch.start("RegistryController.searchEntity");
             JsonNode result = searchService.search(payload);
@@ -251,7 +251,7 @@ public class RegistryController {
             ITransformer<Object> responseTransformer = transformer.getInstance(config);
             Data<Object> resultContent = responseTransformer.transform(data);
             response.setResult(resultContent.getData());
-            logger.info("ReadEntity,{},{}", recordId.getUuid(), config);
+            logger.info("ReadEntity,{},{}", recordId.toString(), config);
         } catch (Exception e) {
             logger.error("Read Api Exception occurred ", e);
             responseParams.setErrmsg(e.getMessage());
@@ -282,7 +282,7 @@ public class RegistryController {
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.update");
-            logger.info("UpdateEntity,{}", recordId.getUuid());
+            logger.info("UpdateEntity,{}", recordId.toString());
         } catch (Exception e) {
             logger.error("RegistryController: Exception while updating entity (without id)!", e);
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
