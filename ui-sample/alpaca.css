@@ -13,6 +13,7 @@
 .btn
 {
     left : 2%;
+    right: 2%;
 }
 
 /** Added to every container outer field element **/
@@ -24,13 +25,13 @@
 /** Added to the optional label (or legend) accompanying any container **/
 .alpaca-container-label
 {
-
+    padding-left: 10px;
 }
 
 /** Added to every container item field within a container **/
 .alpaca-container-item
 {
-
+    padding-left: 10px;
 }
 
 /** Added to the first container item field within a container **/
@@ -78,13 +79,13 @@
 /** Added to every control outer field element **/
 .alpaca-control
 {
-
+    padding-left: 10px;
 }
 
 /** Added to the optional label accompanying any control **/
 .alpaca-control-label
 {
-
+    padding-left: 10px;
 }
 
 /** ******************************************************** **/
@@ -352,7 +353,7 @@
 
 .alpaca-fileupload-container .row
 {
-    margin-bottom: 10px;
+    padding: 10px;
 }
 
 .alpaca-fileupload-well
@@ -474,6 +475,7 @@ table.dt-rowReorder-float tr td .alpaca-field
 .alpaca-field-table table tr td .alpaca-field .form-control,
 table.dt-rowReorder-float tr td .alpaca-field .form-control
 {
+    padding-left: 10px;
     width: 100%;
 }
 
@@ -492,6 +494,7 @@ table.dt-rowReorder-float .form-group.alpaca-field-checkbox
 .alpaca-field-table .alpaca-control.checkbox,
 table.dt-rowReorder-float .alpaca-control.checkbox
 {
+    padding-left: 6px;
     padding-top: 6px;
 }
 

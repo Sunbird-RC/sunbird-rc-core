@@ -15,10 +15,6 @@
     
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.js"></script>
     <script type="text/javascript" src="http://code.cloudcms.com/alpaca/1.5.24/bootstrap/alpaca.min.js"></script>
-    <!--
-        In case you want to do GUI validation also.
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/ajv/4.1.7/ajv.bundle.js"></script>
-    -->
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
@@ -64,15 +60,15 @@
                         },
                         "buttons": {
                             "validate": {
-                                "title": "Validate and view JSON!",
+                                "title": "Validate",
                                 "click": function () {
                                     this.validate(true);
                                     this.refreshValidationState(true);
                                     if (this.isValid(true)) {
                                         var value = this.getValue();
-                                        alert(JSON.stringify(value, null, "  "));
+                                        alert("Perfecto!");
                                     } else {
-                                        alert("not valid");
+                                        alert("Invalid. Please correct errors");
                                     }
                                 }
                             },
@@ -102,20 +98,21 @@
                                 }
                             }
                         }
-                    }
-                    /*
-                    // If you want to display this form in any other layout.
-                    // 
+                    },
                     "view": {
                         "parent": "bootstrap-edit",
                         "layout": {
-                            "template": './layouts-example1-template.html',
+                            "template": './layout1.html',
                             "bindings": {
-                                "firstName": "#left",
-                                "lastName": "#right"
+                                "nationalIdentifier": "#left",
+                                "name": "#right",
+                                "gender": "#id3",
+                                "dob": "#id4",
+                                "hasDrivingLicense": "#id5",
+                                "photo": "#id6"
                             }
                         }
-                    }*/
+                    }
                 }
             });
         });

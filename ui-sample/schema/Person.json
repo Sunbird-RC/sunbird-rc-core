@@ -10,17 +10,13 @@
   ],
   "additionalProperties": false,
   "properties": {
-    "photo": {
-      "type": "string",
-      "contentEncoding": "base64",
-      "mediaType": "image/png",
-      "title": "photo"
-    },
     "nationalIdentifier": {
       "$id": "#/properties/nationalIdentifier",
       "type": "string",
       "$comment": "Nationality",
-      "title": "National identifier"
+      "pattern": "^[0-9]{3}-.*",
+      "title": "National identifier",
+      "examples": ["888-abc", "639-def"]
     },
     "name": {
       "$id": "#/properties/name",
@@ -51,6 +47,12 @@
       "$id": "#/properties/hasDrivingLicense",
       "type": "boolean",
       "title": "Driving license is present"
+    },
+    "photo": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "mediaType": "image/png",
+      "title": "photo"
     }
   }
 }
