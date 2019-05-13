@@ -32,15 +32,15 @@ registry:
     base: ${registry_system_base:http://localhost:8080/opensaber/}
   rootEntity:
         type: ${registry_rootentity_type:Teacher}
- 
-# This property is to be used for search request/query 
-# offset: search result starts from value provided as default        
-# limits: search result to value provided as default 
+
+# This property is to be used for search request/query
+# offset: search result starts from value provided as default
+# limits: search result to value provided as default
 search:
   offset: ${search_offset:0}
   limit: ${search_limit:100}
   # The search mechanism to use. Values could be either NativeSearchService or ElasticSearchService
-  #   If NativeSearchService, then every search API uses the same database as the writes. May 
+  #   If NativeSearchService, then every search API uses the same database as the writes. May
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
   providerName: io.opensaber.registry.service.NativeSearchService
@@ -66,7 +66,7 @@ database:
   # has been provided for reference. If you'd like to use it, set value "serialNum" here.
   # Note that "serialNum" must then be part of the payload.
   shardProperty: ${database_shardProperty:none}
-  
+
   # This property is instruction to use the shard advisor.
   # Values could be io.opensaber.registry.sink.shard.DefaultShardAdvisor, OR
   # io.opensaber.registry.sink.shard.SerialNumberShardAdvisor OR
@@ -78,12 +78,12 @@ database:
     -
       # shardId, shardlabel must be a unique identifier to each connection.
       shardId: shard1
-      
+
       # shardLabel is used as prefix for a uuid. Could be any alpha numeric string
       # Example of a record identifier: 1-60f76147-0acd-4dff-b75a-2d811787d04d
       # Note '1' is the label used for record identifier
       # shardLabel is not stored in the database
-      shardLabel: 1      
+      shardLabel: 1
 
       # The format of the URI can be learnt from the following links -
       #     * 1. Graph database (Neo4J)
@@ -121,7 +121,7 @@ cassandra:
     index:
       storage.backend: ${cassandr_index_storage:elasticsearch}
       hostname: ${cassandra_index_hostname:localhost}
-    
+
 # File for framing the entity while reading
 frame:
   file: ${frame_file:frame.json}

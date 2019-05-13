@@ -82,7 +82,7 @@ public class SunbirdActorFactory {
                     ActorRef actorRef = null;
                     String className = actorScanPackage + "." + stringConfigValueEntry.getKey().substring(1);
                     try {
-                        actorRef = createLocalActor(actorSystem, ClassLoader.getSystemClassLoader().loadClass(className));
+                        actorRef = createLocalActor(actorSystem, Class.forName(className));
                         actorCache.add(ActorUtils.getName(actorRef), actorRef);
                     } catch (ClassNotFoundException notFound) {
                         // class is not found, looks developer didn't implement

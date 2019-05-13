@@ -253,6 +253,7 @@ public class RegistryServiceImpl implements RegistryService {
                 logger.debug("Updating the parent record {}", rootId);
                 // Update is for the parent entity.
                 // Nothing to do as the record has been already read.
+                rootId = id;
             }
             String parentEntityType = readNode.fields().next().getKey();
             HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
@@ -322,7 +323,7 @@ public class RegistryServiceImpl implements RegistryService {
         }
         auditRecord.setAuditInfo(auditItemDetails);
 
-        boolean elasticSearchEnabled = (searchProvider == "io.opensaber.registry.service.ElasticSearchService");
+        boolean elasticSearchEnabled = (searchProvider.equals("io.opensaber.registry.service.ElasticSearchService"));
         MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, operation,
                                 parentEntityType.toLowerCase(), entityRootId, mergedNode.get(parentEntityType), auditRecord);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
