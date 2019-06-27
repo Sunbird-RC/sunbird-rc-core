@@ -1,0 +1,11 @@
+code,name,grade,subjects,schoolName,phone,email
+TCH1,Nirmala,[3],[EVS],QSBB higher secondary school,98800123,tch1@school1.com
+TCH2,Padma,[4],[Geography],QSBB higher secondary school,98800123,tch2@school1.com
+TCH3,Jayabalan,[4],[EVS],QSBB higher secondary school,98800123,tch3@school1.com
+TCH4,Rani,[5],[Geography],QSBB higher secondary school,98800123,tch4@school1.com
+TCH5,John,[8],[Physics],QSBB higher secondary school,98800123,tch5@school1.com
+TCH6,Anita,[3],[EVS],Ayan international school,98800123,tch6@school2.com
+TCH7,Lorita,[4],[Geography],Ayan international school,98800123,tch7@school2.com
+TCH8,Britto,[4],[EVS],Ayan international school,98800123,tch8@school2.com
+TCH9,Jayshree,[5],[Geography],Ayan international school,98800123,tch9@school2.com
+TCH10,Pandian,[8],[Physics],Ayan international school,98800123,tch10@school2.com
