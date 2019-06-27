@@ -13,19 +13,19 @@
     "name": {
       "$id": "#/properties/name",
       "type": "string",
-      "title": "Name"
+      "title": "Nombre"
     },
     "phone": {
       "$id": "#/properties/phone",
       "format": "phone",
-      "title": "phone"
+      "title": "Teléfono"
     },
     "teacherId": {
       "$id": "#/properties/teacherId",
       "type": "string",
       "$comment": "teacherId",
       "pattern": "^[0-9]{3}-.*",
-      "title": "Teacher Id",
+      "title": "Identificador Maestro",
       "examples": [
         "888-abc",
         "639-def"
@@ -34,17 +34,17 @@
     "school": {
       "$id": "#/properties/school",
       "type": "string",
-      "title": "school"
+      "title": "colegio"
     },
     "isAdmin": {
       "$id": "isAdmin",
       "type": "boolean",
-      "title": "isAdmin"
+      "title": "esAdmin"
     },
     "isApproved": {
       "$id": "isApproved",
       "type": "boolean",
-      "title": "isApproved"
+      "title": "estaAprobado"
     }
   }
 }

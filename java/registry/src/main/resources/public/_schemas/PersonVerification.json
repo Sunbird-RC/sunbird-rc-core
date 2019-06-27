@@ -2,24 +2,21 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
   "properties": {
-    "Person": {
-      "$ref": "#/definitions/Person"
+    "PersonVerified": {
+      "$ref": "#/definitions/PersonVerified"
     }
   },
-  "title": "Person",
+  "title": "PersonVerified",
   "required": [
-    "Person"
+    "PersonVerified"
   ],
   "definitions": {
-    "Person": {
-      "$id": "#/properties/Person",
+    "PersonVerified": {
+      "$id": "#/properties/PersonVerified",
       "type": "object",
-      "title": "The Person Schema",
+      "title": "The PersonVerified Schema",
       "required": [
-        "teacherId",
-        "name",
-        "phone",
-        "school"
+        "personId"
       ],
       "additionalProperties": false,
       "properties": {
@@ -31,35 +28,25 @@
           },
           "$comment": "Placeholder for all verifiable claims"
         },
-        "teacherId": {
-          "$id": "#/properties/teacherId",
+        "personId": {
+          "$id": "#/properties/personId",
           "type": "string",
+          "$comment": "person identifier"
+        },
+        "TeacherIdVerified": {
+          "$id": "#/properties/teacherIdVerified",
+          "type": "boolean",
           "$comment": "teacher identifier"
         },
-        "name": {
-          "$id": "#/properties/name",
-          "type": "string",
-          "title": "Name"
-        },
-        "phone": {
-          "$id": "#/properties/phone",
-          "type": "string",
+        "PhoneVerified": {
+          "$id": "phoneVerified",
+          "type": "boolean",
           "title": "Phone"
         },
-        "school": {
-          "$id": "#/properties/school",
-          "type": "string",
+        "SchoolVerified": {
+          "$id": "schoolVerified",
+          "type": "boolean",
           "title": "School"
-        },
-        "isAdmin": {
-          "$id": "#/properties/isAdmin",
-          "type": "boolean",
-          "title": "isAdmin"
-        },
-        "isApproved": {
-          "$id": "#/properties/isApproved",
-          "type": "boolean",
-          "title": "isApproved"
         }
       }
     }
@@ -73,14 +60,10 @@
       "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
       "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"
     ],
-    "privateFields": [
-
-    ],
+    "privateFields": [],
     "signedFields": [],
-    "indexFields": [
-    ],
-    "uniqueIndexFields": [
-    ],
+    "indexFields": [],
+    "uniqueIndexFields": [],
     "systemFields": [
       "_osCreatedAt",
       "_osUpdatedAt",

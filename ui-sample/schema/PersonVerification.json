@@ -1,0 +1,31 @@
+{
+  "$id": "#/properties/PersonVerified",
+  "type": "object",
+  "title": "The PersonVerified Schema",
+  "required": [
+    "personId"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "personId": {
+      "$id": "#/properties/personId",
+      "type": "string",
+      "title": "personId"
+    },
+    "PhoneVerified": {
+      "$id": "#/properties/phoneVerified",
+      "type": "boolean",
+      "title": "phone"
+    },
+    "TeacherIdVerified": {
+      "$id": "#/properties/teacherIdVerified",
+      "type": "boolean",
+      "title": "Teacher Id"
+    },
+    "SchoolVerified": {
+      "$id": "#/properties/schoolVerified",
+      "type": "boolean",
+      "title": "school"
+    }
+  }
+}

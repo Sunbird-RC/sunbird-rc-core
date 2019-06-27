@@ -1,0 +1,30 @@
+{
+  "subject": "Person",
+  "fields": [
+    {
+      "name": "name",
+      "title": "name",
+      "display": true
+    },
+    {
+      "name": "phone",
+      "title": "phone"
+    },
+    {
+      "name": "school",
+      "title": "school"
+    },
+    {
+      "name": "teacherId",
+      "title": "teacherId"
+    },
+    {
+      "name": "osid",
+      "title": "osid"
+    },
+    {
+      "name": "isApproved",
+      "title": "isApproved"
+    }
+  ]
+}

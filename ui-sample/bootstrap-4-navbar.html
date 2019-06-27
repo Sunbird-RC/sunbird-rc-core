@@ -1,0 +1,68 @@
+<script src="./utils.js"></script>
+<script>
+    function langSelectedPage(page) {
+        console.log('langSelectedPage ' + document.getElementById("langSelected").innerHTML)
+
+        if (document.getElementById("langSelected").innerHTML === 'English') {
+            document.location.href = "./" + page + ".html?lang=" + document.getElementById("langSelected").innerHTML
+        }
+        else if(document.getElementById("langSelected").innerHTML === 'Spanish') {
+            document.location.href = "./" + page + ".html?lang=" + document.getElementById("langSelected").innerHTML
+        }
+
+    }
+
+</script>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+        <a class="navbar-brand" data-localize="productName" href="#">Teacher Registry
+          <a class="navbar-item" style="margin-top: 2rem; margin-left: -1rem;"> <h9 data-localize="poweredBy" style="font-size: 11px"> Powered by OpenSABER </h9> </a>
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText"
+            aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item dropdown pr-4" id="nav1">
+                    <a class="nav-link"  onClick="langSelectedPage('login')" data-localize="login" href=""
+                        id="navbarDropdownMenuLink">Login</a>
+                </li>
+                <li class="nav-item dropdown pr-4" id="nav2">
+                    <!-- <a class="nav-link" href="./signUp.html" id="navbarDropdownMenuLink" > signUp</a> -->
+                    <a class="btn btn-outline-primary" onClick="langSelectedPage('signUp')"  href=""
+                        data-localize="signUp" id="navbarDropdownMenuLink">Sign up</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="admin" href="" onclick="langSelectedPage('adminPage')" data-localize="manage" style="display: none">Manage</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="langSelected" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                        <ul>
+                            <li onclick="dataLocalizeRefresh('es', 'Spanish')" id="es">Spanish</li>
+                            <li onclick="dataLocalizeRefresh('en', 'English')" id="en">English</li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item dropdown" id="profile">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-user-circle" style="font-size:28px;color: grey"></i>
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                        <a class="dropdown-item" id="dropdown">
+                        </a>
+                        <div class="dropdown-divider" id="adminline" style="display: none"></div>
+                        <a class="dropdown-item" data-localize="logout" href="./home.html">Logout</a>
+                    </div>
+
+
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
