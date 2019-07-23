@@ -2,12 +2,9 @@ package io.opensaber.views;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Field {
-    private static Logger logger = LoggerFactory.getLogger(Field.class);
 
     private String name;
     private String title;
@@ -75,7 +72,6 @@ public class Field {
     public String getFunctioName(){
         String fdName = StringUtils.substring(this.function, this.function.lastIndexOf("/")+1, this.function.indexOf("("));
         if(fdName.isEmpty()){
-            logger.error("$function reference is not valid! for " + this.function);
             throw new IllegalArgumentException("$function reference is not valid! ");
         }
         return fdName;

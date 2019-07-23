@@ -10,21 +10,21 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class EncryptionHelper extends PrivateField {
+public class DecryptionHelper extends PrivateField {
 
-    public JsonNode getEncryptedJson(JsonNode rootNode) throws EncryptionException {
-        JsonNode encryptedRoot = rootNode;
+    public JsonNode getDecryptedJson(JsonNode rootNode) throws EncryptionException {
+        JsonNode decryptedRoot = rootNode;
         String rootFieldName = rootNode.fieldNames().next();
         Definition definition = definitionsManager.getDefinition(rootFieldName);
         List<String> privatePropertyLst = definition.getOsSchemaConfiguration().getPrivateFields();
         if (rootNode.isObject()) {
             Map<String, Object> plainMap = getPrivateFields(rootNode, privatePropertyLst);
             if(null != plainMap){
-                Map<String, Object> encodedMap = encryptionService.encrypt(plainMap);
-                encryptedRoot  = replacePrivateFields(rootNode, privatePropertyLst, encodedMap);
+                Map<String, Object> encodedMap = encryptionService.decrypt(plainMap);
+                decryptedRoot  = replacePrivateFields(rootNode, privatePropertyLst, encodedMap);
             }
         }
-        return encryptedRoot;
+        return decryptedRoot;
     }
 
 }

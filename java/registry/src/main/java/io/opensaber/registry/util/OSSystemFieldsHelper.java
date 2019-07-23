@@ -60,17 +60,17 @@ public class OSSystemFieldsHelper {
     public void addSystemProperty(String field, JsonNode node, String userId, String timeStamp) {
         try {
             switch (OSSystemFields.getByValue(field)) {
-                case _osCreatedAt:
-                    OSSystemFields._osCreatedAt.createdAt(node, timeStamp);
+                case osCreatedAt:
+                    OSSystemFields.osCreatedAt.createdAt(node, timeStamp);
                     break;
-                case _osCreatedBy:
-                    OSSystemFields._osCreatedBy.createdBy(node, userId);
+                case osCreatedBy:
+                    OSSystemFields.osCreatedBy.createdBy(node, userId);
                     break;
-                case _osUpdatedAt:
-                    OSSystemFields._osUpdatedAt.updatedAt(node, timeStamp);
+                case osUpdatedAt:
+                    OSSystemFields.osUpdatedAt.updatedAt(node, timeStamp);
                     break;
-                case _osUpdatedBy:
-                    OSSystemFields._osUpdatedBy.updatedBy(node, userId);
+                case osUpdatedBy:
+                    OSSystemFields.osUpdatedBy.updatedBy(node, userId);
                     break;
             }
         } catch (Exception e) {

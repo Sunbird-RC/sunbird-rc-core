@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.opensaber.views.Field;
 import io.opensaber.views.ViewTemplate;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -35,6 +37,9 @@ public class ViewTemplateManager {
     
     @Autowired
     private ResourceLoader resourceLoader;
+
+	@Autowired
+    private DefinitionsManager definitionsManager;
 
     /**
      * Loads the templates from the views folder
@@ -88,6 +93,20 @@ public class ViewTemplateManager {
 	private ViewTemplate getViewTemplateByContent(String templateContent)
 			throws JsonParseException, JsonMappingException, IOException {
 		return mapper.readValue(templateContent, ViewTemplate.class);
+	}
+
+	public boolean isPrivateFieldEnabled(ViewTemplate viewTemplate, String entityType){
+		boolean privateFieldEnabled = false;
+		List<Field> fieldList = viewTemplate.getFields();
+		Definition definition = definitionsManager.getDefinition(entityType);
+		List<String> privateFields = definition.getOsSchemaConfiguration().getPrivateFields();
+		for(Field field : fieldList) {
+			if(privateFields.contains(field.getName())){
+				privateFieldEnabled = true;
+				break;
+			}
+		}
+		return privateFieldEnabled;
 	}
     
 }

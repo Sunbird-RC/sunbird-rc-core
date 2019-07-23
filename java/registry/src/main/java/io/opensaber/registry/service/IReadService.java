@@ -5,6 +5,7 @@ import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.dao.ValueType;
+import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.util.ReadConfigurator;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,6 +16,6 @@ import org.slf4j.LoggerFactory;
 
 public interface IReadService {
 
-    JsonNode getEntity(String id, String entityType, ReadConfigurator configurator) throws Exception;
+    JsonNode getEntity(Shard shard, String userId, String id, String entityType, ReadConfigurator configurator) throws Exception;
 
 }

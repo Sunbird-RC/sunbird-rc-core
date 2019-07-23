@@ -13,6 +13,7 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.DateUtil;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.util.ReadConfigurator;
 
 import java.io.IOException;
@@ -42,8 +43,6 @@ public class ElasticReadService implements IReadService {
 
     @Autowired
     private IAuditService auditService;
-    @Autowired
-    private APIMessage apiMessage;
 
     /**
      * This method interacts with the Elasticsearch and reads the record
@@ -55,7 +54,7 @@ public class ElasticReadService implements IReadService {
      * @throws Exception
      */
     @Override
-    public JsonNode getEntity(String id, String entityType, ReadConfigurator configurator) throws Exception {
+    public JsonNode getEntity(Shard shard, String userId, String id, String entityType, ReadConfigurator configurator) throws Exception {
         JsonNode result = null;
         AuditRecord auditRecord = null;
         Map<String, Object> response = null;
@@ -73,14 +72,14 @@ public class ElasticReadService implements IReadService {
             JSONUtil.removeNode((ObjectNode) result, Constants.SIGNATURES_STR);
         }
         auditRecord = new AuditRecord();
-        auditRecord.setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_READ).setRecordId(id).
+        auditRecord.setUserId(userId).setAction(Constants.AUDIT_ACTION_READ).setRecordId(id).
                 setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());
         AuditInfo auditInfo = new AuditInfo();
         auditInfo.setOp(Constants.AUDIT_ACTION_READ_OP);
         auditInfo.setPath("/" + entityType);
         auditRecord.setAuditInfo(Arrays.asList(auditInfo));
         auditService.audit(auditRecord);
-		ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
+        ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
         resultNode.set(entityType, result);
         return resultNode;
     }

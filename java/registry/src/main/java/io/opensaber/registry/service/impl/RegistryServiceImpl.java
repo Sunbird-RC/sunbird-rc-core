@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.actors.factory.MessageFactory;
-import io.opensaber.elastic.IElasticService;
-import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.AuditInfo;
 import io.opensaber.pojos.AuditRecord;
 import io.opensaber.pojos.ComponentHealthInfo;
@@ -77,8 +75,6 @@ public class RegistryServiceImpl implements RegistryService {
     private SignatureHelper signatureHelper;
     @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
-    private APIMessage apiMessage;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
 
@@ -98,9 +94,6 @@ public class RegistryServiceImpl implements RegistryService {
     private String searchProvider;
 
     @Autowired
-    private Shard shard;
-
-    @Autowired
     private EntityParenter entityParenter;
 
     @Autowired
@@ -108,11 +101,7 @@ public class RegistryServiceImpl implements RegistryService {
 
     private AuditRecord auditRecord;
 
-    public void setShard(Shard shard) {
-        this.shard = shard;
-    }
-
-    public HealthCheckResponse health() throws Exception {
+    public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
         boolean databaseServiceup = shard.getDatabaseProvider().isDatabaseServiceUp();
         boolean overallHealthStatus = databaseServiceup;
@@ -150,7 +139,7 @@ public class RegistryServiceImpl implements RegistryService {
      * @throws Exception
      */
     @Override
-    public void deleteEntityById(String uuid) throws Exception {
+    public void deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -164,7 +153,7 @@ public class RegistryServiceImpl implements RegistryService {
                 registryDao.deleteEntity(vertex);
                 databaseProvider.commitTransaction(graph, tx);
                 String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
-                callAuditESActors(null,null,"delete", Constants.AUDIT_ACTION_DELETE,uuid,index,uuid,tx);
+                callAuditESActors(userId,null,null,"delete", Constants.AUDIT_ACTION_DELETE,uuid,index,uuid,tx);
             }
             logger.info("Entity {} marked deleted", uuid);
         }
@@ -173,18 +162,16 @@ public class RegistryServiceImpl implements RegistryService {
     /**
      * This method adds the entity into db, calls elastic and audit asynchronously
      *
-     * @param jsonString - input value as string
+     * @param rootNode - input value as string
      * @return
      * @throws Exception
      */
-    public String addEntity(String jsonString) throws Exception {
+    public String addEntity(Shard shard, String userId, JsonNode rootNode) throws Exception {
         Transaction tx = null;
         String entityId = "entityPlaceholderId";
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode rootNode = mapper.readTree(jsonString);
         String vertexLabel = rootNode.fieldNames().next();
 
-        systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), apiMessage.getUserID());
+        systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
         if (encryptionEnabled) {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
@@ -213,19 +200,17 @@ public class RegistryServiceImpl implements RegistryService {
             Definition definition = definitionsManager.getDefinition(vertexLabel);
             entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
 
-            callAuditESActors(null,rootNode,"add", Constants.AUDIT_ACTION_ADD,entityId,vertexLabel,entityId,tx);
+            callAuditESActors(userId,null,rootNode,"add", Constants.AUDIT_ACTION_ADD,entityId,vertexLabel,entityId,tx);
 
         }
         return entityId;
     }
 
     @Override
-    public void updateEntity(String id, String jsonString) throws Exception {
+    public void updateEntity(Shard shard, String userId, String id, String jsonString) throws Exception {
         JsonNode inputNode = objectMapper.readTree(jsonString);
         String entityType = inputNode.fields().next().getKey();
-
-        systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), apiMessage.getUserID());
-
+        systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
         if (encryptionEnabled) {
             inputNode = encryptionHelper.getEncryptedJson(inputNode);
         }
@@ -294,21 +279,21 @@ public class RegistryServiceImpl implements RegistryService {
             }
 
             // The entity type is a child and so could be different from parent entity type.
-            doUpdate(graph, registryDao, vr, inputNode.get(entityType));
+            doUpdate(shard, graph, registryDao, vr, inputNode.get(entityType));
 
             databaseProvider.commitTransaction(graph, tx);
             // elastic-search and audit akka calls starts here
-            callAuditESActors(readNode,mergedNode,"update",Constants.AUDIT_ACTION_UPDATE,id,entityType,rootId,tx);
+            callAuditESActors(userId,readNode,mergedNode,"update",Constants.AUDIT_ACTION_UPDATE,id,entityType,rootId,tx);
         }
     }
 
     @Async("auditExecutor")
-    public void callAuditESActors(JsonNode readNode, JsonNode mergedNode, String operation, String auditAction, String id,
+    public void callAuditESActors(String userId, JsonNode readNode, JsonNode mergedNode, String operation, String auditAction, String id,
                                   String parentEntityType, String entityRootId, Transaction tx) throws JsonProcessingException {
         logger.debug("callAuditESActors started");
         List<AuditInfo> auditItemDetails = null;
         auditRecord = new AuditRecord();
-        auditRecord.setUserId(apiMessage.getUserID()).setAction(auditAction)
+        auditRecord.setUserId(userId).setAction(auditAction)
                 .setTransactionId(new LinkedList<>(Arrays.asList(tx.hashCode()))).setRecordId(id).
                 setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());
         JsonNode differenceJson = JSONUtil.diffJsonNode(readNode, mergedNode);
@@ -325,12 +310,12 @@ public class RegistryServiceImpl implements RegistryService {
 
         boolean elasticSearchEnabled = (searchProvider.equals("io.opensaber.registry.service.ElasticSearchService"));
         MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, operation,
-                                parentEntityType.toLowerCase(), entityRootId, mergedNode.get(parentEntityType), auditRecord);
+                parentEntityType.toLowerCase(), entityRootId, mergedNode.get(parentEntityType), auditRecord);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
         logger.debug("callAuditESActors ends");
     }
 
-    private void doUpdateArray(Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode) {
+    private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode) {
         HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
         Set<String> updatedUuids = new HashSet<>();
 
@@ -368,7 +353,7 @@ public class RegistryServiceImpl implements RegistryService {
         }
     }
 
-    private void doUpdate(Graph graph, IRegistryDao registryDao, VertexReader vr, JsonNode userInputNode) throws Exception {
+    private void doUpdate(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, JsonNode userInputNode) throws Exception {
         HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
         Vertex rootVertex = vr.getRootVertex();
 
@@ -393,7 +378,7 @@ public class RegistryServiceImpl implements RegistryService {
                 Map.Entry<String, JsonNode> oneElement = fieldsItr.next();
                 JsonNode oneElementNode = oneElement.getValue();
                 if (!oneElement.getKey().equals(uuidPropertyName) &&
-                    oneElementNode.isValueNode() || oneElementNode.isArray()) {
+                        oneElementNode.isValueNode() || oneElementNode.isArray()) {
                     logger.info("Value or array node, going to update {}", oneElement.getKey());
 
                     if (oneElementNode.isArray()) {
@@ -410,7 +395,7 @@ public class RegistryServiceImpl implements RegistryService {
 
                         if (null != existArrayVertex) {
                             // updateArrayItems one by one
-                            doUpdateArray(graph, registryDao, vr, existArrayVertex, (ArrayNode) oneElementNode);
+                            doUpdateArray(shard, graph, registryDao, vr, existArrayVertex, (ArrayNode) oneElementNode);
                         } else {
                             VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
                             vertexWriter.createArrayNode(rootVertex, oneElement.getKey(), (ArrayNode) oneElementNode);
@@ -421,7 +406,7 @@ public class RegistryServiceImpl implements RegistryService {
                     }
                 } else if (oneElementNode.isObject()) {
                     logger.info("Object node {}", oneElement.toString());
-                    doUpdate(graph, registryDao, vr, oneElementNode);
+                    doUpdate(shard, graph, registryDao, vr, oneElementNode);
                 }
             }
         } else {

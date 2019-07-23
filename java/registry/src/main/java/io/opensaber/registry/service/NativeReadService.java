@@ -31,8 +31,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * This class provides native search which hits the native database
- * Hence, this have performance in-efficiency on search operations    
- * 
+ * Hence, this have performance in-efficiency on search operations
+ *
  */
 @Component
 public class NativeReadService implements IReadService {
@@ -43,13 +43,7 @@ public class NativeReadService implements IReadService {
 	private DefinitionsManager definitionsManager;
 
 	@Autowired
-	private Shard shard;
-
-	@Autowired
 	private IAuditService auditService;
-
-    @Autowired
-    private APIMessage apiMessage;
 
 	@Value("${database.uuidPropertyName}")
 	public String uuidPropertyName;
@@ -64,8 +58,8 @@ public class NativeReadService implements IReadService {
 	 * @throws Exception
 	 */
 	@Override
-	public JsonNode getEntity(String id, String entityType, ReadConfigurator configurator) throws Exception {
-        AuditRecord auditRecord = null;
+	public JsonNode getEntity(Shard shard, String userId, String id, String entityType, ReadConfigurator configurator) throws Exception {
+		AuditRecord auditRecord = null;
 		DatabaseProvider dbProvider = shard.getDatabaseProvider();
 		IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
 		try (OSGraph osGraph = dbProvider.getOSGraph()) {
@@ -80,8 +74,8 @@ public class NativeReadService implements IReadService {
 			}
 
 			dbProvider.commitTransaction(graph, tx);
-            auditRecord =  new AuditRecord();
-            auditRecord.setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_READ).setRecordId(id).setTransactionId(new LinkedList<>(Arrays.asList(tx.hashCode())))
+			auditRecord =  new AuditRecord();
+			auditRecord.setUserId(userId).setAction(Constants.AUDIT_ACTION_READ).setRecordId(id).setTransactionId(new LinkedList<>(Arrays.asList(tx.hashCode())))
 					.setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());
 			AuditInfo auditInfo = new AuditInfo();
 			auditInfo.setOp(Constants.AUDIT_ACTION_READ_OP);
