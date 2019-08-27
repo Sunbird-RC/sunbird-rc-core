@@ -1,0 +1,64 @@
+.signUp-page-section {
+    background-color: #ffffff;
+    border-bottom: 1px solid rgba(206, 197, 197, 0.79);
+    -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.075);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.075);
+}
+
+@media only screen and (min-width: 1024px){
+    .ui.raised.shadow.container.segment {
+        margin: 35px auto!important;
+        width: 944px!important;
+        padding: 20px;
+        box-shadow: 0 2px 16px 0 rgba(0,0,0,.2);
+    }
+}
+
+.center {
+    text-align: center
+}
+
+.sb-btn-normal {
+    height: 8px * 4;
+    font-size:16px;
+}
+
+.sb-btn {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    outline: 0;
+    display: inline-block;
+    border: 1px solid;
+    color: white;
+    cursor: pointer;
+    line-height: inherit;
+    text: {
+        transform: capitalize;
+        decoration: none;
+    }
+    &:hover {
+        opacity: 1;
+    }
+    &.disabled,
+    &.disabled:hover,
+    &:disabled,
+    &:disabled:hover {
+        background-color:  #333333;
+        color: #333333;
+        border:1px solid ;
+        cursor: not-allowed;
+    }
+    &+.sb-btn {
+        margin:0 8px 0 0;
+    }
+    border-radius: 4px;
+    
+}
+
+.primary {
+    background-color: #024f9d;
+}
+.buttons {
+    text-align: center;
+    padding: 2rem;
+}

@@ -1,0 +1,52 @@
+tr th {
+    text-transform: capitalize;
+}
+
+.disableIcon {
+    pointer-events: none;
+    opacity: 0.45;
+}
+
+::ng-deep .ui.floating.main-header-search-dropdown.dropdown .menu {
+    top:25px;
+}
+
+.ui.icon.button {
+    background: white;
+    padding: 1px 4px 7px 7px;
+    border: 1px solid rgba(34,36,38,.15);
+    .primary-search-icon {
+      font-size: 1.2em;  
+      color: black;     
+    }
+}
+.ui.small.input {
+    width: 300px !important;
+    height: 3rem;
+}
+::ng-deep {
+    .ui.fluid.action.input.primary-search-input {
+        height: 39px;
+        border: 1px solid grey;
+        opacity: 1;
+        border-radius: 5px;
+    }    
+}
+
+@media only screen and (min-width: 767px) and (max-width:1023px){
+    ::ng-deep {
+        .ui.fluid.action.input.primary-search-input {
+            height: 39px;
+        }    
+    }
+    .primary-search-input {
+        top: -1rem;
+    }
+}
+@media only screen and (min-width: 1024px)
+{
+// .primary-search-input[_ngcontent-c17] {
+//     left: 1rem !important;
+//     top: 0rem;
+// }
+}

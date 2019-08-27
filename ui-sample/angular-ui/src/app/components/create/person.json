@@ -1,0 +1,112 @@
+{
+    "type": "signUp",
+    "action": "signUp",
+    "data": {
+      "templateName": "defaultTemplate",
+      "action": "signUp",
+      "fields": [
+        {
+          "code": "name",
+          "dataType": "text",
+          "name": "Name",
+          "label": "Name",
+          "description": "Name",
+          "editable": true,
+          "placeholder": "Name",
+          "inputType": "text",
+          "required": false,
+          "displayProperty": "Editable",
+          "visible": true,
+          "renderingHints": {
+            "semanticColumnWidth": "twelve"
+          },
+          "index": 1
+        },
+        {
+          "code": "phone",
+          "dataType": "text",
+          "name": "phone",
+          "label": "Phone",
+          "description": "Phone",
+          "editable": true,
+          "placeholder": "Phone",
+          "inputType": "text",
+          "required": false,
+          "displayProperty": "Editable",
+          "visible": true,
+          "renderingHints": {
+            "semanticColumnWidth": "twelve"
+          },
+          "index": 2
+        },
+        {
+          "code": "teacherId",
+          "dataType": "text",
+          "name": "teacherId",
+          "label": "Teacher ID",
+          "description": "Teacher ID",
+          "editable": true,
+          "placeholder": "Teacher ID",
+          "inputType": "text",
+          "required": false,
+          "displayProperty": "Editable",
+          "visible": true,
+          "renderingHints": {
+            "semanticColumnWidth": "twelve"
+          },
+          "index": 3
+        },
+        {
+            "code": "school",
+            "dataType": "text",
+            "name": "school",
+            "label": "School",
+            "description": "School",
+            "editable": true,
+            "placeholder": "School",
+            "inputType": "text",
+            "required": false,
+            "displayProperty": "Editable",
+            "visible": true,
+            "renderingHints": {
+              "semanticColumnWidth": "twelve"
+            },
+            "index": 4
+          },
+          {
+            "code": "isAdmin",
+            "dataType": "text",
+            "name": "isAdmin",
+            "label": "IsAdmin",
+            "description": "IsAdmin",
+            "editable": true,
+            "placeholder": "IsAdmin",
+            "inputType": "text",
+            "required": false,
+            "displayProperty": "Editable",
+            "visible": true,
+            "renderingHints": {
+              "semanticColumnWidth": "twelve"
+            },
+            "index": 5
+          },
+          {
+            "code": "isApproved",
+            "dataType": "text",
+            "name": "isApproved",
+            "label": "IsApproved",
+            "description": "IsApproved",
+            "editable": true,
+            "placeholder": "IsApproved",
+            "inputType": "text",
+            "required": false,
+            "displayProperty": "Editable",
+            "visible": true,
+            "renderingHints": {
+              "semanticColumnWidth": "twelve"
+            },
+            "index": 6
+          }
+      ]
+    }
+}

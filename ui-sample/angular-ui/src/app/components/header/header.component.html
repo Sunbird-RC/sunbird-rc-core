@@ -1,0 +1,54 @@
+<div class="ui fixed main menu bs-0 d-block">
+        <div class="ui container">
+                <div class="ui grid padded width-100">
+                        <div class="six wide column p-0">
+                                <!--Logo-->
+                                <a class="d-flex logo" tabindex="0" role="banner">
+                                        <img class="cursor-pointer" alt="logo"
+                                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Logo_TV_2015.svg/1200px-Logo_TV_2015.svg.png">
+
+                                </a>
+                                <!--/Logo-->
+                        </div>
+                        <div class="six wide column p-0 d-flex flex-jc-flex-end flex-ai-center">
+                                <i class="large bars icon link primary-color mobile only" (click)="showSideBar()"
+                                        tabindex="0"></i>
+                                <div class="ui text menu m-0 d-flex flex-jc-center flex-ai-center computer only">
+
+                                        <ng-container>
+                                                <a class="item" [class.active]="router.isActive('/signUp')"
+                                                        routerLink="/signUp">
+                                                        {{resourceService?.frmelmnts?.btn?.signUp}}
+                                                </a>
+                                                <a class="item " routerLink="/logIn">
+                                                        {{resourceService?.frmelmnts?.btn?.logIn}}
+                                                </a>
+
+                                        </ng-container>
+                                </div>
+                                <a class="profile-avtar computer only p-0 ml-15" tabindex="0" *ngIf="userLogin">
+                                        <div suiDropdown class="ui dropdown right top pointing"
+                                                id="dropdown-menu-list-header">
+                                                <ngx-avatar [style]="avtarDesktopStyle" [size]="38" initialsSize="1"
+                                                        name="ais">
+                                                </ngx-avatar>
+                                                <div class="menu" suiDropdownMenu>
+                                                        <div class="item headerDropdownProfile">
+                                                                userName
+                                                        </div>
+                                                        <div class="ui divider"></div>
+                                                        <a class="item" routerLink="profile">
+                                                                {{resourceService?.frmelmnts?.btn?.profile}}
+                                                        </a>
+
+
+                                                        <a class="item" (click)="logout()">
+                                                                {{resourceService?.frmelmnts?.btn?.logout}}
+                                                        </a>
+                                                </div>
+                                        </div>
+                                </a>
+                        </div>
+                </div>
+        </div>
+</div>

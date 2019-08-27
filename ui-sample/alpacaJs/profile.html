@@ -68,7 +68,6 @@
             var g_lang = g_urlParams.searchParams.get('lang');
             var tempobj;
             var g_thisPerson = {};
-            var g_thisNewPerson = {};
             var g_isAdmin = g_urlParams.searchParams.get('isAdmin');
             var isedited = false;
             var g_thisPersonVerification = {};
@@ -331,6 +330,7 @@
                                 cb(result)
                             })
                         }
+
                     }
 
                     function isTrue(head) {

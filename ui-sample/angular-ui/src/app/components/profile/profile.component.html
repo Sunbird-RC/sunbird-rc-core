@@ -1,0 +1,46 @@
+<div class="ui container mb-20 mt-20 py-20">
+
+  <div class="ui grid flex-jc-center border">
+    <div class="twelve wide column">
+      <div class="mb-15 d-flex flex-jc-center relative">
+        <ngx-avatar class="my-avatar" [style]="{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #fff',
+                    boxShadow: '0 0 6px 0 rgba(0,0,0,0.38)',
+                    borderRadius: '50%',
+                    color: '#9017FF',
+                    fontWeight: 'bold',
+                    fontFamily: 'inherit'}" [size]="90" initialsSize="1" [textSizeRatio]="2"
+          name="{{userProfile.Name}} ">
+        </ngx-avatar>
+      </div>
+    </div>
+
+    <div class="six wide column">
+      <table class="ui table tac">
+        <tbody>
+          <tr *ngFor="let row  of userProfile | keyvalue">
+            <td>{{row.key}} : </td>
+            <td>{{row.value}}</td>
+          </tr>
+      </table>
+    </div>
+    <div class="twelve wide column">
+      <div class="d-flex flex-jc-center pt-0">
+        <a class="ui primary button" title="Download JSON" [href]="downloadJsonHref" download="download.json"
+          (click)="dowloadJson()"> {{resourceService?.frmelmnts?.btn?.download}}
+        </a>
+        <button class="ui primary button" (click)="navigateToEditPage()">
+          {{resourceService?.frmelmnts?.btn?.edit}}
+        </button>
+        <button class="ui button" (click)="navigateToHomePage()">
+          {{resourceService?.frmelmnts?.btn?.cancel}}
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<a id="downloadAnchorElem" style="display:none"></a>

@@ -1,0 +1,23 @@
+{
+    "data": {
+        "frmelmnts": {
+            "btn": {
+                "signUp": "Sign Up",
+                "logIn": "Log In",
+                "approve": "Approve",
+                "create": "Create",
+                "profile": "profile",
+                "logout": "logout",
+                "edit": "Edit",
+                "cancel": "Cancel",
+                "download": "Dowload",
+                "SearchIn": "search",
+                "update": "Update"
+            },
+            "msg": {
+                "logInHead": "Log-in to your account",
+                "createAccount": "create account"
+            }
+        }
+    }
+}

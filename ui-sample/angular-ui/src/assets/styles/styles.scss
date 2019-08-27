@@ -1,0 +1,148 @@
+/* You can add global styles to this file, and also import other style files */
+
+// @import url("../node_modules/bootstrap/dist/css/bootstrap.min.css")
+
+.d-flex {
+  display: flex !important;
+}
+.flex-jc-center {
+  justify-content: center !important;
+}
+.flex-jc-flex-end {
+  justify-content: flex-end !important;
+}
+.flex-jc-space-around {
+  justify-content: space-around !important;
+}
+.flex-jc-space-between {
+  justify-content: space-between !important;
+}
+.flex-as-center {
+   align-self: center !important;
+}
+.flex-as-flex-end {
+  align-self: flex-end !important;
+}  
+.flex-ai-center {
+  align-items: center !important;
+}
+.flex-dr {
+  flex-direction: row !important;
+}
+.flex-dc {
+  flex-direction: column !important;
+}
+.flex-w-wrap {
+  flex-wrap: wrap !important;
+}
+
+ .d-inline-block{
+    display: inline-block !important;
+}
+.d-block{
+    display: block !important;
+}
+.d-flex{
+    display: flex !important;
+}
+.d-inline-flex {
+    display: inline-flex !important;
+}
+.d-inline{
+    display: inline !important;
+}
+.d-none{
+    display: none !important;
+}
+
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.tac {
+  text-align: center !important;
+}
+
+@media only screen and (max-width: 1023px) {
+  [class*="mobile hidden"],
+  [class*="tablet only"]:not(.mobile),
+  [class*="computer only"]:not(.mobile),
+  [class*="large screen only"]:not(.mobile),
+  [class*="widescreen only"]:not(.mobile),
+  [class*="or lower hidden"] {
+    display: none !important;
+  }
+}
+
+@media only screen and (min-width: 1024px) {
+  [class*="mobile only"]:not(.computer),
+  [class*="tablet only"]:not(.computer),
+  [class*="computer hidden"],
+  [class*="large screen only"]:not(.computer),
+  [class*="widescreen only"]:not(.computer),
+  [class*="or lower hidden"]:not(.tablet):not(.mobile) {
+    display: none !important;
+  }
+}
+
+
+.mb-20 {
+  margin-bottom: 20px!important
+}
+.mt-20 {
+  margin-top: 20px!important
+}
+.py-20 {
+  padding-top: 20px!important;
+  padding-bottom: 20px!important;
+}
+
+body{
+  font-family: 'Open Sans', sans-serif;
+
+}
+
+.sb-btn-normal {
+  height: 8px * 4;
+  font-size:16px;
+}
+
+.sb-btn {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  outline: 0;
+  display: inline-block;
+  border: 1px solid;
+  color: white;
+  cursor: pointer;
+  line-height: inherit;
+  text: {
+      transform: capitalize;
+      decoration: none;
+  }
+  &:hover {
+      opacity: 1;
+  }
+  &.disabled,
+  &.disabled:hover,
+  &:disabled,
+  &:disabled:hover {
+      background-color:  #333333;
+      color: #333333;
+      border:1px solid ;
+      cursor: not-allowed;
+  }
+  &+.sb-btn {
+      margin:0 8px 0 0;
+  }
+  border-radius: 4px;
+  
+}
+
+.primary {
+  background-color: #024f9d;
+}
+.buttons {
+  text-align: center;
+  padding: 2rem;
+}
