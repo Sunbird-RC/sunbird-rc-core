@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormService } from '../../services/forms/form.service';
 import { ResourceService } from '../../services/resource/resource.service';
+import { DefaultTemplateComponent } from '../default-template/default-template.component';
+import { Subject } from 'rxjs';
 
 
 
@@ -10,12 +12,11 @@ import { ResourceService } from '../../services/resource/resource.service';
   styleUrls: ['./signup.component.scss']
 })
 export class SignupComponent implements OnInit {
+  @ViewChild('formData') formData: DefaultTemplateComponent;
 
   public formService: FormService;
 
   public formFieldProperties: any;
-
-  private action;
 
   public resourceService: ResourceService;
   constructor(formService: FormService, resouceService: ResourceService) {
@@ -29,8 +30,9 @@ export class SignupComponent implements OnInit {
     this.resourceService.initialize();
   }
   fetchFormData() {
-    this.formFieldProperties = this.formService.getFormConfig("signUp").fields;
-    
+      this.formService.getFormConfig("signUp").subscribe(res => {
+        this.formFieldProperties = res.fields;
+      });
   }
 
 }

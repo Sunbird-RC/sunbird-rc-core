@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import {ServerResponse} from '../interfaces/serverResponse'
-import {RequestParam} from '../interfaces/requestParam';
 import {HttpOptions} from '../interfaces/httpOptions'
 import {HttpClient} from '@angular/common/http'
 import { mergeMap } from 'rxjs/operators';

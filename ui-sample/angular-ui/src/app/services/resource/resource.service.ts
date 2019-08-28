@@ -4,7 +4,6 @@ import {of as observableOf, throwError as observableThrowError,  Observable, Beh
 import { Injectable, EventEmitter } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import * as _ from 'lodash-es';
-import {mergeMap} from 'rxjs/operators';
 
 
 
@@ -37,7 +36,7 @@ export class ResourceService {
 
    public initialize() {
     const range  = {value: 'en', label: 'English', dir: 'ltr'};
-    this.getResource('en', range);
+    // this.getResource('en', range);
   }
   /**
    * method to fetch resource bundle

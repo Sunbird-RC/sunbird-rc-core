@@ -41,10 +41,9 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.resourceService.getResource();
     this.userProfile = true;
     this.userLogin = true;
-
-
   }
 showSideBar() {
     jQuery('.ui.sidebar').sidebar('setting', 'transition', 'overlay').sidebar('toggle');

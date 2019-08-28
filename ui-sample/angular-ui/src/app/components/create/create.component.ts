@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ResourceService } from '../../services/resource/resource.service';
 import { FormService } from '../../services/forms/form.service'
-import { from } from 'rxjs';
 import { DefaultTemplateComponent } from '../default-template/default-template.component';
 import urlConfig from '../../services/urlConfig.json';
 import { DataService } from '../../services/data/data.service';
@@ -30,7 +29,17 @@ export class CreateComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.formFieldProperties = this.formService.getPersonForm().fields;
+      this.formService.getFormConfig("person").subscribe(res => {
+      this.formFieldProperties = res.fields;
+    })
+  }
+
+  validate()  {
+      if(!!this.formData) {
+        console.log("please fill the form");
+      } else {
+        this.createUser();
+      }
   }
 
   createUser() {

@@ -1,22 +1,35 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { of as observableOf, throwError as observableThrowError, Observable,  } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import signUp  from "../jsons/signUp.json";
 import person from "../jsons/person.json";
+import { mergeMap, merge , map, catchError} from 'rxjs/operators';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class FormService {
 
+  formData: any;
   constructor(private http: HttpClient) { }
 
 
-  getFormConfig(formName) {
-    return signUp.data;
+ public getFormConfig(formName): Observable<any> {
+     this.formData = "";
+    const option = {
+      url: "../../../assets/jsons/" + formName + ".json"
+    };
+   return this.http.get(option.url).pipe(
+      map((response: any) => {
+        return response.data;
+      }),
+      catchError((err) => {
+        return err;
+      }));
   }
-  
+
   getPersonForm() {
     return person.data;
   }
+
 }

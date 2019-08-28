@@ -2,8 +2,8 @@
   <div class="ui grid">
     <div *ngFor="let field of formFieldProperties;let i = index"
       class="{{field.renderingHints.semanticColumnWidth || 'twelve'}} wide column">
-      <div *ngIf="field.inputType==='text' || field.inputType==='number'" class="field required"
-        [ngClass]="{ 'disabled':!field.editable}">
+      <div *ngIf="field.inputType==='text' || field.inputType==='number'" class="field"
+        [ngClass]="{ 'disabled':!field.editable, 'required':field.required}">
         <label>
           {{field.label}}
         </label>
@@ -12,8 +12,14 @@
             placeholder={{field.placeholder}}>
         </div>
       </div>
-      <div *ngIf="field.inputType==='boolean'" class="field" [ngClass]="{ 'disabled':!field.editable}">
+      <div *ngIf="field.inputType==='boolean'" class="field" [ngClass]="{ 'disabled':!field.editable, 'required':field.required}">
           <sui-checkbox [(ngModel)]="formInputData[field.code]">{{field.label}}</sui-checkbox>
+      </div>
+      <div  *ngIf="field.inputType==='password'" class="field" [ngClass]="{ 'disabled':!field.editable, 'required':field.required}">
+          <label>
+              {{field.label}}
+            </label>
+          <input name="{{field.code}}" type="{{field.inputType}}" [(ngModel)]="formInputData[field.code]">
       </div>
     </div>
   </div>
