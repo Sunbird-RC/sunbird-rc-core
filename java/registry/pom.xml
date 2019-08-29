@@ -112,21 +112,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.neo4j</groupId>
-            <artifactId>neo4j-tinkerpop-api-impl</artifactId>
-            <version>0.7-3.2.3</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.scala-lang</groupId>
-                    <artifactId>scala-library</artifactId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>scala-reflect</artifactId>
-                    <groupId>org.scala-lang</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>org.apache.tinkerpop</groupId>
             <artifactId>gremlin-core</artifactId>
             <version>${tinkerpop.version}</version>
@@ -141,18 +126,14 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
-            <artifactId>neo4j-gremlin</artifactId>
+            <artifactId>tinkergraph-gremlin</artifactId>
             <version>${tinkerpop.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.steelbridgelabs.oss</groupId>
-            <artifactId>neo4j-gremlin-bolt</artifactId>
-            <version>0.2.27</version>
-        </dependency>
-
+        <!-- Include this dependency for Orient DB support -->
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-gremlin</artifactId>
@@ -164,17 +145,18 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-jdbc</artifactId>
-            <version>3.0.0m2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.orientechnologies</groupId>-->
+            <!--<artifactId>orientdb-jdbc</artifactId>-->
+            <!--<version>3.0.0m2</version>-->
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>com.google.guava</groupId>-->
+                    <!--<artifactId>guava</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
+        <!--</dependency>-->
+        <!-- End - Include this dependency for Orient DB support -->
 
         <!-- Include this dependency for Janusgraph (CASSANDRA) support -->
         <dependency>
@@ -188,33 +170,51 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.tinkerpop</groupId>
-            <artifactId>gremlin-driver</artifactId>
-            <version>${tinkerpop.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.apache.tinkerpop</groupId>-->
+            <!--<artifactId>gremlin-driver</artifactId>-->
+            <!--<version>${tinkerpop.version}</version>-->
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>org.slf4j</groupId>-->
+                    <!--<artifactId>slf4j-log4j12</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
+        <!--</dependency>-->
 
         <!-- Refer to https://docs.janusgraph.org/0.3.0/config-ref.html#_storage_cassandra for list
          of storage backend options -->
         <!--Include this dependency if you need cql as storage.backend option-->
         <!-- https://mvnrepository.com/artifact/org.janusgraph/janusgraph-cql -->
-        <dependency>
-            <groupId>org.janusgraph</groupId>
-            <artifactId>janusgraph-cql</artifactId>
-            <version>${janusgraph.version}</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.janusgraph</groupId>-->
+            <!--<artifactId>janusgraph-cql</artifactId>-->
+            <!--<version>${janusgraph.version}</version>-->
+        <!--</dependency>-->
 
         <!--Include this dependency if you need cassandra or cassandrathrift as storage.backend option-->
         <!--<dependency>-->
+        <!--<groupId>org.janusgraph</groupId>-->
+        <!--<artifactId>janusgraph-cassandra</artifactId>-->
+        <!--<version>${janusgraph.version}</version>-->
+        <!--<exclusions>-->
+        <!--<exclusion>-->
+        <!--<groupId>ch.qos.logback</groupId>-->
+        <!--<artifactId>logback-classic</artifactId>-->
+        <!--</exclusion>-->
+        <!--<exclusion>-->
+        <!--<groupId>org.slf4j</groupId>-->
+        <!--<artifactId>slf4j-log4j12</artifactId>-->
+        <!--</exclusion>-->
+        <!--</exclusions>-->
+        <!--</dependency>-->
+
+        <!-- Include this dependency for ElasticSearch when using CASSANDRA -->
+        <!--<dependency>-->
             <!--<groupId>org.janusgraph</groupId>-->
-            <!--<artifactId>janusgraph-cassandra</artifactId>-->
+            <!--<artifactId>janusgraph-es</artifactId>-->
             <!--<version>${janusgraph.version}</version>-->
+            <!--<scope>runtime</scope>-->
             <!--<exclusions>-->
                 <!--<exclusion>-->
                     <!--<groupId>ch.qos.logback</groupId>-->
@@ -227,59 +227,61 @@
             <!--</exclusions>-->
         <!--</dependency>-->
 
-        <!-- Include this dependency for ElasticSearch when using CASSANDRA -->
+        <!-- Include this dependency for Postgres support -->
         <dependency>
-            <groupId>org.janusgraph</groupId>
-            <artifactId>janusgraph-es</artifactId>
-            <version>${janusgraph.version}</version>
-            <scope>runtime</scope>
+            <groupId>org.umlg</groupId>
+            <artifactId>sqlg-postgres</artifactId>
+            <version>2.0.0</version>
             <exclusions>
                 <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-classic</artifactId>
-                </exclusion>
-                <exclusion>
                     <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
+                    <artifactId>slf4j-nop</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
-
-        <!-- Include this dependency for Postgres support -->
-		<dependency>
-			<groupId>org.umlg</groupId>
-			<artifactId>sqlg-postgres</artifactId>
-			<version>2.0.0</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-nop</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
         <!-- End dependency for Postgres support -->
 
         <!-- Include this dependency for Neo4j support -->
         <dependency>
-            <groupId>org.neo4j.driver</groupId>
-            <artifactId>neo4j-java-driver</artifactId>
-            <version>1.4.4</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.tinkerpop</groupId>
-            <artifactId>tinkergraph-gremlin</artifactId>
+            <artifactId>neo4j-gremlin</artifactId>
             <version>${tinkerpop.version}</version>
         </dependency>
         <dependency>
-            <groupId>commons-validator</groupId>
-            <artifactId>commons-validator</artifactId>
-            <version>1.6</version>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j-tinkerpop-api-impl</artifactId>
+            <version>0.7-3.2.3</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>scala-reflect</artifactId>
+                    <groupId>org.scala-lang</groupId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-nop</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
-            <artifactId>transaction-event-handler</artifactId>
-            <version>2.0.2</version>
+            <groupId>com.steelbridgelabs.oss</groupId>
+            <artifactId>neo4j-gremlin-bolt</artifactId>
+            <version>0.2.27</version>
         </dependency>
+
+        <!--<dependency>-->
+            <!--<groupId>org.neo4j.driver</groupId>-->
+            <!--<artifactId>neo4j-java-driver</artifactId>-->
+            <!--<version>1.4.4</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>commons-validator</groupId>-->
+            <!--<artifactId>commons-validator</artifactId>-->
+            <!--<version>1.6</version>-->
+        <!--</dependency>-->
         <!-- End dependency for Neo4j support -->
 
 
@@ -432,12 +434,12 @@
         </plugins>
 
         <testResources>
-        <testResource>
-            <directory>${project.basedir}/src/test/resources</directory>
-        </testResource>
-        <testResource>
-            <directory>${project.basedir}/src/main/resources</directory>
-        </testResource>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </testResource>
         </testResources>
     </build>
 

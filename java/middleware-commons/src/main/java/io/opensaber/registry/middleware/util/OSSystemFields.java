@@ -9,29 +9,29 @@ import java.util.EnumSet;
  */
 public enum OSSystemFields {
 
-    _osCreatedAt {
+    osCreatedAt {
         @Override
         public void createdAt(JsonNode node, String timeStamp) {
-            JSONUtil.addField((ObjectNode) node, _osCreatedAt.toString(), timeStamp);
+            JSONUtil.addField((ObjectNode) node, osCreatedAt.toString(), timeStamp);
         }
     },
-    _osUpdatedAt {
+    osUpdatedAt {
         @Override
         public void updatedAt(JsonNode node, String timeStamp) {
-            JSONUtil.addField((ObjectNode) node, _osUpdatedAt.toString(), timeStamp);
+            JSONUtil.addField((ObjectNode) node, osUpdatedAt.toString(), timeStamp);
         }
 
     },
-    _osCreatedBy {
+    osCreatedBy {
         @Override
         public void createdBy(JsonNode node, String userId) {
-            JSONUtil.addField((ObjectNode) node, _osCreatedBy.toString(), userId != null ? userId : "");
+            JSONUtil.addField((ObjectNode) node, osCreatedBy.toString(), userId != null ? userId : "");
         }
     },
-    _osUpdatedBy {
+    osUpdatedBy {
         @Override
         public void updatedBy(JsonNode node, String userId) {
-            JSONUtil.addField((ObjectNode) node, _osUpdatedBy.toString(), userId != null ? userId : "");
+            JSONUtil.addField((ObjectNode) node, osUpdatedBy.toString(), userId != null ? userId : "");
         }
     };
 

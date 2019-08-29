@@ -37,8 +37,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 /**
  * This class provides native search which hits the native database
- * Hence, this have performance in-efficiency on search operations    
- * 
+ * Hence, this have performance in-efficiency on search operations
+ *
  */
 @Component
 public class NativeSearchService implements ISearchService {
@@ -55,9 +55,6 @@ public class NativeSearchService implements ISearchService {
 	private ShardManager shardManager;
 
 	@Autowired
-	private Shard shard;
-
-	@Autowired
 	private IAuditService auditService;
 
 	@Autowired
@@ -65,7 +62,7 @@ public class NativeSearchService implements ISearchService {
 
 	@Value("${database.uuidPropertyName}")
 	public String uuidPropertyName;
-	
+
 	@Value("${search.offset}")
 	private int offset;
 	
@@ -87,7 +84,7 @@ public class NativeSearchService implements ISearchService {
 		for (DBConnectionInfo dbConnection : dbConnectionInfoMgr.getConnectionInfo()) {
 
 			// TODO: parallel search.
-			shardManager.activateShard(dbConnection.getShardId());
+			Shard shard = shardManager.activateShard(dbConnection.getShardId());
 			IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName);
 			SearchDaoImpl searchDao = new SearchDaoImpl(registryDao);
 			try (OSGraph osGraph = shard.getDatabaseProvider().getOSGraph()) {

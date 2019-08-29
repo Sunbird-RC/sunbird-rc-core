@@ -9,13 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class ViewTransformer {
-    
-    private static Logger logger = LoggerFactory.getLogger(ViewTransformer.class);
-
     /**
      * transforms a given JsonNode to representation of view templates
      * view template indicates any new field or mask fields for transformation
@@ -25,7 +19,6 @@ public class ViewTransformer {
      * @return
      */
 	public JsonNode transform(ViewTemplate viewTemplate, JsonNode node) throws Exception {
-		logger.debug("transformation on input node " + node);
 
 		ObjectNode result = JsonNodeFactory.instance.objectNode();
 
@@ -51,7 +44,7 @@ public class ViewTransformer {
 				resultNode = tranformNode(viewTemplate, nodeAttrs);
 
 			} else {
-				logger.error("Not a valid node for transformation, must be a object node or array node");
+				throw new IllegalArgumentException("Not a valid node for transformation, must be a object node or array node");
 			}
 
 			result.set(subjectType, resultNode);
@@ -64,7 +57,7 @@ public class ViewTransformer {
      * Transforms a single node for given view template
      * 
      * @param viewTemplate
-     * @param node
+     * @param nodeAttrs
      * @return
      */
     private JsonNode tranformNode(ViewTemplate viewTemplate, JsonNode nodeAttrs) throws Exception {
@@ -102,10 +95,6 @@ public class ViewTransformer {
             }
 
         }
-        logger.debug("Node transformation result: " + result);
         return result;
-
     }
-    
-
 }

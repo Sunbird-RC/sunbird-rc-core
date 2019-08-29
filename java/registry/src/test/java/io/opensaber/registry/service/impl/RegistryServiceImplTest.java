@@ -66,9 +66,6 @@ public class RegistryServiceImplTest {
 	private ShardManager shardManager;
 
 	@Autowired
-	private Shard shard;
-
-	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 
 	@Mock
@@ -104,8 +101,6 @@ public class RegistryServiceImplTest {
 		dbConnectionInfoMgr.setUuidPropertyName("tid");
 
 		mockDatabaseProvider = dbProviderFactory.getInstance(null);
-		shardManager.activateShard(null);
-		registryServiceForHealth.setShard(shard);
 		try (OSGraph osGraph = mockDatabaseProvider.getOSGraph()) {
 			graph = osGraph.getGraphStore();
 		} catch (Exception e) {}
@@ -117,7 +112,7 @@ public class RegistryServiceImplTest {
 		when(encryptionService.isEncryptionServiceUp()).thenReturn(true);
 		//when(mockDatabaseProvider.isDatabaseServiceUp()).thenReturn(true);
 		when(signatureService.isServiceUp()).thenReturn(true);
-		HealthCheckResponse response = registryServiceForHealth.health();
+		HealthCheckResponse response = registryServiceForHealth.health(shardManager.getDefaultShard());
 		assertTrue(response.isHealthy());
 		response.getChecks().forEach(ch -> assertTrue(ch.isHealthy()));
 	}
@@ -131,7 +126,7 @@ public class RegistryServiceImplTest {
 		FieldSetter.setField(registryServiceForHealth, registryServiceForHealth.getClass().
 				getDeclaredField("signatureEnabled"), true);
 
-		HealthCheckResponse response = registryServiceForHealth.health();
+		HealthCheckResponse response = registryServiceForHealth.health(shardManager.getDefaultShard());
 		System.out.println(response.toString());
 
 		assertFalse(response.isHealthy());
