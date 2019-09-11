@@ -46,6 +46,8 @@ public class ElasticSearchService implements ISearchService {
     @Value("${search.limit}")
     private int limit;
 
+    @Value("${database.uuidPropertyName}")
+    private String uuidPropertyName;
 
     @Override
     public JsonNode search(JsonNode inputQueryNode) throws IOException {

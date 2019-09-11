@@ -1,0 +1,31 @@
+{
+  "subject": "User",
+  "fields": [
+    {
+        "name": "username",
+        "title": "MR/MRS"
+    },
+    {
+      "name": "loginid",
+      "display": true
+    },
+    {
+        "name": "$email",
+        "title": "Email",
+        "display": false,
+        "$comment": "This field is not displayable, but needed for internal referencing"
+    },
+    {
+        "title": "email and mobilenumber",
+        "function": "#/functionDefinitions/concat($email, $phone)",
+        "$comment": "This is a virtual field not defined in the schema"
+    }
+  ],
+  "functionDefinitions": [
+      {
+            "name" : "concat",
+            "result": "arg1 + \", \" + arg2",
+            "$comment": "arg1 and arg2 will be populated with parameter values at runtime"
+      }
+  ]
+}

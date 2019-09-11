@@ -1,17 +1,18 @@
 package io.opensaber.registry.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.helper.RegistryHelper;
-import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.IReadService;
+import io.opensaber.registry.service.NativeReadService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.ISearchService;
 import io.opensaber.registry.sink.shard.Shard;
@@ -23,8 +24,6 @@ import io.opensaber.registry.transform.ITransformer;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.ViewTemplateManager;
-import io.opensaber.views.ViewTemplate;
-import io.opensaber.views.ViewTransformer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,9 +66,13 @@ public class RegistryController {
 
     @Autowired
     private ShardManager shardManager;
-
+    
     @Autowired
     private ViewTemplateManager viewTemplateManager;
+    @Autowired
+    private NativeReadService nativeReadService;
+    @Autowired
+    private ObjectMapper objectMapper;
     @Autowired
     private RegistryHelper registryHelper;
 

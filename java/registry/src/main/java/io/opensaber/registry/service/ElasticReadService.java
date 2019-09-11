@@ -65,7 +65,7 @@ public class ElasticReadService implements IReadService {
             logger.error("Exception in reading a record to ElasticSearch", e);
         }
         if (response == null) {
-            throw new RecordNotFoundException("Record with " + id + " not found");
+            throw new RecordNotFoundException("Record with " + id + " not found in Elastic-search");
         }
         result = objectMapper.convertValue(response, JsonNode.class);
         if (!configurator.isIncludeSignatures()) {
