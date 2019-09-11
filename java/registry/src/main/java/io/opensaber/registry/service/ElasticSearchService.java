@@ -8,14 +8,18 @@ import io.opensaber.elastic.IElasticService;
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.AuditInfo;
 import io.opensaber.pojos.AuditRecord;
+import io.opensaber.pojos.Filter;
+import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.DateUtil;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
+import io.opensaber.registry.util.RecordIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +59,18 @@ public class ElasticSearchService implements ISearchService {
         AuditRecord auditRecord = new AuditRecord();
         List<AuditInfo> auditInfoLst = new LinkedList<>();
         SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
+
+        Filter uuidFilter = getUUIDFilter(searchQuery, uuidPropertyName);
+        boolean isSpecificSearch = (uuidFilter != null);
+        if (isSpecificSearch) {
+            RecordIdentifier recordIdentifier = RecordIdentifier.parse(uuidFilter.getValue().toString());
+
+            if (!uuidFilter.getValue().equals(recordIdentifier.getUuid())) {
+                // value is not just uuid and so trim out
+                uuidFilter.setValue(recordIdentifier.getUuid());
+            }
+        }
+
         ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
         for(String indexName : searchQuery.getEntityTypes()){
             try{

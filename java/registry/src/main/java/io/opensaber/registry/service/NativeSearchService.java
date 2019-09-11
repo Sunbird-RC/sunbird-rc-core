@@ -82,18 +82,8 @@ public class NativeSearchService implements ISearchService {
 		if(searchQuery.getFilters().size() == 1 && searchQuery.getFilters().get(0).getOperator() == FilterOperators.queryString)
             throw new IllegalArgumentException("free-text queries not supported for native search!");
 
-		boolean isSpecificSearch = false;
-		Filter specificSearchFilter = null;
-		Iterator<Filter> filterIterator = searchQuery.getFilters().iterator();
-		while (filterIterator.hasNext()) {
-			Filter filter = filterIterator.next();
-			if (filter.getProperty().equals(uuidPropertyName) &&
-					(filter.getOperator().equals(FilterOperators.eq) || filter.getOperator().equals(FilterOperators.startsWith))) {
-				isSpecificSearch = true;
-				specificSearchFilter = filter;
-				logger.info("Performing a specific shard search");
-			}
-		}
+		Filter uuidFilter = getUUIDFilter(searchQuery, uuidPropertyName);
+		boolean isSpecificSearch = (uuidFilter != null);
 
 		boolean continueSearch = true;
 		// Now, search across all shards and return the results.
@@ -101,11 +91,11 @@ public class NativeSearchService implements ISearchService {
 
 			if (continueSearch) {
 				if (isSpecificSearch) {
-					RecordIdentifier recordIdentifier = RecordIdentifier.parse(specificSearchFilter.getValue().toString());
+					RecordIdentifier recordIdentifier = RecordIdentifier.parse(uuidFilter.getValue().toString());
 
-					if (!specificSearchFilter.getValue().equals(recordIdentifier.getUuid())) {
+					if (!uuidFilter.getValue().equals(recordIdentifier.getUuid())) {
 						// value is not just uuid and so trim out
-						specificSearchFilter.setValue(recordIdentifier.getUuid());
+						uuidFilter.setValue(recordIdentifier.getUuid());
 					}
 				}
 
