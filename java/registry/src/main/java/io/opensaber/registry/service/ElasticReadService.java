@@ -58,7 +58,6 @@ public class ElasticReadService implements IReadService {
         JsonNode result = null;
         AuditRecord auditRecord = null;
         Map<String, Object> response = null;
-        //TODO - URGENT - Fix this error
         try {
             response = elasticService.readEntity(entityType.toLowerCase(), id);
         } catch (IOException e) {

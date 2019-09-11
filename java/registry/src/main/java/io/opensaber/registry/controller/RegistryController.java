@@ -89,11 +89,7 @@ public class RegistryController {
         Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
         JsonNode payload = apiMessage.getRequest().getRequestMapNode();
 
-        response.setResult("API to be supported soon");
-        responseParams.setStatus(Response.Status.SUCCESSFUL);
-
         try {
-
             watch.start("RegistryController.searchEntity");
             JsonNode result = registryHelper.searchEntity(payload);
 
@@ -101,8 +97,7 @@ public class RegistryController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.searchEntity");
         } catch (Exception e) {
-            logger.error("Exception in controller while searching entities !",
-                    e);
+            logger.error("Exception in controller while searching entities !", e);
             response.setResult("");
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
