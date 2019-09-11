@@ -1,0 +1,137 @@
+swagger: "2.0"
+info:
+  description: ""
+  version: "1.0.0"
+  title: "Employees"
+  termsOfService: ""
+  contact:
+    email: ""
+host: "TBD"
+basePath: "/add"
+tags:
+- name: "EkStep"
+  description: "Manage partner employees"
+schemes:
+- "http"
+paths:
+  /add:
+    post:
+      tags:
+      - "EkStep"
+      summary: "Add a new employee"
+      description: ""
+      operationId: ""
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Employee object that needs to be added"
+        required: true
+        schema:
+          $ref: "#/definitions/Employee"
+      responses:
+        400:
+          description: "Invalid input"
+        200:
+          description: "Ok with a uuid as per EkStep API spec"
+  /update:
+    post:
+      tags:
+      - "EkStep"
+      summary: "Update an existing employee"
+      description: "Update when changes to employee profile, like designation changes, skills added"
+      operationId: "updatePet"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Employee that needs to be updated"
+        required: true
+        schema:
+          $ref: "#/definitions/Employee"
+      responses:
+        400:
+          description: "Invalid ID supplied"
+  /search:
+    post:
+      tags:
+      - "EkStep"
+      summary: "Finds Employees by org specific identifier"
+      description: "Multiple status values can be provided with comma separated strings"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "filter"
+        in: "body"
+        description: "Status values that need to be considered for filter"
+        required: true
+        schema: 
+          $ref: "#/definitions/PartnerEmployeeSearch"
+      responses:
+        200:
+          description: "successful operation"
+definitions:
+  Employee:
+    type: "object"
+    required:
+    - "orgName"  
+    - "externalId"
+    - "name"
+    - "email"
+    - "phone"
+    - "role"
+    properties:
+      orgName:
+        type: "string"
+        enum:
+        - "Tarento"
+        - "Ilimi"
+        - "GoodWorkLabs"
+      name:
+        type: "string"
+        example: "doggie"
+      email:
+        type: "string"
+      phone:
+        type: "string"
+      macAddress:
+        type: "string"
+      githubId:
+        type: "string"
+      role:
+        type: "string"
+        enum:
+        - "Developer"
+        - "Documentation engineer"
+        - "Technical lead"
+        - "Technical manager"
+        - "Business analyst"
+        - "Intern"
+  PartnerEmployeeSearch:
+    type: "object"
+    properties:
+      entityType: 
+        type: "array"
+        items:
+          type: "string"
+          enum:
+          - "Employee"
+          default: "Employee"
+      filters: 
+        $ref: "#/definitions/EmployeeFilter"
+      viewTemplateId:
+        type: "string"
+        default: "PartnerAdminView.json"
+  EmployeeFilter:
+    type: "object"
+    properties:
+      attributeName:
+        type: "string"
+        description: "Provide externalId as attribute name and search. One can add multiple filters"
+        

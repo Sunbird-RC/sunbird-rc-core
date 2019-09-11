@@ -1,0 +1,196 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "Employee": {
+      "$ref": "#/definitions/Employee"
+    }
+  },
+  "required": [
+    "Employee"
+  ],
+  "title":"Employee",
+  "definitions": {
+    "Employee": {
+      "$id": "#/properties/Employee",
+      "type": "object",
+      "title": "The Employee Schema",
+      "required": [
+        "orgName",
+        "name",
+        "email",
+        "phone",
+        "role"
+      ],
+      "properties": {
+        "orgName": {
+          "$id": "#/properties/orgName",
+          "type": "string",
+          "enum": [
+            "ILIMI", "Tarento", "TEKDI", "OPTIT", "Qualitrix", "Framewirk",
+            "Consultant", "GWL", "TurtleBowl", "MantraLabs", "Zool", "Tibil",
+            "Lollypop", "E&Y", "BeyondSquare"
+          ],
+          "title": "Organisation name"
+        },
+        "name": {
+          "$id": "#/properties/name",
+          "type": "string",
+          "$comment": "Employee name"
+        },
+        "email": {
+          "$id": "#/properties/email",
+          "type": "string",
+          "$comment": "Email id"
+        },
+        "phone": {
+          "$id": "#/properties/phone",
+          "type": "string",
+          "$comment": "Phone"
+        },
+        "macAddress": {
+          "$id": "#/properties/macAddress",
+          "type": "string",
+          "$comment": "MAC Address"
+        },
+        "githubId": {
+          "$id": "#/properties/githubId",
+          "type": "string",
+          "$comment": "GitHub username"
+        },
+        "role": {
+          "$id": "#/properties/username",
+          "type": "string",
+          "enum": [
+            "BA", "Developer", "Tech Lead", "Project Management",
+            "Design Council", "Designer", "Tech Manager", "DevOps",
+            "Tech Support"
+          ],
+          "title": "EkStep role"
+        },
+        "externalId": {
+          "$id": "#/properties/externalId",
+          "type": "string",
+          "$comment": "Org specific identifier"
+        },
+        "isActive": {
+          "$id": "#/properties/isActive",
+          "type": "boolean",
+          "title": "isApproved"
+        },
+        "isInKronos": {
+          "$id": "#/properties/isInKronos",
+          "type": "boolean",
+          "title": "isInKronos"
+        },
+        "nineAMreportTo":{
+          "$id": "#/properties/nineAMreportTo",
+          "type": "string",
+          "title": "nineAMreportTo"
+        },
+        "subProjectName":{
+          "$id": "#/properties/subProjectName",
+          "type": "string",
+          "enum": [
+            "User Platform", "Mobile", "Implementation",
+            "Project Management", "Design Council", "DIKSHA UX",
+            "Content Framework", "Portal", "Infra & DevOps",
+            "DIKSHA Liasion", "Learning Platform", "DIKSHA Tech Support",
+            "Courses Platform", "DIKSHA Analytics"
+          ],
+          "title": "Sub-project name"
+        },
+        "projectName":{
+          "$id": "#/properties/projectName",
+          "type": "string",
+          "enum": [
+            "DIKSHA", "Learning platform",
+            "Sunbird + DIKSHA"
+          ],
+          "title": "Project name"
+        },
+        "proposedBilling":{
+          "$id": "#/properties/proposedBilling",
+          "type": "string",
+          "enum": [
+            "Analytics",
+            "DIKSHA Services",
+            "Engineering",
+            "Solution",
+            "Support",
+            "UX"
+          ],
+          "title": "Proposed billing"
+        },
+        "billLocation":{
+          "$id": "#/properties/billLocation",
+          "type": "string",
+          "default": "Bangalore",
+          "title": "Billing location"
+        },
+        "startDate":{
+
+        },
+        "endDate":{
+
+        },
+        "githubId":{
+          "$id": "#/properties/githubId",
+          "type": "string",
+          "title": "Github identifier"
+        },
+        "repoAccess":{
+          "$id": "#/properties/repoAccess",
+          "type": "string",
+          "enum": [
+            "ES", "SB", "Both", "Not-Eligible"
+          ],
+          "title": "Code repo access"
+        },
+        "slackAccess":{
+          "$id": "#/properties/slackAccess",
+          "type": "string",
+          "enum": [
+            "ES", "SB", "Both", "Not-Eligible"
+          ],
+          "title": "Slack access"
+        },
+        "workLocation":{
+          "$id": "#/properties/workLocation",
+          "type": "string",
+          "enum": [
+            "EkStep", "Ilimi", "Tarento"
+          ],
+          "title": "Place of work"
+        },
+        "remarks":{
+          "$id": "#/properties/remarks",
+          "type": "string",
+          "title": "Remarks"
+        },
+        "workingStyle":{
+          "$id": "#/properties/workLocation",
+          "type": "string",
+          "enum": [
+            "part-time", "full-time"
+          ],
+          "title": "Working style"
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "osComment": ["This section contains the OpenSABER specific configuration information",
+      "privateFields: Optional; list of field names to be encrypted and stored in database",
+      "signedFields: Optional; list of field names that must be pre-signed",
+      "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, teacherCode) is a composite index and teacherName is a single column index.",
+      "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
+      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"],
+
+    "privateFields": [],
+    "signedFields": [],
+    "indexFields": [],
+    "uniqueIndexFields": [],
+    "systemFields": []
+  }
+}
