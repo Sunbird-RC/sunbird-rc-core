@@ -1,6 +1,5 @@
 package io.opensaber.registry.service;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -9,6 +8,7 @@ import io.opensaber.audit.IAuditService;
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.AuditInfo;
 import io.opensaber.pojos.AuditRecord;
+import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.dao.IRegistryDao;
@@ -23,11 +23,6 @@ import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.RecordIdentifier;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.slf4j.Logger;
@@ -35,6 +30,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 /**
  * This class provides native search which hits the native database
  * Hence, this have performance in-efficiency on search operations
@@ -80,28 +82,45 @@ public class NativeSearchService implements ISearchService {
 		if(searchQuery.getFilters().size() == 1 && searchQuery.getFilters().get(0).getOperator() == FilterOperators.queryString)
             throw new IllegalArgumentException("free-text queries not supported for native search!");
 
+		Filter uuidFilter = getUUIDFilter(searchQuery, uuidPropertyName);
+		boolean isSpecificSearch = (uuidFilter != null);
+
+		boolean continueSearch = true;
 		// Now, search across all shards and return the results.
 		for (DBConnectionInfo dbConnection : dbConnectionInfoMgr.getConnectionInfo()) {
 
-			// TODO: parallel search.
-			Shard shard = shardManager.activateShard(dbConnection.getShardId());
-			IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName);
-			SearchDaoImpl searchDao = new SearchDaoImpl(registryDao);
-			try (OSGraph osGraph = shard.getDatabaseProvider().getOSGraph()) {
-				Graph graph = osGraph.getGraphStore();
-				try (Transaction tx = shard.getDatabaseProvider().startTransaction(graph)) {
-                    ObjectNode shardResult = (ObjectNode) searchDao.search(graph, searchQuery);
-                    if (!shard.getShardLabel().isEmpty()) {
-                        // Replace osid with shard details
-                        String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
-                        JSONUtil.addPrefix((ObjectNode) shardResult, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
-                    }
-                   
-                    result.add(shardResult);
-					transaction.add(tx.hashCode());
+			if (continueSearch) {
+				if (isSpecificSearch) {
+					RecordIdentifier recordIdentifier = RecordIdentifier.parse(uuidFilter.getValue().toString());
+
+					if (!uuidFilter.getValue().equals(recordIdentifier.getUuid())) {
+						// value is not just uuid and so trim out
+						uuidFilter.setValue(recordIdentifier.getUuid());
+					}
 				}
-			} catch (Exception e) {
-				logger.error("search operation failed: {}", e);
+
+				// TODO: parallel search.
+				Shard shard = shardManager.activateShard(dbConnection.getShardId());
+				IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName);
+				SearchDaoImpl searchDao = new SearchDaoImpl(registryDao);
+				try (OSGraph osGraph = shard.getDatabaseProvider().getOSGraph()) {
+					Graph graph = osGraph.getGraphStore();
+					try (Transaction tx = shard.getDatabaseProvider().startTransaction(graph)) {
+						ObjectNode shardResult = (ObjectNode) searchDao.search(graph, searchQuery);
+						if (!shard.getShardLabel().isEmpty()) {
+							// Replace osid with shard details
+							String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
+							JSONUtil.addPrefix((ObjectNode) shardResult, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
+						}
+
+						result.add(shardResult);
+						transaction.add(tx.hashCode());
+					}
+				} catch (Exception e) {
+					logger.error("search operation failed: {}", e);
+				} finally {
+					continueSearch = !isSpecificSearch;
+				}
 			}
 		}
 		

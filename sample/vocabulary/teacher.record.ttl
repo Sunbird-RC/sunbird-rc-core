@@ -1,6 +1,0 @@
-@prefix sample: <http://example.com/voc/teacher/1.0.0/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-
-[]
-  a sample:School ;
-  sample:udiseNumber "Professor"^^xsd:string .

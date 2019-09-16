@@ -5,11 +5,11 @@
     <parent>
         <artifactId>opensaber</artifactId>
         <groupId>io.opensaber</groupId>
-        <version>2.0.2</version>
+        <version>2.0.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>middleware-bom</artifactId>
-    <version>2.0.2</version>
+    <version>2.0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <dependencyManagement>

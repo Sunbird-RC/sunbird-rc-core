@@ -15,6 +15,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 public interface ISearchService {
 
     static Logger logger = LoggerFactory.getLogger(ISearchService.class);
@@ -128,5 +129,19 @@ public interface ISearchService {
     }
 
 
+    default Filter getUUIDFilter(SearchQuery searchQuery, String uuidPropertyName) {
+        Filter specificSearchFilter = null;
+        Iterator<Filter> filterIterator = searchQuery.getFilters().iterator();
+        while (filterIterator.hasNext()) {
+            Filter filter = filterIterator.next();
+            if (filter.getProperty().equals(uuidPropertyName) &&
+                    (filter.getOperator().equals(FilterOperators.eq) || filter.getOperator().equals(FilterOperators.startsWith))) {
+                specificSearchFilter = filter;
+                logger.info("Performing a specific shard search");
+                break;
+            }
+        }
+        return specificSearchFilter;
+    }
 
 }
