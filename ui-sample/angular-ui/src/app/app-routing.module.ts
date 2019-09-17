@@ -7,31 +7,54 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { LoginComponent } from './components/login/login.component';
 import { CreateComponent } from './components/create/create.component';
 import { UpdateComponent } from './components/update/update.component';
+import { environment } from '../environments/environment';
 
-const routes: Routes = [
-  {
-    path: '', 
-    component: LandingPageComponent,
-  },
-  {
-    path: 'signUp', component: SignupComponent,
-  },
-  {
-    path: 'admin/:pageNumber', component: AdminPageComponent
-  },
-  {
-    path: 'profile/:id', component: ProfileComponent
-  },
-  {
-    path: 'logIn', component: LoginComponent
-  },
-  {
-    path:'create', component: CreateComponent
-  },
-  {
-    path:'edit/:id', component: UpdateComponent
-  }
-];
+var routes = [];
+if (environment.keycloakEnabled) {
+  routes = [
+    {
+      path: '',
+      component: LandingPageComponent,
+    },
+    {
+      path: 'signup', component: SignupComponent,
+    },
+    {
+      path: 'admin/:pageNumber', component: AdminPageComponent
+    },
+    {
+      path: 'profile/:id', component: ProfileComponent
+    },
+    {
+      path: 'login', component: LoginComponent
+    },
+    {
+      path: 'edit/:id', component: UpdateComponent
+    }
+  ];
+} else {
+  routes = [
+    {
+      path: '',
+      component: LandingPageComponent,
+    },
+    {
+      path: 'signup', component: SignupComponent,
+    },
+    {
+      path: 'admin/:pageNumber', component: AdminPageComponent
+    },
+    {
+      path: 'profile/:id', component: ProfileComponent
+    },
+    {
+      path: 'login', component: LoginComponent
+    },
+    {
+      path: 'edit/:id', component: UpdateComponent
+    }
+  ];
+}
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
