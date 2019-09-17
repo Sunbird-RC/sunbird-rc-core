@@ -73,6 +73,11 @@
           "type": "string",
           "$comment": "Org specific identifier"
         },
+        "externalRole": {
+          "$id": "#/properties/externalId",
+          "type": "string",
+          "$comment": "Org specific role"
+        },
         "isActive": {
           "$id": "#/properties/isActive",
           "type": "boolean",
@@ -129,10 +134,20 @@
           "title": "Billing location"
         },
         "startDate":{
-
+          "type": "string",
+          "format": "date",
+          "$comment": "YYYY-MM-DD format",
+          "examples": [
+            "1990-12-01"
+          ]
         },
         "endDate":{
-
+          "type": "string",
+          "format": "date",
+          "$comment": "YYYY-MM-DD format",
+          "examples": [
+            "1990-12-01"
+          ]
         },
         "githubId":{
           "$id": "#/properties/githubId",
