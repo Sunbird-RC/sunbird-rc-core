@@ -2,7 +2,7 @@
     "data": {
         "frmelmnts": {
             "btn": {
-                "signUp": "Sign Up",
+                "signup": "Sign Up",
                 "logIn": "Log In",
                 "approve": "Approve",
                 "create": "Create",

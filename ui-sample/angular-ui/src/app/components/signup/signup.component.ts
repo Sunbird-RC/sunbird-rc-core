@@ -30,7 +30,7 @@ export class SignupComponent implements OnInit {
     this.resourceService.initialize();
   }
   fetchFormData() {
-      this.formService.getFormConfig("signUp").subscribe(res => {
+      this.formService.getFormConfig("signup").subscribe(res => {
         this.formFieldProperties = res.fields;
       });
   }

@@ -1,9 +1,9 @@
  {
-    "type": "signUp",
-    "action": "signUp",
+    "type": "signup",
+    "action": "signup",
     "data": {
       "templateName": "defaultTemplate",
-      "action": "signUp",
+      "action": "signup",
       "fields": [
         {
           "code": "name",

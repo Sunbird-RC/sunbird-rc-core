@@ -8,53 +8,41 @@ import { LoginComponent } from './components/login/login.component';
 import { CreateComponent } from './components/create/create.component';
 import { UpdateComponent } from './components/update/update.component';
 import { environment } from '../environments/environment';
+import { AppAuthGuard } from './app.authguard';
 
-var routes = [];
-if (environment.keycloakEnabled) {
-  routes = [
-    {
-      path: '',
-      component: LandingPageComponent,
-    },
-    {
-      path: 'signup', component: SignupComponent,
-    },
-    {
-      path: 'admin/:pageNumber', component: AdminPageComponent
-    },
-    {
-      path: 'profile/:id', component: ProfileComponent
-    },
-    {
-      path: 'login', component: LoginComponent
-    },
-    {
-      path: 'edit/:id', component: UpdateComponent
-    }
-  ];
-} else {
-  routes = [
-    {
-      path: '',
-      component: LandingPageComponent,
-    },
-    {
-      path: 'signup', component: SignupComponent,
-    },
-    {
-      path: 'admin/:pageNumber', component: AdminPageComponent
-    },
-    {
-      path: 'profile/:id', component: ProfileComponent
-    },
-    {
-      path: 'login', component: LoginComponent
-    },
-    {
-      path: 'edit/:id', component: UpdateComponent
-    }
-  ];
-}
+var routes = [
+  {
+    path: '',
+    component: LandingPageComponent
+  },
+  {
+    path: 'signup',
+    component: SignupComponent,
+    canActivate: [AppAuthGuard],
+    data: { roles: [] }
+  },
+  {
+    path: 'admin/:pageNumber',
+    component: AdminPageComponent,
+    canActivate: [AppAuthGuard],
+    data: { roles: ['admin', 'partner-admin'] }
+  },
+  {
+    path: 'profile/:id', component: ProfileComponent,
+    canActivate: [AppAuthGuard],
+    data: { roles: ['admin', 'partner-admin', 'owner'] }
+  },
+  {
+    path: 'login', component: LoginComponent,
+    canActivate: [AppAuthGuard],
+    data: { roles: ['admin', 'partner-admin', 'owner'] }
+  },
+  {
+    path: 'edit/:id', component: UpdateComponent,
+    canActivate: [AppAuthGuard],
+    data: { roles: ['admin', 'partner-admin', 'owner'] }
+  }
+];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
