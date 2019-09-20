@@ -8,7 +8,7 @@ let keycloakConfiguration: KeycloakConfig = {
   realm: 'PartnerRegistry',
   clientId: 'portal',
   "credentials": {
-    "secret": "portal-client-secret"
+    "secret": ""
   }  
 };
 
