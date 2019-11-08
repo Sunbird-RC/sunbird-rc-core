@@ -1,0 +1,46 @@
+{
+  "subject": "Employee",
+  "fields": [
+    {
+      "name": "osid",
+      "title": "identifier"
+    },
+    {
+      "name": "name",
+      "title": "name",
+      "display": true
+    },
+    {
+      "name": "orgName",
+      "title": "Organization"
+    },
+    {
+      "name": "projectName",
+      "title": "Project"
+    },
+    {
+      "name": "subProjectName",
+      "title": "Team"
+    },
+    {
+      "name": "workLocation",
+      "title": "location"
+    },
+    {
+      "name": "nineAMreportTo",
+      "title": "nineAMreportTo"
+    },
+    {
+      "name": "isInKronos",
+      "title": "Kronos"
+    },
+    {
+      "name": "githubId",
+      "title": "GitHub Identifier"
+    },
+    {
+      "name": "isActive",
+      "title": "isApproved"
+    }
+  ]
+}

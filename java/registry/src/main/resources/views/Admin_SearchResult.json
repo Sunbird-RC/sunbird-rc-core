@@ -1,0 +1,22 @@
+{
+  "subject": "Admin",
+  "fields": [
+    {
+      "name": "name",
+      "title": "name",
+      "display": true
+    },
+    {
+      "name": "orgName",
+      "title": "Organization"
+    },
+    {
+      "name": "role",
+      "title": "Role"
+    },
+    {
+      "name": "isActive",
+      "title": "isApproved"
+    }
+  ]
+}

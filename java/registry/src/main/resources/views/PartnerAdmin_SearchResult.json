@@ -1,0 +1,22 @@
+{
+  "subject": "PartnerAdmin",
+  "fields": [
+    {
+      "name": "name",
+      "title": "name",
+      "display": true
+    },
+    {
+      "name": "orgName",
+      "title": "Organization"
+    },
+    {
+      "name": "isActive",
+      "title": "isApproved"
+    },
+    {
+      "name": "proposedBilling",
+      "title": "Billing"
+    }
+  ]
+}

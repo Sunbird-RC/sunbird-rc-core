@@ -53,11 +53,6 @@
           "type": "string",
           "$comment": "MAC Address"
         },
-        "githubId": {
-          "$id": "#/properties/githubId",
-          "type": "string",
-          "$comment": "GitHub username"
-        },
         "role": {
           "$id": "#/properties/username",
           "type": "string",

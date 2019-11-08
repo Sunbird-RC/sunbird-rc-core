@@ -1,0 +1,26 @@
+{
+  "subject": "Reporter",
+  "fields": [
+    {
+      "name": "name",
+      "title": "name",
+      "display": true
+    },
+    {
+      "name": "orgName",
+      "title": "Organization"
+    },
+    {
+      "name": "isActive",
+      "title": "isApproved"
+    },
+    {
+      "name": "role",
+      "title": "Role"
+    },
+    {
+      "name": "isInKronos",
+      "title": "Is In Kronous"
+    }
+  ]
+}
