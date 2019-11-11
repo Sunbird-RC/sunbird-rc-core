@@ -4,7 +4,6 @@ import urlConfig from '../../services/urlConfig.json'
 import * as _ from 'lodash-es';
 import { ResourceService } from '../../services/resource/resource.service'
 import { Router, ActivatedRoute } from '@angular/router'
-import { takeUntil, map, mergeMap, first, filter, debounceTime } from 'rxjs/operators';
 
 
 
@@ -72,10 +71,10 @@ export class AdminPageComponent implements OnInit, AfterViewInit {
       data: {
         "id": "open-saber.registry.search",
         'request': {
-          "entityType": ["Person"],
+          "entityType": ["Employee"],
           "filters": {
           },
-          "viewTemplateId": "Person_SearchResult.json"
+          "viewTemplateId": "Employee_SearchResult.json"
         }
       }
     }
@@ -88,17 +87,17 @@ export class AdminPageComponent implements OnInit, AfterViewInit {
 
     this.dataService.post(option).subscribe(data => {
       this.result = {
-        "headers": _.keys(data.result.Person[0]),
-        "row": data.result.Person.slice(0, this.pageLimit)
+        "headers": _.keys(data.result.Employee[0]),
+        "row": data.result.Employee.slice(0, this.pageLimit)
       }
-      this.paginationDetails = this.getPager(data.result.Person.length, this.paginationDetails.currentPage,
+      this.paginationDetails = this.getPager(data.result.Employee.length, this.paginationDetails.currentPage,
         urlConfig.PAGE_LIMIT);
     })
   }
 
   navigateToProfilePage(user: any) {
     console.log('user profile', user)
-    this.router.navigate(['/profile', user.osid]);
+    this.router.navigate(['/profile', user.identifier]);
   }
 
   onEnter(key: string) {

@@ -26,8 +26,11 @@ import { UpdateComponent } from './components/update/update.component';
 import { environment } from '../environments/environment';
 import { ProvidersFeature } from '../../node_modules/@angular/core/src/render3';
 import { KeycloakService, KeycloakAngularModule, KeycloakOptions } from 'keycloak-angular';
+import { PermissionDirective } from './directives/permission/permission.directive';
+import { CacheService } from 'ng2-cache-service';
+import { CacheStorageAbstract } from 'ng2-cache-service/dist/src/services/storage/cache-storage-abstract.service';
+import { CacheSessionStorage } from 'ng2-cache-service/dist/src/services/storage/session-storage/cache-session-storage.service';
 
-let keycloakService;
 let moduleOptions = {
   declarations: [
     AppComponent,
@@ -40,8 +43,8 @@ let moduleOptions = {
     ProfileComponent,
     LoginComponent,
     CreateComponent,
-    UpdateComponent
-  ],
+    UpdateComponent,
+    PermissionDirective],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -55,13 +58,16 @@ let moduleOptions = {
     ReactiveFormsModule,
     KeycloakAngularModule
   ],
-  providers: [AppAuthGuard],
+  providers: [AppAuthGuard,
+    CacheService,
+    { provide: CacheStorageAbstract, useClass: CacheSessionStorage }],
   bootstrap: [],
   entryComponents: [AppComponent]
 }
 
 let kcOptions: KeycloakOptions = {
   config: environment.keycloakConfig,
+  loadUserProfileAtStartUp: true,
   bearerExcludedUrls: ['/', '/assets', '/clients/public']
 };
 
@@ -81,7 +87,7 @@ export class AppModule {
       .catch(error => {
         console.error('KC init failed', error);
       })
-      .finally(()=> {
+      .finally(() => {
         app.bootstrap(AppComponent);
       });
   }

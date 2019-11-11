@@ -1,10 +1,11 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, OnChanges } from '@angular/core';
 import { FormService } from '../../services/forms/form.service';
 import { ResourceService } from '../../services/resource/resource.service';
 import { KeycloakService } from 'keycloak-angular';
 import { DefaultTemplateComponent } from '../default-template/default-template.component';
-import {takeUntil} from 'rxjs/operators'
 import { Subject } from 'rxjs';
+import { UserService } from '../../services/user/user.service';
+import { Router } from '@angular/router'
 
 @Component({
   selector: 'app-login',
@@ -22,23 +23,44 @@ export class LoginComponent implements OnInit {
 
   public resourceService: ResourceService;
 
-  public keycloakAngular : KeycloakService;
-  constructor(formService: FormService, resouceService: ResourceService, keycloakAngular: KeycloakService) {
+  public keycloakAngular: KeycloakService;
+
+  public userService: UserService;
+
+  public userDetails: any;
+
+  private userLogin: any;
+
+  router: Router;
+
+  private userRoles = [];
+
+
+  constructor(formService: FormService, resouceService: ResourceService, keycloakAngular: KeycloakService, userService: UserService, route: Router) {
     this.formService = formService;
     this.resourceService = resouceService;
     this.keycloakAngular = keycloakAngular;
+    this.userService = userService;
+    this.router = route;
+
   }
 
   ngOnInit() {
     this.fetchFormData()
     this.resourceService.initialize();
     let userDetails = this.keycloakAngular.getToken();
+    this.userLogin = this.userService.loggedIn;
+    this.userDetails = this.userService.getUserInfo();
+    this.userRoles = this.userService.getUserRoles;
+    if(this.userLogin)  {
+      this.router.navigate(['home']);
+    }
   }
 
   fetchFormData() {
-      this.formService.getFormConfig("login").subscribe(res => {
-        this.formFieldProperties = res.fields;
-      });
-  }
-
+    this.formService.getFormConfig("login").subscribe(res => {
+      this.formFieldProperties = res.fields;
+    });
+  } 
+  
 }

@@ -1,5 +1,13 @@
+<div class="ui container mt-20">
+    <div class="ui small breadcrumb">
+        <a class="section" routerLink=''>Home</a>
+        <i class="right chevron icon divider"></i>
+        <div class="active section">Personal Information</div>
+      </div>
+</div>
 <div class="ui container mb-20 mt-20 py-20">
 
+      
   <div class="ui grid flex-jc-center border">
     <div class="twelve wide column">
       <div class="mb-15 d-flex flex-jc-center relative">
@@ -11,7 +19,7 @@
                     color: '#9017FF',
                     fontWeight: 'bold',
                     fontFamily: 'inherit'}" [size]="90" initialsSize="1" [textSizeRatio]="2"
-          name="{{userProfile.Name}} ">
+          name="{{userProfile.name}} ">
         </ngx-avatar>
       </div>
     </div>

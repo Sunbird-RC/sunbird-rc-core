@@ -1,10 +1,10 @@
 {
     "URLS": {
-        "BASE_URL": "http://localhost:8080",
+        "BASE_URL": "http://localhost:8081",
         "SEARCH": "/search",
         "READ": "/read",
         "ADD": "/add",
         "UPDATE": "/update"
     },
-    "PAGE_LIMIT": 5
+    "PAGE_LIMIT": 20
 }

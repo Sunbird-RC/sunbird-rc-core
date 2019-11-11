@@ -26,24 +26,40 @@ export class DataService {
     console.log(requestParam)
     const httpOptions: HttpOptions = {
       headers: requestParam.header ? this.getHeader(requestParam.header) : this.getHeader(),
-      params: requestParam.param
+      params: requestParam.param,
+      observe: 'response'
+
     };
     return this.http.post(this.baseUrl+requestParam.url, requestParam.data, httpOptions).pipe(
-      mergeMap((data: ServerResponse) => {
-        if (data.responseCode !== 'OK') {
-          return observableThrowError(data);
+      mergeMap(({body, headers}: any) => {
+        // replace ts time with header date , this value is used in telemetry
+        body.ts =  this.getDateDiff((headers.get('Date')));
+        if (body.responseCode !== 'OK') {
+          return observableThrowError(body);
         }
-        return observableOf(data);
+        return observableOf(body);
       }));
   }
 
   private getHeader(headers?: HttpOptions['headers']): HttpOptions['headers'] {
     const default_headers = {
       'Accept': 'application/json',
+      'Content-Type':'application/json'
     };
 
     return { ...default_headers };
 
+}
+
+
+private getDateDiff (serverdate): number {
+  const currentdate: any = new Date();
+  const serverDate: any = new Date(serverdate);
+  if (serverdate) {
+    return ( serverDate - currentdate ) / 1000;
+  } else {
+    return 0;
+  }
 }
 }
 

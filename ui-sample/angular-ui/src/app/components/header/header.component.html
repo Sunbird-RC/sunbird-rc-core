@@ -1,40 +1,54 @@
 <div class="ui fixed main menu bs-0 d-block">
-        <div class="ui container">
+        <div class="ui container p-0">
                 <div class="ui grid padded width-100">
 
-                        <div class="six wide column p-0 d-flex">
+                        <div class="six wide column d-flex">
                                 <!--Logo-->
                                 <a class="d-flex logo" tabindex="0" role="banner">
-                                        <!-- TODO: FIX: Logo is not displayed for some reason, n/w status is cancelled. -->
-                                        <img class="ui image" src="assets/images/logo.png" style="background-color: black"/>
-                                        <h2 style="margin-top: 0">Employee registry</h2>
+                                        <img src="assets/images/logo.png" class="ui image"/>
                                 </a>
                                 <!--/Logo-->
                         </div>
                         <div class="six wide column p-0 d-flex flex-jc-flex-end flex-ai-center">
-                                <i class="large bars icon link primary-color mobile only" (click)="showSideBar()" tabindex="0"></i>
-                                <div class="ui text menu m-0 d-flex flex-jc-center flex-ai-center computer only">
+                                <i class="large bars icon link primary-color mobile only" (click)="showSideBar()"
+                                        tabindex="0"></i>
+                                <div class="ui text menu m-0 d-flex flex-jc-center flex-ai-center computer only"
+                                        *ngIf="!userLogin">
 
                                         <ng-container>
-                                                <a class="item" [class.active]="router.isActive('/signup')" routerLink="/signup">
+                                                <!-- <a class="item" [class.active]="router.isActive('/signup')"
+                                                        routerLink="/signup">
                                                         {{resourceService?.frmelmnts?.btn?.signup}}
-                                                </a>
-                                                <a class="item " routerLink="/logIn">
+                                                </a> -->
+                                                <a class="item " (click)="logIn()">
                                                         {{resourceService?.frmelmnts?.btn?.logIn}}
                                                 </a>
 
                                         </ng-container>
                                 </div>
+                                <div class="ui text menu m-0 d-flex flex-jc-center flex-ai-center computer only"
+                                        *ngIf="userLogin">
+                                        <ng-container>
+                                                <a class="item" [class.active]="router.isActive('/admin/1')"
+                                                        *ngIf='permissionService.permissionAvailable' appPermission
+                                                        [permission]="adminConsoleRole"
+                                                        [routerLink]="[navigateToAdminConsole()]" tabindex="0">
+                                                        {{resourceService?.frmelmnts?.btn?.adminConsole}}
+                                                </a>
+                                        </ng-container>
+                                </div>
                                 <a class="profile-avtar computer only p-0 ml-15" tabindex="0" *ngIf="userLogin">
-                                        <div suiDropdown class="ui dropdown right top pointing" id="dropdown-menu-list-header">
-                                                <ngx-avatar [style]="avtarDesktopStyle" [size]="38" initialsSize="1" name="ais">
+                                        <div suiDropdown class="ui dropdown right top pointing"
+                                                id="dropdown-menu-list-header">
+                                                <ngx-avatar [style]="avtarDesktopStyle" [size]="38" initialsSize="1"
+                                                        name="ais">
                                                 </ngx-avatar>
                                                 <div class="menu" suiDropdownMenu>
                                                         <div class="item headerDropdownProfile">
-                                                                userName
+                                                                {{userName}}
                                                         </div>
                                                         <div class="ui divider"></div>
-                                                        <a class="item" routerLink="profile">
+                                                        <a class="item" (click)="navigateToProfilePage()">
                                                                 {{resourceService?.frmelmnts?.btn?.profile}}
                                                         </a>
 

@@ -34,6 +34,7 @@ export class ProfileComponent implements OnInit {
       this.userProfile = {}
     }
     this.getUserDetails();
+    console.log(this.userProfile)
   }
 
   getUserDetails() {
@@ -41,18 +42,18 @@ export class ProfileComponent implements OnInit {
       data: {
         "id": "open-saber.registry.read",
         'request': {
-          "Person": {
+          "Employee": {
             "osid": this.userId
           },
           "includeSignatures": true,
-          "viewTemplateId": "Person_Default.json"
+          "viewTemplateId": "Employee_SearchResult.json",
         }
       },
       url: urlConfig.URLS.READ,
     }
     this.dataService.post(requestData).subscribe(response => {
       console.log(response);
-      this.userProfile = response.result.Person;
+      this.userProfile = response.result.Employee;
     })
   }
   dowloadJson() {

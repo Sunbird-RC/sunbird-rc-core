@@ -1,68 +1,67 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, CanLoad } from '@angular/router';
 import { KeycloakService, KeycloakAuthGuard } from 'keycloak-angular';
-import { getLocaleExtraDayPeriodRules } from '../../node_modules/@angular/common';
-import { calcBindingFlags } from '../../node_modules/@angular/core/src/view/util';
+import { UserService } from './services/user/user.service';
+import { Observable } from 'rxjs';
+import { PermissionService } from './services/permission/permission.service';
+import rolesConfig from './services/rolesConfig.json';
 
 @Injectable()
-export class AppAuthGuard implements CanActivate {
-    granted: Boolean = undefined;
+export class AppAuthGuard implements CanActivate, CanLoad {
 
-    constructor(protected router: Router, protected keycloakAngular: KeycloakService) {
+    granted: boolean = false;
+
+    public userService: UserService;
+    public permissionService: PermissionService;
+
+    constructor(protected router: Router, protected keycloakAngular: KeycloakService, userService: UserService
+        , permissionService: PermissionService, ) {
         //super(router, keycloakAngular);
-        this.granted = undefined;
+        this.permissionService = permissionService;
         this.keycloakAngular = keycloakAngular;
+        this.userService = userService;
     }
 
-    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
-        return new Promise(async (resolve, reject) => {
-            var isLoggedIn = await this.keycloakAngular.isLoggedIn()
-            if (!isLoggedIn) {
-                this.keycloakAngular.login().then(() => {
-                    console.log('isloggedin = ' + isLoggedIn)
-                    console.log('role restriction given at app-routing.module for this route', route.data.roles);
-                    this.checkRoles(route, resolve, reject) 
-                }).catch(() => { reject() });
-            } else {
-                // Already computed granted. Rethrow it.
-                console.log("is logged in already. Use existing granted")
-                this.checkRoles(route, resolve, reject)
-            }
+    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
+        return this.getPermission(route.data.roles)
+    }
+
+    getPermission(roles) {
+        return Observable.create(observer => {
+            this.permissionService.permissionAvailable$.subscribe(
+                permissionAvailable => {
+                    if (permissionAvailable && permissionAvailable === 'success') {
+                        if (roles && rolesConfig.ROLES_MAPPING[roles]) {
+                            if (this.permissionService.checkRolesPermissions(rolesConfig.ROLES_MAPPING[roles])) {
+                                observer.next(true);
+                            } else {
+                                this.navigateToHome(observer);
+                            }
+                        } else {
+                            this.navigateToHome(observer);
+                        }
+                    } else if (permissionAvailable && permissionAvailable === 'error') {
+                        this.navigateToHome(observer);
+                    } else if(permissionAvailable === undefined) {
+                        this.navigateToHome(observer);
+                    }
+                }
+            );
         });
     }
 
-    fetchUserRoles() {
-        var roles: string[] = this.keycloakAngular.getUserRoles()
-        console.log('User roles coming after login from keycloak :', roles);
-        return roles;
+    navigateToHome(observer) {
+        this.router.navigate(['']);
+        observer.next(false);
+        observer.complete();
     }
 
-    checkRoles(route, resolve, reject) {
-        if (this.granted === undefined) {
-            this.granted = false; // set it, so that we marked it as found one time atleast.
-
-            // Fetch roles only once.
-            var roles: string[] = this.fetchUserRoles() 
-            const requiredRoles = route.data.roles;
-
-            if (!requiredRoles || requiredRoles.length === 0) {
-                console.log("No roles mentioned. Allowing access")
-                this.granted = true;
-            } else {
-                for (const requiredRole of requiredRoles) {
-                    if (roles.indexOf(requiredRole) > -1) {
-                        this.granted = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (this.granted === false) {
-            console.log("Not granted due to required roles missing")
-            reject(new Error("Access denied. Required roles are not set."))
+    canLoad(): boolean {
+        if (this.userService.loggedIn) {
+            return true;
         } else {
-            resolve()
+            return false;
         }
     }
+
 }

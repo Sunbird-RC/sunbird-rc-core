@@ -6,6 +6,7 @@
 }
 
 .ui.menu.fixed {
+    background: #2c3e50!important;
     position: -webkit-sticky;
     position: -moz-sticky;
     position: -ms-sticky;
@@ -18,7 +19,7 @@
   
     .logo {
       img {
-        height: 56px;
+        height: 45px;
         max-height: 56px;
       }
   
@@ -76,15 +77,15 @@
     &.text {
       .item {
         padding: 8px 16px;
-        color: #333333;
+        color: white;
         &:hover {
-          color: #024f9d;
+          font-size: 1.2rem;
           outline: none;
         }
   
         &.active {
           font-weight: 700;
-          color:  #024f9d;;
+          color: white ;;
   
           &:hover,
           &:focus {
@@ -104,4 +105,9 @@
 
   .ui.text.menu {
       margin: 0px;
+  }
+
+  .p-0 {
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
   }

@@ -45,16 +45,16 @@ export class CreateComponent implements OnInit {
   createUser() {
     const requestData = {
       data: {
-        "id": "open-saber.registry.create",
-        "request": {
-          "Person": this.formData.formInputData
+        id: "open-saber.registry.create",
+        request: {
+          Employee: this.formData.formInputData
         }
       },
       url: urlConfig.URLS.ADD
     };
     console.log("request data :", requestData)
     this.dataService.post(requestData).subscribe(response => {
-      this.navigateToProfilePage(response.result.Person.osid);
+      this.navigateToProfilePage(response.result.Employee.osid);
     }, err => {
       console.log("error", err);
     });

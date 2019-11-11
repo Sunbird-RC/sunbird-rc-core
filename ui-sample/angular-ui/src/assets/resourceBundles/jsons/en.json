@@ -3,7 +3,7 @@
         "frmelmnts": {
             "btn": {
                 "signup": "Sign Up",
-                "logIn": "Log In",
+                "logIn": "Login",
                 "approve": "Approve",
                 "create": "Create",
                 "profile": "profile",
@@ -12,7 +12,9 @@
                 "cancel": "Cancel",
                 "download": "Dowload",
                 "SearchIn": "search",
-                "update": "Update"
+                "update": "Update",
+                "generate": "Generate",
+                "adminConsole": "AdminConsole"
             },
             "msg": {
                 "logInHead": "Log-in to your account",
