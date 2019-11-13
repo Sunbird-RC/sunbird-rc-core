@@ -8,6 +8,10 @@
             "owner",
             "admin",
             "partner-admin"
+        ],
+        "createRole": [
+            "admin",
+            "partner-admin"
         ]
     }
 }

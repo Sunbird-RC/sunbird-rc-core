@@ -63,7 +63,7 @@ export class PermissionService {
   private setCurrentRoleActions(): void {
     let userDetails = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserKeyCloakData);
     if (userDetails) {
-      this.userRoles = userDetails.resource_access.portal.roles;
+      this.userRoles = userDetails.realm_access.roles;
     } else {
       this.userRoles = this.userService.getUserRoles;
     }

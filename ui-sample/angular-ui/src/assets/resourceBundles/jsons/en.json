@@ -17,7 +17,8 @@
                 "adminConsole": "AdminConsole",
                 "apply":"Apply",
                 "reset":"reset",
-                "home":"Home"
+                "home":"Home",
+                "onBoard": "OnBoard"
             },
             "label":{
                 "filters":"Filters"

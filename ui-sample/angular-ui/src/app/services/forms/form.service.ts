@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { of as observableOf, throwError as observableThrowError, Observable,  } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import person from "../jsons/person.json";
 import { mergeMap, merge , map, catchError} from 'rxjs/operators';
 
 

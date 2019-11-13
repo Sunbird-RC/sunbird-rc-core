@@ -49,6 +49,7 @@ export class HeaderComponent implements OnInit {
   public userName: any;
   public permissionService: PermissionService;
   adminConsoleRole: Array<string>;
+  createRole: Array<string>;
   public keycloakAngular: KeycloakService;
   public dataService: DataService;
   public keyCloakUserDetails: any;
@@ -66,6 +67,7 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit() {
     this.adminConsoleRole = rolesConfig.rolesMapping.adminRole;
+    this.createRole = rolesConfig.rolesMapping.createRole;
     this.resourceService.getResource();
     this.userAuthenticated = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserAuthenticated);
     if (this.userAuthenticated) {
@@ -98,6 +100,8 @@ export class HeaderComponent implements OnInit {
 
   cacheData() {
     let userDetails = this.keycloakAngular.getKeycloakInstance().tokenParsed;
+    let userToken = this.keycloakAngular.getKeycloakInstance().token;
+    this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.UserToken, userToken, { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });
     this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.UserKeyCloakData, userDetails, { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });
     this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.UserAuthenticated, { status: true }, { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });
     if (this.userLogin) {

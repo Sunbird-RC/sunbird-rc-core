@@ -40,7 +40,7 @@ var routes = [
   {
     path: 'create', component: CreateComponent,
     canActivate: [AppAuthGuard],
-    data: {roles:[]}
+    data: {roles:'createRole'}
   },
   {
     path: 'edit/:id', component: UpdateComponent,

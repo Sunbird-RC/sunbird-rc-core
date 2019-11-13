@@ -23,12 +23,11 @@
         </label>
         <input name="{{field.code}}" type="{{field.inputType}}" [(ngModel)]="formInputData[field.code]">
       </div>
-      <div *ngIf="field.inputType==='select'" class="field" [ngClass]="{ 'disabled':!field.editable}">
+      <div *ngIf="field.inputType==='select'" class="field" [ngClass]="{ 'disabled':!field.editable, 'required':field.required}">
         <label>{{field.label}}</label>
         <div class="field">
           <sui-select class="selection" [(ngModel)]="formInputData[field.code]" [isSearchable]="true"
             [options]="options" #select>
-            <option class="option selection" id="selectOption" *ngFor="let option of field.range">{{option.name}}</option>
             <sui-select-option *ngFor="let option of field.range" [value]="option.name"></sui-select-option>
           </sui-select>
         </div>

@@ -39,4 +39,8 @@ export class UserService {
   get getUserName(): string {
     return this.keycloakAngular.getUsername()
   }
+
+  get getUserToken(): string {
+    return this.keycloakAngular.getKeycloakInstance().token;
+  }
 }

@@ -35,6 +35,12 @@
                                                         [routerLink]="[navigateToAdminConsole()]" tabindex="0">
                                                         {{resourceService?.frmelmnts?.btn?.adminConsole}}
                                                 </a>
+                                                <a class="item" [class.active]="router.isActive('create')"
+                                                        *ngIf='permissionService.permissionAvailable' appPermission
+                                                        [permission]="createRole"
+                                                        [routerLink]="'/create'" tabindex="0">
+                                                        {{resourceService?.frmelmnts?.btn?.onBoard}}
+                                                </a>
                                         </ng-container>
                                 </div>
                                 <a class="profile-avtar computer only p-0 ml-15" tabindex="0" *ngIf="userLogin">

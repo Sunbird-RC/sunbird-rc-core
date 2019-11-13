@@ -5,7 +5,8 @@
         "cacheVariables": {
             "UserKeyCloakData": "userKeyCloakData",
             "UserAuthenticated": "userAuthenticated",
-            "EmployeeDetails": "userInfo"
+            "EmployeeDetails": "userInfo",
+            "UserToken":"userToken"
         }
     }
 }

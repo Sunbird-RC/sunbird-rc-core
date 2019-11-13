@@ -17,6 +17,22 @@
     {
       "name": "isActive",
       "title": "isApproved"
-    }
+    },
+    {
+      "name": "isInKronos",
+      "title": "Kronos"
+    },
+    {
+      "name": "nineAMreportTo",
+      "title": "nineAMreportTo"
+    },
+    {
+      "name": "projectName",
+      "title": "Project"
+    },
+    {
+      "name": "subProjectName",
+      "title": "Team"
+    },
   ]
 }

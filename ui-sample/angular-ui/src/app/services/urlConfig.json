@@ -1,10 +1,11 @@
 {
     "URLS": {
-        "BASE_URL": "http://localhost:8081",
-        "SEARCH": "/search",
-        "READ": "/read",
-        "ADD": "/add",
-        "UPDATE": "/update"
+        "BASE_URL": "http://localhost:8090",
+        "SEARCH": "/registry/search",
+        "READ": "/registry/read",
+        "ADD": "/registry/add",
+        "UPDATE": "/registry/update",
+        "REGISTER":"/register/users"
     },
     "PAGE_LIMIT": 20
 }
