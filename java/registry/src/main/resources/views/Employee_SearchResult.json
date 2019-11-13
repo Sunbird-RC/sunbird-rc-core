@@ -23,6 +23,14 @@
       "title": "Team"
     },
     {
+      "name": "role",
+      "title": "Role"
+    },
+    {
+      "name": "startDate",
+      "title": "StartDate"
+    },
+    {
       "name": "workLocation",
       "title": "location"
     },

@@ -1,9 +1,13 @@
-import { Component, OnInit, AfterViewInit, EventEmitter} from '@angular/core';
+import { Component, OnInit, EventEmitter } from '@angular/core';
 import { DataService } from '../../services/data/data.service'
 import urlConfig from '../../services/urlConfig.json'
 import * as _ from 'lodash-es';
 import { ResourceService } from '../../services/resource/resource.service'
 import { Router, ActivatedRoute } from '@angular/router'
+import { ICard } from '../../services/interfaces/Card';
+import { takeUntil, map, first, debounceTime, delay } from 'rxjs/operators';
+import { combineLatest, Subject } from 'rxjs';
+
 
 
 
@@ -24,86 +28,88 @@ export interface IPagination {
   templateUrl: './admin-page.component.html',
   styleUrls: ['./admin-page.component.scss']
 })
-export class AdminPageComponent implements OnInit, AfterViewInit {
+export class AdminPageComponent implements OnInit {
 
   dataService: DataService;
+  public showLoader = true;
   resourceService: ResourceService;
   router: Router;
-  users: Array<Object>;
-  result: any;
   activatedRoute: ActivatedRoute;
   public paginationDetails: IPagination;
   pageLimit: any
   public dataDrivenFilterEvent = new EventEmitter();
-
+  private listOfEmployees: ICard[];
+  public initFilters = false;
+  public dataDrivenFilters: any = {};
+  public queryParams: any;
+  public unsubscribe$ = new Subject<void>();
+  public key: string;
 
   constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute) {
     this.dataService = dataService;
     this.resourceService = resourceService;
     this.router = route;
     this.activatedRoute = activatedRoute;
-    console.log('resource service ', this.resourceService)
     this.pageLimit = urlConfig.PAGE_LIMIT;
     this.paginationDetails = this.getPager(0, 1, urlConfig.PAGE_LIMIT);
   }
 
   ngOnInit() {
-    this.result = {
-      "headers": '',
-      "row": ''
-    }
-    // this.dataDrivenFilterEvent.pipe(first()).
-    //         subscribe((filters: any) => {
-    //            this.getUsers(null);
-    //         });
-    this.getUsers(null);
+    this.initFilters = true;
+    this.dataDrivenFilterEvent.pipe(first()).
+      subscribe((filters: any) => {
+        this.dataDrivenFilters = filters;
+        this.fetchDataOnParamChange();
+        // this.setNoResultMessage();
+      });
+    this.activatedRoute.queryParams.subscribe(queryParams => {
+      this.queryParams = { ...queryParams };
+      this.key = this.queryParams['key'];
+    });
   }
 
-  ngAfterViewInit() { }
 
-  getUsers(key: string) {
-    this.activatedRoute.params.subscribe((params) => {
-      this.paginationDetails.currentPage = Number(params.pageNumber)
+  getDataForCard(data) {
+    const list: Array<ICard> = [];
+    _.forEach(data, (item, key) => {
+      const card = this.processContent(item);
+      list.push(card);
     });
+    return <ICard[]>list;
+  }
 
-    const option = {
-      url: urlConfig.URLS.SEARCH,
-      data: {
-        "id": "open-saber.registry.search",
-        'request': {
-          "entityType": ["Employee"],
-          "filters": {
-          },
-          "viewTemplateId": "Employee_SearchResult.json"
-        }
-      }
-    }
-    if (key !== null) {
 
-      option.data.request.filters = {
-        "name": { "contains": key }
-      }
-    }
-
-    this.dataService.post(option).subscribe(data => {
-      this.result = {
-        "headers": _.keys(data.result.Employee[0]),
-        "row": data.result.Employee.slice(0, this.pageLimit)
-      }
-      this.paginationDetails = this.getPager(data.result.Employee.length, this.paginationDetails.currentPage,
-        urlConfig.PAGE_LIMIT);
-    })
+  processContent(data) {
+    const content: any = {
+      name: data.name,
+      subProjectName: data.Team,
+      role: data.Role,
+      isApproved: data.isApproved,
+      startDate: data.StartDate,
+      identifier: data.identifier
+    };
+    return content;
   }
 
   navigateToProfilePage(user: any) {
-    console.log('user profile', user)
-    this.router.navigate(['/profile', user.identifier]);
+    this.router.navigate(['/profile', user.data.identifier]);
   }
 
-  onEnter(key: string) {
-    this.getUsers(key)
-  }
 
+
+  onEnter(key) {
+    this.key = key;
+    this.queryParams = {};
+    this.queryParams['key'] = this.key;
+    if (this.key && this.key.length > 0) {
+      this.queryParams['key'] = this.key;
+    } else {
+      delete this.queryParams['key'];
+    }
+    this.router.navigate(["admin/1"], {
+      queryParams: this.queryParams
+    });
+  }
 
 
   getPager(totalItems: number, currentPage: number = 1, pageSize: number = 10, pageStrip: number = 5) {
@@ -150,11 +156,79 @@ export class AdminPageComponent implements OnInit, AfterViewInit {
 
   navigateToPage(page: number): void {
     if (page < 1 || page > this.paginationDetails.totalPages) {
-        return;
+      return;
     }
     console.log(this.router.url)
     const url = this.router.url.split('?')[0].replace(/.$/, page.toString());
     this.router.navigate([url]);
-}
-  
+  }
+
+  public getFilters(filters) {
+    const defaultFilters = _.reduce(filters, (collector: any, element) => {
+      return collector;
+    }, {});
+    this.dataDrivenFilterEvent.emit(defaultFilters);
+  }
+
+  private fetchDataOnParamChange() {
+    combineLatest(this.activatedRoute.params, this.activatedRoute.queryParams)
+      .pipe(debounceTime(5), // wait for both params and queryParams event to change
+        delay(10),
+        map(result => ({ params: { pageNumber: Number(result[0].pageNumber) }, queryParams: result[1] })),
+        takeUntil(this.unsubscribe$)
+      ).subscribe(({ params, queryParams }) => {
+        this.showLoader = true;
+        this.paginationDetails.currentPage = params.pageNumber;
+        this.queryParams = { ...queryParams };
+        this.listOfEmployees = [];
+        this.fetchEmployees();
+      });
+  }
+
+  private fetchEmployees() {
+    const option = {
+      url: urlConfig.URLS.SEARCH,
+      data: {
+        id: "open-saber.registry.search",
+        request: {
+          entityType: ["Employee"],
+          filters: {
+          },
+          viewTemplateId: "Employee_SearchResult.json"
+        }
+      }
+    }
+    let filters = _.pickBy(this.queryParams, (value: Array<string> | string) => value && value.length);
+    filters = _.omit(filters, ['key', 'sort_by', 'sortType', 'appliedFilters']);
+    option.data.request.filters = this.getFilterObject(filters);
+    this.dataService.post(option)
+      .subscribe(data => {
+        this.showLoader = false;
+        this.listOfEmployees = this.getDataForCard(data.result.Employee);
+      }, err => {
+        this.showLoader = false;
+        this.listOfEmployees = [];
+      });
+  }
+  getFilterObject(filter) {
+    let option = {}
+    if (filter) {
+      _.forEach(filter, (elem, key) => {
+        let filterType = {}
+        if(_.isArray(elem)) {
+          filterType['or'] = elem;
+        } else {
+          filterType['contains'] = elem;
+        }
+        option[key] = filterType;
+      });
+    }
+    //search by name
+    if (this.queryParams.key) {
+      let filterTypes = {}
+      filterTypes["startsWith"] = this.queryParams.key;
+      option["name"] = filterTypes
+    }
+    return option;
+  }
 }

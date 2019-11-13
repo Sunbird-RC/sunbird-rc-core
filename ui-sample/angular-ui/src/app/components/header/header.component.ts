@@ -65,7 +65,7 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.adminConsoleRole = rolesConfig.ROLES_MAPPING.adminRole;
+    this.adminConsoleRole = rolesConfig.rolesMapping.adminRole;
     this.resourceService.getResource();
     this.userAuthenticated = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserAuthenticated);
     if (this.userAuthenticated) {

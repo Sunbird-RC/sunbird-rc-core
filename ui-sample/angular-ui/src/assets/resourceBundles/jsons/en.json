@@ -11,10 +11,16 @@
                 "edit": "Edit",
                 "cancel": "Cancel",
                 "download": "Dowload",
-                "SearchIn": "search",
+                "SearchIn": "Search by name",
                 "update": "Update",
                 "generate": "Generate",
-                "adminConsole": "AdminConsole"
+                "adminConsole": "AdminConsole",
+                "apply":"Apply",
+                "reset":"reset",
+                "home":"Home"
+            },
+            "label":{
+                "filters":"Filters"
             },
             "msg": {
                 "logInHead": "Log-in to your account",

@@ -1,5 +1,5 @@
 {
-    "ROLES_MAPPING": {
+    "rolesMapping": {
         "adminRole": [
             "admin",
             "partner-admin"
@@ -9,12 +9,5 @@
             "admin",
             "partner-admin"
         ]
-    },
-    "AvailableRoles": [
-        "partner-admin",
-        "admin",
-        "owner",
-        "reporter",
-        "fin-admin"
-    ]
+    }
 }

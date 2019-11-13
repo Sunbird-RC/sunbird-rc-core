@@ -44,7 +44,7 @@ export class PermissionService {
    * method to fetch roles.
    */
   private getPermissionsData(): void {
-    this.setRolesAndPermissions(roleConfig.AvailableRoles);
+    this.setCurrentRoleActions();
   }
   /**
    * method to process roles 
@@ -92,7 +92,7 @@ export class PermissionService {
   }
   getAdminAuthRoles() {
     let adminAuthRoles = [{
-      roles: roleConfig.ROLES_MAPPING['adminRole'],
+      roles: roleConfig.rolesMapping['adminRole'],
       url: "admin/1",
       tab: "adminConsole"
     }];
@@ -104,4 +104,3 @@ export class PermissionService {
     return authRoles;
   }
 }
-

@@ -1,9 +1,9 @@
 <div class="ui container mt-20">
-    <div class="ui small breadcrumb">
-        <a class="section" routerLink=''>Home</a>
-        <i class="right chevron icon divider"></i>
-        <div class="active section">Admin Console</div>
-      </div>
+  <div class="ui small breadcrumb">
+    <a class="section" routerLink=''>{{resourceService?.frmelmnts?.btn?.home}}</a>
+    <i class="right chevron icon divider"></i>
+    <div class="active section">{{resourceService?.frmelmnts?.btn?.adminConsole}}</div>
+  </div>
 </div>
 <div class="ui container py-20 m-20 tac">
   <div class="ui small ui action input primary-search-input" id="search-input-container">
@@ -16,40 +16,23 @@
   </div>
 </div>
 <div class="ui container py-20 ">
-  <table class="ui celled padded table">
-    <thead>
-      <tr>
-        <th *ngFor="let header of result.headers">{{header}}</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let user of result.row" [ngClass]="{positive:user.isApproved===true}">
-        <td *ngFor="let col of result.headers">
-          {{user[col]}}
-        </td>
-        <td *ngIf="user['isApproved']===false">
-          <button class="ui inverted green button"
-            (click)="navigateToProfilePage(user)">{{resourceService?.frmelmnts?.btn?.approve}}</button>
-        </td>
-      </tr>
-    </tbody>
-    <tfoot *ngIf="paginationDetails.totalItems > pageLimit">
-      <tr>
-        <th colspan="5">
-          <div class="ui right floated pagination menu">
-            <a class="icon item" (click)="navigateToPage(paginationDetails.currentPage - 1)"
-              [ngClass]="{active:paginationDetails.currentPage===page}">
-              <i class="left chevron icon"></i>
-            </a>
-            <a *ngFor="let page of paginationDetails.pages" [ngClass]="{active:paginationDetails.currentPage===page}"
-              (click)="navigateToPage(page)" class="item">{{page}}</a>
-            <a class="icon item" [ngClass]="{active:paginationDetails.currentPage===page}"
-              (click)="navigateToPage(paginationDetails.currentPage + 1)">
-              <i class="right chevron icon"></i>
-            </a>
-          </div>
-        </th>
-      </tr>
-    </tfoot>
-  </table>
+  <div class="ui grid">
+    <div class="two wide column">
+      <app-data-filter  (dataDrivenFilter)="getFilters($event)"
+        [ignoreQuery]="['key']" *ngIf="initFilters" [accordionDefaultOpen]=true
+        [isShowFilterLabel]=true></app-data-filter>
+    </div>
+    <div class="ten wide column">
+      <div class="ui grid mt-5" >
+        <div *ngFor="let content of listOfEmployees">
+          <app-card [data]="content" (clickEvent)="navigateToProfilePage($event)" [data]="content" class="d-block"
+            [class.last-card]="mr-0">
+          </app-card>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
 </div>

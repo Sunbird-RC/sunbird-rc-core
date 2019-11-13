@@ -1,7 +1,11 @@
 /* You can add global styles to this file, and also import other style files */
 
 // @import url("../node_modules/bootstrap/dist/css/bootstrap.min.css")
+$primary-color:  #024f9d;
 
+.ui.container {
+  width: 1250px;
+}
 .d-flex {
   display: flex !important;
 }

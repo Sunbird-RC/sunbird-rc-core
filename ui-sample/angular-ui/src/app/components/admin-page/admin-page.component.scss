@@ -21,7 +21,7 @@ tr th {
     }
 }
 .ui.small.input {
-    width: 300px !important;
+    width: 370px !important;
     height: 3rem;
 }
 ::ng-deep {
@@ -49,4 +49,7 @@ tr th {
 //     left: 1rem !important;
 //     top: 0rem;
 // }
+}
+.mt-5 {
+    margin-top: 0.5rem;
 }
