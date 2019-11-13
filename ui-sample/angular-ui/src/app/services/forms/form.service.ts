@@ -27,8 +27,4 @@ export class FormService {
       }));
   }
 
-  getPersonForm() {
-    return person.data;
-  }
-
 }

@@ -1,4 +1,18 @@
 <div class="ui container mb-20 mt-20">
+    <div class="ui grid info" >
+            <div class="ui info message" *ngIf="success == true">
+                    <i class="close icon" (click)="close()"></i>
+                    <div class="header">
+                            Employee successfully added to registry
+                    </div>
+                </div>
+                <div class="ui negative message" *ngIf="isError">
+                        <i class="close icon" (click)="close()"></i>
+                        <div class="header">
+                            Employee regiter unsuccessfull {{errMessage}}
+                        </div>
+                    </div>
+    </div>
     <div class="ui raised shadow container segment" style="width: 44rem;">
         <h3 class="center tac">{{resourceService?.frmelmnts?.btn?.onBoard}}</h3>
         <div class="d-flex flex-jc-center mb-30" *ngIf="formFieldProperties">

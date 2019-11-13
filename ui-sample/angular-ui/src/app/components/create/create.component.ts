@@ -8,6 +8,7 @@ import { Router, ActivatedRoute } from '@angular/router'
 import { UserService } from 'src/app/services/user/user.service';
 import { CacheService } from 'ng2-cache-service';
 import appConfig from '../../services/app.config.json';
+import * as $ from 'jquery';
 
 @Component({
   selector: 'app-create',
@@ -23,7 +24,9 @@ export class CreateComponent implements OnInit {
   public formFieldProperties: any;
   dataService: DataService;
   router: Router;
-
+  success = false;
+  isError = false;
+  errMessage: string;
   constructor(resourceService: ResourceService, formService: FormService, dataService: DataService, route: Router, public userService: UserService, private cacheService: CacheService) {
     this.resourceService = resourceService;
     this.formService = formService;
@@ -54,12 +57,25 @@ export class CreateComponent implements OnInit {
       url: urlConfig.URLS.REGISTER
     }
     this.dataService.post(requestData).subscribe(response => {
-      this.navigateToProfilePage(response.result.Employee.osid);
+      if (response.params.status === "SUCCESSFUL") {
+        this.success = true;
+      }
     }, err => {
+      this.isError = true;
+      this.errMessage = err.errorMessage;
       console.log("error", err);
     });
   }
   navigateToProfilePage(id: String) {
     this.router.navigate(['/profile', id])
   }
+
+  close() {
+    $(".close.icon").click(function () {
+      $(this).parent().hide();
+    });
+    this.isError = false;
+    this.success = false;
+  }
+
 }

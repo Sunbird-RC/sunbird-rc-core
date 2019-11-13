@@ -33,7 +33,9 @@ export class UpdateComponent implements OnInit {
 
   ngOnInit() {
     this.userId = this.activatedRoute.snapshot.params.id;
-    this.formFieldProperties = this.formService.getPersonForm().fields;
+    this.formService.getFormConfig('employee').subscribe(res => {
+      this.formFieldProperties = res.fields;
+    })
   }
 
   updateInfo() {

@@ -19,8 +19,7 @@
         "orgName",
         "name",
         "email",
-        "phone",
-        "role"
+        "phone"
       ],
       "properties": {
         "orgName": {

@@ -25,6 +25,12 @@ export interface ServerResponse {
     ver: string;
 
     headers?: any;
+
+    errorMessage? :any;
+
+    error?: any;
+
+    statusCode?: any;
 }
 
 export interface Params {
