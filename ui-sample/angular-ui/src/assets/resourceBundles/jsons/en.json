@@ -18,14 +18,16 @@
                 "apply":"Apply",
                 "reset":"reset",
                 "home":"Home",
-                "onBoard": "OnBoard"
+                "onBoard": "OnBoard",
+                "clearQuery":"Clear Query"
             },
             "label":{
                 "filters":"Filters"
             },
             "msg": {
                 "logInHead": "Log-in to your account",
-                "createAccount": "create account"
+                "createAccount": "create account",
+                "queryMessage":"We don't have any documents matching your query"
             }
         }
     }

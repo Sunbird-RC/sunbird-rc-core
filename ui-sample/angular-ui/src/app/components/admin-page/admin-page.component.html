@@ -17,18 +17,37 @@
 </div>
 <div class="ui container py-20 ">
   <div class="ui grid">
-    <div class="two wide column">
-      <app-data-filter  (dataDrivenFilter)="getFilters($event)"
-        [ignoreQuery]="['key']" *ngIf="initFilters" [accordionDefaultOpen]=true
-        [isShowFilterLabel]=true></app-data-filter>
+    <div class="two wide computer three wide tablet twelve wide mobile column">
+      <app-data-filter (dataDrivenFilter)="getFilters($event)" [ignoreQuery]="['key']" *ngIf="initFilters"
+        [accordionDefaultOpen]=true [isShowFilterLabel]=true></app-data-filter>
     </div>
-    <div class="ten wide column">
-      <div class="ui grid mt-5" >
-        <div *ngFor="let content of listOfEmployees">
-          <app-card [data]="content" (clickEvent)="navigateToProfilePage($event)" [data]="content" class="d-block"
-            [class.last-card]="mr-0">
-          </app-card>
+    <div class="ten wide computer nine wide tablet twelve wide mobile column">
+      <div class="ui grid mt-5">
+        <div class="row" *ngIf="showLoader">
+          <div class="twelve wide column">
+            <div class="ui segment">
+              <div class="ui active medium inline loader"></div>
+            </div>
+          </div>
         </div>
+        <div class="row" *ngIf="listOfEmployees.length === 0 && !showLoader">
+          <div class="twelve wide column">
+            <div class="ui placeholder segment tac">
+              <div class="ui icon header">
+                <i class="search icon"></i>
+                {{resourceService?.frmelmnts?.msg?.queryMessage}}
+              </div>
+              <div class="inline">
+                <div class="ui primary button" (click)="clearQuery()">{{resourceService?.frmelmnts?.btn?.clearQuery}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+          <div *ngFor="let content of listOfEmployees">
+            <app-card [data]="content" (clickEvent)="navigateToProfilePage($event)" [data]="content" class="d-block"
+              [class.last-card]="mr-0">
+            </app-card>
+          </div>
       </div>
 
     </div>

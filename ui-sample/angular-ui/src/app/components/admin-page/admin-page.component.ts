@@ -38,7 +38,7 @@ export class AdminPageComponent implements OnInit {
   public paginationDetails: IPagination;
   pageLimit: any
   public dataDrivenFilterEvent = new EventEmitter();
-  private listOfEmployees: ICard[];
+  private listOfEmployees: ICard[] = [];
   public initFilters = false;
   public dataDrivenFilters: any = {};
   public queryParams: any;
@@ -230,5 +230,11 @@ export class AdminPageComponent implements OnInit {
       option["name"] = filterTypes
     }
     return option;
+  }
+
+  clearQuery() {
+    let redirectUrl = this.router.url.split('?')[0];
+    redirectUrl = decodeURI(redirectUrl);
+    this.router.navigate([redirectUrl]);
   }
 }
