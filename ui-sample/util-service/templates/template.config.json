@@ -1,0 +1,8 @@
+{
+    "formTemplates":{
+        "admin":"templates/AdminFormTemplate.json",
+        "partner-admin":"templates/PartnerAdminFormTemplate.json",
+        "owner":"templates/OwnerFormTemplate.json",
+        "fin-admin":"templates/FinAdminFormTemplate.json"
+    }
+}

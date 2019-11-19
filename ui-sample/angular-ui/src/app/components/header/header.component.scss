@@ -86,7 +86,7 @@
         &.active {
           font-weight: 700;
           color: white ;;
-  
+          outline: none;
           &:hover,
           &:focus {
             opacity: 0.9;

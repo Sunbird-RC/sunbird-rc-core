@@ -1,5 +1,5 @@
 {
-  "subject": "Admin",
+  "subject": "FinAdmin",
   "fields": [
     {
       "name": "name",
@@ -19,8 +19,12 @@
       "title": "isApproved"
     },
     {
-      "name": "isInKronos",
-      "title": "Kronos"
+      "name": "proposedBilling",
+      "title": "ProposedBilling"
+    },
+    {
+      "name": "billLocation",
+      "title": "BillLocation"
     },
     {
       "name": "nineAMreportTo",

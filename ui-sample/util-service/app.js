@@ -10,7 +10,10 @@ const realmName = process.env.realmName || "PartnerRegistry"
 const keyCloakHost = process.env.keyCloakHost || "http://localhost:8080/auth/admin/realms/" + realmName + "/users";
 const request = require('request')
 const _ = require('lodash')
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
 var async = require('async');
+const templates = require('./templates/template.config.json');
 
 
 const port = process.env.PORT || 8090;
@@ -20,7 +23,7 @@ app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.post("/register/users", async (req, res) => {
+app.post("/register/users", (req, res) => {
     createUser(req.body, req.headers, function (err, data) {
         if (err) {
             // res.statusCode = err.statusCode;
@@ -50,29 +53,84 @@ const createUser = (value, header, callback) => {
 }
 
 
-app.post("/registry/add", async (req, res, next) => {
+app.post("/registry/add", (req, res, next) => {
     postCallToRegistry(req.body, "/add", function (err, data) {
         return res.send(data);
     });
 });
 
-app.post("/registry/search", async (req, res, next) => {
+app.post("/registry/search", (req, res, next) => {
     postCallToRegistry(req.body, "/search", function (err, data) {
         return res.send(data);
     });
 });
 
-app.post("/registry/read", async (req, res, next) => {
+app.post("/registry/read", (req, res, next) => {
     postCallToRegistry(req.body, "/read", function (err, data) {
         return res.send(data);
     })
 });
 
-app.post("/registry/update", async (req, res, next) => {
+app.post("/registry/update", (req, res, next) => {
     postCallToRegistry(req.body, "/update", function (err, data) {
         return res.send(data);
     })
 });
+
+app.get("/formTemplates", (req, res, next) => {
+    getFormTemplates(req.headers, function (err, data) {
+        if (err) {
+            res.statusCode = 404;
+            return res.send(err);
+        }
+        else {
+            const json = {
+                result: { formTemplate: data },
+                responseCode: 'OK'
+            }
+            return res.send(json)
+        }
+    })
+});
+
+const getFormTemplates = (header, callback) => {
+    let token = header['x-authenticated-user-token'];
+    let roles = [];
+    var decoded = jwt.decode(token);
+    if (decoded.realm_access) {
+        roles = decoded.realm_access.roles;
+    }
+    readFormTemplate(getTemplateName(roles), function (err, data) {
+        if (err) callback(err, null);
+        else callback(null, data);
+    });
+}
+
+/**
+ * pick the template according to the role, preferences is ordered 
+ * @param {*} roles 
+ */
+//todo get roles from config
+const getTemplateName = (roles) => {
+    if (_.includes(roles, 'admin'))
+        return templates.formTemplates['admin'];
+    if (_.includes(roles, 'partner-admin'))
+        return templates.formTemplates['partner-admin'];
+    if (_.includes(roles, 'fin-admin'))
+        return templates.formTemplates['fin-admin'];
+    if (_.includes(roles, 'owner'))
+        return templates.formTemplates['owner']
+}
+
+const readFormTemplate = (value, callback) => {
+    fs.readFile(value, (err, data) => {
+        if (err) callback(err, null);
+        else {
+            let jsonData = JSON.parse(data);
+            callback(null, jsonData);
+        }
+    });
+}
 
 const postCallToRegistry = (value, endPoint, callback) => {
     const options = {

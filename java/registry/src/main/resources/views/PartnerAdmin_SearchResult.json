@@ -7,16 +7,76 @@
       "display": true
     },
     {
+      "name": "email",
+      "title": "Email"
+    },
+    {
+      "name": "phone",
+      "title": "phone"
+    },
+    {
       "name": "orgName",
       "title": "Organization"
+    },
+    {
+      "name": "role",
+      "title": "Role"
     },
     {
       "name": "isActive",
       "title": "isApproved"
     },
     {
-      "name": "proposedBilling",
-      "title": "Billing"
+      "name": "isInKronos",
+      "title": "Kronos"
+    },
+    {
+      "name": "nineAMreportTo",
+      "title": "nineAMreportTo"
+    },
+    {
+      "name": "projectName",
+      "title": "Project"
+    },
+    {
+      "name": "subProjectName",
+      "title": "Team"
+    },
+    {
+      "name": "startDate",
+      "title": "StartDate"
+    },
+    {
+      "name": "endDate",
+      "title": "EndDate"
+    },
+    {
+      "name": "repoAccess",
+      "title": "RepoAccess"
+    },
+    {
+      "name": "slackAccess",
+      "title": "SlackAccess"
+    },
+    {
+      "name": "workLocation",
+      "title": "WorkLocation"
+    },
+    {
+      "name": "remarks",
+      "title": "Remarks"
+    },
+    {
+      "name": "workingStyle",
+      "title": "WorkingStyle"
+    },
+    {
+      "name": "externalId",
+      "title": "ExternalId"
+    },
+    {
+      "name": "externalRole",
+      "title": "ExternalRole"
     }
   ]
 }

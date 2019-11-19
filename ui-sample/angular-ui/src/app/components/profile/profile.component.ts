@@ -61,9 +61,8 @@ export class ProfileComponent implements OnInit {
     var uri = this.sanitizer.bypassSecurityTrustUrl("data:text/json;charset=UTF-8," + encodeURIComponent(theJSON));
     this.downloadJsonHref = uri;
   }
-  navigateToEditPage()  {
-    console.log(this.userId, )
-    this.router.navigate(['/edit', this.userId])
+  navigateToEditPage() {
+    this.router.navigate(['/edit'], { queryParams: {userId: this.userId}});
   }
 }
 

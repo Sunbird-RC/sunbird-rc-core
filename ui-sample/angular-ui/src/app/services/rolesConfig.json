@@ -12,6 +12,11 @@
         "createRole": [
             "admin",
             "partner-admin"
+        ],
+        "editProfileRole": [
+            "owner",
+            "admin",
+            "partner-admin"
         ]
     }
 }

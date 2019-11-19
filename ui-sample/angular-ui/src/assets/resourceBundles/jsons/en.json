@@ -22,12 +22,16 @@
                 "clearQuery":"Clear Query"
             },
             "label":{
-                "filters":"Filters"
+                "filters":"Filters",
+                "profileInformation":"Profile Information",
+                "updateProfile": "Update Profile"
             },
             "msg": {
                 "logInHead": "Log-in to your account",
                 "createAccount": "create account",
-                "queryMessage":"We don't have any documents matching your query"
+                "queryMessage":"We don't have any documents matching your query",
+                "createUserSuccess":"Employee successfully added to registry",
+                "createUserUnsuccess":"Employee register unsuccessful"
             }
         }
     }

@@ -1,10 +1,26 @@
 {
-  "subject": "Admin",
+  "subject": "Owner Search Template",
   "fields": [
     {
       "name": "name",
       "title": "name",
       "display": true
+    },
+    {
+      "name": "email",
+      "title": "Email"
+    },
+    {
+      "name": "phone",
+      "title": "Phone"
+    },
+    {
+      "name": "macAddress",
+      "title": "MacAddress"
+    },
+    {
+      "name": "githubId",
+      "title": "GithubId"
     },
     {
       "name": "orgName",
@@ -17,10 +33,6 @@
     {
       "name": "isActive",
       "title": "isApproved"
-    },
-    {
-      "name": "isInKronos",
-      "title": "Kronos"
     },
     {
       "name": "nineAMreportTo",
@@ -41,26 +53,6 @@
     {
       "name": "endDate",
       "title": "EndDate"
-    },
-    {
-      "name": "repoAccess",
-      "title": "RepoAccess"
-    },
-    {
-      "name": "slackAccess",
-      "title": "SlackAccess"
-    },
-    {
-      "name": "workLocation",
-      "title": "WorkLocation"
-    },
-    {
-      "name": "remarks",
-      "title": "Remarks"
-    },
-    {
-      "name": "workingStyle",
-      "title": "WorkingStyle"
     },
     {
       "name": "externalId",

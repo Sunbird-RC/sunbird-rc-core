@@ -5,7 +5,8 @@
         "READ": "/registry/read",
         "ADD": "/registry/add",
         "UPDATE": "/registry/update",
-        "REGISTER":"/register/users"
+        "REGISTER":"/register/users",
+        "FORM_TEPLATE":"/formtemplates"
     },
     "PAGE_LIMIT": 20
 }

@@ -1,17 +1,22 @@
 <div class="ui container mb-20 mt-20">
-    <div class="ui grid info" >
-            <div class="ui info message" *ngIf="success == true">
-                    <i class="close icon" (click)="close()"></i>
-                    <div class="header">
-                            Employee successfully added to registry
-                    </div>
-                </div>
-                <div class="ui negative message" *ngIf="isError">
-                        <i class="close icon" (click)="close()"></i>
-                        <div class="header">
-                            Employee regiter unsuccessfull {{errMessage}}
-                        </div>
-                    </div>
+    <div class="ui small breadcrumb">
+        <a class="section" routerLink=''>{{resourceService?.frmelmnts?.btn?.home}}</a>
+        <i class="right chevron icon divider"></i>
+        <div class="active section">{{resourceService?.frmelmnts?.btn?.onBoard}}</div>
+    </div>
+    <div class="ui grid info">
+        <div class="ui info message" *ngIf="success == true">
+            <i class="close icon" (click)="close()"></i>
+            <div class="header">
+                {{resourceService?.frmelmnts?.msg?.createUserSuccess}}
+            </div>
+        </div>
+        <div class="ui negative message" *ngIf="isError">
+            <i class="close icon" (click)="close()"></i>
+            <div class="header">
+                {{resourceService?.frmelmnts?.msg?.createUserUnsuccess}} {{errMessage}}
+            </div>
+        </div>
     </div>
     <div class="ui raised shadow container segment" style="width: 44rem;">
         <h3 class="center tac">{{resourceService?.frmelmnts?.btn?.onBoard}}</h3>

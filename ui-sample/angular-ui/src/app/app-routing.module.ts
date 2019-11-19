@@ -43,9 +43,9 @@ var routes = [
     data: {roles:'createRole'}
   },
   {
-    path: 'edit/:id', component: UpdateComponent,
+    path: 'edit', component: UpdateComponent,
     canActivate: [AppAuthGuard],
-    data: { roles: ['admin', 'partner-admin', 'owner'] }
+    data: { roles: 'editProfileRole' }
   }
 ];
 

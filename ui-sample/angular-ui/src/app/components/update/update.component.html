@@ -1,6 +1,13 @@
-
 <div class="ui container mb-20 mt-20">
-    <div class="ui raised shadow container segment">
+    <div class="ui small breadcrumb">
+        <a class="section" routerLink=''>{{resourceService?.frmelmnts?.btn?.home}}</a>
+        <i class="right chevron icon divider"></i>
+        <a class="section"
+            [routerLink]="['/profile', userId]">{{resourceService?.frmelmnts?.label?.profileInformation}}</a>
+        <i class="right chevron icon divider"></i>
+        <div class="active section">{{resourceService?.frmelmnts?.label?.updateProfile}}</div>
+    </div>
+    <div class="ui raised shadow container segment" style="width: 50rem;">
         <h3 class="center tac">{{resourceService?.frmelmnts?.btn?.update}}</h3>
         <div class="d-flex flex-jc-center mb-30" *ngIf="formFieldProperties">
             <app-default-template #formData [formFieldProperties]="formFieldProperties">

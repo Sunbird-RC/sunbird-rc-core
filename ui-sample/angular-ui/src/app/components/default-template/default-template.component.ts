@@ -23,7 +23,7 @@ export class DefaultTemplateComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.userId = this.activatedRoute.snapshot.params.id;
+    this.userId = this.activatedRoute.snapshot.queryParams.userId;
     if (this.userId) {
       this.getUserDetails();
     }
@@ -34,7 +34,7 @@ export class DefaultTemplateComponent implements OnInit {
       data: {
         "id": "open-saber.registry.read",
         'request': {
-          "Person": {
+          "Employee": {
             "osid": this.userId
           },
           "includeSignatures": true,
@@ -43,8 +43,8 @@ export class DefaultTemplateComponent implements OnInit {
       url: urlConfig.URLS.READ,
     }
     this.dataService.post(requestData).subscribe(response => {
-      this.formInputData = response.result.Person;
-    },(err =>{
+      this.formInputData = response.result.Employee;
+    }, (err => {
       console.log(err)
     }))
   }
