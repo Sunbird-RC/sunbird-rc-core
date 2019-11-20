@@ -23,8 +23,10 @@ export class DefaultTemplateComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.userId = this.activatedRoute.snapshot.queryParams.userId;
-    if (this.userId) {
+    this.activatedRoute.params.subscribe((params) => {
+      this.userId = params.userId;
+    });
+    if(this.userId) {
       this.getUserDetails();
     }
   }

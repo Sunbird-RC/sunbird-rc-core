@@ -17,6 +17,10 @@
             "owner",
             "admin",
             "partner-admin"
+        ],
+        "readers": [
+            "fin-admin",
+            "reporter"
         ]
     }
 }

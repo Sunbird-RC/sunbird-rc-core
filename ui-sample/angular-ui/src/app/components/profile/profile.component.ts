@@ -4,6 +4,10 @@ import { ResourceService } from '../../services/resource/resource.service';
 import { ActivatedRoute, Router } from '@angular/router'
 import urlConfig from '../../services/urlConfig.json';
 import { DomSanitizer } from '@angular/platform-browser'
+import { CacheService } from 'ng2-cache-service';
+import appConfig from '../../services/app.config.json';
+import { UserService } from '../../services/user/user.service';
+import _ from 'lodash-es';
 
 @Component({
   selector: 'app-profile',
@@ -17,24 +21,57 @@ export class ProfileComponent implements OnInit {
   router: Router;
   activatedRoute: ActivatedRoute;
   userId: String;
-  userProfile: any;
+  userProfile: any = {};
   downloadJsonHref: any;
-  constructor(dataService: DataService, resourceService: ResourceService, activatedRoute: ActivatedRoute, private sanitizer: DomSanitizer, router: Router) {
+  userService: UserService;
+  public formFieldProperties: any;
+  public showLoader = true;
+  public viewOwnerProfile : string;
+
+  constructor(dataService: DataService, resourceService: ResourceService, activatedRoute: ActivatedRoute, private sanitizer: DomSanitizer, router: Router, userService: UserService, public cacheService: CacheService) {
     this.dataService = dataService
     this.resourceService = resourceService;
     this.router = router
     this.activatedRoute = activatedRoute;
+    this.userService = userService;
   }
 
   ngOnInit() {
     this.activatedRoute.params.subscribe((params) => {
-      this.userId = params.id;
+      this.userId = params.userId;
+      this.viewOwnerProfile = params.role
     });
-    if (!this.userProfile) {
-      this.userProfile = {}
+    this.getFormTemplate();
+  }
+
+  getFormTemplate() {
+    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+    if (!token) {
+      token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
     }
-    this.getUserDetails();
-    console.log(this.userProfile)
+    const requestData = {
+      url: urlConfig.URLS.FORM_TEPLATE,
+      header: {
+        userToken: token,
+        role: this.viewOwnerProfile
+      }
+    }
+    this.dataService.get(requestData).subscribe(res => {
+      if (res.responseCode === 'OK') {
+        this.formFieldProperties = res.result.formTemplate.data.fields;
+        this.disableEditMode()
+      }
+    });
+  }
+
+  disableEditMode() {
+    _.map(this.formFieldProperties, field => {
+      if (field.hasOwnProperty('editable')) {
+        field['editable'] = false;
+        field['required'] = false;
+      }
+    });
+    this.showLoader = false;
   }
 
   getUserDetails() {
@@ -62,7 +99,7 @@ export class ProfileComponent implements OnInit {
     this.downloadJsonHref = uri;
   }
   navigateToEditPage() {
-    this.router.navigate(['/edit'], { queryParams: {userId: this.userId}});
+    this.router.navigate(['/edit', this.userId]);
   }
 }
 

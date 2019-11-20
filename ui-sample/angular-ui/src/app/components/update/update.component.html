@@ -8,6 +8,9 @@
         <div class="active section">{{resourceService?.frmelmnts?.label?.updateProfile}}</div>
     </div>
     <div class="ui raised shadow container segment" style="width: 50rem;">
+            <div class="ui segment" *ngIf="showLoader">
+                    <div class="ui active medium inline loader"></div>
+                  </div>
         <h3 class="center tac">{{resourceService?.frmelmnts?.btn?.update}}</h3>
         <div class="d-flex flex-jc-center mb-30" *ngIf="formFieldProperties">
             <app-default-template #formData [formFieldProperties]="formFieldProperties">

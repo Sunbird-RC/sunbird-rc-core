@@ -97,7 +97,9 @@ const getFormTemplates = (header, callback) => {
     let token = header['x-authenticated-user-token'];
     let roles = [];
     var decoded = jwt.decode(token);
-    if (decoded.realm_access) {
+    if (header.role) {
+        roles = [header.role]
+    } else if (decoded.realm_access) {
         roles = decoded.realm_access.roles;
     }
     readFormTemplate(getTemplateName(roles), function (err, data) {

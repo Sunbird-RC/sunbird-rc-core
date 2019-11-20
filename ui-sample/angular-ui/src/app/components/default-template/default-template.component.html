@@ -3,11 +3,11 @@
     <div *ngFor="let field of formFieldProperties;let i = index"
       class="{{field.renderingHints.semanticColumnWidth || 'twelve'}} wide column">
       <div *ngIf="field.inputType==='text' || field.inputType==='number'" class="field"
-        [ngClass]="{ 'disabled':!field.editable, 'required':field.required}">
+        [ngClass]="{'required':field.required}">
         <label>
           {{field.label}}
         </label>
-        <div class="field">
+        <div class="field" [ngClass]="{ 'disabled':!field.editable}">
           <input name={{field.code}} type={{field.inputType}} [(ngModel)]="formInputData[field.code]"
             placeholder={{field.placeholder}}>
         </div>
@@ -23,9 +23,9 @@
         </label>
         <input name="{{field.code}}" type="{{field.inputType}}" [(ngModel)]="formInputData[field.code]">
       </div>
-      <div *ngIf="field.inputType==='select'" class="field" [ngClass]="{ 'disabled':!field.editable, 'required':field.required}">
+      <div *ngIf="field.inputType==='select'" class="field" [ngClass]="{'required':field.required}">
         <label>{{field.label}}</label>
-        <div class="field">
+        <div class="field" [ngClass]="{ 'disabled':!field.editable}">
           <sui-select class="selection" [(ngModel)]="formInputData[field.code]" [isSearchable]="true"
             [options]="options" #select>
             <sui-select-option *ngFor="let option of field.range" [value]="option.name"></sui-select-option>

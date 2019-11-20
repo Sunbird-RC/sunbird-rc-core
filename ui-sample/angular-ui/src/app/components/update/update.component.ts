@@ -26,6 +26,8 @@ export class UpdateComponent implements OnInit {
   userId: String;
   activatedRoute: ActivatedRoute;
   userService: UserService;
+  public showLoader = true;
+
   constructor(resourceService: ResourceService, formService: FormService, dataService: DataService, route: Router, activatedRoute: ActivatedRoute,
     userService: UserService, public cacheService: CacheService) {
     this.resourceService = resourceService;
@@ -37,7 +39,9 @@ export class UpdateComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.userId = this.activatedRoute.snapshot.queryParams.userId;
+    this.activatedRoute.params.subscribe((params) => {
+      this.userId = params.userId;
+    });
     this.getFormTemplate();
   }
 
@@ -55,6 +59,7 @@ export class UpdateComponent implements OnInit {
     this.dataService.get(requestData).subscribe(res =>{
       if(res.responseCode === 'OK')
       {
+        this.showLoader =false;
         this.formFieldProperties = res.result.formTemplate.data.fields;
       }
     });

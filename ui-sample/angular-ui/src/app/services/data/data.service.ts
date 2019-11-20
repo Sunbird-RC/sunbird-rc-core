@@ -73,6 +73,9 @@ export class DataService {
       if(headers.userToken) {
         default_headers['x-authenticated-user-token'] = headers.userToken
       }
+      if(headers.role) {
+        default_headers['role'] = headers.role
+      }
     }
    
     return { ...default_headers };
