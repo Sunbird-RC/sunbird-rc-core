@@ -16,8 +16,8 @@ export class CardComponent implements OnInit {
   }
 
   getRandColor() {
-    let colors = ["#66B7B0", "#727289", "#642F7A", "#A34B25", "#872C6F", "#A34B25", "#8FB339", "#157A7F", "#51504E", "#334A66"]
-    let randNum = Math.floor(Math.random() * 10);
+    let colors = ["#DD4132", "#727289", "#642F7A", "#A34B25", "#872C6F", "#A34B25", "#8FB339", "#157A7F", "#51504E", "#334A66", "#F7786B","#CE3175","#5B5EA6","#B565A7","#66B7B0"]
+    let randNum = Math.floor(Math.random() * 15);
     return colors[randNum];
   }
   public onAction(data, event) {

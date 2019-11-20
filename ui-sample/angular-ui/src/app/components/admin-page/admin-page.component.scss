@@ -43,13 +43,12 @@ tr th {
         top: -1rem;
     }
 }
-@media only screen and (min-width: 1024px)
-{
-// .primary-search-input[_ngcontent-c17] {
-//     left: 1rem !important;
-//     top: 0rem;
-// }
-}
+@media not all and  (min-width: 635px) {
+    .ui.cards {
+      justify-content: center;
+  }
+  }
+
 .mt-5 {
     margin-top: 0.5rem;
 }

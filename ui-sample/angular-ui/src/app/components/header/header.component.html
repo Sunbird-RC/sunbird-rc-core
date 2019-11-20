@@ -37,8 +37,7 @@
                                                 </a>
                                                 <a class="item" [class.active]="router.isActive('create')"
                                                         *ngIf='permissionService.permissionAvailable' appPermission
-                                                        [permission]="createRole"
-                                                        [routerLink]="'/create'" tabindex="0">
+                                                        [permission]="createRole" [routerLink]="'/create'" tabindex="0">
                                                         {{resourceService?.frmelmnts?.btn?.onBoard}}
                                                 </a>
                                         </ng-container>
@@ -65,6 +64,52 @@
                                                 </div>
                                         </div>
                                 </a>
+                        </div>
+<!-- mobil view -->
+                        <div class="mobile only">
+                                <div class="ui sidebar right vertical menu">
+                                        <!--Logged in user-->
+                                        <ng-container *ngIf="userLogin">
+                                                <div class="item font-weight-bold">
+                                                        <i class="close link icon" (click)="showSideBar()" tabindex="0"
+                                                                title="{{resourceService?.frmelmnts?.btn?.close}}"></i>
+                                                        <div class="ellipsis">
+                                                                {{userName}}
+                                                        </div>
+                                                </div>
+                                                <div class="ui divider mt-0"></div>
+                                                <a class="item" [class.active]="router.isActive('/admin/1')"
+                                                        *ngIf='permissionService.permissionAvailable' appPermission
+                                                        [permission]="adminConsoleRole" (click)="showSideBar()"
+                                                        [routerLink]="[navigateToAdminConsole()]">
+                                                        {{resourceService?.frmelmnts?.btn?.adminConsole}}
+                                                </a>
+                                                <a class="item" [class.active]="router.isActive('create')" (click)="showSideBar()"
+                                                        *ngIf='permissionService.permissionAvailable' appPermission
+                                                        [permission]="createRole" [routerLink]="'/create'" tabindex="0">
+                                                        {{resourceService?.frmelmnts?.btn?.onBoard}}
+                                                </a>
+                                                <a class="item" [class.active]="router.isActive('/profile')" (click)="showSideBar();navigateToProfilePage()"
+                                                        (click)="showSideBar()">
+                                                        {{resourceService.frmelmnts?.btn?.profile | titlecase}}
+                                                </a>
+                                                <a class="item logout-btn" (click)="logout()">
+                                                        {{resourceService.frmelmnts?.btn?.logout | titlecase}}
+                                                </a>
+                                        </ng-container>
+                                        <!--Not Logged in user-->
+                                        <ng-container *ngIf="!userLogin">
+                                                <div class="item active dark-gray">
+                                                        <i class="close link icon" (click)="showSideBar()" tabindex="0"
+                                                                title="{{resourceService?.frmelmnts?.btn?.close}}"></i>
+                                                        <a class="dark-gray" (click)="logIn()">
+                                                                {{resourceService.frmelmnts?.btn?.logIn}}
+                                                        </a>
+                                                </div>
+                                                <div class="ui divider mt-0"></div>
+                                        </ng-container>
+
+                                </div>
                         </div>
                 </div>
         </div>

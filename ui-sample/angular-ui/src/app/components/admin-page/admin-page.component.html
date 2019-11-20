@@ -21,8 +21,8 @@
       <app-data-filter (dataDrivenFilter)="getFilters($event)" [ignoreQuery]="['key']" *ngIf="initFilters"
         [accordionDefaultOpen]=true [isShowFilterLabel]=true></app-data-filter>
     </div>
-    <div class="ten wide computer nine wide tablet twelve wide mobile column">
-      <div class="ui grid mt-5">
+    <div class="one wide column"></div>
+    <div class="nine wide computer eight wide tablet twelve wide mobile column">
         <div class="row" *ngIf="showLoader">
           <div class="twelve wide column">
             <div class="ui segment">
@@ -43,13 +43,14 @@
             </div>
           </div>
         </div>
-          <div *ngFor="let content of listOfEmployees">
-            <app-card [data]="content" (clickEvent)="navigateToProfilePage($event)" [data]="content" class="d-block"
-              [class.last-card]="mr-0">
-            </app-card>
-          </div>
-      </div>
-
+        <div class="ui cards">
+            <div *ngFor="let content of listOfEmployees" style="margin-right: 1.5rem;">
+                <app-card [data]="content" (clickEvent)="navigateToProfilePage($event)" [data]="content" class="d-block"
+                  [class.last-card]="mr-0">
+                </app-card>
+              </div>
+        </div>
+        
     </div>
 
   </div>

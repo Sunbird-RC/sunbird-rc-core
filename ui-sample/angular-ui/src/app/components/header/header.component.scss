@@ -2,9 +2,14 @@
     width: 100%;
 }
 .primary-color {
-    color: gray
+    color:  whitesmoke
 }
 
+.dark-gray {
+  color: darkgrey !important;
+  font-size: 1.2rem;
+}
+ 
 .ui.menu.fixed {
     background: #2c3e50!important;
     position: -webkit-sticky;
@@ -38,27 +43,6 @@
     }
   }
 
-.ui.sidebar.right {
-    &.visible.uncover {
-      z-index: 4;
-      border: 0;
-      box-shadow: none;
-      transition: none;
-  
-      & ~ .fixed,
-      & ~ .pusher {
-        transform: translate3d(0, 0, 0) !important;
-      }
-      &.animating {
-        transition: none;
-        visibility: visible;
-      }
-    }
-    &.animating {
-      transition: none;
-      visibility: hidden;
-    }
-  }
 
   *[dir="rtl"] {
     .ui.right.sidebar {
