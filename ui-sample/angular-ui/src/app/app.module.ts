@@ -56,7 +56,7 @@ let moduleOptions = {
     HttpClientModule,
     HttpModule,
     SuiSelectModule, SuiModalModule, SuiAccordionModule, SuiPopupModule, SuiDropdownModule, SuiProgressModule,
-    SuiRatingModule, SuiCollapseModule, SuiCheckboxModule,
+    SuiRatingModule, SuiCollapseModule, SuiCheckboxModule, SuiPopupModule,
     RouterModule,
     FormsModule,
     ReactiveFormsModule,

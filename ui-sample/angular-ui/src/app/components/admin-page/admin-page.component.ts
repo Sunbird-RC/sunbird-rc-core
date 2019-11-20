@@ -44,6 +44,9 @@ export class AdminPageComponent implements OnInit {
   public queryParams: any;
   public unsubscribe$ = new Subject<void>();
   public key: string;
+  public buttonIcon: string = 'list';
+  public buttonText: string = 'list view'
+  result: { "headers": string; "row": {}; };
 
   constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute) {
     this.dataService = dataService;
@@ -55,6 +58,10 @@ export class AdminPageComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.result = {
+      "headers": '',
+      "row": ''
+    }
     this.initFilters = true;
     this.dataDrivenFilterEvent.pipe(first()).
       subscribe((filters: any) => {
@@ -95,6 +102,15 @@ export class AdminPageComponent implements OnInit {
     this.router.navigate(['/profile', user.data.identifier]);
   }
 
+  changeView() {
+    if (this.buttonIcon === 'list') {
+      this.buttonIcon = 'block layout';
+      this.buttonText = 'grid view'
+    } else {
+      this.buttonIcon = 'list'
+      this.buttonText = 'list view'
+    }
+  }
 
 
   onEnter(key) {
@@ -181,6 +197,7 @@ export class AdminPageComponent implements OnInit {
         this.paginationDetails.currentPage = params.pageNumber;
         this.queryParams = { ...queryParams };
         this.listOfEmployees = [];
+
         this.fetchEmployees();
       });
   }
@@ -205,6 +222,10 @@ export class AdminPageComponent implements OnInit {
       .subscribe(data => {
         this.showLoader = false;
         this.listOfEmployees = this.getDataForCard(data.result.Employee);
+        this.result = {
+          "headers": _.keys(this.listOfEmployees[0]),
+          "row": this.listOfEmployees
+        }
       }, err => {
         this.showLoader = false;
         this.listOfEmployees = [];
@@ -215,7 +236,7 @@ export class AdminPageComponent implements OnInit {
     if (filter) {
       _.forEach(filter, (elem, key) => {
         let filterType = {}
-        if(_.isArray(elem)) {
+        if (_.isArray(elem)) {
           filterType['or'] = elem;
         } else {
           filterType['contains'] = elem;
