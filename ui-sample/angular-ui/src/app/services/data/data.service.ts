@@ -70,9 +70,6 @@ export class DataService {
       if (headers.Authorization) {
         default_headers['Authorization'] = 'Bearer ' + headers.Authorization;
       }
-      if(headers.userToken) {
-        default_headers['x-authenticated-user-token'] = headers.userToken
-      }
       if(headers.role) {
         default_headers['role'] = headers.role
       }

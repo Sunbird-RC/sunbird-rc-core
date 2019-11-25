@@ -55,8 +55,8 @@ export class UpdateComponent implements OnInit {
     const requestData = {
       url: appConfig.URLS.FORM_TEPLATE,
       header: {
-       userToken: token,
-       role: this.viewOwnerProfile
+        Authorization: token,
+        role: this.viewOwnerProfile
       }
     }
     this.dataService.get(requestData).subscribe(res =>{

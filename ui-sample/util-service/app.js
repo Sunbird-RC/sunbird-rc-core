@@ -94,8 +94,8 @@ app.get("/formTemplates", (req, res, next) => {
 });
 
 const getFormTemplates = (header, callback) => {
-    let token = header['x-authenticated-user-token'];
     let roles = [];
+    var token =  header['authorization'].replace('Bearer ', '');
     var decoded = jwt.decode(token);
     if (header.role) {
         roles = [header.role]

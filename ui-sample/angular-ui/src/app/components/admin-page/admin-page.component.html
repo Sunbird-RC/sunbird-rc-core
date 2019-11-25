@@ -53,14 +53,14 @@
             </div>
           </div>
         </div>
-          <div class="ui cards mt-5" *ngIf="buttonIcon == 'list'">
-            <div class="mr-1" *ngFor="let content of listOfEmployees">
-              <app-card [data]="content" (clickEvent)="navigateToProfilePage($event)" class="d-block"
-                [class.last-card]="mr-0">
-              </app-card>
+        <div class="ui cards mt-5" *ngIf="buttonIcon == 'list'">
+          <div class="mr-1" *ngFor="let content of listOfEmployees">
+            <app-card [data]="content" (clickEvent)="navigateToProfilePage($event)" class="d-block"
+              [class.last-card]="mr-0">
+            </app-card>
             </div>
           </div>
-        <div class="ui grid mt-5 table-scroll" *ngIf="buttonIcon == 'block layout'">
+        <div class="ui grid mt-5 table-scroll mb-1" *ngIf="buttonIcon == 'block layout'">
           <table class="ui celled padded table tablet stackable">
             <thead>
               <tr>
@@ -75,6 +75,23 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      <div class="twelve wide column right aligned">
+        <div class="sb-pagination-container flex-jc-flex-end">
+          <div *ngIf="paginationDetails.totalItems > pageLimit && !showLoader">
+            <div class="ui right floated pagination menu">
+              <a class="icon item" (click)="navigateToPage(paginationDetails.currentPage - 1)"
+                [ngClass]="{active:paginationDetails.currentPage===page}">
+                <i class="left chevron icon"></i>
+              </a>
+              <a *ngFor="let page of paginationDetails.pages" [ngClass]="{active:paginationDetails.currentPage===page}"
+                (click)="navigateToPage(page)" class="item">{{page}}</a>
+              <a class="icon item" [ngClass]="{active:paginationDetails.currentPage===page}"
+                (click)="navigateToPage(paginationDetails.currentPage + 1)">
+                <i class="right chevron icon"></i>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

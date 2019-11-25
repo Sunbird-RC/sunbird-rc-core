@@ -1,4 +1,4 @@
-import { Component, OnInit, EventEmitter } from '@angular/core';
+import { Component, OnInit, EventEmitter, OnDestroy } from '@angular/core';
 import { DataService } from '../../services/data/data.service'
 import * as _ from 'lodash-es';
 import { ResourceService } from '../../services/resource/resource.service'
@@ -28,7 +28,7 @@ export interface IPagination {
   templateUrl: './admin-page.component.html',
   styleUrls: ['./admin-page.component.scss']
 })
-export class AdminPageComponent implements OnInit {
+export class AdminPageComponent implements OnInit, OnDestroy {
 
   dataService: DataService;
   public showLoader = true;
@@ -47,6 +47,7 @@ export class AdminPageComponent implements OnInit {
   public buttonIcon: string = 'list';
   public buttonText: string = 'list view'
   result: { "headers": string; "row": {}; };
+  totalItems: any;
 
   constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute) {
     this.dataService = dataService;
@@ -58,6 +59,7 @@ export class AdminPageComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.getTotalItems();
     this.result = {
       "headers": '',
       "row": ''
@@ -75,6 +77,23 @@ export class AdminPageComponent implements OnInit {
     });
   }
 
+  getTotalItems() {
+    const option = {
+      url: appConfig.URLS.SEARCH,
+      data: {
+        id: "open-saber.registry.search",
+        request: {
+          entityType: ["Employee"],
+          filters: {}
+        }
+      }
+    }
+    this.dataService.post(option).subscribe(data => {
+      if (data.result.Employee) {
+        this.totalItems = data.result.Employee.length;
+      }
+    })
+  }
 
   getDataForCard(data) {
     const list: Array<ICard> = [];
@@ -174,7 +193,6 @@ export class AdminPageComponent implements OnInit {
     if (page < 1 || page > this.paginationDetails.totalPages) {
       return;
     }
-    console.log(this.router.url)
     const url = this.router.url.split('?')[0].replace(/.$/, page.toString());
     this.router.navigate([url]);
   }
@@ -211,6 +229,7 @@ export class AdminPageComponent implements OnInit {
           entityType: ["Employee"],
           filters: {
           },
+          limit: this.pageLimit,
           viewTemplateId: "Employee_SearchResult.json"
         }
       }
@@ -218,9 +237,11 @@ export class AdminPageComponent implements OnInit {
     let filters = _.pickBy(this.queryParams, (value: Array<string> | string) => value && value.length);
     filters = _.omit(filters, ['key', 'sort_by', 'sortType', 'appliedFilters']);
     option.data.request.filters = this.getFilterObject(filters);
+    option.data.request['offset'] = (this.paginationDetails.currentPage - 1) * this.pageLimit
     this.dataService.post(option)
       .subscribe(data => {
         this.showLoader = false;
+        this.paginationDetails = this.getPager(this.totalItems, this.paginationDetails.currentPage, appConfig.PAGE_LIMIT);
         this.listOfEmployees = this.getDataForCard(data.result.Employee);
         this.result = {
           "headers": _.keys(this.listOfEmployees[0]),
@@ -229,6 +250,7 @@ export class AdminPageComponent implements OnInit {
       }, err => {
         this.showLoader = false;
         this.listOfEmployees = [];
+        this.paginationDetails = this.getPager(0, this.paginationDetails.currentPage, appConfig.PAGE_LIMIT);
       });
   }
   getFilterObject(filter) {
@@ -257,5 +279,10 @@ export class AdminPageComponent implements OnInit {
     let redirectUrl = this.router.url.split('?')[0];
     redirectUrl = decodeURI(redirectUrl);
     this.router.navigate([redirectUrl]);
+  }
+
+  ngOnDestroy() {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 }
