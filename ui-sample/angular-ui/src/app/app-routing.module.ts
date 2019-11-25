@@ -22,20 +22,20 @@ var routes = [
     data: { roles: [] }
   },
   {
-    path: 'admin/:pageNumber',
+    path: 'search/:pageNumber',
     component: AdminPageComponent,
     canActivate: [AppAuthGuard],
-    data: { roles: 'adminRole' }
+    data: { roles: 'adminPageViewRole' }
   },
   {
     path: 'profile/:userId', component: ProfileComponent,
     canActivate: [AppAuthGuard],
-    data: { roles: 'profileRole' }
+    data: { roles: 'profilePageViewRole' }
   },
   {
       path: 'profile/:userId/:role', component: ProfileComponent,
       canActivate: [AppAuthGuard],
-      data: { roles: 'profileRole' }
+      data: { roles: 'profilePageViewRole' }
   },
   {
     path: 'login', component: LoginComponent,
@@ -45,10 +45,15 @@ var routes = [
   {
     path: 'create', component: CreateComponent,
     canActivate: [AppAuthGuard],
-    data: {roles:'createRole'}
+    data: {roles:'onboardEmployee'}
   },
   {
     path: 'edit/:userId', component: UpdateComponent,
+    canActivate: [AppAuthGuard],
+    data: { roles: 'editProfileRole' }
+  },
+  {
+    path: 'edit/:userId/:role', component: UpdateComponent,
     canActivate: [AppAuthGuard],
     data: { roles: 'editProfileRole' }
   }

@@ -8,5 +8,19 @@
 }
 
 .ui.card .fixHeight {
-    height: 108.5px;
+    height: 99.5px;
+   
+}
+.ui.card {
+    width: 222px;
+}
+
+.ui.card>.content, .ui.cards>.card>.content {
+    padding: 9px 9px;
+}
+.ui.card .meta{
+    font-size: 0.8em;
+}
+.ui.card .header {
+    font-size: 1.17em;
 }

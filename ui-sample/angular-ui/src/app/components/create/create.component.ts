@@ -2,7 +2,6 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ResourceService } from '../../services/resource/resource.service';
 import { FormService } from '../../services/forms/form.service'
 import { DefaultTemplateComponent } from '../default-template/default-template.component';
-import urlConfig from '../../services/urlConfig.json';
 import { DataService } from '../../services/data/data.service';
 import { Router, ActivatedRoute } from '@angular/router'
 import { UserService } from 'src/app/services/user/user.service';
@@ -54,7 +53,7 @@ export class CreateComponent implements OnInit {
       header: {
         Authorization: token
       },
-      url: urlConfig.URLS.REGISTER
+      url: appConfig.URLS.REGISTER
     }
     this.dataService.post(requestData).subscribe(response => {
       if (response.params.status === "SUCCESSFUL") {

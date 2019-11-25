@@ -5,10 +5,10 @@ import { from } from 'rxjs';
 import { DefaultTemplateComponent } from '../default-template/default-template.component';
 import { DataService } from 'src/app/services/data/data.service';
 import { Router, ActivatedRoute } from '@angular/router';
-import urlConfig from '../../services/urlConfig.json';
 import { CacheService } from 'ng2-cache-service';
 import appConfig from '../../services/app.config.json';
 import { UserService } from '../../services/user/user.service';
+import _ from 'lodash-es';
 
 @Component({
   selector: 'app-update',
@@ -27,6 +27,7 @@ export class UpdateComponent implements OnInit {
   activatedRoute: ActivatedRoute;
   userService: UserService;
   public showLoader = true;
+  viewOwnerProfile : string;
 
   constructor(resourceService: ResourceService, formService: FormService, dataService: DataService, route: Router, activatedRoute: ActivatedRoute,
     userService: UserService, public cacheService: CacheService) {
@@ -39,6 +40,7 @@ export class UpdateComponent implements OnInit {
   }
 
   ngOnInit() {
+   this.viewOwnerProfile = this.activatedRoute.snapshot.queryParams.role;
     this.activatedRoute.params.subscribe((params) => {
       this.userId = params.userId;
     });
@@ -47,13 +49,14 @@ export class UpdateComponent implements OnInit {
 
   getFormTemplate() {
     let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
-    if (!token) {
-      token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+    if (_.isEmpty(token)) {
+      token = this.userService.getUserToken;
     } 
     const requestData = {
-      url: urlConfig.URLS.FORM_TEPLATE,
+      url: appConfig.URLS.FORM_TEPLATE,
       header: {
-       userToken: token
+       userToken: token,
+       role: this.viewOwnerProfile
       }
     }
     this.dataService.get(requestData).subscribe(res =>{
@@ -74,7 +77,7 @@ export class UpdateComponent implements OnInit {
           "Employee": this.formData.formInputData
         }
       },
-      url: urlConfig.URLS.UPDATE
+      url: appConfig.URLS.UPDATE
     };
     this.dataService.post(requestData).subscribe(response => {
       console.log(response)
@@ -85,6 +88,11 @@ export class UpdateComponent implements OnInit {
   }
 
   navigateToProfilePage() {
-    this.router.navigate(['/profile', this.userId]);
+    if(this.viewOwnerProfile) {
+      this.router.navigate(['/profile', this.userId, this.viewOwnerProfile]);
+    }
+    else {
+      this.router.navigate(['/profile', this.userId]);
+    }
   }
 }

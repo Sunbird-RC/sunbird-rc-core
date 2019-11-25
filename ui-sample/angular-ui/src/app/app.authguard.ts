@@ -4,7 +4,7 @@ import { KeycloakService, KeycloakAuthGuard } from 'keycloak-angular';
 import { UserService } from './services/user/user.service';
 import { Observable } from 'rxjs';
 import { PermissionService } from './services/permission/permission.service';
-import rolesConfig from './services/rolesConfig.json';
+import appConfig from './services/app.config.json';
 
 @Injectable()
 export class AppAuthGuard implements CanActivate, CanLoad {
@@ -31,8 +31,8 @@ export class AppAuthGuard implements CanActivate, CanLoad {
             this.permissionService.permissionAvailable$.subscribe(
                 permissionAvailable => {
                     if (permissionAvailable && permissionAvailable === 'success') {
-                        if (roles && rolesConfig.rolesMapping[roles]) {
-                            if (this.permissionService.checkRolesPermissions(rolesConfig.rolesMapping[roles])) {
+                        if (roles && appConfig.rolesMapping[roles]) {
+                            if (this.permissionService.checkRolesPermissions(appConfig.rolesMapping[roles])) {
                                 observer.next(true);
                             } else {
                                 this.navigateToHome(observer);

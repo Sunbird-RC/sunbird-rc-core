@@ -29,15 +29,15 @@
                                 <div class="ui text menu m-0 d-flex flex-jc-center flex-ai-center computer only"
                                         *ngIf="userLogin">
                                         <ng-container>
-                                                <a class="item" [class.active]="router.isActive('/admin/1')"
+                                                <a class="item" [class.active]="router.isActive('/search/1')"
                                                         *ngIf='permissionService.permissionAvailable' appPermission
-                                                        [permission]="adminConsoleRole"
-                                                        [routerLink]="[navigateToAdminConsole()]" tabindex="0">
-                                                        {{resourceService?.frmelmnts?.btn?.adminConsole}}
+                                                        [permission]="userDirectoryViewRole"
+                                                        [routerLink]="'/search/1'" tabindex="0">
+                                                        {{resourceService?.frmelmnts?.btn?.search}}
                                                 </a>
                                                 <a class="item" [class.active]="router.isActive('create')"
                                                         *ngIf='permissionService.permissionAvailable' appPermission
-                                                        [permission]="createRole" [routerLink]="'/create'" tabindex="0">
+                                                        [permission]="onBoardEmployee" [routerLink]="'/create'" tabindex="0">
                                                         {{resourceService?.frmelmnts?.btn?.onBoard}}
                                                 </a>
                                         </ng-container>
@@ -46,7 +46,7 @@
                                         <div suiDropdown class="ui dropdown right top pointing"
                                                 id="dropdown-menu-list-header">
                                                 <ngx-avatar [style]="avtarDesktopStyle" [size]="38" initialsSize="1"
-                                                        name="ais">
+                                                        name={{userName}}>
                                                 </ngx-avatar>
                                                 <div class="menu" suiDropdownMenu>
                                                         <div class="item headerDropdownProfile">
@@ -78,15 +78,15 @@
                                                         </div>
                                                 </div>
                                                 <div class="ui divider mt-0"></div>
-                                                <a class="item" [class.active]="router.isActive('/admin/1')"
+                                                <a class="item" [class.active]="router.isActive('/search/1')"
                                                         *ngIf='permissionService.permissionAvailable' appPermission
-                                                        [permission]="adminConsoleRole" (click)="showSideBar()"
-                                                        [routerLink]="[navigateToAdminConsole()]">
-                                                        {{resourceService?.frmelmnts?.btn?.adminConsole}}
+                                                        [permission]="userDirectoryViewRole" (click)="showSideBar()"
+                                                        [routerLink]="'/search/1'">
+                                                        {{resourceService?.frmelmnts?.btn?.search}}
                                                 </a>
                                                 <a class="item" [class.active]="router.isActive('create')" (click)="showSideBar()"
                                                         *ngIf='permissionService.permissionAvailable' appPermission
-                                                        [permission]="createRole" [routerLink]="'/create'" tabindex="0">
+                                                        [permission]="onBoardEmployee" [routerLink]="'/create'" tabindex="0">
                                                         {{resourceService?.frmelmnts?.btn?.onBoard}}
                                                 </a>
                                                 <a class="item" [class.active]="router.isActive('/profile')" (click)="showSideBar();navigateToProfilePage()"

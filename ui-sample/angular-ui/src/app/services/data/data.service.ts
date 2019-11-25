@@ -4,7 +4,7 @@ import { HttpOptions } from '../interfaces/httpOptions'
 import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { mergeMap } from 'rxjs/operators';
 import { of as observableOf, throwError as observableThrowError, Observable } from 'rxjs';
-import urlConfig from '../urlConfig.json';
+import appConfig from '../app.config.json';
 
 
 
@@ -19,7 +19,7 @@ export class DataService {
 
   constructor(http: HttpClient) {
     this.http = http;
-    this.baseUrl = urlConfig.URLS.BASE_URL;
+    this.baseUrl = appConfig.URLS.UTIl_SERVICE_BASE_URL;
   }
 
   post(requestParam: any): Observable<ServerResponse> {

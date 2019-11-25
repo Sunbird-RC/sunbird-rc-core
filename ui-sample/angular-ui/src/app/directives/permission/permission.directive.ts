@@ -1,6 +1,5 @@
 import { PermissionService } from '../../services/permission/permission.service';
 import { Directive, ElementRef, Input, OnInit } from '@angular/core';
-import rolesConfig from '../../services/rolesConfig.json'
 
 
 @Directive({

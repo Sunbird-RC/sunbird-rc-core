@@ -3,11 +3,9 @@ import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { ResourceService } from '../../services/resource/resource.service'
 import { UserService } from 'src/app/services/user/user.service';
 import { PermissionService } from 'src/app/services/permission/permission.service';
-import rolesConfig from '../../services/rolesConfig.json'
 import { KeycloakService } from 'keycloak-angular';
 import { CacheService } from 'ng2-cache-service';
 import { DataService } from 'src/app/services/data/data.service';
-import urlConfig from '../../services/urlConfig.json';
 import appConfig from '../../services/app.config.json';
 
 
@@ -48,8 +46,8 @@ export class HeaderComponent implements OnInit {
   public userService: UserService;
   public userName: any;
   public permissionService: PermissionService;
-  adminConsoleRole: Array<string>;
-  createRole: Array<string>;
+  userDirectoryViewRole: Array<string>;
+  onBoardEmployee: Array<string>;
   public keycloakAngular: KeycloakService;
   public dataService: DataService;
   public keyCloakUserDetails: any;
@@ -66,8 +64,8 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.adminConsoleRole = rolesConfig.rolesMapping.adminRole;
-    this.createRole = rolesConfig.rolesMapping.createRole;
+    this.userDirectoryViewRole = appConfig.rolesMapping.adminPageViewRole;
+    this.onBoardEmployee = appConfig.rolesMapping.onboardEmployee;
     this.resourceService.getResource();
     this.userAuthenticated = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserAuthenticated);
     if (this.userAuthenticated) {
@@ -131,7 +129,7 @@ export class HeaderComponent implements OnInit {
           }
         }
       },
-      url: urlConfig.URLS.SEARCH,
+      url: appConfig.URLS.SEARCH,
     }
     this.dataService.post(requestData).subscribe(response => {
       this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.EmployeeDetails, response.result.Employee[0], { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });

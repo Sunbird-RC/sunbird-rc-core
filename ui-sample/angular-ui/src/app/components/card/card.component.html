@@ -7,13 +7,13 @@
           color: 'white',
           fontWeight: 'bold',
           fontFamily: 'inherit',
-          lineHeight: '54px'}" [size]="56" initialsSize="1" [textSizeRatio]="2" name="{{data.name}} ">
+          lineHeight: '48px'}" [size]="50" initialsSize="1" [textSizeRatio]="2" name="{{data.name}} ">
     </ngx-avatar>
     <div class="header">
       {{data.name | titlecase}}
     </div>
     <div *ngIf="data.isApproved" class="meta">
-      Joined in {{data?.startDate | date:'yyyy'}}
+      Since {{data?.startDate | timeAgo}}
     </div>
     <div *ngIf="!data.isApproved" class="meta">
       New Member
@@ -23,12 +23,21 @@
     </div>
   </div>
   <div class="extra content">
-    <div *ngIf="!data.isApproved" class="ui two buttons">
-      <div class="ui basic green button"  (click)="onAction(data,{Approve: true})" >Approve</div>
-      <div class="ui basic red button"  (click)="onAction(data,{Decline: true})" >Decline</div>
+    <div *ngIf="permissionService.permissionAvailable" appPermission [permission]="approveEmployee">
+      <div class="ui two buttons" *ngIf="!data?.isApproved">
+        <div class="ui basic green button" (click)="onAction(data,{Approve: true})">
+          {{resourceService?.frmelmnts?.btn?.approve}}</div>
+        <div class="ui basic red button" (click)="onAction(data,{Decline: true})">
+          {{resourceService?.frmelmnts?.btn?.decline}}</div>
+      </div>
+      <div *ngIf="data?.isApproved">
+        <div class="ui basic blue button" (click)="onAction(data,{View: true})">
+          {{resourceService?.frmelmnts?.btn?.viewProfile}}</div>
+      </div>
     </div>
-    <div *ngIf="data.isApproved">
-      <div class="ui basic blue button"  (click)="onAction(data,{View: true})" >More Info</div>
+    <div *ngIf="enableViewProfile">
+      <div class="ui basic blue button" (click)="onAction(data,{View: true})">
+        {{resourceService?.frmelmnts?.btn?.viewProfile}}</div>
     </div>
   </div>
 </div>

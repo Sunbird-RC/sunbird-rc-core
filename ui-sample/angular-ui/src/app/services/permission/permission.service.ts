@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { UserService } from '../user/user.service';
-import roleConfig from '../rolesConfig.json';
 import appConfig from '../app.config.json';
 import * as _ from 'lodash-es';
 import { CacheService } from 'ng2-cache-service'
@@ -92,9 +91,9 @@ export class PermissionService {
   }
   getAdminAuthRoles() {
     let adminAuthRoles = [{
-      roles: roleConfig.rolesMapping['adminRole'],
-      url: "admin/1",
-      tab: "adminConsole"
+      roles: appConfig.rolesMapping['adminPageViewRole'],
+      url: "search/1",
+      tab: "User Directory"
     }];
     const authRoles = _.find(adminAuthRoles, (role, key) => {
       if (this.checkRolesPermissions(role.roles)) {

@@ -1,6 +1,9 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { ICard } from '../../services/interfaces/Card';
-
+import { ResourceService } from '../../services/resource/resource.service';
+import  appConfig  from '../../services/app.config.json';
+import { PermissionService } from 'src/app/services/permission/permission.service';
+ 
 @Component({
   selector: 'app-card',
   templateUrl: './card.component.html',
@@ -10,9 +13,22 @@ export class CardComponent implements OnInit {
 
   @Input() data: ICard;
   @Output() clickEvent = new EventEmitter<any>();
-  constructor() { }
+  resourceService: ResourceService;
   color =this.getRandColor();
+  public permissionService: PermissionService;
+  public approveEmployee: Array<string>;
+  public enableViewProfile = true;
+
+  constructor(resourceService: ResourceService, permissionService: PermissionService) {
+    this.resourceService = resourceService;
+    this.permissionService = permissionService;
+   }
+
   ngOnInit() {
+    this.approveEmployee = appConfig.rolesMapping.approveEmployee;
+    if(this.permissionService.checkRolesPermissions(this.approveEmployee)) {
+      this.enableViewProfile = false;
+    }
   }
 
   getRandColor() {

@@ -20,7 +20,10 @@
                 "home":"Home",
                 "onBoard": "OnBoard",
                 "clearQuery":"Clear Query",
-                "Close":"Close"
+                "Close":"Close",
+                "decline":"Decline",
+                "viewProfile":"View Profile",
+                "search":"User Directory"
             },
             "label":{
                 "filters":"Filters",

@@ -1,12 +1,12 @@
 import { Component, OnInit, EventEmitter } from '@angular/core';
 import { DataService } from '../../services/data/data.service'
-import urlConfig from '../../services/urlConfig.json'
 import * as _ from 'lodash-es';
 import { ResourceService } from '../../services/resource/resource.service'
 import { Router, ActivatedRoute } from '@angular/router'
 import { ICard } from '../../services/interfaces/Card';
 import { takeUntil, map, first, debounceTime, delay } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';
+import appConfig from '../../services/app.config.json';
 
 
 
@@ -53,8 +53,8 @@ export class AdminPageComponent implements OnInit {
     this.resourceService = resourceService;
     this.router = route;
     this.activatedRoute = activatedRoute;
-    this.pageLimit = urlConfig.PAGE_LIMIT;
-    this.paginationDetails = this.getPager(0, 1, urlConfig.PAGE_LIMIT);
+    this.pageLimit = appConfig.PAGE_LIMIT
+    this.paginationDetails = this.getPager(0, 1, appConfig.PAGE_LIMIT);
   }
 
   ngOnInit() {
@@ -122,7 +122,7 @@ export class AdminPageComponent implements OnInit {
     } else {
       delete this.queryParams['key'];
     }
-    this.router.navigate(["admin/1"], {
+    this.router.navigate(["search/1"], {
       queryParams: this.queryParams
     });
   }
@@ -204,7 +204,7 @@ export class AdminPageComponent implements OnInit {
 
   private fetchEmployees() {
     const option = {
-      url: urlConfig.URLS.SEARCH,
+      url: appConfig.URLS.SEARCH,
       data: {
         id: "open-saber.registry.search",
         request: {

@@ -56,11 +56,14 @@ tr th {
     margin-right: 1rem;
 }
 
-.row.end {
-    justify-content: flex-end;
-    padding: 0px;
+.end {
+   float: right;
 }
 
 .table-scroll {
     overflow-y: scroll;
+}
+
+.one.wide.column.fit-content {
+    width: fit-content !important;
 }

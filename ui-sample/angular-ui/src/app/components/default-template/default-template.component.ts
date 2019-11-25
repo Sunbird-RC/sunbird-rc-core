@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, AfterViewInit, Output, EventEmitter } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router'
 import { DataService } from '../../services/data/data.service';
-import urlConfig from '../../services/urlConfig.json';
+import appConfig from '../../services/app.config.json';
 import * as _ from 'lodash-es';
 
 
@@ -42,7 +42,7 @@ export class DefaultTemplateComponent implements OnInit {
           "includeSignatures": true,
         }
       },
-      url: urlConfig.URLS.READ,
+      url: appConfig.URLS.READ,
     }
     this.dataService.post(requestData).subscribe(response => {
       this.formInputData = response.result.Employee;
