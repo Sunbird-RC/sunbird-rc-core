@@ -13,7 +13,7 @@ const _ = require('lodash')
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 var async = require('async');
-const templates = require('./templates/template.config.json');
+const templateConfig = require('./templates/template.config.json');
 
 
 const port = process.env.PORT || 8090;
@@ -60,16 +60,33 @@ app.post("/registry/add", (req, res, next) => {
 });
 
 app.post("/registry/search", (req, res, next) => {
+    if(!_.isEmpty(req.headers.authorization)) {
+        req.body.request.viewTemplateId = getViewtemplate(req.headers.authorization);
+    }
     postCallToRegistry(req.body, "/search", function (err, data) {
         return res.send(data);
     });
 });
 
 app.post("/registry/read", (req, res, next) => {
+    if(!_.isEmpty(req.headers.authorization)) {
+    req.body.request.viewTemplateId = getViewtemplate(req.headers.authorization);
+    }
     postCallToRegistry(req.body, "/read", function (err, data) {
         return res.send(data);
     })
 });
+
+const getViewtemplate = (authToken) => {
+    var roles = [];
+    let token = authToken.replace('Bearer ', '');
+    var decoded = jwt.decode(token);
+    if (decoded != null && decoded.realm_access) {
+        roles = decoded.realm_access.roles;
+    }
+    var searchTemplate = getTemplateName(roles, 'searchTemplates');
+    return searchTemplate;
+}
 
 app.post("/registry/update", (req, res, next) => {
     postCallToRegistry(req.body, "/update", function (err, data) {
@@ -93,16 +110,31 @@ app.get("/formTemplates", (req, res, next) => {
     })
 });
 
+app.get("/owner/formTemplate", (req, res, next) => {
+    readFormTemplate(templateConfig.formTemplates.owner, function (err, data) {
+        if (err) {
+            res.statusCode = 404;
+            return res.send(err);
+        } else {
+            const json = {
+                result: { formTemplate: data },
+                responseCode: 'OK'
+            }
+            return res.send(json)
+        }
+    });
+})
+
 const getFormTemplates = (header, callback) => {
     let roles = [];
-    var token =  header['authorization'].replace('Bearer ', '');
+    var token = header['authorization'].replace('Bearer ', '');
     var decoded = jwt.decode(token);
     if (header.role) {
         roles = [header.role]
     } else if (decoded.realm_access) {
         roles = decoded.realm_access.roles;
     }
-    readFormTemplate(getTemplateName(roles), function (err, data) {
+    readFormTemplate(getTemplateName(roles, 'formTemplates'), function (err, data) {
         if (err) callback(err, null);
         else callback(null, data);
     });
@@ -113,15 +145,15 @@ const getFormTemplates = (header, callback) => {
  * @param {*} roles 
  */
 //todo get roles from config
-const getTemplateName = (roles) => {
-    if (_.includes(roles, 'admin'))
-        return templates.formTemplates['admin'];
-    if (_.includes(roles, 'partner-admin'))
-        return templates.formTemplates['partner-admin'];
-    if (_.includes(roles, 'fin-admin'))
-        return templates.formTemplates['fin-admin'];
-    if (_.includes(roles, 'owner'))
-        return templates.formTemplates['owner']
+const getTemplateName = (roles, templateName) => {
+    if (_.includes(roles, templateConfig.roles.admin))
+        return templateConfig[templateName][templateConfig.roles.admin];
+    if (_.includes(roles, templateConfig.roles.partnerAdmin))
+        return templateConfig[templateName][templateConfig.roles.partnerAdmin];
+    if (_.includes(roles, templateConfig.roles.finAdmin))
+        return templateConfig[templateName][templateConfig.roles.finAdmin];
+    if (_.includes(roles, templateConfig.roles.owner))
+        return templateConfig[templateName][templateConfig.roles.owner]
 }
 
 const readFormTemplate = (value, callback) => {
@@ -158,6 +190,7 @@ const postCallToRegistry = (value, endPoint, callback) => {
 
 const addEmployeeToRegistry = (value, header, res, callback) => {
     value['isApproved'] = false;
+    value['startDate'] = new Date();
     let reqBody = {
         "id": "open-saber.registry.create",
         "ver": "1.0",

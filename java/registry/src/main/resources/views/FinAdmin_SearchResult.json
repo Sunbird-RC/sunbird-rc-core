@@ -3,76 +3,61 @@
   "fields": [
     {
       "name": "name",
-      "title": "name",
       "display": true
     },
     {
-      "name": "orgName",
-      "title": "Organization"
+      "name": "osid"
     },
     {
-      "name": "role",
-      "title": "Role"
+      "name": "orgName"
     },
     {
-      "name": "isActive",
-      "title": "isApproved"
+      "name": "role"
     },
     {
-      "name": "proposedBilling",
-      "title": "ProposedBilling"
+      "name": "isActive"
     },
     {
-      "name": "billLocation",
-      "title": "BillLocation"
+      "name": "proposedBilling"
     },
     {
-      "name": "nineAMreportTo",
-      "title": "nineAMreportTo"
+      "name": "billLocation"
     },
     {
-      "name": "projectName",
-      "title": "Project"
+      "name": "nineAMreportTo"
     },
     {
-      "name": "subProjectName",
-      "title": "Team"
+      "name": "projectName"
     },
     {
-      "name": "startDate",
-      "title": "StartDate"
+      "name": "subProjectName"
     },
     {
-      "name": "endDate",
-      "title": "EndDate"
+      "name": "startDate"
     },
     {
-      "name": "repoAccess",
-      "title": "RepoAccess"
+      "name": "endDate"
     },
     {
-      "name": "slackAccess",
-      "title": "SlackAccess"
+      "name": "repoAccess"
     },
     {
-      "name": "workLocation",
-      "title": "WorkLocation"
+      "name": "slackAccess"
     },
     {
-      "name": "remarks",
-      "title": "Remarks"
+      "name": "workLocation"
     },
     {
-      "name": "workingStyle",
-      "title": "WorkingStyle"
+      "name": "remarks"
     },
     {
-      "name": "externalId",
-      "title": "ExternalId"
+      "name": "workingStyle"
     },
     {
-      "name": "externalRole",
-      "title": "ExternalRole"
+      "name": "externalId"
+    },
+    {
+      "name": "externalRole"
     }
   ]
 }

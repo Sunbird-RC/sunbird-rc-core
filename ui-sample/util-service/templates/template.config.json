@@ -1,8 +1,21 @@
 {
-    "formTemplates":{
-        "admin":"templates/AdminFormTemplate.json",
-        "partner-admin":"templates/PartnerAdminFormTemplate.json",
-        "owner":"templates/OwnerFormTemplate.json",
-        "fin-admin":"templates/FinAdminFormTemplate.json"
+    "formTemplates": {
+        "admin": "templates/AdminFormTemplate.json",
+        "partner-admin": "templates/PartnerAdminFormTemplate.json",
+        "owner": "templates/OwnerFormTemplate.json",
+        "fin-admin": "templates/FinAdminFormTemplate.json"
+    },
+    "searchTemplates": {
+        "admin": "Admin_SearchResult.json",
+        "partner-admin": "PartnerAdmin_SearchResult.json",
+        "owner": "Owner_SearchTemplates.json",
+        "fin-admin": "FinAdmin_SearchResult.json"
+    },
+    "roles": {
+        "admin": "admin",
+        "partnerAdmin": "partner-admin",
+        "owner": "owner",
+        "finAadmin": "fin-admin",
+        "reporter": "reporter"
     }
 }

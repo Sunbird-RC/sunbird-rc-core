@@ -12,8 +12,8 @@
     <div class="header">
       {{data.name | titlecase}}
     </div>
-    <div *ngIf="data.isApproved" class="meta">
-      Since {{data?.startDate | timeAgo}}
+    <div *ngIf="data.isApproved && data?.startDate != null" class="meta">
+      Since {{data?.startDate | timeAgo | slice:0:-3}}
     </div>
     <div *ngIf="!data.isApproved" class="meta">
       New Member
@@ -25,9 +25,9 @@
   <div class="extra content">
     <div *ngIf="permissionService.permissionAvailable" appPermission [permission]="approveEmployee">
       <div class="ui two buttons" *ngIf="!data?.isApproved">
-        <div class="ui basic green button" (click)="onAction(data,{Approve: true})">
+        <div class="ui basic blue button" (click)="approveConfirmModal(data?.identifier); $event.stopPropagation()">
           {{resourceService?.frmelmnts?.btn?.approve}}</div>
-        <div class="ui basic red button" (click)="onAction(data,{Decline: true})">
+        <div class="ui basic grey button">
           {{resourceService?.frmelmnts?.btn?.decline}}</div>
       </div>
       <div *ngIf="data?.isApproved">
@@ -41,3 +41,15 @@
     </div>
   </div>
 </div>
+
+<ng-template let-context let-modal="modal" #modalTemplate>
+  <div class="header"> {{resourceService?.frmelmnts?.btn?.approve}}</div>
+  <div class="content">
+    <p>{{ context.data }}</p>
+  </div>
+  <div class="actions">
+    <button class="ui blue button" (click)="modal.approve('approved')"
+      autofocus>{{resourceService?.frmelmnts?.btn?.yes}}</button>
+    <button class="ui basic blue button" (click)="modal.deny('denied')">{{resourceService?.frmelmnts?.btn?.viewProfile}}</button>
+  </div>
+</ng-template>
