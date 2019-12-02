@@ -23,7 +23,8 @@
                 "Close":"Close",
                 "decline":"Decline",
                 "viewProfile":"View Profile",
-                "search":"User Directory"
+                "search":"User Directory",
+                "yes":"Yes"
             },
             "label":{
                 "filters":"Filters",

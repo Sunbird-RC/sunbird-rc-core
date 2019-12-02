@@ -23,7 +23,6 @@ export class DataService {
   }
 
   post(requestParam: any): Observable<ServerResponse> {
-    console.log(requestParam)
     const httpOptions: HttpOptions = {
       headers: requestParam.header ? this.getHeader(requestParam.header) : this.getHeader(),
       params: requestParam.param,

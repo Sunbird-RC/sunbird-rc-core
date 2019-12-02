@@ -7,7 +7,8 @@ import { ICard } from '../../services/interfaces/Card';
 import { takeUntil, map, first, debounceTime, delay } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';
 import appConfig from '../../services/app.config.json';
-
+import { UserService } from 'src/app/services/user/user.service';
+import { CacheService } from 'ng2-cache-service';
 
 
 
@@ -48,9 +49,11 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   public buttonText: string = 'list view'
   result: { "headers": string; "row": {}; };
   totalItems: any;
+  userService: UserService;
 
-  constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute) {
+  constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute,  userService: UserService, public cacheService: CacheService) {
     this.dataService = dataService;
+    this.userService = userService;
     this.resourceService = resourceService;
     this.router = route;
     this.activatedRoute = activatedRoute;
@@ -108,7 +111,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   processContent(data) {
     const content: any = {
       name: data.name,
-      subProjectName: data.Team,
+      subProjectName: data.subProjectName,
       role: data.Role,
       isActive: data.isApproved,
       startDate: data.StartDate,
@@ -221,8 +224,13 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   }
 
   private fetchEmployees() {
+    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+    if (_.isEmpty(token)) {
+      token = this.userService.getUserToken;
+    }
     const option = {
       url: appConfig.URLS.SEARCH,
+      header: { Authorization: token },
       data: {
         id: "open-saber.registry.search",
         request: {

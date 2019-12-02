@@ -13,7 +13,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { HttpModule } from '@angular/http'
 import {
   SuiSelectModule, SuiModalModule, SuiAccordionModule, SuiPopupModule, SuiDropdownModule, SuiProgressModule,
-  SuiRatingModule, SuiCollapseModule, SuiCheckboxModule
+  SuiRatingModule, SuiCollapseModule, SuiCheckboxModule, SuiModalService
 } from 'ng2-semantic-ui';
 import { RouterModule } from '@angular/router';
 import { DefaultTemplateComponent } from './components/default-template/default-template.component';
@@ -66,7 +66,7 @@ let moduleOptions = {
   ],
   providers: [AppAuthGuard,
     CacheService,
-    { provide: CacheStorageAbstract, useClass: CacheSessionStorage }],
+    { provide: CacheStorageAbstract, useClass: CacheSessionStorage }, SuiModalService],
   bootstrap: [],
   entryComponents: [AppComponent]
 }

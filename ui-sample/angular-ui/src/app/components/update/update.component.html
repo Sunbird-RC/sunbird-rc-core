@@ -3,7 +3,7 @@
         <a class="section" routerLink=''>{{resourceService?.frmelmnts?.btn?.home}}</a>
         <i class="right chevron icon divider"></i>
         <a class="section"
-            [routerLink]="['/profile', userId]">{{resourceService?.frmelmnts?.label?.profileInformation}}</a>
+            (click) = "navigateToProfilePage()">{{resourceService?.frmelmnts?.label?.profileInformation}}</a>
         <i class="right chevron icon divider"></i>
         <div class="active section">{{resourceService?.frmelmnts?.label?.updateProfile}}</div>
     </div>

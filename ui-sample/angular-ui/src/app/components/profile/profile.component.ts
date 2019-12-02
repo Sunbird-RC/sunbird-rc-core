@@ -7,6 +7,7 @@ import { DomSanitizer } from '@angular/platform-browser'
 import { CacheService } from 'ng2-cache-service';
 import { UserService } from '../../services/user/user.service';
 import _ from 'lodash-es';
+import { PermissionService } from 'src/app/services/permission/permission.service';
 
 @Component({
   selector: 'app-profile',
@@ -17,6 +18,7 @@ export class ProfileComponent implements OnInit {
 
   dataService: DataService;
   resourceService: ResourceService;
+  permissionService: PermissionService;
   router: Router;
   activatedRoute: ActivatedRoute;
   userId: String;
@@ -25,34 +27,48 @@ export class ProfileComponent implements OnInit {
   userService: UserService;
   public formFieldProperties: any;
   public showLoader = true;
-  public viewOwnerProfile : string;
-
-  constructor(dataService: DataService, resourceService: ResourceService, activatedRoute: ActivatedRoute, private sanitizer: DomSanitizer, router: Router, userService: UserService, public cacheService: CacheService) {
+  public viewOwnerProfile: string;
+  public editProfile: Array<string>;
+  enable: boolean = false;
+  constructor(dataService: DataService, resourceService: ResourceService, activatedRoute: ActivatedRoute, private sanitizer: DomSanitizer, router: Router, userService: UserService, public cacheService: CacheService
+    , permissionService: PermissionService) {
     this.dataService = dataService
     this.resourceService = resourceService;
     this.router = router
     this.activatedRoute = activatedRoute;
     this.userService = userService;
+    this.permissionService = permissionService;
   }
 
   ngOnInit() {
+    this.editProfile = appConfig.rolesMapping.editProfileRole;
+    _.pull(this.editProfile, 'owner')
     this.activatedRoute.params.subscribe((params) => {
       this.userId = params.userId;
       this.viewOwnerProfile = params.role
     });
+    if(_.isEmpty(this.viewOwnerProfile) && this.viewOwnerProfile == undefined) {
+        this.enable = true;
+    } 
     this.getFormTemplate();
   }
 
   getFormTemplate() {
-    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
-    if (_.isEmpty(token)) {
-      token = this.userService.getUserToken;
-    }
-    const requestData = {
-      url: appConfig.URLS.FORM_TEPLATE,
-      header: {
-        Authorization: token,
-        role: this.viewOwnerProfile
+    var requestData = {}
+    if (this.viewOwnerProfile === 'owner') {
+      requestData = {
+        url: appConfig.URLS.OWNER_FORM_TEMPLATE
+      }
+    } else {
+      let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+      if (_.isEmpty(token)) {
+        token = this.userService.getUserToken;
+      }
+       requestData = {
+        url: appConfig.URLS.FORM_TEPLATE,
+        header: {
+          Authorization: token
+        }
       }
     }
     this.dataService.get(requestData).subscribe(res => {
@@ -68,40 +84,23 @@ export class ProfileComponent implements OnInit {
       if (field.hasOwnProperty('editable')) {
         field['editable'] = false;
         field['required'] = false;
-        field['inputType'] = "text";
+        if (field.inputType === 'select')
+          field['inputType'] = "text";
       }
     });
     this.showLoader = false;
   }
-
-  getUserDetails() {
-    const requestData = {
-      data: {
-        "id": "open-saber.registry.read",
-        'request': {
-          "Employee": {
-            "osid": this.userId
-          },
-          "includeSignatures": true,
-          "viewTemplateId": "Employee_SearchResult.json",
-        }
-      },
-      url: appConfig.URLS.READ,
-    }
-    this.dataService.post(requestData).subscribe(response => {
-      console.log(response);
-      this.userProfile = response.result.Employee;
-    })
-  }
-  dowloadJson() {
-    var theJSON = JSON.stringify(this.userProfile);
-    var uri = this.sanitizer.bypassSecurityTrustUrl("data:text/json;charset=UTF-8," + encodeURIComponent(theJSON));
-    this.downloadJsonHref = uri;
-  }
+  
   navigateToEditPage() {
-    this.router.navigate(['/edit', this.userId], {queryParams: {
-      role:this.viewOwnerProfile
-    }});
+    if(this.viewOwnerProfile) {
+      this.router.navigate(['/edit', this.userId, this.viewOwnerProfile]);
+    } else {
+      this.router.navigate(['/edit', this.userId]);
+    }
+  }
+
+  navigateToHomePage() {
+    this.router.navigate(['/search/1'])
   }
 }
 

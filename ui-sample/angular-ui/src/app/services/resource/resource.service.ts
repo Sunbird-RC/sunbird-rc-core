@@ -53,7 +53,6 @@ export class ResourceService {
       };
       this.http.get(option.url).subscribe(
         (data: any) => {
-          console.log(data)
           this.frmelmnts = _.merge({}, data.data.frmelmnts);
           this.getLanguageChange(range);
         },
@@ -62,15 +61,6 @@ export class ResourceService {
       );
     }
   }
-  // get(requestParam: any): Observable<any> {
-  //   console.log("request url", requestParam.url)
-  //   return this.http.get(requestParam.url).pipe(
-  //     mergeMap((data: any ) => {
-  //       console.log("data" , data)
-  //       return observableOf(data);
-  //     }));
-  // }
-
 
   getLanguageChange(language) {
     this._languageSelected.next(language);

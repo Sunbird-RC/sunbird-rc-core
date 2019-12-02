@@ -27,7 +27,7 @@ export class UpdateComponent implements OnInit {
   activatedRoute: ActivatedRoute;
   userService: UserService;
   public showLoader = true;
-  viewOwnerProfile : string;
+  viewOwnerProfile: string;
 
   constructor(resourceService: ResourceService, formService: FormService, dataService: DataService, route: Router, activatedRoute: ActivatedRoute,
     userService: UserService, public cacheService: CacheService) {
@@ -40,36 +40,37 @@ export class UpdateComponent implements OnInit {
   }
 
   ngOnInit() {
-   this.viewOwnerProfile = this.activatedRoute.snapshot.queryParams.role;
     this.activatedRoute.params.subscribe((params) => {
       this.userId = params.userId;
+      this.viewOwnerProfile = params.role;
     });
     this.getFormTemplate();
   }
 
   getFormTemplate() {
-    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
-    if (_.isEmpty(token)) {
-      token = this.userService.getUserToken;
-    } 
-    const requestData = {
-      url: appConfig.URLS.FORM_TEPLATE,
-      header: {
-        Authorization: token,
-        role: this.viewOwnerProfile
+    var requestData = {};
+    if (this.viewOwnerProfile === 'owner') {
+      requestData = { url: appConfig.URLS.OWNER_FORM_TEMPLATE }
+    } else {
+      let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+      if (_.isEmpty(token)) {
+        token = this.userService.getUserToken;
+      }
+      requestData = {
+        url: appConfig.URLS.FORM_TEPLATE,
+        header: { Authorization: token }
       }
     }
-    this.dataService.get(requestData).subscribe(res =>{
-      if(res.responseCode === 'OK')
-      {
-        this.showLoader =false;
+    this.dataService.get(requestData).subscribe(res => {
+      if (res.responseCode === 'OK') {
+        this.showLoader = false;
         this.formFieldProperties = res.result.formTemplate.data.fields;
       }
     });
   }
 
   updateInfo() {
-    this.formData.formInputData['osid'] = this.userId; 
+    this.formData.formInputData['osid'] = this.userId;
     const requestData = {
       data: {
         "id": "open-saber.registry.update",
@@ -80,7 +81,6 @@ export class UpdateComponent implements OnInit {
       url: appConfig.URLS.UPDATE
     };
     this.dataService.post(requestData).subscribe(response => {
-      console.log(response)
       this.navigateToProfilePage();
     }, err => {
       // this.toasterService.error(this.resourceService.messages.fmsg.m0078);

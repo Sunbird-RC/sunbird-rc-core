@@ -2,53 +2,41 @@
   "subject": "Employee",
   "fields": [
     {
-      "name": "osid",
-      "title": "identifier"
+      "name": "osid"
     },
     {
       "name": "name",
-      "title": "name",
       "display": true
     },
     {
-      "name": "orgName",
-      "title": "Organization"
+      "name": "orgName"
     },
     {
-      "name": "projectName",
-      "title": "Project"
+      "name": "projectName"
     },
     {
-      "name": "subProjectName",
-      "title": "Team"
+      "name": "subProjectName"
     },
     {
-      "name": "role",
-      "title": "Role"
+      "name": "role"
     },
     {
-      "name": "startDate",
-      "title": "StartDate"
+      "name": "startDate"
     },
     {
-      "name": "workLocation",
-      "title": "location"
+      "name": "workLocation"
     },
     {
-      "name": "nineAMreportTo",
-      "title": "nineAMreportTo"
+      "name": "nineAMreportTo"
     },
     {
-      "name": "isInKronos",
-      "title": "Kronos"
+      "name": "isInKronos"
     },
     {
-      "name": "githubId",
-      "title": "GitHub Identifier"
+      "name": "githubId"
     },
     {
-      "name": "isActive",
-      "title": "isApproved"
+      "name": "isActive"
     }
   ]
 }

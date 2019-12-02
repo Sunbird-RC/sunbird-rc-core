@@ -29,9 +29,9 @@
             "partner-admin"
         ],
         "editProfileRole": [
-            "owner",
             "admin",
-            "partner-admin"
+            "partner-admin",
+            "owner"
         ],
         "approveEmployee": [
             "admin"
@@ -44,7 +44,8 @@
         "ADD": "/registry/add",
         "UPDATE": "/registry/update",
         "REGISTER": "/register/users",
-        "FORM_TEPLATE": "/formtemplates"
+        "FORM_TEPLATE": "/formtemplates",
+        "OWNER_FORM_TEMPLATE":"/owner/formTemplate"
     },
     "PAGE_LIMIT": 20
 }
