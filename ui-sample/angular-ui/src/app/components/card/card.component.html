@@ -12,10 +12,10 @@
     <div class="header">
       {{data.name | titlecase}}
     </div>
-    <div *ngIf="data.isApproved" class="meta">
+    <div *ngIf="data.isActive" class="meta">
       Since {{data?.startDate | timeAgo}}
     </div>
-    <div *ngIf="!data.isApproved" class="meta">
+    <div *ngIf="!data.isActive" class="meta">
       New Member
     </div>
     <div class="description">

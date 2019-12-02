@@ -38,7 +38,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   public paginationDetails: IPagination;
   pageLimit: any
   public dataDrivenFilterEvent = new EventEmitter();
-  private listOfEmployees: ICard[] = [];
+  public listOfEmployees: ICard[] = [];
   public initFilters = false;
   public dataDrivenFilters: any = {};
   public queryParams: any;
@@ -110,7 +110,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
       name: data.name,
       subProjectName: data.Team,
       role: data.Role,
-      isApproved: data.isApproved,
+      isActive: data.isApproved,
       startDate: data.StartDate,
       identifier: data.identifier
     };
