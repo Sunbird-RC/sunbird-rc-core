@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, AfterViewInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router'
 import { DataService } from '../../services/data/data.service';
 import appConfig from '../../services/app.config.json';
@@ -20,6 +20,7 @@ export class DefaultTemplateComponent implements OnInit {
   userId: String;
   dataService: DataService;
   userService: UserService;
+  userInfo: string;
   constructor(activatedRoute: ActivatedRoute, dataService: DataService, public cacheService: CacheService, userService: UserService) {
     this.activatedRoute = activatedRoute;
     this.dataService = dataService;
@@ -55,6 +56,7 @@ export class DefaultTemplateComponent implements OnInit {
     }
     this.dataService.post(requestData).subscribe(response => {
       this.formInputData = response.result.Employee;
+      this.userInfo = JSON.stringify(response.result.Employee)
     }, (err => {
       console.log(err)
     }))

@@ -39,7 +39,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   public paginationDetails: IPagination;
   pageLimit: any
   public dataDrivenFilterEvent = new EventEmitter();
-  private listOfEmployees: ICard[] = [];
+  public listOfEmployees: ICard[] = [];
   public initFilters = false;
   public dataDrivenFilters: any = {};
   public queryParams: any;
@@ -50,7 +50,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   result: { "headers": string; "row": {}; };
   totalItems: any;
   userService: UserService;
-
+  
   constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute,  userService: UserService, public cacheService: CacheService) {
     this.dataService = dataService;
     this.userService = userService;
@@ -113,7 +113,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
       name: data.name,
       subProjectName: data.subProjectName,
       role: data.role,
-      isApproved: data.isActive,
+      isActive: data.isActive,
       startDate: data.startDate,
       identifier: data.osid
     };

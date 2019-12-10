@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ɵConsole } from '@angular/core';
 import { ResourceService } from '../../services/resource/resource.service'
 import { FormService } from '../../services/forms/form.service'
 import { from } from 'rxjs';
@@ -70,21 +70,33 @@ export class UpdateComponent implements OnInit {
   }
 
   updateInfo() {
-    this.formData.formInputData['osid'] = this.userId;
-    const requestData = {
-      data: {
-        "id": "open-saber.registry.update",
-        "request": {
-          "Employee": this.formData.formInputData
-        }
-      },
-      url: appConfig.URLS.UPDATE
-    };
-    this.dataService.post(requestData).subscribe(response => {
-      this.navigateToProfilePage();
-    }, err => {
-      // this.toasterService.error(this.resourceService.messages.fmsg.m0078);
-    });
+    var userData = JSON.parse(this.formData.userInfo);
+    var diffObj = Object.keys(userData).filter(i => userData[i] !== this.formData.formInputData[i]);
+
+    let updatedFields = {}
+    if (diffObj.length > 0) {
+      _.map(diffObj, (value) => {
+        updatedFields[value] = this.formData.formInputData[value];
+      })
+      updatedFields['osid'] = this.userId;
+    }
+
+    if (Object.keys(updatedFields).length > 0 ){
+      const requestData = {
+        data: {
+          "id": "open-saber.registry.update",
+          "request": {
+            "Employee": updatedFields
+          }
+        },
+        url: appConfig.URLS.UPDATE
+      };
+      this.dataService.post(requestData).subscribe(response => {
+        this.navigateToProfilePage();
+      }, err => {
+        // this.toasterService.error(this.resourceService.messages.fmsg.m0078);
+      });
+    }
   }
 
   navigateToProfilePage() {

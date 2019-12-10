@@ -5,30 +5,29 @@ var bodyParser = require("body-parser");
 var cors = require("cors")
 const morgan = require("morgan");
 const server = http.createServer(app);
-const registryHost = process.env.registry_url || "http://localhost:8081";
-const realmName = process.env.keycloak_realmName || "PartnerRegistry"
-const keyCloakHost = process.env.keycloak_url || "http://localhost:8080/auth/admin/realms/" + realmName + "/users";
-const request = require('request')
 const _ = require('lodash')
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 var async = require('async');
 const templateConfig = require('./templates/template.config.json');
-
-
-const port = process.env.PORT || 8090;
-
+let notification = require('./notification.js')
+const registryService = require('./registryService.js')
+const keycloakHelper = require('./keycloakHelper.js');
+const notificationRules = require('./notifyRulesSet.json')
 app.use(cors())
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+const port = process.env.PORT || 8090;
+
 app.post("/register/users", (req, res) => {
     createUser(req.body, req.headers, function (err, data) {
         if (err) {
-            // res.statusCode = err.statusCode;
+            res.statusCode = err.statusCode;
             return res.send(err.body)
         } else {
+            notify(notificationRules.create.role)
             return res.send(data);
         }
     });
@@ -37,7 +36,7 @@ app.post("/register/users", (req, res) => {
 const createUser = (value, header, callback) => {
     async.waterfall([
         function (callback) {
-            addUserToKeycloak(value.request, header, callback);
+            keycloakHelper.registerUserToKeycloak(value.request, header, callback)
         },
         function (value, header, res, callback2) {
             console.log("Employee successfully added to registry")
@@ -47,32 +46,45 @@ const createUser = (value, header, callback) => {
         console.log('Main Callback --> ' + result);
         if (err) {
             callback(err, null)
-        } else
-            callback(null, result)
+        } else {
+            callback(null, result);
+        }
     });
 }
 
+const addEmployeeToRegistry = (value, header, res, callback) => {
+    if (res.statusCode == 201) {
+        registryService.addEmployee(value, function (err, res) {
+            if (res.statusCode == 200) {
+                console.log("Employee successfully added to registry")
+                callback(null, res.body)
+            } else {
+                console.log("Employee could not be added to registry" + res.statusCode)
+                callback(res.statusCode, res.errorMessage)
+            }
+        })
+    } else {
+        callback(res, null)
+    }
+}
 
 app.post("/registry/add", (req, res, next) => {
-    postCallToRegistry(req.body, "/add", function (err, data) {
+    registryService.addEmployee(req.body, function (err, data) {
         return res.send(data);
-    });
+    })
 });
 
 app.post("/registry/search", (req, res, next) => {
-    if(!_.isEmpty(req.headers.authorization)) {
+    if (!_.isEmpty(req.headers.authorization)) {
         req.body.request.viewTemplateId = getViewtemplate(req.headers.authorization);
     }
-    postCallToRegistry(req.body, "/search", function (err, data) {
+    registryService.searchEmployee(req.body, function (err, data) {
         return res.send(data);
-    });
+    })
 });
 
 app.post("/registry/read", (req, res, next) => {
-    if(!_.isEmpty(req.headers.authorization)) {
-    req.body.request.viewTemplateId = getViewtemplate(req.headers.authorization);
-    }
-    postCallToRegistry(req.body, "/read", function (err, data) {
+    registryService.readEmployee(req.body, function (err, data) {
         return res.send(data);
     })
 });
@@ -89,10 +101,25 @@ const getViewtemplate = (authToken) => {
 }
 
 app.post("/registry/update", (req, res, next) => {
-    postCallToRegistry(req.body, "/update", function (err, data) {
-        return res.send(data);
+    registryService.updateEmployee(req.body, function (err, data) {
+        if (data) {
+            notifyUserBasedOnAttributes(req);
+            return res.send(data);
+        } else {
+            return res.send(err);
+        }
     })
 });
+
+const notifyUserBasedOnAttributes = (req) => {
+    let params = _.keys(req.body.request.Employee);
+    _.forEach(notificationRules.update.attributes, function (value) {
+        if (_.includes(params, value)) {
+            let roles = notificationRules.update[value].role;
+            notify(roles);
+        }
+    });
+}
 
 app.get("/formTemplates", (req, res, next) => {
     getFormTemplates(req.headers, function (err, data) {
@@ -166,104 +193,56 @@ const readFormTemplate = (value, callback) => {
     });
 }
 
-const postCallToRegistry = (value, endPoint, callback) => {
-    const options = {
-        method: 'POST',
-        url: registryHost + endPoint,
-        json: true,
-        headers: {
-            'content-type': 'application/json',
-            'accept': 'application/json'
-        },
-        body: value,
-        json: true
-    }
-    request(options, function (err, res) {
-        if (res.body.responseCode === 'OK') {
-            callback(null, res.body)
-        }
-        else {
-            callback(new Error(_.get(res, 'params.errmsg') || _.get(res, 'params.err')), res.body);
+const notify = (roles) => {
+    getUserMailId(roles);
+}
+
+const getUserMailId = (roles) => {
+    let tokenDetails;
+    let emailIds = [];
+    getTokenDetails(function (err, token) {
+        if (token) {
+            tokenDetails = token;
+            for (let i = 0; i < roles.length; i++) {
+                getUser(roles[i], tokenDetails, function (err, data) {
+                    if (data.length > 0) {
+                        emailIds.push(...data)
+                        if (i == roles.length - 1) {
+                            let unique = _.uniq(emailIds);
+                            notification(unique);
+                        }
+                    }
+                });
+            }
+
         }
     });
 }
 
-const addEmployeeToRegistry = (value, header, res, callback) => {
-    value['isApproved'] = false;
-    value['startDate'] = new Date();
-    let reqBody = {
-        "id": "open-saber.registry.create",
-        "ver": "1.0",
-        "ets": "11234",
-        "params": {
-            "did": "",
-            "key": "",
-            "msgid": ""
-        },
-        "request": {
-            "Employee": value
+const getTokenDetails = (callback) => {
+    keycloakHelper.getToken(function (err, token) {
+        if (token) {
+            callback(null, token);
+        } else {
+            callback(err)
         }
-    }
-    const options = {
-        method: 'POST',
-        url: registryHost + '/add',
-        json: true,
-        headers: {
-            'content-type': 'application/json',
-            'accept': 'application/json'
-        },
-        body: reqBody,
-        json: true
-    }
-    if (res.statusCode == 201) {
-        request(options, function (err, res, body) {
-            if (res.statusCode == 200) {
-                console.log("Employee successfully added to registry")
-                callback(null, res.body)
-            } else {
-                console.log("Employee could not be added to registry" + res.statusCode)
-                callback(res.statusCode, body.errorMessage)
-            }
-        })
-    } else {
-        callback(res, null)
-    }
+    });
 }
 
-const addUserToKeycloak = (value, headers, callback) => {
-    const options = {
-        method: 'POST',
-        url: keyCloakHost,
-        json: true,
-        headers: {
-            'content-type': 'application/json',
-            'accept': 'application/json',
-            'Authorization': headers.authorization
-        },
-        body: {
-            username: value.email,
-            enabled: true,
-            emailVerified: false,
-            firstName: value.name,
-            email: value.email,
-            requiredActions: [
-                "UPDATE_PASSWORD"
-            ],
-            credentials: [
-                {
-                    "value": "password",
-                    "type": "password"
-                }
-            ]
-        },
-        json: true
-    }
-    request(options, function (err, res, body) {
-        callback(null, value, headers, res)
-    })
+function getUser(value, tokenDetails, callback) {
+    let emailIds = [];
+    keycloakHelper.getUserByRole(value, tokenDetails.access_token.token, function (err, data) {
+        if (data) {
+            _.forEach(data, function (value) {
+                emailIds.push(value.email);
+            });
+            callback(null, emailIds)
+        }
+        else {
+            callback(err)
+        }
+    });
 }
-
-
 
 startServer = () => {
     server.listen(port, function () {
