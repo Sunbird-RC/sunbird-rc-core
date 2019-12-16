@@ -58,8 +58,8 @@
             <app-card [data]="content" (clickEvent)="navigateToProfilePage($event)" class="d-block"
               [class.last-card]="mr-0">
             </app-card>
-            </div>
           </div>
+        </div>
         <div class="ui grid mt-5 table-scroll mb-1" *ngIf="buttonIcon == 'block layout'">
           <table class="ui celled padded table tablet stackable">
             <thead>
@@ -76,26 +76,13 @@
             </tbody>
           </table>
         </div>
-      <div class="twelve wide column right aligned">
-        <div class="sb-pagination-container flex-jc-flex-end">
-          <div *ngIf="paginationDetails.totalItems > pageLimit && !showLoader">
-            <div class="ui right floated pagination menu">
-              <a class="icon item" (click)="navigateToPage(paginationDetails.currentPage - 1)"
-                [ngClass]="{active:paginationDetails.currentPage===page}">
-                <i class="left chevron icon"></i>
-              </a>
-              <a *ngFor="let page of paginationDetails.pages" [ngClass]="{active:paginationDetails.currentPage===page}"
-                (click)="navigateToPage(page)" class="item">{{page}}</a>
-              <a class="icon item" [ngClass]="{active:paginationDetails.currentPage===page}"
-                (click)="navigateToPage(paginationDetails.currentPage + 1)">
-                <i class="right chevron icon"></i>
-              </a>
-            </div>
+        <div class="twelve wide column right aligned" *ngIf="!queryParams.appliedFilters && !key">
+          <div class="ui right floated pagination menu">
+            <a class="item bl-1" [ngClass]="{'disabled': paginationDetails.previousBtn }"
+              (click)="previous()">Previous</a>
+            <a class="item bl-1" [ngClass]="{'disabled': paginationDetails.nextBtn}"
+              (click)="next(paginationDetails.offset)">Next</a>
           </div>
         </div>
       </div>
     </div>
-
-  </div>
-
-</div>

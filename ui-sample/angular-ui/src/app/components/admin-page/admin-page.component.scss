@@ -70,3 +70,13 @@ tr th {
 .one.wide.column.fit-content {
     width: fit-content !important;
 }
+
+.ui.menu .item:hover {
+    text-decoration: none;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.bl-1 {
+    border: 1px solid #dee2e6;
+}

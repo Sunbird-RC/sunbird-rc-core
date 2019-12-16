@@ -10,20 +10,6 @@ import appConfig from '../../services/app.config.json';
 import { UserService } from 'src/app/services/user/user.service';
 import { CacheService } from 'ng2-cache-service';
 
-
-
-export interface IPagination {
-  totalItems: number;
-  currentPage: number;
-  pageSize: number;
-  totalPages: number;
-  startPage: number;
-  endPage: number;
-  startIndex: number;
-  endIndex: number;
-  pages: Array<number>;
-}
-
 @Component({
   selector: 'app-admin-page',
   templateUrl: './admin-page.component.html',
@@ -36,7 +22,15 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   resourceService: ResourceService;
   router: Router;
   activatedRoute: ActivatedRoute;
-  public paginationDetails: IPagination;
+  public paginationDetails = {
+    totalItems: 0,
+    currentOffset: 0,
+    intialOffset: 0,
+    previousBtn: true,
+    nextBtn: false,
+    limit: 10,
+    offset: 10
+  };
   pageLimit: any
   public dataDrivenFilterEvent = new EventEmitter();
   public listOfEmployees: ICard[] = [];
@@ -48,21 +42,19 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   public buttonIcon: string = 'list';
   public buttonText: string = 'list view'
   result: { "headers": string; "row": {}; };
-  totalItems: any;
   userService: UserService;
-  
-  constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute,  userService: UserService, public cacheService: CacheService) {
+
+  constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute, userService: UserService, public cacheService: CacheService) {
     this.dataService = dataService;
     this.userService = userService;
     this.resourceService = resourceService;
     this.router = route;
     this.activatedRoute = activatedRoute;
     this.pageLimit = appConfig.PAGE_LIMIT
-    this.paginationDetails = this.getPager(0, 1, appConfig.PAGE_LIMIT);
   }
 
   ngOnInit() {
-    this.getTotalItems();
+    this.resetPaigination();
     this.result = {
       "headers": '',
       "row": ''
@@ -72,30 +64,11 @@ export class AdminPageComponent implements OnInit, OnDestroy {
       subscribe((filters: any) => {
         this.dataDrivenFilters = filters;
         this.fetchDataOnParamChange();
-        // this.setNoResultMessage();
       });
     this.activatedRoute.queryParams.subscribe(queryParams => {
       this.queryParams = { ...queryParams };
       this.key = this.queryParams['key'];
     });
-  }
-
-  getTotalItems() {
-    const option = {
-      url: appConfig.URLS.SEARCH,
-      data: {
-        id: "open-saber.registry.search",
-        request: {
-          entityType: ["Employee"],
-          filters: {}
-        }
-      }
-    }
-    this.dataService.post(option).subscribe(data => {
-      if (data.result.Employee) {
-        this.totalItems = data.result.Employee.length;
-      }
-    })
   }
 
   getDataForCard(data) {
@@ -106,7 +79,6 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     });
     return <ICard[]>list;
   }
-
 
   processContent(data) {
     const content: any = {
@@ -144,60 +116,36 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     } else {
       delete this.queryParams['key'];
     }
-    this.router.navigate(["search/1"], {
+    this.resetPaigination()
+    this.router.navigate(["/search"], {
       queryParams: this.queryParams
     });
   }
 
-
-  getPager(totalItems: number, currentPage: number = 1, pageSize: number = 10, pageStrip: number = 5) {
-    const totalPages = Math.ceil(totalItems / pageSize);
-    let startPage: number, endPage: number;
-    if (totalPages <= pageStrip) {
-      startPage = 1;
-      endPage = totalPages;
-    } else {
-      // when pagination is on the first section
-      if (currentPage <= 1) {
-        startPage = 1;
-        endPage = pageStrip;
-        // when pagination is on the last section
-      } else if (currentPage + (pageStrip - 1) >= totalPages) {
-        startPage = totalPages - (pageStrip - 1);
-        endPage = totalPages;
-        // when pagination is not on the first/last section
-      } else {
-        startPage = currentPage;
-        endPage = currentPage + (pageStrip - 1);
-      }
-    }
-    // calculate start and end item indexes
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = Math.min(startIndex + pageSize - 1, totalItems - 1);
-
-    // create an array of pages to *nFort in the pager control
-    const pages = _.range(startPage, endPage + 1);
-
-    // return object with all pager properties required by the view
-    return {
-      totalItems: totalItems,
-      currentPage: currentPage,
-      pageSize: pageSize,
-      totalPages: totalPages,
-      startPage: startPage,
-      endPage: endPage,
-      startIndex: startIndex,
-      endIndex: endIndex,
-      pages: pages
-    };
+  resetPaigination() {
+    this.paginationDetails.previousBtn = true;
+    this.paginationDetails.nextBtn = false;
+    this.paginationDetails.currentOffset = 0;
   }
 
-  navigateToPage(page: number): void {
-    if (page < 1 || page > this.paginationDetails.totalPages) {
-      return;
+  next(nextOffset) {
+    let total = this.paginationDetails.currentOffset + nextOffset;
+    this.paginationDetails.previousBtn = false;
+    this.paginationDetails.currentOffset = total;
+    this.fetchEmployees(total)
+  }
+
+  previous(prevOffset = 10) {
+    let total = this.paginationDetails.currentOffset - prevOffset;
+    if (total >= this.paginationDetails.intialOffset) {
+      this.paginationDetails.currentOffset = total;
+      this.fetchEmployees(total)
     }
-    const url = this.router.url.split('?')[0].replace(/.$/, page.toString());
-    this.router.navigate([url]);
+    if (total === this.paginationDetails.intialOffset) {
+      this.paginationDetails.previousBtn = true
+      this.paginationDetails.nextBtn = false
+    }
+
   }
 
   public getFilters(filters) {
@@ -215,15 +163,13 @@ export class AdminPageComponent implements OnInit, OnDestroy {
         takeUntil(this.unsubscribe$)
       ).subscribe(({ params, queryParams }) => {
         this.showLoader = true;
-        this.paginationDetails.currentPage = params.pageNumber;
         this.queryParams = { ...queryParams };
         this.listOfEmployees = [];
-
-        this.fetchEmployees();
+        this.fetchEmployees(this.paginationDetails.intialOffset);
       });
   }
 
-  private fetchEmployees() {
+  private fetchEmployees(offset) {
     let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
     if (_.isEmpty(token)) {
       token = this.userService.getUserToken;
@@ -237,7 +183,6 @@ export class AdminPageComponent implements OnInit, OnDestroy {
           entityType: ["Employee"],
           filters: {
           },
-          limit: this.pageLimit,
           viewTemplateId: "Employee_SearchResult.json"
         }
       }
@@ -245,22 +190,31 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     let filters = _.pickBy(this.queryParams, (value: Array<string> | string) => value && value.length);
     filters = _.omit(filters, ['key', 'sort_by', 'sortType', 'appliedFilters']);
     option.data.request.filters = this.getFilterObject(filters);
-    option.data.request['offset'] = (this.paginationDetails.currentPage - 1) * this.pageLimit
+    option.data.request['offset'] = offset;
+    option.data.request['limit'] = this.paginationDetails.limit;
     this.dataService.post(option)
       .subscribe(data => {
-        this.showLoader = false;
-        this.paginationDetails = this.getPager(this.totalItems, this.paginationDetails.currentPage, appConfig.PAGE_LIMIT);
-        this.listOfEmployees = this.getDataForCard(data.result.Employee);
-        this.result = {
-          "headers": _.keys(this.listOfEmployees[0]),
-          "row": this.listOfEmployees
+        if (data.result.Employee && data.result.Employee.length > 0) {
+          this.showLoader = false;
+          this.listOfEmployees = this.getDataForCard(data.result.Employee);
+          this.result = {
+            "headers": _.keys(this.listOfEmployees[0]),
+            "row": this.listOfEmployees
+          }
+          if (data.result.Employee.length < this.paginationDetails.limit) {
+            this.showLoader = false;
+            this.paginationDetails.nextBtn = true;
+          }
+        } else {
+          this.showLoader = false;
+          this.paginationDetails.nextBtn = true
         }
       }, err => {
         this.showLoader = false;
         this.listOfEmployees = [];
-        this.paginationDetails = this.getPager(0, this.paginationDetails.currentPage, appConfig.PAGE_LIMIT);
       });
   }
+
   getFilterObject(filter) {
     let option = {}
     if (filter) {
