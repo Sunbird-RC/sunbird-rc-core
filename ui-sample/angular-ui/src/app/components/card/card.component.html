@@ -12,7 +12,7 @@
     <div class="header">
       {{data.name | titlecase}}
     </div>
-    <div *ngIf="data.isActive" && data?.startDate != null" class="meta">
+    <div *ngIf="data.isActive && data?.startDate != null" class="meta">
       Since {{data?.startDate | timeAgo | slice:0:-3}}
     </div>
     <div *ngIf="!data.isActive" class="meta">
@@ -50,6 +50,6 @@
   <div class="actions">
     <button class="ui blue button" (click)="modal.approve('approved')"
       autofocus>{{resourceService?.frmelmnts?.btn?.yes}}</button>
-    <button class="ui basic blue button" (click)="modal.deny('denied')">{{resourceService?.frmelmnts?.btn?.viewProfile}}</button>
+    <button class="ui basic blue button" (click)="modal.deny('view')">{{resourceService?.frmelmnts?.btn?.viewProfile}}</button>
   </div>
 </ng-template>

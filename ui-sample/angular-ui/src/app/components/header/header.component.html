@@ -29,10 +29,10 @@
                                 <div class="ui text menu m-0 d-flex flex-jc-center flex-ai-center computer only"
                                         *ngIf="userLogin">
                                         <ng-container>
-                                                <a class="item" [class.active]="router.isActive('/search/1')"
+                                                <a class="item" [class.active]="router.isActive('/search')"
                                                         *ngIf='permissionService.permissionAvailable' appPermission
                                                         [permission]="userDirectoryViewRole"
-                                                        [routerLink]="'/search/1'" tabindex="0">
+                                                        [routerLink]="'/search'" tabindex="0">
                                                         {{resourceService?.frmelmnts?.btn?.search}}
                                                 </a>
                                                 <a class="item" [class.active]="router.isActive('create')"
@@ -78,10 +78,10 @@
                                                         </div>
                                                 </div>
                                                 <div class="ui divider mt-0"></div>
-                                                <a class="item" [class.active]="router.isActive('/search/1')"
+                                                <a class="item" [class.active]="router.isActive('/search')"
                                                         *ngIf='permissionService.permissionAvailable' appPermission
                                                         [permission]="userDirectoryViewRole" (click)="showSideBar()"
-                                                        [routerLink]="'/search/1'">
+                                                        [routerLink]="'/search'">
                                                         {{resourceService?.frmelmnts?.btn?.search}}
                                                 </a>
                                                 <a class="item" [class.active]="router.isActive('create')" (click)="showSideBar()"

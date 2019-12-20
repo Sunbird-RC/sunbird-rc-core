@@ -22,7 +22,7 @@ var routes = [
     data: { roles: [] }
   },
   {
-    path: 'search/:pageNumber',
+    path: 'search',
     component: AdminPageComponent,
     canActivate: [AppAuthGuard],
     data: { roles: 'adminPageViewRole' }

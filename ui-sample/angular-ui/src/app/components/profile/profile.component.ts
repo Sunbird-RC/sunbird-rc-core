@@ -100,7 +100,7 @@ export class ProfileComponent implements OnInit {
   }
 
   navigateToHomePage() {
-    this.router.navigate(['/search/1'])
+    this.router.navigate(['/search'])
   }
 }
 

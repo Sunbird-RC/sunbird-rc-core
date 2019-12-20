@@ -1,0 +1,21 @@
+{
+    "version": "1.0.0",
+    "config": {
+        "/register/users": {
+            "url": "/registry/users",
+            "method": "post",
+            "actions": [
+                "getAdminUsers",
+                "getPartnerAdminUsers",
+                "sendNotifications"
+            ]
+        },
+        "/registry/update": {
+            "url": "registry/update",
+            "method": "post",
+            "actions": [
+                "notifyUsersBasedOnAttributes"
+            ]
+        }
+    }
+}

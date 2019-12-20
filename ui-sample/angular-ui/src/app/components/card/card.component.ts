@@ -27,8 +27,8 @@ export class CardComponent implements OnInit {
   router: Router;
   public dataService: DataService;
 
-  constructor(resourceService: ResourceService, permissionService: PermissionService, public modalService: SuiModalService, route: Router
-    , dataService: DataService) {
+  constructor(resourceService: ResourceService, permissionService: PermissionService, public modalService: SuiModalService, route: Router, 
+    dataService: DataService) {
     this.resourceService = resourceService;
     this.permissionService = permissionService;
     this.router = route;
@@ -63,7 +63,9 @@ export class CardComponent implements OnInit {
         this.approve(userId);
       })
       .onDeny(result => {
-        this.router.navigate(['/profile', userId])
+        if (result === 'view') {
+          this.router.navigate(['/profile', userId]);
+        }
       });
   }
   approve(userId) {
@@ -80,7 +82,7 @@ export class CardComponent implements OnInit {
       url: appConfig.URLS.UPDATE
     };
     this.dataService.post(requestData).subscribe(response => {
-      this.router.navigate(['/search/1'])
+      this.router.navigate(['/search']);
     }, err => {
     });
   }
