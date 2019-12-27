@@ -33,6 +33,7 @@
     "keycloak-js": "^6.0.1",
     "lodash-es": "^4.17.11",
     "ng2-cache-service": "^1.1.1",
+    "ng2-izitoast": "^2.0.0",
     "ng2-semantic-ui": "github:project-sunbird/ng2-semantic-ui",
     "ngx-avatar": "^3.3.3",
     "popper.js": "^1.15.0",

@@ -9,6 +9,7 @@ import { combineLatest, Subject } from 'rxjs';
 import appConfig from '../../services/app.config.json';
 import { UserService } from 'src/app/services/user/user.service';
 import { CacheService } from 'ng2-cache-service';
+import { ToasterService } from 'src/app/services/toaster/toaster.service';
 
 @Component({
   selector: 'app-admin-page',
@@ -44,7 +45,8 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   result: { "headers": string; "row": {}; };
   userService: UserService;
 
-  constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute, userService: UserService, public cacheService: CacheService) {
+  constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute,
+    userService: UserService, public cacheService: CacheService, public toasterService: ToasterService) {
     this.dataService = dataService;
     this.userService = userService;
     this.resourceService = resourceService;
@@ -210,6 +212,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
           this.paginationDetails.nextBtn = true
         }
       }, err => {
+        this.toasterService.error(this.resourceService.frmelmnts.msg.errorMsg);
         this.showLoader = false;
         this.listOfEmployees = [];
       });

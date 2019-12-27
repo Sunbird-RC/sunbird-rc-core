@@ -7,6 +7,7 @@ import { KeycloakService } from 'keycloak-angular';
 import { CacheService } from 'ng2-cache-service';
 import { DataService } from 'src/app/services/data/data.service';
 import appConfig from '../../services/app.config.json';
+import { ToasterService } from 'src/app/services/toaster/toaster.service';
 
 
 
@@ -55,7 +56,7 @@ export class HeaderComponent implements OnInit {
   private userAuthenticated: any;
   constructor(public router: Router, public activatedRoute: ActivatedRoute, resourceService: ResourceService, userService: UserService
     , permissionService: PermissionService, keycloakAngular: KeycloakService, private cacheService: CacheService, private _cacheService: CacheService,
-    dataService: DataService) {
+    dataService: DataService, public toasterService: ToasterService) {
     this.resourceService = resourceService;
     this.userService = userService;
     this.permissionService = permissionService;
@@ -136,6 +137,7 @@ export class HeaderComponent implements OnInit {
       this.userId = response.result.Employee[0].osid;
       this.router.navigate(['/profile', this.userId, 'owner'])
     }, (err => {
+      this.toasterService.error(this.resourceService.frmelmnts.msg.errorMsg);
       console.log(err)
     }))
   }

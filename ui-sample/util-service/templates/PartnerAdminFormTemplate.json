@@ -271,7 +271,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "four"
                 },
                 "range": [
                     {
@@ -302,7 +302,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "four"
                 },
                 "range": [
                     {
@@ -377,7 +377,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "four"
                 },
                 "range": [
                     {
@@ -488,7 +488,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "six"
                 },
                 "range": [
                     {
@@ -515,7 +515,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "four"
                 },
                 "range": [
                     {
@@ -550,7 +550,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "four"
                 },
                 "range": [
                     {

@@ -9,6 +9,7 @@ import { CacheService } from 'ng2-cache-service';
 import appConfig from '../../services/app.config.json';
 import { UserService } from '../../services/user/user.service';
 import _ from 'lodash-es';
+import { ToasterService } from 'src/app/services/toaster/toaster.service';
 
 @Component({
   selector: 'app-update',
@@ -30,7 +31,7 @@ export class UpdateComponent implements OnInit {
   viewOwnerProfile: string;
 
   constructor(resourceService: ResourceService, formService: FormService, dataService: DataService, route: Router, activatedRoute: ActivatedRoute,
-    userService: UserService, public cacheService: CacheService) {
+    userService: UserService, public cacheService: CacheService, public toasterService: ToasterService) {
     this.resourceService = resourceService;
     this.formService = formService;
     this.dataService = dataService;
@@ -69,34 +70,57 @@ export class UpdateComponent implements OnInit {
     });
   }
 
-  updateInfo() {
-    var userData = JSON.parse(this.formData.userInfo);
-    var diffObj = Object.keys(userData).filter(i => userData[i] !== this.formData.formInputData[i]);
-
-    let updatedFields = {}
+  /**
+   * to validate requried fields
+   */
+  validate() {
+    const userData = JSON.parse(this.formData.userInfo);
+    //get only updated fields
+    const diffObj = Object.keys(userData).filter(i => userData[i] !== this.formData.formInputData[i]);
+    const updatedFields = {}
+    let emptyFields = [];
     if (diffObj.length > 0) {
       _.map(diffObj, (value) => {
         updatedFields[value] = this.formData.formInputData[value];
-      })
+      });
       updatedFields['osid'] = this.userId;
     }
-
-    if (Object.keys(updatedFields).length > 0 ){
-      const requestData = {
-        data: {
-          "id": "open-saber.registry.update",
-          "request": {
-            "Employee": updatedFields
+    if (Object.keys(updatedFields).length > 0) {
+      _.map(this.formFieldProperties, field => {
+        if (field.required) {
+          if (!this.formData.formInputData[field.code]) {
+            let findObj = _.find(this.formFieldProperties, { code: field.code });
+            emptyFields.push(findObj.label);
           }
-        },
-        url: appConfig.URLS.UPDATE
-      };
-      this.dataService.post(requestData).subscribe(response => {
-        this.navigateToProfilePage();
-      }, err => {
-        // this.toasterService.error(this.resourceService.messages.fmsg.m0078);
+        }
       });
+      if (emptyFields.length === 0) {
+        this.updateInfo(updatedFields, diffObj);
+      }
+      else {
+        this.toasterService.warning("Profile updation failed please provide required fields " + emptyFields.join(', '));
+      }
     }
+  }
+
+  updateInfo(updatedFieldValues, diffObj) {
+    const requestData = {
+      data: {
+        id: "open-saber.registry.update",
+        request: {
+          Employee: updatedFieldValues
+        }
+      },
+      url: appConfig.URLS.UPDATE
+    };
+    this.dataService.post(requestData).subscribe(response => {
+      if (response.params.status === "SUCCESSFUL") {
+        this.toasterService.success(diffObj + " successfully updated");
+        this.navigateToProfilePage();
+      }
+    }, err => {
+      this.toasterService.error(this.resourceService.frmelmnts.msg.updateFailure);
+    });
   }
 
   navigateToProfilePage() {
