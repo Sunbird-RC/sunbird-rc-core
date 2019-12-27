@@ -1,8 +1,10 @@
 const httpUtil = require('./httpUtils.js');
 const notificationHost = process.env.notificationUrl || "http://localhost:9000/v1/notification/send/sync"
 const _ = require('lodash')
+const logger = require('./log4j.js');
 
-const sendNotifications = (mailIds) => {
+const sendNotifications = (placeholder, callback) => {
+    logger.info("email ids to send notifications", placeholder.emailIds);
     const reqBody = {
         id: "notification.message.send",
         ver: "1.0",
@@ -18,14 +20,16 @@ const sendNotifications = (mailIds) => {
                     mode: "email",
                     deliveryType: "message",
                     config: { "subject": "Welcome to Ekstep" },
-                    ids: mailIds,
+                    ids: placeholder.emailIds,
                     template: {
-                        data: "Hello, thanks for completing",
-                    }
+                        id: placeholder.templateId,
+                        params: placeholder.templateParams
+                    },
                 }
             ]
         }
     }
+    logger.info("request body of notification request", JSON.stringify(reqBody));
     const option = {
         method: 'POST',
         url: notificationHost,
@@ -37,10 +41,11 @@ const sendNotifications = (mailIds) => {
     }
     httpUtil.post(option, function (err, res) {
         if (res) {
-            console.log("notification has been sucessfully sent", res.body)
-            // callback(null, res.body)
+            logger.info("notification has been sucessfully sent", res.body)
+            callback(null, res.body)
         } else {
-            // callback(err)
+            logger.error("sending notification is unsuccessfull", err)
+            callback(err)
         }
     });
 }

@@ -57,13 +57,14 @@ const getUserByRole = function (role, token, callback) {
     }
 }
 
-const registerUserToKeycloak = (value, headers, callback) => {
+const registerUserToKeycloak = (req, callback) => {
+    const value = req.body.request;
     const options = {
         url: keyCloakHost + "/users",
         headers: {
             'content-type': 'application/json',
             'accept': 'application/json',
-            'Authorization': headers.authorization
+            'Authorization': req.headers.authorization
         },
         body: {
             username: value.email,
@@ -83,7 +84,7 @@ const registerUserToKeycloak = (value, headers, callback) => {
         }
     }
     httpUtil.post(options, function (err, res) {
-        callback(null, value, headers, res)
+        callback(null, req, res)
     });
 
 }

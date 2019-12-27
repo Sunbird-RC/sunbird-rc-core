@@ -164,6 +164,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
         map(result => ({ params: { pageNumber: Number(result[0].pageNumber) }, queryParams: result[1] })),
         takeUntil(this.unsubscribe$)
       ).subscribe(({ params, queryParams }) => {
+        this.resetPaigination();
         this.showLoader = true;
         this.queryParams = { ...queryParams };
         this.listOfEmployees = [];

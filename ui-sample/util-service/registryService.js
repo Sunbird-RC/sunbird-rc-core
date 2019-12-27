@@ -2,27 +2,10 @@ const registryHost = process.env.registry_url || "http://localhost:8081";
 const httpUtil = require('./httpUtils.js')
 
 const addEmployee = (value, callback) => {
-    value['isOnboarded'] = false;
-    let reqBody = {
-        "id": "open-saber.registry.create",
-        "ver": "1.0",
-        "ets": "11234",
-        "params": {
-            "did": "",
-            "key": "",
-            "msgid": ""
-        },
-        "request": {
-            "Employee": value
-        }
-    }
     const options = {
         url: registryHost + "/add",
-        headers: {
-            'content-type': 'application/json',
-            'accept': 'application/json'
-        },
-        body: reqBody
+        headers: getDefaultHeaders(value.headers),
+        body: value.body
     }
     httpUtil.post(options, function (err, res) {
         if (res) {
@@ -37,11 +20,8 @@ const addEmployee = (value, callback) => {
 const updateEmployee = (value, callback) => {
     const options = {
         url: registryHost + "/update",
-        headers: {
-            'content-type': 'application/json',
-            'accept': 'application/json'
-        },
-        body: value
+        headers: getDefaultHeaders(value.headers),
+        body: value.body
     }
     httpUtil.post(options, function (err, res) {
         if (res) {
@@ -56,11 +36,8 @@ const updateEmployee = (value, callback) => {
 const readEmployee = (value, callback) => {
     const options = {
         url: registryHost + "/read",
-        headers: {
-            'content-type': 'application/json',
-            'accept': 'application/json'
-        },
-        body: value
+        headers: getDefaultHeaders(value.headers),
+        body: value.body
     }
     httpUtil.post(options, function (err, res) {
         if (res) {
@@ -74,11 +51,8 @@ const readEmployee = (value, callback) => {
 const searchEmployee = (value, callback) => {
     const options = {
         url: registryHost + "/search",
-        headers: {
-            'content-type': 'application/json',
-            'accept': 'application/json'
-        },
-        body: value
+        headers: getDefaultHeaders(value.headers),
+        body: value.body
     }
     httpUtil.post(options, function (err, res) {
         if (res) {
@@ -87,6 +61,16 @@ const searchEmployee = (value, callback) => {
             callback(err)
         }
     })
+}
+
+const getDefaultHeaders = (reqHeaders) => {
+    var token = reqHeaders.authorization.replace('Bearer ', '');
+    let headers = {
+        'content-type': 'application/json',
+        'accept': 'application/json',
+        'x-authenticated-user-token': token
+    }
+    return headers;
 }
 
 exports.addEmployee = addEmployee

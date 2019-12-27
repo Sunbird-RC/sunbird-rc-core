@@ -75,7 +75,13 @@
         "isActive": {
           "$id": "#/properties/isActive",
           "type": "boolean",
-          "title": "isApproved"
+          "title": "isActive"
+        },
+        "isOnboarded": {
+          "$id": "#/properties/isOnboarded",
+          "type": "boolean",
+          "title": "isOnboarded",
+          "default": false
         },
         "isInKronos": {
           "$id": "#/properties/isInKronos",
@@ -201,10 +207,10 @@
     "indexFields": [],
     "uniqueIndexFields": [],
     "systemFields": [
-      "_osCreatedAt",
-      "_osUpdatedAt",
-      "_osCreatedBy",
-      "_osUpdatedBy"
+      "osCreatedAt",
+      "osUpdatedAt",
+      "osCreatedBy",
+      "osUpdatedBy"
     ]
   }
 }

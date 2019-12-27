@@ -29,6 +29,7 @@ export class UpdateComponent implements OnInit {
   userService: UserService;
   public showLoader = true;
   viewOwnerProfile: string;
+  userToken: string;
 
   constructor(resourceService: ResourceService, formService: FormService, dataService: DataService, route: Router, activatedRoute: ActivatedRoute,
     userService: UserService, public cacheService: CacheService, public toasterService: ToasterService) {
@@ -45,6 +46,10 @@ export class UpdateComponent implements OnInit {
       this.userId = params.userId;
       this.viewOwnerProfile = params.role;
     });
+    this.userToken = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+    if (_.isEmpty(this.userToken )) {
+      this.userToken = this.userService.getUserToken;
+    }
     this.getFormTemplate();
   }
 
@@ -53,13 +58,9 @@ export class UpdateComponent implements OnInit {
     if (this.viewOwnerProfile === 'owner') {
       requestData = { url: appConfig.URLS.OWNER_FORM_TEMPLATE }
     } else {
-      let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
-      if (_.isEmpty(token)) {
-        token = this.userService.getUserToken;
-      }
       requestData = {
         url: appConfig.URLS.FORM_TEPLATE,
-        header: { Authorization: token }
+        header: { Authorization: this.userToken }
       }
     }
     this.dataService.get(requestData).subscribe(res => {
@@ -109,8 +110,9 @@ export class UpdateComponent implements OnInit {
         id: "open-saber.registry.update",
         request: {
           Employee: updatedFieldValues
-        }
+        },
       },
+      header: { Authorization: this.userToken },
       url: appConfig.URLS.UPDATE
     };
     this.dataService.post(requestData).subscribe(response => {

@@ -104,7 +104,7 @@ export class HeaderComponent implements OnInit {
     this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.UserKeyCloakData, userDetails, { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });
     this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.UserAuthenticated, { status: true }, { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });
     if (this.userLogin) {
-      this.readUserDetails(this.keycloakAngular.getKeycloakInstance().profile.email)
+      this.readUserDetails(this.keycloakAngular.getKeycloakInstance().profile.email, userToken)
     }
 
   }
@@ -119,8 +119,9 @@ export class HeaderComponent implements OnInit {
     this.router.navigate(['/profile', this.userId, 'owner'])
   }
 
-  readUserDetails(data: String) {
+  readUserDetails(data: String, token ){
     const requestData = {
+      header: { Authorization: token },
       data: {
         id: "open-saber.registry.search",
         request: {
