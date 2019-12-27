@@ -2,7 +2,7 @@ const registryHost = process.env.registry_url || "http://localhost:8081";
 const httpUtil = require('./httpUtils.js')
 
 const addEmployee = (value, callback) => {
-    value['isApproved'] = false;
+    value['isOnboarded'] = false;
     let reqBody = {
         "id": "open-saber.registry.create",
         "ver": "1.0",

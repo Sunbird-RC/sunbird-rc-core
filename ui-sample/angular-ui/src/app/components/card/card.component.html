@@ -12,10 +12,10 @@
     <div class="header">
       {{data.name | titlecase}}
     </div>
-    <div *ngIf="data.isActive && data?.startDate != null" class="meta">
+    <div *ngIf="data.isOnboarded && data?.startDate != null" class="meta">
       Since {{data?.startDate | timeAgo | slice:0:-3}}
     </div>
-    <div *ngIf="!data.isActive" class="meta">
+    <div *ngIf="!data.isOnboarded" class="meta">
       New Member
     </div>
     <div class="description">
@@ -24,13 +24,13 @@
   </div>
   <div class="extra content">
     <div *ngIf="permissionService.permissionAvailable" appPermission [permission]="approveEmployee">
-      <div class="ui two buttons" *ngIf="!data?.isApproved">
+      <div class="ui two buttons" *ngIf="!data?.isOnboarded">
         <div class="ui basic blue button" (click)="approveConfirmModal(data?.identifier); $event.stopPropagation()">
           {{resourceService?.frmelmnts?.btn?.approve}}</div>
         <div class="ui basic grey button">
           {{resourceService?.frmelmnts?.btn?.decline}}</div>
       </div>
-      <div *ngIf="data?.isApproved">
+      <div *ngIf="data?.isOnboarded">
         <div class="ui basic blue button" (click)="onAction(data,{View: true})">
           {{resourceService?.frmelmnts?.btn?.viewProfile}}</div>
       </div>

@@ -170,6 +170,23 @@
                 "index": 4
             },
             {
+                "code": "isOnboarded",
+                "dataType": "boolean",
+                "name": "isOnboarded",
+                "label": "isOnboarded",
+                "description": "isOnboarded",
+                "editable": true,
+                "placeholder": "isOnboarded",
+                "inputType": "boolean",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 5
+            },
+            {
                 "code": "isActive",
                 "dataType": "boolean",
                 "name": "isApproved",

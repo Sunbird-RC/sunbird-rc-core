@@ -76,7 +76,7 @@ export class CardComponent implements OnInit {
         request: {
           Employee: {
             osid: userId,
-            isActive: true
+            isOnboarded: true
           }
         }
       },

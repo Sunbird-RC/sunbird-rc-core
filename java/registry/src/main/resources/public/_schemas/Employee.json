@@ -200,6 +200,11 @@
     "signedFields": [],
     "indexFields": [],
     "uniqueIndexFields": [],
-    "systemFields": []
+    "systemFields": [
+      "_osCreatedAt",
+      "_osUpdatedAt",
+      "_osCreatedBy",
+      "_osUpdatedBy"
+    ]
   }
 }
