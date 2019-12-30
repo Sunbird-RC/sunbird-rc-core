@@ -32,7 +32,8 @@ import { PermissionDirective } from './directives/permission/permission.directiv
 import { CacheService } from 'ng2-cache-service';
 import { CacheStorageAbstract } from 'ng2-cache-service/dist/src/services/storage/cache-storage-abstract.service';
 import { CacheSessionStorage } from 'ng2-cache-service/dist/src/services/storage/session-storage/cache-session-storage.service';
-import {TimeAgoPipe} from 'time-ago-pipe'
+import {TimeAgoPipe} from 'time-ago-pipe';
+import { Ng2IziToastModule } from 'ng2-izitoast';
 
 let moduleOptions = {
   declarations: [
@@ -62,7 +63,8 @@ let moduleOptions = {
     RouterModule,
     FormsModule,
     ReactiveFormsModule,
-    KeycloakAngularModule
+    KeycloakAngularModule,
+    Ng2IziToastModule
   ],
   providers: [AppAuthGuard,
     CacheService,

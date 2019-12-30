@@ -29,11 +29,13 @@
             "styles": [
               "node_modules/font-awesome/css/font-awesome.css",
               "src/assets/styles/semantic/semantic.min.css",
-              "src/assets/styles/styles.scss"
+              "src/assets/styles/styles.scss",
+              "node_modules/izitoast/dist/css/iziToast.min.css"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",
-              "src/assets/libs/semantic.min.js"
+              "src/assets/libs/semantic.min.js",
+              "node_modules/izitoast/dist/js/iziToast.min.js"
             ],
             "es5BrowserSupport": true
           },

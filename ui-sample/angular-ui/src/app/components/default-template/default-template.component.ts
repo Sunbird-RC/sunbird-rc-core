@@ -14,7 +14,7 @@ import { UserService } from 'src/app/services/user/user.service';
 })
 export class DefaultTemplateComponent implements OnInit {
   @Input() formFieldProperties: any;
-  public formInputData = {};
+  @Input() formInputData: any ={};
   router: Router;
   activatedRoute: ActivatedRoute;
   userId: String;
@@ -31,35 +31,6 @@ export class DefaultTemplateComponent implements OnInit {
     this.activatedRoute.params.subscribe((params) => {
       this.userId = params.userId;
     });
-    if (this.userId) {
-      this.getUserDetails();
-    }
-  }
-
-  getUserDetails() {
-    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
-    if (_.isEmpty(token)) {
-      token = this.userService.getUserToken;
-    }
-    const requestData = {
-      header: { Authorization: token },
-      data: {
-        "id": "open-saber.registry.read",
-        'request': {
-          "Employee": {
-            "osid": this.userId
-          },
-          "includeSignatures": true,
-        }
-      },
-      url: appConfig.URLS.READ,
-    }
-    this.dataService.post(requestData).subscribe(response => {
-      this.formInputData = response.result.Employee;
-      this.userInfo = JSON.stringify(response.result.Employee)
-    }, (err => {
-      console.log(err)
-    }))
   }
 
 }

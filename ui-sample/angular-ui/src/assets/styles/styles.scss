@@ -100,9 +100,9 @@ $primary-color:  #024f9d;
 .mt-20 {
   margin-top: 20px!important
 }
-.py-20 {
-  padding-top: 20px!important;
-  padding-bottom: 20px!important;
+.py-10 {
+  padding-top: 10px!important;
+  padding-bottom: 10px!important;
 }
 
 body{
@@ -113,6 +113,12 @@ body{
 .sb-btn-normal {
   height: 8px * 4;
   font-size:16px;
+}
+.tas {
+  text-align: start;
+}
+.ui.raised.segment {
+  box-shadow: 0 4px 16px 2px rgba(17,22,26,.16), 0 4px 8px 0 rgba(17,22,26,.08), 0 16px 24px 0 rgba(17,22,26,.08);
 }
 
 .sb-btn {
@@ -205,4 +211,9 @@ body {
       }
     }
   }
+}
+
+.ui.raised.segment {
+  box-shadow: 5px 5px 25px 0 rgba(46,61,73,.2);
+  border-radius: .375rem;
 }

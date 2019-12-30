@@ -4,6 +4,12 @@
     "data": {
         "templateName": "defaultTemplate",
         "action": "create",
+        "categories":{
+            "Personal information":["name", "orgName","externalId", "externalRole","email", "phone"],
+            "General":["slackAccess", "repoAccess", "startDate", "endDate", "workLocation", "workingStyle", "macAddress"],
+            "Admin information":["role", "isActive","projectName","subProjectName", "nineAMreportTo", "remarks"],
+            "Billing":["proposedBilling"]
+        },
         "fields": [
             {
                 "code": "name",
@@ -14,7 +20,7 @@
                 "editable": true,
                 "placeholder": "Employee name",
                 "inputType": "text",
-                "required": false,
+                "required": true,
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
@@ -31,7 +37,7 @@
                 "editable": true,
                 "placeholder": "Phone",
                 "inputType": "text",
-                "required": false,
+                "required": true,
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
@@ -48,7 +54,7 @@
                 "editable": true,
                 "placeholder": "Email",
                 "inputType": "text",
-                "required": false,
+                "required": true,
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
@@ -66,7 +72,7 @@
                 "editable": true,
                 "placeholder": "External Id",
                 "inputType": "text",
-                "required": false,
+                "required": true,
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
@@ -83,7 +89,7 @@
                 "editable": true,
                 "placeholder": "External Role",
                 "inputType": "text",
-                "required": false,
+                "required": true,
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
@@ -100,7 +106,7 @@
                 "editable": true,
                 "placeholder": "Mac Address",
                 "inputType": "text",
-                "required": false,
+                "required": true,
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {

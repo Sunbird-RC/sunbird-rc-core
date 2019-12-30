@@ -18,6 +18,9 @@
       "name": "isActive"
     },
     {
+      "name": "isOnboarded"
+    },
+    {
       "name": "proposedBilling"
     },
     {

@@ -4,6 +4,12 @@
     "data": {
         "templateName": "defaultTemplate",
         "action": "create",
+        "categories":{
+            "Personal information":["name", "orgName","externalId", "externalRole","email", "phone"],
+            "General":["slackAccess", "repoAccess", "startDate", "endDate", "workLocation", "workingStyle", "macAddress"],
+            "Admin information":["role", "isActive","projectName","subProjectName", "nineAMreportTo", "remarks"],
+            "Billing":["proposedBilling"]
+        },
         "fields": [
             {
                 "code": "name",
@@ -136,13 +142,30 @@
                 "index": 4
             },
             {
+                "code": "isOnboarded",
+                "dataType": "boolean",
+                "name": "isOnboarded",
+                "label": "isOnboarded",
+                "description": "isOnboarded",
+                "editable": true,
+                "placeholder": "isOnboarded",
+                "inputType": "boolean",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 5
+            },
+            {
                 "code": "isActive",
                 "dataType": "boolean",
-                "name": "isApproved",
-                "label": "isApproved",
-                "description": "isApproved",
+                "name": "isActive",
+                "label": "isActive",
+                "description": "isActive",
                 "editable": true,
-                "placeholder": "isApproved",
+                "placeholder": "isActive",
                 "inputType": "boolean",
                 "required": false,
                 "displayProperty": "Editable",

@@ -6,6 +6,7 @@ import { PermissionService } from 'src/app/services/permission/permission.servic
 import { SuiModalService, TemplateModalConfig, ModalTemplate } from 'ng2-semantic-ui';
 import { Router } from '@angular/router';
 import { DataService } from 'src/app/services/data/data.service';
+import { ToasterService } from 'src/app/services/toaster/toaster.service';
 
 
 @Component({
@@ -20,15 +21,15 @@ export class CardComponent implements OnInit {
   @Input() data: ICard;
   @Output() clickEvent = new EventEmitter<any>();
   resourceService: ResourceService;
-  color =this.getRandColor();
+  color = this.getRandColor();
   public permissionService: PermissionService;
   public approveEmployee: Array<string>;
   public enableViewProfile = true;
   router: Router;
   public dataService: DataService;
 
-  constructor(resourceService: ResourceService, permissionService: PermissionService, public modalService: SuiModalService, route: Router, 
-    dataService: DataService) {
+  constructor(resourceService: ResourceService, permissionService: PermissionService, public modalService: SuiModalService, route: Router,
+    dataService: DataService, public toasterService: ToasterService) {
     this.resourceService = resourceService;
     this.permissionService = permissionService;
     this.router = route;
@@ -37,13 +38,13 @@ export class CardComponent implements OnInit {
 
   ngOnInit() {
     this.approveEmployee = appConfig.rolesMapping.approveEmployee;
-    if(this.permissionService.checkRolesPermissions(this.approveEmployee)) {
+    if (this.permissionService.checkRolesPermissions(this.approveEmployee)) {
       this.enableViewProfile = false;
     }
   }
 
   getRandColor() {
-    let colors = ["#DD4132", "#727289", "#642F7A", "#A34B25", "#872C6F", "#A34B25", "#8FB339", "#157A7F", "#51504E", "#334A66", "#F7786B","#CE3175","#5B5EA6","#B565A7","#66B7B0"]
+    let colors = ["#DD4132", "#727289", "#642F7A", "#A34B25", "#872C6F", "#A34B25", "#8FB339", "#157A7F", "#51504E", "#334A66", "#F7786B", "#CE3175", "#5B5EA6", "#B565A7", "#66B7B0"]
     let randNum = Math.floor(Math.random() * 15);
     return colors[randNum];
   }
@@ -71,19 +72,23 @@ export class CardComponent implements OnInit {
   approve(userId) {
     const requestData = {
       data: {
-        "id": "open-saber.registry.update",
-        "request": {
-          "Employee": {
+        id: "open-saber.registry.update",
+        request: {
+          Employee: {
             osid: userId,
-            isActive: true
+            isOnboarded: true
           }
         }
       },
       url: appConfig.URLS.UPDATE
     };
     this.dataService.post(requestData).subscribe(response => {
-      this.router.navigate(['/search']);
+      if (response.params.status === "SUCCESSFUL") {
+        this.toasterService.success(this.data.name + " " + this.resourceService.frmelmnts.msg.OnboardedSuccess);
+        this.router.navigate(['/search']);
+      }
     }, err => {
+      this.toasterService.error(this.data.name + " " + this.resourceService.frmelmnts.msg.OnboardUnSuccess);
     });
   }
 }

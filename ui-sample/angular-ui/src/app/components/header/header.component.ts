@@ -7,6 +7,7 @@ import { KeycloakService } from 'keycloak-angular';
 import { CacheService } from 'ng2-cache-service';
 import { DataService } from 'src/app/services/data/data.service';
 import appConfig from '../../services/app.config.json';
+import { ToasterService } from 'src/app/services/toaster/toaster.service';
 
 
 
@@ -55,7 +56,7 @@ export class HeaderComponent implements OnInit {
   private userAuthenticated: any;
   constructor(public router: Router, public activatedRoute: ActivatedRoute, resourceService: ResourceService, userService: UserService
     , permissionService: PermissionService, keycloakAngular: KeycloakService, private cacheService: CacheService, private _cacheService: CacheService,
-    dataService: DataService) {
+    dataService: DataService, public toasterService: ToasterService) {
     this.resourceService = resourceService;
     this.userService = userService;
     this.permissionService = permissionService;
@@ -103,7 +104,7 @@ export class HeaderComponent implements OnInit {
     this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.UserKeyCloakData, userDetails, { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });
     this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.UserAuthenticated, { status: true }, { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });
     if (this.userLogin) {
-      this.readUserDetails(this.keycloakAngular.getKeycloakInstance().profile.email)
+      this.readUserDetails(this.keycloakAngular.getKeycloakInstance().profile.email, userToken)
     }
 
   }
@@ -118,8 +119,9 @@ export class HeaderComponent implements OnInit {
     this.router.navigate(['/profile', this.userId, 'owner'])
   }
 
-  readUserDetails(data: String) {
+  readUserDetails(data: String, token ){
     const requestData = {
+      header: { Authorization: token },
       data: {
         id: "open-saber.registry.search",
         request: {
@@ -136,6 +138,7 @@ export class HeaderComponent implements OnInit {
       this.userId = response.result.Employee[0].osid;
       this.router.navigate(['/profile', this.userId, 'owner'])
     }, (err => {
+      this.toasterService.error(this.resourceService.frmelmnts.msg.errorMsg);
       console.log(err)
     }))
   }

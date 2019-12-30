@@ -8,13 +8,25 @@ class WorkFlowFactory {
     constructor() {
     }
 
-    invoke(request) {
+    preInvoke(request) {
         let config = workFlowJson.config[request.url];
         let workflow = new WorkFlowFunctions(request);
-        if(config) {
-            async.forEachSeries(config.actions, function (value, callback) {
+        if (config) {
+            async.forEachSeries(config.prevActions, function (value, callback) {
                 workflow[value]((err, data) => {
-                        callback()
+                    callback()
+                });
+            });
+        }
+    }
+
+    postInvoke(request) {
+        let config = workFlowJson.config[request.url];
+        let workflow = new WorkFlowFunctions(request);
+        if (config) {
+            async.forEachSeries(config.postActions, function (value, callback) {
+                workflow[value]((err, data) => {
+                    callback()
                 });
             });
         }

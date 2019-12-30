@@ -30,6 +30,9 @@
       "name": "isActive"
     },
     {
+      "name": "isOnboarded"
+    },
+    {
       "name": "nineAMreportTo"
     },
     {

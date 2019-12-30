@@ -4,6 +4,12 @@
     "data": {
         "templateName": "defaultTemplate",
         "action": "create",
+        "categories":{
+            "Personal information":["name", "orgName","externalId", "externalRole","email", "phone"],
+            "General":["slackAccess", "repoAccess", "startDate", "endDate", "workLocation", "workingStyle", "macAddress"],
+            "Admin information":["role", "isActive","projectName","subProjectName", "nineAMreportTo", "remarks"],
+            "Billing":["proposedBilling"]
+        },
         "fields": [
             {
                 "code": "name",
@@ -170,6 +176,23 @@
                 "index": 4
             },
             {
+                "code": "isOnboarded",
+                "dataType": "boolean",
+                "name": "isOnboarded",
+                "label": "isOnboarded",
+                "description": "isOnboarded",
+                "editable": true,
+                "placeholder": "isOnboarded",
+                "inputType": "boolean",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 5
+            },
+            {
                 "code": "isActive",
                 "dataType": "boolean",
                 "name": "isApproved",
@@ -271,7 +294,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "four"
                 },
                 "range": [
                     {
@@ -302,7 +325,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "four"
                 },
                 "range": [
                     {
@@ -377,7 +400,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "four"
                 },
                 "range": [
                     {
@@ -488,7 +511,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "six"
                 },
                 "range": [
                     {
@@ -515,7 +538,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "four"
                 },
                 "range": [
                     {
@@ -550,7 +573,7 @@
                 "displayProperty": "Editable",
                 "visible": true,
                 "renderingHints": {
-                    "semanticColumnWidth": "three"
+                    "semanticColumnWidth": "four"
                 },
                 "range": [
                     {

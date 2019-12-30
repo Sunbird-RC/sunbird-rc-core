@@ -4,8 +4,11 @@
         "/register/users": {
             "url": "/registry/users",
             "method": "post",
-            "actions": [
+            "prevActions": [
                 "getAdminUsers",
+                "sendNotifications"
+            ],
+            "postActions": [
                 "getPartnerAdminUsers",
                 "sendNotifications"
             ]
@@ -13,7 +16,8 @@
         "/registry/update": {
             "url": "registry/update",
             "method": "post",
-            "actions": [
+            "prevActions": [],
+            "postActions": [
                 "notifyUsersBasedOnAttributes"
             ]
         }

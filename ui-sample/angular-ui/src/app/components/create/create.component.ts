@@ -8,6 +8,8 @@ import { UserService } from 'src/app/services/user/user.service';
 import { CacheService } from 'ng2-cache-service';
 import appConfig from '../../services/app.config.json';
 import * as $ from 'jquery';
+import { ToasterService } from 'src/app/services/toaster/toaster.service';
+import _ from 'lodash-es';
 
 @Component({
   selector: 'app-create',
@@ -26,7 +28,9 @@ export class CreateComponent implements OnInit {
   success = false;
   isError = false;
   errMessage: string;
-  constructor(resourceService: ResourceService, formService: FormService, dataService: DataService, route: Router, public userService: UserService, private cacheService: CacheService) {
+  formInputDta = {}
+  constructor(resourceService: ResourceService, formService: FormService, dataService: DataService, route: Router, public userService: UserService, private cacheService: CacheService,
+    public toasterService: ToasterService) {
     this.resourceService = resourceService;
     this.formService = formService;
     this.dataService = dataService;
@@ -37,6 +41,28 @@ export class CreateComponent implements OnInit {
     this.formService.getFormConfig("employee").subscribe(res => {
       this.formFieldProperties = res.fields;
     })
+  }
+
+  /**
+   * validates required fields
+   */
+  validate() {
+    let emptyFields = [];
+    _.map(this.formFieldProperties, field => {
+      if (field.required) {
+        if (!this.formData.formInputData[field.code]) {
+          let findObj = _.find(this.formFieldProperties, { code: field.code });
+          emptyFields.push(findObj.label);
+        }
+      }
+    });
+    if (emptyFields.length === 0) {
+      this.registerNewUser();
+    }
+    else {
+      this.toasterService.warning("Employee registration failed please provide required fields " + emptyFields.join(', '));
+    }
+
   }
 
   registerNewUser() {
@@ -57,12 +83,11 @@ export class CreateComponent implements OnInit {
     }
     this.dataService.post(requestData).subscribe(response => {
       if (response.params.status === "SUCCESSFUL") {
-        this.success = true;
+        this.toasterService.success(this.resourceService.frmelmnts.msg.createUserSuccess);
       }
     }, err => {
-      this.isError = true;
-      this.errMessage = err.errorMessage;
-      console.log("error", err);
+      this.errMessage = err.error.errorMessage;
+      this.toasterService.error(this.resourceService.frmelmnts.msg.createUserUnSuccess + " : " + err.error.errorMessage);
     });
   }
   navigateToProfilePage(id: String) {
