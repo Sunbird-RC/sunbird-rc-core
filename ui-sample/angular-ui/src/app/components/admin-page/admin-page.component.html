@@ -70,7 +70,7 @@
             <tbody>
               <tr *ngFor="let user of result.row" [ngClass]="{positive:user.isApproved===true}">
                 <td *ngFor="let col of result.headers">
-                  {{user[col]}}
+                  {{user[col]? user[col]: '-'}}
                 </td>
               </tr>
             </tbody>

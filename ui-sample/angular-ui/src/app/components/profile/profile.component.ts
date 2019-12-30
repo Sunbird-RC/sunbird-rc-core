@@ -8,6 +8,7 @@ import { CacheService } from 'ng2-cache-service';
 import { UserService } from '../../services/user/user.service';
 import _ from 'lodash-es';
 import { PermissionService } from 'src/app/services/permission/permission.service';
+import { ToasterService } from 'src/app/services/toaster/toaster.service';
 
 @Component({
   selector: 'app-profile',
@@ -15,7 +16,6 @@ import { PermissionService } from 'src/app/services/permission/permission.servic
   styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent implements OnInit {
-
   dataService: DataService;
   resourceService: ResourceService;
   permissionService: PermissionService;
@@ -30,8 +30,13 @@ export class ProfileComponent implements OnInit {
   public viewOwnerProfile: string;
   public editProfile: Array<string>;
   enable: boolean = false;
-  constructor(dataService: DataService, resourceService: ResourceService, activatedRoute: ActivatedRoute, private sanitizer: DomSanitizer, router: Router, userService: UserService, public cacheService: CacheService
-    , permissionService: PermissionService) {
+  categories: any = {};
+  sections = []
+  formInputData = {};
+  userInfo: string;
+
+  constructor(dataService: DataService, resourceService: ResourceService, activatedRoute: ActivatedRoute, router: Router, userService: UserService, public cacheService: CacheService
+    , permissionService: PermissionService, public toastService: ToasterService) {
     this.dataService = dataService
     this.resourceService = resourceService;
     this.router = router
@@ -47,10 +52,11 @@ export class ProfileComponent implements OnInit {
       this.userId = params.userId;
       this.viewOwnerProfile = params.role
     });
-    if(_.isEmpty(this.viewOwnerProfile) && this.viewOwnerProfile == undefined) {
-        this.enable = true;
-    } 
+    if (_.isEmpty(this.viewOwnerProfile) && this.viewOwnerProfile == undefined) {
+      this.enable = true;
+    }
     this.getFormTemplate();
+    this.getUserDetails();
   }
 
   getFormTemplate() {
@@ -64,7 +70,7 @@ export class ProfileComponent implements OnInit {
       if (_.isEmpty(token)) {
         token = this.userService.getUserToken;
       }
-       requestData = {
+      requestData = {
         url: appConfig.URLS.FORM_TEPLATE,
         header: {
           Authorization: token
@@ -74,6 +80,7 @@ export class ProfileComponent implements OnInit {
     this.dataService.get(requestData).subscribe(res => {
       if (res.responseCode === 'OK') {
         this.formFieldProperties = res.result.formTemplate.data.fields;
+        this.categories = res.result.formTemplate.data.categories;
         this.disableEditMode()
       }
     });
@@ -89,10 +96,19 @@ export class ProfileComponent implements OnInit {
       }
     });
     this.showLoader = false;
+    this.getCategory()
   }
-  
+
+  getCategory() {
+    _.map(this.categories, (value, key) => {
+      var filtered_people = _.filter(this.formFieldProperties, function (field) {
+        return _.includes(value, field.code);
+      });
+      this.sections.push({ name: key, fields: filtered_people });
+    });
+  }
   navigateToEditPage() {
-    if(this.viewOwnerProfile) {
+    if (this.viewOwnerProfile) {
       this.router.navigate(['/edit', this.userId, this.viewOwnerProfile]);
     } else {
       this.router.navigate(['/edit', this.userId]);
@@ -101,6 +117,32 @@ export class ProfileComponent implements OnInit {
 
   navigateToHomePage() {
     this.router.navigate(['/search'])
+  }
+
+  getUserDetails() {
+    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+    if (_.isEmpty(token)) {
+      token = this.userService.getUserToken;
+    }
+    const requestData = {
+      header: { Authorization: token },
+      data: {
+        id: "open-saber.registry.read",
+        request: {
+          Employee: {
+            osid: this.userId
+          },
+          includeSignatures: true,
+        }
+      },
+      url: appConfig.URLS.READ,
+    }
+    this.dataService.post(requestData).subscribe(response => {
+      this.formInputData = response.result.Employee;
+      this.userInfo = JSON.stringify(response.result.Employee)
+    }, (err => {
+      console.log(err)
+    }))
   }
 }
 

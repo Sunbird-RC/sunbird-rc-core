@@ -1,33 +1,38 @@
 <div class="ui container mt-20">
-    <div class="ui small breadcrumb">
-       <a class="section" routerLink=''>{{resourceService?.frmelmnts?.btn?.home}}</a>
-        <i class="right chevron icon divider"></i>
-        <div class="active section">{{resourceService?.frmelmnts?.label?.profileInformation}}</div>
-    </div>
+  <div class="ui small breadcrumb">
+    <a class="section" routerLink=''>{{resourceService?.frmelmnts?.btn?.home}}</a>
+    <i class="right chevron icon divider"></i>
+    <div class="active section">{{resourceService?.frmelmnts?.label?.profileInformation}}</div>
+  </div>
 </div>
 
-  <div class="ui segment" *ngIf="showLoader">
-      <div class="ui raised shadow container segment mb-30 width-50">
-      <div class="ui active medium inline loader"></div>
-    </div>
+<div class="ui segment" *ngIf="showLoader">
+  <div class="ui raised shadow container segment mb-20 width-50">
+    <div class="ui active medium inline loader"></div>
   </div>
-  <div class="ui raised shadow container segment mb-30 width-50" *ngIf="!showLoader">
-    <div class="d-flex flex-jc-center mb-30" *ngIf="formFieldProperties">
-      <app-default-template #formData [formFieldProperties]="formFieldProperties">
-      </app-default-template>
-    </div>
-    <div class="twelve wide column">
-    <div class="d-flex flex-jc-center">
-        <button class="ui primary button" *ngIf="permissionService.permissionAvailable && enable == true" appPermission [permission]="editProfile" (click)="navigateToEditPage()">
-          {{resourceService?.frmelmnts?.btn?.edit}}
-        </button>
-        <button class="ui primary button" *ngIf="viewOwnerProfile =='owner'" (click)="navigateToEditPage()">
-            {{resourceService?.frmelmnts?.btn?.edit}}
-          </button>
-        <button class="ui button" (click)="navigateToHomePage()">
-          {{resourceService?.frmelmnts?.btn?.cancel}}
-        </button>
+</div>
+<div class="ui raised shadow container segment mb-20 width-50" *ngIf="!showLoader">
+  <div *ngFor="let section of sections">
+    <div class="ui header tas mb-20" *ngIf="section.fields.length > 0">{{section.name | titlecase}}</div>
+    <div class="ui segment mb-20" *ngIf="section.fields.length > 0">
+      <div class="row">
+        <app-default-template #formData [formFieldProperties]="section.fields" [formInputData]="formInputData">
+        </app-default-template>
       </div>
     </div>
   </div>
-  
+  <div class="twelve wide column">
+    <div class="d-flex flex-jc-center">
+      <button class="ui primary button" *ngIf="permissionService.permissionAvailable && enable == true" appPermission
+        [permission]="editProfile" (click)="navigateToEditPage()">
+        {{resourceService?.frmelmnts?.btn?.edit}}
+      </button>
+      <button class="ui primary button" *ngIf="viewOwnerProfile =='owner'" (click)="navigateToEditPage()">
+        {{resourceService?.frmelmnts?.btn?.edit}}
+      </button>
+      <button class="ui button" (click)="navigateToHomePage()">
+        {{resourceService?.frmelmnts?.btn?.cancel}}
+      </button>
+    </div>
+  </div>
+</div>

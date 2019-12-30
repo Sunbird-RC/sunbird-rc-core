@@ -114,6 +114,12 @@ body{
   height: 8px * 4;
   font-size:16px;
 }
+.tas {
+  text-align: start;
+}
+.ui.raised.segment {
+  box-shadow: 0 4px 16px 2px rgba(17,22,26,.16), 0 4px 8px 0 rgba(17,22,26,.08), 0 16px 24px 0 rgba(17,22,26,.08);
+}
 
 .sb-btn {
   -webkit-tap-highlight-color: transparent;

@@ -1,7 +1,7 @@
 <div class="ui form">
   <div class="ui grid">
     <div *ngFor="let field of formFieldProperties;let i = index"
-      class="{{field.renderingHints.semanticColumnWidth || 'twelve'}} wide column">
+      class="{{field.renderingHints.semanticColumnWidth || 'twelve'}} wide computer twelve wide mobile column">
       <div *ngIf="field.inputType==='text' || field.inputType==='number'" class="field"
         [ngClass]="{'required':field.required}">
         <label>
