@@ -14,7 +14,7 @@ log4js.configure({
     },
     categories: {
         default: {
-            appenders: ['consoleAppender', 'fileAppender'], level: 'info', enableCallStack: true
+            appenders: ['consoleAppender', 'fileAppender'], level: 'debug', enableCallStack: true
         },
     },
 });

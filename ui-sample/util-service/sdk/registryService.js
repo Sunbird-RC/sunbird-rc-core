@@ -1,4 +1,4 @@
-const registryHost = process.env.registry_url || "http://localhost:8081";
+const registryHost = process.env.registry_url || "http://localhost:9080";
 const httpUtil = require('./httpUtils.js')
 
 const addEmployee = (value, callback) => {

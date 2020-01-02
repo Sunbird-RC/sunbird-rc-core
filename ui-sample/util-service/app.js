@@ -10,24 +10,24 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 var async = require('async');
 const templateConfig = require('./templates/template.config.json');
-const registryService = require('./registryService.js')
-const keycloakHelper = require('./keycloakHelper.js');
-const WorkFlowFactory = require('./workflow/workFlowFactory.js');
-const logger = require('./log4j.js');
+const engineConfig = require('./engineConfig.json')
+const registryService = require('./sdk/registryService')
+const keycloakHelper = require('./sdk/keycloakHelper');
+const WfEngineFactory = require('./workflow/EngineFactory');
+const logger = require('./sdk/log4j');
+const port = process.env.PORT || 8090;
+
 app.use(cors())
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const port = process.env.PORT || 8090;
-
-
 const workFlowFunctionPre = (req) => {
-    WorkFlowFactory.preInvoke(req);
+    wfEngine.preInvoke(req);
 }
 
 const workFlowFunctionPost = (req) => {
-    WorkFlowFactory.postInvoke(req);
+    wfEngine.postInvoke(req);
 }
 
 app.use((req, res, next) => {
@@ -219,5 +219,10 @@ startServer = () => {
         logger.info("util service listening on port " + port);
     })
 };
+
+
+// Init the workflow engine.
+const wfEngine = WfEngineFactory.getEngine(engineConfig)
+wfEngine.init()
 
 startServer();

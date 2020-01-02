@@ -1,0 +1,23 @@
+{
+    "version": "1.0.0",
+    "rules": [{
+        "url": "/registry/users",
+        "method": "post",
+        "preActions": [
+            "getAdminUsers",
+            "sendNotifications"
+        ],
+        "postActions": [
+            "getPartnerAdminUsers",
+            "sendNotifications"
+        ]
+    },
+    {
+        "url": "/registry/update",
+        "method": "post",
+        "preActions": [],
+        "postActions": [
+            "notifyUsersBasedOnAttributes"
+        ]
+    }]
+}
