@@ -1,6 +1,5 @@
 var async = require('async');
 const logger = require('../sdk/log4j');
-const WorkFlowFunctions = require('./Functions.js');
 
 class Engine {
 
@@ -12,10 +11,12 @@ class Engine {
      *          "postActions": [],
      *      }
      *  }
-     * @param {engineConfig} config 
+     * @param {engineConfig json} config 
+     * @param {functionObj} classNameFunctions
      */
-    constructor(config) {
+    constructor(config, classNameFunctions) {
         this.pathActions = {}
+        this.functionImplObj = new classNameFunctions
         if ("1.0.0" === config.version) {
             var rules = config.rules
             for (var itr = 0, len = rules.length; itr < len; itr++) {
@@ -51,15 +52,23 @@ class Engine {
         return pathAction;
     }
 
+    _invokeFunction(name, callback) {
+        this.functionImplObj[name]((err, data) => {
+            callback()
+        });
+    }
+
     preInvoke(request) {
         logger.debug("Calling preInvoke functions for " + request.method + " " + request.url)
         let config = this._getConfig(request.method, request.url);
         if (config) {
-            let workflow = new WorkFlowFunctions(request);
+            this.functionImplObj.setRequest(request);
+            // just for debugging.
+            this.functionImplObj["check123"]()
+
+            var tempThis = this
             async.forEachSeries(config.preActions, function (value, callback) {
-                workflow[value]((err, data) => {
-                    callback()
-                });
+                tempThis._invokeFunction(value, callback)
             });
         }
         logger.debug("End calling preInvoke functions for " + request.method + " " + request.url)
@@ -69,11 +78,11 @@ class Engine {
         logger.debug("Calling postInvoke functions for " + request.method + " " + request.url)
         let config = this._getConfig(request.method, request.url);
         if (config) {
-            let workflow = new WorkFlowFunctions(request);
+            this.functionImplObj.setRequest(request);
+
+            var tempThis = this
             async.forEachSeries(config.postActions, function (value, callback) {
-                workflow[value]((err, data) => {
-                    callback()
-                });
+                tempThis._invokeFunction(value, callback)
             });
         }
         logger.debug("End calling postInvoke functions for " + request.method + " " + request.url)

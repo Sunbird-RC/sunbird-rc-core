@@ -1,104 +1,48 @@
-const keycloakHelper = require('../sdk/keycloakHelper.js');
-const registryService = require('../sdk/registryService.js');
 const _ = require('lodash')
+const async = require('async');
+
+const keycloakHelper = require('../sdk/keycloakHelper.js');
 const notify = require('../sdk/notification.js')
-var async = require('async');
+const registryService = require('../sdk/registryService.js');
+
 const logger = require('../sdk/log4j.js')
 
-
 class Functions {
-
-    constructor(request) {
-        // Provide access to the request object to all actions.
-        this.request = request;
-
+    constructor() {
         // Provide a property bag for any data exchange between workflow functions.
-        this.placeholders = {};
+        this._placeholders = {};
 
         this.attributes = ["macAddress", "githubId", "isOnboarded"]
     }
 
-    getAdminUsers(callback) {
-        logger.info("get admin users method invoked")
-        this.getUserMailId('admin', (err, data) => {
-            if (data) {
-                let emailIds = [];
-                if (data.length > 0) {
-                    _.forEach(data, (value) => {
-                        emailIds.push(value.email);
-                    });
-                    this.placeholders['emailIds'] = emailIds;
-                    callback(null, data)
-                }
-            } else {
-                callback(err)
-            }
-        });
+    setRequest(request) {
+        this.request = request
     }
 
-    getPartnerAdminUsers(callback) {
-        logger.info("get partner-admin users method invoked")
-        this.getUserMailId('partner-admin', (err, data) => {
-            if (data) {
-                let emailIds = [];
-                if (data.length > 0) {
-                    _.forEach(data, (value) => {
-                        emailIds.push(value.email);
-                    });
-                    this.placeholders['emailIds'] = emailIds;
-                    callback(null, data)
-                }
-            } else {
-                callback(err)
-            }
-        });
+    addToPlaceholders(anyKey, anyValue) {
+        this._placeholders[anyKey] = anyValue
     }
 
-    getFinAdminUsers(callback) {
-        logger.info("get fin-admin users method invoked")
-        this.getUserMailId('fin-admin', (err, data) => {
-            if (data) {
-                let emailIds = [];
-                if (data.length > 0) {
-                    _.forEach(data, (value) => {
-                        emailIds.push(value.email);
-                    });
-                    this.placeholders['emailIds'] = emailIds;
-                    callback(null, data)
-                }
-            } else {
-                callback(err)
-            }
-        });
+    getPlaceholders(anyKey) {
+        return this._placeholders[anyKey]
     }
-    getReporterUsers(callback) {
-        logger.info("get reporter users method invoked")
-        this.getUserMailId('reporter', (err, data) => {
+
+    /**
+     * Returns emailIds of users that match a given role.
+     * @param {String} roleName 
+     * @param {fun(err, data)} callback 
+     */
+    getUsersByRole(roleName, callback) {
+        this.getUserMailId(roleName, (err, data) => {
             if (data) {
                 let emailIds = [];
                 if (data.length > 0) {
                     _.forEach(data, (value) => {
                         emailIds.push(value.email);
                     });
-                    this.placeholders['emailIds'] = emailIds;
-                    callback(null, data)
-                }
-            } else {
-                callback(err)
-            }
-        });
-    }
-    getOwnerUsers(callback) {
-        logger.info("get owner users method invoked")
-        this.getUserMailId('owner', (err, data) => {
-            if (data) {
-                let emailIds = [];
-                if (data.length > 0) {
-                    _.forEach(data, (value) => {
-                        emailIds.push(value.email);
-                    });
-                    this.placeholders['emailIds'] = emailIds;
-                    callback(null, data)
+                    // TODO: Remove this comment. 
+                    //this._placeholders['emailIds'] = emailIds;
+                    callback(null, emailIds)
                 }
             } else {
                 callback(err)
@@ -122,7 +66,7 @@ class Functions {
             }
         });
     }
-
+    
     /**
      * calls notification send api 
      * @param {*} callback 
@@ -240,6 +184,10 @@ class Functions {
                 callback(err)
             }
         });
+    }
+
+    check123() {
+        console.log("Check 123 function invoked - this means we are all set")
     }
 
 }
