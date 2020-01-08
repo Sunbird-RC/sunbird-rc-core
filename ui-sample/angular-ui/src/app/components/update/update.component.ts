@@ -50,21 +50,17 @@ export class UpdateComponent implements OnInit {
       this.userId = params.userId;
       this.viewOwnerProfile = params.role;
     });
-    this.getUserDetails();
     this.userToken = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
     if (_.isEmpty(this.userToken )) {
       this.userToken = this.userService.getUserToken;
     }
+    this.getUserDetails();
     this.getFormTemplate();
   }
 
   getUserDetails() {
-    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
-    if (_.isEmpty(token)) {
-      token = this.userService.getUserToken;
-    }
     const requestData = {
-      header: { Authorization: token },
+      header: { Authorization: this.userToken },
       data: {
         id: "open-saber.registry.read",
         request: {

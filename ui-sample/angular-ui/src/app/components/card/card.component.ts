@@ -7,7 +7,9 @@ import { SuiModalService, TemplateModalConfig, ModalTemplate } from 'ng2-semanti
 import { Router } from '@angular/router';
 import { DataService } from 'src/app/services/data/data.service';
 import { ToasterService } from 'src/app/services/toaster/toaster.service';
-
+import { CacheService } from 'ng2-cache-service';
+import { UserService } from '../../services/user/user.service';
+import _ from 'lodash-es';
 
 @Component({
   selector: 'app-card',
@@ -27,13 +29,15 @@ export class CardComponent implements OnInit {
   public enableViewProfile = true;
   router: Router;
   public dataService: DataService;
+  userService: UserService;
 
   constructor(resourceService: ResourceService, permissionService: PermissionService, public modalService: SuiModalService, route: Router,
-    dataService: DataService, public toasterService: ToasterService) {
+    dataService: DataService, public toasterService: ToasterService, userService: UserService, public cacheService: CacheService) {
     this.resourceService = resourceService;
     this.permissionService = permissionService;
     this.router = route;
     this.dataService = dataService;
+    this.userService = userService;
   }
 
   ngOnInit() {
@@ -70,7 +74,12 @@ export class CardComponent implements OnInit {
       });
   }
   approve(userId) {
+    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+    if (_.isEmpty(token)) {
+      token = this.userService.getUserToken;
+    }
     const requestData = {
+      header: { Authorization: token },
       data: {
         id: "open-saber.registry.update",
         request: {

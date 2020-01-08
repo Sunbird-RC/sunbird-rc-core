@@ -1,5 +1,5 @@
 const httpUtil = require('./httpUtils.js');
-const notificationHost = process.env.notificationUrl || "http://localhost:9000/v1/notification/send/sync"
+const notificationHost = process.env.notificationUrl || "http://localhost:9012/v1/notification/send/sync"
 const _ = require('lodash')
 const logger = require('./log4j.js');
 

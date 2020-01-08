@@ -6,7 +6,7 @@
         "action": "create",
         "categories":{
             "Personal information":["name", "orgName","externalId", "externalRole","email", "phone"],
-            "General":["slackAccess", "repoAccess", "startDate", "endDate", "workLocation", "workingStyle", "macAddress"],
+            "General":["slackAccess", "repoAccess", "startDate", "endDate", "workLocation", "workingStyle", "githubId", "macAddress"],
             "Admin information":["role", "isActive","projectName","subProjectName", "nineAMreportTo", "remarks"],
             "Billing":["proposedBilling"]
         },
@@ -113,6 +113,23 @@
                     "semanticColumnWidth": "four"
                 },
                 "index": 6
+            },
+            {
+                "code": "githubId",
+                "dataType": "text",
+                "name": "githubId",
+                "label": "GithubId",
+                "description": "GithubId",
+                "editable": true,
+                "placeholder": "GithubId",
+                "inputType": "text",
+                "required": true,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 7
             }
         ]
     }

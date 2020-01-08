@@ -15,9 +15,15 @@ public class KeyCloakServiceImpl {
 
 	private static Logger logger = LoggerFactory.getLogger(KeyCloakServiceImpl.class);
 
-	private String ssoUrl = System.getenv("sunbird_sso_url");
-	private String ssoRealm = System.getenv("sunbird_sso_realm");
-	private PublicKey publicKey = toPublicKey(System.getenv("sunbird_sso_publickey"));
+	private String ssoUrl;
+	private String ssoRealm;
+	private PublicKey publicKey;
+
+	public KeyCloakServiceImpl(String ssoUrl, String ssoRealm, String publicKeyStr) {
+		this.ssoUrl = ssoUrl;
+		this.ssoRealm = ssoRealm;
+		this.publicKey = toPublicKey(publicKeyStr);
+	}
 
 	public PublicKey getPublicKey() {
 		return publicKey;

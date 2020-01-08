@@ -3,11 +3,14 @@ var keyCloakAuthUtils = require('keycloak-auth-utils');
 let request = require('request')
 const httpUtil = require('./httpUtils.js');
 const realmName = process.env.keycloak_realmName || "PartnerRegistry"
-const keyCloakHost = process.env.keycloak_url || "http://localhost:8080/auth/admin/realms/" + realmName;
+const keyCloakHost = process.env.keycloak_url || "http://localhost:8443" + "/auth/admin/realms/" + realmName;
 
 let keyCloak_config = {
     "realm": realmName,
-    "auth-server-url": keyCloakHost,
+    "auth-server-url": process.env.keycloak_url || "http://localhost:8443" + "/auth",
+    "credentials": {
+        "secret": "9ebc2fc1-ced9-4774-a661-7e2c59991cfe"
+    },
     "resource": "utils",
     "bearerOnly": true,
     "clientId": "utils"
@@ -53,13 +56,14 @@ const getUserByRole = function (role, token, callback) {
     }
 }
 
-const registerUserToKeycloak = (value, headers, callback) => {
+const registerUserToKeycloak = (req, callback) => {
+    const value = req.body.request;
     const options = {
         url: keyCloakHost + "/users",
         headers: {
             'content-type': 'application/json',
             'accept': 'application/json',
-            'Authorization': headers.authorization
+            'Authorization': req.headers.authorization
         },
         body: {
             username: value.email,
@@ -79,7 +83,7 @@ const registerUserToKeycloak = (value, headers, callback) => {
         }
     }
     httpUtil.post(options, function (err, res) {
-        callback(null, value, headers, res)
+        callback(null, req, res)
     });
 
 }

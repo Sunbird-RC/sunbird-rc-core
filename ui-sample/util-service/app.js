@@ -15,7 +15,7 @@ const registryService = require('./sdk/registryService')
 const keycloakHelper = require('./sdk/keycloakHelper');
 const WfEngineFactory = require('./workflow/EngineFactory');
 const logger = require('./sdk/log4j');
-const port = process.env.PORT || 8090;
+const port = process.env.PORT || 9081;
 
 app.use(cors())
 app.use(morgan('dev'));
@@ -52,6 +52,11 @@ app.post("/register/users", (req, res, next) => {
 const createUser = (req, callback) => {
     async.waterfall([
         function (callback) {
+            //if auth token is not given , this function is used get access token
+            getTokenDetails(req, callback);
+        },
+        function (token, callback) {
+            req.headers['authorization'] = token;
             keycloakHelper.registerUserToKeycloak(req, callback)
         },
         function (req, res, callback2) {
@@ -66,6 +71,20 @@ const createUser = (req, callback) => {
             callback(null, result);
         }
     });
+}
+
+const getTokenDetails = (req, callback) => {
+    if (!req.headers.authorization) {
+        keycloakHelper.getToken(function (err, token) {
+            if (token) {
+                callback(null, 'Bearer ' + token.access_token.token);
+            } else {
+                callback(err)
+            }
+        });
+    } else {
+        callback(null, req.headers.authorization)
+    }
 }
 
 const addEmployeeToRegistry = (req, res, callback) => {

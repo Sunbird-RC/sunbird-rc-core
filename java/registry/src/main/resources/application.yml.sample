@@ -9,12 +9,12 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
-name: dev-yaml
+name: dev-yam
 enviroment: development
 
 server:
   # Change this port number if you want to run it on another.
-  port: ${server_port:8080}
+  port: ${server_port:9080}
 
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
@@ -31,7 +31,7 @@ registry:
   system:
     base: ${registry_system_base:http://localhost:8080/opensaber/}
   rootEntity:
-        type: ${registry_rootentity_type:Teacher}
+    type: ${registry_rootentity_type:Teacher}
 
 # This property is to be used for search request/query
 # offset: search result starts from value provided as default
@@ -94,32 +94,40 @@ database:
       #     ** Example - Postgres - jdbc:postgresql://localhost:5432/yourdb
       #     * 3. NoSQL  databases (Cassandra)
       #     ** Example - cassandra - jdbc:cassandra://localhost:9160/yourdb
-      uri: ${connectionInfo_uri:jdbc:postgresql://localhost:5432/osdemo2}
+      uri: ${connectionInfo_uri:jdbc:postgresql://localhost:5432/opensaberdb}
 
-      username: ${connectionInfo_username:postgres}
-      password: ${connectionInfo_password:postgres1!}
+      username: ${connectionInfo_username:aishwarya}
+      password: ${connectionInfo_password:aishu@123}
+
+      # Any other shard information follows...
+      #-
+      #shardId: shard2
+      #shardLabel: 2
+      #uri: ${connectionInfo_uri:bolt://localhost:7688
+      #username: ${connectionInfo_username:neo4j}
+      #password: ${connectionInfo_password:}
 
 ##################################################################################
 # Uncomment the following section to use Cassandra as backend store              #
 ##################################################################################
 cassandra:
-    graphFactory: org.janusgraph.core.JanusGraphFactory
-    backend: "cql"
-    hostname: ${cassandra_host:localhost}
-    keyspace: ${cassandra_keyspace:registry_db}
-    db.cache.size: ${cassandra_db_cache_size:0.25}
-    # wait time in milliseconds to clean the cache
-    db.cache.clean.wait: ${cassandra_db_cache_clean_wait:60}
-    index:
-      storage.backend: ${cassandr_index_storage:elasticsearch}
-      hostname: ${cassandra_index_hostname:localhost}
+  graphFactory: org.janusgraph.core.JanusGraphFactory
+  backend: "cql"
+  hostname: ${cassandra_host:localhost}
+  keyspace: ${cassandra_keyspace:registry_db}
+  db.cache.size: ${cassandra_db_cache_size:0.25}
+  # wait time in milliseconds to clean the cache
+  db.cache.clean.wait: ${cassandra_db_cache_clean_wait:60}
+  index:
+    storage.backend: ${cassandr_index_storage:elasticsearch}
+    hostname: ${cassandra_index_hostname:localhost}
 
 # File for framing the entity while reading
 frame:
   file: ${frame_file:frame.json}
 
 encryption:
-  enabled: ${encryption_enabled:true}
+  enabled: ${encryption_enabled:false}
   base: ${encryption_base:http://localhost:8013}
   uri: ${encryption_uri:http://localhost:8013/encrypt}
   batch:
@@ -131,7 +139,7 @@ decryption:
     uri: ${decryption_batch_uri:http://localhost:8013/decrypt/obj}
 
 signature:
-  enabled: ${signature_enabled:true}
+  enabled: ${signature_enabled:false}
   healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
   signURL: ${sign_url:http://localhost:8013/sign}
   verifyURL: ${verify_url:http://localhost:8013/verify}
@@ -141,19 +149,16 @@ signature:
     config:
       name: SignatureShape
 
-#audit:
-  #enabled: ${audit_enabled:false}
-  #frame:
+    #audit:
+    #enabled: ${audit_enabled:false}
+    #frame:
     #file: ${audit_frame_file:audit_frame.json}
 
 authentication:
-  enabled: ${authentication_enabled:false}
-
-keycloak:
-  sso:
-    publicKey:  ${sunbird_sso_publickey}
-    realm:  ${sunbird_sso_realm}
-    auth_server_url:  ${sunbird_sso_url}
+  enabled: ${authentication_enabled:true}
+  publicKey:  ${authentication_publickey:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqe1lVD9jnQWQce62e2Q44tACqBIt5UZyGzCegxax2gddj4xotY5BDxaxuJRGKDLRpm8lPNHxX8dce8SUVAMBfk85rL+Bxv1mjspKo7Q5qsFm9TGcvE4e/4xhgpMjw6dCFt8+S87jvRjmDHjakGMooOls1kjppQiklSEZ0lW3Crqet4RNjb1FNJ+2Jg26frm8i2cpb2wRnmLDuQ9sAnHCxAD2rGxSGLXhKABptbMeTVx25eh+PVISjc78uOhAnMwOHKApVBGnVCfcUoVYqfkX8XcPQU9ybmAi27vp9xZqMfh6I56Tl4fsWYBgf8ZMl0UWyRR3PNmo/0kxon1d3zqFnwIDAQAB}
+  realm:  ${authentication_realm:PartnerRegistry}
+  url:  ${authentication_url:http://localhost:8443/auth/}
 
 validation:
   enabled: ${validation_enabled:true}

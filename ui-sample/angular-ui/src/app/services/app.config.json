@@ -38,7 +38,7 @@
         ]
     },
     "URLS": {
-        "UTIl_SERVICE_BASE_URL": "http://localhost:8090",
+        "UTIl_SERVICE_BASE_URL": "http://localhost:9081",
         "SEARCH": "/registry/search",
         "READ": "/registry/read",
         "ADD": "/registry/add",
