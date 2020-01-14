@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "rules": [{
-        "url": "/registry/users",
+        "url": "/register/users",
         "method": "post",
         "preActions": [
             "getAdminUsers",

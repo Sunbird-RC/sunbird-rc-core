@@ -3,7 +3,7 @@ let app = require('./app')
 const WFEngineFactory = require('./workflow/EngineFactory');
 const baseFunctions = require('./workflow/Functions')
 const engineConfig = require('./engineConfig.json')
-const EPRUtilFunctions = require('./EPRFunction')
+const EPRUtilFunctions = require('./EPRFunctions')
 
 const classesMapping = {
     'EPRFunction': EPRUtilFunctions,
