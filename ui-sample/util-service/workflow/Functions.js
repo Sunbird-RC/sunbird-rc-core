@@ -3,10 +3,11 @@ const async = require('async');
 
 const keycloakHelper = require('../sdk/keycloakHelper.js');
 const Notification = require('../sdk/notification.js')
-const registryService = require('../sdk/registryService.js');
+const RegistryService = require('../sdk/registryService.js');
 const logger = require('../sdk/log4j.js')
 var CacheManager = require('../sdk/CacheManager.js');
 var cacheManager = new CacheManager();
+const registryService = new RegistryService();
 
 class Functions {
     constructor() {
@@ -64,15 +65,13 @@ class Functions {
             body: this.request.body
         };
         req.body.id = "open-saber.registry.read",
-        req.body.request.Employee.osid = this.request.body.request.Employee.osid;
-        registryService.readEmployee(req, (err, data) => {
-            if (data) {
-                this.userData = data.result.Employee;
-                callback(null, data.result.Employee)
-            } else {
-                callback(err);
-            }
-        });
+            registryService.readRecord(req, (err, data) => {
+                if (data) {
+                    callback(null, data)
+                } else {
+                    callback(err);
+                }
+            });
     }
 
     /**
@@ -80,8 +79,8 @@ class Functions {
      * @param {*} callback 
      */
     sendNotifications(callback) {
-        const notification = new Notification(null, null, this._placeholders, this._placeholders.subject, 
-            this._placeholders.templateId, this._placeholders.templateParams, this._placeholders.emailIds);
+        const notification = new Notification(null, null,
+            this._placeholders.templateId, this._placeholders.templateParams, this._placeholders.emailIds, this._placeholders.subject);
         notification.sendNotifications((err, data) => {
             if (data) {
                 callback(null, data);

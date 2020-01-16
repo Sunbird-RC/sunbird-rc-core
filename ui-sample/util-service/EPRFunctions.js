@@ -1,6 +1,8 @@
 let Functions = require("./workflow/Functions");
 const _ = require('lodash')
 const async = require('async');
+const entityType = 'Employee';
+
 
 class EPRFunctions extends Functions {
     EPRFunctions() {
@@ -40,7 +42,7 @@ class EPRFunctions extends Functions {
     getRegistryUsersMailId(callback) {
         this.getUserByid((err, data) => {
             if (data) {
-                this.addEmailToPlaceHolder([data], callback);
+                this.addEmailToPlaceHolder([data.result[entityType]], callback);
             }
         })
     }
@@ -51,12 +53,12 @@ class EPRFunctions extends Functions {
     }
 
     notifyUsersBasedOnAttributes(callback) {
-        let params = _.keys(this.request.body.request.Employee);
+        let params = _.keys(this.request.body.request[entityType]);
         async.forEachSeries(this.attributes, (value, callback) => {
             if (_.includes(params, value)) {
                 let params = {
                     paramName: value,
-                    paramValue: this.request.body.request.Employee[value]
+                    paramValue: this.request.body.request[entityType][value]
                 }
                 this.addToPlaceholders('templateParams', params)
                 this.getActions(value, (err, data) => {
