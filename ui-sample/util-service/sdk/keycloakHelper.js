@@ -2,22 +2,24 @@
 var keyCloakAuthUtils = require('keycloak-auth-utils');
 let request = require('request')
 const httpUtil = require('./httpUtils.js');
-const realmName = process.env.keycloak_realmName || "PartnerRegistry"
-const keyCloakHost = process.env.keycloak_url || "http://localhost:8443" + "/auth/admin/realms/" + realmName;
+const vars = require('./vars').getAllVars(process.env.NODE_ENV)
+const realmName = vars['keycloak']['realmName']
+const keyCloakHost = vars['keycloak']['url'] + "/auth/admin/realms/" + realmName;
 
 let keyCloak_config = {
-    "realm": realmName,
-    "auth-server-url": process.env.keycloak_url || "http://localhost:8443" + "/auth",
+    "realm": vars['keycloak']['realmName'],
+    "auth-server-url": vars['keycloak']['url'] + "/auth",
     "credentials": {
-        "secret": "9ebc2fc1-ced9-4774-a661-7e2c59991cfe"
+        "secret": vars['keycloak']['clientSecret']
     },
     "resource": "utils",
     "bearerOnly": true,
-    "clientId": "utils"
+    "clientId": vars['keycloak']['client']
 };
 
 
 const getToken = async (callback) => {
+    // FIXME - use grant_type=client_credentials instead of password
     let adminId = process.env.systemAdminId || "sysadmin@ekstep.org";
     let adminPassword = process.env.systemAdminPassword || "password1";
     this.config = keyCloak_config;
@@ -32,7 +34,6 @@ const getToken = async (callback) => {
 }
 
 const getUserByRole = function (role, token, callback) {
-
     var headers = {
         'content-type': 'application/json',
         'authorization': 'Bearer ' + token
@@ -40,7 +41,7 @@ const getUserByRole = function (role, token, callback) {
     try {
         const options = {
             method: 'GET',
-            url: keyCloakHost + '/roles/' + role + '/users',
+            url: vars[keyCloakHost] + '/roles/' + role + '/users',
             json: true,
             headers: headers
         }

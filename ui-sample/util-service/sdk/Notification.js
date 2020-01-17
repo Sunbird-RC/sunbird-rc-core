@@ -1,5 +1,6 @@
 const httpUtil = require('./httpUtils.js');
-const notificationHost = process.env.notificationUrl || "http://localhost:9012/v1/notification/send/sync"
+const vars = require('./vars').getAllVars(process.env.NODE_ENV)
+const notificationEndPoint = vars['notificationUrl'] + "/v1/notification/send/sync"
 const _ = require('lodash')
 const logger = require('./log4j.js');
 
@@ -50,7 +51,7 @@ class Notification {
         }
         const option = {
             method: 'POST',
-            url: notificationHost,
+            url: notificationEndPoint,
             headers: {
                 'content-type': 'application/json',
                 'accept': 'application/json'

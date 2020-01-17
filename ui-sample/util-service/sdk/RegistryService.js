@@ -1,4 +1,5 @@
-const registryHost = process.env.registry_url || "http://localhost:9080";
+const vars = require('./vars').getAllVars(process.env.NODE_ENV)
+const registryUrl = vars['registryUrl']
 const httpUtil = require('./httpUtils.js')
 
 class RegistryService {
@@ -8,7 +9,7 @@ class RegistryService {
 
     addRecord(value, callback) {
         const options = {
-            url: registryHost + "/add",
+            url: registryUrl + "/add",
             headers: this.getDefaultHeaders(value.headers),
             body: value.body
         }
@@ -24,7 +25,7 @@ class RegistryService {
 
     updateRecord(value, callback) {
         const options = {
-            url: registryHost + "/update",
+            url: registryUrl + "/update",
             headers: this.getDefaultHeaders(value.headers),
             body: value.body
         }
@@ -40,7 +41,7 @@ class RegistryService {
 
     readRecord(value, callback) {
         const options = {
-            url: registryHost + "/read",
+            url: registryUrl + "/read",
             headers: this.getDefaultHeaders(value.headers),
             body: value.body
         }
@@ -55,7 +56,7 @@ class RegistryService {
 
     searchRecord(value, callback) {
         const options = {
-            url: registryHost + "/search",
+            url: registryUrl + "/search",
             headers: this.getDefaultHeaders(value.headers),
             body: value.body
         }
