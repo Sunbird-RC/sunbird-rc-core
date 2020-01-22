@@ -24,6 +24,18 @@ public class Constants {
 	public static final String ARRAY_ITEM = "_item";
 	public static final String INTERNAL_TYPE_KEYWORD = "_intType";
 	public static final String ROOT_KEYWORD = "_osroot";
+	
+	//Audit Data Store Type
+	public static final String FILE="FILE";
+	public static final String DATABASE="DATABASE";
+	
+	//Audit Fields Constant
+	public static final String ACTION="action";
+	public static final String ID="id";
+	public static final String START_DATE="startDate";
+	public static final String END_DATE="endDate";
+	public static final String LIMIT="limit";
+	public static final String OFFSET="offset";
 
 	// JSON LD specific
 	public static final String CONTEXT_KEYWORD = "@context";
@@ -66,6 +78,7 @@ public class Constants {
 	public static final String REGISTRY_SEARCH_ENDPOINT = "/search";
 	public static final String SIGNATURE_SIGN_ENDPOINT = "/utils/sign";
 	public static final String SIGNATURE_VERIFY_ENDPOINT = "/utils/verify";
+	public static final String REGISTRY_AUDT_READ_ENDPOINT="/audit";
 	
 	//class path for json resources from _schemas folder
 	public static final String RESOURCE_LOCATION = "classpath*:public/_schemas/*.json";

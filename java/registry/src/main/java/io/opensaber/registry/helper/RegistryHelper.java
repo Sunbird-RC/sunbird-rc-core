@@ -1,8 +1,16 @@
 package io.opensaber.registry.helper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.DecryptionHelper;
 import io.opensaber.registry.service.IReadService;
@@ -10,18 +18,13 @@ import io.opensaber.registry.service.ISearchService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
+import io.opensaber.registry.util.AuditHelper;
 import io.opensaber.registry.util.ReadConfigurator;
 import io.opensaber.registry.util.ReadConfiguratorFactory;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.ViewTemplateManager;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 
 /**
@@ -58,6 +61,12 @@ public class RegistryHelper {
 
     @Autowired
     private ObjectMapper objectMapper;
+    
+    @Autowired
+    private AuditHelper auditHelper;
+    
+    @Value("${database.uuidPropertyName}")
+    public String uuidPropertyName;
 
     /**
      * calls validation and then persists the record to registry.
@@ -169,6 +178,31 @@ public class RegistryHelper {
         logger.debug("updateEntity ends");
         return "SUCCESS";
     }
+
+    /**
+	 * Get Audit log information , external api's can use this method to get the
+	 * audit log of an antity
+	 * 
+	 * @param inputJson
+	 * @return
+	 * @throws Exception
+	 */
+
+	public JsonNode getAuditLog(JsonNode inputJson) throws Exception {
+		logger.debug("get audit log starts");
+		JsonNode auditNode = auditHelper.getSearchQueryNodeForAudit(inputJson, uuidPropertyName);
+		JsonNode resultNode = searchService.search(auditNode);
+		ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
+		if (viewTemplate != null) {
+			ViewTransformer vTransformer = new ViewTransformer();
+			resultNode = vTransformer.transform(viewTemplate, resultNode);
+		}
+		logger.debug("get audit log ends");
+		return resultNode;
+
+	}
+
+	
 
 }
 

@@ -149,10 +149,11 @@ signature:
     config:
       name: SignatureShape
 
-#audit:
-  #enabled: ${audit_enabled:false}
-  #frame:
-    #file: ${audit_frame_file:audit_frame.json}
+audit:
+  enabled: ${audit_enabled:true}
+  frame:
+    file: ${audit_frame_file:raw_audit_schema.json}
+    store: ${audit_frame_store:DATABASE}
 
 authentication:
   enabled: ${authentication_enabled:true}

@@ -319,7 +319,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		requestIdMap.put(Constants.REGISTRY_UPDATE_ENDPOINT, Response.API_ID.UPDATE.getId());
 		requestIdMap.put(Constants.SIGNATURE_SIGN_ENDPOINT, Response.API_ID.SIGN.getId());
 		requestIdMap.put(Constants.SIGNATURE_VERIFY_ENDPOINT, Response.API_ID.VERIFY.getId());
-
+		requestIdMap.put(Constants.REGISTRY_AUDT_READ_ENDPOINT, Response.API_ID.AUDIT.getId());
 		return requestIdMap;
 	}
 
