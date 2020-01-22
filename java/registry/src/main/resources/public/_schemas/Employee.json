@@ -9,7 +9,7 @@
   "required": [
     "Employee"
   ],
-  "title":"Employee",
+  "title": "Employee",
   "definitions": {
     "Employee": {
       "$id": "#/properties/Employee",
@@ -26,9 +26,34 @@
           "$id": "#/properties/orgName",
           "type": "string",
           "enum": [
-            "ILIMI", "Tarento", "TEKDI", "OPTIT", "Qualitrix", "Framewirk",
-            "Consultant", "GWL", "TurtleBowl", "MantraLabs", "Zool", "Tibil",
-            "Lollypop", "E&Y", "BeyondSquare"
+            "ILIMI",
+            "Tarento",
+            "TEKDI",
+            "OPTIT",
+            "Qualitrix",
+            "Framewirk",
+            "Consultant",
+            "GWL",
+            "TurtleBowl",
+            "MantraLabs",
+            "Zool",
+            "Tibil",
+            "Lollypop",
+            "E&Y",
+            "BeyondSquare",
+            "Compassites",
+            "Juspay",
+            "Latitude Fintech",
+            "Monsoonfish",
+            "Nurture",
+            "Riflexion",
+            "Sahaj",
+            "SQS",
+            "PosteroTech",
+            "EkStep",
+            "Funtoot",
+            "Kuliza",
+            "Unknown"
           ],
           "title": "Organisation name"
         },
@@ -52,13 +77,38 @@
           "type": "string",
           "$comment": "MAC Address"
         },
+        "location": {
+          "$id": "#/properties/location",
+          "type": "string",
+          "$comment": "Employee Location"
+        },
         "role": {
           "$id": "#/properties/username",
           "type": "string",
           "enum": [
-            "BA", "Developer", "Tech Lead", "Project Management",
-            "Design Council", "Designer", "Tech Manager", "DevOps",
-            "Tech Support"
+            "Architect",
+            "BA",
+            "Developer",
+            "Tech Lead",
+            "Project Management",
+            "Design Council",
+            "Designer",
+            "Tech Manager",
+            "DevOps",
+            "Tech Support",
+            "Tech Writer",
+            "Test Engineer",
+            "Lead Analyst",
+            "Product Management",
+            "Intern",
+            "QA Lead",
+            "Principal Engineer",
+            "Analyst",
+            "Account Manager",
+            "Tester",
+            "Documentation",
+            "Adoption",
+            "Unknown"
           ],
           "title": "EkStep role"
         },
@@ -75,65 +125,134 @@
         "isActive": {
           "$id": "#/properties/isActive",
           "type": "boolean",
-          "title": "isActive"
-        },
-        "isOnboarded": {
-          "$id": "#/properties/isOnboarded",
-          "type": "boolean",
-          "title": "isOnboarded",
-          "default": false
+          "title": "isApproved"
         },
         "isInKronos": {
           "$id": "#/properties/isInKronos",
           "type": "boolean",
           "title": "isInKronos"
         },
-        "nineAMreportTo":{
+        "nineAMreportTo": {
           "$id": "#/properties/nineAMreportTo",
           "type": "string",
           "title": "nineAMreportTo"
         },
-        "subProjectName":{
+        "subProjectName": {
           "$id": "#/properties/subProjectName",
           "type": "string",
           "enum": [
-            "User Platform", "Mobile", "Implementation",
-            "Project Management", "Design Council", "DIKSHA UX",
-            "Content Framework", "Portal", "Infra & DevOps",
-            "DIKSHA Liasion", "Learning Platform", "DIKSHA Tech Support",
-            "Courses Platform", "DIKSHA Analytics"
+            "Sunbird Platform",
+            "Knowledge Platform",
+            "TPM & RM",
+            "NLP",
+            "Societal Platform",
+            "NOC Team",
+            "User Platform",
+            "Mobile",
+            "Implementation",
+            "Project Management",
+            "Design Council",
+            "DIKSHA UX",
+            "Content Framework",
+            "Portal",
+            "Infra & DevOps",
+            "DIKSHA Liasion",
+            "Learning Platform",
+            "DIKSHA Tech Support",
+            "Courses Platform",
+            "DIKSHA Analytics",
+            "Adhoc Analytics",
+            "Automation QA",
+            "Analytics",
+            "Data Science",
+            "DS-Solutioning",
+            "Documentation",
+            "DS-Liasion",
+            "DS-Product",
+            "Testing",
+            "Support",
+            "UX",
+            "Ektep Platform",
+            "Offline Consumption",
+            "Open SABER",
+            "SB2",
+            "Genie",
+            "UI",
+            "Ekstep Portal",
+            "Plugin",
+            "Unknown",
+            "AILP",
+            "SDK",
+            "DIKSHA",
+            "Sunbird Adoption",
+            "EkStep Portal",
+            "DIKSHA Documentation",
+            "Communities",
+            "NA"
           ],
           "title": "Sub-project name"
         },
-        "projectName":{
+        "projectName": {
           "$id": "#/properties/projectName",
           "type": "string",
           "enum": [
-            "DIKSHA", "Learning platform",
-            "Sunbird + DIKSHA"
+            "DIKSHA",
+            "Learning platform",
+            "Sunbird+DIKSHA",
+            "Ekstep Platform",
+            "Sunbird",
+            "SB+DS",
+            "ES+DS",
+            "ES+SB",
+            "NLP",
+            "SB2",
+            "Plugins",
+            "Non DIKSHA",
+            "Societal Platform",
+            "PISA Dashboard",
+            "Testing",
+            "Open SABER",
+            "UX",
+            "AILP",
+            "Learning Platform",
+            "Infra & DevOps",
+            "EkStep",
+            "Adoption",
+            "Unknown"
           ],
           "title": "Project name"
         },
-        "proposedBilling":{
+        "proposedBilling": {
           "$id": "#/properties/proposedBilling",
           "type": "string",
           "enum": [
+            "PISA",
             "Analytics",
-            "DIKSHA Services",
             "Engineering",
-            "Solution",
+            "Solutions",
             "Support",
-            "UX"
+            "UX",
+            "Diksha Services",
+            "Documentation",
+            "SB2",
+            "Non Diksha",
+            "NOC Team",
+            "NA",
+            "Adoption",
+            "DIKSHA Services",
+            "EkStep Community Portal",
+            "Sunbird",
+            "Unknown"
           ],
           "title": "Proposed billing"
         },
-        "billLocation":{
+        "billLocation": {
           "$id": "#/properties/billLocation",
           "type": "string",
           "default": "Bangalore",
           "title": "Billing location"
         },
-        "startDate":{
+        "startDate": {
           "type": "string",
           "format": "date",
           "$comment": "YYYY-MM-DD format",
@@ -141,7 +260,7 @@
             "1990-12-01"
           ]
         },
-        "endDate":{
+        "endDate": {
           "type": "string",
           "format": "date",
           "$comment": "YYYY-MM-DD format",
@@ -149,45 +268,63 @@
             "1990-12-01"
           ]
         },
-        "githubId":{
+        "githubId": {
           "$id": "#/properties/githubId",
           "type": "string",
           "title": "Github identifier"
         },
-        "repoAccess":{
+        "repoAccess": {
           "$id": "#/properties/repoAccess",
           "type": "string",
           "enum": [
-            "ES", "SB", "Both", "Not-Eligible"
+            "ES",
+            "SB",
+            "Both",
+            "No Account",
+            "Deactivated",
+            "Unknown"
           ],
           "title": "Code repo access"
         },
-        "slackAccess":{
+        "slackAccess": {
           "$id": "#/properties/slackAccess",
           "type": "string",
           "enum": [
-            "ES", "SB", "Both", "Not-Eligible"
+            "ES",
+            "SB",
+            "Both",
+            "No Account",
+            "Deactivated",
+            "Unknown"
           ],
           "title": "Slack access"
         },
-        "workLocation":{
+        "workLocation": {
           "$id": "#/properties/workLocation",
           "type": "string",
           "enum": [
-            "EkStep", "Ilimi", "Tarento"
+            "EkStep",
+            "Ilimi",
+            "Tarento",
+            "OPTIT",
+            "Pune",
+            "Remotely",
+            "Unknown"
           ],
           "title": "Place of work"
         },
-        "remarks":{
+        "remarks": {
           "$id": "#/properties/remarks",
           "type": "string",
           "title": "Remarks"
         },
-        "workingStyle":{
+        "workingStyle": {
           "$id": "#/properties/workLocation",
           "type": "string",
           "enum": [
-            "part-time", "full-time"
+            "Part Time",
+            "Full Time",
+            "Unknown"
           ],
           "title": "Working style"
         }
@@ -195,17 +332,18 @@
     }
   },
   "_osConfig": {
-    "osComment": ["This section contains the OpenSABER specific configuration information",
+    "osComment": [
+      "This section contains the OpenSABER specific configuration information",
       "privateFields: Optional; list of field names to be encrypted and stored in database",
       "signedFields: Optional; list of field names that must be pre-signed",
       "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, teacherCode) is a composite index and teacherName is a single column index.",
       "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
-      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"],
-
+      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"
+    ],
     "privateFields": [],
     "signedFields": [],
     "indexFields": [],
-    "uniqueIndexFields": [],
+    "uniqueIndexFields": ["(name, orgName, startDate)"],
     "systemFields": [
       "osCreatedAt",
       "osUpdatedAt",
