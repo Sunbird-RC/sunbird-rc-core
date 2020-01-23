@@ -8,15 +8,11 @@ const server = http.createServer(app);
 const _ = require('lodash')
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
-var async = require('async');
 const templateConfig = require('./templates/template.config.json');
 const RegistryService = require('./sdk/registryService')
-const keycloakHelper = require('./sdk/keycloakHelper');
 const logger = require('./sdk/log4j');
 const port = process.env.PORT || 9081;
 let wfEngine = undefined
-var CacheManager = require('./sdk/CacheManager.js');
-var cacheManager = new CacheManager();
 const registryService = new RegistryService();
 
 app.use(cors())
@@ -39,94 +35,6 @@ app.use((req, res, next) => {
     logger.info("post api request interceptor");
     workFlowFunctionPost(req);
 });
-
-app.post("/register/users", (req, res, next) => {
-    createUser(req, function (err, data) {
-        if (err) {
-            res.statusCode = err.statusCode;
-            return res.send(err.body)
-        } else {
-            return res.send(data);
-        }
-    });
-});
-
-const createUser = (req, callback) => {
-    async.waterfall([
-        function (callback) {
-            //if auth token is not given , this function is used get access token
-            getTokenDetails(req, callback);
-        },
-        function (token, callback) {
-            req.headers['authorization'] = token;
-            keycloakHelper.registerUserToKeycloak(req, callback)
-        },
-        function (req, res, callback2) {
-            addRecordToRegistry(req, res, callback2)
-        }
-    ], function (err, result) {
-        logger.info('Main Callback --> ' + result);
-        if (err) {
-            callback(err, null)
-        } else {
-            callback(null, result);
-        }
-    });
-}
-
-const getTokenDetails = (req, callback) => {
-    if (!req.headers.authorization) {
-        cacheManager.get('usertoken', function (err, tokenData) {
-            if (err || !tokenData) {
-                keycloakHelper.getToken(function (err, token) {
-                    if (token) {
-                        cacheManager.set({ key: 'usertoken', value: { authToken: token } }, function (err, res) { });
-                        callback(null, 'Bearer ' + token.access_token.token);
-                    } else {
-                        callback(err);
-                    }
-                });
-            } else {
-                callback(null, 'Bearer ' + tokenData.authToken.access_token.token);
-            }
-        });
-    } else {
-        callback(null, req.headers.authorization);
-    }
-}
-
-//ToDo this must move to workflow functions 
-const addRecordToRegistry = (req, res, callback) => {
-    if (res.statusCode == 201) {
-        let reqParam = req.body.request;
-        reqParam['isOnboarded'] = false;
-        let reqBody = {
-            "id": "open-saber.registry.create",
-            "ver": "1.0",
-            "ets": "11234",
-            "params": {
-                "did": "",
-                "key": "",
-                "msgid": ""
-            },
-            "request": {
-                "Employee": reqParam
-            }
-        }
-        req.body = reqBody;
-        registryService.addRecord(req, function (err, res) {
-            if (res.statusCode == 200) {
-                logger.info("record successfully added to registry")
-                callback(null, res.body)
-            } else {
-                logger.debug("record could not be added to registry" + res.statusCode)
-                callback(res.statusCode, res.errorMessage)
-            }
-        })
-    } else {
-        callback(res, null)
-    }
-}
 
 app.post("/registry/add", (req, res, next) => {
     registryService.addRecord(req, function (err, data) {
@@ -253,3 +161,6 @@ module.exports.startServer = (engine) => {
         logger.info("util service listening on port " + port);
     })
 };
+
+// Expose the app object for adopters to add new endpoints.
+module.exports.theApp = app
