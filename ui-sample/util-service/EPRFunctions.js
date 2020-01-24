@@ -62,7 +62,7 @@ class EPRFunctions extends Functions {
 
     notifyUsersBasedOnAttributes(callback) {
         let params = _.keys(this.request.body.request[entityType]);
-        async.forEachSeries(this.attributes, (value, callback) => {
+        async.forEachSeries(this.attributes, (value) => {
             if (_.includes(params, value)) {
                 let params = {
                     paramName: value,
@@ -123,7 +123,6 @@ class EPRFunctions extends Functions {
 
     getNERToken(readResponse, callback) {
         nerKeycloakHelper.getToken((err, token) => {
-            console.log("getNERToken", token)
             if (token) callback(null, readResponse, token.access_token.token);
             else callback(err)
         });
@@ -149,14 +148,14 @@ class EPRFunctions extends Functions {
             if (res.body.params.status === appConfig.STATUS.SUCCESSFULL && res.body.result[entityType].length > 0) {
                 callback(null, res.body, headers);
             } else if (res.body.result[entityType].length <= 0) {
-                callback(new Error("error: record is not present in the client regitry"));
+                callback("error: record is not present in the client regitry");
             }
         });
     }
 
     notifyNER(searchRes, headers, callback) {
-        let req = _.cloneDeep(this.request);
-        req.body.request[entityType].osid = searchRes.result[entityType][0].osid;
+        let updateReq = _.cloneDeep(this.request);
+        updateReq.body.request[entityType].osid = searchRes.result[entityType][0].osid;
         let option = {
             body: updateReq.body,
             headers: headers,
@@ -175,13 +174,13 @@ class EPRFunctions extends Functions {
      * @param {*} req 
      */
     updateRecordOfClientRegistry() {
-        if (this.response.data.params.status === appConfig.STATUS.SUCCESSFULL) {
+        if (JSON.parse(this.response).params.status === appConfig.STATUS.SUCCESSFULL) {
             logger.debug("updating record in client registry started", this.request.body)
             async.waterfall([
-                this.isIlimiUser,
-                this.getNERToken,
-                this.getNERid,
-                this.notifyNER
+                this.isIlimiUser.bind(this),
+                this.getNERToken.bind(this),
+                this.getNERid.bind(this),
+                this.notifyNER.bind(this)
             ], (err, result) => {
                 if (result)
                     logger.debug("Updating record in client registry is completed", result);

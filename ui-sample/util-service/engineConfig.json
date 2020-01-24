@@ -17,7 +17,8 @@
         "method": "post",
         "preActions": [],
         "postActions": [
-            "notifyUsersBasedOnAttributes"
+            "notifyUsersBasedOnAttributes",
+            "updateRecordOfClientRegistry"
         ]
     }]
 }
