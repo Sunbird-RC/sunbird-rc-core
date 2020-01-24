@@ -5,13 +5,15 @@ const WFEngineFactory = require('./workflow/EngineFactory');
 const baseFunctions = require('./workflow/Functions')
 const engineConfig = require('./engineConfig.json')
 const EPRUtilFunctions = require('./EPRFunctions')
-const keycloakHelper = require('./sdk/keycloakHelper');
+const KeycloakHelper = require('./sdk/KeycloakHelper');
 const RegistryService = require('./sdk/registryService')
 const CacheManager = require('./sdk/CacheManager.js');
 const logger = require('./sdk/log4j');
+const vars = require('./sdk/vars').getAllVars(process.env.NODE_ENV);
 
 var cacheManager = new CacheManager();
 var registryService = new RegistryService();
+const keycloakHelper = new KeycloakHelper(vars.keycloak);
 
 const classesMapping = {
     'EPRFunction': EPRUtilFunctions,

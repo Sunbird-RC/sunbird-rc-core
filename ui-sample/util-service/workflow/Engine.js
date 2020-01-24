@@ -74,11 +74,12 @@ class Engine {
         logger.debug("End calling preInvoke functions for " + request.method + " " + request.url)
     }
 
-    postInvoke(request) {
+    postInvoke(request, response) {
         logger.debug("Calling postInvoke functions for " + request.method + " " + request.url)
         let config = this._getConfig(request.method, request.url);
         if (config) {
             this.functionImplObj.setRequest(request);
+            this.functionImplObj.setResponse(response);
 
             var tempThis = this
             async.forEachSeries(config.postActions, function (value, callback) {

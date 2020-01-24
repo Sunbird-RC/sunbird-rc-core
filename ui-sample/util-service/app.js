@@ -8,8 +8,10 @@ const server = http.createServer(app);
 const _ = require('lodash')
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
+var async = require('async');
 const templateConfig = require('./templates/template.config.json');
 const RegistryService = require('./sdk/registryService')
+const KeycloakHelper = require('./sdk/KeycloakHelper');
 const logger = require('./sdk/log4j');
 const port = process.env.PORT || 9081;
 let wfEngine = undefined
@@ -24,16 +26,15 @@ const workFlowFunctionPre = (req) => {
     wfEngine.preInvoke(req);
 }
 
-const workFlowFunctionPost = (req) => {
-    wfEngine.postInvoke(req);
+const workFlowFunctionPost = (req, res) => {
+    wfEngine.postInvoke(req, res);
 }
 
 app.use((req, res, next) => {
     logger.info('pre api request interceptor');
     workFlowFunctionPre(req);
     next();
-    logger.info("post api request interceptor");
-    workFlowFunctionPost(req);
+    workFlowFunctionPost(req, res);
 });
 
 app.post("/registry/add", (req, res, next) => {
@@ -76,6 +77,16 @@ app.post("/registry/update", (req, res, next) => {
             return res.send(err);
         }
     })
+});
+
+app.post("/notifications", (req, res, next) => {
+    registryService.updateRecord(req, function (err, data) {
+        if (data) {
+            return res.send(data);
+        } else {
+            return res.send(err);
+        }
+    });
 });
 
 app.get("/formTemplates", (req, res, next) => {
