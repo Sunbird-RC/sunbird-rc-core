@@ -47,7 +47,6 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit() {
     this.editProfile = appConfig.rolesMapping.editProfileRole;
-    _.pull(this.editProfile, 'owner')
     this.activatedRoute.params.subscribe((params) => {
       this.userId = params.userId;
       this.viewOwnerProfile = params.role

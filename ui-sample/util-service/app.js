@@ -10,10 +10,10 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 var interceptor = require('express-interceptor');
 const templateConfig = require('./templates/template.config.json');
-const RegistryService = require('./sdk/registryService')
-const KeycloakHelper = require('./sdk/KeycloakHelper');
-const logger = require('./sdk/log4j');
-const port = process.env.PORT || 9081;
+const RegistryService = require('./sdk/RegistryService.js')
+const logger = require('./sdk/log4j.js');
+const vars = require('./sdk/vars.js').getAllVars(process.env.NODE_ENV);
+const port = vars.utilServicePort;
 let wfEngine = undefined
 const registryService = new RegistryService();
 
@@ -22,8 +22,8 @@ app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const workFlowFunctionPre = (req) => {
-    wfEngine.preInvoke(req);
+const workFlowFunctionPre =  (req) => {
+     wfEngine.preInvoke(req);
 }
 
 const workFlowFunctionPost = (req, res) => {

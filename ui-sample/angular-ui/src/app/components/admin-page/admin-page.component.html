@@ -77,10 +77,10 @@
           </table>
         </div>
         <div class="twelve wide column right aligned" *ngIf="!queryParams.appliedFilters && !key">
-          <div class="ui right floated pagination menu">
-            <a class="item bl-1" [ngClass]="{'disabled': paginationDetails.previousBtn }"
+          <div class="ui right floated ui buttons">
+            <a class="ui basic primary button" [ngClass]="{'disabled': paginationDetails.previousBtn }"
               (click)="previous()">Previous</a>
-            <a class="item bl-1" [ngClass]="{'disabled': paginationDetails.nextBtn}"
+            <a class="ui basic primary button" [ngClass]="{'disabled': paginationDetails.nextBtn}"
               (click)="next(paginationDetails.offset)">Next</a>
           </div>
         </div>

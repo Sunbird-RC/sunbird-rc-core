@@ -1,6 +1,6 @@
 {
     "cacheServiceConfig": {
-        "setTimeInMinutes": 20,
+        "setTimeInMinutes": 30,
         "setTimeInSeconds": 60,
         "cacheVariables": {
             "UserKeyCloakData": "userKeyCloakData",
@@ -30,7 +30,9 @@
         ],
         "editProfileRole": [
             "admin",
-            "partner-admin",
+            "partner-admin"
+        ],
+        "editOwnProfileRole": [
             "owner"
         ],
         "approveEmployee": [

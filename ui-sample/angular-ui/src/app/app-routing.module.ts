@@ -55,7 +55,7 @@ var routes = [
   {
     path: 'edit/:userId/:role', component: UpdateComponent,
     canActivate: [AppAuthGuard],
-    data: { roles: 'editProfileRole' }
+    data: { roles: 'editOwnProfileRole' }
   }
 ];
 

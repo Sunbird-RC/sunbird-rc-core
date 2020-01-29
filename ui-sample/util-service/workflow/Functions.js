@@ -2,15 +2,15 @@ const _ = require('lodash')
 const async = require('async');
 
 const KeycloakHelper = require('../sdk/KeycloakHelper.js');
-const Notification = require('../sdk/notification.js')
-const RegistryService = require('../sdk/registryService.js');
+const Notification = require('../sdk/Notification.js')
+const RegistryService = require('../sdk/RegistryService');
 const logger = require('../sdk/log4j.js')
 var CacheManager = require('../sdk/CacheManager.js');
 var vars = require('../sdk/vars').getAllVars(process.env.NODE_ENV);
 var appConfig = require('../sdk/appConfig');
 var cacheManager = new CacheManager();
 const registryService = new RegistryService();
-const keycloakHelper = new KeycloakHelper(vars.keycloak_ner);
+const keycloakHelper = new KeycloakHelper(vars.keycloak);
 
 class Functions {
     constructor() {

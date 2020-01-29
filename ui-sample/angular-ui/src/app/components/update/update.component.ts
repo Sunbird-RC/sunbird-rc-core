@@ -113,7 +113,7 @@ export class UpdateComponent implements OnInit {
   validate() {
     const userData = JSON.parse(this.userInfo);
     //get only updated fields
-    const diffObj = Object.keys(userData).filter(i => userData[i] !== this.formData.formInputData[i]);
+    const diffObj = Object.keys(this.formData.formInputData).filter(i => this.formData.formInputData[i] !== userData[i]);
     const updatedFields = {}
     let emptyFields = [];
     if (diffObj.length > 0) {

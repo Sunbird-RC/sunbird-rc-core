@@ -92,7 +92,6 @@ class KeycloakHelper {
             }
         }
         httpUtil.post(options, function (err, res) {
-            console.log("success", res)
             callback(null, req, res)
         });
     }
