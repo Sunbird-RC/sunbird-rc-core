@@ -60,6 +60,40 @@ class EPRFunctions extends Functions {
         callback();
     }
 
+    sendNotificationForRequestToOnBoard(callback) {
+        this.addToPlaceholders('subject', "Request to Onboard " + this.request.body.request[entityType].name)
+        this.addToPlaceholders('templateId', "requestOnboardTemplate");
+        let tempParams = this.request.body.request[entityType];
+        tempParams['employeeName'] = this.request.body.request[entityType].name
+        tempParams['empRecord'] = "http://localhost:9082/profile/" + JSON.parse(this.response).result[entityType].osid
+        this.addToPlaceholders('templateParams', tempParams);
+        let actions = ['getAdminUsers', 'sendNotifications'];
+        this.invoke(actions, (err, data) => {
+            callback(null, data)
+        });
+    }
+
+    sendOnboardSuccesNotification(callback) {
+        this.addToPlaceholders('subject', "New Employee Onboarded")
+        this.addToPlaceholders('templateId', "newPartnerEmployeeTemplate");
+        let actions = ['getRegistryUsersInfo', 'getAdminUsers', 'sendNotifications', 'getReporterUsers', 'sendNotifications'];
+        this.invoke(actions, (err, data) => {
+            callback(null, data)
+        });
+    }
+
+    getRegistryUsersInfo(callback) {
+        let tempParams = {}
+        this.getUserByid((err, data) => {
+            if (data) {
+                tempParams = data.result[entityType];
+                tempParams['employeeName'] = data.result[entityType].name
+                this.addToPlaceholders('templateParams', tempParams)
+                callback()
+            }
+        })
+    }
+
     notifyUsersBasedOnAttributes(callback) {
         let params = _.keys(this.request.body.request[entityType]);
         async.forEachSeries(this.attributes, (value) => {
@@ -99,7 +133,7 @@ class EPRFunctions extends Functions {
                 break;
             case 'isOnboarded':
                 actions = ['getRegistryUsersMailId', 'sendNotifications'];
-                this.addToPlaceholders('templateId', "onboardSuccesstemplate");
+                this.addToPlaceholders('templateId', "onboardSuccessTemplate");
                 this.invoke(actions, (err, data) => {
                     callback(null, data)
                 });

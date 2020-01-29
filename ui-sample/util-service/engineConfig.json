@@ -3,13 +3,8 @@
     "rules": [{
         "url": "/register/users",
         "method": "post",
-        "preActions": [
-            "getAdminUsers",
-            "sendNotifications"
-        ],
         "postActions": [
-            "getPartnerAdminUsers",
-            "sendNotifications"
+            "sendNotificationForRequestToOnBoard"
         ]
     },
     {
@@ -18,6 +13,7 @@
         "preActions": [],
         "postActions": [
             "notifyUsersBasedOnAttributes",
+            "sendOnboardSuccesNotification",
             "updateRecordOfClientRegistry"
         ]
     }]
