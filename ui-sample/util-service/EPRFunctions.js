@@ -97,11 +97,12 @@ class EPRFunctions extends Functions {
 
     notifyUsersBasedOnAttributes(callback) {
         let params = _.keys(this.request.body.request[entityType]);
+        let count = 0
         async.forEachSeries(this.attributes, (value, callback2) => {
             if (_.includes(params, value)) {
                 let params = {
                     paramName: value,
-                    paramValue: this.request.body.request[entityType][value]
+                    [value]: this.request.body.request[entityType][value]
                 }
                 this.addToPlaceholders('templateParams', params)
                 this.getActions(value, (err, data) => {
@@ -129,8 +130,8 @@ class EPRFunctions extends Functions {
                 });
                 break;
             case 'macAddress':
-                actions = ['getReporterUsers', 'sendNotifications'];
-                this.addToPlaceholders('subject', "MacAdress updated");
+                actions = ['getRegistryUsersInfo','getReporterUsers', 'sendNotifications'];
+                this.addToPlaceholders('subject', "MacAdress updation");
                 this.addToPlaceholders('templateId', "macAddressUpdateTemplate");
                 this.invoke(actions, (err, data) => {
                     callback(null, data)
