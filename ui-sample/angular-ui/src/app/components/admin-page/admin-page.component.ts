@@ -29,8 +29,8 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     intialOffset: 0,
     previousBtn: true,
     nextBtn: false,
-    limit: 10,
-    offset: 10
+    limit: 24,
+    offset: 24
   };
   pageLimit: any
   public dataDrivenFilterEvent = new EventEmitter();

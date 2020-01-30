@@ -88,6 +88,7 @@ class EPRFunctions extends Functions {
             if (data) {
                 tempParams = data.result[entityType];
                 tempParams['employeeName'] = data.result[entityType].name
+                tempParams['eprURL'] = "http://localhost:9082"
                 this.addToPlaceholders('templateParams', tempParams)
                 callback()
             }
@@ -96,7 +97,7 @@ class EPRFunctions extends Functions {
 
     notifyUsersBasedOnAttributes(callback) {
         let params = _.keys(this.request.body.request[entityType]);
-        async.forEachSeries(this.attributes, (value) => {
+        async.forEachSeries(this.attributes, (value, callback2) => {
             if (_.includes(params, value)) {
                 let params = {
                     paramName: value,
@@ -105,11 +106,14 @@ class EPRFunctions extends Functions {
                 this.addToPlaceholders('templateParams', params)
                 this.getActions(value, (err, data) => {
                     if (data) {
-                        callback();
+                        callback2();
                     }
                 });
             } else {
-                callback();
+                callback2();
+            }
+            if (count === this.attributes.length) {
+                callback(null, "success")
             }
         });
     }
@@ -126,14 +130,16 @@ class EPRFunctions extends Functions {
                 break;
             case 'macAddress':
                 actions = ['getReporterUsers', 'sendNotifications'];
-                this.addToPlaceholders('templateId', "updateParamTemplate");
+                this.addToPlaceholders('subject', "MacAdress updated");
+                this.addToPlaceholders('templateId', "macAddressUpdateTemplate");
                 this.invoke(actions, (err, data) => {
                     callback(null, data)
                 });
                 break;
             case 'isOnboarded':
-                actions = ['getRegistryUsersMailId', 'sendNotifications'];
+                actions = ['getRegistryUsersMailId', 'getRegistryUsersInfo', 'sendNotifications'];
                 this.addToPlaceholders('templateId', "onboardSuccessTemplate");
+                this.addToPlaceholders('subject', "Successfully Onboarded to EkStep");
                 this.invoke(actions, (err, data) => {
                     callback(null, data)
                 });

@@ -84,6 +84,7 @@ export class CreateComponent implements OnInit {
     this.dataService.post(requestData).subscribe(response => {
       if (response.params.status === "SUCCESSFUL") {
         this.toasterService.success(this.resourceService.frmelmnts.msg.createUserSuccess);
+        this.router.navigate(['/search'])
       }
     }, err => {
       this.errMessage = err.error.errorMessage;
