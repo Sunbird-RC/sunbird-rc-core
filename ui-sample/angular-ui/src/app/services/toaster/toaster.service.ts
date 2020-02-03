@@ -9,7 +9,8 @@ export class ToasterService {
   constructor(public iziToast: Ng2IzitoastService) { 
     this.iziToast.settings({
       position: 'topCenter',
-      titleSize: '18'
+      titleSize: '18',
+      timeout: 4000
     });
   }
 

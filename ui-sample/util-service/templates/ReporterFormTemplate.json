@@ -1,9 +1,15 @@
 {
-    "type": "FinAdminFormTemplate",
+    "type": "ReporterFormTemplate",
     "action": "search",
     "data": {
         "templateName": "defaultTemplate",
         "action": "create",
+        "categories":{
+            "Personal information":["name", "orgName","externalId", "externalRole","email", "phone"],
+            "General":["slackAccess", "repoAccess", "startDate", "endDate", "workLocation", "workingStyle", "macAddress"],
+            "Admin information":["role", "isActive","projectName","subProjectName", "nineAMreportTo", "remarks"],
+            "Billing":["proposedBilling"]
+        },
         "fields": [
             {
                 "code": "name",
@@ -110,6 +116,23 @@
                 "editable": false,
                 "placeholder": "isApproved",
                 "inputType": "boolean",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 5
+            },
+            {
+                "code": "workLocation",
+                "dataType": "text",
+                "name": "Employee work location",
+                "label": "WorkLocation",
+                "description": "",
+                "editable": false,
+                "placeholder": "workLocation",
+                "inputType": "text",
                 "required": false,
                 "displayProperty": "Editable",
                 "visible": true,
@@ -330,24 +353,6 @@
                 },
                 "index": 12
             },
-            {
-                "code": "workLocation",
-                "dataType": "text",
-                "name": "workLocation",
-                "label": "Work Location",
-                "description": "Work Location",
-                "editable": false,
-                "placeholder": "Work Location",
-                "inputType": "text",
-                "required": false,
-                "displayProperty": "Editable",
-                "visible": true,
-                "renderingHints": {
-                    "semanticColumnWidth": "four"
-                },
-                "index": 13
-            },
-            
             {
                 "code": "workingStyle",
                 "dataType": "text",

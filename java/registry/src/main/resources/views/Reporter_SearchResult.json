@@ -12,7 +12,7 @@
     },
     {
       "name": "isActive",
-      "title": "isApproved"
+      "title": "isActive"
     },
     {
       "name": "role",
@@ -21,6 +21,10 @@
     {
       "name": "isInKronos",
       "title": "Is In Kronous"
+    },
+    {
+      "name": "workLocation"
     }
+
   ]
 }

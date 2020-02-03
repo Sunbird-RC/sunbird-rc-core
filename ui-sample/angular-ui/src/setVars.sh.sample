@@ -1,2 +1,1 @@
 export KC_AUTH_URL=http://localhost:8080/auth
-export KC_CLIENT_SECRET='my-client-secret'

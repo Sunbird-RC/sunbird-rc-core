@@ -76,7 +76,10 @@ class EPRFunctions extends Functions {
     sendOnboardSuccesNotification(callback) {
         this.addToPlaceholders('subject', "New Employee Onboarded")
         this.addToPlaceholders('templateId', "newPartnerEmployeeTemplate");
-        let actions = ['getRegistryUsersInfo', 'getAdminUsers', 'sendNotifications', 'getReporterUsers', 'sendNotifications'];
+        let actions = ['getRegistryUsersInfo', 
+                        'getAdminUsers', 'sendNotifications', 
+                        'getReporterUsers', 'sendNotifications',
+                        'getFinAdminUsers', 'sendNotifications'];
         this.invoke(actions, (err, data) => {
             callback(null, data)
         });
@@ -124,6 +127,7 @@ class EPRFunctions extends Functions {
         switch (attribute) {
             case 'githubId':
                 actions = ['getFinAdminUsers', 'sendNotifications'];
+                // FIXME - add subject
                 this.addToPlaceholders('templateId', "updateParamTemplate");
                 this.invoke(actions, (err, data) => {
                     callback(null, data)

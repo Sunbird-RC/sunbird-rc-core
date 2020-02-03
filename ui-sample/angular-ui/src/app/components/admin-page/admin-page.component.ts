@@ -80,6 +80,14 @@ export class AdminPageComponent implements OnInit, OnDestroy {
       list.push(card);
     });
     return <ICard[]>list;
+    
+    // FIXME: Put all resigned employees last
+    // return <ICard[]>list.sort((a, b) => {
+    //   if (a.endDate > b.endDate) {
+    //     return 1;
+    //   }
+    //   return 0;
+    // });
   }
 
   processContent(data) {
@@ -89,7 +97,9 @@ export class AdminPageComponent implements OnInit, OnDestroy {
       role: data.role,
       isOnboarded: data.isOnboarded,
       startDate: data.startDate,
-      identifier: data.osid
+      identifier: data.osid,
+      endDate: data.endDate,
+      isActive: data.isActive
     };
     return content;
   }

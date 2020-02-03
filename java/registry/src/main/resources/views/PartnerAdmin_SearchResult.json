@@ -64,6 +64,12 @@
     },
     {
       "name": "externalRole"
+    },
+    {
+      "name": "macAddress"
+    },
+    {
+      "name": "githubId"
     }
   ]
 }

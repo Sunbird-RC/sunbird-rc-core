@@ -1,24 +1,28 @@
+
+
 /**
- * Programmatically invoke Open-Saber APIs to populate database
- * and spit out "code -> osid" map
+ * Programmatically invoke APIs to populate database
+ * 
  */
 
-// @ts-check
 var request = require("request")
 var async = require("async")
 var fs = require("fs");
 var path = require("path");
 var csvjson = require('csvjson');
+var _ = require('lodash');
 
 var invoke_add = function (nIter, payload, callback) {
-    var addSuffix = "add"
+    var addSuffix = "register/users"
     var url = baseUrl + "/" + addSuffix
     var headerVars = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ",
+        "x-authenticated-user-token": ""
     }
 
     if (dryRun) {
-        console.log("#" + nIter + " DryRun: Will invoke " + url + " with payload " + payload)        
+        console.log("#" + nIter + " DryRun: Will invoke " + url + " with payload " + payload)
         callback(null, nIter)
     } else {
         //console.log("#" + nIter + " Invoking " + url + " with payload " + payload)
@@ -35,11 +39,11 @@ var invoke_add = function (nIter, payload, callback) {
                 console.log(" error for " + payload)
                 callback(err)
             } else {
-                var responseErr = apiResponse["params"]["errmsg"]
+                var responseErr = apiResponse
                 if (responseErr != "") {
                     callback(responseErr, null)
                 } else {
-                    console.log(" success for " + payload)
+                    console.log(" success for " + payload, " " + apiResponse.result)
                     callback(null, apiResponse.result)
                 }
             }
@@ -57,7 +61,18 @@ var addToArr = function (arr, val, cb) {
  */
 var populate_add_tasks = function (tasks, entityType, static_payload, arrDynamicData, someEntity) {
     var allPayloads = []
-
+    //to match keys of sechema and csv
+    // const arrayWithValidKeys = [];
+    // arrDynamicData.map(item => {
+    //     arrayWithValidKeys.push(
+    //         _.mapKeys(item, (value, key) => {
+    //             let newKey = keys[key];
+    //             if (newKey)
+    //                 return newKey;
+    //             else return key
+    //         })
+    //     )
+    // });
     for (var itr = 0; itr < arrDynamicData.length; itr++) {
         //async.eachSeries(arrDynamicData, function (oneCSVRow, callback) {
         var completePayload = JSON.parse(JSON.stringify(static_payload))
@@ -65,12 +80,12 @@ var populate_add_tasks = function (tasks, entityType, static_payload, arrDynamic
         //console.log("PAYLOAD Complete", JSON.stringify(static_payload))
         //console.log("one row = " + JSON.stringify(oneCSVRow))
 
-        var attrsMerged = Object.assign(completePayload["request"][entityType], oneCSVRow)
-        completePayload["request"][entityType] = attrsMerged
+        var attrsMerged = Object.assign(completePayload["request"], oneCSVRow)
+        completePayload["request"] = attrsMerged
 
         //console.log(itr + " - payload = " + JSON.stringify(completePayload))
 
-        var dataPortion = completePayload["request"][entityType]
+        var dataPortion = completePayload["request"]
         for (var field in dataPortion) {
             var fieldVal = dataPortion[field]
             if (fieldVal.indexOf("[") != -1) {
@@ -97,14 +112,46 @@ var populate_add_tasks = function (tasks, entityType, static_payload, arrDynamic
                 }
                 dataPortion[field] = myArr
             }
+            if (field === 'isActive') {
+                if (dataPortion[field] === 'Yes') {
+                    dataPortion['isOnboarded'] = true;
+                } else {
+                    dataPortion['isOnboarded'] = false;
+                }
+            }
 
             // If there are field specific code, set here.
-            // if (field === 'phone') {
-            //     var phone = parseInt(dataPortion[field]) * 100
-            //     dataPortion[field] = phone + (itr + 1)
-            // }
+            if (field === 'isActive' || field === 'isInKronos') {
+                // Yes-No fields.
+                if (dataPortion[field] === 'No' || dataPortion[field] === 'Inactive') {
+                    dataPortion[field] = false
+                } else {
+                    dataPortion[field] = true
+                }
+            }
+            if (field === 'repoAccess' || field === 'slackAccess') {
+                // Yes-No fields.
+                if (dataPortion[field] === 'Added to ES') {
+                    dataPortion[field] = "ES"
+                } else if (dataPortion[field] === 'Added to Both') {
+                    dataPortion[field] = "Both"
+                } else if (dataPortion[field] === 'Added to SB') {
+                    dataPortion[field] = 'SB'
+                }
+            }
+            if (field === 'startDate' || field === 'endDate') {
+                if (dataPortion[field] !== "") {
+                    var newdate = dataPortion[field].split("-").reverse().join("-");
+                    dataPortion[field] = newdate;
+                }
+                if (dataPortion[field] === "") {
+                    delete dataPortion[field];
+                }
+            }
+
         }
 
+        console.log(completePayload)
         // Any extra column to delete from the csv goes here
         //delete dataPortion.ParentCode
 
@@ -136,6 +183,8 @@ var execute_tasks = function (tasks, fileName, cb) {
     //async.parallelLimit(tasks, PARALLEL_LIMIT, function (err, callback) {
     async.series(tasks, function (err, callback) {
         if (!err) {
+            console.log("Executed tasks")
+            cb(null)
         } else {
             console.error(err)
             console.log("One or more errors occurred.")
@@ -164,16 +213,16 @@ var addApiPayload = {
 }
 
 // The subject that we have schematized
-var entityType = "Student"
-addApiPayload.request[entityType] = {}
+var entityType = "Employee"
+addApiPayload.request = {}
 
 // The URL where the registry is running
-var baseUrl = "http://127.0.0.1:8080"
+var baseUrl = "http://localhost:9081"
 
 // Whether you want to run in dryRun mode
 // true - API will not be invoked.
 // false - API will be invoked.
-var dryRun = false
+var dryRun = true
 
 var PARALLEL_LIMIT = 1;
 var dataEntities = {}
@@ -181,23 +230,17 @@ var dataEntities = {}
 
 function populateStudent(cb) {
     var student_tasks = [];
-    var studentCSV = csvToJson('data.csv')
+    var studentCSV = csvToJson('EkStepStaffingSheet.csv')
     populate_add_tasks(student_tasks, entityType, addApiPayload, studentCSV)
     console.log("Total number of students = " + student_tasks.length)
     execute_tasks(student_tasks, "data.json", cb)
 }
 
-var instance1_url = "http://localhost:8080"
-var func_array = [populateStudent]
-
-// Execution phase
-console.log("Func_Array", func_array);
-
-async.series(func_array, (result, err) => {
+populateStudent(function (err, result) {
     if (err) {
         return (err);
         console.log("Errorrrrr==>", err);
     }
+    console.log("Finished successfully");
     return result;
-    console.log("result = " + result);
 })
