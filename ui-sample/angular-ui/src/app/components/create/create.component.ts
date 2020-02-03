@@ -74,7 +74,10 @@ export class CreateComponent implements OnInit {
     }
     const requestData = {
       data: {
-        request: this.formData.formInputData
+        id: appConfig.API_ID.CREATE,
+        request: {
+          Employee: this.formData.formInputData
+        }
       },
       header: {
         Authorization: token

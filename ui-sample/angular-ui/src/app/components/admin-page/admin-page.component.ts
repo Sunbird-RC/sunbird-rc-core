@@ -191,7 +191,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
       url: appConfig.URLS.SEARCH,
       header: { Authorization: token },
       data: {
-        id: "open-saber.registry.search",
+        id: appConfig.API_ID.SEARCH,
         request: {
           entityType: ["Employee"],
           filters: {

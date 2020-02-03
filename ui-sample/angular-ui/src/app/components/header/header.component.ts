@@ -123,7 +123,7 @@ export class HeaderComponent implements OnInit {
     const requestData = {
       header: { Authorization: token },
       data: {
-        id: "open-saber.registry.search",
+        id: appConfig.API_ID.SEARCH,
         request: {
           entityType: ["Employee"],
           filters: {

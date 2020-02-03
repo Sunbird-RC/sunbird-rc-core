@@ -81,7 +81,7 @@ export class CardComponent implements OnInit {
     const requestData = {
       header: { Authorization: token },
       data: {
-        id: "open-saber.registry.update",
+        id: appConfig.API_ID.UPDATE,
         request: {
           Employee: {
             osid: userId,

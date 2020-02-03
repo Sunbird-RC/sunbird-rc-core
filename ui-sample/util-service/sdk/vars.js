@@ -33,6 +33,7 @@ const config = {
         },
         "appUrl": process.env.appUrl,
         "notificationUrl": process.env.notificationUrl,
+        "appUrl": process.env.appUrl,
         "registryUrl": process.env.registry_url,
         "nerUtilServiceUrl": process.env.ner_utilservice_url
     }

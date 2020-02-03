@@ -14,6 +14,7 @@ const vars = require('./sdk/vars').getAllVars(process.env.NODE_ENV);
 var cacheManager = new CacheManager();
 var registryService = new RegistryService();
 const keycloakHelper = new KeycloakHelper(vars.keycloak);
+const entityType = 'Employee';
 
 const classesMapping = {
     'EPRFunction': EPRUtilFunctions,
@@ -46,9 +47,15 @@ const createUser = (req, callback) => {
         },
         function (token, callback) {
             req.headers['authorization'] = token;
-            keycloakHelper.registerUserToKeycloak(req, callback)
+            var keycloakUserReq = {
+                body: {
+                    request: req.body.request[entityType]
+                },
+                headers: req.headers
+            }
+            keycloakHelper.registerUserToKeycloak(keycloakUserReq, callback)
         },
-        function (req, res, callback2) {
+        function (res, callback2) {
             addRecordToRegistry(req, res, callback2)
         }
     ], function (err, result) {
@@ -95,22 +102,8 @@ const getTokenDetails = (req, callback) => {
  */
 const addRecordToRegistry = (req, res, callback) => {
     if (res.statusCode == 201) {
-        let reqParam = req.body.request;
-        reqParam['isOnboarded'] = false;
-        let reqBody = {
-            "id": "open-saber.registry.create",
-            "ver": "1.0",
-            "ets": "11234",
-            "params": {
-                "did": "",
-                "key": "",
-                "msgid": ""
-            },
-            "request": {
-                "Employee": reqParam
-            }
-        }
-        req.body = reqBody;
+        //intially isOnBoarded flag is set false
+        req.body.request[entityType]['isOnboarded'] = false;
         registryService.addRecord(req, function (err, res) {
             if (res.statusCode == 200) {
                 logger.info("record successfully added to registry")

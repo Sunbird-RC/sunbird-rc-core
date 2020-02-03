@@ -62,7 +62,7 @@ export class UpdateComponent implements OnInit {
     const requestData = {
       header: { Authorization: this.userToken },
       data: {
-        id: "open-saber.registry.read",
+        id: appConfig.API_ID.READ,
         request: {
           Employee: {
             osid: this.userId
@@ -143,7 +143,7 @@ export class UpdateComponent implements OnInit {
   updateInfo(updatedFieldValues, diffObj) {
     const requestData = {
       data: {
-        id: "open-saber.registry.update",
+        id: appConfig.API_ID.UPDATE,
         request: {
           Employee: updatedFieldValues
         },
@@ -153,7 +153,7 @@ export class UpdateComponent implements OnInit {
     };
     this.dataService.post(requestData).subscribe(response => {
       if (response.params.status === "SUCCESSFUL") {
-        this.toasterService.success(diffObj + " successfully updated");
+        this.toasterService.success(this.resourceService.frmelmnts.msg.updateSuccess);
         this.navigateToProfilePage();
       }
     }, err => {
