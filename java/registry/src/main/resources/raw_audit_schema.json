@@ -51,12 +51,11 @@
         },
          "timestamp": {
           "$id": "#/properties/timestamp",
-          "type": "date",
-          "format": "date-time",
+          "type": "string",
           "$comment": "Timestamp",
           "default": "",
           "examples": [
-            "2017-09-23T20:21:34Z"
+            "1580729777849"
           ]
         }
       }

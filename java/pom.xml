@@ -36,9 +36,8 @@
         <module>registry-interceptor</module>
         <module>registry</module>
         <module>elastic-search</module>
-	<module>view-templates</module>
+		<module>view-templates</module>
         <module>opensaber-actors</module>
-        <module>opensaber-audit</module>
         <module>sunbird-actor</module>
     </modules>
 

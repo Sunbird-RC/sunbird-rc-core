@@ -74,7 +74,7 @@
     <logger name="io.opensaber.registry.dao.RegistryDaoImpl" level="DEBUG"/>
     <logger name="com.mchange.v2.c3p0.impl.NewProxyPreparedStatement" level="INFO"/>
 
-    <logger name="io.opensaber.audit.AuditServiceImpl" level="DEBUG" additivity="FALSE">
+    <logger name="io.opensaber.registry.util.AuditFileWriter" level="DEBUG" additivity="FALSE">
         <appender-ref ref="AuditFileAppender"/>
     </logger>
 

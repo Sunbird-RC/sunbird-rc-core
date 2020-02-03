@@ -9,7 +9,7 @@ public class AuditRecord {
 	private List<Integer> transactionId;
 	private String userId;
 	private String auditId;
-	private String timeStamp;
+	private String timestamp;
 	private List<AuditInfo> auditInfo;
 
 	public String getAction() {
@@ -66,12 +66,12 @@ public class AuditRecord {
         return this;
     }
 
-    public String getTimeStamp() {
-        return timeStamp;
+    public String getTimestamp() {
+        return timestamp;
     }
 
-    public AuditRecord setTimeStamp(String timeStamp) {
-        this.timeStamp = timeStamp;
+    public AuditRecord setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
         return this;
     }
 }

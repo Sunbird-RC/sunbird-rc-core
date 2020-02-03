@@ -1,12 +1,25 @@
 package io.opensaber.registry.service;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.opensaber.audit.IAuditService;
+
 import io.opensaber.pojos.APIMessage;
-import io.opensaber.pojos.AuditInfo;
 import io.opensaber.pojos.AuditRecord;
 import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.FilterOperators;
@@ -23,20 +36,6 @@ import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.RecordIdentifier;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 /**
  * This class provides native search which hits the native database
  * Hence, this have performance in-efficiency on search operations
@@ -71,11 +70,15 @@ public class NativeSearchService implements ISearchService {
 	@Value("${search.limit}")
 	private int limit;
 
+    @Value("${audit.enabled}")
+    private boolean auditEnabled;
+    
+    @Value("${audit.frame.suffix}")
+    private String auditSuffix;
+
 	@Override
 	public JsonNode search(JsonNode inputQueryNode) throws IOException {
-		AuditRecord auditRecord = null;
-		List<Integer> transaction = new LinkedList<>();
-		List<AuditInfo> auditInfoLst = new LinkedList<>();
+		
 		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
 
@@ -100,6 +103,7 @@ public class NativeSearchService implements ISearchService {
 				}
 
 				// TODO: parallel search.
+				List<Integer> transaction = new LinkedList<>();
 				Shard shard = shardManager.activateShard(dbConnection.getShardId());
 				IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName);
 				SearchDaoImpl searchDao = new SearchDaoImpl(registryDao);
@@ -121,19 +125,23 @@ public class NativeSearchService implements ISearchService {
 				} finally {
 					continueSearch = !isSpecificSearch;
 				}
-			}
+				
+		        //if Audit enabled in configuration yml file
+		        if(auditEnabled) {
+		        	String operation = Constants.AUDIT_ACTION_SEARCH_OP;
+		        	String action = Constants.AUDIT_ACTION_SEARCH;
+		        	if(searchQuery.getEntityTypes().get(0).contains(auditSuffix)) {
+		        		operation = Constants.AUDIT_ACTION_AUDIT_OP;
+		        		action = Constants.AUDIT_ACTION_AUDIT;
+		        	}
+
+		        	AuditRecord auditRecord = auditService.createAuditRecord(apiMessage.getUserID(), action, "", transaction);
+			        auditRecord.setAuditInfo(auditService.createAuditInfo(operation, action, null, inputQueryNode, searchQuery.getEntityTypes()));
+		        	auditService.doAudit(auditRecord, inputQueryNode, searchQuery.getEntityTypes(), null, shard);
+		        }
+		 	}
 		}
 		
-		auditRecord = new AuditRecord();
-		for (String entity : searchQuery.getEntityTypes()) {
-			AuditInfo auditInfo = new AuditInfo();
-			auditInfo.setOp(Constants.AUDIT_ACTION_SEARCH_OP);
-			auditInfo.setPath(entity);
-			auditInfoLst.add(auditInfo);
-		}
-		auditRecord.setAuditInfo(auditInfoLst);
-		auditRecord.setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_SEARCH).setTransactionId(transaction);
-		auditService.audit(auditRecord);
 		return buildResultNode(searchQuery, result);
 	}
 	

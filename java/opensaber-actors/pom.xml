@@ -22,12 +22,6 @@
             <artifactId>elastic-search</artifactId>
             <version>${version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>io.opensaber</groupId>
-            <artifactId>opensaber-audit</artifactId>
-            <version>${version}</version>
-        </dependency>
     </dependencies>
 
 </project>

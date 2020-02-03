@@ -8,6 +8,9 @@ public class DateUtil {
     public static String getTimeStamp() {
         return new Timestamp(System.currentTimeMillis()).toString();
     }
+    public static long getTimeStampLong() {
+        return System.currentTimeMillis();
+    }
     
     public static String instantTimeStamp() {
         return Instant.now().toString();
