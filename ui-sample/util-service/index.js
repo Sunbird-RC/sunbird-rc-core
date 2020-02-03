@@ -32,6 +32,12 @@ app.theApp.post("/register/users", (req, res, next) => {
     });
 });
 
+/**
+ * creates user in keycloak and add record to the registry
+ * first gets the bearer token needed to create user in keycloak and registry
+ * @param {*} req 
+ * @param {*} callback 
+ */
 const createUser = (req, callback) => {
     async.waterfall([
         function (callback) {
@@ -55,6 +61,11 @@ const createUser = (req, callback) => {
     });
 }
 
+/**
+ * returns user token and caches if token is not cached
+ * @param {*} req 
+ * @param {*} callback 
+ */
 const getTokenDetails = (req, callback) => {
     if (!req.headers.authorization) {
         cacheManager.get('usertoken', function (err, tokenData) {
@@ -76,6 +87,12 @@ const getTokenDetails = (req, callback) => {
     }
 }
 
+/**
+ * adds record to the registry
+ * @param {objecr} req 
+ * @param {*} res 
+ * @param {*} callback 
+ */
 const addRecordToRegistry = (req, res, callback) => {
     if (res.statusCode == 201) {
         let reqParam = req.body.request;

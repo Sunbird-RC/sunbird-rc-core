@@ -12,9 +12,7 @@
         "method": "post",
         "preActions": [],
         "postActions": [
-            "notifyUsersBasedOnAttributes",
-            "sendOnboardSuccesNotification",
-            "updateRecordOfClientRegistry"
+            "notifyUsersBasedOnAttributes"
         ]
     }]
 }

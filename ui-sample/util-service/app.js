@@ -22,8 +22,8 @@ app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const workFlowFunctionPre =  (req) => {
-     wfEngine.preInvoke(req);
+const workFlowFunctionPre = (req) => {
+    wfEngine.preInvoke(req);
 }
 
 const workFlowFunctionPost = (req, res) => {
@@ -96,8 +96,6 @@ app.post("/notification", (req, res, next) => {
     logger.info("Got notification from external party" + JSON.stringify(req.body))
     registryService.updateRecord(req, function (err, data) {
         if (data) {
-            logger.info("stringified " + JSON.stringify(data))
-
             return res.send(data);
         } else {
             return res.send(err);

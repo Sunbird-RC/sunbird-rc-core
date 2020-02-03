@@ -14,6 +14,7 @@ const config = {
             "clientSecret": process.env.keycloak_ner_clientSecret || "f6ce7466-b04f-4ccf-b986-e9c61e5fb26b"
         },
         "notificationUrl": process.env.notificationUrl || "http://localhost:9012",
+        "appUrl": process.env.appUrl || "http://localhost:9082",
         "registryUrl": process.env.registry_url || "http://localhost:9080",
         "nerUtilServiceUrl": process.env.ner_utilservice_url || "http://localhost:9181"
     },
@@ -30,6 +31,7 @@ const config = {
             "clientId": "utils",
             "clientSecret": process.env.keycloak_ner_clientSecret
         },
+        "appUrl": process.env.appUrl,
         "notificationUrl": process.env.notificationUrl,
         "registryUrl": process.env.registry_url,
         "nerUtilServiceUrl": process.env.ner_utilservice_url
