@@ -79,15 +79,11 @@ export class AdminPageComponent implements OnInit, OnDestroy {
       const card = this.processContent(item);
       list.push(card);
     });
-    return <ICard[]>list;
-    
-    // FIXME: Put all resigned employees last
-    // return <ICard[]>list.sort((a, b) => {
-    //   if (a.endDate > b.endDate) {
-    //     return 1;
-    //   }
-    //   return 0;
-    // });
+    //sort by startdate decending order
+    return <ICard[]>list.sort((record1, record2) => {
+      return + new Date(record2.startDate) - + new Date(record1.startDate);
+    });
+
   }
 
   processContent(data) {
@@ -147,8 +143,8 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     this.fetchEmployees(total)
   }
 
-  previous(prevOffset = 10) {
-    let total = this.paginationDetails.currentOffset - prevOffset;
+  previous() {
+    let total = this.paginationDetails.currentOffset - this.paginationDetails.offset;
     if (total >= this.paginationDetails.intialOffset) {
       this.paginationDetails.currentOffset = total;
       this.fetchEmployees(total)

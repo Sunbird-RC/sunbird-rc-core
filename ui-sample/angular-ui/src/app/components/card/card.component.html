@@ -15,7 +15,7 @@
     <div *ngIf="data.isOnboarded && data.isActive && data?.startDate != null" class="meta">
       Since {{data?.startDate | timeAgo | slice:0:-3}}
     </div>
-    <div *ngIf="!data.isOnboarded" class="meta">
+    <div *ngIf="!data.isOnboarded && data?.endDate == null" class="meta">
       New Member
     </div>
     <div *ngIf="data?.endDate != null" class="meta">
@@ -53,6 +53,7 @@
   <div class="actions">
     <button class="ui blue button" (click)="modal.approve('approved')"
       autofocus>{{resourceService?.frmelmnts?.btn?.yes}}</button>
-    <button class="ui basic blue button" (click)="modal.deny('view')">{{resourceService?.frmelmnts?.btn?.viewProfile}}</button>
+    <button class="ui basic blue button"
+      (click)="modal.deny('view')">{{resourceService?.frmelmnts?.btn?.viewProfile}}</button>
   </div>
 </ng-template>
