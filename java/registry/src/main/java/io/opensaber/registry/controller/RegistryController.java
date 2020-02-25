@@ -76,6 +76,12 @@ public class RegistryController {
     @Autowired
     private RegistryHelper registryHelper;
 
+    @Value("${audit.enabled}")
+	private boolean auditEnabled;
+	
+	@Value("${audit.frame.store}")
+	public String auditStoreType;
+	
     /**
      * Note: Only one mime type is supported at a time. Pick up the first mime
      * type from the header.
@@ -130,15 +136,36 @@ public class RegistryController {
     }
 
     @ResponseBody
-    @RequestMapping(value = "/fetchAudit/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Response> fetchAudit(@PathVariable("id") String id) {
-        ResponseParams responseParams = new ResponseParams();
-        Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
-        // if (auditEnabled) {
+	@RequestMapping(value = "/audit", method = RequestMethod.POST)
+	public ResponseEntity<Response> fetchAudit() {
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
+		JsonNode payload = apiMessage.getRequest().getRequestMapNode();
+		if (auditEnabled && Constants.DATABASE.equals(auditStoreType)) {
+			try {
+				watch.start("RegistryController.audit");
+				JsonNode result = registryHelper.getAuditLog(payload);
 
-        response.setResult("To be implemented soon...");
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+				response.setResult(result);
+				responseParams.setStatus(Response.Status.SUCCESSFUL);
+				watch.stop("RegistryController.searchEntity");
+
+			} catch (Exception e) {
+				logger.error("Error in getting audit log !", e);
+				logger.error("Exception in controller while searching entities !", e);
+				response.setResult("");
+				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+				responseParams.setErrmsg(e.getMessage());
+			}
+		}else {
+			response.setResult("");
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg("Audit is not enabled or file is chosen to store the audit");
+			return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
+		}
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<Response> deleteEntity() {

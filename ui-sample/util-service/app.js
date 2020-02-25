@@ -71,6 +71,12 @@ app.post("/registry/read", (req, res, next) => {
     })
 });
 
+app.post("/registry/audit", (req, res, next) => {
+    registryService.searchAuditRecords(req, function (err, data) {
+        return res.send(data);
+    })
+});
+
 const getViewtemplate = (authToken) => {
     var roles = [];
     let token = authToken.replace('Bearer ', '');

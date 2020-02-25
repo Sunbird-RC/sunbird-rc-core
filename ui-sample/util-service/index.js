@@ -21,6 +21,19 @@ const classesMapping = {
     'Functions': baseFunctions
 };
 
+app.theApp.get("/keycloak/users/:userId", (req, res, next) => {
+    getTokenDetails(req, (err, token) => {
+        keycloakHelper.getUserById(req.params.userId, token, (error, data) => {
+            if (data) {
+                res.statusCode = data.statusCode
+                res.send(data.body);
+            } else {
+                res.send(error)
+            }
+        })
+    })
+})
+
 // Add any new APIs here.
 app.theApp.post("/register/users", (req, res, next) => {
     createUser(req, function (err, data) {

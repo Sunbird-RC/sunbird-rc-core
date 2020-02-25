@@ -56,7 +56,10 @@
                                                         <a class="item" (click)="navigateToProfilePage()">
                                                                 {{resourceService?.frmelmnts?.btn?.profile}}
                                                         </a>
-
+                                                        <a class="item" (click)="getAuditReport()"  *ngIf='permissionService.permissionAvailable' appPermission
+                                                        [permission]="onBoardEmployee" [routerLink]="'/dashboard'" tabindex="0">
+                                                                Dashboard
+                                                        </a>
 
                                                         <a class="item" (click)="logout()">
                                                                 {{resourceService?.frmelmnts?.btn?.logout}}

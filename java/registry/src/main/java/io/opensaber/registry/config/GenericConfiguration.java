@@ -1,45 +1,10 @@
 package io.opensaber.registry.config;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import io.opensaber.audit.AuditServiceImpl;
-import io.opensaber.audit.IAuditService;
-import io.opensaber.elastic.ElasticServiceImpl;
-import io.opensaber.elastic.IElasticService;
-import io.opensaber.pojos.AuditRecord;
-import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.pojos.Response;
-import io.opensaber.registry.authorization.AuthorizationFilter;
-import io.opensaber.registry.authorization.KeyCloakServiceImpl;
-import io.opensaber.registry.exception.CustomException;
-import io.opensaber.registry.exception.CustomExceptionHandler;
-import io.opensaber.registry.frame.FrameContext;
-import io.opensaber.registry.interceptor.AuthorizationInterceptor;
-import io.opensaber.registry.interceptor.RequestIdValidationInterceptor;
-import io.opensaber.registry.interceptor.ValidationInterceptor;
-import io.opensaber.registry.middleware.Middleware;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.Constants.SchemaType;
-import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.service.IReadService;
-import io.opensaber.registry.service.ISearchService;
-import io.opensaber.registry.sink.DBProviderFactory;
-import io.opensaber.registry.sink.shard.DefaultShardAdvisor;
-import io.opensaber.registry.sink.shard.IShardAdvisor;
-import io.opensaber.registry.sink.shard.ShardAdvisor;
-import io.opensaber.registry.transform.ConfigurationHelper;
-import io.opensaber.registry.transform.Json2JsonTransformer;
-import io.opensaber.registry.transform.Json2LdTransformer;
-import io.opensaber.registry.transform.Ld2JsonTransformer;
-import io.opensaber.registry.transform.Transformer;
-import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.ServiceProvider;
-import io.opensaber.validators.IValidate;
-import io.opensaber.validators.ValidationFilter;
-import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -65,10 +30,47 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 import org.sunbird.akka.core.SunbirdActorFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+
+import io.opensaber.elastic.ElasticServiceImpl;
+import io.opensaber.elastic.IElasticService;
+import io.opensaber.pojos.AuditRecord;
+import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.Response;
+import io.opensaber.registry.authorization.AuthorizationFilter;
+import io.opensaber.registry.authorization.KeyCloakServiceImpl;
+import io.opensaber.registry.exception.CustomException;
+import io.opensaber.registry.exception.CustomExceptionHandler;
+import io.opensaber.registry.frame.FrameContext;
+import io.opensaber.registry.interceptor.AuthorizationInterceptor;
+import io.opensaber.registry.interceptor.RequestIdValidationInterceptor;
+import io.opensaber.registry.interceptor.ValidationInterceptor;
+import io.opensaber.registry.middleware.Middleware;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.Constants.SchemaType;
+import io.opensaber.registry.model.DBConnectionInfoMgr;
+import io.opensaber.registry.service.IAuditService;
+import io.opensaber.registry.service.IReadService;
+import io.opensaber.registry.service.ISearchService;
+import io.opensaber.registry.service.impl.AuditServiceImpl;
+import io.opensaber.registry.sink.DBProviderFactory;
+import io.opensaber.registry.sink.shard.DefaultShardAdvisor;
+import io.opensaber.registry.sink.shard.IShardAdvisor;
+import io.opensaber.registry.sink.shard.ShardAdvisor;
+import io.opensaber.registry.transform.ConfigurationHelper;
+import io.opensaber.registry.transform.Json2JsonTransformer;
+import io.opensaber.registry.transform.Json2LdTransformer;
+import io.opensaber.registry.transform.Ld2JsonTransformer;
+import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.ServiceProvider;
+import io.opensaber.validators.IValidate;
+import io.opensaber.validators.ValidationFilter;
+import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
 
 @Configuration
 @EnableRetry
@@ -329,7 +331,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		requestIdMap.put(Constants.REGISTRY_UPDATE_ENDPOINT, Response.API_ID.UPDATE.getId());
 		requestIdMap.put(Constants.SIGNATURE_SIGN_ENDPOINT, Response.API_ID.SIGN.getId());
 		requestIdMap.put(Constants.SIGNATURE_VERIFY_ENDPOINT, Response.API_ID.VERIFY.getId());
-
+		requestIdMap.put(Constants.REGISTRY_AUDT_READ_ENDPOINT, Response.API_ID.AUDIT.getId());
 		return requestIdMap;
 	}
 

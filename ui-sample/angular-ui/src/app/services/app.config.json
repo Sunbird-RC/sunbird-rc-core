@@ -37,6 +37,13 @@
         ],
         "approveEmployee": [
             "admin"
+        ],
+        "dashboardView": [
+            "admin",
+            "partner-admin",
+            "reporter",
+            "owner",
+            "fin-admin"
         ]
     },
     "URLS": {
@@ -45,6 +52,7 @@
         "READ": "/registry/read",
         "ADD": "/registry/add",
         "UPDATE": "/registry/update",
+        "AUDIT": "/registry/audit",
         "REGISTER": "/register/users",
         "FORM_TEPLATE": "/formtemplates",
         "OWNER_FORM_TEMPLATE":"/owner/formTemplate"
@@ -54,7 +62,8 @@
         "READ": "open-saber.registry.read",
         "UPDATE": "open-saber.registry.update",
         "DELETE": "open-saber.registry.delete",
-        "SEARCH": "open-saber.registry.search"
+        "SEARCH": "open-saber.registry.search",
+        "AUDIT":"open-saber.registry.audit"
     },
     "PAGE_LIMIT": 20
 }

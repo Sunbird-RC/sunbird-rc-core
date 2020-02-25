@@ -27,10 +27,13 @@
         [permission]="editProfile" (click)="navigateToEditPage()">
         {{resourceService?.frmelmnts?.btn?.edit}}
       </button>
-      <button class="ui primary button" *ngIf="viewOwnerProfile =='owner'" (click)="navigateToEditPage()">
+      <button class="ui primary basic button" *ngIf="viewOwnerProfile =='owner'" (click)="navigateToEditPage()">
         {{resourceService?.frmelmnts?.btn?.edit}}
       </button>
-      <button class="ui button" (click)="navigateToHomePage()">
+      <button class="ui secondary basic button" *ngIf="viewOwnerProfile =='owner'" (click)="navigateToDashBoardPage()">
+        {{resourceService?.frmelmnts?.btn?.viewHistory}}
+      </button>
+      <button class="ui grey basic button" (click)="navigateToHomePage()">
         {{resourceService?.frmelmnts?.btn?.cancel}}
       </button>
     </div>

@@ -118,6 +118,10 @@ export class ProfileComponent implements OnInit {
     this.router.navigate(['/search'])
   }
 
+  navigateToDashBoardPage() {
+    this.router.navigate(['/dashboard', this.userId])
+  }
+
   getUserDetails() {
     let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
     if (_.isEmpty(token)) {

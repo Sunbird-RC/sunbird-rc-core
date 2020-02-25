@@ -69,6 +69,21 @@ class RegistryService {
         })
     }
 
+    searchAuditRecords(value, callback) {
+        const options = {
+            url: registryUrl + "/audit",
+            headers: this.getDefaultHeaders(value.headers),
+            body: value.body
+        }
+        httpUtil.post(options, function (err, res) {
+            if (res) {
+                callback(null, res.body)
+            } else {
+                callback(err)
+            }
+        })
+    }
+
     getDefaultHeaders(reqHeaders) {
         var token = reqHeaders.authorization.replace('Bearer ', '');
         let headers = {

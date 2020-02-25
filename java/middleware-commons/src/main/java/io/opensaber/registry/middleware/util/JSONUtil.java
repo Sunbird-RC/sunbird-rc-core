@@ -1,5 +1,6 @@
 package io.opensaber.registry.middleware.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -13,6 +14,7 @@ import com.github.jsonldjava.utils.JsonUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,9 +42,24 @@ public class JSONUtil {
 		return gson.fromJson(result, stringObjMapType);
 	}
 
+	public static String convertObjectJsonString(Object object) throws JsonProcessingException {
+		String result = new ObjectMapper().writeValueAsString(object);
+		return result;
+	}
+	
+	public static JsonNode convertStringJsonNode(String jsonStr) throws IOException {
+		JsonNode jNode = new ObjectMapper().readTree(jsonStr);
+		return jNode;
+	}
+	
+	public static JsonNode convertObjectJsonNode(Object object) throws IOException {
+		JsonNode inputNode = new ObjectMapper().valueToTree(object);
+		return inputNode;
+	}
+
 	public static Map<String, Object> convertJsonNodeToMap(JsonNode object) {
 		ObjectMapper mapper = new ObjectMapper();
-		Map<String, Object> mapObject = mapper.convertValue(object, Map.class);
+		Map<String, Object> mapObject = new ObjectMapper().convertValue(object, Map.class);
 		return mapObject;
 	}
 

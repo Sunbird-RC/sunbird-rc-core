@@ -2,6 +2,9 @@ package io.opensaber.registry.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.DecryptionHelper;
@@ -16,12 +19,12 @@ import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.ViewTemplateManager;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 
 /**
@@ -58,7 +61,15 @@ public class RegistryHelper {
 
     @Autowired
     private ObjectMapper objectMapper;
+        
+    @Value("${database.uuidPropertyName}")
+    public String uuidPropertyName;
 
+    @Value("${audit.frame.suffix}")
+    public String auditSuffix;
+
+    @Value("${audit.frame.suffixSeparator}")
+    public String auditSuffixSeparator;
     /**
      * calls validation and then persists the record to registry.
      * @param inputJson
@@ -169,6 +180,39 @@ public class RegistryHelper {
         logger.debug("updateEntity ends");
         return "SUCCESS";
     }
+
+    /**
+	 * Get Audit log information , external api's can use this method to get the
+	 * audit log of an antity
+	 * 
+	 * @param inputJson
+	 * @return
+	 * @throws Exception
+	 */
+
+    public JsonNode getAuditLog(JsonNode inputJson) throws Exception {
+        logger.debug("get audit log starts");
+        String entityType = inputJson.fields().next().getKey();
+        JsonNode queryNode =inputJson.get(entityType);
+        
+        ArrayNode newEntityArrNode = objectMapper.createArrayNode();
+        newEntityArrNode.add(entityType + auditSuffixSeparator + auditSuffix);
+        ((ObjectNode)queryNode).set("entityType", newEntityArrNode);
+        
+        JsonNode resultNode = searchService.search(queryNode);
+        
+        ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
+        if (viewTemplate != null) {
+            ViewTransformer vTransformer = new ViewTransformer();
+            resultNode = vTransformer.transform(viewTemplate, resultNode);
+        }
+        logger.debug("get audit log ends");
+        
+        return resultNode;
+
+    }
+
+	
 
 }
 

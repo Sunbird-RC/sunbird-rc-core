@@ -143,4 +143,8 @@ export class HeaderComponent implements OnInit {
     }))
   }
 
+  getAuditReport() {
+    this.router.navigate(['/dashboard'])
+  }
+
 }
