@@ -1,9 +1,9 @@
 package io.opensaber.registry.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-
-import io.opensaber.registry.middleware.util.JSONUtil;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,23 +95,15 @@ public class ArrayHelper {
      * @return
      */
     public static ArrayNode constructArrayNode(String valItems) {
-        ArrayNode arrNode = JsonNodeFactory.instance.arrayNode();
-        JSONArray array = new JSONArray(valItems);
-        for (Object item : array) {
-        	boolean isNotString = isNotAString(item.toString());
-            try {
-                if (isNotString) {
-                    arrNode.add(JSONUtil.convertObjectJsonNode(item));
-                } else {
-                	if(JSONUtil.isJsonString(item.toString())) {
-                		arrNode.add(JSONUtil.convertStringJsonNode(item.toString()));  
-                	}else {
-                		arrNode.add(unquoteString(item.toString()));
-                	}
-                }
-            } catch (Exception e) {
-                logger.error("Error in converting array elements to JsonNode" + e);
-            }
+    	ArrayNode arrNode = JsonNodeFactory.instance.arrayNode();
+    	ObjectMapper mapper = new ObjectMapper();
+    	
+    	try {
+        	List<Object> itemList =  mapper.readValue(valItems, 
+            		TypeFactory.defaultInstance().constructCollectionType(List.class, Object.class));     
+        	 arrNode = mapper.valueToTree(itemList);
+        } catch (Exception e) {
+            logger.error("Error in converting array elements to JsonNode" + e);
         }
         return arrNode;
     }
