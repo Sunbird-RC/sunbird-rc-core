@@ -149,11 +149,19 @@ signature:
     config:
       name: SignatureShape
 
+# These properties are used to enable the audit log
+# enabled : should be true to enable audit log and false to disable audit log
+# store : specifies the storage option is FILE or DATABASE
+# suffix : specifies the suffix given for schema. If audit schema name is Teacher_Audit.json, the suffix is Audit.
+# suffixSeperator : specifies the separator used between entity name and suffix. If audit schema name is Teacher_Audit.json, the suffixSeperator is _.
 audit:
   enabled: ${audit_enabled:true}
   frame:
     file: ${audit_frame_file:raw_audit_schema.json}
     store: ${audit_frame_store:DATABASE}
+#   store: ${audit_frame_store:FILE}
+    suffix: ${audit_suffix:Audit}
+    suffixSeparator: ${audit_suffixSeparator:_}
 
 authentication:
   enabled: ${authentication_enabled:true}
@@ -289,11 +297,20 @@ signature:
     config:
       name: SignatureShape
 
-audit:
-  enabled: false
-  frame:
-    file: audit_frame.json
+# These properties are used to enable the audit log
+# enabled : should be true to enable audit log and false to disable audit log
+# store : specifies the storage option is FILE or DATABASE
+# suffix : specifies the suffix given for schema. If audit schema name is Teacher_Audit.json, the suffix is Audit.
+# suffixSeperator : specifies the separator used between entity name and suffix. If audit schema name is Teacher_Audit.json, the suffixSeperator is _.
 
+audit:
+  enabled: ${audit_enabled:false}
+  frame:
+    store: ${audit_frame_store:DATABASE}
+#   store: ${audit_frame_store:FILE}
+    suffix: ${audit_suffix:Audit}
+    suffixSeparator: ${audit_suffixSeparator:_}
+   
 authentication:
   enabled: true
 
