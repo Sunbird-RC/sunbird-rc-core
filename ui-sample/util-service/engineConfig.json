@@ -14,5 +14,13 @@
         "postActions": [
             "notifyUsersBasedOnAttributes"
         ]
+    },
+    {
+        "url": "/notification",
+        "method": "post",
+        "preActions": [],
+        "postActions": [
+            "notifyUsersBasedOnAttributes"
+        ]
     }]
 }

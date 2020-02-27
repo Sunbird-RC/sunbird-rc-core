@@ -7,11 +7,11 @@
         "reporter": "templates/ReporterFormTemplate.json"
     },
     "searchTemplates": {
-        "admin": "Admin_SearchResult.json",
-        "partner-admin": "PartnerAdmin_SearchResult.json",
-        "owner": "Owner_SearchTemplates.json",
-        "fin-admin": "FinAdmin_SearchResult.json",
-        "reporter": "Reporter_SearchResult.json"
+        "admin": "310447c4-4745-11ea-b77f-2e728ce88125.json",
+        "partner-admin": "6ccd3400-4745-11ea-b77f-2e728ce88125.json",
+        "owner": "6245495a-4745-11ea-b77f-2e728ce88125.json",
+        "fin-admin": "530adeaa-4745-11ea-b77f-2e728ce88125.json",
+        "reporter": "90986382-4745-11ea-b77f-2e728ce88125.json"
     },
     "roles": {
         "admin": "admin",

@@ -147,6 +147,7 @@ class EPRFunctions extends Functions {
         let attributesUpdated = _.keys(this.request.body.request[entityType]);//get the list of updated attributes from the req
         let count = 0
         async.forEachSeries(this.notifyAttributes, (param, callback2) => {
+            count ++
             if (_.includes(attributesUpdated, param)) {
                 let params = {
                     paramName: param,
@@ -178,7 +179,7 @@ class EPRFunctions extends Functions {
         switch (attribute) {
             case 'githubId':
                 actions = ['getFinAdminUsers', 'sendNotifications'];
-                // FIXME - add subject
+                this.addToPlaceholders('subject', "GitHub Id updation");
                 this.addToPlaceholders('templateId', "updateParamTemplate");
                 this.invoke(actions, (err, data) => {
                     callback(null, data)

@@ -123,24 +123,11 @@ export class UpdateComponent implements OnInit {
       updatedFields['osid'] = this.userId;
     }
     if (Object.keys(updatedFields).length > 0) {
-      _.map(this.formFieldProperties, field => {
-        if (field.required) {
-          if (!this.formData.formInputData[field.code]) {
-            let findObj = _.find(this.formFieldProperties, { code: field.code });
-            emptyFields.push(findObj.label);
-          }
-        }
-      });
-      if (emptyFields.length === 0) {
-        this.updateInfo(updatedFields, diffObj);
-      }
-      else {
-        this.toasterService.warning("Profile updation failed please provide required fields " + emptyFields.join(', '));
-      }
+      this.updateInfo(updatedFields);
     }
   }
 
-  updateInfo(updatedFieldValues, diffObj) {
+  updateInfo(updatedFieldValues) {
     const requestData = {
       data: {
         id: appConfig.API_ID.UPDATE,
