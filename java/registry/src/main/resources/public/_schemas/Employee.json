@@ -127,6 +127,11 @@
           "type": "boolean",
           "title": "isApproved"
         },
+         "isOnboarded": {
+          "$id": "#/properties/isOboarded",
+          "type": "boolean",
+          "title": "isOboarded"
+        },
         "isInKronos": {
           "$id": "#/properties/isInKronos",
           "type": "boolean",
@@ -171,6 +176,7 @@
             "DS-Product",
             "Testing",
             "Support",
+            "Sunbird Portal",
             "UX",
             "Ektep Platform",
             "Offline Consumption",
@@ -185,9 +191,11 @@
             "SDK",
             "DIKSHA",
             "Sunbird Adoption",
+            "Sunbird App",
             "EkStep Portal",
             "DIKSHA Documentation",
             "Communities",
+            "VidyaDaan",
             "NA"
           ],
           "title": "Sub-project name"
@@ -204,9 +212,11 @@
             "SB+DS",
             "ES+DS",
             "ES+SB",
+            "EkStep + Sunbird",
             "NLP",
             "SB2",
             "Plugins",
+            "Documentation",
             "Non DIKSHA",
             "Societal Platform",
             "PISA Dashboard",
@@ -214,6 +224,8 @@
             "Open SABER",
             "UX",
             "AILP",
+            "MHRD",
+            "Knowledge Platform",
             "Learning Platform",
             "Infra & DevOps",
             "EkStep",
@@ -242,6 +254,7 @@
             "DIKSHA Services",
             "EkStep Community Portal",
             "Sunbird",
+            "MHRD",
             "Unknown"
           ],
           "title": "Proposed billing"

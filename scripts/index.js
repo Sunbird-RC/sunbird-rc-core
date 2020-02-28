@@ -61,7 +61,7 @@ var addToArr = function (arr, val, cb) {
  */
 var populate_add_tasks = function (tasks, entityType, static_payload, arrDynamicData, someEntity) {
     var allPayloads = []
-    //to match keys of sechema and csv
+    //to match keys of schema and csv
     // const arrayWithValidKeys = [];
     // arrDynamicData.map(item => {
     //     arrayWithValidKeys.push(
@@ -79,6 +79,7 @@ var populate_add_tasks = function (tasks, entityType, static_payload, arrDynamic
         var oneCSVRow = JSON.parse(JSON.stringify(arrDynamicData[itr]))
         //console.log("PAYLOAD Complete", JSON.stringify(static_payload))
         //console.log("one row = " + JSON.stringify(oneCSVRow))
+        completePayload["request"][entityType] ={}
 
         var attrsMerged = Object.assign(completePayload["request"][entityType], oneCSVRow)
         completePayload["request"][entityType] = attrsMerged
@@ -88,6 +89,7 @@ var populate_add_tasks = function (tasks, entityType, static_payload, arrDynamic
         var dataPortion = completePayload["request"][entityType]
         for (var field in dataPortion) {
             var fieldVal = dataPortion[field]
+
             if (fieldVal.indexOf("[") != -1) {
                 var myArr = new Array()
                 var individualItems = fieldVal.replace(/\[|\]/g, "")
@@ -113,17 +115,53 @@ var populate_add_tasks = function (tasks, entityType, static_payload, arrDynamic
                 dataPortion[field] = myArr
             }
             if (field === 'isActive') {
-                if (dataPortion[field] === 'Yes' || !dataPortion['endDate']) {
+                if (dataPortion[field].toUpperCase() === 'Yes'.toUpperCase() || !dataPortion['endDate']) {
+
                     dataPortion['isOnboarded'] = true;
+                    dataPortion['isActive'] = true;
                 } else {
+                    dataPortion['isActive'] = false;
                     dataPortion['isOnboarded'] = false;
+
+                }
+            }
+            // If WorkLocation and working Style is empty , adding value "Unknown"
+            if (field === 'projectName' || field === 'subProjectName' ) {
+                if(dataPortion[field] === ''){
+                    dataPortion[field]="Unknown"
+                }else if(dataPortion[field].toUpperCase() === 'DIKSHA'){
+                    dataPortion[field]="DIKSHA"
+                }else if(dataPortion['projectName'] === 'Plugin'){
+                    dataPortion[field]="Plugins"
                 }
             }
 
+            if ( field === 'proposedBilling') {
+                if(dataPortion[field] === 'Non DIKSHA'){
+                    dataPortion[field]="Non Diksha"
+                }
+            }
+
+            if (field === 'role' || field === 'proposedBilling') {
+                if(dataPortion[field] === ''){
+                    dataPortion[field]="Unknown"
+                }
+            }
+
+            if (field === 'workLocation' || field === 'workingStyle' ) {
+                if( dataPortion[field] === ''){
+                     dataPortion[field]="Unknown"
+                }else if(dataPortion[field] === "Ekstep"){
+                    dataPortion[field]="EkStep"
+                }
+            }
+
+            
             // If there are field specific code, set here.
-            if (field === 'isActive' || field === 'isInKronos') {
+            if (field === 'isInKronos') {
                 // Yes-No fields.
-                if (dataPortion[field] === 'No' || dataPortion[field] === 'Inactive') {
+                if (dataPortion[field] !== undefined &&
+                     (dataPortion[field].toUpperCase() === 'No'.toUpperCase() || dataPortion[field].toUpperCase() === 'Inactive'.toUpperCase() || dataPortion[field]==='')) {
                     dataPortion[field] = false
                 } else {
                     dataPortion[field] = true
@@ -131,14 +169,19 @@ var populate_add_tasks = function (tasks, entityType, static_payload, arrDynamic
             }
             if (field === 'repoAccess' || field === 'slackAccess') {
                 // Yes-No fields.
-                if (dataPortion[field] === 'Added to ES') {
-                    dataPortion[field] = "ES"
-                } else if (dataPortion[field] === 'Added to Both') {
-                    dataPortion[field] = "Both"
-                } else if (dataPortion[field] === 'Added to SB') {
-                    dataPortion[field] = 'SB'
+                if(dataPortion[field] !== ''){
+                    if (dataPortion[field].toUpperCase() === 'Added to ES'.toUpperCase()) {
+                        dataPortion[field] = "ES"
+                    } else if (dataPortion[field].toUpperCase() === 'Added to Both'.toUpperCase()) {
+                        dataPortion[field] = "Both"
+                    } else if (dataPortion[field].toUpperCase() === 'Added to SB'.toUpperCase()) {
+                        dataPortion[field] = 'SB'
+                    }
+                }else{
+                    dataPortion[field]="Unknown"
                 }
             }
+           
             if (field === 'startDate' || field === 'endDate') {
                 if (dataPortion[field] !== "") {
                     var newdate = dataPortion[field].split("-").reverse().join("-");
@@ -151,16 +194,24 @@ var populate_add_tasks = function (tasks, entityType, static_payload, arrDynamic
 
         }
 
-        console.log(completePayload)
         // Any extra column to delete from the csv goes here
         //delete dataPortion.ParentCode
+        delete dataPortion["Edu Stack - Layer"]
+        delete dataPortion["Edu Stack - Component"]
+        delete dataPortion[""]
+        delete dataPortion["Experience"]
+        delete dataPortion["Role"]
+        delete dataPortion["Sub Project"]
 
-        allPayloads.push(completePayload)
+
+        console.log(completePayload)
+        if(dataPortion["orgName"]!== "" && dataPortion["name"]!== ""){
+             allPayloads.push(completePayload)
+        }
     }
 
     //console.log("Lengths of tasks = " + arrDynamicData.length + " and " + allPayloads.length)
     //console.log(JSON.stringify(allPayloads))
-
     async.forEachOf(allPayloads, function (onePayload, nIter, callback) {
         tasks.push(
             (cb) => invoke_add(nIter, JSON.stringify(onePayload), function (err, data) {
@@ -216,6 +267,7 @@ var addApiPayload = {
 var entityType = "Employee"
 addApiPayload.request[entityType] = {}
 
+
 // The URL where the registry is running
 var baseUrl = "http://localhost:9081"
 
@@ -228,15 +280,16 @@ var PARALLEL_LIMIT = 1;
 var dataEntities = {}
 
 
-function populateStudent(cb) {
-    var student_tasks = [];
-    var studentCSV = csvToJson('EkStepStaffingSheet.csv')
-    populate_add_tasks(student_tasks, entityType, addApiPayload, studentCSV)
-    console.log("Total number of students = " + student_tasks.length)
-    execute_tasks(student_tasks, "data.json", cb)
+function populateData(cb) {
+    var data_tasks = [];
+    var dataCSV = csvToJson('EkStepStaffingSheet.csv')
+    populate_add_tasks(data_tasks, entityType, addApiPayload, dataCSV)
+    console.log("Total number of data records = " + data_tasks.length)
+    execute_tasks(data_tasks, "data.json", cb)
 }
 
-populateStudent(function (err, result) {
+//start pupulating data
+populateData(function (err, result) {
     if (err) {
         return (err);
         console.log("Errorrrrr==>", err);
@@ -244,3 +297,4 @@ populateStudent(function (err, result) {
     console.log("Finished successfully");
     return result;
 })
+
