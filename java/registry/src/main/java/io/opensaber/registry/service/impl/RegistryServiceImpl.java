@@ -292,7 +292,7 @@ public class RegistryServiceImpl implements RegistryService {
             if (!shard.getShardLabel().isEmpty()) {
                 // Replace osid without shard details
                 String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
-                JSONUtil.trimPrefix((ObjectNode) inputNode, prefix);
+                JSONUtil.trimPrefix((ObjectNode)inputNode, uuidPropertyName, prefix);
             }
 
             // The entity type is a child and so could be different from parent entity type.

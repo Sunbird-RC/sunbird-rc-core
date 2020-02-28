@@ -377,4 +377,32 @@ public class JSONUtil {
 		JsonNode patchNode = JsonDiff.asJson(existingNode, latestNode);
 		return patchNode;
 	}
+
+
+	/**
+	 * Trimming a given prefix if present from each TextNode value corresponding to
+	 * the fieldName in parent's hierarchy (including nested objects).
+	 * 
+	 * @param parent
+	 * @param prefix
+	 */
+	public static void trimPrefix(ObjectNode parent, String fieldName, String prefix) {
+
+		parent.fields().forEachRemaining(entry -> {
+			JsonNode entryValue = entry.getValue();
+
+			if ( entry.getKey().equals(fieldName) && entryValue.isValueNode() && entryValue.toString().contains(prefix)) {
+				parent.put(entry.getKey(), entry.getValue().asText().replaceFirst(prefix, ""));
+
+			} else if (entryValue.isArray()) {
+				for (int i = 0; i < entryValue.size(); i++) {
+					if (entry.getValue().get(i).isObject())
+						trimPrefix((ObjectNode) entry.getValue().get(i), fieldName, prefix);
+				}
+			} else if (entryValue.isObject()) {
+				trimPrefix((ObjectNode) entry.getValue(), fieldName, prefix);
+			}
+
+		});
+	}
 }
