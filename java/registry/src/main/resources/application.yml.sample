@@ -9,12 +9,12 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
-name: dev-yam
+name: dev-yaml
 enviroment: development
 
 server:
   # Change this port number if you want to run it on another.
-  port: ${server_port:9080}
+  port: ${server_port:8080}
 
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
@@ -31,14 +31,14 @@ registry:
   system:
     base: ${registry_system_base:http://localhost:8080/opensaber/}
   rootEntity:
-    type: ${registry_rootentity_type:Teacher}
+        type: ${registry_rootentity_type:Teacher}
 
 # This property is to be used for search request/query
 # offset: search result starts from value provided as default
 # limits: search result to value provided as default
 search:
   offset: ${search_offset:0}
-  limit: ${search_limit:100}
+  limit: ${search_limit:2000}
   # The search mechanism to use. Values could be either NativeSearchService or ElasticSearchService
   #   If NativeSearchService, then every search API uses the same database as the writes. May
   # not offer high speed reads. This is the default search service, if this config is not provided.
@@ -96,14 +96,14 @@ database:
       #     ** Example - cassandra - jdbc:cassandra://localhost:9160/yourdb
       uri: ${connectionInfo_uri:jdbc:postgresql://localhost:5432/opensaberdb}
 
-      username: ${connectionInfo_username:aishwarya}
-      password: ${connectionInfo_password:aishu@123}
+      username: ${connectionInfo_username:postgres}
+      password: ${connectionInfo_password:opensaberdb}
 
       # Any other shard information follows...
-      #-
+    #-
       #shardId: shard2
       #shardLabel: 2
-      #uri: ${connectionInfo_uri:bolt://localhost:7688
+      #uri: ${connectionInfo_uri:bolt://localhost:7688}
       #username: ${connectionInfo_username:neo4j}
       #password: ${connectionInfo_password:}
 
@@ -111,16 +111,16 @@ database:
 # Uncomment the following section to use Cassandra as backend store              #
 ##################################################################################
 cassandra:
-  graphFactory: org.janusgraph.core.JanusGraphFactory
-  backend: "cql"
-  hostname: ${cassandra_host:localhost}
-  keyspace: ${cassandra_keyspace:registry_db}
-  db.cache.size: ${cassandra_db_cache_size:0.25}
-  # wait time in milliseconds to clean the cache
-  db.cache.clean.wait: ${cassandra_db_cache_clean_wait:60}
-  index:
-    storage.backend: ${cassandr_index_storage:elasticsearch}
-    hostname: ${cassandra_index_hostname:localhost}
+    graphFactory: org.janusgraph.core.JanusGraphFactory
+    backend: "cql"
+    hostname: ${cassandra_host:localhost}
+    keyspace: ${cassandra_keyspace:registry_db}
+    db.cache.size: ${cassandra_db_cache_size:0.25}
+    # wait time in milliseconds to clean the cache
+    db.cache.clean.wait: ${cassandra_db_cache_clean_wait:60}
+    index:
+      storage.backend: ${cassandr_index_storage:elasticsearch}
+      hostname: ${cassandra_index_hostname:localhost}
 
 # File for framing the entity while reading
 frame:
@@ -149,16 +149,27 @@ signature:
     config:
       name: SignatureShape
 
-    #audit:
-    #enabled: ${audit_enabled:false}
-    #frame:
-    #file: ${audit_frame_file:audit_frame.json}
+# This audit configuration will enable audit logging in the system, use audit_frame.json to create a schema for database /elastic storage.
+#  data_store can have following values
+#   * FILE     : Store the audit log in files.
+#   * DATABASE : Store the audit log in primary database configured in database properties.
+#   * ELASTIC  : Store the audit log in elastic search configured in elastic properties. 
+#  Note : Database Stores the created audit schema in audit_schema folder.
+audit:
+   enabled: ${audit_enabled:false}
+   frame:             
+     store: ${audit_frame_store:DATABASE}
+     suffix: ${audit_suffix:Audit}
+     suffixSeparator: ${audit_suffixSeparator:_}
 
 authentication:
-  enabled: ${authentication_enabled:true}
-  publicKey:  ${authentication_publickey:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqe1lVD9jnQWQce62e2Q44tACqBIt5UZyGzCegxax2gddj4xotY5BDxaxuJRGKDLRpm8lPNHxX8dce8SUVAMBfk85rL+Bxv1mjspKo7Q5qsFm9TGcvE4e/4xhgpMjw6dCFt8+S87jvRjmDHjakGMooOls1kjppQiklSEZ0lW3Crqet4RNjb1FNJ+2Jg26frm8i2cpb2wRnmLDuQ9sAnHCxAD2rGxSGLXhKABptbMeTVx25eh+PVISjc78uOhAnMwOHKApVBGnVCfcUoVYqfkX8XcPQU9ybmAi27vp9xZqMfh6I56Tl4fsWYBgf8ZMl0UWyRR3PNmo/0kxon1d3zqFnwIDAQAB}
-  realm:  ${authentication_realm:PartnerRegistry}
-  url:  ${authentication_url:http://localhost:8443/auth/}
+  enabled: ${authentication_enabled:false}
+
+keycloak:
+  sso:
+    publicKey:  ${sunbird_sso_publickey}
+    realm:  ${sunbird_sso_realm}
+    auth_server_url:  ${sunbird_sso_url}
 
 validation:
   enabled: ${validation_enabled:true}
@@ -209,7 +220,7 @@ auditTaskExecutor:
 elastic:
   search:
     # elastic-search can be enable and disable through this flag
-    enabled: ${elastic_search_enabled:true}
+    enabled: ${elastic_search_enabled:false}
     # elastic-search connection info
     connection_url: ${elastic_search_connection_url:localhost:9200}
 
@@ -248,7 +259,7 @@ database:
 
   # Providers available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
   # NOTE: Values given against 'shardId' must be unique
-  provider: ${database_provider:NEO4J}
+  provider: ${database_provider:SQLG}
 
   # Choose "none" as the propertyName if you don't want any shards. Otherwise
   # implement IShardAdvisor interface in your own ways. An example, SerialNumShardAdvisor
@@ -263,7 +274,7 @@ frame:
   file: frame.json
 
 encryption:
-  enabled: true
+  enabled: false
   base: https://dev.sunbirded.org/encryption/
   uri: https://dev.sunbirded.org/encryption/encrypt
   batch:
@@ -275,7 +286,7 @@ decryption:
     uri: https://dev.sunbirded.org/encryption/decrypt/obj
 
 signature:
-  enabled: ${signature_enabled:true}
+  enabled: ${signature_enabled:false}
   healthCheckURL: ${sign_health_check_url:https://dev.sunbirded.org/encryption/}
   signURL: ${sign_url:https://dev.sunbirded.org/encryption/sign}
   verifyURL: ${verify_url:https://dev.sunbirded.org/encryption/verify}
@@ -291,7 +302,7 @@ audit:
     file: audit_frame.json
 
 authentication:
-  enabled: true
+  enabled: false
 
 keycloak:
   sso:

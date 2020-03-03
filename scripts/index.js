@@ -17,7 +17,7 @@ var invoke_add = function (nIter, payload, callback) {
     var url = baseUrl + "/" + addSuffix
     var headerVars = {
         "Content-Type": "application/json",
-        "Authorization": "Bearer ",
+        // "Authorization": "Bearer ",
         "x-authenticated-user-token": ""
     }
 
@@ -282,7 +282,7 @@ var dataEntities = {}
 
 function populateData(cb) {
     var data_tasks = [];
-    var dataCSV = csvToJson('EkStepStaffingSheet.csv')
+    var dataCSV = csvToJson('data_ek.csv')
     populate_add_tasks(data_tasks, entityType, addApiPayload, dataCSV)
     console.log("Total number of data records = " + data_tasks.length)
     execute_tasks(data_tasks, "data.json", cb)

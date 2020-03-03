@@ -62,7 +62,7 @@ const createUser = (req, callback) => {
 
     //Add to keycloak if user is active
 
-        tasks.push(function (token, callback) {
+    tasks.push(function (token, callback) {
           
             req.headers['authorization'] = token;
             if(req.body.request[entityType].isActive){
@@ -74,6 +74,9 @@ const createUser = (req, callback) => {
                         headers: req.headers
                     }
                     keycloakHelper.registerUserToKeycloak(keycloakUserReq, callback)
+            }else{
+                callback(null, null)
+
             }
                 
         })

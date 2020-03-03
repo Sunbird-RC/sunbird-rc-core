@@ -32,7 +32,7 @@ const workFlowFunctionPost = (req, res) => {
 
 app.use((req, res, next) => {
     logger.info('pre api request interceptor');
-    workFlowFunctionPre(req);
+    // workFlowFunctionPre(req);
     next();
 });
 
@@ -45,7 +45,7 @@ app.use(interceptor(function (req, res) {
             send(body)
         },
         afterSend(oldResBody, newResBody) {
-            workFlowFunctionPost(req, newResBody)
+            // workFlowFunctionPost(req, newResBody)
         }
     }
 }));
