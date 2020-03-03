@@ -33,9 +33,11 @@
         <div class="ui basic grey button">
           {{resourceService?.frmelmnts?.btn?.decline}}</div>
       </div>
-      <div *ngIf="data?.isOnboarded">
+      <div class="ui two buttons" *ngIf="data?.isOnboarded">
         <div class="ui basic blue button" (click)="onAction(data,{View: true})">
           {{resourceService?.frmelmnts?.btn?.viewProfile}}</div>
+        <div class="ui basic grey button" (click)="deBoardConfirmModal(data?.identifier); $event.stopPropagation()">
+          {{resourceService?.frmelmnts?.btn?.Deboard}}</div>
       </div>
     </div>
     <div *ngIf="enableViewProfile">
@@ -46,7 +48,7 @@
 </div>
 
 <ng-template let-context let-modal="modal" #modalTemplate>
-  <div class="header"> {{resourceService?.frmelmnts?.btn?.approve}}</div>
+  <div class="header"> {{modalHeader}}</div>
   <div class="content">
     <p>{{ context.data }}</p>
   </div>

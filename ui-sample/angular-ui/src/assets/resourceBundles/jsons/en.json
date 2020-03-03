@@ -25,7 +25,8 @@
                 "viewProfile": "View Profile",
                 "search": "User Directory",
                 "yes": "Yes",
-                "viewHistory": "View History"
+                "viewHistory": "View History",
+                "Deboard":"Deboard"
             },
             "label": {
                 "filters": "Filters",
@@ -42,7 +43,9 @@
                 "OnboardUnSuccess": "Onboarding failed",
                 "errorMsg": "Error retrieving data please try again later",
                 "updateFailure": "Profile updation failed please try again later",
-                "updateSuccess":"Updated Successfully"
+                "updateSuccess":"Updated Successfully",
+                "deBoardSuccess":"Deboarded Successfully",
+                "deBoardFailure":"Deboarding failed"
             }
         }
     }
