@@ -28,7 +28,7 @@ export class UpdateComponent implements OnInit {
   activatedRoute: ActivatedRoute;
   userService: UserService;
   public showLoader = true;
-  viewOwnerProfile: string;
+  viewProfileRole: string;
   categories: any = {};
   sections = []
   formInputData = {}
@@ -48,7 +48,7 @@ export class UpdateComponent implements OnInit {
   ngOnInit() {
     this.activatedRoute.params.subscribe((params) => {
       this.userId = params.userId;
-      this.viewOwnerProfile = params.role;
+      this.viewProfileRole = params.role;
     });
     this.userToken = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
     if (_.isEmpty(this.userToken )) {
@@ -81,8 +81,8 @@ export class UpdateComponent implements OnInit {
 
   getFormTemplate() {
     var requestData = {};
-    if (this.viewOwnerProfile === 'owner') {
-      requestData = { url: appConfig.URLS.OWNER_FORM_TEMPLATE }
+    if (this.viewProfileRole === 'owner') {
+      requestData = { url: appConfig.URLS.OWNER_FORM_TEMPLATE + "/" + this.viewProfileRole }
     } else {
       requestData = {
         url: appConfig.URLS.FORM_TEPLATE,
@@ -149,8 +149,8 @@ export class UpdateComponent implements OnInit {
   }
 
   navigateToProfilePage() {
-    if(this.viewOwnerProfile) {
-      this.router.navigate(['/profile', this.userId, this.viewOwnerProfile]);
+    if (this.viewProfileRole) {
+      this.router.navigate(['/profile', this.userId, this.viewProfileRole]);
     }
     else {
       this.router.navigate(['/profile', this.userId]);

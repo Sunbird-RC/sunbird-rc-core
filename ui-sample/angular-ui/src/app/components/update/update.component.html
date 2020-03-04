@@ -20,8 +20,11 @@
       </div>
     </div>
     <div class="buttons flex-jc-center">
-      <button class="sb-btn sb-btn-normal primary" (click)="validate()">
+      <button class="ui button primary" (click)="validate()">
         {{resourceService?.frmelmnts?.btn?.update}} </button>
+      <button class="ui grey basic button" (click)="navigateToProfilePage()">
+        {{resourceService?.frmelmnts?.btn?.cancel}}
+      </button>
     </div>
   </div>
 </div>
