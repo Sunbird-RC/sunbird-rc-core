@@ -10,6 +10,8 @@ const RegistryService = require('./sdk/RegistryService')
 const CacheManager = require('./sdk/CacheManager.js');
 const logger = require('./sdk/log4j');
 const vars = require('./sdk/vars').getAllVars(process.env.NODE_ENV);
+const dateFormat = require('dateformat');
+const _ = require('lodash');
 
 var cacheManager = new CacheManager();
 var registryService = new RegistryService();
@@ -45,7 +47,79 @@ app.theApp.post("/register/users", (req, res, next) => {
         }
     });
 });
-
+app.theApp.post("/offboard/user", (req, res, next) => {
+    offBoardUser(req, function (err, data) {
+        if (err) {
+            return res.send({
+                status: 'UNSUCCESSFUL',
+                errMsg: err.message
+            })
+        } else {
+            return res.send(data);
+        }
+    });
+});
+/**
+ * deletes user in keycloak and update record as inactive to the registry
+ * @param {*} req 
+ * @param {*} callback 
+ */
+const offBoardUser = (req, callback) => {
+    async.waterfall([
+        function (callback) {
+            //if auth token is not given , this function is used get access token
+            getTokenDetails(req, callback);
+        },
+        // To get the entity record from registry with osid
+        function (token, callback) {
+            req.headers['authorization'] = token;
+            var readRequest = {
+                body: JSON.parse(JSON.stringify(req.body)),
+                headers: req.headers
+            }
+            readRequest.body["id"] = "open-saber.registry.read";
+            registryService.readRecord(readRequest, (err, data) => {
+                if (data) {
+                    callback(null, token, data.result)
+                } else if (err) {
+                    callback(new Error(err.message))
+                }
+            })
+        },
+        // To get the keycloak id by passing user email id
+        function (token, result, callback) {
+            keycloakHelper.getUserByEmailId(result[entityType].emailId, token, (err, data) => {
+                if (data && data.body.length > 0) {
+                    req.params.keyCloakId = data.body[0].id
+                    callback(null, token)
+                } else {
+                    callback(new Error("Unable to get userdetails from keycloak"))
+                }
+            })
+        },
+        // To update 'x-owner' role to the user
+        function (token, callback2) {
+            updateKeycloakUserRoles(token, req, (err, data) => {
+                if (data) {
+                    callback2(null, data)
+                } else if (err) {
+                    callback(new Error("Unable to update Keycloak User Roles"))
+                }
+            })
+        },
+        //To inactivate user in registry
+        function (res, callback3) {
+            offBoardUserFromRegistry(req, res, callback3)
+        }
+    ], function (err, result) {
+        logger.info('Main Callback --> ' + result);
+        if (err) {
+            callback(err)
+        } else {
+            callback(null, result);
+        }
+    });
+}
 /**
  * creates user in keycloak and add record to the registry
  * first gets the bearer token needed to create user in keycloak and registry
@@ -151,7 +225,88 @@ const addRecordToRegistry = (req, res, callback) => {
         callback(res, null)
     }
 }
+/**
+ * update record to the registry
+ * @param {objecr} req 
+ * @param {*} res 
+ * @param {*} callback 
+ */
+const offBoardUserFromRegistry = (req, res, callback) => {
+    if (res.statusCode == 204) {
+        req.body.request[entityType]['isActive'] = false;
+        req.body.request[entityType]['endDate'] = dateFormat(new Date(), "yyyy-mm-dd")
+        registryService.updateRecord(req, function (err, res) {
+            if (res) {
+                logger.info("record successfully update to registry")
+                callback(null, res)
 
+            } else {
+                callback(err)
+            }
+        })
+    }
+}
+
+/**
+ * get roles from keycloak 
+ * add x-owner role to keycloak user
+ * delete other roles from keycloak user except default roles
+ * @param {objecr} req 
+ * @param {*} res 
+ * @param {*} callback 
+ */
+const updateKeycloakUserRoles = (token, req, callback) => {
+    async.waterfall([
+        //To get all roles with ids from keycloak
+        function (callback) {
+            keycloakHelper.getRolesByRealm(token, (err, roles) => {
+                if (roles) {
+                    callback(null, token, roles)
+                } else {
+                    callback(new Error("Unable to get Keycloak Roles fom realm"))
+                }
+            })
+        },
+        //To add 'x-owner' role to keycloak user
+        function (token, roles, callback2) {
+            var addRoleDetails = _.filter(roles, { name: 'x-owner' })
+            req.headers['authorization'] = token;
+            var keycloakUserReq = {
+                headers: req.headers,
+                body: addRoleDetails
+            }
+            keycloakHelper.addUserRoleById(req.params.keyCloakId, keycloakUserReq, (err, res) => {
+                if (res && res.statusCode == 204) {
+                    callback2(null, roles)
+                } else {
+                    callback(new Error("Unable to add 'x-owner' to keycloak Id"), null)
+                }
+            })
+        },
+        //To remove all roles from keycloak user except default roles
+        function (roles, callback) {
+            var deleteRoleDetails = _.pullAllBy(roles, [{ 'name': 'x-owner' }, { 'name': 'uma_authorization' }, { 'name': 'offline_access' }], 'name');
+            var keycloakUserReq = {
+                headers: req.headers,
+                body: deleteRoleDetails
+            }
+            keycloakHelper.deleteUserRoleById(req.params.keyCloakId, keycloakUserReq, (err, res) => {
+                if (res && res.statusCode == 204) {
+                    callback(null, res)
+                } else {
+                    callback(new Error("Unable to delete roles from keycloak Id"))
+                }
+            })
+        }
+    ], function (err, result) {
+        logger.info('updateKeycloakUserRoles callback --> ' + result);
+        if (err) {
+            callback(err)
+        } else {
+            callback(null, result);
+        }
+    });
+}
 // Init the workflow engine with your own custom functions.
 const wfEngine = WFEngineFactory.getEngine(engineConfig, classesMapping['EPRFunction'])
 wfEngine.init()

@@ -119,7 +119,163 @@ class KeycloakHelper {
 
         }
     }
+    getUserByEmailId(emailId, token, callback) {
+        var headers = {
+            'content-type': 'application/json',
+            authorization: token
+        }
+        try {
+            const options = {
+                method: 'GET',
+                url: this.keyCloakHost + "/auth/admin/realms/" + this.realmName + '/users?email=' + emailId,
+                json: true,
+                headers: headers
+            }
+            httpUtil.get(options, function (err, res, body) {
+                if (res.body) {
+                    callback(null, res)
+                } else {
+                    callback(err)
+                }
+            });
+        } catch (err) {
 
+        }
+    }
+
+    deleteUserById(req, callback) {
+        
+        var headers = {
+            'content-type': 'application/json',
+            authorization: req.headers['authorization']
+        }
+        try {
+            const options = {
+                method: 'DELETE',
+                url: this.keyCloakHost + "/auth/admin/realms/" + this.realmName + '/users/' + req.body.request.keyCloakId,
+                json: true,
+                headers: headers
+            }
+            httpUtil.deletes(options, function (err, res, body) {
+                if (res) {
+                    callback(null, res)
+                } else {
+                    callback(err)
+                }
+            });
+        } catch (err) {
+
+        }
+    }
+
+    disableUserById(req, callback) {
+        
+        var headers = {
+            'content-type': 'application/json',
+            authorization: req.headers['authorization']
+        }
+        try {
+            const options = {
+                method: 'PUT',
+                url: this.keyCloakHost + "/auth/admin/realms/" + this.realmName + '/users/' + req.body.request.keyCloakId,
+                json: true,
+                headers: headers,
+                body: {
+                    enabled: false,
+                }
+            }
+            httpUtil.put(options, function (err, res, body) {
+                if (res) {
+                    callback(null, res)
+                } else {
+                    callback(err)
+                }
+            });
+        } catch (err) {
+
+        }
+    }
+
+    addUserRoleById(keyCloackUserId, req, callback) {
+        
+        var headers = {
+            'content-type': 'application/json',
+            authorization: req.headers['authorization']
+        }
+        try {
+            const options = {
+                method: 'POST',
+                url: this.keyCloakHost + "/auth/admin/realms/" + this.realmName + '/users/' + keyCloackUserId+'/role-mappings/realm',
+                json: true,
+                headers: headers,
+                body: req.body
+            }
+            httpUtil.post(options, function (err, res, body) {
+                if (res) {
+                    callback(null, res)
+                } else {
+                    callback(err)
+                }
+            });
+        } catch (err) {
+
+        }
+    }
+
+    deleteUserRoleById(keyCloackUserId, req, callback) {
+        
+        var headers = {
+            'content-type': 'application/json',
+            authorization: req.headers['authorization']
+        }
+        try {
+            const options = {
+                method: 'DELETE',
+                url: this.keyCloakHost + "/auth/admin/realms/" + this.realmName + '/users/' + keyCloackUserId+'/role-mappings/realm',
+                json: true,
+                headers: headers,
+                body: req.body
+            }
+            httpUtil.deletes(options, function (err, res, body) {
+                if (res) {
+                    callback(null, res)
+                } else {
+                    callback(err)
+                }
+            });
+        } catch (err) {
+
+        }
+    }
+
+    /**
+     * @param {*} token authorization token 
+     * @param {*} callback 
+     */
+    getRolesByRealm(token, callback) {
+        var headers = {
+            'content-type': 'application/json',
+            authorization: token
+        }
+        try {
+            const options = {
+                method: 'GET',
+                url: this.keyCloakHost + "/auth/admin/realms/" + this.realmName + '/roles',
+                json: true,
+                headers: headers
+            }
+            httpUtil.get(options, function (err, res) {
+                if (res) {
+                    callback(null, res.body)
+                } else {
+                    callback(err)
+                }
+            });
+        } catch (err) {
+
+        }
+    }
+    
 }
 
 module.exports = KeycloakHelper;
