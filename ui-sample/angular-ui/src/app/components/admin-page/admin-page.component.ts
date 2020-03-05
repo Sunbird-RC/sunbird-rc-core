@@ -191,8 +191,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
         request: {
           entityType: ["Employee"],
           filters: {
-          },
-          viewTemplateId: "Employee_SearchResult.json"
+          }
         }
       }
     }

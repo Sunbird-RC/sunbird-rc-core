@@ -31,6 +31,28 @@ const get = (option, callback) => {
     });
 }
 
+const deletes = (option, callback) => {
+    request.delete(option, function (err, res) {
+        if (res) {
+            callback(null, res)
+        }
+        else {
+            callback(err, null);
+        }
+    });
+}
+
+const put = (option, callback) => {
+    request.put(option, function (err, res) {
+        if (res) {
+            callback(null, res)
+        }
+        else {
+            callback(err, null);
+        }
+    });
+}
+
 const getDefaultHeaders = (otherHeaders) => {
     let headers = {
         'content-type': 'application/json',
@@ -41,3 +63,5 @@ const getDefaultHeaders = (otherHeaders) => {
 
 exports.post = post
 exports.get = get
+exports.deletes = deletes
+exports.put = put

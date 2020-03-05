@@ -125,8 +125,8 @@ app.get("/formTemplates", (req, res, next) => {
     })
 });
 
-app.get("/owner/formTemplate", (req, res, next) => {
-    readFormTemplate(templateConfig.formTemplates.owner, function (err, data) {
+app.get("/formTemplate/:role", (req, res, next) => {
+    readFormTemplate(templateConfig.formTemplates[req.params.role], function (err, data) {
         if (err) {
             res.statusCode = 404;
             return res.send(err);

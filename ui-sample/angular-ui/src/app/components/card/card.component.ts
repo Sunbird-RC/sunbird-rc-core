@@ -30,6 +30,7 @@ export class CardComponent implements OnInit {
   router: Router;
   public dataService: DataService;
   userService: UserService;
+  modalHeader = ""
 
   constructor(resourceService: ResourceService, permissionService: PermissionService, public modalService: SuiModalService, route: Router,
     dataService: DataService, public toasterService: ToasterService, userService: UserService, public cacheService: CacheService) {
@@ -56,6 +57,7 @@ export class CardComponent implements OnInit {
     this.clickEvent.emit({ 'action': event, 'data': data });
   }
   approveConfirmModal(userId) {
+    this.modalHeader = "Approve"
     const config = new TemplateModalConfig<{ data: string }, string, string>(this.modalTemplate);
     config.isClosable = true;
     config.size = 'mini';
@@ -73,6 +75,55 @@ export class CardComponent implements OnInit {
         }
       });
   }
+
+  deBoardConfirmModal(userId) {
+    this.modalHeader = "Deboard"
+    const config = new TemplateModalConfig<{ data: string }, string, string>(this.modalTemplate);
+    config.isClosable = true;
+    config.size = 'mini';
+    config.context = {
+      data: 'Do you want to Deboard before viewing the profile?'
+    };
+    this.modalService
+      .open(config)
+      .onApprove(result => {
+        this.offBoard(userId);
+      })
+      .onDeny(result => {
+        if (result === 'view') {
+          this.router.navigate(['/profile', userId]);
+        }
+      });
+  }
+
+  offBoard(userId) {
+    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+    if (_.isEmpty(token)) {
+      token = this.userService.getUserToken;
+    }
+    const requestData = {
+      header: { Authorization: token },
+      data: {
+        id: appConfig.API_ID.UPDATE,
+        request: {
+          Employee: {
+            osid: userId
+          }
+        }
+      },
+      url: "/offboard/user"
+    };
+    this.dataService.post(requestData).subscribe(response => {
+      if (response.params.status === "SUCCESSFUL") {
+        this.toasterService.success(this.data.name + " " + this.resourceService.frmelmnts.msg.deBoardSuccess);
+        this.router.navigate(['/search']);
+      }
+    }, err => {
+      this.toasterService.error(this.data.name + " " + this.resourceService.frmelmnts.msg.deBoardFailure);
+    });
+  }
+
+
   approve(userId) {
     let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
     if (_.isEmpty(token)) {

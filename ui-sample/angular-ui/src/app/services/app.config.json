@@ -22,7 +22,8 @@
             "partner-admin",
             "reporter",
             "owner",
-            "fin-admin"
+            "fin-admin",
+            "x-owner"
         ],
         "onboardEmployee": [
             "admin",
@@ -55,7 +56,8 @@
         "AUDIT": "/registry/audit",
         "REGISTER": "/register/users",
         "FORM_TEPLATE": "/formtemplates",
-        "OWNER_FORM_TEMPLATE":"/owner/formTemplate"
+        "OWNER_FORM_TEMPLATE":"/formTemplate",
+        "OFFBOARD":"/offboard/user"
     },
     "API_ID": {
         "CREATE": "open-saber.registry.create",

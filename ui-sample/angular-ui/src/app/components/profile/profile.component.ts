@@ -27,7 +27,7 @@ export class ProfileComponent implements OnInit {
   userService: UserService;
   public formFieldProperties: any;
   public showLoader = true;
-  public viewOwnerProfile: string;
+  public viewProfileRole: string;
   public editProfile: Array<string>;
   enable: boolean = false;
   categories: any = {};
@@ -49,9 +49,9 @@ export class ProfileComponent implements OnInit {
     this.editProfile = appConfig.rolesMapping.editProfileRole;
     this.activatedRoute.params.subscribe((params) => {
       this.userId = params.userId;
-      this.viewOwnerProfile = params.role
+      this.viewProfileRole = params.role
     });
-    if (_.isEmpty(this.viewOwnerProfile) && this.viewOwnerProfile == undefined) {
+    if (_.isEmpty(this.viewProfileRole) && this.viewProfileRole == undefined) {
       this.enable = true;
     }
     this.getFormTemplate();
@@ -60,9 +60,9 @@ export class ProfileComponent implements OnInit {
 
   getFormTemplate() {
     var requestData = {}
-    if (this.viewOwnerProfile === 'owner') {
+    if (this.viewProfileRole) {
       requestData = {
-        url: appConfig.URLS.OWNER_FORM_TEMPLATE
+        url: appConfig.URLS.OWNER_FORM_TEMPLATE + "/" + this.viewProfileRole
       }
     } else {
       let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
@@ -107,8 +107,8 @@ export class ProfileComponent implements OnInit {
     });
   }
   navigateToEditPage() {
-    if (this.viewOwnerProfile) {
-      this.router.navigate(['/edit', this.userId, this.viewOwnerProfile]);
+    if (this.viewProfileRole) {
+      this.router.navigate(['/edit', this.userId, this.viewProfileRole]);
     } else {
       this.router.navigate(['/edit', this.userId]);
     }
