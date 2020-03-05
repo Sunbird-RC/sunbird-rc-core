@@ -2,7 +2,7 @@ const config = {
     "dev": {
         "utilServicePort":process.env.util_service_port || 9081,
         "keycloak": {
-            "url": process.env.keycloak_url || "http://localhost:8081", 
+            "url": process.env.keycloak_url || "http://localhost:8443", 
             "realmName": process.env.keycloak_realmName || "PartnerRegistry",
             "clientId": "utils",
             "clientSecret": process.env.keycloak_clientSecret || "fd637035-cfbd-48de-8fac-073e7e6614b2"
@@ -15,7 +15,7 @@ const config = {
         },
         "notificationUrl": process.env.notificationUrl || "http://localhost:9012",
         "appUrl": process.env.appUrl || "http://localhost:9082",
-        "registryUrl": process.env.registry_url || "http://localhost:8080",
+        "registryUrl": process.env.registry_url || "http://localhost:9080",
         "nerUtilServiceUrl": process.env.ner_utilservice_url || "http://localhost:9181"
     },
     "prod": {
