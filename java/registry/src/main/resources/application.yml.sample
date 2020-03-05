@@ -14,7 +14,7 @@ enviroment: development
 
 server:
   # Change this port number if you want to run it on another.
-  port: ${server_port:8080}
+  port: ${server_port:9080}
 
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
@@ -274,7 +274,7 @@ frame:
   file: frame.json
 
 encryption:
-  enabled: false
+  enabled: true
   base: https://dev.sunbirded.org/encryption/
   uri: https://dev.sunbirded.org/encryption/encrypt
   batch:
@@ -286,7 +286,7 @@ decryption:
     uri: https://dev.sunbirded.org/encryption/decrypt/obj
 
 signature:
-  enabled: ${signature_enabled:false}
+  enabled: ${signature_enabled:true}
   healthCheckURL: ${sign_health_check_url:https://dev.sunbirded.org/encryption/}
   signURL: ${sign_url:https://dev.sunbirded.org/encryption/sign}
   verifyURL: ${verify_url:https://dev.sunbirded.org/encryption/verify}
@@ -297,12 +297,17 @@ signature:
       name: SignatureShape
 
 audit:
-  enabled: false
+  enabled: ${audit_enabled:false}
   frame:
-    file: audit_frame.json
-
+    store: ${audit_frame_store:DATABASE}
+    suffix: ${audit_suffix:Audit}
+    suffixSeparator: ${audit_suffixSeparator:_}
+      
 authentication:
-  enabled: false
+  enabled: ${authentication_enabled:true}
+  publicKey:  ${authentication_publickey:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqe1lVD9jnQWQce62e2Q44tACqBIt5UZyGzCegxax2gddj4xotY5BDxaxuJRGKDLRpm8lPNHxX8dce8SUVAMBfk85rL+Bxv1mjspKo7Q5qsFm9TGcvE4e/4xhgpMjw6dCFt8+S87jvRjmDHjakGMooOls1kjppQiklSEZ0lW3Crqet4RNjb1FNJ+2Jg26frm8i2cpb2wRnmLDuQ9sAnHCxAD2rGxSGLXhKABptbMeTVx25eh+PVISjc78uOhAnMwOHKApVBGnVCfcUoVYqfkX8XcPQU9ybmAi27vp9xZqMfh6I56Tl4fsWYBgf8ZMl0UWyRR3PNmo/0kxon1d3zqFnwIDAQAB}
+  realm:  ${authentication_realm:PartnerRegistry}
+  url:  ${authentication_url:http://localhost:8443/auth/}
 
 keycloak:
   sso:
