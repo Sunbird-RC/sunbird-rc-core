@@ -29,6 +29,10 @@
             "admin",
             "partner-admin"
         ],
+        "downLoadCsv":[
+            "admin",
+            "partner-admin"
+        ],
         "editProfileRole": [
             "admin",
             "partner-admin"

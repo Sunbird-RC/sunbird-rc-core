@@ -23,6 +23,8 @@
           [popupPlacement]="'bottom right'">
           <i class="icon {{buttonIcon}}"></i>
         </div>
+        <a  class="ui button primary end"  *ngIf='permissionService.permissionAvailable' appPermission
+        [permission]="downloadRole" (click)="downloadFile()"  [ngClass]="{'loading' : loader}">Download CSV</a>
       </div>
     </div>
     <div class="row">

@@ -10,6 +10,8 @@ import appConfig from '../../services/app.config.json';
 import { UserService } from 'src/app/services/user/user.service';
 import { CacheService } from 'ng2-cache-service';
 import { ToasterService } from 'src/app/services/toaster/toaster.service';
+import { DownloadCSVFileService } from 'src/app/services/download/download-csvfile.service';
+import { PermissionService } from 'src/app/services/permission/permission.service';
 
 @Component({
   selector: 'app-admin-page',
@@ -44,18 +46,25 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   public buttonText: string = 'list view'
   result: { "headers": string; "row": {}; };
   userService: UserService;
+  public permissionService: PermissionService;
+  downloadRole: Array<string>;
+  userToken = '';
+  loader = false;
 
   constructor(dataService: DataService, resourceService: ResourceService, route: Router, activatedRoute: ActivatedRoute,
-    userService: UserService, public cacheService: CacheService, public toasterService: ToasterService) {
+    userService: UserService, public cacheService: CacheService, public toasterService: ToasterService, public downloadCSVFileService: DownloadCSVFileService,
+    permissionService: PermissionService) {
     this.dataService = dataService;
     this.userService = userService;
     this.resourceService = resourceService;
     this.router = route;
     this.activatedRoute = activatedRoute;
     this.pageLimit = appConfig.PAGE_LIMIT
+    this.permissionService = permissionService;
   }
 
   ngOnInit() {
+    this.downloadRole = appConfig.rolesMapping.downLoadCsv;
     this.resetPaigination();
     this.result = {
       "headers": '',
@@ -179,13 +188,13 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   }
 
   private fetchEmployees(offset) {
-    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
-    if (_.isEmpty(token)) {
-      token = this.userService.getUserToken;
+    this.userToken = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+    if (_.isEmpty(this.userToken)) {
+      this.userToken = this.userService.getUserToken;
     }
     const option = {
       url: appConfig.URLS.SEARCH,
-      header: { Authorization: token },
+      header: { Authorization: this.userToken },
       data: {
         id: appConfig.API_ID.SEARCH,
         request: {
@@ -198,7 +207,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     let filters = _.pickBy(this.queryParams, (value: Array<string> | string) => value && value.length);
     filters = _.omit(filters, ['key', 'sort_by', 'sortType', 'appliedFilters']);
     option.data.request.filters = this.getFilterObject(filters);
-    if(!this.queryParams.key) {
+    if (!this.queryParams.key) {
       option.data.request['offset'] = offset;
       option.data.request['limit'] = this.paginationDetails.limit;
     }
@@ -262,4 +271,35 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
   }
+
+  //to dowload csv file
+  downloadFile() {
+    this.loader = true
+    const option = {
+      url: appConfig.URLS.SEARCH,
+      header: { Authorization: this.userToken },
+      data: {
+        id: appConfig.API_ID.SEARCH,
+        request: {
+          entityType: ["Employee"],
+          filters: {
+          }
+        }
+      }
+    }
+    let filters = _.pickBy(this.queryParams, (value: Array<string> | string) => value && value.length);
+    filters = _.omit(filters, ['key', 'sort_by', 'sortType', 'appliedFilters']);
+    option.data.request.filters = this.getFilterObject(filters);
+    this.dataService.post(option)
+      .subscribe(data => {
+        if (data.result.Employee && data.result.Employee.length > 0) {
+          this.loader = false;
+          return this.downloadCSVFileService.downloadCsvFile(data.result.Employee);
+        } else {
+          this.loader = false;
+          return this.downloadCSVFileService.downloadCsvFile(data.result.Employee);
+        }
+      });
+  }
+
 }

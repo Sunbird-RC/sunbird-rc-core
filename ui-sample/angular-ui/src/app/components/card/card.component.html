@@ -36,12 +36,12 @@
       <div class="ui two buttons" *ngIf="data?.isOnboarded">
         <div class="ui basic blue button" (click)="onAction(data,{View: true})">
           {{resourceService?.frmelmnts?.btn?.viewProfile}}</div>
-        <div class="ui basic grey button" (click)="deBoardConfirmModal(data?.identifier); $event.stopPropagation()">
+        <div class="ui basic grey button" *ngIf="data?.isActive" (click)="deBoardConfirmModal(data?.identifier); $event.stopPropagation()">
           {{resourceService?.frmelmnts?.btn?.Deboard}}</div>
       </div>
     </div>
     <div *ngIf="enableViewProfile">
-      <div class="ui basic blue button" (click)="onAction(data,{View: true})">
+      <div class="ui basic fluid blue button" (click)="onAction(data,{View: true})">
         {{resourceService?.frmelmnts?.btn?.viewProfile}}</div>
     </div>
   </div>
