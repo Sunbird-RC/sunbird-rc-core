@@ -156,12 +156,13 @@ signature:
 #   * ELASTIC  : Store the audit log in elastic search configured in elastic properties. 
 #  Note : Database Stores the created audit schema in audit_schema folder.
 audit:
-   enabled: ${audit_enabled:false}
-   frame:             
-     store: ${audit_frame_store:DATABASE}
-     suffix: ${audit_suffix:Audit}
-     suffixSeparator: ${audit_suffixSeparator:_}
-
+  enabled: ${audit_enabled:false}
+  frame:
+    store: ${audit_frame_store:DATABASE}
+#   store: ${audit_frame_store:FILE}
+    suffix: ${audit_suffix:Audit}
+    suffixSeparator: ${audit_suffixSeparator:_}
+    
 authentication:
   enabled: ${authentication_enabled:false}
 

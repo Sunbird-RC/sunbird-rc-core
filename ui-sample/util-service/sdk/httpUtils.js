@@ -31,6 +31,7 @@ const get = (option, callback) => {
     });
 }
 
+//delete is a keyword, so using deletes
 const deletes = (option, callback) => {
     request.delete(option, function (err, res) {
         if (res) {

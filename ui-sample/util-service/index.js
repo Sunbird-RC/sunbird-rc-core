@@ -79,8 +79,10 @@ const offBoardUser = (req, callback) => {
             }
             readRequest.body["id"] = "open-saber.registry.read";
             registryService.readRecord(readRequest, (err, data) => {
-                if (data) {
+                if (data && data.params.status=='SUCCESSFUL') {
                     callback(null, token, data.result)
+                } else if (data && data.params.status=='UNSUCCESSFUL') {
+                    callback(new Error(data.params.errmsg))
                 } else if (err) {
                     callback(new Error(err.message))
                 }
@@ -88,7 +90,7 @@ const offBoardUser = (req, callback) => {
         },
         // To get the keycloak id by passing user email id
         function (token, result, callback) {
-            keycloakHelper.getUserByEmailId(result[entityType].emailId, token, (err, data) => {
+            keycloakHelper.getUserByEmailId(result[entityType].email, token, (err, data) => {
                 if (data && data.body.length > 0) {
                     req.params.keyCloakId = data.body[0].id
                     callback(null, token)
