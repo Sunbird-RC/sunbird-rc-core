@@ -106,6 +106,28 @@ class EPRFunctions extends Functions {
     }
 
     /**
+     * sends notification to Employee after successfully onboarding (seed/users)
+     * @param {*} callback 
+     */
+    sendNotificationForSuccessfullyOnboarding(callback) {
+        if(this.request.body.request[entityType].isActive) {
+            this.addToPlaceholders('subject', "Successfully Onboarded to EkStep")
+            this.addToPlaceholders('templateId', "onboardSuccessTemplate");
+            let tempParams = this.request.body.request[entityType];
+            tempParams['employeeName'] = this.request.body.request[entityType].name
+            tempParams['eprURL'] = vars.appUrl + "/profile/" + JSON.parse(this.response).result[entityType].osid
+            this.addToPlaceholders('templateParams', tempParams);
+            this.addToPlaceholders('emailIds', [this.request.body.request[entityType].email])
+            let actions = ['sendNotifications'];
+            this.invoke(actions, (err, data) => {
+                callback(null, data)
+            });
+        } else {
+            callback(null, "Not active user")
+        }
+    }
+
+    /**
      * sends notification to the Employee if employee succesfully onboarded to organization
      * @param {*} callback 
      */
@@ -116,6 +138,24 @@ class EPRFunctions extends Functions {
                         'getAdminUsers', 'sendNotifications', 
                         'getReporterUsers', 'sendNotifications',
                         'getFinAdminUsers', 'sendNotifications'];
+        this.invoke(actions, (err, data) => {
+            callback(null, data)
+        });
+    }
+
+    /**
+     * notify the user who are offboarded form the Ekstep 
+     * notify to admins, reporters, 
+     * @param {*} callback 
+     */
+    sendOffboardSuccessNotification(callback) {
+        this.addToPlaceholders('subject', "Successfully Offboarded")
+        this.addToPlaceholders('templateId', "offboardingSuccessEmployeeTemplate");
+        let actions = ['getRegistryUsersInfo',
+            'getAdminUsers', 'sendNotifications',
+            'getReporterUsers', 'sendNotifications',
+            'getFinAdminUsers', 'sendNotifications',
+        ];
         this.invoke(actions, (err, data) => {
             callback(null, data)
         });

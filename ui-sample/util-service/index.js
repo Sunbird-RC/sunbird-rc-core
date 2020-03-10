@@ -47,6 +47,19 @@ app.theApp.post("/register/users", (req, res, next) => {
         }
     });
 });
+
+//used to onboard all users
+app.theApp.post("/seed/users", (req, res, next) => {
+    createUser(req, function (err, data) {
+        if (err) {
+            res.statusCode = err.statusCode;
+            return res.send(err.body)
+        } else {
+            return res.send(data);
+        }
+    });
+});
+
 app.theApp.post("/offboard/user", (req, res, next) => {
     offBoardUser(req, function (err, data) {
         if (err) {
