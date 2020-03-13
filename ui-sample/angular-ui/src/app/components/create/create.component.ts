@@ -72,6 +72,7 @@ export class CreateComponent implements OnInit {
     } else {
       token = this.userService.getUserToken
     }
+    this.formData.formInputData['isActive'] = true;
     const requestData = {
       data: {
         id: appConfig.API_ID.CREATE,

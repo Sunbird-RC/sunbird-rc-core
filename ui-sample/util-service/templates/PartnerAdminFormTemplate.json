@@ -29,40 +29,6 @@
                 "index": 1
             },
             {
-                "code": "email",
-                "dataType": "text",
-                "name": "Email",
-                "label": "Email",
-                "description": "Email",
-                "editable": true,
-                "placeholder": "Email",
-                "inputType": "text",
-                "required": false,
-                "displayProperty": "Editable",
-                "visible": true,
-                "renderingHints": {
-                    "semanticColumnWidth": "four"
-                },
-                "index": 1
-            },
-            {
-                "code": "phone",
-                "dataType": "text",
-                "name": "Phone",
-                "label": "Phone",
-                "description": "Phone",
-                "editable": true,
-                "placeholder": "Phone",
-                "inputType": "text",
-                "required": false,
-                "displayProperty": "Editable",
-                "visible": true,
-                "renderingHints": {
-                    "semanticColumnWidth": "four"
-                },
-                "index": 1
-            },
-            {
                 "code": "orgName",
                 "dataType": "text",
                 "name": "orgName",

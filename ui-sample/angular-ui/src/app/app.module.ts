@@ -35,6 +35,8 @@ import { CacheSessionStorage } from 'ng2-cache-service/dist/src/services/storage
 import {TimeAgoPipe} from 'time-ago-pipe';
 import { Ng2IziToastModule } from 'ng2-izitoast';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { ActionComponent } from './components/action/action.component';
+import { ActionCardsComponent } from './components/action-cards/action-cards.component';
 
 let moduleOptions = {
   declarations: [
@@ -53,6 +55,8 @@ let moduleOptions = {
     PermissionDirective,
     DataFilterComponent,
     DashboardComponent,
+    ActionComponent,
+    ActionCardsComponent,
     TimeAgoPipe],
   imports: [
     BrowserModule,

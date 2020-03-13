@@ -48,6 +48,18 @@ app.theApp.post("/register/users", (req, res, next) => {
     });
 });
 
+// self registeration api
+app.theApp.post("/register/users/self", (req, res, next) => {
+    createUser(req, function (err, data) {
+        if (err) {
+            res.statusCode = err.statusCode;
+            return res.send(err.body)
+        } else {
+            return res.send(data);
+        }
+    });
+});
+
 //used to onboard all users
 app.theApp.post("/seed/users", (req, res, next) => {
     createUser(req, true, function (err, data) {

@@ -17,6 +17,13 @@
             "owner",
             "fin-admin"
         ],
+        "actionPageViewRole": [
+            "admin",
+            "partner-admin",
+            "reporter",
+            "owner",
+            "fin-admin"
+        ],
         "profilePageViewRole": [
             "admin",
             "partner-admin",
