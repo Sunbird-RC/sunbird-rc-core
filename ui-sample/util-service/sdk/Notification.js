@@ -1,6 +1,7 @@
 const httpUtil = require('./httpUtils.js');
 const vars = require('./vars').getAllVars(process.env.NODE_ENV)
 const notificationEndPoint = vars['notificationUrl'] + "/v1/notification/send/sync"
+const shouldSendNotification = vars['notificationShouldSend']
 const _ = require('lodash')
 const logger = require('./log4j.js');
 
@@ -58,15 +59,21 @@ class Notification {
             },
             body: reqBody,
         }
-        httpUtil.post(option, function (err, res) {
-            if (res) {
-                logger.info("notification has been sucessfully sent", res.body)
-                callback(null, res.body)
-            } else {
-                logger.error("sending notification is unsuccessfull", err)
-                callback(err)
-            }
-        });
+
+        if (shouldSendNotification) {
+            httpUtil.post(option, function (err, res) {
+                if (res) {
+                    logger.info("notification has been sucessfully sent", res.body)
+                    callback(null, res.body)
+                } else {
+                    logger.error("sending notification is unsuccessfull", err)
+                    callback(err)
+                }
+            });
+        } else {
+            logger.info("DRYRUN WARNING: Notifications not send to " + this.ids + " with subject " + this.subject)
+            callback(null, "done")
+        }
     }
 }
 

@@ -70,14 +70,14 @@ class KeycloakHelper {
         const options = {
             url: this.keyCloakHost + "/auth/admin/realms/" + this.realmName + "/users",
             headers: {
-                'content-type': 'application/json',
-                accept: 'application/json',
-                Authorization: req.headers.authorization
+                'Content-type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': req.headers.authorization
             },
             body: {
-                username: value.email,
+                username: value.name + Date.now(),
                 enabled: true,
-                emailVerified: false,
+                emailVerified: value.emailVerified,
                 firstName: value.name,
                 email: value.email,
                 requiredActions: [
@@ -92,6 +92,7 @@ class KeycloakHelper {
             }
         }
         httpUtil.post(options, function (err, res) {
+            console.log("This is the response from KC" + err + " : " + res)
             callback(null, res)
         });
     }

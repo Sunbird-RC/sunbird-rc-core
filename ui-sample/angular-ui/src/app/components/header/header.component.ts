@@ -105,7 +105,8 @@ export class HeaderComponent implements OnInit {
     this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.UserKeyCloakData, userDetails, { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });
     this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.UserAuthenticated, { status: true }, { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });
     if (this.userLogin) {
-      this.readUserDetails(this.keycloakAngular.getKeycloakInstance().profile.email, userDetails.realm_access.roles, userToken)
+      // The subject is the keycloak user id
+      this.readUserDetails(userDetails.sub, userDetails.realm_access.roles, userToken)
     }
 
   }
@@ -120,7 +121,7 @@ export class HeaderComponent implements OnInit {
     this.router.navigate(['/profile', this.userId, 'owner'])
   }
 
-  readUserDetails(data: String, roles, token) {
+  readUserDetails(userdata: String, roles, token) {
     const requestData = {
       header: { Authorization: token },
       data: {
@@ -128,7 +129,7 @@ export class HeaderComponent implements OnInit {
         request: {
           entityType: ["Employee"],
           filters: {
-            email: { eq: data }
+            kcid: { eq: userdata }
           }
         }
       },

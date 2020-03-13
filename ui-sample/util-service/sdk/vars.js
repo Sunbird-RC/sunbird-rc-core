@@ -16,7 +16,8 @@ const config = {
         "notificationUrl": process.env.notificationUrl || "http://localhost:9012",
         "appUrl": process.env.appUrl || "http://localhost:9082",
         "registryUrl": process.env.registry_url || "http://localhost:9080",
-        "nerUtilServiceUrl": process.env.ner_utilservice_url || "http://localhost:9181"
+        "nerUtilServiceUrl": process.env.ner_utilservice_url || "http://localhost:9181",
+        "notificationShouldSend": process.env.notification_send || false
     },
     "prod": {
         "keycloak": {
@@ -35,7 +36,8 @@ const config = {
         "notificationUrl": process.env.notificationUrl,
         "appUrl": process.env.appUrl,
         "registryUrl": process.env.registry_url,
-        "nerUtilServiceUrl": process.env.ner_utilservice_url
+        "nerUtilServiceUrl": process.env.ner_utilservice_url,
+        "notificationShouldSend": process.env.notification_send || false
     }
 }
 
@@ -43,6 +45,9 @@ const logger = require('./log4j')
 
 module.exports.getAllVars = function (envName) {
     var environment = envName
+
+    // FIXME: Dont think config based on env is needed anymore given all 
+    // vars can be picked up from env-vars.
     if (envName === undefined) {
         environment = 'dev'
     }
