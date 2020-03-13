@@ -35,6 +35,12 @@
                                                         [routerLink]="'/search'" tabindex="0">
                                                         {{resourceService?.frmelmnts?.btn?.search}}
                                                 </a>
+                                                <a class="item" [class.active]="router.isActive('/actions')"
+                                                        *ngIf='permissionService.permissionAvailable' appPermission
+                                                        [permission]="userDirectoryViewRole"
+                                                        [routerLink]="['/actions']" tabindex="0">
+                                                        {{resourceService?.frmelmnts?.btn?.Actions}}
+                                                </a>
                                                 <a class="item" [class.active]="router.isActive('create')"
                                                         *ngIf='permissionService.permissionAvailable' appPermission
                                                         [permission]="onBoardEmployee" [routerLink]="'/create'" tabindex="0">
@@ -86,6 +92,12 @@
                                                         [permission]="userDirectoryViewRole" (click)="showSideBar()"
                                                         [routerLink]="'/search'">
                                                         {{resourceService?.frmelmnts?.btn?.search}}
+                                                </a>
+                                                <a class="item" [class.active]="router.isActive('/actions')"
+                                                *ngIf='permissionService.permissionAvailable' appPermission
+                                                [permission]="userDirectoryViewRole"
+                                                [routerLink]="['/actions']" tabindex="0">
+                                                {{resourceService?.frmelmnts?.btn?.Actions}}
                                                 </a>
                                                 <a class="item" [class.active]="router.isActive('create')" (click)="showSideBar()"
                                                         *ngIf='permissionService.permissionAvailable' appPermission

@@ -64,6 +64,9 @@
     },
     {
       "name": "githubId"
+    },
+    {
+      "name": "manager"
     }
   ]
 }

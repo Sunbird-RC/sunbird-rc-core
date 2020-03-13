@@ -145,7 +145,34 @@ export class ProfileComponent implements OnInit {
       this.userInfo = JSON.stringify(response.result.Employee)
     }, (err => {
       console.log(err)
-    }))
+    }));
+  }
+
+  validate() {
+    let token = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserToken);
+    if (_.isEmpty(token)) {
+      token = this.userService.getUserToken;
+    }
+    const requestData = {
+      header: { Authorization: token },
+      data: {
+        id: appConfig.API_ID.UPDATE,
+        request: {
+          Employee: {
+            osid: this.userId,
+            isOnboarded: true,
+            isActive: true
+          }
+        }
+      },
+      url: appConfig.URLS.UPDATE
+    };
+    this.dataService.post(requestData).subscribe(response => {
+      if (response.params.status === "SUCCESSFUL") {
+        this.router.navigate(['/actions']);
+      }
+    }, err => {
+    });
   }
 }
 
