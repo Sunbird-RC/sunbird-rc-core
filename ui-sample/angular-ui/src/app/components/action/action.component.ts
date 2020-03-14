@@ -99,6 +99,7 @@ export class ActionComponent implements OnInit {
           Employee: {
             osid: userId
           },
+          viewTemplateId:"6245495a-4745-11ea-b77f-2e728ce88125.json",
           includeSignatures: true
         }
       },

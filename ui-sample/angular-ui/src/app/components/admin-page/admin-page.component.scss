@@ -11,23 +11,34 @@ tr th {
     top:25px;
 }
 
+.pb-0 {
+    padding-bottom: 0px !important;
+}
+
+.py-10 {
+    padding: 12px 16px;
+}
+
 .ui.icon.button {
     background: white;
     padding: 1px 4px 7px 7px;
     border: 1px solid rgba(34,36,38,.15);
-    .primary-search-icon {
-      font-size: 1.2em;  
-      color: black;     
-    }
 }
-.ui.small.input {
-    width: 370px !important;
+.ui.input input {
+    border-radius: 2rem;
+    width: 26rem;
     height: 3rem;
 }
+.ui.icon.input .search.icon {
+    cursor: pointer;
+}
+.ui.icon.input>i.icon:not(.link) {
+    pointer-events: visible;
+}
+
 ::ng-deep {
-    .ui.fluid.action.input.primary-search-input {
+    .ui.input input {
         height: 39px;
-        border: 1px solid grey;
         opacity: 1;
         border-radius: 5px;
     }    
@@ -35,7 +46,7 @@ tr th {
 
 @media only screen and (min-width: 767px) and (max-width:1023px){
     ::ng-deep {
-        .ui.fluid.action.input.primary-search-input {
+         .ui.input input {
             height: 39px;
         }    
     }
@@ -43,10 +54,22 @@ tr th {
         top: -1rem;
     }
 }
+
 @media not all and  (min-width: 635px) {
     .ui.cards {
       justify-content: center;
   }
+  .primary-search-input {
+    padding-bottom: 1rem;
+}
+  }
+@media not all and  (min-width: 390px) {
+    .ui.input input {
+       width: 20rem;
+    }
+    .primary-search-input {
+        padding-bottom: 1rem;
+    }
   }
 
 .mt-5 {
@@ -54,6 +77,9 @@ tr th {
 }
 .mr-1 {
     margin-right: 1rem;
+}
+.mt-1{
+    margin-top: 0.1rem;
 }
 .mb-1 {
     margin-bottom: 1rem;

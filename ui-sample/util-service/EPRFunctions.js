@@ -62,16 +62,23 @@ class EPRFunctions extends Functions {
     }
 
     /**
+     * to send notification to Employee after successfully onboarding (both for partner employees and ekstep employess)
      * to get the registry user mail id
      * @param {} callback 
      */
     getRegistryUsersMailId(callback) {
+        this.request.body.request['viewTemplateId'] = "6245495a-4745-11ea-b77f-2e728ce88125.json"
         let tempParams = {}
         this.getUserByid((err, data) => {
             if (data) {
                 tempParams = data.result[entityType];
                 tempParams['employeeName'] = data.result[entityType].name
                 tempParams['eprURL'] = vars.appUrl
+                if(tempParams.orgName == 'EkStep') {
+                    this.addToPlaceholders('templateId', "onboardSuccessTemplateEkstepEmployee");
+                } else {
+                    this.addToPlaceholders('templateId', "onboardSuccessTemplate");
+                }
                 this.addToPlaceholders('templateParams', tempParams)
                 this.addEmailToPlaceHolder([data.result[entityType]], callback);
             }
@@ -111,8 +118,12 @@ class EPRFunctions extends Functions {
      */
     sendNotificationForSuccessfullyOnboarding(callback) {
         if(this.request.body.request[entityType].isActive) {
+            if(this.request.body.request[entityType].orgName == 'EkStep') {
+                this.addToPlaceholders('templateId', "onboardSuccessTemplateEkstepEmployee");
+            } else {
+                this.addToPlaceholders('templateId', "onboardSuccessTemplate");
+            }
             this.addToPlaceholders('subject', "Successfully Onboarded to EkStep")
-            this.addToPlaceholders('templateId', "onboardSuccessTemplate");
             let tempParams = this.request.body.request[entityType];
             tempParams['employeeName'] = this.request.body.request[entityType].name
             tempParams['eprURL'] = vars.appUrl + "/profile/" + JSON.parse(this.response).result[entityType].osid
@@ -160,6 +171,44 @@ class EPRFunctions extends Functions {
             callback(null, data)
         });
     }
+
+    /**
+     * sends notification to manager to onBoard new Employee (self registeration)
+     * @param {*} callback 
+     */
+    sendNotificationForManager(callback) {
+        this.addToPlaceholders('subject', "[Action Required] Validate reportee " + this.request.body.request[entityType].name)
+        this.addToPlaceholders('templateId', "supervisorNotificationTemplate");
+        let tempParams = this.request.body.request[entityType];
+        tempParams['employeeName'] = this.request.body.request[entityType].name
+        tempParams['empRecord'] = vars.appUrl + "/actions"
+        this.addToPlaceholders('templateParams', tempParams);
+        this.addToPlaceholders('emailIds', [this.request.body.request[entityType].manager])
+        let actions = ['sendNotifications'];
+        this.invoke(actions, (err, data) => {
+            callback(null, data)
+        });
+    }
+
+
+    /**
+     * sends notification to self Registry user
+     * @param {*} callback 
+     */
+    sendNotificationToSelfRegisteredUser(callback) {
+        this.addToPlaceholders('subject', "Successfully Registered");
+        this.addToPlaceholders('templateId', "newEkStepUserNotificationTemplate");
+        let tempParams = this.request.body.request[entityType];
+        tempParams['employeeName'] = this.request.body.request[entityType].name
+        tempParams['eprURL'] = vars.appUrl
+        this.addToPlaceholders('templateParams', tempParams);
+        this.addToPlaceholders('emailIds', [this.request.body.request[entityType].email])
+        let actions = ['sendNotifications'];
+        this.invoke(actions, (err, data) => {
+            callback(null, data)
+        });
+    }
+
 
     /**
      * to get Employee deatils(from registry)
@@ -237,7 +286,6 @@ class EPRFunctions extends Functions {
                 //if isOnBoarded attribute is set to true, email is sent to Employee (as you are OnBoarded successfully to the Ekstep) and Admin (as new Employee onBoarded)
                 if (this.request.body.request[entityType][attribute]) {
                     actions = ['getRegistryUsersMailId', 'sendNotifications', 'sendOnboardSuccesNotification']
-                    this.addToPlaceholders('templateId', "onboardSuccessTemplate");
                     this.addToPlaceholders('subject', "Successfully Onboarded to EkStep");
                     this.invoke(actions, (err, data) => {
                         callback(null, data)

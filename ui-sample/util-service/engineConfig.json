@@ -38,6 +38,15 @@
         "postActions": [
             "sendNotificationForSuccessfullyOnboarding"
         ]
+    },
+    {
+        "url":"/register/users/self",
+        "method":"post",
+        "preActions":[],
+        "postActions":[
+            "sendNotificationForManager",
+            "sendNotificationToSelfRegisteredUser"
+        ]
     }
 ]
 }
