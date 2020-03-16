@@ -63,9 +63,19 @@
           "$comment": "Employee name"
         },
         "kcid": {
-          "$id": "#/properties/name",
+          "$id": "#/properties/kcid",
           "type": "string",
           "$comment": "Employee identity"
+        },
+        "empCode": {
+          "$id": "#/properties/empCode",
+          "type": "string",
+          "$comment": "Employee code"
+        },
+        "photoUrl": {
+          "$id": "#/properties/photoUrl",
+          "type": "string",
+          "$comment": "photo png"
         },
         "email": {
           "$id": "#/properties/email",
@@ -366,7 +376,7 @@
     "privateFields": ["email","phone"],
     "signedFields": [],
     "indexFields": [],
-    "uniqueIndexFields": ["(name, orgName, startDate)"],
+    "uniqueIndexFields": ["kcid", "empCode"],
     "systemFields": [
       "osCreatedAt",
       "osUpdatedAt",
