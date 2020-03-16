@@ -37,7 +37,7 @@ node('build-slave') {
 		sh('''git clone https://github.com/Sunbird-Ed/creation-portal.git -b creation_portal
 		      rm -rf java/registry/src/main/resources/public/_schemas/*
 		      cp -r creation-portal/opensaber_schemas/* java/registry/src/main/resources/public/_schemas/
-		      cd java && mvn clean install -DksipTests
+		      cd java && mvn clean install 
 		   ''')
                 sh('chmod 777 build.sh')
                 sh("./build.sh ${build_tag} ${env.NODE_NAME} ${hub_org}")
