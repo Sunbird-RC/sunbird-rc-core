@@ -34,7 +34,7 @@ node('build-slave') {
             stage('Build') {
                 env.NODE_ENV = "build"
                 print "Environment will be : ${env.NODE_ENV}"
-		sh(./configure-dependencies.sh)
+		sh(configure-dependencies.sh)
 		sh('''git clone https://github.com/Sunbird-Ed/creation-portal.git -b creation_portal
 		      rm -rf java/registry/src/main/resources/public/_schemas/*
 		      cp -r creation-portal/opensaber_schemas/* java/registry/src/main/resources/public/_schemas/
