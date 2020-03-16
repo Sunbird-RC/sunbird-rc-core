@@ -40,7 +40,7 @@ node('build-slave') {
 		      cd java && mvn clean install -DksipTests
 		   ''')
                 sh('chmod 777 build.sh')
-               // sh("./build.sh ${build_tag} ${env.NODE_NAME} ${hub_org}")
+                sh("./build.sh ${build_tag} ${env.NODE_NAME} ${hub_org}")
             }
             stage('ArchiveArtifacts') {
                 archiveArtifacts "metadata.json"
