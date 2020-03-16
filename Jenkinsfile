@@ -35,7 +35,8 @@ node('build-slave') {
                 env.NODE_ENV = "build"
                 print "Environment will be : ${env.NODE_ENV}"
 		sh('''git clone https://github.com/Sunbird-Ed/creation-portal.git -b creation_portal
-		      cp -r creation_portal/opensaber_schemas/* java/registry/src/main/resources/public/_schemas/
+		      rm -rf java/registry/src/main/resources/public/_schemas/*
+		      cp -r creation-portal/opensaber_schemas/* java/registry/src/main/resources/public/_schemas/
 		      cd java && mvn clean install -DksipTests
 		   ''')
                 sh('chmod 777 build.sh')
