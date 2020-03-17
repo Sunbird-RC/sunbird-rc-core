@@ -68,7 +68,7 @@ class KeycloakHelper {
     registerUserToKeycloak(req, callback) {
         const value = req.body.request;
         const options = {
-            url: this.keyCloakHost + "/auth/admin/realms/" + this.realmName + "/users",
+            url: this.keyCloakHost + "/auth/realms/" + this.realmName + "/users/add",
             headers: {
                 'Content-type': 'application/json',
                 'Accept': 'application/json',

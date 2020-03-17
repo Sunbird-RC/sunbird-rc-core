@@ -12,6 +12,7 @@ const logger = require('./sdk/log4j');
 const vars = require('./sdk/vars').getAllVars(process.env.NODE_ENV);
 const dateFormat = require('dateformat');
 const _ = require('lodash');
+const appConfig = require('./sdk/appConfig');
 
 var cacheManager = new CacheManager();
 var registryService = new RegistryService();
@@ -50,7 +51,7 @@ app.theApp.post("/register/users", (req, res, next) => {
 
 // self registeration api
 app.theApp.post("/register/users/self", (req, res, next) => {
-    createUser(req, function (err, data) {
+    createUser(req, false, function (err, data) {
         if (err) {
             res.statusCode = err.statusCode;
             return res.send(err.body)
@@ -152,26 +153,19 @@ const createUser = (req, seedMode, callback) => {
         req.headers['Authorization'] = token;
         req.body.request[entityType]['emailVerified'] = seedMode
 
-        //Add to keycloak if user is active
-        if (req.body.request[entityType].isActive) {
-            var keycloakUserReq = {
-                body: {
-                    request: req.body.request[entityType]
-                },
-                headers: req.headers
-            }
-            logger.info("Adding user to KeyCloak. Email verified = " + seedMode)
-            keycloakHelper.registerUserToKeycloak(keycloakUserReq, callback)
-        } else {
-            logger.info("User is not active. Not registering to keycloak")
-            callback(null, undefined)
+        var keycloakUserReq = {
+            body: {
+                request: req.body.request[entityType]
+            },
+            headers: req.headers
         }
+        logger.info("Adding user to KeyCloak. Email verified = " + seedMode)
+        keycloakHelper.registerUserToKeycloak(keycloakUserReq, callback)
     })
-
     //Add to registry
     tasks.push(function (res, callback2) {
-        logger.info("Got this response from KC registration " + res)
-        addRecordToRegistry(req, res, callback2)
+        logger.info("Got this response from KC registration " + JSON.stringify(res))
+        addEmployeeToRegistry(req, res, callback2);
     })
 
 
@@ -183,6 +177,65 @@ const createUser = (req, seedMode, callback) => {
             callback(null, result);
         }
     });
+}
+
+/**
+ * gets employee next code
+ * updates employee next code
+ * add records to the registry
+ * @param {*} req 
+ * @param {*} keycloakRes 
+ * @param {*} callback 
+ */
+const addEmployeeToRegistry = (req, keycloakRes, callback) => {
+    //if keycloak registration is successfull then add record to the registry
+    if (keycloakRes.statusCode == 200) {
+        async.waterfall([
+            function (callback1) {
+                getNextEmployeeCode(req.headers, callback1)
+            },
+            function (employeeCode, callback3) {
+                updateEmployeeCode(employeeCode, req.headers, callback3);
+            },
+            function (employeeCode, callback2) {
+                addRecordToRegistry(req, keycloakRes, employeeCode, callback2)
+            }
+        ], function (err, data) {
+            if (err) {
+                callback(err, null)
+            } else {
+                callback(null, data);
+            }
+        })
+    } else {
+        callback(keycloakRes, null)
+    }
+}
+
+/**
+ * 
+ * @param {*} headers 
+ * @param {*} callback 
+ */
+const getNextEmployeeCode = (headers, callback) => {
+    let employeeCodeReq = {
+        body: {
+            id: appConfig.APP_ID.SEARCH,
+            request: {
+                entityType: ["EmployeeCode"],
+                filters: {},
+            }
+        },
+        headers: headers
+    }
+    registryService.searchRecord(employeeCodeReq, function (err, res) {
+        if (res.params.status == 'SUCCESSFUL') {
+            logger.info("next employee code is ", res.result.EmployeeCode[0])
+            callback(null, res.result.EmployeeCode[0])
+        } else {
+            process.exit()
+        }
+    })
 }
 
 /**
@@ -212,35 +265,55 @@ const getTokenDetails = (req, callback) => {
 }
 
 /**
- * adds record to the registry
- * @param {objecr} req 
- * @param {*} res 
+ * 
+ * @param {*} req 
+ * @param {*} res keycloak res , for getting kcId
+ * @param {*} employeeCode 
  * @param {*} callback 
  */
-const addRecordToRegistry = (req, res, callback) => {
-    // If active, KC registration must be successful.
-    let isActive = req.body.request[entityType].isActive
-    if ((isActive && (res.statusCode == 201 || res.statusCode == 200)) ||
-        !isActive) {
-        let kcid = ""
-        if (isActive) {
-            kcid = res.body.id
+const addRecordToRegistry = (req, res, employeeCode, callback) => {
+    req.body.request[entityType]['kcid'] = res.body.id
+    req.body.request[entityType]['isOnboarded'] = req.body.request[entityType].isActive;
+    req.body.request[entityType]['empCode'] = employeeCode.prefix + employeeCode.nextCode;
+    registryService.addRecord(req, function (err, res) {
+        if (res.statusCode == 200 && res.body.params.status == 'SUCCESSFUL') {
+            logger.info("record successfully added to registry");
+            callback(null, res.body)
+        } else {
+            logger.debug("record could not be added to registry" + res.statusCode)
+            callback(res)
         }
-        
-        req.body.request[entityType]['kcid'] = kcid
-        req.body.request[entityType]['isOnboarded'] = req.body.request[entityType].isActive;
-        registryService.addRecord(req, function (err, res) {
-            if (res.statusCode == 200 && res.params.status == 'SUCCESSFUL') {
-                logger.info("record successfully added to registry")
-                callback(null, res.body)
-            } else {
-                logger.debug("record could not be added to registry" + res.statusCode)
-                callback(res.statusCode, res.errorMessage)
+    })
+}
+
+/**
+ * update employee code after successfully adding record to the registry
+ * @param {*} employeeCode 
+ * @param {*} headers 
+ */
+const updateEmployeeCode = (employeeCode, headers, callback) => {
+    logger.info("employee code updation started", employeeCode.nextCode)
+    let empCodeUpdateReq = {
+        body: {
+            id: appConfig.APP_ID.UPDATE,
+            request: {
+                EmployeeCode: {
+                    osid: employeeCode.osid,
+                    nextCode: employeeCode.nextCode + 1
+                }
             }
-        })
-    } else {
-        callback(res, null)
+        },
+        headers: headers
     }
+    registryService.updateRecord(empCodeUpdateReq, (err, res) => {
+        if (res.params.status == 'SUCCESSFUL') {
+            logger.info("employee code succesfully updated", res)
+            callback(null, employeeCode)
+        } else {
+            logger.info("employee code updation failed", res)
+            process.exit();
+        }
+    });
 }
 /**
  * update record to the registry
