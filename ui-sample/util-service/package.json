@@ -20,12 +20,14 @@
     "express": "^4.16.3",
     "express-interceptor": "^1.2.0",
     "express-session": "^1.17.0",
+    "jimp": "^0.9.5",
     "jsonwebtoken": "^8.5.1",
     "keycloak-auth-utils": "^3.3.0",
     "keycloak-connect": "^8.0.0",
     "lodash": "^4.17.15",
     "log4js": "^6.1.0",
     "morgan": "^1.9.1",
+    "qrcode": "^1.4.4",
     "request": "^2.88.0"
   }
 }

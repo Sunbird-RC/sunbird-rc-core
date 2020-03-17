@@ -5,7 +5,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http'
 import { mergeMap } from 'rxjs/operators';
 import { of as observableOf, throwError as observableThrowError, Observable } from 'rxjs';
 import appConfig from '../app.config.json';
-
+import { map } from 'rxjs/operators';
 
 
 
@@ -58,7 +58,14 @@ export class DataService {
         return observableOf(data);
       }));
   }
-
+  getImg(requestParam: any): Observable<any> {
+    const headers = new HttpHeaders().set('Content-Type', 'text/plain; charset=utf-8');
+  
+    return this.http.post(this.baseUrl + requestParam.url, 
+      { qrCode: requestParam.qrCode }, 
+      { headers, responseType: 'text', params:requestParam.param}
+    ).pipe();
+  }
   private getHeader(headers?: any) {
     const default_headers = {
       'Accept': 'application/json',
@@ -77,6 +84,13 @@ export class DataService {
     return { ...default_headers };
   }
 
+
+  getImage(imageUrl: string) {
+    return this.http.get(imageUrl, {observe: 'response', responseType: 'blob'})
+      .pipe(map((res) => {
+        return new Blob([res.body], {type: res.headers.get('Content-Type')});
+      }))
+  }
 
   private getDateDiff(serverdate): number {
     const currentdate: any = new Date();

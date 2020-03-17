@@ -55,6 +55,9 @@
     },
     {
       "name": "manager"
+    },
+    {
+      "name":"empCode"
     }
   ]
 }

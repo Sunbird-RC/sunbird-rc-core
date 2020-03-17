@@ -68,7 +68,8 @@
         "REGISTER": "/register/users",
         "FORM_TEPLATE": "/formtemplates",
         "OWNER_FORM_TEMPLATE":"/formTemplate",
-        "OFFBOARD":"/offboard/user"
+        "OFFBOARD":"/offboard/user",
+        "QRIMAGE":"/profile/qrImage"
     },
     "API_ID": {
         "CREATE": "open-saber.registry.create",
