@@ -18,8 +18,7 @@
       "required": [
         "orgName",
         "name",
-        "email",
-        "phone"
+        "email"
       ],
       "properties": {
         "orgName": {
@@ -51,6 +50,7 @@
             "SQS",
             "PosteroTech",
             "EkStep",
+            "Societal Platform",
             "Funtoot",
             "Kuliza",
             "Unknown"
