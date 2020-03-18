@@ -30,22 +30,23 @@
                                         *ngIf="userLogin">
                                         <ng-container>
                                                 <a class="item" [class.active]="router.isActive('/search')"
-                                                        *ngIf='permissionService.permissionAvailable' appPermission
+                                                        *ngIf='permissionService.permissionAvailable && userData.isActive' appPermission
                                                         [permission]="userDirectoryViewRole"
                                                         [routerLink]="'/search'" tabindex="0">
                                                         {{resourceService?.frmelmnts?.btn?.search}}
                                                 </a>
                                                 <a class="item" [class.active]="router.isActive('/actions')"
-                                                        *ngIf='permissionService.permissionAvailable' appPermission
+                                                        *ngIf='permissionService.permissionAvailable && userData.isActive' appPermission
                                                         [permission]="userDirectoryViewRole"
                                                         [routerLink]="['/actions']" tabindex="0">
                                                         {{resourceService?.frmelmnts?.btn?.Actions}}
                                                 </a>
                                                 <a class="item" [class.active]="router.isActive('create')"
-                                                        *ngIf='permissionService.permissionAvailable' appPermission
+                                                        *ngIf='permissionService.permissionAvailable && userData.isActive' appPermission
                                                         [permission]="onBoardEmployee" [routerLink]="'/create'" tabindex="0">
                                                         {{resourceService?.frmelmnts?.btn?.onBoard}}
                                                 </a>
+                                                <div *ngIf='permissionService.permissionAvailable && !userData.isActive' class="item" >Validation Pending</div>
                                         </ng-container>
                                 </div>
                                 <a class="profile-avtar computer only p-0 ml-15" tabindex="0" *ngIf="userLogin">
