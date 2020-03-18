@@ -57,6 +57,9 @@
       "name": "manager"
     },
     {
+      "name": "kcid"
+    },
+    {
       "name":"empCode"
     }
   ]

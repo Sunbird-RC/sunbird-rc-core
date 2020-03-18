@@ -53,7 +53,7 @@ app.theApp.post("/register/users", (req, res, next) => {
 
 // self registeration api
 app.theApp.post("/register/users/self", (req, res, next) => {
-    createUser(req, false, function (err, data) {
+    selfRegisterUser(req, function (err, data) {
         if (err) {
             res.statusCode = err.statusCode;
             return res.send(err.body)
@@ -175,6 +175,32 @@ const offBoardUser = (req, callback) => {
         }
     });
 }
+
+/**
+ * 
+ * @param {*} req 
+ * @param {*} callback 
+ */
+const selfRegisterUser = (req, callback) => {
+    async.waterfall([
+        function (callback) {
+            getTokenDetails(req, callback);
+        },
+        function (token, callback2) {
+            req.headers['authorization'] = token;
+            req.body.request[entityType]['emailVerified'] = false
+            addEmployeeToRegistry(req, callback2);
+        }
+    ], function (err, result) {
+        logger.info('Main Callback --> ' + result);
+        if (err) {
+            callback(err, null)
+        } else {
+            callback(null, result);
+        }
+    });
+}
+
 /**
  * creates user in keycloak and add record to the registry
  * first gets the bearer token needed to create user in keycloak and registry
@@ -182,6 +208,7 @@ const offBoardUser = (req, callback) => {
  * @param {*} callback 
  */
 const createUser = (req, seedMode, callback) => {
+    //todo remove getToken method --- token must sent in request headers
     var tasks = [function (callback) {
         //if auth token is not given , this function is used get access token
         getTokenDetails(req, callback);
@@ -201,9 +228,15 @@ const createUser = (req, seedMode, callback) => {
         keycloakHelper.registerUserToKeycloak(keycloakUserReq, callback)
     })
     //Add to registry
-    tasks.push(function (res, callback2) {
-        logger.info("Got this response from KC registration " + JSON.stringify(res))
-        addEmployeeToRegistry(req, res, callback2);
+    tasks.push(function (keycloakRes, callback2) {
+        //if keycloak registration is successfull then add record to the registry
+        logger.info("Got this response from KC registration " + JSON.stringify(keycloakRes))
+        if (keycloakRes.statusCode == 200) {
+            req.body.request[entityType]['kcid'] = keycloakRes.body.id
+            addEmployeeToRegistry(req, callback2);
+        } else {
+            callback(keycloakRes, null)
+        }
     })
 
 
@@ -222,32 +255,26 @@ const createUser = (req, seedMode, callback) => {
  * updates employee next code
  * add records to the registry
  * @param {*} req 
- * @param {*} keycloakRes 
  * @param {*} callback 
  */
-const addEmployeeToRegistry = (req, keycloakRes, callback) => {
-    //if keycloak registration is successfull then add record to the registry
-    if (keycloakRes.statusCode == 200) {
-        async.waterfall([
-            function (callback1) {
-                getNextEmployeeCode(req.headers, callback1)
-            },
-            function (employeeCode, callback3) {
-                updateEmployeeCode(employeeCode, req.headers, callback3);
-            },
-            function (employeeCode, callback2) {
-                addRecordToRegistry(req, keycloakRes, employeeCode, callback2)
-            }
-        ], function (err, data) {
-            if (err) {
-                callback(err, null)
-            } else {
-                callback(null, data);
-            }
-        })
-    } else {
-        callback(keycloakRes, null)
-    }
+const addEmployeeToRegistry = (req, callback) => {
+    async.waterfall([
+        function (callback1) {
+            getNextEmployeeCode(req.headers, callback1)
+        },
+        function (employeeCode, callback3) {
+            updateEmployeeCode(employeeCode, req.headers, callback3);
+        },
+        function (employeeCode, callback2) {
+            addRecordToRegistry(req, employeeCode, callback2)
+        }
+    ], function (err, data) {
+        if (err) {
+            callback(err, null)
+        } else {
+            callback(null, data);
+        }
+    })
 }
 
 /**
@@ -305,13 +332,11 @@ const getTokenDetails = (req, callback) => {
 /**
  * 
  * @param {*} req 
- * @param {*} res keycloak res , for getting kcId
  * @param {*} employeeCode 
  * @param {*} callback 
  */
-const addRecordToRegistry = (req, res, employeeCode, callback) => {
-    req.body.request[entityType]['kcid'] = res.body.id
-    req.body.request[entityType]['isOnboarded'] = req.body.request[entityType].isActive;
+const addRecordToRegistry = (req, employeeCode, callback) => {
+    req.body.request[entityType]['isOnboarded'] = req.body.request[entityType].isOnboarded ? req.body.request[entityType].isOnboarded : false;
     req.body.request[entityType]['empCode'] = employeeCode.prefix + employeeCode.nextCode;
     registryService.addRecord(req, function (err, res) {
         if (res.statusCode == 200 && res.body.params.status == 'SUCCESSFUL') {
