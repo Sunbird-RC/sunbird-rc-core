@@ -55,6 +55,7 @@ export class HeaderComponent implements OnInit {
   public keyCloakUserDetails: any;
   private userId: string;
   private userAuthenticated: any;
+  private userData: any;
   constructor(public router: Router, public activatedRoute: ActivatedRoute, resourceService: ResourceService, userService: UserService
     , permissionService: PermissionService, keycloakAngular: KeycloakService, private cacheService: CacheService, private _cacheService: CacheService,
     dataService: DataService, public toasterService: ToasterService) {
@@ -70,6 +71,9 @@ export class HeaderComponent implements OnInit {
     this.onBoardEmployee = appConfig.rolesMapping.onboardEmployee;
     this.resourceService.getResource();
     this.userAuthenticated = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserAuthenticated);
+    if(this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.EmployeeDetails)) {
+      this.userData = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.EmployeeDetails)
+    }
     if (this.userAuthenticated) {
       this.userLogin = this.userAuthenticated.status;
       this.userName = this.cacheService.get(appConfig.cacheServiceConfig.cacheVariables.UserKeyCloakData).given_name;
@@ -138,6 +142,7 @@ export class HeaderComponent implements OnInit {
     this.dataService.post(requestData).subscribe(response => {
       this.cacheService.set(appConfig.cacheServiceConfig.cacheVariables.EmployeeDetails, response.result.Employee[0], { maxAge: appConfig.cacheServiceConfig.setTimeInMinutes * appConfig.cacheServiceConfig.setTimeInSeconds });
       this.userId = response.result.Employee[0].osid;
+      this.userData = response.result.Employee[0];
       if(_.includes(roles, 'x-owner')) {
         this.router.navigate(['/profile', this.userId, 'x-owner'])
       } else {

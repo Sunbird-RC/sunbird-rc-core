@@ -219,21 +219,30 @@ const createUser = (req, seedMode, callback) => {
         req.headers['Authorization'] = token;
         req.body.request[entityType]['emailVerified'] = seedMode
 
-        var keycloakUserReq = {
-            body: {
-                request: req.body.request[entityType]
-            },
-            headers: req.headers
+        if (req.body.request[entityType].isActive) {	
+                var keycloakUserReq = {
+                body: {
+                    request: req.body.request[entityType]
+                },
+                headers: req.headers
+            }
+            logger.info("Adding user to KeyCloak. Email verified = " + seedMode)
+            keycloakHelper.registerUserToKeycloak(keycloakUserReq, callback)
+        }else{
+            logger.info("User is not active. Not registering to keycloak")	
+            callback(null, undefined)
         }
-        logger.info("Adding user to KeyCloak. Email verified = " + seedMode)
-        keycloakHelper.registerUserToKeycloak(keycloakUserReq, callback)
     })
     //Add to registry
     tasks.push(function (keycloakRes, callback2) {
         //if keycloak registration is successfull then add record to the registry
         logger.info("Got this response from KC registration " + JSON.stringify(keycloakRes))
-        if (keycloakRes.statusCode == 200) {
-            req.body.request[entityType]['kcid'] = keycloakRes.body.id
+        let isActive = req.body.request[entityType].isActive
+        if ((isActive && keycloakRes.statusCode == 200) || !isActive) {
+            if(isActive ){
+                req.body.request[entityType]['kcid'] = keycloakRes.body.id
+            }
+
             addEmployeeToRegistry(req, callback2);
         } else {
             callback(keycloakRes, null)
