@@ -304,7 +304,7 @@ const getNextEmployeeCode = (headers, callback) => {
         headers: headers
     }
     registryService.searchRecord(employeeCodeReq, function (err, res) {
-        if (res.params.status == 'SUCCESSFUL') {
+        if (res != undefined && res.params.status == 'SUCCESSFUL') {
             logger.info("next employee code is ", res.result.EmployeeCode[0])
             callback(null, res.result.EmployeeCode[0])
         } else {

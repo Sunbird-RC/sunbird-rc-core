@@ -1,5 +1,6 @@
 package io.opensaber.registry.middleware.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,7 +54,7 @@ public class JSONUtil {
 	}
 	
 	public static JsonNode convertObjectJsonNode(Object object) throws IOException {
-		JsonNode inputNode = new ObjectMapper().valueToTree(object);
+		JsonNode inputNode = new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL).valueToTree(object);
 		return inputNode;
 	}
 

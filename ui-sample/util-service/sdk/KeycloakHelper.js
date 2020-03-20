@@ -91,6 +91,7 @@ class KeycloakHelper {
                 ]
             }
         }
+        console.log("This is the request going to kc" + JSON.stringify(options.body))
         httpUtil.post(options, function (err, res) {
             console.log("This is the response from KC" + err + " : " + res)
             callback(null, res)
