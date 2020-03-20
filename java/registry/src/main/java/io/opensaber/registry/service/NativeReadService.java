@@ -75,15 +75,15 @@ public class NativeReadService implements IReadService {
 			}
 
 			dbProvider.commitTransaction(graph, tx);
-			
+
 	        //if Audit enabled in configuration yml file
 	        if(auditEnabled) {
-				List<Integer> transaction = new LinkedList<>(Arrays.asList(tx.hashCode()));
+				List<Object> transaction = new LinkedList<>(Arrays.asList(tx.hashCode()));
 				List<String> entityTypes = new LinkedList<>(Arrays.asList(entityType));
-				
+
 		        AuditRecord auditRecord = auditService.createAuditRecord(userId, Constants.AUDIT_ACTION_READ, id, transaction);
-		        auditRecord.setAuditInfo(auditService.createAuditInfo(Constants.AUDIT_ACTION_READ_OP, Constants.AUDIT_ACTION_READ, null,null, entityTypes));
-				auditService.doAudit(auditRecord, null, entityTypes, id, shard);
+		        auditRecord.setAuditInfo(auditService.createAuditInfo(Constants.AUDIT_ACTION_READ, Constants.AUDIT_ACTION_READ, null,null, entityTypes));
+				auditService.doAudit(auditRecord, null, entityType, id, shard);
 	        }
 	 
 			return result;

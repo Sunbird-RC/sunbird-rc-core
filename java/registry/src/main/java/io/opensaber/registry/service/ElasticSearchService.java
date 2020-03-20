@@ -83,16 +83,13 @@ public class ElasticSearchService implements ISearchService {
         
         //if Audit enabled in configuration yml file
         if(auditEnabled) {
-        	String operation = Constants.AUDIT_ACTION_SEARCH_OP;
         	String action = Constants.AUDIT_ACTION_SEARCH;
+        	// If a query is made to search audit table, call it audit.
         	if(!(searchQuery.getEntityTypes().get(0).contains(auditSuffix))) {
-        		operation = Constants.AUDIT_ACTION_AUDIT_OP;
         		action = Constants.AUDIT_ACTION_AUDIT;
         	}
-        	
-	        AuditRecord auditRecord = auditService.createAuditRecord(apiMessage.getUserID(), action, "", null);
-	        auditRecord.setAuditInfo(auditService.createAuditInfo(operation, action, null, inputQueryNode, searchQuery.getEntityTypes()));
-	        auditService.doAudit(auditRecord, inputQueryNode, searchQuery.getEntityTypes(), null, null);
+
+        	auditService.doAudit(null, apiMessage.getUserID(), searchQuery.getEntityTypes().get(0), null, null, action, searchQuery.getEntityTypes());
         }
  
         return resultNode;

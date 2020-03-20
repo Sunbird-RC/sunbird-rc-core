@@ -103,7 +103,7 @@ public class NativeSearchService implements ISearchService {
 				}
 
 				// TODO: parallel search.
-				List<Integer> transaction = new LinkedList<>();
+				List<Object> transaction = new LinkedList<>();
 				Shard shard = shardManager.activateShard(dbConnection.getShardId());
 				IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName);
 				SearchDaoImpl searchDao = new SearchDaoImpl(registryDao);
@@ -128,16 +128,21 @@ public class NativeSearchService implements ISearchService {
 				
 		        //if Audit enabled in configuration yml file
 		        if(auditEnabled) {
-		        	String operation = Constants.AUDIT_ACTION_SEARCH_OP;
 		        	String action = Constants.AUDIT_ACTION_SEARCH;
+
+		        	// If somebody is querying audit operations, record audit as audit instead of search
 		        	if(searchQuery.getEntityTypes().get(0).contains(auditSuffix)) {
-		        		operation = Constants.AUDIT_ACTION_AUDIT_OP;
 		        		action = Constants.AUDIT_ACTION_AUDIT;
 		        	}
 
+		        	auditService.doAudit(shard, apiMessage.getUserID(), null, et, transaction, action, searchQuery.getEntityTypes());
+
 		        	AuditRecord auditRecord = auditService.createAuditRecord(apiMessage.getUserID(), action, "", transaction);
 			        auditRecord.setAuditInfo(auditService.createAuditInfo(operation, action, null, inputQueryNode, searchQuery.getEntityTypes()));
-		        	auditService.doAudit(auditRecord, inputQueryNode, searchQuery.getEntityTypes(), null, shard);
+
+					searchQuery.getEntityTypes().forEach(et -> {
+						auditService.doAudit(auditRecord, inputQueryNode, et, null, shard);
+					});
 		        }
 		 	}
 		}

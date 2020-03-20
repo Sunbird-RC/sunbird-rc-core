@@ -14,6 +14,14 @@ import java.util.Map;
 
 public class JsonValidationServiceImpl implements IValidate {
 	private static Logger logger = LoggerFactory.getLogger(JsonValidationServiceImpl.class);
+	private long port = 8080;
+	public JsonValidationServiceImpl() {
+
+	}
+
+	public void setPort(long port) {
+		this.port = port;
+	}
 
 	private Map<String, Schema> entitySchemaMap = new HashMap<>();
 	private Map<String, String> definitionMap = new HashMap<>();;
@@ -29,7 +37,7 @@ public class JsonValidationServiceImpl implements IValidate {
                 JSONObject rawSchema = new JSONObject(definitionContent);
 
 				SchemaLoader schemaLoader = SchemaLoader.builder().schemaJson(rawSchema).draftV7Support()
-						.resolutionScope("http://localhost:8080/_schemas/").build();
+						.resolutionScope("http://localhost:9080/_schemas/").build();
 				schema = schemaLoader.load().build();
 				entitySchemaMap.put(entityType, schema);
 			} catch (Exception ioe) {

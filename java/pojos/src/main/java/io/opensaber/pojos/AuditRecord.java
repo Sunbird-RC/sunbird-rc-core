@@ -1,12 +1,13 @@
 package io.opensaber.pojos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.List;
 
 public class AuditRecord {
-
 	private String action;
 	private String recordId;
-	private List<Integer> transactionId;
+	private List<Object> transactionId;
 	private String userId;
 	private String auditId;
 	private String timestamp;
@@ -21,11 +22,11 @@ public class AuditRecord {
 		return this;
 	}
 
-    public List<Integer> getTransactionId() {
+    public List<Object> getTransactionId() {
         return transactionId;
     }
 
-    public AuditRecord setTransactionId(List<Integer> transactionId) {
+    public AuditRecord setTransactionId(List<Object> transactionId) {
         this.transactionId = transactionId;
         return this;
     }

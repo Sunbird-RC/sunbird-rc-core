@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -88,16 +89,13 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${search.providerName}")
     private String searchProvider;
 
-    @Value("${audit.enabled}")
-    private boolean auditEnabled;
-
     @Autowired
     private EntityParenter entityParenter;
 
     @Autowired
     private OSSystemFieldsHelper systemFieldsHelper;
 
-   @Autowired
+    @Autowired
     private IAuditService auditService;
 
     public HealthCheckResponse health(Shard shard) throws Exception {
@@ -152,16 +150,8 @@ public class RegistryServiceImpl implements RegistryService {
                 registryDao.deleteEntity(vertex);
                 databaseProvider.commitTransaction(graph, tx);
                 String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
-                
-                //if Audit enabled in configuration yml file
-                if(auditEnabled) {
-	                List<Integer> transactionId = new LinkedList<>(Arrays.asList(tx.hashCode()));
-	                List<String> entityTypes = new LinkedList<>(Arrays.asList(index));
-	                
-			        AuditRecord auditRecord = auditService.createAuditRecord(userId, Constants.AUDIT_ACTION_DELETE, uuid, transactionId);
-			        auditRecord.setAuditInfo(auditService.createAuditInfo(Constants.AUDIT_ACTION_DELETE_OP, Constants.AUDIT_ACTION_DELETE, null, null, entityTypes));
-	                auditService.doAudit(auditRecord, null, entityTypes, uuid, shard);
-                }
+
+               auditService.doAudit(shard, userId, uuid, index, tx, Constants.AUDIT_ACTION_DELETE, Arrays.asList(index));
             }
             logger.info("Entity {} marked deleted", uuid);
         }
@@ -210,15 +200,8 @@ public class RegistryServiceImpl implements RegistryService {
             
             List<Integer> transactionId = new LinkedList<>(Arrays.asList(tx.hashCode()));
             List<String> entityTypes = new LinkedList<>(Arrays.asList(vertexLabel));
-            
-            //if Audit enabled in configuration yml file
-            if(auditEnabled) {
-		        AuditRecord auditRecord = auditService.createAuditRecord(userId, Constants.AUDIT_ACTION_ADD, entityId, transactionId);
-		        auditRecord.setAuditInfo(auditService.createAuditInfo(Constants.AUDIT_ACTION_ADD_OP, Constants.AUDIT_ACTION_ADD, null, rootNode, entityTypes));
 
-            	auditService.doAudit(auditRecord, rootNode, entityTypes, entityId, shard);
-            }
-     
+            auditService.doAudit(shard, userId, entityId, vertexLabel, tx, Constants.AUDIT_ACTION_ADD, entityTypes);
         }
         return entityId;
     }
@@ -299,16 +282,9 @@ public class RegistryServiceImpl implements RegistryService {
             doUpdate(shard, graph, registryDao, vr, inputNode.get(entityType));
 
             databaseProvider.commitTransaction(graph, tx);
-            
-            //if Audit enabled in configuration yml file
-            if(auditEnabled) {
-	            List<Integer> transactionId = new LinkedList<>(Arrays.asList(tx.hashCode()));
-	            List<String> entityTypes = new LinkedList<>(Arrays.asList(entityType));
-	            
-		        AuditRecord auditRecord = auditService.createAuditRecord(userId, Constants.AUDIT_ACTION_UPDATE, id, transactionId);
-		        auditRecord.setAuditInfo(auditService.createAuditInfo(Constants.AUDIT_ACTION_UPDATE_OP, Constants.AUDIT_ACTION_UPDATE, readNode, mergedNode, entityTypes));
-		        auditService.doAudit(auditRecord, mergedNode, entityTypes, rootId, shard);
-            }
+
+            List<String> entityTypes = new LinkedList<>(Arrays.asList(entityType));
+            auditService.doAudit(shard, userId, rootId, entityType, tx, Constants.AUDIT_ACTION_UPDATE, entityTypes);
         }
     }
 

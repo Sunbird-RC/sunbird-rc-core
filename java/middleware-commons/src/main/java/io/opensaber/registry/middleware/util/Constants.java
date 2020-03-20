@@ -19,19 +19,10 @@ public class Constants {
 	public static final String STATUS_KEYWORD = "_status";
 	public static final String STATUS_INACTIVE = "false";
 	public static final String STATUS_ACTIVE = "true";
-	public static final String AUDIT_KEYWORD = "_audit";
 	public static final String ARRAY_NODE_KEYWORD = "_array_node";
 	public static final String ARRAY_ITEM = "_item";
 	public static final String INTERNAL_TYPE_KEYWORD = "_intType";
 	public static final String ROOT_KEYWORD = "_osroot";
-	
-	//Audit Fields Constant
-	public static final String ACTION="action";
-	public static final String ID="id";
-	public static final String START_DATE="startDate";
-	public static final String END_DATE="endDate";
-	public static final String LIMIT="limit";
-	public static final String OFFSET="offset";
 
 	// JSON LD specific
 	public static final String CONTEXT_KEYWORD = "@context";
