@@ -36,31 +36,26 @@ public interface IAuditService {
 	}
 
 	default void doAudit(Shard shard, String userId, String entityId,
-						 String entityType, Transaction tx, String operation,
-						 List<String> entityTypes) throws JsonProcessingException {
+						 String entityType, Transaction tx, String operation) throws JsonProcessingException {
 		if(shouldAudit(entityType)) {
 			List<Object> transactionId = new LinkedList<>(Arrays.asList(tx.hashCode()));
 
 			AuditRecord auditRecord = createAuditRecord(userId, operation, entityId, transactionId);
-			auditRecord.setAuditInfo(createAuditInfo(operation, operation, null, null, entityTypes));
-			entityTypes.forEach(et -> {
-				doAudit(auditRecord, null, et, entityId, shard);
-			});
+			auditRecord.setAuditInfo(createAuditInfo(operation, operation, null, null, entityType));
+
+			doAudit(auditRecord, null, entityType, entityId, shard);
 		}
 	}
 
+	// Elastic Read and Search operations - only when multiple entity types are involved.
 	default void doAudit(Shard shard, String userId,
 						 String operation,
 						 List<String> entityTypes,
 						 List<Object> transactionIds) throws JsonProcessingException {
 
 		entityTypes.forEach(et -> {
-
-			AuditRecord auditRecord = createAuditRecord(userId, operation, null, transactionId);
-			auditRecord.setAuditInfo(createAuditInfo(operation, operation, null, null, entityTypes));
-				doAudit(auditRecord, null, et, null, shard);
-			});
-		}
+			doAudit(above_with_params);
+		});
 	}
 
 }
