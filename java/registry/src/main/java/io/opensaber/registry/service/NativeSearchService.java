@@ -126,24 +126,11 @@ public class NativeSearchService implements ISearchService {
 					continueSearch = !isSpecificSearch;
 				}
 				
-		        //if Audit enabled in configuration yml file
-		        if(auditEnabled) {
-		        	String action = Constants.AUDIT_ACTION_SEARCH;
-
-		        	// If somebody is querying audit operations, record audit as audit instead of search
-		        	if(searchQuery.getEntityTypes().get(0).contains(auditSuffix)) {
-		        		action = Constants.AUDIT_ACTION_AUDIT;
-		        	}
-
-		        	auditService.doAudit(shard, apiMessage.getUserID(), null, et, transaction, action, searchQuery.getEntityTypes());
-
-		        	AuditRecord auditRecord = auditService.createAuditRecord(apiMessage.getUserID(), action, "", transaction);
-			        auditRecord.setAuditInfo(auditService.createAuditInfo(operation, action, null, inputQueryNode, searchQuery.getEntityTypes()));
-
-					searchQuery.getEntityTypes().forEach(et -> {
-						auditService.doAudit(auditRecord, inputQueryNode, et, null, shard);
-					});
-		        }
+	        	auditService.auditNativeSearch( 
+	        			new AuditRecord()
+	        			.setUserId(apiMessage.getUserID())
+	        			.setTransactionId(transaction), 
+	        			shard, searchQuery.getEntityTypes(), inputQueryNode);
 		 	}
 		}
 		

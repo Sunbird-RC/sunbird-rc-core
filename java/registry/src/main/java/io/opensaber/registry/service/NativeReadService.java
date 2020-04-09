@@ -2,8 +2,6 @@ package io.opensaber.registry.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -16,10 +14,8 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.opensaber.pojos.AuditRecord;
 import io.opensaber.registry.dao.IRegistryDao;
 import io.opensaber.registry.dao.RegistryDaoImpl;
-import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
@@ -75,17 +71,8 @@ public class NativeReadService implements IReadService {
 			}
 
 			dbProvider.commitTransaction(graph, tx);
-
-	        //if Audit enabled in configuration yml file
-	        if(auditEnabled) {
-				List<Object> transaction = new LinkedList<>(Arrays.asList(tx.hashCode()));
-				List<String> entityTypes = new LinkedList<>(Arrays.asList(entityType));
-
-		        AuditRecord auditRecord = auditService.createAuditRecord(userId, Constants.AUDIT_ACTION_READ, id, transaction);
-		        auditRecord.setAuditInfo(auditService.createAuditInfo(Constants.AUDIT_ACTION_READ, Constants.AUDIT_ACTION_READ, null,null, entityTypes));
-				auditService.doAudit(auditRecord, null, entityType, id, shard);
-	        }
-	 
+			
+			auditService.auditRead(auditService.createAuditRecord(userId, id, tx, entityType), shard);
 			return result;
 		}
 	}

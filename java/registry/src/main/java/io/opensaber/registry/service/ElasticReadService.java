@@ -72,8 +72,7 @@ public class ElasticReadService implements IReadService {
             JSONUtil.removeNode((ObjectNode) result, Constants.SIGNATURES_STR);
         }
 
-        List<String> entityTypes = new LinkedList<>(Arrays.asList(entityType));
-        auditService.doAudit(shard, userId, id, entityType, null, Constants.AUDIT_ACTION_READ, entityTypes);
+        auditService.auditRead(auditService.createAuditRecord(userId, id, entityType), shard);
 
         ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
         resultNode.set(entityType, result);

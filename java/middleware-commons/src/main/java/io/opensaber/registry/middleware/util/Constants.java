@@ -75,16 +75,10 @@ public class Constants {
 
 	public static final String AUDIT_ACTION_READ = "READ";
 	public static final String AUDIT_ACTION_ADD = "ADD";
-	public static final String AUDIT_ACTION_ADD_OP = "add";
 	public static final String AUDIT_ACTION_UPDATE = "UPDATE";
-	public static final String AUDIT_ACTION_UPDATE_OP = "update";
-	public static final String AUDIT_ACTION_SEARCH_OP = "search";
 	public static final String AUDIT_ACTION_SEARCH = "SEARCH";
 	public static final String AUDIT_ACTION_DELETE = "DELETE";
-	public static final String AUDIT_ACTION_DELETE_OP = "delete";
-	public static final String AUDIT_ACTION_READ_OP = "read";
 	public static final String AUDIT_ACTION_AUDIT = "AUDIT";
-	public static final String AUDIT_ACTION_AUDIT_OP = "audit";
 
 	public static final String ELASTIC_SEARCH_ACTOR = "ElasticSearchActor";
 	public static final String AUDIT_ACTOR = "AuditActor";

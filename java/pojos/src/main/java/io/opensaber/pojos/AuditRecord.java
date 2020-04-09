@@ -1,7 +1,5 @@
 package io.opensaber.pojos;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.util.List;
 
 public class AuditRecord {
@@ -12,6 +10,16 @@ public class AuditRecord {
 	private String auditId;
 	private String timestamp;
 	private List<AuditInfo> auditInfo;
+	private String entityType;
+
+	public String getEntityType() {
+		return entityType;
+	}
+
+	public AuditRecord setEntityType(String entityType) {
+		this.entityType = entityType;
+		return this;
+	}
 
 	public String getAction() {
 		return action;

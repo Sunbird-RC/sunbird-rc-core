@@ -53,10 +53,8 @@ import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.SchemaType;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.service.IAuditService;
 import io.opensaber.registry.service.IReadService;
 import io.opensaber.registry.service.ISearchService;
-import io.opensaber.registry.service.impl.AuditServiceImpl;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.shard.DefaultShardAdvisor;
 import io.opensaber.registry.sink.shard.IShardAdvisor;
@@ -437,13 +435,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return elasticService;
 	}
 
-	/** creates elastic-service bean and instanstiates the indices
-	 * @return - IElasticService
-	 * @throws IOException
-	 */
-	@Bean
-	public IAuditService auditService() throws IOException {
-		IAuditService auditService = new AuditServiceImpl();
-		return auditService;
-	}
+
+//	/** creates elastic-service bean and instanstiates the indices
+//	 * @return - IElasticService
+//	 * @throws IOException
+//	 */
+//	@Bean
+//	public IAuditService auditService() throws IOException {
+//		IAuditService auditService = new AuditProviderFactory().getAuditService(auditFrameStore);
+//		return auditService;
+//	}
 }

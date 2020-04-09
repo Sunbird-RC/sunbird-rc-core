@@ -47,12 +47,6 @@ public class ElasticSearchService implements ISearchService {
     @Value("${database.uuidPropertyName}")
     private String uuidPropertyName;
 
-    @Value("${audit.enabled}")
-    private boolean auditEnabled;
-    
-    @Value("${audit.frame.suffix}")
-    private String auditSuffix;
-
     @Override
     public JsonNode search(JsonNode inputQueryNode) throws IOException {
         logger.debug("search request body = " + inputQueryNode);
@@ -81,16 +75,10 @@ public class ElasticSearchService implements ISearchService {
             }
         }
         
-        //if Audit enabled in configuration yml file
-        if(auditEnabled) {
-        	String action = Constants.AUDIT_ACTION_SEARCH;
-        	// If a query is made to search audit table, call it audit.
-        	if(!(searchQuery.getEntityTypes().get(0).contains(auditSuffix))) {
-        		action = Constants.AUDIT_ACTION_AUDIT;
-        	}
-
-        	auditService.doAudit(null, apiMessage.getUserID(), searchQuery.getEntityTypes().get(0), null, null, action, searchQuery.getEntityTypes());
-        }
+        auditService.auditElasticSearch( 
+        		new AuditRecord()
+        		.setUserId(apiMessage.getUserID()),
+        		searchQuery.getEntityTypes(), inputQueryNode);
  
         return resultNode;
 

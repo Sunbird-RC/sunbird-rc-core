@@ -150,8 +150,10 @@ public class RegistryServiceImpl implements RegistryService {
                 registryDao.deleteEntity(vertex);
                 databaseProvider.commitTransaction(graph, tx);
                 String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
-
-               auditService.doAudit(shard, userId, uuid, index, tx, Constants.AUDIT_ACTION_DELETE, Arrays.asList(index));
+                
+                auditService.auditDelete(
+                		auditService.createAuditRecord(userId, uuid, tx, index),
+                		shard);
             }
             logger.info("Entity {} marked deleted", uuid);
         }
@@ -198,10 +200,9 @@ public class RegistryServiceImpl implements RegistryService {
             Definition definition = definitionsManager.getDefinition(vertexLabel);
             entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             
-            List<Integer> transactionId = new LinkedList<>(Arrays.asList(tx.hashCode()));
-            List<String> entityTypes = new LinkedList<>(Arrays.asList(vertexLabel));
-
-            auditService.doAudit(shard, userId, entityId, vertexLabel, tx, Constants.AUDIT_ACTION_ADD, entityTypes);
+            auditService.auditAdd(
+            		auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
+            		shard, rootNode);
         }
         return entityId;
     }
@@ -283,8 +284,10 @@ public class RegistryServiceImpl implements RegistryService {
 
             databaseProvider.commitTransaction(graph, tx);
 
-            List<String> entityTypes = new LinkedList<>(Arrays.asList(entityType));
-            auditService.doAudit(shard, userId, rootId, entityType, tx, Constants.AUDIT_ACTION_UPDATE, entityTypes);
+            auditService.auditUpdate(
+            		auditService.createAuditRecord(userId, rootId, tx, entityType), 
+            		shard, mergedNode, readNode);
+
         }
     }
 
