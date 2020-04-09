@@ -164,13 +164,10 @@ audit:
     suffixSeparator: ${audit_suffixSeparator:_}
 
 authentication:
-  enabled: ${authentication_enabled:true}
-
-keycloak:
-  sso:
-    publicKey:  ${sunbird_sso_publickey}
-    realm:  ${sunbird_sso_realm}
-    auth_server_url:  ${sunbird_sso_url}
+    enabled: ${authentication_enabled:true}
+    publicKey:  ${authentication_publickey}
+    realm:  ${authentication_realm}
+    url:  ${authentication_url}
 
 validation:
   enabled: ${validation_enabled:true}

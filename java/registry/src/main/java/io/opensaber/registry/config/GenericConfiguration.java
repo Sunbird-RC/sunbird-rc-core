@@ -95,6 +95,16 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${authentication.enabled}")
 	private boolean authenticationEnabled;
 
+	@Value(("${authentication.url}"))
+	private String authUrl;
+
+	@Value(("${authentication.realm}"))
+	private String authRealm;
+
+
+	@Value(("${authentication.publicKey}"))
+	private String authPublicKey;
+
 	@Value("${perf.monitoring.enabled}")
 	private boolean performanceMonitoringEnabled;
 
@@ -231,7 +241,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Bean
 	public Middleware authorizationFilter() {
-		return new AuthorizationFilter(new KeyCloakServiceImpl());
+		return new AuthorizationFilter(new KeyCloakServiceImpl(authUrl, authRealm, authPublicKey));
 	}
 	
     @Bean
