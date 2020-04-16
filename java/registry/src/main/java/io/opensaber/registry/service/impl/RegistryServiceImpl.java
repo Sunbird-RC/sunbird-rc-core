@@ -42,6 +42,7 @@ import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
 import io.opensaber.registry.sink.shard.Shard;
+import io.opensaber.registry.util.ArrayHelper;
 import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.EntityParenter;
@@ -314,11 +315,14 @@ public class RegistryServiceImpl implements RegistryService {
 
     private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode) {
         HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
-        Set<String> updatedUuids = new HashSet<>();
-
+        Set<Object> updatedUuids = new HashSet<Object>();
+        Set<String> previousArrayItemsUuids = vr.getArrayItemUuids(blankArrVertex);
+        
+        VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider() , uuidPropertyName);
+        
         for (JsonNode item : arrayNode) {
             if (item.isObject()) {
-                if (item.get(uuidPropertyName) != null && item.get(uuidPropertyName) != null) {
+                if (item.get(uuidPropertyName) != null) {
                     Vertex existingItem = uuidVertexMap.getOrDefault(item.get(uuidPropertyName).textValue(), null);
                     if (existingItem != null) {
                         try {
@@ -327,26 +331,37 @@ public class RegistryServiceImpl implements RegistryService {
                             logger.error("Can't update item {}", item.toString());
                         }
                         updatedUuids.add(item.get(uuidPropertyName).textValue());
-                    } else {
-                        // New item got added.
-                        VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider() , uuidPropertyName);
-                        vertexWriter.writeSingleNode(blankArrVertex, vr.getInternalType(blankArrVertex), item);
                     }
+                } else {
+                    // New item got added.
+                    Vertex newItem = vertexWriter.writeSingleNode(blankArrVertex, vr.getInternalType(blankArrVertex), item);
+                    updatedUuids.add(shard.getDatabaseProvider().getId(newItem));
                 }
             }
         }
+        
+        //Update the array_node with list of updated uuids
+        vertexWriter.updateArrayNode(blankArrVertex, vr.getInternalType(blankArrVertex), new ArrayList<Object>(updatedUuids));
+        
+        doDelete(registryDao, vr, previousArrayItemsUuids, updatedUuids);
 
-        doDelete(registryDao, vr, blankArrVertex, updatedUuids);
     }
 
-    private void doDelete(IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, Set<String> updatedUuids) {
-        HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
-        Set<String> previousArrayItemsUuids = vr.getArrayItemUuids(blankArrVertex);
+    /**Delete the previous array items Uuids which are not updated
+     * 
+     * @param registryDao
+     * @param vr
+     * @param previousArrayItemsUuids
+     * @param updatedUuids
+     */
+    private void doDelete(IRegistryDao registryDao, VertexReader vr, Set<String> previousArrayItemsUuids,Set<Object> updatedUuids) {
+    	HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
         for (String itemUuid : previousArrayItemsUuids) {
-            if (!updatedUuids.contains(itemUuid)) {
-                // delete this item
-                registryDao.deleteEntity(uuidVertexMap.get(itemUuid));
-            }
+        	itemUuid = ArrayHelper.unquoteString(itemUuid);
+			if (!updatedUuids.contains(itemUuid)) {
+				// delete this item
+				registryDao.deleteEntity(uuidVertexMap.get(itemUuid));
+			}
         }
     }
 

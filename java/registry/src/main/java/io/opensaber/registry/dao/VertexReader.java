@@ -127,7 +127,7 @@ public class VertexReader {
                         on.put(uuidPropertyName, value);
                         arrayNode.add(on);
                     }
-                    if (isObjectNode) {
+                    if (isObjectNode && !isArrayType) {
                         contentNode.set(refEntityName, arrayNode.get(0));
                     } else {
                         contentNode.set(refEntityName, arrayNode);
