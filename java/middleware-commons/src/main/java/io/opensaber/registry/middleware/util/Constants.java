@@ -23,6 +23,14 @@ public class Constants {
 	public static final String ARRAY_ITEM = "_item";
 	public static final String INTERNAL_TYPE_KEYWORD = "_intType";
 	public static final String ROOT_KEYWORD = "_osroot";
+	
+	//Audit Fields Constant
+	public static final String ACTION="action";
+	public static final String ID="id";
+	public static final String START_DATE="startDate";
+	public static final String END_DATE="endDate";
+	public static final String LIMIT="limit";
+	public static final String OFFSET="offset";
 
 	// JSON LD specific
 	public static final String CONTEXT_KEYWORD = "@context";
@@ -75,10 +83,12 @@ public class Constants {
 
 	public static final String AUDIT_ACTION_READ = "READ";
 	public static final String AUDIT_ACTION_ADD = "ADD";
+	public static final String AUDIT_ACTION_ADD_OP = "add";
 	public static final String AUDIT_ACTION_UPDATE = "UPDATE";
 	public static final String AUDIT_ACTION_SEARCH = "SEARCH";
 	public static final String AUDIT_ACTION_DELETE = "DELETE";
 	public static final String AUDIT_ACTION_AUDIT = "AUDIT";
+
 
 	public static final String ELASTIC_SEARCH_ACTOR = "ElasticSearchActor";
 	public static final String AUDIT_ACTOR = "AuditActor";

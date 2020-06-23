@@ -95,7 +95,8 @@ public class ArrayHelper {
      * @return
      */
     public static ArrayNode constructArrayNode(String valItems) {
-      	ArrayNode arrNode = JsonNodeFactory.instance.arrayNode();
+
+    	ArrayNode arrNode = JsonNodeFactory.instance.arrayNode();
     	ObjectMapper mapper = new ObjectMapper();
     	
     	try {
@@ -104,7 +105,7 @@ public class ArrayHelper {
         	 arrNode = mapper.valueToTree(itemList);
         } catch (Exception e) {
             logger.error("Error in converting array elements to JsonNode" + e);
-    	       logger.error("Error in converting array elements to JsonNode" + e);
+
         }
         return arrNode;
     }

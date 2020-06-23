@@ -64,19 +64,24 @@ public class ElasticReadService implements IReadService {
         } catch (IOException e) {
             logger.error("Exception in reading a record to ElasticSearch", e);
         }
-        if (response == null) {
+        
+        if (response == null || Constants.STATUS_INACTIVE.equals(response.get(Constants.STATUS_KEYWORD)) ) {
             throw new RecordNotFoundException("Record with " + id + " not found in Elastic-search");
         }
+        
         result = objectMapper.convertValue(response, JsonNode.class);
         if (!configurator.isIncludeSignatures()) {
             JSONUtil.removeNode((ObjectNode) result, Constants.SIGNATURES_STR);
-        }
-
+        }     
+        
         auditService.auditRead(auditService.createAuditRecord(userId, id, entityType), shard);
+
 
         ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
         resultNode.set(entityType, result);
         return resultNode;
     }
+    
+    
 
 }

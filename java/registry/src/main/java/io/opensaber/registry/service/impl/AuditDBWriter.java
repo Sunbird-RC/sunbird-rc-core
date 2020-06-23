@@ -43,7 +43,7 @@ public class AuditDBWriter {
     @Autowired
     private EntityParenter entityParenter;
     
-	public void auditToDB(Shard shard, JsonNode rootNode, String entityType) throws AuditFailedException {
+	public String auditToDB(Shard shard, JsonNode rootNode, String entityType) throws AuditFailedException {
 
     	String entityId = "auditPlaceholderId";
 	 	Transaction tx = null;
@@ -70,5 +70,6 @@ public class AuditDBWriter {
         Vertex parentVertex = entityParenter.getKnownParentVertex(entityType, shardId);
         Definition definition = definitionsManager.getDefinition(entityType);
         entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
+        return entityId;
 	}
 }

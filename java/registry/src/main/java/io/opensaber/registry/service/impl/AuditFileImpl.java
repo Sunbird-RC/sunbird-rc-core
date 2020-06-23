@@ -32,7 +32,7 @@ public class AuditFileImpl extends AuditServiceImpl {
         	AuditFileWriter auditWriter = new AuditFileWriter();
             auditWriter.auditToFile(auditRecord);
 
-            sendAuditToActor(auditRecord, inputNode, auditRecord.getEntityType());
+           // sendAuditToActor(auditRecord, inputNode, auditRecord.getEntityType());
         } catch (Exception e) {
             logger.error("Generic error in saving audit info : {}", e);
         }

@@ -191,10 +191,12 @@ public class ElasticServiceImpl implements IElasticService {
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public Map<String, Object> readEntity(String index, String osid) throws IOException {
         logger.debug("readEntity starts with index {} and entityId {}", index, osid);
+        
         GetResponse response = null;
         response = getClient(index).get(new GetRequest(index, searchType, osid), RequestOptions.DEFAULT);
         return response.getSourceAsMap();
     }
+    
 
     /**
      * Updates the document with updated inputEntity
@@ -230,8 +232,8 @@ public class ElasticServiceImpl implements IElasticService {
         try {
             String indexL = index.toLowerCase();
             Map<String, Object> readMap = readEntity(indexL, osid);
-            Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
-            entityMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
+           // Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
+            readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
         } catch (NullPointerException | IOException e) {
             logger.error("exception in deleteEntity {}", e);

@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.opensaber.registry.dao.IRegistryDao;
 import io.opensaber.registry.dao.RegistryDaoImpl;
+
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
@@ -73,6 +74,7 @@ public class NativeReadService implements IReadService {
 			dbProvider.commitTransaction(graph, tx);
 			
 			auditService.auditRead(auditService.createAuditRecord(userId, id, tx, entityType), shard);
+
 			return result;
 		}
 	}

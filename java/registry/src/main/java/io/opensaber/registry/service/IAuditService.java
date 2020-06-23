@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.tinkerpop.gremlin.structure.Transaction;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.opensaber.pojos.AuditInfo;
@@ -130,4 +129,5 @@ public interface IAuditService {
 			}
 		});
 	}
+
 }

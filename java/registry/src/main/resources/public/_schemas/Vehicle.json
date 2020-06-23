@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "Vehicle": {
+      "$ref": "#/definitions/Vehicle"
+    }
+  },
+  "title":"Vehicle",
+  "required": [
+    "Vehicle"
+  ],
+  "definitions": {
+    "Vehicle": {
+      "$id": "#/properties/Vehicle",
+      "type": "object",
+      "title": "The Vehicle Schema",
+      "required": [
+        "registrationNumber",
+        "yearManufactured",
+        "model",
+        "manufacturer"
+      ],
+      "properties": {
+        "signatures": {
+          "$id": "#/properties/signatures",
+          "type": "array",
+          "items": {
+            "$ref": "Signature.json#/definitions/Signature"
+          },
+          "$comment": "Placeholder for all verifiable claims"
+        },
+        "registrationNumber": {
+          "$id": "#/properties/registrationNumber",
+          "type": "string",
+          "$comment": "Registration number"
+        },
+        "model": {
+          "$id": "#/properties/model",
+          "type": "string",
+          "title": "Model"
+        },
+        "manufacturer": {
+          "$id": "#/properties/manufacturer",
+          "type": "string",
+          "enum": [
+            "Hero",
+            "Honda",
+            "Bajaj",
+            "Suzuki",
+            "Kawasaki",
+            "Other"
+          ]
+        },
+        "yearManufactured": {
+          "$id": "#/properties/yearManufactured",
+          "$ref": "Common.json#/definitions/Year"
+        },
+        "kerbWeight": {
+          "$id": "#/properties/kerbWeight",
+          "$type": "double"
+        }
+      }
+    }
+  },
+  "_osConfig": {
+         "osComment": ["This section contains the OpenSABER specific configuration information", 
+                      "privateFields: Optional; list of field names to be encrypted and stored in database", 
+                      "signedFields: Optional; list of field names that must be pre-signed",
+                      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"], 
+         "privateFields": [],                                 
+         "signedFields": [],
+         "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"]
+         
+  }
+}

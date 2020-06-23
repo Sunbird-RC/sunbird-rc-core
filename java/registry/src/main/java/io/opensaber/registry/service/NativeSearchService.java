@@ -104,6 +104,7 @@ public class NativeSearchService implements ISearchService {
 
 				// TODO: parallel search.
 				List<Object> transaction = new LinkedList<>();
+
 				Shard shard = shardManager.activateShard(dbConnection.getShardId());
 				IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName);
 				SearchDaoImpl searchDao = new SearchDaoImpl(registryDao);
@@ -131,6 +132,7 @@ public class NativeSearchService implements ISearchService {
 	        			.setUserId(apiMessage.getUserID())
 	        			.setTransactionId(transaction), 
 	        			shard, searchQuery.getEntityTypes(), inputQueryNode);
+
 		 	}
 		}
 		

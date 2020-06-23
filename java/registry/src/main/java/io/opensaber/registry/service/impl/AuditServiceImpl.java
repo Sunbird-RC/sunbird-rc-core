@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
@@ -64,6 +65,7 @@ public class AuditServiceImpl implements IAuditService {
     @Autowired
     private AuditProviderFactory auditProviderFactory;
 
+
     @Value("${search.providerName}")
     private String searchProvider;
 
@@ -109,19 +111,15 @@ public class AuditServiceImpl implements IAuditService {
     	auditProviderFactory.getAuditService(auditFrameStore).doAudit(auditRecord, inputNode, shard);
     }
     
-    public void sendAuditToActor(AuditRecord auditRecord, JsonNode inputNode, String entityType) throws JsonProcessingException{
+    public void sendAuditToESActor(JsonNode inputNode, String entityType, String entityId) throws JsonProcessingException{
     	boolean elasticSearchEnabled = ("io.opensaber.registry.service.ElasticSearchService".equals(searchProvider));
-
-        JsonNode tempNode = null;
-        if (inputNode != null) {
-        	tempNode = inputNode.get(entityType);
-        }
-        MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, auditRecord.getAction(),
-                entityType, auditRecord.getAuditId(), tempNode, auditRecord);
+		
+        MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, "ADD",
+                entityType.toLowerCase(), entityId, inputNode.get(entityType), null);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
     }
 
-    public JsonNode convertAuditRecordToJson(AuditRecord auditRecord, String entityType) throws IOException {
+    public JsonNode convertAuditRecordToJson(AuditRecord auditRecord, String vertexLabel) throws IOException {
     	JsonNode jsonN = JSONUtil.convertObjectJsonNode(auditRecord);
 
         //Fetching auditInfo and creating json string
@@ -135,14 +133,10 @@ public class AuditServiceImpl implements IAuditService {
         // Adding auditInfo with json string to audit record
         ((ObjectNode) jsonN).put("auditInfo", json);
 
-        //Creating root node with vertex label
-  		//by appending the entity name with _Audit
-  		String vertexLabel = entityType;
-  		if( null != entityType && !(entityType.contains(auditSuffixSeparator+auditSuffix))) {
-  			vertexLabel = vertexLabel+auditSuffixSeparator+auditSuffix;
-  		}
+      		
+        ObjectNode root = JsonNodeFactory.instance.objectNode();        
+     
   		
-        ObjectNode root = JsonNodeFactory.instance.objectNode();
         root.set(vertexLabel, jsonN);
         
         JsonNode rootNode  =  root;
@@ -180,5 +174,6 @@ public class AuditServiceImpl implements IAuditService {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 }

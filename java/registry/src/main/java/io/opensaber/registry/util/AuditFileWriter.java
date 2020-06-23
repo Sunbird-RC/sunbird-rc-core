@@ -17,13 +17,10 @@ import io.opensaber.pojos.AuditRecord;
  */
 public class AuditFileWriter {
     private static Logger logger = LoggerFactory.getLogger(AuditFileWriter.class);
-    
-	@Autowired
-	private ObjectMapper objectMapper;
-
+  
 	@Async("auditExecutor")
 	public void auditToFile(AuditRecord auditRecord) throws JsonProcessingException {
-		
+		ObjectMapper objectMapper = new ObjectMapper();
 		String auditString = objectMapper.writeValueAsString(auditRecord);
 		logger.info("{}", auditString);
 	}

@@ -36,13 +36,15 @@ public class ViewTransformer {
 
 				for (int i = 0; i < nodeAttrs.size(); i++) {
 					
-					JsonNode tNode = tranformNode(viewTemplate, nodeAttrs.get(i));
+
+					JsonNode tNode = transformNode(viewTemplate, nodeAttrs.get(i));
 					resultArray.add(tNode);
 				}
 				resultNode = resultArray;
 
 			} else if (nodeAttrs.isObject()) {
-				resultNode = tranformNode(viewTemplate, nodeAttrs);
+
+				resultNode = transformNode(viewTemplate, nodeAttrs);
 				
 			} else {
 				throw new IllegalArgumentException("Not a valid node for transformation, must be a object node or array node");
@@ -61,7 +63,7 @@ public class ViewTransformer {
      * @param nodeAttrs
      * @return
      */
-    private JsonNode tranformNode(ViewTemplate viewTemplate, JsonNode nodeAttrs) throws Exception {
+    private JsonNode transformNode(ViewTemplate viewTemplate, JsonNode nodeAttrs) throws Exception {
         ObjectNode result = JsonNodeFactory.instance.objectNode();
 
         for (Field field : viewTemplate.getFields()) {
