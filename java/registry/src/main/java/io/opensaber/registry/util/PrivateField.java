@@ -1,20 +1,26 @@
 package io.opensaber.registry.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import io.opensaber.registry.exception.EncryptionException;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.service.EncryptionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 public class PrivateField {
-
     @Autowired
     public EncryptionService encryptionService;
     @Autowired
     public DefinitionsManager definitionsManager;
+    private Logger logger = LoggerFactory.getLogger(PrivateField.class);
 
     /**
      * Identifies the keys in the rootNode that needs to be encrypted/decrypted
@@ -29,8 +35,6 @@ public class PrivateField {
             if (entryValue.isValueNode()) {
                 if (privatePropertyLst.contains(entry.getKey()))
                     plainKeyValues.put(entry.getKey(), entryValue.asText());
-            } else if (entryValue.isObject()) {
-                plainKeyValues.putAll(getPrivateFields(entryValue, privatePropertyLst));
             }
         });
         return plainKeyValues;
@@ -53,10 +57,77 @@ public class PrivateField {
                 String privateFieldValue = privateFieldMap.get(entry.getKey()).toString();
                 JsonNode encryptedValNode = JsonNodeFactory.instance.textNode(privateFieldValue);
                 entry.setValue(encryptedValNode);
-            } else if (entryValue.isObject()) {
-                replacePrivateFields(entryValue, privatePropertyLst, privateFieldMap);
             }
         });
         return rootNode;
+    }
+
+    protected Map<String, Object> performOperation(Map<String, Object> plainMap) throws EncryptionException {
+        return null;
+    }
+
+    protected JsonNode processPrivateFields(JsonNode element, String rootDefinitionName, String childFieldName) throws EncryptionException {
+        JsonNode tempElement = element;
+        Definition definition = definitionsManager.getDefinition(rootDefinitionName);;
+        if (null != childFieldName) {
+            String defnName = definition.getDefinitionNameForField(childFieldName);
+            Definition childDefinition = definitionsManager.getDefinition(defnName);
+            if (null == childDefinition) {
+                logger.error("Cannot get child name definition {}", childFieldName);
+                return element;
+            }
+            definition = childDefinition;
+        }
+
+        List<String> privatePropertyLst = definition.getOsSchemaConfiguration().getPrivateFields();
+        Map<String, Object> plainMap = getPrivateFields(element, privatePropertyLst);
+        if (null != plainMap && !plainMap.isEmpty()) {
+            Map<String, Object> encodedMap = performOperation(plainMap);
+            tempElement = replacePrivateFields(element, privatePropertyLst, encodedMap);
+        }
+        return tempElement;
+    }
+
+    private void processArray(ArrayNode arrayNode, String rootFieldName, String fieldName) throws EncryptionException {
+        for (JsonNode jsonNode : arrayNode) {
+            if (jsonNode.isObject()) {
+                process(jsonNode, rootFieldName, fieldName);
+            }
+        }
+    }
+
+    protected JsonNode process(JsonNode jsonNode, String rootFieldName, String fieldName) throws EncryptionException {
+        processPrivateFields(jsonNode, rootFieldName, fieldName);
+
+        String tempFieldName = fieldName;
+        if (null == tempFieldName) {
+            tempFieldName = rootFieldName;
+        }
+
+        JsonNode toProcess = jsonNode;
+        JsonNode childNode = jsonNode.get(tempFieldName);
+        if (null != childNode) {
+            toProcess = childNode;
+        }
+
+        Iterator<Map.Entry<String, JsonNode>> fieldsItr = toProcess.fields();
+        while (fieldsItr.hasNext()) {
+            try {
+                Map.Entry<String, JsonNode> entry = fieldsItr.next();
+                JsonNode entryValue = entry.getValue();
+                logger.debug("Processing {}.{} -> {}", tempFieldName, entry.getKey(), entry.getValue());
+                boolean isNotSignatures = !Constants.SIGNATURES_STR.equals(entry.getKey());
+
+                if (isNotSignatures && entryValue.isObject()) {
+                    // Recursive calls
+                    process(entryValue, tempFieldName, entry.getKey());
+                } else if (isNotSignatures && entryValue.isArray()) {
+                    processArray((ArrayNode) entryValue, tempFieldName, entry.getKey());
+                }
+            } catch (EncryptionException e) {
+                e.printStackTrace();
+            }
+        }
+        return jsonNode;
     }
 }

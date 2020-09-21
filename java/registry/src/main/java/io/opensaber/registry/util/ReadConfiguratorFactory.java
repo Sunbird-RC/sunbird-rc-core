@@ -1,5 +1,10 @@
 package io.opensaber.registry.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+
 public class ReadConfiguratorFactory {
     public static ReadConfigurator getDefault() {
         ReadConfigurator configurator = new ReadConfigurator();
@@ -21,6 +26,24 @@ public class ReadConfiguratorFactory {
         } else {
             return getDefault();
         }
+    }
+
+    public static ReadConfigurator getOne(boolean withSignatures, JsonNode configRequested) {
+        ReadConfigurator readConfigurator = null;
+        if (configRequested != null && !configRequested.isNull()) {
+            try {
+                readConfigurator = new ObjectMapper().readValue(configRequested.toString(),
+                        ReadConfigurator.class);
+            } catch (IOException e) {
+                // No explicit config requested. Not a problem.
+                readConfigurator = null;
+            }
+        }
+
+        if (null == readConfigurator) {
+            readConfigurator = getOne(withSignatures);
+        }
+        return readConfigurator;
     }
 
     public static ReadConfigurator getForUpdateValidation() {

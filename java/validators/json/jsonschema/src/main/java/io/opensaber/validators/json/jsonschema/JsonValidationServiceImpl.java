@@ -36,8 +36,9 @@ public class JsonValidationServiceImpl implements IValidate {
 				String definitionContent = definitionMap.get(entityType);
                 JSONObject rawSchema = new JSONObject(definitionContent);
 
+				String scopeUrl = String.format("http://localhost:%d/_schemas/", port);
 				SchemaLoader schemaLoader = SchemaLoader.builder().schemaJson(rawSchema).draftV7Support()
-						.resolutionScope("http://localhost:9080/_schemas/").build();
+						.resolutionScope(scopeUrl).build();
 				schema = schemaLoader.load().build();
 				entitySchemaMap.put(entityType, schema);
 			} catch (Exception ioe) {
@@ -65,6 +66,7 @@ public class JsonValidationServiceImpl implements IValidate {
 		}
 		return result;
 	}
+
     /**
      * Store all list of known definitions as definitionMap.
      * Must get populated before creating the schema.
@@ -75,7 +77,5 @@ public class JsonValidationServiceImpl implements IValidate {
     @Override
     public void addDefinitions(String definitionTitle, String definitionContent) {
         definitionMap.put(definitionTitle, definitionContent);
-       
     }
-
 }

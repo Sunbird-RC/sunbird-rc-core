@@ -113,25 +113,34 @@ public class RegistryHelper {
         Shard shard = shardManager.activateShard(shardId);
         logger.info("Read Api: shard id: " + recordId.getShardLabel() + " for label: " + label);
         JsonNode signatureNode = inputJson.get(entityType).get("includeSignatures");
-        if(null != signatureNode) {
+        if (null != signatureNode) {
             includeSignatures = true;
         }
-        ReadConfigurator configurator = ReadConfiguratorFactory.getOne(includeSignatures);
+        JsonNode config = inputJson.get("config");
+        ReadConfigurator configurator = ReadConfiguratorFactory.getOne(includeSignatures, config);
         configurator.setIncludeTypeAttributes(requireLDResponse);
+
+        // Check if viewTemplate refers to any private properties
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
-        if (viewTemplate != null) {
-            includePrivateFields = viewTemplateManager.isPrivateFieldEnabled(viewTemplate,entityType);
-        }
-        configurator.setIncludeEncryptedProp(includePrivateFields);
+        boolean encFlag = configurator.isIncludeEncryptedProp() ||
+                    (viewTemplate != null &&
+                            viewTemplateManager.isPrivateFieldEnabled(viewTemplate, entityType));
+        configurator.setIncludeEncryptedProp(encFlag);
+
+        // Get the entity
         resultNode =  readService.getEntity(shard, userId, recordId.getUuid(), entityType, configurator);
+        if (encFlag) { // Optionally decrypt values
+            resultNode = decryptionHelper.getDecryptedJson(resultNode);
+        }
+
+        // Apply the final transformation
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
-            resultNode = includePrivateFields ? decryptionHelper.getDecryptedJson(resultNode) : resultNode;
             resultNode = vTransformer.transform(viewTemplate, resultNode);
         }
+
         logger.debug("readEntity ends");
         return resultNode;
-
     }
 
     /**
