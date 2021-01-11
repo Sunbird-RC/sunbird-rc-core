@@ -99,6 +99,9 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${audit.enabled}")
     private boolean auditEnabled;
 
+    @Value("${registry.perRequest.indexCreation.enabled:false}")
+    private boolean perRequestIndexCreation;
+
     @Autowired
     private EntityParenter entityParenter;
 
@@ -211,10 +214,12 @@ public class RegistryServiceImpl implements RegistryService {
                 tx.close();
             }
             // Add indices: executes only once.
-            String shardId = shard.getShardId();
-            Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
-            Definition definition = definitionsManager.getDefinition(vertexLabel);
-            entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
+            if (perRequestIndexCreation) {
+                String shardId = shard.getShardId();
+                Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
+                Definition definition = definitionsManager.getDefinition(vertexLabel);
+                entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
+            }
             
             callESActors(rootNode, "ADD", vertexLabel, entityId, tx);
 
