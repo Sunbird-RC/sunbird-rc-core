@@ -150,7 +150,7 @@ public class JSONUtil {
 
 		parent.fields().forEachRemaining(entry -> {
 			JsonNode entryValue = entry.getValue();
-			if (entryValue.isValueNode() && entryValue.toString().contains(prefix)) {
+			if (entryValue.isValueNode() && entryValue.asText("").startsWith(prefix)) {
 				parent.put(entry.getKey(), entry.getValue().asText().replaceFirst(prefix, ""));
 			} else if (entryValue.isArray()) {
 				for (int i = 0; i < entryValue.size(); i++) {
@@ -394,7 +394,7 @@ public class JSONUtil {
 		parent.fields().forEachRemaining(entry -> {
 			JsonNode entryValue = entry.getValue();
 
-			if ( entry.getKey().equals(fieldName) && entryValue.isValueNode() && entryValue.toString().contains(prefix)) {
+			if ( entry.getKey().equals(fieldName) && entryValue.isValueNode() && entryValue.asText("").startsWith(prefix)) {
 				parent.put(entry.getKey(), entry.getValue().asText().replaceFirst(prefix, ""));
 
 			} else if (entryValue.isArray()) {
