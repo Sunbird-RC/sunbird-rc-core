@@ -194,10 +194,12 @@ public class ElasticServiceImpl implements IElasticService {
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public Map<String, Object> readEntity(String index, String osid) throws IOException {
         logger.debug("readEntity starts with index {} and entityId {}", index, osid);
+        
         GetResponse response = null;
         response = getClient(index).get(new GetRequest(index, searchType, osid), RequestOptions.DEFAULT);
         return response.getSourceAsMap();
     }
+    
 
     /**
      * Updates the document with updated inputEntity
@@ -214,6 +216,8 @@ public class ElasticServiceImpl implements IElasticService {
         try {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
             inputMap.keySet().removeIf(key -> !publicFieldsInfo.get(index).contains(key));
+            logger.debug("updateEntity inputMap {}", inputMap);
+            logger.debug("updateEntity inputEntity {}", inputEntity);
             response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in updating a record to ElasticSearch", e);
