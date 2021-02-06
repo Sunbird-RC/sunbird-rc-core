@@ -7,6 +7,6 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 
 public interface SearchDao {
 
-    JsonNode search(Graph graphFromStore, SearchQuery searchQuery);
+    JsonNode search(Graph graphFromStore, SearchQuery searchQuery, boolean expandInternal);
 
 }

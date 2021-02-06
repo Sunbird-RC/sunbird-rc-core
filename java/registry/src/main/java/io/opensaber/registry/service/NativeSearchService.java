@@ -76,6 +76,9 @@ public class NativeSearchService implements ISearchService {
     @Value("${audit.frame.suffix}")
     private String auditSuffix;
 
+	@Value("${search.expandInternal}")
+	private boolean expandInternal;
+
 	@Override
 	public JsonNode search(JsonNode inputQueryNode) throws IOException {
 		
@@ -111,7 +114,7 @@ public class NativeSearchService implements ISearchService {
 				try (OSGraph osGraph = shard.getDatabaseProvider().getOSGraph()) {
 					Graph graph = osGraph.getGraphStore();
 					try (Transaction tx = shard.getDatabaseProvider().startTransaction(graph)) {
-						ObjectNode shardResult = (ObjectNode) searchDao.search(graph, searchQuery);
+						ObjectNode shardResult = (ObjectNode) searchDao.search(graph, searchQuery, expandInternal);
 						if (!shard.getShardLabel().isEmpty()) {
 							// Replace osid with shard details
 							String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();

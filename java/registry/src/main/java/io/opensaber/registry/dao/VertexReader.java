@@ -289,7 +289,9 @@ public class VertexReader {
      */
     private ArrayNode expandChildObject(ObjectNode entityNode, List<String> processedUUIDs) {
         ArrayNode resultArr = JsonNodeFactory.instance.arrayNode();
-
+        if (entityNode == null) {
+            return resultArr;
+        }
         List<String> fieldNames = new ArrayList<String>();
         entityNode.fieldNames().forEachRemaining(fieldName -> {
             fieldNames.add(fieldName);
@@ -297,63 +299,71 @@ public class VertexReader {
 
         for (String field : fieldNames) {
             JsonNode entry = entityNode.get(field);
+            if (entry != null) {
 
-            logger.debug("Working on field {}", field);
+                logger.debug("Working on field {}", field);
+                logger.debug("Working on entry {}", entry);
 
-            if (field.equals(uuidPropertyName)) {
-                // has a uuid that may have been populated
-                // This could be a textual value or an array
-                JsonNode entryValNode = entry;
-                String uuidVal = entryValNode.asText();
-                JsonNode temp = uuidNodeMap.getOrDefault(uuidVal, null);
-                boolean isArray = (temp != null
-                        && temp.get(Constants.TYPE_STR_JSON_LD).asText().equals(Constants.ARRAY_NODE_KEYWORD));
+                if (field.equals(uuidPropertyName)) {
+                    // has a uuid that may have been populated
+                    // This could be a textual value or an array
+                    JsonNode entryValNode = entry;
+                    String uuidVal = entryValNode.asText();
+                    JsonNode temp = uuidNodeMap.getOrDefault(uuidVal, null);
+                    boolean isArray = (temp != null
+                            && temp.get(Constants.TYPE_STR_JSON_LD).asText().equals(Constants.ARRAY_NODE_KEYWORD));
 
-                if (temp == null) {
-                    // No node loaded for this.
-                    // No action required.
-                    entityNode.remove(field);
-                } else if (!isArray) {
-                    logger.debug("Field {} Not an array type", field);
-                    if (null == processedUUIDs) {
-                        processedUUIDs = new ArrayList<>();
-                        logger.debug("Provision for expansion");
-                    }
+                    if (temp == null) {
+                        // No node loaded for this.
+                        // No action required.
+                        entityNode.remove(field);
+                    } else if (!isArray) {
+                        logger.debug("Field {} Not an array type", field);
+                        if (null == processedUUIDs) {
+                            processedUUIDs = new ArrayList<>();
+                            logger.debug("Provision for expansion");
+                        }
 
-                    if (!processedUUIDs.contains(uuidVal)) {
-                        processedUUIDs.add(uuidVal);
-                        ObjectNode tmp = uuidNodeMap.get(uuidVal);
-                        ArrayNode result = expandChildObject(tmp, processedUUIDs);
-                        entityNode.setAll(tmp);
-                    }
-                } else {
-                    // Now first query the uuidNodeMap for the list of items
-                    JsonNode blankNode = temp;
+                        if (!processedUUIDs.contains(uuidVal)) {
+                            processedUUIDs.add(uuidVal);
+                            ObjectNode tmp = uuidNodeMap.get(uuidVal);
+                            ArrayNode result = expandChildObject(tmp, processedUUIDs);
+                            entityNode.setAll(tmp);
+                        }
+                    } else {
+                        // Now first query the uuidNodeMap for the list of items
+                        JsonNode blankNode = temp;
 
-                    Iterator<Map.Entry<String, JsonNode>> entryIterator = blankNode.fields();
-                    while (entryIterator.hasNext()) {
-                        Map.Entry<String, JsonNode> item = entryIterator.next();
-                        JsonNode ar = item.getValue();
-                        for (JsonNode node : ar) {
-                            String osidVal = ArrayHelper.unquoteString(node.get(uuidPropertyName).asText());
-                            ObjectNode ovalue = uuidNodeMap.getOrDefault(osidVal, null);
-                            expandChildObject(ovalue);
-                            if (ovalue != null) {
-                                resultArr.add(ovalue);
-                            } else {
-                                logger.info("Field {} Array items not found in map", field);
+                        Iterator<Map.Entry<String, JsonNode>> entryIterator = blankNode.fields();
+                        while (entryIterator.hasNext()) {
+                            Map.Entry<String, JsonNode> item = entryIterator.next();
+                            JsonNode ar = item.getValue();
+                            for (JsonNode node : ar) {
+                                String osidVal;
+                                if(node.isObject()) {
+                                    osidVal = ArrayHelper.unquoteString(node.get(uuidPropertyName).asText());
+                                } else {
+                                    osidVal = ArrayHelper.unquoteString(node.asText());
+                                }
+                                ObjectNode ovalue = uuidNodeMap.getOrDefault(osidVal, null);
+                                expandChildObject(ovalue);
+                                if (ovalue != null) {
+                                    resultArr.add(ovalue);
+                                } else {
+                                    logger.info("Field {} Array items not found in map", field);
+                                }
                             }
                         }
                     }
-                }
-            } else if (entry.isObject()) {
-                logger.debug("Field {} is an object. Expanding further.", entry);
-                ArrayNode expandChildObject = expandChildObject((ObjectNode) entry);
-                if(expandChildObject.size() == 0 && entityNode.get(field).size() == 0){
-                    entityNode.remove(field);
-                }
-                if (expandChildObject != null && expandChildObject.size() > 0) {
-                    entityNode.set(field, expandChildObject);
+                } else if (entry.isObject()) {
+                    logger.debug("Field {} is an object. Expanding further.", entry);
+                    ArrayNode expandChildObject = expandChildObject((ObjectNode) entry);
+                    if (expandChildObject.size() == 0 && entityNode.get(field).size() == 0) {
+                        entityNode.remove(field);
+                    }
+                    if (expandChildObject != null && expandChildObject.size() > 0) {
+                        entityNode.set(field, expandChildObject);
+                    }
                 }
             }
         }
@@ -437,9 +447,6 @@ public class VertexReader {
      */
     public JsonNode read(String entityType, String osid) throws Exception {
         rootVertex = getVertex(entityType, osid);
-        if (rootVertex == null) {
-            throw new NotFoundException(entityType, osid);
-        }
         return readInternal(rootVertex);
     }
 
@@ -448,7 +455,7 @@ public class VertexReader {
         return readInternal(rootVertex);
     }
 
-    private JsonNode readInternal(Vertex rootVertex) throws Exception {
+    JsonNode readInternal(Vertex rootVertex) throws Exception {
         if (null == rootVertex) {
             throw new Exception("Invalid id");
         }

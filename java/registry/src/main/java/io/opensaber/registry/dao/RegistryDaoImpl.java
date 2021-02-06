@@ -70,12 +70,14 @@ public class RegistryDaoImpl implements IRegistryDao {
     }
 
 
-    public JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator) {
+    public JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator, boolean expandInternal) throws Exception {
 
         VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
-        JsonNode result = vr.constructObject(vertex);
-
-        return result;
+        if (expandInternal) {
+            return vr.readInternal(vertex);
+        } else {
+            return vr.constructObject(vertex);
+        }
     }
 
 
@@ -115,7 +117,9 @@ public class RegistryDaoImpl implements IRegistryDao {
             String fieldKey = field.getKey();
             if (!fieldKey.equals(uuidPropertyName) &&
                     fieldValue.isValueNode() && !fieldKey.equals(Constants.TYPE_STR_JSON_LD)) {
-                vertex.property(fieldKey, ValueType.getValue(fieldValue));
+                if (!fieldValue.isNull()) {
+                    vertex.property(fieldKey, ValueType.getValue(fieldValue));
+                }
             } else {
                 logger.debug("Not updating non-value object types here");
             }
