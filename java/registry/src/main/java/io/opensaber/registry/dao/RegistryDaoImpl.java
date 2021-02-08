@@ -7,6 +7,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
+import io.opensaber.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
@@ -73,10 +74,12 @@ public class RegistryDaoImpl implements IRegistryDao {
     public JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator, boolean expandInternal) throws Exception {
 
         VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
+        ObjectNode constructObject = vr.constructObject(vertex);
         if (expandInternal) {
-            return vr.readInternal(vertex);
+            String entityType = (String) ValueType.getValue(constructObject.get(TypePropertyHelper.getTypeName()));
+            return vr.readInternal(vertex).get(entityType);
         } else {
-            return vr.constructObject(vertex);
+            return constructObject;
         }
     }
 
