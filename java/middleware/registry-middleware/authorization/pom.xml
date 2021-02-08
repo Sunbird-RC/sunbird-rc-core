@@ -3,14 +3,14 @@
     <modelVersion>4.0.0</modelVersion>
     <!-- <groupId>io.opensaber</groupId> -->
     <artifactId>authorization</artifactId>
-    <version>2.0.3-SNAPSHOT</version>
+    <version>2.0.3</version>
     <name>Authorization</name>
     <description>Authorization of requests</description>
 
     <parent>
         <groupId>io.opensaber</groupId>
         <artifactId>registry-middleware</artifactId>
-        <version>2.0.3-SNAPSHOT</version>
+        <version>2.0.3</version>
     </parent>
 
     <properties>
@@ -35,7 +35,7 @@
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>middleware-commons</artifactId>
-            <version>2.0.3-SNAPSHOT</version>
+            <version>2.0.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

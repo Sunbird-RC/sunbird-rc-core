@@ -46,7 +46,6 @@ public class VertexWriterTest {
     @Before
     public void setUp() throws Exception {
         dbConnectionInfoMgr.setUuidPropertyName(testUuidPropertyName);
-
         mockDatabaseProvider = dbProviderFactory.getInstance(null);
         try (OSGraph osGraph = mockDatabaseProvider.getOSGraph()) {
             graph = osGraph.getGraphStore();
