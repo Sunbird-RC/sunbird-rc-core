@@ -48,7 +48,7 @@
             <!-- Adopter's specific tags: maxHistory, totalSizeCap disabled by default -->            
             <!-- <maxHistory>10</maxHistory> -->
             <!-- <totalSizeCap>5GB</totalSizeCap> -->
-            <maxFileSize>30MB</maxFileSize>            
+            <maxFileSize>30MB</maxFileSize>
         </rollingPolicy>
         <encoder>
             <pattern>%msg%n</pattern>
@@ -72,13 +72,13 @@
     <logger name="io.opensaber.registry.service" level="DEBUG"/>
     <logger name="com.steelbridgelabs.oss.neo4j.structure.Neo4JSession" level="DEBUG"/>
     <logger name="io.opensaber.registry.dao.RegistryDaoImpl" level="DEBUG"/>
-    <logger name="com.mchange.v2.c3p0.impl.NewProxyPreparedStatement" level="DEBUG"/>
+    <logger name="com.mchange.v2.c3p0.impl.NewProxyPreparedStatement" level="INFO"/>
 
-    <logger name="io.opensaber.audit.AuditServiceImpl" level="DEBUG" additivity="FALSE">
+    <logger name="io.opensaber.registry.util.AuditFileWriter" level="DEBUG" additivity="FALSE">
         <appender-ref ref="AuditFileAppender"/>
     </logger>
 
-    <root level="INFO" additivity="FALSE">
+    <root level="DEBUG" additivity="FALSE">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </root>

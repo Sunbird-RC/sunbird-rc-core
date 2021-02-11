@@ -1,6 +1,7 @@
 package io.opensaber.views;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -9,13 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class ViewTransformer {
-    
-    private static Logger logger = LoggerFactory.getLogger(ViewTransformer.class);
-
     /**
      * transforms a given JsonNode to representation of view templates
      * view template indicates any new field or mask fields for transformation
@@ -25,7 +20,6 @@ public class ViewTransformer {
      * @return
      */
 	public JsonNode transform(ViewTemplate viewTemplate, JsonNode node) throws Exception {
-		logger.debug("transformation on input node " + node);
 
 		ObjectNode result = JsonNodeFactory.instance.objectNode();
 
@@ -41,17 +35,17 @@ public class ViewTransformer {
 				ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
 
 				for (int i = 0; i < nodeAttrs.size(); i++) {
-					JsonNode tNode = tranformNode(viewTemplate, nodeAttrs.get(i));
+					
+					JsonNode tNode = transformNode(viewTemplate, nodeAttrs.get(i));
 					resultArray.add(tNode);
-
 				}
 				resultNode = resultArray;
 
 			} else if (nodeAttrs.isObject()) {
-				resultNode = tranformNode(viewTemplate, nodeAttrs);
-
+				resultNode = transformNode(viewTemplate, nodeAttrs);
+				
 			} else {
-				logger.error("Not a valid node for transformation, must be a object node or array node");
+				throw new IllegalArgumentException("Not a valid node for transformation, must be a object node or array node");
 			}
 
 			result.set(subjectType, resultNode);
@@ -64,10 +58,10 @@ public class ViewTransformer {
      * Transforms a single node for given view template
      * 
      * @param viewTemplate
-     * @param node
+     * @param nodeAttrs
      * @return
      */
-    private JsonNode tranformNode(ViewTemplate viewTemplate, JsonNode nodeAttrs) throws Exception {
+    private JsonNode transformNode(ViewTemplate viewTemplate, JsonNode nodeAttrs) throws Exception {
         ObjectNode result = JsonNodeFactory.instance.objectNode();
 
         for (Field field : viewTemplate.getFields()) {
@@ -83,7 +77,6 @@ public class ViewTransformer {
                     // Cut off the $
                 	if(nodeAttrs.get(oneArg.substring(1)) != null) {
                         actualValues.add(ValueType.getValue(nodeAttrs.get(oneArg.substring(1))));
-
                 	}
                 }
                 
@@ -100,12 +93,45 @@ public class ViewTransformer {
             } else if (field.getDisplay()) {
                 result.set(field.getTitle(), nodeAttrs.get(field.getName()));
             }
-
         }
-        logger.debug("Node transformation result: " + result);
+        
+        appendSignatures(viewTemplate, nodeAttrs,result);        
         return result;
-
     }
     
-
+    /**
+     * Appends the signature array to the result as per the fields specified in view template file.
+     *
+     * @param viewTemplate
+     * @param nodeAttrs
+     * @param resultNode
+     * @return
+     * */
+    private JsonNode appendSignatures(ViewTemplate viewTemplate, JsonNode nodeAttrs, JsonNode resultNode) throws Exception {
+    	if(nodeAttrs.get("signatures")!=null) {
+			
+			ArrayNode sigArray = new ObjectMapper().createArrayNode();
+			
+	    	for (JsonNode sigNode : nodeAttrs.get("signatures")) {
+	    		JsonNode signatureField = sigNode.get("signatureFor");
+	    		
+	    		if(signatureField != null){
+	    			//Adds the signatures of fields specified in view template file
+		    		for (Field fieldTemp : viewTemplate.getFields()) {
+		    			if(signatureField.asText().endsWith("/"+fieldTemp.getName()) && fieldTemp.getDisplay()){		
+		    				sigArray.add(sigNode);
+		    			}
+		    		}
+		    		//Adds the subject signature
+		    		if(signatureField.asText().endsWith("/"+viewTemplate.getSubject())){	    				
+	    				sigArray.add(sigNode);
+	    			}
+	    		}
+	    	}
+	    	if(sigArray.size()>0) {
+	    		((ObjectNode)resultNode).set("signatures", sigArray);
+	    	}
+		}
+    	return resultNode;
+    }
 }

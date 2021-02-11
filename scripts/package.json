@@ -1,0 +1,16 @@
+{
+  "name": "utils",
+  "version": "1.0.0",
+  "description": "Open-Saber upload script",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "async": "^2.6.1",
+    "request": "^2.87.0",
+    "csvjson": "5.1.0"
+  },
+  "author": "indrajra",
+  "license": "MIT"
+}

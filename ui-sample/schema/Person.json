@@ -1,0 +1,58 @@
+{
+  "$id": "#/properties/Person",
+  "type": "object",
+  "title": "The Person Schema",
+  "required": [
+    "nationalIdentifier",
+    "name",
+    "gender",
+    "dob"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "nationalIdentifier": {
+      "$id": "#/properties/nationalIdentifier",
+      "type": "string",
+      "$comment": "Nationality",
+      "pattern": "^[0-9]{3}-.*",
+      "title": "National identifier",
+      "examples": ["888-abc", "639-def"]
+    },
+    "name": {
+      "$id": "#/properties/name",
+      "type": "string",
+      "title": "Full name"
+    },
+    "gender": {
+      "$id": "#/properties/gender",
+      "type": "string",
+      "enum": [
+        "MALE",
+        "FEMALE",
+        "OTHER"
+      ],
+      "title": "Gender"
+    },
+    "dob": {
+      "$id": "#/properties/birthDate",
+      "type": "string",
+      "format": "date",
+      "$comment": "YYYY-MM-DD format",
+      "examples": [
+        "1990-12-01"
+      ],
+      "title": "Date of birth"
+    },
+    "hasDrivingLicense": {
+      "$id": "#/properties/hasDrivingLicense",
+      "type": "boolean",
+      "title": "Driving license is present"
+    },
+    "photo": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "mediaType": "image/png",
+      "title": "photo"
+    }
+  }
+}

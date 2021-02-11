@@ -1,19 +1,26 @@
 package io.opensaber.registry.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import org.apache.commons.lang3.StringUtils;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * This class creates util methods for String modification and replacing
  */
 public class ArrayHelper {
 
+	private static Logger logger = LoggerFactory.getLogger(ArrayHelper.class);
+	
     private static final String ITEM_SEPARATOR = ",";
     private static final String SQUARE_BRACE_REGEX = "[\\[\\]]";
     private static final String SQUARE_BRACE_ENCLOSED_REGEX = "(\\[)(.*)(\\])";
@@ -56,7 +63,10 @@ public class ArrayHelper {
      * @return
      */
     public static String unquoteString(String quotedStr) {
-        return StringUtils.substringBetween(quotedStr, "\"", "\"");
+    	if(quotedStr.startsWith("\"") && quotedStr.endsWith("\"")){
+    		return StringUtils.substringBetween(quotedStr, "\"", "\"");
+    	}
+        return quotedStr;
     }
 
     /**
@@ -81,27 +91,19 @@ public class ArrayHelper {
 
     /**
      *
-     * @param valItems example, "1,2,3" or "social, english"
+     * @param valItems example, "[1,2,3]" or "["social", "english"]" or "[{"op":"add","path":"/Teacher"}]"
      * @return
      */
     public static ArrayNode constructArrayNode(String valItems) {
-        ArrayNode arrNode = JsonNodeFactory.instance.arrayNode();
-        String[] arrItems = valItems.split(ITEM_SEPARATOR);
-
-        if (arrItems.length > 0) {
-            boolean isNotString = isNotAString(arrItems[0]);
-
-            for (String item : arrItems) {
-                try {
-                    if (isNotString) {
-                        arrNode.add(Long.valueOf(item));
-                    } else {
-                        arrNode.add(unquoteString(item));
-                    }
-                } catch (Exception e) {
-                    arrNode.add(Double.parseDouble(item));
-                }
-            }
+    	ArrayNode arrNode = JsonNodeFactory.instance.arrayNode();
+    	ObjectMapper mapper = new ObjectMapper();
+    	
+    	try {
+        	List<Object> itemList =  mapper.readValue(valItems, 
+            		TypeFactory.defaultInstance().constructCollectionType(List.class, Object.class));     
+        	 arrNode = mapper.valueToTree(itemList);
+        } catch (Exception e) {
+            logger.error("Error in converting array elements to JsonNode" + e);
         }
         return arrNode;
     }

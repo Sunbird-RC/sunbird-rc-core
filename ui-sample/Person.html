@@ -1,0 +1,122 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link type="text/css" rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/todc-bootstrap/3.3.2-3.3.2/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker-standalone.min.css"/>
+    <link type="text/css" href="./alpaca.css" rel="stylesheet" />
+   
+    <!--
+        <link type="text/css" href="http://code.cloudcms.com/alpaca/1.5.24/bootstrap/alpaca.min.css" rel="stylesheet" />
+    -->
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.js"></script>
+    <script type="text/javascript" src="http://code.cloudcms.com/alpaca/1.5.24/bootstrap/alpaca.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
+    <!-- bootstrap datetimepicker for date and datetime controls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+</head>
+
+<body>
+    <div id="PersonForm"></div>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var cookedVal = {  "id": "",
+                                "ver": "1.0",
+                                "ets": "11234",
+                                "params": {
+                                    "did": "",
+                                    "key": "",
+                                    "msgid": ""
+                                },
+                                "request": {"Person": {}} 
+                            };
+            $("#PersonForm").alpaca({
+                "schemaSource": "./schema/Person.json",
+                "options": {
+                    "validate": true,
+                    "fields": {
+                        "dob": {
+                            "picker": {
+                                "useCurrent": false,
+                                "format": "YYYY-MM-DD",
+                                "locale": "en_US",
+                                "dayViewHeaderFormat": "MMMM YYYY",
+                                "extraFormats": []
+                            },
+                            "manualEntry": false,
+                            "fields": {}
+                        }
+                    },
+                    "form": {
+                        "attributes": {
+                            "method": "post",
+                            "action": "http://localhost:8080/add"
+                        },
+                        "buttons": {
+                            "validate": {
+                                "title": "Validate",
+                                "click": function () {
+                                    this.validate(true);
+                                    this.refreshValidationState(true);
+                                    if (this.isValid(true)) {
+                                        var value = this.getValue();
+                                        alert("Perfecto!");
+                                    } else {
+                                        alert("Invalid. Please correct errors");
+                                    }
+                                }
+                            },
+                            "serialize": {
+                                "title": "Serialize",
+                                "click": function () {
+                                    var value = this.getValue();
+                                    alert(JSON.stringify(value, null, "  "));
+                                }
+                            },
+                            "add": {
+                                "title": "Add",
+                                "click": function () {
+                                    var value = this.getValue();
+                                    cookedVal["id"] = "open-saber.registry.create";
+                                    cookedVal["request"]["Person"] = value;
+                                    console.log(JSON.stringify(cookedVal));
+
+                                    $.ajax({url: "http://localhost:8080/add", 
+                                            type: "post", 
+                                            dataType: "application/json",
+                                            contentType: "application/json",
+                                            data: JSON.stringify(cookedVal)
+                                        }, function(data, status) {
+                                            alert("Data: " + JSON.stringify(data) + "\nStatus: " + status);
+                                    });
+                                }
+                            }
+                        }
+                    },
+                    "view": {
+                        "parent": "bootstrap-edit",
+                        "layout": {
+                            "template": './layout1.html',
+                            "bindings": {
+                                "nationalIdentifier": "#left",
+                                "name": "#right",
+                                "gender": "#id3",
+                                "dob": "#id4",
+                                "hasDrivingLicense": "#id5",
+                                "photo": "#id6"
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

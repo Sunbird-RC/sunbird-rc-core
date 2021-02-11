@@ -127,7 +127,7 @@ public class VertexReader {
                         on.put(uuidPropertyName, value);
                         arrayNode.add(on);
                     }
-                    if (isObjectNode) {
+                    if (isObjectNode && !isArrayType) {
                         contentNode.set(refEntityName, arrayNode.get(0));
                     } else {
                         contentNode.set(refEntityName, arrayNode);
@@ -136,7 +136,7 @@ public class VertexReader {
                     logger.debug("{} is a simple value", prop.key());
                     if (canAdd(prop.key(), privatePropertyList)) {
                         if (isArrayType) {
-                            ArrayNode arrayNode = ArrayHelper.constructArrayNode(propValue);
+                            ArrayNode arrayNode = ArrayHelper.constructArrayNode(prop.value().toString());
                             contentNode.set(prop.key(), arrayNode);
                         } else {
                             ValueType.setValue(contentNode, prop.key(), prop.value());

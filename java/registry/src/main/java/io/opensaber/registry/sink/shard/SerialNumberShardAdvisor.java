@@ -1,5 +1,6 @@
 package io.opensaber.registry.sink.shard;
 
+import com.fasterxml.jackson.databind.node.IntNode;
 import io.opensaber.registry.model.DBConnectionInfo;
 import org.springframework.stereotype.Component;
 
@@ -17,9 +18,15 @@ public class SerialNumberShardAdvisor extends DefaultShardAdvisor {
 	 */
 	@Override
 	public DBConnectionInfo getShard(Object serialNumber) {
-		DBConnectionInfo connectionInfo = null;
+		DBConnectionInfo connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(0);
 		if (serialNumber instanceof Integer) {
 			Integer serNo = (Integer) serialNumber;
+			int mod = serNo % 2;
+			connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(mod);
+
+		}
+		if (serialNumber instanceof IntNode) {
+			Integer serNo = ((IntNode) serialNumber).intValue();
 			int mod = serNo % 2;
 			connectionInfo = dBConnectionInfoMgr.getConnectionInfo().get(mod);
 

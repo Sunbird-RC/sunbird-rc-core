@@ -94,10 +94,15 @@ public class SignatureHelper {
      */
     private void addSignature(JsonNode entityNode, String entityType, JsonNode toAdd) {
         ArrayNode existingSignatures = (ArrayNode) entityNode.get(entityType).get(Constants.SIGNATURES_STR);
-        if (existingSignatures == null) {
+        boolean signatureExists = (existingSignatures != null);
+
+        if (signatureExists) {
+            existingSignatures.add(toAdd);
+        } else {
             existingSignatures = JsonNodeFactory.instance.arrayNode();
+            existingSignatures.add(toAdd);
+            ((ObjectNode) entityNode.get(entityType)).set(Constants.SIGNATURES_STR, existingSignatures);
         }
-        existingSignatures.add(toAdd);
     }
 
     /**

@@ -94,7 +94,7 @@ public class ArrayHelperTest {
 
     @Test
     public void constructIntegerArrayNode() {
-        ArrayNode arrayNode = ArrayHelper.constructArrayNode("1,2,3");
+        ArrayNode arrayNode = ArrayHelper.constructArrayNode("[1,2,3]");
         arrayNode.forEach( item -> {
             int val = item.intValue();
             assertTrue(val == 1 || val == 2 || val == 3);
@@ -103,7 +103,7 @@ public class ArrayHelperTest {
 
     @Test
     public void constructDoubleArrayNode() {
-        ArrayNode arrayNode = ArrayHelper.constructArrayNode("1.1,2.1,3.1");
+        ArrayNode arrayNode = ArrayHelper.constructArrayNode("[1.1,2.1,3.1]");
         arrayNode.forEach( item -> {
             Double val = item.doubleValue();
             assertTrue(val.compareTo(1.1) == 0 ||
@@ -114,12 +114,25 @@ public class ArrayHelperTest {
 
     @Test
     public void constructStringArrayNode() {
-        ArrayNode arrayNode = ArrayHelper.constructArrayNode("\"a\", \"b\", \"c\"");
+        ArrayNode arrayNode = ArrayHelper.constructArrayNode("[\"a\", \"b\", \"c\"]");
         arrayNode.forEach( item -> {
             String val = item.asText();
             assertTrue("a".equals(val) ||
                     "b".equals(val) ||
                     "c".equals(val));
+        });
+    }
+
+    @Test
+    public void constructJsonStringArrayNode() {
+        ArrayNode arrayNode = ArrayHelper.constructArrayNode("[{\"op\":\"add\",\"path\":\"/Teacher\"},{\"op\":\"update\",\"path\":\"/Teacher\"}]");
+       
+        arrayNode.forEach( item -> { 
+            assertTrue("add".equals(item.get("op").asText()) ||
+            		"/Teacher".equals(item.get("path").asText()) ||
+                    "update".equals(item.get("op").asText()) ||
+                    "/Teacher".equals(item.get("path").asText())
+                    );
         });
     }
 
@@ -134,6 +147,6 @@ public class ArrayHelperTest {
     public void unquoteStringWithoutQuotes() {
         String qStr = "a";
         String actual = ArrayHelper.unquoteString(qStr);
-        assertTrue(actual == null);
+        assertTrue(actual == "a");
     }
 }

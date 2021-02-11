@@ -1,26 +1,10 @@
 package io.opensaber.registry.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.opensaber.audit.IAuditService;
-import io.opensaber.pojos.APIMessage;
-import io.opensaber.pojos.AuditInfo;
-import io.opensaber.pojos.AuditRecord;
-import io.opensaber.registry.dao.IRegistryDao;
-import io.opensaber.registry.dao.RegistryDaoImpl;
-import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.middleware.util.DateUtil;
-import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.sink.DatabaseProvider;
-import io.opensaber.registry.sink.OSGraph;
-import io.opensaber.registry.sink.shard.Shard;
-import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.ReadConfigurator;
-import io.opensaber.registry.util.RecordIdentifier;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.UUID;
 import java.util.LinkedList;
+import java.util.List;
+
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.slf4j.Logger;
@@ -29,10 +13,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import io.opensaber.pojos.AuditRecord;
+import io.opensaber.registry.dao.IRegistryDao;
+import io.opensaber.registry.dao.RegistryDaoImpl;
+import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.sink.DatabaseProvider;
+import io.opensaber.registry.sink.OSGraph;
+import io.opensaber.registry.sink.shard.Shard;
+import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.ReadConfigurator;
+import io.opensaber.registry.util.RecordIdentifier;
+
 /**
  * This class provides native search which hits the native database
- * Hence, this have performance in-efficiency on search operations    
- * 
+ * Hence, this have performance in-efficiency on search operations
+ *
  */
 @Component
 public class NativeReadService implements IReadService {
@@ -43,16 +42,13 @@ public class NativeReadService implements IReadService {
 	private DefinitionsManager definitionsManager;
 
 	@Autowired
-	private Shard shard;
-
-	@Autowired
 	private IAuditService auditService;
-
-    @Autowired
-    private APIMessage apiMessage;
 
 	@Value("${database.uuidPropertyName}")
 	public String uuidPropertyName;
+
+    @Value("${audit.enabled}")
+    private boolean auditEnabled;
 
 	/**
 	 * This method interacts with the native db and reads the record
@@ -64,8 +60,7 @@ public class NativeReadService implements IReadService {
 	 * @throws Exception
 	 */
 	@Override
-	public JsonNode getEntity(String id, String entityType, ReadConfigurator configurator) throws Exception {
-        AuditRecord auditRecord = null;
+	public JsonNode getEntity(Shard shard, String userId, String id, String entityType, ReadConfigurator configurator) throws Exception {
 		DatabaseProvider dbProvider = shard.getDatabaseProvider();
 		IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
 		try (OSGraph osGraph = dbProvider.getOSGraph()) {
@@ -80,14 +75,17 @@ public class NativeReadService implements IReadService {
 			}
 
 			dbProvider.commitTransaction(graph, tx);
-            auditRecord =  new AuditRecord();
-            auditRecord.setUserId(apiMessage.getUserID()).setAction(Constants.AUDIT_ACTION_READ).setRecordId(id).setTransactionId(new LinkedList<>(Arrays.asList(tx.hashCode())))
-					.setAuditId(UUID.randomUUID().toString()).setTimeStamp(DateUtil.getTimeStamp());
-			AuditInfo auditInfo = new AuditInfo();
-			auditInfo.setOp(Constants.AUDIT_ACTION_READ_OP);
-			auditInfo.setPath("/"+entityType);
-			auditRecord.setAuditInfo(Arrays.asList(auditInfo));
-			auditService.audit(auditRecord);
+			
+	        //if Audit enabled in configuration yml file
+	        if(auditEnabled) {
+				List<Integer> transaction = new LinkedList<>(Arrays.asList(tx.hashCode()));
+				List<String> entityTypes = new LinkedList<>(Arrays.asList(entityType));
+				
+		        AuditRecord auditRecord = auditService.createAuditRecord(userId, Constants.AUDIT_ACTION_READ, id, transaction);
+		        auditRecord.setAuditInfo(auditService.createAuditInfo(Constants.AUDIT_ACTION_READ_OP, Constants.AUDIT_ACTION_READ, null,null, entityTypes));
+				auditService.doAudit(auditRecord, null, entityTypes, id, shard);
+	        }
+	 
 			return result;
 		}
 	}
