@@ -14,7 +14,7 @@ enviroment: development
 
 server:
   # Change this port number if you want to run it on another.
-  port: ${server_port:9080}
+  port: ${server_port:8080}
 
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
@@ -170,9 +170,9 @@ keycloak:
 
 authentication:
     enabled: ${authentication_enabled:false}
-    publicKey:  ${authentication_publickey}
-    realm:  ${authentication_realm}
-    url:  ${authentication_url}
+    publicKey:  ${authentication_publickey:}
+    realm:  ${authentication_realm:}
+    url:  ${authentication_url:localhost:8443/auth}
 
 validation:
   enabled: ${validation_enabled:true}
