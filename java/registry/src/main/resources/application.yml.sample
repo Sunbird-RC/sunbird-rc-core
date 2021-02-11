@@ -169,7 +169,7 @@ keycloak:
     auth_server_url:  ${sunbird_sso_url}
 
 authentication:
-    enabled: ${authentication_enabled:true}
+    enabled: ${authentication_enabled:false}
     publicKey:  ${authentication_publickey}
     realm:  ${authentication_realm}
     url:  ${authentication_url}
@@ -312,7 +312,6 @@ audit:
     suffix: ${audit_suffix:Audit}
     suffixSeparator: ${audit_suffixSeparator:_}
       
-=
 authentication:
   enabled: ${authentication_enabled:true}
   publicKey:  ${authentication_publickey:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqe1lVD9jnQWQce62e2Q44tACqBIt5UZyGzCegxax2gddj4xotY5BDxaxuJRGKDLRpm8lPNHxX8dce8SUVAMBfk85rL+Bxv1mjspKo7Q5qsFm9TGcvE4e/4xhgpMjw6dCFt8+S87jvRjmDHjakGMooOls1kjppQiklSEZ0lW3Crqet4RNjb1FNJ+2Jg26frm8i2cpb2wRnmLDuQ9sAnHCxAD2rGxSGLXhKABptbMeTVx25eh+PVISjc78uOhAnMwOHKApVBGnVCfcUoVYqfkX8XcPQU9ybmAi27vp9xZqMfh6I56Tl4fsWYBgf8ZMl0UWyRR3PNmo/0kxon1d3zqFnwIDAQAB}
