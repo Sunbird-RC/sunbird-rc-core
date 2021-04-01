@@ -1,0 +1,8 @@
+in/divoc/api/authenticator/FacilityUserProviderFactory.class
+in/divoc/api/authenticator/FacilityUserRestProvider.class
+in/divoc/api/authenticator/models/UserDetails.class
+in/divoc/api/authenticator/MobileNumberAuthenticatorFactory.class
+in/divoc/api/authenticator/OtpService.class
+in/divoc/api/authenticator/Constants.class
+in/divoc/api/authenticator/models/UserGroup.class
+in/divoc/api/authenticator/MobileNumberAuthenticator.class
