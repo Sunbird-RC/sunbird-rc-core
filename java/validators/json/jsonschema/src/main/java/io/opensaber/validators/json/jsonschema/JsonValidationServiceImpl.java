@@ -2,6 +2,7 @@ package io.opensaber.validators.json.jsonschema;
 
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.validators.IValidate;
+import org.apache.logging.log4j.util.Strings;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -53,7 +54,9 @@ public class JsonValidationServiceImpl implements IValidate {
 			e.getCausingExceptions().stream()
 					.map(ValidationException::getMessage)
 					.forEach(logger::error);
-			throw new MiddlewareHaltException(e.getMessage());
+
+			throw new MiddlewareHaltException("Validation exception\n" + Strings.join(e.getCausingExceptions().stream()
+					.map(ValidationException::getMessage).iterator(), '\n'));
 		}
 		return result;
 	}
