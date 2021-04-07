@@ -22,6 +22,7 @@ import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Data;
 import io.opensaber.registry.transform.ITransformer;
 import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.ViewTemplateManager;
 
@@ -41,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 public class RegistryController {
@@ -81,7 +83,10 @@ public class RegistryController {
 	
 	@Value("${audit.frame.store}")
 	public String auditStoreType;
-	
+
+	@Autowired
+    private DefinitionsManager definitionsManager;
+
     /**
      * Note: Only one mime type is supported at a time. Pick up the first mime
      * type from the header.
@@ -243,6 +248,26 @@ public class RegistryController {
             Data<Object> resultContent = responseTransformer.transform(data);
             response.setResult(resultContent.getData());
             logger.info("ReadEntity,{},{}", resultNode.get(apiMessage.getRequest().getEntityType()).get(uuidPropertyName),config);
+        } catch (Exception e) {
+            logger.error("Read Api Exception occurred ", e);
+            responseParams.setErrmsg(e.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value = "/registers", method = RequestMethod.GET)
+    public ResponseEntity<Response> getRegisters(@RequestHeader HttpHeaders header) {
+        boolean requireLDResponse = header.getAccept().contains(Constants.LD_JSON_MEDIA_TYPE);
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.READ, "OK", responseParams);
+        try {
+            Set<String> registryList = definitionsManager.getAllKnownDefinitions();
+            response.setResult(registryList);
+            logger.info("get registers,{}", registryList);
         } catch (Exception e) {
             logger.error("Read Api Exception occurred ", e);
             responseParams.setErrmsg(e.getMessage());
