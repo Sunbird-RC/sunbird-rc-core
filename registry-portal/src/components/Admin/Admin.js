@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from 'react';
 import VaccineRegistration from "../VaccineRegistration/VaccineRegistration";
 import {TabPanels} from "../TabPanel/TabPanel";
 import VaccinatorsRegistry from "../VaccinatorsRegistry/VaccinatorsRegistry";
@@ -9,9 +9,23 @@ import {Button, Col} from "react-bootstrap";
 import {SampleCSV} from "../../utils/constants";
 import DownloadImg from "../../assets/img/download.svg";
 import "./Admin.module.css"
+import {useAxios} from "../../utils/useAxios";
 
 
 export default function Admin() {
+
+    const axiosInstance = useAxios("");
+    const [entities, setEntities] = useState([]);
+
+    useEffect(() => {
+        axiosInstance.current.get("http://localhost:8081/registers")
+        .then((res) => {
+            setEntities(res.data.result);
+        })
+        .catch((e) => {
+            console.log(e);
+        })
+    }, []);
 
     function renderDownloadTemplateButton(templateLink) {
         return <Button bsPrefix={"btn-template"} href={templateLink}>
@@ -22,25 +36,17 @@ export default function Admin() {
         </Button>;
     }
 
-    return (
-        <TabPanels tabs={[
-            {
-                title: 'Facilities',
+    function fetchTabs() {
+        return entities.map(ent => {
+            return {
+                title: ent,
                 component: <FacilitiesRegistry/>,
                 rightTabContent: renderDownloadTemplateButton(SampleCSV.FACILITY_REGISTRY)
-            },
-            {
-                title: 'Vaccinators',
-                component: <VaccinatorsRegistry/>,
-                rightTabContent: renderDownloadTemplateButton(SampleCSV.VACCINATOR_REGISTRY)
-            },
-            {title: 'Vaccines', component: <VaccineRegistration/>},
-            {title: 'Vaccine Programs', component: <ProgramRegistration/>},
-            {
-                title: 'Pre-Enrollment',
-                component: <PreEnrollment/>,
-                rightTabContent: renderDownloadTemplateButton(SampleCSV.PRE_ENROLLMENT)
-            },
-        ]}/>
+            }
+        });
+    }
+    
+    return entities.length > 0 && (
+        <TabPanels tabs={fetchTabs()}/>
     );
 }
