@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import VaccineRegistration from "../VaccineRegistration/VaccineRegistration";
 import {TabPanels} from "../TabPanel/TabPanel";
 import VaccinatorsRegistry from "../VaccinatorsRegistry/VaccinatorsRegistry";
-import FacilitiesRegistry from "../FacilitiesRegistry/FacilitiesRegistry";
+import Entities from "../EntityRegistry/EntityRegistry";
 import ProgramRegistration from "../ProgramRegistration/ProgramRegistration";
 import PreEnrollment from "../PreEnrollment/PreEnrollment";
 import {Button, Col} from "react-bootstrap";
@@ -18,7 +18,7 @@ export default function Admin() {
     const [entities, setEntities] = useState([]);
 
     useEffect(() => {
-        axiosInstance.current.get("http://localhost:8081/registers")
+        axiosInstance.current.get("http://localhost:8080/registers")
         .then((res) => {
             setEntities(res.data.result);
         })
@@ -40,7 +40,7 @@ export default function Admin() {
         return entities.map(ent => {
             return {
                 title: ent,
-                component: <FacilitiesRegistry/>,
+                component: <Entities type={ent}/>,
                 rightTabContent: renderDownloadTemplateButton(SampleCSV.FACILITY_REGISTRY)
             }
         });
