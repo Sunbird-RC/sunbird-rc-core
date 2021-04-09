@@ -1,12 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import VaccineRegistration from "../VaccineRegistration/VaccineRegistration";
 import {TabPanels} from "../TabPanel/TabPanel";
-import VaccinatorsRegistry from "../VaccinatorsRegistry/VaccinatorsRegistry";
 import Entities from "../EntityRegistry/EntityRegistry";
-import ProgramRegistration from "../ProgramRegistration/ProgramRegistration";
-import PreEnrollment from "../PreEnrollment/PreEnrollment";
 import {Button, Col} from "react-bootstrap";
-import {SampleCSV} from "../../utils/constants";
+import {API_URL, SampleCSV} from "../../utils/constants";
 import DownloadImg from "../../assets/img/download.svg";
 import "./Admin.module.css"
 import {useAxios} from "../../utils/useAxios";
@@ -18,7 +14,7 @@ export default function Admin() {
     const [entities, setEntities] = useState([]);
 
     useEffect(() => {
-        axiosInstance.current.get("http://localhost:8080/registers")
+        axiosInstance.current.get(API_URL.REGISTRY_LIST)
         .then((res) => {
             setEntities(res.data.result);
         })

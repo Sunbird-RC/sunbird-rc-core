@@ -13,7 +13,7 @@ function Entities({type}) {
     }, [type]);
 
     function fetchTableDetails() {
-        axiosInstance.current.post("http://localhost:8080/search", {
+        axiosInstance.current.post(API_URL.REGISTRY_SEARCH, {
             id: "open-saber.registry.search",
             ver: 1.0,
             request: {
