@@ -103,22 +103,23 @@ public class RegistryHelper {
      */
     public JsonNode readEntity(JsonNode inputJson, String userId, boolean requireLDResponse) throws Exception {
         logger.debug("readEntity starts");
-        boolean includeSignatures = false;
-        boolean includePrivateFields =  false;
-        JsonNode resultNode = null;
         String entityType = inputJson.fields().next().getKey();
         String label = inputJson.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
+        boolean includeSignatures = inputJson.get(entityType).get("includeSignatures") != null;
+
+        return readEntity(userId, entityType, label, includeSignatures, viewTemplateManager.getViewTemplate(inputJson), requireLDResponse);
+
+    }
+
+    public JsonNode readEntity(String userId, String entityType, String label, boolean includeSignatures, ViewTemplate viewTemplate, boolean requireLDResponse) throws Exception {
+        boolean includePrivateFields =  false;
+        JsonNode resultNode = null;
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         Shard shard = shardManager.activateShard(shardId);
         logger.info("Read Api: shard id: " + recordId.getShardLabel() + " for label: " + label);
-        JsonNode signatureNode = inputJson.get(entityType).get("includeSignatures");
-        if(null != signatureNode) {
-            includeSignatures = true;
-        }
         ReadConfigurator configurator = ReadConfiguratorFactory.getOne(includeSignatures);
         configurator.setIncludeTypeAttributes(requireLDResponse);
-        ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             includePrivateFields = viewTemplateManager.isPrivateFieldEnabled(viewTemplate,entityType);
         }
@@ -131,7 +132,6 @@ public class RegistryHelper {
         }
         logger.debug("readEntity ends");
         return resultNode;
-
     }
 
     /**

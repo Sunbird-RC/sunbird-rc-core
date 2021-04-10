@@ -22,6 +22,10 @@
         "manufacturer"
       ],
       "properties": {
+        "phone": {
+          "type": "string",
+          "minLength": 10
+        },
         "signatures": {
           "$id": "#/properties/signatures",
           "type": "array",
@@ -77,7 +81,13 @@
       "osUpdatedAt",
       "osCreatedBy",
       "osUpdatedBy",
-      "osStatus"
+      "osStatus",
+      "osOwner"
+    ],
+    "subjectJsonPath": "/phone",
+    "attestations": [
+      {"path":"/fitness", "by": "did:rto:*", "role": "rto"},
+      {"path": "/owner/name", "by": "did:uidaiplugin", "constraint": "same_state"}
     ]
   }
 }

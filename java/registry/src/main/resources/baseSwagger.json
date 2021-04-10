@@ -1,0 +1,19 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "Open saber registry and credential api",
+    "title": "Registry and Credential",
+    "version": "1.0.0"
+  },
+  "host": "divoc.xiv.in",
+  "basePath": "/api/v1"
+}

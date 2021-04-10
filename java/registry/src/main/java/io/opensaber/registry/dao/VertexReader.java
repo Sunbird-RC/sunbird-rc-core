@@ -418,6 +418,9 @@ public class VertexReader {
      */
     public JsonNode read(String entityType, String osid) throws Exception {
         rootVertex = getVertex(entityType, osid);
+        if (rootVertex == null) {
+            throw new NotFoundException(entityType, osid);
+        }
         return readInternal(rootVertex);
     }
 
