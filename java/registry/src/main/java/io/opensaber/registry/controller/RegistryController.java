@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.jsonldjava.utils.Obj;
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.pojos.OpenSaberInstrumentation;
@@ -442,7 +443,7 @@ public class RegistryController {
             ObjectNode path = populateEntityActions(entityName);
             paths.set(String.format("/api/v1/%s/{entityId}", entityName), path);
             JsonNode schemaDefinition = objectMapper.reader().readTree(definitionsManager.getDefinition(entityName).getContent());
-
+            deleteAll$Ids((ObjectNode) schemaDefinition);
             definitions.set(entityName, schemaDefinition.get("definitions").get(entityName));
         }
         return new ResponseEntity<>(objectMapper.writeValueAsString(doc), HttpStatus.OK);
@@ -464,8 +465,22 @@ public class RegistryController {
         operation.parameter(parameter)
                 .addResponse("200", response);
 
-        path.set("get", objectMapper.reader().readTree(Json.mapper().writeValueAsString(operation)));
+        ObjectNode jsonOperationMapping = (ObjectNode) objectMapper.reader().readTree(Json.mapper().writeValueAsString(operation));
+        deleteAll$Ids(jsonOperationMapping);
+        path.set("get", jsonOperationMapping);
         return path;
+    }
+
+    private void deleteAll$Ids(ObjectNode jsonOperationMapping) {
+        if (jsonOperationMapping.has("$id"))
+            jsonOperationMapping.remove("$id");
+        if (jsonOperationMapping.has("$comment"))
+            jsonOperationMapping.remove("$comment");
+        jsonOperationMapping.forEach(x-> {
+            if (x instanceof ObjectNode) {
+                deleteAll$Ids((ObjectNode) x);
+            }
+        });
     }
 
 
