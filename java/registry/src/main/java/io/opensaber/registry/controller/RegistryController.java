@@ -28,6 +28,7 @@ import io.opensaber.registry.transform.Data;
 import io.opensaber.registry.transform.ITransformer;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.KeycloakAdminUtil;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.ViewTemplateManager;
 
@@ -77,7 +78,8 @@ public class RegistryController {
     public String uuidPropertyName;
     @Autowired
     private OpenSaberInstrumentation watch;
-
+    @Autowired
+    private KeycloakAdminUtil keycloakAdminUtil;
     @Autowired
     private ShardManager shardManager;
 
@@ -293,18 +295,18 @@ public class RegistryController {
 
         try {
             String entitySubject = validationService.getEntitySubject(entityType, rootNode);
-//            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
-//            Map resultMap = new HashMap();
-//            resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
-//
-//            result.put(entityType, resultMap);
-//            response.setResult(result);
-//            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            keycloakAdminUtil.createUser(entitySubject, "facility admin");
+            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
+            Map resultMap = new HashMap();
+            resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
+            result.put(entityType, resultMap);
+            response.setResult(result);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
         } catch (Exception e) {
             logger.error("Exception in controller while adding entity !", e);
-//            response.setResult(result);
-//            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-//            responseParams.setErrmsg(e.getMessage());
+            response.setResult(result);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
