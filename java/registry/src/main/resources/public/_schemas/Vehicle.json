@@ -84,7 +84,7 @@
       "osStatus",
       "osOwner"
     ],
-    "subjectJsonPath": "/phone",
+    "subjectJsonPath": "phone",
     "attestations": [
       {"path":"/fitness", "by": "did:rto:*", "role": "rto"},
       {"path": "/owner/name", "by": "did:uidaiplugin", "constraint": "same_state"}

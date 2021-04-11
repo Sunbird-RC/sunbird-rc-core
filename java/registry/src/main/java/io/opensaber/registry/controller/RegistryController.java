@@ -283,15 +283,30 @@ public class RegistryController {
         return null;
     }
 
-    @RequestMapping(value = "/invite", method = RequestMethod.GET)
+    @RequestMapping(value = "/invite", method = RequestMethod.POST)
     public ResponseEntity<Response> invite(@RequestHeader HttpHeaders header) {
-        /** take list of entities
-         *  create entities and set the owner
-         *  how notification should work -- mobile - key
-         *  use case:
-         *      bulk invite | api call
-         */
-        return null;
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
+        Map<String, Object> result = new HashMap<>();
+        String entityType = apiMessage.getRequest().getEntityType();
+        JsonNode rootNode = apiMessage.getRequest().getRequestMapNode();
+
+        try {
+            String entitySubject = validationService.getEntitySubject(entityType, rootNode);
+//            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
+//            Map resultMap = new HashMap();
+//            resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
+//
+//            result.put(entityType, resultMap);
+//            response.setResult(result);
+//            responseParams.setStatus(Response.Status.SUCCESSFUL);
+        } catch (Exception e) {
+            logger.error("Exception in controller while adding entity !", e);
+//            response.setResult(result);
+//            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+//            responseParams.setErrmsg(e.getMessage());
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 
