@@ -21,20 +21,32 @@ import javax.ws.rs.core.Response;
 public class KeycloakAdminUtil {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakAdminUtil.class);
 
-    private static final String realm = "divoc";
-    private static final String clientSecret = "daa3e6b4-7be0-4cc5-9854-14ea15f74cae";
-    private static final String authURL = "http://localhost:8081/auth";
+
+    private String realm;
+    private String clientSecret;
+    private String authURL;
+    private final Keycloak keycloak;
 
     @Autowired
-    public KeycloakAdminUtil() { }
+    public KeycloakAdminUtil(
+            @Value("${keycloak.sso.realm}") String realm,
+            @Value("${keycloak.sso.client_secret}") String clientSecret,
+            @Value("${keycloak.sso.auth_server_url}") String authURL) {
+        this.realm = realm;
+        this.clientSecret = clientSecret;
+        this.authURL = authURL;
+        this.keycloak = buildKeycloak();
+    }
 
-    private final Keycloak keycloak = KeycloakBuilder.builder()
-            .serverUrl(authURL)
-            .realm("divoc")
-            .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-            .clientId("admin-api")
-            .clientSecret(clientSecret)
-            .build();
+    private Keycloak buildKeycloak() {
+        return KeycloakBuilder.builder()
+                .serverUrl(authURL)
+                .realm(realm)
+                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                .clientId("admin-api")
+                .clientSecret(clientSecret)
+                .build();
+    }
 
     public void createUser(String mobileNumber, String role) {
         logger.info("Creating user with mobile_number : " + mobileNumber);
