@@ -26,14 +26,6 @@
           "type": "string",
           "minLength": 10
         },
-        "signatures": {
-          "$id": "#/properties/signatures",
-          "type": "array",
-          "items": {
-            "$ref": "Signature.json#/definitions/Signature"
-          },
-          "$comment": "Placeholder for all verifiable claims"
-        },
         "registrationNumber": {
           "$id": "#/properties/registrationNumber",
           "type": "string",
@@ -62,7 +54,15 @@
         },
         "kerbWeight": {
           "$id": "#/properties/kerbWeight",
-          "$type": "double"
+          "type": "number"
+        },
+        "fitness": {
+          "type": "object",
+          "properties": {
+            "validUntil": {
+              "type": "string"
+            }
+          }
         }
       }
     }
