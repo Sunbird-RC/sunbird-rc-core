@@ -1,17 +1,27 @@
-import React from "react";
-import VaccineRegistration from "../VaccineRegistration/VaccineRegistration";
+import React, {useEffect, useState} from 'react';
 import {TabPanels} from "../TabPanel/TabPanel";
-import VaccinatorsRegistry from "../VaccinatorsRegistry/VaccinatorsRegistry";
-import FacilitiesRegistry from "../FacilitiesRegistry/FacilitiesRegistry";
-import ProgramRegistration from "../ProgramRegistration/ProgramRegistration";
-import PreEnrollment from "../PreEnrollment/PreEnrollment";
+import Entities from "../EntityRegistry/EntityRegistry";
 import {Button, Col} from "react-bootstrap";
-import {SampleCSV} from "../../utils/constants";
+import {API_URL, SampleCSV} from "../../utils/constants";
 import DownloadImg from "../../assets/img/download.svg";
 import "./Admin.module.css"
+import {useAxios} from "../../utils/useAxios";
 
 
 export default function Admin() {
+
+    const axiosInstance = useAxios("");
+    const [entities, setEntities] = useState([]);
+
+    useEffect(() => {
+        axiosInstance.current.get(API_URL.REGISTRY_LIST)
+        .then((res) => {
+            setEntities(res.data.result);
+        })
+        .catch((e) => {
+            console.log(e);
+        })
+    }, []);
 
     function renderDownloadTemplateButton(templateLink) {
         return <Button bsPrefix={"btn-template"} href={templateLink}>
@@ -22,25 +32,17 @@ export default function Admin() {
         </Button>;
     }
 
-    return (
-        <TabPanels tabs={[
-            {
-                title: 'Facilities',
-                component: <FacilitiesRegistry/>,
+    function fetchTabs() {
+        return entities.map(ent => {
+            return {
+                title: ent,
+                component: <Entities type={ent}/>,
                 rightTabContent: renderDownloadTemplateButton(SampleCSV.FACILITY_REGISTRY)
-            },
-            {
-                title: 'Vaccinators',
-                component: <VaccinatorsRegistry/>,
-                rightTabContent: renderDownloadTemplateButton(SampleCSV.VACCINATOR_REGISTRY)
-            },
-            {title: 'Vaccines', component: <VaccineRegistration/>},
-            {title: 'Vaccine Programs', component: <ProgramRegistration/>},
-            {
-                title: 'Pre-Enrollment',
-                component: <PreEnrollment/>,
-                rightTabContent: renderDownloadTemplateButton(SampleCSV.PRE_ENROLLMENT)
-            },
-        ]}/>
+            }
+        });
+    }
+    
+    return entities.length > 0 && (
+        <TabPanels tabs={fetchTabs()}/>
     );
 }
