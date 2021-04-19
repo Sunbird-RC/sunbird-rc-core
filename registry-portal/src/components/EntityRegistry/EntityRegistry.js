@@ -58,6 +58,7 @@ function Entities({type}) {
         emptyListMessage={"No Entity Found"}
         tableData={data}
         tableHeader={HeaderData}
+        entityType={type}
         onRefresh={() => fetchTableDetails()}
     />
 }

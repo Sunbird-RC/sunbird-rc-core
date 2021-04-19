@@ -22,6 +22,8 @@ export const FACILITY_TYPE = Object.freeze({
 export const API_URL = Object.freeze({
     REGISTRY_SEARCH: "http://localhost:8080/search",
     REGISTRY_LIST: "http://localhost:8080/registers",
+    SCHEMA_BASE: "http://localhost:8080/api/docs/",
+    REST_BASE: "http://localhost:8080/api/v1/",
     FACILITY_API: "/divoc/admin/api/v1/facilities",
     USER_FACILITY_API: "/divoc/admin/api/v1/facility",
     FACILITY_NOTIFY_API: "/divoc/admin/api/v1/facilities/notify",

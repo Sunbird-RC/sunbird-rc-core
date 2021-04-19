@@ -6,17 +6,22 @@ import {API_URL, SampleCSV} from "../../utils/constants";
 import DownloadImg from "../../assets/img/download.svg";
 import "./Admin.module.css"
 import {useAxios} from "../../utils/useAxios";
+import AppBar from "@material-ui/core/AppBar";
+import Tabs from "@material-ui/core/Tabs";
+import Tab from "@material-ui/core/Tab";
 
 
-export default function Admin() {
+export default function Admin(props) {
 
     const axiosInstance = useAxios("");
     const [entities, setEntities] = useState([]);
+    const entityType = props.match.params.entity;
 
     useEffect(() => {
         axiosInstance.current.get(API_URL.REGISTRY_LIST)
         .then((res) => {
-            setEntities(res.data.result);
+            const entities = res.data.result.filter(x=> x[0] != x[0].toLowerCase())
+            setEntities(entities);
         })
         .catch((e) => {
             console.log(e);
@@ -36,13 +41,13 @@ export default function Admin() {
         return entities.map(ent => {
             return {
                 title: ent,
-                component: <Entities type={ent}/>,
-                rightTabContent: renderDownloadTemplateButton(SampleCSV.FACILITY_REGISTRY)
+                component: <Entities type={ent}/>
+                // , rightTabContent: renderDownloadTemplateButton(SampleCSV.FACILITY_REGISTRY)
             }
         });
     }
     
     return entities.length > 0 && (
-        <TabPanels tabs={fetchTabs()}/>
+        <TabPanels tabs={fetchTabs()} />
     );
 }

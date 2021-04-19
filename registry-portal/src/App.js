@@ -23,6 +23,7 @@ import FacilityInfo from './components/FacilityInfo/FacilityInfo';
 import {addFacilityDetails} from "./redux/reducers/facilityReducer";
 import {useAxios} from "./utils/useAxios";
 import FacilityConfigureSlot from "./components/FacilityConfigureSlot";
+import Add from "./components/Add/Add";
 
 export default function App() {
     const {initialized, keycloak} = useKeycloak();
@@ -68,7 +69,9 @@ export default function App() {
                             <Route exact path={config.urlPath + "/analytics/map"} component={MapView}/>
                             <PrivateRoute exact path={config.urlPath + "/dashboard"} component={Dashboard}/>
                             <PrivateRoute exact path={config.urlPath + "/about"} component={About}/>
-                            <PrivateRoute exact path={config.urlPath + "/admin"} component={Admin}
+                            <PrivateRoute exact path={config.urlPath + "/admin/:entity?"} component={Admin}
+                                          role={CONSTANTS.ADMIN_ROLE} clientId={CONSTANTS.PORTAL_CLIENT}/>
+                            <PrivateRoute exact path={config.urlPath + "/registry/:entity"} component={Add}
                                           role={CONSTANTS.ADMIN_ROLE} clientId={CONSTANTS.PORTAL_CLIENT}/>
                             <PrivateRoute exact path={config.urlPath + "/analytics"} component={Analytics}
                                           role={CONSTANTS.MONITORING} clientId={CONSTANTS.PORTAL_CLIENT}/>

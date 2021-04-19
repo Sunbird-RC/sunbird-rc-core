@@ -12,6 +12,10 @@ import "./UploadHistory.css";
 import {TotalRecords} from "../TotalRecords";
 
 import Modal from "react-bootstrap/Modal";
+import IconButton from "@material-ui/core/IconButton";
+import Checkbox from "@material-ui/core/Checkbox";
+import { useHistory } from 'react-router-dom';
+import {identity} from "ramda";
 
 const UploadHistory = ({
                            fileUploadAPI,
@@ -24,12 +28,13 @@ const UploadHistory = ({
                            tableData,
                            tableHeader,
                            onRefresh,
+                           entityType
                        }) => {
     const axiosInstance = useAxios("");
     const [uploadHistory, setUploadHistory] = useState([]);
     const [selectedHistory, setSelectedHistory] = useState(null);
     const [show, setShow] = useState(false);
-
+    const history = useHistory();
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
     useEffect(() => {
@@ -86,6 +91,9 @@ const UploadHistory = ({
         }
         return 0;
     }
+    const handleAdd = function () {
+        history.push('/portal/registry/' + entityType)
+    };
 
     return (
         <div>
@@ -96,18 +104,19 @@ const UploadHistory = ({
                         count={getTotalRegistryUploadCount()}
                     />
                 )}
-                <UploadComponent
-                    fileUploadAPI={fileUploadAPI}
-                    onUploadComplete={() => {
-                        fetchUploadHistory();
-                        if (onRefresh) {
-                            onRefresh();
-                        }
-                    }}
-                    uploadHistoryCount={selectedHistory && selectedHistory.success}
-                    errorCount={selectedHistory && selectedHistory.errors}
-                    handleShow={handleShow}
-                />
+                <IconButton onClick={handleAdd}>Add / Invite</IconButton>
+                {/*<UploadComponent*/}
+                {/*    fileUploadAPI={fileUploadAPI}*/}
+                {/*    onUploadComplete={() => {*/}
+                {/*        fetchUploadHistory();*/}
+                {/*        if (onRefresh) {*/}
+                {/*            onRefresh();*/}
+                {/*        }*/}
+                {/*    }}*/}
+                {/*    uploadHistoryCount={selectedHistory && selectedHistory.success}*/}
+                {/*    errorCount={selectedHistory && selectedHistory.errors}*/}
+                {/*    handleShow={handleShow}*/}
+                {/*/>*/}
             </div>
             <div className="upload-csv-container">
                 <div className="upload-history">
@@ -118,17 +127,17 @@ const UploadHistory = ({
                         emptyListMessage={emptyListMessage}
                     />
                 </div>
-                <div className="upload-history">
-                    <UploadHistoryTable
-                        data={uploadHistory}
-                        headerData={uploadCSVHeaderData}
-                        onCellClicked={(value) => {
-                            setSelectedHistory(value);
-                            handleShow();
-                        }}
-                        title="Uploads History"
-                    />
-                </div>
+                {/*<div className="upload-history">*/}
+                {/*    <UploadHistoryTable*/}
+                {/*        data={uploadHistory}*/}
+                {/*        headerData={uploadCSVHeaderData}*/}
+                {/*        onCellClicked={(value) => {*/}
+                {/*            setSelectedHistory(value);*/}
+                {/*            handleShow();*/}
+                {/*        }}*/}
+                {/*        title="Uploads History"*/}
+                {/*    />*/}
+                {/*</div>*/}
                 <div className="error-temp">
                     {selectedHistory && (
                         <UploadErrors uploadHistory={selectedHistory}
