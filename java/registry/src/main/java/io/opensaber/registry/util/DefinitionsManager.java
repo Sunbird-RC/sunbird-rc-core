@@ -3,12 +3,10 @@ package io.opensaber.registry.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.registry.middleware.util.Constants;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,4 +78,25 @@ public class DefinitionsManager {
         return definitionMap.getOrDefault(title, null);
     }
 
+    /**
+     * Returns the map, where key is the index and value is the public fields
+     *
+     * @return
+     * */
+    public Map<String, Set<String>> getPublicFieldsInfoMap() {
+        return getAllKnownDefinitions()
+                .stream()
+                .collect(
+                        Collectors.toMap(String::toLowerCase, index -> {
+                            List<String> publicFields = getDefinition(index)
+                                    .getOsSchemaConfiguration()
+                                    .getPublicFields();
+                            if(publicFields != null) {
+                                return new HashSet<>(publicFields);
+                            } else {
+                                return new HashSet<>();
+                            }
+                        })
+                );
+    };
 }

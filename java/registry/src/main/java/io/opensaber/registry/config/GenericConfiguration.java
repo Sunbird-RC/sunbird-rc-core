@@ -425,21 +425,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (isElasticSearchEnabled()) {
 			elasticService.setType(Constants.ES_DOC_TYPE);
 			elasticService.setConnectionInfo(elasticConnInfo);
-			Map<String, Set<String>> ans = definitionsManager.getAllKnownDefinitions()
-					.stream()
-					.collect(
-							Collectors.toMap(String::toLowerCase, index -> {
-								List<String> publicFields = definitionsManager.getDefinition(index)
-										.getOsSchemaConfiguration()
-										.getPublicFields();
-								if(publicFields != null) {
-									return new HashSet<>(publicFields);
-								} else {
-									return new HashSet<>();
-								}
-							})
-					);
-			elasticService.init(definitionsManager.getAllKnownDefinitions(), ans);
+			elasticService.init(definitionsManager.getAllKnownDefinitions(), definitionsManager.getPublicFieldsInfoMap());
 		}
 		return elasticService;
 	}
