@@ -43,6 +43,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 
 public class ElasticServiceImpl implements IElasticService {
+    private static Map<String, Set<String>> publicFieldsInfo = new HashMap<>();
     private static Map<String, RestHighLevelClient> esClient = new HashMap<String, RestHighLevelClient>();
     private static Logger logger = LoggerFactory.getLogger(ElasticServiceImpl.class);
 
@@ -63,7 +64,8 @@ public class ElasticServiceImpl implements IElasticService {
      * @param indices
      * @throws RuntimeException
      */
-    public static void init(Set<String> indices) throws RuntimeException {
+    public static void init(Set<String> indices, Map<String, Set<String>> publicFieldsInfoMap) throws RuntimeException {
+        publicFieldsInfo = publicFieldsInfoMap;
         indices.iterator().forEachRemaining(index -> {
             try {
                 addIndex(index.toLowerCase(), searchType);
@@ -172,7 +174,8 @@ public class ElasticServiceImpl implements IElasticService {
         IndexResponse response = null;
         try {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
-            response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
+            inputMap.keySet().removeIf(key -> publicFieldsInfo.containsKey(key));
+            response = getClient(index).index(new IndexRequest(index.toLowerCase(), searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in adding record to ElasticSearch", e);
         }
@@ -210,6 +213,7 @@ public class ElasticServiceImpl implements IElasticService {
         UpdateResponse response = null;
         try {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
+            inputMap.keySet().removeIf(key -> publicFieldsInfo.containsKey(key));
             response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in updating a record to ElasticSearch", e);

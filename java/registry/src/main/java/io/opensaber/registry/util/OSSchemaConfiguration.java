@@ -29,6 +29,10 @@ public class OSSchemaConfiguration {
      * Holds fields name(s) to be used for auditing
      */
     private List<String> systemFields =  new ArrayList<>();
+    /**
+     * Holds fields name(s) for public usage
+     * */
+    private List<String> publicFields;
 
     public List<String> getPrivateFields() {
         return privateFields;
@@ -68,5 +72,13 @@ public class OSSchemaConfiguration {
 
     public void setSystemFields(List<String> systemFields) {
         this.systemFields = systemFields;
+    }
+
+    public List<String> getPublicFields() {
+        return publicFields;
+    }
+
+    public void setPublicFields(List<String> publicFields) {
+        this.publicFields = publicFields;
     }
 }

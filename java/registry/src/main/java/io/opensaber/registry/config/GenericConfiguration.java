@@ -1,9 +1,8 @@
 package io.opensaber.registry.config;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
@@ -426,7 +425,21 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (isElasticSearchEnabled()) {
 			elasticService.setType(Constants.ES_DOC_TYPE);
 			elasticService.setConnectionInfo(elasticConnInfo);
-			elasticService.init(definitionsManager.getAllKnownDefinitions());
+			Map<String, Set<String>> ans = definitionsManager.getAllKnownDefinitions()
+					.stream()
+					.collect(
+							Collectors.toMap(String::toLowerCase, index -> {
+								List<String> publicFields = definitionsManager.getDefinition(index)
+										.getOsSchemaConfiguration()
+										.getPublicFields();
+								if(publicFields != null) {
+									return new HashSet<>(publicFields);
+								} else {
+									return new HashSet<>();
+								}
+							})
+					);
+			elasticService.init(definitionsManager.getAllKnownDefinitions(), ans);
 		}
 		return elasticService;
 	}
