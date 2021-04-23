@@ -418,7 +418,8 @@ public class RegistryServiceImpl implements RegistryService {
                     }
                 } else if (oneElementNode.isObject()) {
                     logger.info("Object node {}", oneElement.toString());
-                    doUpdate(shard, graph, registryDao, vr, oneElementNode);
+                    doUpdate(shard, graph, registryDao, vr, oneElementNode); //todo this is adding to existing parent node merging inner structure.
+                    //registryDao.updateVertex(graph, rootVertex, userInputNode);
                 }
             }
         } else {
