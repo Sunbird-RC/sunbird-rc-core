@@ -234,8 +234,7 @@ public class ElasticServiceImpl implements IElasticService {
         try {
             String indexL = index.toLowerCase();
             Map<String, Object> readMap = readEntity(indexL, osid);
-            Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
-            entityMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
+            readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
         } catch (NullPointerException | IOException e) {
             logger.error("exception in deleteEntity {}", e);
@@ -257,7 +256,10 @@ public class ElasticServiceImpl implements IElasticService {
             SearchResponse searchResponse = getClient(index).search(searchRequest, RequestOptions.DEFAULT);
             for (SearchHit hit : searchResponse.getHits()) {
                 JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
-                resultArray.add(node);
+                // TODO: Add draft mode condition
+                if(node.get("_status") == null || node.get("_status").asBoolean()) {
+                    resultArray.add(node);
+                }
             }
             logger.debug("Total search records found " + resultArray.size());
 
