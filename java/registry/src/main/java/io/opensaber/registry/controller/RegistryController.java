@@ -27,6 +27,7 @@ import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Data;
 import io.opensaber.registry.transform.ITransformer;
 import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.ViewTemplateManager;
@@ -436,7 +437,16 @@ public class RegistryController {
     public ResponseEntity<Object> getSwaggerDocImportFiles(
             @PathVariable String file
     ) throws IOException {
-        return new ResponseEntity<>(definitionsManager.getDefinition(file.toLowerCase()).getContent(), HttpStatus.OK);
+        Definition definition = definitionsManager.getDefinition(file);
+        if (definition == null)
+            definition = definitionsManager.getDefinition(file.toLowerCase());
+        String content = definition.getContent();
+        String inlined = importAllReferences(content);
+        return new ResponseEntity<>(inlined, HttpStatus.OK);
+    }
+
+    private String importAllReferences(String content) {
+        return content;
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.PATCH)
