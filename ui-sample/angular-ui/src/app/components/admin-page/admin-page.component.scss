@@ -1,0 +1,113 @@
+tr th {
+    text-transform: capitalize;
+}
+
+.disableIcon {
+    pointer-events: none;
+    opacity: 0.45;
+}
+
+::ng-deep .ui.floating.main-header-search-dropdown.dropdown .menu {
+    top:25px;
+}
+
+.pb-0 {
+    padding-bottom: 0px !important;
+}
+
+.py-10 {
+    padding: 12px 16px;
+}
+
+.ui.icon.button {
+    background: white;
+    padding: 1px 4px 7px 7px;
+    border: 1px solid rgba(34,36,38,.15);
+}
+.ui.input input {
+    border-radius: 2rem;
+    width: 26rem;
+    height: 3rem;
+}
+.ui.icon.input .search.icon {
+    cursor: pointer;
+}
+.ui.icon.input>i.icon:not(.link) {
+    pointer-events: visible;
+}
+
+::ng-deep {
+    .ui.input input {
+        height: 39px;
+        opacity: 1;
+        border-radius: 5px;
+    }    
+}
+
+@media only screen and (min-width: 767px) and (max-width:1023px){
+    ::ng-deep {
+         .ui.input input {
+            height: 39px;
+        }    
+    }
+    .primary-search-input {
+        top: -1rem;
+    }
+}
+
+@media not all and  (min-width: 635px) {
+    .ui.cards {
+      justify-content: center;
+  }
+  .primary-search-input {
+    padding-bottom: 1rem;
+}
+  }
+@media not all and  (min-width: 390px) {
+    .ui.input input {
+       width: 20rem;
+    }
+    .primary-search-input {
+        padding-bottom: 1rem;
+    }
+  }
+
+.mt-5 {
+    margin-top: 0.5rem;
+}
+.mr-1 {
+    margin-right: 1rem;
+}
+.mt-1{
+    margin-top: 0.1rem;
+}
+.mb-1 {
+    margin-bottom: 1rem;
+}
+
+.py-2 {
+    padding-top: 2px;
+    padding-bottom: 2px;;
+}
+
+.end {
+   float: right;
+}
+
+.table-scroll {
+    overflow-y: scroll;
+}
+
+.one.wide.column.fit-content {
+    width: fit-content !important;
+}
+
+.ui.menu .item:hover {
+    text-decoration: none;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.bl-1 {
+    border: 1px solid #dee2e6;
+}

@@ -29,7 +29,7 @@ public class OSSystemFieldsHelper {
         List<String> systemFields = getSystemFields(title);
         String timeStamp = DateUtil.instantTimeStamp();
         for (String field : systemFields) {
-            addSystemProperty(field, node, userId, timeStamp);
+            addSystemProperty(field, node, userId, timeStamp, true);
         }
     }
 
@@ -44,7 +44,7 @@ public class OSSystemFieldsHelper {
         List<String> systemFields = getSystemFields(title);
         String timeStamp = DateUtil.instantTimeStamp();
         for (String field : systemFields) {
-            addSystemProperty(field, node, userId, timeStamp);
+            addSystemProperty(field, node, userId, timeStamp, false);
 
         }
     }
@@ -57,20 +57,26 @@ public class OSSystemFieldsHelper {
      * @param userId
      * @param timeStamp 
      */
-    public void addSystemProperty(String field, JsonNode node, String userId, String timeStamp) {
+    public void addSystemProperty(String field, JsonNode node, String userId, String timeStamp, boolean isCreate) {
         try {
             switch (OSSystemFields.getByValue(field)) {
                 case osCreatedAt:
-                    OSSystemFields.osCreatedAt.createdAt(node, timeStamp);
+                    if (isCreate) {
+                        OSSystemFields.osCreatedAt.createdAt(node, timeStamp);
+                    }
                     break;
                 case osCreatedBy:
-                    OSSystemFields.osCreatedBy.createdBy(node, userId);
+                    if (isCreate && userId != null) {
+                        OSSystemFields.osCreatedBy.createdBy(node, userId);
+                    }
                     break;
                 case osUpdatedAt:
                     OSSystemFields.osUpdatedAt.updatedAt(node, timeStamp);
                     break;
                 case osUpdatedBy:
-                    OSSystemFields.osUpdatedBy.updatedBy(node, userId);
+                    if (userId != null) {
+                        OSSystemFields.osUpdatedBy.updatedBy(node, userId);
+                    }
                     break;
             }
         } catch (Exception e) {

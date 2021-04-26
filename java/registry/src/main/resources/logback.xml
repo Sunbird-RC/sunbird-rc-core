@@ -2,7 +2,7 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%line - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -17,7 +17,7 @@
             <!-- <totalSizeCap>20GB</totalSizeCap> -->           
         </rollingPolicy>
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %-4relative [%thread] %-5level %logger{35}.%M:%line - %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -25,7 +25,7 @@
         <file>logs/perf.log</file>
         <encoder>
             <!-- <Pattern>%date %-5level [%thread] %logger{36} [%file:%line] %msg%n -->
-            <Pattern>%date %-5level %msg%n</Pattern>
+            <Pattern>%date %-5level %logger{35}.%M\(%line\) %msg%n</Pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <FileNamePattern>logs/perf_%d{yyyy-MM-dd}_%d{HH-mm-ss}_%i.log</FileNamePattern>
@@ -78,7 +78,7 @@
         <appender-ref ref="AuditFileAppender"/>
     </logger>
 
-    <root level="DEBUG" additivity="FALSE">
+    <root level="INFO" additivity="FALSE">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </root>

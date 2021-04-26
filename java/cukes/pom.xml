@@ -5,7 +5,7 @@
     <parent>
         <artifactId>opensaber</artifactId>
         <groupId>io.opensaber</groupId>
-        <version>1.0.0</version>
+        <version>2.0.2</version>
     </parent>
 
     <artifactId>cukes</artifactId>

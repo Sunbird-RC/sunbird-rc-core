@@ -1,0 +1,73 @@
+<script src="./utils.js"></script>
+<script>
+    function changePage(code, lang) {
+        var status = window.location.href.substring(window.location.href.lastIndexOf("/") + 1).split("?")[0]
+        console.log(window.location.href.substring(window.location.href.lastIndexOf("/") + 1).split("?")[0])
+        if (status == "signUp.html") {
+            window.location.href = "./signUp.html?lang=" + lang
+        } else if (status == "registration-form.html") {
+            window.location.href = "./registration-form.html?lang=" + lang
+        }
+    }
+
+</script>
+<nav class="navbar navbar-default">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                data-target="#bs-example-navbar-collapse-1" aria-expanded="true">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#"><span data-localizse="productName">OpenSABER</span></a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                        aria-expanded="false">
+                        <p id="langSelected"></p>
+                        <span class="caret"></span>
+
+                    </a>
+
+                    <ul class="dropdown-menu">
+                        <li onclick="dataLocalizeRefresh('en', 'English'); changePage('en', 'English');" id="en">
+                            English
+
+                        </li>
+                        <li onclick="dataLocalizeRefresh('es', 'Spanish');changePage('es', 'Spanish');" id="es">Spanish
+                        </li>
+                    </ul>
+                </li>
+                <li class="dropdown" id="profile">
+                    <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true"
+                        aria-expanded="false">
+                        <i class="fa fa-user-circle-o" style="font-size:25px;color: grey"></i>
+
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-item" id="dropdown"></li>
+
+                        <div class="dropdown-divider" id="adminline" style="display: none"></div>
+                        <li>
+                            <a id="admin" class="dropdown-item" style="display: none">Manage</a>
+
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="./home.html">Logout</a>
+
+                        </li>
+
+
+                    </ul>
+
+
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

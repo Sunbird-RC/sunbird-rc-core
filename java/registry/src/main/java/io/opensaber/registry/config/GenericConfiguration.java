@@ -1,34 +1,5 @@
 package io.opensaber.registry.config;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import org.apache.commons.validator.routines.UrlValidator;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
-import org.springframework.core.task.TaskExecutor;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.retry.annotation.EnableRetry;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.HandlerExceptionResolver;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.resource.PathResourceResolver;
-import org.sunbird.akka.core.SunbirdActorFactory;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -70,6 +41,35 @@ import io.opensaber.registry.util.ServiceProvider;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
+import org.apache.commons.validator.routines.UrlValidator;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.resource.PathResourceResolver;
+import org.sunbird.akka.core.SunbirdActorFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableRetry
@@ -151,7 +151,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${read.providerName}")
 	private String readProviderName;
-	
+
+	@Value("${server.port}")
+	private long serverPort;
+
 	static {
 		Config config = ConfigFactory.parseResources("opensaber-actors.conf");
 
@@ -430,13 +433,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return elasticService;
 	}
 
-	/** creates elastic-service bean and instanstiates the indices
-	 * @return - IElasticService
-	 * @throws IOException
-	 */
-	@Bean
-	public IAuditService auditService() throws IOException {
-		IAuditService auditService = new AuditServiceImpl();
-		return auditService;
-	}
+
+//	/** creates elastic-service bean and instanstiates the indices
+//	 * @return - IElasticService
+//	 * @throws IOException
+//	 */
+//	@Bean
+//	public IAuditService auditService() throws IOException {
+//		IAuditService auditService = new AuditProviderFactory().getAuditService(auditFrameStore);
+//		return auditService;
+//	}
 }

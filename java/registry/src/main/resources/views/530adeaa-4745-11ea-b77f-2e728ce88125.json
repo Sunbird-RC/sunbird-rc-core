@@ -1,0 +1,69 @@
+{
+  "subject": "FinAdmin",
+  "fields": [
+    {
+      "name": "name",
+      "display": true
+    },
+    {
+      "name": "osid"
+    },
+    {
+      "name": "orgName"
+    },
+    {
+      "name": "role"
+    },
+    {
+      "name": "isActive"
+    },
+    {
+      "name": "isOnboarded"
+    },
+    {
+      "name": "proposedBilling"
+    },
+    {
+      "name": "billLocation"
+    },
+    {
+      "name": "nineAMreportTo"
+    },
+    {
+      "name": "projectName"
+    },
+    {
+      "name": "subProjectName"
+    },
+    {
+      "name": "startDate"
+    },
+    {
+      "name": "endDate"
+    },
+    {
+      "name": "repoAccess"
+    },
+    {
+      "name": "slackAccess"
+    },
+    {
+      "name": "workLocation"
+    },
+    {
+      "name": "remarks"
+    },
+    {
+      "name": "workingStyle"
+    },
+    {
+      "name": "externalId"
+    },
+    {
+      "name": "externalRole"
+    },
+    {
+      "name": "manager"
+    }
+  ]
+}

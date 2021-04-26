@@ -1,0 +1,30 @@
+.right{
+    float: right;
+    padding-bottom: 0.8rem;
+}
+
+.ui.two.buttons {
+    padding: 0px;
+}
+
+.ui.card .fixHeight {
+    height: 99.5px;
+   
+}
+.ui.card {
+    width: 222px;
+}
+
+.ui.card>.content, .ui.cards>.card>.content {
+    padding: 9px 9px;
+}
+.ui.card .meta{
+    font-size: 0.8em;
+}
+.ui.card .header {
+    font-size: 1.17em;
+}
+
+.ui.button {
+    font-size: 0.8rem
+}

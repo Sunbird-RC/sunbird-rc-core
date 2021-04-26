@@ -70,7 +70,5 @@ public class JsonValidationServiceImpl implements IValidate {
     @Override
     public void addDefinitions(String definitionTitle, String definitionContent) {
         definitionMap.put(definitionTitle, definitionContent);
-       
     }
-
 }

@@ -76,6 +76,7 @@
     ],
     "privateFields": [],
     "signedFields": [],
+    "publicFields": ["registrationNumber", "model", "osid"],
     "systemFields": [
       "osCreatedAt",
       "osUpdatedAt",

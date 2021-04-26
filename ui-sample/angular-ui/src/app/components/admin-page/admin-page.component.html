@@ -1,0 +1,91 @@
+<div class="ui container mt-20 mb-1">
+  <div class="ui small breadcrumb">
+    <a class="section" routerLink=''>{{resourceService?.frmelmnts?.btn?.home}}</a>
+    <i class="right chevron icon divider"></i>
+    <div class="active section">{{resourceService?.frmelmnts?.btn?.search}}</div>
+  </div>
+</div>
+<div class="ui container py-2 m-20 tac">
+  <div class="ui search primary-search-input" id="search-input-container">
+    <div class="ui icon input">
+      <input type="text" id="keyword" name="filter_search" title="Search"
+        placeholder="{{resourceService.frmelmnts?.btn?.SearchIn}}" class="searchinput" [(ngModel)]="key"
+        (keyup.enter)="onEnter(key)" />
+      <i class="search icon" (click)="onEnter(key)"></i>
+    </div>
+  </div>
+</div>
+<div class="ui container py-2">
+  <div class="ui grid">
+    <div class="row" style="padding-bottom: 0px;">
+      <div class="twelve wide column">
+        <div class="ui toggle button end" (click)="changeView()" suiPopup popupText="{{buttonText}}" popupInverted
+          [popupPlacement]="'bottom right'">
+          <i class="icon {{buttonIcon}}"></i>
+        </div>
+        <a  class="ui button primary end"  *ngIf='permissionService.permissionAvailable' appPermission
+        [permission]="downloadRole" (click)="downloadFile()"  [ngClass]="{'loading' : loader}">Download CSV</a>
+      </div>
+    </div>
+    <div class="row">
+      <div class="three wide computer four wide tablet twelve wide mobile column">
+        <div class="ui container segment fit-content mb-20 py-10">
+          <app-data-filter (dataDrivenFilter)="getFilters($event)" [ignoreQuery]="['key']" *ngIf="initFilters"
+          [accordionDefaultOpen]=true [isShowFilterLabel]=true></app-data-filter>
+        </div>
+      </div>
+      <div class="nine wide computer eight wide tablet twelve wide mobile column">
+        <div class="row" *ngIf="showLoader">
+          <div class="twelve wide column">
+            <div class="ui segment">
+              <div class="ui active medium inline loader"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row" *ngIf="listOfEmployees.length === 0 && !showLoader">
+          <div class="twelve wide column mb-20">
+            <div class="ui placeholder segment tac">
+              <div class="ui icon header">
+                <i class="search icon"></i>
+                {{resourceService?.frmelmnts?.msg?.queryMessage}}
+              </div>
+              <div class="inline">
+                <div class="ui primary button" (click)="clearQuery()">{{resourceService?.frmelmnts?.btn?.clearQuery}}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ui cards mt-1" *ngIf="buttonIcon == 'list'">
+          <div class="mr-1" *ngFor="let content of listOfEmployees">
+            <app-card [data]="content" (clickEvent)="navigateToProfilePage($event)" class="d-block"
+              [class.last-card]="mr-0">
+            </app-card>
+          </div>
+        </div>
+        <div class="ui grid mt-5 table-scroll mb-1" *ngIf="buttonIcon == 'block layout' && listOfEmployees.length > 0">
+          <table class="ui celled padded table tablet stackable">
+            <thead>
+              <tr>
+                <th *ngFor="let header of result.headers">{{header}}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of result.row" [ngClass]="{positive:user.isApproved===true}">
+                <td *ngFor="let col of result.headers">
+                  {{user[col]? user[col]: '-'}}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="twelve wide column right aligned" *ngIf="!queryParams.appliedFilters && !key">
+          <div class="ui right floated ui buttons">
+            <a class="ui basic primary button" [ngClass]="{'disabled': paginationDetails.previousBtn }"
+              (click)="previous()">Previous</a>
+            <a class="ui basic primary button" [ngClass]="{'disabled': paginationDetails.nextBtn}"
+              (click)="next(paginationDetails.offset)">Next</a>
+          </div>
+        </div>
+      </div>
+    </div>

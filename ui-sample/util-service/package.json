@@ -1,0 +1,33 @@
+{
+  "name": "util-service",
+  "version": "1.0.0",
+  "description": "utils service",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^3.1.0",
+    "body-parser": "^1.19.0",
+    "cache-manager": "^2.10.1",
+    "cors": "^2.8.5",
+    "dateformat": "^3.0.3",
+    "express": "^4.16.3",
+    "express-interceptor": "^1.2.0",
+    "express-session": "^1.17.0",
+    "jimp": "^0.9.5",
+    "jsonwebtoken": "^8.5.1",
+    "keycloak-auth-utils": "^3.3.0",
+    "keycloak-connect": "^8.0.0",
+    "lodash": "^4.17.15",
+    "log4js": "^6.1.0",
+    "morgan": "^1.9.1",
+    "qrcode": "^1.4.4",
+    "request": "^2.88.0"
+  }
+}

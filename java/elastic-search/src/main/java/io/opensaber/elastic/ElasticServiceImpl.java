@@ -175,7 +175,7 @@ public class ElasticServiceImpl implements IElasticService {
         try {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
             inputMap.keySet().removeIf(key -> !publicFieldsInfo.get(index).contains(key));
-            response = getClient(index).index(new IndexRequest(index.toLowerCase(), searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
+            response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in adding record to ElasticSearch", e);
         }
@@ -234,6 +234,7 @@ public class ElasticServiceImpl implements IElasticService {
         try {
             String indexL = index.toLowerCase();
             Map<String, Object> readMap = readEntity(indexL, osid);
+           // Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
             readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
         } catch (NullPointerException | IOException e) {

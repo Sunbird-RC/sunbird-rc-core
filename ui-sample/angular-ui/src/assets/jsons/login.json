@@ -1,0 +1,44 @@
+{
+    "type": "login",
+    "action": "login",
+    "data": {
+      "templateName": "defaultTemplate",
+      "action": "login",
+      "fields": [
+        {
+          "code": "phone",
+          "dataType": "text",
+          "name": "phone",
+          "label": "Phone",
+          "description": "Phone",
+          "editable": true,
+          "placeholder": "Phone",
+          "inputType": "text",
+          "required": true,
+          "displayProperty": "Editable",
+          "visible": true,
+          "renderingHints": {
+            "semanticColumnWidth": "twelve"
+          },
+          "index": 1
+        },
+        {
+          "code": "otp",
+          "dataType": "otp",
+          "name": "otp",
+          "label": "OTP",
+          "description": "OTP",
+          "editable": true,
+          "placeholder": "OTP",
+          "inputType": "password",
+          "required": true,
+          "displayProperty": "Editable",
+          "visible": true,
+          "renderingHints": {
+            "semanticColumnWidth": "twelve"
+          },
+          "index": 2
+        }
+      ]
+    }
+}

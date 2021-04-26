@@ -1,0 +1,17 @@
+#PersonForm {
+    width: 70rem;
+}
+
+
+.btn-default {
+    background-color: #007bff;
+    border-color: #007bff;
+    text-shadow: 0 -1px 0 rgba(0,0,0,.2);
+    color: white;
+  }
+
+  .btn-default:hover {
+    color: white;
+    background-color: #007bff;
+    border-color: #007bff;
+  }

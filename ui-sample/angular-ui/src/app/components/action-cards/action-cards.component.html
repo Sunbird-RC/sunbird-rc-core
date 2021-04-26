@@ -1,0 +1,43 @@
+<div class="ui card mb-20">
+  <div class="content fixHeight">
+    <ngx-avatar class="my-avatar" class="floatRight" [style]="{
+            background: backgroundColor,
+            border: '1px solid #fff',
+            borderRadius: '50%',
+            color: color,
+            fontWeight: 'bold',
+            fontFamily: 'inherit',
+            lineHeight: '58px'}" [size]="60" initialsSize="1" [textSizeRatio]="2" name="{{data.name}} ">
+    </ngx-avatar>
+    <div class="header">
+      {{data?.name | titlecase}}
+    </div>
+    <div *ngIf="!data.isOnboarded && data?.endDate == null" class="meta">
+      New Member
+    </div>
+    <div class="description">
+      {{data.role}}
+    </div>
+  </div>
+  <div class="extra content">
+    <div class="ui basic fluid blue button" *ngIf="!data?.isActive && !data?.isOnboarded" (click)="validateConfirmModal(data?.osid); $event.stopPropagation()">
+      validate</div>
+    <div class="ui basic fluid blue button" *ngIf="data?.isActive && data?.isOnboarded && data?.manager" (click)="onAction(data,{View: true})">
+      view profile</div>
+  </div>
+</div>
+
+
+
+<ng-template let-context let-modal="modal" #modalTemplate>
+  <div class="header"> Validate</div>
+  <div class="content">
+    <p>{{ context.data }}</p>
+  </div>
+  <div class="actions">
+    <button class="ui blue button" (click)="modal.approve('approved')"
+      autofocus>{{resourceService?.frmelmnts?.btn?.yes}}</button>
+    <button class="ui basic blue button"
+    (click)="modal.deny('view')">{{resourceService?.frmelmnts?.btn?.viewProfile}}</button>
+  </div>
+</ng-template>

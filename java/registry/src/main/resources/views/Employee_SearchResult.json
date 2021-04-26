@@ -1,0 +1,42 @@
+{
+  "subject": "Employee",
+  "fields": [
+    {
+      "name": "osid"
+    },
+    {
+      "name": "name",
+      "display": true
+    },
+    {
+      "name": "orgName"
+    },
+    {
+      "name": "projectName"
+    },
+    {
+      "name": "subProjectName"
+    },
+    {
+      "name": "role"
+    },
+    {
+      "name": "startDate"
+    },
+    {
+      "name": "workLocation"
+    },
+    {
+      "name": "nineAMreportTo"
+    },
+    {
+      "name": "isInKronos"
+    },
+    {
+      "name": "githubId"
+    },
+    {
+      "name": "isActive"
+    }
+  ]
+}

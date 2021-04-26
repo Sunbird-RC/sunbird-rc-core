@@ -1,0 +1,14 @@
+.table .thead-light th {
+    text-transform: capitalize;
+}
+
+#noResult {
+    text-align: center;
+    font-size: 3rem;
+    padding: 2rem;
+    color: #5f615d69;
+}
+
+#admin {
+    display: none;
+}

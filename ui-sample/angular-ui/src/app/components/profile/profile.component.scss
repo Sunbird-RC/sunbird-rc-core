@@ -1,0 +1,36 @@
+.border {
+    box-shadow: 0 0.25rem 0.75rem rgba(65, 58, 58, 0.42);
+    width: 42rem;
+}
+
+.container {
+    text-align: -webkit-center
+}
+.ui.table {
+        background: inherit;
+        margin: 1em 0;
+        border: 0px;
+        border-spacing: 3px;
+}
+.ui.table tr td {
+    border-top: 0px;
+}
+.pt-0 {
+    padding-top: 0px;
+}
+.breadcrumb{
+    display: flex;
+}
+.mb-30 {
+    margin-bottom: 30px;
+}
+
+.width-50 {
+    width: 50rem;
+}
+
+.qrcode{
+    position: relative;
+    right: -245px;
+    bottom: -0px;
+}

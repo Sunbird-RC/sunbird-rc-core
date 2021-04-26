@@ -80,7 +80,7 @@ public class RegistryController {
 
     @Autowired
     private ShardManager shardManager;
-
+    
     @Autowired
     private ViewTemplateManager viewTemplateManager;
     @Autowired
@@ -156,36 +156,36 @@ public class RegistryController {
     }
 
     @ResponseBody
-    @RequestMapping(value = "/audit", method = RequestMethod.POST)
-    public ResponseEntity<Response> fetchAudit() {
-        ResponseParams responseParams = new ResponseParams();
-        Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
-        JsonNode payload = apiMessage.getRequest().getRequestMapNode();
-        if (auditEnabled && Constants.DATABASE.equals(auditStoreType)) {
-            try {
-                watch.start("RegistryController.audit");
-                JsonNode result = registryHelper.getAuditLog(payload);
+	@RequestMapping(value = "/audit", method = RequestMethod.POST)
+	public ResponseEntity<Response> fetchAudit() {
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
+		JsonNode payload = apiMessage.getRequest().getRequestMapNode();
+		if (auditEnabled && Constants.DATABASE.equals(auditStoreType)) {
+			try {
+				watch.start("RegistryController.audit");
+				JsonNode result = registryHelper.getAuditLog(payload);
 
-                response.setResult(result);
-                responseParams.setStatus(Response.Status.SUCCESSFUL);
-                watch.stop("RegistryController.searchEntity");
+				response.setResult(result);
+				responseParams.setStatus(Response.Status.SUCCESSFUL);
+				watch.stop("RegistryController.searchEntity");
 
-            } catch (Exception e) {
-                logger.error("Error in getting audit log !", e);
-                logger.error("Exception in controller while searching entities !", e);
-                response.setResult("");
-                responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-                responseParams.setErrmsg(e.getMessage());
-            }
-        } else {
-            response.setResult("");
-            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg("Audit is not enabled or file is chosen to store the audit");
-            return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
-        }
+			} catch (Exception e) {
+				logger.error("Error in getting audit log !", e);
+				logger.error("Exception in controller while searching entities !", e);
+				response.setResult("");
+				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+				responseParams.setErrmsg(e.getMessage());
+			}
+		}else {
+			response.setResult("");
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg("Audit is not enabled or file is chosen to store the audit");
+			return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
+		}
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<Response> deleteEntity() {
@@ -197,7 +197,7 @@ public class RegistryController {
             RecordIdentifier recordId = RecordIdentifier.parse(entityId);
             String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
             Shard shard = shardManager.activateShard(shardId);
-            registryService.deleteEntityById(shard, apiMessage.getUserID(), recordId.getUuid());
+            registryService.deleteEntityById(shard,apiMessage.getUserID(),recordId.getUuid());
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
         } catch (UnsupportedOperationException e) {
@@ -223,7 +223,7 @@ public class RegistryController {
         JsonNode rootNode = apiMessage.getRequest().getRequestMapNode();
 
         try {
-            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
+            String label = registryHelper.addEntity(rootNode,apiMessage.getUserID());
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
 

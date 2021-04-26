@@ -1,0 +1,85 @@
+/* body {
+    padding-top: 40px;
+    padding-bottom: 40px;
+    background-color: #eee;
+  }
+  
+  .form-signin {
+    max-width: 330px;
+    padding: 15px;
+    margin: 0 auto;
+  }
+  .form-signin .form-signin-heading,
+  .form-signin .checkbox {
+    margin-bottom: 10px;
+  }
+  .form-signin .checkbox {
+    font-weight: normal;
+  }
+  .form-signin .form-control {
+    position: relative;
+    height: auto;
+    -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+    padding: 10px;
+    font-size: 16px;
+  }
+  .form-signin .form-control:focus {
+    z-index: 2;
+  }
+  .form-signin input[type="email"] {
+    margin-bottom: -1px;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  .form-signin input[type="password"] {
+    margin-bottom: 10px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  } */
+
+
+  #addHeight {
+    height: 5rem;
+  }
+  .alpaca-form-buttons-container {
+  text-align: center !important
+  }
+
+  .btn-default {
+    background-color: #007bff;
+    border-color: #007bff;
+    text-shadow: 0 -1px 0 rgba(0,0,0,.2);
+    color: white;
+  }
+
+  .btn-default:hover {
+    color: white;
+    background-color: #007bff;
+    border-color: #007bff;
+  }
+
+  .data {
+    float: right;
+position: relative;
+padding-top: 9.3rem;
+  }
+
+  #alert {
+    
+    display:none;
+}
+.border-top { border-top: 1px solid #e5e5e5; }
+.border-bottom { border-bottom: 1px solid #e5e5e5; }
+
+.box-shadow { box-shadow: 0 .25rem .75rem rgba(65, 58, 58, 0.42) }
+
+.jumbotron {
+  word-wrap: break-word;
+  background-color: #fff;
+  background-clip: border-box;
+  border: 1px solid rgba(0,0,0,.125);
+  border-radius: .25rem;
+  margin-top: 4rem;
+  height: auto;
+}

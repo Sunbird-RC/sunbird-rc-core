@@ -1,0 +1,26 @@
+<div class="ui container mt-20">
+    <table class="ui celled striped table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Action</th>
+                <th>Attributes Updated</th>
+                <th>Updated By</th>
+                <th>Updated on</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let row of auditInfo; let i = index;">
+                <td>{{i}}</td>
+                <td>{{row.action}}</td>
+                <td>
+                    <span *ngFor="let audit of row.auditInfo; let isLast=last">
+                        {{audit.path | slice: 10}}{{isLast ? '' : ', '}}
+                    </span>
+                </td>
+                <td>{{row.userId}}</td>
+                <td>{{row.osUpdatedAt | date: 'medium' }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

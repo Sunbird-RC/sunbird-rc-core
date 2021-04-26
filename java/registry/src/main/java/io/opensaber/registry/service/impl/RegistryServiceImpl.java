@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -17,13 +19,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.sunbird.akka.core.ActorCache;
+import org.sunbird.akka.core.MessageProtos;
+import org.sunbird.akka.core.Router;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.AuditRecord;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
@@ -92,13 +99,16 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${audit.enabled}")
     private boolean auditEnabled;
 
+    @Value("${registry.perRequest.indexCreation.enabled:false}")
+    private boolean perRequestIndexCreation;
+
     @Autowired
     private EntityParenter entityParenter;
 
     @Autowired
     private OSSystemFieldsHelper systemFieldsHelper;
 
-   @Autowired
+    @Autowired
     private IAuditService auditService;
 
     public HealthCheckResponse health(Shard shard) throws Exception {
@@ -154,18 +164,18 @@ public class RegistryServiceImpl implements RegistryService {
                 databaseProvider.commitTransaction(graph, tx);
                 String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
                 
-                //if Audit enabled in configuration yml file
-                if(auditEnabled) {
-	                List<Integer> transactionId = new LinkedList<>(Arrays.asList(tx.hashCode()));
-	                List<String> entityTypes = new LinkedList<>(Arrays.asList(index));
-	                
-			        AuditRecord auditRecord = auditService.createAuditRecord(userId, Constants.AUDIT_ACTION_DELETE, uuid, transactionId);
-			        auditRecord.setAuditInfo(auditService.createAuditInfo(Constants.AUDIT_ACTION_DELETE_OP, Constants.AUDIT_ACTION_DELETE, null, null, entityTypes));
-	                auditService.doAudit(auditRecord, null, entityTypes, uuid, shard);
-                }
+                auditService.auditDelete(
+                		auditService.createAuditRecord(userId, uuid, tx, index),
+                		shard);
+                
+                callESActors( null, "DELETE", index, uuid, tx);
+
+
             }
             logger.info("Entity {} marked deleted", uuid);
         }
+        
+
     }
 
     /**
@@ -204,22 +214,20 @@ public class RegistryServiceImpl implements RegistryService {
                 tx.close();
             }
             // Add indices: executes only once.
-            String shardId = shard.getShardId();
-            Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
-            Definition definition = definitionsManager.getDefinition(vertexLabel);
-            entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
-            
-            List<Integer> transactionId = new LinkedList<>(Arrays.asList(tx.hashCode()));
-            List<String> entityTypes = new LinkedList<>(Arrays.asList(vertexLabel));
-            
-            //if Audit enabled in configuration yml file
-            if(auditEnabled) {
-		        AuditRecord auditRecord = auditService.createAuditRecord(userId, Constants.AUDIT_ACTION_ADD, entityId, transactionId);
-		        auditRecord.setAuditInfo(auditService.createAuditInfo(Constants.AUDIT_ACTION_ADD_OP, Constants.AUDIT_ACTION_ADD, null, rootNode, entityTypes));
-
-            	auditService.doAudit(auditRecord, rootNode, entityTypes, entityId, shard);
+            if (perRequestIndexCreation) {
+                String shardId = shard.getShardId();
+                Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
+                Definition definition = definitionsManager.getDefinition(vertexLabel);
+                entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             }
-     
+            
+            callESActors(rootNode, "ADD", vertexLabel, entityId, tx);
+
+            auditService.auditAdd(
+            		auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
+            		shard, rootNode);
+            
+
         }
         return entityId;
     }
@@ -300,17 +308,28 @@ public class RegistryServiceImpl implements RegistryService {
             doUpdate(shard, graph, registryDao, vr, inputNode.get(entityType));
 
             databaseProvider.commitTransaction(graph, tx);
+
+            callESActors(mergedNode, "UPDATE", entityType, id, tx);
+
+            auditService.auditUpdate(
+            		auditService.createAuditRecord(userId, rootId, tx, entityType), 
+            		shard, mergedNode, readNode);
             
-            //if Audit enabled in configuration yml file
-            if(auditEnabled) {
-	            List<Integer> transactionId = new LinkedList<>(Arrays.asList(tx.hashCode()));
-	            List<String> entityTypes = new LinkedList<>(Arrays.asList(entityType));
-	            
-		        AuditRecord auditRecord = auditService.createAuditRecord(userId, Constants.AUDIT_ACTION_UPDATE, id, transactionId);
-		        auditRecord.setAuditInfo(auditService.createAuditInfo(Constants.AUDIT_ACTION_UPDATE_OP, Constants.AUDIT_ACTION_UPDATE, readNode, mergedNode, entityTypes));
-		        auditService.doAudit(auditRecord, mergedNode, entityTypes, rootId, shard);
-            }
+
+
         }
+    }
+
+ 
+   @Async("taskExecutor")	
+   public void callESActors(JsonNode rootNode, String operation, String parentEntityType, String entityRootId, Transaction tx) throws JsonProcessingException {			      
+			logger.debug("callESActors started");       
+			rootNode = rootNode != null ? rootNode.get(parentEntityType): rootNode;
+			boolean elasticSearchEnabled = (searchProvider.equals("io.opensaber.registry.service.ElasticSearchService"));	
+			MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, operation,	
+			        parentEntityType.toLowerCase(), entityRootId, rootNode,null);	
+			ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);	
+			logger.debug("callESActors ends");	
     }
 
     private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode) {

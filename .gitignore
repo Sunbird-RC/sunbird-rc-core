@@ -5,6 +5,8 @@ dump.json
 .classpath
 .vscode
 
+.setupVars.sh
+
 /.idea
 *.iml
 .idea_modules

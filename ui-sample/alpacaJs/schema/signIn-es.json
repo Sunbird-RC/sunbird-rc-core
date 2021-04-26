@@ -1,0 +1,27 @@
+{
+    "$id": "#/properties/SignUp",
+    "type": "object",
+    "title": "Regístrate",
+    "required": [
+      "phone"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "phone": {
+        "$id": "#/properties/phone",
+        "format": "phone",
+        "title": "Número de teléfono"
+        
+      },
+      "otp": {
+          "$id" : "#/properties/password",
+          "format": "password",
+          "title": "Entrar otp"
+
+      }
+      
+    },
+    "dependencies": {
+      "otp": ["phone"]
+  }
+  }

@@ -1,0 +1,403 @@
+{
+    "type": "ReporterFormTemplate",
+    "action": "search",
+    "data": {
+        "templateName": "defaultTemplate",
+        "action": "create",
+        "categories":{
+            "Personal information":["name", "orgName","externalId", "externalRole","email", "phone"],
+            "General":["slackAccess", "repoAccess", "startDate", "endDate", "workLocation", "workingStyle", "macAddress"],
+            "Admin information":["role", "isActive","projectName","subProjectName", "nineAMreportTo", "remarks"],
+            "Billing":["proposedBilling"]
+        },
+        "fields": [
+            {
+                "code": "name",
+                "dataType": "text",
+                "name": "Employee name",
+                "label": "Employee name",
+                "description": "Employee name",
+                "editable": false,
+                "placeholder": "Employee name",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 1
+            },
+            {
+                "code": "orgName",
+                "dataType": "text",
+                "name": "orgName",
+                "label": "Organisation name",
+                "description": "Organisation name",
+                "editable": false,
+                "placeholder": "Organisation name",
+                "inputType": "select",
+                "required": true,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "range": [
+                    {
+                        "id": "ilimi",
+                        "name": "ILIMI"
+                    },
+                    {
+                        "id": "tarento",
+                        "name": "Tarento"
+                    },
+                    {
+                        "id": "TEKDI",
+                        "name": "TEKDI"
+                    },
+                    {
+                        "id": "OPTIT",
+                        "name": "OPTIT"
+                    },
+                    {
+                        "id": "Qualitrix",
+                        "name": "Qualitrix"
+                    },
+                    {
+                        "id": "Framewirk",
+                        "name": "Framewirk"
+                    },
+                    {
+                        "id": "Consultant",
+                        "name": "Consultant"
+                    },
+                    {
+                        "id": "GWL",
+                        "name": "GWL"
+                    },
+                    {
+                        "id": "TurtleBowl",
+                        "name": "TurtleBowl"
+                    },
+                    {
+                        "id": "MantraLabs",
+                        "name": "MantraLabs"
+                    },
+                    {
+                        "id": "Zool",
+                        "name": "Zool"
+                    },
+                    {
+                        "id": "Tibil",
+                        "name": "Tibil"
+                    },
+                    {
+                        "id": "Lollypop",
+                        "name": "Lollypop"
+                    },
+                    {
+                        "id": "E&Y",
+                        "name": "E&Y"
+                    },
+                    {
+                        "id": "BeyondSquare",
+                        "name": "BeyondSquare"
+                    }
+                ],
+                "index": 2
+            },
+            {
+                "code": "isActive",
+                "dataType": "boolean",
+                "name": "isApproved",
+                "label": "isApproved",
+                "description": "isApproved",
+                "editable": false,
+                "placeholder": "isApproved",
+                "inputType": "boolean",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 5
+            },
+            {
+                "code": "workLocation",
+                "dataType": "text",
+                "name": "Employee work location",
+                "label": "WorkLocation",
+                "description": "",
+                "editable": false,
+                "placeholder": "workLocation",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 5
+            },
+            {
+                "code": "nineAMreportTo",
+                "dataType": "text",
+                "name": "NineAMreportTo",
+                "label": "NineAMreportTo",
+                "description": "NineAMreportTo",
+                "editable": false,
+                "placeholder": "NineAMreportTo",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 6
+            },
+            {
+                "code": "role",
+                "dataType": "text",
+                "name": "role",
+                "label": "EkStep role",
+                "description": "EkStep role",
+                "editable": false,
+                "placeholder": "EkStep role",
+                "inputType": "select",
+                "required": true,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "range": [
+                    {
+                        "id": "BA",
+                        "name": "BA"
+                    },
+                    {
+                        "id": "Tech Lead",
+                        "name": "Tech Lead"
+                    },
+                    {
+                        "id": "Project Management",
+                        "name": "Project Management"
+                    },
+                    {
+                        "id": "Developer",
+                        "name": "Developer"
+                    },
+                    {
+                        "id": "Design Council",
+                        "name": "Design Council"
+                    },
+                    {
+                        "id": "Designer",
+                        "name": "Designer"
+                    },
+                    {
+                        "id": "Tech Manager",
+                        "name": "Tech Manager"
+                    },
+                    {
+                        "id": "DevOps",
+                        "name": "DevOps"
+                    },
+                    {
+                        "id": "Tech Support",
+                        "name": "Tech Support"
+                    }
+                ],
+                "index": 7
+            },
+            {
+                "code": "projectName",
+                "dataType": "text",
+                "name": "projectName",
+                "label": "Project name",
+                "description": "Project name",
+                "editable": false,
+                "placeholder": "Project name",
+                "inputType": "select",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "range": [
+                    {
+                        "id": "DIKSHA",
+                        "name": "DIKSHA"
+                    },
+                    {
+                        "id": "Learning platform",
+                        "name": "Learning platform"
+                    },
+                    {
+                        "id": "Sunbird + DIKSHA",
+                        "name": "Sunbird + DIKSHA"
+                    }
+                ],
+                "index": 8
+            },
+            {
+                "code": "subProjectName",
+                "dataType": "text",
+                "name": "subProjectName",
+                "label": "Sub-project name",
+                "description": "Sub-project name",
+                "editable": false,
+                "placeholder": "Sub-project name",
+                "inputType": "select",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "range": [
+                    {
+                        "id": "User Platform",
+                        "name": "User Platform"
+                    },
+                    {
+                        "id": "Mobile",
+                        "name": "Mobile"
+                    },
+                    {
+                        "id": "Implementation",
+                        "name": "Implementation"
+                    },
+                    {
+                        "id": "Project Management",
+                        "name": "Project Management"
+                    },
+                    {
+                        "id": "Design Council",
+                        "name": "Design Council"
+                    },
+                    {
+                        "id": "DIKSHA UX",
+                        "name": "DIKSHA UX"
+                    },
+                    {
+                        "id": "Content Framework",
+                        "name": "Content Framework"
+                    },
+                    {
+                        "id": "Portal",
+                        "name": "Portal"
+                    },
+                    {
+                        "id": "Infra & DevOps",
+                        "name": "Infra & DevOps"
+                    },
+                    {
+                        "id": "DIKSHA Liasion",
+                        "name": "DIKSHA Liasion"
+                    },
+                    {
+                        "id": "Learning Platform",
+                        "name": "Learning Platform"
+                    },
+                    {
+                        "id": "DIKSHA Tech Support",
+                        "name": "DIKSHA Tech Support"
+                    },
+                    {
+                        "id": "Courses Platform",
+                        "name": "Courses Platform"
+                    },
+                    {
+                        "id": "DIKSHA Analytics",
+                        "name": "DIKSHA Analytics"
+                    }
+                ],
+                "index": 9
+            },
+            {
+                "code": "startDate",
+                "dataType": "text",
+                "name": "startDate",
+                "label": "Start Date",
+                "description": "Start Date",
+                "editable": false,
+                "placeholder": "Start Date",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 11
+            },
+            {
+                "code": "endDate",
+                "dataType": "text",
+                "name": "endDate",
+                "label": "End Date",
+                "description": "End Date",
+                "editable": false,
+                "placeholder": "End Date",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 12
+            },
+            {
+                "code": "workingStyle",
+                "dataType": "text",
+                "name": "workingStyle",
+                "label": "Working Style",
+                "description": "Working Style",
+                "editable": false,
+                "placeholder": "Working Style",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "range": [
+                    {
+                        "name": "part-time",
+                        "id": "part-time"
+                    },
+                    {
+                        "name": "full-time",
+                        "id": "full-time"
+                    }
+                ],
+                "index": 14
+            },
+            {
+                "code": "remarks",
+                "dataType": "text",
+                "name": "remarks",
+                "label": "Remarks",
+                "description": "Remarks",
+                "editable": false,
+                "placeholder": "Remarks",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "twelve"
+                },
+                "index": 17
+            }
+        
+        ]
+    }
+}
