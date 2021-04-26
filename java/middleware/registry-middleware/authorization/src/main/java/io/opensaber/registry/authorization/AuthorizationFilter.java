@@ -79,7 +79,7 @@ public class AuthorizationFilter implements Middleware {
 				throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
 			}
 		} catch (Exception e) {
-			logger.error("AuthorizationFilter: MiddlewareHaltException !");
+			logger.error("AuthorizationFilter: MiddlewareHaltException !", e);
 			throw new MiddlewareHaltException(VERIFICATION_EXCEPTION);
 		}
 		return true;
