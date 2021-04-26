@@ -86,7 +86,7 @@
       "osStatus",
       "osOwner"
     ],
-    "subjectJsonPath": "/phone",
+    "subjectJsonPath": "phone",
     "attestations": [
       {
         "path": "/fitness",

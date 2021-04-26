@@ -70,13 +70,20 @@ public class Response {
 	}
 
 	public enum API_ID {
-		CREATE("open-saber.registry.create"), READ("open-saber.registry.read"), UPDATE(
-				"open-saber.registry.update"), AUDIT("open-saber.registry.audit"), HEALTH(
-						"open-saber.registry.health"), DELETE("open-saber.registry.delete"), SEARCH(
-								"open-saber.registry.search"), SIGN("open-saber.utils.sign"), VERIFY(
-										"open-saber.utils.verify"), KEYS("open-saber.utils.keys"), ENCRYPT(
-												"open-saber.utils.encrypt"), DECRYPT(
-														"open-saber.utils.decrypt"), NONE("");
+		CREATE("open-saber.registry.create"),
+		INVITE("open-saber.registry.invite"),
+		READ("open-saber.registry.read"),
+		UPDATE("open-saber.registry.update"),
+		AUDIT("open-saber.registry.audit"),
+		HEALTH("open-saber.registry.health"),
+		DELETE("open-saber.registry.delete"),
+		SEARCH("open-saber.registry.search"),
+		SIGN("open-saber.utils.sign"),
+		VERIFY("open-saber.utils.verify"),
+		KEYS("open-saber.utils.keys"),
+		ENCRYPT("open-saber.utils.encrypt"),
+		DECRYPT("open-saber.utils.decrypt"),
+		NONE("");
 		private String id;
 
 		private API_ID(String id) {

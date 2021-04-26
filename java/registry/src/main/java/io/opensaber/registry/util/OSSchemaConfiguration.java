@@ -29,6 +29,10 @@ public class OSSchemaConfiguration {
      * Holds fields name(s) to be used for auditing
      */
     private List<String> systemFields =  new ArrayList<>();
+    /**
+     * Holds field path of the subject of entity
+     * */
+    private String subjectJsonPath = "";
 
     public List<String> getPrivateFields() {
         return privateFields;
@@ -68,5 +72,13 @@ public class OSSchemaConfiguration {
 
     public void setSystemFields(List<String> systemFields) {
         this.systemFields = systemFields;
+    }
+
+    public String getSubjectJsonPath() {
+        return subjectJsonPath;
+    }
+
+    public void setSubjectJsonPath(String subjectJsonPath) {
+        this.subjectJsonPath = subjectJsonPath;
     }
 }
