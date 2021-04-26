@@ -3,8 +3,8 @@ package io.opensaber.registry.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.jsonldjava.utils.Obj;
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.pojos.OpenSaberInstrumentation;
@@ -27,19 +27,19 @@ import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Data;
 import io.opensaber.registry.transform.ITransformer;
 import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.KeycloakAdminUtil;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.ViewTemplateManager;
 
 import io.opensaber.validators.IValidate;
-import io.swagger.models.Model;
-import io.swagger.models.ModelImpl;
 import io.swagger.models.Operation;
 import io.swagger.models.RefModel;
+import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.PathParameter;
 import io.swagger.models.properties.ObjectProperty;
 import io.swagger.util.Json;
-import io.swagger.util.ObjectMapperFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,10 +51,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 public class RegistryController {
@@ -77,7 +74,8 @@ public class RegistryController {
     public String uuidPropertyName;
     @Autowired
     private OpenSaberInstrumentation watch;
-
+    @Autowired
+    private KeycloakAdminUtil keycloakAdminUtil;
     @Autowired
     private ShardManager shardManager;
     
@@ -273,6 +271,7 @@ public class RegistryController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+
     @RequestMapping(value = "/attest", method = RequestMethod.GET)
     public ResponseEntity<Response> attest(@RequestHeader HttpHeaders header) {
         /*
@@ -282,16 +281,30 @@ public class RegistryController {
          */
         return null;
     }
-
     @RequestMapping(value = "/invite", method = RequestMethod.GET)
     public ResponseEntity<Response> invite(@RequestHeader HttpHeaders header) {
-        /** take list of entities
-         *  create entities and set the owner
-         *  how notification should work -- mobile - key
-         *  use case:
-         *      bulk invite | api call
-         */
-        return null;
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
+        Map<String, Object> result = new HashMap<>();
+        String entityType = apiMessage.getRequest().getEntityType();
+        JsonNode rootNode = apiMessage.getRequest().getRequestMapNode();
+
+        try {
+            String entitySubject = validationService.getEntitySubject(entityType, rootNode);
+            keycloakAdminUtil.createUser(entitySubject, "facility admin");
+            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
+            Map resultMap = new HashMap();
+            resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
+            result.put(entityType, resultMap);
+            response.setResult(result);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+        } catch (Exception e) {
+            logger.error("Exception in controller while adding entity !", e);
+            response.setResult(result);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 
@@ -345,10 +358,9 @@ public class RegistryController {
         return null;
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.POST)
     public ResponseEntity<Object> postEntity(
             @PathVariable String entityName,
-            @PathVariable String entityId,
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode rootNode
     ) throws JsonProcessingException {
@@ -439,7 +451,7 @@ public class RegistryController {
         ObjectNode definitions = objectMapper.createObjectNode();
         doc.set("paths", paths);
         doc.set("definitions", definitions);
-        for (String entityName : Arrays.asList("Vehicle")) {
+        for (String entityName : definitionsManager.getAllKnownDefinitions()) {
             ObjectNode path = populateEntityActions(entityName);
             paths.set(String.format("/api/v1/%s/{entityId}", entityName), path);
             JsonNode schemaDefinition = objectMapper.reader().readTree(definitionsManager.getDefinition(entityName).getContent());
@@ -448,27 +460,82 @@ public class RegistryController {
         }
         return new ResponseEntity<>(objectMapper.writeValueAsString(doc), HttpStatus.OK);
     }
+    @RequestMapping(value = "/api/docs/{file}.json", method = RequestMethod.GET, produces = "application/json")
+    public ResponseEntity<Object> getSwaggerDocImportFiles(
+            @PathVariable String file
+    ) throws IOException {
+        Definition definition = definitionsManager.getDefinition(file);
+        if (definition == null)
+            definition = definitionsManager.getDefinition(file.toLowerCase());
+        String content = definition.getContent();
+        String inlined = importAllReferences(content);
+        return new ResponseEntity<>(inlined, HttpStatus.OK);
+    }
+
+    private String importAllReferences(String content) {
+        return content;
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.PATCH)
+    public ResponseEntity<Object> attestEntity(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode rootNode
+    ) throws Exception {
+        logger.info("Attestation request for {}", rootNode.get("fieldPaths"));
+        JsonNode nodePath = rootNode.get("jsonPaths");
+        if (nodePath instanceof ArrayNode) {
+            Iterator<JsonNode> elements = ((ArrayNode) nodePath).elements();
+            ArrayList<String> paths = new ArrayList<>();
+            for (Iterator<JsonNode> it = elements; it.hasNext(); ) {
+                JsonNode e = it.next();
+                paths.add(e.textValue());
+            }
+            JsonNode node = registryHelper.readEntity("admin", entityName, entityId, false, null, false);
+            registryHelper.attestEntity(entityName, node, paths.toArray(new String[]{}), "admin");
+        }
+        return null;
+    }
 
     ObjectNode populateEntityActions(String entityName) throws IOException {
         ObjectNode path = objectMapper.createObjectNode();
+        addGetOperation(entityName, path);
+        addModifyOperation(entityName, path, "post", "Create");
+        addModifyOperation(entityName, path, "put", "Update");
+        return path;
+    }
+
+    private void addModifyOperation(String entityName, ObjectNode path, String operationType, String descriptionPrefix) throws IOException {
+        Operation operation = new Operation()
+                .description(String.format("%s new %s", descriptionPrefix, entityName));
+        BodyParameter parameter = new BodyParameter()
+                .name("entityId")
+                .description(String.format("Id of the %s", entityName))
+                .schema(new RefModel(String.format("#/definitions/%s", entityName)));
+        addResponseType(entityName, path, operation.parameter(parameter), operationType);
+    }
+
+    private void addGetOperation(String entityName, ObjectNode path) throws IOException {
         Operation operation = new Operation();
         PathParameter parameter = new PathParameter().name("entityId")
                 .description(String.format("Id of the %s", entityName))
                 .type("string");
-        Model model = new ModelImpl().type("object");
+        addResponseType(entityName, path, operation.parameter(parameter), "get");
+    }
+
+    private void addResponseType(String entityName, ObjectNode path, Operation operation, String operationType) throws IOException {
         ObjectProperty schema = new ObjectProperty();
         schema.setType("object");
         io.swagger.models.Response response = new io.swagger.models.Response()
                 .description("OK")
                 .responseSchema(new RefModel(String.format("#/definitions/%s", entityName)));
 
-        operation.parameter(parameter)
-                .addResponse("200", response);
+        operation.addResponse("200", response);
 
         ObjectNode jsonOperationMapping = (ObjectNode) objectMapper.reader().readTree(Json.mapper().writeValueAsString(operation));
         deleteAll$Ids(jsonOperationMapping);
-        path.set("get", jsonOperationMapping);
-        return path;
+        path.set(operationType, jsonOperationMapping);
     }
 
     private void deleteAll$Ids(ObjectNode jsonOperationMapping) {

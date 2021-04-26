@@ -36,17 +36,9 @@
         "basicProficiencyLevel",
         "disabilityType",
         "trainedForChildrenSpecialNeeds",
-        "trainedinUseOfComputer"
+        "trainedInUseOfComputer"
       ],
       "properties": {
-        "signatures": {
-          "$id": "#/properties/signatures",
-          "type": "array",
-          "items": {
-            "$ref": "Signature.json#/definitions/Signature"
-          },
-          "$comment": "Placeholder for all verifiable claims"
-        },
         "serialNum": {
           "$id": "#/properties/serialNum",
           "type": "integer",
@@ -69,73 +61,313 @@
         },
         "gender": {
           "$id": "#/properties/gender",
-          "$ref": "Common.json#/definitions/TeacherGender"
+          "$ref": "#/definitions/TeacherGender"
         },
         "birthDate": {
           "$id": "#/properties/birthDate",
-          "$ref": "Common.json#/definitions/Date"
+          "$ref": "#/definitions/Date"
         },
         "socialCategory": {
           "$id": "#/properties/socialCategory",
-          "$ref": "Common.json#/definitions/SocialCategory"
+          "$ref": "#/definitions/SocialCategory"
         },
         "highestAcademicQualification": {
           "$id": "#/properties/highestAcademicQualification",
-          "$ref": "Common.json#/definitions/AcademicQualification"
+          "$ref": "#/definitions/AcademicQualification"
         },
         "highestTeacherQualification": {
           "$id": "#/properties/highestTeacherQualification",
-          "$ref": "Common.json#/definitions/Qualification"
+          "$ref": "#/definitions/Qualification"
         },
         "yearOfJoiningService": {
           "$id": "#/properties/yearOfJoiningService",
-          "$ref": "Common.json#/definitions/Year"
+          "$ref": "#/definitions/Year"
         },
         "teachingRole": {
           "$id": "#/properties/teachingRole",
-          "$ref": "TeachingRole.json#/definitions/TeachingRole"
+          "$ref": "#/definitions/TeachingRole"
         },
         "inServiceTeacherTrainingFromBRC": {
           "$id": "#/properties/inServiceTeacherTrainingFromBRC",
-          "$ref": "InServiceTeacherTraining.json#/definitions/InServiceTeacherTraining"
+          "$ref": "#/definitions/InServiceTeacherTraining"
         },
         "inServiceTeacherTrainingFromCRC": {
           "$id": "#/properties/inServiceTeacherTrainingFromCRC",
-          "$ref": "InServiceTeacherTraining.json#/definitions/InServiceTeacherTraining"
+          "$ref": "#/definitions/InServiceTeacherTraining"
         },
         "inServiceTeacherTrainingFromDIET": {
           "$id": "#/properties/inServiceTeacherTrainingFromDIET",
-          "$ref": "InServiceTeacherTraining.json#/definitions/InServiceTeacherTraining"
+          "$ref": "#/definitions/InServiceTeacherTraining"
         },
         "inServiceTeacherTrainingFromOthers": {
           "$id": "#/properties/inServiceTeacherTrainingFromOthers",
-          "$ref": "InServiceTeacherTraining.json#/definitions/InServiceTeacherTraining"
+          "$ref": "#/definitions/InServiceTeacherTraining"
         },
         "nonTeachingAssignmentsForAcademicCalendar": {
           "$id": "#/properties/nonTeachingAssignmentsForAcademicCalendar",
-          "$ref": "NonTeachingAssignments.json#/definitions/NonTeachingAssignments"
+          "$ref": "#/definitions/NonTeachingAssignments"
         },
         "basicProficiencyLevel": {
           "$id": "#/properties/basicProficiencyLevel",
           "type": "array",
           "items": {
-            "$ref": "BasicProficiencyLevel.json#/definitions/BasicProficiencyLevel"
+            "$ref": "#/definitions/BasicProficiencyLevel"
           },
           "minItems": 3
         },
         "disabilityType": {
           "$id": "#/properties/disabilityType",
-          "$ref": "Common.json#/definitions/DisabilityType"
+          "$ref": "#/definitions/DisabilityType"
         },
         "trainedForChildrenSpecialNeeds": {
           "$id": "#/properties/trainedForChildrenSpecialNeeds",
-          "$ref": "Common.json#/definitions/YesNoCode"
+          "$ref": "#/definitions/YesNoCode"
         },
-        "trainedinUseOfComputer": {
-          "$id": "#/properties/trainedinUseOfComputer",
-          "$ref": "Common.json#/definitions/YesNoCode"
+        "trainedInUseOfComputer": {
+          "$id": "#/properties/trainedInUseOfComputer",
+          "$ref": "#/definitions/YesNoCode"
         },
         "___encryptedFields": {
+        }
+      }
+    },
+    "@type": {
+      "type": "string"
+    },
+    "TeacherGender": {
+      "type": "string",
+      "enum": [
+        "GenderTypeCode-MALE",
+        "GenderTypeCode-FEMALE"
+      ]
+    },
+    "Gender": {
+      "type": "string",
+      "enum": [
+        "MALE",
+        "FEMALE",
+        "OTHER"
+      ]
+    },
+    "Date": {
+      "type": "string",
+      "format": "date",
+      "$comment": "YYYY-MM-DD format",
+      "examples": [
+        "1990-12-01"
+      ]
+    },
+    "Year": {
+      "type": "string",
+      "pattern": "(^[0-9]{4}$)"
+    },
+    "SocialCategory": {
+      "type": "string",
+      "enum": [
+        "SocialCategoryTypeCode-GENERAL",
+        "SocialCategoryTypeCode-SC",
+        "SocialCategoryTypeCode-ST",
+        "SocialCategoryTypeCode-OBC",
+        "SocialCategoryTypeCode-ORC",
+        "SocialCategoryTypeCode-OTHERS"
+      ]
+    },
+    "AcademicQualification": {
+      "type": "string",
+      "enum": [
+        "AcademicQualificationTypeCode-BELOWSECONDARY",
+        "AcademicQualificationTypeCode-SECONDARY",
+        "AcademicQualificationTypeCode-HIGHERSECONDARY",
+        "AcademicQualificationTypeCode-GRADUATE",
+        "AcademicQualificationTypeCode-POSTGRADUATE",
+        "AcademicQualificationTypeCode-MPHIL",
+        "AcademicQualificationTypeCode-POSTDOC",
+        "AcademicQualificationTypeCode-PHD"
+      ]
+    },
+    "Qualification": {
+      "type": "string",
+      "enum": [
+        "TeacherQualificationTypeCode-DIPLOMAORBASIC",
+        "TeacherQualificationTypeCode-BELED",
+        "TeacherQualificationTypeCode-MED",
+        "TeacherQualificationTypeCode-OTHERS",
+        "TeacherQualificationTypeCode-NONE",
+        "TeacherQualificationTypeCode-SPECIAL"
+      ]
+    },
+    "TeacherType": {
+      "type": "string",
+      "enum": [
+        "TeacherTypeCode-HEAD",
+        "TeacherTypeCode-ACTINGHEAD",
+        "TeacherTypeCode-TEACHER",
+        "TeacherTypeCode-RTEINSTRUCTOR",
+        "TeacherTypeCode-PRINCIPAL",
+        "TeacherTypeCode-VICEPRINCIPAL",
+        "TeacherTypeCode-LECTURER"
+      ]
+    },
+    "AppointmentType": {
+      "type": "string",
+      "enum": [
+        "TeacherAppointmentTypeCode-REGULAR",
+        "TeacherAppointmentTypeCode-CONTRACT",
+        "TeacherAppointmentTypeCode-PARTTIME"
+      ]
+    },
+    "ClassType": {
+      "type": "string",
+      "enum": [
+        "ClassTypeCode-PRIMARY",
+        "ClassTypeCode-UPPERPRIMARY",
+        "ClassTypeCode-PRIMARYANDUPPERPRIMARY",
+        "ClassTypeCode-SECONDARY",
+        "ClassTypeCode-HIGHERSECONDARY",
+        "ClassTypeCode-UPPERPRIMARYANDSECONDARY",
+        "ClassTypeCode-SECONDARYANDHIGHERSECONDARY"
+      ]
+    },
+    "Subjects": {
+      "type": "string",
+      "enum": [
+        "SubjectCode-ALL",
+        "SubjectCode-LANGUAGE",
+        "SubjectCode-ENGLISH",
+        "SubjectCode-MATH",
+        "SubjectCode-ENVSTUDIES",
+        "SubjectCode-SPORTS",
+        "SubjectCode-MUSIC",
+        "SubjectCode-SCIENCE",
+        "SubjectCode-SOCIALSTUDIES",
+        "SubjectCode-ACCOUNTANCY",
+        "SubjectCode-BIOLOGY",
+        "SubjectCode-BUSINESSSTUDIES",
+        "SubjectCode-CHEMISTRY",
+        "SubjectCode-COMPSC",
+        "SubjectCode-ECONOMICS",
+        "SubjectCode-FINEARTS",
+        "SubjectCode-ENGDRAWING",
+        "SubjectCode-GEOGRAPHY",
+        "SubjectCode-HISTORY",
+        "SubjectCode-HOMESCIENCE",
+        "SubjectCode-PHILOSOPHY",
+        "SubjectCode-PHYSICS",
+        "SubjectCode-POLITICALSCIENCE",
+        "SubjectCode-FOREIGNLANG",
+        "SubjectCode-BOTONY",
+        "SubjectCode-ZOOLOGY",
+        "SubjectCode-HINDI",
+        "SubjectCode-MARATHI",
+        "SubjectCode-SANSKRIT",
+        "SubjectCode-SINDHI",
+        "SubjectCode-URDU",
+        "SubjectCode-ENLISH",
+        "SubjectCode-REGIONALLANGUAGE",
+        "SubjectCode-ARTEDUCATION",
+        "SubjectCode-PHYSICALEDUCATION",
+        "SubjectCode-WORKEDUCATION",
+        "SubjectCode-OTHER"
+      ]
+    },
+    "DisabilityType": {
+      "type": "string",
+      "enum": [
+        "DisabilityCode-NA",
+        "DisabilityCode-LOCOMOTOR",
+        "DisabilityCode-VISUAL",
+        "DisabilityCode-OTHERDISABILITY"
+      ]
+    },
+    "YesNoCode": {
+      "type": "string",
+      "enum": [
+        "YesNoCode-YES",
+        "YesNoCode-NO"
+      ]
+    },
+    "TeachingRole": {
+      "$id": "#",
+      "type": "object",
+      "required": [
+        "teacherType",
+        "appointmentType",
+        "classesTaught",
+        "appointedForSubjects",
+        "mainSubjectsTaught",
+        "appointmentYear"
+      ],
+      "properties": {
+        "teacherType": {
+          "$id": "#/properties/teacherType",
+          "$ref": "Common.json#/definitions/TeacherType"
+        },
+        "appointmentType": {
+          "$id": "#/properties/appointmentType",
+          "$ref": "Common.json#/definitions/AppointmentType"
+        },
+        "classesTaught": {
+          "$id": "#/properties/classesTaught",
+          "type": "array",
+          "$ref": "Common.json#/definitions/ClassType"
+        },
+        "appointedForSubjects": {
+          "$id": "#/properties/appointedForSubjects",
+          "type": "array",
+          "$ref": "Common.json#/definitions/Subjects"
+        },
+        "mainSubjectsTaught": {
+          "$id": "#/properties/mainSubjectsTaught",
+          "type": "array",
+          "items": {
+            "$ref": "Common.json#/definitions/Subjects"
+          }
+        },
+        "appointmentYear": {
+          "$id": "#/properties/appointmentYear",
+          "$ref": "Common.json#/definitions/Year"
+        }
+      }
+    },
+    "NonTeachingAssignments": {
+      "$id": "#/properties/nonTeachingAssignmentsForAcademicCalendar",
+      "type": "object",
+      "required": [
+        "daysOfNonTeachingAssignments"
+      ],
+      "properties": {
+        "daysOfNonTeachingAssignments": {
+          "$id": "#/properties/daysOfNonTeachingAssignments",
+          "type": "number"
+        }
+      }
+    },
+    "BasicProficiencyLevel": {
+      "$id": "#/properties/basicProficiencyLevel",
+      "required": [
+        "proficiencySubject",
+        "proficiencyAcademicQualification"
+      ],
+      "properties": {
+        "proficiencySubject": {
+          "$id": "#/properties/proficiencySubject",
+          "$ref": "Common.json#/definitions/Subjects"
+        },
+        "proficiencyAcademicQualification": {
+          "$id": "#/properties/proficiencyAcademicQualification",
+          "$ref": "Common.json#/definitions/AcademicQualification"
+        }
+      }
+    },
+    "InServiceTeacherTraining": {
+      "type": "object",
+      "required": [
+        "daysOfInServiceTeacherTraining"
+      ],
+      "properties": {
+        "daysOfInServiceTeacherTraining": {
+          "$id": "#/properties/daysOfInServiceTeacherTraining",
+          "type": "string"
         }
       }
     }

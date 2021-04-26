@@ -3,11 +3,11 @@
   "type": "object",
   "$comment": "Signature schema definition",
   "properties": {
-    "signatures": {
+    "signature": {
       "$ref": "#/definitions/Signature"
     }
   },
-  "title":"signatures",
+  "title":"signature",
   "definitions": {
     "Signature": {
       "$id": "#/properties/Signature",

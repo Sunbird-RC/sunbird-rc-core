@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.DecryptionHelper;
@@ -25,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
 
 
 /**
@@ -179,6 +182,12 @@ public class RegistryHelper {
         registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString);
         logger.debug("updateEntity ends");
         return "SUCCESS";
+    }
+
+    public void attestEntity(String entityName, JsonNode node, String[] jsonPaths, String userId) throws Exception {
+        String patch = String.format("[{\"op\":\"add\", \"path\": \"attested\", \"value\": {\"attestation\":{\"id\":\"%s\"}, \"path\": \"%s\"}}]", userId, jsonPaths[0]);
+        JsonPatch.applyInPlace(objectMapper.readTree(patch), node.get(entityName));
+        updateEntity(node, userId);
     }
 
     /**

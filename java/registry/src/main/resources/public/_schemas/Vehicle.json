@@ -24,15 +24,8 @@
       "properties": {
         "phone": {
           "type": "string",
-          "minLength": 10
-        },
-        "signatures": {
-          "$id": "#/properties/signatures",
-          "type": "array",
-          "items": {
-            "$ref": "Signature.json#/definitions/Signature"
-          },
-          "$comment": "Placeholder for all verifiable claims"
+          "minLength": 10,
+          "format": "[6-9][0-9]{9}"
         },
         "registrationNumber": {
           "$id": "#/properties/registrationNumber",
@@ -58,11 +51,20 @@
         },
         "yearManufactured": {
           "$id": "#/properties/yearManufactured",
-          "$ref": "Common.json#/definitions/Year"
+          "type": "string",
+          "pattern": "(^[0-9]{4}$)"
         },
         "kerbWeight": {
           "$id": "#/properties/kerbWeight",
-          "$type": "double"
+          "type": "number"
+        },
+        "fitness": {
+          "type": "object",
+          "properties": {
+            "validUntil": {
+              "type": "string"
+            }
+          }
         }
       }
     }
@@ -85,10 +87,44 @@
       "osStatus",
       "osOwner"
     ],
-    "subjectJsonPath": "/phone",
+    "subjectJsonPath": "phone",
     "attestations": [
-      {"path":"/fitness", "by": "did:rto:*", "role": "rto"},
-      {"path": "/owner/name", "by": "did:uidaiplugin", "constraint": "same_state"}
-    ]
+      {
+        "path": "/fitness",
+        "by": "did:rto:*",
+        "role": "rto"
+      },
+      {
+        "path": "/owner/name",
+        "by": "did:uidaiplugin",
+        "constraint": "same_state"
+      }
+    ],
+    "workflow": {
+      "transitions": [
+        [
+          "start",
+          "draft"
+        ],
+        [
+          "draft",
+          "published"
+        ],
+        [
+          "published",
+          "attested",
+          ""
+        ],
+        [
+          "attested",
+          "invalid"
+        ]
+      ]
+    },
+    "public" : [
+      "/registrationNumber"
+    ],
+    "private" : [],
+    "personal": []
   }
 }
