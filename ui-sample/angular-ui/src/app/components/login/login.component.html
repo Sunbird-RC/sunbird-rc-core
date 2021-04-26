@@ -1,0 +1,22 @@
+<div class="sign-page-section mb-20 mt-10">
+    <div class="ui container">
+        <div class="ui raised shadow container segment flex-jc-center">
+            <h3 class="center">{{resourceService?.frmelmnts?.btn?.logIn}}</h3>
+            <div class="d-flex flex-jc-center mb-30" *ngIf="formFieldProperties">
+                <app-default-template #formData [formFieldProperties]="formFieldProperties">
+                </app-default-template>
+
+            </div>
+            <div class="buttons flex-jc-center">
+                <button class="sb-btn sb-btn-normal primary">
+                    {{resourceService?.frmelmnts?.btn?.logIn}} </button>
+            </div>
+            <div class="ui message center">
+                {{resourceService?.frmelmnts?.msg?.createAccount}}? <a
+                  href="#">{{resourceService?.frmelmnts?.btn?.signup}}</a>
+              </div>
+        </div>
+        
+    </div>
+
+</div>

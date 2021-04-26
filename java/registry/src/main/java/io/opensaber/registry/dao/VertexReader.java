@@ -26,6 +26,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -39,11 +40,11 @@ public class VertexReader {
     private Graph graph;
     private ReadConfigurator configurator;
     private String uuidPropertyName;
-    private HashMap<String, ObjectNode> uuidNodeMap = new HashMap<>();
+    private LinkedHashMap<String, ObjectNode> uuidNodeMap = new LinkedHashMap<>();
     private String entityType;
     private DefinitionsManager definitionsManager;
     private Vertex rootVertex;
-    private HashMap<String, Vertex> uuidVertexMap = new HashMap<>();
+    private LinkedHashMap<String, Vertex> uuidVertexMap = new LinkedHashMap<>();
 
     private Logger logger = LoggerFactory.getLogger(VertexReader.class);
 
@@ -238,6 +239,7 @@ public class VertexReader {
             }
             VertexProperty internalTypeProp = currVertex.property(Constants.INTERNAL_TYPE_KEYWORD);
             String internalType = internalTypeProp.isPresent() ? internalTypeProp.value().toString() : "";
+            logger.debug("Current vertext {}", currVertex.label());
 
             // Do not work on the signatures again here.
             if (!currVertex.label().equals(entityType) && !internalType.equals(Constants.SIGNATURES_STR)) {
@@ -260,7 +262,9 @@ public class VertexReader {
                 }
 
                 if (canLoadVertex(++tempCurrLevel, configurator.getDepth())) {
+                    logger.debug("Going to load children of {}", currVertex.label());
                     loadOtherVertices(currVertex, tempCurrLevel);
+                    logger.debug("End load children of {}", currVertex.label());
                     tempCurrLevel = currLevel;
                 }
             }
@@ -273,13 +277,17 @@ public class VertexReader {
         });
     }
 
+    private ArrayNode expandChildObject(ObjectNode entityNode) {
+        return expandChildObject(entityNode, null);
+    }
+
     /**
      * After loading all the associated objects, this function sets the object
      * content in the right paths
      *
      * @param entityNode
      */
-    private ArrayNode expandChildObject(ObjectNode entityNode) {
+    private ArrayNode expandChildObject(ObjectNode entityNode, List<String> processedUUIDs) {
         ArrayNode resultArr = JsonNodeFactory.instance.arrayNode();
 
         List<String> fieldNames = new ArrayList<String>();
@@ -307,7 +315,17 @@ public class VertexReader {
                     entityNode.remove(field);
                 } else if (!isArray) {
                     logger.debug("Field {} Not an array type", field);
-                    entityNode.setAll(uuidNodeMap.get(uuidVal));
+                    if (null == processedUUIDs) {
+                        processedUUIDs = new ArrayList<>();
+                        logger.debug("Provision for expansion");
+                    }
+
+                    if (!processedUUIDs.contains(uuidVal)) {
+                        processedUUIDs.add(uuidVal);
+                        ObjectNode tmp = uuidNodeMap.get(uuidVal);
+                        ArrayNode result = expandChildObject(tmp, processedUUIDs);
+                        entityNode.setAll(tmp);
+                    }
                 } else {
                     // Now first query the uuidNodeMap for the list of items
                     JsonNode blankNode = temp;
@@ -319,6 +337,7 @@ public class VertexReader {
                         for (JsonNode node : ar) {
                             String osidVal = ArrayHelper.unquoteString(node.get(uuidPropertyName).asText());
                             ObjectNode ovalue = uuidNodeMap.getOrDefault(osidVal, null);
+                            expandChildObject(ovalue);
                             if (ovalue != null) {
                                 resultArr.add(ovalue);
                             } else {

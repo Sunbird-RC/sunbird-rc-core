@@ -30,12 +30,18 @@ public class OSSchemaConfiguration {
      */
     private List<String> systemFields =  new ArrayList<>();
     /**
+     * Holds fields name(s) for public usage
+     * */
+    private List<String> publicFields;
+
+    /** 
      * Holds field path of the subject of entity
      * */
     private String subjectJsonPath = "";
 
+
     public List<String> getPrivateFields() {
-        return privateFields;
+        return privateFields; 
     }
 
     public void setPrivateFields(List<String> privateFields) {
@@ -72,6 +78,15 @@ public class OSSchemaConfiguration {
 
     public void setSystemFields(List<String> systemFields) {
         this.systemFields = systemFields;
+    }
+
+
+    public List<String> getPublicFields() {
+        return publicFields;
+    }
+
+    public void setPublicFields(List<String> publicFields) {
+        this.publicFields = publicFields;
     }
 
     public String getSubjectJsonPath() {

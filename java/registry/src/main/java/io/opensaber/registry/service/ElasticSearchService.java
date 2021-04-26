@@ -1,6 +1,8 @@
 package io.opensaber.registry.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,7 @@ import io.opensaber.elastic.IElasticService;
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.AuditRecord;
 import io.opensaber.pojos.Filter;
+import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.util.RecordIdentifier;
@@ -60,6 +63,10 @@ public class ElasticSearchService implements ISearchService {
         SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
 
         Filter uuidFilter = getUUIDFilter(searchQuery, uuidPropertyName);
+        
+        // Fetch only Active records
+        updateStatusFilter(searchQuery);
+        
         boolean isSpecificSearch = (uuidFilter != null);
         if (isSpecificSearch) {
             RecordIdentifier recordIdentifier = RecordIdentifier.parse(uuidFilter.getValue().toString());
@@ -81,22 +88,17 @@ public class ElasticSearchService implements ISearchService {
             }
         }
         
-        //if Audit enabled in configuration yml file
-        if(auditEnabled) {
-        	String operation = Constants.AUDIT_ACTION_SEARCH_OP;
-        	String action = Constants.AUDIT_ACTION_SEARCH;
-        	if(!(searchQuery.getEntityTypes().get(0).contains(auditSuffix))) {
-        		operation = Constants.AUDIT_ACTION_AUDIT_OP;
-        		action = Constants.AUDIT_ACTION_AUDIT;
-        	}
-        	
-	        AuditRecord auditRecord = auditService.createAuditRecord(apiMessage.getUserID(), action, "", null);
-	        auditRecord.setAuditInfo(auditService.createAuditInfo(operation, action, null, inputQueryNode, searchQuery.getEntityTypes()));
-	        auditService.doAudit(auditRecord, inputQueryNode, searchQuery.getEntityTypes(), null, null);
-        }
+        auditService.auditElasticSearch( new AuditRecord().setUserId(apiMessage.getUserID()),
+        		searchQuery.getEntityTypes(), inputQueryNode);    
  
         return resultNode;
 
     }
+
+	private void updateStatusFilter(SearchQuery searchQuery) {		
+        List<Filter> filterList = searchQuery.getFilters();
+        Filter filter = new Filter(Constants.STATUS_KEYWORD, FilterOperators.neq, Constants.STATUS_INACTIVE);
+        filterList.add(filter);
+	}
 
 }

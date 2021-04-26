@@ -1,0 +1,205 @@
+{
+    "type": "filter",
+    "action": "search",
+    "data": {
+        "templateName": "defaultTemplate",
+        "action": "search",
+        "fields": [
+            {
+                "code": "role",
+                "dataType": "text",
+                "name": "Role",
+                "label": "Role",
+                "description": "Role",
+                "editable": true,
+                "inputType": "select",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "range": [
+                    {
+                        "name": "Developer"
+                    },
+                    {
+                        "name": "Tech Lead"
+                    },
+                    {
+                        "name": "BA"
+                    },
+                    {
+                        "name": "Project Management"
+                    },
+                    {
+                        "name": "Design Council"
+                    },
+                    {
+                        "name": "Designer"
+                    },
+                    {
+                        "name": "Tech Manager"
+                    },
+                    {
+                        "name": "DevOps"
+                    },
+                    {
+                        "name": "Tech Support"
+                    }
+                ],
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 1
+            },
+            {
+                "code": "subProjectName",
+                "dataType": "text",
+                "name": "Project",
+                "label": "Project",
+                "description": "Project",
+                "editable": true,
+                "inputType": "select",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "range": [
+                    {
+                        "name": "User Platform"
+                    },
+                    {
+                        "name": "Mobile"
+                    },
+                    {
+                        "name": "Implementation"
+                    },
+                    {
+                        "name": "Project Management"
+                    },
+                    {
+                        "name": "Design Council"
+                    },
+                    {
+                        "name": "DIKSHA UX"
+                    },
+                    {
+                        "name": "Content Framework"
+                    },
+                    {
+                        "name": "Portal"
+                    },
+                    {
+                        "name": "Infra & DevOps"
+                    },
+                    {
+                        "name": "DIKSHA Liasion"
+                    },
+                    {
+                        "name": "Learning Platform"
+                    },
+                    {
+                        "name": "DIKSHA Tech Support"
+                    },
+                    {
+                        "name": "Courses Platform"
+                    },
+                    {
+                        "name": "DIKSHA Analytics"
+                    }
+                ],
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 2
+            },
+            {
+                "code": "orgName",
+                "dataType": "text",
+                "name": "Organisation",
+                "label": "Organisation",
+                "description": "Organisation",
+                "editable": true,
+                "inputType": "select",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "range": [
+                    {
+                        "name": "ILIMI"
+                    },
+                    {
+                        "name": "Tarento"
+                    },
+                    {
+                        "name": "TEKDI"
+                    },
+                    {
+                        "name": "OPTIT"
+                    },
+                    {
+                        "name": "Qualitrix"
+                    },
+                    {
+                        "name": "Framewirk"
+                    },
+                    {
+                        "name": "Consultant"
+                    },
+                    {
+                        "name": "GWL"
+                    },
+                    {
+                        "name": "TurtleBowl"
+                    },
+                    {
+                        "name": "MantraLabs"
+                    },
+                    {
+                        "name": "Zool"
+                    },
+                    {
+                        "name": "Tibil"
+                    },
+                    {
+                        "name": "Lollypop"
+                    },
+                    {
+                        "name": "E&Y"
+                    },
+                    {
+                        "name": "BeyondSquare"
+                    }
+                ],
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 3
+            },
+            {
+                "code": "workLocation",
+                "dataType": "text",
+                "name": "Location",
+                "label": "Location",
+                "description": "Location",
+                "editable": true,
+                "inputType": "select",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "range": [
+                    {
+                        "name": "EkStep"
+                    },
+                    {
+                        "name": "Ilimi"
+                    },
+                    {
+                        "name": "Tarento"
+                    }
+                ],
+                "index": 4
+            }
+        ]
+    }
+}

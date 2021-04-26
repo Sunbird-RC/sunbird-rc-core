@@ -1,0 +1,6 @@
+export keycloak_url="http://localhost:8080"
+export keycloak_realmName="PartnerRegistry"
+export keycloak_clientSecret=""
+export registry_url="http://localhost:9080"
+export notification_url="http://localhost:9012"
+export notification_send = false

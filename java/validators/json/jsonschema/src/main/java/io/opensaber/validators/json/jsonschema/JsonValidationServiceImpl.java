@@ -72,8 +72,8 @@ public class JsonValidationServiceImpl implements IValidate {
     @Override
     public void addDefinitions(String definitionTitle, String definitionContent) {
         definitionMap.put(definitionTitle, definitionContent);
-       
     }
+
 
     public String getEntitySubject(String entityType, JsonNode entity) throws Exception {
     	String subjectJsonPath = new ObjectMapper()
@@ -81,5 +81,6 @@ public class JsonValidationServiceImpl implements IValidate {
 				.findPath("subjectJsonPath").textValue();
     	return entity.findPath(subjectJsonPath).textValue();
 	}
+
 
 }

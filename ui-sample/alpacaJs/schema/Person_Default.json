@@ -1,0 +1,26 @@
+{
+    "subject": "Person",
+    "fields": [
+      {
+        "name": "name",
+        "title": "Name",
+        "display": true
+      },
+      {
+        "name": "phone",
+        "title": "phone"
+      },
+      {
+        "name": "school",
+        "title": "School"
+      },
+      {
+        "name": "teacherId",
+        "title": "TeacherId"
+      },
+      {
+        "name": "isAdmin",
+        "title": "isAdmin"
+      }
+    ]
+  }

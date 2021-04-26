@@ -1,0 +1,26 @@
+{
+    "formTemplates": {
+        "admin": "templates/AdminFormTemplate.json",
+        "partner-admin": "templates/PartnerAdminFormTemplate.json",
+        "owner": "templates/OwnerFormTemplate.json",
+        "fin-admin": "templates/FinAdminFormTemplate.json",
+        "reporter": "templates/ReporterFormTemplate.json",
+        "x-owner":"templates/X-OwnerFormTemplate.json"
+    },
+    "searchTemplates": {
+        "admin": "310447c4-4745-11ea-b77f-2e728ce88125.json",
+        "partner-admin": "6ccd3400-4745-11ea-b77f-2e728ce88125.json",
+        "owner": "6245495a-4745-11ea-b77f-2e728ce88125.json",
+        "fin-admin": "530adeaa-4745-11ea-b77f-2e728ce88125.json",
+        "reporter": "90986382-4745-11ea-b77f-2e728ce88125.json",
+        "x-owner":"89a9d198-5d6e-11ea-bc55-0242ac130003.json"
+    },
+    "roles": {
+        "admin": "admin",
+        "partnerAdmin": "partner-admin",
+        "owner": "owner",
+        "finAdmin": "fin-admin",
+        "reporter": "reporter",
+        "x-owner":"x-owner"
+    }
+}

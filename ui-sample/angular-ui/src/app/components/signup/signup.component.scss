@@ -1,0 +1,19 @@
+.signup-page-section {
+    background-color: #ffffff;
+    border-bottom: 1px solid rgba(206, 197, 197, 0.79);
+    -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.075);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.075);
+}
+
+@media only screen and (min-width: 1024px){
+    .ui.raised.shadow.container.segment {
+        margin: 35px auto!important;
+        width: 944px!important;
+        padding: 20px;
+        box-shadow: 0 2px 16px 0 rgba(0,0,0,.2);
+    }
+}
+
+.center {
+    text-align: center
+}

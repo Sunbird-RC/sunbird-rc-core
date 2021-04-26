@@ -1,0 +1,83 @@
+{
+    "cacheServiceConfig": {
+        "setTimeInMinutes": 30,
+        "setTimeInSeconds": 60,
+        "cacheVariables": {
+            "UserKeyCloakData": "userKeyCloakData",
+            "UserAuthenticated": "userAuthenticated",
+            "EmployeeDetails": "userInfo",
+            "UserToken":"userToken"
+        }
+    },
+    "rolesMapping": {
+        "adminPageViewRole": [
+            "admin",
+            "partner-admin",
+            "reporter",
+            "owner",
+            "fin-admin"
+        ],
+        "actionPageViewRole": [
+            "admin",
+            "partner-admin",
+            "reporter",
+            "owner",
+            "fin-admin"
+        ],
+        "profilePageViewRole": [
+            "admin",
+            "partner-admin",
+            "reporter",
+            "owner",
+            "fin-admin",
+            "x-owner"
+        ],
+        "onboardEmployee": [
+            "admin",
+            "partner-admin"
+        ],
+        "downLoadCsv":[
+            "admin",
+            "partner-admin"
+        ],
+        "editProfileRole": [
+            "admin",
+            "partner-admin"
+        ],
+        "editOwnProfileRole": [
+            "owner"
+        ],
+        "approveEmployee": [
+            "admin"
+        ],
+        "dashboardView": [
+            "admin",
+            "partner-admin",
+            "reporter",
+            "owner",
+            "fin-admin"
+        ]
+    },
+    "URLS": {
+        "UTIl_SERVICE_BASE_URL": "http://localhost:9081",
+        "SEARCH": "/registry/search",
+        "READ": "/registry/read",
+        "ADD": "/registry/add",
+        "UPDATE": "/registry/update",
+        "AUDIT": "/registry/audit",
+        "REGISTER": "/register/users",
+        "FORM_TEPLATE": "/formtemplates",
+        "OWNER_FORM_TEMPLATE":"/formTemplate",
+        "OFFBOARD":"/offboard/user",
+        "QRIMAGE":"/profile/qrImage"
+    },
+    "API_ID": {
+        "CREATE": "open-saber.registry.create",
+        "READ": "open-saber.registry.read",
+        "UPDATE": "open-saber.registry.update",
+        "DELETE": "open-saber.registry.delete",
+        "SEARCH": "open-saber.registry.search",
+        "AUDIT":"open-saber.registry.audit"
+    },
+    "PAGE_LIMIT": 20
+}

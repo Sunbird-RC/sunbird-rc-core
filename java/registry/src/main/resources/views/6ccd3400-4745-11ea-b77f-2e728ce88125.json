@@ -1,0 +1,78 @@
+{
+  "subject": "PartnerAdmin",
+  "fields": [
+    {
+      "name": "name",
+      "display": true
+    },
+    {
+      "name": "osid"
+    },
+    {
+      "name": "email"
+    },
+    {
+      "name": "phone"
+    },
+    {
+      "name": "orgName"
+    },
+    {
+      "name": "role"
+    },
+    {
+      "name": "isOnboarded"
+    },
+    {
+      "name": "isActive"
+    },
+    {
+      "name": "isInKronos"
+    },
+    {
+      "name": "nineAMreportTo"
+    },
+    {
+      "name": "projectName"
+    },
+    {
+      "name": "subProjectName"
+    },
+    {
+      "name": "startDate"
+    },
+    {
+      "name": "endDate"
+    },
+    {
+      "name": "repoAccess"
+    },
+    {
+      "name": "slackAccess"
+    },
+    {
+      "name": "workLocation"
+    },
+    {
+      "name": "remarks"
+    },
+    {
+      "name": "workingStyle"
+    },
+    {
+      "name": "externalId"
+    },
+    {
+      "name": "externalRole"
+    },
+    {
+      "name": "macAddress"
+    },
+    {
+      "name": "githubId"
+    },
+    {
+      "name": "manager"
+    }
+  ]
+}
