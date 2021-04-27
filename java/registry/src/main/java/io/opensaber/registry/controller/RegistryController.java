@@ -355,7 +355,39 @@ public class RegistryController {
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode rootNode
     ) throws JsonProcessingException {
-        return null;
+        logger.info("Updating entityType {} request body {}", entityName, rootNode);
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        if (rootNode == null) {
+            logger.error("Bad request body {}", rootNode);
+            return badRequestException(responseParams, response, "Request body is empty");
+        }
+        if (rootNode.has(uuidPropertyName)) {
+            if (!rootNode.get(uuidPropertyName).asText().equals(entityId)) {
+                logger.error("Bad request body {}", rootNode);
+                return badRequestException(responseParams, response, "ID passed in params doesn't match with the Request body ID");
+            }
+        } else {
+            ((ObjectNode)rootNode).put(uuidPropertyName, entityId);
+        }
+        ObjectNode newRootNode = objectMapper.createObjectNode();
+        newRootNode.set(entityName, rootNode);
+
+        try {
+            String tag = "RegistryController.update " + entityName;
+            watch.start(tag);
+            // TODO: get userID from auth header
+            registryHelper.updateEntity(newRootNode, "");
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.stop(tag);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("RegistryController: Exception while updating entity (without id)!", e);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.POST)
