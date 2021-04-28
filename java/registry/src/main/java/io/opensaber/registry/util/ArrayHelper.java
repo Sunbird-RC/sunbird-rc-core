@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 public class ArrayHelper {
 
 	private static Logger logger = LoggerFactory.getLogger(ArrayHelper.class);
-	
+
     private static final String ITEM_SEPARATOR = ",";
     private static final String SQUARE_BRACE_REGEX = "[\\[\\]]";
     private static final String SQUARE_BRACE_ENCLOSED_REGEX = "(\\[)(.*)(\\])";
@@ -97,10 +97,10 @@ public class ArrayHelper {
     public static ArrayNode constructArrayNode(String valItems) {
     	ArrayNode arrNode = JsonNodeFactory.instance.arrayNode();
     	ObjectMapper mapper = new ObjectMapper();
-    	
+
     	try {
-        	List<Object> itemList =  mapper.readValue(valItems, 
-            		TypeFactory.defaultInstance().constructCollectionType(List.class, Object.class));     
+        	List<Object> itemList =  mapper.readValue(valItems,
+            		TypeFactory.defaultInstance().constructCollectionType(List.class, Object.class));
         	 arrNode = mapper.valueToTree(itemList);
         } catch (Exception e) {
             logger.error("Error in converting array elements to JsonNode" + e);

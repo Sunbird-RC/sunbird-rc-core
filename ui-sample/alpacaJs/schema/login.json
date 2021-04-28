@@ -1,0 +1,27 @@
+{
+    "$id": "#/properties/SignUp",
+    "type": "object",
+    "title": "Login using your phone number",
+    "required": [
+        "phone",
+        "otp"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "phone": {
+            "$id": "#/properties/phone",
+            "type": "string",
+            "title": "Phone"
+        },
+        "otp": {
+            "$id": "#/properties/password",
+            "format": "password",
+            "title": "Enter otp"
+        }
+    },
+    "dependencies": {
+        "otp": [
+            "phone"
+        ]
+    }
+}

@@ -1,0 +1,132 @@
+<div class="ui fixed main menu bs-0 d-block">
+        <div class="ui container p-0">
+                <div class="ui grid padded width-100">
+
+                        <div class="six wide column d-flex">
+                                <!--Logo-->
+                                <a class="d-flex logo" tabindex="0" role="banner">
+                                        <img src="assets/images/logo.png" class="ui image"/>
+                                </a>
+                                <!--/Logo-->
+                        </div>
+                        <div class="six wide column p-0 d-flex flex-jc-flex-end flex-ai-center">
+                                <i class="large bars icon link primary-color mobile only" (click)="showSideBar()"
+                                        tabindex="0"></i>
+                                <div class="ui text menu m-0 d-flex flex-jc-center flex-ai-center computer only"
+                                        *ngIf="!userLogin">
+
+                                        <ng-container>
+                                                <!-- <a class="item" [class.active]="router.isActive('/signup')"
+                                                        routerLink="/signup">
+                                                        {{resourceService?.frmelmnts?.btn?.signup}}
+                                                </a> -->
+                                                <a class="item " (click)="logIn()">
+                                                        {{resourceService?.frmelmnts?.btn?.logIn}}
+                                                </a>
+
+                                        </ng-container>
+                                </div>
+                                <div class="ui text menu m-0 d-flex flex-jc-center flex-ai-center computer only"
+                                        *ngIf="userLogin">
+                                        <ng-container>
+                                                <a class="item" [class.active]="router.isActive('/search')"
+                                                        *ngIf='permissionService.permissionAvailable && userData.isActive' appPermission
+                                                        [permission]="userDirectoryViewRole"
+                                                        [routerLink]="'/search'" tabindex="0">
+                                                        {{resourceService?.frmelmnts?.btn?.search}}
+                                                </a>
+                                                <a class="item" [class.active]="router.isActive('/actions')"
+                                                        *ngIf='permissionService.permissionAvailable && userData.isActive' appPermission
+                                                        [permission]="userDirectoryViewRole"
+                                                        [routerLink]="['/actions']" tabindex="0">
+                                                        {{resourceService?.frmelmnts?.btn?.Actions}}
+                                                </a>
+                                                <a class="item" [class.active]="router.isActive('create')"
+                                                        *ngIf='permissionService.permissionAvailable && userData.isActive' appPermission
+                                                        [permission]="onBoardEmployee" [routerLink]="'/create'" tabindex="0">
+                                                        {{resourceService?.frmelmnts?.btn?.onBoard}}
+                                                </a>
+                                                <div *ngIf='permissionService.permissionAvailable && !userData.isActive' class="item" >Validation Pending</div>
+                                        </ng-container>
+                                </div>
+                                <a class="profile-avtar computer only p-0 ml-15" tabindex="0" *ngIf="userLogin">
+                                        <div suiDropdown class="ui dropdown right top pointing"
+                                                id="dropdown-menu-list-header">
+                                                <ngx-avatar [style]="avtarDesktopStyle" [size]="38" initialsSize="1"
+                                                        name={{userName}}>
+                                                </ngx-avatar>
+                                                <div class="menu" suiDropdownMenu>
+                                                        <div class="item headerDropdownProfile">
+                                                                {{userName}}
+                                                        </div>
+                                                        <div class="ui divider"></div>
+                                                        <a class="item" (click)="navigateToProfilePage()">
+                                                                {{resourceService?.frmelmnts?.btn?.profile}}
+                                                        </a>
+                                                        <a class="item" (click)="getAuditReport()"  *ngIf='permissionService.permissionAvailable' appPermission
+                                                        [permission]="onBoardEmployee" [routerLink]="'/dashboard'" tabindex="0">
+                                                                Dashboard
+                                                        </a>
+
+                                                        <a class="item" (click)="logout()">
+                                                                {{resourceService?.frmelmnts?.btn?.logout}}
+                                                        </a>
+                                                </div>
+                                        </div>
+                                </a>
+                        </div>
+<!-- mobil view -->
+                        <div class="mobile only">
+                                <div class="ui sidebar right vertical menu">
+                                        <!--Logged in user-->
+                                        <ng-container *ngIf="userLogin">
+                                                <div class="item font-weight-bold">
+                                                        <i class="close link icon" (click)="showSideBar()" tabindex="0"
+                                                                title="{{resourceService?.frmelmnts?.btn?.close}}"></i>
+                                                        <div class="ellipsis">
+                                                                {{userName}}
+                                                        </div>
+                                                </div>
+                                                <div class="ui divider mt-0"></div>
+                                                <a class="item" [class.active]="router.isActive('/search')"
+                                                        *ngIf='permissionService.permissionAvailable' appPermission
+                                                        [permission]="userDirectoryViewRole" (click)="showSideBar()"
+                                                        [routerLink]="'/search'">
+                                                        {{resourceService?.frmelmnts?.btn?.search}}
+                                                </a>
+                                                <a class="item" [class.active]="router.isActive('/actions')"
+                                                *ngIf='permissionService.permissionAvailable' appPermission
+                                                [permission]="userDirectoryViewRole"
+                                                [routerLink]="['/actions']" tabindex="0">
+                                                {{resourceService?.frmelmnts?.btn?.Actions}}
+                                                </a>
+                                                <a class="item" [class.active]="router.isActive('create')" (click)="showSideBar()"
+                                                        *ngIf='permissionService.permissionAvailable' appPermission
+                                                        [permission]="onBoardEmployee" [routerLink]="'/create'" tabindex="0">
+                                                        {{resourceService?.frmelmnts?.btn?.onBoard}}
+                                                </a>
+                                                <a class="item" [class.active]="router.isActive('/profile')" (click)="showSideBar();navigateToProfilePage()"
+                                                        (click)="showSideBar()">
+                                                        {{resourceService.frmelmnts?.btn?.profile | titlecase}}
+                                                </a>
+                                                <a class="item logout-btn" (click)="logout()">
+                                                        {{resourceService.frmelmnts?.btn?.logout | titlecase}}
+                                                </a>
+                                        </ng-container>
+                                        <!--Not Logged in user-->
+                                        <ng-container *ngIf="!userLogin">
+                                                <div class="item active dark-gray">
+                                                        <i class="close link icon" (click)="showSideBar()" tabindex="0"
+                                                                title="{{resourceService?.frmelmnts?.btn?.close}}"></i>
+                                                        <a class="dark-gray" (click)="logIn()">
+                                                                {{resourceService.frmelmnts?.btn?.logIn}}
+                                                        </a>
+                                                </div>
+                                                <div class="ui divider mt-0"></div>
+                                        </ng-container>
+
+                                </div>
+                        </div>
+                </div>
+        </div>
+</div>

@@ -1,0 +1,57 @@
+<div class="sb-prominent-filter" *ngIf="showFilters">
+    <sui-accordion [closeOthers]="false">
+      <sui-accordion-panel [isOpen]="true" [isDisabled]="true">
+        <div *ngIf="isShowFilterLabel" title class="cursor-text filter-title py-8">
+          <!-- <span (click)="accordionDefaultOpen = !accordionDefaultOpen" class="cursor-pointer"> -->
+            <i alt="Filter" class="icon filter"></i>
+           {{resourceService?.frmelmnts?.label?.filters}}
+            <!-- <i class="dropdown icon vertical-align-middle"></i> -->
+          <!-- </span> -->
+        </div>
+        <div content>
+          <div *ngIf="filtersDetails && formInputData && showSearchedParam" class="twelve wide column pb-16 content">
+            <span class="d-inline-block" *ngFor="let field of filtersDetails">
+              <span class="padded chip mt-5 mr-10" *ngIf='formInputData[field.code] && formInputData[field.code].length > 0'>
+                {{field.label}}:
+                <span *ngFor="let item of formInputData[field.code]">
+                  <a class="ui label mt-5 mr-5" *ngIf='!item?.name'>
+                    {{item}}
+                    <i class="delete icon" (click)="removeFilterSelection(field.code,item)"></i>
+                  </a>
+                  <a class="ui label mt-5 mr-5" *ngIf='item?.name'>
+                    {{item.name}}
+                    <i class="delete icon" (click)="removeFilterSelection(field.code,item)"></i>
+                  </a>
+                </span>
+              </span>
+            </span>
+          </div>
+          <div class="twelve wide column pt-0" *ngIf="refresh">
+            <form *ngIf="filtersDetails" class="ui form">
+              <div class="ui grid stackable top aligned mt-0">
+              <div class="twelve wide tablet twelve wide computer column py-0">
+                  <div class="sb-prominent-filter-container">
+                      <div *ngFor="let field of filtersDetails" class="sb-prominent-filter-field">
+                        <div *ngIf="field.inputType==='select' || field.inputType === 'multi-select'">
+                          <sui-multi-select  id={{field.code}} name={{field.code}}
+                            defaultSelectionText={{field.label}} zeroSelectionText= "Select" class="ui selection multiselect-square-border dropdown multiple"
+                            [(ngModel)]="formInputData[field.code]" [options]="options" [hasLabels]="false" #multiSelect>
+                            <sui-select-option *ngFor="let option of field.range" [value]="option.name"></sui-select-option>
+                          </sui-multi-select>
+                        </div>
+                      </div>
+                      <div class="">
+                          <button class="ui  mini primary button" (click)="applyFilters()"
+                         >{{resourceService?.frmelmnts?.btn?.apply}}</button>
+                        <button 
+                        class="ui grey basic mini  button ml-10 mr-0" (click)="resetFilters()">{{resourceService?.frmelmnts?.btn?.reset}}</button>
+                      </div>
+                    </div>
+              </div>
+            </div>
+            </form>
+          </div>
+        </div>
+      </sui-accordion-panel>
+    </sui-accordion>
+</div>

@@ -78,6 +78,7 @@
     ],
     "privateFields": [],
     "signedFields": [],
+    "publicFields": ["registrationNumber", "model", "osid"],
     "systemFields": [
       "osCreatedAt",
       "osUpdatedAt",
@@ -86,7 +87,7 @@
       "osStatus",
       "osOwner"
     ],
-    "subjectJsonPath": "/phone",
+    "subjectJsonPath": "phone",
     "attestations": [
       {
         "path": "/fitness",

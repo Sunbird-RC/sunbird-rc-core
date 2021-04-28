@@ -1,0 +1,37 @@
+<div class="ui container mt-20 mb-1">
+  <div class="ui small breadcrumb">
+    <a class="section" routerLink=''>{{resourceService?.frmelmnts?.btn?.home}}</a>
+    <i class="right chevron icon divider"></i>
+    <div class="active section">{{resourceService?.frmelmnts?.btn?.Actions}}</div>
+  </div>
+</div>
+
+<div class="ui container mt-20 mb-1">
+  <div class="ui grid">
+    <div class="row" *ngIf="listOfEmployees.length === 0 && !showLoader">
+      <div class="twelve wide column mb-20">
+        <div class="ui placeholder segment tac">
+          <div class="ui icon header">
+            No Actions are available
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row" *ngIf="listOfEmployees.length > 0">
+      <div class="twelve wide column">
+        <div class="section-header">
+          <h4 class="section-title section-sentenceCase m-0 mr-16">Supervisor Actions <span><a
+                class="ui orange label">{{listOfEmployees.length}}</a>
+            </span></h4>
+        </div>
+        <div class="ui cards mt-5">
+          <div class="mr-1" *ngFor="let data of listOfEmployees">
+            <app-action-cards [data]="data" (clickEvent)="navigateToProfilePage($event)" class="d-block"
+              [class.last-card]="mr-0">
+            </app-action-cards>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

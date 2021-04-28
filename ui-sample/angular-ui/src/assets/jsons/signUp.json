@@ -1,0 +1,61 @@
+{
+    "type": "signup",
+    "action": "signup",
+    "data": {
+      "templateName": "defaultTemplate",
+      "action": "signup",
+      "fields": [
+        {
+          "code": "name",
+          "dataType": "text",
+          "name": "Name",
+          "label": "Name",
+          "description": "Name",
+          "editable": true,
+          "placeholder": "Name",
+          "inputType": "text",
+          "required": true,
+          "displayProperty": "Editable",
+          "visible": true,
+          "renderingHints": {
+            "semanticColumnWidth": "twelve"
+          },
+          "index": 1
+        },
+        {
+          "code": "phone",
+          "dataType": "text",
+          "name": "phone",
+          "label": "Phone",
+          "description": "Phone",
+          "editable": true,
+          "placeholder": "Phone",
+          "inputType": "text",
+          "required": true,
+          "displayProperty": "Editable",
+          "visible": true,
+          "renderingHints": {
+            "semanticColumnWidth": "twelve"
+          },
+          "index": 2
+        },
+        {
+          "code": "password",
+          "dataType": "text",
+          "name": "password",
+          "label": "Password",
+          "description": "Password",
+          "editable": true,
+          "placeholder": "Password",
+          "inputType": "password",
+          "required": true,
+          "displayProperty": "Editable",
+          "visible": true,
+          "renderingHints": {
+            "semanticColumnWidth": "twelve"
+          },
+          "index": 3
+        }
+      ]
+    }
+}

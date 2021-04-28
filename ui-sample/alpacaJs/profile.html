@@ -1,0 +1,600 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link type="text/css" href="./css/profile.css" rel="stylesheet" />
+    <link type="text/css" href="./css/signIn.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"
+        integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+</head>
+
+<body onload="myFunction()">
+    <div id="navbar"> </div>
+    <h3 class="text-center mt-2 mb-3" data-localize="profile">Profile Information</h3>
+
+    <div class="border">
+        <div class="image mb-2 center">
+            <div id="profileImage"></div>
+        </div>
+        <table id="row">
+            <tbody>
+
+            </tbody>
+        </table>
+        <div class="text-center pt-3">
+
+            <span class="">
+                <button class="btn btn-primary" data-localize="edit" id="button" onclick="editBtnClicked(this.id)"
+                    style="margin-top: 1rem;">
+                    <i class="fas fa-user-edit"></i>
+                    <span> Edit</span>
+                </button>
+            </span>
+            <span class="pl-3 pr-3">
+                <button class="btn btn-primary outline" id="cancelBtn" data-localize="cancel"
+                    onclick="backtoProfile(this.id)">Cancel</button>
+            </span>
+            <span class="">
+                <button data-localize="download" class="btn btn-primary" id="downloadButton" onclick="downloadJson()"
+                    data-toggle="tooltip" title="Download Signed
+                Profile">Download</button>
+            </span>
+            <a id="downloadAnchorElem" style="display:none"></a>
+
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+            integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+            crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+            crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+        <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery-localize/0.1.0/jquery.localize.min.js"></script>
+
+        <script type="text/javascript" src="./utils.js"></script>
+
+        <script type="text/javascript">
+            var query = window.location.search.substring(1);
+            var g_urlParams = new URL(window.location);
+            var g_personOSid = g_urlParams.searchParams.get('osid');
+            var g_lang = g_urlParams.searchParams.get('lang');
+            var tempobj;
+            var g_thisPerson = {};
+            var g_isAdmin = g_urlParams.searchParams.get('isAdmin');
+            var isedited = false;
+            var g_thisPersonVerification = {};
+            var g_PersonDefaultSchemaJson;
+            var g_PersonSpanishSchemaJson;
+            var tempkey;
+            var preval;
+            var approvedStatusCount = 0; 
+
+            $(document).ready(function () {
+                console.log('url params', g_personOSid)
+                $('#navbar').load("bootstrap-4-navbar.html", function () {
+                    document.getElementById("nav1").style.display = "none"
+                    document.getElementById("nav2").style.display = "none"
+                    if (g_lang === 'English') {
+                        dataLocalizeRefresh('en', 'English')
+                    }
+                    else if (g_lang === 'Spanish') {
+                        dataLocalizeRefresh('es', 'Spanish')
+                    }
+                });
+                $('[data-toggle="tooltip"]').tooltip;
+            });
+
+            const searchReq = {
+                "id": "open-saber.registry.search",
+                "ver": "1.0",
+                "ets": "11234",
+                "params": {
+                    "did": "",
+                    "key": "",
+                    "msgid": ""
+                },
+                "request": {
+                }
+            }
+            const readPersonRequest = {
+                "id": "open-saber.registry.read",
+                "ver": "1.0",
+                "ets": "11234",
+                "params": {
+                    "did": "",
+                    "key": "",
+                    "msgid": ""
+                },
+                "request": {
+                    "Person": {
+                    }
+                }
+            }
+
+            const downloadProfileRequest = {
+                "id": "open-saber.registry.read",
+                "ver": "1.0",
+                "ets": "11234",
+                "params": {
+                    "did": "",
+                    "key": "",
+                    "msgid": ""
+                },
+                "request": {
+                    "Person": {
+                    }
+                }
+            }
+            const updatePersonVerifiedRequest = {
+                "id": "open-saber.registry.update",
+                "ver": "1.0",
+                "ets": "11234",
+                "params": {
+                    "did": "",
+                    "key": "",
+                    "msgid": ""
+                },
+                "request": {
+                    "PersonVerified": {
+                    }
+                }
+            }
+            const updatePersonRequest = {
+                "id": "open-saber.registry.update",
+                "ver": "1.0",
+                "ets": "11234",
+                "params": {
+                    "did": "",
+                    "key": "",
+                    "msgid": ""
+                },
+                "request": {
+                    "Person": {
+                    }
+                }
+            }
+
+            function getPersonVerificationDetails(cb) {
+                searchReq.request = {
+                    "entityType": ["PersonVerified"],
+                    "filters": {
+                        "personId": { "contains": g_personOSid }
+                    }
+                }
+                const https = new XMLHttpRequest()
+                https.open('POST', "http://localhost:8080/search")
+                https.setRequestHeader('Content-type', 'application/json')
+                https.send(JSON.stringify(searchReq)) // Make sure to stringify
+
+                https.onload = function () {
+                    var count = 0;
+                    var response = JSON.parse(https.responseText);
+                    g_thisPersonVerification = response.result.PersonVerified[0];
+                    console.log("Finished load PersonVerified" + JSON.stringify(g_thisPersonVerification))
+                    cb()
+                }
+            }
+
+            function setNameInProfileSection(person) {
+                // Set the name in the Profile
+                if (g_lang == 'English') {
+                    document.getElementById('dropdown').innerHTML = person.Name;
+                    document.getElementById('profileImage').innerHTML = person.Name.charAt(0);
+
+                }
+                else if (g_lang == 'Spanish') {
+                    document.getElementById('dropdown').innerHTML = person.Nombre;
+                    document.getElementById('profileImage').innerHTML = person.Nombre.charAt(0);
+
+                }
+            }
+
+            function getPersonDetails(cb) {
+                searchReq.request = {
+                    "entityType": ["Person"],
+                    "filters": {
+                        "osid": { "eq": g_personOSid.slice(2, g_personOSid.length) }
+                    },
+                    "viewTemplateId": "Person_Default.json"
+                }
+                if (g_lang === 'English') {
+                    searchReq.request.viewTemplateId = "Person_Default.json";
+                } else if (g_lang === 'Spanish') {
+                    searchReq.request.viewTemplateId = "Person_Default_es.json";
+                    console.log("Set viewTemplate to spanish")
+                }
+                const http = new XMLHttpRequest()
+                http.open('POST', "http://localhost:8080/search")
+                http.setRequestHeader('Content-type', 'application/json')
+                http.send(JSON.stringify(searchReq)) // Make sure to stringify
+                var row = "", col = "";
+                http.onload = function () {
+                    var obj = JSON.parse(http.responseText);
+                    console.log("this is the " + JSON.stringify(obj))
+                    setNameInProfileSection(obj.result.Person[0])
+
+                    g_thisPerson = obj.result.Person[0];
+                    console.log(JSON.stringify(g_thisPerson))
+                    // g_isAdmin = g_thisPerson.isAdmin
+                    console.log("This user is an admin " + g_isAdmin)
+                    cb()
+                }
+            }
+
+            function myFunction() {
+                console.log("myFunction is getting called")
+                approvedStatusCount = 0;
+                getPersonVerificationDetails(function () {
+                    getPersonDetails(function () {
+
+                        for (var head in g_thisPerson) {
+                            //console.log("Iterating in head " + head)
+                            if (head === "isAdmin") {
+                                // We dont need to show this flag
+                                if (g_thisPerson[head]){
+                                console.log("head is " + head, g_thisPerson[head])
+                                document.getElementById('admin').style.display = 'inline-block'
+                                }
+                            } else {
+                                document.getElementById('cancelBtn').style.display = 'none';
+                                if (g_isAdmin) {
+                                    document.getElementById('button').style.display = 'none';
+                                    document.getElementById("downloadButton").style.display = 'none'
+                                }
+                                var val = head;
+                                var headval = head;
+                                var value = g_thisPerson[head];
+                                var temprow;
+                                temprow = "<tr><th class='header pr-5'>" + head + "</th><td id=" + head + " class='text' name=" + head + "  width='20% !importent'>" + value + "</td >";
+                                if (!g_isAdmin) {
+                                    console.log("Checking profile as normal user " + head)
+                                    if (head === 'Name' || head === 'Nombre') {
+                                        var validaterow = "<td class='text pl-2' style='color:#007bff;font-size: 14px;'><i class='fa fa-exclamation-circle pr-1' style='color: #007bff;font-size: small !important;'></i><div id='notRequired' data-localize='notRequired'>Validation not required</div></td></tr>";
+                                        row += temprow + validaterow;
+                                    } else if (!g_thisPersonVerification[head + 'Verified'] && g_thisPersonVerification.hasOwnProperty(head + 'Verified')) {
+                                        var validaterow = "<td class='text pl-2' style='color:#007bff;font-size: 14px;'><i class='fa fa-exclamation-circle pr-1' style='color: #007bff;font-size: small !important;'></i><div id='pending' data-localize='pending'>Pending Validation</div></td></tr>";
+                                        row += temprow + validaterow;
+                                    }
+                                    else if (head === 'Phone' || head === 'Teléfono') {
+                                        var verifiedrow = "<td class='text pl-2' style='color:green;font-size: 14px;'><i class='fa fa-check-circle pr-1' style='color:green;font-size: small !important;'></i><span data-localize='systemValidated'>System validated</span></td></tr>";
+                                        row += temprow + verifiedrow;
+                                    } else if (isTrue(head)) {
+                                        var verifiedrow = "<td class='text pl-2' style='color:green;font-size: 14px;'><i class='fa fa-check-circle pr-1' style='color:green;font-size: small !important;'></i><span data-localize='validated'>Validated</span></td></tr>";
+                                        row += temprow + verifiedrow;
+                                    }
+                                    else {
+                                        row += temprow;
+                                    }
+                                } else if (g_isAdmin) {
+                                    console.log("Checking profile as Admin user " + head)
+                                    if (head === 'Name' || head === 'Nombre') {
+                                        var validaterow = "<td class='text pl-2' style='color:#007bff;font-size: 14px;'><i class='fa fa-exclamation-circle pr-1' style='color: #007bff;font-size: small !important;'></i><div id='notRequired' data-localize='notRequired'>Validation not required</div></td></tr>";
+                                        row += temprow + validaterow;
+                                    } else if (head === 'Phone' || head === 'Teléfono') {
+                                        var verifiedrow = "<td class='text pl-2' style='color:green;font-size: 14px;'><i class='fa fa-check-circle pr-1' style='color:green;font-size: small !important;'></i><span data-localize='systemValidated'>System validated</span></td></tr>";
+                                        row += temprow + verifiedrow;
+                                    } else if (isTrueImpl(head, function (data) {
+                                            if (data) {
+                                                var verifiedrow = "<td class='text pl-2' style='color:green;font-size: 14px;'><i class='fa fa-check-circle pr-1' style='color:green;font-size: small !important;'></i><span data-localize='validated'>Validated</span></td></tr>";
+                                                console.log(" Setting up validated here")
+                                                row += temprow + verifiedrow;
+                                                incApprovedStatusCount()
+                                            } else {
+                                                console.log(" Setting up approve  " + head)
+                                                var validaterow = "<td class='text pl-2' id='style'><button id='approve' data-localize='approve' class='btn btn-primary mr-3 sc' style='font-size:1rem;' onclick=approve(" + head + ")><i class='fa fa-check-circle pr-1' style='font-size: small !important;'></i>Approve</button><button class='btn btn-outline-danger sc' style='font-size:1rem;' id='reject' data-localize='reject'>&nbsp;Reject</button></td></tr>";
+                                                row += temprow + validaterow;
+                                            }
+                                    })) {}
+                                }
+                            }
+                        }
+                        $("table tbody").append(row);
+                        var element = document.getElementsByTagName("tr");
+                        for (var i = 0; i < element.length; i++) {
+                            var newElement = document.createElement('div');
+                            var divElement = document.getElementsByTagName('div');
+                            newElement.setAttribute('class', 'mt-2')
+                            var elementParent = element[i].parentNode;
+                            elementParent.insertBefore(newElement, element[i].nextSibling);
+                        }
+                    })
+
+                    getViewSchemaEng(function () {
+                        
+                    })
+
+                    getViewSchemaSpanish(function () {
+                        
+                    })
+
+                    function isTrueImpl(head, cb) {
+                        // the head could be in English or Spanish
+                        console.log("isTrueImpl called for " + head + " " + g_lang)
+                        if (g_lang === 'English') {
+                            console.log("Returning English " + head + " - English ->" + g_thisPersonVerification[head + 'Verified'])
+                            cb(g_thisPersonVerification[head + 'Verified'])
+                        } else if (g_lang === 'Spanish') {
+                            getEnglishColNameFromSpanishColame(head, function (err, data) {
+                                //console.log(data + "Verified is " +  g_thisPersonVerification[data + 'Verified'])
+                                var capName = data.charAt(0).toUpperCase() + data.slice(1)
+                                var result = g_thisPersonVerification[data + 'Verified'] || g_thisPersonVerification[capName + 'Verified']
+                                console.log("head " + data + " --> " + result)
+                                cb(result)
+                            })
+                        }
+
+                    }
+
+                    function isTrue(head) {
+                        isTrueImpl(head, function(d) {
+                             return d   
+                        })
+                    }
+                })
+            }
+
+            function getViewSchemaEng(cb) {
+                getViewSchema('schema/Person_Default.json', cb);
+            }
+
+            function getViewSchemaSpanish(cb) {
+                getViewSchema('schema/Person_Default_es.json', cb);
+            }
+
+            function getViewSchema(filename, cb) {
+                $.getJSON(filename, function (data) {
+                    if (filename.includes("_es")) {
+                        g_PersonSpanishSchemaJson = data
+                        console.log("Loaded View schema for Spanish")
+                    } else {
+                        g_PersonDefaultSchemaJson = data
+                        console.log("Loaded View schema for English")
+                    }
+                    cb()
+                })
+            }
+
+            function setEditForField(key, flag) {
+                isedited = flag;
+                var anchor = document.getElementById(key);
+                var att = document.createAttribute("contenteditable");
+                if (flag) {
+                    att.value = "true";
+                } else {
+                    att.value = "false";
+                }
+                anchor.setAttributeNode(att);
+            }
+
+            function turnOnEditForField(key) {
+                setEditForField(key, true);
+            }
+
+            function turnOffEditForField(key) {
+                setEditForField(key, false);
+            }
+
+            function getDbColumnNameFromTitle(title, cb) {
+                $.each(g_PersonDefaultSchemaJson, function (i, f) {
+                    if (i === 'fields') {
+                        var verifiedDetails = f;
+                        for (var i = 0; i < verifiedDetails.length; i++) {
+                            if (key === verifiedDetails[i].title) {
+                                cb(null, verifiedDetails[i].name)
+                            }
+                        }
+                    }
+                });
+            }
+
+            function getEnglishColNameFromSpanishColame(name, cb) {
+                // Iterate spanish details to fetch the tiel
+                $.each(g_PersonSpanishSchemaJson, function (i, f) {
+                    if (i === 'fields') {
+                        console.log("Getting the right fields")
+                        var verifiedDetails = f;
+                        for (var i = 0; i < verifiedDetails.length; i++) {
+                            console.log("Iterating over title " + verifiedDetails[i].title + " name " + verifiedDetails[i].name)
+                            var capName = name.charAt(0).toUpperCase() + name.slice(1)
+                            if (name === verifiedDetails[i].title || 
+                                capName === verifiedDetails[i].title) {
+                                console.log("Getting the right name " + name + " " + g_PersonDefaultSchemaJson['fields'][i].name)
+                                cb(null, g_PersonDefaultSchemaJson['fields'][i].name)
+                            } else {
+                                console.log("Not getting " + name +  "  " + verifiedDetails[i].name)
+                            }
+                        }
+                    }
+                });
+            }
+
+            function update() {
+                updatePersonRequest.request.Person = g_thisNewPerson;
+                updatePersonRequest.request.Person.isApproved = false;
+
+                const http = new XMLHttpRequest()
+                http.open('POST', "http://localhost:8080/update")
+                http.setRequestHeader('Content-type', 'application/json')
+                http.send(JSON.stringify(updatePersonRequest)) // Make sure to stringify
+                http.onload = function () {
+                    var obj = JSON.parse(http.responseText);
+                    alert("Your record is successfully updated");
+                    window.location.reload(true);
+                }
+            }
+
+            function editBtnClicked(id) {
+                var edit = document.getElementById(id);
+                isedited = !isedited
+
+                if (isedited) {
+                    // Rename edit to Update and turn Cancel on
+                    edit.innerHTML = "Update";
+                    document.getElementById('cancelBtn').style.display = '-webkit-inline-box';
+
+                    for (key in g_thisPerson) {
+                        if (key != 'isAdmin') {
+                            if (document.getElementById(key).firstChild != "[object HTMLInputElement]") {
+                                turnOnEditForField(key);
+                            }
+                        }
+                    }
+                } else {
+                    // Update is clicked now.
+                    for (key in g_thisPerson) {
+                        if(key === 'isAdmin' || key === 'osid') 
+                        continue;
+                        // Derive the name from the title and setup the new Person object
+                        var childElemnet = document.getElementById(key);
+
+                        getDbColumnNameFromTitle(key, function (err, name) {
+                            if (childElemnet.innerHTML.localeCompare(g_thisPerson[key])) {
+                                //update(isedited, key);
+
+                                console.log(key)
+                                if (key === 'School' || key === 'TeacherId' ||
+                                    key === 'Colegio' || key === 'Identificador Maestro') {
+                                    // This will set PersonVerification to false.
+                                    var attr = key.charAt(0).toUpperCase() + key.slice(1);
+                                    console.log("Rejecting attr " + attr)
+                                    reject(attr);
+                                }
+                                g_thisNewPerson[name] = childElemnet.innerHTML;
+                            } else {
+                                console.log("No change done for attribute " + key)
+                            }
+                        })
+                    }
+                    g_thisNewPerson["osid"] = g_personOSid;
+                    console.log("New person record = " + JSON.stringify(g_thisNewPerson))
+                    update()
+                }
+            }
+
+
+            function backtoProfile(id) {
+                var edit = document.getElementById("button").innerHTML = "Edit"
+                document.getElementById('cancelBtn').style.display = 'none';
+
+                for (var field in g_thisPerson) {
+                    if (field != 'isAdmin') {
+                        if (document.getElementById(field).firstChild != "[object HTMLInputElement]") {
+                            turnOffEditForField(field);
+                        }
+                    }
+                }
+                console.log("Turned off edit");
+            }
+
+            function downloadJson() {
+                var g_urlParams = new URLSearchParams(location.search);
+                downloadProfileRequest.request.Person.osid = g_urlParams.get('osid')
+                downloadProfileRequest.request.includeSignatures = true
+                $.ajax({
+                    url: "http://localhost:8080/read",
+                    type: "post",
+                    dataType: "application/json",
+                    data: JSON.stringify(downloadProfileRequest),
+                    contentType: "application/json",
+                    dataType: "json",
+                    success: function (msg) {
+                        console.log(JSON.stringify(msg))
+                        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(msg.result.Person));
+                        var dlAnchorElem = document.getElementById('downloadAnchorElem');
+                        dlAnchorElem.setAttribute("href", dataStr);
+                        dlAnchorElem.setAttribute("download", "Person.json");
+                        dlAnchorElem.click();
+                    }
+                });
+            }
+
+            function reject(id) {
+                console.log("Rejecting " + id)
+
+                var key = (id + 'Verified')
+                updatePersonVerifiedRequest.request.PersonVerified = {
+                    "osid": g_thisPersonVerification.osid,
+                    [key]: false
+                }
+                $.ajax({
+                    url: "http://localhost:8080/update",
+                    type: "post",
+                    dataType: "application/json",
+                    data: JSON.stringify(updatePersonVerifiedRequest),
+                    contentType: "application/json",
+                    dataType: "json",
+                    success: function (msg) {
+
+                    }
+                });
+            }
+
+            function incApprovedStatusCount() {
+                approvedStatusCount++;
+                console.log("approvedStatusCount = " + approvedStatusCount);
+            }
+
+            function approve(id) {
+                console.log(JSON.stringify(g_thisPersonVerification) + "id = " + id)
+                var key = (id.id + 'Verified')
+                updatePersonVerifiedRequest.request.PersonVerified = {
+                    "osid": g_thisPersonVerification.osid,
+                    [key]: true
+                }
+                $.ajax({
+                    url: "http://localhost:8080/update",
+                    type: "post",
+                    dataType: "application/json",
+                    data: JSON.stringify(updatePersonVerifiedRequest),
+                    contentType: "application/json",
+                    dataType: "json",
+                    success: function (msg) {
+                        incApprovedStatusCount()
+                        if (approvedStatusCount == 2) {
+                            updatePersonApprovedStatus(true);
+                        } else {
+                            window.location.href = window.location.href;
+                        }
+                    }
+                });
+            }
+
+            function updatePersonApprovedStatus(status) {
+                var approveParam = {
+                    "id": "open-saber.registry.update",
+                    "ver": "1.0",
+                    "ets": "11234",
+                    "params": {
+                        "did": "",
+                        "key": "",
+                        "msgid": ""
+                    },
+                    "request": {
+                        "Person": {
+                            "osid": g_thisPersonVerification.personId,
+                            "isApproved": status
+
+                        }
+                    }
+                }
+                const http = new XMLHttpRequest()
+                http.open('POST', "http://localhost:8080/update")
+                http.setRequestHeader('Content-type', 'application/json')
+                http.send(JSON.stringify(approveParam)) // Make sure to stringify
+                http.onload = function () {
+                    var obj = JSON.parse(http.responseText);
+                    console.log("PersonApprovedStatus is set to " + obj + " " + status)
+                }
+            }
+        </script>
+</body>
+
+</html>

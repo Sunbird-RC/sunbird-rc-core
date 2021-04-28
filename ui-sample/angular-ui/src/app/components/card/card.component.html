@@ -1,0 +1,61 @@
+<div class="ui card mb-20">
+  <div class="content fixHeight">
+    <ngx-avatar class="my-avatar" class="right" [style]="{
+          background: color,
+          border: '1px solid #fff',
+          borderRadius: '50%',
+          color: 'white',
+          fontWeight: 'bold',
+          fontFamily: 'inherit',
+          lineHeight: '48px'}" [size]="50" initialsSize="1" [textSizeRatio]="2" name="{{data.name}} ">
+    </ngx-avatar>
+    <div class="header">
+      {{data.name | titlecase}}
+    </div>
+    <div *ngIf="data.isOnboarded && data.isActive && data?.startDate != null" class="meta">
+      Since {{data?.startDate | timeAgo | slice:0:-3}}
+    </div>
+    <div *ngIf="!data.isOnboarded && data?.endDate == null" class="meta">
+      New Member
+    </div>
+    <div *ngIf="data?.endDate != null" class="meta">
+        Resigned {{data?.endDate | timeAgo | slice:0:-3}}
+    </div>
+    <div class="description">
+      {{data.role}}
+    </div>
+  </div>
+  <div class="extra content">
+    <div *ngIf="permissionService.permissionAvailable" appPermission [permission]="approveEmployee">
+      <div class="ui two buttons" *ngIf="!data?.isOnboarded">
+        <div class="ui basic blue button" (click)="approveConfirmModal(data?.identifier); $event.stopPropagation()">
+          {{resourceService?.frmelmnts?.btn?.approve}}</div>
+        <div class="ui basic grey button">
+          {{resourceService?.frmelmnts?.btn?.decline}}</div>
+      </div>
+      <div class="ui two buttons" *ngIf="data?.isOnboarded">
+        <div class="ui basic blue button" (click)="onAction(data,{View: true})">
+          {{resourceService?.frmelmnts?.btn?.viewProfile}}</div>
+        <div class="ui basic grey button" *ngIf="data?.isActive" (click)="deBoardConfirmModal(data?.identifier); $event.stopPropagation()">
+          {{resourceService?.frmelmnts?.btn?.Deboard}}</div>
+      </div>
+    </div>
+    <div *ngIf="enableViewProfile">
+      <div class="ui basic fluid blue button" (click)="onAction(data,{View: true})">
+        {{resourceService?.frmelmnts?.btn?.viewProfile}}</div>
+    </div>
+  </div>
+</div>
+
+<ng-template let-context let-modal="modal" #modalTemplate>
+  <div class="header"> {{modalHeader}}</div>
+  <div class="content">
+    <p>{{ context.data }}</p>
+  </div>
+  <div class="actions">
+    <button class="ui blue button" (click)="modal.approve('approved')"
+      autofocus>{{resourceService?.frmelmnts?.btn?.yes}}</button>
+    <button class="ui basic blue button"
+      (click)="modal.deny('view')">{{resourceService?.frmelmnts?.btn?.viewProfile}}</button>
+  </div>
+</ng-template>

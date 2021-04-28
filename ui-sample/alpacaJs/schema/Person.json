@@ -1,0 +1,50 @@
+{
+  "$id": "#/properties/Person",
+  "type": "object",
+  "title": "",
+  "required": [
+    "teacherId",
+    "name",
+    "phone",
+    "school"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "$id": "#/properties/name",
+      "type": "string",
+      "title": "Name"
+    },
+    "phone": {
+      "$id": "#/properties/phone",
+      "format": "phone",
+      "title": "phone"
+    },
+    "teacherId": {
+      "$id": "#/properties/teacherId",
+      "type": "string",
+      "$comment": "teacherId",
+      "pattern": "^[0-9]{3}-.*",
+      "title": "Teacher Id",
+      "examples": [
+        "888-abc",
+        "639-def"
+      ]
+    },
+    "school": {
+      "$id": "#/properties/school",
+      "type": "string",
+      "title": "school"
+    },
+    "isAdmin": {
+      "$id": "isAdmin",
+      "type": "boolean",
+      "title": "isAdmin"
+    },
+    "isApproved": {
+      "$id": "isApproved",
+      "type": "boolean",
+      "title": "isApproved"
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+    "type": "OwnerFormTemplate",
+    "action": "Employee",
+    "data": {
+        "templateName": "defaultTemplate",
+        "action": "create",
+        "categories":{
+            "Personal information":["name", "orgName","externalId", "externalRole","email", "phone"],
+            "General":["slackAccess", "repoAccess", "startDate", "endDate", "workLocation", "workingStyle", "githubId", "macAddress"],
+            "Admin information":["role", "isActive","projectName","subProjectName", "nineAMreportTo", "remarks"],
+            "Billing":["proposedBilling"]
+        },
+        "fields": [
+            {
+                "code": "name",
+                "dataType": "text",
+                "name": "Employee name",
+                "label": "Employee name",
+                "description": "Employee name",
+                "editable": true,
+                "placeholder": "Employee name",
+                "inputType": "text",
+                "required": true,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "six"
+                },
+                "index": 1
+            },
+            {
+                "code": "phone",
+                "dataType": "text",
+                "name": "Phone",
+                "label": "Phone",
+                "description": "Phone",
+                "editable": true,
+                "placeholder": "Phone",
+                "inputType": "text",
+                "required": true,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "six"
+                },
+                "index": 2
+            },
+            {
+                "code": "email",
+                "dataType": "text",
+                "name": "Email",
+                "label": "Email",
+                "description": "Email",
+                "editable": true,
+                "placeholder": "Email",
+                "inputType": "text",
+                "required": true,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "twelve"
+                },
+                "index": 3
+            },
+           
+            {
+                "code": "externalId",
+                "dataType": "text",
+                "name": "externalId",
+                "label": "Partner Employee Id",
+                "description": "External Id",
+                "editable": true,
+                "placeholder": "External Id",
+                "inputType": "text",
+                "required": true,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "six"
+                },
+                "index": 4
+            },
+            {
+                "code": "externalRole",
+                "dataType": "text",
+                "name": "externalRole",
+                "label": "External Role",
+                "description": "External Role",
+                "editable": true,
+                "placeholder": "External Role",
+                "inputType": "text",
+                "required": true,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "six"
+                },
+                "index": 5
+            },
+            {
+                "code": "macAddress",
+                "dataType": "text",
+                "name": "macAddress",
+                "label": "Mac Address",
+                "description": "Mac Address",
+                "editable": true,
+                "placeholder": "Mac Address",
+                "inputType": "text",
+                "required": true,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 6
+            },
+            {
+                "code": "githubId",
+                "dataType": "text",
+                "name": "githubId",
+                "label": "GithubId",
+                "description": "GithubId",
+                "editable": true,
+                "placeholder": "GithubId",
+                "inputType": "text",
+                "required": true,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 7
+            }
+        ]
+    }
+}

@@ -1,0 +1,54 @@
+{
+    "data": {
+        "frmelmnts": {
+            "btn": {
+                "signup": "Sign Up",
+                "logIn": "Login",
+                "approve": "Approve",
+                "create": "Create",
+                "profile": "profile",
+                "logout": "logout",
+                "edit": "Edit",
+                "cancel": "Cancel",
+                "download": "Dowload",
+                "SearchIn": "Search by name",
+                "update": "Update",
+                "generate": "Generate",
+                "adminConsole": "AdminConsole",
+                "apply": "Apply",
+                "reset": "Reset",
+                "home": "Home",
+                "onBoard": "OnBoard",
+                "clearQuery": "Clear Query",
+                "Close": "Close",
+                "decline": "Decline",
+                "viewProfile": "View Profile",
+                "search": "User Directory",
+                "yes": "Yes",
+                "viewHistory": "View History",
+                "Deboard":"Deboard",
+                "Validate":"Validate",
+                "Actions":"Actions"
+            },
+            "label": {
+                "filters": "Filters",
+                "profileInformation": "Profile Information",
+                "updateProfile": "Update Profile"
+            },
+            "msg": {
+                "logInHead": "Log-in to your account",
+                "createAccount": "create account",
+                "queryMessage": "We don't have any documents matching your query",
+                "createUserSuccess": "Employee successfully added to registry",
+                "createUserUnSuccess": "Employee register unsuccessful",
+                "OnboardedSuccess": "Onboarded successfully",
+                "OnboardUnSuccess": "Onboarding failed",
+                "errorMsg": "Error retrieving data please try again later",
+                "updateFailure": "Profile updation failed please try again later",
+                "updateSuccess":"Updated Successfully",
+                "deBoardSuccess":"Deboarded Successfully",
+                "deBoardFailure":"Deboarding failed"
+            }
+        }
+    }
+}

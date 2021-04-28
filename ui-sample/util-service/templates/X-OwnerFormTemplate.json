@@ -1,0 +1,193 @@
+{
+    "type": "X-OwnerFormTemplate",
+    "action": "Employee",
+    "data": {
+        "templateName": "defaultTemplate",
+        "action": "create",
+        "categories": {
+            "Personal information": [
+                "name",
+                "orgName",
+                "externalId",
+                "externalRole",
+                "email",
+                "phone"
+            ],
+            "General": [
+                "slackAccess",
+                "repoAccess",
+                "startDate",
+                "endDate",
+                "workLocation",
+                "workingStyle",
+                "githubId"  
+              ],
+            "Admin information": [
+                "role",
+                "isActive",
+                "projectName",
+                "subProjectName",
+                "nineAMreportTo",
+                "remarks"
+            ],
+            "Billing": [
+                "proposedBilling"
+            ]
+        },
+        "fields": [
+            {
+                "code": "name",
+                "dataType": "text",
+                "name": "Employee name",
+                "label": "Employee name",
+                "description": "Employee name",
+                "editable": false,
+                "placeholder": "Employee name",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "six"
+                },
+                "index": 1
+            },
+            {
+                "code": "phone",
+                "dataType": "text",
+                "name": "Phone",
+                "label": "Phone",
+                "description": "Phone",
+                "editable": false,
+                "placeholder": "Phone",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "six"
+                },
+                "index": 2
+            },
+            {
+                "code": "email",
+                "dataType": "text",
+                "name": "Email",
+                "label": "Email",
+                "description": "Email",
+                "editable": false,
+                "placeholder": "Email",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "twelve"
+                },
+                "index": 3
+            },
+            {
+                "code": "externalId",
+                "dataType": "text",
+                "name": "externalId",
+                "label": "Partner Employee Id",
+                "description": "External Id",
+                "editable": false,
+                "placeholder": "External Id",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "six"
+                },
+                "index": 4
+            },
+            {
+                "code": "externalRole",
+                "dataType": "text",
+                "name": "externalRole",
+                "label": "External Role",
+                "description": "External Role",
+                "editable": false,
+                "placeholder": "External Role",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "six"
+                },
+                "index": 5
+            },
+            {
+                "code": "githubId",
+                "dataType": "text",
+                "name": "githubId",
+                "label": "GithubId",
+                "description": "GithubId",
+                "editable": false,
+                "placeholder": "GithubId",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 7
+            },
+            {
+                "code": "role",
+                "dataType": "text",
+                "name": "role",
+                "label": "EkStep role",
+                "description": "EkStep role",
+                "editable": false,
+                "placeholder": "EkStep role",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 7
+            },
+            {
+                "code": "projectName",
+                "dataType": "text",
+                "name": "projectName",
+                "label": "Project name",
+                "description": "Project name",
+                "editable": false,
+                "placeholder": "Project name",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 8
+            },
+            {
+                "code": "subProjectName",
+                "dataType": "text",
+                "name": "subProjectName",
+                "label": "Sub-project name",
+                "description": "Sub-project name",
+                "editable": false,
+                "placeholder": "Sub-project name",
+                "inputType": "text",
+                "required": false,
+                "displayProperty": "Editable",
+                "visible": true,
+                "renderingHints": {
+                    "semanticColumnWidth": "four"
+                },
+                "index": 9
+            }
+        ]
+    }
+}

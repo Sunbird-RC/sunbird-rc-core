@@ -1,0 +1,30 @@
+<div class="ui container mb-20 mt-20">
+  <div class="ui small breadcrumb">
+    <a class="section" routerLink=''>{{resourceService?.frmelmnts?.btn?.home}}</a>
+    <i class="right chevron icon divider"></i>
+    <a class="section" (click)="navigateToProfilePage()">{{resourceService?.frmelmnts?.label?.profileInformation}}</a>
+    <i class="right chevron icon divider"></i>
+    <div class="active section">{{resourceService?.frmelmnts?.label?.updateProfile}}</div>
+  </div>
+  <div class="ui raised shadow container segment" style="width: 50rem;">
+    <div class="ui segment" *ngIf="showLoader">
+      <div class="ui active medium inline loader"></div>
+    </div>
+    <div *ngFor="let section of sections">
+      <div class="ui header tas" *ngIf="section.fields.length > 0">{{section.name | titlecase}} section</div>
+      <div class="ui segment mb-20" *ngIf="section.fields.length > 0">
+        <div class="row">
+          <app-default-template #formData [formFieldProperties]="section.fields" [formInputData]="formInputData">
+          </app-default-template>
+        </div>
+      </div>
+    </div>
+    <div class="buttons flex-jc-center">
+      <button class="ui button primary" (click)="validate()">
+        {{resourceService?.frmelmnts?.btn?.update}} </button>
+      <button class="ui grey basic button" (click)="navigateToProfilePage()">
+        {{resourceService?.frmelmnts?.btn?.cancel}}
+      </button>
+    </div>
+  </div>
+</div>

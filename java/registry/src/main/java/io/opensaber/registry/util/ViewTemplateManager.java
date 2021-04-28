@@ -68,8 +68,7 @@ public class ViewTemplateManager {
      * @throws JsonMappingException
      * @throws IOException
      */
-	public ViewTemplate getViewTemplate(JsonNode requestNode)
-			throws JsonParseException, JsonMappingException, IOException {
+	public ViewTemplate getViewTemplate(JsonNode requestNode) {
 
 		ViewTemplate viewTemp = null;
 		String name = null;
@@ -91,17 +90,18 @@ public class ViewTemplateManager {
 	}
     
 	private ViewTemplate getViewTemplateByContent(String templateContent)
-			throws JsonParseException, JsonMappingException, IOException {
+			throws IOException {
 		return mapper.readValue(templateContent, ViewTemplate.class);
 	}
 
-	public boolean isPrivateFieldEnabled(ViewTemplate viewTemplate, String entityType){
+	// TODO = this cannot be determined by the root level node alone. Check subschema
+	public boolean isPrivateFieldEnabled(ViewTemplate viewTemplate, String entityType) {
 		boolean privateFieldEnabled = false;
 		List<Field> fieldList = viewTemplate.getFields();
 		Definition definition = definitionsManager.getDefinition(entityType);
 		List<String> privateFields = definition.getOsSchemaConfiguration().getPrivateFields();
-		for(Field field : fieldList) {
-			if(privateFields.contains(field.getName())){
+		for (Field field : fieldList) {
+			if(privateFields.contains(field.getName())) {
 				privateFieldEnabled = true;
 				break;
 			}

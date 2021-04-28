@@ -1,0 +1,244 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link type="text/css" rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/todc-bootstrap/3.3.2-3.3.2/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" media="screen"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker-standalone.min.css" />
+    <link rel="stylesheet" href="./css//admin.css">
+
+    <link type="text/css" href="http://cdn.jsdelivr.net/npm/alpaca@1.5.27/dist/alpaca/bootstrap/alpaca.min.css"
+        rel="stylesheet" />
+    <!-- <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"> -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"
+        integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+
+
+</head>
+
+<body>
+    <div id="navbar"> </div>
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="form-inline mb-3">
+                <label data-localize="name">Name : </label>
+                <input class="form-control mr-sm-2 ml-2" data-localize="searchPlaceholder.num" name="search" type="search"
+                     aria-label="Search" onchange="searchByQuery(this)">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit" data-localize="searchs"
+                    onclick="searchByQuery(document.getElementsByName('search')[0])">Search</button>
+            </div>
+        </div>
+        <div class="row" style="overflow-x:auto;">
+
+            <table class="table" id="tablePerson">
+                <thead class="thead-light">
+                    <tr>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+
+            </table>
+            <div class="col-md-12">
+                <h2 id="noResult"></h2>
+            </div>
+
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.min.js"></script>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/jquery-localize/0.1.0/jquery.localize.min.js"></script>
+
+    <script type="text/javascript" src="./utils.js"></script>
+
+    <script type="text/javascript">
+        var urlParams = new URLSearchParams(location.search);
+        var lang = urlParams.get('lang')
+        var cookedVal = {
+            "id": "open-saber.registry.search",
+            "ver": "1.0",
+            "ets": "11234",
+            "params": {
+                "did": "",
+                "key": "",
+                "msgid": ""
+            },
+            "request": {
+                "entityType": ["Person"],
+                "filters": {
+                },
+                "viewTemplateId": "Person_SearchResult.json"
+            }
+        };
+        if (lang == 'English') {
+            cookedVal.request.viewTemplateId = "Person_SearchResult.json"
+        } else if (lang == 'Spanish') {
+            cookedVal.request.viewTemplateId = "Person_SearchResult_es.json"
+        }
+
+        $(document).ready(function () {
+            var langId;
+            $.ajax({
+                url: "http://localhost:8080/search",
+                type: "post",
+                dataType: "application/json",
+                data: JSON.stringify(cookedVal),
+                contentType: "application/json",
+                dataType: "json",
+                success: function (msg) {
+                    personRecords = []
+                    _.map(msg.result.Person, (person) => {
+                        personRecords.push(_.omit(person, ['@type', '_osUpdatedBy', '_osCreatedAt', '_osCreatedBy', '_osCreatedAt', '_osUpdatedAt']))
+                    });
+                    var colHeader = Object.keys(personRecords[0]);
+                    _.forEach(personRecords[0], (value, key) => {
+                        console.log(value,key)
+                        if (key !== 'isApproved' && key !== 'osid') {
+                            $('table thead tr').append('<th>' + key + '</th>');
+                        }
+                    });
+
+                    $('table thead tr').append("<th> <div data-localize='actions'>" +  'Actions' + '</div></th>');
+                    console.log('person Records',personRecords,colHeader);
+                    for (var idx = 0; idx < personRecords.length; idx++) {
+                        var approved = false;
+                        $('table tbody').append('<tr></tr>')
+                        var row = "";
+                        for (var j = 0; j < colHeader.length; j++) {
+                            // console.log('col',colHeader[j])
+                            if (colHeader[j] === 'isApproved') {
+                                // console.log('if',personRecords)
+                                approved = personRecords[idx][colHeader[j]]
+                            }  else if(colHeader[j]!='osid'){
+                                $('table tbody tr').last().append('<td>' + personRecords[idx][colHeader[j]] + '</td>');
+                            }
+                        }
+                        console.log("approved = " + approved)
+                        if (approved === false) {
+                            row = "<td><button type='button' class='btn btn-primary' data-localize='approve' onclick=approveFn(" + JSON.stringify(personRecords[idx].osid) + ")>Approve</button></td>";
+                            $('table tbody tr').last().append(row);
+                        } else {
+                            row = "<td><label style='color: green;font-size: 1rem;' data-localize='verifiedRecord'><i class='fa fa-check-circle pr-1' style='color:green;font-size: small !important;'></i>Verified record</label></td>";
+                            $('table tbody tr').last().append(row);
+                        }
+                        if (lang === 'English') {
+                            langId = 'uniqueId'
+                        } else if (lang === 'Spanish') {
+                            langId = 'Identificaciónúnica'
+                        }
+                    }
+                }
+            });
+
+
+            $('#navbar').load("bootstrap-4-navbar.html", function () {
+                var urlParams = new URLSearchParams(location.search);
+                document.getElementById("nav1").style.display = "none"
+                document.getElementById("nav2").style.display = "none"
+
+                document.getElementById('dropdown').innerHTML = urlParams.get('name')
+
+                if (lang == 'English') {
+                    dataLocalizeRefresh('en', 'English')
+
+                }
+                else if (lang == 'Spanish') {
+                    dataLocalizeRefresh('es', 'Spanish')
+
+                }
+            });
+        });
+  
+        function approveFn(obj) {
+            var localUrl = "file:///Users/rajeshr/IdeaProjects/aishwa8141/open-saber/ui-sample/"
+            if (lang === 'English') {
+                localUrl += "profile.html?osid=" + obj + '&lang=' + lang + '&isAdmin=true';
+            }
+            else if (lang === 'Spanish') {
+                localUrl += "profile.html?osid=" + obj + '&lang=' + lang + '&isAdmin=true';
+            }
+            console.log(localUrl)
+            window.open(localUrl, '_blank')
+        }
+
+        function searchByQuery(key) {
+            cookedVal.request.filters = {
+                "name": { "contains": key.value }
+            }
+            $.ajax({
+                url: "http://localhost:8080/search",
+                type: "post",
+                dataType: "application/json",
+                data: JSON.stringify(cookedVal),
+                contentType: "application/json",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.result.Person.length > 0) {
+                        document.getElementById("noResult").textContent = "";
+                        $("table").find("tr:not(:first)").remove();
+                        personRecords = []
+                        _.map(msg.result.Person, (person) => {
+                            personRecords.push(_.omit(person, ['@type', '_osUpdatedBy', '_osCreatedAt', '_osCreatedBy', '_osCreatedAt', '_osUpdatedAt']));
+                        });
+                        var colHeader = Object.keys(personRecords[0]);
+                        $('table thead tr').append('<th>' + '' + '</th>');
+
+                        for (var idx = 0; idx < personRecords.length; idx++) {
+                        var approved = false;
+                        $('table tbody').append('<tr></tr>')
+                        var row = "";
+                        for (var j = 0; j < colHeader.length; j++) {
+                            console.log('col',colHeader[j])
+                            if (colHeader[j] === 'isApproved') {
+                                // console.log('if',personRecords)
+                                approved = personRecords[idx][colHeader[j]]
+                            } else if(colHeader[j]!='Osid'){
+                                $('table tbody tr').last().append('<td>' + personRecords[idx][colHeader[j]] + '</td>');
+                            }
+                        }
+                        console.log("approved = " + approved)
+                        if (lang === 'English') {
+                            langId = 'uniqueId'
+                        } else if (lang === 'Spanish') {
+                            langId = 'Identificaciónúnica'
+                        }
+                        if (approved === false) {
+                            row = "<td><button type='button' class='btn btn-primary' data-localize='approve' onclick=approveFn(" + JSON.stringify(personRecords[idx].osid) + ")>Approve</button></td>";
+                            $('table tbody tr').last().append(row);
+                        } else {
+                            row = "<td><label style='color: green;font-size: 1rem;' data-localize='verifiedRecord'><i class='fa fa-check-circle pr-1' style='color:green;font-size: small !important;'></i>Verified record</label></td>";
+                            $('table tbody tr').last().append(row);
+                        }
+                        
+                    }
+                    }
+                    else {
+                        $("table").find("tr:not(:first)").remove();
+                        document.getElementById("noResult").textContent = "No Result Found";
+                    }
+
+                }
+            });
+
+        }
+    </script>
+</body>
+
+</html>

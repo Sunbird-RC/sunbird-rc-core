@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.pojos.AuditRecord;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -12,11 +13,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class JSONUtilTest {
 
@@ -186,5 +189,18 @@ public class JSONUtilTest {
         JsonNode afterNode = mapper.readTree(afterJsonStr);
         JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode,afterNode);
         assertThat(patchNode.size(), is(0) );
+    }
+
+    @Test
+    public void convertObjectJsonNode_doNotSerializeNullValues() throws IOException {
+        AuditRecord ar = new AuditRecord();
+        ar.setUserId(null);
+        ar.setAuditId("xyz");
+        ar.setAction("action");
+        ar.setTransactionId(new ArrayList<>(Arrays.asList(1234, 4566)));
+
+        JsonNode result = JSONUtil.convertObjectJsonNode(ar);
+        assertTrue(result.size() == 3);
+        assertTrue(result.get("userId") == null);
     }
 }

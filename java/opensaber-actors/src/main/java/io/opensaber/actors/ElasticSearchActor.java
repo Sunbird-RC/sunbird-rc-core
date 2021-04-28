@@ -22,16 +22,16 @@ public class ElasticSearchActor extends BaseActor {
         ESMessage esMessage = objectMapper.readValue(request.getPayload().getStringValue(), ESMessage.class);
         //ESMessage es =  objectMapper.writeValue(request.getPayload(), ESMessage.class);
         switch (request.getPerformOperation()) {
-            case "add":
+            case "ADD":
                 elasticSearch.addEntity(esMessage.getIndexName(), esMessage.getOsid(), esMessage.getInput());
                 break;
-            case "update":
+            case "UPDATE":
                 elasticSearch.updateEntity(esMessage.getIndexName(), esMessage.getOsid(), esMessage.getInput());
                 break;
-            case "delete":
+            case "DELETE":
                 elasticSearch.deleteEntity(esMessage.getIndexName(), esMessage.getOsid());
                 break;
-            case "read":
+            case "READ":
                 break;
         }
     }

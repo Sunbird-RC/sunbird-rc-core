@@ -43,6 +43,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 
 public class ElasticServiceImpl implements IElasticService {
+    private static Map<String, Set<String>> publicFieldsInfo = new HashMap<>();
     private static Map<String, RestHighLevelClient> esClient = new HashMap<String, RestHighLevelClient>();
     private static Logger logger = LoggerFactory.getLogger(ElasticServiceImpl.class);
 
@@ -63,7 +64,8 @@ public class ElasticServiceImpl implements IElasticService {
      * @param indices
      * @throws RuntimeException
      */
-    public static void init(Set<String> indices) throws RuntimeException {
+    public static void init(Set<String> indices, Map<String, Set<String>> publicFieldsInfoMap) throws RuntimeException {
+        publicFieldsInfo = publicFieldsInfoMap;
         indices.iterator().forEachRemaining(index -> {
             try {
                 addIndex(index.toLowerCase(), searchType);
@@ -172,6 +174,7 @@ public class ElasticServiceImpl implements IElasticService {
         IndexResponse response = null;
         try {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
+            inputMap.keySet().removeIf(key -> !publicFieldsInfo.get(index).contains(key));
             response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in adding record to ElasticSearch", e);
@@ -210,6 +213,7 @@ public class ElasticServiceImpl implements IElasticService {
         UpdateResponse response = null;
         try {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
+            inputMap.keySet().removeIf(key -> !publicFieldsInfo.get(index).contains(key));
             response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in updating a record to ElasticSearch", e);
@@ -230,8 +234,8 @@ public class ElasticServiceImpl implements IElasticService {
         try {
             String indexL = index.toLowerCase();
             Map<String, Object> readMap = readEntity(indexL, osid);
-            Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
-            entityMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
+           // Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
+            readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
         } catch (NullPointerException | IOException e) {
             logger.error("exception in deleteEntity {}", e);
@@ -253,7 +257,10 @@ public class ElasticServiceImpl implements IElasticService {
             SearchResponse searchResponse = getClient(index).search(searchRequest, RequestOptions.DEFAULT);
             for (SearchHit hit : searchResponse.getHits()) {
                 JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
-                resultArray.add(node);
+                // TODO: Add draft mode condition
+                if(node.get("_status") == null || node.get("_status").asBoolean()) {
+                    resultArray.add(node);
+                }
             }
             logger.debug("Total search records found " + resultArray.size());
 

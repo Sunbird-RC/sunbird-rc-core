@@ -153,7 +153,7 @@ signature:
 #  data_store can have following values
 #   * FILE     : Store the audit log in files.
 #   * DATABASE : Store the audit log in primary database configured in database properties.
-#   * ELASTIC  : Store the audit log in elastic search configured in elastic properties. 
+#   * ELASTIC  : Store the audit log in elastic search configured in elastic properties.
 #  Note : Database Stores the created audit schema in audit_schema folder.
 audit:
   enabled: ${audit_enabled:false}
@@ -311,7 +311,7 @@ audit:
     store: ${audit_frame_store:DATABASE}
     suffix: ${audit_suffix:Audit}
     suffixSeparator: ${audit_suffixSeparator:_}
-      
+
 authentication:
   enabled: ${authentication_enabled:true}
   publicKey:  ${authentication_publickey:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqe1lVD9jnQWQce62e2Q44tACqBIt5UZyGzCegxax2gddj4xotY5BDxaxuJRGKDLRpm8lPNHxX8dce8SUVAMBfk85rL+Bxv1mjspKo7Q5qsFm9TGcvE4e/4xhgpMjw6dCFt8+S87jvRjmDHjakGMooOls1kjppQiklSEZ0lW3Crqet4RNjb1FNJ+2Jg26frm8i2cpb2wRnmLDuQ9sAnHCxAD2rGxSGLXhKABptbMeTVx25eh+PVISjc78uOhAnMwOHKApVBGnVCfcUoVYqfkX8XcPQU9ybmAi27vp9xZqMfh6I56Tl4fsWYBgf8ZMl0UWyRR3PNmo/0kxon1d3zqFnwIDAQAB}

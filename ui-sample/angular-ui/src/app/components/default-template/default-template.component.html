@@ -1,0 +1,37 @@
+<div class="ui form">
+  <div class="ui grid">
+    <div *ngFor="let field of formFieldProperties;let i = index"
+      class="{{field.renderingHints.semanticColumnWidth || 'twelve'}} wide computer twelve wide mobile column">
+      <div *ngIf="field.inputType==='text' || field.inputType==='number'" class="field"
+        [ngClass]="{'required':field.required}">
+        <label>
+          {{field.label}}
+        </label>
+        <div class="field" [ngClass]="{ 'disabled':!field.editable}">
+          <input name={{field.code}} type={{field.inputType}} [(ngModel)]="formInputData[field.code]"
+            placeholder={{field.placeholder}}>
+        </div>
+      </div>
+      <div *ngIf="field.inputType==='boolean'" class="field"
+        [ngClass]="{ 'disabled':!field.editable, 'required':field.required}">
+        <sui-checkbox [(ngModel)]="formInputData[field.code]">{{field.label}}</sui-checkbox>
+      </div>
+      <div *ngIf="field.inputType==='password'" class="field"
+        [ngClass]="{ 'disabled':!field.editable, 'required':field.required}">
+        <label>
+          {{field.label}}
+        </label>
+        <input name="{{field.code}}" type="{{field.inputType}}" [(ngModel)]="formInputData[field.code]">
+      </div>
+      <div *ngIf="field.inputType==='select'" class="field" [ngClass]="{'required':field.required}">
+        <label>{{field.label}}</label>
+        <div class="field" [ngClass]="{ 'disabled':!field.editable}">
+          <sui-select class="selection" [(ngModel)]="formInputData[field.code]" [isSearchable]="true"
+            [options]="options" #select>
+            <sui-select-option *ngFor="let option of field.range" [value]="option.name"></sui-select-option>
+          </sui-select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

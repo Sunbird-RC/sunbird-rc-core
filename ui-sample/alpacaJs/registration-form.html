@@ -1,0 +1,204 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link type="text/css" rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/todc-bootstrap/3.3.2-3.3.2/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker-standalone.min.css"
+    />
+    <link type="text/css" href="./css/alpaca.css" rel="stylesheet" />
+    <link type="text/css" href="./css/person.css" rel="stylesheet" />
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+    <div id="navbar"> </div>
+    <div class="container" id="PersonForm"></div>
+
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="http://cdn.jsdelivr.net/npm/alpaca@1.5.27/dist/alpaca/bootstrap/alpaca.min.js"></script>
+    <script type="text/javascript" src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+    <script type="text/javascript" src="http://code.cloudcms.com/alpaca/1.5.24/bootstrap/alpaca.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-ajaxy/1.6.1/scripts/jquery.ajaxy.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-localize/0.1.0/jquery.localize.min.js"></script>
+    <script src="utils.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#navbar').load("navbar.html");
+
+            var schema;
+            var cookedVal = {
+
+            };
+            var urlParams = new URLSearchParams(location.search);
+            if (urlParams.get('lang') == 'English') {
+                dataLocalizeRefresh('en', 'English')
+            } else {
+                dataLocalizeRefresh('es', 'Spanish')
+
+            }
+            var cookedVal = {
+                "id": "",
+                "ver": "1.0",
+                "ets": "11234",
+                "params": {
+                    "did": "",
+                    "key": "",
+                    "msgid": ""
+                },
+                "request": { "Person": {} }
+            };
+            var schema = "";
+            var registerBtnText = "Register"
+            var urlParams = new URLSearchParams(location.search);
+            if (urlParams.get('lang') == 'English') {
+                dataLocalizeRefresh('en', 'English')
+                schema = "./schema/Person.json"
+            } else {
+                dataLocalizeRefresh('es', 'Spanish')
+                schema = "./schema/Person-es.json"
+                registerBtnText = "Registro"
+            }
+
+            $("#PersonForm").alpaca({
+                "schemaSource": schema,
+                "options": {
+                    "validate": false,
+                    "fields": {
+                        "dob": {
+                            "picker": {
+                                "useCurrent": false,
+                                "format": "YYYY-MM-DD",
+                                "locale": "en_US",
+                                "dayViewHeaderFormat": "MMMM YYYY",
+                                "extraFormats": []
+                            },
+                            "manualEntry": false,
+                        },
+                        "photo": {
+                            "type": "file",
+                            "styled": true,
+                            "type": "file",
+                            "selectionHandler": function (files, data) {
+                                var myArray = [];
+                                var file = {};
+                                for (var i = 0; i < files.length; i++) {
+                                    file = {
+
+                                        'name': files[i].name,
+                                        'size': files[i].size,
+                                        'type': files[i].type,
+                                    }
+                                    //add the file obj to your array
+                                    myArray.push(file)
+                                }
+                                this.data = myArray;
+                                console.log('this.data', this.data)
+                            },
+                        },
+                        "isAdmin": {
+                            "hidden": true
+                        },
+                        "isApproved": {
+                            "hidden": true
+                        }
+                    },
+                    "form": {
+                        "attributes": {
+                            "method": "post",
+                            "action": "http://localhost:8080/add"
+                        },
+                        "buttons": {
+                            "add": {
+                                "title": registerBtnText,
+                                "id": "sign",
+                                "click": function () {
+                                    var value = this.getValue();
+                                    console.log(value, 'value')
+                                    cookedVal["id"] = "open-saber.registry.create";
+                                    if (value.photo) {
+                                        var photo = value.photo[0];
+                                        value.photo = photo.name
+                                    }
+
+                                    cookedVal["request"]["Person"] = value;
+                                    console.log(JSON.stringify(cookedVal));
+
+                                    $.ajax({
+                                        url: "http://localhost:8080/add",
+                                        type: "post",
+                                        contentType: "application/json",
+                                        data: JSON.stringify(cookedVal),
+                                        success: function (data) {
+                                            // params.request.personId = data.result.Person.osid;
+                                            // console.log('personid', params.request.personId);
+                                            personVerify(data.result.Person.osid);
+
+                                        },
+                                        error: function () {
+                                            alert('error');
+                                        }
+                                    }
+                                    );
+                                    function personVerify(osid) {
+                                        var params = {
+                                            "id": "open-saber.registry.create",
+                                            "ver": "1.0",
+                                            "ets": "11234",
+                                            "params": {
+                                                "did": "",
+                                                "key": "",
+                                                "msgid": ""
+                                            },
+                                            "request": {
+                                                "PersonVerified": {
+                                                    "PhoneVerified": true,
+                                                    "TeacherIdVerified": false,
+                                                    "SchoolVerified": false,
+                                                    "personId": osid
+
+                                                }
+                                            }
+                                        }
+                                        $.ajax({
+                                            url: "http://localhost:8080/add",
+                                            type: "post",
+                                            contentType: "application/json",
+                                            data: JSON.stringify(params),
+                                            success: function (data) {
+                                                // params.request.personId = data.result.Person.osid;
+                                                console.log('parma', data)
+                                                document.location.href = "./profile.html?osid=" + osid + "&lang=English";
+                                            },
+                                            error: function () {
+                                                alert('error');
+                                            }
+                                        }
+                                        );
+
+                                    }
+
+                                }
+
+                            }
+                        }
+                    }
+
+                },
+                "postRender": function () {
+                    var urlParams = new URLSearchParams(location.search);
+                    document.getElementById("alpaca4").value = urlParams.get('phone');
+                    document.getElementById("alpaca4").readOnly = true; 
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

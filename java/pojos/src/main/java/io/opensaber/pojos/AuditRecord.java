@@ -3,14 +3,23 @@ package io.opensaber.pojos;
 import java.util.List;
 
 public class AuditRecord {
-
 	private String action;
 	private String recordId;
-	private List<Integer> transactionId;
+	private List<Object> transactionId;
 	private String userId;
 	private String auditId;
 	private String timestamp;
 	private List<AuditInfo> auditInfo;
+	private String entityType;
+
+	public String getEntityType() {
+		return entityType;
+	}
+
+	public AuditRecord setEntityType(String entityType) {
+		this.entityType = entityType;
+		return this;
+	}
 
 	public String getAction() {
 		return action;
@@ -21,11 +30,11 @@ public class AuditRecord {
 		return this;
 	}
 
-    public List<Integer> getTransactionId() {
+    public List<Object> getTransactionId() {
         return transactionId;
     }
 
-    public AuditRecord setTransactionId(List<Integer> transactionId) {
+    public AuditRecord setTransactionId(List<Object> transactionId) {
         this.transactionId = transactionId;
         return this;
     }

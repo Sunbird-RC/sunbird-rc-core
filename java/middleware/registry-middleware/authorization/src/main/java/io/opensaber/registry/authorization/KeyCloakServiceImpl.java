@@ -25,7 +25,6 @@ public class KeyCloakServiceImpl {
 		this.publicKey = toPublicKey(publicKeyStr);
 	}
 
-
 	public PublicKey getPublicKey() {
 		return publicKey;
 	}

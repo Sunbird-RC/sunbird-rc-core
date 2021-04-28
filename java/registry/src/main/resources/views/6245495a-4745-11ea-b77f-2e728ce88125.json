@@ -1,0 +1,66 @@
+{
+  "subject": "Owner Search Template",
+  "fields": [
+    {
+      "name": "name",
+      "display": true
+    },
+    {
+      "name": "osid"
+    },
+    {
+      "name": "email"
+    },
+    {
+      "name": "phone"
+    },
+    {
+      "name": "macAddress"
+    },
+    {
+      "name": "githubId"
+    },
+    {
+      "name": "orgName"
+    },
+    {
+      "name": "role"
+    },
+    {
+      "name": "isActive"
+    },
+    {
+      "name": "isOnboarded"
+    },
+    {
+      "name": "nineAMreportTo"
+    },
+    {
+      "name": "projectName"
+    },
+    {
+      "name": "subProjectName"
+    },
+    {
+      "name": "startDate"
+    },
+    {
+      "name": "endDate"
+    },
+    {
+      "name": "externalId"
+    },
+    {
+      "name": "externalRole"
+    },
+    {
+      "name": "manager"
+    },
+    {
+      "name": "kcid"
+    },
+    {
+      "name":"empCode"
+    }
+  ]
+}

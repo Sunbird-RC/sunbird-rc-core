@@ -1,0 +1,88 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="./css/home.css">
+</head>
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+    crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+    crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+    crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+<script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/jquery-localize/0.1.0/jquery.localize.min.js"></script>
+<script type="text/javascript" src="./utils.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#navbar').load("bootstrap-4-navbar.html", function () {
+            dataLocalizeRefresh("en", "English");
+            document.getElementById("profile").style.display = 'none';
+        });
+    });
+
+    function signUpPage() {
+        document.location.href = "./signUp.html?lang=" + document.getElementById("langSelected").innerHTML
+    }
+</script>
+
+<body>
+    <div id="navbar"> </div>
+    <!-- <section class="jumbotron text-center">
+        <div class="container">
+            <!-- <h1 class="jumbotron-heading">Welcome to the world of building registries!</h1>
+            <p class="lead text-muted">OpenSABER is a collection of interfaces, default implementations and
+                configuration tools to enable any knowledge silo to publish data to the external world and allow trusted
+                agents to issue information into it, via secure standards, privacy protected by a consent driven
+                architecture and expressed via a explicit but extensible vocabulary.</p>
+                
+            <p> 
+                <!-- <a onClick="signUpPage()" class="btn btn-secondary text-light my-2">Sign Up For Free</a>
+            </p>
+        </div>
+    </section> -->
+    <div class="container mt-5 ">
+        <div class="card-deck mb-3">
+            <div class="card mb-4 box-shadow">
+                    <img src="./teacher.jpg" style="height: 18rem">
+
+                <div class="card-body">
+                   <h5 class="card-title" data-localize="teacherCard">As a teacher</h5>
+                    <p class="card-text">
+                        <ul align="left"> 
+                            <li data-localize="teacherLine1"> I ensure my data is correct. </li>
+                            <li data-localize="teacherLine2"> I become discoverable. </li>
+                            <li data-localize="teacherLine3"> I help build my micro-community. </li>
+                        </ul>
+                    </p>
+                </div>
+            </div>
+
+            <div class="card mb-4 box-shadow">
+                    <img src="./institute.jpg" style="height: 18rem">
+
+                <div class="card-body">
+                    <h5 class="card-title" data-localize="stateCard">As a state</h5>
+                    <p class="card-text">
+                        <ul align="left"> 
+                            <li data-localize="stateLine1"> I want to improve my education. </li>
+                            <li data-localize="stateLine2"> I want to identify skills and demand for the country's future. </li>
+                            <li data-localize="stateLine3"> I want to help create self-sustaining, self-run communities.  </li>
+                        </ul>
+                    </p>
+                </div>
+            </div>
+        </div>
+</body>
+
+</html>
