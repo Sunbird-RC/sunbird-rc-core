@@ -33,8 +33,7 @@
         },
          "photo": {
           "type": "string",
-          "contentEncoding": "base64",
-          "mediaType": "image/png"
+          "description": "URL or data url format"
         },
         "nationalIdentifier": {
           "$id": "#/properties/nationalIdentifier",
@@ -48,11 +47,11 @@
         },
         "gender": {
           "$id": "#/properties/gender",
-          "$ref": "Common.json#/definitions/Gender"
+          "$ref": "#/definitions/Gender"
         },
         "dob": {
           "$id": "#/properties/birthDate",
-          "$ref": "Common.json#/definitions/Date"
+          "$ref": "#/definitions/Date"
         },
         "hasDrivingLicense": {
           "$id": "#/properties/hasDrivingLicense",
@@ -67,6 +66,22 @@
           }
         }
       }
+    },
+    "Gender": {
+      "type": "string",
+      "enum": [
+        "MALE",
+        "FEMALE",
+        "OTHER"
+      ]
+    },
+    "Date": {
+      "type": "string",
+      "format": "date",
+      "$comment": "YYYY-MM-DD format",
+      "examples": [
+        "1990-12-01"
+      ]
     }
   },
   "_osConfig": {
