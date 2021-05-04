@@ -1,8 +1,13 @@
 package io.opensaber.registry.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.opensaber.registry.model.attestation.AttestationPolicy;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 /**
  * Holds _osconfig properties for a schema  
  *
@@ -32,13 +37,25 @@ public class OSSchemaConfiguration {
     /**
      * Holds fields name(s) for public usage
      * */
-    private List<String> publicFields;
+    private List<String> publicFields = new ArrayList<>();
 
     /** 
      * Holds field path of the subject of entity
      * */
     private String subjectJsonPath = "";
 
+    /**
+     *
+     * Holds attestableFields info,
+     * Where key is the property name eg. education, certification, ...
+     * and values are list of fields requires attestation
+     */
+    private Map<String, List<String>> attestationFields = new HashMap<>();
+
+    /**
+     * Holds the info of attestation policy
+     */
+    private List<AttestationPolicy> attestationPolicies = new ArrayList<>();
 
     public List<String> getPrivateFields() {
         return privateFields; 
@@ -96,4 +113,21 @@ public class OSSchemaConfiguration {
     public void setSubjectJsonPath(String subjectJsonPath) {
         this.subjectJsonPath = subjectJsonPath;
     }
+
+    public Map<String, List<String>> getAttestationFields() {
+        return attestationFields;
+    }
+
+    public void setAttestationFields(Map<String, List<String>> attestationFields) {
+        this.attestationFields = attestationFields;
+    }
+
+    public List<AttestationPolicy> getAttestationPolicies() {
+        return attestationPolicies;
+    }
+
+    public void setAttestationPolicies(List<AttestationPolicy> attestationPolicies) {
+        this.attestationPolicies = attestationPolicies;
+    }
+
 }

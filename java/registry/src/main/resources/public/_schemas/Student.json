@@ -16,10 +16,67 @@
       "type": "object",
       "title": "The Student Schema",
       "properties": {
-        "personalDetails": {
+        "phone": {
+          "allOf": [
+            {
+              "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
+            },
+            {
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "minLength": 10,
+                  "format": "[6-9][0-9]{9}",
+                  "title": "Phone number"
+                }
+              }
+            }
+          ]
+        },
+        "name": {
+          "allOf": [
+            {
+              "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
+            },
+            {
+              "properties": {
+                "value": {
+                  "$id": "#/properties/name",
+                  "type": "string",
+                  "title": "Name"
+                }
+              }
+            }
+          ]
+        },
+        "dob": {
+          "allOf": [
+            {
+              "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
+            },
+            {
+              "properties": {
+                "value": {
+                  "$id": "#/properties/dob",
+                  "type": "string",
+                  "title": "Date of birth"
+                }
+              }
+            }
+          ]
+        },
+        "address": {
+          "$id": "#/properties/address",
+          "type": "string",
+          "title": "Address of the student"
+        }
+      },
+      "educationDetails": {
+        "type": "array",
+        "items": {
           "type": "object",
           "properties": {
-            "phone": {
+            "title": {
               "allOf": [
                 {
                   "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
@@ -27,24 +84,7 @@
                 {
                   "properties": {
                     "value": {
-                      "type": "string",
-                      "minLength": 10,
-                      "format": "[6-9][0-9]{9}",
-                      "title": "Phone number"
-                    }
-                  }
-                }
-              ]
-            },
-            "name": {
-              "allOf": [
-                {
-                  "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
-                },
-                {
-                  "properties": {
-                    "value": {
-                      "$id": "#/properties/name",
+                      "$id": "#/properties/education/title",
                       "type": "string",
                       "title": "Name"
                     }
@@ -52,7 +92,23 @@
                 }
               ]
             },
-            "dob": {
+            "fromDate": {
+              "allOf": [
+                {
+                  "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
+                },
+                {
+                  "properties": {
+                    "value": {
+                      "$id": "#/properties/fromDate",
+                      "type": "string",
+                      "title": "From date"
+                    }
+                  }
+                }
+              ]
+            },
+            "toDate": {
               "allOf": [
                 {
                   "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
@@ -62,7 +118,7 @@
                     "value": {
                       "$id": "#/properties/dob",
                       "type": "string",
-                      "title": "Date of birth"
+                      "title": "to Date"
                     }
                   }
                 }
@@ -72,67 +128,6 @@
               "$id": "#/properties/address",
               "type": "string",
               "title": "Address of the student"
-            }
-          }
-        },
-        "educationDetails": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "title": {
-                "allOf": [
-                  {
-                    "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
-                  },
-                  {
-                    "properties": {
-                      "value": {
-                        "$id": "#/properties/education/title",
-                        "type": "string",
-                        "title": "Name"
-                      }
-                    }
-                  }
-                ]
-              },
-              "fromDate": {
-                "allOf": [
-                  {
-                    "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
-                  },
-                  {
-                    "properties": {
-                      "value": {
-                        "$id": "#/properties/fromDate",
-                        "type": "string",
-                        "title": "From date"
-                      }
-                    }
-                  }
-                ]
-              },
-              "toDate": {
-                "allOf": [
-                  {
-                    "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
-                  },
-                  {
-                    "properties": {
-                      "value": {
-                        "$id": "#/properties/dob",
-                        "type": "string",
-                        "title": "to Date"
-                      }
-                    }
-                  }
-                ]
-              },
-              "address": {
-                "$id": "#/properties/address",
-                "type": "string",
-                "title": "Address of the student"
-              }
             }
           }
         }
@@ -148,18 +143,19 @@
     ],
     "privateFields": [],
     "signedFields": [],
-    "attestableFields": {
-      "personalDetails": [
+    "attestationFields": {
+      "": [
         "name",
-        "phone"
+        "phone",
+        "dob"
       ],
-      "educationalDetails": [
+      "educationDetails": [
         "fromYear",
         "toYear",
         "instituteName"
       ]
     },
-    "attestations": [
+    "attestationPolicies": [
       {
         "path": "/personalDetails/name",
         "type": "MANUAL",
@@ -208,11 +204,23 @@
       "address"
     ],
     "stateTransitions": {
-      "": ["draft"],
-      "draft": ["published"],
-      "published": ["attested", "draft", "rejected"],
-      "attested": ["draft"],
-      "rejected": ["draft"]
+      "": [
+        "draft"
+      ],
+      "draft": [
+        "published"
+      ],
+      "published": [
+        "attested",
+        "draft",
+        "rejected"
+      ],
+      "attested": [
+        "draft"
+      ],
+      "rejected": [
+        "draft"
+      ]
     },
     "systemFields": [
       "osCreatedAt",

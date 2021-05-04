@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.HealthCheckResponse;
@@ -404,6 +405,7 @@ public class RegistryController {
             logger.info("Bad request body {}", rootNode);
             return badRequestException(responseParams, response, "Request body is empty");
         }
+        enrichRequestWithAttestationDetails(entityName, "", rootNode);
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
 
@@ -437,6 +439,71 @@ public class RegistryController {
         responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         responseParams.setErrmsg(errorMessage);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}", method = RequestMethod.POST)
+    public ResponseEntity<Object> addNewPropertyToTheEntity(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @PathVariable String property,
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode requestBody
+    ) {
+        // TODO: Add Auth validation & property validation
+        // TODO: Read registry
+        // TODO: find all the attestable fields and update it to draft state
+        // TODO: update the db
+        // TODO: Find how to update the es
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+
+        enrichRequestWithAttestationDetails(entityName, property, requestBody);
+        ObjectNode propertyNode = objectMapper.createObjectNode();
+        // TODO: How to check whether it is an array or not? unlike certication and education, IDDetails is not array
+        propertyNode.set(property, JsonNodeFactory.instance.arrayNode().add(requestBody));
+        propertyNode.put(uuidPropertyName, entityId);
+
+        ObjectNode newRootNode = objectMapper.createObjectNode();
+        newRootNode.set(entityName, propertyNode);
+        try {
+            // update db
+            String tag = "RegistryController.update " + entityName;
+            watch.start(tag);
+            // TODO: get userID from auth header
+            registryHelper.updateEntity(newRootNode, "");
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.stop(tag);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            responseParams.setErrmsg(e.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+
+    }
+
+    private void enrichRequestWithAttestationDetails(String entityName, String property, JsonNode requestBody) {
+        // TODO: move the transition logic to DRL
+        Optional<Definition> first = definitionsManager.getAllDefinitions()
+                .stream()
+                .filter(definition -> definition.getTitle().equals(entityName))
+                .findFirst();
+
+        if (first.isPresent()) {
+            List<String> attestationFields = first.get()
+                    .getOsSchemaConfiguration()
+                    .getAttestationFields()
+                    .get(property);
+            for(String field: attestationFields) {
+                Map<String, Object> node = new HashMap<String, Object>() {{
+                    put("state", "draft");
+                    put("value", requestBody.get(field));
+                }};
+                ((ObjectNode) requestBody).set(field, objectMapper.valueToTree(node));
+            }
+        }
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)
