@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.DecryptionHelper;
 import io.opensaber.registry.service.IReadService;
@@ -80,8 +81,17 @@ public class RegistryHelper {
      * @throws Exception
      */
     public String addEntity(JsonNode inputJson, String userId) throws Exception {
-        RecordIdentifier recordId = null;
+        return addEntity(inputJson, userId, inputJson.fields().next().getKey());
+    }
+
+    public String inviteEntity(JsonNode inputJson, String userId, String owner) throws Exception {
         String entityType = inputJson.fields().next().getKey();
+        JSONUtil.addField((ObjectNode) inputJson.get(entityType), "osOwner", owner);
+        return addEntity(inputJson, userId, entityType);
+    }
+
+    private String addEntity(JsonNode inputJson, String userId, String entityType) throws Exception {
+        RecordIdentifier recordId = null;
         try {
             logger.info("Add api: entity type: {} and shard propery: {}", entityType, shardManager.getShardProperty());
             Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));

@@ -281,7 +281,7 @@ public class RegistryController {
          */
         return null;
     }
-    @RequestMapping(value = "/invite", method = RequestMethod.GET)
+    @RequestMapping(value = "/invite", method = RequestMethod.POST)
     public ResponseEntity<Response> invite(@RequestHeader HttpHeaders header) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
@@ -291,8 +291,9 @@ public class RegistryController {
 
         try {
             String entitySubject = validationService.getEntitySubject(entityType, rootNode);
-            keycloakAdminUtil.createUser(entitySubject, "facility admin");
-            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
+            String userID = keycloakAdminUtil.createUser(entitySubject, "facility admin");
+            logger.info("Owner user_id : " + userID);
+            String label = registryHelper.inviteEntity(rootNode, apiMessage.getUserID(), userID);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             result.put(entityType, resultMap);
