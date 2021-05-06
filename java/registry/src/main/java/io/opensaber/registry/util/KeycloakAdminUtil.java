@@ -34,9 +34,9 @@ public class KeycloakAdminUtil {
 
     @Autowired
     public KeycloakAdminUtil(
-            @Value("${keycloak.sso.realm}") String realm,
-            @Value("${keycloak.sso.client_secret}") String clientSecret,
-            @Value("${keycloak.sso.auth_server_url}") String authURL) {
+            @Value("${keycloak.realm}") String realm,
+            @Value("${keycloak-admin.secret}") String clientSecret,
+            @Value("${keycloak.auth-server-url}") String authURL) {
         this.realm = realm;
         this.clientSecret = clientSecret;
         this.authURL = authURL;
