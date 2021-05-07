@@ -50,7 +50,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.security.RolesAllowed;
 import java.io.IOException;
+import java.security.Principal;
 import java.util.*;
 
 @RestController
@@ -246,14 +248,14 @@ public class RegistryController {
      * @return
      */
     @RequestMapping(value = "/read", method = RequestMethod.POST)
-    public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header) {
+    public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header, Principal principal) {
         boolean requireLDResponse = header.getAccept().contains(Constants.LD_JSON_MEDIA_TYPE);
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         JsonNode inputJson = apiMessage.getRequest().getRequestMapNode();
         try {
-            JsonNode resultNode = registryHelper.readEntity(inputJson, apiMessage.getUserID(), requireLDResponse);
+            JsonNode resultNode = registryHelper.readEntity(inputJson, principal.getName(), requireLDResponse);
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
             Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
