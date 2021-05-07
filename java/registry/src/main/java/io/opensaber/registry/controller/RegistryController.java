@@ -462,6 +462,38 @@ public class RegistryController {
         return null;
     }
 
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}", method = RequestMethod.PUT)
+    public ResponseEntity<Object> addNewPropertyToTheEntity(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @PathVariable String property,
+            @PathVariable String propertyId,
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode requestBody
+    ) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        try {
+
+            JsonNode existingNode = registryHelper.readEntity("", property, propertyId, false, null, false);
+            StateContext stateContext = new StateContext(existingNode, requestBody, "student");
+            ruleEngineService.doTransition(stateContext);
+            ObjectNode newRootNode = objectMapper.createObjectNode();
+            newRootNode.set(property, stateContext.getResult());
+            String tag = "RegistryController.update " + entityName;
+            watch.start(tag);
+            registryHelper.updateEntity(newRootNode, "");
+            // entityId may be used to update the es actor
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.stop(tag);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            responseParams.setErrmsg(e.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}", method = RequestMethod.POST)
     public ResponseEntity<Object> addNewPropertyToTheEntity(
             @PathVariable String entityName,
@@ -474,6 +506,7 @@ public class RegistryController {
         // TODO: Read registry
         // TODO: Find how to update the es
         // TODO: get userID from auth header
+        // TODO: Delegate business logic to separate services
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
@@ -488,7 +521,6 @@ public class RegistryController {
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, propertyNode);
         try {
-            // update db
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             registryHelper.updateEntity(newRootNode, "");
