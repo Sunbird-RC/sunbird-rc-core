@@ -17,7 +17,7 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.model.state.StateTransitionDefinition;
+import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
@@ -472,18 +472,17 @@ public class RegistryController {
     ) {
         // TODO: Add Auth validation & property validation
         // TODO: Read registry
-        // TODO: find all the attestable fields and update it to draft state
-        // TODO: update the db
         // TODO: Find how to update the es
+        // TODO: get userID from auth header
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         ObjectNode propertyNode = objectMapper.createObjectNode();
-        StateTransitionDefinition stateTransitionDefinition = new StateTransitionDefinition("student", requestBody);
-        stateTransitionDefinition = ruleEngineService.doTransition(stateTransitionDefinition);
+        StateContext state = new StateContext("student", requestBody);
+        ruleEngineService.doTransition(state);
 
-        // TODO: How to check whether it is an array or not? unlike certication and education IDDetails is not array
-        propertyNode.set(property, JsonNodeFactory.instance.arrayNode().add(stateTransitionDefinition.getRequestBody()));
+        // Assuming property is array node
+        propertyNode.set(property, JsonNodeFactory.instance.arrayNode().add(state.getResult()));
         propertyNode.put(uuidPropertyName, entityId);
 
         ObjectNode newRootNode = objectMapper.createObjectNode();
@@ -492,7 +491,6 @@ public class RegistryController {
             // update db
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
-            // TODO: get userID from auth header
             registryHelper.updateEntity(newRootNode, "");
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);

@@ -1,30 +1,30 @@
-import io.opensaber.registry.model.state.StateTransitionDefinition;
-
+import io.opensaber.registry.model.state.StateContext;
+import io.opensaber.registry.model.state.States;
 
 rule "Admin accepted"
     when
-        stateDefinition : StateTransitionDefinition(currentRole=="admin");
+        stateDefinition : StateContext(currentRole=="admin");
     then
-        stateDefinition.setState("attested");
+        stateDefinition.setState(States.PUBLISHED);
 end
 
 rule "Admin rejected"
     when
-        stateDefinition:StateTransitionDefinition(currentRole=="admin");
+        stateDefinition:StateContext(currentRole=="admin");
     then
-        stateDefinition.setState("rejected");
+        stateDefinition.setState(States.REJECTED);
 end
 
 rule "Set starting state as draft"
     when
-        stateDefinition:StateTransitionDefinition(existingNode == null);
+        stateDefinition:StateContext(existingNode == null);
     then
-        stateDefinition.setState("draft");
+        stateDefinition.setState(States.DRAFT);
 end
 
-rule "Publish if there is a change"
+rule "Set draft if there is a change"
     when
-        stateDefinition:StateTransitionDefinition(!isAttributesContainsSameValue());
+        stateDefinition:StateContext(isAttributesChanged());
     then
-        stateDefinition.setState("draft");
+        stateDefinition.setState(States.DRAFT);
 end

@@ -1,6 +1,6 @@
 package io.opensaber.registry.service;
 
-import io.opensaber.registry.model.state.StateTransitionDefinition;
+import io.opensaber.registry.model.state.StateContext;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +15,10 @@ public class RuleEngineService {
         this.kieContainer = kieContainer;
     }
 
-    public StateTransitionDefinition doTransition(StateTransitionDefinition stateTransitionDefinition) {
+    public void doTransition(StateContext stateContext) {
         KieSession kieSession = kieContainer.newKieSession();
-        kieSession.insert(stateTransitionDefinition);
+        kieSession.insert(stateContext);
         kieSession.fireAllRules();
         kieSession.dispose();
-        return stateTransitionDefinition;
     }
 }
