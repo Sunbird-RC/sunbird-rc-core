@@ -17,10 +17,8 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.service.IReadService;
-import io.opensaber.registry.service.NativeReadService;
-import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.service.ISearchService;
+import io.opensaber.registry.model.state.StateTransitionDefinition;
+import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.transform.Configuration;
@@ -100,6 +98,9 @@ public class RegistryController {
 
     @Autowired
     private IValidate validationService;
+
+    @Autowired
+    RuleEngineService ruleEngineService;
 
     /**
      * Note: Only one mime type is supported at a time. Pick up the first mime
@@ -405,7 +406,6 @@ public class RegistryController {
             logger.info("Bad request body {}", rootNode);
             return badRequestException(responseParams, response, "Request body is empty");
         }
-        enrichRequestWithAttestationDetails(entityName, "", rootNode);
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
 
@@ -441,6 +441,27 @@ public class RegistryController {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    // Entity name and entityId will be used for ESActor
+    @RequestMapping(value="/api/v1/{entityName}/{entityId}/{property}/attest")
+    public ResponseEntity<Object> attest(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @PathVariable String property,
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode requestBody
+    ) throws IOException {
+        String id = requestBody.get(uuidPropertyName).asText();
+        try {
+            JsonNode node = registryHelper.readEntity("admin", property, id, false, null, false);
+            Map<String, Object> result = JSONUtil.convertJsonNodeToMap(node.get(property));
+            // Do the state transitions based on valid and invalid fields
+            logger.info("Received ", result.size());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}", method = RequestMethod.POST)
     public ResponseEntity<Object> addNewPropertyToTheEntity(
             @PathVariable String entityName,
@@ -457,11 +478,12 @@ public class RegistryController {
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
-
-        enrichRequestWithAttestationDetails(entityName, property, requestBody);
         ObjectNode propertyNode = objectMapper.createObjectNode();
-        // TODO: How to check whether it is an array or not? unlike certication and education, IDDetails is not array
-        propertyNode.set(property, JsonNodeFactory.instance.arrayNode().add(requestBody));
+        StateTransitionDefinition stateTransitionDefinition = new StateTransitionDefinition("student", requestBody);
+        stateTransitionDefinition = ruleEngineService.doTransition(stateTransitionDefinition);
+
+        // TODO: How to check whether it is an array or not? unlike certication and education IDDetails is not array
+        propertyNode.set(property, JsonNodeFactory.instance.arrayNode().add(stateTransitionDefinition.getRequestBody()));
         propertyNode.put(uuidPropertyName, entityId);
 
         ObjectNode newRootNode = objectMapper.createObjectNode();
@@ -482,28 +504,6 @@ public class RegistryController {
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
-    }
-
-    private void enrichRequestWithAttestationDetails(String entityName, String property, JsonNode requestBody) {
-        // TODO: move the transition logic to DRL
-        Optional<Definition> first = definitionsManager.getAllDefinitions()
-                .stream()
-                .filter(definition -> definition.getTitle().equals(entityName))
-                .findFirst();
-
-        if (first.isPresent()) {
-            List<String> attestationFields = first.get()
-                    .getOsSchemaConfiguration()
-                    .getAttestationFields()
-                    .get(property);
-            for(String field: attestationFields) {
-                Map<String, Object> node = new HashMap<String, Object>() {{
-                    put("state", "draft");
-                    put("value", requestBody.get(field));
-                }};
-                ((ObjectNode) requestBody).set(field, objectMapper.valueToTree(node));
-            }
-        }
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)

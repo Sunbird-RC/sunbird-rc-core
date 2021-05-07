@@ -75,61 +75,37 @@
         "type": "array",
         "items": {
           "type": "object",
-          "properties": {
-            "title": {
-              "allOf": [
-                {
-                  "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
-                },
-                {
-                  "properties": {
-                    "value": {
-                      "$id": "#/properties/education/title",
-                      "type": "string",
-                      "title": "Name"
-                    }
-                  }
-                }
-              ]
+          "allOf": [
+            {
+              "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
             },
-            "fromDate": {
-              "allOf": [
-                {
-                  "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
-                },
-                {
-                  "properties": {
-                    "value": {
-                      "$id": "#/properties/fromDate",
-                      "type": "string",
-                      "title": "From date"
-                    }
+            {
+              "properties": {
+                "title": {
+                  "value": {
+                    "$id": "#/properties/education/title",
+                    "type": "string",
+                    "title": "Name"
                   }
-                }
-              ]
-            },
-            "toDate": {
-              "allOf": [
-                {
-                  "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
                 },
-                {
-                  "properties": {
-                    "value": {
-                      "$id": "#/properties/dob",
-                      "type": "string",
-                      "title": "to Date"
-                    }
-                  }
+                "fromDate": {
+                  "$id": "#/properties/fromDate",
+                  "type": "string",
+                  "title": "From date"
+                },
+                "toDate": {
+                  "$id": "#/properties/dob",
+                  "type": "string",
+                  "title": "to Date"
+                },
+                "address": {
+                  "$id": "#/properties/address",
+                  "type": "string",
+                  "title": "Address of the student"
                 }
-              ]
-            },
-            "address": {
-              "$id": "#/properties/address",
-              "type": "string",
-              "title": "Address of the student"
+              }
             }
-          }
+          ]
         }
       }
     }

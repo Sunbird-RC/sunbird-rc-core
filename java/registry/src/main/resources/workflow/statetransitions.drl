@@ -1,0 +1,30 @@
+import io.opensaber.registry.model.state.StateTransitionDefinition;
+
+
+rule "Admin accepted"
+    when
+        stateDefinition : StateTransitionDefinition(currentRole=="admin");
+    then
+        stateDefinition.setState("attested");
+end
+
+rule "Admin rejected"
+    when
+        stateDefinition:StateTransitionDefinition(currentRole=="admin");
+    then
+        stateDefinition.setState("rejected");
+end
+
+rule "Set starting state as draft"
+    when
+        stateDefinition:StateTransitionDefinition(existingNode == null);
+    then
+        stateDefinition.setState("draft");
+end
+
+rule "Publish if there is a change"
+    when
+        stateDefinition:StateTransitionDefinition(!isAttributesContainsSameValue());
+    then
+        stateDefinition.setState("draft");
+end
