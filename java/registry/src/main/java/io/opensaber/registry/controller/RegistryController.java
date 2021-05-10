@@ -475,7 +475,9 @@ public class RegistryController {
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
 
-            JsonNode existingNode = registryHelper.readEntity("", property, propertyId, false, null, false);
+            JsonNode existingNode = registryHelper
+                    .readEntity("", property, propertyId, false, null, false)
+                    .get(property);
             StateContext stateContext = new StateContext(existingNode, requestBody, "student");
             ruleEngineService.doTransition(stateContext);
             ObjectNode newRootNode = objectMapper.createObjectNode();

@@ -17,53 +17,20 @@
       "title": "The Student Schema",
       "properties": {
         "phone": {
-          "allOf": [
-            {
-              "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
-            },
-            {
-              "properties": {
-                "value": {
-                  "type": "string",
-                  "minLength": 10,
-                  "format": "[6-9][0-9]{9}",
-                  "title": "Phone number"
-                }
-              }
-            }
-          ]
+          "type": "string",
+          "minLength": 10,
+          "format": "[6-9][0-9]{9}",
+          "title": "Phone number"
         },
         "name": {
-          "allOf": [
-            {
-              "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
-            },
-            {
-              "properties": {
-                "value": {
-                  "$id": "#/properties/name",
-                  "type": "string",
-                  "title": "Name"
-                }
-              }
-            }
-          ]
+          "$id": "#/properties/name",
+          "type": "string",
+          "title": "Name"
         },
         "dob": {
-          "allOf": [
-            {
-              "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
-            },
-            {
-              "properties": {
-                "value": {
-                  "$id": "#/properties/dob",
-                  "type": "string",
-                  "title": "Date of birth"
-                }
-              }
-            }
-          ]
+          "$id": "#/properties/dob",
+          "type": "string",
+          "title": "Date of birth"
         },
         "address": {
           "$id": "#/properties/address",

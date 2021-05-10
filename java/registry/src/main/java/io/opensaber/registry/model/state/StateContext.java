@@ -11,42 +11,55 @@ public class StateContext {
     JsonNode existingNode;
     String currentRole;
     JsonNode requestBody;
-    JsonNode result;
+    ObjectNode result;
 
     public StateContext(JsonNode existingNode, String currentRole) {
         this.existingNode = existingNode;
+        result = existingNode.deepCopy();
         this.currentRole = currentRole;
     }
 
     public StateContext(String currentRole, JsonNode requestBody) {
         this.currentRole = currentRole;
+        result = requestBody.deepCopy();
         this.requestBody = requestBody;
     }
 
-    public StateContext(JsonNode existingNode, JsonNode requestBody, String student) {
+    public StateContext(JsonNode existingNode, JsonNode requestBody, String currentRole) {
         this.existingNode = existingNode;
         this.currentRole = currentRole;
         this.requestBody = requestBody;
+        result = existingNode.deepCopy();
+        copyTheRequestBody(requestBody);
+    }
+
+    private void copyTheRequestBody(JsonNode requestBody) {
+        Iterator<Map.Entry<String, JsonNode>> fields = requestBody.fields();
+        while(fields.hasNext()) {
+            Map.Entry<String, JsonNode> next = fields.next();
+            if(result.has(next.getKey())) {
+                result.put(next.getKey(), requestBody.get(next.getKey()));
+            }
+        }
     }
 
     public boolean isAttributesChanged() {
         Iterator<Map.Entry<String, JsonNode>> fields = existingNode.fields();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> next = fields.next();
-            if(existingNode.has(next.getKey()) && requestBody.has(next.getKey()) &&
+            if(requestBody.has(next.getKey()) &&
                     !requestBody.get(next.getKey()).equals(existingNode.get(next.getKey()))){
                 return true;
             }
         }
         return false;
     }
+
     public void setState(States destinationState) {
         if(existingNode != null) {
-            result = existingNode.deepCopy();
-            ((ObjectNode)result).put("state", destinationState.toString());
+            result.put("state", destinationState.toString());
         } else {
-            result = requestBody.deepCopy();
-            ((ObjectNode)result).put("state", destinationState.toString());
+            result.put("state", destinationState.toString());
         }
     }
 
