@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.APIMessage;
 import io.opensaber.pojos.HealthCheckResponse;
@@ -16,10 +17,8 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.service.IReadService;
-import io.opensaber.registry.service.NativeReadService;
-import io.opensaber.registry.service.RegistryService;
-import io.opensaber.registry.service.ISearchService;
+import io.opensaber.registry.model.state.StateContext;
+import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.transform.Configuration;
@@ -50,7 +49,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.security.RolesAllowed;
 import java.io.IOException;
+import java.security.Principal;
 import java.util.*;
 
 @RestController
@@ -99,6 +100,9 @@ public class RegistryController {
 
     @Autowired
     private IValidate validationService;
+
+    @Autowired
+    RuleEngineService ruleEngineService;
 
     /**
      * Note: Only one mime type is supported at a time. Pick up the first mime
@@ -246,14 +250,14 @@ public class RegistryController {
      * @return
      */
     @RequestMapping(value = "/read", method = RequestMethod.POST)
-    public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header) {
+    public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header, Principal principal) {
         boolean requireLDResponse = header.getAccept().contains(Constants.LD_JSON_MEDIA_TYPE);
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         JsonNode inputJson = apiMessage.getRequest().getRequestMapNode();
         try {
-            JsonNode resultNode = registryHelper.readEntity(inputJson, apiMessage.getUserID(), requireLDResponse);
+            JsonNode resultNode = registryHelper.readEntity(inputJson, principal.getName(), requireLDResponse);
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
             Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
@@ -281,7 +285,7 @@ public class RegistryController {
          */
         return null;
     }
-    @RequestMapping(value = "/invite", method = RequestMethod.GET)
+    @RequestMapping(value = "/invite", method = RequestMethod.POST)
     public ResponseEntity<Response> invite(@RequestHeader HttpHeaders header) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
@@ -291,8 +295,9 @@ public class RegistryController {
 
         try {
             String entitySubject = validationService.getEntitySubject(entityType, rootNode);
-            keycloakAdminUtil.createUser(entitySubject, "facility admin");
-            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
+            String userID = keycloakAdminUtil.createUser(entitySubject, "facility admin");
+            logger.info("Owner user_id : " + userID);
+            String label = registryHelper.inviteEntity(rootNode, apiMessage.getUserID(), userID);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             result.put(entityType, resultMap);
@@ -355,7 +360,39 @@ public class RegistryController {
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode rootNode
     ) throws JsonProcessingException {
-        return null;
+        logger.info("Updating entityType {} request body {}", entityName, rootNode);
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        if (rootNode == null) {
+            logger.error("Bad request body {}", rootNode);
+            return badRequestException(responseParams, response, "Request body is empty");
+        }
+        if (rootNode.has(uuidPropertyName)) {
+            if (!rootNode.get(uuidPropertyName).asText().equals(entityId)) {
+                logger.error("Bad request body {}", rootNode);
+                return badRequestException(responseParams, response, "ID passed in params doesn't match with the Request body ID");
+            }
+        } else {
+            ((ObjectNode)rootNode).put(uuidPropertyName, entityId);
+        }
+        ObjectNode newRootNode = objectMapper.createObjectNode();
+        newRootNode.set(entityName, rootNode);
+
+        try {
+            String tag = "RegistryController.update " + entityName;
+            watch.start(tag);
+            // TODO: get userID from auth header
+            registryHelper.updateEntity(newRootNode, "");
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.stop(tag);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("RegistryController: Exception while updating entity (without id)!", e);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.POST)
@@ -405,6 +442,103 @@ public class RegistryController {
         responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         responseParams.setErrmsg(errorMessage);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    // Entity name and entityId will be used for ESActor
+    @RequestMapping(value="/api/v1/{entityName}/{entityId}/{property}/attest")
+    public ResponseEntity<Object> attest(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @PathVariable String property,
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode requestBody
+    ) throws IOException {
+        String id = requestBody.get(uuidPropertyName).asText();
+        try {
+            JsonNode node = registryHelper.readEntity("admin", property, id, false, null, false);
+            Map<String, Object> result = JSONUtil.convertJsonNodeToMap(node.get(property));
+            // Do the state transitions based on valid and invalid fields
+            logger.info("Received ", result.size());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}", method = RequestMethod.PUT)
+    public ResponseEntity<Object> addNewPropertyToTheEntity(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @PathVariable String property,
+            @PathVariable String propertyId,
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode requestBody
+    ) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        try {
+
+            JsonNode existingNode = registryHelper
+                    .readEntity("", property, propertyId, false, null, false)
+                    .get(property);
+            StateContext stateContext = new StateContext(existingNode, requestBody, "student");
+            ruleEngineService.doTransition(stateContext);
+            ObjectNode newRootNode = objectMapper.createObjectNode();
+            newRootNode.set(property, stateContext.getResult());
+            String tag = "RegistryController.update " + entityName;
+            watch.start(tag);
+            registryHelper.updateEntity(newRootNode, "");
+            // entityId may be used to update the es actor
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.stop(tag);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            responseParams.setErrmsg(e.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}", method = RequestMethod.POST)
+    public ResponseEntity<Object> addNewPropertyToTheEntity(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @PathVariable String property,
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode requestBody
+    ) {
+        // TODO: Add Auth validation & property validation
+        // TODO: Read registry
+        // TODO: Find how to update the es
+        // TODO: get userID from auth header
+        // TODO: Delegate business logic to separate services
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        ObjectNode propertyNode = objectMapper.createObjectNode();
+        StateContext state = new StateContext("student", requestBody);
+        ruleEngineService.doTransition(state);
+
+        // Assuming property is array node
+        propertyNode.set(property, JsonNodeFactory.instance.arrayNode().add(state.getResult()));
+        propertyNode.put(uuidPropertyName, entityId);
+
+        ObjectNode newRootNode = objectMapper.createObjectNode();
+        newRootNode.set(entityName, propertyNode);
+        try {
+            String tag = "RegistryController.update " + entityName;
+            watch.start(tag);
+            registryHelper.updateEntity(newRootNode, "");
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.stop(tag);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            responseParams.setErrmsg(e.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)

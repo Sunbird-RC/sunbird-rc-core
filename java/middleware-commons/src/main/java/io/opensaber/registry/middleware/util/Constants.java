@@ -98,6 +98,9 @@ public class Constants {
 	public static final String FILE="FILE";
 	public static final String DATABASE="DATABASE";
 
+	//Expand config
+	public static final int MAX_EXPAND_LEVEL=4;
+
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH");
 

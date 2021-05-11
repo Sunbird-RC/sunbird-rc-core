@@ -7,6 +7,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ReadConfigurator;
+import io.opensaber.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
@@ -70,12 +71,16 @@ public class RegistryDaoImpl implements IRegistryDao {
     }
 
 
-    public JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator) {
+    public JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator, boolean expandInternal) throws Exception {
 
         VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
-        JsonNode result = vr.constructObject(vertex);
-
-        return result;
+        ObjectNode constructObject = vr.constructObject(vertex);
+        if (expandInternal) {
+            String entityType = (String) ValueType.getValue(constructObject.get(TypePropertyHelper.getTypeName()));
+            return vr.readInternal(vertex).get(entityType);
+        } else {
+            return constructObject;
+        }
     }
 
 
@@ -115,7 +120,9 @@ public class RegistryDaoImpl implements IRegistryDao {
             String fieldKey = field.getKey();
             if (!fieldKey.equals(uuidPropertyName) &&
                     fieldValue.isValueNode() && !fieldKey.equals(Constants.TYPE_STR_JSON_LD)) {
-                vertex.property(fieldKey, ValueType.getValue(fieldValue));
+                if (!fieldValue.isNull()) {
+                    vertex.property(fieldKey, ValueType.getValue(fieldValue));
+                }
             } else {
                 logger.debug("Not updating non-value object types here");
             }
