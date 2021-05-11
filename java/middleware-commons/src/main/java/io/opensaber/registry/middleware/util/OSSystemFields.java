@@ -33,6 +33,12 @@ public enum OSSystemFields {
         public void updatedBy(JsonNode node, String userId) {
             JSONUtil.addField((ObjectNode) node, osUpdatedBy.toString(), userId != null ? userId : "");
         }
+    },
+    osOwner {
+      @Override
+      public void setOsOwner(JsonNode node, String owner) {
+          JSONUtil.addField((ObjectNode) node, osOwner.toString(), owner != null ? owner : "");
+      }
     };
 
     public void createdBy(JsonNode node, String userId){};
@@ -42,6 +48,8 @@ public enum OSSystemFields {
     public void createdAt(JsonNode node, String timeStamp){};
 
     public void updatedAt(JsonNode node, String timeStamp){};
+
+    public void setOsOwner(JsonNode node, String owner) {};
 
     public static OSSystemFields getByValue(String value) {
         for (final OSSystemFields element : EnumSet.allOf(OSSystemFields.class)) {
