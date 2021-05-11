@@ -14,6 +14,6 @@
     "title": "Registry and Credential",
     "version": "1.0.0"
   },
-  "host": "divoc.xiv.in",
-  "basePath": "/api/v1"
+  "host": "ndear.xiv.in",
+  "basePath": "/"
 }

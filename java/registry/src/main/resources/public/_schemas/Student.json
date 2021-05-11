@@ -2,28 +2,29 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
   "properties": {
-    "Teacher": {
-      "$ref": "#/definitions/Teacher"
+    "Student": {
+      "$ref": "#/definitions/Student"
     }
   },
   "required": [
-    "Teacher"
+    "Student"
   ],
-  "title":"Teacher",
+  "title":"Student",
   "definitions": {
-    "Teacher": {
-      "$id": "#/properties/Teacher",
+    "Student": {
+      "$id": "#/properties/Student",
       "type": "object",
-      "title": "The Teacher Schema",
+      "title": "The Student Schema",
       "required": [
-        "teacherName",
-        "teacherCode",
+        "studentName",
+        "studentCode",
         "nationalIdentifier",
+        "class",
         "gender"
       ],
       "properties": {
-        "teacherCode": {
-          "$id": "#/properties/teacherCode",
+        "studentCode": {
+          "$id": "#/properties/studentCode",
           "type": "string",
           "$comment": "Code"
         },
@@ -32,8 +33,8 @@
           "type": "string",
           "$comment": "Nationality"
         },
-        "teacherName": {
-          "$id": "#/properties/teacherName",
+        "studentName": {
+          "$id": "#/properties/studentName",
           "type": "string",
           "title": "Full name"
         },
@@ -135,14 +136,14 @@
          "osComment": ["This section contains the OpenSABER specific configuration information", 
                       "privateFields: Optional; list of field names to be encrypted and stored in database", 
                       "signedFields: Optional; list of field names that must be pre-signed",
-                      "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, teacherCode) is a composite index and teacherName is a single column index.",
+                      "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, studentCode) is a composite index and studentName is a single column index.",
                       "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
                       "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"], 
                                            
-         "privateFields": ["teacherCode", "birthDate"],
+         "privateFields": ["studentCode", "birthDate"],
          "signedFields": [],
-         "indexFields": ["teacherCode","teacherName"],
-         "uniqueIndexFields": ["teacherCode"],
+         "indexFields": ["studentCode","studentName"],
+         "uniqueIndexFields": ["studentCode"],
          "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"],
     "attestations": [
       {
