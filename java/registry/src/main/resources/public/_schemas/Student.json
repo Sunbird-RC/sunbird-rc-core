@@ -144,7 +144,8 @@
     "publicFields": [
       "name",
       "dob",
-      "address"
+      "address",
+      "educationDetails"
     ],
     "stateTransitions": {
       "": [

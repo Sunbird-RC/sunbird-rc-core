@@ -320,7 +320,7 @@ public class RegistryServiceImpl implements RegistryService {
         }
     }
 
- 
+   @Override
    @Async("taskExecutor")	
    public void callESActors(JsonNode rootNode, String operation, String parentEntityType, String entityRootId, Transaction tx) throws JsonProcessingException {			      
 			logger.debug("callESActors started");       

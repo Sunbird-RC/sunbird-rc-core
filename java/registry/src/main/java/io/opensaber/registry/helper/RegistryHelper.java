@@ -27,8 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-
 
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
@@ -182,6 +180,13 @@ public class RegistryHelper {
         registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString);
         logger.debug("updateEntity ends");
         return "SUCCESS";
+    }
+
+    /* It will be used to update the sub section of the entity in the es
+    */
+    public void updateEntityInEs(String entityName, String entityId) throws Exception {
+        JsonNode jsonNode = readEntity("", entityName, entityId, false, null, false);
+        registryService.callESActors(jsonNode, "UPDATE", entityName, entityId, null);
     }
 
     public void attestEntity(String entityName, JsonNode node, String[] jsonPaths, String userId) throws Exception {

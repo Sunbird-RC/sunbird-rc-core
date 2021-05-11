@@ -485,7 +485,7 @@ public class RegistryController {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             registryHelper.updateEntity(newRootNode, "");
-            // entityId may be used to update the es actor
+            registryHelper.updateEntityInEs(entityName, entityId);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -505,10 +505,7 @@ public class RegistryController {
             @RequestBody JsonNode requestBody
     ) {
         // TODO: Add Auth validation & property validation
-        // TODO: Read registry
-        // TODO: Find how to update the es
         // TODO: get userID from auth header
-        // TODO: Delegate business logic to separate services
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
@@ -528,6 +525,7 @@ public class RegistryController {
             registryHelper.updateEntity(newRootNode, "");
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
+            registryHelper.updateEntityInEs(entityName, entityId);
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
