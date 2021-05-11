@@ -509,17 +509,24 @@ public class RegistryController {
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
-        ObjectNode propertyNode = objectMapper.createObjectNode();
-        StateContext state = new StateContext("student", requestBody);
-        ruleEngineService.doTransition(state);
-
-        // Assuming property is array node
-        propertyNode.set(property, JsonNodeFactory.instance.arrayNode().add(state.getResult()));
-        propertyNode.put(uuidPropertyName, entityId);
-
-        ObjectNode newRootNode = objectMapper.createObjectNode();
-        newRootNode.set(entityName, propertyNode);
         try {
+            ObjectNode propertyNode = objectMapper.createObjectNode();
+            StateContext state = new StateContext("student", requestBody);
+            ruleEngineService.doTransition(state);
+            JsonNode existingProperties = registryHelper
+                    .readEntity("", entityName, entityId, false, null, false)
+                    .get(entityName)
+                    .get(property);
+            if(existingProperties != null) {
+                propertyNode.set(property, ((ArrayNode)existingProperties).add(state.getResult()));
+                propertyNode.put(uuidPropertyName, entityId);
+            } else {
+                propertyNode.set(property, JsonNodeFactory.instance.arrayNode().add(state.getResult()));
+                propertyNode.put(uuidPropertyName, entityId);
+            }
+
+            ObjectNode newRootNode = objectMapper.createObjectNode();
+            newRootNode.set(entityName, propertyNode);
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             registryHelper.updateEntity(newRootNode, "");
@@ -533,7 +540,6 @@ public class RegistryController {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)
