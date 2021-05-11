@@ -131,9 +131,6 @@
         }
       }
     },
-    "@type": {
-      "type": "string"
-    },
     "TeacherGender": {
       "type": "string",
       "enum": [
@@ -152,10 +149,7 @@
     "Date": {
       "type": "string",
       "format": "date",
-      "$comment": "YYYY-MM-DD format",
-      "examples": [
-        "1990-12-01"
-      ]
+      "$comment": "YYYY-MM-DD format"
     },
     "Year": {
       "type": "string",
@@ -300,32 +294,33 @@
       "properties": {
         "teacherType": {
           "$id": "#/properties/teacherType",
-          "$ref": "Common.json#/definitions/TeacherType"
+          "$ref": "#/definitions/TeacherType"
         },
         "appointmentType": {
-          "$id": "#/properties/appointmentType",
-          "$ref": "Common.json#/definitions/AppointmentType"
+          "$ref": "#/definitions/AppointmentType"
         },
         "classesTaught": {
-          "$id": "#/properties/classesTaught",
           "type": "array",
-          "$ref": "Common.json#/definitions/ClassType"
+          "items": {
+            "$ref": "#/definitions/ClassType"
+          }
         },
         "appointedForSubjects": {
-          "$id": "#/properties/appointedForSubjects",
           "type": "array",
-          "$ref": "Common.json#/definitions/Subjects"
+          "items": {
+            "$ref": "#/definitions/Subjects"
+          }
         },
         "mainSubjectsTaught": {
           "$id": "#/properties/mainSubjectsTaught",
           "type": "array",
           "items": {
-            "$ref": "Common.json#/definitions/Subjects"
+            "$ref": "#/definitions/Subjects"
           }
         },
         "appointmentYear": {
           "$id": "#/properties/appointmentYear",
-          "$ref": "Common.json#/definitions/Year"
+          "$ref": "#/definitions/Year"
         }
       }
     },
@@ -351,11 +346,11 @@
       "properties": {
         "proficiencySubject": {
           "$id": "#/properties/proficiencySubject",
-          "$ref": "Common.json#/definitions/Subjects"
+          "$ref": "#/definitions/Subjects"
         },
         "proficiencyAcademicQualification": {
           "$id": "#/properties/proficiencyAcademicQualification",
-          "$ref": "Common.json#/definitions/AcademicQualification"
+          "$ref": "#/definitions/AcademicQualification"
         }
       }
     },

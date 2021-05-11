@@ -49,7 +49,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.security.RolesAllowed;
 import java.io.IOException;
+import java.security.Principal;
 import java.util.*;
 
 @RestController
@@ -248,14 +250,14 @@ public class RegistryController {
      * @return
      */
     @RequestMapping(value = "/read", method = RequestMethod.POST)
-    public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header) {
+    public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header, Principal principal) {
         boolean requireLDResponse = header.getAccept().contains(Constants.LD_JSON_MEDIA_TYPE);
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         JsonNode inputJson = apiMessage.getRequest().getRequestMapNode();
         try {
-            JsonNode resultNode = registryHelper.readEntity(inputJson, apiMessage.getUserID(), requireLDResponse);
+            JsonNode resultNode = registryHelper.readEntity(inputJson, principal.getName(), requireLDResponse);
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
             Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
@@ -283,7 +285,7 @@ public class RegistryController {
          */
         return null;
     }
-    @RequestMapping(value = "/invite", method = RequestMethod.GET)
+    @RequestMapping(value = "/invite", method = RequestMethod.POST)
     public ResponseEntity<Response> invite(@RequestHeader HttpHeaders header) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
@@ -293,8 +295,9 @@ public class RegistryController {
 
         try {
             String entitySubject = validationService.getEntitySubject(entityType, rootNode);
-            keycloakAdminUtil.createUser(entitySubject, "facility admin");
-            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
+            String userID = keycloakAdminUtil.createUser(entitySubject, "facility admin");
+            logger.info("Owner user_id : " + userID);
+            String label = registryHelper.inviteEntity(rootNode, apiMessage.getUserID(), userID);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             result.put(entityType, resultMap);
@@ -587,11 +590,17 @@ public class RegistryController {
         doc.set("paths", paths);
         doc.set("definitions", definitions);
         for (String entityName : definitionsManager.getAllKnownDefinitions()) {
-            ObjectNode path = populateEntityActions(entityName);
-            paths.set(String.format("/api/v1/%s/{entityId}", entityName), path);
-            JsonNode schemaDefinition = objectMapper.reader().readTree(definitionsManager.getDefinition(entityName).getContent());
-            deleteAll$Ids((ObjectNode) schemaDefinition);
-            definitions.set(entityName, schemaDefinition.get("definitions").get(entityName));
+            if (Character.isUpperCase(entityName.charAt(0))) {
+                ObjectNode path = populateEntityActions(entityName);
+                paths.set(String.format("/api/v1/%s/{entityId}", entityName), path);
+                JsonNode schemaDefinition = objectMapper.reader().readTree(definitionsManager.getDefinition(entityName).getContent());
+                deleteAll$Ids((ObjectNode) schemaDefinition);
+//                definitions.set(entityName, schemaDefinition.get("definitions").get(entityName));
+                for (Iterator<String> it = schemaDefinition.get("definitions").fieldNames(); it.hasNext(); ) {
+                    String fieldName = it.next();
+                    definitions.set(fieldName, schemaDefinition.get("definitions").get(fieldName));
+                }
+            }
         }
         return new ResponseEntity<>(objectMapper.writeValueAsString(doc), HttpStatus.OK);
     }
@@ -644,11 +653,17 @@ public class RegistryController {
     private void addModifyOperation(String entityName, ObjectNode path, String operationType, String descriptionPrefix) throws IOException {
         Operation operation = new Operation()
                 .description(String.format("%s new %s", descriptionPrefix, entityName));
-        BodyParameter parameter = new BodyParameter()
+        BodyParameter bodyParameter = new BodyParameter()
                 .name("entityId")
                 .description(String.format("Id of the %s", entityName))
                 .schema(new RefModel(String.format("#/definitions/%s", entityName)));
-        addResponseType(entityName, path, operation.parameter(parameter), operationType);
+        PathParameter pathParameter = new PathParameter()
+                .name("entityId")
+                .description(String.format("Id of the %s", entityName))
+                .required(true)
+                .type("string");
+        addResponseType(entityName, path,
+                operation.parameter(bodyParameter).parameter(pathParameter), operationType);
     }
 
     private void addGetOperation(String entityName, ObjectNode path) throws IOException {
