@@ -58,7 +58,7 @@ public class ReadConfiguratorFactory {
         configurator.setIncludeIdentifiers(true);
 
         // We want to know if the passed in value is child or not
-        configurator.setIncludeRootIdentifiers(true);
+        configurator.setIncludeRootIdentifiers(false);
 
         return configurator;
     }

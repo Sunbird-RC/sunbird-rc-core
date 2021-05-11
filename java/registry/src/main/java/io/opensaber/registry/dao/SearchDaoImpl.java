@@ -25,7 +25,7 @@ public class SearchDaoImpl implements SearchDao {
         registryDao = registryDaoImpl;
     }
 
-    public JsonNode search(Graph graphFromStore, SearchQuery searchQuery) {
+    public JsonNode search(Graph graphFromStore, SearchQuery searchQuery, boolean expandInternal) {
 
         GraphTraversalSource dbGraphTraversalSource = graphFromStore.traversal().clone();
         List<Filter> filterList = searchQuery.getFilters();
@@ -38,7 +38,7 @@ public class SearchDaoImpl implements SearchDao {
 
             resultGraphTraversal = getFilteredResultTraversal(resultGraphTraversal, filterList)
                     .range(offset, offset + searchQuery.getLimit()).limit(searchQuery.getLimit());
-            JsonNode result = getResult(graphFromStore, resultGraphTraversal, parentTraversal);
+            JsonNode result = getResult(graphFromStore, resultGraphTraversal, parentTraversal, expandInternal);
             resultNode.set(entity, result);
         }
 
@@ -148,7 +148,7 @@ public class SearchDaoImpl implements SearchDao {
 		return valueList;
 	}
 
-	private JsonNode getResult (Graph graph, GraphTraversal resultTraversal, GraphTraversal parentTraversal) {
+	private JsonNode getResult(Graph graph, GraphTraversal resultTraversal, GraphTraversal parentTraversal, boolean expandInternal) {
 		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		if (resultTraversal != null) {
             //parentTraversal.map(resultTraversal);
@@ -163,7 +163,7 @@ public class SearchDaoImpl implements SearchDao {
 
 					JsonNode answer = null;
 					try {
-						answer = registryDao.getEntity(graph, v, configurator);
+						answer = registryDao.getEntity(graph, v, configurator, expandInternal);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

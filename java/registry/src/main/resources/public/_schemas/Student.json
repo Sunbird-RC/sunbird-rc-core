@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "Student": {
+      "$ref": "#/definitions/Student"
+    }
+  },
+  "title": "Student",
+  "required": [
+    "Student"
+  ],
+  "definitions": {
+    "Student": {
+      "$id": "#/properties/Student",
+      "type": "object",
+      "title": "The Student Schema",
+      "properties": {
+        "phone": {
+          "type": "string",
+          "minLength": 10,
+          "format": "[6-9][0-9]{9}",
+          "title": "Phone number"
+        },
+        "name": {
+          "$id": "#/properties/name",
+          "type": "string",
+          "title": "Name"
+        },
+        "dob": {
+          "$id": "#/properties/dob",
+          "type": "string",
+          "title": "Date of birth"
+        },
+        "address": {
+          "$id": "#/properties/address",
+          "type": "string",
+          "title": "Address of the student"
+        }
+      },
+      "educationDetails": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
+            },
+            {
+              "properties": {
+                "title": {
+                  "value": {
+                    "$id": "#/properties/education/title",
+                    "type": "string",
+                    "title": "Name"
+                  }
+                },
+                "fromDate": {
+                  "$id": "#/properties/fromDate",
+                  "type": "string",
+                  "title": "From date"
+                },
+                "toDate": {
+                  "$id": "#/properties/dob",
+                  "type": "string",
+                  "title": "to Date"
+                },
+                "address": {
+                  "$id": "#/properties/address",
+                  "type": "string",
+                  "title": "Address of the student"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "osComment": [
+      "This section contains the OpenSABER specific configuration information",
+      "privateFields: Optional; list of field names to be encrypted and stored in database",
+      "signedFields: Optional; list of field names that must be pre-signed",
+      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"
+    ],
+    "privateFields": [],
+    "signedFields": [],
+    "attestationFields": {
+      "": [
+        "name",
+        "phone",
+        "dob"
+      ],
+      "educationDetails": [
+        "fromYear",
+        "toYear",
+        "instituteName"
+      ]
+    },
+    "attestationPolicies": [
+      {
+        "path": "/personalDetails/name",
+        "type": "MANUAL",
+        "by": "some-route-which-redirects-to-respective-school's-admin/teacher/hod",
+        "roles": [
+          "admin",
+          "teacher"
+        ]
+      },
+      {
+        "path": "/personalDetails/phone",
+        "type": "AUTOMATED",
+        "by": "route-to-otp-service"
+      },
+      {
+        "path": "/educationDetails/fromYear",
+        "type": "MANUAL",
+        "by": "some-route-which-redirects-to-respective-school's-admin/teacher/hod",
+        "roles": [
+          "admin",
+          "teacher"
+        ]
+      },
+      {
+        "path": "/educationDetails/toYear",
+        "type": "MANUAL",
+        "by": "some-route-which-redirects-to-respective-school's-admin/teacher/hod",
+        "roles": [
+          "admin",
+          "teacher"
+        ]
+      },
+      {
+        "path": "/educationDetails/institutionName",
+        "type": "MANUAL",
+        "by": "some-route-which-redirects-to-respective-school's-admin/teacher/hod",
+        "roles": [
+          "admin",
+          "teacher"
+        ]
+      }
+    ],
+    "publicFields": [
+      "name",
+      "dob",
+      "address"
+    ],
+    "stateTransitions": {
+      "": [
+        "draft"
+      ],
+      "draft": [
+        "published"
+      ],
+      "published": [
+        "attested",
+        "draft",
+        "rejected"
+      ],
+      "attested": [
+        "draft"
+      ],
+      "rejected": [
+        "draft"
+      ]
+    },
+    "systemFields": [
+      "osCreatedAt",
+      "osUpdatedAt",
+      "osCreatedBy",
+      "osUpdatedBy",
+      "osStatus",
+      "osOwner"
+    ]
+  }
+}

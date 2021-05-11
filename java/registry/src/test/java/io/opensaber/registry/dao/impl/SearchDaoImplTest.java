@@ -55,6 +55,7 @@ public class SearchDaoImplTest {
     private final static String VALUE_NOT_PRESENT = "valueNotPresent";
     private final static int offset = 0;
     private final static int limit = 1;
+    private final static boolean expandInternal = true;
     private List<String> entities = new ArrayList<>();
 
     
@@ -76,21 +77,21 @@ public class SearchDaoImplTest {
     @Test
     public void test_search_no_response() throws AuditFailedException, EncryptionException, RecordNotFoundException {
         SearchQuery searchQuery = getSearchQuery(entities, "", "", FilterOperators.eq);//new SearchQuery("", 0, 0);
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 0);
     }
 
     @Test
     public void testEqOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "marko", FilterOperators.eq);
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 1);
     }
 
     @Test
     public void testNeqOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "marko", FilterOperators.neq);
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 2);
     }
 
@@ -100,7 +101,7 @@ public class SearchDaoImplTest {
         range.add(1);
         range.add(3);
         SearchQuery searchQuery = getSearchQuery(entities, "serialNum", range, FilterOperators.between);
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 2);
     }
     
@@ -111,33 +112,33 @@ public class SearchDaoImplTest {
         values.add("vedas");
         values.add(VALUE_NOT_PRESENT); 
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", values, FilterOperators.or);
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 2);
     }
 
     @Test
     public void testStartsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.startsWith);
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 1);
     }
     @Test
     public void testNotStartsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "ma", FilterOperators.notStartsWith);
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 2);
     }
 
     @Test
     public void testEndsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.endsWith);
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 2);
     }
     @Test
     public void testNotEndsWithOperator() {
         SearchQuery searchQuery = getSearchQuery(entities, "teacherName", "as", FilterOperators.notEndsWith);
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 1);
     }
     @Test
@@ -149,14 +150,14 @@ public class SearchDaoImplTest {
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.gte, 3));
         searchQuery.getFilters().add(new Filter("serialNum", FilterOperators.gt, 1));
 
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 0);
     }
 
     @Test
     public void testResponseLimit() {
         SearchQuery searchQuery = new SearchQuery(entities, offset, limit);
-        JsonNode result = searchDao.search(graph, searchQuery);
+        JsonNode result = searchDao.search(graph, searchQuery, expandInternal);
         assertTrue(result.get("Teacher").size() == 1);
     }
 

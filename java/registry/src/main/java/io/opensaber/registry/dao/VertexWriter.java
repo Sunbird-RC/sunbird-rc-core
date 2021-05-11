@@ -13,6 +13,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,6 +111,14 @@ public class VertexWriter {
     	vertex.property(propertyName,ArrayHelper.formatToString(updatedUuids));
     }
 
+    private void removeExistingDefaultProperty(Vertex vertex, String entryKey){
+        VertexProperty<Object> existingProperty = vertex.property(entryKey);
+        if (existingProperty.isPresent()) {
+            logger.info("Removing existing emtpy property: {}", entryKey);
+            existingProperty.remove();
+        }
+    }
+
     /**
      * Writes an array into the database. For each array item, if it is an
      * object creates/populates a new vertex/table and stores the reference
@@ -138,6 +147,7 @@ public class VertexWriter {
             } else {
                 addEdge(entryKey, vertex, blankNode);
             }
+            removeExistingDefaultProperty(vertex, entryKey);
             vertex.property(label, databaseProvider.getId(blankNode));
             blankNode.property(Constants.INTERNAL_TYPE_KEYWORD, entryKey);
             blankNode.property(Constants.ROOT_KEYWORD, parentOSid);

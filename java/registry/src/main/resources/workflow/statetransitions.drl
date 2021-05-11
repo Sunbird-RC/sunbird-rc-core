@@ -1,0 +1,30 @@
+import io.opensaber.registry.model.state.StateContext;
+import io.opensaber.registry.model.state.States;
+
+rule "Admin accepted"
+    when
+        stateDefinition : StateContext(currentRole=="admin");
+    then
+        stateDefinition.setState(States.PUBLISHED);
+end
+
+rule "Admin rejected"
+    when
+        stateDefinition:StateContext(currentRole=="admin");
+    then
+        stateDefinition.setState(States.REJECTED);
+end
+
+rule "Set starting state as draft"
+    when
+        stateDefinition:StateContext(existingNode == null);
+    then
+        stateDefinition.setState(States.DRAFT);
+end
+
+rule "Set state as draft if there is a change"
+    when
+        stateDefinition:StateContext(existingNode != null && isAttributesChanged());
+    then
+        stateDefinition.setState(States.DRAFT);
+end
