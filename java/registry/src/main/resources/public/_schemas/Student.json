@@ -6,173 +6,151 @@
       "$ref": "#/definitions/Student"
     }
   },
-  "title": "Student",
   "required": [
     "Student"
   ],
+  "title":"Student",
   "definitions": {
     "Student": {
       "$id": "#/properties/Student",
       "type": "object",
       "title": "The Student Schema",
+      "required": [
+        "studentName",
+        "studentCode",
+        "nationalIdentifier",
+        "class",
+        "gender"
+      ],
       "properties": {
-        "phone": {
+        "studentCode": {
+          "$id": "#/properties/studentCode",
           "type": "string",
-          "minLength": 10,
-          "format": "[6-9][0-9]{9}",
-          "title": "Phone number"
+          "$comment": "Code"
         },
-        "name": {
-          "$id": "#/properties/name",
+        "nationalIdentifier": {
+          "$id": "#/properties/nationalIdentifier",
           "type": "string",
-          "title": "Name"
+          "$comment": "Nationality"
         },
-        "dob": {
-          "$id": "#/properties/dob",
+        "studentName": {
+          "$id": "#/properties/studentName",
           "type": "string",
-          "title": "Date of birth"
+          "title": "Full name"
+        },
+        "gender": {
+          "$id": "#/properties/gender",
+          "type": "string",
+          "enum": [
+            "Male",
+            "Female",
+            "Other"
+          ]
+        },
+        "birthDate": {
+          "$id": "#/properties/birthDate",
+          "type": "string",
+          "format": "date"
+        },
+        "email": {
+          "$id": "#/properties/email",
+          "type": "string"
+        },
+        "mobile": {
+          "$id": "#/properties/mobile",
+          "type": "string"
         },
         "address": {
-          "$id": "#/properties/address",
-          "type": "string",
-          "title": "Address of the student"
-        }
-      },
-      "educationDetails": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "allOf": [
-            {
-              "$ref": "./BaseAttestationField.json#/definitions/baseAttestationField"
-            },
-            {
-              "properties": {
-                "title": {
-                  "value": {
-                    "$id": "#/properties/education/title",
-                    "type": "string",
-                    "title": "Name"
-                  }
-                },
-                "fromDate": {
-                  "$id": "#/properties/fromDate",
-                  "type": "string",
-                  "title": "From date"
-                },
-                "toDate": {
-                  "$id": "#/properties/dob",
-                  "type": "string",
-                  "title": "to Date"
-                },
-                "address": {
-                  "$id": "#/properties/address",
-                  "type": "string",
-                  "title": "Address of the student"
-                }
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "education": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "degree": {
+                "type": "string"
+              },
+              "institute": {
+                "type": "string"
+              },
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
               }
             }
-          ]
+          }
+        },
+        "experience": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
+        },
+        "certification": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "institute": {
+                "type": "string"
+              },
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
         }
       }
     }
   },
   "_osConfig": {
-    "osComment": [
-      "This section contains the OpenSABER specific configuration information",
-      "privateFields: Optional; list of field names to be encrypted and stored in database",
-      "signedFields: Optional; list of field names that must be pre-signed",
-      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"
-    ],
-    "privateFields": [],
-    "signedFields": [],
-    "attestationFields": {
-      "": [
-        "name",
-        "phone",
-        "dob"
-      ],
-      "educationDetails": [
-        "fromYear",
-        "toYear",
-        "instituteName"
-      ]
-    },
-    "attestationPolicies": [
+         "osComment": ["This section contains the OpenSABER specific configuration information",
+                      "privateFields: Optional; list of field names to be encrypted and stored in database",
+                      "signedFields: Optional; list of field names that must be pre-signed",
+                      "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, studentCode) is a composite index and studentName is a single column index.",
+                      "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
+                      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"],
+
+         "privateFields": ["studentCode", "birthDate"],
+         "signedFields": [],
+         "indexFields": ["studentCode","studentName"],
+         "uniqueIndexFields": ["studentCode"],
+         "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"],
+    "attestations": [
       {
-        "path": "/personalDetails/name",
-        "type": "MANUAL",
-        "by": "some-route-which-redirects-to-respective-school's-admin/teacher/hod",
-        "roles": [
-          "admin",
-          "teacher"
-        ]
-      },
-      {
-        "path": "/personalDetails/phone",
-        "type": "AUTOMATED",
-        "by": "route-to-otp-service"
-      },
-      {
-        "path": "/educationDetails/fromYear",
-        "type": "MANUAL",
-        "by": "some-route-which-redirects-to-respective-school's-admin/teacher/hod",
-        "roles": [
-          "admin",
-          "teacher"
-        ]
-      },
-      {
-        "path": "/educationDetails/toYear",
-        "type": "MANUAL",
-        "by": "some-route-which-redirects-to-respective-school's-admin/teacher/hod",
-        "roles": [
-          "admin",
-          "teacher"
-        ]
-      },
-      {
-        "path": "/educationDetails/institutionName",
-        "type": "MANUAL",
-        "by": "some-route-which-redirects-to-respective-school's-admin/teacher/hod",
-        "roles": [
-          "admin",
-          "teacher"
-        ]
+        "paths": ["education"],
+        "role": "bo",
+        "constraint": "same_block"
       }
-    ],
-    "publicFields": [
-      "name",
-      "dob",
-      "address",
-      "educationDetails"
-    ],
-    "stateTransitions": {
-      "": [
-        "draft"
-      ],
-      "draft": [
-        "published"
-      ],
-      "published": [
-        "attested",
-        "draft",
-        "rejected"
-      ],
-      "attested": [
-        "draft"
-      ],
-      "rejected": [
-        "draft"
       ]
-    },
-    "systemFields": [
-      "osCreatedAt",
-      "osUpdatedAt",
-      "osCreatedBy",
-      "osUpdatedBy",
-      "osStatus",
-      "osOwner"
-    ]
   }
 }
