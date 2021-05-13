@@ -1,7 +1,9 @@
 package io.opensaber.registry.helper;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -26,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import java.util.*;
 
 
 /**
@@ -72,6 +74,12 @@ public class RegistryHelper {
 
     @Value("${audit.frame.suffixSeparator}")
     public String auditSuffixSeparator;
+
+    @Value("${conditionalAccess.internal}")
+    private String internalFieldsProp;
+
+    @Value("${conditionalAccess.private}")
+    private String privateFieldsProp;
     /**
      * calls validation and then persists the record to registry.
      * @param inputJson
@@ -171,6 +179,7 @@ public class RegistryHelper {
     public JsonNode searchEntity(JsonNode inputJson) throws Exception {
         logger.debug("searchEntity starts");
         JsonNode resultNode = searchService.search(inputJson);
+        removeNonPublicFields((ObjectNode) resultNode);
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
@@ -179,6 +188,27 @@ public class RegistryHelper {
         // Search is tricky to support LD. Needs a revisit here.
         logger.debug("searchEntity ends");
         return resultNode;
+    }
+
+    private void removeNonPublicFields(ObjectNode searchResultNode) throws Exception {
+        ObjectReader stringListReader = objectMapper.readerFor(new TypeReference<List<String>>() {});
+        List<String> nonPublicNodePathContainers = Arrays.asList(internalFieldsProp, privateFieldsProp);
+        Iterator<Map.Entry<String, JsonNode>> fieldIterator = searchResultNode.fields();
+        while (fieldIterator.hasNext()) {
+            ArrayNode entityResults = (ArrayNode) fieldIterator.next().getValue();
+            for(int i = 0; i < entityResults.size(); i++) {
+                ObjectNode entityResult = (ObjectNode) entityResults.get(i);
+                List<String> nodePathsForRemoval = new ArrayList<>(nonPublicNodePathContainers);
+                for(String nodePathContainer: nonPublicNodePathContainers) {
+                    if (entityResult.has(nodePathContainer)) {
+                        JsonNode js = entityResult.get(nodePathContainer);
+                        List<String> list = stringListReader.readValue(js);
+                        nodePathsForRemoval.addAll(list);
+                    }
+                }
+                JSONUtil.removeNodesByPath(entityResult, nodePathsForRemoval);
+            }
+        }
     }
 
     /** Updates the input entity, external api's can use this method to update the entity
