@@ -19,10 +19,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -274,9 +271,10 @@ public class JSONUtil {
 			int depth = transNodes.length;
 			JsonNode current = root;
 			for(int i = 0; i < depth - 1; i++) {
+				if (Objects.isNull(current)) break;
 				current = moveToNode(current, transNodes[i]);
 			}
-			removeField(current, transNodes[depth-1]);
+			if (Objects.nonNull(current)) removeField(current, transNodes[depth-1]);
 		}
 	}
 

@@ -154,7 +154,8 @@ public class JSONUtilTest {
                 "address/pincode",
                 "education/1",
                 "education/0/fromDate",
-                "education/0/toDate"
+                "education/0/toDate",
+                "edulcation/2/fromDate"
         );
         JSONUtil.removeNodesByPath((ObjectNode)node, removalPaths);
         JsonNode expected = mapper.readTree(new File("src/test/resources/jsonUtils-removeNodes/student_afterRemoval.json"));
