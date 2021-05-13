@@ -1,0 +1,23 @@
+{
+  "name": "Raj Tiwari",
+  "age": 29,
+  "address": {
+    "street": "123, xxsdf lane",
+    "district": "yuiiob bui",
+    "state": "Htyu",
+    "pincode": "345121"
+  },
+  "education": [
+    {
+      "title": "Bachelor of Commerce",
+      "university": "Abiuh University",
+      "fromDate": "12-12-1212",
+      "toDate": "12-07-1216"
+    },
+    {
+      "title": "Master of Business Administration",
+      "university": "Zsdbui University",
+      "fromDate": "08-12-1218"
+    }
+  ]
+}

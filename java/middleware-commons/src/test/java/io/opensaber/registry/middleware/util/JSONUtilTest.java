@@ -7,10 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.AuditRecord;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -146,6 +143,22 @@ public class JSONUtilTest {
 
         }
         return null;
+    }
+
+    @Test
+    public void removeNodesByPathTest() throws Exception {
+        JsonNode node = mapper.readTree(new File("src/test/resources/jsonUtils-removeNodes/student.json"));
+        List<String> removalPaths = Arrays.asList(
+                "age",
+                "address/street",
+                "address/pincode",
+                "education/1",
+                "education/0/fromDate",
+                "education/0/toDate"
+        );
+        JSONUtil.removeNodesByPath((ObjectNode)node, removalPaths);
+        JsonNode expected = mapper.readTree(new File("src/test/resources/jsonUtils-removeNodes/student_afterRemoval.json"));
+        assertEquals(node, expected);
     }
 
     @Test

@@ -268,6 +268,38 @@ public class JSONUtil {
 		parent.remove(removeKey);
 	}
 
+	public static void removeNodesByPath(ObjectNode root, List<String> nodePaths) throws Exception {
+		for(String nodePath: nodePaths) {
+			String[] transNodes = nodePath.split("/");
+			int depth = transNodes.length;
+			JsonNode current = root;
+			for(int i = 0; i < depth - 1; i++) {
+				current = moveToNode(current, transNodes[i]);
+			}
+			removeField(current, transNodes[depth-1]);
+		}
+	}
+
+	private static JsonNode moveToNode(JsonNode current, String fieldName) throws Exception {
+		if (current instanceof ArrayNode) {
+			return current.get(Integer.parseInt(fieldName));
+		} else if(current instanceof ObjectNode) {
+			return current.get(fieldName);
+		} else {
+			throw new Exception("illegal nodePath");
+		}
+	}
+
+	private static void removeField(JsonNode node, String fieldName) throws Exception {
+		if(node instanceof ArrayNode) {
+			((ArrayNode)node).remove(Integer.parseInt(fieldName));
+		} else if(node instanceof ObjectNode) {
+			((ObjectNode)node).remove(fieldName);
+		} else {
+			throw new Exception("illegal nodePath");
+		}
+	}
+
 	/**
 	 * Remove list of nodes given from parent's hierarchy(including nested objects
 	 * too)
