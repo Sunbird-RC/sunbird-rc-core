@@ -1,5 +1,6 @@
 package io.opensaber.registry.middleware.util;
 
+import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -11,6 +12,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -149,13 +151,13 @@ public class JSONUtilTest {
     public void removeNodesByPathTest() throws Exception {
         JsonNode node = mapper.readTree(new File("src/test/resources/jsonUtils-removeNodes/student.json"));
         List<String> removalPaths = Arrays.asList(
-                "age",
-                "address/street",
-                "address/pincode",
-                "education/1",
-                "education/0/fromDate",
-                "education/0/toDate",
-                "edulcation/2/fromDate"
+                "/age",
+                "/address/street",
+                "/address/pincode",
+                "/education/0",
+                "/education/1/fromDate",
+                "/education/2",
+                "/edulcation/2/fromDate"
         );
         JSONUtil.removeNodesByPath((ObjectNode)node, removalPaths);
         JsonNode expected = mapper.readTree(new File("src/test/resources/jsonUtils-removeNodes/student_afterRemoval.json"));

@@ -198,15 +198,14 @@ public class RegistryHelper {
             ArrayNode entityResults = (ArrayNode) fieldIterator.next().getValue();
             for(int i = 0; i < entityResults.size(); i++) {
                 ObjectNode entityResult = (ObjectNode) entityResults.get(i);
-                List<String> nodePathsForRemoval = new ArrayList<>(nonPublicNodePathContainers);
+                List<String> nodePathsForRemoval = new ArrayList<>();
                 for(String nodePathContainer: nonPublicNodePathContainers) {
                     if (entityResult.has(nodePathContainer)) {
-                        JsonNode js = entityResult.get(nodePathContainer);
-                        List<String> list = stringListReader.readValue(js);
-                        nodePathsForRemoval.addAll(list);
+                        nodePathsForRemoval.addAll(stringListReader.readValue(entityResult.get(nodePathContainer)));
                     }
                 }
                 JSONUtil.removeNodesByPath(entityResult, nodePathsForRemoval);
+                entityResult.remove(nonPublicNodePathContainers);
             }
         }
     }

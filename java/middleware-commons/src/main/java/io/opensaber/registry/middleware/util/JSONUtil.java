@@ -2,6 +2,7 @@ package io.opensaber.registry.middleware.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -266,35 +267,31 @@ public class JSONUtil {
 	}
 
 	public static void removeNodesByPath(ObjectNode root, List<String> nodePaths) throws Exception {
+		Map<JsonPointer, List<Integer>> arrayNodePathsMap = new HashMap<>();
 		for(String nodePath: nodePaths) {
-			String[] transNodes = nodePath.split("/");
-			int depth = transNodes.length;
-			JsonNode current = root;
-			for(int i = 0; i < depth - 1; i++) {
-				if (Objects.isNull(current)) break;
-				current = moveToNode(current, transNodes[i]);
+			JsonPointer jsonPointer = JsonPointer.compile(nodePath);
+			JsonPointer parentPtr = jsonPointer.head();
+			String leafFieldName = jsonPointer.last().getMatchingProperty();
+			JsonNode parent = root.at(jsonPointer.head());
+
+			if(parent.isMissingNode()) continue;
+			if(parent instanceof ObjectNode) ((ObjectNode) parent).remove(leafFieldName);
+			else if (parent instanceof ArrayNode) {
+				if(!arrayNodePathsMap.containsKey(parentPtr)) {
+					arrayNodePathsMap.put(parentPtr, new ArrayList<>(Collections.singletonList(Integer.parseInt(leafFieldName))));
+				} else {
+					arrayNodePathsMap.get(parentPtr).add(Integer.parseInt(leafFieldName));
+				}
+			} else {
+				throw new Exception("Illegal Path");
 			}
-			if (Objects.nonNull(current)) removeField(current, transNodes[depth-1]);
 		}
-	}
-
-	private static JsonNode moveToNode(JsonNode current, String fieldName) throws Exception {
-		if (current instanceof ArrayNode) {
-			return current.get(Integer.parseInt(fieldName));
-		} else if(current instanceof ObjectNode) {
-			return current.get(fieldName);
-		} else {
-			throw new Exception("illegal nodePath");
-		}
-	}
-
-	private static void removeField(JsonNode node, String fieldName) throws Exception {
-		if(node instanceof ArrayNode) {
-			((ArrayNode)node).remove(Integer.parseInt(fieldName));
-		} else if(node instanceof ObjectNode) {
-			((ObjectNode)node).remove(fieldName);
-		} else {
-			throw new Exception("illegal nodePath");
+		for (JsonPointer targetPtr: arrayNodePathsMap.keySet()) {
+			List<Integer> removalPaths = arrayNodePathsMap.get(targetPtr);
+			removalPaths.sort(Comparator.reverseOrder());
+			for(int index: removalPaths) {
+				((ArrayNode)root.at(targetPtr)).remove(index);
+			}
 		}
 	}
 

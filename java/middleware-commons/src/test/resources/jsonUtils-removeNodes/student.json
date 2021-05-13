@@ -9,6 +9,12 @@
   },
   "education": [
     {
+      "title": "Diploma in Mathematics",
+      "university": "Abiuh University",
+      "fromDate": "12-11-1210",
+      "toDate": "12-07-1212"
+    },
+    {
       "title": "Bachelor of Commerce",
       "university": "Abiuh University",
       "fromDate": "12-12-1212",
