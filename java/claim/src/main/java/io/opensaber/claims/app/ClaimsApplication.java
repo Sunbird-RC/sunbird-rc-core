@@ -1,4 +1,4 @@
-package io.opensaber.claims;
+package io.opensaber.claims.app;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
