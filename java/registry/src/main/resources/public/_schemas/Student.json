@@ -23,6 +23,11 @@
         "gender"
       ],
       "properties": {
+        "instituteId": {
+          "$id": "#/properties/instituteId",
+          "type": "string",
+          "$comment": "Institute Id"
+        },
         "studentCode": {
           "$id": "#/properties/studentCode",
           "type": "string",

@@ -28,3 +28,10 @@ rule "Set state as draft if there is a change"
     then
         stateDefinition.setState(States.DRAFT);
 end
+
+rule "Set state as attestation requested"
+    when
+        stateDefinition:StateContext(existingNode != null && requestBody == null);
+    then
+        stateDefinition.setState(States.ATTESTATION_REQUESTED);
+end

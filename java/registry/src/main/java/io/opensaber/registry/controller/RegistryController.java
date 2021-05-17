@@ -18,6 +18,7 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.state.StateContext;
+import io.opensaber.registry.model.state.States;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
@@ -490,6 +491,52 @@ public class RegistryController {
             registryHelper.updateEntity(newRootNode, "");
             registryHelper.updateEntityInEs(entityName, entityId);
             responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.stop(tag);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            responseParams.setErrmsg(e.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}/send", method = RequestMethod.POST)
+    public ResponseEntity<Object> sendForVerification(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @PathVariable String property,
+            @PathVariable String propertyId,
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode requestBody
+    ) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        try {
+            String userId = "";
+            String currentRole = "student";
+            JsonNode existingNode = registryHelper
+                    .readEntity(userId, property, propertyId, false, null, false)
+                    .get(property);
+            StateContext stateContext = new StateContext(existingNode, currentRole);
+            ObjectNode newRootNode = objectMapper.createObjectNode();
+            newRootNode.set(property, stateContext.getResult());
+            String tag = "RegistryController.update " + entityName;
+            watch.start(tag);
+            // update the state
+            registryHelper.updateEntity(newRootNode, userId);
+            registryHelper.updateEntityInEs(entityName, entityId);
+            Map<String, String> claimDetails = new HashMap<String, String>(){{
+                put("entity", entityName);
+                put("entityId", entityId);
+                put("property", property);
+                put("propertyId", propertyId);
+                put("inboxId", propertyId);
+            }};
+            // create claim request
+            ObjectNode claimRequestNode = objectMapper.createObjectNode();
+            claimRequestNode.set("Claim", JSONUtil.convertObjectJsonNode(claimDetails));
+            registryHelper.addEntity(claimRequestNode, userId);
+            responseParams.setErrmsg(userId);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
