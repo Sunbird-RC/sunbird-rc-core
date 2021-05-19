@@ -525,14 +525,13 @@ public class RegistryController {
             // update the state
             registryHelper.updateEntity(newRootNode, userId);
             registryHelper.updateEntityInEs(entityName, entityId);
-            Map<String, String> claimDetails = new HashMap<String, String>(){{
+            Map<String, Object> claimDetails = new HashMap<String, Object>(){{
                 put("entity", entityName);
                 put("entityId", entityId);
                 put("property", property);
                 put("propertyId", propertyId);
                 put("inboxId", propertyId);
             }};
-            // create claim request
             ObjectNode claimRequestNode = objectMapper.createObjectNode();
             claimRequestNode.set("Claim", JSONUtil.convertObjectJsonNode(claimDetails));
             registryHelper.addEntity(claimRequestNode, userId);

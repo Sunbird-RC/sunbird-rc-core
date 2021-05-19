@@ -149,7 +149,7 @@
          "signedFields": [],
          "indexFields": ["studentCode","studentName"],
          "uniqueIndexFields": ["studentCode"],
-         "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"],
+         "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy", "_osAttestation", "_osState"],
     "attestations": [
       {
         "paths": ["education"],

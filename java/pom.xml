@@ -39,6 +39,7 @@
 		<module>view-templates</module>
         <module>opensaber-actors</module>
         <module>sunbird-actor</module>
+        <module>claim</module>
     </modules>
 
     <build>

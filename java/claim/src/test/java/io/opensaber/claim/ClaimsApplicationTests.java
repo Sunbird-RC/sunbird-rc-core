@@ -1,6 +1,6 @@
-package io.opensaber.claims;
+package io.opensaber.claim;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
