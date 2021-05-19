@@ -57,9 +57,9 @@ public class StateContext {
 
     public void setState(States destinationState) {
         if(existingNode != null) {
-            result.put("state", destinationState.toString());
+            result.put("_osState", destinationState.toString());
         } else {
-            result.put("state", destinationState.toString());
+            result.put("_osState", destinationState.toString());
         }
     }
 

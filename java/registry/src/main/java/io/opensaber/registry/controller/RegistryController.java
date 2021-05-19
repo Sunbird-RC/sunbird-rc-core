@@ -18,7 +18,6 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.state.StateContext;
-import io.opensaber.registry.model.state.States;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
@@ -27,11 +26,7 @@ import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Data;
 import io.opensaber.registry.transform.ITransformer;
 import io.opensaber.registry.transform.Transformer;
-import io.opensaber.registry.util.Definition;
-import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.KeycloakAdminUtil;
-import io.opensaber.registry.util.RecordIdentifier;
-import io.opensaber.registry.util.ViewTemplateManager;
+import io.opensaber.registry.util.*;
 
 import io.opensaber.validators.IValidate;
 import io.swagger.models.Operation;
@@ -50,7 +45,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.security.RolesAllowed;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
@@ -80,7 +74,9 @@ public class RegistryController {
     private KeycloakAdminUtil keycloakAdminUtil;
     @Autowired
     private ShardManager shardManager;
-    
+    @Autowired
+    ClaimRequestClient claimRequestClient;
+
     @Autowired
     private ViewTemplateManager viewTemplateManager;
     @Autowired
@@ -525,16 +521,7 @@ public class RegistryController {
             // update the state
             registryHelper.updateEntity(newRootNode, userId);
             registryHelper.updateEntityInEs(entityName, entityId);
-            Map<String, Object> claimDetails = new HashMap<String, Object>(){{
-                put("entity", entityName);
-                put("entityId", entityId);
-                put("property", property);
-                put("propertyId", propertyId);
-                put("inboxId", propertyId);
-            }};
-            ObjectNode claimRequestNode = objectMapper.createObjectNode();
-            claimRequestNode.set("Claim", JSONUtil.convertObjectJsonNode(claimDetails));
-            registryHelper.addEntity(claimRequestNode, userId);
+            claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId);
             responseParams.setErrmsg(userId);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -545,6 +532,7 @@ public class RegistryController {
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
+
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}", method = RequestMethod.POST)
     public ResponseEntity<Object> addNewPropertyToTheEntity(
             @PathVariable String entityName,

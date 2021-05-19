@@ -74,7 +74,7 @@ public class StateContextTest {
                     "    \"fromYear\": \"1999\",\n" +
                     "    \"toYear\": \"2019\",\n" +
                     "    \"instituteName\": \"Park Angels school\",\n" +
-                    "    \"state\": " + "\"" + state.toString() + "\"" + "\n" +
+                    "    \"_osState\": " + "\"" + state.toString() + "\"" + "\n" +
                     "}\n");
             assertEquals(expectedResult, stateContext.getResult());
         }
