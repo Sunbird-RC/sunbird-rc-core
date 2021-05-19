@@ -44,6 +44,9 @@ public class StateContext {
     }
 
     public boolean isAttributesChanged() {
+        if(requestBody == null || existingNode == null) {
+            return true;
+        }
         Iterator<Map.Entry<String, JsonNode>> fields = existingNode.fields();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> next = fields.next();

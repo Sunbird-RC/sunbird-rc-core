@@ -16,7 +16,7 @@ public class ClaimRequestClient {
     private final String claimRequestUrl;
     private final RestTemplate restTemplate;
 
-    ClaimRequestClient(@Value("{claims.url}") String claimRequestUrl, RestTemplate restTemplate) {
+    ClaimRequestClient(@Value("${claims.url}") String claimRequestUrl, RestTemplate restTemplate) {
         this.claimRequestUrl = claimRequestUrl;
         this.restTemplate = restTemplate;
     }

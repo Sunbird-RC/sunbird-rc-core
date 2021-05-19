@@ -514,6 +514,7 @@ public class RegistryController {
                     .readEntity(userId, property, propertyId, false, null, false)
                     .get(property);
             StateContext stateContext = new StateContext(existingNode, currentRole);
+            ruleEngineService.doTransition(stateContext);
             ObjectNode newRootNode = objectMapper.createObjectNode();
             newRootNode.set(property, stateContext.getResult());
             String tag = "RegistryController.update " + entityName;
