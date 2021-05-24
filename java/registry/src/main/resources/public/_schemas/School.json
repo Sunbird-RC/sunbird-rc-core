@@ -48,86 +48,95 @@
           "type": "string"
         },
         "address": {
-          "type": "object",
-          "properties": {
-            "addressLine1": {
-              "type": "string"
-            },
-            "addressLine2": {
-              "type": "string"
-            },
-            "district": {
-              "type": "string"
-            },"state": {
-              "type": "string"
-            },"pinCode": {
-              "type": "string"
-            }
-          }
+          "$ref": "#/definitions/Address"
         },
         "accreditation": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "title": {
-                "type": "string"
-              },
-              "institute": {
-                "type": "string"
-              },
-              "start": {
-                "type": "string",
-                "format": "date"
-              },
-              "end": {
-                "type": "string",
-                "format": "date"
-              }
-            }
+            "$ref": "#/definitions/Accreditation"
           }
         },
         "courses": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "title": {
-                "type": "string"
-              },
-              "start": {
-                "type": "string",
-                "format": "date"
-              },
-              "end": {
-                "type": "string",
-                "format": "date"
-              }
-            }
+            "$ref": "#/definitions/Courses"
           }
+        }
+      }
+    },
+    "Courses": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "start": {
+          "type": "string",
+          "format": "date"
+        },
+        "end": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "Accreditation": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "institute": {
+          "type": "string"
+        },
+        "start": {
+          "type": "string",
+          "format": "date"
+        },
+        "end": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "Address": {
+      "type": "object",
+      "properties": {
+        "addressLine1": {
+          "type": "string"
+        },
+        "addressLine2": {
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },"state": {
+          "type": "string"
+        },"pinCode": {
+          "type": "string"
         }
       }
     }
   },
   "_osConfig": {
-         "osComment": ["This section contains the OpenSABER specific configuration information", 
-                      "privateFields: Optional; list of field names to be encrypted and stored in database", 
-                      "signedFields: Optional; list of field names that must be pre-signed",
-                      "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, schoolCode) is a composite index and schoolName is a single column index.",
-                      "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
-                      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"], 
-                                           
-         "privateFields": ["schoolCode", "birthDate"],
-         "signedFields": [],
-         "indexFields": ["schoolCode","schoolName"],
-         "uniqueIndexFields": ["schoolCode"],
-         "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"],
+    "osComment": ["This section contains the OpenSABER specific configuration information",
+      "privateFields: Optional; list of field names to be encrypted and stored in database",
+      "signedFields: Optional; list of field names that must be pre-signed",
+      "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, schoolCode) is a composite index and schoolName is a single column index.",
+      "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
+      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"],
+
+    "privateFields": ["schoolCode", "birthDate"],
+    "signedFields": [],
+    "indexFields": ["schoolCode","schoolName"],
+    "uniqueIndexFields": ["schoolCode"],
+    "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"],
     "attestations": [
       {
         "paths": ["accreditation"],
         "role": "bo",
         "constraint": "same_block"
       }
-      ]
+    ]
   }
 }
