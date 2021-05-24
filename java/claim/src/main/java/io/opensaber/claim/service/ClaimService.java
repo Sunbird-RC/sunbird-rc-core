@@ -24,7 +24,7 @@ public class ClaimService {
         return claimRepository.save(claim);
     }
 
-    public Optional<Claim> findById(long id) {
+    public Optional<Claim> findById(String id) {
         return claimRepository.findById(id);
     }
 

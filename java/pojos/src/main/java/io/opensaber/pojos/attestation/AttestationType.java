@@ -1,4 +1,4 @@
-package io.opensaber.registry.model.attestation;
+package io.opensaber.pojos.attestation;
 
 public enum AttestationType {
     MANUAL, AUTOMATED

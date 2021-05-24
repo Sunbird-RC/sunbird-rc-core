@@ -17,6 +17,7 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
+import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
@@ -496,6 +497,7 @@ public class RegistryController {
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
+
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}/send", method = RequestMethod.POST)
     public ResponseEntity<Object> sendForVerification(
             @PathVariable String entityName,
@@ -615,6 +617,27 @@ public class RegistryController {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping(value="/api/v1/{entity}/{entityId}/attestationProperties")
+    public ResponseEntity<Object> getEntityForAttestation(
+            @PathVariable String entity,
+            @PathVariable String entityId
+    ) {
+        try {
+            JsonNode resultNode = registryHelper.readEntity("", entity, entityId, false, null, false);
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            objectNode.set(entity, resultNode.get(entity));
+            List<AttestationPolicy> attestationPolicies = definitionsManager.getDefinition(entity)
+                    .getOsSchemaConfiguration()
+                    .getAttestationPolicies();
+            objectNode.set("policy", objectMapper.convertValue(attestationPolicies, JsonNode.class));
+            return new ResponseEntity<>(resultNode, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 
     @RequestMapping(value = "/api/docs/swagger.json", method = RequestMethod.GET, produces = "application/json")

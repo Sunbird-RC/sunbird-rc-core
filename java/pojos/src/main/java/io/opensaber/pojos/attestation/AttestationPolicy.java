@@ -1,12 +1,18 @@
-package io.opensaber.registry.model.attestation;
+package io.opensaber.pojos.attestation;
+
 import java.util.List;
 
 public class AttestationPolicy {
 
+    /*
+    * Holds the name of the attestation property. eg. education, certificate, course
+    *
+    * */
+    private String property;
     /**
      * Holds the value of the jsonpath
      */
-    private String path;
+    private List<String> paths;
     /**
      * Holds the info of manual or automated attestation
      */
@@ -18,10 +24,10 @@ public class AttestationPolicy {
     /**
      * Holds the info of who can do the attestation
      */
-    private List<String> roles;
+    private String role;
 
-    public String getPath() {
-        return path;
+    public List<String> getPaths() {
+        return paths;
     }
 
     public AttestationType getType() {
@@ -32,12 +38,12 @@ public class AttestationPolicy {
         return by;
     }
 
-    public List<String> getRoles() {
-        return roles;
+    public String getRole() {
+        return role;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setPaths(List<String> paths) {
+        this.paths = paths;
     }
 
     public void setType(AttestationType type) {
@@ -48,7 +54,15 @@ public class AttestationPolicy {
         this.by = by;
     }
 
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getProperty() {
+        return property;
+    }
+
+    public void setProperty(String property) {
+        this.property = property;
     }
 }
