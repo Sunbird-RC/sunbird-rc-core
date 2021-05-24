@@ -131,6 +131,7 @@
     "indexFields": ["schoolCode","schoolName"],
     "uniqueIndexFields": ["schoolCode"],
     "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"],
+    "subjectJsonPath": "adminMobile",
     "attestations": [
       {
         "paths": ["accreditation"],

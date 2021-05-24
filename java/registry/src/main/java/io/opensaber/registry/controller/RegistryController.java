@@ -18,6 +18,8 @@ import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.state.StateContext;
+import io.opensaber.registry.operators.InviteOperator;
+import io.opensaber.registry.operators.Operator;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
@@ -103,6 +105,9 @@ public class RegistryController {
 
     @Autowired
     RuleEngineService ruleEngineService;
+
+    @Autowired
+    InviteOperator inviteOperator;
 
     /**
      * Note: Only one mime type is supported at a time. Pick up the first mime
@@ -291,13 +296,8 @@ public class RegistryController {
         Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
         Map<String, Object> result = new HashMap<>();
         String entityType = apiMessage.getRequest().getEntityType();
-        JsonNode rootNode = apiMessage.getRequest().getRequestMapNode();
-
         try {
-            String entitySubject = validationService.getEntitySubject(entityType, rootNode);
-            String userID = keycloakAdminUtil.createUser(entitySubject, "facility admin");
-            logger.info("Owner user_id : " + userID);
-            String label = registryHelper.inviteEntity(rootNode, apiMessage.getUserID(), userID);
+            String label = inviteOperator.execute(apiMessage);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             result.put(entityType, resultMap);
