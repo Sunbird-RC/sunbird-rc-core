@@ -443,7 +443,6 @@ public class RegistryController {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    // Entity name and entityId will be used for ESActor
     @RequestMapping(value="/api/v1/{entityName}/{entityId}/{property}/{propertyId}/attest")
     public ResponseEntity<Object> attest(
             @PathVariable String entityName,
@@ -453,10 +452,9 @@ public class RegistryController {
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode requestBody
     ) throws IOException {
-        String id = requestBody.get(uuidPropertyName).asText();
         String userId = "";
         try {
-            JsonNode node = registryHelper.readEntity(userId, property, id, false, null, false);
+            JsonNode node = registryHelper.readEntity(userId, property, propertyId, false, null, false);
             Map<String, Object> result = JSONUtil.convertJsonNodeToMap(node.get(property));
             if(requestBody.get("action").asText().equals("GRANTED")) {
                 result.put("_osState", States.PUBLISHED);
@@ -464,9 +462,10 @@ public class RegistryController {
             } else {
                 result.put("_osState", States.REJECTED);
             }
-            registryHelper.updateEntity(JSONUtil.convertObjectJsonNode(result), userId);
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            objectNode.set(property, JSONUtil.convertObjectJsonNode(result));
+            registryHelper.updateEntity(objectNode, userId);
             registryHelper.updateEntityInEs(entityName, entityId);
-            // Do the state transitions based on valid and invalid fields
             logger.info("Received ", result.size());
         } catch (Exception e) {
             e.printStackTrace();
@@ -643,12 +642,12 @@ public class RegistryController {
         try {
             JsonNode resultNode = registryHelper.readEntity("", entity, entityId, false, null, false);
             ObjectNode objectNode = objectMapper.createObjectNode();
-            objectNode.set(entity, resultNode.get(entity));
+            objectNode.set("entity", resultNode.get(entity));
             List<AttestationPolicy> attestationPolicies = definitionsManager.getDefinition(entity)
                     .getOsSchemaConfiguration()
                     .getAttestationPolicies();
-            objectNode.set("policy", objectMapper.convertValue(attestationPolicies, JsonNode.class));
-            return new ResponseEntity<>(resultNode, HttpStatus.OK);
+            objectNode.set("attestationPolicies", objectMapper.convertValue(attestationPolicies, JsonNode.class));
+            return new ResponseEntity<>(objectNode, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

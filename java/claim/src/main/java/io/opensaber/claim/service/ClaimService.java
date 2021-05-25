@@ -60,9 +60,9 @@ public class ClaimService {
         Optional<Claim> claimOptional = findById(claimId);
         if(claimOptional.isPresent()) {
             Claim claim = claimOptional.get();
-            Map<String, Object> attestationProperties = openSaberClient.getAttestationProperties(claim);
+            AttestationPropertiesDTO attestationProperties = openSaberClient.getAttestationProperties(claim);
             ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode entityNode = objectMapper.convertValue(attestationProperties.get("entity"), JsonNode.class);
+            JsonNode entityNode = objectMapper.convertValue(attestationProperties.getEntity(), JsonNode.class);
             AttestationPolicy attestationPolicy = getAttestationPolicy(claim, attestationProperties);
             if(attestationPolicy == null){
                 throw new Exception("Attestation policy is not defined");
@@ -96,12 +96,11 @@ public class ClaimService {
         return attestedData;
     }
 
-    private AttestationPolicy getAttestationPolicy(Claim claim, Map<String, Object> attestationProperties) {
-        AttestationPolicy attestationPolicy = ((ArrayList<AttestationPolicy>) attestationProperties.get("policy"))
+    private AttestationPolicy getAttestationPolicy(Claim claim, AttestationPropertiesDTO attestationProperties) {
+        return attestationProperties.getAttestationPolicies()
                 .stream()
                 .filter(policy -> policy.getProperty().equals(claim.getProperty()))
                 .findFirst()
                 .orElse(null);
-        return attestationPolicy;
     }
 }

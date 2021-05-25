@@ -1,6 +1,6 @@
 package io.opensaber.claim.model;
 
-public enum AttestationActions {
+public enum AttestorActions {
     GRANTED,
     DENIED
 }

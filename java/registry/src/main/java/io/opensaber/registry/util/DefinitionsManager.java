@@ -47,7 +47,7 @@ public class DefinitionsManager {
             String filename = entry.getKey();
             String filenameWithoutExtn = filename.substring(0, filename.indexOf('.'));
             JsonNode jsonNode = mapper.readTree(entry.getValue());
-            Definition definition = new Definition(jsonNode);
+            Definition definition = new  Definition(jsonNode);
             logger.info("loading resource:" + entry.getKey() + " with private field size:"
                     + definition.getOsSchemaConfiguration().getPrivateFields().size() + " & signed fields size:"
                     + definition.getOsSchemaConfiguration().getSignedFields().size());

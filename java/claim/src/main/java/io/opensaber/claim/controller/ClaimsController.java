@@ -2,10 +2,9 @@ package io.opensaber.claim.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.opensaber.claim.entity.Claim;
-import io.opensaber.claim.model.AttestationActions;
+import io.opensaber.claim.model.AttestorActions;
 import io.opensaber.claim.model.ClaimStatus;
 import io.opensaber.claim.service.ClaimService;
-import io.opensaber.claim.service.OpenSaberClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -39,7 +38,7 @@ public class ClaimsController {
 
     @RequestMapping(value = "/api/v1/claims/{claimId}/{action}", method = RequestMethod.POST)
     public ResponseEntity<Object> attestClaims(@PathVariable String claimId,
-                                               @PathVariable AttestationActions action,
+                                               @PathVariable AttestorActions action,
                                                @RequestHeader HttpHeaders headers,
                                                @RequestBody JsonNode requestBody) throws Exception {
         // TODO: fetch role from jwt
