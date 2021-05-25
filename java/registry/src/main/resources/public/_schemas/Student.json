@@ -163,7 +163,8 @@
       "_osUpdatedAt",
       "_osCreatedBy",
       "_osUpdatedBy",
-      "_osAttestation",
+      "_osAttestedData",
+      "_osClaimId",
       "_osState"
     ],
     "attestationAttributes": [

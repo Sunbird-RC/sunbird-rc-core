@@ -1,4 +1,4 @@
-package io.opensaber.claim.controller;
+package io.opensaber.claim.model;
 
 public enum AttestationActions {
     GRANTED,

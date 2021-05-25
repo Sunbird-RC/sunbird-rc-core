@@ -476,8 +476,9 @@ public class RegistryController {
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
 
+            String userId = "";
             JsonNode existingNode = registryHelper
-                    .readEntity("", property, propertyId, false, null, false)
+                    .readEntity(userId, property, propertyId, false, null, false)
                     .get(property);
             StateContext stateContext = new StateContext(existingNode, requestBody, "student");
             ruleEngineService.doTransition(stateContext);
@@ -485,8 +486,11 @@ public class RegistryController {
             newRootNode.set(property, stateContext.getResult());
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
-            registryHelper.updateEntity(newRootNode, "");
+            registryHelper.updateEntity(newRootNode, userId);
             registryHelper.updateEntityInEs(entityName, entityId);
+            if(requestBody.has("send") && requestBody.get("send").asBoolean()) {
+                claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId);
+            }
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);

@@ -37,7 +37,7 @@ public class StateContext {
         Iterator<Map.Entry<String, JsonNode>> fields = requestBody.fields();
         while(fields.hasNext()) {
             Map.Entry<String, JsonNode> next = fields.next();
-            if(result.has(next.getKey())) {
+            if(result.has(next.getKey()) && !requestBody.has("send")) {
                 result.put(next.getKey(), requestBody.get(next.getKey()));
             }
         }
