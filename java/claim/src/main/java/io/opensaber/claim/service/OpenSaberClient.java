@@ -1,7 +1,10 @@
 package io.opensaber.claim.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.claim.contants.OpensaberApiUrlPaths;
 import io.opensaber.claim.entity.Claim;
+import io.opensaber.claim.model.AttestationActions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -33,16 +36,24 @@ public class OpenSaberClient {
         String url = openSaberUrl + OpensaberApiUrlPaths.ATTEST_PROPERTY
                 .replace("PROPERTY", claim.getProperty())
                 .replace("PROPERTY_ID", claim.getPropertyId());
-        HttpEntity<String> entity = new HttpEntity<>("", headers);
+        HashMap<String, Object> requestBody = new HashMap<String, Object>() {{
+            put("action", AttestationActions.DENIED);
+        }};
+        HttpEntity<HashMap<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         restTemplate.postForObject(url, entity, Void.class);
     }
 
     public void updateAttestedProperty(Claim claim, Map<String, Object> attestedData, HttpHeaders headers) {
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(attestedData, headers);
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode node = objectMapper.convertValue(attestedData, JsonNode.class);
+        HashMap<String, Object> requestBody = new HashMap<String, Object>() {{
+            put("action", AttestationActions.GRANTED);
+            put("attestedData", node.toString());
+        }};
         String url = openSaberUrl + OpensaberApiUrlPaths.ATTEST_PROPERTY
                 .replace("PROPERTY", claim.getProperty())
                 .replace("PROPERTY_ID", claim.getPropertyId());
 
-        restTemplate.postForObject(url, entity, Void.class);
+        restTemplate.postForObject(url, requestBody, Void.class);
     }
 }

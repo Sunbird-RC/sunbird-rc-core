@@ -21,7 +21,7 @@ public class ClaimRequestClient {
         this.restTemplate = restTemplate;
     }
 
-    public void riseClaimRequest(String entityName, String entityId, String property, String propertyId) throws Exception {
+    public Object riseClaimRequest(String entityName, String entityId, String property, String propertyId) throws Exception {
         Map<String, Object> claimDetails = new HashMap<String, Object>(){{
             put("entity", entityName);
             put("entityId", entityId);
@@ -31,6 +31,7 @@ public class ClaimRequestClient {
         String claimsPath = "/api/v1/claims";
         Object hashMap = restTemplate.postForObject(claimRequestUrl + claimsPath, claimDetails, HashMap.class);
         logger.info("Claim has successfully risen ", hashMap.toString());
+        return hashMap;
     }
 
 }

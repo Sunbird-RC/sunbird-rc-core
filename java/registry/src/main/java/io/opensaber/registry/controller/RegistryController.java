@@ -19,6 +19,7 @@ import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.model.state.StateContext;
+import io.opensaber.registry.model.state.States;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
@@ -443,18 +444,28 @@ public class RegistryController {
     }
 
     // Entity name and entityId will be used for ESActor
-    @RequestMapping(value="/api/v1/{entityName}/{entityId}/{property}/attest")
+    @RequestMapping(value="/api/v1/{entityName}/{entityId}/{property}/{propertyId}/attest")
     public ResponseEntity<Object> attest(
             @PathVariable String entityName,
             @PathVariable String entityId,
             @PathVariable String property,
+            @PathVariable String propertyId,
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode requestBody
     ) throws IOException {
         String id = requestBody.get(uuidPropertyName).asText();
+        String userId = "";
         try {
-            JsonNode node = registryHelper.readEntity("admin", property, id, false, null, false);
+            JsonNode node = registryHelper.readEntity(userId, property, id, false, null, false);
             Map<String, Object> result = JSONUtil.convertJsonNodeToMap(node.get(property));
+            if(requestBody.get("action").asText().equals("GRANTED")) {
+                result.put("_osState", States.PUBLISHED);
+                result.put("_osAttestedData", requestBody.get("attestedData").asText());
+            } else {
+                result.put("_osState", States.REJECTED);
+            }
+            registryHelper.updateEntity(JSONUtil.convertObjectJsonNode(result), userId);
+            registryHelper.updateEntityInEs(entityName, entityId);
             // Do the state transitions based on valid and invalid fields
             logger.info("Received ", result.size());
         } catch (Exception e) {
@@ -484,13 +495,14 @@ public class RegistryController {
             ruleEngineService.doTransition(stateContext);
             ObjectNode newRootNode = objectMapper.createObjectNode();
             newRootNode.set(property, stateContext.getResult());
+            if(requestBody.has("send") && requestBody.get("send").asBoolean()) {
+                HashMap<String, Object> claimResponse = (HashMap<String, Object>)claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId);
+                newRootNode.put("_osClaimId", (String) claimResponse.get("id"));
+            }
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             registryHelper.updateEntity(newRootNode, userId);
             registryHelper.updateEntityInEs(entityName, entityId);
-            if(requestBody.has("send") && requestBody.get("send").asBoolean()) {
-                claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId);
-            }
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
