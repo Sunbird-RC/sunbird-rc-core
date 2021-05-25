@@ -536,7 +536,6 @@ public class RegistryController {
             newRootNode.set(property, stateContext.getResult());
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
-            // update the state
             registryHelper.updateEntity(newRootNode, userId);
             registryHelper.updateEntityInEs(entityName, entityId);
             claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId);

@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.opensaber.claim.contants.AttributeNames.*;
+
 
 @Service
 public class OpenSaberClient {
@@ -51,10 +53,10 @@ public class OpenSaberClient {
             put("attestedData", node.toString());
         }};
         String url = openSaberUrl + OpensaberApiUrlPaths.ATTEST_PROPERTY
-                .replace("ENTITY_ID", claim.getEntityId())
-                .replace("ENTITY", claim.getEntity())
-                .replace("PROPERTY_ID", claim.getPropertyId())
-                .replace("PROPERTY", claim.getProperty());
+                .replace(ENTITY_ID, claim.getEntityId())
+                .replace(ENTITY, claim.getEntity())
+                .replace(PROPERTY_ID, claim.getPropertyId())
+                .replace(PROPERTY, claim.getProperty());
         HttpEntity<HashMap<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         restTemplate.postForObject(url, entity, Void.class);
     }

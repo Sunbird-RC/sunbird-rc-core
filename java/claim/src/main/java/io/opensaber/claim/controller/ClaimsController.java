@@ -13,6 +13,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
+import static io.opensaber.claim.contants.AttributeNames.NOTES;
 
 @Controller
 public class ClaimsController {
@@ -25,14 +29,14 @@ public class ClaimsController {
     }
 
     @RequestMapping(value = "/api/v1/claims", method = RequestMethod.GET)
-    public ResponseEntity<Object> getClaims() throws IOException {
-        Object response = claimService.findAll();
-        return new ResponseEntity<>(response, HttpStatus.OK);
+    public ResponseEntity<List<Claim>> getClaims() throws IOException {
+        List<Claim> claims = claimService.findAll();
+        return new ResponseEntity<>(claims, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/api/v1/claims", method = RequestMethod.POST)
     public ResponseEntity<Claim> save(@RequestBody Claim claim, @RequestHeader HttpHeaders headers) {
-        claim.setStatus(ClaimStatus.getOpen());
+        claim.setStatus(ClaimStatus.OPEN.name());
         return new ResponseEntity<>(claimService.save(claim), HttpStatus.OK);
     }
 
@@ -48,9 +52,10 @@ public class ClaimsController {
                 claimService.grantClaim(claimId, role, headers, this);
                 break;
             case DENIED:
-                String notes = "";
-                if(requestBody.has("notes")) {
-                    notes = requestBody.get("notes").asText();
+                Optional<String> notes = Optional.empty();
+
+                if(requestBody.has(NOTES)) {
+                    notes = Optional.of(requestBody.get(NOTES).asText());
                 }
                 claimService.updateNotes(claimId, notes, headers);
                 break;

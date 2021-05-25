@@ -18,6 +18,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static io.opensaber.claim.contants.AttributeNames.PROPERTY_ID;
+
 @Service
 public class ClaimService {
 
@@ -39,17 +41,15 @@ public class ClaimService {
     }
 
     public List<Claim> findAll() {
-        return StreamSupport
-                .stream(claimRepository.findAll().spliterator(), false)
-                .collect(Collectors.toList());
+        return claimRepository.findAll();
     }
 
-    public void updateNotes(String claimId, String notes, HttpHeaders headers) {
+    public void updateNotes(String claimId, Optional<String> notes, HttpHeaders headers) {
         Optional<Claim> claimOptional = findById(claimId);
         if(claimOptional.isPresent()) {
             Claim claim = claimOptional.get();
-            claim.setNotes(notes);
-            claim.setStatus(ClaimStatus.getClosed());
+            claim.setNotes(notes.orElse(""));
+            claim.setStatus(ClaimStatus.CLOSED.name());
             claim.setAttestedOn(new Date());
             save(claim);
             openSaberClient.updateAttestedProperty(claim, headers);
@@ -71,7 +71,7 @@ public class ClaimService {
                 throw new Exception("Invalid role, See ya!!!");
             }
             Map<String, Object> attestedData = generateAttestedData(claim, entityNode, attestationPolicy);
-            claim.setStatus(ClaimStatus.getClosed());
+            claim.setStatus(ClaimStatus.CLOSED.name());
             claim.setAttestedOn(new Date());
             save(claim);
             openSaberClient.updateAttestedProperty(claim, attestedData, header);
@@ -81,8 +81,8 @@ public class ClaimService {
     private Map<String, Object> generateAttestedData(Claim claim, JsonNode entityNode, AttestationPolicy attestationPolicy) {
         Map<String, Object> attestedData = new HashMap<>();
         for (String path: attestationPolicy.getPaths()) {
-            if(path.contains("PROPERTY_ID")) {
-                path = path.replace("PROPERTY_ID", claim.getPropertyId());
+            if(path.contains(PROPERTY_ID)) {
+                path = path.replace(PROPERTY_ID, claim.getPropertyId());
             }
             DocumentContext context = JsonPath.parse(entityNode.toString());
             Object result = context.read(path);

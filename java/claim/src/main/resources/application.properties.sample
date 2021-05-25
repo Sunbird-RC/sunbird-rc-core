@@ -1,0 +1,11 @@
+server.port=8081
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/claimsdb
+spring.datasource.username=postgres
+spring.datasource.password=
+
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=update
+
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+opensaber.url=http://localhost:8080
