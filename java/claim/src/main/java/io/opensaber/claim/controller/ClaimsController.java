@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import static io.opensaber.claim.contants.AttributeNames.ACTION;
 import static io.opensaber.claim.contants.AttributeNames.NOTES;
 
 @Controller
@@ -40,20 +41,19 @@ public class ClaimsController {
         return new ResponseEntity<>(claimService.save(claim), HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/api/v1/claims/{claimId}/{action}", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/claims/{claimId}", method = RequestMethod.POST)
     public ResponseEntity<Object> attestClaims(@PathVariable String claimId,
-                                               @PathVariable AttestorActions action,
                                                @RequestHeader HttpHeaders headers,
                                                @RequestBody JsonNode requestBody) throws Exception {
         // TODO: fetch role from jwt
         String role = "bo";
+        AttestorActions action = AttestorActions.valueOf(requestBody.get(ACTION).asText());
         switch (action) {
             case GRANTED:
-                claimService.grantClaim(claimId, role, headers, this);
+                claimService.grantClaim(claimId, role, headers);
                 break;
             case DENIED:
                 Optional<String> notes = Optional.empty();
-
                 if(requestBody.has(NOTES)) {
                     notes = Optional.of(requestBody.get(NOTES).asText());
                 }

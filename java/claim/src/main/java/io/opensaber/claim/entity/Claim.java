@@ -33,7 +33,6 @@ public class Claim {
     private String propertyId;
 
     @Column(name=Claim.CREATED_AT)
-    @Generated(GenerationTime.INSERT)
     private Date createdAt;
 
     @Column(name=Claim.ATTESTED_ON)
@@ -43,6 +42,11 @@ public class Claim {
     private String notes;
     @Column
     private String status;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = new Date();
+    }
 
     public String getId() {
         return id;

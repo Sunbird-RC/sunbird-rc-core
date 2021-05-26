@@ -68,4 +68,8 @@ public class AttestationPolicy {
     public void setProperty(String property) {
         this.property = property;
     }
+
+    public boolean isValidRole(String role) {
+        return this.role.equals(role);
+    }
 }

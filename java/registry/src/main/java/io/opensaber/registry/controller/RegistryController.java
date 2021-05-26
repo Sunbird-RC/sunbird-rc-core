@@ -452,25 +452,26 @@ public class RegistryController {
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode requestBody
     ) throws IOException {
+        // TODO: fetch user details from JWT
         String userId = "";
+        String role = "bo";
         try {
-            JsonNode node = registryHelper.readEntity(userId, property, propertyId, false, null, false);
-            Map<String, Object> result = JSONUtil.convertJsonNodeToMap(node.get(property));
-            if(requestBody.get("action").asText().equals("GRANTED")) {
-                result.put("_osState", States.PUBLISHED);
-                result.put("_osAttestedData", requestBody.get("attestedData").asText());
-            } else {
-                result.put("_osState", States.REJECTED);
+            JsonNode existingNode = registryHelper
+                    .readEntity(userId, property, propertyId, false, null, false)
+                    .get(property);
+            StateContext stateContext = new StateContext(existingNode, requestBody, role);
+            if(stateContext.getRequestBodyVal("action").equals("GRANTED")) {
+                stateContext.setOSProperty("_osAttestedData", requestBody.get("attestedData").asText());
             }
+            ruleEngineService.doTransition(stateContext);
             ObjectNode objectNode = objectMapper.createObjectNode();
-            objectNode.set(property, JSONUtil.convertObjectJsonNode(result));
-            registryHelper.updateEntity(objectNode, userId);
+            objectNode.set(property, stateContext.getResult());
+            registryHelper.updateEntity(objectNode, propertyId);
             registryHelper.updateEntityInEs(entityName, entityId);
-            logger.info("Received ", result.size());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}", method = RequestMethod.PUT)
@@ -492,12 +493,12 @@ public class RegistryController {
                     .get(property);
             StateContext stateContext = new StateContext(existingNode, requestBody, "student");
             ruleEngineService.doTransition(stateContext);
+            if(requestBody.has("send") && requestBody.get("send").asBoolean()) {
+                HashMap<String, Object> claimResponse = claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId);
+                stateContext.setOSProperty("_osClaimId", claimResponse.get("id").toString());
+            }
             ObjectNode newRootNode = objectMapper.createObjectNode();
             newRootNode.set(property, stateContext.getResult());
-            if(requestBody.has("send") && requestBody.get("send").asBoolean()) {
-                HashMap<String, Object> claimResponse = (HashMap<String, Object>)claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId);
-                newRootNode.put("_osClaimId", (String) claimResponse.get("id"));
-            }
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             registryHelper.updateEntity(newRootNode, userId);

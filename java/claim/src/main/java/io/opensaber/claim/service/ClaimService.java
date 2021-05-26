@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
-import io.opensaber.claim.controller.ClaimsController;
 import io.opensaber.claim.entity.Claim;
 import io.opensaber.claim.model.ClaimStatus;
 import io.opensaber.claim.repository.ClaimRepository;
@@ -13,10 +12,7 @@ import net.minidev.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static io.opensaber.claim.contants.AttributeNames.PROPERTY_ID;
 
@@ -56,7 +52,7 @@ public class ClaimService {
         }
     }
 
-    public void grantClaim(String claimId, String role, HttpHeaders header, ClaimsController claimsController) throws Exception {
+    public void grantClaim(String claimId, String role, HttpHeaders header) throws Exception {
         Optional<Claim> claimOptional = findById(claimId);
         if(claimOptional.isPresent()) {
             Claim claim = claimOptional.get();
@@ -67,7 +63,7 @@ public class ClaimService {
             if(attestationPolicy == null){
                 throw new Exception("Attestation policy is not defined");
             }
-            if(!attestationPolicy.getRole().equals(role)) {
+            if(!attestationPolicy.isValidRole(role)) {
                 throw new Exception("Invalid role, See ya!!!");
             }
             Map<String, Object> attestedData = generateAttestedData(claim, entityNode, attestationPolicy);

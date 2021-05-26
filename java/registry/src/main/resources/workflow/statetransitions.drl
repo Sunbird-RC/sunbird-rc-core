@@ -1,16 +1,16 @@
 import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.model.state.States;
 
-rule "Admin accepted"
+rule "Attestor granted the claim"
     when
-        stateDefinition : StateContext(currentRole=="admin");
+        stateDefinition : StateContext(requestBodyHas("action") && getRequestBodyVal("action") == "GRANTED");
     then
         stateDefinition.setState(States.PUBLISHED);
 end
 
-rule "Admin rejected"
+rule "Attestor rejected the claim"
     when
-        stateDefinition:StateContext(currentRole=="admin");
+        stateDefinition : StateContext(requestBodyHas("action") && getRequestBodyVal("action") == "DENIED");
     then
         stateDefinition.setState(States.REJECTED);
 end
@@ -31,7 +31,7 @@ end
 
 rule "Set state as attestation requested"
     when
-        stateDefinition:StateContext(existingNode != null && requestBody == null);
+        stateDefinition:StateContext(isAttestationRequested());
     then
         stateDefinition.setState(States.ATTESTATION_REQUESTED);
 end
