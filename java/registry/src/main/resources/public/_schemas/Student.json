@@ -63,18 +63,9 @@
     "attestationPolicies": [
       {
         "property": "education",
-        "paths": ["$.education[?(@.osid == 'PROPERTY_ID')]['start', 'end', 'institute']", "$['studentName', 'class']"],
+        "paths": ["$.education[?(@.osid == 'PROPERTY_ID')]['institute', 'program', 'graduationYear', 'marks']", "$['fullName']"],
         "role": "bo",
         "type": "MANUAL",
-        "constraint": "same_block"
-      },
-      {
-        "property": "nationalIdentifier",
-        "paths": [
-          "nationalIdentifier"
-        ],
-        "role": "bo",
-        "type": "AUTOMATED",
         "constraint": "same_block"
       }
     ]

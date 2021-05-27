@@ -119,4 +119,15 @@ public class Claim {
     public void setAttestedOn(Date attestedOn) {
         this.attestedOn = attestedOn;
     }
+
+    @Override
+    public String toString() {
+        return "Claim{" +
+                "entity='" + entity + '\'' +
+                ", entityId='" + entityId + '\'' +
+                ", property='" + property + '\'' +
+                ", propertyId='" + propertyId + '\'' +
+                ", status='" + status + '\'' +
+                '}';
+    }
 }

@@ -72,4 +72,15 @@ public class AttestationPolicy {
     public boolean isValidRole(String role) {
         return this.role.equals(role);
     }
+
+    @Override
+    public String toString() {
+        return "AttestationPolicy{" +
+                "property='" + property + '\'' +
+                ", paths=" + paths +
+                ", type=" + type +
+                ", by='" + by + '\'' +
+                ", role='" + role + '\'' +
+                '}';
+    }
 }
