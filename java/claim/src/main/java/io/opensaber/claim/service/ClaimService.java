@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import io.opensaber.claim.entity.Claim;
+import io.opensaber.claim.exception.InvalidRoleException;
+import io.opensaber.claim.exception.ResourceNotFoundException;
 import io.opensaber.claim.model.ClaimStatus;
 import io.opensaber.claim.repository.ClaimRepository;
 import io.opensaber.pojos.attestation.AttestationPolicy;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 import static io.opensaber.claim.contants.AttributeNames.PROPERTY_ID;
+import static io.opensaber.claim.contants.ErrorMessages.*;
 
 @Service
 public class ClaimService {
@@ -41,34 +44,28 @@ public class ClaimService {
     }
 
     public void updateNotes(String claimId, Optional<String> notes, HttpHeaders headers) {
-        Optional<Claim> claimOptional = findById(claimId);
-        if(claimOptional.isPresent()) {
-            Claim claim = claimOptional.get();
-            claim.setNotes(notes.orElse(""));
-            claim.setStatus(ClaimStatus.CLOSED.name());
-            claim.setAttestedOn(new Date());
-            save(claim);
-            openSaberClient.updateAttestedProperty(claim, headers);
-        }
+        Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));
+        claim.setNotes(notes.orElse(""));
+        claim.setStatus(ClaimStatus.CLOSED.name());
+        claim.setAttestedOn(new Date());
+        save(claim);
+        openSaberClient.updateAttestedProperty(claim, headers);
     }
 
     public void grantClaim(String claimId, String role, HttpHeaders header) throws Exception {
-        Optional<Claim> claimOptional = findById(claimId);
-        if(claimOptional.isPresent()) {
-            Claim claim = claimOptional.get();
-            AttestationPropertiesDTO attestationProperties = openSaberClient.getAttestationProperties(claim);
-            Optional<AttestationPolicy> attestationPolicyOptional = getAttestationPolicy(claim, attestationProperties);
-            AttestationPolicy attestationPolicy = attestationPolicyOptional.orElseThrow(Exception::new);
-            if(!attestationPolicy.isValidRole(role)) {
-                throw new Exception("Invalid role, See ya!!!");
-            }
-            Map<String, Object> attestedData = generateAttestedData(attestationProperties.getEntityAsJsonNode(), attestationPolicy, claim.getPropertyId());
-            claim.setStatus(ClaimStatus.CLOSED.name());
-            claim.setAttestedOn(new Date());
-            save(claim);
-            JsonNode node = new ObjectMapper().convertValue(attestedData, JsonNode.class);
-            openSaberClient.updateAttestedProperty(claim, node.toString(), header);
+        Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));
+        AttestationPropertiesDTO attestationProperties = openSaberClient.getAttestationProperties(claim);
+        Optional<AttestationPolicy> attestationPolicyOptional = getAttestationPolicy(claim, attestationProperties);
+        AttestationPolicy attestationPolicy = attestationPolicyOptional.orElseThrow(() -> new ResourceNotFoundException(ATTESTATION_POLICY_IS_NOT_FOUND));
+        if(!attestationPolicy.isValidRole(role)) {
+            throw new InvalidRoleException(USER_NOT_AUTHORIZED);
         }
+        Map<String, Object> attestedData = generateAttestedData(attestationProperties.getEntityAsJsonNode(), attestationPolicy, claim.getPropertyId());
+        claim.setStatus(ClaimStatus.CLOSED.name());
+        claim.setAttestedOn(new Date());
+        save(claim);
+        JsonNode node = new ObjectMapper().convertValue(attestedData, JsonNode.class);
+        openSaberClient.updateAttestedProperty(claim, node.toString(), header);
     }
 
     private Map<String, Object> generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyId) {

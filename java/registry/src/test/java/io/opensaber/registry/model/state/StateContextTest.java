@@ -52,7 +52,7 @@ public class StateContextTest {
     @Test
     public void shouldReturnFalseIfThereIsNoChangeInTheUpdateRequestAndEvenThoughSomeFieldsAreMissingInIt()
             throws IOException {
-        JsonNode existingNode = requestBody = JSONUtil.convertStringJsonNode("{\n" +
+        JsonNode existingNode = JSONUtil.convertStringJsonNode("{\n" +
                 "    \"fromYear\": \"1999\"\n" +
                 "}");
         StateContext stateContext = new StateContext(existingNode, requestBody, currentRole);
@@ -78,5 +78,20 @@ public class StateContextTest {
                     "}\n");
             assertEquals(expectedResult, stateContext.getResult());
         }
+    }
+
+    @Test
+    public void shouldNotSetTheSendAttributeToTheResult() throws IOException {
+        JsonNode existingNode = JSONUtil.convertStringJsonNode("{\n" +
+                "    \"fromYear\": \"1999\",\n" +
+                "    \"toYear\": \"2019\",\n" +
+                "    \"instituteName\": \"AHSS\"\n" +
+                "}");
+        JsonNode requestBody = JSONUtil.convertStringJsonNode("{\n" +
+                "    \"fromYear\": \"1999\",\n" +
+                "    \"send\": \"true\"\n" +
+                "}");
+        StateContext stateContext = new StateContext(existingNode, requestBody, currentRole);
+        assertFalse(stateContext.getResult().has("send"));
     }
 }
