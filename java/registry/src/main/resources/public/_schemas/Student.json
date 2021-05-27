@@ -16,141 +16,44 @@
       "type": "object",
       "title": "The Student Schema",
       "required": [
-        "studentName",
-        "studentCode",
-        "nationalIdentifier",
-        "class",
-        "gender"
+
       ],
       "properties": {
-        "studentCode": {
-          "$id": "#/properties/studentCode",
-          "type": "string",
-          "$comment": "Code"
+        "identityDetails": {
+          "$ref": "Common.json/#/definitions/IdentityDetails"
         },
-        "nationalIdentifier": {
-          "$id": "#/properties/nationalIdentifier",
-          "type": "string",
-          "$comment": "Nationality"
-        },
-        "studentName": {
-          "$id": "#/properties/studentName",
-          "type": "string",
-          "title": "Full name"
-        },
-        "gender": {
-          "$id": "#/properties/gender",
-          "type": "string",
-          "enum": [
-            "Male",
-            "Female",
-            "Other"
-          ]
-        },
-        "birthDate": {
-          "$id": "#/properties/birthDate",
-          "type": "string",
-          "format": "date"
-        },
-        "email": {
-          "$id": "#/properties/email",
-          "type": "string"
-        },
-        "mobile": {
-          "$id": "#/properties/mobile",
-          "type": "string"
-        },
-        "address": {
-          "type": "string"
-        },
-        "district": {
-          "type": "string"
-        },
-        "state": {
-          "type": "string"
+        "contactDetails": {
+          "$ref": "Common.json/#/definitions/ContactDetails"
         },
         "education": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "degree": {
-                "type": "string"
-              },
-              "institute": {
-                "type": "string"
-              },
-              "start": {
-                "type": "string",
-                "format": "date"
-              },
-              "end": {
-                "type": "string",
-                "format": "date"
-              }
-            }
-          }
-        },
-        "experience": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "title": {
-                "type": "string"
-              },
-              "start": {
-                "type": "string",
-                "format": "date"
-              },
-              "end": {
-                "type": "string",
-                "format": "date"
-              }
-            }
-          }
-        },
-        "certification": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "institute": {
-                "type": "string"
-              },
-              "start": {
-                "type": "string",
-                "format": "date"
-              },
-              "end": {
-                "type": "string",
-                "format": "date"
-              }
-            }
-          }
+            "$ref": "Common.json/#/definitions/EducationType"
+          },
+          "title": "Education Details"
         }
       }
     }
   },
   "_osConfig": {
-         "osComment": ["This section contains the OpenSABER specific configuration information",
-                      "privateFields: Optional; list of field names to be encrypted and stored in database",
-                      "signedFields: Optional; list of field names that must be pre-signed",
-                      "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, studentCode) is a composite index and studentName is a single column index.",
-                      "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
-                      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"],
+    "osComment": ["This section contains the OpenSABER specific configuration information",
+      "privateFields: Optional; list of field names to be encrypted and stored in database",
+      "signedFields: Optional; list of field names that must be pre-signed",
+      "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, studentCode) is a composite index and studentName is a single column index.",
+      "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
+      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"],
 
-         "privateFields": ["studentCode", "birthDate"],
-         "signedFields": [],
-         "indexFields": ["studentCode","studentName"],
-         "uniqueIndexFields": ["studentCode"],
-         "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"],
+    "privateFields": ["birthDate"],
+    "signedFields": [],
+    "indexFields": ["studentName"],
+    "uniqueIndexFields": ["identityValue"],
+    "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"],
     "attestations": [
       {
         "paths": ["education"],
         "role": "bo",
         "constraint": "same_block"
       }
-      ]
+    ]
   }
 }
