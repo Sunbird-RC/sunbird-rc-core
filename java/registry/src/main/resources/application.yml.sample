@@ -32,7 +32,8 @@ registry:
     base: ${registry_system_base:http://localhost:8080/opensaber/}
   rootEntity:
         type: ${registry_rootentity_type:Teacher}
-
+schema:
+    url: http://localhost:8081/_schemas
 # This property is to be used for search request/query
 # offset: search result starts from value provided as default
 # limits: search result to value provided as default

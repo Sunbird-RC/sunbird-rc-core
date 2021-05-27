@@ -666,6 +666,8 @@ public class RegistryController {
             if (Character.isUpperCase(entityName.charAt(0))) {
                 ObjectNode path = populateEntityActions(entityName);
                 paths.set(String.format("/api/v1/%s/{entityId}", entityName), path);
+                path = getPostOperation(entityName);
+                paths.set(String.format("/api/v1/%s", entityName), path);
                 JsonNode schemaDefinition = objectMapper.reader().readTree(definitionsManager.getDefinition(entityName).getContent());
                 deleteAll$Ids((ObjectNode) schemaDefinition);
 //                definitions.set(entityName, schemaDefinition.get("definitions").get(entityName));
@@ -715,10 +717,9 @@ public class RegistryController {
         return null;
     }
 
-    ObjectNode populateEntityActions(String entityName) throws IOException {
+    private ObjectNode populateEntityActions(String entityName) throws IOException {
         ObjectNode path = objectMapper.createObjectNode();
         addGetOperation(entityName, path);
-        addModifyOperation(entityName, path, "post", "Create");
         addModifyOperation(entityName, path, "put", "Update");
         return path;
     }
@@ -739,12 +740,30 @@ public class RegistryController {
                 operation.parameter(bodyParameter).parameter(pathParameter), operationType);
     }
 
+    private void addPostOperation(String entityName, ObjectNode path) throws IOException {
+        Operation operation = new Operation()
+                .description(String.format("Create new %s", entityName));
+        BodyParameter bodyParameter = new BodyParameter()
+                .name("entityId")
+                .description(String.format("Id of the %s", entityName))
+                .schema(new RefModel(String.format("#/definitions/%s", entityName)));
+        addResponseType(entityName, path,
+                operation.parameter(bodyParameter), "post");
+    }
+
     private void addGetOperation(String entityName, ObjectNode path) throws IOException {
         Operation operation = new Operation();
         PathParameter parameter = new PathParameter().name("entityId")
                 .description(String.format("Id of the %s", entityName))
+                .required(true)
                 .type("string");
         addResponseType(entityName, path, operation.parameter(parameter), "get");
+    }
+
+    private ObjectNode getPostOperation(String entityName) throws IOException {
+        ObjectNode path = objectMapper.createObjectNode();
+        addPostOperation(entityName, path);
+        return path;
     }
 
     private void addResponseType(String entityName, ObjectNode path, Operation operation, String operationType) throws IOException {
