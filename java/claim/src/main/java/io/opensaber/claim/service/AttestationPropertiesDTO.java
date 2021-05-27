@@ -1,4 +1,6 @@
 package io.opensaber.claim.service;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 
 import java.util.List;
@@ -22,5 +24,10 @@ public class AttestationPropertiesDTO {
 
     public void setAttestationPolicies(List<AttestationPolicy> attestationPolicies) {
         this.attestationPolicies = attestationPolicies;
+    }
+
+    public JsonNode getEntityAsJsonNode() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.convertValue(entity, JsonNode.class);
     }
 }

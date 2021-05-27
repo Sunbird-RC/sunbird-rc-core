@@ -57,46 +57,50 @@ public class ClaimService {
         if(claimOptional.isPresent()) {
             Claim claim = claimOptional.get();
             AttestationPropertiesDTO attestationProperties = openSaberClient.getAttestationProperties(claim);
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode entityNode = objectMapper.convertValue(attestationProperties.getEntity(), JsonNode.class);
-            AttestationPolicy attestationPolicy = getAttestationPolicy(claim, attestationProperties);
-            if(attestationPolicy == null){
-                throw new Exception("Attestation policy is not defined");
-            }
+            Optional<AttestationPolicy> attestationPolicyOptional = getAttestationPolicy(claim, attestationProperties);
+            AttestationPolicy attestationPolicy = attestationPolicyOptional.orElseThrow(Exception::new);
             if(!attestationPolicy.isValidRole(role)) {
                 throw new Exception("Invalid role, See ya!!!");
             }
-            Map<String, Object> attestedData = generateAttestedData(claim, entityNode, attestationPolicy);
+            Map<String, Object> attestedData = generateAttestedData(attestationProperties.getEntityAsJsonNode(), attestationPolicy, claim.getPropertyId());
             claim.setStatus(ClaimStatus.CLOSED.name());
             claim.setAttestedOn(new Date());
             save(claim);
-            openSaberClient.updateAttestedProperty(claim, attestedData, header);
+            JsonNode node = new ObjectMapper().convertValue(attestedData, JsonNode.class);
+            openSaberClient.updateAttestedProperty(claim, node.toString(), header);
         }
     }
 
-    private Map<String, Object> generateAttestedData(Claim claim, JsonNode entityNode, AttestationPolicy attestationPolicy) {
+    private Map<String, Object> generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyId) {
         Map<String, Object> attestedData = new HashMap<>();
         for (String path: attestationPolicy.getPaths()) {
             if(path.contains(PROPERTY_ID)) {
-                path = path.replace(PROPERTY_ID, claim.getPropertyId());
+                path = path.replace(PROPERTY_ID, propertyId);
             }
             DocumentContext context = JsonPath.parse(entityNode.toString());
             Object result = context.read(path);
             if(result.getClass().equals(JSONArray.class)) {
                 HashMap<String, Object> extractedVal = (HashMap) ((JSONArray) result).get(0);
                 attestedData.putAll(extractedVal);
-            } else {
-                attestedData.putAll((HashMap)result);
+            } else if(result.getClass().equals(LinkedHashMap.class)) {
+                attestedData.putAll((HashMap) result);
+            }
+            else {
+                // It means it is just a value,
+                attestedData.putAll(
+                        new HashMap<String, Object>(){{
+                            put(attestationPolicy.getProperty(), result);
+                        }}
+                );
             }
         }
         return attestedData;
     }
 
-    private AttestationPolicy getAttestationPolicy(Claim claim, AttestationPropertiesDTO attestationProperties) {
+    private Optional<AttestationPolicy> getAttestationPolicy(Claim claim, AttestationPropertiesDTO attestationProperties) {
         return attestationProperties.getAttestationPolicies()
                 .stream()
                 .filter(policy -> policy.getProperty().equals(claim.getProperty()))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 }
