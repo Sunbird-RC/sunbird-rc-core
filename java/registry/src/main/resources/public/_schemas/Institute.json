@@ -195,10 +195,10 @@
     "indexFields": [],
     "uniqueIndexFields": [],
     "systemFields": [
-      "_osCreatedAt",
-      "_osUpdatedAt",
-      "_osCreatedBy",
-      "_osUpdatedBy"
+      "osCreatedAt",
+      "osUpdatedAt",
+      "osCreatedBy",
+      "osUpdatedBy"
     ],
     "attestations": [
       {
@@ -208,6 +208,7 @@
         "role": "board_admin",
         "constraint": "same_block"
       }
-    ]
+    ],
+    "subjectJsonPath": "email"
   }
 }

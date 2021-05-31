@@ -12,6 +12,8 @@ import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.dao.NotFoundException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -284,31 +286,26 @@ public class RegistryController {
          */
         return null;
     }
-    @RequestMapping(value = "/invite", method = RequestMethod.POST)
-    public ResponseEntity<Response> invite(@RequestHeader HttpHeaders header) {
+    @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
+    public ResponseEntity<Object> invite(
+            @PathVariable String entityName,
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode rootNode
+    ) throws JsonProcessingException, DuplicateRecordException, EntityCreationException {
+        logger.info("Inviting entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
-        Map<String, Object> result = new HashMap<>();
-        String entityType = apiMessage.getRequest().getEntityType();
-        JsonNode rootNode = apiMessage.getRequest().getRequestMapNode();
-
+        ObjectNode newRootNode = objectMapper.createObjectNode();
+        newRootNode.set(entityName, rootNode);
         try {
-            String entitySubject = validationService.getEntitySubject(entityType, rootNode);
-            String userID = keycloakAdminUtil.createUser(entitySubject, "facility admin");
-            logger.info("Owner user_id : " + userID);
-            String label = registryHelper.inviteEntity(rootNode, apiMessage.getUserID(), userID);
-            Map resultMap = new HashMap();
-            resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
-            result.put(entityType, resultMap);
-            response.setResult(result);
-            responseParams.setStatus(Response.Status.SUCCESSFUL);
-        } catch (Exception e) {
-            logger.error("Exception in controller while adding entity !", e);
-            response.setResult(result);
-            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg(e.getMessage());
+            validationService.validate(entityName, objectMapper.writeValueAsString(newRootNode));
+        } catch (MiddlewareHaltException e) {
+            logger.info("Error in validating the request");
+            return badRequestException(responseParams, response, e.getMessage());
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        String entitySubject = rootNode.findPath(definitionsManager.getSubjectPath(entityName)).asText();
+        String userID = keycloakAdminUtil.createUser(entitySubject, entityName);
+        return postEntity(entityName, header, rootNode, userID);
     }
 
 
@@ -398,7 +395,8 @@ public class RegistryController {
     public ResponseEntity<Object> postEntity(
             @PathVariable String entityName,
             @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode rootNode
+            @RequestBody JsonNode rootNode,
+            String userId
     ) throws JsonProcessingException {
         logger.info("Adding entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
@@ -410,7 +408,6 @@ public class RegistryController {
         }
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
-
         try {
             validationService.validate(entityName, objectMapper.writeValueAsString(newRootNode));
         } catch (MiddlewareHaltException e) {
@@ -419,7 +416,10 @@ public class RegistryController {
         }
 
         try {
-            String label = registryHelper.addEntity(newRootNode, ""); //todo add user id from auth scope.
+            if (userId == null) {
+                userId = "";
+            }
+            String label = registryHelper.addEntity(newRootNode, userId); //todo add user id from auth scope.
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
 
@@ -601,6 +601,7 @@ public class RegistryController {
         }
         return new ResponseEntity<>(objectMapper.writeValueAsString(doc), HttpStatus.OK);
     }
+
     @RequestMapping(value = "/api/docs/{file}.json", method = RequestMethod.GET, produces = "application/json")
     public ResponseEntity<Object> getSwaggerDocImportFiles(
             @PathVariable String file
