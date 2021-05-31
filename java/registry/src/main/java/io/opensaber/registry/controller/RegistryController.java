@@ -590,6 +590,7 @@ public class RegistryController {
                 paths.set(String.format("/api/v1/%s/{entityId}", entityName), path);
                 path = getPostOperation(entityName);
                 paths.set(String.format("/api/v1/%s", entityName), path);
+                paths.set(String.format("/api/v1/%s/invite", entityName), path);
                 JsonNode schemaDefinition = objectMapper.reader().readTree(definitionsManager.getDefinition(entityName).getContent());
                 deleteAll$Ids((ObjectNode) schemaDefinition);
 //                definitions.set(entityName, schemaDefinition.get("definitions").get(entityName));
