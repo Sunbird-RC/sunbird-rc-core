@@ -44,6 +44,8 @@ public class OpenSaberApplication {
 		config.addAllowedMethod("POST");
 		config.addAllowedMethod("DELETE");
 		config.addAllowedMethod("GET");
+		config.addAllowedMethod("OPTIONS");
+		config.addAllowedMethod("PUT");
 		source.registerCorsConfiguration("/**", config);
 		FilterRegistrationBean bean = new FilterRegistrationBean(new CorsFilter(source));
 		bean.setOrder(0);
