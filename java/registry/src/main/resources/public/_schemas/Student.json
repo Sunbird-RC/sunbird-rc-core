@@ -68,6 +68,7 @@
         "type": "MANUAL",
         "constraint": "same_block"
       }
-    ]
+    ],
+    "subjectJsonPath": "mobile"
   }
 }

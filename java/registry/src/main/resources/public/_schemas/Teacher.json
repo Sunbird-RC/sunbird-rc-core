@@ -60,10 +60,10 @@
       "identityValue"
     ],
     "systemFields": [
-      "_osCreatedAt",
-      "_osUpdatedAt",
-      "_osCreatedBy",
-      "_osUpdatedBy"
+      "osCreatedAt",
+      "osUpdatedAt",
+      "osCreatedBy",
+      "osUpdatedBy"
     ],
     "attestations": [
       {
@@ -73,6 +73,7 @@
         "role": "bo",
         "constraint": "same_block"
       }
-    ]
+    ],
+    "subjectJsonPath": "mobile"
   }
 }
