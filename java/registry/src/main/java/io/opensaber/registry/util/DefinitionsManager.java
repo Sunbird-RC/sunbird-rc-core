@@ -125,4 +125,8 @@ public class DefinitionsManager {
         }
         return result;
     };
+
+    public String getSubjectPath(String title) {
+        return definitionMap.get(title).getOsSchemaConfiguration().getSubjectJsonPath();
+    }
 }
