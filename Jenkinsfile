@@ -6,6 +6,7 @@ node {
         }
 
         stage('Compile And Test'){
+            sh """sh configure-dependencies.sh"""
             dir('java') {
               sh """./mvnw clean install -DskipTests"""
             }
