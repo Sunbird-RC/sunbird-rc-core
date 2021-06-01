@@ -165,13 +165,13 @@ audit:
     suffixSeparator: ${audit_suffixSeparator:_}
 
 keycloak:
-  publicKey:  ${sunbird_sso_publickey}
-  realm:  ${sunbird_sso_realm}
-  auth_server_url:  ${sunbird_sso_url}
-  resource: ${sunbird_sso_client_id}
+  #publicKey:  ${sunbird_sso_publickey:pk}
+  auth-server-url: ${sunbird_sso_url:https://localhost:8888/auth}
+  realm: ${sunbird_sso_realm:realm}
+  resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
-  client-id: ${sunbird_sso_admin_client_id}
-  client-secret: ${sunbird_sso_admin_client_secret}
+  client-id: ${sunbird_sso_admin_client_id:client}
+  client-secret: ${sunbird_sso_admin_client_secret:client_secret}
 claims:
   url: ${claims_url:http://localhost:8081}
 authentication:
