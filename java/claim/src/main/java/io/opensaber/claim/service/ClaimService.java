@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import io.opensaber.claim.entity.Claim;
+import io.opensaber.claim.exception.ClaimAlreadyProcessedException;
 import io.opensaber.claim.exception.InvalidRoleException;
 import io.opensaber.claim.exception.ResourceNotFoundException;
 import io.opensaber.claim.model.ClaimStatus;
@@ -49,6 +50,9 @@ public class ClaimService {
     public void updateNotes(String claimId, Optional<String> notes, HttpHeaders headers) {
         logger.info("Initiating denial action for claim with id{} ",  claimId);
         Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));
+        if(claim.isClosed()) {
+            throw new ClaimAlreadyProcessedException(CLAIM_IS_ALREADY_PROCESSED);
+        }
         claim.setNotes(notes.orElse(""));
         claim.setStatus(ClaimStatus.CLOSED.name());
         claim.setAttestedOn(new Date());
@@ -57,9 +61,12 @@ public class ClaimService {
         logger.info("Clam with id {} is successfully denied",  claimId);
     }
 
-    public void grantClaim(String claimId, String role, HttpHeaders header) throws Exception {
+    public void grantClaim(String claimId, String role, HttpHeaders header) {
         logger.info("Initiating grant action for claim with id {} ",  claimId);
         Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));
+        if(claim.isClosed()) {
+            throw new ClaimAlreadyProcessedException(CLAIM_IS_ALREADY_PROCESSED);
+        }
         AttestationPropertiesDTO attestationProperties = openSaberClient.getAttestationProperties(claim);
         Optional<AttestationPolicy> attestationPolicyOptional = getAttestationPolicy(claim, attestationProperties);
         AttestationPolicy attestationPolicy = attestationPolicyOptional.orElseThrow(() -> new ResourceNotFoundException(ATTESTATION_POLICY_IS_NOT_FOUND));

@@ -493,7 +493,7 @@ public class RegistryController {
                     .get(property);
             StateContext stateContext = new StateContext(existingNode, requestBody, "student");
             ruleEngineService.doTransition(stateContext);
-            if(requestBody.has("send") && requestBody.get("send").asBoolean()) {
+            if(stateContext.isAttestationRequested()) {
                 HashMap<String, Object> claimResponse = claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId);
                 stateContext.setOSProperty("_osClaimId", claimResponse.get("id").toString());
             }

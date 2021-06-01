@@ -76,7 +76,8 @@ public class StateContext {
     }
 
     public boolean isAttestationRequested() {
-        return requestBodyHas("send") && requestBody.get("send").asBoolean();
+        return !existingNode.get("_osState").asText().equals(States.ATTESTATION_REQUESTED.name()) &&
+                requestBodyHas("send") && requestBody.get("send").asBoolean();
     }
 
     public void setOSProperty(String key, Object val) {

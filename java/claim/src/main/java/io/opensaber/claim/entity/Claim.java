@@ -1,8 +1,7 @@
 package io.opensaber.claim.entity;
 
 
-import org.hibernate.annotations.Generated;
-import org.hibernate.annotations.GenerationTime;
+import io.opensaber.claim.model.ClaimStatus;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -129,5 +128,9 @@ public class Claim {
                 ", propertyId='" + propertyId + '\'' +
                 ", status='" + status + '\'' +
                 '}';
+    }
+
+    public boolean isClosed() {
+        return status.equals(ClaimStatus.CLOSED.name());
     }
 }

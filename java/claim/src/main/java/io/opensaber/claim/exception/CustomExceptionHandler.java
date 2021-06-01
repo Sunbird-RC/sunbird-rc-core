@@ -21,4 +21,11 @@ public class CustomExceptionHandler {
         errorResponse.setMessage(exception.getLocalizedMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(ClaimAlreadyProcessedException.class)
+    public ResponseEntity<Object> handleClaimAlreadyProcessedException(ClaimAlreadyProcessedException exception) {
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setMessage(exception.getLocalizedMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 }

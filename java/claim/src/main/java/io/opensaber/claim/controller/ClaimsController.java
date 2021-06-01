@@ -47,7 +47,7 @@ public class ClaimsController {
     @RequestMapping(value = "/api/v1/claims/{claimId}", method = RequestMethod.POST)
     public ResponseEntity<Object> attestClaims(@PathVariable String claimId,
                                                @RequestHeader HttpHeaders headers,
-                                               @RequestBody JsonNode requestBody) throws Exception {
+                                               @RequestBody JsonNode requestBody) {
         // TODO: fetch role from jwt
         String role = "bo";
         AttestorActions action = AttestorActions.valueOf(requestBody.get(ACTION).asText());
