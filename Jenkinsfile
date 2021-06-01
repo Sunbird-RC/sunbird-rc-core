@@ -29,6 +29,8 @@ node {
 
         stage('Deploy image') {
             sh "ssh dileep@40.80.94.137 'kubectl get pods -n ndear'"
+            sh "ssh dileep@40.80.94.137 'kubectl set image deployment/registry registry=tejashjl/open-saber-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
+
         }
 
     }
