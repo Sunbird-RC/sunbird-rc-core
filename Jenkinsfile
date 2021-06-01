@@ -17,7 +17,14 @@ node {
         }
 
         stage('Build image') {
-            app = docker.build("open-saber-rc",".")
+            app = docker.build("tejashjl/open-saber-rc",".")
+        }
+
+        stage('Push image') {
+            docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
+                app.push("${env.BUILD_NUMBER}")
+                app.push("latest")
+           }
         }
 
         stage('Deploy image') {
