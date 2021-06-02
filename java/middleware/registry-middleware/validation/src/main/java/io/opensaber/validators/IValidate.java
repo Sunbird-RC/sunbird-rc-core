@@ -5,8 +5,8 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 
 public interface IValidate {
 
-    boolean validate(String entityType, String payload) throws MiddlewareHaltException;
-    String getEntitySubject(String entityType, JsonNode entity) throws Exception;
+    void validate(String entityType, String payload) throws MiddlewareHaltException;
+    void validateIgnoreRequired(String entityType, String payload) throws MiddlewareHaltException;
 
     /**
      * Store all list of known definitions as definitionMap.
