@@ -35,6 +35,7 @@ import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.ViewTemplateManager;
 
 import io.opensaber.validators.IValidate;
+import io.opensaber.validators.ValidationException;
 import io.swagger.models.Operation;
 import io.swagger.models.RefModel;
 import io.swagger.models.parameters.BodyParameter;
@@ -98,9 +99,6 @@ public class RegistryController {
 
     @Autowired
     private DefinitionsManager definitionsManager;
-
-    @Autowired
-    private IValidate validationService;
 
     @Autowired
     RuleEngineService ruleEngineService;
@@ -291,21 +289,28 @@ public class RegistryController {
             @PathVariable String entityName,
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode rootNode
-    ) throws JsonProcessingException, DuplicateRecordException, EntityCreationException {
+    ) throws Exception {
+        final String TAG = "RegistryController:invite";
         logger.info("Inviting entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
+        Map<String, Object> result = new HashMap<>();
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
         try {
-            validationService.validate(entityName, objectMapper.writeValueAsString(newRootNode));
-        } catch (MiddlewareHaltException e) {
-            logger.info("Error in validating the request");
+            watch.start(TAG);
+            String entityId = registryHelper.inviteEntity(newRootNode, "");
+            Map resultMap = new HashMap();
+            resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), entityId);
+            result.put(entityName, resultMap);
+            response.setResult(result);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.start(TAG);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (MiddlewareHaltException | ValidationException e) {
+            logger.info("Error in validating the request", e);
             return badRequestException(responseParams, response, e.getMessage());
         }
-        String entitySubject = rootNode.findPath(definitionsManager.getSubjectPath(entityName)).asText();
-        String userID = keycloakAdminUtil.createUser(entitySubject, entityName);
-        return postEntity(entityName, header, rootNode, userID);
     }
 
 
@@ -408,12 +413,6 @@ public class RegistryController {
         }
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
-        try {
-            validationService.validate(entityName, objectMapper.writeValueAsString(newRootNode));
-        } catch (MiddlewareHaltException e) {
-            logger.info("Error in validating the request");
-            return badRequestException(responseParams, response, e.getMessage());
-        }
 
         try {
             if (userId == null) {
@@ -428,6 +427,9 @@ public class RegistryController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.addToExistingEntity");
             return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (MiddlewareHaltException e) {
+            logger.info("Error in validating the request");
+            return badRequestException(responseParams, response, e.getMessage());
         } catch (Exception e) {
             logger.error("Exception in controller while adding entity !", e);
             response.setResult(result);

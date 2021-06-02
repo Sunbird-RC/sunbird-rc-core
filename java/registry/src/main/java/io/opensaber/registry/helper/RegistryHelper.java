@@ -19,6 +19,8 @@ import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.*;
+import io.opensaber.validators.IValidate;
+import io.opensaber.validators.ValidationException;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
 
@@ -49,10 +51,19 @@ public class RegistryHelper {
     IReadService readService;
 
     @Autowired
+    IValidate validationService;
+
+    @Autowired
     private ISearchService searchService;
 
     @Autowired
     private ViewTemplateManager viewTemplateManager;
+
+    @Autowired
+    private KeycloakAdminUtil keycloakAdminUtil;
+
+    @Autowired
+    private DefinitionsManager definitionsManager;
 
     @Autowired
     private DBConnectionInfoMgr dbConnectionInfoMgr;
@@ -87,12 +98,25 @@ public class RegistryHelper {
      * @throws Exception
      */
     public String addEntity(JsonNode inputJson, String userId) throws Exception {
-        return addEntity(inputJson, userId, inputJson.fields().next().getKey());
+        String entityType = inputJson.fields().next().getKey();
+        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson));
+        return addEntity(inputJson, userId, entityType);
     }
 
-    public String inviteEntity(JsonNode inputJson, String userId, String owner) throws Exception {
+    public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
         String entityType = inputJson.fields().next().getKey();
+        validationService.validateIgnoreRequired(entityType, objectMapper.writeValueAsString(inputJson));
+
+        String entitySubjectPath = definitionsManager.getSubjectPath(entityType);
+        JsonNode entitySubjectNode = inputJson.get(entityType).findPath(entitySubjectPath);
+        if (entitySubjectNode.isMissingNode()) {
+            throw new ValidationException("Missing required field for invitation: " + entitySubjectPath);
+        }
+
+        String entitySubject = entitySubjectNode.asText();
+        String owner = keycloakAdminUtil.createUser(entitySubject, entityType);
         OSSystemFields.osOwner.setOsOwner(inputJson.get(entityType), owner);
+
         return addEntity(inputJson, userId, entityType);
     }
 
@@ -220,6 +244,7 @@ public class RegistryHelper {
         logger.debug("updateEntity starts");
         String entityType = inputJson.fields().next().getKey();
         String jsonString = objectMapper.writeValueAsString(inputJson);
+        validationService.validateIgnoreRequired(entityType, jsonString);
         Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
         String label = inputJson.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
         RecordIdentifier recordId = RecordIdentifier.parse(label);
