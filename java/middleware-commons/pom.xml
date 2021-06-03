@@ -25,6 +25,11 @@
             <version>5.0.2.RELEASE</version>
         </dependency>
         <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.1.4</version>
+        </dependency>
+        <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>pojos</artifactId>
             <version>2.0.3</version>

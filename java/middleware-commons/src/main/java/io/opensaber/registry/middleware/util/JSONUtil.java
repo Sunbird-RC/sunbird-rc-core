@@ -2,6 +2,7 @@ package io.opensaber.registry.middleware.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,10 +20,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -266,6 +264,35 @@ public class JSONUtil {
 
 		});
 		parent.remove(removeKey);
+	}
+
+	public static void removeNodesByPath(ObjectNode root, List<String> nodePaths) throws Exception {
+		Map<JsonPointer, List<Integer>> arrayNodePathsMap = new HashMap<>();
+		for(String nodePath: nodePaths) {
+			JsonPointer jsonPointer = JsonPointer.compile(nodePath);
+			JsonPointer parentPtr = jsonPointer.head();
+			String leafFieldName = jsonPointer.last().getMatchingProperty();
+			JsonNode parent = root.at(jsonPointer.head());
+
+			if(parent.isMissingNode()) continue;
+			if(parent instanceof ObjectNode) ((ObjectNode) parent).remove(leafFieldName);
+			else if (parent instanceof ArrayNode) {
+				if(!arrayNodePathsMap.containsKey(parentPtr)) {
+					arrayNodePathsMap.put(parentPtr, new ArrayList<>(Collections.singletonList(Integer.parseInt(leafFieldName))));
+				} else {
+					arrayNodePathsMap.get(parentPtr).add(Integer.parseInt(leafFieldName));
+				}
+			} else {
+				throw new Exception("Illegal Path");
+			}
+		}
+		for (JsonPointer targetPtr: arrayNodePathsMap.keySet()) {
+			List<Integer> removalPaths = arrayNodePathsMap.get(targetPtr);
+			removalPaths.sort(Comparator.reverseOrder());
+			for(int index: removalPaths) {
+				((ArrayNode)root.at(targetPtr)).remove(index);
+			}
+		}
 	}
 
 	/**
