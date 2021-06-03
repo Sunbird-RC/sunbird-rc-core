@@ -1,0 +1,13 @@
+{
+  "Student": {
+    "name": "Rohan K",
+    "address": {
+      "line1": "somewhere",
+      "pincode": "123456"
+    },
+    "education": [
+      {
+      }
+    ]
+  }
+}
