@@ -18,9 +18,7 @@ public class ValidationFilter implements Middleware {
 	public boolean execute(APIMessage apiMessage) throws MiddlewareHaltException {
 		String entityType = apiMessage.getRequest().getEntityType();
 		String payload = apiMessage.getRequest().getRequestMapAsString();
-		if (!validationService.validate(entityType, payload)) {
-			throw new MiddlewareHaltException(VALIDATION_FAILURE_MSG);
-		}
+		validationService.validate(entityType, payload);
 		return true;
 	}
 }
