@@ -25,10 +25,10 @@
         "contactDetails": {
           "$ref": "Common.json/#/definitions/ContactDetails"
         },
-        "education": {
+        "academicQualifications": {
           "type": "array",
           "items": {
-            "$ref": "Common.json/#/definitions/EducationType"
+            "$ref": "Common.json/#/definitions/AcademicQualification"
           },
           "title": "Education Details"
         },

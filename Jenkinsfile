@@ -1,52 +1,47 @@
-node('build-slave') {
+node {
     try {
-        String ANSI_GREEN = "\u001B[32m"
-        String ANSI_NORMAL = "\u001B[0m"
-        String ANSI_BOLD = "\u001B[1m"
-        String ANSI_RED = "\u001B[31m"
-        String ANSI_YELLOW = "\u001B[33m"
+        def branchname = 'open-saber-rc-2'
+        stage('Clone repository') {
+            git([url: 'https://github.com/tejash-jl/open-saber', branch: "${branchname}"])
+        }
 
-        ansiColor('xterm') {
-            stage('Checkout') {
-                if (!env.hub_org) {
-                    println(ANSI_BOLD + ANSI_RED + "Uh Oh! Please set a Jenkins environment variable named hub_org with value as registery/sunbidrded" + ANSI_NORMAL)
-                    error 'Please resolve the errors and rerun..'
-                }
-                else
-                    println(ANSI_BOLD + ANSI_GREEN + "Found environment variable named hub_org with value as: " + hub_org + ANSI_NORMAL)
-                cleanWs()
-                if (params.github_release_tag == "") {
-                    checkout scm
-                    commit_hash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    branch_name = sh(script: 'git name-rev --name-only HEAD | rev | cut -d "/" -f1| rev', returnStdout: true).trim()
-                    build_tag = branch_name + "_" + commit_hash
-                    println(ANSI_BOLD + ANSI_YELLOW + "github_release_tag not specified, using the latest commit hash: " + commit_hash + ANSI_NORMAL)
-                }
-                else {
-                    def scmVars = checkout scm
-                    checkout scm: [$class: 'GitSCM', branches: [[name: "refs/tags/$params.github_release_tag"]], userRemoteConfigs: [[url: scmVars.GIT_URL]]]
-                    build_tag = params.github_release_tag
-                    println(ANSI_BOLD + ANSI_YELLOW + "github_release_tag specified, building from github_release_tag: " + params.github_release_tag + ANSI_NORMAL)
-                }
-                echo "build_tag: " + build_tag
+        stage('Compile And Test'){
+            sh """sh configure-dependencies.sh"""
+            dir('java') {
+              sh """./mvnw clean install -DskipTests"""
             }
+            sh """rm -rf target"""
+            sh """mkdir target"""
+            dir('target') {
+              sh """jar -xvf ../java/registry/target/registry.jar"""
+            }
+        }
 
-            stage('Build') {
-                env.NODE_ENV = "build"
-                print "Environment will be : ${env.NODE_ENV}"
-		sh("./configure-dependencies.sh")
-		sh('''git clone https://github.com/Sunbird-Ed/creation-portal.git -b creation_portal
-		      rm -rf java/registry/src/main/resources/public/_schemas/*
-		      cp -r creation-portal/opensaber_schemas/* java/registry/src/main/resources/public/_schemas/
-		      cd java && mvn clean install -DksipTests=true 
-		   ''')
-                sh('chmod 777 build.sh')
-                sh("./build.sh ${build_tag} ${env.NODE_NAME} ${hub_org}")
+        stage('Build image') {
+            app = docker.build("tejashjl/open-saber-rc",".")
+        }
+
+        stage('Test image') {
+            app.withRun('-p 8010:8081') {c ->
+                sh """#!/bin/bash
+                env;
+                i=0;
+                while [[ \$i -lt 120 ]] ; do let i=i+1; sleep 1; status=`curl -I localhost:8010/health 2>/dev/null | grep 'HTTP/1.1 200' | wc -l`;if [ \$status -ge 1 ];then echo '\nTested Successfully';exit 0;else printf '.';  fi;done; exit 1;"""
             }
-            stage('ArchiveArtifacts') {
-                archiveArtifacts "metadata.json"
-                currentBuild.description = "${build_tag}"
-            }
+        }
+
+
+        stage('Push image') {
+            docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
+                app.push("${env.BUILD_NUMBER}")
+                app.push("latest")
+           }
+        }
+
+        stage('Deploy image') {
+            sh "ssh dileep@40.80.94.137 'kubectl get pods -n ndear'"
+            sh "ssh dileep@40.80.94.137 'kubectl set image deployment/registry registry=tejashjl/open-saber-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
+
         }
 
     }

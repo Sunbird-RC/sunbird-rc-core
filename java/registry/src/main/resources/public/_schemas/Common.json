@@ -66,13 +66,18 @@
         }
       }
     },
-    "EducationType": {
+    "AcademicQualification": {
       "type": "object",
       "properties": {
         "institute": {
           "$id": "#/properties/institute",
           "type": "string",
           "title": "Institute Full Name"
+        },
+        "qualification": {
+          "$id": "#/properties/qualification",
+          "type": "string",
+          "title": "Qualification"
         },
         "program": {
           "$id": "#/properties/program",
@@ -146,6 +151,31 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "EducationType": {
+      "type": "object",
+      "properties": {
+        "institute": {
+          "$id": "#/properties/institute",
+          "type": "string",
+          "title": "Institute Name"
+        },
+        "board": {
+          "$id": "#/properties/board",
+          "type": "string",
+          "title": "Board of Education"
+        },
+        "medium": {
+          "$id": "#/properties/program",
+          "type": "string",
+          "title": "Medium of Education"
+        },
+        "class": {
+          "$id": "#/properties/graduationYear",
+          "type": "string",
+          "title": "Current Enrollment Class / Std."
         }
       }
     },

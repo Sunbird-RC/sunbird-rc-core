@@ -14,7 +14,7 @@ enviroment: development
 
 server:
   # Change this port number if you want to run it on another.
-  port: ${server_port:8080}
+  port: ${server_port:8081}
 
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
@@ -27,13 +27,18 @@ perf:
 
 registry:
   context:
-    base: ${registry_context_base:http://localhost:8080/}
+    base: ${registry_context_base:http://localhost:8081/}
   system:
-    base: ${registry_system_base:http://localhost:8080/opensaber/}
+    base: ${registry_system_base:http://localhost:8081/opensaber/}
   rootEntity:
         type: ${registry_rootentity_type:Teacher}
-schema:
-    url: http://localhost:8081/_schemas
+  schema:
+      url: ${registry_schema_url:http://localhost:8081/_schemas/}
+
+conditionalAccess:
+  internal: _internal
+  private: _private
+
 # This property is to be used for search request/query
 # offset: search result starts from value provided as default
 # limits: search result to value provided as default
@@ -44,6 +49,7 @@ search:
   #   If NativeSearchService, then every search API uses the same database as the writes. May
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
+  expandInternal: ${search_expandInternal:true}
   providerName: io.opensaber.registry.service.NativeSearchService
 
 # This property is to be used for read request
@@ -164,11 +170,15 @@ audit:
     suffixSeparator: ${audit_suffixSeparator:_}
 
 keycloak:
-  sso:
-    publicKey:  ${sunbird_sso_publickey}
-    realm:  ${sunbird_sso_realm}
-    auth_server_url:  ${sunbird_sso_url}
-
+  #publicKey:  ${sunbird_sso_publickey:pk}
+  auth-server-url: ${sunbird_sso_url:https://localhost:8888/auth}
+  realm: ${sunbird_sso_realm:realm}
+  resource: ${sunbird_sso_client_id:client}
+keycloak-admin:
+  client-id: ${sunbird_sso_admin_client_id:client}
+  client-secret: ${sunbird_sso_admin_client_secret:client_secret}
+claims:
+  url: ${claims_url:http://localhost:8081}
 authentication:
     enabled: ${authentication_enabled:false}
     publicKey:  ${authentication_publickey:}

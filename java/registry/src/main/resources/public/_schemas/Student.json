@@ -25,7 +25,7 @@
         "contactDetails": {
           "$ref": "Common.json/#/definitions/ContactDetails"
         },
-        "education": {
+        "educationDetails": {
           "type": "array",
           "items": {
             "$ref": "Common.json/#/definitions/EducationType"

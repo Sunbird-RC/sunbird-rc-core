@@ -15,9 +15,7 @@
       "$id": "#/properties/Institute",
       "type": "object",
       "title": "The Institute Schema",
-      "required": [
-        "instituteName"
-      ],
+      "required": [],
       "properties": {
         "instituteName": {
           "$id": "#/properties/instituteName",
