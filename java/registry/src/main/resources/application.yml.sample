@@ -185,6 +185,9 @@ authentication:
     realm:  ${authentication_realm:}
     url:  ${authentication_url:localhost:8443/auth}
 
+claims:
+  url: ${claims_url:http://localhost:8081}
+
 validation:
   enabled: ${validation_enabled:true}
   type: ${validation_type:json}

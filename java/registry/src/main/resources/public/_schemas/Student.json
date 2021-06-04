@@ -47,11 +47,25 @@
     "signedFields": [],
     "indexFields": ["studentName"],
     "uniqueIndexFields": ["identityValue"],
-    "systemFields": ["osCreatedAt", "osUpdatedAt", "osCreatedBy", "osUpdatedBy"],
-    "attestations": [
+    "systemFields": [
+      "_osCreatedAt",
+      "_osUpdatedAt",
+      "_osCreatedBy",
+      "_osUpdatedBy",
+      "_osAttestedData",
+      "_osClaimId",
+      "_osState"
+    ],
+    "attestationAttributes": [
+      "education",
+      "nationalIdentifier"
+    ],
+    "attestationPolicies": [
       {
-        "paths": ["education"],
+        "property": "education",
+        "paths": ["$.education[?(@.osid == 'PROPERTY_ID')]['institute', 'program', 'graduationYear', 'marks']", "$['fullName']"],
         "role": "bo",
+        "type": "MANUAL",
         "constraint": "same_block"
       }
     ],

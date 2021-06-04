@@ -1,7 +1,7 @@
 package io.opensaber.registry.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.opensaber.registry.model.attestation.AttestationPolicy;
+import io.opensaber.pojos.attestation.AttestationPolicy;
 
 import java.util.ArrayList;
 import java.util.HashMap;

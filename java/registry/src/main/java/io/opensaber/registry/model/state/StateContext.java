@@ -1,10 +1,12 @@
 package io.opensaber.registry.model.state;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 
 public class StateContext {
 
@@ -30,20 +32,26 @@ public class StateContext {
         this.currentRole = currentRole;
         this.requestBody = requestBody;
         result = existingNode.deepCopy();
-        copyTheRequestBody(requestBody);
+        copyTheRequestBody();
     }
 
-    private void copyTheRequestBody(JsonNode requestBody) {
+    private void copyTheRequestBody() {
         Iterator<Map.Entry<String, JsonNode>> fields = requestBody.fields();
         while(fields.hasNext()) {
             Map.Entry<String, JsonNode> next = fields.next();
+            if(next.getKey().equals("send")) {
+                continue;
+            }
             if(result.has(next.getKey())) {
-                result.put(next.getKey(), requestBody.get(next.getKey()));
+                result.set(next.getKey(), requestBody.get(next.getKey()));
             }
         }
     }
 
     public boolean isAttributesChanged() {
+        if(requestBody == null || existingNode == null) {
+            return true;
+        }
         Iterator<Map.Entry<String, JsonNode>> fields = existingNode.fields();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> next = fields.next();
@@ -56,11 +64,26 @@ public class StateContext {
     }
 
     public void setState(States destinationState) {
-        if(existingNode != null) {
-            result.put("state", destinationState.toString());
-        } else {
-            result.put("state", destinationState.toString());
-        }
+        result.put("_osState", destinationState.name());
+    }
+
+    public boolean requestBodyHas(String property) {
+        return requestBody.has(property);
+    }
+
+    public String getRequestBodyVal(String property) {
+        return requestBody.get(property).asText();
+    }
+
+    public boolean isAttestationRequested() {
+        return !existingNode.get("_osState").asText().equals(States.ATTESTATION_REQUESTED.name()) &&
+                requestBodyHas("send") && requestBody.get("send").asBoolean();
+    }
+
+    public void setOSProperty(String key, Object val) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode node = objectMapper.convertValue(val, JsonNode.class);
+        result.set(key, node);
     }
 
     public JsonNode getResult() {
