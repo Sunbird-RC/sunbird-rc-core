@@ -1,0 +1,169 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "common",
+  "definitions": {
+    "IdentityDetails": {
+      "type": "object",
+      "title": "Identity Details",
+      "description": "Identity Details",
+      "required": [],
+      "properties": {
+        "fullName": {
+          "$id": "#/properties/fullName",
+          "type": "string",
+          "title": "Full name"
+        },
+        "gender": {
+          "$id": "#/properties/gender",
+          "type": "string",
+          "enum": [
+            "Male",
+            "Female",
+            "Other"
+          ],
+          "title": "Gender"
+        },
+        "dob": {
+          "$id": "#/properties/dob",
+          "type": "string",
+          "format": "date",
+          "title": "DOB"
+        },
+        "identityType": {
+          "$id": "#/properties/identityType",
+          "type": "string",
+          "$comment": "Nationality",
+          "title": "ID Type"
+        },
+        "identityValue": {
+          "$id": "#/properties/identityValue",
+          "type": "string",
+          "$comment": "Nationality",
+          "title": "ID Value"
+        }
+      }
+    },
+    "ContactDetails": {
+      "type": "object",
+      "title": "Contact Details",
+      "description": "Contact Details",
+      "required": [],
+      "properties": {
+        "email": {
+          "$id": "#/properties/email",
+          "type": "string",
+          "title": "Email"
+        },
+        "mobile": {
+          "$id": "#/properties/mobile",
+          "type": "string",
+          "title": "Mobile"
+        },
+        "address": {
+          "$id": "#/properties/address",
+          "type": "string",
+          "title": "Address"
+        }
+      }
+    },
+    "EducationType": {
+      "type": "object",
+      "properties": {
+        "institute": {
+          "$id": "#/properties/institute",
+          "type": "string",
+          "title": "Institute Full Name"
+        },
+        "program": {
+          "$id": "#/properties/program",
+          "type": "string",
+          "title": "Program of Study"
+        },
+        "graduationYear": {
+          "$id": "#/properties/graduationYear",
+          "type": "string",
+          "title": "Year of Graduation"
+        },
+        "marks": {
+          "$id": "#/properties/marks",
+          "type": "string",
+          "title": "Marks / Ranking / GPA, etc"
+        }
+      }
+    },
+    "ExperienceType": {
+      "type": "object",
+      "properties": {
+        "institute": {
+          "$id": "#/properties/institute",
+          "type": "string",
+          "title": "Institute Full Name"
+        },
+        "employmentType": {
+          "$id": "#/properties/employmentType",
+          "type": "string",
+          "title": "Employment Type",
+          "enum": [
+            "Permanent",
+            "Contract"
+          ]
+        },
+        "start": {
+          "$id": "#/properties/start",
+          "type": "string",
+          "format": "date",
+          "title": "Start Date"
+        },
+        "end": {
+          "$id": "#/properties/end",
+          "type": "string",
+          "format": "date",
+          "title": "End Date"
+        },
+        "teacherType": {
+          "$id": "#/properties/teacherType",
+          "type": "string",
+          "title": "Teacher Type",
+          "enum": [
+            "Head teacher",
+            "Principal",
+            "VicePrincipal",
+            "Lecture"
+          ]
+        },
+        "subjects": {
+          "$id": "#/properties/subjects",
+          "type": "array",
+          "title": "Subjects teaching at this Institute",
+          "items": {
+            "type": "string"
+          }
+        },
+        "grades": {
+          "$id": "#/properties/grades",
+          "type": "array",
+          "title": "Grades Taught (per subject taught)",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "CertificationType": {
+      "type": "object",
+      "properties": {
+        "institute": {
+          "type": "string"
+        },
+        "start": {
+          "type": "string",
+          "format": "date"
+        },
+        "end": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    }
+  }
+}

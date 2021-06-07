@@ -161,6 +161,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${server.port}")
 	private long serverPort;
 
+
+	@Value("${registry.schema.url}")
+	private String schemaUrl;
+
 	static {
 		Config config = ConfigFactory.parseResources("opensaber-actors.conf");
 
@@ -256,7 +260,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
     public IValidate validationServiceImpl() throws IOException, CustomException {
         // depends on input type,we need to implement validation
         if (getValidationType() == SchemaType.JSON) {
-            IValidate validator = new JsonValidationServiceImpl();
+            IValidate validator = new JsonValidationServiceImpl(schemaUrl);
             definitionsManager.getAllDefinitions().forEach(definition->{
                 logger.debug("Definition: title-" + definition.getTitle() + " , content-" + definition.getContent());
                 validator.addDefinitions(definition.getTitle(), definition.getContent());  

@@ -16,127 +16,21 @@
       "type": "object",
       "title": "The Student Schema",
       "required": [
-        "studentName",
-        "studentCode",
-        "nationalIdentifier",
-        "class",
-        "gender"
+
       ],
       "properties": {
-        "studentCode": {
-          "$id": "#/properties/studentCode",
-          "type": "string",
-          "$comment": "Code"
+        "identityDetails": {
+          "$ref": "Common.json/#/definitions/IdentityDetails"
         },
-        "nationalIdentifier": {
-          "$id": "#/properties/nationalIdentifier",
-          "type": "string",
-          "$comment": "Nationality"
-        },
-        "studentName": {
-          "$id": "#/properties/studentName",
-          "type": "string",
-          "title": "Full name"
-        },
-        "gender": {
-          "$id": "#/properties/gender",
-          "type": "string",
-          "enum": [
-            "Male",
-            "Female",
-            "Other"
-          ]
-        },
-        "birthDate": {
-          "$id": "#/properties/birthDate",
-          "type": "string",
-          "format": "date"
-        },
-        "email": {
-          "$id": "#/properties/email",
-          "type": "string"
-        },
-        "mobile": {
-          "$id": "#/properties/mobile",
-          "type": "string"
-        },
-        "address": {
-          "type": "string"
-        },
-        "district": {
-          "type": "string"
-        },
-        "state": {
-          "type": "string"
+        "contactDetails": {
+          "$ref": "Common.json/#/definitions/ContactDetails"
         },
         "education": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/EducationType"
-          }
-        },
-        "experience": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ExperienceType"
-          }
-        },
-        "certification": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CertificationType"
-          }
-        }
-      }
-    },
-    "EducationType": {
-      "type": "object",
-      "properties": {
-        "degree": {
-          "type": "string"
-        },
-        "institute": {
-          "type": "string"
-        },
-        "start": {
-          "type": "string",
-          "format": "date"
-        },
-        "end": {
-          "type": "string",
-          "format": "date"
-        }
-      }
-    },
-    "ExperienceType": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string"
-        },
-        "start": {
-          "type": "string",
-          "format": "date"
-        },
-        "end": {
-          "type": "string",
-          "format": "date"
-        }
-      }
-    },
-    "CertificationType": {
-      "type": "object",
-      "properties": {
-        "institute": {
-          "type": "string"
-        },
-        "start": {
-          "type": "string",
-          "format": "date"
-        },
-        "end": {
-          "type": "string",
-          "format": "date"
+            "$ref": "Common.json/#/definitions/EducationType"
+          },
+          "title": "Education Details"
         }
       }
     }
@@ -149,17 +43,18 @@
       "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
       "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"],
 
-    "privateFields": ["studentCode", "birthDate"],
+    "privateFields": ["birthDate"],
     "signedFields": [],
-    "indexFields": ["studentCode","studentName"],
-    "uniqueIndexFields": ["studentCode"],
-    "systemFields": ["_osCreatedAt", "_osUpdatedAt", "_osCreatedBy", "_osUpdatedBy"],
+    "indexFields": ["studentName"],
+    "uniqueIndexFields": ["identityValue"],
+    "systemFields": ["osCreatedAt", "osUpdatedAt", "osCreatedBy", "osUpdatedBy"],
     "attestations": [
       {
         "paths": ["education"],
         "role": "bo",
         "constraint": "same_block"
       }
-    ]
+    ],
+    "subjectJsonPath": "mobile"
   }
 }

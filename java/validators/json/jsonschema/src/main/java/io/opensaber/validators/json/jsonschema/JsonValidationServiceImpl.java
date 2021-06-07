@@ -20,6 +20,11 @@ public class JsonValidationServiceImpl implements IValidate {
 
 	private Map<String, Schema> entitySchemaMap = new HashMap<>();
 	private Map<String, String> definitionMap = new HashMap<>();;
+	private final String schemaUrl;
+
+	public JsonValidationServiceImpl(String schemaUrl) {
+		this.schemaUrl = schemaUrl;
+	}
 
 	private Schema getEntitySchema(String entityType) throws MiddlewareHaltException {
 
@@ -32,7 +37,7 @@ public class JsonValidationServiceImpl implements IValidate {
                 JSONObject rawSchema = new JSONObject(definitionContent);
 
 				SchemaLoader schemaLoader = SchemaLoader.builder().schemaJson(rawSchema).draftV7Support()
-						.resolutionScope("http://localhost:8080/_schemas/").build();
+						.resolutionScope(schemaUrl).build();
 				schema = schemaLoader.load().build();
 				entitySchemaMap.put(entityType, schema);
 			} catch (Exception ioe) {
@@ -56,7 +61,7 @@ public class JsonValidationServiceImpl implements IValidate {
 			e.getCausingExceptions().stream()
 					.map(ValidationException::getMessage)
 					.forEach(logger::error);
-
+            logger.error(e.toJSON().toString());
 			throw new MiddlewareHaltException("Validation exception\n" + Strings.join(e.getCausingExceptions().stream()
 					.map(ValidationException::getMessage).iterator(), '\n'));
 		}

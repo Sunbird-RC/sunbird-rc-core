@@ -12,6 +12,8 @@ import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.dao.NotFoundException;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -51,7 +53,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.security.RolesAllowed;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
@@ -290,26 +291,26 @@ public class RegistryController {
          */
         return null;
     }
-    @RequestMapping(value = "/invite", method = RequestMethod.POST)
-    public ResponseEntity<Response> invite(@RequestHeader HttpHeaders header) {
+    @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
+    public ResponseEntity<Object> invite(
+            @PathVariable String entityName,
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode rootNode
+    ) throws JsonProcessingException, DuplicateRecordException, EntityCreationException {
+        logger.info("Inviting entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
-        Map<String, Object> result = new HashMap<>();
-        String entityType = apiMessage.getRequest().getEntityType();
+        ObjectNode newRootNode = objectMapper.createObjectNode();
+        newRootNode.set(entityName, rootNode);
         try {
-            String label = inviteOperator.execute(apiMessage);
-            Map resultMap = new HashMap();
-            resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
-            result.put(entityType, resultMap);
-            response.setResult(result);
-            responseParams.setStatus(Response.Status.SUCCESSFUL);
-        } catch (Exception e) {
-            logger.error("Exception in controller while adding entity !", e);
-            response.setResult(result);
-            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg(e.getMessage());
+            validationService.validate(entityName, objectMapper.writeValueAsString(newRootNode));
+        } catch (MiddlewareHaltException e) {
+            logger.info("Error in validating the request");
+            return badRequestException(responseParams, response, e.getMessage());
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        String entitySubject = rootNode.findPath(definitionsManager.getSubjectPath(entityName)).asText();
+        String userID = keycloakAdminUtil.createUser(entitySubject, entityName);
+        return postEntity(entityName, header, rootNode, userID);
     }
 
 
@@ -399,7 +400,8 @@ public class RegistryController {
     public ResponseEntity<Object> postEntity(
             @PathVariable String entityName,
             @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode rootNode
+            @RequestBody JsonNode rootNode,
+            String userId
     ) throws JsonProcessingException {
         logger.info("Adding entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
@@ -411,7 +413,6 @@ public class RegistryController {
         }
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
-
         try {
             validationService.validate(entityName, objectMapper.writeValueAsString(newRootNode));
         } catch (MiddlewareHaltException e) {
@@ -420,7 +421,10 @@ public class RegistryController {
         }
 
         try {
-            String label = registryHelper.addEntity(newRootNode, ""); //todo add user id from auth scope.
+            if (userId == null) {
+                userId = "";
+            }
+            String label = registryHelper.addEntity(newRootNode, userId); //todo add user id from auth scope.
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
 
@@ -589,6 +593,9 @@ public class RegistryController {
             if (Character.isUpperCase(entityName.charAt(0))) {
                 ObjectNode path = populateEntityActions(entityName);
                 paths.set(String.format("/api/v1/%s/{entityId}", entityName), path);
+                path = getPostOperation(entityName);
+                paths.set(String.format("/api/v1/%s", entityName), path);
+                paths.set(String.format("/api/v1/%s/invite", entityName), path);
                 JsonNode schemaDefinition = objectMapper.reader().readTree(definitionsManager.getDefinition(entityName).getContent());
                 deleteAll$Ids((ObjectNode) schemaDefinition);
 //                definitions.set(entityName, schemaDefinition.get("definitions").get(entityName));
@@ -600,6 +607,7 @@ public class RegistryController {
         }
         return new ResponseEntity<>(objectMapper.writeValueAsString(doc), HttpStatus.OK);
     }
+
     @RequestMapping(value = "/api/docs/{file}.json", method = RequestMethod.GET, produces = "application/json")
     public ResponseEntity<Object> getSwaggerDocImportFiles(
             @PathVariable String file
@@ -638,10 +646,9 @@ public class RegistryController {
         return null;
     }
 
-    ObjectNode populateEntityActions(String entityName) throws IOException {
+    private ObjectNode populateEntityActions(String entityName) throws IOException {
         ObjectNode path = objectMapper.createObjectNode();
         addGetOperation(entityName, path);
-        addModifyOperation(entityName, path, "post", "Create");
         addModifyOperation(entityName, path, "put", "Update");
         return path;
     }
@@ -662,12 +669,30 @@ public class RegistryController {
                 operation.parameter(bodyParameter).parameter(pathParameter), operationType);
     }
 
+    private void addPostOperation(String entityName, ObjectNode path) throws IOException {
+        Operation operation = new Operation()
+                .description(String.format("Create new %s", entityName));
+        BodyParameter bodyParameter = new BodyParameter()
+                .name("entityId")
+                .description(String.format("Id of the %s", entityName))
+                .schema(new RefModel(String.format("#/definitions/%s", entityName)));
+        addResponseType(entityName, path,
+                operation.parameter(bodyParameter), "post");
+    }
+
     private void addGetOperation(String entityName, ObjectNode path) throws IOException {
         Operation operation = new Operation();
         PathParameter parameter = new PathParameter().name("entityId")
                 .description(String.format("Id of the %s", entityName))
+                .required(true)
                 .type("string");
         addResponseType(entityName, path, operation.parameter(parameter), "get");
+    }
+
+    private ObjectNode getPostOperation(String entityName) throws IOException {
+        ObjectNode path = objectMapper.createObjectNode();
+        addPostOperation(entityName, path);
+        return path;
     }
 
     private void addResponseType(String entityName, ObjectNode path, Operation operation, String operationType) throws IOException {
