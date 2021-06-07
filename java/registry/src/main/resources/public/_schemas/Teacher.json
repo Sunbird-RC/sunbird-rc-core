@@ -65,12 +65,12 @@
       "osCreatedBy",
       "osUpdatedBy"
     ],
-    "attestations": [
+    "attestationPolicies": [
       {
         "paths": [
           "education"
         ],
-        "role": "bo",
+        "roles": ["bo", "hod"],
         "constraint": "same_block"
       }
     ],
