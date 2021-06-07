@@ -177,7 +177,7 @@ public class Claim {
     }
 
     public boolean isValidRole(List<String> roles) {
-        return this.roles.stream()
+        return this.roles != null && this.roles.stream()
                 .map(Role::getName)
                 .anyMatch(roles::contains);
     }

@@ -3,6 +3,7 @@ package io.opensaber.claim.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.claim.entity.Claim;
+import io.opensaber.claim.entity.Role;
 import io.opensaber.claim.repository.ClaimRepository;
 import io.opensaber.claim.repository.RoleRepository;
 import io.opensaber.pojos.attestation.AttestationPolicy;
@@ -45,6 +46,8 @@ public class ClaimServiceTest {
         claim = new Claim();
         claim.setId(claimId);
         claim.setStatus(OPEN.name());
+        String boRole = "bo";
+        claim.setRoles(Collections.singletonList(new Role(boRole)));
     }
 
     @Test
