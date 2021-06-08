@@ -8,5 +8,6 @@ public class AttributeNames {
     public static final String PROPERTY = "PROPERTY";
     public static final String ENTITY_ID = "ENTITY_ID";
     public static final String ENTITY = "ENTITY";
+    public static final String ENTITY_HEADER = "entity";;
 
 }

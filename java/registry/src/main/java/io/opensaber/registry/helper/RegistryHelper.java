@@ -270,8 +270,4 @@ public class RegistryHelper {
         return resultNode;
 
     }
-
-	
-
 }
-
