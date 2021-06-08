@@ -57,16 +57,16 @@
       "_osState"
     ],
     "attestationAttributes": [
-      "education",
+      "educationDetails",
       "nationalIdentifier"
     ],
     "attestationPolicies": [
       {
-        "property": "education",
-        "paths": ["$.education[?(@.osid == 'PROPERTY_ID')]['institute', 'program', 'graduationYear', 'marks']", "$['fullName']"],
-        "role": "bo",
+        "property": "educationDetails",
+        "paths": ["$.educationDetails[?(@.osid == 'PROPERTY_ID')]['institute', 'program', 'graduationYear', 'marks']", "$['fullName']"],
+        "roles": ["bo"],
         "type": "MANUAL",
-        "constraint": "same_block"
+        "conditions": "$.educationDetails[?(@.osid == 'PROPERTY_ID')]['institute'] == $.osid"
       }
     ],
     "subjectJsonPath": "mobile"

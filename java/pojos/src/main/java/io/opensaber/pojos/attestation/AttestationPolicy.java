@@ -21,13 +21,9 @@ public class AttestationPolicy {
      */
     private AttestationType type;
     /**
-     * Holds the info of routing
-     */
-    private String by;
-    /**
      * Holds the info of who can do the attestation
      */
-    private String role;
+    private List<String> roles;
 
     public List<String> getPaths() {
         return paths;
@@ -37,12 +33,8 @@ public class AttestationPolicy {
         return type;
     }
 
-    public String getBy() {
-        return by;
-    }
-
-    public String getRole() {
-        return role;
+    public List<String> getRoles() {
+        return roles;
     }
 
     public void setPaths(List<String> paths) {
@@ -53,12 +45,8 @@ public class AttestationPolicy {
         this.type = type;
     }
 
-    public void setBy(String by) {
-        this.by = by;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     public String getProperty() {
@@ -69,8 +57,8 @@ public class AttestationPolicy {
         this.property = property;
     }
 
-    public boolean isValidRole(String role) {
-        return this.role.equals(role);
+    public boolean isValidRole(List<String> role) {
+        return this.roles.contains(role);
     }
 
     @Override
@@ -79,8 +67,11 @@ public class AttestationPolicy {
                 "property='" + property + '\'' +
                 ", paths=" + paths +
                 ", type=" + type +
-                ", by='" + by + '\'' +
-                ", role='" + role + '\'' +
+                ", roles='" + roles + '\'' +
                 '}';
+    }
+
+    public boolean hasProperty(String property) {
+        return getProperty().equals(property);
     }
 }

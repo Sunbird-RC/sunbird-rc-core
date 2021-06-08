@@ -3,7 +3,9 @@ package io.opensaber.claim.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.claim.entity.Claim;
+import io.opensaber.claim.entity.Role;
 import io.opensaber.claim.repository.ClaimRepository;
+import io.opensaber.claim.repository.RoleRepository;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,16 +34,20 @@ public class ClaimServiceTest {
     @Mock
     ClaimRepository claimRepository;
     @Mock
+    RoleRepository roleRepository;
+    @Mock
     OpenSaberClient openSaberClient;
     @Captor
     ArgumentCaptor<Claim> argumentCaptor;
 
     @Before
     public void setUp() {
-        claimService = new ClaimService(claimRepository, openSaberClient);
+        claimService = new ClaimService(claimRepository, openSaberClient, roleRepository);
         claim = new Claim();
         claim.setId(claimId);
         claim.setStatus(OPEN.name());
+        String boRole = "bo";
+        claim.setRoles(Collections.singletonList(new Role(boRole)));
     }
 
     @Test
@@ -78,7 +84,7 @@ public class ClaimServiceTest {
         AttestationPropertiesDTO attestationPropertiesDTO = getAttestationPropertiesDTO();
         when(claimRepository.findById(claimId)).thenReturn(Optional.of(claim));
         when(openSaberClient.getAttestationProperties(claim)).thenReturn(attestationPropertiesDTO);
-        claimService.grantClaim(claimId, role, dummyHeader);
+        claimService.grantClaim(claimId, Collections.singletonList(role), dummyHeader);
         verify(claimRepository).save(argumentCaptor.capture());
         Claim actualClaim = argumentCaptor.getValue();
         assertNull(actualClaim.getNotes());
@@ -99,11 +105,11 @@ public class ClaimServiceTest {
         JsonNode node = objectMapper.readTree(studentEntity);
         Map<String, Object> entity = objectMapper.convertValue(node, HashMap.class);
         AttestationPolicy attestationPolicy1 = new AttestationPolicy();
-        attestationPolicy1.setRole(role);
+        attestationPolicy1.setRoles(Collections.singletonList(role));
         attestationPolicy1.setPaths(Arrays.asList("$.education[?(@.osid == 'PROPERTY_ID')]['start', 'end', 'institute']", "$['studentName', 'class']"));
         attestationPolicy1.setProperty("education");
         AttestationPolicy attestationPolicy2 = new AttestationPolicy();
-        attestationPolicy2.setRole(role);
+        attestationPolicy2.setRoles(Collections.singletonList(role));
         attestationPolicy2.setPaths(Collections.singletonList("nationalIdentifier"));
         attestationPolicy2.setProperty("nationalIdentifier");
 

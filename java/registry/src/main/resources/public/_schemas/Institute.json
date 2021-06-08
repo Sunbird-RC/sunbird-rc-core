@@ -198,12 +198,12 @@
       "osCreatedBy",
       "osUpdatedBy"
     ],
-    "attestations": [
+    "attestationPolicies": [
       {
         "paths": [
           "affiliation"
         ],
-        "role": "board_admin",
+        "roles": ["board_admin"],
         "constraint": "same_block"
       }
     ],

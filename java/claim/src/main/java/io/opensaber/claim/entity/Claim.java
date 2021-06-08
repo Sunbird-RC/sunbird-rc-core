@@ -1,18 +1,25 @@
 package io.opensaber.claim.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.opensaber.claim.model.ClaimStatus;
+import io.opensaber.pojos.dto.ClaimDTO;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = Claim.TABLE_NAME)
 public class Claim {
-    public static final String TABLE_NAME= "Claims";
+    public static final String TABLE_NAME= "claims";
     public static final String CREATED_AT = "created_at";
     private static final String ATTESTED_ON = "attested_on";
+    private static final String CLAIMS_ROLES_TABLE_NAME = "claims_roles";
+    private static final String CLAIMS_ID = "claims_id";
+    private static final String ROLES_ID = "role_name";
 
     @Id
     @GeneratedValue(generator = "UUID")
@@ -30,17 +37,23 @@ public class Claim {
     private String property;
     @Column
     private String propertyId;
-
     @Column(name=Claim.CREATED_AT)
     private Date createdAt;
-
     @Column(name=Claim.ATTESTED_ON)
     private Date attestedOn;
-
     @Column
     private String notes;
     @Column
     private String status;
+    @ManyToMany(targetEntity = Role.class)
+    @JoinTable(
+            name=Claim.CLAIMS_ROLES_TABLE_NAME,
+            joinColumns = @JoinColumn(name=Claim.CLAIMS_ID),
+            inverseJoinColumns = @JoinColumn(name=Claim.ROLES_ID)
+    )
+    private List<Role> roles;
+    @Column
+    private String referenceId;
 
     @PrePersist
     protected void onCreate() {
@@ -131,6 +144,41 @@ public class Claim {
     }
 
     public boolean isClosed() {
-        return status.equals(ClaimStatus.CLOSED.name());
+        return status != null && status.equals(ClaimStatus.CLOSED.name());
+    }
+
+    public List<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    public static Claim fromDTO(ClaimDTO claimDTO) {
+        Claim claim = new Claim();
+        claim.setPropertyId(claimDTO.getPropertyId());
+        claim.setProperty(claimDTO.getProperty());
+        claim.setEntity(claimDTO.getEntity());
+        claim.setEntityId(claimDTO.getEntityId());
+        claim.setPropertyId(claimDTO.getPropertyId());
+        claim.setRoles(Role.createRoles(claimDTO.getRoles()));
+        claim.setReferenceId(claimDTO.getReferenceId());
+        claim.setStatus(ClaimStatus.OPEN.name());
+        return claim;
+    }
+
+    public boolean isValidRole(List<String> roles) {
+        return this.roles != null && this.roles.stream()
+                .map(Role::getName)
+                .anyMatch(roles::contains);
     }
 }

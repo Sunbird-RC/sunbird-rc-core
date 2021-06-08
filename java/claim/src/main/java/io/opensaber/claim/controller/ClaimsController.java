@@ -5,6 +5,7 @@ import io.opensaber.claim.entity.Claim;
 import io.opensaber.claim.model.AttestorActions;
 import io.opensaber.claim.model.ClaimStatus;
 import io.opensaber.claim.service.ClaimService;
+import io.opensaber.pojos.dto.ClaimDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,14 +36,14 @@ public class ClaimsController {
     @RequestMapping(value = "/api/v1/claims", method = RequestMethod.GET)
     public ResponseEntity<List<Claim>> getClaims() {
         List<Claim> claims = claimService.findAll();
-        return new ResponseEntity<>(claims, HttpStatus.OK);
+        return new ResponseEntity<>(claimService.transform(claims), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/api/v1/claims", method = RequestMethod.POST)
-    public ResponseEntity<Claim> save(@RequestBody Claim claim, @RequestHeader HttpHeaders headers) {
-        logger.info("Adding new claim {} ",  claim.toString());
-        claim.setStatus(ClaimStatus.OPEN.name());
-        return new ResponseEntity<>(claimService.save(claim), HttpStatus.OK);
+    public ResponseEntity<Claim> save(@RequestBody ClaimDTO claimDTO, @RequestHeader HttpHeaders headers) {
+        logger.info("Adding new claimDTO {} ",  claimDTO.toString());
+        Claim savedClaim = claimService.save(Claim.fromDTO(claimDTO));
+        return new ResponseEntity<>(claimService.transform(savedClaim), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/api/v1/claims/{claimId}", method = RequestMethod.POST)
@@ -53,7 +55,7 @@ public class ClaimsController {
         AttestorActions action = AttestorActions.valueOf(requestBody.get(ACTION).asText());
         switch (action) {
             case GRANTED:
-                claimService.grantClaim(claimId, role, headers);
+                claimService.grantClaim(claimId, Collections.singletonList(role), headers);
                 break;
             case DENIED:
                 Optional<String> notes = Optional.empty();
