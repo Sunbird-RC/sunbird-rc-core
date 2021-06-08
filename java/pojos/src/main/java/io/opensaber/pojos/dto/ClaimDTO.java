@@ -1,7 +1,5 @@
 package io.opensaber.pojos.dto;
 
-import java.util.Date;
-import java.util.List;
 
 public class ClaimDTO {
     private String entity;
@@ -10,8 +8,7 @@ public class ClaimDTO {
     private String propertyId;
     private String notes;
     private String status;
-    private List<String> roles;
-    private String referenceId;
+    private String conditions;
     public String getEntity() {
         return entity;
     }
@@ -60,19 +57,11 @@ public class ClaimDTO {
         this.status = status;
     }
 
-    public List<String> getRoles() {
-        return roles;
+    public String getConditions() {
+        return conditions;
     }
 
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
+    public void setConditions(String conditions) {
+        this.conditions = conditions;
     }
 }

@@ -203,8 +203,7 @@
         "paths": [
           "affiliation"
         ],
-        "roles": ["board_admin"],
-        "constraint": "same_block"
+        "constraint": "Board"
       }
     ],
     "subjectJsonPath": "email"

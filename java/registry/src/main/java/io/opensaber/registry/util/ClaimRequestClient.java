@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
-import java.util.List;
 
 @Component
 public class ClaimRequestClient {
@@ -22,14 +21,13 @@ public class ClaimRequestClient {
         this.restTemplate = restTemplate;
     }
 
-    public HashMap<String, Object> riseClaimRequest(String entityName, String entityId, String property, String propertyId, String referenceId, List<String> roles) throws Exception {
+    public HashMap<String, Object> riseClaimRequest(String entityName, String entityId, String property, String propertyId, String conditions) throws Exception {
         ClaimDTO claimDTO = new ClaimDTO();
         claimDTO.setEntity(entityName);
         claimDTO.setEntityId(entityId);
         claimDTO.setProperty(property);
         claimDTO.setPropertyId(propertyId);
-        claimDTO.setRoles(roles);
-        claimDTO.setReferenceId(referenceId);
+        claimDTO.setConditions(conditions);
         String claimsPath = "/api/v1/claims";
         HashMap<String, Object> hashMap = restTemplate.postForObject(claimRequestUrl + claimsPath, claimDTO, HashMap.class);
         logger.info("Claim has successfully risen {}", hashMap.toString());

@@ -3,9 +3,7 @@ package io.opensaber.claim.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.claim.entity.Claim;
-import io.opensaber.claim.entity.Role;
 import io.opensaber.claim.repository.ClaimRepository;
-import io.opensaber.claim.repository.RoleRepository;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,20 +32,17 @@ public class ClaimServiceTest {
     @Mock
     ClaimRepository claimRepository;
     @Mock
-    RoleRepository roleRepository;
-    @Mock
     OpenSaberClient openSaberClient;
     @Captor
     ArgumentCaptor<Claim> argumentCaptor;
 
     @Before
     public void setUp() {
-        claimService = new ClaimService(claimRepository, openSaberClient, roleRepository);
+        claimService = new ClaimService(claimRepository, openSaberClient);
         claim = new Claim();
         claim.setId(claimId);
         claim.setStatus(OPEN.name());
         String boRole = "bo";
-        claim.setRoles(Collections.singletonList(new Role(boRole)));
     }
 
     @Test
@@ -64,7 +59,7 @@ public class ClaimServiceTest {
 
     private void assertNotes(Optional<String> optionalNotes, String expectedNotes) {
         when(claimRepository.findById(claimId)).thenReturn(Optional.of(claim));
-        claimService.updateNotes(claimId, optionalNotes, dummyHeader);
+        claimService.updateNotes(claimId, optionalNotes, dummyHeader, Collections.emptyList());
         verify(claimRepository).save(argumentCaptor.capture());
         Claim actualValue = argumentCaptor.getValue();
         assertEquals(expectedNotes, actualValue.getNotes());
@@ -105,11 +100,9 @@ public class ClaimServiceTest {
         JsonNode node = objectMapper.readTree(studentEntity);
         Map<String, Object> entity = objectMapper.convertValue(node, HashMap.class);
         AttestationPolicy attestationPolicy1 = new AttestationPolicy();
-        attestationPolicy1.setRoles(Collections.singletonList(role));
         attestationPolicy1.setPaths(Arrays.asList("$.education[?(@.osid == 'PROPERTY_ID')]['start', 'end', 'institute']", "$['studentName', 'class']"));
         attestationPolicy1.setProperty("education");
         AttestationPolicy attestationPolicy2 = new AttestationPolicy();
-        attestationPolicy2.setRoles(Collections.singletonList(role));
         attestationPolicy2.setPaths(Collections.singletonList("nationalIdentifier"));
         attestationPolicy2.setProperty("nationalIdentifier");
 

@@ -5,13 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import io.opensaber.claim.entity.Claim;
-import io.opensaber.claim.entity.Role;
 import io.opensaber.claim.exception.ClaimAlreadyProcessedException;
-import io.opensaber.claim.exception.InvalidRoleException;
+import io.opensaber.claim.exception.UnAuthorizedException;
 import io.opensaber.claim.exception.ResourceNotFoundException;
 import io.opensaber.claim.model.ClaimStatus;
 import io.opensaber.claim.repository.ClaimRepository;
-import io.opensaber.claim.repository.RoleRepository;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import net.minidev.json.JSONArray;
 import org.slf4j.Logger;
@@ -30,18 +28,15 @@ public class ClaimService {
 
     private final ClaimRepository claimRepository;
     private final OpenSaberClient openSaberClient;
-    private final RoleRepository roleRepository;
     private static final Logger logger = LoggerFactory.getLogger(ClaimService.class);
 
     @Autowired
-    public ClaimService(ClaimRepository claimRepository, OpenSaberClient openSaberClient, RoleRepository roleRepository) {
+    public ClaimService(ClaimRepository claimRepository, OpenSaberClient openSaberClient) {
         this.claimRepository = claimRepository;
         this.openSaberClient = openSaberClient;
-        this.roleRepository = roleRepository;
     }
 
     public Claim save(Claim claim) {
-        roleRepository.saveAll(claim.getRoles());
         return claimRepository.save(claim);
     }
 
@@ -53,27 +48,17 @@ public class ClaimService {
         return claimRepository.findAll();
     }
 
-    public List<Claim> findClaimsForAttestor(List<String> roles) {
-        List<Claim> claims = claimRepository.findByRoles(Role.createRoles(roles));
-//        TODO: filter the claims by expression
-//        claims.stream().filter(claim -> {
-//            String referenceId = claim.getReferenceId();
-//            String[] strings = referenceId.split("==");
-//            strings[1]
-//        })
-        // now filter based on refId
-        return claims;
+    public List<Claim> findClaimsForAttestor(List<String> referenceId) {
+        return claimRepository.findByConditionsIn(referenceId);
     }
-    public void updateNotes(String claimId, Optional<String> notes, HttpHeaders headers) {
+    public void updateNotes(String claimId, Optional<String> notes, HttpHeaders headers, List<String> conditions) {
         logger.info("Initiating denial action for claim with id{} ",  claimId);
         Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));
         if(claim.isClosed()) {
             throw new ClaimAlreadyProcessedException(CLAIM_IS_ALREADY_PROCESSED);
         }
-        // TODO: read roles from jwt
-        List<String> roles = Collections.singletonList("bo");
-        if(!claim.isValidRole(roles)) {
-            throw new InvalidRoleException(USER_NOT_AUTHORIZED);
+        if(!conditions.contains(claim.getConditions())) {
+            throw new UnAuthorizedException(USER_NOT_AUTHORIZED);
         }
         claim.setNotes(notes.orElse(""));
         claim.setStatus(ClaimStatus.CLOSED.name());
@@ -83,19 +68,19 @@ public class ClaimService {
         logger.info("Clam with id {} is successfully denied",  claimId);
     }
 
-    public void grantClaim(String claimId, List<String> role, HttpHeaders header) {
+    public void grantClaim(String claimId, List<String> conditions, HttpHeaders header) {
         logger.info("Initiating grant action for claim with id {} ",  claimId);
         Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));
         if(claim.isClosed()) {
             throw new ClaimAlreadyProcessedException(CLAIM_IS_ALREADY_PROCESSED);
         }
+        if(!conditions.contains(claim.getConditions())) {
+            throw new UnAuthorizedException(USER_NOT_AUTHORIZED);
+        }
         AttestationPropertiesDTO attestationProperties = openSaberClient.getAttestationProperties(claim);
         Optional<AttestationPolicy> attestationPolicyOptional = getAttestationPolicy(claim, attestationProperties);
         AttestationPolicy attestationPolicy = attestationPolicyOptional.orElseThrow(() -> new ResourceNotFoundException(ATTESTATION_POLICY_IS_NOT_FOUND));
         logger.info("Found the attestation policy {} ",  attestationPolicy.toString());
-        if(!claim.isValidRole(role)) {
-            throw new InvalidRoleException(USER_NOT_AUTHORIZED);
-        }
         Map<String, Object> attestedData = generateAttestedData(attestationProperties.getEntityAsJsonNode(), attestationPolicy, claim.getPropertyId());
         claim.setStatus(ClaimStatus.CLOSED.name());
         claim.setAttestedOn(new Date());
@@ -136,30 +121,5 @@ public class ClaimService {
                 .stream()
                 .filter(policy -> policy.hasProperty(claim.getProperty()))
                 .findFirst();
-    }
-
-    public Claim transform(Claim savedClaim) {
-        Claim claim = new Claim();
-        claim.setAttestedOn(savedClaim.getAttestedOn());
-        claim.setCreatedAt(savedClaim.getCreatedAt());
-        claim.setProperty(savedClaim.getProperty());
-        claim.setPropertyId(savedClaim.getPropertyId());
-        claim.setEntity(savedClaim.getEntity());
-        claim.setEntityId(savedClaim.getEntityId());
-        claim.setStatus(savedClaim.getStatus());
-        claim.setNotes(savedClaim.getNotes());
-        claim.setId(savedClaim.getId());
-        claim.setRoles(getRoles(savedClaim));
-        return claim;
-    }
-
-    public List<Claim> transform(List<Claim> claims) {
-        return claims.stream().map(this::transform).collect(Collectors.toList());
-    }
-    private List<Role> getRoles(Claim claim) {
-        return claim.getRoles()
-                .stream()
-                .map(role -> new Role(role.getName()))
-                .collect(Collectors.toList());
     }
 }

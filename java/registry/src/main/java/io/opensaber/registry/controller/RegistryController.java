@@ -477,9 +477,8 @@ public class RegistryController {
             StateContext stateContext = new StateContext(existingNode, requestBody, "student");
             ruleEngineService.doTransition(stateContext);
             if (stateContext.isAttestationRequested()) {
-                List<String> roles = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getRoles(property);
-                String referenceId = existingNode.get("institute").asText();
-                HashMap<String, Object> claimResponse = claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId, referenceId, roles);
+                String conditions = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getConditions(property);
+                HashMap<String, Object> claimResponse = claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId, conditions);
                 stateContext.setOSProperty("_osClaimId", claimResponse.get("id").toString());
             }
             ObjectNode newRootNode = objectMapper.createObjectNode();
@@ -524,8 +523,7 @@ public class RegistryController {
             watch.start(tag);
             registryHelper.updateEntity(newRootNode, userId);
             registryHelper.updateEntityInEs(entityName, entityId);
-            List<String> roles = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getRoles(property);
-            claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId, existingNode.get("institute").asText(), roles);
+            claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId, existingNode.get("institute").asText());
             responseParams.setErrmsg(userId);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);

@@ -70,8 +70,7 @@
         "paths": [
           "education"
         ],
-        "roles": ["bo", "hod"],
-        "constraint": "same_block"
+        "conditions": "Institute"
       }
     ],
     "subjectJsonPath": "mobile"
