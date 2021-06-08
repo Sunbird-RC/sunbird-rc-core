@@ -130,9 +130,13 @@ public class OSSchemaConfiguration {
         this.attestationPolicies = attestationPolicies;
     }
 
-    public List<String> getRoles(String property) {
+    public String getConditions(String property) {
+        return getAttestationPolicy(property).getConditions();
+    }
+
+    private AttestationPolicy getAttestationPolicy(String property) {
         return attestationPolicies.stream()
                 .filter(policy -> policy.hasProperty(property))
-                .findFirst().orElse(new AttestationPolicy()).getRoles();
+                .findFirst().orElse(new AttestationPolicy());
     }
 }

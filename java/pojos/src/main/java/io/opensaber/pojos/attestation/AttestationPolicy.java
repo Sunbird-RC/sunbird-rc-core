@@ -20,10 +20,10 @@ public class AttestationPolicy {
      * Holds the info of manual or automated attestation
      */
     private AttestationType type;
-    /**
-     * Holds the info of who can do the attestation
-     */
-    private List<String> roles;
+    /*
+    * Holds the expression to identify the attestor
+    * */
+    private String conditions;
 
     public List<String> getPaths() {
         return paths;
@@ -31,10 +31,6 @@ public class AttestationPolicy {
 
     public AttestationType getType() {
         return type;
-    }
-
-    public List<String> getRoles() {
-        return roles;
     }
 
     public void setPaths(List<String> paths) {
@@ -45,10 +41,6 @@ public class AttestationPolicy {
         this.type = type;
     }
 
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
-    }
-
     public String getProperty() {
         return property;
     }
@@ -57,8 +49,12 @@ public class AttestationPolicy {
         this.property = property;
     }
 
-    public boolean isValidRole(List<String> role) {
-        return this.roles.contains(role);
+    public String getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(String conditions) {
+        this.conditions = conditions;
     }
 
     @Override
@@ -67,7 +63,6 @@ public class AttestationPolicy {
                 "property='" + property + '\'' +
                 ", paths=" + paths +
                 ", type=" + type +
-                ", roles='" + roles + '\'' +
                 '}';
     }
 

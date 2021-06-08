@@ -64,9 +64,8 @@
       {
         "property": "educationDetails",
         "paths": ["$.educationDetails[?(@.osid == 'PROPERTY_ID')]['institute', 'program', 'graduationYear', 'marks']", "$['fullName']"],
-        "roles": ["bo"],
         "type": "MANUAL",
-        "conditions": "$.educationDetails[?(@.osid == 'PROPERTY_ID')]['institute'] == $.osid"
+        "conditions": "Teacher"
       }
     ],
     "subjectJsonPath": "mobile"
