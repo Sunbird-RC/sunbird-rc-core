@@ -6,44 +6,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.opensaber.pojos.APIMessage;
-import io.opensaber.pojos.HealthCheckResponse;
-import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.ResponseParams;
+import io.opensaber.pojos.*;
+import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.dao.NotFoundException;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
-import io.opensaber.registry.transform.Configuration;
-import io.opensaber.registry.transform.ConfigurationHelper;
-import io.opensaber.registry.transform.Data;
-import io.opensaber.registry.transform.ITransformer;
-import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.transform.*;
 import io.opensaber.registry.util.*;
-
-import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationException;
-import io.swagger.models.Operation;
-import io.swagger.models.RefModel;
-import io.swagger.models.parameters.BodyParameter;
-import io.swagger.models.parameters.PathParameter;
-import io.swagger.models.properties.ObjectProperty;
-import io.swagger.util.Json;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -156,36 +137,36 @@ public class RegistryController {
     }
 
     @ResponseBody
-	@RequestMapping(value = "/audit", method = RequestMethod.POST)
-	public ResponseEntity<Response> fetchAudit() {
-		ResponseParams responseParams = new ResponseParams();
-		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
-		JsonNode payload = apiMessage.getRequest().getRequestMapNode();
-		if (auditEnabled && Constants.DATABASE.equals(auditStoreType)) {
-			try {
-				watch.start("RegistryController.audit");
-				JsonNode result = registryHelper.getAuditLog(payload);
+    @RequestMapping(value = "/audit", method = RequestMethod.POST)
+    public ResponseEntity<Response> fetchAudit() {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
+        JsonNode payload = apiMessage.getRequest().getRequestMapNode();
+        if (auditEnabled && Constants.DATABASE.equals(auditStoreType)) {
+            try {
+                watch.start("RegistryController.audit");
+                JsonNode result = registryHelper.getAuditLog(payload);
 
-				response.setResult(result);
-				responseParams.setStatus(Response.Status.SUCCESSFUL);
-				watch.stop("RegistryController.searchEntity");
+                response.setResult(result);
+                responseParams.setStatus(Response.Status.SUCCESSFUL);
+                watch.stop("RegistryController.searchEntity");
 
-			} catch (Exception e) {
-				logger.error("Error in getting audit log !", e);
-				logger.error("Exception in controller while searching entities !", e);
-				response.setResult("");
-				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-				responseParams.setErrmsg(e.getMessage());
-			}
-		}else {
-			response.setResult("");
-			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg("Audit is not enabled or file is chosen to store the audit");
-			return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
-		}
+            } catch (Exception e) {
+                logger.error("Error in getting audit log !", e);
+                logger.error("Exception in controller while searching entities !", e);
+                response.setResult("");
+                responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                responseParams.setErrmsg(e.getMessage());
+            }
+        } else {
+            response.setResult("");
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg("Audit is not enabled or file is chosen to store the audit");
+            return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
+        }
 
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public ResponseEntity<Response> deleteEntity() {
@@ -197,7 +178,7 @@ public class RegistryController {
             RecordIdentifier recordId = RecordIdentifier.parse(entityId);
             String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
             Shard shard = shardManager.activateShard(shardId);
-            registryService.deleteEntityById(shard,apiMessage.getUserID(),recordId.getUuid());
+            registryService.deleteEntityById(shard, apiMessage.getUserID(), recordId.getUuid());
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
         } catch (UnsupportedOperationException e) {
@@ -223,7 +204,7 @@ public class RegistryController {
         JsonNode rootNode = apiMessage.getRequest().getRequestMapNode();
 
         try {
-            String label = registryHelper.addEntity(rootNode,apiMessage.getUserID());
+            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
 
@@ -283,6 +264,7 @@ public class RegistryController {
          */
         return null;
     }
+
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
             @PathVariable String entityName,
@@ -373,7 +355,7 @@ public class RegistryController {
                 return badRequestException(responseParams, response, "ID passed in params doesn't match with the Request body ID");
             }
         } else {
-            ((ObjectNode)rootNode).put(uuidPropertyName, entityId);
+            ((ObjectNode) rootNode).put(uuidPropertyName, entityId);
         }
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
@@ -444,7 +426,7 @@ public class RegistryController {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    @RequestMapping(value="/api/v1/{entityName}/{entityId}/{property}/{propertyId}/attest")
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}/attest")
     public ResponseEntity<Object> attest(
             @PathVariable String entityName,
             @PathVariable String entityId,
@@ -461,7 +443,7 @@ public class RegistryController {
                     .readEntity(userId, property, propertyId, false, null, false)
                     .get(property);
             StateContext stateContext = new StateContext(existingNode, requestBody, role);
-            if(stateContext.getRequestBodyVal("action").equals("GRANTED")) {
+            if (stateContext.getRequestBodyVal("action").equals("GRANTED")) {
                 stateContext.setOSProperty("_osAttestedData", requestBody.get("attestedData").asText());
             }
             ruleEngineService.doTransition(stateContext);
@@ -494,7 +476,7 @@ public class RegistryController {
                     .get(property);
             StateContext stateContext = new StateContext(existingNode, requestBody, "student");
             ruleEngineService.doTransition(stateContext);
-            if(stateContext.isAttestationRequested()) {
+            if (stateContext.isAttestationRequested()) {
                 List<String> roles = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getRoles(property);
                 String referenceId = existingNode.get("institute").asText();
                 HashMap<String, Object> claimResponse = claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId, referenceId, roles);
@@ -543,7 +525,7 @@ public class RegistryController {
             registryHelper.updateEntity(newRootNode, userId);
             registryHelper.updateEntityInEs(entityName, entityId);
             List<String> roles = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getRoles(property);
-            claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId, existingNode.get("institute").asText(),roles);
+            claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId, existingNode.get("institute").asText(), roles);
             responseParams.setErrmsg(userId);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -576,8 +558,8 @@ public class RegistryController {
                     .readEntity("", entityName, entityId, false, null, false)
                     .get(entityName)
                     .get(property);
-            if(existingProperties != null) {
-                propertyNode.set(property, ((ArrayNode)existingProperties).add(state.getResult()));
+            if (existingProperties != null) {
+                propertyNode.set(property, ((ArrayNode) existingProperties).add(state.getResult()));
                 propertyNode.put(uuidPropertyName, entityId);
             } else {
                 propertyNode.set(property, JsonNodeFactory.instance.arrayNode().add(state.getResult()));
@@ -638,7 +620,7 @@ public class RegistryController {
         }
     }
 
-    @GetMapping(value="/api/v1/{entity}/{entityId}/attestationProperties")
+    @GetMapping(value = "/api/v1/{entity}/{entityId}/attestationProperties")
     public ResponseEntity<Object> getEntityForAttestation(
             @PathVariable String entity,
             @PathVariable String entityId
@@ -659,47 +641,6 @@ public class RegistryController {
 
     }
 
-    @RequestMapping(value = "/api/docs/swagger.json", method = RequestMethod.GET, produces = "application/json")
-    public ResponseEntity<Object> getSwaggerDoc() throws IOException {
-        ObjectNode doc = (ObjectNode) objectMapper.reader().readTree(new ClassPathResource("/baseSwagger.json").getInputStream());
-        ObjectNode paths = objectMapper.createObjectNode();
-        ObjectNode definitions = objectMapper.createObjectNode();
-        doc.set("paths", paths);
-        doc.set("definitions", definitions);
-        for (String entityName : definitionsManager.getAllKnownDefinitions()) {
-            if (Character.isUpperCase(entityName.charAt(0))) {
-                ObjectNode path = populateEntityActions(entityName);
-                paths.set(String.format("/api/v1/%s/{entityId}", entityName), path);
-                path = getPostOperation(entityName);
-                paths.set(String.format("/api/v1/%s", entityName), path);
-                paths.set(String.format("/api/v1/%s/invite", entityName), path);
-                JsonNode schemaDefinition = objectMapper.reader().readTree(definitionsManager.getDefinition(entityName).getContent());
-                deleteAll$Ids((ObjectNode) schemaDefinition);
-//                definitions.set(entityName, schemaDefinition.get("definitions").get(entityName));
-                for (Iterator<String> it = schemaDefinition.get("definitions").fieldNames(); it.hasNext(); ) {
-                    String fieldName = it.next();
-                    definitions.set(fieldName, schemaDefinition.get("definitions").get(fieldName));
-                }
-            }
-        }
-        return new ResponseEntity<>(objectMapper.writeValueAsString(doc), HttpStatus.OK);
-    }
-
-    @RequestMapping(value = "/api/docs/{file}.json", method = RequestMethod.GET, produces = "application/json")
-    public ResponseEntity<Object> getSwaggerDocImportFiles(
-            @PathVariable String file
-    ) throws IOException {
-        Definition definition = definitionsManager.getDefinition(file);
-        if (definition == null)
-            definition = definitionsManager.getDefinition(file.toLowerCase());
-        String content = definition.getContent();
-        String inlined = importAllReferences(content);
-        return new ResponseEntity<>(inlined, HttpStatus.OK);
-    }
-
-    private String importAllReferences(String content) {
-        return content;
-    }
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.PATCH)
     public ResponseEntity<Object> attestEntity(
@@ -721,81 +662,6 @@ public class RegistryController {
             registryHelper.attestEntity(entityName, node, paths.toArray(new String[]{}), "admin");
         }
         return null;
-    }
-
-    private ObjectNode populateEntityActions(String entityName) throws IOException {
-        ObjectNode path = objectMapper.createObjectNode();
-        addGetOperation(entityName, path);
-        addModifyOperation(entityName, path, "put", "Update");
-        return path;
-    }
-
-    private void addModifyOperation(String entityName, ObjectNode path, String operationType, String descriptionPrefix) throws IOException {
-        Operation operation = new Operation()
-                .description(String.format("%s new %s", descriptionPrefix, entityName));
-        BodyParameter bodyParameter = new BodyParameter()
-                .name("entityId")
-                .description(String.format("Id of the %s", entityName))
-                .schema(new RefModel(String.format("#/definitions/%s", entityName)));
-        PathParameter pathParameter = new PathParameter()
-                .name("entityId")
-                .description(String.format("Id of the %s", entityName))
-                .required(true)
-                .type("string");
-        addResponseType(entityName, path,
-                operation.parameter(bodyParameter).parameter(pathParameter), operationType);
-    }
-
-    private void addPostOperation(String entityName, ObjectNode path) throws IOException {
-        Operation operation = new Operation()
-                .description(String.format("Create new %s", entityName));
-        BodyParameter bodyParameter = new BodyParameter()
-                .name("entityId")
-                .description(String.format("Id of the %s", entityName))
-                .schema(new RefModel(String.format("#/definitions/%s", entityName)));
-        addResponseType(entityName, path,
-                operation.parameter(bodyParameter), "post");
-    }
-
-    private void addGetOperation(String entityName, ObjectNode path) throws IOException {
-        Operation operation = new Operation();
-        PathParameter parameter = new PathParameter().name("entityId")
-                .description(String.format("Id of the %s", entityName))
-                .required(true)
-                .type("string");
-        addResponseType(entityName, path, operation.parameter(parameter), "get");
-    }
-
-    private ObjectNode getPostOperation(String entityName) throws IOException {
-        ObjectNode path = objectMapper.createObjectNode();
-        addPostOperation(entityName, path);
-        return path;
-    }
-
-    private void addResponseType(String entityName, ObjectNode path, Operation operation, String operationType) throws IOException {
-        ObjectProperty schema = new ObjectProperty();
-        schema.setType("object");
-        io.swagger.models.Response response = new io.swagger.models.Response()
-                .description("OK")
-                .responseSchema(new RefModel(String.format("#/definitions/%s", entityName)));
-
-        operation.addResponse("200", response);
-
-        ObjectNode jsonOperationMapping = (ObjectNode) objectMapper.reader().readTree(Json.mapper().writeValueAsString(operation));
-        deleteAll$Ids(jsonOperationMapping);
-        path.set(operationType, jsonOperationMapping);
-    }
-
-    private void deleteAll$Ids(ObjectNode jsonOperationMapping) {
-        if (jsonOperationMapping.has("$id"))
-            jsonOperationMapping.remove("$id");
-        if (jsonOperationMapping.has("$comment"))
-            jsonOperationMapping.remove("$comment");
-        jsonOperationMapping.forEach(x-> {
-            if (x instanceof ObjectNode) {
-                deleteAll$Ids((ObjectNode) x);
-            }
-        });
     }
 
 
