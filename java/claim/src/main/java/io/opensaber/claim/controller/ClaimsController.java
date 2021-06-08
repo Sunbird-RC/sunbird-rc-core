@@ -48,11 +48,11 @@ public class ClaimsController {
     }
 
     private List<String> getAccessToken(@RequestHeader HttpHeaders headers) throws IOException {
-        String ACCESS_TOKEN = "accessToken";
-        if(!headers.containsKey(ACCESS_TOKEN)) {
+        String AUTHORIZATION = "AUTHORIZATION";
+        if(!headers.containsKey(AUTHORIZATION)) {
             throw new InvalidInputException(ACCESS_TOKEN_IS_MISSING);
         }
-        String accessToken = headers.get(ACCESS_TOKEN).get(0);
+        String accessToken = headers.get(AUTHORIZATION).get(0).split(" ")[1];
         Base64.Decoder decoder = Base64.getDecoder();
         String payloadPart = accessToken.split("\\.")[1];
         String payloadStr = new String(decoder.decode(payloadPart));
