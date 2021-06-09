@@ -1,4 +1,4 @@
-server.port=8081
+server.port=8082
 
 spring.datasource.url=${connectionInfo_uri:jdbc:postgresql://0.0.0.0:5432/registry}
 spring.datasource.username=${connectionInfo_username:postgres}
