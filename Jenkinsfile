@@ -7,9 +7,7 @@ node {
 
         stage('Compile And Test'){
             sh """sh configure-dependencies.sh"""
-            dir('java') {
-              sh """ docker run -v "$HOME/.m2":/root/.m2  -v "\$(pwd)":/src -w /src/java java:8 ./mvnw clean install -nsu"""
-            }
+            sh """ docker run -v "$HOME/.m2":/root/.m2  -v "\$(pwd)":/src -w /src/java java:8 ./mvnw clean install -nsu"""
             sh """rm -rf target"""
             sh """mkdir target"""
             dir('target') {
