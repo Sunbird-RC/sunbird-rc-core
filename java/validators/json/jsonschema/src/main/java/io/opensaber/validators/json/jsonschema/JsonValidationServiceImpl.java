@@ -64,23 +64,25 @@ public class JsonValidationServiceImpl implements IValidate {
 	private void validate(String entityType, String objString, boolean ignoreRequired) throws MiddlewareHaltException {
 		Schema schema = getEntitySchema(entityType);
 		JSONObject obj = new JSONObject(objString);
-		try {
-			schema.validate(obj); // throws a ValidationException if this object is invalid
-		} catch (ValidationException e) {
-			logger.error("Validation Exception : " + e.getAllMessages());
-			if (ignoreRequired) {
-				List<ValidationException> flattenedExceptions = flattenException(e).stream()
-						.filter(ve -> !ve.getKeyword().equals(REQUIRED_KEYWORD))
-						.collect(Collectors.toList());
+		if (schema != null) {
+			try {
+				schema.validate(obj); // throws a ValidationException if this object is invalid
+			} catch (ValidationException e) {
+				logger.error("Validation Exception : " + e.getAllMessages());
+				if (ignoreRequired) {
+					List<ValidationException> flattenedExceptions = flattenException(e).stream()
+							.filter(ve -> !ve.getKeyword().equals(REQUIRED_KEYWORD))
+							.collect(Collectors.toList());
 
-				if (!flattenedExceptions.isEmpty()) {
-					String errMsg = flattenedExceptions.stream()
-							.map(ve -> String.format("%s : %s", e.getPointerToViolation(), e.getMessage()))
-							.collect(Collectors.joining("; "));
-					throw new MiddlewareHaltException("Validation Exception : " + errMsg);
+					if (!flattenedExceptions.isEmpty()) {
+						String errMsg = flattenedExceptions.stream()
+								.map(ve -> String.format("%s : %s", e.getPointerToViolation(), e.getMessage()))
+								.collect(Collectors.joining("; "));
+						throw new MiddlewareHaltException("Validation Exception : " + errMsg);
+					}
+				} else {
+					throw new MiddlewareHaltException("Validation Exception : " + String.join("; ", e.getAllMessages()));
 				}
-			} else {
-				throw new MiddlewareHaltException("Validation Exception : " + String.join("; ", e.getAllMessages()));
 			}
 		}
 	}
