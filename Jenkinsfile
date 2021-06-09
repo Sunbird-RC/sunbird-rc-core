@@ -8,13 +8,14 @@ node {
         stage('Compile And Test'){
             sh """sh configure-dependencies.sh"""
             dir('java') {
-              sh """./mvnw clean install -DskipTests"""
+              sh """ docker run -v "$HOME/.m2":/root/.m2  -v "$(pwd)":/src -w /src/java java:8 ./mvnw clean install -nsu"""
             }
             sh """rm -rf target"""
             sh """mkdir target"""
             dir('target') {
               sh """jar -xvf ../java/registry/target/registry.jar"""
             }
+            step([$class: 'JacocoPublisher', exclusionPattern: '**/model/**,**/helpers/**,**/config/**,**/configs/**,**/controllers/**,**/models/**,**/exceptions/**,**/messaging/**,**/response/**,**/utils/**,**/migration/**,**/TestApplication.class,**/TestKafkaConfiguration.class,**/HealthCheck.class,**/TestSubmissionPipelineApplicationn.class,**/TestApplicationConfiguration.class,**/migration/**'])
         }
 
         stage('Build image') {
