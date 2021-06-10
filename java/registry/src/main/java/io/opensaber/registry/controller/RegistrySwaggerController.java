@@ -3,8 +3,8 @@ package io.opensaber.registry.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.RefResolver;
 import io.swagger.models.ModelImpl;
 import io.swagger.models.Operation;
 import io.swagger.models.RefModel;
@@ -16,6 +16,7 @@ import io.swagger.models.properties.ObjectProperty;
 import io.swagger.models.properties.StringProperty;
 import io.swagger.util.Json;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,12 +31,16 @@ import java.util.List;
 @RestController
 public class RegistrySwaggerController {
     private final DefinitionsManager definitionsManager;
+    private final RefResolver refResolver;
     private final ObjectMapper objectMapper;
+    @Value("${registry.schema.url}")
+    private String schemaUrl;
 
     @Autowired
-    public RegistrySwaggerController(DefinitionsManager definitionsManager, ObjectMapper objectMapper) {
+    public RegistrySwaggerController(DefinitionsManager definitionsManager, ObjectMapper objectMapper, RefResolver refResolver) {
         this.definitionsManager = definitionsManager;
         this.objectMapper = objectMapper;
+        this.refResolver = refResolver;
     }
 
     @RequestMapping(value = "/api/docs/swagger.json", method = RequestMethod.GET, produces = "application/json")
@@ -66,17 +71,10 @@ public class RegistrySwaggerController {
     public ResponseEntity<Object> getSwaggerDocImportFiles(
             @PathVariable String file
     ) throws IOException {
-        Definition definition = definitionsManager.getDefinition(file);
-        if (definition == null)
-            definition = definitionsManager.getDefinition(file.toLowerCase());
-        String content = definition.getContent();
-        String inlined = importAllReferences(content);
-        return new ResponseEntity<>(inlined, HttpStatus.OK);
+        JsonNode definitions = refResolver.getResolvedSchema(file, "properties");
+        return new ResponseEntity<>(definitions, HttpStatus.OK);
     }
 
-    private String importAllReferences(String content) {
-        return content;
-    }
 
     private void populateEntityActions(ObjectNode paths, String entityName) throws IOException {
         ObjectNode path = objectMapper.createObjectNode();
