@@ -30,7 +30,7 @@ public class RefResolver {
         try {
             JsonNode node = JSONUtil.convertStringJsonNode(content);
             ObjectNode jsonNode = ((ObjectNode) node);
-            JsonNode resolvedDefinitions = process("", rootDefinitionName, jsonNode.get(rootContext));
+            JsonNode resolvedDefinitions = resolveDefinitions(rootDefinitionName, jsonNode.get(rootContext));
             logger.info(JSONUtil.convertObjectJsonString(resolvedDefinitions));
             return resolvedDefinitions;
         } catch (IOException e) {
@@ -39,7 +39,7 @@ public class RefResolver {
         return null;
     }
 
-    private JsonNode process(String prefix, String currentDefinitionName, JsonNode currentNode) {
+    public JsonNode resolveDefinitions(String currentDefinitionName, JsonNode currentNode) {
         if (checkIfRefIsPresent(currentNode)) {
             String refPath = currentNode.get(REF).asText();
             JsonNode refJsonNode = fetchDefinition(refPath, currentDefinitionName);
@@ -54,21 +54,17 @@ public class RefResolver {
             ArrayNode arrayNode = (ArrayNode) currentNode;
             ArrayNode updateArrayNodes = JsonNodeFactory.instance.arrayNode();
             Iterator<JsonNode> node = arrayNode.elements();
-            int index = 1;
             while (node.hasNext()) {
-                JsonNode resultantNode = process(!prefix.isEmpty() ? prefix + "-" + index : String.valueOf(index), currentDefinitionName, node.next());
-                index += 1;
+                JsonNode resultantNode = resolveDefinitions(currentDefinitionName, node.next());
                 updateArrayNodes.add(resultantNode);
             }
             return updateArrayNodes;
         } else if (currentNode.isObject()) {
             for (Iterator<Map.Entry<String, JsonNode>> it = currentNode.fields(); it.hasNext(); ) {
                 Map.Entry<String, JsonNode> entry = it.next();
-                JsonNode resultantNode = process(!prefix.isEmpty() ? prefix + "-" + entry.getKey() : entry.getKey(), currentDefinitionName, entry.getValue());
+                JsonNode resultantNode = resolveDefinitions(currentDefinitionName, entry.getValue());
                 ((ObjectNode) currentNode).set(entry.getKey(), resultantNode);
             }
-        } else {
-            logger.info(prefix + ": " + currentNode.toString());
         }
         return currentNode;
     }

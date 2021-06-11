@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.RefResolver;
-import io.swagger.models.ModelImpl;
-import io.swagger.models.Operation;
-import io.swagger.models.RefModel;
+import io.swagger.models.*;
 import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
@@ -59,7 +57,7 @@ public class RegistrySwaggerController {
 //                definitions.set(entityName, schemaDefinition.get("definitions").get(entityName));
                 for (Iterator<String> it = schemaDefinition.get("definitions").fieldNames(); it.hasNext(); ) {
                     String fieldName = it.next();
-                    definitions.set(fieldName, schemaDefinition.get("definitions").get(fieldName));
+                    definitions.set(fieldName, refResolver.resolveDefinitions(fieldName,schemaDefinition.get("definitions").get(fieldName)));
                 }
             }
         }
@@ -86,6 +84,9 @@ public class RegistrySwaggerController {
         addGetOperation("entityName", path, Collections.singletonList(pathParam));
         addModifyOperation(entityName, path, Collections.singletonList(pathParam), getBodyParameter(entityName));
         paths.set(String.format("/api/v1/%s/{entityId}", entityName), path);
+        path = objectMapper.createObjectNode();
+        addGetOperation("", path, Collections.emptyList());
+        paths.set(String.format("/api/docs/%s.json", entityName), path);
         path = objectMapper.createObjectNode();
         addPostOperation(entityName, path, Collections.singletonList(getBodyParameter(entityName)));
         paths.set(String.format("/api/v1/%s", entityName), path);
@@ -125,14 +126,14 @@ public class RegistrySwaggerController {
                 .description(String.format("%s new update", entityName));
         pathParameters.forEach(operation::addParameter);
         operation.addParameter(bodyParameter);
-        addResponseType(entityName, path, operation, "put");
+        addResponseType(path, operation, "put", new RefModel(String.format("#/definitions/%s", entityName)));
     }
 
     private void addPostOperation(String entityName, ObjectNode path, List<Parameter> parameters) throws IOException {
         Operation operation = new Operation()
                 .description(String.format("Create new %s", entityName));
         parameters.forEach(operation::addParameter);
-        addResponseType(entityName, path, operation, "post");
+        addResponseType(path, operation, "post", new RefModel(String.format("#/definitions/%s", entityName)));
     }
 
     private BodyParameter getPropertyUpdateRequestBody() {
@@ -159,15 +160,15 @@ public class RegistrySwaggerController {
     private void addGetOperation(String entityName, ObjectNode path, List<PathParameter> pathParameters) throws IOException {
         Operation operation = new Operation();
         pathParameters.forEach(operation::addParameter);
-        addResponseType(entityName, path, operation, "get");
+        addResponseType(path, operation, "get", new RefModel(String.format("#/definitions/%s", entityName)));
     }
 
-    private void addResponseType(String entityName, ObjectNode path, Operation operation, String operationType) throws IOException {
+    private void addResponseType(ObjectNode path, Operation operation, String operationType, Model responseSchema) throws IOException {
         ObjectProperty schema = new ObjectProperty();
         schema.setType("object");
         io.swagger.models.Response response = new io.swagger.models.Response()
                 .description("OK")
-                .responseSchema(new RefModel(String.format("#/definitions/%s", entityName)));
+                .responseSchema(responseSchema);
 
         operation.addResponse("200", response);
 
