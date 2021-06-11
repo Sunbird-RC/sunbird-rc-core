@@ -8,6 +8,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
@@ -60,6 +61,10 @@ public class KeycloakAdminUtil {
         UserRepresentation newUser = new UserRepresentation();
         newUser.setEnabled(true);
         newUser.setUsername(userName);
+        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
+        credentialRepresentation.setValue("password");
+        credentialRepresentation.setType("password");
+        newUser.setCredentials(Collections.singletonList(credentialRepresentation));
         newUser.singleAttribute("mobile_number", userName);
         newUser.singleAttribute("entity", entityName);
         UsersResource usersResource = keycloak.realm(realm).users();
