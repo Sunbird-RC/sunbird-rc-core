@@ -660,7 +660,8 @@ public class RegistryController {
         if (principal != null) {
             return principal.getAccount().getPrincipal().getName();
         }
-        throw new Exception("Forbidden");
+//        throw new Exception("Forbidden");
+        return "";
     }
 
     @GetMapping(value = "/api/v1/{entity}/{entityId}/attestationProperties")
