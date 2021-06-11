@@ -81,16 +81,17 @@ public class RegistrySwaggerController {
                 .description(String.format("Id of the %s", entityName))
                 .required(true)
                 .type("string");
-        addGetOperation("entityName", path, Collections.singletonList(pathParam));
+        addGetOperation(entityName, path, Collections.singletonList(pathParam));
         addModifyOperation(entityName, path, Collections.singletonList(pathParam), getBodyParameter(entityName));
         paths.set(String.format("/api/v1/%s/{entityId}", entityName), path);
         path = objectMapper.createObjectNode();
         addGetOperation("", path, Collections.emptyList());
         paths.set(String.format("/api/docs/%s.json", entityName), path);
+        paths.set(String.format("/api/v1/%s/invite", entityName), path);
         path = objectMapper.createObjectNode();
+        addGetOperation(entityName, path, Collections.emptyList());
         addPostOperation(entityName, path, Collections.singletonList(getBodyParameter(entityName)));
         paths.set(String.format("/api/v1/%s", entityName), path);
-        paths.set(String.format("/api/v1/%s/invite", entityName), path);
     }
 
     private void populateSubEntityActions(ObjectNode paths, String entityName) throws IOException {
