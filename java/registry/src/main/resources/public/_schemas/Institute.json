@@ -98,10 +98,7 @@
           "title": "Principal / Dean / Head - Mobile"
         },
         "affiliation": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Affiliation"
-          },
+          "$ref": "#/definitions/Affiliation",
           "title": "Affiliation"
         }
       }
