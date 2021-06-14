@@ -639,7 +639,7 @@ public class RegistryController {
             JsonNode result = registryHelper.searchEntity(payload);
             watch.stop("RegistryController.searchEntity");
             if (result.get(entityName).size() > 0) {
-                return new ResponseEntity<>(result.get(entityName).get(0), HttpStatus.OK);
+                return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
             } else {
                 responseParams.setErrmsg("Entity not found");
                 responseParams.setStatus(Response.Status.UNSUCCESSFUL);

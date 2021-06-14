@@ -77,7 +77,13 @@ public class KeycloakAdminUtil {
             return userID;
         } else if (response.getStatus() == 409) {
             logger.info("UserID: {} exists", userName);
-            throw new DuplicateRecordException("Username already invited / registered");
+            Optional<UserRepresentation> userRepresentationOptional = getUserByUsername(userName);
+            if (userRepresentationOptional.isPresent()) {
+                return userRepresentationOptional.get().getId();
+            } else {
+                logger.error("Failed fetching user by username: {}", userName);
+                throw new EntityCreationException("Creating user failed");
+            }
         } else {
             throw new EntityCreationException("Username already invited / registered");
         }
