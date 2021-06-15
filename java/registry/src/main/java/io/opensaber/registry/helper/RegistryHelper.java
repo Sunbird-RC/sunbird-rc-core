@@ -166,8 +166,9 @@ public class RegistryHelper {
         }
         configurator.setIncludeEncryptedProp(includePrivateFields);
         resultNode =  readService.getEntity(shard, userId, recordId.getUuid(), entityType, configurator);
-        if (!isAuthorized(resultNode.get(entityType), userId)) {
-            throw new Exception("Unauthorized");
+        if (!isOwner(resultNode.get(entityType), userId)) {
+//            throw new Exception("Unauthorized");
+            //TODO: return public fields
         }
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
@@ -178,7 +179,7 @@ public class RegistryHelper {
         return resultNode;
     }
 
-    private boolean isAuthorized(JsonNode entity, String userId) {
+    private boolean isOwner(JsonNode entity, String userId) {
         String osOwner = OSSystemFields.osOwner.toString();
         return !entity.has(osOwner) || entity.get(osOwner).asText().equals(userId);
     }

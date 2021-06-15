@@ -37,12 +37,16 @@ public class JsonValidationServiceImpl implements IValidate {
 			Schema schema;
 			try {
 				String definitionContent = definitionMap.get(entityType);
-                JSONObject rawSchema = new JSONObject(definitionContent);
+				if (definitionContent != null) {
+					JSONObject rawSchema = new JSONObject(definitionContent);
 
-				SchemaLoader schemaLoader = SchemaLoader.builder().schemaJson(rawSchema).draftV7Support()
-						.resolutionScope(schemaUrl).build();
-				schema = schemaLoader.load().build();
-				entitySchemaMap.put(entityType, schema);
+					SchemaLoader schemaLoader = SchemaLoader.builder().schemaJson(rawSchema).draftV7Support()
+							.resolutionScope(schemaUrl).build();
+					schema = schemaLoader.load().build();
+					entitySchemaMap.put(entityType, schema);
+				} else {
+					return null;
+				}
 			} catch (Exception ioe) {
 			    ioe.printStackTrace();
 				throw new MiddlewareHaltException("can't validate, "+ entityType + ": schema has a problem!");
@@ -63,25 +67,29 @@ public class JsonValidationServiceImpl implements IValidate {
 
 	private void validate(String entityType, String objString, boolean ignoreRequired) throws MiddlewareHaltException {
 		Schema schema = getEntitySchema(entityType);
-		JSONObject obj = new JSONObject(objString);
-		try {
-			schema.validate(obj); // throws a ValidationException if this object is invalid
-		} catch (ValidationException e) {
-			logger.error("Validation Exception : " + e.getAllMessages());
-			if (ignoreRequired) {
-				List<ValidationException> flattenedExceptions = flattenException(e).stream()
-						.filter(ve -> !ve.getKeyword().equals(REQUIRED_KEYWORD))
-						.collect(Collectors.toList());
+		if (schema != null) {
+			JSONObject obj = new JSONObject(objString);
+			try {
+				schema.validate(obj); // throws a ValidationException if this object is invalid
+			} catch (ValidationException e) {
+				logger.error("Validation Exception : " + e.getAllMessages());
+				if (ignoreRequired) {
+					List<ValidationException> flattenedExceptions = flattenException(e).stream()
+							.filter(ve -> !ve.getKeyword().equals(REQUIRED_KEYWORD))
+							.collect(Collectors.toList());
 
-				if (!flattenedExceptions.isEmpty()) {
-					String errMsg = flattenedExceptions.stream()
-							.map(ve -> String.format("%s : %s", e.getPointerToViolation(), e.getMessage()))
-							.collect(Collectors.joining("; "));
-					throw new MiddlewareHaltException("Validation Exception : " + errMsg);
+					if (!flattenedExceptions.isEmpty()) {
+						String errMsg = flattenedExceptions.stream()
+								.map(ve -> String.format("%s : %s", e.getPointerToViolation(), e.getMessage()))
+								.collect(Collectors.joining("; "));
+						throw new MiddlewareHaltException("Validation Exception : " + errMsg);
+					}
+				} else {
+					throw new MiddlewareHaltException("Validation Exception : " + String.join("; ", e.getAllMessages()));
 				}
-			} else {
-				throw new MiddlewareHaltException("Validation Exception : " + String.join("; ", e.getAllMessages()));
 			}
+		} else {
+			logger.warn("{} schema not found for validation", entityType);
 		}
 	}
 

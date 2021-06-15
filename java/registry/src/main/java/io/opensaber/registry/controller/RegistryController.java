@@ -13,6 +13,7 @@ import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.operators.InviteOperator;
@@ -23,6 +24,7 @@ import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.transform.*;
 import io.opensaber.registry.util.*;
 import io.opensaber.validators.ValidationException;
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
@@ -590,13 +593,15 @@ public class RegistryController {
     public ResponseEntity<Object> getEntity(
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @RequestHeader HttpHeaders header) {
+            @RequestHeader HttpHeaders header, HttpServletRequest request) {
         boolean requireLDResponse = header.getAccept().contains(Constants.LD_JSON_MEDIA_TYPE);
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
-            JsonNode resultNode = registryHelper.readEntity("", entityName, entityId, false, null, false);
+            String userId = getKeycloakUserId(request);
+
+            JsonNode resultNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
             Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
@@ -621,6 +626,46 @@ public class RegistryController {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.GET)
+    public ResponseEntity<Object> getEntityByToken(@PathVariable String entityName, HttpServletRequest request) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
+        try {
+            String userId = getKeycloakUserId(request);
+            ObjectNode payload = JsonNodeFactory.instance.objectNode();
+            payload.set("entityType", JsonNodeFactory.instance.arrayNode().add(entityName));
+            ObjectNode filters = JsonNodeFactory.instance.objectNode();
+            filters.set(OSSystemFields.osOwner.toString(), JsonNodeFactory.instance.objectNode().put("eq", userId));
+            payload.set("filters", filters);
+
+            watch.start("RegistryController.searchEntity");
+            JsonNode result = registryHelper.searchEntity(payload);
+            watch.stop("RegistryController.searchEntity");
+            if (result.get(entityName).size() > 0) {
+                return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
+            } else {
+                responseParams.setErrmsg("Entity not found");
+                responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+
+        } catch (Exception e) {
+            logger.error("Exception in controller while searching entities !", e);
+            response.setResult("");
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    private String getKeycloakUserId(HttpServletRequest request) throws Exception {
+        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        if (principal != null) {
+            return principal.getAccount().getPrincipal().getName();
+        }
+        throw new Exception("Forbidden");
     }
 
     @GetMapping(value = "/api/v1/{entity}/{entityId}/attestationProperties")

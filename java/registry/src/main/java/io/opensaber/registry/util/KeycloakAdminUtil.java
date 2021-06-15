@@ -8,6 +8,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
@@ -60,6 +61,10 @@ public class KeycloakAdminUtil {
         UserRepresentation newUser = new UserRepresentation();
         newUser.setEnabled(true);
         newUser.setUsername(userName);
+        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
+        credentialRepresentation.setValue("password");
+        credentialRepresentation.setType("password");
+        newUser.setCredentials(Collections.singletonList(credentialRepresentation));
         newUser.singleAttribute("mobile_number", userName);
         newUser.singleAttribute("entity", entityName);
         UsersResource usersResource = keycloak.realm(realm).users();
@@ -72,7 +77,13 @@ public class KeycloakAdminUtil {
             return userID;
         } else if (response.getStatus() == 409) {
             logger.info("UserID: {} exists", userName);
-            throw new DuplicateRecordException("Username already invited / registered");
+            Optional<UserRepresentation> userRepresentationOptional = getUserByUsername(userName);
+            if (userRepresentationOptional.isPresent()) {
+                return userRepresentationOptional.get().getId();
+            } else {
+                logger.error("Failed fetching user by username: {}", userName);
+                throw new EntityCreationException("Creating user failed");
+            }
         } else {
             throw new EntityCreationException("Username already invited / registered");
         }
