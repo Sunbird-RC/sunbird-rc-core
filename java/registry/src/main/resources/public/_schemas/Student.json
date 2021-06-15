@@ -65,7 +65,7 @@
         "property": "educationDetails",
         "paths": ["$.educationDetails[?(@.osid == 'PROPERTY_ID')]['institute', 'program', 'graduationYear', 'marks']", "$.identityDetails['fullName']"],
         "type": "MANUAL",
-        "conditions": "Teacher"
+        "conditions": "(ATTESTOR#$.experience.[*].institute#.contains('REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#'))"
       }
     ],
     "subjectJsonPath": "mobile"

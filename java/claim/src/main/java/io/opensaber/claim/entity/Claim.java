@@ -41,6 +41,8 @@ public class Claim {
     private String status;
     @Column
     private String conditions;
+    @Column
+    private String attestorEntity;
 
     @PrePersist
     protected void onCreate() {
@@ -140,6 +142,14 @@ public class Claim {
 
     public void setConditions(String referenceId) {
         this.conditions = referenceId;
+    }
+
+    public String getAttestorEntity() {
+        return attestorEntity;
+    }
+
+    public void setAttestorEntity(String attestorEntity) {
+        this.attestorEntity = attestorEntity;
     }
 
     public static Claim fromDTO(ClaimDTO claimDTO) {
