@@ -16,8 +16,6 @@ import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.state.StateContext;
-import io.opensaber.registry.operators.InviteOperator;
-import io.opensaber.registry.operators.Operator;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
@@ -87,9 +85,6 @@ public class RegistryController {
 
     @Autowired
     RuleEngineService ruleEngineService;
-
-    @Autowired
-    InviteOperator inviteOperator;
 
     /**
      * Note: Only one mime type is supported at a time. Pick up the first mime
