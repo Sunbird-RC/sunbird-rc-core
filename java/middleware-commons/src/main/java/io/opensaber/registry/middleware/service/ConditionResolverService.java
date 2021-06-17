@@ -13,12 +13,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class AttestationConditionResolverService {
+public class ConditionResolverService {
+    /**
+     * @param entityNode subject node where we will apply the extract out the values for given json path
+     * @param matcher it accepts either ATTESTOR or REQUESTER
+     * @param condition this is the condition the system has to resolve which will be used for evaluation
+     * @param attributes contains pair[key, val] where key will be replaced with its value in the condition
+     * */
     public String resolve(JsonNode entityNode, String matcher, String condition, List<String[]> attributes) {
         String entity = entityNode.toString();
         condition = replaceMultipleEntries(condition, attributes);
         List<Integer> matchersIndices = findWordIndices(matcher, condition);
-        List<String[]> matchersValuesPair = new ArrayList<String[]>();
+        List<String[]> matchersValuesPair = new ArrayList<>();
         for (int index : matchersIndices) {
             String[] expressions = generateExpressionAndJsonPathPair(index, condition);
             expressions[1] = replaceOriginalValueForGivenJsonPath(entity, expressions[1]);
@@ -35,7 +41,7 @@ public class AttestationConditionResolverService {
         List<String> read = JsonPath.using(alwaysReturnListConfig).parse(entity).read(path);
         String s;
         if(read.size() == 1) {
-            s = read.get(0);
+            s = "\"" + read.get(0) + "\"";
         } else {
             s = read.toString();
         }
@@ -77,7 +83,7 @@ public class AttestationConditionResolverService {
 
     private List<Integer> findWordIndices(String matcher, String condition) {
         int index = 0;
-        List<Integer> indices = new ArrayList<Integer>();
+        List<Integer> indices = new ArrayList<>();
         while(index != -1) {
             index = condition.indexOf(matcher, index);
             if(index != -1) {

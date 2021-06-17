@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.controller.RegistryController;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
@@ -24,11 +26,14 @@ import io.opensaber.validators.ValidationException;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
 
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -295,5 +300,44 @@ public class RegistryHelper {
         
         return resultNode;
 
+    }
+
+    public JsonNode getRequestedUser(String entityName, String userId) throws Exception {
+        ObjectNode payload = JsonNodeFactory.instance.objectNode();
+        payload.set("entityType", JsonNodeFactory.instance.arrayNode().add(entityName));
+        ObjectNode filters = JsonNodeFactory.instance.objectNode();
+        filters.set(OSSystemFields.osOwner.toString(), JsonNodeFactory.instance.objectNode().put("eq", userId));
+        payload.set("filters", filters);
+
+        watch.start("RegistryController.searchEntity");
+        JsonNode result = searchEntity(payload);
+        watch.stop("RegistryController.searchEntity");
+        return result;
+    }
+
+    public String getKeycloakUserId(HttpServletRequest request) throws Exception {
+        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        if (principal != null) {
+            return principal.getAccount().getPrincipal().getName();
+        }
+        throw new Exception("Forbidden");
+    }
+
+    public JsonNode getRequestedUserDetails(HttpServletRequest request, String entityName) throws Exception {
+        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        if (principal != null) {
+            String userId = principal.getAccount().getPrincipal().getName();
+            ObjectNode payload = JsonNodeFactory.instance.objectNode();
+            payload.set("entityType", JsonNodeFactory.instance.arrayNode().add(entityName));
+            ObjectNode filters = JsonNodeFactory.instance.objectNode();
+            filters.set(OSSystemFields.osOwner.toString(), JsonNodeFactory.instance.objectNode().put("eq", userId));
+            payload.set("filters", filters);
+
+            watch.start("RegistryController.searchEntity");
+            JsonNode result = searchEntity(payload);
+            watch.stop("RegistryController.searchEntity");
+            return result;
+        }
+        throw new Exception("Forbidden");
     }
 }

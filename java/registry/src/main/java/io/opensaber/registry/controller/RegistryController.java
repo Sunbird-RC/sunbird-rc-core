@@ -8,12 +8,13 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.*;
 import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.pojos.dto.ClaimDTO;
 import io.opensaber.registry.dao.NotFoundException;
 import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.service.ConditionResolverService;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.service.*;
@@ -22,7 +23,6 @@ import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.transform.*;
 import io.opensaber.registry.util.*;
 import io.opensaber.validators.ValidationException;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +40,8 @@ import java.util.*;
 @RestController
 public class RegistryController {
     private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
+    @Autowired
+    ConditionResolverService conditionResolverService;
     @Autowired
     Transformer transformer;
     @Autowired
@@ -386,7 +388,7 @@ public class RegistryController {
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode rootNode,
             String userId
-    ) throws JsonProcessingException {
+    ) {
         logger.info("Adding entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
@@ -480,8 +482,7 @@ public class RegistryController {
             StateContext stateContext = new StateContext(existingNode, requestBody, "student");
             ruleEngineService.doTransition(stateContext);
             if (stateContext.isAttestationRequested()) {
-                String conditions = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getConditions(property);
-                HashMap<String, Object> claimResponse = claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId, conditions);
+                HashMap<String, Object> claimResponse = createClaimHelper(entityName, entityId, property, propertyId, stateContext);
                 stateContext.setOSProperty("_osClaimId", claimResponse.get("id").toString());
             }
             ObjectNode newRootNode = objectMapper.createObjectNode();
@@ -501,6 +502,22 @@ public class RegistryController {
         }
     }
 
+    private HashMap<String, Object> createClaimHelper(String entityName, String entityId, String property, String propertyId, StateContext stateContext) {
+        OSSchemaConfiguration osSchemaConfiguration = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration();
+        String conditions = osSchemaConfiguration.getConditions(property);
+        String attestorEntity = osSchemaConfiguration.getAttestorEntity(property);
+        String resolvedConditions =  conditionResolverService.resolve(stateContext.getResult(), "REQUESTER", conditions, Collections.emptyList());
+        ClaimDTO claimDTO = new ClaimDTO();
+        claimDTO.setEntity(entityName);
+        claimDTO.setEntityId(entityId);
+        claimDTO.setProperty(property);
+        claimDTO.setPropertyId(propertyId);
+        claimDTO.setConditions(resolvedConditions);
+        claimDTO.setAttestorEntity(attestorEntity);
+        return claimRequestClient.riseClaimRequest(claimDTO);
+    }
+
+    @Deprecated
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}/send", method = RequestMethod.POST)
     public ResponseEntity<Object> sendForVerification(
             @PathVariable String entityName,
@@ -520,13 +537,14 @@ public class RegistryController {
                     .get(property);
             StateContext stateContext = new StateContext(existingNode, currentRole);
             ruleEngineService.doTransition(stateContext);
+            HashMap<String, Object> claimResponse = createClaimHelper(entityName, entityId, property, propertyId, stateContext);
+            stateContext.setOSProperty("_osClaimId", claimResponse.get("id").toString());
             ObjectNode newRootNode = objectMapper.createObjectNode();
             newRootNode.set(property, stateContext.getResult());
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             registryHelper.updateEntity(newRootNode, userId);
             registryHelper.updateEntityInEs(entityName, entityId);
-            claimRequestClient.riseClaimRequest(entityName, entityId, property, propertyId, existingNode.get("institute").asText());
             responseParams.setErrmsg(userId);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -594,8 +612,7 @@ public class RegistryController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
-            String userId = getKeycloakUserId(request);
-
+            String userId = registryHelper.getKeycloakUserId(request);
             JsonNode resultNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
@@ -628,16 +645,7 @@ public class RegistryController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
         try {
-            String userId = getKeycloakUserId(request);
-            ObjectNode payload = JsonNodeFactory.instance.objectNode();
-            payload.set("entityType", JsonNodeFactory.instance.arrayNode().add(entityName));
-            ObjectNode filters = JsonNodeFactory.instance.objectNode();
-            filters.set(OSSystemFields.osOwner.toString(), JsonNodeFactory.instance.objectNode().put("eq", userId));
-            payload.set("filters", filters);
-
-            watch.start("RegistryController.searchEntity");
-            JsonNode result = registryHelper.searchEntity(payload);
-            watch.stop("RegistryController.searchEntity");
+            JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
             if (result.get(entityName).size() > 0) {
                 return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
             } else {
@@ -653,14 +661,6 @@ public class RegistryController {
             responseParams.setErrmsg(e.getMessage());
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    private String getKeycloakUserId(HttpServletRequest request) throws Exception {
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        if (principal != null) {
-            return principal.getAccount().getPrincipal().getName();
-        }
-        throw new Exception("Forbidden");
     }
 
     @GetMapping(value = "/api/v1/{entity}/{entityId}/attestationProperties")
@@ -683,7 +683,6 @@ public class RegistryController {
         }
 
     }
-
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.PATCH)
     public ResponseEntity<Object> attestEntity(

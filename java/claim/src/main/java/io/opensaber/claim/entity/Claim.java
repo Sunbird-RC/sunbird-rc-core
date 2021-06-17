@@ -160,6 +160,7 @@ public class Claim {
         claim.setEntityId(claimDTO.getEntityId());
         claim.setPropertyId(claimDTO.getPropertyId());
         claim.setConditions(claimDTO.getConditions());
+        claim.setAttestorEntity(claimDTO.getAttestorEntity());
         claim.setStatus(ClaimStatus.OPEN.name());
         return claim;
     }

@@ -10,8 +10,8 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class AttestationConditionResolverServiceTest {
-    AttestationConditionResolverService attestationConditionResolverService = new AttestationConditionResolverService();
+public class ConditionResolverServiceTest {
+    ConditionResolverService conditionResolverService = new ConditionResolverService();
     @Test
     public void shouldAbleToResolveRequesterPaths() throws IOException {
         String condition = "(ATTESTOR#$.experience.[*].institute#.contains('REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#') && (ATTESTOR#$.experience[?(@.institute == 'REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#')]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == 'REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#')]['role'][*]#.contains('hod')))";
@@ -20,7 +20,7 @@ public class AttestationConditionResolverServiceTest {
             add(new String[]{"REQUESTER_PROPERTY_ID", "4"});
         }};
         String expectedCondition = "(ATTESTOR#$.experience.[*].institute#.contains('Mary school') && (ATTESTOR#$.experience[?(@.institute == 'Mary school')]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == 'Mary school')]['role'][*]#.contains('hod')))";
-        String resolve = attestationConditionResolverService.resolve(getStudentJsonNode(), matcher, condition, attributes);
+        String resolve = conditionResolverService.resolve(getStudentJsonNode(), matcher, condition, attributes);
         assertEquals(expectedCondition, resolve);
     }
 
@@ -30,7 +30,7 @@ public class AttestationConditionResolverServiceTest {
         String matcher = "ATTESTOR";
         List<String[]> attributes = new ArrayList<String[]>();
         String expectedCondition = "({\"Mary school\",\"ABC institute of school\"}.contains('Mary school') && ({\"hod\",\"admin\"}.contains('bo') || {\"hod\",\"admin\"}.contains('hod')))";
-        assertEquals(expectedCondition, attestationConditionResolverService.resolve(getTeacherJsonNode(), matcher, condition, attributes));
+        assertEquals(expectedCondition, conditionResolverService.resolve(getTeacherJsonNode(), matcher, condition, attributes));
     }
 
     @Test
@@ -42,13 +42,13 @@ public class AttestationConditionResolverServiceTest {
         String requester = "REQUESTER";
         String resolve = null;
         try {
-            resolve = attestationConditionResolverService.resolve(getStudentJsonNode(), requester, condition, attributes);
+            resolve = conditionResolverService.resolve(getStudentJsonNode(), requester, condition, attributes);
         } catch (IOException e) {
             e.printStackTrace();
         }
         String attestor = "ATTESTOR";
-        resolve = attestationConditionResolverService.resolve(getTeacherJsonNode(), attestor, resolve, attributes);
-        assertTrue(attestationConditionResolverService.evaluate(resolve));
+        resolve = conditionResolverService.resolve(getTeacherJsonNode(), attestor, resolve, attributes);
+        assertTrue(conditionResolverService.evaluate(resolve));
     }
 
     @Test
@@ -58,10 +58,10 @@ public class AttestationConditionResolverServiceTest {
             add(new String[]{"REQUESTER_PROPERTY_ID", "4"});
         }};
         String requester = "REQUESTER";
-        String resolve = attestationConditionResolverService.resolve(getStudentJsonNode(), requester, condition, attributes);
+        String resolve = conditionResolverService.resolve(getStudentJsonNode(), requester, condition, attributes);
         String attestor = "ATTESTOR";
-        resolve = attestationConditionResolverService.resolve(getTeacherJsonNode(), attestor, resolve, attributes);
-        assertFalse(attestationConditionResolverService.evaluate(resolve));
+        resolve = conditionResolverService.resolve(getTeacherJsonNode(), attestor, resolve, attributes);
+        assertFalse(conditionResolverService.evaluate(resolve));
     }
     private JsonNode getTeacherJsonNode() throws IOException {
         String nodeStr = "{\n" +

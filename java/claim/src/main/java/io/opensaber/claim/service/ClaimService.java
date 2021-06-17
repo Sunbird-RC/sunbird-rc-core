@@ -11,12 +11,14 @@ import io.opensaber.claim.exception.ResourceNotFoundException;
 import io.opensaber.claim.model.ClaimStatus;
 import io.opensaber.claim.repository.ClaimRepository;
 import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.registry.middleware.service.ConditionResolverService;
 import net.minidev.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,12 +30,14 @@ public class ClaimService {
 
     private final ClaimRepository claimRepository;
     private final OpenSaberClient openSaberClient;
+    private final ConditionResolverService conditionResolverService;
     private static final Logger logger = LoggerFactory.getLogger(ClaimService.class);
 
     @Autowired
-    public ClaimService(ClaimRepository claimRepository, OpenSaberClient openSaberClient) {
+    public ClaimService(ClaimRepository claimRepository, OpenSaberClient openSaberClient, ConditionResolverService conditionResolverService) {
         this.claimRepository = claimRepository;
         this.openSaberClient = openSaberClient;
+        this.conditionResolverService = conditionResolverService;
     }
 
     public Claim save(Claim claim) {
@@ -48,9 +52,16 @@ public class ClaimService {
         return claimRepository.findAll();
     }
 
-    public List<Claim> findClaimsForAttestor(List<String> referenceId) {
-        return claimRepository.findByConditionsIn(referenceId);
+    public List<Claim> findClaimsForAttestor(String entity, JsonNode attestorNode) {
+        List<Claim> claims = claimRepository.findByAttestorEntity(entity);
+        return claims.stream().filter(claim -> {
+            String ATTESTOR = "ATTESTOR";
+            String resolvedCondition = conditionResolverService.resolve(attestorNode,
+                    ATTESTOR, claim.getConditions(), Collections.emptyList());
+            return conditionResolverService.evaluate(resolvedCondition);
+        }).collect(Collectors.toList());
     }
+
     public void updateNotes(String claimId, Optional<String> notes, HttpHeaders headers, List<String> conditions) {
         logger.info("Initiating denial action for claim with id{} ",  claimId);
         Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.claim.entity.Claim;
 import io.opensaber.claim.repository.ClaimRepository;
 import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.registry.middleware.service.ConditionResolverService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,12 +34,14 @@ public class ClaimServiceTest {
     ClaimRepository claimRepository;
     @Mock
     OpenSaberClient openSaberClient;
+    @Mock
+    ConditionResolverService conditionResolverService;
     @Captor
     ArgumentCaptor<Claim> argumentCaptor;
 
     @Before
     public void setUp() {
-        claimService = new ClaimService(claimRepository, openSaberClient);
+        claimService = new ClaimService(claimRepository, openSaberClient, conditionResolverService);
         claim = new Claim();
         claim.setId(claimId);
         claim.setStatus(OPEN.name());

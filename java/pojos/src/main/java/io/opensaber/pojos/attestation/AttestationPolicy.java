@@ -24,6 +24,10 @@ public class AttestationPolicy {
     * Holds the expression to identify the attestor
     * */
     private String conditions;
+    /*
+    * It will be used as first filter for fetching claims
+    * */
+    private String attestorEntity;
 
     public List<String> getPaths() {
         return paths;
@@ -68,5 +72,13 @@ public class AttestationPolicy {
 
     public boolean hasProperty(String property) {
         return getProperty().equals(property);
+    }
+
+    public String getAttestorEntity() {
+        return attestorEntity;
+    }
+
+    public void setAttestorEntity(String attestorEntity) {
+        this.attestorEntity = attestorEntity;
     }
 }

@@ -10,7 +10,6 @@ import io.opensaber.claim.exception.InvalidInputException;
 import io.opensaber.claim.model.AttestorActions;
 import io.opensaber.claim.service.ClaimService;
 import io.opensaber.pojos.dto.ClaimDTO;
-import javassist.tools.web.BadHttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +20,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static io.opensaber.claim.contants.AttributeNames.*;
 import static io.opensaber.claim.contants.ErrorMessages.ACCESS_TOKEN_IS_MISSING;
@@ -40,10 +36,12 @@ public class ClaimsController {
         this.claimService = claimService;
     }
 
-    @RequestMapping(value = "/api/v1/claims", method = RequestMethod.GET)
-    public ResponseEntity<List<Claim>> getClaims(@RequestHeader HttpHeaders headers) throws IOException {
-        List<String> entities = getAccessToken(headers);
-        List<Claim> claims = claimService.findClaimsForAttestor(entities);
+    @RequestMapping(value = "/api/v1/getClaims", method = RequestMethod.POST)
+    public ResponseEntity<List<Claim>> getClaims(@RequestHeader HttpHeaders headers,
+                                                 @RequestBody JsonNode requestBody) {
+        String entity = requestBody.get(LOWERCASE_ENTITY).asText();
+        JsonNode attestorNode = requestBody.get(ATTESTOR_INFO);
+        List<Claim> claims = claimService.findClaimsForAttestor(entity, attestorNode);
         return new ResponseEntity<>(claims, HttpStatus.OK);
     }
 
@@ -58,14 +56,14 @@ public class ClaimsController {
         String payloadStr = new String(decoder.decode(payloadPart));
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode payload = objectMapper.readTree(payloadStr);
-        ArrayNode node = (ArrayNode) payload.get(ENTITY_HEADER);
+        ArrayNode node = (ArrayNode) payload.get(LOWERCASE_ENTITY);
         ObjectReader reader = objectMapper.readerFor(new TypeReference<List<String>>() {
         });
         return reader.readValue(node);
     }
 
     @RequestMapping(value = "/api/v1/claims", method = RequestMethod.POST)
-    public ResponseEntity<Claim> save(@RequestBody ClaimDTO claimDTO, @RequestHeader HttpHeaders headers) {
+    public ResponseEntity<Claim> save(@RequestBody ClaimDTO claimDTO) {
         logger.info("Adding new claimDTO {} ",  claimDTO.toString());
         Claim savedClaim = claimService.save(Claim.fromDTO(claimDTO));
         return new ResponseEntity<>(savedClaim, HttpStatus.OK);
