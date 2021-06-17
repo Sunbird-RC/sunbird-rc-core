@@ -139,4 +139,8 @@ public class OSSchemaConfiguration {
                 .filter(policy -> policy.hasProperty(property))
                 .findFirst().orElse(new AttestationPolicy());
     }
+
+    public String getAttestorEntity(String property) {
+        return getAttestationPolicy(property).getAttestorEntity();
+    }
 }

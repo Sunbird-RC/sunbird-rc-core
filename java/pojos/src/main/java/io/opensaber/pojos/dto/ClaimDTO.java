@@ -9,6 +9,7 @@ public class ClaimDTO {
     private String notes;
     private String status;
     private String conditions;
+    private String attestorEntity;
     public String getEntity() {
         return entity;
     }
@@ -63,5 +64,13 @@ public class ClaimDTO {
 
     public void setConditions(String conditions) {
         this.conditions = conditions;
+    }
+
+    public String getAttestorEntity() {
+        return attestorEntity;
+    }
+
+    public void setAttestorEntity(String attestorEntity) {
+        this.attestorEntity = attestorEntity;
     }
 }

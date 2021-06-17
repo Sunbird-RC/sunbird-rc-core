@@ -41,6 +41,8 @@ public class Claim {
     private String status;
     @Column
     private String conditions;
+    @Column
+    private String attestorEntity;
 
     @PrePersist
     protected void onCreate() {
@@ -142,6 +144,14 @@ public class Claim {
         this.conditions = referenceId;
     }
 
+    public String getAttestorEntity() {
+        return attestorEntity;
+    }
+
+    public void setAttestorEntity(String attestorEntity) {
+        this.attestorEntity = attestorEntity;
+    }
+
     public static Claim fromDTO(ClaimDTO claimDTO) {
         Claim claim = new Claim();
         claim.setPropertyId(claimDTO.getPropertyId());
@@ -150,6 +160,7 @@ public class Claim {
         claim.setEntityId(claimDTO.getEntityId());
         claim.setPropertyId(claimDTO.getPropertyId());
         claim.setConditions(claimDTO.getConditions());
+        claim.setAttestorEntity(claimDTO.getAttestorEntity());
         claim.setStatus(ClaimStatus.OPEN.name());
         return claim;
     }
