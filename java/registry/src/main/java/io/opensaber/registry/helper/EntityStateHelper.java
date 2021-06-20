@@ -46,6 +46,7 @@ public class EntityStateHelper {
 
         List<String> ignoredProperties = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields();
         List<AttestationPolicy> attestationPolicies = definitionsManager.getAttestationPolicy(entityName);
+        List<StateContext> allContexts = new ArrayList<>();
 
         for (AttestationPolicy policy: attestationPolicies) {
             Set<EntityPropertyURI> targetPathPointers = new AttestationPath(policy.getProperty())
@@ -70,9 +71,10 @@ public class EntityStateHelper {
                         .metadataNode(metadataNodePointer.getFirst())
                         .pointerFromMetadataNode(metadataNodePointer.getSecond())
                         .build();
-                ruleEngineService.doTransition(stateContext);
+                allContexts.add(stateContext);
             }
         }
+        ruleEngineService.doTransition(allContexts);
     }
 
     public JsonNode sendForAttestation(JsonNode entityNode, String propertyURL) throws Exception {
