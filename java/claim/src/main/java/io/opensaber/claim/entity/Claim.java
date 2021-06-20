@@ -154,11 +154,9 @@ public class Claim {
 
     public static Claim fromDTO(ClaimDTO claimDTO) {
         Claim claim = new Claim();
-        claim.setPropertyId(claimDTO.getPropertyId());
-        claim.setProperty(claimDTO.getProperty());
+        claim.setProperty(claimDTO.getPropertyURI());
         claim.setEntity(claimDTO.getEntity());
         claim.setEntityId(claimDTO.getEntityId());
-        claim.setPropertyId(claimDTO.getPropertyId());
         claim.setConditions(claimDTO.getConditions());
         claim.setAttestorEntity(claimDTO.getAttestorEntity());
         claim.setStatus(ClaimStatus.OPEN.name());
