@@ -98,7 +98,10 @@
           "title": "Principal / Dean / Head - Mobile"
         },
         "affiliation": {
-          "$ref": "#/definitions/Affiliation",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Affiliation"
+          },
           "title": "Affiliation"
         }
       }
@@ -160,7 +163,8 @@
         "paths": [
           "affiliation"
         ],
-        "constraint": "Board"
+        "constraint": "Board",
+        "attestorEntity": "Board"
       }
     ],
     "subjectJsonPath": "email"
