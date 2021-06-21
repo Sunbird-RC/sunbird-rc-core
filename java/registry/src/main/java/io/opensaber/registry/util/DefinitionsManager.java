@@ -2,6 +2,7 @@ package io.opensaber.registry.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.middleware.util.Constants;
 
 import java.util.*;
@@ -14,6 +15,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 
+import io.opensaber.registry.model.attestation.AttestationPath;
 import org.apache.commons.collections.map.HashedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,5 +130,11 @@ public class DefinitionsManager {
 
     public String getSubjectPath(String title) {
         return definitionMap.get(title).getOsSchemaConfiguration().getSubjectJsonPath();
+    }
+
+    public List<AttestationPolicy> getAttestationPolicy(String entityType) {
+        return new ArrayList<>(definitionMap.get(entityType)
+                .getOsSchemaConfiguration()
+                .getAttestationPolicies());
     }
 }

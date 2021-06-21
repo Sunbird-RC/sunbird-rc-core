@@ -4,8 +4,7 @@ package io.opensaber.pojos.dto;
 public class ClaimDTO {
     private String entity;
     private String entityId;
-    private String property;
-    private String propertyId;
+    private String propertyURI;
     private String notes;
     private String status;
     private String conditions;
@@ -26,20 +25,12 @@ public class ClaimDTO {
         this.entityId = entityId;
     }
 
-    public String getProperty() {
-        return property;
+    public String getPropertyURI() {
+        return propertyURI;
     }
 
-    public void setProperty(String property) {
-        this.property = property;
-    }
-
-    public String getPropertyId() {
-        return propertyId;
-    }
-
-    public void setPropertyId(String propertyId) {
-        this.propertyId = propertyId;
+    public void setPropertyURI(String propertyURI) {
+        this.propertyURI = propertyURI;
     }
 
     public String getNotes() {

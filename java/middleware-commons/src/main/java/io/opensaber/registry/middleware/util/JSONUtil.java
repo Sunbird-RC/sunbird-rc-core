@@ -435,4 +435,14 @@ public class JSONUtil {
 
 		});
 	}
+
+	public static void removeNodes(JsonNode node, List<String> backList) {
+		if (node.isArray()) {
+			for (JsonNode child: node) {
+				removeNodes(child, backList);
+			}
+		} else if (node.isObject()){
+			removeNodes((ObjectNode) node, backList);
+		}
+	}
 }

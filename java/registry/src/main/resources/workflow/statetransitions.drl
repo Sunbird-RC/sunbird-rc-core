@@ -1,37 +1,32 @@
 import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.model.state.States;
 
-rule "Attestor granted the claim"
+rule "Set state as draft if there is a change"
     when
-        stateDefinition : StateContext(requestBodyHas("action") && getRequestBodyVal("action") == "GRANTED");
+        stateDefinition:StateContext(isModified() && !isAttestationRequested());
+    then
+        stateDefinition.setState(States.DRAFT);
+end
+
+rule "Send for attestation and Set state as attestation requested"
+    when
+        stateDefinition:StateContext(isAttestationRequested());
+    then
+        stateDefinition.setState(States.ATTESTATION_REQUESTED);
+        stateDefinition.setClaimId();
+end
+
+rule "Set state as Published when Claim is approved"
+    when
+        stateDefinition:StateContext(isClaimApproved());
     then
         stateDefinition.setState(States.PUBLISHED);
 end
 
-rule "Attestor rejected the claim"
+rule "Set state as Rejected when Claim is rejected"
     when
-        stateDefinition : StateContext(requestBodyHas("action") && getRequestBodyVal("action") == "DENIED");
+        stateDefinition:StateContext(isClaimRejected());
     then
         stateDefinition.setState(States.REJECTED);
-end
-
-rule "Set starting state as draft"
-    when
-        stateDefinition:StateContext(existingNode == null);
-    then
-        stateDefinition.setState(States.DRAFT);
-end
-
-rule "Set state as draft if there is a change"
-    when
-        stateDefinition:StateContext(existingNode != null && isAttributesChanged());
-    then
-        stateDefinition.setState(States.DRAFT);
-end
-
-rule "Set state as attestation requested"
-    when
-        stateDefinition:StateContext(existingNode != null && isAttestationRequested());
-    then
-        stateDefinition.setState(States.ATTESTATION_REQUESTED);
+        stateDefinition.setRejectionMessage();
 end

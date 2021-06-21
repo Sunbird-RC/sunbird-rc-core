@@ -1,0 +1,44 @@
+{
+  "name": "Er P",
+  "education": [
+    {
+      "osid": "1-324a-123",
+      "institute": "X",
+      "courses": [
+        ["A1", "A2", "A3"],
+        ["B1", "B2", "B3"],
+        ["C1", "C2"],
+        ["D1"]
+      ],
+      "awards": [
+        {
+          "osid": "1-awd-001",
+          "name": "Hon. Tyu",
+          "reason": "vfkui uygi"
+        },
+        {
+          "osid": "1-awd-002",
+          "name": "Hon. Tyu",
+          "reason": "vfkui uygi"
+        }
+      ]
+    },
+    {
+      "osid": "1-324a-121",
+      "institute": "Y",
+      "courses": [
+        ["A1", "A2"],
+        ["B1", "B2"],
+        ["C1"],
+        ["D1"]
+      ],
+      "awards": [
+        {
+          "osid": "1-awd-0021",
+          "name": "Hon. Tyu",
+          "reason": "vfkui uygi"
+        }
+      ]
+    }
+  ]
+}
