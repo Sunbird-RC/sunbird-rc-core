@@ -14,6 +14,7 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
+import io.opensaber.registry.model.attestation.EntityPropertyURI;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
@@ -325,9 +326,9 @@ public class RegistryHelper {
         updateEntityNoStateChange(node, userId);
     }
 
-    public void sendForAttestation(String entityName, String entityId, String uuidPath) throws Exception {
+    public void sendForAttestation(String entityName, String entityId, String propertyURI) throws Exception {
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
-        JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, uuidPath);
+        JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, propertyURI);
         updateEntityNoStateChange(updatedNode, "");
     }
 

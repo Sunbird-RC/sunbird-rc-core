@@ -479,21 +479,20 @@ public class RegistryController {
     }
 
     @Deprecated
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}/send", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/send/**", method = RequestMethod.POST)
     public ResponseEntity<Object> sendForVerification(
+            HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @PathVariable String property,
-            @PathVariable String propertyId,
-            @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode requestBody
+            @RequestHeader HttpHeaders header
     ) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        String propertyURI = request.getRequestURI().split(entityId+"/send/")[1];
         try {
             String tag = "RegistryController.sendForVerification " + entityName;
             watch.start(tag);
-            registryHelper.sendForAttestation(entityName, entityId, property+"/"+propertyId);
+            registryHelper.sendForAttestation(entityName, entityId, propertyURI);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
