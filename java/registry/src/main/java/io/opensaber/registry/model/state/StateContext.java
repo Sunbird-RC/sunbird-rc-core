@@ -1,116 +1,74 @@
 package io.opensaber.registry.model.state;
 
+import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.registry.middleware.util.JSONUtil;
+import lombok.Builder;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
+@Builder
 public class StateContext {
 
-    JsonNode existingNode;
-    String currentRole;
-    JsonNode requestBody;
-    ObjectNode result;
+    private String entityName;
+    private JsonNode existing;
+    private JsonNode updated;
+    private AttestationPolicy attestationPolicy;
+    private ObjectNode metadataNode;
+    private JsonPointer pointerFromMetadataNode;
 
-    public StateContext(JsonNode existingNode, String currentRole) {
-        this.existingNode = existingNode;
-        result = existingNode.deepCopy();
-        this.currentRole = currentRole;
+    @Builder.Default
+    private Action action = Action.SET_TO_DRAFT;
+    @Builder.Default
+    private List<String> ignoredFields = new ArrayList<>();
+    @Builder.Default
+    private ObjectNode metaData =JsonNodeFactory.instance.objectNode();
+
+
+    private void setMetadata(String fieldName, JsonNode fieldValue) throws Exception {
+        metadataNode.set(fieldName + pointerFromMetadataNode.toString(), fieldValue);
     }
 
-    public StateContext(String currentRole, JsonNode requestBody) {
-        this.currentRole = currentRole;
-        result = requestBody.deepCopy();
-        this.requestBody = requestBody;
-    }
-
-    public StateContext(JsonNode existingNode, JsonNode requestBody, String currentRole) {
-        this.existingNode = existingNode;
-        this.currentRole = currentRole;
-        this.requestBody = requestBody;
-        result = existingNode.deepCopy();
-        copyTheRequestBody();
-    }
-
-    private void copyTheRequestBody() {
-        Iterator<Map.Entry<String, JsonNode>> fields = requestBody.fields();
-        while(fields.hasNext()) {
-            Map.Entry<String, JsonNode> next = fields.next();
-            if(next.getKey().equals("send")) {
-                continue;
-            }
-            if(result.has(next.getKey())) {
-                result.set(next.getKey(), requestBody.get(next.getKey()));
-            }
-        }
-    }
-
-    public boolean isAttributesChanged() {
-        if(requestBody == null || existingNode == null) {
-            return true;
-        }
-        Iterator<Map.Entry<String, JsonNode>> fields = existingNode.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> next = fields.next();
-            if(requestBody.has(next.getKey()) &&
-                    !requestBody.get(next.getKey()).equals(existingNode.get(next.getKey()))){
-                return true;
-            }
+    public boolean isModified() {
+        if (existing == null  && updated != null) { return true; }
+        if (existing != null && updated != null) {
+            JsonNode relevantExistingSubNode = existing.deepCopy();
+            JSONUtil.removeNodes(relevantExistingSubNode, ignoredFields);
+            JsonNode relevantUpdatedSubNode = updated.deepCopy();
+            JSONUtil.removeNodes(relevantUpdatedSubNode, ignoredFields);
+            return !relevantExistingSubNode.equals(relevantUpdatedSubNode);
         }
         return false;
     }
 
-    public void setState(States destinationState) {
-        result.put("_osState", destinationState.name());
+    public boolean isClaimApproved() {
+        return action.equals(Action.GRANT_CLAIM);
     }
 
-    public boolean requestBodyHas(String property) {
-        return requestBody.has(property);
-    }
-
-    public String getRequestBodyVal(String property) {
-        return requestBody.get(property).asText();
+    public boolean isClaimRejected() {
+        return action.equals(Action.REJECT_CLAIM);
     }
 
     public boolean isAttestationRequested() {
-        return !existingNode.get("_osState").asText().equals(States.ATTESTATION_REQUESTED.name()) &&
-                requestBodyHas("send") && requestBody.get("send").asBoolean();
+        return action.equals(Action.RAISE_CLAIM);
     }
 
-    public void setOSProperty(String key, Object val) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode node = objectMapper.convertValue(val, JsonNode.class);
-        result.set(key, node);
+    public void setState(States destinationState) throws Exception {
+        setMetadata("_osState", JsonNodeFactory.instance.textNode(destinationState.toString()));
     }
 
-    public JsonNode getResult() {
-        return result;
+    public void setClaimId() throws Exception {
+        setMetadata("_osClaimId", metaData.get("claimId"));
     }
 
-    public JsonNode getExistingNode() {
-        return existingNode;
+    public void setRejectionMessage() throws Exception {
+        setMetadata("_osClaimId", metaData.get("claimRejectionMessage"));
     }
 
-    public void setExistingNode(JsonNode existingNode) {
-        this.existingNode = existingNode;
-    }
-
-    public String getCurrentRole() {
-        return currentRole;
-    }
-
-    public void setCurrentRole(String currentRole) {
-        this.currentRole = currentRole;
-    }
-
-    public JsonNode getRequestBody() {
-        return requestBody;
-    }
-
-    public void setRequestBody(JsonNode requestBody) {
-        this.requestBody = requestBody;
+    public JsonNode getUpdatedNode() {
+        return updated != null ? updated : existing;
     }
 }

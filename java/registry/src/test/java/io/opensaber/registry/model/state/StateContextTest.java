@@ -1,97 +1,56 @@
 package io.opensaber.registry.model.state;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.opensaber.registry.middleware.util.JSONUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import static junit.framework.TestCase.*;
 
 public class StateContextTest {
-    String currentRole;
-    JsonNode requestBody;
+    private static final ObjectMapper m = new ObjectMapper();
+    private static final String UUID_PROP = "osid";
+    private static final String TEST_FOLDER = "src/test/resources/StateContext/";
+    JsonNode existingNode;
+    JsonNode updatedNode;
 
     @Before
     public void setUp() throws IOException {
-        currentRole = "student";
-        requestBody = JSONUtil.convertStringJsonNode("{\n" +
-                "    \"fromYear\": \"1999\",\n" +
-                "    \"toYear\": \"2019\",\n" +
-                "    \"instituteName\": \"Park Angels school\"\n" +
-                "}");
+        existingNode = m.readTree(new File(TEST_FOLDER + "existingNode.json"));
+        updatedNode = m.readTree(new File(TEST_FOLDER + "updatedNode.json"));
     }
 
     @Test
-    public void shouldReturnTrueIfThereIsChangeInTheUpdateRequest() throws IOException {
-        JsonNode existingNode = JSONUtil.convertStringJsonNode("{\n" +
-                "    \"fromYear\": \"1999\",\n" +
-                "    \"toYear\": \"2019\",\n" +
-                "    \"instituteName\": \"AHSS\"\n" +
-                "}");
-        StateContext stateContext = new StateContext(existingNode, requestBody, currentRole);
-        assertTrue(stateContext.isAttributesChanged());
-    }
-    @Test
-    public void shouldReturnTrueIfThereIsChangeInTheUpdateRequestAndEvenThoughSomeFieldsAreMissingInIt()
-            throws IOException {
-        JsonNode existingNode = JSONUtil.convertStringJsonNode("{\n" +
-                "    \"instituteName\": \"AHSS\"\n" +
-                "}");
-        StateContext stateContext = new StateContext(existingNode, requestBody, currentRole);
-        assertTrue(stateContext.isAttributesChanged());
+    public void shouldReturnTrueIfThereIsChangeInTheUpdatedNode() throws Exception {
+
+        StateContext stateContext = StateContext.builder()
+                .existing(existingNode.at("/Student/identityDetails"))
+                .updated(updatedNode.at("/Student/identityDetails"))
+                .build();
+        assertTrue(stateContext.isModified());
     }
 
     @Test
-    public void shouldReturnFalseIfThereIsNoChangeInTheUpdateRequest() {
-        StateContext stateContext = new StateContext(requestBody, requestBody, currentRole);
-        assertFalse(stateContext.isAttributesChanged());
+    public void shouldReturnFalseIfThereIsNoChangeInRelevantFieldsUpdatedNode() throws Exception {
+        StateContext stateContext = StateContext.builder()
+                .existing(existingNode.at("/Student/educationDetails/0"))
+                .updated(updatedNode.at("/Student/educationDetails/1"))
+                .ignoredFields(Arrays.asList("awards", "courses"))
+                .build();
+        assertFalse(stateContext.isModified());
     }
 
     @Test
-    public void shouldReturnFalseIfThereIsNoChangeInTheUpdateRequestAndEvenThoughSomeFieldsAreMissingInIt()
-            throws IOException {
-        JsonNode existingNode = JSONUtil.convertStringJsonNode("{\n" +
-                "    \"fromYear\": \"1999\"\n" +
-                "}");
-        StateContext stateContext = new StateContext(existingNode, requestBody, currentRole);
-        assertFalse(stateContext.isAttributesChanged());
-    }
-
-    @Test
-    public void shouldCopyTheRequestBodyToTheResultInitially() {
-        StateContext stateContext = new StateContext(currentRole, requestBody);
-        assertEquals(requestBody, stateContext.getResult());
-    }
-
-    @Test
-    public void shouldSetTheGivenStateToTheResult() throws IOException {
-        StateContext stateContext = new StateContext(currentRole, requestBody);
-        for (States state : States.values()) {
-            stateContext.setState(state);
-            JsonNode expectedResult = JSONUtil.convertStringJsonNode("{\n" +
-                    "    \"fromYear\": \"1999\",\n" +
-                    "    \"toYear\": \"2019\",\n" +
-                    "    \"instituteName\": \"Park Angels school\",\n" +
-                    "    \"_osState\": " + "\"" + state.toString() + "\"" + "\n" +
-                    "}\n");
-            assertEquals(expectedResult, stateContext.getResult());
-        }
-    }
-
-    @Test
-    public void shouldNotSetTheSendAttributeToTheResult() throws IOException {
-        JsonNode existingNode = JSONUtil.convertStringJsonNode("{\n" +
-                "    \"fromYear\": \"1999\",\n" +
-                "    \"toYear\": \"2019\",\n" +
-                "    \"instituteName\": \"AHSS\"\n" +
-                "}");
-        JsonNode requestBody = JSONUtil.convertStringJsonNode("{\n" +
-                "    \"fromYear\": \"1999\",\n" +
-                "    \"send\": \"true\"\n" +
-                "}");
-        StateContext stateContext = new StateContext(existingNode, requestBody, currentRole);
-        assertFalse(stateContext.getResult().has("send"));
+    public void shouldReturnTrueIfFieldIsPresentOnlyInUpdatedNode() throws Exception {
+         StateContext stateContext = StateContext.builder()
+                 .existing(JsonNodeFactory.instance.objectNode())
+                 .updated(updatedNode.at("/Student/educationDetails/1/awards/0"))
+                 .build();
+        assertTrue(stateContext.isModified());
     }
 }

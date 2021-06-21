@@ -1,0 +1,51 @@
+{
+  "Student": {
+    "identityDetails": {
+      "osid": "1-ert23-no123",
+      "name": "Loki Laufeyson",
+      "gender": "Other",
+      "dob": "965-12-17",
+      "nationalIdentity": "did:pan:10023441"
+    },
+    "contactDetails": {
+      "osid": "1-eit23-85123",
+      "email": "loki@iou.com",
+      "mobile": "0000000001"
+    },
+    "educationDetails": [
+      {
+        "osid": "1-ewt87-no007",
+        "institute": "Asgard Institute of Magic",
+        "title": "M.Mg",
+        "from": "975",
+        "to": "977"
+      },
+      {
+        "osid": "1-ewt23-no113",
+        "institute": "Asgard Institute of Magic",
+        "title": "B.Mg",
+        "from": "972",
+        "to": "975",
+        "courses": [
+          [
+            "CL101",
+            "LK101",
+            "TY101"
+          ],
+          [
+            "CL201",
+            "LK301",
+            "TY501"
+          ]
+        ],
+        "awards": [
+          {
+            "osid": "1-awd23-no113",
+            "title": "Trickster of the year",
+            "year": "973"
+          }
+        ]
+      }
+    ]
+  }
+}
