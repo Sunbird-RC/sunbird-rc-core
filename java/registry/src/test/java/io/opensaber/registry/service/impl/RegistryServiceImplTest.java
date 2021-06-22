@@ -26,7 +26,6 @@ import org.junit.runners.MethodSorters;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.internal.util.reflection.FieldSetter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -121,10 +120,8 @@ public class RegistryServiceImplTest {
 	public void test_health_check_down_scenario() throws Exception {
 		when(signatureService.isServiceUp()).thenReturn(true);
 		when(encryptionService.isEncryptionServiceUp()).thenReturn(false);
-		FieldSetter.setField(registryServiceForHealth, registryServiceForHealth.getClass().
-				getDeclaredField("encryptionEnabled"), true);
-		FieldSetter.setField(registryServiceForHealth, registryServiceForHealth.getClass().
-				getDeclaredField("signatureEnabled"), true);
+		ReflectionTestUtils.setField(registryServiceForHealth, "encryptionEnabled", true);
+		ReflectionTestUtils.setField(registryServiceForHealth, "signatureEnabled", true);
 
 		HealthCheckResponse response = registryServiceForHealth.health(shardManager.getDefaultShard());
 		System.out.println(response.toString());
