@@ -32,11 +32,11 @@ node {
 
 
         stage('Push image') {
-            docker.withRegistry('https://index.docker.io/v2/', 'dockerhub') {
+            docker.withRegistry('', 'dockerhub') {
                 app.push("${env.BUILD_NUMBER}")
                 app.push("latest")
            }
-           docker.withRegistry('https://index.docker.io/v2/', 'dockerhub') {
+           docker.withRegistry('', 'dockerhub') {
                claimApp.push("${env.BUILD_NUMBER}")
                claimApp.push("latest")
           }
