@@ -1,5 +1,6 @@
 package io.opensaber.registry.helper;
 
+import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -273,50 +274,73 @@ public class RegistryHelper {
         return updateEntityNoStateChange(updatedNode, userId);
     }
 
-    public void addEntityProperty(String entityName, String entityId, String propertyName, JsonNode inputJson) throws Exception {
+    public void addEntityProperty(String entityName, String entityId, String propertyURI, JsonNode inputJson) throws Exception {
         String userId = "";
         JsonNode existingNode = readEntity("", entityName, entityId, false, null, false);
         JsonNode updateNode = existingNode.deepCopy();
-        JsonNode propertyNode = updateNode.get(entityName).get(propertyName);
+
+        JsonPointer propertyURIPointer = JsonPointer.compile("/" + propertyURI);
+        String propertyName = propertyURIPointer.last().getMatchingProperty();
+
+        Optional<EntityPropertyURI> parentURI = EntityPropertyURI
+                .fromEntityAndPropertyURI(updateNode.get(entityName), propertyURIPointer.head().toString(), uuidPropertyName);
+
+        if (!parentURI.isPresent()) {
+            throw new Exception(parentURI +" does not exist");
+        }
+
+        String parentPath = parentURI.get().getJsonPointer().toString();
+        if (parentPath.equals("/")) {
+            parentPath = "";
+        }
+
+        JsonNode parentNode = updateNode.get(entityName).at(parentPath);
+        JsonNode propertyNode = parentNode.get(propertyName);
+
         if (propertyNode != null && !propertyNode.isMissingNode()) {
             if (propertyNode.isArray()){
                 ((ArrayNode)propertyNode).add(inputJson);
             } else {
-                ((ObjectNode)updateNode).set(propertyName, inputJson);
+                ((ObjectNode)parentNode).set(propertyName, inputJson);
             }
         } else {
             // if array property
-            JsonNode newPropertyNode = objectMapper.createArrayNode();
-            ((ArrayNode)newPropertyNode).add(inputJson);
-            ((ObjectNode)updateNode.get(entityName)).set(propertyName, newPropertyNode);
+            ArrayNode newPropertyNode = objectMapper.createArrayNode().add(inputJson);
+            ((ObjectNode)parentNode).set(propertyName, newPropertyNode);
             try {
                 validationService.validate(entityName, objectMapper.writeValueAsString(updateNode));
             } catch (MiddlewareHaltException me) {
                 // try a field node since array validation failed
-                newPropertyNode = objectMapper.createObjectNode();
-                ((ObjectNode) updateNode).set(propertyName, newPropertyNode);
+                ((ObjectNode) parentNode).set(propertyName, inputJson);
             }
         }
         updateEntityAndState(existingNode, updateNode, "");
     }
 
-    public void updateEntityProperty(String entityName, String entityId, String propertyName, String propertyId, JsonNode inputJson) throws Exception {
+    public void updateEntityProperty(String entityName, String entityId, String propertyURI, JsonNode inputJson) throws Exception {
         String userId = "";
         JsonNode existingNode = readEntity("", entityName, entityId, false, null, false);
-
         JsonNode updateNode = existingNode.deepCopy();
-        ArrayNode propertyArrayNode = (ArrayNode) updateNode.get(entityName).get(propertyName);
-        boolean found = false;
-        for (JsonNode propertyNode : propertyArrayNode) {
-            if (propertyNode.get(uuidPropertyName).asText().equals(propertyId)) {
-                found = true;
-                inputJson.fields().forEachRemaining(f -> {
-                    ((ObjectNode)propertyNode).set(f.getKey(), f.getValue());
-                });
-                break;
-            }
+
+        Optional<EntityPropertyURI> entityPropertyURI = EntityPropertyURI
+                .fromEntityAndPropertyURI(updateNode.get(entityName), propertyURI, uuidPropertyName);
+
+        if (!entityPropertyURI.isPresent()) {
+            throw new Exception(propertyURI +  ": do not exist");
         }
-        if (!found) throw new Exception("No property with given id");
+
+        JsonNode existingPropertyNode = updateNode.get(entityName).at(entityPropertyURI.get().getJsonPointer());
+        JsonNode propertyParentNode = updateNode.get(entityName).at(entityPropertyURI.get().getJsonPointer().head());
+        String propertyName = entityPropertyURI.get().getJsonPointer().last().getMatchingProperty();
+
+        if (propertyParentNode.isObject()) {
+            ((ObjectNode)propertyParentNode).set(propertyName, inputJson);
+        } else if (existingPropertyNode.isObject()){
+            inputJson.fields().forEachRemaining(f -> ((ObjectNode)existingPropertyNode).set(f.getKey(), f.getValue()));
+        } else {
+            int propertyIndex = Integer.parseInt(propertyName);
+            ((ArrayNode)propertyParentNode).set(propertyIndex, inputJson);
+        }
         updateEntityAndState(existingNode, updateNode, "");
     }
 

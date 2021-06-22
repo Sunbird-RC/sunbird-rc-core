@@ -452,21 +452,21 @@ public class RegistryController {
         }
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/**", method = RequestMethod.PUT)
     public ResponseEntity<Object> updatePropertyOfTheEntity(
+            HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @PathVariable String property,
-            @PathVariable String propertyId,
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode requestBody
     ) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        String propertyURI = request.getRequestURI().split(entityId + "/")[1];
         try {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
-            registryHelper.updateEntityProperty(entityName, entityId, property, propertyId, requestBody);
+            registryHelper.updateEntityProperty(entityName, entityId, propertyURI, requestBody);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -503,11 +503,11 @@ public class RegistryController {
         }
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/**", method = RequestMethod.POST)
     public ResponseEntity<Object> addNewPropertyToTheEntity(
+            HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @PathVariable String property,
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode requestBody
     ) {
@@ -516,10 +516,11 @@ public class RegistryController {
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        String propertyURI = request.getRequestURI().split(entityId + "/")[1];
         try {
             String tag = "RegistryController.addNewPropertyToTheEntity " + entityName;
             watch.start(tag);
-            registryHelper.addEntityProperty(entityName, entityId, property, requestBody);
+            registryHelper.addEntityProperty(entityName, entityId, propertyURI, requestBody);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);

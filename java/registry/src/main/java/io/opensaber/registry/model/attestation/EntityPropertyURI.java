@@ -60,7 +60,7 @@ public class EntityPropertyURI {
             }
             curr = curr.get(index);
         }
-        return Optional.of(new EntityPropertyURI(
+        return curr== null || curr.isMissingNode() ? Optional.empty() : Optional.of(new EntityPropertyURI(
                 propertyURI,
                 "/" + String.join("/", steps)
         ));
