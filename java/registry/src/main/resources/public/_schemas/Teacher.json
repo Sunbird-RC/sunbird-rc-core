@@ -67,9 +67,11 @@
     ],
     "attestationPolicies": [
       {
+        "property": "experience/[]",
         "paths": [
-          "education"
+          "experience"
         ],
+        "attestorEntity": "Institute",
         "conditions": "Institute"
       }
     ],

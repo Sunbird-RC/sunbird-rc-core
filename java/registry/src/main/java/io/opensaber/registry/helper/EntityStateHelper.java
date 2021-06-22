@@ -102,7 +102,13 @@ public class EntityStateHelper {
         if (action.equals(Action.RAISE_CLAIM)) {
             metaData.set(
                     "claimId",
-                    JsonNodeFactory.instance.textNode(raiseClaim(entityName, propertyURL, metadataNodePointer.getFirst(), policy))
+                    JsonNodeFactory.instance.textNode(raiseClaim(
+                            entityName,
+                            entityNode.get(uuidPropertyName).asText(),
+                            propertyURL,
+                            metadataNodePointer.getFirst(),
+                            policy
+                    ))
             );
         }
 
@@ -134,12 +140,12 @@ public class EntityStateHelper {
         return Optional.empty();
     }
 
-    public String raiseClaim(String entityName, String uuidPath, JsonNode node, AttestationPolicy attestationPolicy) {
-        String resolvedConditions =  conditionResolverService.resolve(node, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
+    public String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode,AttestationPolicy attestationPolicy) {
+        String resolvedConditions =  conditionResolverService.resolve(metadataNode, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
         ClaimDTO claimDTO = new ClaimDTO();
         claimDTO.setEntity(entityName);
-        claimDTO.setEntityId(node.get(uuidPropertyName).asText());
-        claimDTO.setPropertyURI(uuidPath);
+        claimDTO.setEntityId(entityId);
+        claimDTO.setPropertyURI(propertyURI);
         claimDTO.setConditions(resolvedConditions);
         claimDTO.setAttestorEntity(attestationPolicy.getAttestorEntity());
         return claimRequestClient.riseClaimRequest(claimDTO).get("id").toString();
