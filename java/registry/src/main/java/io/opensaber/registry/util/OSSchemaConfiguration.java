@@ -38,6 +38,10 @@ public class OSSchemaConfiguration {
      * Holds fields name(s) for public usage
      * */
     private List<String> publicFields = new ArrayList<>();
+    /**
+     * Holds fields name(s) for non-public usage
+     * */
+    private List<String> internalFields = new ArrayList<>();
 
     /** 
      * Holds field path of the subject of entity
@@ -102,8 +106,16 @@ public class OSSchemaConfiguration {
         return publicFields;
     }
 
+    public List<String> getInternalFields() {
+        return internalFields;
+    }
+
     public void setPublicFields(List<String> publicFields) {
         this.publicFields = publicFields;
+    }
+
+    public void setInternalFields(List<String> internalFields) {
+        this.internalFields = internalFields;
     }
 
     public String getSubjectJsonPath() {

@@ -9,9 +9,7 @@ import io.swagger.models.*;
 import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.PathParameter;
-import io.swagger.models.properties.BooleanProperty;
-import io.swagger.models.properties.ObjectProperty;
-import io.swagger.models.properties.StringProperty;
+import io.swagger.models.properties.*;
 import io.swagger.util.Json;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,10 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @RestController
 public class RegistrySwaggerController {
@@ -89,9 +84,35 @@ public class RegistrySwaggerController {
         paths.set(String.format("/api/docs/%s.json", entityName), path);
         paths.set(String.format("/api/v1/%s/invite", entityName), path);
         path = objectMapper.createObjectNode();
+        RefProperty refProperty = new RefProperty();
+        refProperty.set$ref(String.format("#/definitions/%s", entityName));
+        addPostOperation(entityName, path, Collections.singletonList(getSearchBodyParameter()), new ArrayModel().items(refProperty));
+        paths.set(String.format("/api/v1/%s/search", entityName), path);
+        path = objectMapper.createObjectNode();
         addGetOperation(entityName, path, Collections.emptyList());
-        addPostOperation(entityName, path, Collections.singletonList(getBodyParameter(entityName)));
+        addPostOperation(entityName, path, Collections.singletonList(getBodyParameter(entityName)), new RefModel(String.format("#/definitions/%s", entityName)));
         paths.set(String.format("/api/v1/%s", entityName), path);
+    }
+
+    private ModelImpl getSearchRequestModel() {
+        ModelImpl searchRequest = new ModelImpl();
+        Map<String, Property> searchProps = new HashMap<>();
+        ObjectProperty searchField = new ObjectProperty();
+        ObjectProperty searchValueObject = new ObjectProperty();
+        StringProperty searchValue = new StringProperty();
+        searchValue.description("Search searchField");
+        searchValue.example("name");
+        searchValueObject.property("operators", searchValue);
+        searchValueObject.setDescription("operators can be gte, lte, contains, gt, lt, eq, between, or, startsWith, endsWith, notContains, notStartsWith, notEndsWith");
+        searchField.property("field_path", searchValueObject);
+        searchField.description("Ex: (field_path): $.educationDetails.name");
+        searchProps.put("filters", searchField);
+        IntegerProperty limitVal = new IntegerProperty();
+        limitVal.setDefault(0);
+        searchProps.put("limit", limitVal);
+        searchProps.put("offset", limitVal);
+        searchRequest.setProperties(searchProps);
+        return searchRequest;
     }
 
     private void populateSubEntityActions(ObjectNode paths, String entityName) throws IOException {
@@ -115,10 +136,10 @@ public class RegistrySwaggerController {
         addModifyOperation("", path, Arrays.asList(entityIdParam, propertyParam, propertyIdParam), getPropertyUpdateRequestBody());
         paths.set(String.format("/api/v1/%s/{entityId}/{property}/{propertyId}", entityName), path);
         path = objectMapper.createObjectNode();
-        addPostOperation("", path, Collections.singletonList(getPropertyCreateRequestBody()));
+        addPostOperation("", path, Collections.singletonList(getPropertyCreateRequestBody()), new RefModel(String.format("#/definitions/%s", "")));
         paths.set(String.format("/api/v1/%s/{entityId}/{property}", entityName), path);
         path = objectMapper.createObjectNode();
-        addPostOperation("", path, Arrays.asList(entityIdParam, propertyParam, propertyIdParam));
+        addPostOperation("", path, Arrays.asList(entityIdParam, propertyParam, propertyIdParam), new RefModel(String.format("#/definitions/%s", "")));
         paths.set(String.format("/api/v1/%s/{entityId}/{property}/{propertyId}/send", entityName), path);
     }
 
@@ -130,11 +151,11 @@ public class RegistrySwaggerController {
         addResponseType(path, operation, "put", new RefModel(String.format("#/definitions/%s", entityName)));
     }
 
-    private void addPostOperation(String entityName, ObjectNode path, List<Parameter> parameters) throws IOException {
+    private void addPostOperation(String entityName, ObjectNode path, List<Parameter> parameters, Model responseSchema) throws IOException {
         Operation operation = new Operation()
                 .description(String.format("Create new %s", entityName));
         parameters.forEach(operation::addParameter);
-        addResponseType(path, operation, "post", new RefModel(String.format("#/definitions/%s", entityName)));
+        addResponseType(path, operation, "post", responseSchema);
     }
 
     private BodyParameter getPropertyUpdateRequestBody() {
@@ -156,6 +177,11 @@ public class RegistrySwaggerController {
     private BodyParameter getBodyParameter(String entityName) {
         return new BodyParameter()
                 .schema(new RefModel(String.format("#/definitions/%s", entityName)));
+    }
+
+    private BodyParameter getSearchBodyParameter() {
+        return new BodyParameter()
+                .schema(getSearchRequestModel());
     }
 
     private void addGetOperation(String entityName, ObjectNode path, List<PathParameter> pathParameters) throws IOException {

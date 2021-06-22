@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.*;
 import io.opensaber.pojos.attestation.AttestationPolicy;
@@ -296,6 +297,29 @@ public class RegistryController {
             logger.info("Error in validating the request", e);
             return badRequestException(responseParams, response, e.getMessage());
         }
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}/search", method = RequestMethod.POST)
+    public ResponseEntity<Object> searchEntity(@PathVariable String entityName, @RequestHeader HttpHeaders header,  @RequestBody ObjectNode searchNode) {
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
+
+        try {
+            watch.start("RegistryController.searchEntity");
+            ArrayNode entity = JsonNodeFactory.instance.arrayNode();
+            entity.add(entityName);
+            searchNode.set("entityType", entity);
+            JsonNode result = registryHelper.searchEntity(searchNode);
+            watch.stop("RegistryController.searchEntity");
+            return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Exception in controller while searching entities !", e);
+            response.setResult("");
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 

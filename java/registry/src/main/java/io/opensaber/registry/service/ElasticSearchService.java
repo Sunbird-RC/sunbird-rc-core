@@ -87,10 +87,14 @@ public class ElasticSearchService implements ISearchService {
                 logger.error("Elastic search operation - {}", e);
             }
         }
-        
-        auditService.auditElasticSearch( new AuditRecord().setUserId(apiMessage.getUserID()),
-        		searchQuery.getEntityTypes(), inputQueryNode);    
- 
+
+        try {
+            auditService.auditElasticSearch( new AuditRecord().setUserId(apiMessage.getUserID()),
+                    searchQuery.getEntityTypes(), inputQueryNode);
+        } catch (Exception e) {
+            logger.error("Exception while auditing " + e);
+        }
+
         return resultNode;
 
     }

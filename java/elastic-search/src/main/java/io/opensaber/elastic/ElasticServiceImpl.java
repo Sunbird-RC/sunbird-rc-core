@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 import io.opensaber.pojos.Filter;
 import io.opensaber.pojos.FilterOperators;
 import io.opensaber.pojos.SearchQuery;
@@ -43,7 +45,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 
 public class ElasticServiceImpl implements IElasticService {
-    private static Map<String, Set<String>> publicFieldsInfo = new HashMap<>();
+    private static Map<String, Set<String>> indexWiseExcludeFields = new HashMap<>();
     private static Map<String, RestHighLevelClient> esClient = new HashMap<String, RestHighLevelClient>();
     private static Logger logger = LoggerFactory.getLogger(ElasticServiceImpl.class);
 
@@ -64,8 +66,8 @@ public class ElasticServiceImpl implements IElasticService {
      * @param indices
      * @throws RuntimeException
      */
-    public static void init(Set<String> indices, Map<String, Set<String>> publicFieldsInfoMap) throws RuntimeException {
-        publicFieldsInfo = publicFieldsInfoMap;
+    public void init(Set<String> indices, Map<String, Set<String>> indexWiseExcludeFields) throws RuntimeException {
+        this.indexWiseExcludeFields = indexWiseExcludeFields;
         indices.iterator().forEachRemaining(index -> {
             try {
                 addIndex(index.toLowerCase(), searchType);
@@ -173,8 +175,12 @@ public class ElasticServiceImpl implements IElasticService {
         logger.debug("addEntity starts with index {} and entityId {}", index, entityId);
         IndexResponse response = null;
         try {
-            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
-            inputMap.keySet().removeIf(key -> !publicFieldsInfo.get(index).contains(key));
+            DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(inputEntity));
+            indexWiseExcludeFields.get(index).forEach(path -> {
+                doc.delete(path);
+            });
+            JsonNode filteredNode = JSONUtil.convertStringJsonNode(doc.jsonString());
+            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(filteredNode);
             response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in adding record to ElasticSearch", e);
@@ -215,7 +221,7 @@ public class ElasticServiceImpl implements IElasticService {
         UpdateResponse response = null;
         try {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
-            inputMap.keySet().removeIf(key -> !publicFieldsInfo.get(index).contains(key));
+            inputMap.keySet().removeIf(key -> !indexWiseExcludeFields.get(index).contains(key));
             logger.debug("updateEntity inputMap {}", inputMap);
             logger.debug("updateEntity inputEntity {}", inputEntity);
             response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
@@ -254,7 +260,10 @@ public class ElasticServiceImpl implements IElasticService {
     public JsonNode search(String index, SearchQuery searchQuery) throws IOException {
         BoolQueryBuilder query = buildQuery(searchQuery);
 
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().query(query);
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+                .query(query)
+                .size(searchQuery.getLimit())
+                .from(searchQuery.getOffset());
         SearchRequest searchRequest = new SearchRequest(index).source(sourceBuilder);
         ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
         ObjectMapper mapper = new ObjectMapper();

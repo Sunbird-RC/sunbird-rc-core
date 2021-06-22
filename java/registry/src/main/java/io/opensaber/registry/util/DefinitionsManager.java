@@ -128,6 +128,26 @@ public class DefinitionsManager {
         return result;
     };
 
+    /**
+     * Returns the map, where key is the index and value is the internal fields
+     *
+     * @return
+     * */
+    public Map<String, Set<String>> getInternalFieldsInfoMap() {
+        Map<String, Set<String>> result = new HashMap<>();
+        for (String index: getAllKnownDefinitions()) {
+            List<String> publicFields = getDefinition(index)
+                    .getOsSchemaConfiguration()
+                    .getInternalFields();
+            if(publicFields != null) {
+                result.put(index.toLowerCase(), new HashSet<>(publicFields));
+            } else {
+                result.put(index.toLowerCase(), Collections.emptySet());
+            }
+        }
+        return result;
+    }
+
     public String getSubjectPath(String title) {
         return definitionMap.get(title).getOsSchemaConfiguration().getSubjectJsonPath();
     }

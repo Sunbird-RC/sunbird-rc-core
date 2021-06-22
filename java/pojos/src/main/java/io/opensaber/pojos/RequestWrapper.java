@@ -35,7 +35,7 @@ public class RequestWrapper extends HttpServletRequestWrapper {
 				while ((line = reader.readLine()) != null) {
 					buffer.append(line);
 				}
-			} catch (IOException e) {
+			} catch (Exception e) {
 				logger.error("Can't read from http stream. Set body empty");
 			}
 
