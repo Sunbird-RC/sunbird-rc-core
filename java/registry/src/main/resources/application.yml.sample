@@ -5,6 +5,8 @@ spring:
 #                      DEVELOPMENT PROFILE                       #
 ##################################################################
 spring:
+  main:
+      allow-bean-definition-overriding: true
   profiles: dev
   output:
     ansi:
