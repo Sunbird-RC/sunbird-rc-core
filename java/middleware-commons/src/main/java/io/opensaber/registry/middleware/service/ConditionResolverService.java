@@ -41,7 +41,7 @@ public class ConditionResolverService {
         List<String> read = JsonPath.using(alwaysReturnListConfig).parse(entity).read(path);
         String s;
         if(read.size() == 1) {
-            s = "\"" + read.get(0) + "\"";
+            s = read.get(0);
         } else {
             s = read.toString();
         }
