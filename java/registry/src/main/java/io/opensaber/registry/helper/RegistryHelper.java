@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -16,7 +15,11 @@ import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.attestation.EntityPropertyURI;
-import io.opensaber.registry.service.*;
+import io.opensaber.registry.model.state.Action;
+import io.opensaber.registry.service.DecryptionHelper;
+import io.opensaber.registry.service.IReadService;
+import io.opensaber.registry.service.ISearchService;
+import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.*;
@@ -24,14 +27,12 @@ import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationException;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
-
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -356,9 +357,14 @@ public class RegistryHelper {
         updateEntityNoStateChange(updatedNode, "");
     }
 
-    public void attest(String entityName, String entityId, String uuidPath, boolean isGranted) throws Exception {
+    public void attest(String entityName, String entityId, String uuidPath, JsonNode attestReq) throws Exception {
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
-        JsonNode updatedNode = entityStateHelper.attestClaim(entityNode, uuidPath);
+        JsonNode updatedNode;
+        if (attestReq.get("action").asText().equals(Action.GRANT_CLAIM.toString())) {
+            updatedNode = entityStateHelper.grantClaim(entityNode, uuidPath);
+        } else {
+            updatedNode = entityStateHelper.rejectClaim(entityNode, uuidPath, attestReq.get("notes").asText());
+        }
         updateEntityNoStateChange(updatedNode, "");
     }
 

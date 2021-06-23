@@ -21,6 +21,7 @@ rule "Set state as Published when Claim is approved"
         stateDefinition:StateContext(isClaimApproved());
     then
         stateDefinition.setState(States.PUBLISHED);
+        stateDefinition.setAttestationData();
 end
 
 rule "Set state as Rejected when Claim is rejected"

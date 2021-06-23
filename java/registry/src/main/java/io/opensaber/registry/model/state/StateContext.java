@@ -5,13 +5,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.registry.helper.EntityStateHelper;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import lombok.Builder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Builder
 public class StateContext {
+
+    private static final Logger logger = LoggerFactory.getLogger(EntityStateHelper.class);
 
     private String entityName;
     private JsonNode existing;
@@ -29,6 +35,7 @@ public class StateContext {
 
 
     private void setMetadata(String fieldName, JsonNode fieldValue) throws Exception {
+        logger.info("setting metadata {} : {}", fieldName, fieldValue);
         metadataNode.set(fieldName + pointerFromMetadataNode.toString(), fieldValue);
     }
 
@@ -65,7 +72,11 @@ public class StateContext {
     }
 
     public void setRejectionMessage() throws Exception {
-        setMetadata("_osClaimId", metaData.get("claimRejectionMessage"));
+        setMetadata("_osClaimNotes", metaData.get("notes"));
+    }
+
+    public void setAttestationData() throws Exception {
+        setMetadata("_osAttestedData", metaData.get("attestedData"));
     }
 
     public JsonNode getUpdatedNode() {

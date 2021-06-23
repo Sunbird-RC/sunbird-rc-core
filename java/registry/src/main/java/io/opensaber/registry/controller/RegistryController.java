@@ -3,21 +3,17 @@ package io.opensaber.registry.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.*;
 import io.opensaber.pojos.attestation.AttestationPolicy;
-import io.opensaber.pojos.dto.ClaimDTO;
 import io.opensaber.registry.dao.NotFoundException;
-import io.opensaber.registry.helper.EntityStateHelper;
 import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
@@ -259,17 +255,6 @@ public class RegistryController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-
-    @RequestMapping(value = "/attest", method = RequestMethod.GET)
-    public ResponseEntity<Response> attest(@RequestHeader HttpHeaders header) {
-        /*
-         * check for the attester role.
-         * mark as attested.
-         * save the entity.
-         */
-        return null;
-    }
-
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
             @PathVariable String entityName,
@@ -433,18 +418,19 @@ public class RegistryController {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}/attest")
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/attest/**")
     public ResponseEntity<Object> attest(
+            HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @PathVariable String property,
-            @PathVariable String propertyId,
             @RequestHeader HttpHeaders header,
-            @RequestBody BooleanNode requestBody
+            @RequestBody JsonNode requestBody
     ) throws IOException {
+        String propertyURI = request.getRequestURI().split("attest/")[1];
+        logger.info("Received response to raise claim for entityName: {}, entityId: {}, propertyURI: {}", entityName, entityId, propertyURI);
         // TODO: fetch user details from JWT
         try {
-            registryHelper.attest(entityName, entityId, property+"/"+propertyId, requestBody.asBoolean());
+            registryHelper.attest(entityName, entityId, propertyURI, requestBody);
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
