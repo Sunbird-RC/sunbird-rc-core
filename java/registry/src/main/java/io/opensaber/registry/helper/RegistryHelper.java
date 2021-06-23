@@ -397,7 +397,7 @@ public class RegistryHelper {
     public void authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
         String userId = getKeycloakUserId(request);
         JsonNode resultNode = readEntity(userId, entityName, entityId, false, null, false);
-        if(!isOwner(resultNode, userId)) {
+        if(!isOwner(resultNode.get(entityName), userId)) {
             throw new Exception("User is trying to update someone's data");
         }
     }

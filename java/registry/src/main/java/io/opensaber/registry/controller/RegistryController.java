@@ -449,7 +449,7 @@ public class RegistryController {
         try {
             registryHelper.authorize(entityName, entityId, request);
         } catch (Exception e) {
-            createUnauthorizedExceptionResponse(e);
+            return createUnauthorizedExceptionResponse(e);
         }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
@@ -482,7 +482,7 @@ public class RegistryController {
         try {
             registryHelper.authorize(entityName, entityId, request);
         } catch (Exception e) {
-            createUnauthorizedExceptionResponse(e);
+            return createUnauthorizedExceptionResponse(e);
         }
         try {
             String tag = "RegistryController.sendForVerification " + entityName;
@@ -509,7 +509,7 @@ public class RegistryController {
         try {
             registryHelper.authorize(entityName, entityId, request);
         } catch (Exception e) {
-            createUnauthorizedExceptionResponse(e);
+            return createUnauthorizedExceptionResponse(e);
         }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
