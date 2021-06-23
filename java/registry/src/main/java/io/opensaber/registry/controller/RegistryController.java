@@ -41,6 +41,8 @@ import java.util.*;
 public class RegistryController {
     private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
     @Autowired
+    AuthorizationService authorizationService;
+    @Autowired
     ConditionResolverService conditionResolverService;
     @Autowired
     Transformer transformer;
@@ -343,9 +345,15 @@ public class RegistryController {
     public ResponseEntity<Object> putEntity(
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode rootNode) {
+            @RequestBody JsonNode rootNode,
+            HttpServletRequest request) {
+
         logger.info("Updating entityType {} request body {}", entityName, rootNode);
+        try {
+            authorizationService.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            return createUnauthorizedExceptionResponse(e);
+        }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         ((ObjectNode) rootNode).put(uuidPropertyName, entityId);
@@ -367,6 +375,14 @@ public class RegistryController {
             responseParams.setErrmsg(e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private ResponseEntity<Object> createUnauthorizedExceptionResponse(Exception e) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        responseParams.setErrmsg(e.getMessage());
+        responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.POST)
@@ -417,8 +433,7 @@ public class RegistryController {
             @PathVariable String propertyId,
             @RequestHeader HttpHeaders header,
             @RequestBody BooleanNode requestBody
-    ) throws IOException {
-        // TODO: fetch user details from JWT
+    ) {
         try {
             registryHelper.attest(entityName, entityId, property+"/"+propertyId, requestBody.asBoolean());
             return new ResponseEntity<>(HttpStatus.OK);
@@ -434,9 +449,14 @@ public class RegistryController {
             @PathVariable String entityId,
             @PathVariable String property,
             @PathVariable String propertyId,
-            @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode requestBody
+            @RequestBody JsonNode requestBody,
+            HttpServletRequest request
     ) {
+        try {
+            authorizationService.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            createUnauthorizedExceptionResponse(e);
+        }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
@@ -461,11 +481,15 @@ public class RegistryController {
             @PathVariable String entityId,
             @PathVariable String property,
             @PathVariable String propertyId,
-            @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode requestBody
+            HttpServletRequest request
     ) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        try {
+            authorizationService.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            createUnauthorizedExceptionResponse(e);
+        }
         try {
             String tag = "RegistryController.sendForVerification " + entityName;
             watch.start(tag);
@@ -485,12 +509,14 @@ public class RegistryController {
             @PathVariable String entityName,
             @PathVariable String entityId,
             @PathVariable String property,
-            @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode requestBody
+            @RequestBody JsonNode requestBody,
+            HttpServletRequest request
     ) {
-        // TODO: Add Auth validation & property validation
-        // TODO: get userID from auth header
-
+        try {
+            authorizationService.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            createUnauthorizedExceptionResponse(e);
+        }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
