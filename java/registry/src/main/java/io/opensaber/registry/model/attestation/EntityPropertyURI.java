@@ -7,8 +7,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.Optional;
 
 public class EntityPropertyURI {
-    String propertyURI;
-    JsonPointer jsonPointer;
+    static final String NO_UUID = "NO_UUID";
+    private String propertyURI;
+    private JsonPointer jsonPointer;
 
     private EntityPropertyURI() { }
 
@@ -47,6 +48,9 @@ public class EntityPropertyURI {
             try {
                 index = Integer.parseInt(steps[i]);
             } catch (NumberFormatException nfe) {
+                if (steps[i].equals(EntityPropertyURI.NO_UUID)) {
+                    return Optional.empty();
+                }
                 ArrayNode arrNode = (ArrayNode)curr;
                 for (int j = 0; j < arrNode.size(); j++) {
                     if (arrNode.get(j).get(uuidPropertyName).asText().equals(steps[i])) {
