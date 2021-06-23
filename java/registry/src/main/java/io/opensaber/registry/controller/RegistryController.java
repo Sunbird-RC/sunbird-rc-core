@@ -7,16 +7,13 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.*;
 import io.opensaber.pojos.attestation.AttestationPolicy;
-import io.opensaber.pojos.dto.ClaimDTO;
 import io.opensaber.registry.dao.NotFoundException;
-import io.opensaber.registry.helper.EntityStateHelper;
 import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
@@ -33,15 +30,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
 
 @RestController
 public class RegistryController {
     private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
-    @Autowired
-    AuthorizationService authorizationService;
     @Autowired
     ConditionResolverService conditionResolverService;
     @Autowired
@@ -350,7 +344,7 @@ public class RegistryController {
 
         logger.info("Updating entityType {} request body {}", entityName, rootNode);
         try {
-            authorizationService.authorize(entityName, entityId, request);
+            registryHelper.authorize(entityName, entityId, request);
         } catch (Exception e) {
             return createUnauthorizedExceptionResponse(e);
         }
@@ -453,7 +447,7 @@ public class RegistryController {
             HttpServletRequest request
     ) {
         try {
-            authorizationService.authorize(entityName, entityId, request);
+            registryHelper.authorize(entityName, entityId, request);
         } catch (Exception e) {
             createUnauthorizedExceptionResponse(e);
         }
@@ -486,7 +480,7 @@ public class RegistryController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
-            authorizationService.authorize(entityName, entityId, request);
+            registryHelper.authorize(entityName, entityId, request);
         } catch (Exception e) {
             createUnauthorizedExceptionResponse(e);
         }
@@ -513,7 +507,7 @@ public class RegistryController {
             HttpServletRequest request
     ) {
         try {
-            authorizationService.authorize(entityName, entityId, request);
+            registryHelper.authorize(entityName, entityId, request);
         } catch (Exception e) {
             createUnauthorizedExceptionResponse(e);
         }
