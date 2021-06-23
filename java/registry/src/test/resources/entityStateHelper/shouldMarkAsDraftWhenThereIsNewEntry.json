@@ -1,0 +1,40 @@
+{
+  "existing": {
+    "Student": {
+      "identityDetails": {
+        "fullName": "Deepthi K"
+      }
+    }
+  },
+  "updated": {
+    "Student": {
+      "identityDetails": {
+        "fullName": "Deepthi K"
+      },
+      "educationDetails": [
+        {
+          "institute": "ABC Medical College",
+          "board": "State Board",
+          "medium": "English",
+          "class": "M.B.B.S Sem 7"
+        }
+      ]
+    }
+  },
+  "afterStateChange": {
+    "Student": {
+      "identityDetails": {
+        "fullName": "Deepthi K"
+      },
+      "educationDetails": [
+        {
+          "institute": "ABC Medical College",
+          "board": "State Board",
+          "medium": "English",
+          "class": "M.B.B.S Sem 7",
+          "_osState": "DRAFT"
+        }
+      ]
+    }
+  }
+}
