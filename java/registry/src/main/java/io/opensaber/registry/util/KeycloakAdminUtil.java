@@ -7,6 +7,7 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
@@ -77,9 +78,18 @@ public class KeycloakAdminUtil {
             return userID;
         } else if (response.getStatus() == 409) {
             logger.info("UserID: {} exists", userName);
-            Optional<UserRepresentation> userRepresentationOptional = getUserByUsername(userName);
+            Optional<UserResource> userRepresentationOptional = getUserByUsername(userName);
             if (userRepresentationOptional.isPresent()) {
-                return userRepresentationOptional.get().getId();
+                UserResource userResource = userRepresentationOptional.get();
+                UserRepresentation userRepresentation = userResource.toRepresentation();
+                List<String> entities = userRepresentation.getAttributes().get("entity");
+                if (entities.contains(entityName)) {
+                    throw new EntityCreationException("Username already invited / registered for " + entityName);
+                } else {
+                    entities.add(entityName);
+                    userResource.update(userRepresentation);
+                    return userRepresentation.getId();
+                }
             } else {
                 logger.error("Failed fetching user by username: {}", userName);
                 throw new EntityCreationException("Creating user failed");
@@ -89,10 +99,10 @@ public class KeycloakAdminUtil {
         }
     }
 
-    private Optional<UserRepresentation> getUserByUsername(String username) {
+    private Optional<UserResource> getUserByUsername(String username) {
         List<UserRepresentation> users = keycloak.realm(realm).users().search(username);
         if (users.size() > 0) {
-            return Optional.of(users.get(0));
+            return Optional.of(keycloak.realm(realm).users().get(users.get(0).getId()));
         }
         return Optional.empty();
     }
