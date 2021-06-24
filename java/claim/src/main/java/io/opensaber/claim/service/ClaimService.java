@@ -68,7 +68,7 @@ public class ClaimService {
         if(claim.isClosed()) {
             throw new ClaimAlreadyProcessedException(CLAIM_IS_ALREADY_PROCESSED);
         }
-        if(!conditions.contains(claim.getConditions())) {
+        if(!conditions.contains(claim.getAttestorEntity())) {
             throw new UnAuthorizedException(USER_NOT_AUTHORIZED);
         }
         claim.setNotes(notes.orElse(""));
@@ -85,7 +85,7 @@ public class ClaimService {
         if(claim.isClosed()) {
             throw new ClaimAlreadyProcessedException(CLAIM_IS_ALREADY_PROCESSED);
         }
-        if(!conditions.contains(claim.getConditions())) {
+        if(!conditions.contains(claim.getAttestorEntity())) {
             throw new UnAuthorizedException(USER_NOT_AUTHORIZED);
         }
         AttestationPropertiesDTO attestationProperties = openSaberClient.getAttestationProperties(claim);
