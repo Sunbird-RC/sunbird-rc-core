@@ -282,27 +282,29 @@ public class RegistryHelper {
 
         JsonPointer propertyURIPointer = JsonPointer.compile("/" + propertyURI);
         String propertyName = propertyURIPointer.last().getMatchingProperty();
+        String parentURIPointer = propertyURIPointer.head().toString();
 
-        Optional<EntityPropertyURI> parentURI = EntityPropertyURI
-                .fromEntityAndPropertyURI(updateNode.get(entityName), propertyURIPointer.head().toString(), uuidPropertyName);
-
-        if (!parentURI.isPresent()) {
-            throw new Exception(parentURI +" does not exist");
+        JsonNode parentNode;
+        if (parentURIPointer.equals("")) {
+            parentNode = updateNode.get(entityName);
+        } else {
+            Optional<EntityPropertyURI> parentURI = EntityPropertyURI.fromEntityAndPropertyURI(
+                    updateNode.get(entityName),
+                    parentURIPointer,
+                    uuidPropertyName
+            );
+            if (!parentURI.isPresent()) {
+                throw new Exception(parentURI + " does not exist");
+            }
+            parentNode = updateNode.get(entityName).at(parentURI.get().getJsonPointer());
         }
-
-        String parentPath = parentURI.get().getJsonPointer().toString();
-        if (parentPath.equals("/")) {
-            parentPath = "";
-        }
-
-        JsonNode parentNode = updateNode.get(entityName).at(parentPath);
         JsonNode propertyNode = parentNode.get(propertyName);
 
         if (propertyNode != null && !propertyNode.isMissingNode()) {
-            if (propertyNode.isArray()){
-                ((ArrayNode)propertyNode).add(inputJson);
+            if (propertyNode.isArray()) {
+                ((ArrayNode) propertyNode).add(inputJson);
             } else {
-                ((ObjectNode)parentNode).set(propertyName, inputJson);
+                ((ObjectNode) parentNode).set(propertyName, inputJson);
             }
         } else {
             // if array property
