@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.22.0 (HEAD)
+  labels:
+    k8s-app: registry
+  name: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: registry
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.22.0 (HEAD)
+      labels:
+        k8s-app: registry
+    spec:
+      containers:
+        - env:
+            - name: connectionInfo_password
+              value: postgres
+            - name: connectionInfo_uri
+              value: jdbc:postgresql://postgres-postgresql.default.svc.cluster.local:5432/registry
+            - name: connectionInfo_username
+              value: postgres
+            - name: sunbird_sso_publickey
+              value: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlg8dR/09kQ4tybLbyHSx2oKWstxSEIhkYx7vC+9dQkgmu83E8331/N67tr1CbbxvSEcQ1VXE+3AG9dm3JE3o6ltD0TMXBbtE9bXJFdS/abVoJ6F6A7rY3LaQY9FG7ZmCjUfGweN3BfUWR+u+lMUUAVrzOdrqavMmbsE/orvujgzEXUinXIBBYZGXxhGNQqLIrNVjSaD3sgO3ne1WNYkaJH+ZcIRU0Y7NELq3djuyHRmf0uqNr4E+YCpBi2Vh69+CY8WnVVFfdIGXMWUsFnIY9nRTIP4uduBSMWMzhkQ4IqjeO5ACxqGuOIDYLwjft0MnPmFB0OO/fyWQbzjHlvOASQIDAQAB
+            - name: sunbird_sso_realm
+              value: ndear
+            - name: sunbird_sso_url
+              value: https://ndear.xiv.in/auth
+            - name: sunbird_sso_admin_client_id
+              value: admin-api
+            - name: sunbird_sso_client_id
+              value: registry-frontend  
+            - name: sunbird_sso_admin_client_secret
+              value: d9b0edd2-b268-418f-9346-b67083b2cc16
+            - name: claims_url
+              value: http://192.168.49.2:30128
+            - name: search_providerName
+              value: io.opensaber.registry.service.ElasticSearchService 
+            - name: elastic_search_connection_url
+              value: es-elasticsearch-coordinating-only.default.svc.cluster.local:9200  
+          image: tejashjl/open-saber-rc:38
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+#            limits:
+#              cpu: 500m
+          name: registry
+          ports:
+            - containerPort: 8081
+      restartPolicy: Always
+
+
