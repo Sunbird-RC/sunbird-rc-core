@@ -18,3 +18,6 @@ cd java/
 java -jar registry/target/registry.jar
 ```
 
+### dependencies
+* Elastic search https://hub.kubeapps.com/charts/bitnami/elasticsearch
+* Postgres : https://hub.kubeapps.com/charts/cetic/postgresql
