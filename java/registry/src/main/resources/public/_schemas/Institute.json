@@ -158,15 +158,7 @@
       "osCreatedBy",
       "osUpdatedBy"
     ],
-    "attestationPolicies": [
-      {
-        "paths": [
-          "affiliation"
-        ],
-        "constraint": "Board",
-        "attestorEntity": "Board"
-      }
-    ],
+    "attestationPolicies": [],
     "subjectJsonPath": "email"
   }
 }

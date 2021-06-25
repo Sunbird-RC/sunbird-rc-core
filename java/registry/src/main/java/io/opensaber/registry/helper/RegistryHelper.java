@@ -401,19 +401,6 @@ public class RegistryHelper {
 
     }
 
-    public JsonNode getRequestedUser(String entityName, String userId) throws Exception {
-        ObjectNode payload = JsonNodeFactory.instance.objectNode();
-        payload.set("entityType", JsonNodeFactory.instance.arrayNode().add(entityName));
-        ObjectNode filters = JsonNodeFactory.instance.objectNode();
-        filters.set(OSSystemFields.osOwner.toString(), JsonNodeFactory.instance.objectNode().put("eq", userId));
-        payload.set("filters", filters);
-
-        watch.start("RegistryController.searchEntity");
-        JsonNode result = searchEntity(payload);
-        watch.stop("RegistryController.searchEntity");
-        return result;
-    }
-
     public String getKeycloakUserId(HttpServletRequest request) throws Exception {
         KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
         if (principal != null) {
@@ -438,5 +425,13 @@ public class RegistryHelper {
             return result;
         }
         throw new Exception("Forbidden");
+    }
+
+    public void authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
+        String userId = getKeycloakUserId(request);
+        JsonNode resultNode = readEntity(userId, entityName, entityId, false, null, false);
+        if(!isOwner(resultNode.get(entityName), userId)) {
+            throw new Exception("User is trying to update someone's data");
+        }
     }
 }

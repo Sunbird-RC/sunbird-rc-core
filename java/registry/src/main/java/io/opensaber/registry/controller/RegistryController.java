@@ -30,7 +30,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
 
@@ -352,9 +351,15 @@ public class RegistryController {
     public ResponseEntity<Object> putEntity(
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode rootNode) {
+            @RequestBody JsonNode rootNode,
+            HttpServletRequest request) {
+
         logger.info("Updating entityType {} request body {}", entityName, rootNode);
+        try {
+            registryHelper.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            return createUnauthorizedExceptionResponse(e);
+        }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         ((ObjectNode) rootNode).put(uuidPropertyName, entityId);
@@ -376,6 +381,14 @@ public class RegistryController {
             responseParams.setErrmsg(e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private ResponseEntity<Object> createUnauthorizedExceptionResponse(Exception e) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        responseParams.setErrmsg(e.getMessage());
+        responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.POST)
@@ -425,7 +438,7 @@ public class RegistryController {
             @PathVariable String entityId,
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode requestBody
-    ) throws IOException {
+    ) {
         String propertyURI = request.getRequestURI().split("attest/")[1];
         logger.info("Received response to raise claim for entityName: {}, entityId: {}, propertyURI: {}", entityName, entityId, propertyURI);
         // TODO: fetch user details from JWT
@@ -446,6 +459,11 @@ public class RegistryController {
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode requestBody
     ) {
+        try {
+            registryHelper.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            return createUnauthorizedExceptionResponse(e);
+        }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         String propertyURI = request.getRequestURI().split(entityId + "/")[1];
@@ -476,6 +494,11 @@ public class RegistryController {
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         String propertyURI = request.getRequestURI().split(entityId+"/send/")[1];
         try {
+            registryHelper.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            return createUnauthorizedExceptionResponse(e);
+        }
+        try {
             String tag = "RegistryController.sendForVerification " + entityName;
             watch.start(tag);
             registryHelper.sendForAttestation(entityName, entityId, propertyURI);
@@ -497,9 +520,11 @@ public class RegistryController {
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode requestBody
     ) {
-        // TODO: Add Auth validation & property validation
-        // TODO: get userID from auth header
-
+        try {
+            registryHelper.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            return createUnauthorizedExceptionResponse(e);
+        }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         String propertyURI = request.getRequestURI().split(entityId + "/")[1];
