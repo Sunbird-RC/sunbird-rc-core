@@ -303,6 +303,10 @@ public class RegistryHelper {
         if (propertyNode != null && !propertyNode.isMissingNode()) {
             if (propertyNode.isArray()) {
                 ((ArrayNode) propertyNode).add(inputJson);
+            } else if (propertyNode.isObject()) {
+                inputJson.fields().forEachRemaining(f -> {
+                    ((ObjectNode) propertyNode).set(f.getKey(), f.getValue());
+                });
             } else {
                 ((ObjectNode) parentNode).set(propertyName, inputJson);
             }
