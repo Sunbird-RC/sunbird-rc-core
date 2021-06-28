@@ -29,5 +29,4 @@ rule "Set state as Rejected when Claim is rejected"
         stateDefinition:StateContext(isClaimRejected());
     then
         stateDefinition.setState(States.REJECTED);
-        stateDefinition.setRejectionMessage();
 end

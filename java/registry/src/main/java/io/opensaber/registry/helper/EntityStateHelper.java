@@ -129,7 +129,7 @@ public class EntityStateHelper {
                     ))
             );
         } else if (action.equals(Action.GRANT_CLAIM)) {
-            metaData.set(
+            metaData.put(
                     "attestedData",
                     generateAttestedData(entityNode, policy, propertyURL)
             );
@@ -188,7 +188,7 @@ public class EntityStateHelper {
         );
     }
 
-    private ObjectNode generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyURI) {
+    private String generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyURI) {
         String PROPERTY_ID = "PROPERTY_ID";
         String propertyId = "";
         if (attestationPolicy.getProperty().endsWith("[]")) {
@@ -216,7 +216,7 @@ public class EntityStateHelper {
                 );
             }
         }
-        return new ObjectMapper().valueToTree(attestedData);
+        return new ObjectMapper().valueToTree(attestedData).toString();
     }
 
 }

@@ -50,10 +50,12 @@ public class RegistryClaimsController {
         JsonNode notes = request.get("notes");
         logger.info("Action : {} , Notes: {}", action, notes);
         try {
-            JsonNode attestorInfo = registryHelper.readEntity("", entityName, entityId, false, null, false);
+            JsonNode attestorInfo = registryHelper.readEntity("", entityName, entityId, false, null, false)
+                    .get(entityName);
             ObjectNode attestRequest = JsonNodeFactory.instance.objectNode();
             attestRequest.set("attestorInfo", attestorInfo);
             attestRequest.set("action", action);
+            attestRequest.set("notes", notes);
             return claimRequestClient.attestClaim(
                     attestRequest,
                     claimId

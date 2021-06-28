@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -60,6 +61,16 @@ public class ClaimService {
         if (!claimsAuthorizer.isAuthorized(claim, attestorNode)) {
             throw new UnAuthorizedException(USER_NOT_AUTHORIZED);
         }
+        updateClaim(request, claim);
         return openSaberClient.sendAttestationResponseToRequester(claim, request);
+    }
+
+    private void updateClaim(JsonNode request, Claim claim) {
+        if(request.has("notes")) {
+            claim.setNotes(request.get("notes").asText());
+        }
+        claim.setAttestedOn(new Date());
+        claim.setStatus("CLOSED");
+        claimRepository.save(claim);
     }
 }
