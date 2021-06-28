@@ -18,9 +18,22 @@ spec:
       containers:
         - image: dockerhub/keycloak:latest
           imagePullPolicy: Always
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
           resources:
             requests:
               cpu: "500m"
+              memory: "2048m"
           name: keycloak-service
           env:
             - name: DB_ADDR
@@ -28,16 +41,18 @@ spec:
             - name: DB_DATABASE
               value: keycloak
             - name: DB_PASSWORD
-              value: postgres
+              value: keycloak
             - name: DB_PORT
               value: "5432"
             - name: DB_USER
-              value: postgres
+              value: keycloak
             - name: DB_VENDOR
               value: postgres
             - name: KEYCLOAK_PASSWORD
               value: admin
             - name: KEYCLOAK_USER
               value: admin
+            - name: JAVA_OPTS
+              value: "-server -Xms64m -Xmx2048m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.awt.headless=true  --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-exports=jdk.unsupported/sun.reflect=ALL-UNNAMED"
       restartPolicy: Always
 
