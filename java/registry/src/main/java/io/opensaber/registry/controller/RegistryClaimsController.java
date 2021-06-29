@@ -1,11 +1,12 @@
 package io.opensaber.registry.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.util.ClaimRequestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,33 @@ public class RegistryClaimsController {
             logger.error("Fetching claims failed {}", e.getMessage());
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/claims/{claimId}/attest", method = RequestMethod.POST)
+    public ResponseEntity<Object> attestClaim(
+            @PathVariable String claimId,
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @RequestBody ObjectNode request) throws Exception {
+        logger.info("Attesting claim {} as  {} {}", claimId, entityName, entityId);
+        JsonNode action = request.get("action");
+        JsonNode notes = request.get("notes");
+        logger.info("Action : {} , Notes: {}", action, notes);
+        try {
+            JsonNode attestorInfo = registryHelper.readEntity("", entityName, entityId, false, null, false)
+                    .get(entityName);
+            ObjectNode attestRequest = JsonNodeFactory.instance.objectNode();
+            attestRequest.set("attestorInfo", attestorInfo);
+            attestRequest.set("action", action);
+            attestRequest.set("notes", notes);
+            return claimRequestClient.attestClaim(
+                    attestRequest,
+                    claimId
+            );
+        } catch (Exception exception) {
+            logger.error("Exception : ", exception);
+            return new ResponseEntity<>("Error sending attestation request to Claims service", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

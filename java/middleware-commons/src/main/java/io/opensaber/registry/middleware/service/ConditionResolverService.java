@@ -35,13 +35,12 @@ public class ConditionResolverService {
         }
         return condition;
     }
-
     private String replaceOriginalValueForGivenJsonPath(String entity, String path) {
         Configuration alwaysReturnListConfig = Configuration.builder().options(Option.ALWAYS_RETURN_LIST).build();
         List<String> read = JsonPath.using(alwaysReturnListConfig).parse(entity).read(path);
         String s;
         if(read.size() == 1) {
-            s = read.get(0);
+            s = "'" + read.get(0) + "'";
         } else {
             s = read.toString();
         }

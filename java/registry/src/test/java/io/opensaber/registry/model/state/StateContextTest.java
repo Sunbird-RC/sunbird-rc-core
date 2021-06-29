@@ -14,7 +14,6 @@ import static junit.framework.TestCase.*;
 
 public class StateContextTest {
     private static final ObjectMapper m = new ObjectMapper();
-    private static final String UUID_PROP = "osid";
     private static final String TEST_FOLDER = "src/test/resources/StateContext/";
     JsonNode existingNode;
     JsonNode updatedNode;

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.opensaber.claim.contants.OpensaberApiUrlPaths;
 import io.opensaber.claim.entity.Claim;
 import io.opensaber.claim.exception.ResourceNotFoundException;
-import io.opensaber.claim.model.AttestorActions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import java.util.HashMap;
+
 import static io.opensaber.claim.contants.AttributeNames.*;
 
 
@@ -36,33 +35,13 @@ public class OpenSaberClient {
         return restTemplate.getForObject(url, AttestationPropertiesDTO.class);
     }
 
-    public void updateAttestedProperty(Claim claim, HttpHeaders headers) {
+    public ResponseEntity<Object> sendAttestationResponseToRequester(Claim claim, JsonNode request) {
         String url = openSaberUrl + OpensaberApiUrlPaths.ATTEST
                 .replace(ENTITY_ID, claim.getEntityId())
                 .replace(ENTITY, claim.getEntity())
-                .replace(PROPERTY_ID, claim.getPropertyId())
-                .replace(PROPERTY, claim.getProperty());
-        HashMap<String, Object> requestBody = new HashMap<String, Object>() {{
-            put(ACTION, AttestorActions.DENIED);
-        }};
-        HttpEntity<HashMap<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        logger.info("Sending request to {}", url);
-        restTemplate.postForObject(url, entity, Void.class);
-    }
-
-    public void updateAttestedProperty(Claim claim, String attestedData, HttpHeaders headers) {
-        HashMap<String, Object> requestBody = new HashMap<String, Object>() {{
-            put(ACTION, AttestorActions.GRANTED);
-            put(ATTESTED_DATA, attestedData);
-        }};
-        String url = openSaberUrl + OpensaberApiUrlPaths.ATTEST
-                .replace(ENTITY_ID, claim.getEntityId())
-                .replace(ENTITY, claim.getEntity())
-                .replace(PROPERTY_ID, claim.getPropertyId())
-                .replace(PROPERTY, claim.getProperty());
-        HttpEntity<HashMap<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        logger.info("Sending request to {}", url);
-        restTemplate.postForObject(url, entity, Void.class);
+                .replace(PROPERTY_URI, claim.getPropertyURI());
+        logger.info("Sending attestation request to {}", url);
+        return restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(request), Object.class);
     }
 
     public JsonNode getEntity(String entity, HttpHeaders headers) {
