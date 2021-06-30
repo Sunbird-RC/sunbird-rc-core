@@ -28,7 +28,7 @@ public class ConditionResolverServiceTest {
     public void shouldAbleToResolveAttestorPaths() throws IOException {
         String condition = "(ATTESTOR#$.experience.[*].institute#.contains('Mary school') && (ATTESTOR#$.experience[?(@.institute == 'Mary school')]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == 'Mary school')]['role'][*]#.contains('hod')))";
         String matcher = "ATTESTOR";
-        List<String[]> attributes = new ArrayList<String[]>();
+        List<String[]> attributes = new ArrayList<>();
         String expectedCondition = "({\"Mary school\",\"ABC institute of school\"}.contains('Mary school') && ({\"hod\",\"admin\"}.contains('bo') || {\"hod\",\"admin\"}.contains('hod')))";
         assertEquals(expectedCondition, conditionResolverService.resolve(getTeacherJsonNode(), matcher, condition, attributes));
     }
