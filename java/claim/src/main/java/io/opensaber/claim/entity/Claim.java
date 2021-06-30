@@ -118,6 +118,7 @@ public class Claim {
                 ", entityId='" + entityId + '\'' +
                 ", propertyURI='" + propertyURI + '\'' +
                 ", status='" + status + '\'' +
+                ", condition='" + conditions + '\'' +
                 '}';
     }
 
