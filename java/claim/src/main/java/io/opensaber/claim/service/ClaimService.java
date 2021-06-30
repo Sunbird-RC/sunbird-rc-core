@@ -48,6 +48,7 @@ public class ClaimService {
 
     public List<Claim> findClaimsForAttestor(String entity, JsonNode attestorNode) {
         List<Claim> claims = claimRepository.findByAttestorEntity(entity);
+        logger.info("Found {} claims to process", claims.size());
         return claims.stream()
                 .filter(claim -> claimsAuthorizer.isAuthorized(claim, attestorNode))
                 .collect(Collectors.toList());
@@ -55,6 +56,7 @@ public class ClaimService {
 
     public ResponseEntity<Object> attestClaim(String claimId, JsonNode attestorNode, JsonNode request) {
         Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));
+        logger.info("Processing claim {}", claim.toString());
         if (claim.isClosed()) {
             throw new ClaimAlreadyProcessedException(CLAIM_IS_ALREADY_PROCESSED);
         }
