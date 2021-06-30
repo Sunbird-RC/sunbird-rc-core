@@ -187,8 +187,6 @@ authentication:
     realm:  ${authentication_realm:}
     url:  ${authentication_url:localhost:8443/auth}
 
-claims:
-  url: ${claims_url:http://localhost:8081}
 
 validation:
   enabled: ${validation_enabled:true}
@@ -248,6 +246,8 @@ elastic:
 #                      TEST PROFILE                              #
 ##################################################################
 spring:
+  main:
+      allow-bean-definition-overriding: true
   profiles: test
   output:
     ansi:
@@ -278,7 +278,7 @@ database:
 
   # Providers available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
   # NOTE: Values given against 'shardId' must be unique
-  provider: ${database_provider:SQLG}
+  provider: ${database_provider:TINKERGRAPH}
 
   # Choose "none" as the propertyName if you don't want any shards. Otherwise
   # implement IShardAdvisor interface in your own ways. An example, SerialNumShardAdvisor
@@ -286,7 +286,6 @@ database:
   shardProperty: ${database_shardProperty:none}
 
   # Any other provider breaks the unit tests, needs a work-item
-  provider: TINKERGRAPH
 
 # File for framing the entity while reading
 frame:
