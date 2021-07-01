@@ -125,7 +125,8 @@ public class EntityStateHelper {
                             entityNode.get(uuidPropertyName).asText(),
                             propertyURL,
                             metadataNodePointer.getFirst(),
-                            policy
+                            policy,
+                            getRequestorName(entityNode)
                     ))
             );
         } else if (action.equals(Action.GRANT_CLAIM)) {
@@ -149,6 +150,16 @@ public class EntityStateHelper {
         return root;
     }
 
+    private String getRequestorName(JsonNode entityNode) {
+        if(entityNode.hasNonNull("identityDetails") && entityNode.get("identityDetails").has("fullName")) {
+            return entityNode.get("identityDetails")
+                    .get("fullName")
+                    .asText();
+        } else {
+            return "";
+        }
+    }
+
     public Optional<AttestationPolicy> getMatchingAttestationPolicy(String entityName, JsonNode rootNode, String uuidPath) {
         int uuidPathDepth = uuidPath.split("/").length;
         String matchingUUIDPath = "/" + uuidPath;
@@ -163,7 +174,7 @@ public class EntityStateHelper {
         return Optional.empty();
     }
 
-    public String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode,AttestationPolicy attestationPolicy) {
+    public String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode, AttestationPolicy attestationPolicy, String requestorName) {
         String resolvedConditions =  conditionResolverService.resolve(metadataNode, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
         ClaimDTO claimDTO = new ClaimDTO();
         claimDTO.setEntity(entityName);
@@ -171,6 +182,7 @@ public class EntityStateHelper {
         claimDTO.setPropertyURI(propertyURI);
         claimDTO.setConditions(resolvedConditions);
         claimDTO.setAttestorEntity(attestationPolicy.getAttestorEntity());
+        claimDTO.setRequestorName(requestorName);
         return claimRequestClient.riseClaimRequest(claimDTO).get("id").toString();
     }
 
