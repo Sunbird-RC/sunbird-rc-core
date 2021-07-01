@@ -41,6 +41,8 @@ public class Claim {
     private String conditions;
     @Column
     private String attestorEntity;
+    @Column
+    private String requestorName;
 
     @PrePersist
     protected void onCreate() {
@@ -150,6 +152,15 @@ public class Claim {
         claim.setConditions(claimDTO.getConditions());
         claim.setAttestorEntity(claimDTO.getAttestorEntity());
         claim.setStatus(ClaimStatus.OPEN.name());
+        claim.setRequestorName(claimDTO.getRequestorName());
         return claim;
+    }
+
+    public String getRequestorName() {
+        return requestorName;
+    }
+
+    public void setRequestorName(String requesterName) {
+        this.requestorName = requesterName;
     }
 }

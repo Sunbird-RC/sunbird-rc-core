@@ -9,6 +9,16 @@ public class ClaimDTO {
     private String status;
     private String conditions;
     private String attestorEntity;
+    private String requestorName;
+
+    public String getRequestorName() {
+        return requestorName;
+    }
+
+    public void setRequestorName(String requestorName) {
+        this.requestorName = requestorName;
+    }
+
     public String getEntity() {
         return entity;
     }
