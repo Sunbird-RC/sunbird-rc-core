@@ -72,7 +72,7 @@
           "experience"
         ],
         "attestorEntity": "Institute",
-        "conditions": "Institute"
+        "conditions": "(ATTESTOR#$.instituteName#.contains(REQUESTER#$.institute#))"
       }
     ],
     "subjectJsonPath": "mobile",
