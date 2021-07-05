@@ -8,10 +8,12 @@ import io.opensaber.registry.controller.RegistryController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import javax.json.Json;
 import java.util.HashMap;
 
 @Component
@@ -36,7 +38,16 @@ public class ClaimRequestClient {
     public JsonNode getClaims(JsonNode jsonNode, String entityName) {
         ObjectNode requestBody = JsonNodeFactory.instance.objectNode();
         requestBody.set("attestorInfo", jsonNode);
-        requestBody.put("entity" ,entityName);
-        return restTemplate.postForObject(claimRequestUrl + FETCH_CLAIMS_PATH, requestBody,JsonNode.class);
+        requestBody.put("entity", entityName);
+        return restTemplate.postForObject(claimRequestUrl + FETCH_CLAIMS_PATH, requestBody, JsonNode.class);
+    }
+
+    public ResponseEntity<Object> attestClaim(JsonNode attestationRequest, String claimId) {
+        return restTemplate.exchange(
+                claimRequestUrl + CLAIMS_PATH + "/" + claimId,
+                HttpMethod.POST,
+                new HttpEntity<>(attestationRequest),
+                Object.class
+        );
     }
 }

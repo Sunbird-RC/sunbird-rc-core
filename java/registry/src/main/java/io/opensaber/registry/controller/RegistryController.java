@@ -3,7 +3,6 @@ package io.opensaber.registry.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.*;
@@ -255,17 +254,6 @@ public class RegistryController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-
-    @RequestMapping(value = "/attest", method = RequestMethod.GET)
-    public ResponseEntity<Response> attest(@RequestHeader HttpHeaders header) {
-        /*
-         * check for the attester role.
-         * mark as attested.
-         * save the entity.
-         */
-        return null;
-    }
-
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
             @PathVariable String entityName,
@@ -443,17 +431,19 @@ public class RegistryController {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}/attest")
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/attest/**")
     public ResponseEntity<Object> attest(
+            HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @PathVariable String property,
-            @PathVariable String propertyId,
             @RequestHeader HttpHeaders header,
-            @RequestBody BooleanNode requestBody
+            @RequestBody JsonNode requestBody
     ) {
+        String propertyURI = request.getRequestURI().split("attest/")[1];
+        logger.info("Received response to raise claim for entityName: {}, entityId: {}, propertyURI: {}", entityName, entityId, propertyURI);
+        // TODO: fetch user details from JWT
         try {
-            registryHelper.attest(entityName, entityId, property+"/"+propertyId, requestBody.asBoolean());
+            registryHelper.attest(entityName, entityId, propertyURI, requestBody);
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
@@ -461,14 +451,13 @@ public class RegistryController {
         }
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/**", method = RequestMethod.PUT)
     public ResponseEntity<Object> updatePropertyOfTheEntity(
+            HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @PathVariable String property,
-            @PathVariable String propertyId,
-            @RequestBody JsonNode requestBody,
-            HttpServletRequest request
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode requestBody
     ) {
         try {
             registryHelper.authorize(entityName, entityId, request);
@@ -477,10 +466,11 @@ public class RegistryController {
         }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        String propertyURI = request.getRequestURI().split(entityId + "/")[1];
         try {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
-            registryHelper.updateEntityProperty(entityName, entityId, property, propertyId, requestBody);
+            registryHelper.updateEntityProperty(entityName, entityId, propertyURI, requestBody);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -493,16 +483,16 @@ public class RegistryController {
     }
 
     @Deprecated
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}/{propertyId}/send", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/send/**", method = RequestMethod.POST)
     public ResponseEntity<Object> sendForVerification(
+            HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @PathVariable String property,
-            @PathVariable String propertyId,
-            HttpServletRequest request
+            @RequestHeader HttpHeaders header
     ) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        String propertyURI = request.getRequestURI().split(entityId+"/send/")[1];
         try {
             registryHelper.authorize(entityName, entityId, request);
         } catch (Exception e) {
@@ -511,7 +501,7 @@ public class RegistryController {
         try {
             String tag = "RegistryController.sendForVerification " + entityName;
             watch.start(tag);
-            registryHelper.sendForAttestation(entityName, entityId, property+"/"+propertyId);
+            registryHelper.sendForAttestation(entityName, entityId, propertyURI);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -522,13 +512,13 @@ public class RegistryController {
         }
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/{property}", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/**", method = RequestMethod.POST)
     public ResponseEntity<Object> addNewPropertyToTheEntity(
+            HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @PathVariable String property,
-            @RequestBody JsonNode requestBody,
-            HttpServletRequest request
+            @RequestHeader HttpHeaders header,
+            @RequestBody JsonNode requestBody
     ) {
         try {
             registryHelper.authorize(entityName, entityId, request);
@@ -537,10 +527,11 @@ public class RegistryController {
         }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
+        String propertyURI = request.getRequestURI().split(entityId + "/")[1];
         try {
             String tag = "RegistryController.addNewPropertyToTheEntity " + entityName;
             watch.start(tag);
-            registryHelper.addEntityProperty(entityName, entityId, property, requestBody);
+            registryHelper.addEntityProperty(entityName, entityId, propertyURI, requestBody);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);

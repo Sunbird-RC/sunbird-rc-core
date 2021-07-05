@@ -14,7 +14,7 @@ public class ConditionResolverServiceTest {
     ConditionResolverService conditionResolverService = new ConditionResolverService();
     @Test
     public void shouldAbleToResolveRequesterPaths() throws IOException {
-        String condition = "(ATTESTOR#$.experience.[*].institute#.contains('REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#') && (ATTESTOR#$.experience[?(@.institute == 'REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#')]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == 'REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#')]['role'][*]#.contains('hod')))";
+        String condition = "(ATTESTOR#$.experience.[*].institute#.contains(REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#) && (ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('hod')))";
         String matcher = "REQUESTER";
         List<String[]> attributes = new ArrayList<String[]>(){{
             add(new String[]{"REQUESTER_PROPERTY_ID", "4"});
@@ -28,14 +28,14 @@ public class ConditionResolverServiceTest {
     public void shouldAbleToResolveAttestorPaths() throws IOException {
         String condition = "(ATTESTOR#$.experience.[*].institute#.contains('Mary school') && (ATTESTOR#$.experience[?(@.institute == 'Mary school')]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == 'Mary school')]['role'][*]#.contains('hod')))";
         String matcher = "ATTESTOR";
-        List<String[]> attributes = new ArrayList<String[]>();
+        List<String[]> attributes = new ArrayList<>();
         String expectedCondition = "({\"Mary school\",\"ABC institute of school\"}.contains('Mary school') && ({\"hod\",\"admin\"}.contains('bo') || {\"hod\",\"admin\"}.contains('hod')))";
         assertEquals(expectedCondition, conditionResolverService.resolve(getTeacherJsonNode(), matcher, condition, attributes));
     }
 
     @Test
     public void shouldReturnTrueForValidExpression() throws IOException {
-        String condition = "(ATTESTOR#$.experience.[*].institute#.contains('REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#') && (ATTESTOR#$.experience[?(@.institute == 'REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#')]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == 'REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#')]['role'][*]#.contains('hod')))";
+        String condition = "(ATTESTOR#$.experience.[*].institute#.contains(REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#) && (ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('bo') || ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('hod')))";
         List<String[]> attributes = new ArrayList<String[]>(){{
             add(new String[]{"REQUESTER_PROPERTY_ID", "4"});
         }};
@@ -53,7 +53,7 @@ public class ConditionResolverServiceTest {
 
     @Test
     public void shouldReturnFalseForInvalidExpression() throws IOException {
-        String condition = "(ATTESTOR#$.experience.[*].institute#.contains('REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#') && (ATTESTOR#$.experience[?(@.institute == 'REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#')]['role'][*]#.contains('boa') || ATTESTOR#$.experience[?(@.institute == 'REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#')]['role'][*]#.contains('hoda')))";
+        String condition = "(ATTESTOR#$.experience.[*].institute#.contains(REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#) && (ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('boa') || ATTESTOR#$.experience[?(@.institute == REQUESTER#$.educationDetails[?(@.osid == 'REQUESTER_PROPERTY_ID')]['institute']#)]['role'][*]#.contains('hoda')))";
         List<String[]> attributes = new ArrayList<String[]>(){{
             add(new String[]{"REQUESTER_PROPERTY_ID", "4"});
         }};

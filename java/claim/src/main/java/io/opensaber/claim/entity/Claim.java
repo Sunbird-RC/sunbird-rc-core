@@ -28,10 +28,8 @@ public class Claim {
     @Column
     private String entityId;
     @Column
-    private String property;
-    @Column
-    private String propertyId;
-    @Column(name=Claim.CREATED_AT)
+    private String propertyURI;
+    @Column(name = Claim.CREATED_AT)
     private Date createdAt;
     @Column(name=Claim.ATTESTED_ON)
     private Date attestedOn;
@@ -43,6 +41,8 @@ public class Claim {
     private String conditions;
     @Column
     private String attestorEntity;
+    @Column
+    private String requestorName;
 
     @PrePersist
     protected void onCreate() {
@@ -73,20 +73,12 @@ public class Claim {
         this.entityId = entityId;
     }
 
-    public String getProperty() {
-        return property;
+    public String getPropertyURI() {
+        return propertyURI;
     }
 
-    public void setProperty(String property) {
-        this.property = property;
-    }
-
-    public String getPropertyId() {
-        return propertyId;
-    }
-
-    public void setPropertyId(String propertyId) {
-        this.propertyId = propertyId;
+    public void setPropertyURI(String propertyURI) {
+        this.propertyURI = propertyURI;
     }
 
     public Date getCreatedAt() {
@@ -126,9 +118,9 @@ public class Claim {
         return "Claim{" +
                 "entity='" + entity + '\'' +
                 ", entityId='" + entityId + '\'' +
-                ", property='" + property + '\'' +
-                ", propertyId='" + propertyId + '\'' +
+                ", propertyURI='" + propertyURI + '\'' +
                 ", status='" + status + '\'' +
+                ", condition='" + conditions + '\'' +
                 '}';
     }
 
@@ -154,12 +146,21 @@ public class Claim {
 
     public static Claim fromDTO(ClaimDTO claimDTO) {
         Claim claim = new Claim();
-        claim.setProperty(claimDTO.getPropertyURI());
+        claim.setPropertyURI(claimDTO.getPropertyURI());
         claim.setEntity(claimDTO.getEntity());
         claim.setEntityId(claimDTO.getEntityId());
         claim.setConditions(claimDTO.getConditions());
         claim.setAttestorEntity(claimDTO.getAttestorEntity());
         claim.setStatus(ClaimStatus.OPEN.name());
+        claim.setRequestorName(claimDTO.getRequestorName());
         return claim;
+    }
+
+    public String getRequestorName() {
+        return requestorName;
+    }
+
+    public void setRequestorName(String requesterName) {
+        this.requestorName = requesterName;
     }
 }

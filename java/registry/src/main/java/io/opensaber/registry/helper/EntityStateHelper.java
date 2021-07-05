@@ -2,8 +2,11 @@ package io.opensaber.registry.helper;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.dto.ClaimDTO;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
@@ -14,7 +17,10 @@ import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.service.RuleEngineService;
 import io.opensaber.registry.util.ClaimRequestClient;
 import io.opensaber.registry.util.DefinitionsManager;
+import net.minidev.json.JSONArray;
 import org.apache.commons.math3.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,6 +30,8 @@ import java.util.*;
 
 @Component
 public class EntityStateHelper {
+
+    private static final Logger logger = LoggerFactory.getLogger(EntityStateHelper.class);
 
     @Value("${database.uuidPropertyName}")
     private String uuidPropertyName;
@@ -43,7 +51,7 @@ public class EntityStateHelper {
     public void changeStateAfterUpdate(JsonNode existing, JsonNode updated) {
         String entityName = updated.fields().next().getKey();
         JsonNode modified = updated.get(entityName);
-
+        logger.info("Detecting state changes by comparing attestation paths in existing and the updated nodes");
         List<String> ignoredProperties = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields();
         List<AttestationPolicy> attestationPolicies = definitionsManager.getAttestationPolicy(entityName);
         List<StateContext> allContexts = new ArrayList<>();
@@ -51,7 +59,7 @@ public class EntityStateHelper {
         for (AttestationPolicy policy: attestationPolicies) {
             Set<EntityPropertyURI> targetPathPointers = new AttestationPath(policy.getProperty())
                     .getEntityPropertyURIs(modified, uuidPropertyName);
-
+            logger.info("Updated nodes of interest: {}", targetPathPointers);
             for(EntityPropertyURI tp: targetPathPointers) {
                 Optional<EntityPropertyURI> entityPropertyURI = EntityPropertyURI.fromEntityAndPropertyURI(
                         existing.get(entityName), tp.getPropertyURI(), uuidPropertyName
@@ -78,12 +86,22 @@ public class EntityStateHelper {
     }
 
     public JsonNode sendForAttestation(JsonNode entityNode, String propertyURL) throws Exception {
+        logger.info("Sending {} for attestation", propertyURL);
        return manageState(entityNode, propertyURL, Action.RAISE_CLAIM, JsonNodeFactory.instance.objectNode());
     }
 
-    public JsonNode attestClaim(JsonNode entityNode, String uuidPath) throws Exception {
-        return manageState(entityNode, uuidPath, Action.GRANT_CLAIM, JsonNodeFactory.instance.objectNode());
+    public JsonNode grantClaim(JsonNode entityNode, String propertyURI) throws Exception {
+        logger.info("Claim related to {} marked as granted. Adding attestedData to metadata", propertyURI);
+        return manageState(entityNode, propertyURI, Action.GRANT_CLAIM, JsonNodeFactory.instance.objectNode());
     }
+
+    public JsonNode rejectClaim(JsonNode entityNode, String propertyURI, String notes) throws Exception {
+        logger.info("Claim related to {} marked as rejected. Adding notes to metadata", propertyURI);
+        ObjectNode metaData = JsonNodeFactory.instance.objectNode();
+        metaData.set("notes", JsonNodeFactory.instance.textNode(notes));
+        return manageState(entityNode, propertyURI, Action.REJECT_CLAIM, metaData);
+    }
+
 
     private JsonNode manageState(JsonNode root, String propertyURL, Action action, @NotEmpty ObjectNode metaData) throws Exception {
         String entityName = root.fields().next().getKey();
@@ -107,8 +125,14 @@ public class EntityStateHelper {
                             entityNode.get(uuidPropertyName).asText(),
                             propertyURL,
                             metadataNodePointer.getFirst(),
-                            policy
+                            policy,
+                            getRequestorName(entityNode)
                     ))
+            );
+        } else if (action.equals(Action.GRANT_CLAIM)) {
+            metaData.put(
+                    "attestedData",
+                    generateAttestedData(entityNode, policy, propertyURL)
             );
         }
 
@@ -126,6 +150,16 @@ public class EntityStateHelper {
         return root;
     }
 
+    private String getRequestorName(JsonNode entityNode) {
+        if(entityNode.hasNonNull("identityDetails") && entityNode.get("identityDetails").has("fullName")) {
+            return entityNode.get("identityDetails")
+                    .get("fullName")
+                    .asText();
+        } else {
+            return "";
+        }
+    }
+
     public Optional<AttestationPolicy> getMatchingAttestationPolicy(String entityName, JsonNode rootNode, String uuidPath) {
         int uuidPathDepth = uuidPath.split("/").length;
         String matchingUUIDPath = "/" + uuidPath;
@@ -140,7 +174,7 @@ public class EntityStateHelper {
         return Optional.empty();
     }
 
-    public String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode,AttestationPolicy attestationPolicy) {
+    public String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode, AttestationPolicy attestationPolicy, String requestorName) {
         String resolvedConditions =  conditionResolverService.resolve(metadataNode, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
         ClaimDTO claimDTO = new ClaimDTO();
         claimDTO.setEntity(entityName);
@@ -148,6 +182,7 @@ public class EntityStateHelper {
         claimDTO.setPropertyURI(propertyURI);
         claimDTO.setConditions(resolvedConditions);
         claimDTO.setAttestorEntity(attestationPolicy.getAttestorEntity());
+        claimDTO.setRequestorName(requestorName);
         return claimRequestClient.riseClaimRequest(claimDTO).get("id").toString();
     }
 
@@ -163,6 +198,37 @@ public class EntityStateHelper {
                 (ObjectNode) metadataNode,
                 traversed.stream().reduce(JsonPointer.compile(""), JsonPointer::append)
         );
+    }
+
+    private String generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyURI) {
+        String PROPERTY_ID = "PROPERTY_ID";
+        String propertyId = "";
+        if (attestationPolicy.getProperty().endsWith("[]")) {
+            propertyId = JsonPointer.compile("/" + propertyURI).last().getMatchingProperty();
+        }
+
+        Map<String, Object> attestedData = new HashMap<>();
+        for (String path : attestationPolicy.getPaths()) {
+            if (path.contains(PROPERTY_ID)) {
+                path = path.replace(PROPERTY_ID, propertyId);
+            }
+            DocumentContext context = JsonPath.parse(entityNode.toString());
+            Object result = context.read(path);
+            if (result.getClass().equals(JSONArray.class)) {
+                HashMap<String, Object> extractedVal = (HashMap) ((JSONArray) result).get(0);
+                attestedData.putAll(extractedVal);
+            } else if (result.getClass().equals(LinkedHashMap.class)) {
+                attestedData.putAll((HashMap) result);
+            } else {
+                // It means it is just a value,
+                attestedData.putAll(
+                        new HashMap<String, Object>() {{
+                            put(attestationPolicy.getProperty(), result);
+                        }}
+                );
+            }
+        }
+        return new ObjectMapper().valueToTree(attestedData).toString();
     }
 
 }

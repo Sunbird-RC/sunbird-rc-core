@@ -62,7 +62,7 @@ public class AttestationPath {
                         JsonNode uuidNode = arrayNode.get(j).get(uuidPropertyName);
                         String uuidPointer = SEP;
                         if (uuidNode == null || uuidNode.isMissingNode()) {
-                            uuidPointer = uuidPointer + "NO_UUID";
+                            uuidPointer = uuidPointer + EntityPropertyURI.NO_UUID;
                         } else {
                             uuidPointer = uuidPointer + uuidNode.asText();
                         }

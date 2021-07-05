@@ -1,5 +1,6 @@
 package io.opensaber.registry.helper;
 
+import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,14 +8,18 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.service.*;
+import io.opensaber.registry.model.attestation.EntityPropertyURI;
+import io.opensaber.registry.model.state.Action;
+import io.opensaber.registry.service.DecryptionHelper;
+import io.opensaber.registry.service.IReadService;
+import io.opensaber.registry.service.ISearchService;
+import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.*;
@@ -22,14 +27,12 @@ import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationException;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
-
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -272,50 +275,79 @@ public class RegistryHelper {
         return updateEntityNoStateChange(updatedNode, userId);
     }
 
-    public void addEntityProperty(String entityName, String entityId, String propertyName, JsonNode inputJson) throws Exception {
+    public void addEntityProperty(String entityName, String entityId, String propertyURI, JsonNode inputJson) throws Exception {
         String userId = "";
         JsonNode existingNode = readEntity("", entityName, entityId, false, null, false);
         JsonNode updateNode = existingNode.deepCopy();
-        JsonNode propertyNode = updateNode.get(entityName).get(propertyName);
+
+        JsonPointer propertyURIPointer = JsonPointer.compile("/" + propertyURI);
+        String propertyName = propertyURIPointer.last().getMatchingProperty();
+        String parentURIPointer = propertyURIPointer.head().toString();
+
+        JsonNode parentNode;
+        if (parentURIPointer.equals("")) {
+            parentNode = updateNode.get(entityName);
+        } else {
+            Optional<EntityPropertyURI> parentURI = EntityPropertyURI.fromEntityAndPropertyURI(
+                    updateNode.get(entityName),
+                    parentURIPointer,
+                    uuidPropertyName
+            );
+            if (!parentURI.isPresent()) {
+                throw new Exception(parentURI + " does not exist");
+            }
+            parentNode = updateNode.get(entityName).at(parentURI.get().getJsonPointer());
+        }
+        JsonNode propertyNode = parentNode.get(propertyName);
+
         if (propertyNode != null && !propertyNode.isMissingNode()) {
-            if (propertyNode.isArray()){
-                ((ArrayNode)propertyNode).add(inputJson);
+            if (propertyNode.isArray()) {
+                ((ArrayNode) propertyNode).add(inputJson);
+            } else if (propertyNode.isObject()) {
+                inputJson.fields().forEachRemaining(f -> {
+                    ((ObjectNode) propertyNode).set(f.getKey(), f.getValue());
+                });
             } else {
-                ((ObjectNode)updateNode).set(propertyName, inputJson);
+                ((ObjectNode) parentNode).set(propertyName, inputJson);
             }
         } else {
             // if array property
-            JsonNode newPropertyNode = objectMapper.createArrayNode();
-            ((ArrayNode)newPropertyNode).add(inputJson);
-            ((ObjectNode)updateNode.get(entityName)).set(propertyName, newPropertyNode);
+            ArrayNode newPropertyNode = objectMapper.createArrayNode().add(inputJson);
+            ((ObjectNode)parentNode).set(propertyName, newPropertyNode);
             try {
                 validationService.validate(entityName, objectMapper.writeValueAsString(updateNode));
             } catch (MiddlewareHaltException me) {
                 // try a field node since array validation failed
-                newPropertyNode = objectMapper.createObjectNode();
-                ((ObjectNode) updateNode).set(propertyName, newPropertyNode);
+                ((ObjectNode) parentNode).set(propertyName, inputJson);
             }
         }
         updateEntityAndState(existingNode, updateNode, "");
     }
 
-    public void updateEntityProperty(String entityName, String entityId, String propertyName, String propertyId, JsonNode inputJson) throws Exception {
+    public void updateEntityProperty(String entityName, String entityId, String propertyURI, JsonNode inputJson) throws Exception {
         String userId = "";
         JsonNode existingNode = readEntity("", entityName, entityId, false, null, false);
-
         JsonNode updateNode = existingNode.deepCopy();
-        ArrayNode propertyArrayNode = (ArrayNode) updateNode.get(entityName).get(propertyName);
-        boolean found = false;
-        for (JsonNode propertyNode : propertyArrayNode) {
-            if (propertyNode.get(uuidPropertyName).asText().equals(propertyId)) {
-                found = true;
-                inputJson.fields().forEachRemaining(f -> {
-                    ((ObjectNode)propertyNode).set(f.getKey(), f.getValue());
-                });
-                break;
-            }
+
+        Optional<EntityPropertyURI> entityPropertyURI = EntityPropertyURI
+                .fromEntityAndPropertyURI(updateNode.get(entityName), propertyURI, uuidPropertyName);
+
+        if (!entityPropertyURI.isPresent()) {
+            throw new Exception(propertyURI +  ": do not exist");
         }
-        if (!found) throw new Exception("No property with given id");
+
+        JsonNode existingPropertyNode = updateNode.get(entityName).at(entityPropertyURI.get().getJsonPointer());
+        JsonNode propertyParentNode = updateNode.get(entityName).at(entityPropertyURI.get().getJsonPointer().head());
+        String propertyName = entityPropertyURI.get().getJsonPointer().last().getMatchingProperty();
+
+        if (propertyParentNode.isObject()) {
+            ((ObjectNode)propertyParentNode).set(propertyName, inputJson);
+        } else if (existingPropertyNode.isObject()){
+            inputJson.fields().forEachRemaining(f -> ((ObjectNode)existingPropertyNode).set(f.getKey(), f.getValue()));
+        } else {
+            int propertyIndex = Integer.parseInt(propertyName);
+            ((ArrayNode)propertyParentNode).set(propertyIndex, inputJson);
+        }
         updateEntityAndState(existingNode, updateNode, "");
     }
 
@@ -325,15 +357,20 @@ public class RegistryHelper {
         updateEntityNoStateChange(node, userId);
     }
 
-    public void sendForAttestation(String entityName, String entityId, String uuidPath) throws Exception {
+    public void sendForAttestation(String entityName, String entityId, String propertyURI) throws Exception {
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
-        JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, uuidPath);
+        JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, propertyURI);
         updateEntityNoStateChange(updatedNode, "");
     }
 
-    public void attest(String entityName, String entityId, String uuidPath, boolean isGranted) throws Exception {
+    public void attest(String entityName, String entityId, String uuidPath, JsonNode attestReq) throws Exception {
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
-        JsonNode updatedNode = entityStateHelper.attestClaim(entityNode, uuidPath);
+        JsonNode updatedNode;
+        if (attestReq.get("action").asText().equals(Action.GRANT_CLAIM.toString())) {
+            updatedNode = entityStateHelper.grantClaim(entityNode, uuidPath);
+        } else {
+            updatedNode = entityStateHelper.rejectClaim(entityNode, uuidPath, attestReq.get("notes").asText());
+        }
         updateEntityNoStateChange(updatedNode, "");
     }
 
