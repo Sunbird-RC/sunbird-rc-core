@@ -3,6 +3,7 @@ package io.opensaber.registry.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.DecryptionHelper;
@@ -38,7 +39,7 @@ public class RegistryHelperTest {
 	public final ExpectedException exception = ExpectedException.none();
 
 	@InjectMocks
-	private RegistryHelper registerHelper;
+	private RegistryHelper registryHelper;
 
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -69,10 +70,11 @@ public class RegistryHelperTest {
 
 	@Before
     public void initMocks(){
-		ReflectionTestUtils.setField(registerHelper, "auditSuffix", "Audit");
-		ReflectionTestUtils.setField(registerHelper, "auditSuffixSeparator", "_");
+		ReflectionTestUtils.setField(registryHelper, "auditSuffix", "Audit");
+		ReflectionTestUtils.setField(registryHelper, "auditSuffixSeparator", "_");
         MockitoAnnotations.initMocks(this);
-    }
+		registryHelper.uuidPropertyName = "osid";
+	}
 	
 	@Test
 	public void getAuditLogTest() throws Exception {
@@ -94,11 +96,63 @@ public class RegistryHelperTest {
 		Mockito.when(searchService.search(ArgumentMatchers.any())).thenReturn(resultNode);
 		Mockito.when(viewTemplateManager.getViewTemplate(ArgumentMatchers.any())).thenReturn(null);
 		
-		JsonNode node = registerHelper.getAuditLog(jsonNode);
+		JsonNode node = registryHelper.getAuditLog(jsonNode);
 		Assert.assertEquals(jsonNode.get("Teacher").get("filters").get("recordId").get("eq"), node.get("Teacher_Audit").get(0).get("recordId"));
 	}
 
-
+	@Test
+	public void shouldAbleToGetThePropertyIdForTheRequestBody() throws Exception {
+		String entityName = "Student";
+		String entityId = "";
+		JsonNode requestBody = new ObjectMapper().readTree("{\n" +
+				"    \"program\": \"test123\",\n" +
+				"    \"graduationYear\": \"2021\",\n" +
+				"    \"marks\": \"78\",\n" +
+				"    \"institute\": \"DC universe\"\n" +
+				"}\n");
+		String propertyURI = "educationDetails";
+		ObjectNode student = new ObjectMapper().createObjectNode();
+		JsonNode studentNodeContent = new ObjectMapper().readTree("{\n" +
+				"        \"educationDetails\": [\n" +
+				"            {\n" +
+				"                \"graduationYear\": \"2022\",\n" +
+				"                \"institute\": \"CD universe\",\n" +
+				"                \"osid\": \"1-8d6dfb25-7789-44da-a6d4-eacf93e3a7bb\",\n" +
+				"                \"program\": \"8th\",\n" +
+				"                \"marks\": \"99\"\n" +
+				"            },\n" +
+				"            {\n" +
+				"                \"graduationYear\": \"2021\",\n" +
+				"                \"institute\": \"DC universe\",\n" +
+				"                \"osid\": \"1-7d9dfb25-7789-44da-a6d4-eacf93e3a7aa\",\n" +
+				"                \"program\": \"test123\",\n" +
+				"                \"marks\": \"78\"\n" +
+				"            }\n" +
+				"        ],\n" +
+				"        \"contactDetails\": {\n" +
+				"            \"osid\": \"1-096cd663-6ba9-49f8-af31-1ace9e31bc31\",\n" +
+				"            \"mobile\": \"9000090000\",\n" +
+				"            \"osOwner\": \"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\",\n" +
+				"            \"email\": \"ram@gmail.com\"\n" +
+				"        },\n" +
+				"        \"osid\": \"1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb\",\n" +
+				"        \"identityDetails\": {\n" +
+				"            \"osid\": \"1-9f50f1b3-99cc-4fcb-9e51-e0dbe0be19f9\",\n" +
+				"            \"gender\": \"Male\",\n" +
+				"            \"identityType\": \"\",\n" +
+				"            \"dob\": \"1999-01-01\",\n" +
+				"            \"fullName\": \"First Avenger\",\n" +
+				"            \"identityValue\": \"\",\n" +
+				"            \"osOwner\": \"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\"\n" +
+				"        },\n" +
+				"        \"osOwner\": \"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\"\n" +
+				"    }");
+		student.set("Student", studentNodeContent);
+		Mockito.when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(student);
+		String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, propertyURI);
+		String actualPropertyId = "1-7d9dfb25-7789-44da-a6d4-eacf93e3a7aa";
+		Assert.assertEquals(propertyId, actualPropertyId);
+	}
 
 
 }
