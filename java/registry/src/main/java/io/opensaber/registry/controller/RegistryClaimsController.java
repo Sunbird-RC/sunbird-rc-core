@@ -39,6 +39,20 @@ public class RegistryClaimsController {
         }
     }
 
+    @RequestMapping(value = "/api/v1/{entityName}/claims/{claimId}", method = RequestMethod.GET)
+    public ResponseEntity<Object> getClaim(@PathVariable String entityName, @PathVariable String claimId,
+                                           HttpServletRequest request) {
+        try {
+            JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
+            JsonNode claim = claimRequestClient.getClaim(result.get(entityName).get(0), entityName, claimId);
+            return new ResponseEntity<>(claim, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Fetching claim failed {}", e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/claims/{claimId}/attest", method = RequestMethod.POST)
     public ResponseEntity<Object> attestClaim(
             @PathVariable String claimId,
