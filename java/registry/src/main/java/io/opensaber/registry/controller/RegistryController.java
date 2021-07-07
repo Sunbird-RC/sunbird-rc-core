@@ -457,7 +457,9 @@ public class RegistryController {
             @PathVariable String entityName,
             @PathVariable String entityId,
             @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode requestBody
+            @RequestBody JsonNode requestBody,
+            @RequestParam Optional<Boolean> send
+
     ) {
         try {
             registryHelper.authorize(entityName, entityId, request);
@@ -474,6 +476,9 @@ public class RegistryController {
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
+            if(send.isPresent() && send.get()) {
+                registryHelper.sendForAttestation(entityName, entityId, propertyURI);
+            }
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             responseParams.setErrmsg(e.getMessage());
@@ -518,7 +523,8 @@ public class RegistryController {
             @PathVariable String entityName,
             @PathVariable String entityId,
             @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode requestBody
+            @RequestBody JsonNode requestBody,
+            @RequestParam Optional<Boolean> send
     ) {
         try {
             registryHelper.authorize(entityName, entityId, request);
@@ -534,6 +540,10 @@ public class RegistryController {
             registryHelper.addEntityProperty(entityName, entityId, propertyURI, requestBody);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
+            if(send.isPresent() && send.get()) {
+                String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, propertyURI);
+                registryHelper.sendForAttestation(entityName, entityId, propertyURI + "/" + propertyId);
+            }
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
@@ -588,7 +598,8 @@ public class RegistryController {
         try {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
             if (result.get(entityName).size() > 0) {
-                return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
+                ArrayNode responseFromDb = registryHelper.fetchFromDBUsingEsResponse(entityName, (ArrayNode) result.get(entityName));
+                return new ResponseEntity<>(responseFromDb, HttpStatus.OK);
             } else {
                 responseParams.setErrmsg("Entity not found");
                 responseParams.setStatus(Response.Status.UNSUCCESSFUL);

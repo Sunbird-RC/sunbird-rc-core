@@ -438,4 +438,37 @@ public class RegistryHelper {
             throw new Exception("User is trying to update someone's data");
         }
     }
+
+    public String getPropertyIdAfterSavingTheProperty(String entityName, String entityId, JsonNode requestBody, String propertyURI) throws Exception {
+        JsonNode resultNode = readEntity("", entityName, entityId, false, null, false)
+                .get(entityName);
+        JsonNode jsonNode = resultNode.get(propertyURI);
+        if(jsonNode.isArray()) {
+            ArrayNode arrayNode = (ArrayNode) jsonNode;
+            for (JsonNode next : arrayNode) {
+                Iterator<String> fieldNames = requestBody.fieldNames();
+                boolean isAttributesValuesMatched = true;
+                while (fieldNames.hasNext()) {
+                    String field = fieldNames.next();
+                    if (!requestBody.get(field).equals(next.get(field))) {
+                        isAttributesValuesMatched = false;
+                        break;
+                    }
+                }
+                if (isAttributesValuesMatched) {
+                    return next.get(uuidPropertyName).asText();
+                }
+            }
+        }
+        return "";
+    }
+
+    public ArrayNode fetchFromDBUsingEsResponse(String entity, ArrayNode esSearchResponse) throws Exception {
+        ArrayNode result = objectMapper.createArrayNode();
+        for (JsonNode value : esSearchResponse) {
+            JsonNode dbResponse = readEntity("", entity, value.get(uuidPropertyName).asText(), false, null, false);
+            result.add(dbResponse.get(entity));
+        }
+        return result;
+    }
 }

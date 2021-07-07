@@ -23,10 +23,8 @@ import io.opensaber.registry.middleware.Middleware;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.Constants.SchemaType;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
-import io.opensaber.registry.service.IAuditService;
 import io.opensaber.registry.service.IReadService;
 import io.opensaber.registry.service.ISearchService;
-import io.opensaber.registry.service.impl.AuditServiceImpl;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.shard.DefaultShardAdvisor;
 import io.opensaber.registry.sink.shard.IShardAdvisor;
@@ -438,7 +436,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (isElasticSearchEnabled()) {
 			elasticService.setType(Constants.ES_DOC_TYPE);
 			elasticService.setConnectionInfo(elasticConnInfo);
-			elasticService.init(definitionsManager.getAllKnownDefinitions(), definitionsManager.getInternalFieldsInfoMap());
+			elasticService.init(definitionsManager.getAllKnownDefinitions(), definitionsManager.getExcludingFields());
 		}
 		return elasticService;
 	}

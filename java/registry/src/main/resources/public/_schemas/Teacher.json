@@ -52,7 +52,10 @@
       "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"
     ],
     "privateFields": [
-      "birthDate"
+      "$.identityDetails.dob",
+      "$.identityDetails.identityType",
+      "$.identityDetails.identityValue",
+      "$.contactDetails"
     ],
     "signedFields": [],
     "indexFields": [],

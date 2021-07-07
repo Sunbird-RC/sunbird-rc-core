@@ -176,9 +176,7 @@ public class ElasticServiceImpl implements IElasticService {
         IndexResponse response = null;
         try {
             DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(inputEntity));
-            indexWiseExcludeFields.get(index).forEach(path -> {
-                doc.delete(path);
-            });
+            indexWiseExcludeFields.get(index).forEach(doc::delete);
             JsonNode filteredNode = JSONUtil.convertStringJsonNode(doc.jsonString());
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(filteredNode);
             response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
@@ -220,8 +218,10 @@ public class ElasticServiceImpl implements IElasticService {
         logger.debug("updateEntity starts with index {} and entityId {}", index, osid);
         UpdateResponse response = null;
         try {
-            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
-            inputMap.keySet().removeIf(key -> !indexWiseExcludeFields.get(index).contains(key));
+            DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(inputEntity));
+            indexWiseExcludeFields.get(index).forEach(doc::delete);
+            JsonNode filteredNode = JSONUtil.convertStringJsonNode(doc.jsonString());
+            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(filteredNode);
             logger.debug("updateEntity inputMap {}", inputMap);
             logger.debug("updateEntity inputEntity {}", inputEntity);
             response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
