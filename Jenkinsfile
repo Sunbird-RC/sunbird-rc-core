@@ -1,8 +1,8 @@
 node {
     try {
-        def branchname = 'open-saber-rc-2'
+        def branchname = 'main'
         stage('Clone repository') {
-            git([url: 'https://github.com/tejash-jl/open-saber', branch: "${branchname}"])
+            git([url: 'https://github.com/Sunbird-RC/opensaber-rc', branch: "${branchname}"])
         }
 
         stage('Compile And Test'){
