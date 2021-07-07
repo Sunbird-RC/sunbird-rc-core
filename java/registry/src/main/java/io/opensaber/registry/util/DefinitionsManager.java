@@ -133,17 +133,17 @@ public class DefinitionsManager {
      *
      * @return
      * */
-    public Map<String, Set<String>> getInternalFieldsInfoMap() {
+    public Map<String, Set<String>> getExcludingFields() {
         Map<String, Set<String>> result = new HashMap<>();
         for (String index: getAllKnownDefinitions()) {
-            List<String> publicFields = getDefinition(index)
+            List<String> internalFields = getDefinition(index)
                     .getOsSchemaConfiguration()
                     .getInternalFields();
-            if(publicFields != null) {
-                result.put(index.toLowerCase(), new HashSet<>(publicFields));
-            } else {
-                result.put(index.toLowerCase(), Collections.emptySet());
-            }
+            List<String> privateFields = getDefinition(index)
+                    .getOsSchemaConfiguration()
+                    .getPrivateFields();
+            internalFields.addAll(privateFields);
+            result.put(index.toLowerCase(), new HashSet<>(internalFields));
         }
         return result;
     }

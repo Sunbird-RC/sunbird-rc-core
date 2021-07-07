@@ -598,7 +598,8 @@ public class RegistryController {
         try {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
             if (result.get(entityName).size() > 0) {
-                return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
+                ArrayNode responseFromDb = registryHelper.fetchFromDBUsingEsResponse(entityName, (ArrayNode) result.get(entityName));
+                return new ResponseEntity<>(responseFromDb, HttpStatus.OK);
             } else {
                 responseParams.setErrmsg("Entity not found");
                 responseParams.setStatus(Response.Status.UNSUCCESSFUL);

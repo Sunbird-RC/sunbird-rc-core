@@ -462,4 +462,13 @@ public class RegistryHelper {
         }
         return "";
     }
+
+    public ArrayNode fetchFromDBUsingEsResponse(String entity, ArrayNode esSearchResponse) throws Exception {
+        ArrayNode result = objectMapper.createArrayNode();
+        for (JsonNode value : esSearchResponse) {
+            JsonNode dbResponse = readEntity("", entity, value.get(uuidPropertyName).asText(), false, null, false);
+            result.add(dbResponse.get(entity));
+        }
+        return result;
+    }
 }
