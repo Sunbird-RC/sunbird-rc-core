@@ -42,6 +42,13 @@ public class ClaimRequestClient {
         return restTemplate.postForObject(claimRequestUrl + FETCH_CLAIMS_PATH, requestBody, JsonNode.class);
     }
 
+    public JsonNode getClaim(JsonNode jsonNode, String entityName, String claimId) {
+        ObjectNode requestBody = JsonNodeFactory.instance.objectNode();
+        requestBody.set("attestorInfo", jsonNode);
+        requestBody.put("entity", entityName);
+        return restTemplate.postForObject(claimRequestUrl + FETCH_CLAIMS_PATH + "/" + claimId, requestBody, JsonNode.class);
+    }
+
     public ResponseEntity<Object> attestClaim(JsonNode attestationRequest, String claimId) {
         return restTemplate.exchange(
                 claimRequestUrl + CLAIMS_PATH + "/" + claimId,
