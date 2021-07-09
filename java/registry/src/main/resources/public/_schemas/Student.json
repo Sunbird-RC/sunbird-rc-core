@@ -31,6 +31,10 @@
             "$ref": "Common.json/#/definitions/EducationType"
           },
           "title": "Education Details"
+        },
+        "guardianDetails": {
+          "$ref": "Common.json/#/definitions/GuardianDetails",
+          "title": "Guardian Details"
         }
       }
     }

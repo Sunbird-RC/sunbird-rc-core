@@ -90,9 +90,11 @@ public class EntityStateHelper {
        return manageState(entityNode, propertyURL, Action.RAISE_CLAIM, JsonNodeFactory.instance.objectNode());
     }
 
-    public JsonNode grantClaim(JsonNode entityNode, String propertyURI) throws Exception {
+    public JsonNode grantClaim(JsonNode entityNode, String propertyURI, String notes) throws Exception {
         logger.info("Claim related to {} marked as granted. Adding attestedData to metadata", propertyURI);
-        return manageState(entityNode, propertyURI, Action.GRANT_CLAIM, JsonNodeFactory.instance.objectNode());
+        ObjectNode metaData = JsonNodeFactory.instance.objectNode();
+        metaData.set("notes", JsonNodeFactory.instance.textNode(notes));
+        return manageState(entityNode, propertyURI, Action.GRANT_CLAIM, metaData);
     }
 
     public JsonNode rejectClaim(JsonNode entityNode, String propertyURI, String notes) throws Exception {

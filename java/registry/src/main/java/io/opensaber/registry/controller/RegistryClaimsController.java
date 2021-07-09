@@ -75,7 +75,7 @@ public class RegistryClaimsController {
                     claimId
             );
         } catch (Exception exception) {
-            logger.error("Exception : ", exception);
+            logger.error("Exception : {}", exception.getMessage());
             return new ResponseEntity<>("Error sending attestation request to Claims service", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

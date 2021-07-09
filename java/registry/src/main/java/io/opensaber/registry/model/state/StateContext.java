@@ -71,7 +71,7 @@ public class StateContext {
         setMetadata("_osClaimId", metaData.get("claimId"));
     }
 
-    public void setRejectionMessage() throws Exception {
+    public void setNotes() throws Exception {
         setMetadata("_osClaimNotes", metaData.get("notes"));
     }
 

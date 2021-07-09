@@ -179,6 +179,24 @@
         }
       }
     },
+    "GuardianDetails": {
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "$id": "#/properties/fullName",
+          "type": "string",
+          "title": "Full Name"
+        },
+        "relation": {
+          "$id": "#/properties/relation",
+          "type": "string",
+          "title": "Relation type"
+        },
+        "email": {
+          "$ref": "#/definitions/ContactDetails/properties/email"
+        }
+      }
+    },
     "CertificationType": {
       "type": "object",
       "properties": {
