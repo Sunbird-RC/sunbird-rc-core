@@ -76,6 +76,14 @@
         ],
         "attestorEntity": "Institute",
         "conditions": "(ATTESTOR#$.instituteName#.contains(REQUESTER#$.institute#))"
+      },
+      {
+        "property": "academicQualifications/[]",
+        "paths": [
+          "academicQualifications"
+        ],
+        "attestorEntity": "Institute",
+        "conditions": "(ATTESTOR#$.instituteName#.contains(REQUESTER#$.institute#))"
       }
     ],
     "subjectJsonPath": "mobile",

@@ -367,7 +367,7 @@ public class RegistryHelper {
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
         JsonNode updatedNode;
         if (attestReq.get("action").asText().equals(Action.GRANT_CLAIM.toString())) {
-            updatedNode = entityStateHelper.grantClaim(entityNode, uuidPath);
+            updatedNode = entityStateHelper.grantClaim(entityNode, uuidPath, attestReq.get("notes").asText());
         } else {
             updatedNode = entityStateHelper.rejectClaim(entityNode, uuidPath, attestReq.get("notes").asText());
         }
