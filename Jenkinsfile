@@ -21,14 +21,14 @@ node {
             claimApp = docker.build("tejashjl/open-saber-claim-ms","java/claim")
         }
 
-        stage('Test image') {
-            app.withRun('-p 8010:8081') {c ->
-                sh """#!/bin/bash
-                env;
-                i=0;
-                while [[ \$i -lt 120 ]] ; do let i=i+1; sleep 1; status=`curl -I localhost:8010/health 2>/dev/null | grep 'HTTP/1.1 200' | wc -l`;if [ \$status -ge 1 ];then echo '\nTested Successfully';exit 0;else printf '.';  fi;done; exit 1;"""
-            }
-        }
+        // stage('Test image') {
+        //     app.withRun('-p 8010:8081') {c ->
+        //         sh """#!/bin/bash
+        //         env;
+        //         i=0;
+        //         while [[ \$i -lt 120 ]] ; do let i=i+1; sleep 1; status=`curl -I localhost:8010/health 2>/dev/null | grep 'HTTP/1.1 200' | wc -l`;if [ \$status -ge 1 ];then echo '\nTested Successfully';exit 0;else printf '.';  fi;done; exit 1;"""
+        //     }
+        // }
 
 
         stage('Push image') {

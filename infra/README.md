@@ -69,7 +69,7 @@ sudo apt install postgresql-client-common
 
 sudo apt-get install postgresql-client-12
 
-Use helm status ```app name``` to get the details about the app.
+Use helm status ```APP_NAME``` to get the details about the app.
 
 ### Add elasticsearch kubeapps
 helm repo add bitnami https://charts.bitnami.com/bitnami
