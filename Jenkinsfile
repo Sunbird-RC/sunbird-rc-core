@@ -21,14 +21,14 @@ node {
             claimApp = docker.build("tejashjl/open-saber-claim-ms","java/claim")
         }
 
-        stage('Test image') {
-            app.withRun('-p 8010:8081') {c ->
-                sh """#!/bin/bash
-                env;
-                i=0;
-                while [[ \$i -lt 120 ]] ; do let i=i+1; sleep 1; status=`curl -I localhost:8010/health 2>/dev/null | grep 'HTTP/1.1 200' | wc -l`;if [ \$status -ge 1 ];then echo '\nTested Successfully';exit 0;else printf '.';  fi;done; exit 1;"""
-            }
-        }
+        // stage('Test image') {
+        //     app.withRun('-p 8010:8081') {c ->
+        //         sh """#!/bin/bash
+        //         env;
+        //         i=0;
+        //         while [[ \$i -lt 120 ]] ; do let i=i+1; sleep 1; status=`curl -I localhost:8010/health 2>/dev/null | grep 'HTTP/1.1 200' | wc -l`;if [ \$status -ge 1 ];then echo '\nTested Successfully';exit 0;else printf '.';  fi;done; exit 1;"""
+        //     }
+        // }
 
 
         stage('Push image') {
@@ -43,10 +43,9 @@ node {
         }
 
         stage('Deploy image') {
-            sh "ssh dileep@40.80.94.137 'kubectl get pods -n ndear'"
-            sh "ssh dileep@40.80.94.137 'kubectl set image deployment/registry registry=tejashjl/open-saber-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
-            sh "ssh dileep@40.80.94.137 'kubectl set image deployment/claim-ms claim-ms=tejashjl/open-saber-claim-ms:${env.BUILD_NUMBER} --record --namespace=ndear'"
-
+            sh "ssh kesavan@10.4.0.6 'kubectl get pods -n ndear'"
+            sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/registry registry=tejashjl/open-saber-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
+            sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/claim-ms claim-ms=tejashjl/open-saber-claim-ms:${env.BUILD_NUMBER} --record --namespace=ndear'"
         }
 
     }
