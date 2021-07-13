@@ -43,10 +43,9 @@ node {
         }
 
         stage('Deploy image') {
-            sh "ssh dileep@40.80.94.137 'kubectl get pods -n ndear'"
-            sh "ssh dileep@40.80.94.137 'kubectl set image deployment/registry registry=tejashjl/open-saber-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
-            sh "ssh dileep@40.80.94.137 'kubectl set image deployment/claim-ms claim-ms=tejashjl/open-saber-claim-ms:${env.BUILD_NUMBER} --record --namespace=ndear'"
-
+            sh "ssh kesavan@10.4.0.6 'kubectl get pods -n ndear'"
+            sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/registry registry=tejashjl/open-saber-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
+            sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/claim-ms claim-ms=tejashjl/open-saber-claim-ms:${env.BUILD_NUMBER} --record --namespace=ndear'"
         }
 
     }

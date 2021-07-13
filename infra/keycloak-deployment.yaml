@@ -37,7 +37,7 @@ spec:
           name: keycloak-service
           env:
             - name: DB_ADDR
-              value: postgres-postgresql.default.svc.cluster.local
+              value: my-release-postgresql.default.svc.cluster.local
             - name: DB_DATABASE
               value: keycloak
             - name: DB_PASSWORD

@@ -5,7 +5,7 @@ metadata:
     kompose.cmd: kompose convert
     kompose.version: 1.22.0 (HEAD)
   labels:
-    k8s-app: claim-ms
+    k8s-app: claims
   name: claim-ms
 spec:
   replicas: 1
@@ -25,13 +25,13 @@ spec:
       containers:
         - env:
             - name: connectionInfo_password
-              value: postgres
+              value: <db_password>
             - name: connectionInfo_uri
-              value: jdbc:postgresql://postgres-postgresql.default.svc.cluster.local:5432/claims
+              value: jdbc:postgresql://my-release-postgresql.default.svc.cluster.local:5432/claims
             - name: connectionInfo_username
-              value: postgres
+              value: opensaber
             - name: opensaber_url
-              value: http://192.168.49.2:30127
+              value: http://registry:8081
           image: tejashjl/open-saber-claim-ms:38
           imagePullPolicy: Always
           resources:
