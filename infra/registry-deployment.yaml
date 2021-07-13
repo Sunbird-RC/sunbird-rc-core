@@ -47,7 +47,7 @@ spec:
             - name: search_providerName
               value: io.opensaber.registry.service.ElasticSearchService 
             - name: elastic_search_connection_url
-              value: elasticsearch-1626069522-coordinating-only.default.svc.cluster.local:9200
+              value: ndear-es-elasticsearch-coordinating-only.default.svc.cluster.local:9200
           image: tejashjl/open-saber-rc:38
           imagePullPolicy: Always
           resources:
