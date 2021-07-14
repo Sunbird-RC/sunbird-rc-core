@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @RestController
 public class RegistryClaimsController {
-    private static Logger logger = LoggerFactory.getLogger(RegistryClaimsController.class);
+    private static final Logger logger = LoggerFactory.getLogger(RegistryClaimsController.class);
     private final ClaimRequestClient claimRequestClient;
     private final RegistryHelper registryHelper;
 
@@ -53,19 +53,19 @@ public class RegistryClaimsController {
         }
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/claims/{claimId}/attest", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/{entityName}/claims/{claimId}/attest", method = RequestMethod.POST)
     public ResponseEntity<Object> attestClaim(
             @PathVariable String claimId,
             @PathVariable String entityName,
-            @PathVariable String entityId,
-            @RequestBody ObjectNode request) throws Exception {
-        logger.info("Attesting claim {} as  {} {}", claimId, entityName, entityId);
-        JsonNode action = request.get("action");
-        JsonNode notes = request.get("notes");
+            @RequestBody ObjectNode requestBody,
+            HttpServletRequest request) {
+        logger.info("Attesting claim {} as  {}", claimId, entityName);
+        JsonNode action = requestBody.get("action");
+        JsonNode notes = requestBody.get("notes");
         logger.info("Action : {} , Notes: {}", action, notes);
         try {
-            JsonNode attestorInfo = registryHelper.readEntity("", entityName, entityId, false, null, false)
-                    .get(entityName);
+            JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
+            JsonNode attestorInfo = result.get(entityName).get(0);
             ObjectNode attestRequest = JsonNodeFactory.instance.objectNode();
             attestRequest.set("attestorInfo", attestorInfo);
             attestRequest.set("action", action);

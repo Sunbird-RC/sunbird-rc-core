@@ -28,6 +28,12 @@ perf:
     enabled: ${perf_monitoring_enabled:false}
 
 registry:
+  internalentities: >
+    Student,
+    Teacher,
+    Institute
+  externalentities: >
+    board-cbse
   context:
     base: ${registry_context_base:http://localhost:8081/}
   system:
