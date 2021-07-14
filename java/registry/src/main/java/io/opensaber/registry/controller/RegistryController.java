@@ -89,7 +89,7 @@ public class RegistryController {
      *
      * @return
      */
-    @RequestMapping(value = "/search", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/search", method = RequestMethod.POST)
     public ResponseEntity<Response> searchEntity(@RequestHeader HttpHeaders header) {
 
         ResponseParams responseParams = new ResponseParams();
