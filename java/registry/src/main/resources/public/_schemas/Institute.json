@@ -158,7 +158,17 @@
       "osCreatedBy",
       "osUpdatedBy"
     ],
-    "attestationPolicies": [],
+    "attestationPolicies": [
+      {
+        "property": "affiliation/[]",
+        "paths": [
+          "affiliation",
+          "instituteName"
+        ],
+        "attestorEntity": "board-cbse",
+        "conditions": "(ATTESTOR#$.[*]#.contains('board-cbse'))"
+      }
+    ],
     "subjectJsonPath": "email"
   }
 }

@@ -43,7 +43,7 @@ import java.util.*;
 @Component
 public class RegistryHelper {
 
-    private static Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
+    private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
 
     @Autowired
     private ShardManager shardManager;
@@ -98,6 +98,9 @@ public class RegistryHelper {
 
     @Value("${conditionalAccess.private}")
     private String privateFieldsProp;
+
+    @Autowired
+    private EntityTypeHandler entityTypeHandler;
     /**
      * calls validation and then persists the record to registry.
      * @param inputJson
@@ -414,6 +417,27 @@ public class RegistryHelper {
     }
 
     public JsonNode getRequestedUserDetails(HttpServletRequest request, String entityName) throws Exception {
+        if(entityTypeHandler.isInternalRegistry(entityName)) {
+            return getUserInfoFromRegistry(request, entityName);
+        } else if(entityTypeHandler.isExternalRegistry(entityName)) {
+            return getUserInfoFromKeyCloak(request, entityName);
+        }
+        throw new Exception("Entity is not part of our system");
+    }
+
+    private JsonNode getUserInfoFromKeyCloak(HttpServletRequest request, String entityName) {
+        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        Set<String> roles = principal.getAccount().getRoles();
+        JsonNode rolesNode = objectMapper.convertValue(roles, JsonNode.class);
+        ObjectNode result = JsonNodeFactory.instance.objectNode();
+        // To maintain the consistency with searchEntity we are using ArrayNode
+        ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+        arrayNode.add(rolesNode);
+        result.set(entityName, arrayNode);
+        return result;
+    }
+
+    private JsonNode getUserInfoFromRegistry(HttpServletRequest request, String entityName) throws Exception {
         KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
         if (principal != null) {
             String userId = principal.getAccount().getPrincipal().getName();
