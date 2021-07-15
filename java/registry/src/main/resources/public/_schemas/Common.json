@@ -185,6 +185,11 @@
         "medium": {
           "$id": "#/properties/program",
           "type": "string",
+          "title": "Medium of Education"
+        },
+        "class": {
+          "$id": "#/properties/graduationYear",
+          "type": "string",
           "enum": [
             "Pre-Pri.",
             "Class I",
@@ -200,11 +205,6 @@
             "Class XI",
             "Class XII"
           ],
-          "title": "Medium of Education"
-        },
-        "class": {
-          "$id": "#/properties/graduationYear",
-          "type": "string",
           "title": "Current Enrollment Class / Std."
         }
       }
