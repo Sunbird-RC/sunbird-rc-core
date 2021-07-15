@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.*;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.dao.NotFoundException;
+import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
@@ -20,6 +21,8 @@ import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.transform.*;
 import io.opensaber.registry.util.*;
 import io.opensaber.validators.ValidationException;
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.json.Json;
 import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
 import java.util.*;
@@ -553,6 +557,52 @@ public class RegistryController {
         }
     }
 
+    @RequestMapping(value = "/partner/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)
+    public ResponseEntity<Object> getEntityWithConsent(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            HttpServletRequest request) {
+        try {
+            boolean requireLDResponse = false;
+            String userId = registryHelper.getKeycloakUserId(request);
+            ArrayList<String> fields = getConsentFields(request);
+            JsonNode dataNode = getEntityJsonNode(entityName, entityId, requireLDResponse, userId);
+            ObjectNode node = copyWhiteListedFields(fields, dataNode);
+            return new ResponseEntity<>(node, HttpStatus.OK);
+        } catch (RecordNotFoundException ex ){
+            logger.error("Error in finding the entity", ex);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error in partner api access", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private ObjectNode copyWhiteListedFields(ArrayList<String> fields, JsonNode dataNode) {
+        ObjectNode node = JsonNodeFactory.instance.objectNode();
+        for(String key: fields) {
+            node.set(key, dataNode.get(key));
+        }
+        return node;
+    }
+
+    private ArrayList<String> getConsentFields(HttpServletRequest request) {
+        ArrayList<String> fields = new ArrayList<>();
+        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        try {
+            Map<String, Object> otherClaims = ((KeycloakPrincipal) principal.getPrincipal()).getKeycloakSecurityContext().getToken().getOtherClaims();
+            if (otherClaims.keySet().contains(io.opensaber.registry.Constants.KEY_CONSENT) && otherClaims.get(io.opensaber.registry.Constants.KEY_CONSENT) instanceof Map) {
+                Map consentFields = (Map)otherClaims.get(io.opensaber.registry.Constants.KEY_CONSENT);
+                for (Object key : consentFields.keySet()) {
+                    fields.add(key.toString());
+                }
+            }
+        } catch (Exception ex) {
+            logger.error("Error while extracting other claims", ex);
+        }
+        return fields;
+    }
+
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)
     public ResponseEntity<Object> getEntity(
             @PathVariable String entityName,
@@ -564,21 +614,9 @@ public class RegistryController {
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
             String userId = registryHelper.getKeycloakUserId(request);
-            JsonNode resultNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
-            // Transformation based on the mediaType
-            Data<Object> data = new Data<>(resultNode);
-            Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
+            JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, userId);
+            return new ResponseEntity<>(node, HttpStatus.OK);
 
-            ITransformer<Object> responseTransformer = transformer.getInstance(config);
-            Data<Object> resultContent = responseTransformer.transform(data);
-            logger.info("ReadEntity,{},{}", entityId, resultContent);
-            if (resultContent.getData() instanceof JsonNode) {
-                JsonNode node = (JsonNode) resultContent.getData();
-                return new ResponseEntity<>(node.get(entityName), HttpStatus.OK);
-            } else {
-                logger.error("Unknown response object {}", resultContent);
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
         } catch (NotFoundException e) {
             responseParams.setErrmsg(e.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
@@ -589,6 +627,22 @@ public class RegistryController {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private JsonNode getEntityJsonNode(@PathVariable String entityName, @PathVariable String entityId, boolean requireLDResponse, String userId) throws Exception {
+        JsonNode resultNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
+        // Transformation based on the mediaType
+        Data<Object> data = new Data<>(resultNode);
+        Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
+
+        ITransformer<Object> responseTransformer = transformer.getInstance(config);
+        Data<Object> resultContent = responseTransformer.transform(data);
+        logger.info("ReadEntity,{},{}", entityId, resultContent);
+        if (!(resultContent.getData() instanceof JsonNode)) {
+            throw new RuntimeException("Unknown response object " + resultContent);
+        }
+        JsonNode node = (JsonNode) resultContent.getData();
+        return node.get(entityName);
     }
 
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.GET)

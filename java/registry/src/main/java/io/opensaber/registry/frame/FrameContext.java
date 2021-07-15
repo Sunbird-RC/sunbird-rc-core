@@ -26,13 +26,9 @@ public class FrameContext {
 			in = this.getClass().getClassLoader().getResourceAsStream(frameFileName);
 			frameContent = new String(ByteStreams.toByteArray(in), StandardCharsets.UTF_8);
 
-		} catch (FileNotFoundException e1) {
+		} catch (Exception e1) {
 			e1.printStackTrace();
 			logger.error(e1.getLocalizedMessage());
-
-		} catch (IOException e) {
-			e.printStackTrace();
-			logger.error(e.getLocalizedMessage());
 
 		}
 	}
