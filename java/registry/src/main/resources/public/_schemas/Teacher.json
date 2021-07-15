@@ -55,7 +55,12 @@
       "$.identityDetails.dob",
       "$.identityDetails.identityType",
       "$.identityDetails.identityValue",
-      "$.contactDetails"
+      "$.contactDetails.email",
+      "$.contactDetails.mobile",
+      "$.contactDetails.address.plot",
+      "$.contactDetails.address.street",
+      "$.contactDetails.address.landmark",
+      "$.contactDetails.address.locality"
     ],
     "signedFields": [],
     "indexFields": [],
