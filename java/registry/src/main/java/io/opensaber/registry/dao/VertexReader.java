@@ -466,7 +466,7 @@ public class VertexReader {
 
     JsonNode readInternal(Vertex rootVertex) throws Exception {
         if (null == rootVertex) {
-            throw new Exception("Invalid id");
+            throw new RecordNotFoundException("Invalid id");
         }
 
         int currLevel = 0;
