@@ -175,8 +175,7 @@ public class ElasticServiceImpl implements IElasticService {
         logger.debug("addEntity starts with index {} and entityId {}", index, entityId);
         IndexResponse response = null;
         try {
-            DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(inputEntity));
-            indexWiseExcludeFields.get(index).forEach(doc::delete);
+            DocumentContext doc = getDocumentContextAfterRemovingExcludedFields(index, inputEntity);
             JsonNode filteredNode = JSONUtil.convertStringJsonNode(doc.jsonString());
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(filteredNode);
             response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
@@ -218,8 +217,7 @@ public class ElasticServiceImpl implements IElasticService {
         logger.debug("updateEntity starts with index {} and entityId {}", index, osid);
         UpdateResponse response = null;
         try {
-            DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(inputEntity));
-            indexWiseExcludeFields.get(index).forEach(doc::delete);
+            DocumentContext doc = getDocumentContextAfterRemovingExcludedFields(index, inputEntity);
             JsonNode filteredNode = JSONUtil.convertStringJsonNode(doc.jsonString());
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(filteredNode);
             logger.debug("updateEntity inputMap {}", inputMap);
@@ -229,6 +227,18 @@ public class ElasticServiceImpl implements IElasticService {
             logger.error("Exception in updating a record to ElasticSearch", e);
         }
         return response.status();
+    }
+
+    private DocumentContext getDocumentContextAfterRemovingExcludedFields(String index, JsonNode inputEntity) throws com.fasterxml.jackson.core.JsonProcessingException {
+        DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(inputEntity));
+        for (String jsonPath : indexWiseExcludeFields.get(index)) {
+            try {
+                doc.delete(jsonPath);
+            } catch (Exception e) {
+                logger.error("Path not found {} {}", jsonPath, e.getMessage());
+            }
+        }
+        return doc;
     }
 
     /**
