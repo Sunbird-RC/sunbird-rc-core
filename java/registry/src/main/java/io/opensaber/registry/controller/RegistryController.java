@@ -557,18 +557,25 @@ public class RegistryController {
         }
     }
 
-    @RequestMapping(value = "/partner/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/partner/api/v1/{entityName}", method = RequestMethod.GET)
     public ResponseEntity<Object> getEntityWithConsent(
             @PathVariable String entityName,
-            @PathVariable String entityId,
             HttpServletRequest request) {
         try {
-            boolean requireLDResponse = false;
-            String userId = registryHelper.getKeycloakUserId(request);
             ArrayList<String> fields = getConsentFields(request);
-            JsonNode dataNode = getEntityJsonNode(entityName, entityId, requireLDResponse, userId);
-            ObjectNode node = copyWhiteListedFields(fields, dataNode);
-            return new ResponseEntity<>(node, HttpStatus.OK);
+            JsonNode userInfoFromRegistry = registryHelper.getRequestedUserDetails(request, entityName);
+            JsonNode jsonNode = userInfoFromRegistry.get(entityName);
+            if (jsonNode instanceof ArrayNode) {
+                ArrayNode values = (ArrayNode)jsonNode;
+                if (values.size()>0) {
+                    JsonNode node = values.get(0);
+                    if (node instanceof ObjectNode) {
+                        ObjectNode entityNode = copyWhiteListedFields(fields, node);
+                        return new ResponseEntity<>(entityNode, HttpStatus.OK);
+                    }
+                }
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (RecordNotFoundException ex ){
             logger.error("Error in finding the entity", ex);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
