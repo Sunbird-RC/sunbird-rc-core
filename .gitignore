@@ -7,7 +7,8 @@ dump.json
 
 .setupVars.sh
 
-/.idea
+node_modules
+.idea
 *.iml
 .idea_modules
 
