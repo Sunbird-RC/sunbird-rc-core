@@ -92,6 +92,13 @@
       }
     ],
     "subjectJsonPath": "mobile",
-    "internalFields": []
+    "internalFields": [],
+    "ownershipAttributes": [
+      {
+        "email": "/contactDetails/email",
+        "mobile": "/contactDetails/mobile",
+        "userId": "/contactDetails/mobile"
+      }
+    ]
   }
 }

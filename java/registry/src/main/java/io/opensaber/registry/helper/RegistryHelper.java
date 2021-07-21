@@ -83,7 +83,7 @@ public class RegistryHelper {
 
     @Autowired
     private ObjectMapper objectMapper;
-        
+
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
 
@@ -101,8 +101,10 @@ public class RegistryHelper {
 
     @Autowired
     private EntityTypeHandler entityTypeHandler;
+
     /**
      * calls validation and then persists the record to registry.
+     *
      * @param inputJson
      * @return
      * @throws Exception
@@ -120,15 +122,30 @@ public class RegistryHelper {
         String entityType = inputJson.fields().next().getKey();
         validationService.validateIgnoreRequired(entityType, objectMapper.writeValueAsString(inputJson));
 
-        String entitySubjectPath = definitionsManager.getSubjectPath(entityType);
-        JsonNode entitySubjectNode = inputJson.get(entityType).findPath(entitySubjectPath);
-        if (entitySubjectNode.isMissingNode()) {
-            throw new ValidationException("Missing required field for invitation: " + entitySubjectPath);
+        List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityType);
+        if (ownershipAttributes.size() > 0) {
+            List<String> owners = new ArrayList<>();
+            for (OwnershipsAttributes ownershipAttribute : ownershipAttributes) {
+                if (ownershipAttribute.isEmpty()) {
+                    throw new ValidationException(String.format("Ownership attributes not configured for entity: %s", entityType));
+                } else {
+                    JsonNode emailNode = inputJson.get(entityType).at(ownershipAttribute.getEmail());
+                    JsonNode mobileNode = inputJson.get(entityType).at(ownershipAttribute.getMobile());
+                    JsonNode userIdNode = inputJson.get(entityType).at(ownershipAttribute.getUserId());
+                    if (userIdNode.isMissingNode() && (mobileNode.isMissingNode() || userIdNode.isMissingNode())) {
+                        throw new ValidationException(String.format("Missing required field for invitation: %s, %s, %s", ownershipAttribute.getEmail(), ownershipAttribute.getMobile(), ownershipAttribute.getUserId()));
+                    }
+                    String owner = keycloakAdminUtil.createUser(entityType, userIdNode.textValue(), emailNode.textValue(), mobileNode.textValue());
+                    owners.add(owner);
+                }
+            }
+            OSSystemFields.osOwner.setOsOwner(inputJson.get(entityType), owners);
+        } else {
+            throw new ValidationException(String.format("Ownership attributes not configured for entity: %s", entityType));
         }
 
-        String entitySubject = entitySubjectNode.asText();
-        String owner = keycloakAdminUtil.createUser(entitySubject, entityType);
-        OSSystemFields.osOwner.setOsOwner(inputJson.get(entityType), owner);
+
+
 
         return addEntity(inputJson, userId, entityType);
     }
@@ -139,7 +156,7 @@ public class RegistryHelper {
             logger.info("Add api: entity type: {} and shard propery: {}", entityType, shardManager.getShardProperty());
             Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
             watch.start("RegistryController.addToExistingEntity");
-            String resultId = registryService.addEntity(shard,userId,inputJson);
+            String resultId = registryService.addEntity(shard, userId, inputJson);
             recordId = new RecordIdentifier(shard.getShardLabel(), resultId);
             watch.stop("RegistryController.addToExistingEntity");
             logger.info("AddEntity,{}", recordId.toString());
@@ -152,6 +169,7 @@ public class RegistryHelper {
 
     /**
      * Get entity details from the DB and modifies data according to view template
+     *
      * @param inputJson
      * @param requireLDResponse
      * @return
@@ -168,7 +186,7 @@ public class RegistryHelper {
     }
 
     public JsonNode readEntity(String userId, String entityType, String label, boolean includeSignatures, ViewTemplate viewTemplate, boolean requireLDResponse) throws Exception {
-        boolean includePrivateFields =  false;
+        boolean includePrivateFields = false;
         JsonNode resultNode = null;
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
@@ -177,10 +195,10 @@ public class RegistryHelper {
         ReadConfigurator configurator = ReadConfiguratorFactory.getOne(includeSignatures);
         configurator.setIncludeTypeAttributes(requireLDResponse);
         if (viewTemplate != null) {
-            includePrivateFields = viewTemplateManager.isPrivateFieldEnabled(viewTemplate,entityType);
+            includePrivateFields = viewTemplateManager.isPrivateFieldEnabled(viewTemplate, entityType);
         }
         configurator.setIncludeEncryptedProp(includePrivateFields);
-        resultNode =  readService.getEntity(shard, userId, recordId.getUuid(), entityType, configurator);
+        resultNode = readService.getEntity(shard, userId, recordId.getUuid(), entityType, configurator);
         if (!isOwner(resultNode.get(entityType), userId)) {
 //            throw new Exception("Unauthorized");
             //TODO: return public fields
@@ -201,15 +219,18 @@ public class RegistryHelper {
 
     /**
      * Get entity details from the DB and modifies data according to view template, requests which need only json format can call this method
+     *
      * @param inputJson
      * @return
      * @throws Exception
      */
     public JsonNode readEntity(JsonNode inputJson, String userId) throws Exception {
-        return readEntity(inputJson,userId,false);
+        return readEntity(inputJson, userId, false);
     }
 
-    /** Search the input in the configured backend, external api's can use this method for searching
+    /**
+     * Search the input in the configured backend, external api's can use this method for searching
+     *
      * @param inputJson
      * @return
      * @throws Exception
@@ -229,15 +250,16 @@ public class RegistryHelper {
     }
 
     private void removeNonPublicFields(ObjectNode searchResultNode) throws Exception {
-        ObjectReader stringListReader = objectMapper.readerFor(new TypeReference<List<String>>() {});
+        ObjectReader stringListReader = objectMapper.readerFor(new TypeReference<List<String>>() {
+        });
         List<String> nonPublicNodePathContainers = Arrays.asList(internalFieldsProp, privateFieldsProp);
         Iterator<Map.Entry<String, JsonNode>> fieldIterator = searchResultNode.fields();
         while (fieldIterator.hasNext()) {
             ArrayNode entityResults = (ArrayNode) fieldIterator.next().getValue();
-            for(int i = 0; i < entityResults.size(); i++) {
+            for (int i = 0; i < entityResults.size(); i++) {
                 ObjectNode entityResult = (ObjectNode) entityResults.get(i);
                 List<String> nodePathsForRemoval = new ArrayList<>();
-                for(String nodePathContainer: nonPublicNodePathContainers) {
+                for (String nodePathContainer : nonPublicNodePathContainers) {
                     if (entityResult.has(nodePathContainer)) {
                         nodePathsForRemoval.addAll(stringListReader.readValue(entityResult.get(nodePathContainer)));
                     }
@@ -248,7 +270,9 @@ public class RegistryHelper {
         }
     }
 
-    /** Updates the input entity, external api's can use this method to update the entity
+    /**
+     * Updates the input entity, external api's can use this method to update the entity
+     *
      * @param inputJson
      * @param userId
      * @return
@@ -316,7 +340,7 @@ public class RegistryHelper {
         } else {
             // if array property
             ArrayNode newPropertyNode = objectMapper.createArrayNode().add(inputJson);
-            ((ObjectNode)parentNode).set(propertyName, newPropertyNode);
+            ((ObjectNode) parentNode).set(propertyName, newPropertyNode);
             try {
                 validationService.validate(entityName, objectMapper.writeValueAsString(updateNode));
             } catch (MiddlewareHaltException me) {
@@ -336,7 +360,7 @@ public class RegistryHelper {
                 .fromEntityAndPropertyURI(updateNode.get(entityName), propertyURI, uuidPropertyName);
 
         if (!entityPropertyURI.isPresent()) {
-            throw new Exception(propertyURI +  ": do not exist");
+            throw new Exception(propertyURI + ": do not exist");
         }
 
         JsonNode existingPropertyNode = updateNode.get(entityName).at(entityPropertyURI.get().getJsonPointer());
@@ -344,12 +368,12 @@ public class RegistryHelper {
         String propertyName = entityPropertyURI.get().getJsonPointer().last().getMatchingProperty();
 
         if (propertyParentNode.isObject()) {
-            ((ObjectNode)propertyParentNode).set(propertyName, inputJson);
-        } else if (existingPropertyNode.isObject()){
-            inputJson.fields().forEachRemaining(f -> ((ObjectNode)existingPropertyNode).set(f.getKey(), f.getValue()));
+            ((ObjectNode) propertyParentNode).set(propertyName, inputJson);
+        } else if (existingPropertyNode.isObject()) {
+            inputJson.fields().forEachRemaining(f -> ((ObjectNode) existingPropertyNode).set(f.getKey(), f.getValue()));
         } else {
             int propertyIndex = Integer.parseInt(propertyName);
-            ((ArrayNode)propertyParentNode).set(propertyIndex, inputJson);
+            ((ArrayNode) propertyParentNode).set(propertyIndex, inputJson);
         }
         updateEntityAndState(existingNode, updateNode, "");
     }
@@ -378,32 +402,32 @@ public class RegistryHelper {
     }
 
     /**
-	 * Get Audit log information , external api's can use this method to get the
-	 * audit log of an antity
-	 * 
-	 * @param inputJson
-	 * @return
-	 * @throws Exception
-	 */
+     * Get Audit log information , external api's can use this method to get the
+     * audit log of an antity
+     *
+     * @param inputJson
+     * @return
+     * @throws Exception
+     */
 
     public JsonNode getAuditLog(JsonNode inputJson) throws Exception {
         logger.debug("get audit log starts");
         String entityType = inputJson.fields().next().getKey();
-        JsonNode queryNode =inputJson.get(entityType);
-        
+        JsonNode queryNode = inputJson.get(entityType);
+
         ArrayNode newEntityArrNode = objectMapper.createArrayNode();
         newEntityArrNode.add(entityType + auditSuffixSeparator + auditSuffix);
-        ((ObjectNode)queryNode).set("entityType", newEntityArrNode);
-        
+        ((ObjectNode) queryNode).set("entityType", newEntityArrNode);
+
         JsonNode resultNode = searchService.search(queryNode);
-        
+
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
             resultNode = vTransformer.transform(viewTemplate, resultNode);
         }
         logger.debug("get audit log ends");
-        
+
         return resultNode;
 
     }
@@ -417,9 +441,9 @@ public class RegistryHelper {
     }
 
     public JsonNode getRequestedUserDetails(HttpServletRequest request, String entityName) throws Exception {
-        if(entityTypeHandler.isInternalRegistry(entityName)) {
+        if (entityTypeHandler.isInternalRegistry(entityName)) {
             return getUserInfoFromRegistry(request, entityName);
-        } else if(entityTypeHandler.isExternalRegistry(entityName)) {
+        } else if (entityTypeHandler.isExternalRegistry(entityName)) {
             return getUserInfoFromKeyCloak(request, entityName);
         }
         throw new Exception("Entity is not part of our system");
@@ -458,7 +482,7 @@ public class RegistryHelper {
     public void authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
         String userId = getKeycloakUserId(request);
         JsonNode resultNode = readEntity(userId, entityName, entityId, false, null, false);
-        if(!isOwner(resultNode.get(entityName), userId)) {
+        if (!isOwner(resultNode.get(entityName), userId)) {
             throw new Exception("User is trying to update someone's data");
         }
     }
@@ -467,7 +491,7 @@ public class RegistryHelper {
         JsonNode resultNode = readEntity("", entityName, entityId, false, null, false)
                 .get(entityName);
         JsonNode jsonNode = resultNode.get(propertyURI);
-        if(jsonNode.isArray()) {
+        if (jsonNode.isArray()) {
             ArrayNode arrayNode = (ArrayNode) jsonNode;
             for (JsonNode next : arrayNode) {
                 Iterator<String> fieldNames = requestBody.fieldNames();

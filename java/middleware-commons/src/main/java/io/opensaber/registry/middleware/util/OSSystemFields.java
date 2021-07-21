@@ -1,8 +1,12 @@
 package io.opensaber.registry.middleware.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.collections4.ListUtils;
+
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * System fields for created, updated time and userId appended to the json node.
@@ -36,8 +40,8 @@ public enum OSSystemFields {
     },
     osOwner {
       @Override
-      public void setOsOwner(JsonNode node, String owner) {
-          JSONUtil.addField((ObjectNode) node, osOwner.toString(), owner != null ? owner : "");
+      public void setOsOwner(JsonNode node, List<String> owners) {
+          JSONUtil.addField((ObjectNode) node, osOwner.toString(), ListUtils.emptyIfNull(owners));
       }
     };
 
@@ -49,7 +53,7 @@ public enum OSSystemFields {
 
     public void updatedAt(JsonNode node, String timeStamp){};
 
-    public void setOsOwner(JsonNode node, String owner) {};
+    public void setOsOwner(JsonNode node, List<String> owner) {};
 
     public static OSSystemFields getByValue(String value) {
         for (final OSSystemFields element : EnumSet.allOf(OSSystemFields.class)) {

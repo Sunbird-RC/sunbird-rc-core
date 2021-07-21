@@ -2,15 +2,12 @@ package io.opensaber.registry.util;
 
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EntityCreationException;
-import org.apache.catalina.User;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
-import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
-import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,13 +16,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import javax.swing.text.html.Option;
 import javax.ws.rs.core.Response;
 
 
 @Component
 public class KeycloakAdminUtil {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakAdminUtil.class);
+    private static final String EMAIL = "email_id";
+    private static final String ENTITY = "entity";
+    private static final String MOBILE_NUMBER = "mobile_number";
+    private static final String PASSWORD = "password";
+    private static final String DEFAULT_PASSWORD = "ndear@123";
 
 
     private String realm;
@@ -57,17 +58,18 @@ public class KeycloakAdminUtil {
                 .build();
     }
 
-    public String createUser(String userName, String entityName) throws DuplicateRecordException, EntityCreationException {
+    public String createUser(String entityName, String userName, String email, String mobile) throws DuplicateRecordException, EntityCreationException {
         logger.info("Creating user with mobile_number : " + userName);
         UserRepresentation newUser = new UserRepresentation();
         newUser.setEnabled(true);
         newUser.setUsername(userName);
         CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
-        credentialRepresentation.setValue("password");
-        credentialRepresentation.setType("password");
+        credentialRepresentation.setValue(DEFAULT_PASSWORD);
+        credentialRepresentation.setType(PASSWORD);
         newUser.setCredentials(Collections.singletonList(credentialRepresentation));
-        newUser.singleAttribute("mobile_number", userName);
-        newUser.singleAttribute("entity", entityName);
+        newUser.singleAttribute(MOBILE_NUMBER, mobile);
+        newUser.singleAttribute(EMAIL, email);
+        newUser.singleAttribute(ENTITY, entityName);
         UsersResource usersResource = keycloak.realm(realm).users();
         Response response = usersResource.create(newUser);
         if (response.getStatus() == 201) {
@@ -82,20 +84,36 @@ public class KeycloakAdminUtil {
             if (userRepresentationOptional.isPresent()) {
                 UserResource userResource = userRepresentationOptional.get();
                 UserRepresentation userRepresentation = userResource.toRepresentation();
-                List<String> entities = userRepresentation.getAttributes().get("entity");
-                if (entities.contains(entityName)) {
-                    throw new EntityCreationException("Username already invited / registered for " + entityName);
-                } else {
-                    entities.add(entityName);
-                    userResource.update(userRepresentation);
-                    return userRepresentation.getId();
-                }
+                checkIfUserRegisteredForEntity(entityName, userRepresentation);
+                updateUserAttributes(entityName, email, mobile, userRepresentation);
+                userResource.update(userRepresentation);
+                return userRepresentation.getId();
             } else {
                 logger.error("Failed fetching user by username: {}", userName);
                 throw new EntityCreationException("Creating user failed");
             }
         } else {
             throw new EntityCreationException("Username already invited / registered");
+        }
+    }
+
+    private void updateUserAttributes(String entityName, String email, String mobile, UserRepresentation userRepresentation) {
+        List<String> entities = userRepresentation.getAttributes().getOrDefault(ENTITY, Collections.emptyList());
+        entities.add(entityName);
+        addAttributeIfNotExists(userRepresentation, EMAIL, email);
+        addAttributeIfNotExists(userRepresentation, MOBILE_NUMBER, mobile);
+    }
+
+    private void addAttributeIfNotExists(UserRepresentation userRepresentation, String key, String value) {
+        if (!userRepresentation.getAttributes().containsKey(key)) {
+            userRepresentation.singleAttribute(key, value);
+        }
+    }
+
+    private void checkIfUserRegisteredForEntity(String entityName, UserRepresentation userRepresentation) throws EntityCreationException {
+        List<String> entities = userRepresentation.getAttributes().getOrDefault(ENTITY, Collections.emptyList());
+        if (!entities.isEmpty() && entities.contains(entityName)) {
+            throw new EntityCreationException("Username already invited / registered for " + entityName);
         }
     }
 

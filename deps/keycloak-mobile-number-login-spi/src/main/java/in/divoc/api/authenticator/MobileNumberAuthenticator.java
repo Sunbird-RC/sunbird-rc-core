@@ -1,15 +1,12 @@
 package in.divoc.api.authenticator;
 
-import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.authenticators.browser.AbstractUsernameFormAuthenticator;
-import org.keycloak.common.util.KeycloakUriBuilder;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-import org.keycloak.models.utils.KeycloakModelUtils;
 
 import javax.ws.rs.core.MultivaluedMap;
 
@@ -19,7 +16,7 @@ import static in.divoc.api.authenticator.Constants.*;
 
 public class MobileNumberAuthenticator extends AbstractUsernameFormAuthenticator implements Authenticator {
     private OtpService otpService = new OtpService();
-
+    private EmailService emailService = new EmailService();
     @Override
     public void action(AuthenticationFlowContext context) {
         System.err.println("action request ");
@@ -27,22 +24,20 @@ public class MobileNumberAuthenticator extends AbstractUsernameFormAuthenticator
         String type = formData.getFirst(FORM_TYPE);
         System.err.println("action request " + type);
         if (type.equals(LOGIN_FORM)) {
+            //TODO: rename form id
             String mobileNumber = formData.getFirst(MOBILE_NUMBER);
             List<UserModel> users = context.getSession().users()
                     .searchForUserByUserAttribute(MOBILE_NUMBER, mobileNumber, context.getSession().getContext().getRealm());
             if(users.size() > 0) {
-                UserModel user = users.get(0);
-                String otp = otpService.sendOtp(mobileNumber);
-                context.getAuthenticationSession().setAuthNote(OTP, otp);
-                context.setUser(user);
-                context.challenge(context.form().createForm(VERIFY_OTP_UI));
+                generateOTP(context, mobileNumber, users);
             } else {
-                // Uncomment the following line to require user to register
-                //user = context.getSession().users().addUser(context.getRealm(), email);
-                //user.setEnabled(true);
-                //user.setEmail(email);
-                // user.addRequiredAction(UserModel.RequiredAction.UPDATE_PROFILE);
-                context.failure(AuthenticationFlowError.INVALID_USER);
+                users = context.getSession().users()
+                        .searchForUserByUserAttribute(EMAIL, mobileNumber, context.getSession().getContext().getRealm());
+                if(users.size() > 0) {
+                    generateOTP(context, mobileNumber, users);
+                } else {
+                    context.failure(AuthenticationFlowError.INVALID_USER);
+                }
             }
         } else if (type.equals(VERIFY_OTP_FORM)) {
             String sessionKey = context.getAuthenticationSession().getAuthNote(OTP);
@@ -61,6 +56,18 @@ public class MobileNumberAuthenticator extends AbstractUsernameFormAuthenticator
                 context.challenge(context.form().createForm(MOBILE_LOGIN_UI));
             }
         }
+    }
+
+    private void generateOTP(AuthenticationFlowContext context, String mobileNumber, List<UserModel> users) {
+        UserModel user = users.get(0);
+        String otp = otpService.generateOTP(mobileNumber);
+        List<String> emailNodes = user.getAttributes().get(EMAIL);
+        if (emailNodes.size() > 0) {
+            emailService.sendEmail(emailNodes.get(0), otp);
+        }
+        context.getAuthenticationSession().setAuthNote(OTP, otp);
+        context.setUser(user);
+        context.challenge(context.form().createForm(VERIFY_OTP_UI));
     }
 
     @Override

@@ -1,9 +1,12 @@
 package io.opensaber.registry.util;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import io.opensaber.registry.middleware.util.Constants;
 import java.io.IOException;
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,5 +40,29 @@ public class DefinitionsManagerTest {
 
         }
         assertTrue(flag);
+    }
+
+    @Test
+    public void testShouldReturnGetOwnershipAttributes() {
+        String entity = "Student";
+        List<OwnershipsAttributes> ownershipsAttributes = definitionsManager.getOwnershipAttributes(entity);
+        assertEquals(1, ownershipsAttributes.size());
+        assertEquals("$.contactDetails.email", ownershipsAttributes.get(0).email);
+        assertEquals("$.contactDetails.mobile", ownershipsAttributes.get(0).mobile);
+        assertEquals("$.contactDetails.mobile", ownershipsAttributes.get(0).userId);
+    }
+
+    @Test
+    public void testGetOwnershipAttributesForInvalidEntity() {
+        String entity = "UnknownEntity";
+        List<OwnershipsAttributes> ownershipsAttributes = definitionsManager.getOwnershipAttributes(entity);
+        assertEquals(0, ownershipsAttributes.size());
+    }
+
+    @Test
+    public void testGetOwnershipAttributesShouldReturnEmpty() {
+        String entity = "Teacher";
+        List<OwnershipsAttributes> ownershipsAttributes = definitionsManager.getOwnershipAttributes(entity);
+        assertEquals(0, ownershipsAttributes.size());
     }
 }
