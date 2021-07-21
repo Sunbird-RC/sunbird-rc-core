@@ -5,6 +5,7 @@ class Constants {
     static final String LOGIN_FORM = "login";
     static final String VERIFY_OTP_FORM = "verify_otp";
     static final String MOBILE_NUMBER = "mobile_number";
+    static final String EMAIL = "email_id";
     static final String OTP = "otp";
 
     static final String MOBILE_LOGIN_UI = "mobile-login.ftl";

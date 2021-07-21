@@ -2,6 +2,7 @@ package io.opensaber.registry.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.opensaber.pojos.attestation.AttestationPolicy;
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import java.util.Map;
  *
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Data
 public class OSSchemaConfiguration {
     /**
      * holds field name(s) to be encrypted
@@ -49,6 +51,11 @@ public class OSSchemaConfiguration {
     private String subjectJsonPath = "";
 
     /**
+     * Holds fields paths for ownership details of the entity
+     * */
+    private List<OwnershipsAttributes> ownershipAttributes = new ArrayList<>();
+
+    /**
      *
      * Holds attestableFields info,
      * Where key is the property name eg. education, certification, ...
@@ -61,86 +68,6 @@ public class OSSchemaConfiguration {
      */
     private List<AttestationPolicy> attestationPolicies = new ArrayList<>();
 
-    public List<String> getPrivateFields() {
-        return privateFields; 
-    }
-
-    public void setPrivateFields(List<String> privateFields) {
-        this.privateFields = privateFields;
-    }
-
-    public List<String> getSignedFields() {
-        return signedFields;
-    }
-
-    public void setSignedFields(List<String> signedFields) {
-        this.signedFields = signedFields;
-    }
-
-    public List<String> getIndexFields() {
-        return indexFields;
-    }
-
-    public void setIndexFields(List<String> indexFields) {
-        this.indexFields = indexFields;
-    }
-
-    public List<String> getUniqueIndexFields() {
-        return uniqueIndexFields;
-    }
-
-    public void setUniqueIndexFields(List<String> uniqueIndexFields) {
-        this.uniqueIndexFields = uniqueIndexFields;
-    }
-
-    public List<String> getSystemFields() {
-        return systemFields;
-    }
-
-    public void setSystemFields(List<String> systemFields) {
-        this.systemFields = systemFields;
-    }
-
-
-    public List<String> getPublicFields() {
-        return publicFields;
-    }
-
-    public List<String> getInternalFields() {
-        return internalFields;
-    }
-
-    public void setPublicFields(List<String> publicFields) {
-        this.publicFields = publicFields;
-    }
-
-    public void setInternalFields(List<String> internalFields) {
-        this.internalFields = internalFields;
-    }
-
-    public String getSubjectJsonPath() {
-        return subjectJsonPath;
-    }
-
-    public void setSubjectJsonPath(String subjectJsonPath) {
-        this.subjectJsonPath = subjectJsonPath;
-    }
-
-    public Map<String, List<String>> getAttestationFields() {
-        return attestationFields;
-    }
-
-    public void setAttestationFields(Map<String, List<String>> attestationFields) {
-        this.attestationFields = attestationFields;
-    }
-
-    public List<AttestationPolicy> getAttestationPolicies() {
-        return attestationPolicies;
-    }
-
-    public void setAttestationPolicies(List<AttestationPolicy> attestationPolicies) {
-        this.attestationPolicies = attestationPolicies;
-    }
 
     public String getConditions(String property) {
         return getAttestationPolicy(property).getConditions();

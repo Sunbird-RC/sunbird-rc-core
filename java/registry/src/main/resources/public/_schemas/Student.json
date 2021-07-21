@@ -83,6 +83,13 @@
         "conditions": "(ATTESTOR#$.experience.[*].institute#.contains(REQUESTER#$.institute#) && ATTESTOR#$.experience[?(@.institute == REQUESTER#$.institute#)]['_osState']#.contains('PUBLISHED'))"
       }
     ],
-    "subjectJsonPath": "mobile"
+    "subjectJsonPath": "mobile",
+    "ownershipAttributes": [
+      {
+        "email": "/contactDetails/email",
+        "mobile": "/contactDetails/mobile",
+        "userId": "/contactDetails/mobile"
+      }
+    ]
   }
 }

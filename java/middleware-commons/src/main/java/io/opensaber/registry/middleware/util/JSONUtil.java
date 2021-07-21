@@ -243,6 +243,28 @@ public class JSONUtil {
 
     }
 
+	public static void addField(ObjectNode parent, String childKey, List<String> child) {
+		parent.fields().forEachRemaining(entry -> {
+			JsonNode entryValue = entry.getValue();
+			if (entryValue.isObject()) {
+				addField((ObjectNode) entry.getValue(), childKey, child);
+			}
+			if (entryValue.isArray()) {
+				for (int i = 0; i < entryValue.size(); i++) {
+					if (entry.getValue().get(i).isObject())
+						addField((ObjectNode) entry.getValue().get(i), childKey, child);
+				}
+			}
+		});
+		if (childKey == null || childKey.isEmpty())
+			throw new IllegalArgumentException(KEY_NULL_ERROR);
+		ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+		for (String node : child) {
+			arrayNode.add(node);
+		}
+		parent.set(childKey, arrayNode);
+	}
+
 	/**
 	 * Remove a node of given key from parent's hierarchy(including nested objects)
 	 * 

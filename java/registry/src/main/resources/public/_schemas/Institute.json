@@ -169,6 +169,18 @@
         "conditions": "(ATTESTOR#$.[*]#.contains('board-cbse'))"
       }
     ],
-    "subjectJsonPath": "email"
+    "subjectJsonPath": "email",
+    "ownershipAttributes": [
+      {
+        "email": "/email",
+        "mobile": "/contactNumber",
+        "userId": "/email"
+      },
+      {
+        "email": "/adminEmail",
+        "mobile": "/adminMobile",
+        "userId": "/adminEmail"
+      }
+    ]
   }
 }
