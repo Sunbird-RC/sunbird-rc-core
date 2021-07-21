@@ -47,9 +47,9 @@ public class DefinitionsManagerTest {
         String entity = "Student";
         List<OwnershipsAttributes> ownershipsAttributes = definitionsManager.getOwnershipAttributes(entity);
         assertEquals(1, ownershipsAttributes.size());
-        assertEquals("$.contactDetails.email", ownershipsAttributes.get(0).email);
-        assertEquals("$.contactDetails.mobile", ownershipsAttributes.get(0).mobile);
-        assertEquals("$.contactDetails.mobile", ownershipsAttributes.get(0).userId);
+        assertEquals("/contactDetails/email", ownershipsAttributes.get(0).email);
+        assertEquals("/contactDetails/mobile", ownershipsAttributes.get(0).mobile);
+        assertEquals("/contactDetails/mobile", ownershipsAttributes.get(0).userId);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class DefinitionsManagerTest {
 
     @Test
     public void testGetOwnershipAttributesShouldReturnEmpty() {
-        String entity = "Teacher";
+        String entity = "Common";
         List<OwnershipsAttributes> ownershipsAttributes = definitionsManager.getOwnershipAttributes(entity);
         assertEquals(0, ownershipsAttributes.size());
     }
