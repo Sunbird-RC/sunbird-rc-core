@@ -141,7 +141,15 @@
           "type": "array",
           "title": "Subjects teaching at this Institute",
           "items": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "English",
+              "Kannada",
+              "Mathematics",
+              "Science",
+              "Social Science",
+              "Art"
+            ]
           }
         },
         "grades": {
