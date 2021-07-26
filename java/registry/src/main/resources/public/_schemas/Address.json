@@ -24,7 +24,7 @@
           "title": "State name"
         },
         "district": {
-          "$id": "#/properties/distric",
+          "$id": "#/properties/district",
           "type": "string",
           "title": "Name of the district"
         },
