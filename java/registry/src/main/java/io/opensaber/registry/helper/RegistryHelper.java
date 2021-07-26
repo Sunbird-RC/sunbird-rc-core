@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.registry.exception.DuplicateRecordException;
+import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
@@ -121,33 +123,42 @@ public class RegistryHelper {
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
         String entityType = inputJson.fields().next().getKey();
         validationService.validateIgnoreRequired(entityType, objectMapper.writeValueAsString(inputJson));
+        createEntityOwners(inputJson, entityType);
+        return addEntity(inputJson, userId, entityType);
+    }
 
+    void createEntityOwners(JsonNode inputJson, String entityType) throws ValidationException, DuplicateRecordException, EntityCreationException {
         List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityType);
         if (ownershipAttributes.size() > 0) {
             List<String> owners = new ArrayList<>();
             for (OwnershipsAttributes ownershipAttribute : ownershipAttributes) {
-                if (ownershipAttribute.isEmpty()) {
+                if (ownershipAttribute.isValid()) {
                     throw new ValidationException(String.format("Ownership attributes not configured for entity: %s", entityType));
                 } else {
                     JsonNode emailNode = inputJson.get(entityType).at(ownershipAttribute.getEmail());
                     JsonNode mobileNode = inputJson.get(entityType).at(ownershipAttribute.getMobile());
                     JsonNode userIdNode = inputJson.get(entityType).at(ownershipAttribute.getUserId());
-                    if (userIdNode.isMissingNode() && (mobileNode.isMissingNode() || userIdNode.isMissingNode())) {
-                        throw new ValidationException(String.format("Missing required field for invitation: %s, %s, %s", ownershipAttribute.getEmail(), ownershipAttribute.getMobile(), ownershipAttribute.getUserId()));
+                    if (validateOwnershipDetails(mobileNode, userIdNode, emailNode)) {
+                        String owner = keycloakAdminUtil.createUser(entityType, userIdNode.textValue(), emailNode.textValue(), mobileNode.textValue());
+                        owners.add(owner);
+                    } else {
+                        if (owners.size() == 0) {
+                            throw new ValidationException(String.format("Missing required field for invitation: %s, %s, %s", ownershipAttribute.getEmail(), ownershipAttribute.getMobile(), ownershipAttribute.getUserId()));
+                        }
                     }
-                    String owner = keycloakAdminUtil.createUser(entityType, userIdNode.textValue(), emailNode.textValue(), mobileNode.textValue());
-                    owners.add(owner);
                 }
             }
             OSSystemFields.osOwner.setOsOwner(inputJson.get(entityType), owners);
         } else {
             throw new ValidationException(String.format("Ownership attributes not configured for entity: %s", entityType));
         }
+    }
 
-
-
-
-        return addEntity(inputJson, userId, entityType);
+    private boolean validateOwnershipDetails(JsonNode mobileNode, JsonNode userIdNode, JsonNode emailNode) {
+        if (userIdNode.isMissingNode() && (mobileNode.isMissingNode() || emailNode.isMissingNode())) {
+            return false;
+        }
+        return true;
     }
 
     private String addEntity(JsonNode inputJson, String userId, String entityType) throws Exception {
