@@ -1,0 +1,30 @@
+{
+  "existing": {
+    "Institute": {
+      "osid": "rtyuio",
+      "instituteName": "rtyuio",
+      "email": "test@test.com",
+      "osOwner": ["123"]
+    }
+  },
+  "updated": {
+    "Institute": {
+      "osid": "rtyuio",
+      "instituteName": "rtyuio",
+      "email": "test@test.com",
+      "adminMobile": "1233214321",
+      "adminEmail": "admin@test.com",
+      "osOwner": ["123"]
+    }
+  },
+  "expected": {
+    "Institute": {
+      "osid": "rtyuio",
+      "instituteName": "rtyuio",
+      "email": "test@test.com",
+      "adminMobile": "1233214321",
+      "adminEmail": "admin@test.com",
+      "osOwner": ["123","456"]
+    }
+  }
+}

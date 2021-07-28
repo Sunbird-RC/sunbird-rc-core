@@ -116,7 +116,7 @@ public class RegistryHelper {
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson));
         ObjectNode existingNode = objectMapper.createObjectNode();
         existingNode.set(entityType, objectMapper.createObjectNode());
-        entityStateHelper.changeStateAfterUpdate(existingNode, inputJson);
+        entityStateHelper.applyStateTransitions(existingNode, inputJson);
         return addEntity(inputJson, userId, entityType);
     }
 
@@ -225,7 +225,7 @@ public class RegistryHelper {
 
     private boolean isOwner(JsonNode entity, String userId) {
         String osOwner = OSSystemFields.osOwner.toString();
-        return !entity.has(osOwner) || entity.get(osOwner).asText().equals(userId);
+        return !entity.has(osOwner) || entity.get(osOwner).toString().contains(userId);
     }
 
     /**
@@ -309,7 +309,7 @@ public class RegistryHelper {
     }
 
     private String updateEntityAndState(JsonNode existingNode, JsonNode updatedNode, String userId) throws Exception {
-        entityStateHelper.changeStateAfterUpdate(existingNode, updatedNode);
+        entityStateHelper.applyStateTransitions(existingNode, updatedNode);
         return updateEntityNoStateChange(updatedNode, userId);
     }
 

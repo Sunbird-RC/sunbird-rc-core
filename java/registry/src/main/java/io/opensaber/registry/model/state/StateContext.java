@@ -2,19 +2,28 @@ package io.opensaber.registry.model.state;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.helper.EntityStateHelper;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.util.Definition;
+import io.opensaber.registry.util.OwnershipsAttributes;
 import lombok.Builder;
+import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.opensaber.registry.middleware.util.Constants.*;
+import static io.opensaber.registry.middleware.util.OSSystemFields.osOwner;
+
 @Builder
+@Getter
 public class StateContext {
 
     private static final Logger logger = LoggerFactory.getLogger(EntityStateHelper.class);
@@ -25,13 +34,15 @@ public class StateContext {
     private AttestationPolicy attestationPolicy;
     private ObjectNode metadataNode;
     private JsonPointer pointerFromMetadataNode;
+    private Definition definition;
+    private OwnershipsAttributes ownershipAttribute;
 
     @Builder.Default
     private Action action = Action.SET_TO_DRAFT;
     @Builder.Default
     private List<String> ignoredFields = new ArrayList<>();
     @Builder.Default
-    private ObjectNode metaData =JsonNodeFactory.instance.objectNode();
+    private ObjectNode metaData = JsonNodeFactory.instance.objectNode();
 
 
     private void setMetadata(String fieldName, JsonNode fieldValue) throws Exception {
@@ -40,7 +51,9 @@ public class StateContext {
     }
 
     public boolean isModified() {
-        if (existing == null  && updated != null) { return true; }
+        if (existing == null && updated != null) {
+            return true;
+        }
         if (existing != null && updated != null) {
             JsonNode relevantExistingSubNode = existing.deepCopy();
             JSONUtil.removeNodes(relevantExistingSubNode, ignoredFields);
@@ -81,5 +94,43 @@ public class StateContext {
 
     public JsonNode getUpdatedNode() {
         return updated != null ? updated : existing;
+    }
+
+    public boolean isOwnerNewlyAdded() {
+        if (StringUtils.isEmpty(getStringValue(existing, USER_ID)) && (StringUtils.isEmpty(getStringValue(existing, EMAIL)) || StringUtils.isEmpty(getStringValue(existing, MOBILE)))) {
+            return !StringUtils.isEmpty(getStringValue(updated, USER_ID)) && (!StringUtils.isEmpty(getStringValue(updated, EMAIL)) || !StringUtils.isEmpty(getStringValue(updated, MOBILE)));
+        }
+        return false;
+    }
+
+    private String getStringValue(JsonNode jsonNode, String key) {
+        return jsonNode == null || jsonNode.get(key) == null ? null : jsonNode.get(key).textValue();
+    }
+
+    public void addOwner(String owner) {
+        ArrayNode arrayNode = (ArrayNode) metadataNode.get(osOwner.toString());
+        arrayNode.add(owner);
+    }
+
+    public boolean isAttestationProperty() {
+        return attestationPolicy != null;
+    }
+
+    public boolean isOwnershipDetailsUpdated() {
+        JsonNode patchNodes = JSONUtil.diffJsonNode(existing, updated);
+        return patchNodes.size() > 0;
+    }
+
+    public void revertOwnershipDetails() {
+        String mobilePath = ownershipAttribute.getMobile();
+        String emailPath = ownershipAttribute.getEmail();
+        String userIdPath = ownershipAttribute.getUserId();
+        JSONUtil.replaceFieldByPointerPath(metadataNode, mobilePath, existing.get(MOBILE).textValue());
+        JSONUtil.replaceFieldByPointerPath(metadataNode, emailPath, existing.get(EMAIL).textValue());
+        JSONUtil.replaceFieldByPointerPath(metadataNode, userIdPath, existing.get(USER_ID).textValue());
+    }
+
+    public boolean isOwnershipProperty() {
+        return ownershipAttribute != null;
     }
 }

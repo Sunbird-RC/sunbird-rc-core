@@ -1,16 +1,20 @@
+package io.opensaber.registry;
 import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.model.state.States;
 
+dialect  "mvel"
+global io.opensaber.registry.util.KeycloakAdminUtil keycloakAdminUtil;
+
 rule "Set state as draft if there is a change"
     when
-        stateDefinition:StateContext(isModified() && !isAttestationRequested());
+        stateDefinition:StateContext(isAttestationProperty() && isModified() && !isAttestationRequested());
     then
         stateDefinition.setState(States.DRAFT);
 end
 
 rule "Send for attestation and Set state as attestation requested"
     when
-        stateDefinition:StateContext(isAttestationRequested());
+        stateDefinition:StateContext(isAttestationProperty() && isAttestationRequested());
     then
         stateDefinition.setState(States.ATTESTATION_REQUESTED);
         stateDefinition.setClaimId();
@@ -18,7 +22,7 @@ end
 
 rule "Set state as Published when Claim is approved"
     when
-        stateDefinition:StateContext(isClaimApproved());
+        stateDefinition:StateContext(isAttestationProperty() && isClaimApproved());
     then
         stateDefinition.setState(States.PUBLISHED);
         stateDefinition.setAttestationData();
@@ -27,8 +31,24 @@ end
 
 rule "Set state as Rejected when Claim is rejected"
     when
-        stateDefinition:StateContext(isClaimRejected());
+        stateDefinition:StateContext(isAttestationProperty() && isClaimRejected());
     then
         stateDefinition.setState(States.REJECTED);
         stateDefinition.setNotes();
+end
+
+rule "Create entity owner for newly added owner fields"
+    when
+        stateDefinition:StateContext(isOwnershipProperty() && isOwnerNewlyAdded());
+    then
+        String owner = keycloakAdminUtil.createUser(stateDefinition.getEntityName(), stateDefinition.getUpdated().get("userId").textValue(),
+        stateDefinition.getUpdated().get("email").textValue(), stateDefinition.getUpdated().get("mobile").textValue());
+        stateDefinition.addOwner(owner);
+end
+
+rule "Revert if any modification to ownership details"
+    when
+        stateDefinition:StateContext(isOwnershipProperty() && !isOwnerNewlyAdded() && isOwnershipDetailsUpdated());
+    then
+        stateDefinition.revertOwnershipDetails();
 end

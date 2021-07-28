@@ -441,20 +441,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return elasticService;
 	}
 
-	@Bean
-	public KieContainer kieContainer() {
-		String filePath = "workflow/statetransitions.drl";
-
-		KieServices kieServices = KieServices.Factory.get();
-		KieFileSystem kieFileSystem = kieServices.newKieFileSystem();
-		kieFileSystem.write(ResourceFactory.newClassPathResource(filePath));
-		KieBuilder kieBuilder = kieServices.newKieBuilder(kieFileSystem);
-		kieBuilder.buildAll();
-		KieModule kieModule = kieBuilder.getKieModule();
-
-		return kieServices.newKieContainer(kieModule.getReleaseId());
-	}
-
 //	/** creates elastic-service bean and instanstiates the indices
 //	 * @return - IElasticService
 //	 * @throws IOException

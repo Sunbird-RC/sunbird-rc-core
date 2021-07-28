@@ -1,6 +1,5 @@
 package io.opensaber.registry.middleware.util;
 
-import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -12,16 +11,13 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class JSONUtilTest {
-
+    private static final String TEST_DIR = "src/test/resources/";
     private static final String ACTUAL_DATA = "actual_data.json";
     private static final String EXPECTED_DATA = "expected_data.json";
     private static final String EXPECTED_REPLACE_FIELD_DATA = "expected_replace_field_data.json";
@@ -159,7 +155,7 @@ public class JSONUtilTest {
                 "/education/2",
                 "/edulcation/2/fromDate"
         );
-        JSONUtil.removeNodesByPath((ObjectNode)node, removalPaths);
+        JSONUtil.removeNodesByPath((ObjectNode) node, removalPaths);
         JsonNode expected = mapper.readTree(new File("src/test/resources/jsonUtils-removeNodes/student_afterRemoval.json"));
         assertEquals(node, expected);
     }
@@ -167,11 +163,11 @@ public class JSONUtilTest {
     @Test
     public void diffJsonNode_test() throws IOException {
         String beforeJsonStr = "{\"a\":{\"b1\":\"c\"}}";
-		String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
-		JsonNode beforeNode = mapper.readTree(beforeJsonStr);
-		JsonNode afterNode = mapper.readTree(afterJsonStr);
-		JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode,afterNode);
-		assertThat(patchNode.get(0).get("op").asText(), is("replace"));
+        String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
+        JsonNode beforeNode = mapper.readTree(beforeJsonStr);
+        JsonNode afterNode = mapper.readTree(afterJsonStr);
+        JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode, afterNode);
+        assertThat(patchNode.get(0).get("op").asText(), is("replace"));
         assertThat(patchNode.get(0).get("value").asText(), is("d"));
         assertThat(patchNode.get(1).get("op").asText(), is("add"));
         assertThat(patchNode.get(1).get("value").asText(), is("d"));
@@ -183,7 +179,7 @@ public class JSONUtilTest {
         String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
         JsonNode beforeNode = mapper.readTree(beforeJsonStr);
         JsonNode afterNode = mapper.readTree(afterJsonStr);
-        JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode,afterNode);
+        JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode, afterNode);
         assertThat(patchNode.get(0).get("op").asText(), is("add"));
     }
 
@@ -193,8 +189,8 @@ public class JSONUtilTest {
         String afterJsonStr = "{\"a\":{\"b1\":\"d\",\"b2\":\"d\"}}";
         JsonNode beforeNode = mapper.readTree(beforeJsonStr);
         JsonNode afterNode = mapper.readTree(afterJsonStr);
-        JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode,afterNode);
-        assertThat(patchNode.size(), is(0) );
+        JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode, afterNode);
+        assertThat(patchNode.size(), is(0));
     }
 
     @Test
@@ -203,8 +199,8 @@ public class JSONUtilTest {
         String afterJsonStr = "";
         JsonNode beforeNode = mapper.readTree(beforeJsonStr);
         JsonNode afterNode = mapper.readTree(afterJsonStr);
-        JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode,afterNode);
-        assertThat(patchNode.size(), is(0) );
+        JsonNode patchNode = JSONUtil.diffJsonNode(beforeNode, afterNode);
+        assertThat(patchNode.size(), is(0));
     }
 
     @Test
@@ -219,4 +215,15 @@ public class JSONUtilTest {
         assertTrue(result.size() == 3);
         assertTrue(result.get("userId") == null);
     }
+
+    @Test
+    public void shouldReplaceFieldByJsonPointer() throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode test = objectMapper.readTree(new File(TEST_DIR + "actual_data.json"));
+        String jsonPtrExpr = "/Teacher/inServiceTeacherTrainingFromCRC/daysOfInServiceTeacherTraining";
+        String updatedText = "test_value";
+        ((ObjectNode) test.at(jsonPtrExpr.substring(0, jsonPtrExpr.lastIndexOf("/")))).put(jsonPtrExpr.substring(jsonPtrExpr.lastIndexOf("/") + 1), updatedText);
+        assertEquals(updatedText, test.at(jsonPtrExpr).textValue());
+    }
+
 }
