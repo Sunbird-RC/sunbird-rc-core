@@ -101,6 +101,10 @@ public class Constants {
 	//Expand config
 	public static final int MAX_EXPAND_LEVEL=4;
 
+	public static final String USER_ID = "userId";
+	public static final String EMAIL = "email";
+	public static final String MOBILE = "mobile";
+
 	public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH");
 

@@ -17,6 +17,7 @@ import io.opensaber.registry.model.state.StateContext;
 import io.opensaber.registry.service.RuleEngineService;
 import io.opensaber.registry.util.ClaimRequestClient;
 import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.OwnershipsAttributes;
 import net.minidev.json.JSONArray;
 import org.apache.commons.math3.util.Pair;
 import org.slf4j.Logger;
@@ -28,34 +29,73 @@ import org.springframework.stereotype.Component;
 import javax.validation.constraints.NotEmpty;
 import java.util.*;
 
+import static io.opensaber.registry.middleware.util.Constants.*;
+
 @Component
 public class EntityStateHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(EntityStateHelper.class);
 
+
     @Value("${database.uuidPropertyName}")
     private String uuidPropertyName;
 
-    @Autowired
-    private DefinitionsManager definitionsManager;
+    private final DefinitionsManager definitionsManager;
+
+    private final RuleEngineService ruleEngineService;
+
+    private final ConditionResolverService conditionResolverService;
+
+    private final ClaimRequestClient claimRequestClient;
 
     @Autowired
-    private RuleEngineService ruleEngineService;
+    public EntityStateHelper(DefinitionsManager definitionsManager, RuleEngineService ruleEngineService, ConditionResolverService conditionResolverService, ClaimRequestClient claimRequestClient) {
+        this.definitionsManager = definitionsManager;
+        this.ruleEngineService = ruleEngineService;
+        this.conditionResolverService = conditionResolverService;
+        this.claimRequestClient = claimRequestClient;
+    }
 
-    @Autowired
-    private ConditionResolverService conditionResolverService;
-
-    @Autowired
-    private ClaimRequestClient claimRequestClient;
-
-    public void changeStateAfterUpdate(JsonNode existing, JsonNode updated) {
+    public void applyStateTransitions(JsonNode existing, JsonNode updated) {
         String entityName = updated.fields().next().getKey();
         JsonNode modified = updated.get(entityName);
         logger.info("Detecting state changes by comparing attestation paths in existing and the updated nodes");
+        List<StateContext> allContexts = new ArrayList<>();
+        addAttestationStateTransitions(existing, entityName, modified, allContexts);
+        addOwnershipStateTransitions(existing, entityName, updated, allContexts);
+        ruleEngineService.doTransition(allContexts);
+    }
+
+    private void addOwnershipStateTransitions(JsonNode existing, String entityName, JsonNode modified, List<StateContext> allContexts) {
+        List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityName);
+        for (OwnershipsAttributes ownershipAttribute : ownershipAttributes) {
+            ObjectNode existingNode = createOwnershipNode(existing, entityName, ownershipAttribute);
+            ObjectNode modifiedNode = createOwnershipNode(modified, entityName, ownershipAttribute);
+            StateContext stateContext = StateContext.builder()
+                    .entityName(entityName)
+                    .existing(existingNode)
+                    .updated(modifiedNode)
+                    .metadataNode((ObjectNode) modified.get(entityName))
+                    .ownershipAttribute(ownershipAttribute)
+                    .build();
+            allContexts.add(stateContext);
+        }
+    }
+
+    private ObjectNode createOwnershipNode(JsonNode entityNode, String entityName, OwnershipsAttributes ownershipAttribute) {
+        String mobilePath = ownershipAttribute.getMobile();
+        String emailPath = ownershipAttribute.getEmail();
+        String userIdPath = ownershipAttribute.getUserId();
+        ObjectNode objectNode = new ObjectMapper().createObjectNode();
+        objectNode.put(MOBILE, entityNode.get(entityName).at(mobilePath).asText(""));
+        objectNode.put(EMAIL, entityNode.get(entityName).at(emailPath).asText(""));
+        objectNode.put(USER_ID, entityNode.get(entityName).at(userIdPath).asText(""));
+        return objectNode;
+    }
+
+    private void addAttestationStateTransitions(JsonNode existing, String entityName, JsonNode modified, List<StateContext> allContexts) {
         List<String> ignoredProperties = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields();
         List<AttestationPolicy> attestationPolicies = definitionsManager.getAttestationPolicy(entityName);
-        List<StateContext> allContexts = new ArrayList<>();
-
         for (AttestationPolicy policy: attestationPolicies) {
             Set<EntityPropertyURI> targetPathPointers = new AttestationPath(policy.getProperty())
                     .getEntityPropertyURIs(modified, uuidPropertyName);
@@ -82,7 +122,6 @@ public class EntityStateHelper {
                 allContexts.add(stateContext);
             }
         }
-        ruleEngineService.doTransition(allContexts);
     }
 
     public JsonNode sendForAttestation(JsonNode entityNode, String propertyURL) throws Exception {

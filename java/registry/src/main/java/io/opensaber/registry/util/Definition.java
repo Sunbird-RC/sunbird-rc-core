@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.json.Json;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,6 +47,7 @@ public class Definition {
             try {
                 osSchemaConfiguration = mapper.treeToValue(configJson, OSSchemaConfiguration.class);
             } catch (JsonProcessingException e) {
+                logger.error("Error processing {} JSON: ", OSCONFIG, e);
                 logger.debug(title + " does not have OS configuration.");
             }
         }
