@@ -60,6 +60,7 @@
       "_osClaimId",
       "_osState"
     ],
+    "roles": ["system-admin"],
     "attestationAttributes": [],
     "attestationPolicies": [],
     "subjectJsonPath": "mobile"
