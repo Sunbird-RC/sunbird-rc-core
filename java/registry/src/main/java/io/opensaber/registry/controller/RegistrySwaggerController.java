@@ -53,6 +53,9 @@ public class RegistrySwaggerController {
                 for (Iterator<String> it = schemaDefinition.get("definitions").fieldNames(); it.hasNext(); ) {
                     String fieldName = it.next();
                     definitions.set(fieldName, refResolver.resolveDefinitions(fieldName,schemaDefinition.get("definitions").get(fieldName)));
+                    if (schemaDefinition.get("_osConfig") != null) {
+                        definitions.set(String.format("%sOsConfig", fieldName), schemaDefinition.get("_osConfig"));
+                    }
                 }
             }
         }
