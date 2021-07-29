@@ -80,7 +80,7 @@
           "experience"
         ],
         "attestorEntity": "Institute",
-        "conditions": "(ATTESTOR#$.instituteName#.contains(REQUESTER#$.institute#))"
+        "conditions": "(ATTESTOR#$.osid#.contains(REQUESTER#$.institute#))"
       },
       {
         "property": "academicQualifications/[]",
@@ -88,7 +88,7 @@
           "academicQualifications"
         ],
         "attestorEntity": "Institute",
-        "conditions": "(ATTESTOR#$.instituteName#.contains(REQUESTER#$.institute#))"
+        "conditions": "(ATTESTOR#$.osid#.contains(REQUESTER#$.institute#))"
       }
     ],
     "subjectJsonPath": "mobile",
