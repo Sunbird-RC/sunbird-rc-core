@@ -42,7 +42,10 @@ public class OSSchemaConfiguration {
      * Holds fields name(s) for non-public usage
      * */
     private List<String> internalFields = new ArrayList<>();
-
+    /**
+     * Contains which are all the roles (from token) can add this resource
+     */
+    private List<String> roles = new ArrayList<>();
     /** 
      * Holds field path of the subject of entity
      * */
@@ -144,6 +147,14 @@ public class OSSchemaConfiguration {
 
     public String getConditions(String property) {
         return getAttestationPolicy(property).getConditions();
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     private AttestationPolicy getAttestationPolicy(String property) {

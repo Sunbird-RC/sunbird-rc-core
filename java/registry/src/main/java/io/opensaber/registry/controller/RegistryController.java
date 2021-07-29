@@ -32,7 +32,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.json.Json;
 import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
 import java.util.*;
@@ -399,7 +398,8 @@ public class RegistryController {
     public ResponseEntity<Object> postEntity(
             @PathVariable String entityName,
             @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode rootNode
+            @RequestBody JsonNode rootNode,
+            HttpServletRequest request
     ) {
         logger.info("Adding entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
@@ -409,6 +409,7 @@ public class RegistryController {
         newRootNode.set(entityName, rootNode);
 
         try {
+            registryHelper.authorizeUser(request, entityName);
             String label = registryHelper.addEntity(newRootNode, ""); //todo add user id from auth scope.
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
