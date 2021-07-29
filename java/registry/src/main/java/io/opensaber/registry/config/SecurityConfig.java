@@ -44,11 +44,13 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
+        String SYSTEM_ADMIN_ROLE = "system-admin";
         http.csrf()
                 .disable()
                 .authorizeRequests()
                 .antMatchers("/**/invite", "/health", "/error", "/_schemas/**", "/**/*.json", "/swagger-ui", "/**/search", "/**/attest/**")
                 .permitAll()
+                .antMatchers("/**/Address").hasRole(SYSTEM_ADMIN_ROLE)
                 .anyRequest()
                 .authenticated();
     }
