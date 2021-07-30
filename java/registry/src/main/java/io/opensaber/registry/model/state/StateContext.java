@@ -127,7 +127,7 @@ public class StateContext {
         return ownershipAttribute != null;
     }
 
-    public boolean revertModifiedSystemFields() {
+    public boolean revertSystemFieldsChangedEnabled() {
         return this.revertSystemFields;
     }
 

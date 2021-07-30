@@ -56,7 +56,7 @@ end
 
 rule "Revert if any modifications to system fields"
     when
-        stateDefinition:StateContext(revertModifiedSystemFields());
+        stateDefinition:StateContext(revertSystemFieldsChangedEnabled());
     then
         entityStateHelper.revertSystemFields(stateDefinition);
 end
