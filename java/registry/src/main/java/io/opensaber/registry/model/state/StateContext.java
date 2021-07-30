@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static io.opensaber.registry.middleware.util.Constants.*;
-import static io.opensaber.registry.middleware.util.OSSystemFields.osOwner;
+import static io.opensaber.registry.middleware.util.OSSystemFields.*;
 
 @Builder
 @Getter
@@ -36,6 +36,8 @@ public class StateContext {
     private JsonPointer pointerFromMetadataNode;
     private Definition definition;
     private OwnershipsAttributes ownershipAttribute;
+    @Builder.Default
+    private boolean revertSystemFields = false;
 
     @Builder.Default
     private Action action = Action.SET_TO_DRAFT;
@@ -77,19 +79,19 @@ public class StateContext {
     }
 
     public void setState(States destinationState) throws Exception {
-        setMetadata("_osState", JsonNodeFactory.instance.textNode(destinationState.toString()));
+        setMetadata(_osState.toString(), JsonNodeFactory.instance.textNode(destinationState.toString()));
     }
 
     public void setClaimId() throws Exception {
-        setMetadata("_osClaimId", metaData.get("claimId"));
+        setMetadata(_osClaimId.toString(), metaData.get("claimId"));
     }
 
     public void setNotes() throws Exception {
-        setMetadata("_osClaimNotes", metaData.get("notes"));
+        setMetadata(_osClaimNotes.toString(), metaData.get("notes"));
     }
 
     public void setAttestationData() throws Exception {
-        setMetadata("_osAttestedData", metaData.get("attestedData"));
+        setMetadata(_osAttestedData.toString(), metaData.get("attestedData"));
     }
 
     public JsonNode getUpdatedNode() {
@@ -121,16 +123,12 @@ public class StateContext {
         return patchNodes.size() > 0;
     }
 
-    public void revertOwnershipDetails() {
-        String mobilePath = ownershipAttribute.getMobile();
-        String emailPath = ownershipAttribute.getEmail();
-        String userIdPath = ownershipAttribute.getUserId();
-        JSONUtil.replaceFieldByPointerPath(metadataNode, mobilePath, existing.get(MOBILE).textValue());
-        JSONUtil.replaceFieldByPointerPath(metadataNode, emailPath, existing.get(EMAIL).textValue());
-        JSONUtil.replaceFieldByPointerPath(metadataNode, userIdPath, existing.get(USER_ID).textValue());
-    }
-
     public boolean isOwnershipProperty() {
         return ownershipAttribute != null;
     }
+
+    public boolean revertModifiedSystemFields() {
+        return this.revertSystemFields;
+    }
+
 }

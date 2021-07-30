@@ -4,6 +4,7 @@ import io.opensaber.registry.model.state.States;
 
 dialect  "mvel"
 global io.opensaber.registry.util.KeycloakAdminUtil keycloakAdminUtil;
+global io.opensaber.registry.helper.EntityStateHelper entityStateHelper;
 
 rule "Set state as draft if there is a change"
     when
@@ -50,5 +51,12 @@ rule "Revert if any modification to ownership details"
     when
         stateDefinition:StateContext(isOwnershipProperty() && !isOwnerNewlyAdded() && isOwnershipDetailsUpdated());
     then
-        stateDefinition.revertOwnershipDetails();
+        entityStateHelper.revertOwnershipDetails(stateDefinition);
+end
+
+rule "Revert if any modifications to system fields"
+    when
+        stateDefinition:StateContext(revertModifiedSystemFields());
+    then
+        entityStateHelper.revertSystemFields(stateDefinition);
 end

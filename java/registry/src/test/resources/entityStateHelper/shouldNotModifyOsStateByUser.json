@@ -1,0 +1,53 @@
+{
+  "existing": {
+    "Student": {
+      "identityDetails": {
+        "fullName": "Deepthi K"
+      },
+      "educationDetails": [
+        {
+          "osid": "fgyuhij",
+          "institute": "ABC Medical College",
+          "board": "State Board",
+          "medium": "English",
+          "class": "M.B.B.S Sem 7",
+          "_osState": "DRAFT"
+        }
+      ]
+    }
+  },
+  "updated": {
+    "Student": {
+      "identityDetails": {
+        "fullName": "Deepthi K"
+      },
+      "educationDetails": [
+        {
+          "osid": "fgyuhij",
+          "institute": "ABC Medical College",
+          "board": "State Board",
+          "medium": "English",
+          "class": "M.B.B.S Sem 7",
+          "_osState": "PUBLISHED"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "Student": {
+      "identityDetails": {
+        "fullName": "Deepthi K"
+      },
+      "educationDetails": [
+        {
+          "osid": "fgyuhij",
+          "institute": "ABC Medical College",
+          "board": "State Board",
+          "medium": "English",
+          "class": "M.B.B.S Sem 7",
+          "_osState": "DRAFT"
+        }
+      ]
+    }
+  }
+}

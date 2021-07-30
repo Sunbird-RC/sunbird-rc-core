@@ -468,7 +468,7 @@ public class JSONUtil {
 		}
 	}
 
-	public static void replaceFieldByPointerPath(JsonNode node, String jsonPointer, String value) {
+	public static void replaceFieldByPointerPath(JsonNode node, String jsonPointer, JsonNode value) {
 		if (value != null) {
 			((ObjectNode) node.at(jsonPointer.substring(0, jsonPointer.lastIndexOf("/")))).put(jsonPointer.substring(jsonPointer.lastIndexOf("/") + 1), value);
 		}

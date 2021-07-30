@@ -10,6 +10,8 @@ import com.jayway.jsonpath.JsonPath;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.dto.ClaimDTO;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
+import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.attestation.AttestationPath;
 import io.opensaber.registry.model.attestation.EntityPropertyURI;
 import io.opensaber.registry.model.state.Action;
@@ -35,6 +37,7 @@ import static io.opensaber.registry.middleware.util.Constants.*;
 public class EntityStateHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(EntityStateHelper.class);
+    private static final String PATH = "path";
 
 
     @Value("${database.uuidPropertyName}")
@@ -61,9 +64,23 @@ public class EntityStateHelper {
         JsonNode modified = updated.get(entityName);
         logger.info("Detecting state changes by comparing attestation paths in existing and the updated nodes");
         List<StateContext> allContexts = new ArrayList<>();
+        addSystemFieldsStateTransition(existing, modified, entityName, allContexts);
+        ruleEngineService.doTransition(allContexts, this);
+        allContexts = new ArrayList<>();
         addAttestationStateTransitions(existing, entityName, modified, allContexts);
         addOwnershipStateTransitions(existing, entityName, updated, allContexts);
-        ruleEngineService.doTransition(allContexts);
+        ruleEngineService.doTransition(allContexts, this);
+    }
+
+    private void addSystemFieldsStateTransition(JsonNode existing, JsonNode modified, String entityName, List<StateContext> allContexts) {
+        StateContext stateContext = StateContext.builder()
+                .entityName(entityName)
+                .existing(existing.get(entityName))
+                .updated(modified)
+                .metadataNode((ObjectNode) modified)
+                .revertSystemFields(true)
+                .build();
+        allContexts.add(stateContext);
     }
 
     private void addOwnershipStateTransitions(JsonNode existing, String entityName, JsonNode modified, List<StateContext> allContexts) {
@@ -96,11 +113,11 @@ public class EntityStateHelper {
     private void addAttestationStateTransitions(JsonNode existing, String entityName, JsonNode modified, List<StateContext> allContexts) {
         List<String> ignoredProperties = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields();
         List<AttestationPolicy> attestationPolicies = definitionsManager.getAttestationPolicy(entityName);
-        for (AttestationPolicy policy: attestationPolicies) {
+        for (AttestationPolicy policy : attestationPolicies) {
             Set<EntityPropertyURI> targetPathPointers = new AttestationPath(policy.getProperty())
                     .getEntityPropertyURIs(modified, uuidPropertyName);
             logger.info("Updated nodes of interest: {}", targetPathPointers);
-            for(EntityPropertyURI tp: targetPathPointers) {
+            for (EntityPropertyURI tp : targetPathPointers) {
                 Optional<EntityPropertyURI> entityPropertyURI = EntityPropertyURI.fromEntityAndPropertyURI(
                         existing.get(entityName), tp.getPropertyURI(), uuidPropertyName
                 );
@@ -126,7 +143,7 @@ public class EntityStateHelper {
 
     public JsonNode sendForAttestation(JsonNode entityNode, String propertyURL) throws Exception {
         logger.info("Sending {} for attestation", propertyURL);
-       return manageState(entityNode, propertyURL, Action.RAISE_CLAIM, JsonNodeFactory.instance.objectNode());
+        return manageState(entityNode, propertyURL, Action.RAISE_CLAIM, JsonNodeFactory.instance.objectNode());
     }
 
     public JsonNode grantClaim(JsonNode entityNode, String propertyURI, String notes) throws Exception {
@@ -153,7 +170,7 @@ public class EntityStateHelper {
 
         Optional<EntityPropertyURI> entityPropertyURI = EntityPropertyURI.fromEntityAndPropertyURI(entityNode, propertyURL, uuidPropertyName);
         if (!entityPropertyURI.isPresent()) {
-            throw new Exception("Invalid Property Identifier : "+ propertyURL);
+            throw new Exception("Invalid Property Identifier : " + propertyURL);
         }
 
         Pair<ObjectNode, JsonPointer> metadataNodePointer = getTargetMetadataNodeInfo(entityNode, entityPropertyURI.get().getJsonPointer());
@@ -187,12 +204,12 @@ public class EntityStateHelper {
                 .metadataNode(metadataNodePointer.getFirst())
                 .pointerFromMetadataNode(metadataNodePointer.getSecond())
                 .build();
-        ruleEngineService.doTransition(stateContext);
+        ruleEngineService.doTransition(stateContext, this);
         return root;
     }
 
     private String getRequestorName(JsonNode entityNode) {
-        if(entityNode.hasNonNull("identityDetails") && entityNode.get("identityDetails").has("fullName")) {
+        if (entityNode.hasNonNull("identityDetails") && entityNode.get("identityDetails").has("fullName")) {
             return entityNode.get("identityDetails")
                     .get("fullName")
                     .asText();
@@ -204,19 +221,19 @@ public class EntityStateHelper {
     public Optional<AttestationPolicy> getMatchingAttestationPolicy(String entityName, JsonNode rootNode, String uuidPath) {
         int uuidPathDepth = uuidPath.split("/").length;
         String matchingUUIDPath = "/" + uuidPath;
-        for (AttestationPolicy policy: definitionsManager.getAttestationPolicy(entityName)) {
+        for (AttestationPolicy policy : definitionsManager.getAttestationPolicy(entityName)) {
             if (policy.getProperty().split("/").length != uuidPathDepth) continue;
-           if (new AttestationPath(policy.getProperty())
+            if (new AttestationPath(policy.getProperty())
                     .getEntityPropertyURIs(rootNode, uuidPropertyName)
                     .stream().anyMatch(p -> p.getPropertyURI().equals(matchingUUIDPath))) {
-               return Optional.of(policy);
-           }
+                return Optional.of(policy);
+            }
         }
         return Optional.empty();
     }
 
     public String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode, AttestationPolicy attestationPolicy, String requestorName) {
-        String resolvedConditions =  conditionResolverService.resolve(metadataNode, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
+        String resolvedConditions = conditionResolverService.resolve(metadataNode, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
         ClaimDTO claimDTO = new ClaimDTO();
         claimDTO.setEntity(entityName);
         claimDTO.setEntityId(entityId);
@@ -270,6 +287,38 @@ public class EntityStateHelper {
             }
         }
         return new ObjectMapper().valueToTree(attestedData).toString();
+    }
+
+    public void revertOwnershipDetails(StateContext stateContext) {
+        OwnershipsAttributes ownershipAttribute = stateContext.getOwnershipAttribute();
+        ObjectNode updatedNode = stateContext.getMetadataNode();
+        JsonNode existing = stateContext.getExisting();
+        String mobilePath = ownershipAttribute.getMobile();
+        String emailPath = ownershipAttribute.getEmail();
+        String userIdPath = ownershipAttribute.getUserId();
+        JSONUtil.replaceFieldByPointerPath(updatedNode, mobilePath, existing.get(MOBILE));
+        JSONUtil.replaceFieldByPointerPath(updatedNode, emailPath, existing.get(EMAIL));
+        JSONUtil.replaceFieldByPointerPath(updatedNode, userIdPath, existing.get(USER_ID));
+    }
+
+    public void revertSystemFields(StateContext stateContext) {
+        JsonNode updated = stateContext.getUpdated();
+        JsonNode existing = stateContext.getExisting();
+        ObjectNode metadataNode = stateContext.getMetadataNode();
+        JsonNode patchNodes = JSONUtil.diffJsonNode(existing, updated);
+        for (JsonNode patchNode : patchNodes) {
+            String updatedPath = patchNode.get(PATH).textValue();
+            for (OSSystemFields value : OSSystemFields.values()) {
+                if (updatedPath.contains(value.toString())) {
+                    String path = getPathToUpdate(updatedPath, value);
+                    JSONUtil.replaceFieldByPointerPath(metadataNode, path, existing.at(path));
+                }
+            }
+        }
+    }
+
+    private String getPathToUpdate(String updatedPath, OSSystemFields value) {
+        return updatedPath.substring(0, updatedPath.lastIndexOf(value.toString()) + value.toString().length());
     }
 
 }

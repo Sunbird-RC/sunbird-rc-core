@@ -88,7 +88,7 @@ public class EntityStateHelperTest {
     public void shouldBeNoStateChangeIfTheDataDidNotChange() throws IOException {
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldBeNoStateChangeIfTheDataDidNotChange.json"));
         JsonNode beforeUpdate = test.get("updated").deepCopy();
-        runTest(test.get("existing"), test.get("updated"), beforeUpdate);
+        runTest(test.get("existing"), test.get("updated"), test.get("existing"));
     }
 
     @Test
@@ -131,5 +131,16 @@ public class EntityStateHelperTest {
         runTest(test.get("existing"), test.get("updated"), test.get("expected"));
     }
 
+    @Test
+    public void shouldNotAllowUserModifyingOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException {
+        JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotModifyOwnerDetails.json"));
+        runTest(test.get("existing"), test.get("updated"), test.get("expected"));
+    }
+
+    @Test
+    public void shouldNotAllowUserModifyingSystemFields() throws IOException, DuplicateRecordException, EntityCreationException {
+        JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotModifyOsStateByUser.json"));
+        runTest(test.get("existing"), test.get("updated"), test.get("expected"));
+    }
 
 }
