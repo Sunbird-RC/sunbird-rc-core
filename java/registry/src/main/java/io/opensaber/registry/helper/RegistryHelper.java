@@ -530,4 +530,16 @@ public class RegistryHelper {
         }
         return result;
     }
+
+    public void authorizeUser(HttpServletRequest request, String entityName) throws Exception {
+        KeycloakAuthenticationToken userPrincipal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        Set<String> roles = userPrincipal.getAccount().getRoles();
+
+        List<String> supportedRoles = definitionsManager.getDefinition(entityName)
+                .getOsSchemaConfiguration()
+                .getRoles();
+        if(!supportedRoles.isEmpty() && supportedRoles.stream().noneMatch(roles::contains)) {
+            throw new Exception("User is not allowed to access the entity");
+        }
+    }
 }
