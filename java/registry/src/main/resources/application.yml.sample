@@ -251,6 +251,12 @@ elastic:
     # elastic-search connection info
     connection_url: ${elastic_search_connection_url:localhost:9200}
 
+filestorage:
+  url: ${filestorage_connection_url:http://localhost:9500}
+  accesskey: ${filestorage_access_key:XXXXX}
+  secretkey: ${filestorage_secret_key:XXXXX}
+  bucketname: ${filestorage_secret_key:dummy}
+
 ---
 ##################################################################
 #                      TEST PROFILE                              #
