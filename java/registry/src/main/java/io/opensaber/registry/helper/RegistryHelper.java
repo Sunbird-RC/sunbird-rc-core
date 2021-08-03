@@ -9,15 +9,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
+import io.opensaber.keycloak.KeycloakAdminUtil;
+import io.opensaber.keycloak.OwnerCreationException;
 import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.pojos.OwnershipsAttributes;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.attestation.EntityPropertyURI;
-import io.opensaber.registry.model.state.Action;
+import io.opensaber.pojos.attestation.Action;
 import io.opensaber.registry.service.DecryptionHelper;
 import io.opensaber.registry.service.IReadService;
 import io.opensaber.registry.service.ISearchService;
@@ -127,7 +128,7 @@ public class RegistryHelper {
         return addEntity(inputJson, userId, entityType);
     }
 
-    void createEntityOwners(JsonNode inputJson, String entityType) throws ValidationException, DuplicateRecordException, EntityCreationException {
+    void createEntityOwners(JsonNode inputJson, String entityType) throws ValidationException, OwnerCreationException {
         List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityType);
         if (ownershipAttributes.size() > 0) {
             List<String> owners = new ArrayList<>();

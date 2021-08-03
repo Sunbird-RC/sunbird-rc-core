@@ -21,6 +21,7 @@ import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.transform.*;
 import io.opensaber.registry.util.*;
 import io.opensaber.validators.ValidationException;
+import io.opensaber.workflow.RuleEngineService;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
@@ -59,8 +60,6 @@ public class RegistryController {
     public String uuidPropertyName;
     @Autowired
     private OpenSaberInstrumentation watch;
-    @Autowired
-    private KeycloakAdminUtil keycloakAdminUtil;
     @Autowired
     private ShardManager shardManager;
     @Autowired

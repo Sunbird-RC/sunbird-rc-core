@@ -3,8 +3,9 @@ package io.opensaber.registry.helper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.keycloak.KeycloakAdminUtil;
+import io.opensaber.keycloak.OwnerCreationException;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -15,8 +16,7 @@ import io.opensaber.registry.service.ISearchService;
 import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.KeycloakAdminUtil;
-import io.opensaber.registry.util.OwnershipsAttributes;
+import io.opensaber.pojos.OwnershipsAttributes;
 import io.opensaber.registry.util.ViewTemplateManager;
 import io.opensaber.validators.ValidationException;
 import org.junit.Assert;
@@ -171,7 +171,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldCreateEntityOwners() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException {
+    public void shouldCreateEntityOwners() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException, OwnerCreationException {
         String Institute = "Institute";
         when(definitionsManager.getOwnershipAttributes(Institute))
 				.thenReturn(Arrays.asList(
@@ -187,7 +187,7 @@ public class RegistryHelperTest {
     }
 
     @Test
-    public void shouldCreateEntityOwnersForInstitute() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException {
+    public void shouldCreateEntityOwnersForInstitute() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException, OwnerCreationException {
         String Institute = "Institute";
         when(definitionsManager.getOwnershipAttributes(Institute))
                 .thenReturn(Arrays.asList(
@@ -203,7 +203,7 @@ public class RegistryHelperTest {
     }
 
     @Test(expected = ValidationException.class)
-    public void shouldThrowErrorIfOwnershipAttributesAreIncomplete() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException {
+    public void shouldThrowErrorIfOwnershipAttributesAreIncomplete() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException, OwnerCreationException {
         String Institute = "Institute";
         when(definitionsManager.getOwnershipAttributes(Institute))
                 .thenReturn(Collections.singletonList(
@@ -216,14 +216,14 @@ public class RegistryHelperTest {
         registryHelper.createEntityOwners(institute, Institute);
     }
 
-    @Test(expected = EntityCreationException.class)
-    public void shouldThrowErrorIfNoOwnersAreCreated() throws DuplicateRecordException, EntityCreationException, JsonProcessingException, ValidationException {
+    @Test(expected = OwnerCreationException.class)
+    public void shouldThrowErrorIfNoOwnersAreCreated() throws DuplicateRecordException, EntityCreationException, JsonProcessingException, ValidationException, OwnerCreationException {
         String Institute = "Institute";
         when(definitionsManager.getOwnershipAttributes(Institute))
                 .thenReturn(Collections.singletonList(
                         OwnershipsAttributes.builder().mobile("").email("/email").userId("/email").build()
                 ));
-        when(keycloakAdminUtil.createUser(anyString(),anyString(), anyString(), any())).thenThrow(EntityCreationException.class);
+        when(keycloakAdminUtil.createUser(anyString(),anyString(), anyString(), any())).thenThrow(OwnerCreationException.class);
         ObjectNode institute = new ObjectMapper().createObjectNode();
         JsonNode inviteJson = new ObjectMapper().readTree("{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}");
         institute.set(Institute, inviteJson);

@@ -15,5 +15,7 @@
     <modules>
         <module>authorization</module>
         <module>validation</module>
+        <module>keycloak</module>
+        <module>workflow</module>
     </modules>
 </project>

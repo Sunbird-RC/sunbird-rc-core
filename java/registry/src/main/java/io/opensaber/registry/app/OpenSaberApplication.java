@@ -13,7 +13,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 @SpringBootApplication
-@ComponentScan(basePackages = { "io.opensaber.registry", "io.opensaber.pojos"})
+@ComponentScan(basePackages = { "io.opensaber.registry", "io.opensaber.pojos", "io.opensaber.keycloak", "io.opensaber.workflow"})
 public class OpenSaberApplication {
 	private static ApplicationContext context;
 	private static SpringApplication application = new SpringApplication(OpenSaberApplication.class);

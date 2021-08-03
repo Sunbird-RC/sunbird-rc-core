@@ -1,4 +1,4 @@
-package io.opensaber.registry.model.state;
+package io.opensaber.pojos.attestation;
 
 public enum Action {
     RAISE_CLAIM,

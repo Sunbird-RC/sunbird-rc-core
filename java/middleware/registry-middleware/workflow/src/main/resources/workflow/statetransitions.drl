@@ -1,10 +1,10 @@
-package io.opensaber.registry;
-import io.opensaber.registry.model.state.StateContext;
-import io.opensaber.registry.model.state.States;
+package io.opensaber.workflow;
+import io.opensaber.workflow.StateContext;
+import io.opensaber.pojos.attestation.States;
 
 dialect  "mvel"
-global io.opensaber.registry.util.KeycloakAdminUtil keycloakAdminUtil;
-global io.opensaber.registry.helper.EntityStateHelper entityStateHelper;
+global io.opensaber.keycloak.KeycloakAdminUtil keycloakAdminUtil;
+global io.opensaber.workflow.RuleEngineService ruleEngineService;
 
 rule "Set state as draft if there is a change"
     when
@@ -51,12 +51,12 @@ rule "Revert if any modification to ownership details"
     when
         stateDefinition:StateContext(isOwnershipProperty() && !isOwnerNewlyAdded() && isOwnershipDetailsUpdated());
     then
-        entityStateHelper.revertOwnershipDetails(stateDefinition);
+        ruleEngineService.revertOwnershipDetails(stateDefinition);
 end
 
 rule "Revert if any modifications to system fields"
     when
         stateDefinition:StateContext(revertSystemFieldsChangedEnabled());
     then
-        entityStateHelper.revertSystemFields(stateDefinition);
+        ruleEngineService.revertSystemFields(stateDefinition);
 end

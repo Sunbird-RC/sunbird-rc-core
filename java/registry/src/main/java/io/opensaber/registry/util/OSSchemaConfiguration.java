@@ -1,6 +1,7 @@
 package io.opensaber.registry.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.opensaber.pojos.OwnershipsAttributes;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import lombok.Data;
 
@@ -74,14 +75,6 @@ public class OSSchemaConfiguration {
 
     public String getConditions(String property) {
         return getAttestationPolicy(property).getConditions();
-    }
-
-    public List<String> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
     }
 
     private AttestationPolicy getAttestationPolicy(String property) {

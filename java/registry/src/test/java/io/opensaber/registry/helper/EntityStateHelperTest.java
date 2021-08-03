@@ -2,15 +2,16 @@ package io.opensaber.registry.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.opensaber.registry.config.KieConfiguration;
+import io.opensaber.keycloak.KeycloakAdminUtil;
+import io.opensaber.keycloak.OwnerCreationException;
+import io.opensaber.workflow.KieConfiguration;
 import io.opensaber.registry.exception.DuplicateRecordException;
 import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
 import io.opensaber.registry.middleware.util.Constants;
-import io.opensaber.registry.service.RuleEngineService;
+import io.opensaber.workflow.RuleEngineService;
 import io.opensaber.registry.util.ClaimRequestClient;
 import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.KeycloakAdminUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -111,21 +112,21 @@ public class EntityStateHelperTest {
     }
 
     @Test
-    public void shouldCreateNewOwnersForNewlyAddedOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException {
+    public void shouldCreateNewOwnersForNewlyAddedOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
         when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldAddNewOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"));
     }
 
     @Test
-    public void shouldNotCreateNewOwners() throws IOException, DuplicateRecordException, EntityCreationException {
+    public void shouldNotCreateNewOwners() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
         when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotAddNewOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"));
     }
 
     @Test
-    public void shouldNotModifyExistingOwners() throws IOException, DuplicateRecordException, EntityCreationException {
+    public void shouldNotModifyExistingOwners() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
         when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotModifyExistingOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"));

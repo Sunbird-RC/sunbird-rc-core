@@ -14,12 +14,12 @@ import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.attestation.AttestationPath;
 import io.opensaber.registry.model.attestation.EntityPropertyURI;
-import io.opensaber.registry.model.state.Action;
-import io.opensaber.registry.model.state.StateContext;
-import io.opensaber.registry.service.RuleEngineService;
+import io.opensaber.pojos.attestation.Action;
+import io.opensaber.workflow.RuleEngineService;
 import io.opensaber.registry.util.ClaimRequestClient;
 import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.OwnershipsAttributes;
+import io.opensaber.pojos.OwnershipsAttributes;
+import io.opensaber.workflow.StateContext;
 import net.minidev.json.JSONArray;
 import org.apache.commons.math3.util.Pair;
 import org.slf4j.Logger;
@@ -37,7 +37,6 @@ import static io.opensaber.registry.middleware.util.Constants.*;
 public class EntityStateHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(EntityStateHelper.class);
-    private static final String PATH = "path";
 
 
     @Value("${database.uuidPropertyName}")
@@ -65,11 +64,11 @@ public class EntityStateHelper {
         logger.info("Detecting state changes by comparing attestation paths in existing and the updated nodes");
         List<StateContext> allContexts = new ArrayList<>();
         addSystemFieldsStateTransition(existing, modified, entityName, allContexts);
-        ruleEngineService.doTransition(allContexts, this);
+        ruleEngineService.doTransition(allContexts);
         allContexts = new ArrayList<>();
         addAttestationStateTransitions(existing, entityName, modified, allContexts);
         addOwnershipStateTransitions(existing, entityName, updated, allContexts);
-        ruleEngineService.doTransition(allContexts, this);
+        ruleEngineService.doTransition(allContexts);
     }
 
     private void addSystemFieldsStateTransition(JsonNode existing, JsonNode modified, String entityName, List<StateContext> allContexts) {
@@ -204,7 +203,7 @@ public class EntityStateHelper {
                 .metadataNode(metadataNodePointer.getFirst())
                 .pointerFromMetadataNode(metadataNodePointer.getSecond())
                 .build();
-        ruleEngineService.doTransition(stateContext, this);
+        ruleEngineService.doTransition(stateContext);
         return root;
     }
 
@@ -289,36 +288,6 @@ public class EntityStateHelper {
         return new ObjectMapper().valueToTree(attestedData).toString();
     }
 
-    public void revertOwnershipDetails(StateContext stateContext) {
-        OwnershipsAttributes ownershipAttribute = stateContext.getOwnershipAttribute();
-        ObjectNode updatedNode = stateContext.getMetadataNode();
-        JsonNode existing = stateContext.getExisting();
-        String mobilePath = ownershipAttribute.getMobile();
-        String emailPath = ownershipAttribute.getEmail();
-        String userIdPath = ownershipAttribute.getUserId();
-        JSONUtil.replaceFieldByPointerPath(updatedNode, mobilePath, existing.get(MOBILE));
-        JSONUtil.replaceFieldByPointerPath(updatedNode, emailPath, existing.get(EMAIL));
-        JSONUtil.replaceFieldByPointerPath(updatedNode, userIdPath, existing.get(USER_ID));
-    }
 
-    public void revertSystemFields(StateContext stateContext) {
-        JsonNode updated = stateContext.getUpdated();
-        JsonNode existing = stateContext.getExisting();
-        ObjectNode metadataNode = stateContext.getMetadataNode();
-        JsonNode patchNodes = JSONUtil.diffJsonNode(existing, updated);
-        for (JsonNode patchNode : patchNodes) {
-            String updatedPath = patchNode.get(PATH).textValue();
-            for (OSSystemFields value : OSSystemFields.values()) {
-                if (updatedPath.contains(value.toString())) {
-                    String path = getPathToUpdate(updatedPath, value);
-                    JSONUtil.replaceFieldByPointerPath(metadataNode, path, existing.at(path));
-                }
-            }
-        }
-    }
-
-    private String getPathToUpdate(String updatedPath, OSSystemFields value) {
-        return updatedPath.substring(0, updatedPath.lastIndexOf(value.toString()) + value.toString().length());
-    }
 
 }
