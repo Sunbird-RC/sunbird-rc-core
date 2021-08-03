@@ -10,6 +10,12 @@
                 var mobileNumber = sessionStorage.getItem("mobile_number");
                 document.getElementById("mobile_number").value = mobileNumber;
                 document.getElementById("mobile-label").innerText = "Enter the code sent to " + mobileNumber;
+                if(window.location.protocol === "https:") {
+                    let formField = document.getElementById("kc-form-login");
+                    if (formField) {
+                        formField.action = formField.action.replace("http:","https:");
+                    }
+                }
             }
         </script>
     <#elseif section = "form">
