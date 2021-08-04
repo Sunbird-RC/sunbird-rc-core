@@ -1,20 +1,24 @@
 package io.opensaber.registry.service;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
+import io.minio.*;
 import io.minio.errors.*;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
 import io.opensaber.registry.model.dto.DocumentsResponse;
+import org.apache.poi.util.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class FileStorageService {
@@ -78,6 +82,53 @@ public class FileStorageService {
     private String getFileName(String objectPath, String file) {
         String uuid = UUID.randomUUID().toString();
         return objectPath + "/" + uuid + "-" + file;
+    }
+
+    public DocumentsResponse deleteFiles(List<String> files) {
+        DocumentsResponse documentsResponse = new DocumentsResponse();
+        List<DeleteObject> deleteObjects = files.stream().map(DeleteObject::new).collect(Collectors.toList());
+        Iterable<Result<DeleteError>> results = minioClient.removeObjects(RemoveObjectsArgs.builder()
+                        .objects(deleteObjects)
+                        .build());
+        for (Result<DeleteError> next : results) {
+            try {
+                documentsResponse.addFileName(next.get().bucketName());
+            } catch (Exception e) {
+                documentsResponse.addFileName("");
+                e.printStackTrace();
+            }
+        }
+        return documentsResponse;
+    }
+
+    public byte[] getDocument(String documentId) {
+        InputStream inputStream = null;
+        try {
+            inputStream = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(documentId)
+                            .build());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        byte[] bytes = new byte[0];
+        try {
+            bytes = IOUtils.toByteArray(inputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return bytes;
+    }
+
+    public ResponseEntity deleteDocument(String documentId) {
+        try {
+            minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(documentId).build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity(HttpStatus.OK);
     }
 }
 
