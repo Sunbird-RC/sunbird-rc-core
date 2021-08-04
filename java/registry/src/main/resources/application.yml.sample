@@ -255,7 +255,7 @@ filestorage:
   url: ${filestorage_connection_url:http://localhost:9500}
   accesskey: ${filestorage_access_key:XXXXX}
   secretkey: ${filestorage_secret_key:XXXXX}
-  bucketname: ${filestorage_secret_key:dummy}
+  bucketname: ${filestorage_bucket_key:dummy}
 
 ---
 ##################################################################
