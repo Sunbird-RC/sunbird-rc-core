@@ -1,5 +1,6 @@
 package io.opensaber.registry.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -12,9 +13,13 @@ import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
+import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.service.RegistryService;
 import io.opensaber.registry.service.SignatureService;
+import io.opensaber.registry.sink.shard.Shard;
+import io.opensaber.registry.sink.shard.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,8 +58,23 @@ public class RegistryUtilsController {
 	@Autowired
 	private OpenSaberInstrumentation watch;
 
+	@Autowired
+	private ShardManager shardManager;
+
+	@Autowired
+	RegistryHelper registryHelper;
+
+	@Autowired
+	private RegistryService registryService;
+
 	@Value("${frame.file}")
 	private String frameFile;
+
+	@Value("${audit.enabled}")
+	private boolean auditEnabled;
+
+	@Value("${audit.frame.store}")
+	public String auditStoreType;
 
 	@RequestMapping(value = "/utils/sign", method = RequestMethod.POST)
 	public ResponseEntity<Response> generateSignature(HttpServletRequest requestModel) {
@@ -208,5 +228,61 @@ public class RegistryUtilsController {
 		ModelAndView modelAndView = new ModelAndView();
 		modelAndView.setViewName("swagger-ui.html");
 		return modelAndView;
+	}
+
+	@RequestMapping(value = "/health", method = RequestMethod.GET)
+	public ResponseEntity<Response> registryHealth() {
+
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.HEALTH, "OK", responseParams);
+
+		try {
+			Shard shard = shardManager.getDefaultShard();
+			HealthCheckResponse healthCheckResult = registryService.health(shard);
+			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+			responseParams.setErrmsg("");
+			responseParams.setStatus(Response.Status.SUCCESSFUL);
+			logger.debug("Application heath checked : ", healthCheckResult.toString());
+		} catch (Exception e) {
+			logger.error("Error in health checking!", e);
+			HealthCheckResponse healthCheckResult = new HealthCheckResponse(Constants.OPENSABER_REGISTRY_API_NAME,
+					false, null);
+			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg("Error during health check");
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/audit", method = RequestMethod.POST)
+	public ResponseEntity<Response> fetchAudit() {
+		ResponseParams responseParams = new ResponseParams();
+		Response response = new Response(Response.API_ID.AUDIT, "OK", responseParams);
+		JsonNode payload = apiMessage.getRequest().getRequestMapNode();
+		if (auditEnabled && Constants.DATABASE.equals(auditStoreType)) {
+			try {
+				watch.start("RegistryController.audit");
+				JsonNode result = registryHelper.getAuditLog(payload);
+
+				response.setResult(result);
+				responseParams.setStatus(Response.Status.SUCCESSFUL);
+				watch.stop("RegistryController.searchEntity");
+
+			} catch (Exception e) {
+				logger.error("Error in getting audit log !", e);
+				logger.error("Exception in controller while searching entities !", e);
+				response.setResult("");
+				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+				responseParams.setErrmsg(e.getMessage());
+			}
+		} else {
+			response.setResult("");
+			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+			responseParams.setErrmsg("Audit is not enabled or file is chosen to store the audit");
+			return new ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
+		}
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 }

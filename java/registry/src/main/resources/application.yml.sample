@@ -28,6 +28,8 @@ perf:
     enabled: ${perf_monitoring_enabled:false}
 
 registry:
+  baseAPIS:
+    enable: ${registry_base_apis_enable:false}
   internalentities: >
     Student,
     Teacher,
@@ -185,6 +187,8 @@ keycloak:
 keycloak-admin:
   client-id: ${sunbird_sso_admin_client_id:client}
   client-secret: ${sunbird_sso_admin_client_secret:client_secret}
+keycloak-user:
+    default-password: opensaber@123
 claims:
   url: ${claims_url:http://localhost:8081}
 authentication:
