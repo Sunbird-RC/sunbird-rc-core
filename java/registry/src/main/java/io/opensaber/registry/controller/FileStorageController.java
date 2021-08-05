@@ -1,5 +1,6 @@
 package io.opensaber.registry.controller;
 
+import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.model.dto.DocumentsResponse;
 import io.opensaber.registry.service.FileStorageService;
 import org.springframework.http.HttpStatus;
@@ -14,12 +15,15 @@ import java.util.List;
 
 // TODO: authorize user | Get should be viewed by both attestor and reviewer
 // TODO: Modify Response of the post method
+// TODO: Add logging
 @Controller
 public class FileStorageController {
     private final FileStorageService fileStorageService;
+    private final RegistryHelper registryHelper;
 
-    FileStorageController(FileStorageService fileStorageService) {
+    FileStorageController(FileStorageService fileStorageService, RegistryHelper registryHelper) {
         this.fileStorageService = fileStorageService;
+        this.registryHelper = registryHelper;
     }
 
     @PostMapping("/api/v1/{entity}/{entityId}/{property}/documents")
@@ -28,7 +32,12 @@ public class FileStorageController {
                                                   @PathVariable String entityId,
                                                   @PathVariable String property,
                                                   HttpServletRequest httpServletRequest) {
-
+        try {
+            registryHelper.authorize(entity, entityId, httpServletRequest);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.FORBIDDEN);
+        }
         DocumentsResponse documentsResponse = fileStorageService.saveAndFetchFileNames(multipartFiles, httpServletRequest.getRequestURI());
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
     }
@@ -39,6 +48,12 @@ public class FileStorageController {
                                                     @PathVariable String property,
                                                     @RequestBody List<String> files,
                                                     HttpServletRequest httpServletRequest) {
+        try {
+            registryHelper.authorize(entity, entityId, httpServletRequest);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.FORBIDDEN);
+        }
         DocumentsResponse documentsResponse = fileStorageService.deleteFiles(files);
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
     }
@@ -49,6 +64,12 @@ public class FileStorageController {
                               @PathVariable String property,
                               @PathVariable String documentId,
                               HttpServletRequest httpServletRequest) {
+        try {
+            registryHelper.authorize(entity, entityId, httpServletRequest);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity(HttpStatus.FORBIDDEN);
+        }
         return fileStorageService.deleteDocument(httpServletRequest.getRequestURI());
     }
 
@@ -58,6 +79,7 @@ public class FileStorageController {
                                       @PathVariable String property,
                                       @PathVariable String documentId,
                                       HttpServletRequest httpServletRequest) {
+
         byte[] document = fileStorageService.getDocument(httpServletRequest.getRequestURI());
         return ResponseEntity.ok().body(document);
     }
