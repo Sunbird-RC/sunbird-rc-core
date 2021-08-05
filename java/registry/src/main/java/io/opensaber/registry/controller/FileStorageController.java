@@ -13,9 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-// TODO: authorize user | Get should be viewed by both attestor and reviewer
+// TODO: Get should be viewed by both attestor and reviewer
 // TODO: Modify Response of the post method
-// TODO: Add logging
 @Controller
 public class FileStorageController {
     private final FileStorageService fileStorageService;

@@ -7,6 +7,8 @@ import io.minio.messages.DeleteObject;
 import io.opensaber.registry.model.dto.DocumentsResponse;
 import org.apache.poi.util.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class FileStorageService {
-
+    private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
     private final MinioClient minioClient;
     private final String bucketName;
     private static final String CONTENT_TYPE_TEXT = "text/plain";
@@ -34,15 +36,18 @@ public class FileStorageService {
 
     public void save(InputStream inputStream, String objectName) throws Exception {
         if (!isBucketExists()) {
+            logger.info("Bucket {} doesn't exist creating new bucket", bucketName);
             createNewBucket();
             save(inputStream, objectName);
         }
+        logger.info("Saving the file in the location {}", objectName);
         minioClient.putObject(PutObjectArgs.builder()
                 .bucket(bucketName)
                 .object(objectName)
                 .stream(inputStream, -1, 10485760)
                 .contentType(CONTENT_TYPE_TEXT)
                 .build());
+        logger.info("File has successfully saved");
     }
 
     private void createNewBucket() throws ErrorResponseException, InsufficientDataException, InternalException, InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
@@ -64,12 +69,14 @@ public class FileStorageService {
 
         DocumentsResponse documentsResponse = new DocumentsResponse();
         for (MultipartFile file : files) {
+            String fileName = getFileName(file.getOriginalFilename());
             try {
-                String objectName = objectPath + "/" + getFileName(file.getOriginalFilename());
+                String objectName = objectPath + "/" + fileName;
                 save(file.getInputStream(), objectName);
-                documentsResponse.addDocumentLocation(objectName);
+                documentsResponse.addDocumentLocation(fileName);
             } catch (Exception e) {
                 documentsResponse.addError(file.getOriginalFilename());
+                logger.error("Error has occurred while trying to save the file {}", fileName);
                 e.printStackTrace();
             }
         }
@@ -99,6 +106,7 @@ public class FileStorageService {
             try {
                 documentsResponse.addError(result.get().bucketName());
             } catch (Exception e) {
+                logger.error("Error has occurred while fetching the delete error result {}", e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -116,6 +124,7 @@ public class FileStorageService {
                             .build());
             bytes = IOUtils.toByteArray(inputStream);
         } catch (Exception e) {
+            logger.error("Error has occurred while fetching the document {} {}", objectName,  e.getMessage());
             e.printStackTrace();
         }
         return bytes;
@@ -126,6 +135,7 @@ public class FileStorageService {
         try {
             minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
         } catch (Exception e) {
+            logger.error("Error has occurred while deleting the document {}", objectName);
             e.printStackTrace();
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
