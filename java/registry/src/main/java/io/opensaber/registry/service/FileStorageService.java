@@ -60,70 +60,71 @@ public class FileStorageService {
     }
 
     public DocumentsResponse saveAndFetchFileNames(MultipartFile[] files, String requestedURI) {
-        String versionDelimiter = "/v1/";
-        String[] split = requestedURI.split(versionDelimiter);
-        String objectPath = split[1];
+        String objectPath = getDirectoryPath(requestedURI);
 
         DocumentsResponse documentsResponse = new DocumentsResponse();
         for (MultipartFile file : files) {
             try {
-                String objectName = getFileName(objectPath, file.getOriginalFilename());
+                String objectName = objectPath + "/" + getFileName(file.getOriginalFilename());
                 save(file.getInputStream(), objectName);
                 documentsResponse.addDocumentLocation(objectName);
             } catch (Exception e) {
-                documentsResponse.addFileName(file.getOriginalFilename());
+                documentsResponse.addError(file.getOriginalFilename());
                 e.printStackTrace();
             }
         }
         return documentsResponse;
     }
 
+    private String getDirectoryPath(String requestedURI) {
+        String versionDelimiter = "/v1/";
+        String[] split = requestedURI.split(versionDelimiter);
+        return split[1];
+    }
+
     @NotNull
-    private String getFileName(String objectPath, String file) {
+    private String getFileName(String file) {
         String uuid = UUID.randomUUID().toString();
-        return objectPath + "/" + uuid + "-" + file;
+        return uuid + "-" + file;
     }
 
     public DocumentsResponse deleteFiles(List<String> files) {
         DocumentsResponse documentsResponse = new DocumentsResponse();
         List<DeleteObject> deleteObjects = files.stream().map(DeleteObject::new).collect(Collectors.toList());
         Iterable<Result<DeleteError>> results = minioClient.removeObjects(RemoveObjectsArgs.builder()
+                        .bucket(bucketName)
                         .objects(deleteObjects)
                         .build());
-        for (Result<DeleteError> next : results) {
+        for (Result<DeleteError> result : results) {
             try {
-                documentsResponse.addFileName(next.get().bucketName());
+                documentsResponse.addError(result.get().bucketName());
             } catch (Exception e) {
-                documentsResponse.addFileName("");
                 e.printStackTrace();
             }
         }
         return documentsResponse;
     }
 
-    public byte[] getDocument(String documentId) {
-        InputStream inputStream = null;
-        try {
-            inputStream = minioClient.getObject(
-                    GetObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(documentId)
-                            .build());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public byte[] getDocument(String requestedURI) {
+        String objectName = getDirectoryPath(requestedURI);
         byte[] bytes = new byte[0];
         try {
+            InputStream inputStream = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .build());
             bytes = IOUtils.toByteArray(inputStream);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return bytes;
     }
 
-    public ResponseEntity deleteDocument(String documentId) {
+    public ResponseEntity deleteDocument(String requestedURI) {
+        String objectName = getDirectoryPath(requestedURI);
         try {
-            minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(documentId).build());
+            minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -131,4 +132,3 @@ public class FileStorageService {
         return new ResponseEntity(HttpStatus.OK);
     }
 }
-

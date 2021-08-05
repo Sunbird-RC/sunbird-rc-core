@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 // TODO: authorize user | Get should be viewed by both attestor and reviewer
+// TODO: Modify Response of the post method
 @Controller
 public class FileStorageController {
     private final FileStorageService fileStorageService;
@@ -48,15 +49,16 @@ public class FileStorageController {
                               @PathVariable String property,
                               @PathVariable String documentId,
                               HttpServletRequest httpServletRequest) {
-        return fileStorageService.deleteDocument(documentId);
+        return fileStorageService.deleteDocument(httpServletRequest.getRequestURI());
     }
 
     @GetMapping(value = "/api/v1/{entity}/{entityId}/{property}/documents/{documentId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public byte[] get(@PathVariable String entity,
-                              @PathVariable String entityId,
-                              @PathVariable String property,
-                              @PathVariable String documentId,
-                              HttpServletRequest httpServletRequest) {
-        return fileStorageService.getDocument(documentId);
+    public ResponseEntity<byte[]> get(@PathVariable String entity,
+                                      @PathVariable String entityId,
+                                      @PathVariable String property,
+                                      @PathVariable String documentId,
+                                      HttpServletRequest httpServletRequest) {
+        byte[] document = fileStorageService.getDocument(httpServletRequest.getRequestURI());
+        return ResponseEntity.ok().body(document);
     }
 }

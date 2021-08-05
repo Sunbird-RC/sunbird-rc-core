@@ -16,7 +16,7 @@ public class DocumentsResponse {
         documentLocations.add(objectName);
     }
 
-    public void addFileName(String fileName) {
+    public void addError(String fileName) {
         errors.add(fileName);
     }
 }
