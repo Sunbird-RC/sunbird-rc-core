@@ -114,7 +114,7 @@ public class RegistryHelper {
      */
     public String addEntity(JsonNode inputJson, String userId) throws Exception {
         String entityType = inputJson.fields().next().getKey();
-        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson));
+        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), false);
         ObjectNode existingNode = objectMapper.createObjectNode();
         existingNode.set(entityType, objectMapper.createObjectNode());
         entityStateHelper.applyStateTransitions(existingNode, inputJson);
@@ -123,8 +123,8 @@ public class RegistryHelper {
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
         String entityType = inputJson.fields().next().getKey();
-        validationService.validateIgnoreRequired(entityType, objectMapper.writeValueAsString(inputJson));
-        createEntityOwners(inputJson, entityType);
+        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), true);
+        entityStateHelper.applyStateTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson);
         return addEntity(inputJson, userId, entityType);
     }
 
@@ -294,7 +294,7 @@ public class RegistryHelper {
         logger.debug("updateEntity starts");
         String entityType = inputJson.fields().next().getKey();
         String jsonString = objectMapper.writeValueAsString(inputJson);
-        validationService.validateIgnoreRequired(entityType, jsonString);
+        validationService.validate(entityType, jsonString, true);
         Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
         String label = inputJson.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
         RecordIdentifier recordId = RecordIdentifier.parse(label);
@@ -354,7 +354,7 @@ public class RegistryHelper {
             ArrayNode newPropertyNode = objectMapper.createArrayNode().add(inputJson);
             ((ObjectNode) parentNode).set(propertyName, newPropertyNode);
             try {
-                validationService.validate(entityName, objectMapper.writeValueAsString(updateNode));
+                validationService.validate(entityName, objectMapper.writeValueAsString(updateNode), false);
             } catch (MiddlewareHaltException me) {
                 // try a field node since array validation failed
                 ((ObjectNode) parentNode).set(propertyName, inputJson);

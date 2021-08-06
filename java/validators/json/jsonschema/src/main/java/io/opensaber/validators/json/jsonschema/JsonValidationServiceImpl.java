@@ -1,10 +1,7 @@
 package io.opensaber.validators.json.jsonschema;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.validators.IValidate;
-import org.apache.logging.log4j.util.Strings;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -56,16 +53,7 @@ public class JsonValidationServiceImpl implements IValidate {
 	}
 
 	@Override
-	public void validate(String entityType, String objString) throws MiddlewareHaltException {
-		validate(entityType, objString, false);
-	}
-
-	@Override
-	public void validateIgnoreRequired(String entityType, String payload) throws MiddlewareHaltException {
-		validate(entityType, payload, true);
-	}
-
-	private void validate(String entityType, String objString, boolean ignoreRequired) throws MiddlewareHaltException {
+	public void validate(String entityType, String objString, boolean ignoreRequiredFields) throws MiddlewareHaltException {
 		Schema schema = getEntitySchema(entityType);
 		if (schema != null) {
 			JSONObject obj = new JSONObject(objString);
@@ -73,7 +61,7 @@ public class JsonValidationServiceImpl implements IValidate {
 				schema.validate(obj); // throws a ValidationException if this object is invalid
 			} catch (ValidationException e) {
 				logger.error("Validation Exception : " + e.getAllMessages());
-				if (ignoreRequired) {
+				if (ignoreRequiredFields) {
 					List<ValidationException> flattenedExceptions = flattenException(e).stream()
 							.filter(ve -> !ve.getKeyword().equals(REQUIRED_KEYWORD))
 							.collect(Collectors.toList());

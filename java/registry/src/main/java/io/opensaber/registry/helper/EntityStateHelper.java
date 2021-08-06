@@ -7,18 +7,16 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import io.opensaber.pojos.OwnershipsAttributes;
+import io.opensaber.pojos.attestation.Action;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.dto.ClaimDTO;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
-import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.attestation.AttestationPath;
 import io.opensaber.registry.model.attestation.EntityPropertyURI;
-import io.opensaber.pojos.attestation.Action;
-import io.opensaber.workflow.RuleEngineService;
 import io.opensaber.registry.util.ClaimRequestClient;
 import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.pojos.OwnershipsAttributes;
+import io.opensaber.workflow.RuleEngineService;
 import io.opensaber.workflow.StateContext;
 import net.minidev.json.JSONArray;
 import org.apache.commons.math3.util.Pair;
@@ -103,9 +101,9 @@ public class EntityStateHelper {
         String emailPath = ownershipAttribute.getEmail();
         String userIdPath = ownershipAttribute.getUserId();
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
-        objectNode.put(MOBILE, entityNode.get(entityName).at(mobilePath).asText(""));
-        objectNode.put(EMAIL, entityNode.get(entityName).at(emailPath).asText(""));
-        objectNode.put(USER_ID, entityNode.get(entityName).at(userIdPath).asText(""));
+        objectNode.put(MOBILE, entityNode.at(String.format("/%s%s", entityName, mobilePath)).asText(""));
+        objectNode.put(EMAIL, entityNode.at(String.format("/%s%s", entityName, emailPath)).asText(""));
+        objectNode.put(USER_ID, entityNode.at(String.format("/%s%s", entityName, userIdPath)).asText(""));
         return objectNode;
     }
 
@@ -287,7 +285,6 @@ public class EntityStateHelper {
         }
         return new ObjectMapper().valueToTree(attestedData).toString();
     }
-
 
 
 }

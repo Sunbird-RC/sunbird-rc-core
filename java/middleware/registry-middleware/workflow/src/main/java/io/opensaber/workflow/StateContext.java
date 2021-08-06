@@ -2,6 +2,7 @@ package io.opensaber.workflow;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -18,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,9 +109,13 @@ public class StateContext {
         return jsonNode == null || jsonNode.get(key) == null ? null : jsonNode.get(key).textValue();
     }
 
-    public void addOwner(String owner) {
+    public void addOwner(String owner) throws IOException {
         ArrayNode arrayNode = (ArrayNode) metadataNode.get(OSSystemFields.osOwner.toString());
-        arrayNode.add(owner);
+        if (arrayNode == null) {
+            metadataNode.set(OSSystemFields.osOwner.toString(), new ObjectMapper().readTree("[\"" + owner + "\"]"));
+        } else {
+            arrayNode.add(owner);
+        }
     }
 
     public boolean isAttestationProperty() {
