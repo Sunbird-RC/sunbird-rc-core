@@ -128,40 +128,6 @@ public class RegistryHelper {
         return addEntity(inputJson, userId, entityType);
     }
 
-    void createEntityOwners(JsonNode inputJson, String entityType) throws ValidationException, OwnerCreationException {
-        List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityType);
-        if (ownershipAttributes.size() > 0) {
-            List<String> owners = new ArrayList<>();
-            for (OwnershipsAttributes ownershipAttribute : ownershipAttributes) {
-                if (ownershipAttribute.isValid()) {
-                    throw new ValidationException(String.format("Ownership attributes not configured for entity: %s", entityType));
-                } else {
-                    JsonNode emailNode = inputJson.get(entityType).at(ownershipAttribute.getEmail());
-                    JsonNode mobileNode = inputJson.get(entityType).at(ownershipAttribute.getMobile());
-                    JsonNode userIdNode = inputJson.get(entityType).at(ownershipAttribute.getUserId());
-                    if (validateOwnershipDetails(mobileNode, userIdNode, emailNode)) {
-                        String owner = keycloakAdminUtil.createUser(entityType, userIdNode.textValue(), emailNode.textValue(), mobileNode.textValue());
-                        owners.add(owner);
-                    } else {
-                        if (owners.size() == 0) {
-                            throw new ValidationException(String.format("Missing required field for invitation: %s, %s, %s", ownershipAttribute.getEmail(), ownershipAttribute.getMobile(), ownershipAttribute.getUserId()));
-                        }
-                    }
-                }
-            }
-            OSSystemFields.osOwner.setOsOwner(inputJson.get(entityType), owners);
-        } else {
-            throw new ValidationException(String.format("Ownership attributes not configured for entity: %s", entityType));
-        }
-    }
-
-    private boolean validateOwnershipDetails(JsonNode mobileNode, JsonNode userIdNode, JsonNode emailNode) {
-        if (userIdNode.isMissingNode() && (mobileNode.isMissingNode() || emailNode.isMissingNode())) {
-            return false;
-        }
-        return true;
-    }
-
     private String addEntity(JsonNode inputJson, String userId, String entityType) throws Exception {
         RecordIdentifier recordId = null;
         try {

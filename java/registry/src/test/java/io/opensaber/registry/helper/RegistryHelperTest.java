@@ -200,65 +200,6 @@ public class RegistryHelperTest {
         assertEquals(propertyId, actualPropertyId);
     }
 
-    @Test
-    public void shouldCreateEntityOwners() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException, OwnerCreationException {
-        String Institute = "Institute";
-        when(definitionsManager.getOwnershipAttributes(Institute))
-                .thenReturn(Arrays.asList(
-                        OwnershipsAttributes.builder().mobile("/contactNumber").email("/email").userId("/email").build(),
-                        OwnershipsAttributes.builder().mobile("/adminMobile").email("/adminEmail").userId("/adminEmail").build()
-                ));
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn(UUID.randomUUID().toString());
-        ObjectNode institute = new ObjectMapper().createObjectNode();
-        JsonNode inviteJson = new ObjectMapper().readTree("{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}");
-        institute.set(Institute, inviteJson);
-        registryHelper.createEntityOwners(institute, Institute);
-        assertEquals(1, institute.get(Institute).get("osOwner").size());
-    }
-
-    @Test
-    public void shouldCreateEntityOwnersForInstitute() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException, OwnerCreationException {
-        String Institute = "Institute";
-        when(definitionsManager.getOwnershipAttributes(Institute))
-                .thenReturn(Arrays.asList(
-                        OwnershipsAttributes.builder().mobile("").email("/email").userId("/email").build(),
-                        OwnershipsAttributes.builder().mobile("/adminMobile").email("/adminEmail").userId("/adminEmail").build()
-                ));
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn(UUID.randomUUID().toString());
-        ObjectNode institute = new ObjectMapper().createObjectNode();
-        JsonNode inviteJson = new ObjectMapper().readTree("{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}");
-        institute.set(Institute, inviteJson);
-        registryHelper.createEntityOwners(institute, Institute);
-        assertEquals(1, institute.get(Institute).get("osOwner").size());
-    }
-
-    @Test(expected = ValidationException.class)
-    public void shouldThrowErrorIfOwnershipAttributesAreIncomplete() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException, OwnerCreationException {
-        String Institute = "Institute";
-        when(definitionsManager.getOwnershipAttributes(Institute))
-                .thenReturn(Collections.singletonList(
-                        OwnershipsAttributes.builder().mobile("").email("/email").userId("").build()
-                ));
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn(UUID.randomUUID().toString());
-        ObjectNode institute = new ObjectMapper().createObjectNode();
-        JsonNode inviteJson = new ObjectMapper().readTree("{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}");
-        institute.set(Institute, inviteJson);
-        registryHelper.createEntityOwners(institute, Institute);
-    }
-
-    @Test(expected = OwnerCreationException.class)
-    public void shouldThrowErrorIfNoOwnersAreCreated() throws DuplicateRecordException, EntityCreationException, JsonProcessingException, ValidationException, OwnerCreationException {
-        when(definitionsManager.getOwnershipAttributes(INSTITUTE))
-                .thenReturn(Collections.singletonList(
-                        OwnershipsAttributes.builder().mobile("").email("/email").userId("/email").build()
-                ));
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), any())).thenThrow(OwnerCreationException.class);
-        ObjectNode institute = new ObjectMapper().createObjectNode();
-        JsonNode inviteJson = new ObjectMapper().readTree("{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}");
-        institute.set(INSTITUTE, inviteJson);
-        registryHelper.createEntityOwners(institute, INSTITUTE);
-    }
-
     @Captor
     ArgumentCaptor<Shard> shardCapture;
     @Captor
