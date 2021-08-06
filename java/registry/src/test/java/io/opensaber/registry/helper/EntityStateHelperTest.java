@@ -69,7 +69,7 @@ public class EntityStateHelperTest {
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
         EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
-        entityStateHelper.applyStateTransitions(existing, updated);
+        entityStateHelper.applyWorkflowTransitions(existing, updated);
         assertEquals(expected, updated);
     }
 

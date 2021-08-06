@@ -1,6 +1,7 @@
 package io.opensaber.registry.helper;
 
 import com.fasterxml.jackson.core.JsonPointer;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,9 +11,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.keycloak.KeycloakAdminUtil;
-import io.opensaber.keycloak.OwnerCreationException;
 import io.opensaber.pojos.OpenSaberInstrumentation;
-import io.opensaber.pojos.OwnershipsAttributes;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
@@ -27,7 +26,6 @@ import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.*;
 import io.opensaber.validators.IValidate;
-import io.opensaber.validators.ValidationException;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
@@ -117,14 +115,14 @@ public class RegistryHelper {
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), false);
         ObjectNode existingNode = objectMapper.createObjectNode();
         existingNode.set(entityType, objectMapper.createObjectNode());
-        entityStateHelper.applyStateTransitions(existingNode, inputJson);
+        entityStateHelper.applyWorkflowTransitions(existingNode, inputJson);
         return addEntity(inputJson, userId, entityType);
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
         String entityType = inputJson.fields().next().getKey();
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), true);
-        entityStateHelper.applyStateTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson);
+        entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson);
         return addEntity(inputJson, userId, entityType);
     }
 
@@ -256,7 +254,7 @@ public class RegistryHelper {
      * @return
      * @throws Exception
      */
-    private String updateEntityNoStateChange(JsonNode inputJson, String userId) throws Exception {
+    private String updateEntity(JsonNode inputJson, String userId) throws Exception {
         logger.debug("updateEntity starts");
         String entityType = inputJson.fields().next().getKey();
         String jsonString = objectMapper.writeValueAsString(inputJson);
@@ -270,18 +268,17 @@ public class RegistryHelper {
         return "SUCCESS";
     }
 
-    public String updateEntity(JsonNode inputJson, String userId) throws Exception {
+    public String updateEntityAndState(JsonNode inputJson, String userId) throws Exception {
         JsonNode existingNode = readEntity(inputJson, userId);
         return updateEntityAndState(existingNode, inputJson, userId);
     }
 
     private String updateEntityAndState(JsonNode existingNode, JsonNode updatedNode, String userId) throws Exception {
-        entityStateHelper.applyStateTransitions(existingNode, updatedNode);
-        return updateEntityNoStateChange(updatedNode, userId);
+        entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode);
+        return updateEntity(updatedNode, userId);
     }
 
     public void addEntityProperty(String entityName, String entityId, String propertyURI, JsonNode inputJson) throws Exception {
-        String userId = "";
         JsonNode existingNode = readEntity("", entityName, entityId, false, null, false);
         JsonNode updateNode = existingNode.deepCopy();
 
@@ -289,48 +286,64 @@ public class RegistryHelper {
         String propertyName = propertyURIPointer.last().getMatchingProperty();
         String parentURIPointer = propertyURIPointer.head().toString();
 
+        JsonNode parentNode = getParentNode(entityName, updateNode, parentURIPointer);
+        JsonNode propertyNode = parentNode.get(propertyName);
+
+        createOrUpdateProperty(entityName, inputJson, updateNode, propertyName, (ObjectNode) parentNode, propertyNode);
+        updateEntityAndState(existingNode, updateNode, "");
+    }
+
+    private void createOrUpdateProperty(String entityName, JsonNode inputJson, JsonNode updateNode, String propertyName, ObjectNode parentNode, JsonNode propertyNode) throws JsonProcessingException {
+        if (propertyNode != null && !propertyNode.isMissingNode()) {
+            updateProperty(inputJson, propertyName, parentNode, propertyNode);
+        } else {
+            // if array property
+            createProperty(entityName, inputJson, updateNode, propertyName, parentNode);
+        }
+    }
+
+    private void createProperty(String entityName, JsonNode inputJson, JsonNode updateNode, String propertyName, ObjectNode parentNode) throws JsonProcessingException {
+        ArrayNode newPropertyNode = objectMapper.createArrayNode().add(inputJson);
+        parentNode.set(propertyName, newPropertyNode);
+        try {
+            validationService.validate(entityName, objectMapper.writeValueAsString(updateNode), false);
+        } catch (MiddlewareHaltException me) {
+            // try a field node since array validation failed
+            parentNode.set(propertyName, inputJson);
+        }
+    }
+
+    private void updateProperty(JsonNode inputJson, String propertyName, ObjectNode parentNode, JsonNode propertyNode) {
+        if (propertyNode.isArray()) {
+            ((ArrayNode) propertyNode).add(inputJson);
+        } else if (propertyNode.isObject()) {
+            inputJson.fields().forEachRemaining(f -> {
+                ((ObjectNode) propertyNode).set(f.getKey(), f.getValue());
+            });
+        } else {
+            parentNode.set(propertyName, inputJson);
+        }
+    }
+
+    private JsonNode getParentNode(String entityName, JsonNode jsonNode, String parentURIPointer) throws Exception {
         JsonNode parentNode;
         if (parentURIPointer.equals("")) {
-            parentNode = updateNode.get(entityName);
+            parentNode = jsonNode.get(entityName);
         } else {
             Optional<EntityPropertyURI> parentURI = EntityPropertyURI.fromEntityAndPropertyURI(
-                    updateNode.get(entityName),
+                    jsonNode.get(entityName),
                     parentURIPointer,
                     uuidPropertyName
             );
             if (!parentURI.isPresent()) {
                 throw new Exception(parentURI + " does not exist");
             }
-            parentNode = updateNode.get(entityName).at(parentURI.get().getJsonPointer());
+            parentNode = jsonNode.get(entityName).at(parentURI.get().getJsonPointer());
         }
-        JsonNode propertyNode = parentNode.get(propertyName);
-
-        if (propertyNode != null && !propertyNode.isMissingNode()) {
-            if (propertyNode.isArray()) {
-                ((ArrayNode) propertyNode).add(inputJson);
-            } else if (propertyNode.isObject()) {
-                inputJson.fields().forEachRemaining(f -> {
-                    ((ObjectNode) propertyNode).set(f.getKey(), f.getValue());
-                });
-            } else {
-                ((ObjectNode) parentNode).set(propertyName, inputJson);
-            }
-        } else {
-            // if array property
-            ArrayNode newPropertyNode = objectMapper.createArrayNode().add(inputJson);
-            ((ObjectNode) parentNode).set(propertyName, newPropertyNode);
-            try {
-                validationService.validate(entityName, objectMapper.writeValueAsString(updateNode), false);
-            } catch (MiddlewareHaltException me) {
-                // try a field node since array validation failed
-                ((ObjectNode) parentNode).set(propertyName, inputJson);
-            }
-        }
-        updateEntityAndState(existingNode, updateNode, "");
+        return parentNode;
     }
 
     public void updateEntityProperty(String entityName, String entityId, String propertyURI, JsonNode inputJson) throws Exception {
-        String userId = "";
         JsonNode existingNode = readEntity("", entityName, entityId, false, null, false);
         JsonNode updateNode = existingNode.deepCopy();
 
@@ -359,13 +372,13 @@ public class RegistryHelper {
     public void attestEntity(String entityName, JsonNode node, String[] jsonPaths, String userId) throws Exception {
         String patch = String.format("[{\"op\":\"add\", \"path\": \"attested\", \"value\": {\"attestation\":{\"id\":\"%s\"}, \"path\": \"%s\"}}]", userId, jsonPaths[0]);
         JsonPatch.applyInPlace(objectMapper.readTree(patch), node.get(entityName));
-        updateEntityNoStateChange(node, userId);
+        updateEntity(node, userId);
     }
 
     public void sendForAttestation(String entityName, String entityId, String propertyURI) throws Exception {
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
         JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, propertyURI);
-        updateEntityNoStateChange(updatedNode, "");
+        updateEntity(updatedNode, "");
     }
 
     public void attest(String entityName, String entityId, String uuidPath, JsonNode attestReq) throws Exception {
@@ -376,7 +389,7 @@ public class RegistryHelper {
         } else {
             updatedNode = entityStateHelper.rejectClaim(entityNode, uuidPath, attestReq.get("notes").asText());
         }
-        updateEntityNoStateChange(updatedNode, "");
+        updateEntity(updatedNode, "");
     }
 
     /**

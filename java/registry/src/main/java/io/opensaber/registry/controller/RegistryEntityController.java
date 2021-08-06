@@ -107,7 +107,7 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             // TODO: get userID from auth header
-            registryHelper.updateEntity(newRootNode, "");
+            registryHelper.updateEntityAndState(newRootNode, "");
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);

@@ -1,15 +1,11 @@
 package io.opensaber.registry.helper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.keycloak.KeycloakAdminUtil;
-import io.opensaber.keycloak.OwnerCreationException;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.OwnershipsAttributes;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EntityCreationException;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
@@ -24,7 +20,6 @@ import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ViewTemplateManager;
 import io.opensaber.validators.IValidate;
-import io.opensaber.validators.ValidationException;
 import io.opensaber.workflow.KieConfiguration;
 import io.opensaber.workflow.RuleEngineService;
 import org.junit.Before;
@@ -40,13 +35,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)

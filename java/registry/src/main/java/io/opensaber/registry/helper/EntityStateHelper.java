@@ -56,7 +56,7 @@ public class EntityStateHelper {
         this.claimRequestClient = claimRequestClient;
     }
 
-    public void applyStateTransitions(JsonNode existing, JsonNode updated) {
+    void applyWorkflowTransitions(JsonNode existing, JsonNode updated) {
         String entityName = updated.fields().next().getKey();
         JsonNode modified = updated.get(entityName);
         logger.info("Detecting state changes by comparing attestation paths in existing and the updated nodes");
@@ -138,19 +138,19 @@ public class EntityStateHelper {
         }
     }
 
-    public JsonNode sendForAttestation(JsonNode entityNode, String propertyURL) throws Exception {
+    JsonNode sendForAttestation(JsonNode entityNode, String propertyURL) throws Exception {
         logger.info("Sending {} for attestation", propertyURL);
         return manageState(entityNode, propertyURL, Action.RAISE_CLAIM, JsonNodeFactory.instance.objectNode());
     }
 
-    public JsonNode grantClaim(JsonNode entityNode, String propertyURI, String notes) throws Exception {
+    JsonNode grantClaim(JsonNode entityNode, String propertyURI, String notes) throws Exception {
         logger.info("Claim related to {} marked as granted. Adding attestedData to metadata", propertyURI);
         ObjectNode metaData = JsonNodeFactory.instance.objectNode();
         metaData.set("notes", JsonNodeFactory.instance.textNode(notes));
         return manageState(entityNode, propertyURI, Action.GRANT_CLAIM, metaData);
     }
 
-    public JsonNode rejectClaim(JsonNode entityNode, String propertyURI, String notes) throws Exception {
+    JsonNode rejectClaim(JsonNode entityNode, String propertyURI, String notes) throws Exception {
         logger.info("Claim related to {} marked as rejected. Adding notes to metadata", propertyURI);
         ObjectNode metaData = JsonNodeFactory.instance.objectNode();
         metaData.set("notes", JsonNodeFactory.instance.textNode(notes));
@@ -215,7 +215,7 @@ public class EntityStateHelper {
         }
     }
 
-    public Optional<AttestationPolicy> getMatchingAttestationPolicy(String entityName, JsonNode rootNode, String uuidPath) {
+    private Optional<AttestationPolicy> getMatchingAttestationPolicy(String entityName, JsonNode rootNode, String uuidPath) {
         int uuidPathDepth = uuidPath.split("/").length;
         String matchingUUIDPath = "/" + uuidPath;
         for (AttestationPolicy policy : definitionsManager.getAttestationPolicy(entityName)) {
@@ -229,7 +229,7 @@ public class EntityStateHelper {
         return Optional.empty();
     }
 
-    public String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode, AttestationPolicy attestationPolicy, String requestorName) {
+    private String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode, AttestationPolicy attestationPolicy, String requestorName) {
         String resolvedConditions = conditionResolverService.resolve(metadataNode, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
         ClaimDTO claimDTO = new ClaimDTO();
         claimDTO.setEntity(entityName);
