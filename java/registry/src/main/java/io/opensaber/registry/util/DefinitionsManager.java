@@ -2,6 +2,7 @@ package io.opensaber.registry.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opensaber.pojos.OwnershipsAttributes;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.middleware.util.Constants;
 
@@ -12,10 +13,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 
-import io.opensaber.registry.model.attestation.AttestationPath;
 import org.apache.commons.collections.map.HashedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

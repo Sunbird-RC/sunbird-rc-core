@@ -1,32 +1,33 @@
-package io.opensaber.registry.model.state;
+package io.opensaber.workflow;
 
 import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.pojos.OwnershipsAttributes;
+import io.opensaber.pojos.attestation.Action;
 import io.opensaber.pojos.attestation.AttestationPolicy;
-import io.opensaber.registry.helper.EntityStateHelper;
+import io.opensaber.pojos.attestation.States;
+import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
-import io.opensaber.registry.util.Definition;
-import io.opensaber.registry.util.OwnershipsAttributes;
+import io.opensaber.registry.middleware.util.OSSystemFields;
 import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static io.opensaber.registry.middleware.util.Constants.*;
-import static io.opensaber.registry.middleware.util.OSSystemFields.osOwner;
 
 @Builder
 @Getter
 public class StateContext {
 
-    private static final Logger logger = LoggerFactory.getLogger(EntityStateHelper.class);
+    private static final Logger logger = LoggerFactory.getLogger(StateContext.class);
 
     private String entityName;
     private JsonNode existing;
@@ -34,8 +35,9 @@ public class StateContext {
     private AttestationPolicy attestationPolicy;
     private ObjectNode metadataNode;
     private JsonPointer pointerFromMetadataNode;
-    private Definition definition;
     private OwnershipsAttributes ownershipAttribute;
+    @Builder.Default
+    private boolean revertSystemFields = false;
 
     @Builder.Default
     private Action action = Action.SET_TO_DRAFT;
@@ -77,19 +79,19 @@ public class StateContext {
     }
 
     public void setState(States destinationState) throws Exception {
-        setMetadata("_osState", JsonNodeFactory.instance.textNode(destinationState.toString()));
+        setMetadata(OSSystemFields._osState.toString(), JsonNodeFactory.instance.textNode(destinationState.toString()));
     }
 
     public void setClaimId() throws Exception {
-        setMetadata("_osClaimId", metaData.get("claimId"));
+        setMetadata(OSSystemFields._osClaimId.toString(), metaData.get("claimId"));
     }
 
     public void setNotes() throws Exception {
-        setMetadata("_osClaimNotes", metaData.get("notes"));
+        setMetadata(OSSystemFields._osClaimNotes.toString(), metaData.get("notes"));
     }
 
     public void setAttestationData() throws Exception {
-        setMetadata("_osAttestedData", metaData.get("attestedData"));
+        setMetadata(OSSystemFields._osAttestedData.toString(), metaData.get("attestedData"));
     }
 
     public JsonNode getUpdatedNode() {
@@ -97,8 +99,8 @@ public class StateContext {
     }
 
     public boolean isOwnerNewlyAdded() {
-        if (StringUtils.isEmpty(getStringValue(existing, USER_ID)) && (StringUtils.isEmpty(getStringValue(existing, EMAIL)) || StringUtils.isEmpty(getStringValue(existing, MOBILE)))) {
-            return !StringUtils.isEmpty(getStringValue(updated, USER_ID)) && (!StringUtils.isEmpty(getStringValue(updated, EMAIL)) || !StringUtils.isEmpty(getStringValue(updated, MOBILE)));
+        if (StringUtils.isEmpty(getStringValue(existing, Constants.USER_ID)) && (StringUtils.isEmpty(getStringValue(existing, Constants.EMAIL)) || StringUtils.isEmpty(getStringValue(existing, Constants.MOBILE)))) {
+            return !StringUtils.isEmpty(getStringValue(updated, Constants.USER_ID)) && (!StringUtils.isEmpty(getStringValue(updated, Constants.EMAIL)) || !StringUtils.isEmpty(getStringValue(updated, Constants.MOBILE)));
         }
         return false;
     }
@@ -107,9 +109,13 @@ public class StateContext {
         return jsonNode == null || jsonNode.get(key) == null ? null : jsonNode.get(key).textValue();
     }
 
-    public void addOwner(String owner) {
-        ArrayNode arrayNode = (ArrayNode) metadataNode.get(osOwner.toString());
-        arrayNode.add(owner);
+    public void addOwner(String owner) throws IOException {
+        ArrayNode arrayNode = (ArrayNode) metadataNode.get(OSSystemFields.osOwner.toString());
+        if (arrayNode == null) {
+            metadataNode.set(OSSystemFields.osOwner.toString(), new ObjectMapper().readTree("[\"" + owner + "\"]"));
+        } else {
+            arrayNode.add(owner);
+        }
     }
 
     public boolean isAttestationProperty() {
@@ -121,16 +127,12 @@ public class StateContext {
         return patchNodes.size() > 0;
     }
 
-    public void revertOwnershipDetails() {
-        String mobilePath = ownershipAttribute.getMobile();
-        String emailPath = ownershipAttribute.getEmail();
-        String userIdPath = ownershipAttribute.getUserId();
-        JSONUtil.replaceFieldByPointerPath(metadataNode, mobilePath, existing.get(MOBILE).textValue());
-        JSONUtil.replaceFieldByPointerPath(metadataNode, emailPath, existing.get(EMAIL).textValue());
-        JSONUtil.replaceFieldByPointerPath(metadataNode, userIdPath, existing.get(USER_ID).textValue());
-    }
-
     public boolean isOwnershipProperty() {
         return ownershipAttribute != null;
     }
+
+    public boolean revertSystemFieldsChangedEnabled() {
+        return this.revertSystemFields;
+    }
+
 }

@@ -1,4 +1,4 @@
-package io.opensaber.registry.util;
+package io.opensaber.pojos;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,6 +1,5 @@
 package io.opensaber.validators.json.jsonschema;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -37,18 +36,18 @@ public class JsonValidationServiceImplTest {
     @Test(expected = MiddlewareHaltException.class)
     public void testValidate() throws Exception {
         jsonObj = mapper.readTree(new File(sampleJsonPathOnlyRequiredErrors));
-        jsonValidationService.validate(schemaDefinition.getTitle(), mapper.writeValueAsString(jsonObj));
+        jsonValidationService.validate(schemaDefinition.getTitle(), mapper.writeValueAsString(jsonObj), false);
     }
 
     @Test
     public void testIgnoreRequiredValidation() throws Exception {
         jsonObj = mapper.readTree(new File(sampleJsonPathOnlyRequiredErrors));
-        jsonValidationService.validateIgnoreRequired(schemaDefinition.getTitle(), mapper.writeValueAsString(jsonObj));
+        jsonValidationService.validate(schemaDefinition.getTitle(), mapper.writeValueAsString(jsonObj), true);
     }
 
     @Test(expected = MiddlewareHaltException.class)
     public void testIgnoreRequiredValidationWithSchemaViolations() throws Exception {
         jsonObj = mapper.readTree(new File(sampleJsonPathRequiredSchemaErrors));
-        jsonValidationService.validateIgnoreRequired(schemaDefinition.getTitle(), mapper.writeValueAsString(jsonObj));
+        jsonValidationService.validate(schemaDefinition.getTitle(), mapper.writeValueAsString(jsonObj), true);
     }
 }

@@ -1,30 +1,33 @@
 package io.opensaber.registry.helper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EntityCreationException;
+import io.opensaber.keycloak.KeycloakAdminUtil;
+import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.OwnershipsAttributes;
+import io.opensaber.registry.middleware.service.ConditionResolverService;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.service.DecryptionHelper;
 import io.opensaber.registry.service.IReadService;
 import io.opensaber.registry.service.ISearchService;
 import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
+import io.opensaber.registry.util.ClaimRequestClient;
+import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.KeycloakAdminUtil;
-import io.opensaber.registry.util.OwnershipsAttributes;
 import io.opensaber.registry.util.ViewTemplateManager;
-import io.opensaber.validators.ValidationException;
-import org.junit.Assert;
+import io.opensaber.validators.IValidate;
+import io.opensaber.workflow.KieConfiguration;
+import io.opensaber.workflow.RuleEngineService;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.kie.api.runtime.KieContainer;
 import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,17 +35,16 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-@SpringBootTest(classes = {ObjectMapper.class})
+@SpringBootTest(classes = {ObjectMapper.class, KieConfiguration.class})
 public class RegistryHelperTest {
 
     @Rule
@@ -53,6 +55,7 @@ public class RegistryHelperTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
 
     @Mock
     private ObjectMapper objectMapperMock;
@@ -82,7 +85,25 @@ public class RegistryHelperTest {
     private DefinitionsManager definitionsManager;
 
     @Mock
-	private KeycloakAdminUtil keycloakAdminUtil;
+    private KeycloakAdminUtil keycloakAdminUtil;
+
+    @Mock
+    private IValidate validationService;
+
+    @Mock
+    private OpenSaberInstrumentation watch;
+
+    @Mock
+    private ConditionResolverService conditionResolverService;
+
+    @Mock
+    private ClaimRequestClient claimRequestClient;
+
+    @Autowired
+    private KieContainer kieContainer;
+
+
+    private static final String INSTITUTE = "Institute";
 
     @Before
     public void initMocks() {
@@ -90,6 +111,8 @@ public class RegistryHelperTest {
         ReflectionTestUtils.setField(registryHelper, "auditSuffixSeparator", "_");
         MockitoAnnotations.initMocks(this);
         registryHelper.uuidPropertyName = "osid";
+        RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
+        registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
     }
 
     @Test
@@ -113,7 +136,7 @@ public class RegistryHelperTest {
         when(viewTemplateManager.getViewTemplate(ArgumentMatchers.any())).thenReturn(null);
 
         JsonNode node = registryHelper.getAuditLog(jsonNode);
-        Assert.assertEquals(jsonNode.get("Teacher").get("filters").get("recordId").get("eq"), node.get("Teacher_Audit").get(0).get("recordId"));
+        assertEquals(jsonNode.get("Teacher").get("filters").get("recordId").get("eq"), node.get("Teacher_Audit").get(0).get("recordId"));
     }
 
     @Test
@@ -167,66 +190,31 @@ public class RegistryHelperTest {
         when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(student);
         String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, propertyURI);
         String actualPropertyId = "1-7d9dfb25-7789-44da-a6d4-eacf93e3a7aa";
-        Assert.assertEquals(propertyId, actualPropertyId);
+        assertEquals(propertyId, actualPropertyId);
     }
+
+    @Captor
+    ArgumentCaptor<Shard> shardCapture;
+    @Captor
+    ArgumentCaptor<String> userIdCapture;
+    @Captor
+    ArgumentCaptor<JsonNode> inputJsonCapture;
 
     @Test
-    public void shouldCreateEntityOwners() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException {
-        String Institute = "Institute";
-        when(definitionsManager.getOwnershipAttributes(Institute))
-				.thenReturn(Arrays.asList(
-						OwnershipsAttributes.builder().mobile("/contactNumber").email("/email").userId("/email").build(),
-						OwnershipsAttributes.builder().mobile("/adminMobile").email("/adminEmail").userId("/adminEmail").build()
-				));
-        when(keycloakAdminUtil.createUser(anyString(),anyString(), anyString(), anyString())).thenReturn(UUID.randomUUID().toString());
-        ObjectNode institute = new ObjectMapper().createObjectNode();
-        JsonNode inviteJson = new ObjectMapper().readTree("{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}");
-        institute.set(Institute, inviteJson);
-        registryHelper.createEntityOwners(institute, Institute);
-        Assert.assertEquals(1, institute.get(Institute).get("osOwner").size());
-    }
-
-    @Test
-    public void shouldCreateEntityOwnersForInstitute() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException {
-        String Institute = "Institute";
-        when(definitionsManager.getOwnershipAttributes(Institute))
-                .thenReturn(Arrays.asList(
-                        OwnershipsAttributes.builder().mobile("").email("/email").userId("/email").build(),
-                        OwnershipsAttributes.builder().mobile("/adminMobile").email("/adminEmail").userId("/adminEmail").build()
-                ));
-        when(keycloakAdminUtil.createUser(anyString(),anyString(), anyString(), anyString())).thenReturn(UUID.randomUUID().toString());
-        ObjectNode institute = new ObjectMapper().createObjectNode();
-        JsonNode inviteJson = new ObjectMapper().readTree("{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}");
-        institute.set(Institute, inviteJson);
-        registryHelper.createEntityOwners(institute, Institute);
-        Assert.assertEquals(1, institute.get(Institute).get("osOwner").size());
-    }
-
-    @Test(expected = ValidationException.class)
-    public void shouldThrowErrorIfOwnershipAttributesAreIncomplete() throws JsonProcessingException, EntityCreationException, DuplicateRecordException, ValidationException {
-        String Institute = "Institute";
-        when(definitionsManager.getOwnershipAttributes(Institute))
-                .thenReturn(Collections.singletonList(
-                        OwnershipsAttributes.builder().mobile("").email("/email").userId("").build()
-                ));
-        when(keycloakAdminUtil.createUser(anyString(),anyString(), anyString(), anyString())).thenReturn(UUID.randomUUID().toString());
-        ObjectNode institute = new ObjectMapper().createObjectNode();
-        JsonNode inviteJson = new ObjectMapper().readTree("{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}");
-        institute.set(Institute, inviteJson);
-        registryHelper.createEntityOwners(institute, Institute);
-    }
-
-    @Test(expected = EntityCreationException.class)
-    public void shouldThrowErrorIfNoOwnersAreCreated() throws DuplicateRecordException, EntityCreationException, JsonProcessingException, ValidationException {
-        String Institute = "Institute";
-        when(definitionsManager.getOwnershipAttributes(Institute))
+    public void shouldCreateOwnersForInvite() throws Exception {
+        JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
+        when(definitionsManager.getOwnershipAttributes(INSTITUTE))
                 .thenReturn(Collections.singletonList(
                         OwnershipsAttributes.builder().mobile("").email("/email").userId("/email").build()
                 ));
-        when(keycloakAdminUtil.createUser(anyString(),anyString(), anyString(), any())).thenThrow(EntityCreationException.class);
-        ObjectNode institute = new ObjectMapper().createObjectNode();
-        JsonNode inviteJson = new ObjectMapper().readTree("{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}");
-        institute.set(Institute, inviteJson);
-        registryHelper.createEntityOwners(institute, Institute);
+        when(definitionsManager.getDefinition(INSTITUTE))
+                .thenReturn(new Definition(new ObjectMapper().readTree("{\"title\":\"Institute\",\"definitions\":{\"Institute\":{\"$id\":\"#\\/properties\\/Institute\",\"title\":\"The Institute Schema\",\"required\":[],\"properties\":{\"contactNumber\":{\"$id\":\"#\\/properties\\/contactNumber\",\"type\":\"string\",\"title\":\"Landline \\/ Mobile\"},\"email\":{\"$id\":\"#\\/properties\\/email\",\"type\":\"string\",\"format\":\"email\",\"title\":\"Email\"}}}},\"_osConfig\":{\"privateFields\":[],\"signedFields\":[],\"indexFields\":[],\"uniqueIndexFields\":[],\"systemFields\":[\"osCreatedAt\",\"osUpdatedAt\",\"osCreatedBy\",\"osUpdatedBy\"],\"attestationPolicies\":[],\"subjectJsonPath\":\"email\",\"ownershipAttributes\":[{\"email\":\"\\/email\",\"mobile\":\"\\/contactNumber\",\"userId\":\"\\/email\"},{\"email\":\"\\/adminEmail\",\"mobile\":\"\\/adminMobile\",\"userId\":\"\\/adminEmail\"}]}}")));
+        String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
+        when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+        when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
+        when(shardManager.getShard(any())).thenReturn(new Shard());
+        registryHelper.inviteEntity(inviteJson, "");
+        Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());
+        assertEquals("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"osOwner\":[\"" + testUserId + "\"]}}", inputJsonCapture.getValue().toString());
     }
 }

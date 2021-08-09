@@ -1,7 +1,5 @@
-package io.opensaber.registry.util;
+package io.opensaber.keycloak;
 
-import io.opensaber.registry.exception.DuplicateRecordException;
-import io.opensaber.registry.exception.EntityCreationException;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -13,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -20,31 +19,34 @@ import javax.ws.rs.core.Response;
 
 
 @Component
+@PropertySource(value = "classpath:application.yml", ignoreResourceNotFound = true)
 public class KeycloakAdminUtil {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakAdminUtil.class);
     private static final String EMAIL = "email_id";
     private static final String ENTITY = "entity";
     private static final String MOBILE_NUMBER = "mobile_number";
     private static final String PASSWORD = "password";
-    private static final String DEFAULT_PASSWORD = "ndear@123";
 
 
     private String realm;
     private String adminClientSecret;
     private String adminClientId;
     private String authURL;
+    private String defaultPassword;
     private final Keycloak keycloak;
 
     @Autowired
     public KeycloakAdminUtil(
-            @Value("${keycloak.realm}") String realm,
-            @Value("${keycloak-admin.client-secret}") String adminClientSecret,
-            @Value("${keycloak-admin.client-id}") String adminClientId,
-            @Value("${keycloak.auth-server-url}") String authURL) {
+            @Value("${keycloak.realm:}") String realm,
+            @Value("${keycloak-admin.client-secret:}") String adminClientSecret,
+            @Value("${keycloak-admin.client-id:}") String adminClientId,
+            @Value("${keycloak-user.default-password:}") String defaultPassword,
+            @Value("${keycloak.auth-server-url:}") String authURL) {
         this.realm = realm;
         this.adminClientSecret = adminClientSecret;
         this.adminClientId = adminClientId;
         this.authURL = authURL;
+        this.defaultPassword = defaultPassword;
         this.keycloak = buildKeycloak();
     }
 
@@ -58,19 +60,11 @@ public class KeycloakAdminUtil {
                 .build();
     }
 
-    public String createUser(String entityName, String userName, String email, String mobile) throws DuplicateRecordException, EntityCreationException {
+    public String createUser(String entityName, String userName, String email, String mobile) throws OwnerCreationException {
         logger.info("Creating user with mobile_number : " + userName);
-        UserRepresentation newUser = new UserRepresentation();
-        newUser.setEnabled(true);
-        newUser.setUsername(userName);
-        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
-        credentialRepresentation.setValue(DEFAULT_PASSWORD);
-        credentialRepresentation.setType(PASSWORD);
-        newUser.setCredentials(Collections.singletonList(credentialRepresentation));
-        newUser.singleAttribute(MOBILE_NUMBER, mobile);
-        newUser.singleAttribute(EMAIL, email);
-        newUser.singleAttribute(ENTITY, entityName);
+        UserRepresentation newUser = createUserRepresentation(entityName, userName, email, mobile);
         UsersResource usersResource = keycloak.realm(realm).users();
+
         Response response = usersResource.create(newUser);
         if (response.getStatus() == 201) {
             logger.info("Response |  Status: {} | Status Info: {}", response.getStatus(), response.getStatusInfo());
@@ -80,21 +74,39 @@ public class KeycloakAdminUtil {
             return userID;
         } else if (response.getStatus() == 409) {
             logger.info("UserID: {} exists", userName);
-            Optional<UserResource> userRepresentationOptional = getUserByUsername(userName);
-            if (userRepresentationOptional.isPresent()) {
-                UserResource userResource = userRepresentationOptional.get();
-                UserRepresentation userRepresentation = userResource.toRepresentation();
-                checkIfUserRegisteredForEntity(entityName, userRepresentation);
-                updateUserAttributes(entityName, email, mobile, userRepresentation);
-                userResource.update(userRepresentation);
-                return userRepresentation.getId();
-            } else {
-                logger.error("Failed fetching user by username: {}", userName);
-                throw new EntityCreationException("Creating user failed");
-            }
+            return updateExistingUserAttributes(entityName, userName, email, mobile);
         } else {
-            throw new EntityCreationException("Username already invited / registered");
+            throw new OwnerCreationException("Username already invited / registered");
         }
+    }
+
+    private String updateExistingUserAttributes(String entityName, String userName, String email, String mobile) throws OwnerCreationException {
+        Optional<UserResource> userRepresentationOptional = getUserByUsername(userName);
+        if (userRepresentationOptional.isPresent()) {
+            UserResource userResource = userRepresentationOptional.get();
+            UserRepresentation userRepresentation = userResource.toRepresentation();
+            checkIfUserRegisteredForEntity(entityName, userRepresentation);
+            updateUserAttributes(entityName, email, mobile, userRepresentation);
+            userResource.update(userRepresentation);
+            return userRepresentation.getId();
+        } else {
+            logger.error("Failed fetching user by username: {}", userName);
+            throw new OwnerCreationException("Creating user failed");
+        }
+    }
+
+    private UserRepresentation createUserRepresentation(String entityName, String userName, String email, String mobile) {
+        UserRepresentation newUser = new UserRepresentation();
+        newUser.setEnabled(true);
+        newUser.setUsername(userName);
+        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
+        credentialRepresentation.setValue(this.defaultPassword);
+        credentialRepresentation.setType(PASSWORD);
+        newUser.setCredentials(Collections.singletonList(credentialRepresentation));
+        newUser.singleAttribute(MOBILE_NUMBER, mobile);
+        newUser.singleAttribute(EMAIL, email);
+        newUser.singleAttribute(ENTITY, entityName);
+        return newUser;
     }
 
     private void updateUserAttributes(String entityName, String email, String mobile, UserRepresentation userRepresentation) {
@@ -110,10 +122,10 @@ public class KeycloakAdminUtil {
         }
     }
 
-    private void checkIfUserRegisteredForEntity(String entityName, UserRepresentation userRepresentation) throws EntityCreationException {
+    private void checkIfUserRegisteredForEntity(String entityName, UserRepresentation userRepresentation) throws OwnerCreationException {
         List<String> entities = userRepresentation.getAttributes().getOrDefault(ENTITY, Collections.emptyList());
         if (!entities.isEmpty() && entities.contains(entityName)) {
-            throw new EntityCreationException("Username already invited / registered for " + entityName);
+            throw new OwnerCreationException("Username already invited / registered for " + entityName);
         }
     }
 

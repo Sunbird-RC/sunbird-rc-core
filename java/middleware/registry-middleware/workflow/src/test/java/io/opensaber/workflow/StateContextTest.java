@@ -1,8 +1,9 @@
-package io.opensaber.registry.model.state;
+package io.opensaber.workflow;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import io.opensaber.workflow.StateContext;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -10,7 +11,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 public class StateContextTest {
     private static final ObjectMapper m = new ObjectMapper();

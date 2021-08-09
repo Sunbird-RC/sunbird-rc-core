@@ -13,6 +13,7 @@
                 })
 
             }
+
         </script>
     <#elseif section = "form">
         <p class="form-subtitle">Please Enter your Mobile Number and OTP</p>

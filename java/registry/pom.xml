@@ -79,11 +79,6 @@
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-admin-client</artifactId>
-            <version>14.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.keycloak</groupId>
             <artifactId>keycloak-spring-security-adapter</artifactId>
             <version>14.0.0</version>
         </dependency>
@@ -112,7 +107,16 @@
             <artifactId>registry-interceptor</artifactId>
             <version>${revision}</version>
         </dependency>
-
+        <dependency>
+            <groupId>io.opensaber</groupId>
+            <artifactId>keycloak</artifactId>
+            <version>2.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.opensaber</groupId>
+            <artifactId>workflow</artifactId>
+            <version>2.0.3</version>
+        </dependency>
         <dependency>
             <groupId>io.opensaber</groupId>
             <artifactId>elastic-search</artifactId>
@@ -375,21 +379,7 @@
             <version>1.6-beta-2</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.drools</groupId>
-            <artifactId>drools-core</artifactId>
-            <version>${drools.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.drools</groupId>
-            <artifactId>drools-compiler</artifactId>
-            <version>${drools.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.drools</groupId>
-            <artifactId>drools-decisiontables</artifactId>
-            <version>${drools.version}</version>
-        </dependency>
+
     </dependencies>
 
     <build>
