@@ -18,11 +18,17 @@
       "required": [
         "name",
         "contact",
-        "bloodGroup"
+        "bloodGroup",
+        "rhFactor"
       ],
       "properties": {
         "bloodGroup": {
-          "type": "string"
+          "type": "string",
+          "enum": ["A", "B", "AB", "O"]
+        },
+        "rhFactor": {
+          "type": "string",
+          "enum": ["+", "-"]
         },
         "name": {
           "type": "string"
