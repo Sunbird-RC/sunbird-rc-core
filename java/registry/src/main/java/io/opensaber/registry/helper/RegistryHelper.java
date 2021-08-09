@@ -28,6 +28,8 @@ import io.opensaber.registry.util.*;
 import io.opensaber.validators.IValidate;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
+import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,7 @@ import java.util.*;
  * This is helper class, user-service calls this class in-order to access registry functionality
  */
 @Component
+@Setter
 public class RegistryHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
@@ -482,24 +485,27 @@ public class RegistryHelper {
         JsonNode resultNode = readEntity("", entityName, entityId, false, null, false)
                 .get(entityName);
         JsonNode jsonNode = resultNode.get(propertyURI);
+        List<String> fieldsToRemove = getFieldsToRemove(entityName);
         if (jsonNode.isArray()) {
             ArrayNode arrayNode = (ArrayNode) jsonNode;
             for (JsonNode next : arrayNode) {
-                Iterator<String> fieldNames = requestBody.fieldNames();
-                boolean isAttributesValuesMatched = true;
-                while (fieldNames.hasNext()) {
-                    String field = fieldNames.next();
-                    if (!requestBody.get(field).equals(next.get(field))) {
-                        isAttributesValuesMatched = false;
-                        break;
-                    }
-                }
-                if (isAttributesValuesMatched) {
+                JsonNode existingProperty = next.deepCopy();
+                JSONUtil.removeNodes(existingProperty, fieldsToRemove);
+                if (existingProperty.equals(requestBody)) {
                     return next.get(uuidPropertyName).asText();
                 }
             }
         }
         return "";
+    }
+
+    @NotNull
+    private List<String> getFieldsToRemove(String entityName) {
+        List<String> fieldsToRemove = new ArrayList<>();
+        fieldsToRemove.add(uuidPropertyName);
+        List<String> systemFields = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields();
+        fieldsToRemove.addAll(systemFields);
+        return fieldsToRemove;
     }
 
     public ArrayNode fetchFromDBUsingEsResponse(String entity, ArrayNode esSearchResponse) throws Exception {

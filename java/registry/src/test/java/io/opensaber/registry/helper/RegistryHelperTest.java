@@ -22,6 +22,9 @@ import io.opensaber.registry.util.ViewTemplateManager;
 import io.opensaber.validators.IValidate;
 import io.opensaber.workflow.KieConfiguration;
 import io.opensaber.workflow.RuleEngineService;
+import io.opensaber.registry.util.*;
+import io.opensaber.validators.ValidationException;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -81,7 +84,7 @@ public class RegistryHelperTest {
     @Mock
     private DecryptionHelper decryptionHelper;
 
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private DefinitionsManager definitionsManager;
 
     @Mock
@@ -113,6 +116,7 @@ public class RegistryHelperTest {
         registryHelper.uuidPropertyName = "osid";
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
         registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
+        registryHelper.setDefinitionsManager(definitionsManager);
     }
 
     @Test
@@ -137,6 +141,89 @@ public class RegistryHelperTest {
 
         JsonNode node = registryHelper.getAuditLog(jsonNode);
         assertEquals(jsonNode.get("Teacher").get("filters").get("recordId").get("eq"), node.get("Teacher_Audit").get(0).get("recordId"));
+    }
+
+    @Test
+    public void shouldAbleToGetThePropertyIdForTheRequestBodyWhereTheExistingPropertyHasNestedObjects() throws Exception {
+        String entityName = "Student";
+        String entityId = "";
+        JsonNode requestBody = new ObjectMapper().readTree("{\n" +
+                "    \"program\": \"Class C\",\n" +
+                "    \"graduationYear\": \"2021\",\n" +
+                "    \"marks\": \"78\",\n" +
+                "    \"institute\": \"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\n" +
+                "    \"documents\": [\n" +
+                "        {\n" +
+                "            \"fileName\": \"e3266115-0bd0-4456-a347-96f4dc335761-blog_draft\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"fileName\": \"e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\"\n" +
+                "        }\n" +
+                "    ]\n" +
+                "}");
+        String propertyURI = "educationDetails";
+        ObjectNode student = new ObjectMapper().createObjectNode();
+        JsonNode studentNodeContent = new ObjectMapper().readTree("{\n" +
+                "   \"educationDetails\":[\n" +
+                "      {\n" +
+                "         \"osid\": \"12345\",\n" +
+                "         \"program\":\"Class C\",\n" +
+                "         \"graduationYear\":\"2021\",\n" +
+                "         \"marks\":\"78\",\n" +
+                "         \"institute\":\"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\n" +
+                "         \"documents\":[\n" +
+                "            {\n" +
+                "\"osid\": \"007\",\n" +
+                "               \"fileName\":\"e3266115-0bd0-4456-a347-96f4dc335761-blog_draft\"\n" +
+                "            },\n" +
+                "            {\n" +
+                "\"osid\":\"008\",\n" +
+                "               \"fileName\":\"e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\"\n" +
+                "            }\n" +
+                "         ]\n" +
+                "      },\n" +
+                "      {\n" +
+                "         \"osid\":\"7890\",\n" +
+                "         \"program\":\"Class C\",\n" +
+                "         \"graduationYear\":\"2021\",\n" +
+                "         \"marks\":\"78\",\n" +
+                "         \"institute\":\"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\n" +
+                "         \"documents\":[\n" +
+                "            {\n" +
+                "         \"osid\":\"123\",\n" +
+                "               \"fileName\":\"23266111-0bd0-4456-a347-96f4dc335761-blog_draft\"\n" +
+                "            },\n" +
+                "            {\n" +
+                "         \"osid\":\"456\",\n" +
+                "               \"fileName\":\"156dab12-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\"\n" +
+                "            }\n" +
+                "         ]\n" +
+                "      }\n" +
+                "   ],\n" +
+                "   \"contactDetails\":{\n" +
+                "      \"osid\":\"1-096cd663-6ba9-49f8-af31-1ace9e31bc31\",\n" +
+                "      \"mobile\":\"9000090000\",\n" +
+                "      \"osOwner\":\"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\",\n" +
+                "      \"email\":\"ram@gmail.com\"\n" +
+                "   },\n" +
+                "   \"osid\":\"1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb\",\n" +
+                "   \"identityDetails\":{\n" +
+                "      \"osid\":\"1-9f50f1b3-99cc-4fcb-9e51-e0dbe0be19f9\",\n" +
+                "      \"gender\":\"Male\",\n" +
+                "      \"identityType\":\"\",\n" +
+                "      \"dob\":\"1999-01-01\",\n" +
+                "      \"fullName\":\"First Avenger\",\n" +
+                "      \"identityValue\":\"\",\n" +
+                "      \"osOwner\":\"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\"\n" +
+                "   },\n" +
+                "   \"osOwner\":\"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\"\n" +
+                "}");
+        student.set("Student", studentNodeContent);
+        when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(student);
+        when(definitionsManager.getDefinition(any()).getOsSchemaConfiguration().getSystemFields()).thenReturn(Arrays.asList("_osUpdatedAt", "_osCreatedAt"));
+        String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, propertyURI);
+        String actualPropertyId = "12345";
+        Assert.assertEquals(propertyId, actualPropertyId);
     }
 
     @Test
@@ -187,6 +274,7 @@ public class RegistryHelperTest {
                 "        \"osOwner\": \"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\"\n" +
                 "    }");
         student.set("Student", studentNodeContent);
+        when(definitionsManager.getDefinition(any()).getOsSchemaConfiguration().getSystemFields()).thenReturn(Arrays.asList("_osUpdatedAt", "_osCreatedAt"));
         when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(student);
         String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, propertyURI);
         String actualPropertyId = "1-7d9dfb25-7789-44da-a6d4-eacf93e3a7aa";

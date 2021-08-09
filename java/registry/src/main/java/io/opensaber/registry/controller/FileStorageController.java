@@ -26,7 +26,7 @@ public class FileStorageController {
     }
 
     @PostMapping("/api/v1/{entity}/{entityId}/{property}/documents")
-    public ResponseEntity<DocumentsResponse> save(@RequestParam MultipartFile[] multipartFiles,
+    public ResponseEntity<DocumentsResponse> save(@RequestParam MultipartFile[] files,
                                                   @PathVariable String entity,
                                                   @PathVariable String entityId,
                                                   @PathVariable String property,
@@ -35,9 +35,9 @@ public class FileStorageController {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
             e.printStackTrace();
-            return new ResponseEntity(HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        DocumentsResponse documentsResponse = fileStorageService.saveAndFetchFileNames(multipartFiles, httpServletRequest.getRequestURI());
+        DocumentsResponse documentsResponse = fileStorageService.saveAndFetchFileNames(files, httpServletRequest.getRequestURI());
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
     }
 

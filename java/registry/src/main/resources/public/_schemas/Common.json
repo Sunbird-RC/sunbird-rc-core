@@ -214,6 +214,13 @@
             "Class XII"
           ],
           "title": "Current Enrollment Class / Std."
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Document"
+          },
+          "title": "Education related documents"
         }
       }
     },
@@ -245,6 +252,14 @@
         "end": {
           "type": "string",
           "format": "date"
+        }
+      }
+    },
+    "Document": {
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string"
         }
       }
     },

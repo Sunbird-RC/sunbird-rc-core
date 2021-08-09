@@ -45,7 +45,6 @@ public class FileStorageService {
                 .bucket(bucketName)
                 .object(objectName)
                 .stream(inputStream, -1, 10485760)
-                .contentType(CONTENT_TYPE_TEXT)
                 .build());
         logger.info("File has successfully saved");
     }
