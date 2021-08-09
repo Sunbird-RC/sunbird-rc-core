@@ -22,8 +22,6 @@ import io.opensaber.registry.util.ViewTemplateManager;
 import io.opensaber.validators.IValidate;
 import io.opensaber.workflow.KieConfiguration;
 import io.opensaber.workflow.RuleEngineService;
-import io.opensaber.registry.util.*;
-import io.opensaber.validators.ValidationException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,6 +36,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 
