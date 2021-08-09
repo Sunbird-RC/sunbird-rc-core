@@ -491,7 +491,11 @@ public class RegistryHelper {
             for (JsonNode next : arrayNode) {
                 JsonNode existingProperty = next.deepCopy();
                 JSONUtil.removeNodes(existingProperty, fieldsToRemove);
-                if (existingProperty.equals(requestBody)) {
+
+                JsonNode requestBodyWithoutSystemFields = requestBody.deepCopy();
+                JSONUtil.removeNodes(requestBodyWithoutSystemFields, fieldsToRemove);
+
+                if (existingProperty.equals(requestBodyWithoutSystemFields)) {
                     return next.get(uuidPropertyName).asText();
                 }
             }
