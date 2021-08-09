@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "Teacher": {
+      "$ref": "#/definitions/Teacher"
+    }
+  },
+  "required": [
+    "BloodDonor"
+  ],
+  "title": "BloodDonor",
+  "definitions": {
+    "Teacher": {
+      "$id": "#/properties/BloodDonor",
+      "type": "object",
+      "title": "The BloodDonor Schema",
+      "required": [
+        "name",
+        "contact",
+        "bloodGroup"
+      ],
+      "properties": {
+        "bloodGroup": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
