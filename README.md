@@ -8,7 +8,13 @@ Registry is a shared digital infrastructure which enables authorized data reposi
 
 ## Getting started
 ### Test run with docker-compose
-> Coming soon
+```shell script
+wget https://raw.githubusercontent.com/Sunbird-RC/opensaber-rc/main/docker-compose.yml
+docker-compose up -d
+docker-compose ps
+#wait for all services to start
+curl -v http://localhost:8081/health
+```
 ### Running with Docker
 1. Customize the schema
         Refer to the example [here](../blob/main/docs/example/simple.json)
@@ -32,7 +38,7 @@ Registry is a shared digital infrastructure which enables authorized data reposi
     ```
 5. Test the api
     ```shell script
-    curl -v http://localhost:8081/api
+    curl -v http://localhost:8081/health
     ```
 ## Demo
 > Coming soon
@@ -42,6 +48,12 @@ Registry is a shared digital infrastructure which enables authorized data reposi
 * Elastic search to enable search across attributes
 * Keycloak to manage authorization and authentication
 
+## Design principles
+* Minimalism and decentralized
+* Accountability and Non-repudiability
+* Empowerment & Self-maintainability
+* Security & Consented Access
+* Universal Access & Open APIs 
 
 ## Architectural criteria
 * Open API
@@ -49,6 +61,7 @@ Registry is a shared digital infrastructure which enables authorized data reposi
 * Production ready out of the box
 * Customizable by configuration and extentions
 * Scalable out of the box
+
 
 ## Examples:
 * [Blood donor registry example schema](../blob/main/docs/example/simple.json)
