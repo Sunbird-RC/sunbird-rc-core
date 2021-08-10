@@ -1,10 +1,60 @@
- # OpenSABER
+ # OpenSABER Registry and Credentials
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7f8c1785b178411ab28490fb561dfb98)](https://www.codacy.com/app/steotia/open-saber?utm_source=github.com&utm_medium=referral&utm_content=project-sunbird/open-saber&utm_campaign=badger)
-[![Build Status](https://travis-ci.org/project-sunbird/open-saber.svg?branch=master)](https://travis-ci.org/project-sunbird/open-saber)
+![Build](https://github.com/Sunbird-RC/opensaber-rc/actions/workflows/maven.yml/badge.svg)
 
-Open Software Archetype for Building Electronic Registries, shortly called OpenSABER, is an open source software stack that provides the foundation block to build electronic registries. 
+Open Software for Rapidly Building Electronic Registries, shortly called OpenSABER-RC, is an open source software stack that enables running electronic registries with minimal effort.
 
-Registry is a shared digital infrastructure which enables authorized data repositories to publish appropriate data and metadata about a user/entity along with the link to the repository in a digitally signed form and allows data owners to provide authorized access to other users/entities in controlled manner for digital verification and usage.
+Registry is a shared digital infrastructure which enables authorized data repositories to publish appropriate data and metadata about a user/entity along with the link to the repository in a digitally signed form. It allows data owners to provide authorized access to other users/entities in controlled manner for digital verification and usage.
 
-Read the [Wiki](https://github.com/project-sunbird/open-saber/wiki) for more details.
+## Getting started
+### Test run with docker-compose
+> Coming soon
+### Running with Docker
+1. Customize the schema
+        Refer to the example [here](../blob/main/docs/example/simple.json)
+        ```wget https://raw.githubusercontent.com/Sunbird-RC/opensaber-rc/main/docs/example/simple.json```
+2. Configure database type and detail
+    * You can use postgres and prepare database using following command
+        ```sql
+      create database registry;
+      create role registry identified by password('complexPassword') 
+      grant all privileges  on database registry to registry;
+        ``` 
+3. Build docker image with custom schema
+    ```shell script
+   make   
+   ```
+4. start the docker instance.
+    ```shell script
+    docker -p 8081:8081 -v<schema_dir>:/home/opensaber/config/public/_schemas \
+   -e connectionInfo_uri="jdbc:postgresql://localhost:5432/registry" \
+   run your-registry 
+    ```
+5. Test the api
+    ```shell script
+    curl -v http://localhost:8081/api
+    ```
+## Demo
+> Coming soon
+    
+## Dependencies
+* Postgres or Cassandra as datastore
+* Elastic search to enable search across attributes
+* Keycloak to manage authorization and authentication
+
+
+## Architectural criteria
+* Open API
+* Standard JSON-LD based schema
+* Production ready out of the box
+* Customizable by configuration and extentions
+* Scalable out of the box
+
+## Examples:
+* [Blood donor registry example schema](../blob/main/docs/example/simple.json)
+* [Places schema](../blob/main/docs/example/place.json)
+
+
+
+
+    
