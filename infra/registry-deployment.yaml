@@ -48,6 +48,14 @@ spec:
               value: io.opensaber.registry.service.ElasticSearchService 
             - name: elastic_search_connection_url
               value: ndear-es-elasticsearch-coordinating-only.default.svc.cluster.local:9200
+            - name: filestorage_connection_url
+              value: <add connection url>
+            - name: filestorage_access_key
+              value: <add access key of the storage>
+            - name: filestorage_secret_key
+              value: <add secret key of the storage>
+            - name: filestorage_bucket_key
+              value: ndear
           image: tejashjl/open-saber-rc:38
           imagePullPolicy: Always
           resources:
