@@ -2,8 +2,8 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
   "properties": {
-    "Teacher": {
-      "$ref": "#/definitions/Teacher"
+    "BloodDonor": {
+      "$ref": "#/definitions/BloodDonor"
     }
   },
   "required": [
@@ -11,7 +11,7 @@
   ],
   "title": "BloodDonor",
   "definitions": {
-    "Teacher": {
+    "BloodDonor": {
       "$id": "#/properties/BloodDonor",
       "type": "object",
       "title": "The BloodDonor Schema",
