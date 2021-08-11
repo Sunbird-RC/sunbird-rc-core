@@ -536,18 +536,22 @@ public class RegistryHelper {
     }
 
     public void authorizeAttestor(String entity, HttpServletRequest request) throws Exception {
+        List<String> keyCloakEntities = getKeyCloakEntities(request);
+        Set<String> allTheAttestorEntities = definitionsManager.getDefinition(entity)
+                .getOsSchemaConfiguration()
+                .getAllTheAttestorEntities();
+        if(keyCloakEntities.stream().noneMatch(allTheAttestorEntities::contains)) {
+            throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
+        }
+    }
+
+    private List<String> getKeyCloakEntities(HttpServletRequest request) {
         KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
         Object customAttributes = principal.getAccount()
                 .getKeycloakSecurityContext()
                 .getToken()
                 .getOtherClaims()
                 .get("entity");
-        List<String> entities = (List<String>) customAttributes;
-        Set<String> allTheAttestorEntities = definitionsManager.getDefinition(entity)
-                .getOsSchemaConfiguration()
-                .getAllTheAttestorEntities();
-        if(entities.stream().noneMatch(allTheAttestorEntities::contains)) {
-            throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
-        }
+        return (List<String>) customAttributes;
     }
 }
