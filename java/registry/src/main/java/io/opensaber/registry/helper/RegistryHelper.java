@@ -40,6 +40,8 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
+import static io.opensaber.registry.exception.ErrorMessages.*;
+
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
  */
@@ -440,7 +442,7 @@ public class RegistryHelper {
         } else if (entityTypeHandler.isExternalRegistry(entityName)) {
             return getUserInfoFromKeyCloak(request, entityName);
         }
-        throw new Exception("Entity is not part of our system");
+        throw new Exception(NOT_PART_OF_THE_SYSTEM_EXCEPTION);
     }
 
     private JsonNode getUserInfoFromKeyCloak(HttpServletRequest request, String entityName) {
@@ -477,7 +479,7 @@ public class RegistryHelper {
         String userId = getKeycloakUserId(request);
         JsonNode resultNode = readEntity(userId, entityName, entityId, false, null, false);
         if (!isOwner(resultNode.get(entityName), userId)) {
-            throw new Exception("User is trying to update someone's data");
+            throw new Exception(INVALID_OPERATION_EXCEPTION_MESSAGE);
         }
     }
 
@@ -529,7 +531,23 @@ public class RegistryHelper {
                 .getOsSchemaConfiguration()
                 .getRoles();
         if(!supportedRoles.isEmpty() && supportedRoles.stream().noneMatch(roles::contains)) {
-            throw new Exception("User is not allowed to access the entity");
+            throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
+        }
+    }
+
+    public void authorizeAttestor(String entity, HttpServletRequest request) throws Exception {
+        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        Object customAttributes = principal.getAccount()
+                .getKeycloakSecurityContext()
+                .getToken()
+                .getOtherClaims()
+                .get("entity");
+        List<String> entities = (List<String>) customAttributes;
+        Set<String> allTheAttestorEntities = definitionsManager.getDefinition(entity)
+                .getOsSchemaConfiguration()
+                .getAllTheAttestorEntities();
+        if(entities.stream().noneMatch(allTheAttestorEntities::contains)) {
+            throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
         }
     }
 }

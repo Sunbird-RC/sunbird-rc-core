@@ -5,10 +5,8 @@ import io.opensaber.pojos.OwnershipsAttributes;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Holds _osconfig properties for a schema  
@@ -83,6 +81,11 @@ public class OSSchemaConfiguration {
                 .findFirst().orElse(new AttestationPolicy());
     }
 
+    public Set<String> getAllTheAttestorEntities(){
+        return attestationPolicies.stream()
+                .map(AttestationPolicy::getAttestorEntity)
+                .collect(Collectors.toSet());
+    }
     public String getAttestorEntity(String property) {
         return getAttestationPolicy(property).getAttestorEntity();
     }

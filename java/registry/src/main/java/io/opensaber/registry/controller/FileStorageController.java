@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 // TODO: Get should be viewed by both attestor and reviewer
-// TODO: Modify Response of the post method
 @Controller
 public class FileStorageController {
     private final FileStorageService fileStorageService;
@@ -78,7 +77,15 @@ public class FileStorageController {
                                       @PathVariable String property,
                                       @PathVariable String documentId,
                                       HttpServletRequest httpServletRequest) {
-
+        try {
+            registryHelper.authorize(entity, entityId, httpServletRequest);
+        } catch (Exception e) {
+            try {
+                registryHelper.authorizeAttestor(entity, httpServletRequest);
+            } catch (Exception exceptionFromAuthorizeAttestor) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+        }
         byte[] document = fileStorageService.getDocument(httpServletRequest.getRequestURI());
         return ResponseEntity.ok().body(document);
     }
