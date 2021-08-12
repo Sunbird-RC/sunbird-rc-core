@@ -2,7 +2,9 @@ package io.opensaber.claim.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opensaber.claim.dto.AttestationPropertiesDTO;
 import io.opensaber.claim.entity.Claim;
+import io.opensaber.claim.repository.ClaimNoteRepository;
 import io.opensaber.claim.repository.ClaimRepository;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import org.junit.Before;
@@ -34,6 +36,8 @@ public class ClaimServiceTest {
     @Mock
     ClaimRepository claimRepository;
     @Mock
+    ClaimNoteRepository claimNoteRepository;
+    @Mock
     OpenSaberClient openSaberClient;
     @Mock
     ClaimsAuthorizer claimsAuthorizer;
@@ -42,7 +46,7 @@ public class ClaimServiceTest {
 
     @Before
     public void setUp() {
-        claimService = new ClaimService(claimRepository, openSaberClient, claimsAuthorizer);
+        claimService = new ClaimService(claimRepository, claimNoteRepository, openSaberClient, claimsAuthorizer);
         claim = new Claim();
         claim.setId(claimId);
         claim.setStatus(OPEN.name());

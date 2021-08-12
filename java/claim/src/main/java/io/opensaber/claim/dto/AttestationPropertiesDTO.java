@@ -1,4 +1,4 @@
-package io.opensaber.claim.service;
+package io.opensaber.claim.dto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.pojos.attestation.AttestationPolicy;

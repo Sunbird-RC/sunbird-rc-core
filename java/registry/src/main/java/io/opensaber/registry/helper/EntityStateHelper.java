@@ -138,9 +138,11 @@ public class EntityStateHelper {
         }
     }
 
-    JsonNode sendForAttestation(JsonNode entityNode, String propertyURL) throws Exception {
+    JsonNode sendForAttestation(JsonNode entityNode, String propertyURL, String notes) throws Exception {
         logger.info("Sending {} for attestation", propertyURL);
-        return manageState(entityNode, propertyURL, Action.RAISE_CLAIM, JsonNodeFactory.instance.objectNode());
+        ObjectNode metaData = JsonNodeFactory.instance.objectNode();
+        metaData.set("notes", JsonNodeFactory.instance.textNode(notes));
+        return manageState(entityNode, propertyURL, Action.RAISE_CLAIM, metaData);
     }
 
     JsonNode grantClaim(JsonNode entityNode, String propertyURI, String notes) throws Exception {
@@ -181,7 +183,8 @@ public class EntityStateHelper {
                             propertyURL,
                             metadataNodePointer.getFirst(),
                             policy,
-                            getRequestorName(entityNode)
+                            getRequestorName(entityNode),
+                            metaData.get("notes").asText()
                     ))
             );
         } else if (action.equals(Action.GRANT_CLAIM)) {
@@ -229,7 +232,7 @@ public class EntityStateHelper {
         return Optional.empty();
     }
 
-    private String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode, AttestationPolicy attestationPolicy, String requestorName) {
+    private String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode, AttestationPolicy attestationPolicy, String requestorName, String notes) {
         String resolvedConditions = conditionResolverService.resolve(metadataNode, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
         ClaimDTO claimDTO = new ClaimDTO();
         claimDTO.setEntity(entityName);
@@ -238,6 +241,7 @@ public class EntityStateHelper {
         claimDTO.setConditions(resolvedConditions);
         claimDTO.setAttestorEntity(attestationPolicy.getAttestorEntity());
         claimDTO.setRequestorName(requestorName);
+        claimDTO.setNotes(notes);
         return claimRequestClient.riseClaimRequest(claimDTO).get("id").toString();
     }
 

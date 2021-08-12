@@ -11,6 +11,7 @@ import io.opensaber.registry.dao.NotFoundException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
+import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.transform.Configuration;
 import io.opensaber.registry.transform.Data;
 import io.opensaber.registry.transform.ITransformer;
@@ -198,12 +199,13 @@ public class RegistryEntityController extends AbstractController {
         try {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
+            String notes = getNotes(requestBody);
             registryHelper.updateEntityProperty(entityName, entityId, propertyURI, requestBody);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             if (send.isPresent() && send.get()) {
-                registryHelper.sendForAttestation(entityName, entityId, propertyURI);
+                registryHelper.sendForAttestation(entityName, entityId, propertyURI, notes);
             }
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
@@ -219,6 +221,7 @@ public class RegistryEntityController extends AbstractController {
             HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
+            @RequestBody JsonNode requestBody,
             @RequestHeader HttpHeaders header
     ) {
         ResponseParams responseParams = new ResponseParams();
@@ -232,7 +235,8 @@ public class RegistryEntityController extends AbstractController {
         try {
             String tag = "RegistryController.sendForVerification " + entityName;
             watch.start(tag);
-            registryHelper.sendForAttestation(entityName, entityId, propertyURI);
+            String notes = getNotes(requestBody);
+            registryHelper.sendForAttestation(entityName, entityId, propertyURI, notes);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -263,12 +267,13 @@ public class RegistryEntityController extends AbstractController {
         try {
             String tag = "RegistryController.addNewPropertyToTheEntity " + entityName;
             watch.start(tag);
+            String notes = getNotes(requestBody);
             registryHelper.addEntityProperty(entityName, entityId, propertyURI, requestBody);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             if (send.isPresent() && send.get()) {
                 String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, propertyURI);
-                registryHelper.sendForAttestation(entityName, entityId, propertyURI + "/" + propertyId);
+                registryHelper.sendForAttestation(entityName, entityId, propertyURI + "/" + propertyId, notes);
             }
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -277,6 +282,15 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
+    }
+
+    private String getNotes(JsonNode requestBody) {
+        String notes = "";
+        if (requestBody.has("notes")) {
+            notes = requestBody.get("notes").asText();
+            JSONUtil.removeNodes(requestBody, Collections.singletonList("notes"));
+        }
+        return notes;
     }
 
     @RequestMapping(value = "/partner/api/v1/{entityName}", method = RequestMethod.GET)
