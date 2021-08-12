@@ -86,10 +86,6 @@ public class StateContext {
         setMetadata(OSSystemFields._osClaimId.toString(), metaData.get("claimId"));
     }
 
-    public void setNotes() throws Exception {
-        setMetadata(OSSystemFields._osClaimNotes.toString(), metaData.get("notes"));
-    }
-
     public void setAttestationData() throws Exception {
         setMetadata(OSSystemFields._osAttestedData.toString(), metaData.get("attestedData"));
     }
