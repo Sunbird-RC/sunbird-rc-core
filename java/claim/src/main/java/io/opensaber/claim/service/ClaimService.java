@@ -10,6 +10,7 @@ import io.opensaber.claim.exception.UnAuthorizedException;
 import io.opensaber.claim.model.ClaimStatus;
 import io.opensaber.claim.repository.ClaimNoteRepository;
 import io.opensaber.claim.repository.ClaimRepository;
+import io.opensaber.registry.middleware.util.EntityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.opensaber.claim.contants.AttributeNames.ATTESTOR_INFO;
 import static io.opensaber.claim.contants.AttributeNames.NOTES;
 import static io.opensaber.claim.contants.ErrorMessages.*;
 
@@ -61,33 +63,36 @@ public class ClaimService {
                 .collect(Collectors.toList());
     }
 
-    public ResponseEntity<Object> attestClaim(String claimId, JsonNode attestorNode, JsonNode request) {
+    public ResponseEntity<Object> attestClaim(String claimId, JsonNode requestBody) {
         Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));
         logger.info("Processing claim {}", claim.toString());
         if (claim.isClosed()) {
             throw new ClaimAlreadyProcessedException(CLAIM_IS_ALREADY_PROCESSED);
         }
+        JsonNode attestorNode = requestBody.get(ATTESTOR_INFO);
         if (!claimsAuthorizer.isAuthorized(claim, attestorNode)) {
             throw new UnAuthorizedException(USER_NOT_AUTHORIZED);
         }
-        updateClaim(request, claim);
-        return openSaberClient.sendAttestationResponseToRequester(claim, request);
+        updateClaim(requestBody, claim);
+        return openSaberClient.sendAttestationResponseToRequester(claim, requestBody);
     }
 
-    private void updateClaim(JsonNode request, Claim claim) {
-        if(request.has(NOTES)) {
-            addNotes(request.get(NOTES).asText(), claim);
+    private void updateClaim(JsonNode requestBody, Claim claim) {
+        JsonNode attestorNode = requestBody.get(ATTESTOR_INFO);
+        if(requestBody.has(NOTES)) {
+            addNotes(requestBody.get(NOTES).asText(), claim, EntityUtil.getFullNameOfTheEntity(attestorNode));
         }
         claim.setAttestedOn(new Date());
         claim.setStatus(ClaimStatus.CLOSED.name());
         claimRepository.save(claim);
     }
 
-    public void addNotes(String notes, Claim claim) {
+    public void addNotes(String notes, Claim claim, String addedBy) {
         ClaimNote claimNote = new ClaimNote();
         claimNote.setNotes(notes);
         claimNote.setPropertyURI(claim.getPropertyURI());
         claimNote.setEntityId(claim.getEntityId());
+        claimNote.setAddedBy(addedBy);
         claimNoteRepository.save(claimNote);
     }
 

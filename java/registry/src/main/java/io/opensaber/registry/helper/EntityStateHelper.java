@@ -12,6 +12,7 @@ import io.opensaber.pojos.attestation.Action;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.dto.ClaimDTO;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
+import io.opensaber.registry.middleware.util.EntityUtil;
 import io.opensaber.registry.model.attestation.AttestationPath;
 import io.opensaber.registry.model.attestation.EntityPropertyURI;
 import io.opensaber.registry.util.ClaimRequestClient;
@@ -183,7 +184,7 @@ public class EntityStateHelper {
                             propertyURL,
                             metadataNodePointer.getFirst(),
                             policy,
-                            getRequestorName(entityNode),
+                            EntityUtil.getFullNameOfTheEntity(entityNode),
                             metaData.get("notes").asText()
                     ))
             );
@@ -206,16 +207,6 @@ public class EntityStateHelper {
                 .build();
         ruleEngineService.doTransition(stateContext);
         return root;
-    }
-
-    private String getRequestorName(JsonNode entityNode) {
-        if (entityNode.hasNonNull("identityDetails") && entityNode.get("identityDetails").has("fullName")) {
-            return entityNode.get("identityDetails")
-                    .get("fullName")
-                    .asText();
-        } else {
-            return "";
-        }
     }
 
     private Optional<AttestationPolicy> getMatchingAttestationPolicy(String entityName, JsonNode rootNode, String uuidPath) {

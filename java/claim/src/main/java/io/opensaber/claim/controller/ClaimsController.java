@@ -62,7 +62,7 @@ public class ClaimsController {
     public ResponseEntity<Claim> save(@RequestBody ClaimDTO claimDTO) {
         logger.info("Adding new claimDTO {} ", claimDTO.toString());
         Claim savedClaim = claimService.save(Claim.fromDTO(claimDTO));
-        claimService.addNotes(claimDTO.getNotes(), savedClaim);
+        claimService.addNotes(claimDTO.getNotes(), savedClaim, claimDTO.getRequestorName());
         return new ResponseEntity<>(savedClaim, HttpStatus.OK);
     }
 
@@ -71,7 +71,6 @@ public class ClaimsController {
         logger.info("Attesting claim : {}", claimId);
         return claimService.attestClaim(
                 claimId,
-                requestBody.get(ATTESTOR_INFO),
                 requestBody
         );
     }

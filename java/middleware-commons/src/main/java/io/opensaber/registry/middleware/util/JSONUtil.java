@@ -473,4 +473,5 @@ public class JSONUtil {
 			((ObjectNode) node.at(jsonPointer.substring(0, jsonPointer.lastIndexOf("/")))).put(jsonPointer.substring(jsonPointer.lastIndexOf("/") + 1), value);
 		}
 	}
+
 }
