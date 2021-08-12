@@ -6,7 +6,7 @@ build: java
 java: java/registry/target/registry.jar
 	cd java && ./mvnw -DskipTests clean install
 
-test: 
+test: build
 	@docker-compose up -d
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
