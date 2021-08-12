@@ -338,7 +338,15 @@ public class RegistryEntityController extends AbstractController {
             @PathVariable String entityId,
             @RequestHeader HttpHeaders header, HttpServletRequest request) {
         boolean requireLDResponse = header.getAccept().contains(Constants.LD_JSON_MEDIA_TYPE);
-
+        try {
+            registryHelper.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            try {
+                registryHelper.authorizeAttestor(entityName, request);
+            } catch (Exception exceptionFromAuthorizeAttestor) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+        }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {

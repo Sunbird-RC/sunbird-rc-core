@@ -28,6 +28,8 @@ import io.opensaber.registry.util.*;
 import io.opensaber.validators.IValidate;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
+import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +40,13 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
+import static io.opensaber.registry.exception.ErrorMessages.*;
+
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
  */
 @Component
+@Setter
 public class RegistryHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
@@ -437,7 +442,7 @@ public class RegistryHelper {
         } else if (entityTypeHandler.isExternalRegistry(entityName)) {
             return getUserInfoFromKeyCloak(request, entityName);
         }
-        throw new Exception("Entity is not part of our system");
+        throw new Exception(NOT_PART_OF_THE_SYSTEM_EXCEPTION);
     }
 
     private JsonNode getUserInfoFromKeyCloak(HttpServletRequest request, String entityName) {
@@ -474,7 +479,7 @@ public class RegistryHelper {
         String userId = getKeycloakUserId(request);
         JsonNode resultNode = readEntity(userId, entityName, entityId, false, null, false);
         if (!isOwner(resultNode.get(entityName), userId)) {
-            throw new Exception("User is trying to update someone's data");
+            throw new Exception(INVALID_OPERATION_EXCEPTION_MESSAGE);
         }
     }
 
@@ -482,24 +487,31 @@ public class RegistryHelper {
         JsonNode resultNode = readEntity("", entityName, entityId, false, null, false)
                 .get(entityName);
         JsonNode jsonNode = resultNode.get(propertyURI);
+        List<String> fieldsToRemove = getFieldsToRemove(entityName);
         if (jsonNode.isArray()) {
             ArrayNode arrayNode = (ArrayNode) jsonNode;
             for (JsonNode next : arrayNode) {
-                Iterator<String> fieldNames = requestBody.fieldNames();
-                boolean isAttributesValuesMatched = true;
-                while (fieldNames.hasNext()) {
-                    String field = fieldNames.next();
-                    if (!requestBody.get(field).equals(next.get(field))) {
-                        isAttributesValuesMatched = false;
-                        break;
-                    }
-                }
-                if (isAttributesValuesMatched) {
+                JsonNode existingProperty = next.deepCopy();
+                JSONUtil.removeNodes(existingProperty, fieldsToRemove);
+
+                JsonNode requestBodyWithoutSystemFields = requestBody.deepCopy();
+                JSONUtil.removeNodes(requestBodyWithoutSystemFields, fieldsToRemove);
+
+                if (existingProperty.equals(requestBodyWithoutSystemFields)) {
                     return next.get(uuidPropertyName).asText();
                 }
             }
         }
         return "";
+    }
+
+    @NotNull
+    private List<String> getFieldsToRemove(String entityName) {
+        List<String> fieldsToRemove = new ArrayList<>();
+        fieldsToRemove.add(uuidPropertyName);
+        List<String> systemFields = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields();
+        fieldsToRemove.addAll(systemFields);
+        return fieldsToRemove;
     }
 
     public ArrayNode fetchFromDBUsingEsResponse(String entity, ArrayNode esSearchResponse) throws Exception {
@@ -519,7 +531,27 @@ public class RegistryHelper {
                 .getOsSchemaConfiguration()
                 .getRoles();
         if(!supportedRoles.isEmpty() && supportedRoles.stream().noneMatch(roles::contains)) {
-            throw new Exception("User is not allowed to access the entity");
+            throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
         }
+    }
+
+    public void authorizeAttestor(String entity, HttpServletRequest request) throws Exception {
+        List<String> keyCloakEntities = getKeyCloakEntities(request);
+        Set<String> allTheAttestorEntities = definitionsManager.getDefinition(entity)
+                .getOsSchemaConfiguration()
+                .getAllTheAttestorEntities();
+        if(keyCloakEntities.stream().noneMatch(allTheAttestorEntities::contains)) {
+            throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
+        }
+    }
+
+    private List<String> getKeyCloakEntities(HttpServletRequest request) {
+        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        Object customAttributes = principal.getAccount()
+                .getKeycloakSecurityContext()
+                .getToken()
+                .getOtherClaims()
+                .get("entity");
+        return (List<String>) customAttributes;
     }
 }
