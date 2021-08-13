@@ -51,7 +51,8 @@ public class ClaimsController {
         if (!claim.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        if (!claimsAuthorizer.isAuthorized(claim.get(), attestorNode)) {
+        if (!claimsAuthorizer.isAuthorizedAttestor(claim.get(), attestorNode) ||
+                !claimsAuthorizer.isAuthorizedRequestor(claim.get(), attestorNode)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         ClaimWithNotesDTO claimWithNotesDTO = claimService.generateNotesForTheClaim(claim.get());

@@ -59,7 +59,7 @@ public class ClaimService {
         List<Claim> claims = claimRepository.findByAttestorEntity(entity);
         logger.info("Found {} claims to process", claims.size());
         return claims.stream()
-                .filter(claim -> claimsAuthorizer.isAuthorized(claim, attestorNode))
+                .filter(claim -> claimsAuthorizer.isAuthorizedAttestor(claim, attestorNode))
                 .collect(Collectors.toList());
     }
 
@@ -70,7 +70,7 @@ public class ClaimService {
             throw new ClaimAlreadyProcessedException(CLAIM_IS_ALREADY_PROCESSED);
         }
         JsonNode attestorNode = requestBody.get(ATTESTOR_INFO);
-        if (!claimsAuthorizer.isAuthorized(claim, attestorNode)) {
+        if (!claimsAuthorizer.isAuthorizedAttestor(claim, attestorNode)) {
             throw new UnAuthorizedException(USER_NOT_AUTHORIZED);
         }
         updateClaim(requestBody, claim);
