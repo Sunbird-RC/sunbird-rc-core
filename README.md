@@ -64,8 +64,8 @@ curl -v http://localhost:8081/health
 
 
 ## Examples:
-* [Blood donor registry example schema](../blob/main/docs/example/simple.json)
-* [Places schema](../blob/main/docs/example/place.json)
+* [Blood donor registry example schema](../main/docs/example/simple.json)
+* [Places schema](../main/docs/example/place.json)
 
 
 
