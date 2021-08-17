@@ -51,12 +51,13 @@ public class ClaimsController {
         if (!claim.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        if (!claimsAuthorizer.isAuthorizedAttestor(claim.get(), attestorNode) ||
-                !claimsAuthorizer.isAuthorizedRequestor(claim.get(), attestorNode)) {
+        if (claimsAuthorizer.isAuthorizedAttestor(claim.get(), attestorNode) ||
+                claimsAuthorizer.isAuthorizedRequestor(claim.get(), attestorNode)) {
+            ClaimWithNotesDTO claimWithNotesDTO = claimService.generateNotesForTheClaim(claim.get());
+            return new ResponseEntity<>(claimWithNotesDTO, HttpStatus.OK);
+        } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        ClaimWithNotesDTO claimWithNotesDTO = claimService.generateNotesForTheClaim(claim.get());
-        return new ResponseEntity<>(claimWithNotesDTO, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/api/v1/claims", method = RequestMethod.POST)

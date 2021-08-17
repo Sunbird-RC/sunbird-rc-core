@@ -2,8 +2,7 @@ package io.opensaber.registry.util;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class RecordIdentifierTest {
 
@@ -31,7 +30,7 @@ public class RecordIdentifierTest {
 	public void testParseForInvalidRecordId() {
 		String label = "shardidentifier-0000x000-0000-00xx-000X-000x00xx";
 		RecordIdentifier resultRecordId = RecordIdentifier.parse(label);
-		assertFalse(resultRecordId.getUuid() == null);
+		assertNotNull(resultRecordId.getUuid());
 	}
 
 	@Test
@@ -39,7 +38,21 @@ public class RecordIdentifierTest {
 		String label = "5701a670-644f-406e-902b-684b507bb89f";
 		RecordIdentifier resultRecordId = RecordIdentifier.parse(label);
 		assertTrue(resultRecordId.getUuid().equalsIgnoreCase("5701a670-644f-406e-902b-684b507bb89f"));
-		assertTrue(resultRecordId.getShardLabel() == null);
+		assertNull(resultRecordId.getShardLabel());
+	}
+
+	@Test
+	public void shouldReturnOnlyUUIDIfInputHasShardLabel() {
+		String uuidWithShardLabel = "1-5701a670-644f-406e-902b-684b507bb89f";
+		String uuid= "5701a670-644f-406e-902b-684b507bb89f";
+		assertEquals(RecordIdentifier.getUUID(uuidWithShardLabel), uuid);
+	}
+
+	@Test
+	public void shouldReturnJustUUIDIfShardLabelIsNotPresentInInput() {
+		String uuidWithoutShardLabel = "5701a670-644f-406e-902b-684b507bb89f";
+		String uuid= "5701a670-644f-406e-902b-684b507bb89f";
+		assertEquals(RecordIdentifier.getUUID(uuidWithoutShardLabel), uuid);
 	}
 
 }

@@ -64,7 +64,7 @@ public class RecordIdentifier {
 		return shardLabel;
 	}
 
-	private static String getUUID(String input) {
+	public static String getUUID(String input) {
 		String uuid = input;
 		if (isValid(input)) {
 			uuid = input.substring(input.indexOf(SEPARATOR) + 1, input.length());

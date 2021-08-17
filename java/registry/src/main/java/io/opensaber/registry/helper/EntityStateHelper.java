@@ -17,6 +17,7 @@ import io.opensaber.registry.model.attestation.AttestationPath;
 import io.opensaber.registry.model.attestation.EntityPropertyURI;
 import io.opensaber.registry.util.ClaimRequestClient;
 import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.workflow.RuleEngineService;
 import io.opensaber.workflow.StateContext;
 import net.minidev.json.JSONArray;
@@ -227,7 +228,7 @@ public class EntityStateHelper {
         String resolvedConditions = conditionResolverService.resolve(metadataNode, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
         ClaimDTO claimDTO = new ClaimDTO();
         claimDTO.setEntity(entityName);
-        claimDTO.setEntityId(entityId);
+        claimDTO.setEntityId(RecordIdentifier.getUUID(entityId));
         claimDTO.setPropertyURI(propertyURI);
         claimDTO.setConditions(resolvedConditions);
         claimDTO.setAttestorEntity(attestationPolicy.getAttestorEntity());
