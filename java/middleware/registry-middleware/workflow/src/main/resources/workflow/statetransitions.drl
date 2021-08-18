@@ -27,7 +27,6 @@ rule "Set state as Published when Claim is approved"
     then
         stateDefinition.setState(States.PUBLISHED);
         stateDefinition.setAttestationData();
-        stateDefinition.setNotes();
 end
 
 rule "Set state as Rejected when Claim is rejected"
@@ -35,7 +34,6 @@ rule "Set state as Rejected when Claim is rejected"
         stateDefinition:StateContext(isAttestationProperty() && isClaimRejected());
     then
         stateDefinition.setState(States.REJECTED);
-        stateDefinition.setNotes();
 end
 
 rule "Create entity owner for newly added owner fields"

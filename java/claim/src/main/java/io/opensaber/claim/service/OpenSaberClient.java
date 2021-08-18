@@ -2,6 +2,7 @@ package io.opensaber.claim.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.opensaber.claim.contants.OpensaberApiUrlPaths;
+import io.opensaber.claim.dto.AttestationPropertiesDTO;
 import io.opensaber.claim.entity.Claim;
 import io.opensaber.claim.exception.ResourceNotFoundException;
 import org.slf4j.Logger;

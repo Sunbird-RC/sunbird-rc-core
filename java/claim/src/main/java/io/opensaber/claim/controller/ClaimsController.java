@@ -1,6 +1,7 @@
 package io.opensaber.claim.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.opensaber.claim.dto.ClaimWithNotesDTO;
 import io.opensaber.claim.entity.Claim;
 import io.opensaber.claim.service.ClaimService;
 import io.opensaber.claim.service.ClaimsAuthorizer;
@@ -43,24 +44,27 @@ public class ClaimsController {
     }
 
     @RequestMapping(value = "/api/v1/getClaims/{claimId}", method = RequestMethod.POST)
-    public ResponseEntity<Claim> getClaimById(@RequestHeader HttpHeaders headers, @PathVariable String claimId,
+    public ResponseEntity<ClaimWithNotesDTO> getClaimById(@RequestHeader HttpHeaders headers, @PathVariable String claimId,
                                               @RequestBody JsonNode requestBody) {
-        String entity = requestBody.get(LOWERCASE_ENTITY).asText();
         JsonNode attestorNode = requestBody.get(ATTESTOR_INFO);
         Optional<Claim> claim = claimService.findById(claimId);
         if (!claim.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        if (!claimsAuthorizer.isAuthorized(claim.get(), attestorNode)) {
+        if (claimsAuthorizer.isAuthorizedAttestor(claim.get(), attestorNode) ||
+                claimsAuthorizer.isAuthorizedRequestor(claim.get(), attestorNode)) {
+            ClaimWithNotesDTO claimWithNotesDTO = claimService.generateNotesForTheClaim(claim.get());
+            return new ResponseEntity<>(claimWithNotesDTO, HttpStatus.OK);
+        } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        return new ResponseEntity<>(claim.get(), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/api/v1/claims", method = RequestMethod.POST)
     public ResponseEntity<Claim> save(@RequestBody ClaimDTO claimDTO) {
         logger.info("Adding new claimDTO {} ", claimDTO.toString());
         Claim savedClaim = claimService.save(Claim.fromDTO(claimDTO));
+        claimService.addNotes(claimDTO.getNotes(), savedClaim, claimDTO.getRequestorName());
         return new ResponseEntity<>(savedClaim, HttpStatus.OK);
     }
 
@@ -69,7 +73,6 @@ public class ClaimsController {
         logger.info("Attesting claim : {}", claimId);
         return claimService.attestClaim(
                 claimId,
-                requestBody.get(ATTESTOR_INFO),
                 requestBody
         );
     }

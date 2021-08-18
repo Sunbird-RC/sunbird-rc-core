@@ -380,9 +380,9 @@ public class RegistryHelper {
         updateEntity(node, userId);
     }
 
-    public void sendForAttestation(String entityName, String entityId, String propertyURI) throws Exception {
+    public void sendForAttestation(String entityName, String entityId, String propertyURI, String notes) throws Exception {
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
-        JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, propertyURI);
+        JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, propertyURI, notes);
         updateEntity(updatedNode, "");
     }
 

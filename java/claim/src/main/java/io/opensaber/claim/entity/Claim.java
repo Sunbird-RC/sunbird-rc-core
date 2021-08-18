@@ -34,8 +34,6 @@ public class Claim {
     @Column(name=Claim.ATTESTED_ON)
     private Date attestedOn;
     @Column
-    private String notes;
-    @Column
     private String status;
     @Column
     private String conditions;
@@ -87,14 +85,6 @@ public class Claim {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
     }
 
     public String getStatus() {
