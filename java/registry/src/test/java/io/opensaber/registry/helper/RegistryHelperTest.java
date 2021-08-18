@@ -42,7 +42,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
@@ -287,6 +287,15 @@ public class RegistryHelperTest {
     @Captor
     ArgumentCaptor<JsonNode> inputJsonCapture;
 
+    @Captor
+    ArgumentCaptor<String> operationCapture;
+    @Captor
+    ArgumentCaptor<String> toCapture;
+    @Captor
+    ArgumentCaptor<String> subjectCapture;
+    @Captor
+    ArgumentCaptor<String> messageCapture;
+
     @Test
     public void shouldCreateOwnersForInvite() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
@@ -303,5 +312,53 @@ public class RegistryHelperTest {
         registryHelper.inviteEntity(inviteJson, "");
         Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());
         assertEquals("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"osOwner\":[\"" + testUserId + "\"]}}", inputJsonCapture.getValue().toString());
+    }
+
+    @Test
+    public void shouldSendInviteInvitationsAfterCreatingOwners() throws Exception {
+        JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
+        when(definitionsManager.getOwnershipAttributes(INSTITUTE))
+                .thenReturn(Collections.singletonList(
+                        OwnershipsAttributes.builder().mobile("").email("/email").userId("/email").build()
+                ));
+        when(definitionsManager.getDefinition(INSTITUTE))
+                .thenReturn(new Definition(new ObjectMapper().readTree("{\"title\":\"Institute\",\"definitions\":{\"Institute\":{\"$id\":\"#\\/properties\\/Institute\",\"title\":\"The Institute Schema\",\"required\":[],\"properties\":{\"contactNumber\":{\"$id\":\"#\\/properties\\/contactNumber\",\"type\":\"string\",\"title\":\"Landline \\/ Mobile\"},\"email\":{\"$id\":\"#\\/properties\\/email\",\"type\":\"string\",\"format\":\"email\",\"title\":\"Email\"}}}},\"_osConfig\":{\"privateFields\":[],\"signedFields\":[],\"indexFields\":[],\"uniqueIndexFields\":[],\"systemFields\":[\"osCreatedAt\",\"osUpdatedAt\",\"osCreatedBy\",\"osUpdatedBy\"],\"attestationPolicies\":[],\"subjectJsonPath\":\"email\",\"ownershipAttributes\":[{\"email\":\"\\/email\",\"mobile\":\"\\/contactNumber\",\"userId\":\"\\/email\"},{\"email\":\"\\/adminEmail\",\"mobile\":\"\\/adminMobile\",\"userId\":\"\\/adminEmail\"}]}}")));
+        String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
+        when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+        when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
+        when(shardManager.getShard(any())).thenReturn(new Shard());
+        registryHelper.inviteEntity(inviteJson, "");
+        Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());
+        Mockito.verify(registryService, atLeastOnce()).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
+        assertEquals("mailto:gecasu.ihises@tovinit.com", toCapture.getValue());
+        assertEquals("INVITATION TO JOIN Institute", subjectCapture.getValue());
+        assertEquals("You have been invited to join Institute registry. You can complete your profile here: https://ndear.xiv.in", messageCapture.getValue());
+    }
+
+    @Test
+    public void shouldSendMultipleInviteInvitationsAfterCreatingOwners() throws Exception {
+        JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"contactNumber\": \"123123\", \"adminEmail\": \"admin@email.com\",\n" +
+                "  \"adminMobile\": \"1234\"\n" +
+                "}}");
+        when(definitionsManager.getOwnershipAttributes(INSTITUTE))
+                .thenReturn(Arrays.asList(
+                        OwnershipsAttributes.builder().mobile("/contactNumber").email("/email").userId("/email").build(),
+                        OwnershipsAttributes.builder().mobile("/adminMobile").email("/adminEmail").userId("/adminEmail").build()
+                ));
+        when(definitionsManager.getDefinition(INSTITUTE))
+                .thenReturn(new Definition(new ObjectMapper().readTree("{\"title\":\"Institute\",\"definitions\":{\"Institute\":{\"$id\":\"#\\/properties\\/Institute\",\"title\":\"The Institute Schema\",\"required\":[],\"properties\":{\"contactNumber\":{\"$id\":\"#\\/properties\\/contactNumber\",\"type\":\"string\",\"title\":\"Landline \\/ Mobile\"},\"email\":{\"$id\":\"#\\/properties\\/email\",\"type\":\"string\",\"format\":\"email\",\"title\":\"Email\"}}}},\"_osConfig\":{\"privateFields\":[],\"signedFields\":[],\"indexFields\":[],\"uniqueIndexFields\":[],\"systemFields\":[\"osCreatedAt\",\"osUpdatedAt\",\"osCreatedBy\",\"osUpdatedBy\"],\"attestationPolicies\":[],\"subjectJsonPath\":\"email\",\"ownershipAttributes\":[{\"email\":\"\\/email\",\"mobile\":\"\\/contactNumber\",\"userId\":\"\\/email\"},{\"email\":\"\\/adminEmail\",\"mobile\":\"\\/adminMobile\",\"userId\":\"\\/adminEmail\"}]}}")));
+        String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
+        when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+        when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
+        when(shardManager.getShard(any())).thenReturn(new Shard());
+        registryHelper.inviteEntity(inviteJson, "");
+        Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());
+        Mockito.verify(registryService, times(4)).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
+        assertEquals("tel:123123", toCapture.getAllValues().get(0));
+        assertEquals("INVITATION TO JOIN Institute", subjectCapture.getAllValues().get(0));
+        assertEquals("You have been invited to join Institute registry. You can complete your profile here: https://ndear.xiv.in", messageCapture.getAllValues().get(0));
+        assertEquals("mailto:gecasu.ihises@tovinit.com", toCapture.getAllValues().get(1));
+        assertEquals("tel:1234", toCapture.getAllValues().get(2));
+        assertEquals("mailto:admin@email.com", toCapture.getAllValues().get(3));
     }
 }

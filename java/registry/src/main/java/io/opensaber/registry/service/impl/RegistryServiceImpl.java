@@ -1,7 +1,6 @@
 package io.opensaber.registry.service.impl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,7 +30,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.opensaber.actors.factory.MessageFactory;
-import io.opensaber.pojos.AuditRecord;
 import io.opensaber.pojos.ComponentHealthInfo;
 import io.opensaber.pojos.HealthCheckResponse;
 import io.opensaber.registry.dao.IRegistryDao;
@@ -330,6 +328,15 @@ public class RegistryServiceImpl implements RegistryService {
 			        parentEntityType.toLowerCase(), entityRootId, rootNode,null);	
 			ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);	
 			logger.debug("callESActors ends");	
+    }
+
+    @Async("taskExecutor")
+    @Override
+    public void callNotificationActors(String operation, String to, String subject, String message) throws JsonProcessingException {
+        logger.debug("callNotificationActors started");
+        MessageProtos.Message messageProto = MessageFactory.instance().createNotificationActorMessage(operation, to, subject, message);
+        ActorCache.instance().get(Router.ROUTER_NAME).tell(messageProto, null);
+        logger.debug("callESActors ends");
     }
 
     private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode) {
