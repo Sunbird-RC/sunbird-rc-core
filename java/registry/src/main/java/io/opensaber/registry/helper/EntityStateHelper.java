@@ -12,10 +12,12 @@ import io.opensaber.pojos.attestation.Action;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.dto.ClaimDTO;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
+import io.opensaber.registry.middleware.util.EntityUtil;
 import io.opensaber.registry.model.attestation.AttestationPath;
 import io.opensaber.registry.model.attestation.EntityPropertyURI;
 import io.opensaber.registry.util.ClaimRequestClient;
 import io.opensaber.registry.util.DefinitionsManager;
+import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.workflow.RuleEngineService;
 import io.opensaber.workflow.StateContext;
 import net.minidev.json.JSONArray;
@@ -148,9 +150,11 @@ public class EntityStateHelper {
         }
     }
 
-    JsonNode sendForAttestation(JsonNode entityNode, String propertyURL) throws Exception {
+    JsonNode sendForAttestation(JsonNode entityNode, String propertyURL, String notes) throws Exception {
         logger.info("Sending {} for attestation", propertyURL);
-        return manageState(entityNode, propertyURL, Action.RAISE_CLAIM, JsonNodeFactory.instance.objectNode());
+        ObjectNode metaData = JsonNodeFactory.instance.objectNode();
+        metaData.set("notes", JsonNodeFactory.instance.textNode(notes));
+        return manageState(entityNode, propertyURL, Action.RAISE_CLAIM, metaData);
     }
 
     JsonNode grantClaim(JsonNode entityNode, String propertyURI, String notes) throws Exception {
@@ -191,7 +195,8 @@ public class EntityStateHelper {
                             propertyURL,
                             metadataNodePointer.getFirst(),
                             policy,
-                            getRequestorName(entityNode)
+                            EntityUtil.getFullNameOfTheEntity(entityNode),
+                            metaData.get("notes").asText()
                     ))
             );
         } else if (action.equals(Action.GRANT_CLAIM)) {
@@ -215,16 +220,6 @@ public class EntityStateHelper {
         return root;
     }
 
-    private String getRequestorName(JsonNode entityNode) {
-        if (entityNode.hasNonNull("identityDetails") && entityNode.get("identityDetails").has("fullName")) {
-            return entityNode.get("identityDetails")
-                    .get("fullName")
-                    .asText();
-        } else {
-            return "";
-        }
-    }
-
     private Optional<AttestationPolicy> getMatchingAttestationPolicy(String entityName, JsonNode rootNode, String uuidPath) {
         int uuidPathDepth = uuidPath.split("/").length;
         String matchingUUIDPath = "/" + uuidPath;
@@ -239,15 +234,16 @@ public class EntityStateHelper {
         return Optional.empty();
     }
 
-    private String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode, AttestationPolicy attestationPolicy, String requestorName) {
+    private String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode, AttestationPolicy attestationPolicy, String requestorName, String notes) {
         String resolvedConditions = conditionResolverService.resolve(metadataNode, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
         ClaimDTO claimDTO = new ClaimDTO();
         claimDTO.setEntity(entityName);
-        claimDTO.setEntityId(entityId);
+        claimDTO.setEntityId(RecordIdentifier.getUUID(entityId));
         claimDTO.setPropertyURI(propertyURI);
         claimDTO.setConditions(resolvedConditions);
         claimDTO.setAttestorEntity(attestationPolicy.getAttestorEntity());
         claimDTO.setRequestorName(requestorName);
+        claimDTO.setNotes(notes);
         return claimRequestClient.riseClaimRequest(claimDTO).get("id").toString();
     }
 

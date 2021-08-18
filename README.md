@@ -23,7 +23,7 @@ curl -v http://localhost:8081/health
     * You can use postgres and prepare database using following command
         ```sql
       create database registry;
-      create role registry identified by password('complexPassword') 
+      create role registry with password 'complexPassword';
       grant all privileges  on database registry to registry;
         ``` 
 3. Build docker image with custom schema
@@ -64,8 +64,8 @@ curl -v http://localhost:8081/health
 
 
 ## Examples:
-* [Blood donor registry example schema](../blob/main/docs/example/simple.json)
-* [Places schema](../blob/main/docs/example/place.json)
+* [Blood donor registry example schema](../main/docs/example/simple.json)
+* [Places schema](../main/docs/example/place.json)
 
 
 

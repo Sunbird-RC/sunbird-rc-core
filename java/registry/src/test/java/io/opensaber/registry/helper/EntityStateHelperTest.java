@@ -106,8 +106,8 @@ public class EntityStateHelperTest {
                 .thenReturn("");
         when(claimRequestClient.riseClaimRequest(ArgumentMatchers.any()))
                 .thenReturn(mockRaiseClaimResponse);
-
-        assertEquals(test.get("expected"), entityStateHelper.sendForAttestation(test.get("existing"), propertyURI));
+        String notes = "";
+        assertEquals(test.get("expected"), entityStateHelper.sendForAttestation(test.get("existing"), propertyURI, notes));
 
     }
 
