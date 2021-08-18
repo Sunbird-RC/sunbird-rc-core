@@ -1,38 +1,37 @@
 package io.opensaber.claim.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.opensaber.claim.dto.AttestationPropertiesDTO;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.claim.entity.Claim;
+import io.opensaber.claim.entity.ClaimNote;
+import io.opensaber.claim.exception.ClaimAlreadyProcessedException;
+import io.opensaber.claim.exception.ResourceNotFoundException;
+import io.opensaber.claim.exception.UnAuthorizedException;
 import io.opensaber.claim.repository.ClaimNoteRepository;
 import io.opensaber.claim.repository.ClaimRepository;
-import io.opensaber.pojos.attestation.AttestationPolicy;
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.http.HttpHeaders;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.Optional;
 
+import static io.opensaber.claim.contants.AttributeNames.ATTESTOR_INFO;
+import static io.opensaber.claim.contants.AttributeNames.NOTES;
+import static io.opensaber.claim.model.ClaimStatus.CLOSED;
 import static io.opensaber.claim.model.ClaimStatus.OPEN;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@Ignore
 @RunWith(MockitoJUnitRunner.class)
 public class ClaimServiceTest {
     private ClaimService claimService;
-    private final HttpHeaders dummyHeader = new HttpHeaders();
-    private Claim claim;
-    private final String claimId = "123";
-    private final String  role = "bo";
-
     @Mock
     ClaimRepository claimRepository;
     @Mock
@@ -41,112 +40,128 @@ public class ClaimServiceTest {
     OpenSaberClient openSaberClient;
     @Mock
     ClaimsAuthorizer claimsAuthorizer;
-    @Captor
-    ArgumentCaptor<Claim> argumentCaptor;
 
     @Before
     public void setUp() {
         claimService = new ClaimService(claimRepository, claimNoteRepository, openSaberClient, claimsAuthorizer);
-        claim = new Claim();
-        claim.setId(claimId);
-        claim.setStatus(OPEN.name());
-        String boRole = "bo";
     }
 
-//    @Test
-//    public void shouldAbleToSetTheNotes() {
-//        Optional<String> optionalNotes = Optional.of("Burning keyboard with java");
-//        assertNotes(optionalNotes, optionalNotes.get());
-//    }
-//
-//    @Test
-//    public void shouldAbleToSetTheEmptyNotes() {
-//        Optional<String> optionalNotes = Optional.empty();
-//        assertNotes(optionalNotes, "");
-//    }
+    @Test
+    public void shouldReturnOnlyAuthorizedClaims() {
+        Claim claim1 = getClaim("1");
+        Claim claim2 = getClaim("2");
+        Claim claim3 = getClaim("3");
+        List<Claim> allClaimsForEntity = Arrays.asList(claim1, claim2, claim3);
+        String entity = "Teacher";
+        JsonNode dummyNode = new ObjectMapper().nullNode();
+        when(claimRepository.findByAttestorEntity(entity)).thenReturn(allClaimsForEntity);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim1, dummyNode)).thenReturn(true);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim2, dummyNode)).thenReturn(false);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim3, dummyNode)).thenReturn(true);
 
-//    private void assertNotes(Optional<String> optionalNotes, String expectedNotes) {
-//        when(claimRepository.findById(claimId)).thenReturn(Optional.of(claim));
-//        claimService.updateNotes(claimId, optionalNotes, dummyHeader, Collections.emptyList());
-//        verify(claimRepository).save(argumentCaptor.capture());
-//        Claim actualValue = argumentCaptor.getValue();
-//        assertEquals(expectedNotes, actualValue.getNotes());
-//        assertEquals(CLOSED.name(), actualValue.getStatus());
-//        verify(openSaberClient, atLeastOnce()).updateAttestedProperty(actualValue, dummyHeader);
-//    }
+        List<Claim> actualClaims = Arrays.asList(claim1, claim3);
+        assertEquals(claimService.findClaimsForAttestor(entity, dummyNode), actualClaims);
+    }
 
-//    @Test
-//    public void shouldAbleToGrantClaim() throws Exception {
-//        claim.setPropertyURI("education");
-//        claim.setPropertyId("1-faaa0c01-c77f-4906-90ed-9f4b853eaaac");
-//        String expectedAttestedData = "{\"start\":\"2014\",\"end\":\"2015\",\"institute\":\"AHSS\",\"class\":\"12th\",\"studentName\":\"Muthu raman\"}";
-//        assertGrantClaim(expectedAttestedData);
-//    }
-//
-//    private void assertGrantClaim(String expectedAttestedData) throws Exception {
-//        AttestationPropertiesDTO attestationPropertiesDTO = getAttestationPropertiesDTO();
-//        when(claimRepository.findById(claimId)).thenReturn(Optional.of(claim));
-//        when(openSaberClient.getAttestationProperties(claim)).thenReturn(attestationPropertiesDTO);
-//        claimService.grantClaim(claimId, Collections.singletonList(role), dummyHeader);
-//        verify(claimRepository).save(argumentCaptor.capture());
-//        Claim actualClaim = argumentCaptor.getValue();
-//        assertNull(actualClaim.getNotes());
-//        assertEquals(CLOSED.name(), actualClaim.getStatus());
-//        verify(openSaberClient).updateAttestedProperty(actualClaim, expectedAttestedData, dummyHeader);
-//    }
+    @Test(expected = ResourceNotFoundException.class)
+    public void attestClaimShouldThrowExceptionIfTheClaimIsNotFound() {
+        String id = "1";
+        when(claimRepository.findById(id)).thenReturn(Optional.empty());
+        JsonNode dummyNode = new ObjectMapper().nullNode();
+        claimService.attestClaim(id, dummyNode);
+    }
+    @Test(expected = ClaimAlreadyProcessedException.class)
+    public void attestClaimShouldThrowExceptionIfTheClaimIsAlreadyProcessed() {
+        String id = "1";
+        Claim claim = getClaim(id);
+        claim.setStatus(CLOSED.name());
+        when(claimRepository.findById(id)).thenReturn(Optional.of(claim));
+        JsonNode dummyNode = new ObjectMapper().nullNode();
+        claimService.attestClaim(id, dummyNode);
+    }
 
-//    @Test
-//    public void shouldAbleToGrantClaimForSingleValueAttribute() throws Exception {
-//        claim.setPropertyURI("nationalIdentifier");
-//        String expectedAttestedData =  "{\"nationalIdentifier\":\"123456\"}";
-//        assertGrantClaim(expectedAttestedData);
-//    }
+    @Test(expected = UnAuthorizedException.class)
+    public void attestClaimShouldThrowExceptionIfTheUserIsNotAuthorized() {
+        String id = "1";
+        Claim claim = getClaim(id);
+        claim.setStatus(OPEN.name());
+        JsonNode dummyNode = new ObjectMapper().nullNode();
+        when(claimRepository.findById(id)).thenReturn(Optional.of(claim));
+        claimService.attestClaim(id, dummyNode);
+    }
 
-    private AttestationPropertiesDTO getAttestationPropertiesDTO() throws IOException {
-        String studentEntity = getStudentEntity();
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode node = objectMapper.readTree(studentEntity);
-        Map<String, Object> entity = objectMapper.convertValue(node, HashMap.class);
-        AttestationPolicy attestationPolicy1 = new AttestationPolicy();
-        attestationPolicy1.setPaths(Arrays.asList("$.education[?(@.osid == 'PROPERTY_ID')]['start', 'end', 'institute']", "$['studentName', 'class']"));
-        attestationPolicy1.setProperty("education");
-        AttestationPolicy attestationPolicy2 = new AttestationPolicy();
-        attestationPolicy2.setPaths(Collections.singletonList("nationalIdentifier"));
-        attestationPolicy2.setProperty("nationalIdentifier");
+    @Test
+    public void shouldAbleToAttestTheClaim() throws JsonProcessingException {
+        String id = "1";
+        String addedBy = "Rogers";
+        String notes = "what ?";
+        String entityId = "8658cc54-2c9d-42c9-8093-31e8c9e6e090";
+        String propertyURI = "educationDetails/1-8d6dfb25-7789-44da-a6d4-eacf93e3a7bb";
 
-        AttestationPropertiesDTO attestationPropertiesDTO = new AttestationPropertiesDTO();
-        attestationPropertiesDTO.setEntity(entity);
-        attestationPropertiesDTO.setAttestationPolicies(Arrays.asList(attestationPolicy1, attestationPolicy2));
-        return attestationPropertiesDTO;
+        Claim claim = getClaim(id);
+        claim.setStatus(OPEN.name());
+        claim.setEntityId(entityId);
+        claim.setPropertyURI(propertyURI);
+        ObjectNode requestBody = new ObjectMapper().createObjectNode();
+
+        JsonNode dummyNode = new ObjectMapper().readTree(getStudentEntity());
+        requestBody.set(ATTESTOR_INFO, dummyNode);
+        requestBody.put(NOTES, notes);
+
+        when(claimRepository.findById(id)).thenReturn(Optional.of(claim));
+        when(claimsAuthorizer.isAuthorizedAttestor(claim, dummyNode)).thenReturn(true);
+
+        ClaimNote expectedClaimNote = new ClaimNote();
+        expectedClaimNote.setNotes(notes);
+        expectedClaimNote.setPropertyURI(propertyURI);
+        expectedClaimNote.setEntityId(entityId);
+        expectedClaimNote.setAddedBy(addedBy);
+
+        claimService.attestClaim(id, requestBody);
+        verify(claimRepository, atLeastOnce()).save(any());
+        verify(claimNoteRepository, atLeastOnce()).save(expectedClaimNote);
+    }
+    private Claim getClaim(String id) {
+        Claim claim = new Claim();
+        claim.setId(id);
+        return claim;
     }
 
     private String getStudentEntity() {
         return "{\n" +
-                "    \"gender\": \"Male\",\n" +
-                "    \"studentName\": \"Muthu raman\",\n" +
-                "    \"osid\": \"1-2b2a4d9a-1301-4580-8ca1-114e6dbda1c4\",\n" +
-                "    \"nationalIdentifier\": \"123456\",\n" +
-                "    \"education\": [\n" +
-                "        {\n" +
-                "            \"_osState\": \"ATTESTATION_REQUESTED\",\n" +
-                "            \"degree\": \"HSC\",\n" +
-                "            \"start\": \"2014\",\n" +
-                "            \"end\": \"2015\",\n" +
-                "            \"institute\": \"AHSS\",\n" +
-                "            \"osid\": \"1-faaa0c01-c77f-4906-90ed-9f4b853eaaac\",\n" +
-                "            \"_osClaimId\": \"3ec8e8f1-f5fa-470b-ac8e-97aefcc8a470\"\n" +
+                "        \"educationDetails\": [\n" +
+                "            {\n" +
+                "                \"graduationYear\": \"2022\",\n" +
+                "                \"institute\": \"CD universe\",\n" +
+                "                \"osid\": \"1-8d6dfb25-7789-44da-a6d4-eacf93e3a7bb\",\n" +
+                "                \"program\": \"8th\",\n" +
+                "                \"marks\": \"99\"\n" +
+                "            },\n" +
+                "            {\n" +
+                "                \"graduationYear\": \"2021\",\n" +
+                "                \"institute\": \"DC universe\",\n" +
+                "                \"osid\": \"1-7d9dfb25-7789-44da-a6d4-eacf93e3a7aa\",\n" +
+                "                \"program\": \"test123\",\n" +
+                "                \"marks\": \"78\"\n" +
+                "            }\n" +
+                "        ],\n" +
+                "        \"contactDetails\": {\n" +
+                "            \"osid\": \"1-096cd663-6ba9-49f8-af31-1ace9e31bc31\",\n" +
+                "            \"mobile\": \"9000090000\",\n" +
+                "            \"osOwner\": \"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\",\n" +
+                "            \"email\": \"ram@gmail.com\"\n" +
                 "        },\n" +
-                "        {\n" +
-                "            \"_osState\": \"REJECTED\",\n" +
-                "            \"degree\": \"12th\",\n" +
-                "            \"start\": \"2010\",\n" +
-                "            \"end\": \"2012\",\n" +
-                "            \"institute\": \"90001\",\n" +
-                "            \"osid\": \"1-48e69a5a-02fd-4320-b5f5-4b7b31bd5385\",\n" +
-                "            \"_osClaimId\": \"a0db1d81-115b-433b-985e-76ce97bb1373\"\n" +
-                "        }\n" +
-                "    ],\n" +
-                "    \"class\": \"12th\"\n" +
-                "}";
+                "        \"osid\": \"1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb\",\n" +
+                "        \"identityDetails\": {\n" +
+                "            \"osid\": \"1-9f50f1b3-99cc-4fcb-9e51-e0dbe0be19f9\",\n" +
+                "            \"gender\": \"Male\",\n" +
+                "            \"identityType\": \"\",\n" +
+                "            \"dob\": \"1999-01-01\",\n" +
+                "            \"fullName\": \"Rogers\",\n" +
+                "            \"identityValue\": \"\",\n" +
+                "            \"osOwner\": \"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\"\n" +
+                "        },\n" +
+                "        \"osOwner\": \"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\"\n" +
+                "    }";
     }
 }
