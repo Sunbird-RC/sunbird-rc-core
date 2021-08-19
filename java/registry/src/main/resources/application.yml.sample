@@ -23,6 +23,10 @@ server:
   # Change this port number if you want to run it on another.
   port: ${server_port:8081}
 
+notification:
+  service:
+    connection_url: ${notification_url:http://localhost:8765/divoc/notification-service/v1/notification}
+
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
   # in production. For example, http://otherservice.com:9090, to allow requests from otherservice.com.

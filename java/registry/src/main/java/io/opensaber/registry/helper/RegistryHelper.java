@@ -12,12 +12,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.keycloak.KeycloakAdminUtil;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.attestation.Action;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.attestation.EntityPropertyURI;
-import io.opensaber.pojos.attestation.Action;
 import io.opensaber.registry.service.DecryptionHelper;
 import io.opensaber.registry.service.IReadService;
 import io.opensaber.registry.service.ISearchService;
@@ -29,6 +29,7 @@ import io.opensaber.validators.IValidate;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
@@ -40,7 +41,10 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
+import static io.opensaber.registry.Constants.*;
 import static io.opensaber.registry.exception.ErrorMessages.*;
+import static io.opensaber.registry.middleware.util.Constants.EMAIL;
+import static io.opensaber.registry.middleware.util.Constants.MOBILE;
 
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
@@ -128,7 +132,28 @@ public class RegistryHelper {
         String entityType = inputJson.fields().next().getKey();
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), true);
         entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson);
-        return addEntity(inputJson, userId, entityType);
+        String entityId = addEntity(inputJson, userId, entityType);
+        sendInviteNotification(inputJson);
+        return entityId;
+    }
+
+    private void sendInviteNotification(JsonNode inputJson) throws Exception {
+        String entityType = inputJson.fields().next().getKey();
+        sendNotificationToOwners(inputJson, INVITE, String.format(INVITE_SUBJECT_TEMPLATE, entityType), String.format(INVITE_BODY_TEMPLATE, entityType));
+    }
+
+    private void sendNotificationToOwners(JsonNode inputJson, String operation, String subject, String message) throws Exception {
+        String entityType = inputJson.fields().next().getKey();
+        for (ObjectNode owners : entityStateHelper.getOwnersData(inputJson, entityType)) {
+            String ownerMobile = owners.get(MOBILE).asText("");
+            String ownerEmail = owners.get(EMAIL).asText("");
+            if (!StringUtils.isEmpty(ownerMobile)) {
+                registryService.callNotificationActors(operation, String.format("tel:%s", ownerMobile), subject, message);
+            }
+            if (!StringUtils.isEmpty(ownerEmail)) {
+                registryService.callNotificationActors(operation, String.format("mailto:%s", ownerEmail), subject, message);
+            }
+        }
     }
 
     private String addEntity(JsonNode inputJson, String userId, String entityType) throws Exception {
@@ -391,8 +416,10 @@ public class RegistryHelper {
         JsonNode updatedNode;
         if (attestReq.get("action").asText().equals(Action.GRANT_CLAIM.toString())) {
             updatedNode = entityStateHelper.grantClaim(entityNode, uuidPath, attestReq.get("notes").asText());
+            sendNotificationToOwners(updatedNode, CLAIM_GRANTED, String.format(CLAIM_STATUS_SUBJECT_TEMPLATE, CLAIM_GRANTED), String.format(CLAIM_STATUS_BODY_TEMPLATE, CLAIM_GRANTED));
         } else {
             updatedNode = entityStateHelper.rejectClaim(entityNode, uuidPath, attestReq.get("notes").asText());
+            sendNotificationToOwners(updatedNode, CLAIM_REJECTED, String.format(CLAIM_STATUS_SUBJECT_TEMPLATE, CLAIM_REJECTED), String.format(CLAIM_STATUS_BODY_TEMPLATE, CLAIM_REJECTED));
         }
         updateEntity(updatedNode, "");
     }
@@ -530,7 +557,7 @@ public class RegistryHelper {
         List<String> supportedRoles = definitionsManager.getDefinition(entityName)
                 .getOsSchemaConfiguration()
                 .getRoles();
-        if(!supportedRoles.isEmpty() && supportedRoles.stream().noneMatch(roles::contains)) {
+        if (!supportedRoles.isEmpty() && supportedRoles.stream().noneMatch(roles::contains)) {
             throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
         }
     }
@@ -540,7 +567,7 @@ public class RegistryHelper {
         Set<String> allTheAttestorEntities = definitionsManager.getDefinition(entity)
                 .getOsSchemaConfiguration()
                 .getAllTheAttestorEntities();
-        if(keyCloakEntities.stream().noneMatch(allTheAttestorEntities::contains)) {
+        if (keyCloakEntities.stream().noneMatch(allTheAttestorEntities::contains)) {
             throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
         }
     }

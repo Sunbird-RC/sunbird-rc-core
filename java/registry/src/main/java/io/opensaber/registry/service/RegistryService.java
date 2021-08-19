@@ -17,4 +17,6 @@ public interface RegistryService {
 
 	void callESActors(JsonNode rootNode, String operation, String parentEntityType, String entityRootId, Transaction tx) throws Exception;
 
+	void callNotificationActors(String operation, String to, String subject, String message) throws Exception;
+
 }

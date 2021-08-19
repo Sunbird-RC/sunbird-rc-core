@@ -82,6 +82,16 @@ public class EntityStateHelper {
         allContexts.add(stateContext);
     }
 
+    public List<ObjectNode> getOwnersData(JsonNode jsonNode, String entityName) {
+        List<ObjectNode> owners = new ArrayList<>();
+        List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityName);
+        for (OwnershipsAttributes ownershipAttribute : ownershipAttributes) {
+            ObjectNode ownerNode = createOwnershipNode(jsonNode, entityName, ownershipAttribute);
+            owners.add(ownerNode);
+        }
+        return owners;
+    }
+
     private void addOwnershipStateTransitions(JsonNode existing, String entityName, JsonNode modified, List<StateContext> allContexts) {
         List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityName);
         for (OwnershipsAttributes ownershipAttribute : ownershipAttributes) {

@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
+import io.opensaber.actors.services.NotificationService;
 import io.opensaber.elastic.ElasticServiceImpl;
 import io.opensaber.elastic.IElasticService;
 import io.opensaber.pojos.AuditRecord;
@@ -149,6 +150,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${elastic.search.connection_url}")
 	private String elasticConnInfo;
+
+	@Value("${notification.service.connection_url}")
+	private String notificationServiceConnInfo;
 	
     @Value("${search.providerName}")
     private String searchProviderName;
@@ -439,6 +443,13 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			elasticService.init(definitionsManager.getAllKnownDefinitions(), definitionsManager.getExcludingFields());
 		}
 		return elasticService;
+	}
+
+	@Bean
+	public NotificationService notificationService() {
+		NotificationService notificationService = new NotificationService();
+		notificationService.setConnectionInfo(notificationServiceConnInfo);
+		return notificationService;
 	}
 
 //	/** creates elastic-service bean and instanstiates the indices
