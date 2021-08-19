@@ -2,17 +2,17 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
   "properties": {
-    "Child": {
-      "$ref": "#/definitions/Child"
+    "VaccineMaster": {
+      "$ref": "#/definitions/VaccineMaster"
     }
   },
   "required": [
-    "Child"
+    "VaccineMaster"
   ],
-  "title": "Child",
+  "title": "VaccineMaster",
   "definitions": {
-    "Child": {
-      "$id": "#/properties/Child",
+    "VaccineMaster": {
+      "$id": "#/properties/VaccineMaster",
       "type": "object",
       "title": "Vaccine Details",
       "description": "Vaccine Details",
