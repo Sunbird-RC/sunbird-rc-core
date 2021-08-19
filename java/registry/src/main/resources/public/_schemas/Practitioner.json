@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "Practitioner": {
+      "$ref": "#/definitions/Practitioner"
+    }
+  },
+  "required": [
+    "Practitioner"
+  ],
+  "title": "Practitioner",
+  "definitions": {
+    "Practitioner": {
+      "$id": "#/properties/Practitioner",
+      "type": "object",
+      "title": "The Practitioner Schema",
+      "required": [
+      ],
+      "properties": {
+        "identityDetails": {
+          "$ref": "Common.json/#/definitions/IdentityDetails"
+        },
+        "contactDetails": {
+          "$ref": "Common.json/#/definitions/ContactDetails"
+        },
+        "practitionerQualification": {
+          "type": "object",
+          "title": "Qualification Details",
+          "properties": {
+            "degreeType": {
+              "type": "string",
+              "title": "Qualification - Doctoral degree type",
+              "enum": [
+                "MD",
+                "PhD / DPhil",
+                "DD / DDiv"
+              ]
+            },
+            "specialisation": {
+              "type": "string",
+              "title": "Specialisation details",
+              "enum": [
+                "Allergist",
+                "Dermatologist",
+                "Child psychologist"
+              ]
+            },
+            "licenceNumber": {
+              "type": "string",
+              "title": "Licence number"
+            },
+            "grantYear": {
+              "type": "string",
+              "format": "date",
+              "title": "Grant year"
+            },
+            "licenseValidity": {
+              "type": "string",
+              "title": "License Validity"
+            },
+            "trainedFor": {
+              "type": "string",
+              "title": "Vaccinations Trained for"
+            }
+          }
+        },
+        "practitionerExperience": {
+          "title": "Experience Details",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "professionalType": {
+                "type": "string",
+                "title": "Type of Professional"
+              },
+              "employmentType": {
+                "type": "string",
+                "title": "Employment Type",
+                "enum": [
+                  "Permanant",
+                  "Visting faculty"
+                ]
+              },
+              "startDate": {
+                "type": "string",
+                "title": "Start Date",
+                "format": "date"
+              },
+              "endDate": {
+                "type": "string",
+                "format": "date",
+                "title": "End Date"
+              },
+              "hospitalName": {
+                "type": "string",
+                "title": "Hospital name"
+              },
+              "type": {
+                "type": "string",
+                "format": "date",
+                "title": "Type",
+                "enum": [
+                  "Head of department",
+                  "Probationary",
+                  "Assistant"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "_osConfig": {
+        "osComment": [
+          "This section contains the OpenSABER specific configuration information",
+          "privateFields: Optional; list of field names to be encrypted and stored in database",
+          "signedFields: Optional; list of field names that must be pre-signed",
+          "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, studentCode) is a composite index and studentName is a single column index.",
+          "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
+          "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"
+        ],
+        "privateFields": [
+          "$.identityDetails.dob",
+          "$.identityDetails.identityType",
+          "$.identityDetails.identityValue",
+          "$.contactDetails.email",
+          "$.contactDetails.mobile",
+          "$.contactDetails.address.plot",
+          "$.contactDetails.address.street",
+          "$.contactDetails.address.landmark",
+          "$.contactDetails.address.locality"
+        ],
+        "signedFields": [],
+        "indexFields": [],
+        "uniqueIndexFields": [],
+        "systemFields": [
+          "_osCreatedAt",
+          "_osUpdatedAt",
+          "_osCreatedBy",
+          "_osUpdatedBy",
+          "_osAttestedData",
+          "_osClaimId",
+          "_osState"
+        ],
+        "attestationAttributes": [
+          "educationDetails",
+          "nationalIdentifier"
+        ],
+        "attestationPolicies": [],
+        "subjectJsonPath": "mobile",
+        "ownershipAttributes": [
+          {
+            "email": "/contactDetails/email",
+            "mobile": "/contactDetails/mobile",
+            "userId": "/contactDetails/mobile"
+          }
+        ]
+      }
+    }
+  }
+}
