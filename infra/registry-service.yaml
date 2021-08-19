@@ -9,10 +9,10 @@ metadata:
 spec:
   externalTrafficPolicy: Cluster
   ports:
-    - name: "tcp-8081"
-      port: 8081
+    - name: "tcp-9091"
+      port: 9091
       protocol: TCP
-      targetPort: 8081
+      targetPort: 9091
       nodePort: 30127
   selector:
     k8s-app: registry

@@ -9,10 +9,10 @@ metadata:
 spec:
   externalTrafficPolicy: Cluster
   ports:
-    - name: "tcp-8082"
-      port: 8082
+    - name: "tcp-9092"
+      port: 9092
       protocol: TCP
-      targetPort: 8082
+      targetPort: 9092
       nodePort: 30128
   selector:
     k8s-app: claim-ms

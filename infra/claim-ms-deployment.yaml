@@ -27,11 +27,11 @@ spec:
             - name: connectionInfo_password
               value: <db_password>
             - name: connectionInfo_uri
-              value: jdbc:postgresql://my-release-postgresql.default.svc.cluster.local:5432/claims
+              value: jdbc:postgresql://my-release-postgresql.default.svc.cluster.local:5432/immunization-claims
             - name: connectionInfo_username
               value: opensaber
             - name: opensaber_url
-              value: http://registry:8081
+              value: http://registry:9091
           image: tejashjl/open-saber-claim-ms:38
           imagePullPolicy: Always
           resources:
@@ -42,7 +42,7 @@ spec:
 #              cpu: 500m
           name: claim-ms
           ports:
-            - containerPort: 8082
+            - containerPort: 9092
       restartPolicy: Always
 
 

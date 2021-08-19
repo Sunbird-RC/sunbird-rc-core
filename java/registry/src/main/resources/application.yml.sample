@@ -36,11 +36,10 @@ registry:
   baseAPIS:
     enable: ${registry_base_apis_enable:false}
   internalentities: >
-    Student,
-    Teacher,
-    Institute
+    Child,
+    Hospital,
+    Practitioner
   externalentities: >
-    board-cbse
   context:
     base: ${registry_context_base:http://localhost:8081/}
   system:
