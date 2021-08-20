@@ -56,7 +56,7 @@ spec:
               value: <add secret key of the storage>
             - name: filestorage_bucket_key
               value: ndear
-          image: tejashjl/open-saber-rc:38
+          image: dockerhub/opensaber-rc:latest
           imagePullPolicy: Always
           resources:
             requests:

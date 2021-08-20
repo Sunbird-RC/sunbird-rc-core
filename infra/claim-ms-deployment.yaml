@@ -32,7 +32,7 @@ spec:
               value: opensaber
             - name: opensaber_url
               value: http://registry:8081
-          image: tejashjl/open-saber-claim-ms:38
+          image: dockerhub/open-saber-claim-ms:latest
           imagePullPolicy: Always
           resources:
             requests:
