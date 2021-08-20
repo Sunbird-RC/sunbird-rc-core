@@ -27,7 +27,7 @@ spec:
             - name: connectionInfo_password
               value: <db_password>
             - name: connectionInfo_uri
-              value: jdbc:postgresql://my-release-postgresql.default.svc.cluster.local:5432/immunization-claims
+              value: jdbc:postgresql://my-release-postgresql.default.svc.cluster.local:5432/immunizationclaimsdb
             - name: connectionInfo_username
               value: opensaber
             - name: opensaber_url
