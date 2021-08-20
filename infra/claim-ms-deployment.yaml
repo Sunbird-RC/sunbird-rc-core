@@ -31,8 +31,8 @@ spec:
             - name: connectionInfo_username
               value: opensaber
             - name: opensaber_url
-              value: http://registry:9091
-          image: tejashjl/open-saber-claim-ms:38
+              value: http://registry:8081
+          image: dockerhub/open-saber-claim-ms:latest
           imagePullPolicy: Always
           resources:
             requests:
@@ -42,7 +42,7 @@ spec:
 #              cpu: 500m
           name: claim-ms
           ports:
-            - containerPort: 9092
+            - containerPort: 8082
       restartPolicy: Always
 
 

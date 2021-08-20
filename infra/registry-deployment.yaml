@@ -43,7 +43,7 @@ spec:
             - name: sunbird_sso_admin_client_secret
               value: d9b0edd2-b268-418f-9346-b67083b2cc16
             - name: claims_url
-              value: http://claim-ms:9092
+              value: http://claim-ms:8082
             - name: search_providerName
               value: io.opensaber.registry.service.ElasticSearchService 
             - name: elastic_search_connection_url
@@ -56,7 +56,7 @@ spec:
               value: <add secret key of the storage>
             - name: filestorage_bucket_key
               value: immunization
-          image: tejashjl/open-saber-rc:38
+          image: dockerhub/opensaber-rc:latest
           imagePullPolicy: Always
           resources:
             requests:
@@ -66,7 +66,7 @@ spec:
 #              cpu: 500m
           name: registry
           ports:
-            - containerPort: 9091
+            - containerPort: 8081
       restartPolicy: Always
 
 
