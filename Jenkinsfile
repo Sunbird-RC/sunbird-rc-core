@@ -12,8 +12,8 @@ node {
         }
 
         stage('Build image') {
-            app = docker.build("tejashjl/open-saber-rc","target")
-            claimApp = docker.build("tejashjl/open-saber-claim-ms","java/claim")
+            app = docker.build("tejashjl/open-saber-rc",".")
+            claimApp = docker.build("dockerhub/open-saber-claim-ms","java/claim")
         }
 
         // stage('Test image') {
