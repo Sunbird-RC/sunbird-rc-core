@@ -3,6 +3,7 @@ package io.opensaber.registry.util;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.opensaber.pojos.OwnershipsAttributes;
 import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.pojos.attestation.AutoAttestationPolicy;
 import lombok.Data;
 
 import java.util.*;
@@ -69,6 +70,11 @@ public class OSSchemaConfiguration {
      * Holds the info of attestation policy
      */
     private List<AttestationPolicy> attestationPolicies = new ArrayList<>();
+
+    /**
+     * Holds the info of auto attestation policy
+     */
+    private List<AutoAttestationPolicy> autoAttestationPolicies = new ArrayList<>();
 
 
     public String getConditions(String property) {
