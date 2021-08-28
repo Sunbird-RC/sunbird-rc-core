@@ -1,4 +1,4 @@
-package io.opensaber.pojos.attestation;
+package io.opensaber.pojos.attestation.auto;
 
 import lombok.Getter;
 import lombok.Setter;

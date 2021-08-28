@@ -3,7 +3,7 @@ package io.opensaber.registry.util;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.opensaber.pojos.OwnershipsAttributes;
 import io.opensaber.pojos.attestation.AttestationPolicy;
-import io.opensaber.pojos.attestation.AutoAttestationPolicy;
+import io.opensaber.pojos.attestation.auto.AutoAttestationPolicy;
 import lombok.Data;
 
 import java.util.*;
