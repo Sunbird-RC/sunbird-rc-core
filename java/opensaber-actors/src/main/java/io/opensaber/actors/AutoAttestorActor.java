@@ -35,6 +35,11 @@ public class AutoAttestorActor extends BaseActor {
         String value = readValFromJsonTree(valuePath, input);
         JsonNode  requestBody = buildRequestBody(value);
         ResponseEntity<JsonNode> responseEntity = adapter.execute(requestBody);
+        if(responseEntity.getStatusCode().is2xxSuccessful()) {
+           // mark as attested
+        } else {
+            // mark as failed
+        }
     }
 
     private JsonNode buildRequestBody(String value) {
