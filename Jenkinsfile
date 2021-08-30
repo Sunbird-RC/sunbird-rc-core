@@ -12,7 +12,7 @@ node {
         }
 
         stage('Build image') {
-            app = docker.build("dockerhub/opensaber-rc",".")
+            app = docker.build("dockerhub/opensaber-rc","target")
             claimApp = docker.build("dockerhub/open-saber-claim-ms","java/claim")
         }
 
