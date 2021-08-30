@@ -200,6 +200,7 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             String notes = getNotes(requestBody);
+            requestBody = registryHelper.removeFormatAttr(requestBody);
             registryHelper.updateEntityProperty(entityName, entityId, propertyURI, requestBody);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
@@ -268,6 +269,7 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.addNewPropertyToTheEntity " + entityName;
             watch.start(tag);
             String notes = getNotes(requestBody);
+            requestBody = registryHelper.removeFormatAttr(requestBody);
             registryHelper.addEntityProperty(entityName, entityId, propertyURI, requestBody);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
