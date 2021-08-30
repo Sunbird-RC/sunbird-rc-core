@@ -112,6 +112,19 @@ public class RegistryHelper {
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
+    public JsonNode removeFormatAttr(JsonNode requestBody) {
+        String documents = "documents";
+        if (requestBody.has(documents)) {
+            JsonNode documentsNode = requestBody.get(documents);
+            String format = "format";
+            JSONUtil.removeNodes(documentsNode, Collections.singletonList(format));
+            ObjectNode node =  (ObjectNode)requestBody;
+            node.set(documents, documentsNode);
+            return node;
+        }
+        return requestBody;
+    }
+
     /**
      * calls validation and then persists the record to registry.
      *
