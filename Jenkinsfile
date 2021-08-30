@@ -37,11 +37,11 @@ node {
           }
         }
 
-        stage('Deploy image') {
-            sh "ssh kesavan@10.4.0.6 'kubectl get pods -n ndear'"
-            sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/registry registry=dockerhub/open-saber-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
-            sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/claim-ms claim-ms=dockerhub/open-saber-claim-ms:${env.BUILD_NUMBER} --record --namespace=ndear'"
-        }
+//         stage('Deploy image') {
+//             sh "ssh kesavan@10.4.0.6 'kubectl get pods -n ndear'"
+//             sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/registry registry=dockerhub/open-saber-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
+//             sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/claim-ms claim-ms=dockerhub/open-saber-claim-ms:${env.BUILD_NUMBER} --record --namespace=ndear'"
+//         }
 
     }
     catch (err) {
