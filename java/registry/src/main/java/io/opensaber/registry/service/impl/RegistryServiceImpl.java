@@ -350,7 +350,7 @@ public class RegistryServiceImpl implements RegistryService {
                 .getOsSchemaConfiguration()
                 .getAutoAttestationPolicy(IteratorUtils.toList(updatedNode.fieldNames()));
         String accessToken = request.getHeader("Authorization");
-        String url = request.getRequestURI();
+        String url = request.getRequestURL().toString();
         String valuePath = autoAttestationPolicy.getValuePath();
         if(!JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
             MessageProtos.Message message = MessageFactory.instance().createAutoAttestationPolicy(autoAttestationPolicy, updatedNode, accessToken, url);
