@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import akka.actor.ActorRef;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -326,8 +327,14 @@ public class RegistryServiceImpl implements RegistryService {
 			boolean elasticSearchEnabled = (searchProvider.equals("io.opensaber.registry.service.ElasticSearchService"));	
 			MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, operation,	
 			        parentEntityType.toLowerCase(), entityRootId, rootNode,null);	
-			ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);	
+			ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
 			logger.debug("callESActors ends");	
+    }
+
+    @Async("taskExecutor")
+    public void callAutoAttestationActor() {
+        MessageProtos.Message message = MessageFactory.instance().createAutoAttestorMessage();
+        ActorCache.instance().get().path().parent();
     }
 
     @Async("taskExecutor")

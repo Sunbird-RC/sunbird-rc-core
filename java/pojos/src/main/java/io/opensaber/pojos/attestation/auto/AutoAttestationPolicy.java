@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class AutoAttestationPolicy {
     private String property;
+    private String nodeRef;
     private String valuePath;
     private String typePath;
 }

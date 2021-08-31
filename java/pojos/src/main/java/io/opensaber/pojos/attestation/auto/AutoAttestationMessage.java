@@ -11,4 +11,6 @@ import lombok.Setter;
 public class AutoAttestationMessage {
     AutoAttestationPolicy autoAttestationPolicy;
     JsonNode input;
+    String accessToken;
+    String url;
 }
