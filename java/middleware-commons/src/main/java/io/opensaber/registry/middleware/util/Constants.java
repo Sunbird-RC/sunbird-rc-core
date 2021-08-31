@@ -92,6 +92,7 @@ public class Constants {
 
 	public static final String ELASTIC_SEARCH_ACTOR = "ElasticSearchActor";
 	public static final String NOTIFICATION_ACTOR = "NotificationActor";
+	public static final String AUTO_ATTESTOR_ACTOR = "AutoAttestorActor";
 	public static final String AUDIT_ACTOR = "AuditActor";
 	public static final String OS_ACTOR = "OSActor";
 	

@@ -19,4 +19,5 @@ public interface RegistryService {
 
 	void callNotificationActors(String operation, String to, String subject, String message) throws Exception;
 
+	void callAutoAttestationActor(JsonNode existingNode, JsonNode updatedNode, String entityName, String entityId) throws Exception;
 }

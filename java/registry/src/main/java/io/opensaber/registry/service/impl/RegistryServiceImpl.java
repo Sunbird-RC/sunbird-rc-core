@@ -9,9 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import akka.actor.ActorRef;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import io.opensaber.pojos.attestation.auto.AutoAttestationPolicy;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -313,7 +314,6 @@ public class RegistryServiceImpl implements RegistryService {
             auditService.auditUpdate(
             		auditService.createAuditRecord(userId, rootId, tx, entityType), 
             		shard, mergedNode, readNode);
-            
 
 
         }
@@ -332,18 +332,26 @@ public class RegistryServiceImpl implements RegistryService {
     }
 
     @Async("taskExecutor")
-    public void callAutoAttestationActor() {
-        MessageProtos.Message message = MessageFactory.instance().createAutoAttestorMessage();
-        ActorCache.instance().get().path().parent();
-    }
-
-    @Async("taskExecutor")
     @Override
     public void callNotificationActors(String operation, String to, String subject, String message) throws JsonProcessingException {
         logger.debug("callNotificationActors started");
         MessageProtos.Message messageProto = MessageFactory.instance().createNotificationActorMessage(operation, to, subject, message);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(messageProto, null);
         logger.debug("callESActors ends");
+    }
+
+    @Async("taskExecutor")
+    @Override
+    public void callAutoAttestationActor(JsonNode existingNode, JsonNode updatedNode, String entityName, String entityId) throws JsonProcessingException {
+        logger.info("Setting up the message to call auto attestation actor");
+        AutoAttestationPolicy autoAttestationPolicy = definitionsManager.getDefinition(entityName)
+                .getOsSchemaConfiguration()
+                .getAutoAttestationPolicy(IteratorUtils.toList(updatedNode.fieldNames()));
+        String accessToken = "";
+        String url = "";
+        // TODO: add check if the existingnode and updatednode values changed or not
+        MessageProtos.Message message = MessageFactory.instance().createAutoAttestationPolicy(autoAttestationPolicy, updatedNode, accessToken, url);
+        ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
     }
 
     private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode) {

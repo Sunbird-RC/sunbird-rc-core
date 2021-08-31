@@ -5,6 +5,7 @@ import io.opensaber.pojos.OwnershipsAttributes;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.attestation.auto.AutoAttestationPolicy;
 import lombok.Data;
+import org.apache.commons.collections4.IterableUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -94,5 +95,11 @@ public class OSSchemaConfiguration {
     }
     public String getAttestorEntity(String property) {
         return getAttestationPolicy(property).getAttestorEntity();
+    }
+
+    public AutoAttestationPolicy getAutoAttestationPolicy(List<String> fieldNames) {
+        return autoAttestationPolicies.stream()
+                .filter(policy -> fieldNames.contains(policy.getProperty()))
+                .findFirst().orElse(new AutoAttestationPolicy());
     }
 }

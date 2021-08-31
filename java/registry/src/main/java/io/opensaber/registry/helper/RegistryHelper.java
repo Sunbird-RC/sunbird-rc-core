@@ -397,6 +397,8 @@ public class RegistryHelper {
             ((ArrayNode) propertyParentNode).set(propertyIndex, inputJson);
         }
         updateEntityAndState(existingNode, updateNode, "");
+        JsonNode updatedNode = readEntity("", entityName, entityId, false, null, false);
+        registryService.callAutoAttestationActor(existingNode.get(entityName), updatedNode.get(entityName), entityName, entityId);
     }
 
     public void attestEntity(String entityName, JsonNode node, String[] jsonPaths, String userId) throws Exception {
