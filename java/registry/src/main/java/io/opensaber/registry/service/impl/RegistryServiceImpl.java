@@ -59,6 +59,8 @@ import io.opensaber.registry.util.ReadConfiguratorFactory;
 import io.opensaber.registry.util.RecordIdentifier;
 import io.opensaber.registry.util.RefLabelHelper;
 
+import javax.servlet.http.HttpServletRequest;
+
 @Component
 public class RegistryServiceImpl implements RegistryService {
 
@@ -342,16 +344,18 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Async("taskExecutor")
     @Override
-    public void callAutoAttestationActor(JsonNode existingNode, JsonNode updatedNode, String entityName, String entityId) throws JsonProcessingException {
+    public void callAutoAttestationActor(JsonNode existingNode, JsonNode updatedNode, String entityName, String entityId, HttpServletRequest request) throws JsonProcessingException {
         logger.info("Setting up the message to call auto attestation actor");
         AutoAttestationPolicy autoAttestationPolicy = definitionsManager.getDefinition(entityName)
                 .getOsSchemaConfiguration()
                 .getAutoAttestationPolicy(IteratorUtils.toList(updatedNode.fieldNames()));
-        String accessToken = "";
-        String url = "";
-        // TODO: add check if the existingnode and updatednode values changed or not
-        MessageProtos.Message message = MessageFactory.instance().createAutoAttestationPolicy(autoAttestationPolicy, updatedNode, accessToken, url);
-        ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
+        String accessToken = request.getHeader("Authorization");
+        String url = request.getRequestURI();
+        String valuePath = autoAttestationPolicy.getValuePath();
+        if(!JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
+            MessageProtos.Message message = MessageFactory.instance().createAutoAttestationPolicy(autoAttestationPolicy, updatedNode, accessToken, url);
+            ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
+        }
     }
 
     private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode) {
