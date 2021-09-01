@@ -312,7 +312,6 @@ public class RegistryServiceImpl implements RegistryService {
             databaseProvider.commitTransaction(graph, tx);
 
             callESActors(mergedNode, "UPDATE", entityType, id, tx);
-
             auditService.auditUpdate(
             		auditService.createAuditRecord(userId, rootId, tx, entityType), 
             		shard, mergedNode, readNode);
@@ -352,7 +351,7 @@ public class RegistryServiceImpl implements RegistryService {
         String accessToken = request.getHeader("Authorization");
         String url = request.getRequestURL().toString();
         String valuePath = autoAttestationPolicy.getValuePath();
-        if(!JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
+        if(existingNode.isNull() || !JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
             MessageProtos.Message message = MessageFactory.instance().createAutoAttestationPolicy(autoAttestationPolicy, updatedNode, accessToken, url);
             ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
         }

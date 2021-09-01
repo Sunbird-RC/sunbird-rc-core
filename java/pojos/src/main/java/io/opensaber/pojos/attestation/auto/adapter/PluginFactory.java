@@ -9,6 +9,8 @@ public class PluginFactory {
         switch (type) {
             case AADHAR:
                 return new AadharPluginAdapter();
+            case LICENSE:
+                return new LicensePluginAdapter();
             default:
                 throw new PolicyNotFoundException("Type" + type +  "is not found");
         }

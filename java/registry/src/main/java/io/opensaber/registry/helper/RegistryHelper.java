@@ -303,6 +303,11 @@ public class RegistryHelper {
         return updateEntityAndState(existingNode, inputJson, userId);
     }
 
+    public void triggerAutoAttestor(String entityName, String entityId, HttpServletRequest request, JsonNode existingNode) throws Exception {
+        JsonNode updatedNode = readEntity("", entityName, entityId, false, null, false);
+        registryService.callAutoAttestationActor(existingNode.get(entityName), updatedNode.get(entityName), entityName, entityId, request);
+    }
+
     private String updateEntityAndState(JsonNode existingNode, JsonNode updatedNode, String userId) throws Exception {
         entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode);
         return updateEntity(updatedNode, userId);
@@ -399,8 +404,7 @@ public class RegistryHelper {
             ((ArrayNode) propertyParentNode).set(propertyIndex, inputJson);
         }
         updateEntityAndState(existingNode, updateNode, "");
-        JsonNode updatedNode = readEntity("", entityName, entityId, false, null, false);
-        registryService.callAutoAttestationActor(existingNode.get(entityName), updatedNode.get(entityName), entityName, entityId, request);
+
     }
 
     public void attestEntity(String entityName, JsonNode node, String[] jsonPaths, String userId) throws Exception {

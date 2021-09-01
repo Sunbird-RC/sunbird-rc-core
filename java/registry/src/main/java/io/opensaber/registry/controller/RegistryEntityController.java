@@ -108,10 +108,12 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             // TODO: get userID from auth header
+            JsonNode existingNode = registryHelper.readEntity(newRootNode, "");
             registryHelper.updateEntityAndState(newRootNode, "");
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
+            registryHelper.triggerAutoAttestor(entityName, entityId, request, existingNode);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             logger.error("RegistryController: Exception while updating entity (without id)!", e);
