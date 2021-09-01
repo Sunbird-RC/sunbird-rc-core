@@ -39,12 +39,8 @@ perf:
 registry:
   baseAPIS:
     enable: ${registry_base_apis_enable:false}
-  internalentities: >
-    Student,
-    Teacher,
-    Institute
-  externalentities: >
-    board-cbse
+  internalentities: ${internal_entities:}
+  externalentities: ${external_entities:}
   context:
     base: ${registry_context_base:http://localhost:8081/}
   system:
