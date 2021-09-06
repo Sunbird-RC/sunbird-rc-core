@@ -1,5 +1,6 @@
 package io.opensaber.registry.helper;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -367,5 +368,40 @@ public class RegistryHelperTest {
         assertEquals("mailto:gecasu.ihises@tovinit.com", toCapture.getAllValues().get(1));
         assertEquals("tel:1234", toCapture.getAllValues().get(2));
         assertEquals("mailto:admin@email.com", toCapture.getAllValues().get(3));
+    }
+
+    @Test
+    public void shouldAbleToRemoveTheFormatAttributeFromDocumentObject() throws JsonProcessingException {
+        JsonNode requestBody = new ObjectMapper().readTree("{\n" +
+                "    \"program\": \"lol\",\n" +
+                "    \"graduationYear\": \"2021\",\n" +
+                "    \"marks\": \"78\",\n" +
+                "    \"institute\": \"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\n" +
+                "    \"documents\": [\n" +
+                "        {\n" +
+                "            \"fileName\": \"e3266115-0bd0-4456-a347-96f4dc335761-blog_draft\",\n" +
+                "            \"format\": \"file\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"fileName\": \"e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\",\n" +
+                "            \"format\": \"file\"\n" +
+                "        }\n" +
+                "    ]\n" +
+                "}");
+        JsonNode expectedNode = new ObjectMapper().readTree("{\n" +
+                "    \"program\": \"lol\",\n" +
+                "    \"graduationYear\": \"2021\",\n" +
+                "    \"marks\": \"78\",\n" +
+                "    \"institute\": \"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\n" +
+                "    \"documents\": [\n" +
+                "        {\n" +
+                "            \"fileName\": \"e3266115-0bd0-4456-a347-96f4dc335761-blog_draft\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"fileName\": \"e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\"\n" +
+                "        }\n" +
+                "    ]\n" +
+                "}");
+        assertEquals(expectedNode,registryHelper.removeFormatAttr(requestBody));
     }
 }

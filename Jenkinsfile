@@ -12,7 +12,7 @@ node {
         }
 
         stage('Build image') {
-            app = docker.build("dockerhub/opensaber-rc",".")
+            app = docker.build("dockerhub/opensaber-rc","target")
             claimApp = docker.build("dockerhub/open-saber-claim-ms","java/claim")
         }
 
@@ -28,20 +28,18 @@ node {
 
         stage('Push image') {
             docker.withRegistry('', 'dockerhub') {
-                app.push("${env.BUILD_NUMBER}")
                 app.push("latest")
            }
            docker.withRegistry('', 'dockerhub') {
-               claimApp.push("${env.BUILD_NUMBER}")
                claimApp.push("latest")
           }
         }
 
-        stage('Deploy image') {
-            sh "ssh kesavan@10.4.0.6 'kubectl get pods -n ndear'"
-            sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/registry registry=dockerhub/open-saber-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
-            sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/claim-ms claim-ms=dockerhub/open-saber-claim-ms:${env.BUILD_NUMBER} --record --namespace=ndear'"
-        }
+//         stage('Deploy image') {
+//             sh "ssh kesavan@10.4.0.6 'kubectl get pods -n ndear'"
+//             sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/registry registry=dockerhub/open-saber-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
+//             sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/claim-ms claim-ms=dockerhub/open-saber-claim-ms:${env.BUILD_NUMBER} --record --namespace=ndear'"
+//         }
 
     }
     catch (err) {
