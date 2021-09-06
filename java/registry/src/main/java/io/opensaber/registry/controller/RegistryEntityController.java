@@ -465,20 +465,26 @@ public class RegistryEntityController extends AbstractController {
     }
 
     @RequestMapping(value = "/api/v1/system/{property}/{propertyId}", method = RequestMethod.POST)
-    public ResponseEntity<Object> updateProperty(
+    public ResponseEntity<ResponseParams> updateProperty(
             @PathVariable String property,
             @PathVariable String propertyId,
             @RequestBody JsonNode requestBody) {
         logger.info("Got system request for the property {} {}", property, propertyId);
         ((ObjectNode) requestBody).put(uuidPropertyName, propertyId);
         ObjectNode newRootNode = objectMapper.createObjectNode();
+
+        ResponseParams responseParams = new ResponseParams();
         newRootNode.set(property, requestBody);
         try {
-            String response = registryHelper.updateEntityAndState(newRootNode, "");
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            String response = registryHelper.updateProperty(newRootNode, "");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            responseParams.setResultList(Collections.singletonList(response));
+            return new ResponseEntity<>(responseParams, HttpStatus.OK);
         } catch (Exception exception) {
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
             exception.printStackTrace();
-            return new ResponseEntity<>(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

@@ -84,7 +84,7 @@ public class MessageFactory {
         return msgBuilder.build();
     }
 
-    public MessageProtos.Message createAutoAttestationPolicy(AutoAttestationPolicy autoAttestationPolicy, JsonNode updatedNode, String accessToken, String url) throws JsonProcessingException {
+    public MessageProtos.Message createAutoAttestationMessage(AutoAttestationPolicy autoAttestationPolicy, JsonNode updatedNode, String accessToken, String url) throws JsonProcessingException {
         MessageProtos.Message.Builder msgBuilder = MessageProtos.Message.newBuilder();
         msgBuilder.setPerformOperation("");
         msgBuilder.setTargetActorName(Constants.AUTO_ATTESTOR_ACTOR);

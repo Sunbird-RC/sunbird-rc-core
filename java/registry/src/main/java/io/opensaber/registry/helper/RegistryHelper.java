@@ -298,6 +298,18 @@ public class RegistryHelper {
         return "SUCCESS";
     }
 
+    public String updateProperty(JsonNode inputJson, String userId) throws Exception {
+        logger.debug("updateEntity starts");
+        String entityType = inputJson.fields().next().getKey();
+        String jsonString = objectMapper.writeValueAsString(inputJson);
+        Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
+        String label = inputJson.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
+        RecordIdentifier recordId = RecordIdentifier.parse(label);
+        logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
+        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString);
+        return "SUCCESS";
+    }
+
     public String updateEntityAndState(JsonNode inputJson, String userId) throws Exception {
         JsonNode existingNode = readEntity(inputJson, userId);
         return updateEntityAndState(existingNode, inputJson, userId);

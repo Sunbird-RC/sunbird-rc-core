@@ -479,7 +479,7 @@ public class JSONUtil {
 
     public static String readValFromJsonTree(String path, JsonNode input) {
         Configuration alwaysReturnListConfig = Configuration.builder().options(Option.ALWAYS_RETURN_LIST).build();
-        List<String> typeList = JsonPath.using(alwaysReturnListConfig).parse(input).read(path);
+        List<String> typeList = JsonPath.using(alwaysReturnListConfig).parse(input.toString()).read(path);
         return typeList.get(0);
     }
 }

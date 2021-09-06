@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
+import io.opensaber.pojos.Response;
+import io.opensaber.pojos.ResponseParams;
 import io.opensaber.pojos.attestation.auto.AutoAttestationMessage;
 import io.opensaber.pojos.attestation.auto.AutoAttestationPolicy;
 import io.opensaber.pojos.attestation.auto.PluginType;
@@ -22,10 +24,15 @@ import org.sunbird.akka.core.MessageProtos;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 import java.util.Optional;
 
 public class AutoAttestorActor extends BaseActor {
     private static final Logger logger = LoggerFactory.getLogger(AutoAttestorActor.class);
+    private static final String SYSTEM_PROPERTY_URL = "/api/v1/system/%s/%s";
+    private static final String VALUE = "value";
+    private static final String UUID_PROPERTY_NAME = "osid";
+    private static final String VALID_PROPERTY = "valid";
 
     @Override
     protected void onReceive(MessageProtos.Message request) throws Throwable {
@@ -40,7 +47,7 @@ public class AutoAttestorActor extends BaseActor {
 
         if(nodeRefOptional.isPresent()) {
             ObjectNode nodeRef = nodeRefOptional.get();
-            nodeRef.put("valid", responseEntity.getStatusCode().is2xxSuccessful());
+            nodeRef.put(VALID_PROPERTY, responseEntity.getStatusCode().is2xxSuccessful());
             updateObject(autoAttestationMessage, nodeRef);
         } else {
             throw new Exception("Property not found");
@@ -60,18 +67,21 @@ public class AutoAttestorActor extends BaseActor {
     private void updateObject(AutoAttestationMessage autoAttestationMessage, ObjectNode nodeRef) {
         AutoAttestationPolicy autoAttestationPolicy = autoAttestationMessage.getAutoAttestationPolicy();
         String property = autoAttestationPolicy.getProperty();
-        String propertyId = nodeRef.get("osid").asText();
+        String propertyId = nodeRef.get(UUID_PROPERTY_NAME).asText();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + autoAttestationMessage.getAccessToken());
+        headers.set("Authorization", autoAttestationMessage.getAccessToken());
         HttpEntity<JsonNode> entity = new HttpEntity<>(nodeRef, headers);
-
-        String uri = String.format("/api/v1/system/%s/%s", property, propertyId);
+        String uri = String.format(SYSTEM_PROPERTY_URL, property, propertyId);
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<Object> responseEntity = restTemplate.postForEntity(autoAttestationMessage.getUrl() + uri, entity, Object.class);
+        ResponseEntity<ResponseParams> responseEntity = restTemplate.postForEntity(autoAttestationMessage.getUrl() + uri, entity, ResponseParams.class);
+        ResponseParams responseParams = Objects.requireNonNull(responseEntity.getBody());
 
-        logger.info("Updated the status {}", responseEntity.getStatusCode());
+        logger.info("Updated the status {}", responseParams.getStatus());
+        if(responseParams.getStatus().equals(Response.Status.UNSUCCESSFUL)) {
+            logger.error("Updating the node {} is failed with error {}", nodeRef, responseParams.getErrmsg());
+        }
     }
 
     private Optional<ObjectNode> getParentNode(JsonNode input, String nodeRef) throws IOException {
@@ -84,7 +94,7 @@ public class AutoAttestorActor extends BaseActor {
 
     private JsonNode buildRequestBody(String value) {
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
-        objectNode.put("value", value);
+        objectNode.put(VALUE, value);
         return objectNode;
     }
 

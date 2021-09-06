@@ -12,6 +12,7 @@ import java.util.Set;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.opensaber.pojos.attestation.auto.AutoAttestationPolicy;
+import io.opensaber.registry.util.*;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -49,15 +50,6 @@ import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
 import io.opensaber.registry.sink.shard.Shard;
-import io.opensaber.registry.util.ArrayHelper;
-import io.opensaber.registry.util.Definition;
-import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.EntityParenter;
-import io.opensaber.registry.util.OSSystemFieldsHelper;
-import io.opensaber.registry.util.ReadConfigurator;
-import io.opensaber.registry.util.ReadConfiguratorFactory;
-import io.opensaber.registry.util.RecordIdentifier;
-import io.opensaber.registry.util.RefLabelHelper;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -67,6 +59,8 @@ public class RegistryServiceImpl implements RegistryService {
     private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"_:[a-z][0-9]+\",";
     private static Logger logger = LoggerFactory.getLogger(RegistryServiceImpl.class);
 
+    @Autowired
+    private EntityTypeHandler entityTypeHandler;
     @Autowired
     private EncryptionService encryptionService;
     @Autowired
@@ -311,7 +305,9 @@ public class RegistryServiceImpl implements RegistryService {
 
             databaseProvider.commitTransaction(graph, tx);
 
-            callESActors(mergedNode, "UPDATE", entityType, id, tx);
+            if(entityTypeHandler.isInternalRegistry(entityType)) {
+                callESActors(mergedNode, "UPDATE", entityType, id, tx);
+            }
             auditService.auditUpdate(
             		auditService.createAuditRecord(userId, rootId, tx, entityType), 
             		shard, mergedNode, readNode);
@@ -320,7 +316,7 @@ public class RegistryServiceImpl implements RegistryService {
         }
     }
 
-   @Override
+    @Override
    @Async("taskExecutor")	
    public void callESActors(JsonNode rootNode, String operation, String parentEntityType, String entityRootId, Transaction tx) throws JsonProcessingException {			      
 			logger.debug("callESActors started");       
@@ -349,10 +345,11 @@ public class RegistryServiceImpl implements RegistryService {
                 .getOsSchemaConfiguration()
                 .getAutoAttestationPolicy(IteratorUtils.toList(updatedNode.fieldNames()));
         String accessToken = request.getHeader("Authorization");
-        String url = request.getRequestURL().toString();
+        String url = request.getRequestURL().substring(0, request.getRequestURL().length() - request.getRequestURI().length()) + request.getContextPath();
+
         String valuePath = autoAttestationPolicy.getValuePath();
         if(existingNode.isNull() || !JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
-            MessageProtos.Message message = MessageFactory.instance().createAutoAttestationPolicy(autoAttestationPolicy, updatedNode, accessToken, url);
+            MessageProtos.Message message = MessageFactory.instance().createAutoAttestationMessage(autoAttestationPolicy, updatedNode, accessToken, url);
             ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
         }
     }
