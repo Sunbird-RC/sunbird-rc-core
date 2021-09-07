@@ -24,6 +24,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -474,4 +477,9 @@ public class JSONUtil {
 		}
 	}
 
+    public static String readValFromJsonTree(String path, JsonNode input) {
+        Configuration alwaysReturnListConfig = Configuration.builder().options(Option.ALWAYS_RETURN_LIST).build();
+        List<String> typeList = JsonPath.using(alwaysReturnListConfig).parse(input.toString()).read(path);
+        return typeList.get(0);
+    }
 }

@@ -11,6 +11,9 @@ import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import io.opensaber.pojos.attestation.auto.AutoAttestationPolicy;
+import io.opensaber.registry.util.*;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -47,15 +50,8 @@ import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
 import io.opensaber.registry.sink.shard.Shard;
-import io.opensaber.registry.util.ArrayHelper;
-import io.opensaber.registry.util.Definition;
-import io.opensaber.registry.util.DefinitionsManager;
-import io.opensaber.registry.util.EntityParenter;
-import io.opensaber.registry.util.OSSystemFieldsHelper;
-import io.opensaber.registry.util.ReadConfigurator;
-import io.opensaber.registry.util.ReadConfiguratorFactory;
-import io.opensaber.registry.util.RecordIdentifier;
-import io.opensaber.registry.util.RefLabelHelper;
+
+import javax.servlet.http.HttpServletRequest;
 
 @Component
 public class RegistryServiceImpl implements RegistryService {
@@ -63,6 +59,8 @@ public class RegistryServiceImpl implements RegistryService {
     private static final String ID_REGEX = "\"@id\"\\s*:\\s*\"_:[a-z][0-9]+\",";
     private static Logger logger = LoggerFactory.getLogger(RegistryServiceImpl.class);
 
+    @Autowired
+    private EntityTypeHandler entityTypeHandler;
     @Autowired
     private EncryptionService encryptionService;
     @Autowired
@@ -307,18 +305,18 @@ public class RegistryServiceImpl implements RegistryService {
 
             databaseProvider.commitTransaction(graph, tx);
 
-            callESActors(mergedNode, "UPDATE", entityType, id, tx);
-
+            if(entityTypeHandler.isInternalRegistry(entityType)) {
+                callESActors(mergedNode, "UPDATE", entityType, id, tx);
+            }
             auditService.auditUpdate(
             		auditService.createAuditRecord(userId, rootId, tx, entityType), 
             		shard, mergedNode, readNode);
-            
 
 
         }
     }
 
-   @Override
+    @Override
    @Async("taskExecutor")	
    public void callESActors(JsonNode rootNode, String operation, String parentEntityType, String entityRootId, Transaction tx) throws JsonProcessingException {			      
 			logger.debug("callESActors started");       
@@ -326,7 +324,7 @@ public class RegistryServiceImpl implements RegistryService {
 			boolean elasticSearchEnabled = (searchProvider.equals("io.opensaber.registry.service.ElasticSearchService"));	
 			MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, operation,	
 			        parentEntityType.toLowerCase(), entityRootId, rootNode,null);	
-			ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);	
+			ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
 			logger.debug("callESActors ends");	
     }
 
@@ -337,6 +335,23 @@ public class RegistryServiceImpl implements RegistryService {
         MessageProtos.Message messageProto = MessageFactory.instance().createNotificationActorMessage(operation, to, subject, message);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(messageProto, null);
         logger.debug("callESActors ends");
+    }
+
+    @Async("taskExecutor")
+    @Override
+    public void callAutoAttestationActor(JsonNode existingNode, JsonNode updatedNode, String entityName, String entityId, HttpServletRequest request) throws JsonProcessingException {
+        logger.info("Setting up the message to call auto attestation actor");
+        AutoAttestationPolicy autoAttestationPolicy = definitionsManager.getDefinition(entityName)
+                .getOsSchemaConfiguration()
+                .getAutoAttestationPolicy(IteratorUtils.toList(updatedNode.fieldNames()));
+        String accessToken = request.getHeader("Authorization");
+        String url = request.getRequestURL().substring(0, request.getRequestURL().length() - request.getRequestURI().length()) + request.getContextPath();
+
+        String valuePath = autoAttestationPolicy.getValuePath();
+        if(existingNode.isNull() || !JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
+            MessageProtos.Message message = MessageFactory.instance().createAutoAttestationMessage(autoAttestationPolicy, updatedNode, accessToken, url);
+            ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
+        }
     }
 
     private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode) {

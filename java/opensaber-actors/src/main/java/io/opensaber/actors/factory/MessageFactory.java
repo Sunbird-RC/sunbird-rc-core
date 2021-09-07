@@ -8,6 +8,8 @@ import io.opensaber.elastic.ESMessage;
 import io.opensaber.pojos.AuditRecord;
 import io.opensaber.pojos.NotificationMessage;
 import io.opensaber.pojos.OSEvent;
+import io.opensaber.pojos.attestation.auto.AutoAttestationMessage;
+import io.opensaber.pojos.attestation.auto.AutoAttestationPolicy;
 import io.opensaber.registry.middleware.util.Constants;
 import org.sunbird.akka.core.MessageProtos;
 
@@ -78,6 +80,22 @@ public class MessageFactory {
         notificationMessage.setTo(to);
         notificationMessage.setSubject(subject);
         payloadBuilder.setStringValue(objectMapper.writeValueAsString(notificationMessage));
+        msgBuilder.setPayload(payloadBuilder.build());
+        return msgBuilder.build();
+    }
+
+    public MessageProtos.Message createAutoAttestationMessage(AutoAttestationPolicy autoAttestationPolicy, JsonNode updatedNode, String accessToken, String url) throws JsonProcessingException {
+        MessageProtos.Message.Builder msgBuilder = MessageProtos.Message.newBuilder();
+        msgBuilder.setPerformOperation("");
+        msgBuilder.setTargetActorName(Constants.AUTO_ATTESTOR_ACTOR);
+        Value.Builder payloadBuilder = msgBuilder.getPayloadBuilder();
+        ObjectMapper objectMapper = new ObjectMapper();
+        AutoAttestationMessage autoAttestationMessage = new AutoAttestationMessage();
+        autoAttestationMessage.setAutoAttestationPolicy(autoAttestationPolicy);
+        autoAttestationMessage.setInput(updatedNode);
+        autoAttestationMessage.setUrl(url);
+        autoAttestationMessage.setAccessToken(accessToken);
+        payloadBuilder.setStringValue(objectMapper.writeValueAsString(autoAttestationMessage));
         msgBuilder.setPayload(payloadBuilder.build());
         return msgBuilder.build();
     }

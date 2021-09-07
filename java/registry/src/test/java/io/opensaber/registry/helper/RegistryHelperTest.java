@@ -37,6 +37,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
@@ -146,7 +147,7 @@ public class RegistryHelperTest {
     @Test
     public void shouldAbleToGetThePropertyIdForTheRequestBodyWhereTheExistingPropertyHasNestedObjects() throws Exception {
         String entityName = "Student";
-        String entityId = "";
+        String entityId = "7890";
         JsonNode requestBody = new ObjectMapper().readTree("{\n" +
                 "    \"program\": \"Class C\",\n" +
                 "    \"graduationYear\": \"2021\",\n" +
@@ -219,9 +220,12 @@ public class RegistryHelperTest {
                 "   \"osOwner\":\"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\"\n" +
                 "}");
         student.set("Student", studentNodeContent);
+        HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
+        String uri = String.format("%s/%s/%s", entityName, entityId, propertyURI);
+        when(httpServletRequest.getRequestURI()).thenReturn(uri);
         when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(student);
         when(definitionsManager.getDefinition(any()).getOsSchemaConfiguration().getSystemFields()).thenReturn(Arrays.asList("_osUpdatedAt", "_osCreatedAt"));
-        String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, propertyURI);
+        String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, httpServletRequest);
         String actualPropertyId = "12345";
         Assert.assertEquals(propertyId, actualPropertyId);
     }
@@ -229,7 +233,7 @@ public class RegistryHelperTest {
     @Test
     public void shouldAbleToGetThePropertyIdForTheRequestBody() throws Exception {
         String entityName = "Student";
-        String entityId = "";
+        String entityId = "7890";
         JsonNode requestBody = new ObjectMapper().readTree("{\n" +
                 "    \"program\": \"test123\",\n" +
                 "    \"graduationYear\": \"2021\",\n" +
@@ -274,9 +278,12 @@ public class RegistryHelperTest {
                 "        \"osOwner\": \"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\"\n" +
                 "    }");
         student.set("Student", studentNodeContent);
+        HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
+        String uri = String.format("%s/%s/%s", entityName, entityId, propertyURI);
+        when(httpServletRequest.getRequestURI()).thenReturn(uri);
         when(definitionsManager.getDefinition(any()).getOsSchemaConfiguration().getSystemFields()).thenReturn(Arrays.asList("_osUpdatedAt", "_osCreatedAt"));
         when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(student);
-        String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, propertyURI);
+        String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, httpServletRequest);
         String actualPropertyId = "1-7d9dfb25-7789-44da-a6d4-eacf93e3a7aa";
         assertEquals(propertyId, actualPropertyId);
     }

@@ -108,10 +108,12 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             // TODO: get userID from auth header
+            JsonNode existingNode = registryHelper.readEntity(newRootNode, "");
             registryHelper.updateEntityAndState(newRootNode, "");
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
+            registryHelper.triggerAutoAttestor(entityName, entityId, request, existingNode);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             logger.error("RegistryController: Exception while updating entity (without id)!", e);
@@ -195,18 +197,18 @@ public class RegistryEntityController extends AbstractController {
         }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
-        String propertyURI = request.getRequestURI().split(entityId + "/")[1];
+
         try {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             String notes = getNotes(requestBody);
             requestBody = registryHelper.removeFormatAttr(requestBody);
-            registryHelper.updateEntityProperty(entityName, entityId, propertyURI, requestBody);
+            registryHelper.updateEntityProperty(entityName, entityId, requestBody, request);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             if (send.isPresent() && send.get()) {
-                registryHelper.sendForAttestation(entityName, entityId, propertyURI, notes);
+                registryHelper.sendForAttestation(entityName, entityId, notes, request, "");
             }
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
@@ -237,7 +239,7 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.sendForVerification " + entityName;
             watch.start(tag);
             String notes = getNotes(requestBody);
-            registryHelper.sendForAttestation(entityName, entityId, propertyURI, notes);
+            registryHelper.sendForAttestation(entityName, entityId, notes, request, "");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -264,18 +266,17 @@ public class RegistryEntityController extends AbstractController {
         }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
-        String propertyURI = request.getRequestURI().split(entityId + "/")[1];
         try {
             String tag = "RegistryController.addNewPropertyToTheEntity " + entityName;
             watch.start(tag);
             String notes = getNotes(requestBody);
             requestBody = registryHelper.removeFormatAttr(requestBody);
-            registryHelper.addEntityProperty(entityName, entityId, propertyURI, requestBody);
+            registryHelper.addEntityProperty(entityName, entityId, requestBody, request);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             if (send.isPresent() && send.get()) {
-                String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, propertyURI);
-                registryHelper.sendForAttestation(entityName, entityId, propertyURI + "/" + propertyId, notes);
+                String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, request);
+                registryHelper.sendForAttestation(entityName, entityId, notes, request, propertyId);
             }
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -465,4 +466,27 @@ public class RegistryEntityController extends AbstractController {
         return null;
     }
 
+    @RequestMapping(value = "/api/v1/system/{property}/{propertyId}", method = RequestMethod.POST)
+    public ResponseEntity<ResponseParams> updateProperty(
+            @PathVariable String property,
+            @PathVariable String propertyId,
+            @RequestBody JsonNode requestBody) {
+        logger.info("Got system request for the property {} {}", property, propertyId);
+        ((ObjectNode) requestBody).put(uuidPropertyName, propertyId);
+        ObjectNode newRootNode = objectMapper.createObjectNode();
+
+        ResponseParams responseParams = new ResponseParams();
+        newRootNode.set(property, requestBody);
+        try {
+            String response = registryHelper.updateProperty(newRootNode, "");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            responseParams.setResultList(Collections.singletonList(response));
+            return new ResponseEntity<>(responseParams, HttpStatus.OK);
+        } catch (Exception exception) {
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            exception.printStackTrace();
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
