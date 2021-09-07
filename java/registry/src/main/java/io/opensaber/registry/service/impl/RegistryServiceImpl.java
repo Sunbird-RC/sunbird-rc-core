@@ -349,6 +349,9 @@ public class RegistryServiceImpl implements RegistryService {
 
         String valuePath = autoAttestationPolicy.getValuePath();
         if(existingNode.isNull() || !JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
+            logger.info("Calling auto attestation actor");
+            logger.info("Url {}", url);
+
             MessageProtos.Message message = MessageFactory.instance().createAutoAttestationMessage(autoAttestationPolicy, updatedNode, accessToken, url);
             ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
         }
