@@ -98,6 +98,9 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${registry.perRequest.indexCreation.enabled:false}")
     private boolean perRequestIndexCreation;
 
+    @Value("${registry.context.base}")
+    private String registryBaseUrl;
+
     @Autowired
     private EntityParenter entityParenter;
 
@@ -345,14 +348,12 @@ public class RegistryServiceImpl implements RegistryService {
                 .getOsSchemaConfiguration()
                 .getAutoAttestationPolicy(IteratorUtils.toList(updatedNode.fieldNames()));
         String accessToken = request.getHeader("Authorization");
-        String url = request.getRequestURL().substring(0, request.getRequestURL().length() - request.getRequestURI().length()) + request.getContextPath();
-
         String valuePath = autoAttestationPolicy.getValuePath();
         if(existingNode.isNull() || !JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
             logger.info("Calling auto attestation actor");
-            logger.info("Url {}", url);
+            logger.info("Url {}", registryBaseUrl);
 
-            MessageProtos.Message message = MessageFactory.instance().createAutoAttestationMessage(autoAttestationPolicy, updatedNode, accessToken, url);
+            MessageProtos.Message message = MessageFactory.instance().createAutoAttestationMessage(autoAttestationPolicy, updatedNode, accessToken, registryBaseUrl);
             ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
         }
     }
