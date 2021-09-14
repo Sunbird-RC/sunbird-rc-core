@@ -18,7 +18,7 @@ curl -v http://localhost:8081/health
 ### Running with Docker
 1. Customize the schema
         Refer to the example [here](../blob/main/docs/example/simple.json)
-        ```wget https://raw.githubusercontent.com/Sunbird-RC/opensaber-rc/main/docs/example/simple.json```
+        ```wget https://raw.githubusercontent.com/Sunbird-RC/sunbird-rc-core/main/docs/example/simple.json```
 2. Configure database type and detail
     * You can use postgres and prepare database using following command
         ```sql
