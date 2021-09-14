@@ -1,6 +1,6 @@
- # OpenSABER Registry and Credentials
+ # Sunbird-RC-Core Registry and Credentials
 
-![Build](https://github.com/Sunbird-RC/opensaber-rc/actions/workflows/maven.yml/badge.svg)
+![Build](https://github.com/Sunbird-RC/sunbird-rc-core/actions/workflows/maven.yml/badge.svg)
 
 Open Software for Rapidly Building Electronic Registries, shortly called OpenSABER-RC, is an open source software stack that enables running electronic registries with minimal effort.
 
@@ -9,7 +9,7 @@ Registry is a shared digital infrastructure which enables authorized data reposi
 ## Getting started
 ### Test run with docker-compose
 ```shell script
-wget https://raw.githubusercontent.com/Sunbird-RC/opensaber-rc/main/docker-compose.yml
+wget https://raw.githubusercontent.com/Sunbird-RC/sunbird-rc-core/main/docker-compose.yml
 docker-compose up -d
 docker-compose ps
 #wait for all services to start
