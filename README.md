@@ -1,6 +1,6 @@
- # OpenSABER Registry and Credentials
+ # Sunbird-RC-Core Registry and Credentials
 
-![Build](https://github.com/Sunbird-RC/opensaber-rc/actions/workflows/maven.yml/badge.svg)
+![Build](https://github.com/Sunbird-RC/sunbird-rc-core/actions/workflows/maven.yml/badge.svg)
 
 Open Software for Rapidly Building Electronic Registries, shortly called OpenSABER-RC, is an open source software stack that enables running electronic registries with minimal effort.
 
@@ -9,7 +9,7 @@ Registry is a shared digital infrastructure which enables authorized data reposi
 ## Getting started
 ### Test run with docker-compose
 ```shell script
-wget https://raw.githubusercontent.com/Sunbird-RC/opensaber-rc/main/docker-compose.yml
+wget https://raw.githubusercontent.com/Sunbird-RC/sunbird-rc-core/main/docker-compose.yml
 docker-compose up -d
 docker-compose ps
 #wait for all services to start
@@ -18,7 +18,7 @@ curl -v http://localhost:8081/health
 ### Running with Docker
 1. Customize the schema
         Refer to the example [here](../blob/main/docs/example/simple.json)
-        ```wget https://raw.githubusercontent.com/Sunbird-RC/opensaber-rc/main/docs/example/simple.json```
+        ```wget https://raw.githubusercontent.com/Sunbird-RC/sunbird-rc-core/main/docs/example/simple.json```
 2. Configure database type and detail
     * You can use postgres and prepare database using following command
         ```sql

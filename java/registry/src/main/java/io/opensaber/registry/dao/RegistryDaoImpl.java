@@ -88,11 +88,11 @@ public class RegistryDaoImpl implements IRegistryDao {
      * This method update the inputJsonNode related vertices in the database
      * Notes:
      * This graph object is the same one used for reading the entire record
-     *
-     * @param vertex
+     *  @param vertex
      * @param inputJsonNode
+     * @param parentName
      */
-    public void updateVertex(Graph graph, Vertex vertex, JsonNode inputJsonNode) {
+    public void updateVertex(Graph graph, Vertex vertex, JsonNode inputJsonNode, String parentName) {
         if (inputJsonNode.isObject()) {
             String objectName = inputJsonNode.fields().next().getKey();
             logger.debug("Going to update objectName {}", objectName);
@@ -105,7 +105,12 @@ public class RegistryDaoImpl implements IRegistryDao {
                 updateObject(graph, vertex, (ObjectNode) inputJsonNode);
             } else {
                 VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName);
-                vertexWriter.writeSingleNode(vertex, objectName, inputJsonNode.get(objectName));
+                if(inputJsonNode.get(uuidPropertyName) != null) {
+                    vertexWriter.writeSingleNode(vertex, objectName, inputJsonNode.get(objectName));
+                } else {
+                    // Set parent name as label for new node.
+                    vertexWriter.writeSingleNode(vertex, parentName, inputJsonNode);
+                }
             }
         } else {
             logger.error("Unexpected input passed here.");

@@ -1,13 +1,6 @@
 package io.opensaber.registry.service.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -97,6 +90,9 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Value("${registry.perRequest.indexCreation.enabled:false}")
     private boolean perRequestIndexCreation;
+
+    @Value("${registry.context.base}")
+    private String registryBaseUrl;
 
     @Autowired
     private EntityParenter entityParenter;
@@ -280,7 +276,7 @@ public class RegistryServiceImpl implements RegistryService {
                 objectSignNode.put(Constants.ROOT_KEYWORD, rootOsid);
                 Vertex oldEntitySignatureVertex = uuidVertexMap.get(entitySignUUID);
 
-                registryDao.updateVertex(graph, oldEntitySignatureVertex, newSignature);
+                registryDao.updateVertex(graph, oldEntitySignatureVertex, newSignature, entityType);
             }
 
             // TODO - Validate before update
@@ -301,7 +297,7 @@ public class RegistryServiceImpl implements RegistryService {
             }
 
             // The entity type is a child and so could be different from parent entity type.
-            doUpdate(shard, graph, registryDao, vr, inputNode.get(entityType));
+            doUpdate(shard, graph, registryDao, vr, inputNode.get(entityType), entityType, null);
 
             databaseProvider.commitTransaction(graph, tx);
 
@@ -345,16 +341,17 @@ public class RegistryServiceImpl implements RegistryService {
                 .getOsSchemaConfiguration()
                 .getAutoAttestationPolicy(IteratorUtils.toList(updatedNode.fieldNames()));
         String accessToken = request.getHeader("Authorization");
-        String url = request.getRequestURL().substring(0, request.getRequestURL().length() - request.getRequestURI().length()) + request.getContextPath();
-
         String valuePath = autoAttestationPolicy.getValuePath();
         if(existingNode.isNull() || !JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
-            MessageProtos.Message message = MessageFactory.instance().createAutoAttestationMessage(autoAttestationPolicy, updatedNode, accessToken, url);
+            logger.info("Calling auto attestation actor");
+            logger.info("Url {}", registryBaseUrl);
+
+            MessageProtos.Message message = MessageFactory.instance().createAutoAttestationMessage(autoAttestationPolicy, updatedNode, accessToken, registryBaseUrl);
             ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
         }
     }
 
-    private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode) {
+    private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode, String parentName) {
         HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
         Set<Object> updatedUuids = new HashSet<Object>();
         Set<String> previousArrayItemsUuids = vr.getArrayItemUuids(blankArrVertex);
@@ -367,7 +364,7 @@ public class RegistryServiceImpl implements RegistryService {
                     Vertex existingItem = uuidVertexMap.getOrDefault(item.get(uuidPropertyName).textValue(), null);
                     if (existingItem != null) {
                         try {
-                            registryDao.updateVertex(graph, existingItem, item);
+                            registryDao.updateVertex(graph, existingItem, item, parentName);
                         } catch (Exception e) {
                             logger.error("Can't update item {}", item.toString());
                         }
@@ -406,7 +403,7 @@ public class RegistryServiceImpl implements RegistryService {
         }
     }
 
-    private void doUpdate(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, JsonNode userInputNode) throws Exception {
+    private void doUpdate(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, JsonNode userInputNode, String userInputKey, Vertex parentVertex) throws Exception {
         HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
         Vertex rootVertex = vr.getRootVertex();
 
@@ -448,25 +445,26 @@ public class RegistryServiceImpl implements RegistryService {
 
                         if (null != existArrayVertex) {
                             // updateArrayItems one by one
-                            doUpdateArray(shard, graph, registryDao, vr, existArrayVertex, (ArrayNode) oneElementNode);
+                            doUpdateArray(shard, graph, registryDao, vr, existArrayVertex, (ArrayNode) oneElementNode, userInputKey);
                         } else {
                             VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
                             vertexWriter.createArrayNode(rootVertex, oneElement.getKey(), (ArrayNode) oneElementNode);
                         }
-                        registryDao.updateVertex(graph, existArrayVertex, oneElementNode);
+                        registryDao.updateVertex(graph, existArrayVertex, oneElementNode, oneElement.getKey());
                     } else {
-                        registryDao.updateVertex(graph, existingVertex, userInputNode);
+                        registryDao.updateVertex(graph, existingVertex, userInputNode, userInputKey);
                     }
                 } else if (oneElementNode.isObject()) {
                     logger.info("Object node {}", oneElement.toString());
-                    doUpdate(shard, graph, registryDao, vr, oneElementNode); //todo this is adding to existing parent node merging inner structure.
+                    doUpdate(shard, graph, registryDao, vr, oneElementNode, oneElement.getKey(), existingVertex); //todo this is adding to existing parent node merging inner structure.
                     //registryDao.updateVertex(graph, rootVertex, userInputNode);
                 }
             }
         } else {
             // Likely a new addition
             logger.info("Adding a new node to existing one");
-            registryDao.updateVertex(graph, rootVertex, userInputNode);
+            // Attach new vertex to the parent vertex
+            registryDao.updateVertex(graph, parentVertex, userInputNode, userInputKey);
         }
     }
 

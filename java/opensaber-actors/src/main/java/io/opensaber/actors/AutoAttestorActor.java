@@ -68,6 +68,7 @@ public class AutoAttestorActor extends BaseActor {
         AutoAttestationPolicy autoAttestationPolicy = autoAttestationMessage.getAutoAttestationPolicy();
         String property = autoAttestationPolicy.getProperty();
         String propertyId = nodeRef.get(UUID_PROPERTY_NAME).asText();
+        logger.info("Updating the nodeRef {}", nodeRef);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

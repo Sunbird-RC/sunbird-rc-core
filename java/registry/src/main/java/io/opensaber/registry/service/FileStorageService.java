@@ -72,7 +72,7 @@ public class FileStorageService {
             try {
                 String objectName = objectPath + "/" + fileName;
                 save(file.getInputStream(), objectName);
-                documentsResponse.addDocumentLocation(fileName);
+                documentsResponse.addDocumentLocation(objectName);
             } catch (Exception e) {
                 documentsResponse.addError(file.getOriginalFilename());
                 logger.error("Error has occurred while trying to save the file {}", fileName);

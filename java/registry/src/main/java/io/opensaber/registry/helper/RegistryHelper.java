@@ -441,7 +441,7 @@ public class RegistryHelper {
     public void sendForAttestation(String entityName, String entityId, String notes, HttpServletRequest request, String propertyId) throws Exception {
         String propertyURI = getPropertyURI(entityId, request);
         if(!propertyId.isEmpty()) {
-            propertyURI = propertyId + "/" + propertyId;
+            propertyURI = propertyURI + "/" + propertyId;
         }
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
         JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, propertyURI, notes);
