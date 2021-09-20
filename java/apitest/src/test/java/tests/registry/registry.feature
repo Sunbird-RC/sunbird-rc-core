@@ -5,7 +5,7 @@ Feature: Registry api tests
     * def password = "opensaber@123"
     * def student = {"contactDetails": {"email": "peter@sahaj.ai","mobile": "#(mobile)"}}
     * string registryUrl = "http://localhost:8081"
-    * string authUrl = "http://localhost:9000"
+    * string authUrl = "http://localhost:9990"
 
   Scenario: health check
     Given path 'health'
