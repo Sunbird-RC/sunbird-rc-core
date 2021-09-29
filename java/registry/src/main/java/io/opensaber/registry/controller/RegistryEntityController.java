@@ -11,7 +11,6 @@ import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.attestation.AttestationType;
 import io.opensaber.pojos.attestation.exception.PolicyNotFoundException;
 import io.opensaber.registry.dao.NotFoundException;
-import io.opensaber.registry.exception.InvalidPluginPathException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -224,42 +223,33 @@ public class RegistryEntityController extends AbstractController {
 
     @RequestMapping(value = "/api/v1/send")
     public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody JsonNode requestBody)  {
-        String policyName = requestBody.get("name").asText();
-        String userId = null;
+        String entityName = requestBody.get("entityName").asText();
+        String entityId = requestBody.get("entityId").asText();
+        String attestationName = requestBody.get("name").asText();
         try {
-            userId = registryHelper.getKeycloakUserId(request);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-
-        String sourceEntity = requestBody.get("sourceEntity").asText();
-        String sourceOSID = requestBody.get("sourceOSID").asText();
-        try {
-            registryHelper.authorize(sourceEntity, sourceOSID, request);
+            registryHelper.authorize(entityName, entityId, request);
         } catch (Exception e) {
             return createUnauthorizedExceptionResponse(e);
         }
-        try {
-            JsonNode resultNode = registryHelper.readEntity(userId, sourceEntity, sourceOSID, false, null, false);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-
-        AttestationPolicy attestationPolicy = definitionsManager.getDefinition(sourceEntity)
+        AttestationPolicy attestationPolicy = definitionsManager.getDefinition(entityName)
                 .getOsSchemaConfiguration()
-                .getAttestationPolicyFor(policyName)
-                .orElseThrow(() -> new PolicyNotFoundException("Policy " + policyName + " is not found"));
+                .getAttestationPolicyFor(attestationName)
+                .orElseThrow(() -> new PolicyNotFoundException("Policy " + attestationName + " is not found"));
 
         if(attestationPolicy.getType().equals(AttestationType.MANUAL)) {
-            String messageHandlerName = requestBody.getActorName()
-                    .orElseThrow(() -> new InvalidPluginPathException("Pathname " + requestBody.getAttestorPlugin() + " is invalid"));
-            attestationPolicy.getAttestorEntity();
-            String actorName = message.getActorName();
-            PluginRequestMessage message = GenericMessageAdapter.createMessage(actorName, requestBody, policy);
-            PluginRouter.routeToPlugin(actorName, message);
-            // create message
-            // route message
-            // call API to save the claim
+            try {
+                ((ObjectNode)requestBody).set("property", JsonNodeFactory.instance.pojoNode(attestationPolicy.getProperty()));
+                registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
+                String attestationOSID = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, request);
+                // TODO: property path resolver
+                // TODO: response plugin
+                // TODO: requestor plugin
+                // TODO: handle notes
+                PluginRequestMessage message = GenericMessageAdapter.createClaimPluginMessage(requestBody, attestationPolicy, attestationOSID, entityName, entityId);
+                PluginRouter.route(message);
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
         }
     }
     @Deprecated

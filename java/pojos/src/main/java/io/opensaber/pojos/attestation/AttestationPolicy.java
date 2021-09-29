@@ -3,10 +3,15 @@ package io.opensaber.pojos.attestation;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
+import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AttestationPolicy {
 
+    /**
+    * name property will be used to pick the specific attestation policy
+    * */
+    private String name;
     /*
     * Holds the name of the attestation property. eg. education, certificate, course
     *
@@ -80,5 +85,19 @@ public class AttestationPolicy {
 
     public void setAttestorEntity(String attestorEntity) {
         this.attestorEntity = attestorEntity;
+    }
+
+    public Optional<String> getActorName() {
+        // sample names did:plugin:aadhar, did:plugin:claim,
+        String[] split = attestorEntity.split(":");
+        return split.length >= 3 ? Optional.of(split[2]) : Optional.empty();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }
