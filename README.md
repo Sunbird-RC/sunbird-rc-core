@@ -2,7 +2,7 @@
 
 ![Build](https://github.com/Sunbird-RC/sunbird-rc-core/actions/workflows/maven.yml/badge.svg)
 
-Open Software for Rapidly Building Electronic Registries, shortly called OpenSABER-RC, is an open source software stack that enables running electronic registries with minimal effort.
+Sunbird RC is an open-source software framework for rapidly building electronic registries, enable atestation capabilities, and build verifiable credentialling with minimal effort.
 
 Registry is a shared digital infrastructure which enables authorized data repositories to publish appropriate data and metadata about a user/entity along with the link to the repository in a digitally signed form. It allows data owners to provide authorized access to other users/entities in controlled manner for digital verification and usage.
 
