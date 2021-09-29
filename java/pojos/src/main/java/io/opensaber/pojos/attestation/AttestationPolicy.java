@@ -33,6 +33,14 @@ public class AttestationPolicy {
     * It will be used as first filter for fetching claims
     * */
     private String attestorEntity;
+    /*
+    * It will be used to define the actor name
+    * */
+    private String attestorPlugin;
+    /*
+    * It will be used for signin redirection eg. consent based screens
+    * */
+    private String attestorSignin;
 
     public List<String> getPaths() {
         return paths;
@@ -87,17 +95,27 @@ public class AttestationPolicy {
         this.attestorEntity = attestorEntity;
     }
 
-    public Optional<String> getActorName() {
-        // sample names did:plugin:aadhar, did:plugin:claim,
-        String[] split = attestorEntity.split(":");
-        return split.length >= 3 ? Optional.of(split[2]) : Optional.empty();
-    }
-
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getAttestorPlugin() {
+        return attestorPlugin;
+    }
+
+    public void setAttestorPlugin(String attestorPlugin) {
+        this.attestorPlugin = attestorPlugin;
+    }
+
+    public String getAttestorSignin() {
+        return attestorSignin;
+    }
+
+    public void setAttestorSignin(String attestorSignin) {
+        this.attestorSignin = attestorSignin;
     }
 }
