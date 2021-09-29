@@ -4,10 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
 import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.pojos.attestation.AttestationType;
+import io.opensaber.pojos.attestation.exception.PolicyNotFoundException;
 import io.opensaber.registry.dao.NotFoundException;
+import io.opensaber.registry.exception.InvalidPluginPathException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
@@ -218,6 +222,46 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
+    @RequestMapping(value = "/api/v1/send")
+    public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody JsonNode requestBody)  {
+        String policyName = requestBody.get("name").asText();
+        String userId = null;
+        try {
+            userId = registryHelper.getKeycloakUserId(request);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        String sourceEntity = requestBody.get("sourceEntity").asText();
+        String sourceOSID = requestBody.get("sourceOSID").asText();
+        try {
+            registryHelper.authorize(sourceEntity, sourceOSID, request);
+        } catch (Exception e) {
+            return createUnauthorizedExceptionResponse(e);
+        }
+        try {
+            JsonNode resultNode = registryHelper.readEntity(userId, sourceEntity, sourceOSID, false, null, false);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        AttestationPolicy attestationPolicy = definitionsManager.getDefinition(sourceEntity)
+                .getOsSchemaConfiguration()
+                .getAttestationPolicyFor(policyName)
+                .orElseThrow(() -> new PolicyNotFoundException("Policy " + policyName + " is not found"));
+
+        if(attestationPolicy.getType().equals(AttestationType.MANUAL)) {
+            String messageHandlerName = requestBody.getActorName()
+                    .orElseThrow(() -> new InvalidPluginPathException("Pathname " + requestBody.getAttestorPlugin() + " is invalid"));
+            attestationPolicy.getAttestorEntity();
+            String actorName = message.getActorName();
+            PluginRequestMessage message = GenericMessageAdapter.createMessage(actorName, requestBody, policy);
+            PluginRouter.routeToPlugin(actorName, message);
+            // create message
+            // route message
+            // call API to save the claim
+        }
+    }
     @Deprecated
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/send/**", method = RequestMethod.POST)
     public ResponseEntity<Object> sendForVerification(

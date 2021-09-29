@@ -41,6 +41,8 @@ public class Claim {
     private String attestorEntity;
     @Column
     private String requestorName;
+    @Column
+    private String propertyData;
 
     @PrePersist
     protected void onCreate() {

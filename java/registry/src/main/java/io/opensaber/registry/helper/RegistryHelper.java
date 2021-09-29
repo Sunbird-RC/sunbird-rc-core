@@ -354,6 +354,14 @@ public class RegistryHelper {
         updateEntityAndState(existingNode, updateNode, "");
     }
 
+    public String addEntityProperty(String entityName, String entityId, String propertyName, JsonNode inputJson, HttpServletRequest request) throws Exception {
+        String userId = getKeycloakUserId(request);
+        JsonNode existingEntityNode = readEntity(userId, entityName, entityId, false, null, false);
+        JsonNode nodeToUpdate = existingEntityNode.deepCopy();
+        createOrUpdateProperty(entityName, inputJson, nodeToUpdate, propertyName, (ObjectNode) existingEntityNode, existingEntityNode.get(propertyName));
+        return updateEntity(nodeToUpdate, userId);
+    }
+
     private void createOrUpdateProperty(String entityName, JsonNode inputJson, JsonNode updateNode, String propertyName, ObjectNode parentNode, JsonNode propertyNode) throws JsonProcessingException {
         if (propertyNode != null && !propertyNode.isMissingNode()) {
             updateProperty(inputJson, propertyName, parentNode, propertyNode);
