@@ -145,6 +145,7 @@ public class Claim {
         claim.setAttestorEntity(claimDTO.getAttestorEntity());
         claim.setStatus(ClaimStatus.OPEN.name());
         claim.setRequestorName(claimDTO.getRequestorName());
+        claim.setPropertyData(claimDTO.getPropertyData());
         return claim;
     }
 
@@ -154,5 +155,13 @@ public class Claim {
 
     public void setRequestorName(String requesterName) {
         this.requestorName = requesterName;
+    }
+
+    public String getPropertyData() {
+        return propertyData;
+    }
+
+    public void setPropertyData(String propertyData) {
+        this.propertyData = propertyData;
     }
 }

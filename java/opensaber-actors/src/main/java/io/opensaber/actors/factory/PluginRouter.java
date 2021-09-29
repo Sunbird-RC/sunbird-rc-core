@@ -1,6 +1,5 @@
-package io.opensaber.registry.controller;
+package io.opensaber.actors.factory;
 
-import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.PluginRequestMessage;
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.MessageProtos;

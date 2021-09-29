@@ -4,13 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Builder;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import java.util.List;
 import java.util.Optional;
 
 @JsonSerialize
 @Data
-@RequiredArgsConstructor
 @Builder
 public class PluginRequestMessage {
     String policyName;
@@ -22,6 +20,7 @@ public class PluginRequestMessage {
     String attestationOSID;
     String attestationType;
     String attestorPlugin;
+    String attestorSignin;
     String conditions;
 
     public Optional<String> getActorName() {

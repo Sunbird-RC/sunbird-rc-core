@@ -358,7 +358,9 @@ public class RegistryHelper {
         String userId = getKeycloakUserId(request);
         JsonNode existingEntityNode = readEntity(userId, entityName, entityId, false, null, false);
         JsonNode nodeToUpdate = existingEntityNode.deepCopy();
-        createOrUpdateProperty(entityName, inputJson, nodeToUpdate, propertyName, (ObjectNode) existingEntityNode, existingEntityNode.get(propertyName));
+        JsonNode parentNode = nodeToUpdate.get(entityName);
+        JsonNode propertyNode = parentNode.get(propertyName);
+        createOrUpdateProperty(entityName, inputJson, nodeToUpdate, propertyName, (ObjectNode) parentNode, propertyNode);
         return updateEntityAndState(existingEntityNode, nodeToUpdate, userId);
     }
 

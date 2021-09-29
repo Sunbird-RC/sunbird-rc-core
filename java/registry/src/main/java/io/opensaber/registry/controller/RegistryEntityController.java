@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.opensaber.pojos.PluginRequestMessage;
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.ResponseParams;
+import io.opensaber.pojos.*;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.attestation.AttestationType;
 import io.opensaber.pojos.attestation.exception.PolicyNotFoundException;
@@ -27,6 +25,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.opensaber.actors.factory.PluginRouter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -243,14 +242,16 @@ public class RegistryEntityController extends AbstractController {
                 String attestationOSID = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, request);
                 // TODO: property path resolver
                 // TODO: response plugin
-                // TODO: requestor plugin
                 // TODO: handle notes
-                PluginRequestMessage message = GenericMessageAdapter.createClaimPluginMessage(requestBody, attestationPolicy, attestationOSID, entityName, entityId);
+                PluginRequestMessage message = PluginRequestMessageCreator.createClaimPluginMessage(requestBody, attestationPolicy, attestationOSID, entityName, entityId);
                 PluginRouter.route(message);
             } catch (Exception exception) {
                 exception.printStackTrace();
             }
         }
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
     @Deprecated
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/send/**", method = RequestMethod.POST)

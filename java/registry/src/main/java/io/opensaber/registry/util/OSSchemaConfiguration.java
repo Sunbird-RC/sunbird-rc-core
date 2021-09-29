@@ -104,7 +104,7 @@ public class OSSchemaConfiguration {
 
     public Optional<AttestationPolicy> getAttestationPolicyFor(String policyName) {
         return attestationPolicies.stream()
-                .filter(attestationPolicy -> attestationPolicy.hasProperty(policyName))
+                .filter(attestationPolicy -> attestationPolicy.getName().equals(policyName))
                 .findFirst();
     }
 }
