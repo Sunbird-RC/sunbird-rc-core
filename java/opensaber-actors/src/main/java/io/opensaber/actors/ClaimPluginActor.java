@@ -15,6 +15,7 @@ public class ClaimPluginActor extends BaseActor {
     protected void onReceive(MessageProtos.Message request) throws Throwable {
         // TODO: remove the property URI totally, since we have property paths
         // TODO: fix notes and requestorName
+        // TODO: return response to set the claim ID
         final String claimRequestUrl = "http://localhost:8082";
         final String CLAIMS_PATH = "/api/v1/claims";
         String payLoad = request.getPayload().getStringValue();
@@ -24,6 +25,7 @@ public class ClaimPluginActor extends BaseActor {
         claimDTO.setEntity(pluginRequestMessage.getSourceEntity());
         claimDTO.setEntityId(pluginRequestMessage.getSourceOSID());
         claimDTO.setPropertyURI("");
+        claimDTO.setPropertyData(pluginRequestMessage.getPropertyData().toString());
         claimDTO.setConditions(pluginRequestMessage.getConditions());
         claimDTO.setAttestorEntity(pluginRequestMessage.getConditions());
         claimDTO.setConditions(pluginRequestMessage.getConditions());

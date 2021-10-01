@@ -10,18 +10,19 @@ public class PluginRequestMessageCreator {
     public static PluginRequestMessage createClaimPluginMessage(JsonNode requestBody, AttestationPolicy attestationPolicy, String attestationOSID, String entityName, String entityId) {
         JsonNode propertyData = requestBody.get("propertyData");
         String properties = requestBody.get("properties").asText();
-        return new PluginRequestMessage.PluginRequestMessageBuilder()
-                .policyName(attestationPolicy.getName())
-                .properties(Collections.singletonList(properties))
-                .additionalInputs(JsonNodeFactory.instance.nullNode())
-                .propertyData(propertyData)
-                .sourceEntity(entityName)
-                .sourceOSID(entityId)
-                .attestationOSID(attestationOSID)
-                .attestationOSID(attestationPolicy.getType().name())
-                .attestorPlugin(attestationPolicy.getAttestorEntity())
-                .attestorSignin(attestationPolicy.getAttestorSignin())
-                .conditions(attestationPolicy.getConditions())
-                .build();
+        PluginRequestMessage pluginRequestMessage = new PluginRequestMessage();
+        pluginRequestMessage.setPolicyName(attestationPolicy.getName());
+        pluginRequestMessage.setProperties(Collections.singletonList(properties));
+        pluginRequestMessage.setAdditionalInputs(JsonNodeFactory.instance.nullNode());
+        pluginRequestMessage.setPropertyData(propertyData);
+        pluginRequestMessage.setSourceEntity(entityName);
+        pluginRequestMessage.setSourceOSID(entityId);
+        pluginRequestMessage.setAttestationOSID(attestationOSID);
+        pluginRequestMessage.setAttestationType(attestationPolicy.getType().name());
+        pluginRequestMessage.setAttestorPlugin(attestationPolicy.getAttestorPlugin());
+        pluginRequestMessage.setAttestorEntity(attestationPolicy.getAttestorEntity());
+        pluginRequestMessage.setAttestorSignin(attestationPolicy.getAttestorSignin());
+        pluginRequestMessage.setConditions(attestationPolicy.getConditions());
+        return pluginRequestMessage;
     }
 }

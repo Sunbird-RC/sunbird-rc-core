@@ -1,15 +1,18 @@
 package io.opensaber.pojos;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
+
 import java.util.List;
 import java.util.Optional;
 
 @JsonSerialize
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
-@Builder
+@Getter
+@Setter
 public class PluginRequestMessage {
     String policyName;
     List<String> properties;
@@ -20,6 +23,7 @@ public class PluginRequestMessage {
     String attestationOSID;
     String attestationType;
     String attestorPlugin;
+    String attestorEntity;
     String attestorSignin;
     String conditions;
 

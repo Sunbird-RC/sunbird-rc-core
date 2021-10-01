@@ -220,6 +220,10 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
+    // TODO: property path resolver
+    // TODO: resolve propertyPath with osid
+    // TODO: response plugin
+    // TODO: handle notes
     @RequestMapping(value = "/api/v1/send")
     public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody JsonNode requestBody)  {
         String entityName = requestBody.get("entityName").asText();
@@ -228,6 +232,7 @@ public class RegistryEntityController extends AbstractController {
         try {
             registryHelper.authorize(entityName, entityId, request);
         } catch (Exception e) {
+            logger.error("Unauthorized exception {}", e.getMessage());
             return createUnauthorizedExceptionResponse(e);
         }
         AttestationPolicy attestationPolicy = definitionsManager.getDefinition(entityName)
@@ -237,15 +242,13 @@ public class RegistryEntityController extends AbstractController {
 
         if(attestationPolicy.getType().equals(AttestationType.MANUAL)) {
             try {
-                ((ObjectNode)requestBody).set("property", JsonNodeFactory.instance.pojoNode(attestationPolicy.getProperty()));
+                ((ObjectNode)requestBody).set("properties", JsonNodeFactory.instance.pojoNode(attestationPolicy.getProperty()));
                 registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
-                String attestationOSID = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, request);
-                // TODO: property path resolver
-                // TODO: response plugin
-                // TODO: handle notes
+                String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
                 PluginRequestMessage message = PluginRequestMessageCreator.createClaimPluginMessage(requestBody, attestationPolicy, attestationOSID, entityName, entityId);
                 PluginRouter.route(message);
             } catch (Exception exception) {
+                logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
                 exception.printStackTrace();
             }
         }
@@ -253,6 +256,7 @@ public class RegistryEntityController extends AbstractController {
         Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
     @Deprecated
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/send/**", method = RequestMethod.POST)
     public ResponseEntity<Object> sendForVerification(

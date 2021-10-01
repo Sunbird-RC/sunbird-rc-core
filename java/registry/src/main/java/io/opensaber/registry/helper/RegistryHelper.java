@@ -112,6 +112,14 @@ public class RegistryHelper {
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
+    public String getAttestationOSID(JsonNode requestBody, String entityName, String entityId, String propertyName) throws Exception {
+        JsonNode resultNode = readEntity("", entityName, entityId, false, null, false)
+                .get(entityName)
+                .get(propertyName);
+        List<String> fieldsToRemove = getFieldsToRemove(entityName);
+        return JSONUtil.getOSIDFromArrNode(resultNode, requestBody, fieldsToRemove);
+    }
+
     public JsonNode removeFormatAttr(JsonNode requestBody) {
         String documents = "documents";
         if (requestBody.has(documents)) {
@@ -585,7 +593,7 @@ public class RegistryHelper {
     }
 
     @NotNull
-    private List<String> getFieldsToRemove(String entityName) {
+    public List<String> getFieldsToRemove(String entityName) {
         List<String> fieldsToRemove = new ArrayList<>();
         fieldsToRemove.add(uuidPropertyName);
         List<String> systemFields = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields();

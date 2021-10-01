@@ -41,7 +41,7 @@ public class Claim {
     private String attestorEntity;
     @Column
     private String requestorName;
-    @Column
+    @Column(columnDefinition = "text")
     private String propertyData;
 
     @PrePersist
