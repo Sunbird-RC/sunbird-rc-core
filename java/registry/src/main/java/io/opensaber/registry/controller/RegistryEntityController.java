@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.opensaber.pojos.Response;
-import io.opensaber.pojos.ResponseParams;
+import io.opensaber.pojos.*;
 import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.pojos.attestation.AttestationType;
+import io.opensaber.pojos.attestation.exception.PolicyNotFoundException;
 import io.opensaber.registry.dao.NotFoundException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -24,6 +25,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.opensaber.actors.factory.PluginRouter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -216,6 +218,43 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
+    }
+
+    // TODO: property path resolver
+    // TODO: resolve propertyPath with osid
+    // TODO: response plugin
+    // TODO: handle notes
+    @RequestMapping(value = "/api/v1/send")
+    public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody JsonNode requestBody)  {
+        String entityName = requestBody.get("entityName").asText();
+        String entityId = requestBody.get("entityId").asText();
+        String attestationName = requestBody.get("name").asText();
+        try {
+            registryHelper.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            logger.error("Unauthorized exception {}", e.getMessage());
+            return createUnauthorizedExceptionResponse(e);
+        }
+        AttestationPolicy attestationPolicy = definitionsManager.getDefinition(entityName)
+                .getOsSchemaConfiguration()
+                .getAttestationPolicyFor(attestationName)
+                .orElseThrow(() -> new PolicyNotFoundException("Policy " + attestationName + " is not found"));
+
+        if(attestationPolicy.getType().equals(AttestationType.MANUAL)) {
+            try {
+                ((ObjectNode)requestBody).set("properties", JsonNodeFactory.instance.pojoNode(attestationPolicy.getProperty()));
+                registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
+                String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
+                PluginRequestMessage message = PluginRequestMessageCreator.createClaimPluginMessage(requestBody, attestationPolicy, attestationOSID, entityName, entityId);
+                PluginRouter.route(message);
+            } catch (Exception exception) {
+                logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
+                exception.printStackTrace();
+            }
+        }
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Deprecated

@@ -482,4 +482,22 @@ public class JSONUtil {
         List<String> typeList = JsonPath.using(alwaysReturnListConfig).parse(input.toString()).read(path);
         return typeList.get(0);
     }
+
+	public static String getOSIDFromArrNode(JsonNode resultNode, JsonNode requestBody, List<String> fieldsToRemove) {
+		if (resultNode.isArray()) {
+			ArrayNode arrayNode = (ArrayNode) resultNode;
+			for (JsonNode next : arrayNode) {
+				JsonNode existingProperty = next.deepCopy();
+				JSONUtil.removeNodes(existingProperty, fieldsToRemove);
+
+				JsonNode requestBodyWithoutSystemFields = requestBody.deepCopy();
+				JSONUtil.removeNodes(requestBodyWithoutSystemFields, fieldsToRemove);
+
+				if (existingProperty.equals(requestBodyWithoutSystemFields)) {
+					return next.get("osid").asText();
+				}
+			}
+		}
+		return "";
+	}
 }
