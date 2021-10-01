@@ -29,6 +29,7 @@ public class ClaimPluginActor extends BaseActor {
         claimDTO.setConditions(pluginRequestMessage.getConditions());
         claimDTO.setAttestorEntity(pluginRequestMessage.getConditions());
         claimDTO.setConditions(pluginRequestMessage.getConditions());
+        claimDTO.setAttestationId(pluginRequestMessage.getAttestationOSID());
 //        claimDTO.setRequestorName(requestorName);
 //        claimDTO.setNotes(notes);
         RestTemplate restTemplate = new RestTemplate();
