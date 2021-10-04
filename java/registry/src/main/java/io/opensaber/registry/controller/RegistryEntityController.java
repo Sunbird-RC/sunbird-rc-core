@@ -1,5 +1,6 @@
 package io.opensaber.registry.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -159,6 +160,12 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setErrmsg(e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @RequestMapping(value = "/attest")
+    public ResponseEntity attest(HttpServletRequest request) throws JsonProcessingException {
+        registryHelper.callPluginActor();
+        return ResponseEntity.ok().build();
     }
 
 
@@ -520,6 +527,34 @@ public class RegistryEntityController extends AbstractController {
             String response = registryHelper.updateProperty(newRootNode, "");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             responseParams.setResultList(Collections.singletonList(response));
+            return new ResponseEntity<>(responseParams, HttpStatus.OK);
+        } catch (Exception exception) {
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            exception.printStackTrace();
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @RequestMapping(value = "/api/v1/{property}/{propertyId}/attestation/{attestationName}/{attestationId}", method = RequestMethod.PUT)
+    public ResponseEntity<ResponseParams> updateAttestationProperty(
+            @PathVariable String property,
+            @PathVariable String propertyId,
+            @PathVariable String attestationName,
+            @PathVariable String attestationId,
+            @RequestBody JsonNode requestBody) {
+        logger.info("Got system request to update attestaion property {} {} {} {}", property, propertyId, attestationName, attestationId);
+        ((ObjectNode) requestBody).put(uuidPropertyName, propertyId);
+        ObjectNode newRootNode = objectMapper.createObjectNode();
+
+        ResponseParams responseParams = new ResponseParams();
+        newRootNode.set(property, requestBody);
+        try {
+            logger.info("updateAttestationProperty: {}", requestBody);
+//            String response = registryHelper.updateProperty(newRootNode, "");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            responseParams.setResultList(Collections.singletonList("response"));
             return new ResponseEntity<>(responseParams, HttpStatus.OK);
         } catch (Exception exception) {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);

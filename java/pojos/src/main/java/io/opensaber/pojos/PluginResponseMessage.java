@@ -1,6 +1,8 @@
 package io.opensaber.pojos;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -11,6 +13,8 @@ import java.util.Map;
 @JsonSerialize
 @Data
 @RequiredArgsConstructor
+@Builder
+@AllArgsConstructor
 public class PluginResponseMessage {
     String policyName;
     String sourceEntity;

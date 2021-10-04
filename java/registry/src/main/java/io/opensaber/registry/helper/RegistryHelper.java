@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.keycloak.KeycloakAdminUtil;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.attestation.Action;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.JSONUtil;
@@ -464,6 +465,10 @@ public class RegistryHelper {
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
         JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, propertyURI, notes);
         updateEntity(updatedNode, "");
+    }
+
+    public void callPluginActor() throws JsonProcessingException {
+        registryService.callPluginActors("CowinActor", PluginRequestMessage.builder().sourceEntity("Student").sourceOSID("234").policyName("education").attestationOSID("432").build());
     }
 
     public void attest(String entityName, String entityId, String uuidPath, JsonNode attestReq) throws Exception {

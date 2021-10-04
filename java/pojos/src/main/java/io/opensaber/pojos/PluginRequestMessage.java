@@ -3,6 +3,8 @@ package io.opensaber.pojos;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.*;
 
 import java.util.List;
@@ -11,6 +13,9 @@ import java.util.Optional;
 @JsonSerialize
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
+@RequiredArgsConstructor
+@Builder
+@AllArgsConstructor
 @Getter
 @Setter
 public class PluginRequestMessage {
