@@ -101,4 +101,10 @@ public class OSSchemaConfiguration {
                 .filter(policy -> fieldNames.contains(policy.getParentProperty()))
                 .findFirst().orElse(new AutoAttestationPolicy());
     }
+
+    public Optional<AttestationPolicy> getAttestationPolicyFor(String policyName) {
+        return attestationPolicies.stream()
+                .filter(attestationPolicy -> attestationPolicy.getName().equals(policyName))
+                .findFirst();
+    }
 }

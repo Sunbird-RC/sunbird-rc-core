@@ -123,7 +123,7 @@ public class EntityStateHelper {
         List<String> ignoredProperties = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields();
         List<AttestationPolicy> attestationPolicies = definitionsManager.getAttestationPolicy(entityName);
         for (AttestationPolicy policy : attestationPolicies) {
-            Set<EntityPropertyURI> targetPathPointers = new AttestationPath(policy.getProperty())
+            Set<EntityPropertyURI> targetPathPointers = new AttestationPath(policy.getNodePath())
                     .getEntityPropertyURIs(modified, uuidPropertyName);
             logger.info("Updated nodes of interest: {}", targetPathPointers);
             for (EntityPropertyURI tp : targetPathPointers) {
