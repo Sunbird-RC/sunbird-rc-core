@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.*;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.attestation.AttestationType;
-import io.opensaber.pojos.attestation.exception.PolicyNotFoundException;
 import io.opensaber.registry.dao.NotFoundException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -242,10 +241,7 @@ public class RegistryEntityController extends AbstractController {
             logger.error("Unauthorized exception {}", e.getMessage());
             return createUnauthorizedExceptionResponse(e);
         }
-        AttestationPolicy attestationPolicy = definitionsManager.getDefinition(entityName)
-                .getOsSchemaConfiguration()
-                .getAttestationPolicyFor(attestationName)
-                .orElseThrow(() -> new PolicyNotFoundException("Policy " + attestationName + " is not found"));
+        AttestationPolicy attestationPolicy = definitionsManager.getAttestationPolicy(entityName, attestationName);
 
         if(attestationPolicy.getType().equals(AttestationType.MANUAL)) {
             try {

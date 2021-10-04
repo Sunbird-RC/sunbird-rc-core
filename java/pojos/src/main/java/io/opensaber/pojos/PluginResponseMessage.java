@@ -1,5 +1,6 @@
 package io.opensaber.pojos;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,7 +25,7 @@ public class PluginResponseMessage {
     String response;
     String signedData;
     //additional response received:
-    Map additionalData;
+    JsonNode additionalData;
     String status;
     Date date;
     Date validUntil;

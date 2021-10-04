@@ -16,8 +16,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Builder
 @AllArgsConstructor
-@Getter
-@Setter
 public class PluginRequestMessage {
     String policyName;
     List<String> properties;
@@ -31,6 +29,7 @@ public class PluginRequestMessage {
     String attestorEntity;
     String attestorSignin;
     String conditions;
+    String status;
 
     public Optional<String> getActorName() {
         // sample names did:plugin:aadhar, did:plugin:claim,
