@@ -20,7 +20,7 @@ public class PluginRequestMessage {
     String policyName;
     List<String> properties;
     JsonNode additionalInputs;
-    JsonNode propertyData;
+    String propertyData;
     String sourceEntity;
     String sourceOSID;
     String attestationOSID;
