@@ -2,7 +2,7 @@ node {
     try {
         def branchname = 'main'
         stage('Clone repository') {
-            git([url: 'https://github.com/Sunbird-RC/opensaber-rc', branch: "${branchname}"])
+            git([url: 'https://github.com/Sunbird-RC/sunbird-rc-core', branch: "${branchname}"])
         }
 
         stage('Compile And Test'){
@@ -12,7 +12,7 @@ node {
         }
 
         stage('Build image') {
-            app = docker.build("dockerhub/opensaber-rc","target")
+            app = docker.build("dockerhub/sunbird-rc-core","target")
             claimApp = docker.build("dockerhub/open-saber-claim-ms","java/claim")
         }
 
