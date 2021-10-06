@@ -21,7 +21,7 @@ services:
   db:
     image: postgres
     ports:
-      - "5433:5432"
+      - "5432:5432"
     environment:
       - POSTGRES_DB=registry
       - POSTGRES_USER=postgres
