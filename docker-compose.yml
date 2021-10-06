@@ -27,7 +27,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
   registry:
-    image: dockerhub/opensaber-rc
+    image: dockerhub/sunbird-rc-core
     volumes:
     - ${PWD}/java/registry/src/main/resources/public/_schemas:/home/opensaber/config/public/_schemas
 
