@@ -42,11 +42,6 @@ public class AttestationPolicy {
     * */
     private String attestorSignin;
 
-    /**
-    * nodePath contains the pointer to get the attestation node
-    * */
-    private String nodePath;
-
     public List<String> getPaths() {
         return paths;
     }
@@ -125,10 +120,6 @@ public class AttestationPolicy {
     }
 
     public String getNodePath() {
-        return nodePath;
-    }
-
-    public void setNodePath(String nodePath) {
-        this.nodePath = nodePath;
+        return name + "/[]";
     }
 }

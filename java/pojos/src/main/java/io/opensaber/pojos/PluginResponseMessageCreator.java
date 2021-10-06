@@ -9,7 +9,7 @@ import java.util.Date;
 public class PluginResponseMessageCreator {
     public static PluginResponseMessage createClaimResponseMessage(String claimId, Action status, PluginRequestMessage pluginRequestMessage) {
         ObjectNode additionalData = JsonNodeFactory.instance.objectNode();
-        additionalData.put("id", claimId);
+        additionalData.put("claimId", claimId);
         return PluginResponseMessage.builder()
                 .sourceEntity(pluginRequestMessage.getSourceEntity()).sourceOSID(pluginRequestMessage.getSourceOSID())
                 .attestationOSID(pluginRequestMessage.getAttestationOSID())

@@ -548,6 +548,10 @@ public class RegistryEntityController extends AbstractController {
         newRootNode.set(property, requestBody);
         try {
             logger.info("updateAttestationProperty: {}", requestBody);
+            PluginResponseMessage pluginResponseMessage = objectMapper.convertValue(requestBody, PluginResponseMessage.class);
+            String userId = "";
+
+            registryHelper.updateState(pluginResponseMessage);
 //            String response = registryHelper.updateProperty(newRootNode, "");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             responseParams.setResultList(Collections.singletonList("response"));
