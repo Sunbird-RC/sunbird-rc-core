@@ -37,6 +37,7 @@ import java.util.*;
 public class RegistryEntityController extends AbstractController {
     @Autowired
     ConditionResolverService conditionResolverService;
+
     private static Logger logger = LoggerFactory.getLogger(RegistryEntityController.class);
 
 

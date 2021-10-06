@@ -283,7 +283,7 @@ public class EntityStateHelper {
         );
     }
 
-    private String generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyURI) {
+    public String generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyURI) {
         String PROPERTY_ID = "PROPERTY_ID";
         String propertyId = "";
         if (attestationPolicy.getProperty().endsWith("[]")) {

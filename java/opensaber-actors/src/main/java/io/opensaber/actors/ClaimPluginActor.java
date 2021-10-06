@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import foundation.identity.jsonld.JsonLDException;
 import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.PluginResponseMessage;
 import io.opensaber.pojos.PluginResponseMessageCreator;
 import io.opensaber.pojos.attestation.Action;
 import io.opensaber.pojos.dto.ClaimDTO;
+import io.opensaber.verifiablecredentials.CredentialService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,12 @@ import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.text.ParseException;
+
+import static io.opensaber.actors.CredentialConstants.*;
 
 public class ClaimPluginActor extends BaseActor {
     private final String claimRequestUrl = "http://localhost:8082";
@@ -45,7 +53,7 @@ public class ClaimPluginActor extends BaseActor {
         }
     }
 
-    private void attestClaim(PluginRequestMessage pluginRequestMessage) throws JsonProcessingException {
+    private void attestClaim(PluginRequestMessage pluginRequestMessage) throws IOException, JsonLDException, GeneralSecurityException, ParseException {
         JsonNode additionalInputs = pluginRequestMessage.getAdditionalInputs();
         String claimId = additionalInputs.get("claimId").asText();
         JsonNode attestorInfo = additionalInputs.get("attestorInfo");
@@ -62,10 +70,10 @@ public class ClaimPluginActor extends BaseActor {
                 Object.class
         );
         callPluginResponseActor(pluginRequestMessage, claimId, Action.valueOf(status));
-        logger.info("Claim has successfully risen {}", responseEntity.toString());
+        logger.info("Claim has successfully attested {}", responseEntity.toString());
     }
 
-    private void riseClaim(PluginRequestMessage pluginRequestMessage) throws JsonProcessingException {
+    private void riseClaim(PluginRequestMessage pluginRequestMessage) throws IOException, JsonLDException, GeneralSecurityException, ParseException {
         JsonNode additionalInputs = pluginRequestMessage.getAdditionalInputs();
         String notes = "";
         if(additionalInputs.has("notes")) {
@@ -91,8 +99,15 @@ public class ClaimPluginActor extends BaseActor {
         callPluginResponseActor(pluginRequestMessage, claimId, Action.RAISE_CLAIM);
     }
 
-    private void callPluginResponseActor(PluginRequestMessage pluginRequestMessage, String claimId, Action raiseClaim) throws JsonProcessingException {
+    private void callPluginResponseActor(PluginRequestMessage pluginRequestMessage, String claimId, Action raiseClaim) throws IOException, JsonLDException, GeneralSecurityException, ParseException {
         PluginResponseMessage pluginResponseMessage = PluginResponseMessageCreator.createClaimResponseMessage(claimId, raiseClaim, pluginRequestMessage);
+        if(Action.valueOf(pluginRequestMessage.getStatus()).equals(Action.GRANT_CLAIM)) {
+            CredentialService credentialService = new CredentialService(PRIVATE_KEY, PUBLIC_KEY, DOMAIN, CREATOR, NONCE);
+            JsonNode additionalInputs = pluginRequestMessage.getAdditionalInputs();
+            String attestedData = additionalInputs.get("attestedData").asText();
+            ObjectMapper objectMapper = new ObjectMapper();
+            pluginResponseMessage.setSignedData(objectMapper.writeValueAsString(credentialService.sign(attestedData)));
+        }
         MessageProtos.Message pluginResponseActorMessage = MessageFactory.instance().createPluginResponseMessage(pluginResponseMessage);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(pluginResponseActorMessage, null);
     }
