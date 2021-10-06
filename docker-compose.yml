@@ -27,7 +27,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
   registry:
-    image: dockerhub/sunbird-rc-core
+    image: dockerhub/opensaber-rc
     volumes:
     - ${PWD}/java/registry/src/main/resources/public/_schemas:/home/opensaber/config/public/_schemas
 
@@ -51,7 +51,7 @@ services:
       db:
         condition: service_started
   keycloak:
-    image: dockerhub/keycloak
+    image: dockerhub/ndear-keycloak
     volumes:
     - ${PWD}/imports:/opt/jboss/keycloak/imports
     environment:
