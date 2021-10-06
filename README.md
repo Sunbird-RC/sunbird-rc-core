@@ -10,6 +10,7 @@ Registry is a shared digital infrastructure which enables authorized data reposi
 ### Test run with docker-compose
 ```shell script
 wget https://raw.githubusercontent.com/Sunbird-RC/sunbird-rc-core/main/docker-compose.yml
+mkdir imports && cd imports && wget https://raw.githubusercontent.com/Sunbird-RC/sunbird-rc-core/main/imports/realm-export.json && cd ..
 docker-compose up -d
 docker-compose ps
 #wait for all services to start
@@ -40,6 +41,11 @@ curl -v http://localhost:8081/health
     ```shell script
     curl -v http://localhost:8081/health
     ```
+6. Setup Keycloak
+   ```shell script
+   wget https://raw.githubusercontent.com/Sunbird-RC/sunbird-rc-core/main/imports/realm-export.json
+   ```
+   import the realm into keycloak by accessing admin console.
 ## Demo
 > Coming soon
     
