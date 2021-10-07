@@ -1,7 +1,7 @@
 
 
 build: java
-	cd target && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/opensaber-rc .
+	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 
 java: java/registry/target/registry.jar
 	cd java && ./mvnw -DskipTests clean install
