@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-
 import io.opensaber.actors.services.NotificationService;
 import io.opensaber.elastic.ElasticServiceImpl;
 import io.opensaber.elastic.IElasticService;
@@ -30,11 +29,7 @@ import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.shard.DefaultShardAdvisor;
 import io.opensaber.registry.sink.shard.IShardAdvisor;
 import io.opensaber.registry.sink.shard.ShardAdvisor;
-import io.opensaber.registry.transform.ConfigurationHelper;
-import io.opensaber.registry.transform.Json2JsonTransformer;
-import io.opensaber.registry.transform.Json2LdTransformer;
-import io.opensaber.registry.transform.Ld2JsonTransformer;
-import io.opensaber.registry.transform.Transformer;
+import io.opensaber.registry.transform.*;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ServiceProvider;
 import io.opensaber.validators.IValidate;
@@ -43,12 +38,6 @@ import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.kie.api.KieServices;
-import org.kie.api.builder.KieBuilder;
-import org.kie.api.builder.KieFileSystem;
-import org.kie.api.builder.KieModule;
-import org.kie.api.runtime.KieContainer;
-import org.kie.internal.io.ResourceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -292,10 +281,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new RestTemplate(requestFactory);
 	}
 
-	@Bean
-	public DBProviderFactory dbProviderFactory() {
-		return new DBProviderFactory();
-	}
+//	@Bean
+//	public DBProviderFactory dbProviderFactory() {
+//		return new DBProviderFactory();
+//	}
 
 	@Bean
 	public IShardAdvisor shardAdvisor() {		

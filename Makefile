@@ -1,5 +1,4 @@
 
-
 build: java
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 
@@ -15,3 +14,6 @@ test: build
 	@curl -v http://localhost:8081/health
 	@cd java/apitest && ../mvnw test || echo 'Tests failed'
 	@docker-compose down
+
+clean:
+	@rm -rf target
