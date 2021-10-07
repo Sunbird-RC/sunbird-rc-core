@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 
-@Component
 public class RequestIdValidationInterceptor implements HandlerInterceptor {
 	private Map<String, String> requestIdMap;
 
