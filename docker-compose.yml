@@ -29,7 +29,7 @@ services:
   registry:
     image: dockerhub/sunbird-rc-core
     volumes:
-    - ${PWD}/java/registry/src/main/resources/public/_schemas:/home/opensaber/config/public/_schemas
+      - ${PWD}/java/registry/src/main/resources/public/_schemas:/home/opensaber/config/public/_schemas
 
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
@@ -38,7 +38,7 @@ services:
       - elastic_search_connection_url=es:9200
       - search_provider=io.opensaber.registry.service.ElasticSearchService
       - sunbird_sso_realm=ndear
-      - sunbird_sso_url=http://localhost:9990/auth
+      - sunbird_sso_url=http://keycloak:8080/auth
       - sunbird_sso_admin_client_id=admin-api
       - sunbird_sso_client_id=registry-frontend
       - sunbird_sso_admin_client_secret=0358fa30-6014-4192-9551-7c61b15b774c
@@ -53,7 +53,7 @@ services:
   keycloak:
     image: dockerhub/ndear-keycloak
     volumes:
-    - ${PWD}/imports:/opt/jboss/keycloak/imports
+      - ${PWD}/imports:/opt/jboss/keycloak/imports
     environment:
       - DB_VENDOR=postgres
       - DB_ADDR=db

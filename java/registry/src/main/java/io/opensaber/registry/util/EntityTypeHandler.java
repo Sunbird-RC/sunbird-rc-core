@@ -8,16 +8,10 @@ import java.util.List;
 
 @Component
 public class EntityTypeHandler {
-    private final List<String> internalEntities;
     private final List<String> externalEntities;
 
-    public EntityTypeHandler(@Value("${registry.internalentities}") String[] internalEntities, @Value("${registry.externalentities}") String[] externalEntities) {
-        this.internalEntities = Arrays.asList(internalEntities);
+    public EntityTypeHandler(@Value("${registry.externalentities}") String[] externalEntities) {
         this.externalEntities = Arrays.asList(externalEntities);
-    }
-
-    public boolean isInternalRegistry(String entityName) {
-        return internalEntities.contains(entityName);
     }
 
     public boolean isExternalRegistry(String entityName) {
