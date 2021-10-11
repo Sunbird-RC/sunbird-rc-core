@@ -293,7 +293,7 @@ public class RegistryServiceImpl implements RegistryService {
 
             databaseProvider.commitTransaction(graph, tx);
 
-            if (entityTypeHandler.isInternalRegistry(entityType)) {
+            if(isInternalRegistry(entityType)) {
                 callESActors(mergedNode, "UPDATE", entityType, id, tx);
             }
             auditService.auditUpdate(
@@ -302,6 +302,10 @@ public class RegistryServiceImpl implements RegistryService {
 
 
         }
+    }
+
+    private boolean isInternalRegistry(String entityType) {
+        return definitionsManager.getAllKnownDefinitions().contains(entityType);
     }
 
     @Override

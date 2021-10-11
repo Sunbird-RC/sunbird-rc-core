@@ -569,12 +569,16 @@ public class RegistryHelper {
     }
 
     public JsonNode getRequestedUserDetails(HttpServletRequest request, String entityName) throws Exception {
-        if (entityTypeHandler.isInternalRegistry(entityName)) {
+        if (isInternalRegistry(entityName)) {
             return getUserInfoFromRegistry(request, entityName);
         } else if (entityTypeHandler.isExternalRegistry(entityName)) {
             return getUserInfoFromKeyCloak(request, entityName);
         }
         throw new Exception(NOT_PART_OF_THE_SYSTEM_EXCEPTION);
+    }
+
+    private boolean isInternalRegistry(String entityName) {
+        return definitionsManager.getAllKnownDefinitions().contains(entityName);
     }
 
     private JsonNode getUserInfoFromKeyCloak(HttpServletRequest request, String entityName) {

@@ -41,5 +41,9 @@
         }
       }
     }
+  },
+  "_osConfig": {
+    "uniqueIndexFields": ["contact"],
+    "subjectJsonPath": "contact"
   }
 }
