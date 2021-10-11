@@ -3,7 +3,6 @@ package io.opensaber.pojos.attestation;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
-import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AttestationPolicy {
@@ -16,7 +15,7 @@ public class AttestationPolicy {
     * Holds the name of the attestation property. eg. education, certificate, course
     *
     * */
-    private String property;
+    private List<String> attestationProperties;
     /**
      * Holds the value of the jsonpath
      */
@@ -29,10 +28,6 @@ public class AttestationPolicy {
     * Holds the expression to identify the attestor
     * */
     private String conditions;
-    /*
-    * It will be used as first filter for fetching claims
-    * */
-    private String attestorEntity;
     /*
     * It will be used to define the actor name
     * */
@@ -58,12 +53,12 @@ public class AttestationPolicy {
         this.type = type;
     }
 
-    public String getProperty() {
-        return property;
+    public List<String> getAttestationProperties() {
+        return attestationProperties;
     }
 
-    public void setProperty(String property) {
-        this.property = property;
+    public void setAttestationProperties(List<String> attestationProperties) {
+        this.attestationProperties = attestationProperties;
     }
 
     public String getConditions() {
@@ -77,22 +72,19 @@ public class AttestationPolicy {
     @Override
     public String toString() {
         return "AttestationPolicy{" +
-                "property='" + property + '\'' +
+                "property='" + attestationProperties + '\'' +
                 ", paths=" + paths +
                 ", type=" + type +
                 '}';
     }
 
     public boolean hasProperty(String property) {
-        return getProperty().equals(property);
+        return getAttestationProperties().equals(property);
     }
 
     public String getAttestorEntity() {
-        return attestorEntity;
-    }
-
-    public void setAttestorEntity(String attestorEntity) {
-        this.attestorEntity = attestorEntity;
+        String[] split = attestorPlugin.split("entity=");
+        return split.length == 2 ? split[1] : "";
     }
 
     public String getName() {

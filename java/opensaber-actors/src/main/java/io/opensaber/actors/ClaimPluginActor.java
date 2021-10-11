@@ -1,6 +1,5 @@
 package io.opensaber.actors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -12,7 +11,6 @@ import io.opensaber.pojos.PluginResponseMessage;
 import io.opensaber.pojos.PluginResponseMessageCreator;
 import io.opensaber.pojos.attestation.Action;
 import io.opensaber.pojos.dto.ClaimDTO;
-import io.opensaber.verifiablecredentials.CredentialService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +23,8 @@ import org.sunbird.akka.core.Router;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.text.ParseException;
+import java.util.Objects;
 
-import static io.opensaber.actors.CredentialConstants.*;
 
 public class ClaimPluginActor extends BaseActor {
     private final String claimRequestUrl = "http://localhost:8082";
@@ -63,13 +61,14 @@ public class ClaimPluginActor extends BaseActor {
         attestationRequest.set("attestorInfo", attestorInfo);
         attestationRequest.put("action", status);
         attestationRequest.put("notes", notes);
-        ResponseEntity<Object> responseEntity = restTemplate.exchange(
+        ResponseEntity<ClaimDTO> responseEntity = restTemplate.exchange(
                 claimRequestUrl + CLAIMS_PATH + "/" + claimId,
                 HttpMethod.POST,
                 new HttpEntity<>(attestationRequest),
-                Object.class
+                ClaimDTO.class
         );
         callPluginResponseActor(pluginRequestMessage, claimId, Action.valueOf(status));
+        pluginRequestMessage.setPropertyData(Objects.requireNonNull(responseEntity.getBody()).getPropertyData());
         logger.info("Claim has successfully attested {}", responseEntity.toString());
     }
 
@@ -102,11 +101,8 @@ public class ClaimPluginActor extends BaseActor {
     private void callPluginResponseActor(PluginRequestMessage pluginRequestMessage, String claimId, Action raiseClaim) throws IOException, JsonLDException, GeneralSecurityException, ParseException {
         PluginResponseMessage pluginResponseMessage = PluginResponseMessageCreator.createClaimResponseMessage(claimId, raiseClaim, pluginRequestMessage);
         if(Action.valueOf(pluginRequestMessage.getStatus()).equals(Action.GRANT_CLAIM)) {
-            CredentialService credentialService = new CredentialService(PRIVATE_KEY, PUBLIC_KEY, DOMAIN, CREATOR, NONCE);
-            JsonNode additionalInputs = pluginRequestMessage.getAdditionalInputs();
-            String attestedData = additionalInputs.get("attestedData").asText();
             ObjectMapper objectMapper = new ObjectMapper();
-            pluginResponseMessage.setSignedData(objectMapper.writeValueAsString(credentialService.sign(attestedData)));
+            pluginResponseMessage.setSignedData(objectMapper.writeValueAsString(pluginRequestMessage.getPropertyData()));
         }
         MessageProtos.Message pluginResponseActorMessage = MessageFactory.instance().createPluginResponseMessage(pluginResponseMessage);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(pluginResponseActorMessage, null);

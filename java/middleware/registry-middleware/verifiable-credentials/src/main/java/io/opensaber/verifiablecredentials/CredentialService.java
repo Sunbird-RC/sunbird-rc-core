@@ -24,6 +24,7 @@ public class CredentialService {
     private static final String ASSERTION_PROOF_PURPOSE = "AssertionProofPurpose";
     private static final String DATE_FORMAT = "2017-10-24T05:33:31Z";
     private byte[] privateKey, publicKey;
+
     private String domain, creator, nonce;
 
     public CredentialService(String privateKey, String publicKey, String domain, String creator, String nonce) {

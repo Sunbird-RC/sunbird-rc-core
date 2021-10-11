@@ -233,9 +233,6 @@ public class RegistryEntityController extends AbstractController {
     }
 
     // TODO: property path resolver
-    // TODO: resolve propertyPath with osid
-    // TODO: response plugin
-    // TODO: handle notes
     @RequestMapping(value = "/api/v1/send")
     public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody JsonNode requestBody)  {
         String entityName = requestBody.get("entityName").asText();
@@ -251,12 +248,11 @@ public class RegistryEntityController extends AbstractController {
 
         if(attestationPolicy.getType().equals(AttestationType.MANUAL)) {
             try {
-                ((ObjectNode)requestBody).set("properties", JsonNodeFactory.instance.pojoNode(attestationPolicy.getProperty()));
+                ((ObjectNode)requestBody).set("properties", JsonNodeFactory.instance.pojoNode(attestationPolicy.getAttestationProperties()));
                 registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
                 String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
                 String propertyDataStr = requestBody.get("propertyData").asText();
                 JsonNode propertyData = new ObjectMapper().readTree(propertyDataStr);
-                // TODO: pass propertyData to resolve condition
                 String properties = requestBody.get("properties").asText();
                 String condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
                 PluginRequestMessage message = PluginRequestMessageCreator.createClaimPluginMessage(propertyDataStr, properties, condition, attestationPolicy, attestationOSID, entityName, entityId);

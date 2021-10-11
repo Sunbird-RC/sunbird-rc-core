@@ -3,8 +3,13 @@ package io.opensaber.registry.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.actors.factory.PluginRouter;
+import io.opensaber.pojos.PluginRequestMessage;
+import io.opensaber.pojos.Response;
+import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.util.ClaimRequestClient;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -59,24 +64,38 @@ public class RegistryClaimsController {
             @PathVariable String entityName,
             @RequestBody ObjectNode requestBody,
             HttpServletRequest request) {
-        logger.info("Attesting claim {} as  {}", claimId, entityName);
-        JsonNode action = requestBody.get("action");
-        JsonNode notes = requestBody.get("notes");
-        logger.info("Action : {} , Notes: {}", action, notes);
+        ResponseParams responseParams = new ResponseParams();
         try {
-            JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
-            JsonNode attestorInfo = result.get(entityName).get(0);
-            ObjectNode attestRequest = JsonNodeFactory.instance.objectNode();
-            attestRequest.set("attestorInfo", attestorInfo);
-            attestRequest.set("action", action);
-            attestRequest.set("notes", notes);
-            return claimRequestClient.attestClaim(
-                    attestRequest,
-                    claimId
-            );
+            logger.info("Attesting claim {} as  {}", claimId, entityName);
+            JsonNode action = requestBody.get("action");
+            ObjectNode additionalInputs = generateAdditionInput(claimId, entityName, requestBody, request, action);
+
+            PluginRequestMessage pluginRequestMessage = PluginRequestMessage.builder().build();
+            pluginRequestMessage.setAdditionalInputs(additionalInputs);
+            pluginRequestMessage.setStatus(action.asText());
+            PluginRouter.route(pluginRequestMessage);
+
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            return new ResponseEntity<>(responseParams, HttpStatus.OK);
         } catch (Exception exception) {
             logger.error("Exception : {}", exception.getMessage());
-            return new ResponseEntity<>("Error sending attestation request to Claims service", HttpStatus.INTERNAL_SERVER_ERROR);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @NotNull
+    private ObjectNode generateAdditionInput(String claimId, String entityName, ObjectNode requestBody, HttpServletRequest request, JsonNode action) throws Exception {
+        JsonNode notes = requestBody.get("notes");
+        logger.info("Action : {} , Notes: {}", action, notes);
+        JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
+        JsonNode attestorInfo = result.get(entityName).get(0);
+        ObjectNode additionalInputs = JsonNodeFactory.instance.objectNode();
+        additionalInputs.set("attestorInfo", attestorInfo);
+        additionalInputs.set("action", action);
+        additionalInputs.set("notes", notes);
+        additionalInputs.put("claimId", claimId);
+        return additionalInputs;
     }
 }
