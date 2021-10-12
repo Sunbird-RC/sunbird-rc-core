@@ -33,7 +33,8 @@ public class PluginRequestMessage {
 
     public Optional<String> getActorName() {
         // sample names did:plugin:aadhar, did:plugin:claim,
-        String[] split = attestorPlugin.split(":");
-        return split.length >= 3 ? Optional.of(split[2]) : Optional.empty();
+        String[] split1 = attestorPlugin.split("\\?");
+        String[] split2 = split1[0].split(":");
+        return split2.length >= 3 ? Optional.of(split2[2]) : Optional.empty();
     }
 }

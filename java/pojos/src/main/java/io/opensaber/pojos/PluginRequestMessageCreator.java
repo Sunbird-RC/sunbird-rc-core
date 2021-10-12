@@ -1,7 +1,7 @@
 package io.opensaber.pojos;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import io.opensaber.pojos.attestation.Action;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 
 import java.util.Collections;
@@ -21,6 +21,7 @@ public class PluginRequestMessageCreator {
         pluginRequestMessage.setAttestorEntity(attestationPolicy.getAttestorEntity());
         pluginRequestMessage.setAttestorSignin(attestationPolicy.getAttestorSignin());
         pluginRequestMessage.setConditions(condition);
+        pluginRequestMessage.setStatus(Action.RAISE_CLAIM.name());
         return pluginRequestMessage;
     }
 }

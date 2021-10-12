@@ -493,7 +493,7 @@ public class RegistryHelper {
         AttestationPolicy attestationPolicy = definitionsManager.getAttestationPolicy(sourceEntity, attestationName);
         String userId = "";
 
-        JsonNode root = readEntity(userId, attestationName, attestationOSID, false, null, false);
+        JsonNode root = readEntity(userId, sourceEntity, pluginResponseMessage.getSourceOSID(), false, null, false);
         ObjectNode metaData = JsonNodeFactory.instance.objectNode();
         JsonNode additionalData = pluginResponseMessage.getAdditionalData();
         Action action = Action.valueOf(pluginResponseMessage.getStatus());

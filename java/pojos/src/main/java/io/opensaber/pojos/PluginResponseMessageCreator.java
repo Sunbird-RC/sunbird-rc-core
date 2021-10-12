@@ -12,9 +12,11 @@ public class PluginResponseMessageCreator {
         additionalData.put("claimId", claimId);
         return PluginResponseMessage.builder()
                 .sourceEntity(pluginRequestMessage.getSourceEntity()).sourceOSID(pluginRequestMessage.getSourceOSID())
+                .sourceOSID(pluginRequestMessage.getSourceOSID())
                 .attestationOSID(pluginRequestMessage.getAttestationOSID())
                 .attestorPlugin(pluginRequestMessage.getAttestorPlugin())
                 .additionalData(additionalData)
+                .policyName(pluginRequestMessage.getPolicyName())
                 .status(status.name())
                 .date(new Date())
                 .validUntil(new Date())
