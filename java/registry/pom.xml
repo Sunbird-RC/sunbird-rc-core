@@ -130,7 +130,13 @@
 
         <dependency>
             <groupId>io.opensaber</groupId>
-            <artifactId>opensaber-actors</artifactId>
+            <artifactId>sample-external-plugin</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.opensaber</groupId>
+            <artifactId>sample-external-plugin-2</artifactId>
             <version>${revision}</version>
         </dependency>
 

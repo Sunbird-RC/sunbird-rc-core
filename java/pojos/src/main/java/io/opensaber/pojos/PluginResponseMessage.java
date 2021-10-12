@@ -21,6 +21,7 @@ public class PluginResponseMessage {
     String sourceOSID;
     String attestationOSID;
     String attestorPlugin;
+    String response;
     String signedData;
     //additional response received:
     Map additionalData;
