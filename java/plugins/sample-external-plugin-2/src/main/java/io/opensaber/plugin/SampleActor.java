@@ -1,11 +1,10 @@
-package io.opensaber.actors;
+package io.opensaber.plugin;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.PluginResponseMessage;
-import io.opensaber.verifiablecredentials.CredentialService;
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
@@ -14,11 +13,11 @@ import org.sunbird.akka.core.Router;
 import java.util.Collections;
 import java.util.Date;
 
-public class CowinActor extends BaseActor {
+public class SampleActor extends BaseActor {
     private ObjectMapper objectMapper;
 
 
-    public CowinActor() {
+    public SampleActor() {
         this.objectMapper = new ObjectMapper();
 
     }
