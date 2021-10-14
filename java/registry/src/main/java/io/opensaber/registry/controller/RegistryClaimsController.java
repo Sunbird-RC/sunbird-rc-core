@@ -9,12 +9,15 @@ import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
 import io.opensaber.registry.helper.RegistryHelper;
 import io.opensaber.registry.util.ClaimRequestClient;
+import io.opensaber.registry.util.DefinitionsManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -23,10 +26,12 @@ public class RegistryClaimsController {
     private static final Logger logger = LoggerFactory.getLogger(RegistryClaimsController.class);
     private final ClaimRequestClient claimRequestClient;
     private final RegistryHelper registryHelper;
+    private final DefinitionsManager definitionsManager;
 
-    public RegistryClaimsController(ClaimRequestClient claimRequestClient, RegistryHelper registryHelper) {
+    public RegistryClaimsController(ClaimRequestClient claimRequestClient, RegistryHelper registryHelper, DefinitionsManager definitionsManager) {
         this.registryHelper = registryHelper;
         this.claimRequestClient = claimRequestClient;
+        this.definitionsManager = definitionsManager;
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/claims", method = RequestMethod.GET)
@@ -51,9 +56,12 @@ public class RegistryClaimsController {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
             JsonNode claim = claimRequestClient.getClaim(result.get(entityName).get(0), entityName, claimId);
             return new ResponseEntity<>(claim, HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
             logger.error("Fetching claim failed {}", e.getMessage());
             e.printStackTrace();
+            return new ResponseEntity<>(e.getStatusCode());
+        } catch (Exception exception) {
+            exception.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -70,7 +78,9 @@ public class RegistryClaimsController {
             JsonNode action = requestBody.get("action");
             ObjectNode additionalInputs = generateAdditionInput(claimId, entityName, requestBody, request, action);
 
+            final String attestorPlugin = "did:internal:ClaimPluginActor";
             PluginRequestMessage pluginRequestMessage = PluginRequestMessage.builder().build();
+            pluginRequestMessage.setAttestorPlugin(attestorPlugin);
             pluginRequestMessage.setAdditionalInputs(additionalInputs);
             pluginRequestMessage.setStatus(action.asText());
             PluginRouter.route(pluginRequestMessage);

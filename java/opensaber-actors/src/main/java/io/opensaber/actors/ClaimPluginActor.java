@@ -67,8 +67,8 @@ public class ClaimPluginActor extends BaseActor {
                 new HttpEntity<>(attestationRequest),
                 ClaimDTO.class
         );
-        callPluginResponseActor(pluginRequestMessage, claimId, Action.valueOf(status));
         pluginRequestMessage.setPropertyData(Objects.requireNonNull(responseEntity.getBody()).getPropertyData());
+        callPluginResponseActor(pluginRequestMessage, claimId, Action.valueOf(status));
         logger.info("Claim has successfully attested {}", responseEntity.toString());
     }
 

@@ -69,12 +69,10 @@ public class ClaimsController {
     }
 
     @RequestMapping(value = "/api/v1/claims/{claimId}", method = RequestMethod.POST)
-    public ResponseEntity<Object> attestClaims(@PathVariable String claimId, @RequestBody JsonNode requestBody) {
+    public ResponseEntity<Claim> attestClaims(@PathVariable String claimId, @RequestBody JsonNode requestBody) {
         logger.info("Attesting claim : {}", claimId);
-        return claimService.attestClaim(
-                claimId,
-                requestBody
-        );
+        Claim updatedClaim = claimService.attestClaim(claimId, requestBody);
+        return new ResponseEntity<>(updatedClaim, HttpStatus.OK);
     }
 
 }
