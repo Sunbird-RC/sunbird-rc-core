@@ -108,6 +108,9 @@ $ cat schemas/student.json
 $ cat schemas/teacher.json
 ```
 
+> Or you could view the schemas
+> [on Github](https://github.com/gamemaker1/registry-setup-files/tree/main/schemas).
+
 A teacher is represented by 5 fields: `name`, `phoneNumber`, `email`, `subject`
 and `school`, out of which `name`, `phoneNumber`, `email` and `school` are
 required fields. `subject` can be any one of Math, Hindi, English, History,
