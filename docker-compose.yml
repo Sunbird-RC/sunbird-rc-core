@@ -37,7 +37,7 @@ services:
       - connectionInfo_password=postgres
       - elastic_search_connection_url=es:9200
       - search_provider=io.opensaber.registry.service.ElasticSearchService
-      - sunbird_sso_realm=ndear
+      - sunbird_sso_realm=sunbird-rc
       - sunbird_sso_url=http://keycloak:8080/auth
       - sunbird_sso_admin_client_id=admin-api
       - sunbird_sso_client_id=registry-frontend
@@ -76,3 +76,18 @@ services:
     depends_on:
       db:
         condition: service_started
+  claim-ms:
+    image: dockerhub/open-saber-claim-ms
+    environment:
+      - connectionInfo_uri=jdbc:postgresql://db:5432/registry
+      - connectionInfo_username=postgres
+      - connectionInfo_password=postgres
+      - opensaber_url=http://registry:8081
+    ports:
+      - "8082:8082"
+    depends_on:
+      db:
+        condition: service_started
+      registry:
+        condition: service_started
+
