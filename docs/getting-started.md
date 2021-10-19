@@ -1,83 +1,7 @@
-# Installation
-
-## Prerequisites
-
-> This guide assumes a some familiarity with basic linux commands. If not,
-> [here](https://ubuntu.com/tutorials/command-line-for-beginners#1-overview) is
-> a great place to start.
-
-### Terminal emulator
-
-Linux and MacOS will have a terminal installed already. For Windows, it is
-recommended that you use `git-bash`, which you can install from
-[here](https://git-scm.com/download/win).
-
-Type `echo Hi` in the terminal once it is installed. If installed correctly, you
-should see `Hi` appear when you hit enter.
-
-### Git
-
-Installation instructions for Git can be found
-[here](https://github.com/git-guides/install-git).
-
-Run `git --version` in the terminal if `git` has been installed correctly:
-
-```sh
-$ git --version
-git version 2.33.0
-```
-
-### NodeJS
-
-Installation instructions for NodeJS can be found
-[here](https://nodejs.org/en/download/package-manager/).
-
-Run `node -v` in the terminal if `node` has been installed correctly:
-
-```sh
-$ node -v
-v16.11.0
-```
-
-### Docker
-
-Installation instructions for Docker can be found
-[here](https://docs.docker.com/engine/install/).
-
-Run `docker -v` in terminal to check if `docker` has been installed correctly:
-
-```sh
-$ docker -v
-Docker version 20.10.9, build c2ea9bc90b
-```
-
-### Docker Compose
-
-Installation instructions can be found
-[here](https://docs.docker.com/engine/install/).
-
-Run `docker-compose -v` in terminal to check if `docker-compose` has been
-installed correctly:
-
-```sh
-$ docker-compose -v
-Docker Compose version 2.0.1
-```
-
-## Installing the Registry CLI
-
-To install the Registry CLI, run:
-
-```sh
-$ npm install --global registry-cli
-```
-
-> In case you encounter a permission denied/access denied error here, prefix the
-> command with `sudo`: `sudo npm install --global registry-cli`.
-
-The Registry CLI will be used in this guide for all registry related operations.
-
 # Getting Started
+
+Now that you have the Registry CLI installed, we can create a new instance of a
+registry!
 
 Run the following command in a directory where you wish to setup the registry.
 For this example, we will use `~/Registries/example/`. (`~` is short form for
@@ -95,9 +19,28 @@ $ cd ~/Registries/example
 $ registry init
 ```
 
+> Don't copy-paste the `$` signs, they indicate that what follows is a terminal
+> command
+
 This will setup and start a registry using Docker on your machine.
 
-## Understanding schemas
+> The default setup files used to create a registry can be found
+> [here](https://github.com/gamemaker1/registry-setup-files). If you wish to use
+> a different set of files to setup your registry, specify the remote git repo's
+> URL using the `config` command before running the `init` command:
+>
+> ```
+> $ registry config setup.repo <url-to-setup-repo>
+> ```
+>
+> You will also need to change the container names and images if you have
+> changed them in `docker-compose.yaml`:
+>
+> ```
+> $ registry config container.images <url-to-setup-repo>
+> ```
+
+## Understanding Schemas
 
 Each registry can store data as entities. The example registry setup by the CLI
 already has two entities declared in it: `Teacher` and `Student`. To view the
@@ -122,35 +65,60 @@ making a 'claim' (i.e., that the student is from the specified school), which
 can be 'attested' (i.e., confirmed to be true) by a teacher from the same
 school.
 
-## Creating an entity
+## Creating An Entity
 
 To create an entity, we need to make the following HTTP request:
 
+### Request
+
 ```http
-POST /api/v1/{entity}/invite HTTP/1.1
-Content-Type: application/json
-
-
-{ "fields...": "values..." }
+POST /api/v1/{entity}/invite
 ```
+
+| Field          | In     | Type     | Description                  |
+| -------------- | ------ | -------- | ---------------------------- |
+| `content-type` | header | `string` | Set to `application/json`    |
+| `entity`       | path   | `string` | The type of entity to create |
+| `...`          | body   | `object` | The entity's data            |
+
+### Examples
 
 So to create a `Teacher` entity named Pranav Agate who teaches Math at UP Public
 School, we would make the following API call:
 
+**cURL**
+
 ```sh
-curl --location --request POST 'http://localhost:8081/api/v1/Teacher/invite' \
-	--header 'Content-Type: application/json' \
-	--data-raw '
-		{
-			"name": "Pranav Agate",
-			"phoneNumber": "1234567890",
-			"subject": "Math",
-			"school": "UP Public School"
-		}
-	'
+curl --location \
+	--request 'POST' \
+	--header 'content-type: application/json' \
+	--data-raw '{
+		"name": "Pranav Agate",
+		"phoneNumber": "1234567890",
+		"email": "pranav@upps.in",
+		"subject": "Math",
+		"school": "UP Public School"
+	}' \
+	'http://localhost:8081/api/v1/Teacher/invite'
 ```
 
-This should return a JSON object as follows:
+**HTTPie**
+
+```sh
+echo '{
+	"name": "Pranav Agate",
+	"phoneNumber": "1234567890",
+	"email": "pranav@upps.in",
+	"subject": "Math",
+	"school": "UP Public School"
+}' | http post \
+	'http://localhost:8081/api/v1/Teacher/invite' \
+	'content-type: application/json'
+```
+
+### Response
+
+This will store the entity in the registry and return the following object:
 
 ```json
 {
@@ -165,81 +133,142 @@ This should return a JSON object as follows:
 		"errmsg": ""
 	},
 	"responseCode": "OK",
-	"result": { "Teacher": { "osid": "..." } }
+	"result": { "Teacher": { "osid": "1-9d6099fc-2c01-4714-bceb-55ff28c482f9" } }
 }
 ```
 
-Save the `osid` returned, as we will need it to retrieve or update the entity
-later on.
+Important variables to save:
 
-## Authenticating as an entity
+| Field                  | In   | Type     | Description                                                                                    |
+| ---------------------- | ---- | -------- | ---------------------------------------------------------------------------------------------- |
+| `result.{entity}.osid` | body | `string` | The ID of the create entity in the registry, used for retrieval and modification of the entity |
+
+## Authenticating As An Entity
 
 Now that we have created an entity, we can authenticate with the server as that
 entity to perform further operations like retrieving, searching, updating and
 attesting.
 
+### Request
+
 To authenticate as an entity, we need to make the following request:
 
 ```http
-POST /auth/realms/sunbird-rc/protocol/openid-connect/token HTTP/1.1
-Content-Type: application/x-www-form-urlencoded
-
-client_id=...&username=...&password=...&grant_type=password
+POST /auth/realms/sunbird-rc/protocol/openid-connect/token
 ```
+
+| Field          | In     | Type     | Description                                                                                 |
+| -------------- | ------ | -------- | ------------------------------------------------------------------------------------------- |
+| `content-type` | header | `string` | Set to `application/x-www-form-urlencoded`                                                  |
+| `client_id`    | body   | `string` | Set to `registry-frontend`                                                                  |
+| `username`     | body   | `string` | The `_osConfig.ownershipAttributes.userId` of the entity according to the schema            |
+| `password`     | body   | `string` | Set to `opensaber@123` (default password, specified in registry config/docker compose file) |
+| `grant_type`   | body   | `string` | Set to `password`                                                                           |
+
+### Examples
 
 So to authenticate as the `Teacher` entity we just created, we would make the
 following API call:
 
+**cURL**
+
 ```sh
-curl --location --request POST 'http://kc:8080/auth/realms/sunbird-rc/protocol/openid-connect/token' \
-	--header 'Content-Type: application/x-www-form-urlencoded' \
+curl --location \
+	--request POST \
+	--header 'content-type: application/x-www-form-urlencoded' \
 	--data 'client_id=registry-frontend' \
 	--data 'username=1234567890' \
 	--data 'password=opensaber@123' \
-	--data 'grant_type=password'
+	--data 'grant_type=password' \
+	'http://kc:8080/auth/realms/sunbird-rc/protocol/openid-connect/token'
+```
+
+**HTTPie**
+
+```sh
+http --form post \
+	'http://kc:8080/auth/realms/sunbird-rc/protocol/openid-connect/token' \
+	'content-type: application/x-www-form-urlencoded' \
+	'client_id=registry-frontend' \
+	'username=1234567890' \
+	'password=opensaber@123' \
+	'grant_type=password'
 ```
 
 > Here, `registry-frontend` is the preconfigured client we use to make requests
-> to keycloak and `opensaber@123` is the default password for all entities. This
-> API call should return a JSON object as follows:
+> to keycloak and `opensaber@123` is the default password for all entities.
+
+### Response
+
+This API call should return a JSON object as follows:
 
 ```json
 {
-	"access_token": "...",
-	"expires_in": 600,
-	"refresh_expires_in": 600,
-	"refresh_token": "...",
-	"token_type": "Bearer",
-	"not-before-policy": 160238239,
-	"session_state": "...",
-	"scope": "profile email"
+	"access_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lk...2cSSaBKuB58I2OYDGw",
+	"expires_in": 300,
+	"not-before-policy": 0,
+	"refresh_expires_in": 1800,
+	"refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lk...9HulwVv12bBDUdU_nidZXo",
+	"scope": "email profile",
+	"session_state": "300f8a46-e430-4fd6-92aa-a2d337d7343e",
+	"token_type": "Bearer"
 }
 ```
 
-The `expires_in` field tells us how many seconds we have before the access token
-expires and we have to make this request again. Save the access token so we can
-use it in future API calls.
+Important variables to save:
 
-## Retrieving an entity
+| Field          | In   | Type     | Description                                                        |
+| -------------- | ---- | -------- | ------------------------------------------------------------------ |
+| `access_token` | body | `string` | Access token used to retrieve/update entity                        |
+| `expires_in`   | body | `number` | Number of seconds before the access token will be declared invalid |
+| `token_type`   | body | `string` | Should be `Bearer`, else we have gotten the wrong token            |
+| `scope`        | body | `string` | Using this token, what information we can access about the entity  |
+
+## Retrieving An Entity
+
+### Request
 
 To retrieve an entity, we need to make the following HTTP request:
 
 ```http
 GET /api/v1/{entity}/{id} HTTP/1.1
-Authorization: Bearer {accessToken}
 ```
+
+| Field           | In     | Type     | Description                                                                                                    |
+| --------------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------- |
+| `content-type`  | header | `string` | Set to `application/json`                                                                                      |
+| `authorization` | header | `string` | Set to `bearer {access-token}` (substitute the access token for the one retrieved in the authentication step ) |
+| `entity`        | path   | `string` | The type of entity to retrieve                                                                                 |
+| `id`            | path   | `string` | The ID of the entity to retrieve                                                                               |
+
+### Examples
 
 So to retrieve the entity we created earlier, we would make the following
 request:
 
+**cURL**
+
 ```sh
-curl --location --request GET 'http://localhost:8081/api/v1/Teacher/...' \
-	--header 'Authorization: Bearer ...'
+curl --location \
+	--request GET \
+	--header 'content-type: application/json' \
+	--header 'authorization: bearer {access-token}' \
+	'http://localhost:8081/api/v1/Teacher/{id}'
 ```
 
-> Replace the first `...` above with the entity's `osid` you saved from the
-> create entity request. Replace the second `...` with your access token from
-> the authentication step.
+**HTTPie**
+
+```sh
+http get \
+	'http://localhost:8081/api/v1/Teacher/{id}' \
+	'authorization: bearer {access-token}'
+```
+
+> Replace the `{id}` above with the entity's `osid` you saved from the create
+> entity request. Replace the `{access-token}` with your access token from the
+> authentication step.
+
+### Response
 
 This will return the entity's JSON representation as follows:
 
@@ -249,48 +278,96 @@ This will return the entity's JSON representation as follows:
 	"school": "UP Public School",
 	"subject": "Math",
 	"name": "Pranav Agate",
-	"osid": "...",
-	"osOwner": ["..."]
+	"osid": "{id}",
+	"osOwner": ["{ownerId}"]
 }
 ```
 
-The `osOwner` field is the User ID of the entity in Keycloak.
+Important variables to save:
 
-## Updating an entity
+| Field     | In   | Type     | Description                        |
+| --------- | ---- | -------- | ---------------------------------- |
+| `osOwner` | body | `string` | User ID of the entity in Keycloak. |
+
+## Update An Entity
 
 To update an entity, we need to make the following HTTP request:
 
-```http
-PUT /api/v1/{entity}/{id} HTTP/1.1
-Content-Type: application/json
-Authorization: Bearer ...
+### Request
 
-{ "fields...": "values..." }
+```http
+PUT /api/v1/{entity}/{id}
 ```
 
-So to update our `Teacher` to teach Biology instead of Math, we would make the
-following API call:
+| Field          | In     | Type     | Description                  |
+| -------------- | ------ | -------- | ---------------------------- |
+| `content-type` | header | `string` | Set to `application/json`    |
+| `entity`       | path   | `string` | The type of entity to modify |
+| `id`           | id     | `string` | The ID of entity to modify   |
+| `...`          | body   | `object` | The entity's data            |
+
+### Examples
+
+So to update the subject our `Teacher` entity Pranav Agate teaches to `Biology`,
+we would make the following API call:
+
+**cURL**
 
 ```sh
-curl --location --request PUT 'http://localhost:8081/api/v1/Teacher/...' \
-	--header 'Content-Type: application/json' \
-	--header 'Authorization: Bearer ...' \
-	--data-raw '
-		{
-			"name": "Pranav Agate",
-			"phoneNumber": "1234567890",
-			"subject": "Biology",
-			"school": "UP Public School"
-		}
-	'
+curl --location \
+	--request 'PUT' \
+	--header 'content-type: application/json' \
+	--header 'authorization: bearer {access-token}' \
+	--data-raw '{
+		"name": "Pranav Agate",
+		"phoneNumber": "1234567890",
+		"email": "pranav@upps.in",
+		"subject": "Biology",
+		"school": "UP Public School"
+	}' \
+	'http://localhost:8081/api/v1/Teacher/{id}'
 ```
 
-> Replace the first `...` above with the entity's `osid` you saved from the
-> create entity request. Replace the second `...` with your access token from
-> the authentication step.
+**HTTPie**
+
+```sh
+echo '{
+	"name": "Pranav Agate",
+	"phoneNumber": "1234567890",
+	"email": "pranav@upps.in",
+	"subject": "Biology",
+	"school": "UP Public School"
+}' | http put \
+	'http://localhost:8081/api/v1/Teacher/{id}' \
+	'content-type: application/json'
+```
+
+> Replace the `{id}` above with the entity's `osid` you saved from the create
+> entity request. Replace the `{access-token}` with your access token from the
+> authentication step.
 
 > We need to send the whole entity and not just the updated fields because that
 > is how RESTful APIs work. A PUT call should replace the existing record in the
 > database with the new object as-is. To know more about this, take a look at
 > the accepted answer on
 > [this SO question](https://stackoverflow.com/questions/28459418/use-of-put-vs-patch-methods-in-rest-api-real-life-scenarios).
+
+### Response
+
+This will update the entity in the registry and return the following object:
+
+```json
+{
+	"id": "open-saber.registry.update",
+	"ver": "1.0",
+	"ets": 1634371946769,
+	"params": {
+		"resmsgid": "",
+		"msgid": "d51e6e6a-027d-4a42-84bb-2ce00e31d993",
+		"err": "",
+		"status": "SUCCESSFUL",
+		"errmsg": ""
+	},
+	"responseCode": "OK"
+}
+```
