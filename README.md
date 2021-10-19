@@ -14,7 +14,7 @@ for digital verification and usage.
 
 ## Installation and Setup
 
-See [the getting started guide](docs/getting-started.md).
+See [the installation and getting started guide](docs/installation.md).
 
 More documentation can be found [here](https://docs.sunbirdrc.dev/).
 
