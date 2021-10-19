@@ -89,4 +89,4 @@ This should show you all the commands you can execute using the CLI.
 ## Next Steps
 
 Now that you have the Registry CLI running, you can go through the
-[getting started guide](https://github.com/gamemaker1/registry-cli/blob/main/docs/getting-started.md).
+[getting started guide](https://github.com/sunbird-rc/sunbird-rc-core/blob/main/docs/getting-started.md).
