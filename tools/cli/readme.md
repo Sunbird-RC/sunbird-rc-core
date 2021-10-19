@@ -6,7 +6,7 @@ A CLI to create and interact with
 ## Documentation
 
 Take a look at the getting started guide
-[here](https://github.com/sunbird-rc/sunbird-rc-core/tree/main/docs/getting-started.md)
+[here](https://github.com/sunbird-rc/sunbird-rc-core/tree/main/docs/installation.md)
 to get to know how to use the tool.
 
 ## Contributing/Issues
