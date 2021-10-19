@@ -1,0 +1,66 @@
+{
+	"name": "registry-cli",
+	"version": "0.6.4",
+	"description": "A CLI to create and interact with Sunbird RC registry instances",
+	"author": "Vedant K <https://github.com/gamemaker1>",
+	"license": "MIT",
+	"main": "source/main.ts",
+	"type": "module",
+	"bin": {
+		"registry": "build/source/main.js"
+	},
+	"files": [
+		"build",
+		"config",
+		"docs",
+		"scripts",
+		"source",
+		"package.json",
+		"pnpm-lock.yaml",
+		"license.md",
+		"readme.md"
+	],
+	"scripts": {
+		"test": "sh scripts/test.sh",
+		"start": "sh scripts/start.sh",
+		"build": "sh scripts/build.sh",
+		"watch": "sh scripts/watch.sh",
+		"release": "sh scripts/release.sh",
+		"fix:eslint": "sh scripts/fix/eslint.sh",
+		"fix:format": "sh scripts/fix/prettier.sh",
+		"check:eslint": "sh scripts/check/eslint.sh",
+		"check:format": "sh scripts/check/prettier.sh"
+	},
+	"dependencies": {
+		"chalk": "^4.1.2",
+		"command-exists": "^1.2.9",
+		"commander": "^8.2.0",
+		"conf": "^10.0.3",
+		"docker-compose": "^0.23.13",
+		"dockerode": "^3.3.1",
+		"enquirer": "^2.3.6",
+		"git-clone": "^0.2.0",
+		"got": "^11.8.2",
+		"ora": "^6.0.1",
+		"replace-in-file": "^6.2.0"
+	},
+	"devDependencies": {
+		"@types/command-exists": "^1.2.0",
+		"@types/dockerode": "^3.3.0",
+		"@types/node": "^16.11.0",
+		"@typescript-eslint/eslint-plugin": "^5.0.0",
+		"@typescript-eslint/parser": "^5.0.0",
+		"eslint": "^8.0.1",
+		"eslint-config-prettier": "^8.3.0",
+		"eslint-plugin-prettier": "^4.0.0",
+		"np": "^7.5.0",
+		"prettier": "^2.4.1",
+		"ts-node": "^10.3.0",
+		"typescript": "^4.4.4"
+	},
+	"engines": {
+		"node": "v16.11.1",
+		"pm": "pnpm 6.17.2"
+	},
+	"prettier": "./config/prettier.json"
+}
