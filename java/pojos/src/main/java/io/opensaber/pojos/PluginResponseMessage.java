@@ -1,5 +1,7 @@
 package io.opensaber.pojos;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Builder
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PluginResponseMessage {
     String policyName;
     String sourceEntity;
@@ -24,7 +27,7 @@ public class PluginResponseMessage {
     String response;
     String signedData;
     //additional response received:
-    Map additionalData;
+    JsonNode additionalData;
     String status;
     Date date;
     Date validUntil;

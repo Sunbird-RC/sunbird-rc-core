@@ -13,7 +13,9 @@ import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.keycloak.KeycloakAdminUtil;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.PluginRequestMessage;
+import io.opensaber.pojos.PluginResponseMessage;
 import io.opensaber.pojos.attestation.Action;
+import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
@@ -484,6 +486,34 @@ public class RegistryHelper {
         updateEntity(updatedNode, "");
     }
 
+    public void updateState(PluginResponseMessage pluginResponseMessage) throws Exception {
+        String attestationName = pluginResponseMessage.getPolicyName();
+        String attestationOSID = pluginResponseMessage.getAttestationOSID();
+        String sourceEntity = pluginResponseMessage.getSourceEntity();
+        AttestationPolicy attestationPolicy = definitionsManager.getAttestationPolicy(sourceEntity, attestationName);
+        String userId = "";
+
+        JsonNode root = readEntity(userId, sourceEntity, pluginResponseMessage.getSourceOSID(), false, null, false);
+        ObjectNode metaData = JsonNodeFactory.instance.objectNode();
+        JsonNode additionalData = pluginResponseMessage.getAdditionalData();
+        Action action = Action.valueOf(pluginResponseMessage.getStatus());
+        if (action.equals(Action.RAISE_CLAIM)) {
+            metaData.put(
+                    "claimId",
+                    additionalData.get("claimId").asText("")
+            );
+        } else if (action.equals(Action.GRANT_CLAIM)) {
+            metaData.put(
+                    "attestedData",
+                    pluginResponseMessage.getSignedData()
+            );
+        }
+        String propertyURI = attestationName + "/" + attestationOSID;
+        JsonNode nodeToUpdate = entityStateHelper.manageState(attestationPolicy, root, propertyURI, action, metaData);
+        updateEntity(nodeToUpdate, userId);
+    }
+
+
     /**
      * Get Audit log information , external api's can use this method to get the
      * audit log of an antity
@@ -646,4 +676,5 @@ public class RegistryHelper {
                 .get("entity");
         return (List<String>) customAttributes;
     }
+
 }

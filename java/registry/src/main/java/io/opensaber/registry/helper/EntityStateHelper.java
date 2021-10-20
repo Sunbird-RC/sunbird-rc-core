@@ -171,7 +171,29 @@ public class EntityStateHelper {
         return manageState(entityNode, propertyURI, Action.REJECT_CLAIM, metaData);
     }
 
+    public JsonNode manageState(AttestationPolicy policy, JsonNode root, String propertyURL, Action action, @NotEmpty ObjectNode metaData) throws Exception {
+        String entityName = root.fields().next().getKey();
+        JsonNode entityNode = root.get(entityName);
 
+        Optional<EntityPropertyURI> entityPropertyURI = EntityPropertyURI.fromEntityAndPropertyURI(entityNode, propertyURL, uuidPropertyName);
+        if (!entityPropertyURI.isPresent()) {
+            throw new Exception("Invalid Property Identifier : " + propertyURL);
+        }
+        Pair<ObjectNode, JsonPointer> metadataNodePointer = getTargetMetadataNodeInfo(entityNode, entityPropertyURI.get().getJsonPointer());
+
+        StateContext stateContext = StateContext.builder()
+                .entityName(entityName)
+                .existing(entityNode.at(entityPropertyURI.get().getJsonPointer()))
+                .action(action)
+                .ignoredFields(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields())
+                .attestationPolicy(policy)
+                .metaData(metaData)
+                .metadataNode(metadataNodePointer.getFirst())
+                .pointerFromMetadataNode(metadataNodePointer.getSecond())
+                .build();
+        ruleEngineService.doTransition(stateContext);
+        return root;
+    }
     private JsonNode manageState(JsonNode root, String propertyURL, Action action, @NotEmpty ObjectNode metaData) throws Exception {
         String entityName = root.fields().next().getKey();
         JsonNode entityNode = root.get(entityName);
@@ -224,8 +246,8 @@ public class EntityStateHelper {
         int uuidPathDepth = uuidPath.split("/").length;
         String matchingUUIDPath = "/" + uuidPath;
         for (AttestationPolicy policy : definitionsManager.getAttestationPolicy(entityName)) {
-            if (policy.getProperty().split("/").length != uuidPathDepth) continue;
-            if (new AttestationPath(policy.getProperty())
+            if (policy.getAttestationProperties().get(0).split("/").length != uuidPathDepth) continue;
+            if (new AttestationPath(policy.getAttestationProperties().get(0))
                     .getEntityPropertyURIs(rootNode, uuidPropertyName)
                     .stream().anyMatch(p -> p.getPropertyURI().equals(matchingUUIDPath))) {
                 return Optional.of(policy);
@@ -261,10 +283,10 @@ public class EntityStateHelper {
         );
     }
 
-    private String generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyURI) {
+    public String generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyURI) {
         String PROPERTY_ID = "PROPERTY_ID";
         String propertyId = "";
-        if (attestationPolicy.getProperty().endsWith("[]")) {
+        if (attestationPolicy.getAttestationProperties().get(0).endsWith("[]")) {
             propertyId = JsonPointer.compile("/" + propertyURI).last().getMatchingProperty();
         }
 
@@ -284,7 +306,7 @@ public class EntityStateHelper {
                 // It means it is just a value,
                 attestedData.putAll(
                         new HashMap<String, Object>() {{
-                            put(attestationPolicy.getProperty(), result);
+                            put(attestationPolicy.getAttestationProperties().get(0), result);
                         }}
                 );
             }

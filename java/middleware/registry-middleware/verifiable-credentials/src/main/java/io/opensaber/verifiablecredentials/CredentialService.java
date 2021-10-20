@@ -2,6 +2,7 @@ package io.opensaber.verifiablecredentials;
 
 import com.danubetech.keyformats.crypto.provider.Ed25519Provider;
 import com.danubetech.keyformats.crypto.provider.impl.TinkEd25519Provider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import foundation.identity.jsonld.JsonLDException;
 import foundation.identity.jsonld.JsonLDObject;
 import foundation.identity.jsonld.JsonLDUtils;
@@ -24,6 +25,7 @@ public class CredentialService {
     private static final String ASSERTION_PROOF_PURPOSE = "AssertionProofPurpose";
     private static final String DATE_FORMAT = "2017-10-24T05:33:31Z";
     private byte[] privateKey, publicKey;
+
     private String domain, creator, nonce;
 
     public CredentialService(String privateKey, String publicKey, String domain, String creator, String nonce) {
@@ -39,6 +41,13 @@ public class CredentialService {
         }
     }
 
+    public String getSignedData(String data) throws JsonLDException, GeneralSecurityException, IOException, ParseException {
+        // TODO: accept issuer in function parameter
+        String issuer = "did:issuer:MySystem";
+        JsonLDCreator jsonLDCreator = new JsonLDCreator(data, issuer);
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(sign(jsonLDCreator.getValue()));
+    }
 
     public LdProof sign(String data) throws IOException, JsonLDException, GeneralSecurityException, ParseException {
         JsonLDObject jsonLdObject = JsonLDObject.fromJson(data);

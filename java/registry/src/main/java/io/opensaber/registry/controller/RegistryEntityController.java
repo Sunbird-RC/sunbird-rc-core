@@ -2,16 +2,17 @@ package io.opensaber.registry.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.pojos.*;
 import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.attestation.AttestationType;
-import io.opensaber.pojos.attestation.exception.PolicyNotFoundException;
 import io.opensaber.registry.dao.NotFoundException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.middleware.service.ConditionResolverService;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.transform.Configuration;
@@ -22,6 +23,7 @@ import org.keycloak.KeycloakPrincipal;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +35,9 @@ import java.util.*;
 
 @RestController
 public class RegistryEntityController extends AbstractController {
+    @Autowired
+    ConditionResolverService conditionResolverService;
+
     private static Logger logger = LoggerFactory.getLogger(RegistryEntityController.class);
 
 
@@ -228,9 +233,6 @@ public class RegistryEntityController extends AbstractController {
     }
 
     // TODO: property path resolver
-    // TODO: resolve propertyPath with osid
-    // TODO: response plugin
-    // TODO: handle notes
     @RequestMapping(value = "/api/v1/send")
     public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody JsonNode requestBody)  {
         String entityName = requestBody.get("entityName").asText();
@@ -242,17 +244,18 @@ public class RegistryEntityController extends AbstractController {
             logger.error("Unauthorized exception {}", e.getMessage());
             return createUnauthorizedExceptionResponse(e);
         }
-        AttestationPolicy attestationPolicy = definitionsManager.getDefinition(entityName)
-                .getOsSchemaConfiguration()
-                .getAttestationPolicyFor(attestationName)
-                .orElseThrow(() -> new PolicyNotFoundException("Policy " + attestationName + " is not found"));
+        AttestationPolicy attestationPolicy = definitionsManager.getAttestationPolicy(entityName, attestationName);
 
         if(attestationPolicy.getType().equals(AttestationType.MANUAL)) {
             try {
-                ((ObjectNode)requestBody).set("properties", JsonNodeFactory.instance.pojoNode(attestationPolicy.getProperty()));
+                ((ObjectNode)requestBody).set("properties", JsonNodeFactory.instance.pojoNode(attestationPolicy.getAttestationProperties()));
                 registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
                 String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
-                PluginRequestMessage message = PluginRequestMessageCreator.createClaimPluginMessage(requestBody, attestationPolicy, attestationOSID, entityName, entityId);
+                String propertyDataStr = requestBody.get("propertyData").asText();
+                JsonNode propertyData = new ObjectMapper().readTree(propertyDataStr);
+                String properties = requestBody.get("properties").asText();
+                String condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
+                PluginRequestMessage message = PluginRequestMessageCreator.createClaimPluginMessage(propertyDataStr, properties, condition, attestationPolicy, attestationOSID, entityName, entityId);
                 PluginRouter.route(message);
             } catch (Exception exception) {
                 logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
@@ -552,6 +555,10 @@ public class RegistryEntityController extends AbstractController {
         newRootNode.set(property, requestBody);
         try {
             logger.info("updateAttestationProperty: {}", requestBody);
+            PluginResponseMessage pluginResponseMessage = objectMapper.convertValue(requestBody, PluginResponseMessage.class);
+            String userId = "";
+
+            registryHelper.updateState(pluginResponseMessage);
 //            String response = registryHelper.updateProperty(newRootNode, "");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             responseParams.setResultList(Collections.singletonList("response"));
