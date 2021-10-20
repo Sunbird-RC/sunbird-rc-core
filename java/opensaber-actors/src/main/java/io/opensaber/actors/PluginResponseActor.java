@@ -11,8 +11,6 @@ import org.springframework.web.client.RestTemplate;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
 
-import java.util.Objects;
-
 
 public class PluginResponseActor extends BaseActor {
     private static final String SYSTEM_PROPERTY_URL = "/api/v1/%s/%s/attestation/%s/%s";
@@ -28,10 +26,8 @@ public class PluginResponseActor extends BaseActor {
         PluginResponseMessage pluginResponseMessage = objectMapper.readValue(request.getPayload().getStringValue(), PluginResponseMessage.class);
         CredentialService credentialService = new CredentialService(CredentialConstants.PRIVATE_KEY, CredentialConstants.PUBLIC_KEY, CredentialConstants.DOMAIN, CredentialConstants.CREATOR, CredentialConstants.NONCE);
         if(Action.GRANT_CLAIM.equals(Action.valueOf(pluginResponseMessage.getStatus()))) {
-            pluginResponseMessage.setSignedData(objectMapper.writeValueAsString(credentialService.sign(pluginResponseMessage.getSignedData())));
+            pluginResponseMessage.setSignedData(credentialService.getSignedData(pluginResponseMessage.getSignedData()));
         }
-        // TODO: check what is the status for verified response of cowin actor`
-
         logger.info("{}", pluginResponseMessage);
         callUpdateAttestationAPI(pluginResponseMessage);
     }
