@@ -2,7 +2,6 @@ package io.opensaber.registry.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -248,11 +247,18 @@ public class RegistryEntityController extends AbstractController {
 
         if(attestationPolicy.getType().equals(AttestationType.MANUAL)) {
             try {
-                ((ObjectNode)requestBody).set("properties", JsonNodeFactory.instance.pojoNode(attestationPolicy.getAttestationProperties()));
+                ((ObjectNode)requestBody).set("properties", JsonNodeFactory.instance.pojoNode(attestationPolicy.getProperties()));
+
                 registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
                 String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
                 String propertyDataStr = requestBody.get("propertyData").asText();
-                JsonNode propertyData = new ObjectMapper().readTree(propertyDataStr);
+                // generating property based on paths from an entity
+                // how to get entity
+                String userId = registryHelper.getKeycloakUserId(request);
+                JsonNode entityNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false)
+                        .get(entityName);
+                Map<String, Set<String>> propertyOSIDMapper = null;
+                JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationPolicy.getAttestationProperties(), propertyOSIDMapper);
                 String properties = requestBody.get("properties").asText();
                 String condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
                 PluginRequestMessage message = PluginRequestMessageCreator.createClaimPluginMessage(propertyDataStr, properties, condition, attestationPolicy, attestationOSID, entityName, entityId);

@@ -246,8 +246,8 @@ public class EntityStateHelper {
         int uuidPathDepth = uuidPath.split("/").length;
         String matchingUUIDPath = "/" + uuidPath;
         for (AttestationPolicy policy : definitionsManager.getAttestationPolicy(entityName)) {
-            if (policy.getAttestationProperties().get(0).split("/").length != uuidPathDepth) continue;
-            if (new AttestationPath(policy.getAttestationProperties().get(0))
+            if (policy.getProperties().get(0).split("/").length != uuidPathDepth) continue;
+            if (new AttestationPath(policy.getProperties().get(0))
                     .getEntityPropertyURIs(rootNode, uuidPropertyName)
                     .stream().anyMatch(p -> p.getPropertyURI().equals(matchingUUIDPath))) {
                 return Optional.of(policy);
@@ -286,7 +286,7 @@ public class EntityStateHelper {
     public String generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyURI) {
         String PROPERTY_ID = "PROPERTY_ID";
         String propertyId = "";
-        if (attestationPolicy.getAttestationProperties().get(0).endsWith("[]")) {
+        if (attestationPolicy.getProperties().get(0).endsWith("[]")) {
             propertyId = JsonPointer.compile("/" + propertyURI).last().getMatchingProperty();
         }
 
@@ -306,7 +306,7 @@ public class EntityStateHelper {
                 // It means it is just a value,
                 attestedData.putAll(
                         new HashMap<String, Object>() {{
-                            put(attestationPolicy.getAttestationProperties().get(0), result);
+                            put(attestationPolicy.getProperties().get(0), result);
                         }}
                 );
             }

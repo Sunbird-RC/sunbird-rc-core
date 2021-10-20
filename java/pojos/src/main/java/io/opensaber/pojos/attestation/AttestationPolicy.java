@@ -3,6 +3,7 @@ package io.opensaber.pojos.attestation;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AttestationPolicy {
@@ -15,7 +16,12 @@ public class AttestationPolicy {
     * Holds the name of the attestation property. eg. education, certificate, course
     *
     * */
-    private List<String> attestationProperties;
+    private List<String> properties;
+    /*
+    * Holds the name of the attestation property. eg. education, certificate, course
+    *
+    * */
+    private Map<String, String> attestationProperties;
     /**
      * Holds the value of the jsonpath
      */
@@ -53,12 +59,12 @@ public class AttestationPolicy {
         this.type = type;
     }
 
-    public List<String> getAttestationProperties() {
-        return attestationProperties;
+    public List<String> getProperties() {
+        return properties;
     }
 
-    public void setAttestationProperties(List<String> attestationProperties) {
-        this.attestationProperties = attestationProperties;
+    public void setProperties(List<String> properties) {
+        this.properties = properties;
     }
 
     public String getConditions() {
@@ -72,14 +78,14 @@ public class AttestationPolicy {
     @Override
     public String toString() {
         return "AttestationPolicy{" +
-                "property='" + attestationProperties + '\'' +
+                "property='" + properties + '\'' +
                 ", paths=" + paths +
                 ", type=" + type +
                 '}';
     }
 
     public boolean hasProperty(String property) {
-        return getAttestationProperties().equals(property);
+        return getProperties().equals(property);
     }
 
     public String getAttestorEntity() {
@@ -113,5 +119,13 @@ public class AttestationPolicy {
 
     public String getNodePath() {
         return name + "/[]";
+    }
+
+    public Map<String, String> getAttestationProperties() {
+        return attestationProperties;
+    }
+
+    public void setAttestationProperties(Map<String, String> attestationProperties) {
+        this.attestationProperties = attestationProperties;
     }
 }

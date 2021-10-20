@@ -1,0 +1,84 @@
+{
+  "contactDetails": {
+    "osid": "1-542207dc-b893-48fd-8ede-4f9e85c647b7",
+    "mobile": "900011000022",
+    "email": "sita@sahaj.ai",
+    "identityDetails": {
+      "fullName": "Steve Rogers"
+    }
+  },
+  "experience": {
+    "osid": "123",
+    "institute": "8e2e8693-97e5-4b0d-b61e-d843eba8b5a3",
+    "employmentType": "Permanent",
+    "start": "1999-06-16",
+    "end": "2022-06-16",
+    "teacherType": "Head teacher",
+    "subjects": [
+      "Science",
+      "Mathematics"
+    ],
+    "notes": "I goval working in the institute",
+    "grades": [
+      "Class I",
+      "Class II"
+    ]
+  },
+  "osid": "1-bd3beaf2-8a46-4b5e-b0e8-f8d8039ea033",
+  "osOwner": [
+    "2a0b70c3-9297-46ea-a5e6-0781e7f7f54f"
+  ],
+  "educationDetails": [
+    {
+      "program": "HSC",
+      "graduationYear": "2015",
+      "marks": "78",
+      "institute": "b62b3d52-cffe-428d-9dd1-61ba7b0a5882",
+      "documents": [
+        {
+          "fileName": "e3266115-0bd0-4456-a347-96f4dc335761-blog_draft",
+          "format": "file"
+        },
+        {
+          "fileName": "e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt",
+          "format": "file"
+        }
+      ],
+      "osid": "1"
+    },
+    {
+      "program": "SSLC",
+      "graduationYear": "2011",
+      "marks": "78",
+      "institute": "b62b3d52-cffe-428d-9dd1-61ba7b0a5882",
+      "documents": [
+        {
+          "fileName": "e3266115-0bd0-4456-a347-96f4dc335761-blog_draft",
+          "format": "file"
+        },
+        {
+          "fileName": "e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt",
+          "format": "file"
+        }
+      ],
+      "osid": "2"
+    },
+    {
+      "program": "MSC",
+      "graduationYear": "2021",
+      "marks": "78",
+      "institute": "b62b3d52-cffe-428d-9dd1-61ba7b0a5882",
+      "documents": [
+        {
+          "fileName": "e3266115-0bd0-4456-a347-96f4dc335761-blog_draft",
+          "format": "file"
+        },
+        {
+          "fileName": "e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt",
+          "format": "file"
+        }
+      ],
+      "osid": "3"
+    }
+  ]
+}
