@@ -17,12 +17,13 @@ const defaults = {
 		'admin-client-id': 'admin-api',
 	},
 	containers: {
-		names: ['rg', 'es', 'db', 'kc'],
+		names: ['rg', 'es', 'db', 'kc', 'cs'],
 		images: [
 			'dockerhub/sunbird-rc-core',
 			'docker.elastic.co/elasticsearch/elasticsearch:7.10.1',
 			'postgres',
 			'dockerhub/ndear-keycloak',
+			'dockerhub/open-saber-claim-ms',
 		],
 	},
 }
@@ -70,7 +71,7 @@ const ConfigManager = new Conf({
 			properties: {
 				names: {
 					type: 'array',
-					default: ['rg', 'es', 'db', 'kc'],
+					default: ['rg', 'es', 'db', 'kc', 'cs'],
 				},
 				images: {
 					type: 'array',
@@ -79,6 +80,7 @@ const ConfigManager = new Conf({
 						'docker.elastic.co/elasticsearch/elasticsearch:7.10.1',
 						'postgres',
 						'dockerhub/ndear-keycloak',
+						'dockerhub/open-saber-claim-ms',
 					],
 				},
 			},
