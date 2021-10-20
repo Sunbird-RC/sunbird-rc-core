@@ -2,6 +2,7 @@ package io.opensaber.plugin;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.PluginResponseMessage;
@@ -36,7 +37,7 @@ public class SampleActor extends BaseActor {
                 .attestationOSID(pluginRequestMessage.getAttestationOSID())
                 .attestorPlugin(pluginRequestMessage.getAttestorPlugin())
                 .response(cowinResponse)
-                .additionalData(Collections.emptyMap())
+                .additionalData(JsonNodeFactory.instance.nullNode())
                 .status("")
                 .date(new Date())
                 .validUntil(new Date())
