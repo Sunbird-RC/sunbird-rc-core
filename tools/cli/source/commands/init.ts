@@ -107,8 +107,8 @@ export default async () => {
 	})
 	spinner.succeed('Setup files contain necessary info for starting registry')
 
-	// Start elastic search, postgres and keycloak
-	spinner = spin('Starting elastic search, postgres and keycloak...').start()
+	// Start dependent services
+	spinner = spin('Starting dependent services...').start()
 	// Run the docker-compose up command
 	await Compose.upMany(
 		(Config.get('containers.names') as string[]).slice(1)
