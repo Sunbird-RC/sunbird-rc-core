@@ -266,8 +266,8 @@ http get \
 ```
 
 > Replace the `{id}` above with the entity's `osid` you saved from the create
-> entity request. Replace the `{access-token}` with your access token from the
-> authentication step.
+> entity request. Replace the `{access-token}` with the `Teacher` entity's
+> access token from the authentication step.
 
 ### Response
 
@@ -280,15 +280,17 @@ This will return the entity's JSON representation as follows:
 	"subject": "Math",
 	"name": "Pranav Agate",
 	"osid": "{id}",
-	"osOwner": ["{ownerId}"]
+	"osOwner": ["{owner-id}"],
+	"_osState/school": "DRAFT"
 }
 ```
 
 Important variables in the response body:
 
-| Field     | In   | Type     | Description                        |
-| --------- | ---- | -------- | ---------------------------------- |
-| `osOwner` | body | `string` | User ID of the entity in Keycloak. |
+| Field              | In   | Type     | Description                                                                                                                                                                                                                            |
+| ------------------ | ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `osOwner`          | body | `string` | User ID of the entity in Keycloak.                                                                                                                                                                                                     |
+| `_osState/{field}` | body | `string` | State of an attestable field. Can be `DRAFT` (when it has not been sent for attestation), `ATTESTATION_REQUESTED` (when sent for attestation), `PUBLISHED` (when successfully attested) and `REJECTED` (when rejected by the attestor) |
 
 ## Update An Entity
 
@@ -345,8 +347,8 @@ echo '{
 ```
 
 > Replace the `{id}` above with the entity's `osid` you saved from the create
-> entity request. Replace the `{access-token}` with your access token from the
-> authentication step.
+> entity request. Replace the `{access-token}` with the `Teacher` entity's
+> access token from the authentication step.
 
 > We need to send the whole entity and not just the updated fields because that
 > is how RESTful APIs work. A PUT call should replace the existing record in the
@@ -455,8 +457,8 @@ echo '"UP Public School"' | http put \
 ```
 
 > Replace the `{id}` above with the entity's `osid` you saved from the create
-> entity request. Replace the `{access-token}` with your access token from the
-> authentication step.
+> entity request. Replace the `{access-token}` with the `Student` entity's
+> access token from the authentication step.
 
 ### Response
 
@@ -477,3 +479,81 @@ This will send the claim for attestation and return the following object:
 	"responseCode": "OK"
 }
 ```
+
+If you retrieve the `Student` entity by following the
+[Retrieving An Entity section](#retrieving-an-entity), you will get the
+following object in response:
+
+```json
+{
+	"email": "prashant@upps.in",
+	"name": "Prashant Joshi",
+	"phoneNumber": "9876543210",
+	"school": "UP Public School",
+	"osid": "{id}",
+	"osOwner": ["{owner-id}"],
+	"_osClaimId/school": "{claim-id}",
+	"_osState/school": "ATTESTATION_REQUESTED"
+}
+```
+
+Important variables in the response body:
+
+| Field                | In   | Type     | Description                                                                                                                                                                                                                            |
+| -------------------- | ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `osOwner`            | body | `string` | User ID of the entity in Keycloak.                                                                                                                                                                                                     |
+| `_osState/{field}`   | body | `string` | State of an attestable field. Can be `DRAFT` (when it has not been sent for attestation), `ATTESTATION_REQUESTED` (when sent for attestation), `PUBLISHED` (when successfully attested) and `REJECTED` (when rejected by the attestor) |
+| `_osClaimId/{field}` | body | `string` | ID of the claim made on a field, required when attesting the claim.                                                                                                                                                                    |
+
+## Attest/Reject A Claim
+
+To attest/reject a claim, we need to make the following request:
+
+### Request
+
+```http
+POST /api/v1/{entity}/claims/{claim-id}/attest
+```
+
+| Field          | In     | Type     | Description                                                                     |
+| -------------- | ------ | -------- | ------------------------------------------------------------------------------- |
+| `content-type` | header | `string` | Set to `application/json`                                                       |
+| `entity`       | path   | `string` | The attestor entity types                                                       |
+| `claim-id`     | path   | `string` | The ID of the claim to attest                                                   |
+| `action`       | body   | `string` | Set to `GRANT_CLAIM` to attest the claim and `REJECT_CLAIM` to reject the claim |
+| `notes`        | body   | `string` | Attestation related details (optional)                                          |
+
+### Examples
+
+To attest the claim we made in the previous section (that Prashant is a student
+at UP Public School), we make the following request:
+
+```sh
+curl --location \
+	--request 'POST' \
+	--header 'content-type: application/json' \
+	--header 'authorization: bearer {access-token}' \
+	--data-raw '{
+		"action": "GRANT_CLAIM"
+	}' \
+	'http://localhost:8081/api/v1/Teacher/claims/{claim-id}/attest'
+```
+
+**HTTPie**
+
+```sh
+echo '{
+	"action": "GRANT_CLAIM"
+}' | http post \
+	'http://localhost:8081/api/v1/Teacher/claims/{claim-id}/attest' \
+	'content-type: application/json' \
+	'authorization: bearer {access-token}'
+```
+
+> Replace the `{claim-id}` above with the `_osClaimId/school` you saved from the
+> make a claim request. Replace the `{access-token}` with the `Teacher` entity's
+> access token from the authentication step.
+
+### Response
+
+This will attest/reject the claim and return a blank HTTP 200 response.
