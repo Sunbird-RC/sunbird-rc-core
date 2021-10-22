@@ -37,7 +37,8 @@ This will setup and start a registry using Docker on your machine.
 > changed them in `docker-compose.yaml`:
 >
 > ```
-> $ registry config container.images <url-to-setup-repo>
+> $ registry config container.images <comma-separated-image-names>
+> $ registry config container.names <comma-separated-container-names>
 > ```
 
 ## Understanding Schemas
@@ -137,7 +138,7 @@ This will store the entity in the registry and return the following object:
 }
 ```
 
-Important variables to save:
+Important variables in the response body:
 
 | Field                  | In   | Type     | Description                                                                                    |
 | ---------------------- | ---- | -------- | ---------------------------------------------------------------------------------------------- |
@@ -215,7 +216,7 @@ This API call should return a JSON object as follows:
 }
 ```
 
-Important variables to save:
+Important variables in the response body:
 
 | Field          | In   | Type     | Description                                                        |
 | -------------- | ---- | -------- | ------------------------------------------------------------------ |
@@ -283,7 +284,7 @@ This will return the entity's JSON representation as follows:
 }
 ```
 
-Important variables to save:
+Important variables in the response body:
 
 | Field     | In   | Type     | Description                        |
 | --------- | ---- | -------- | ---------------------------------- |
@@ -339,7 +340,8 @@ echo '{
 	"school": "UP Public School"
 }' | http put \
 	'http://localhost:8081/api/v1/Teacher/{id}' \
-	'content-type: application/json'
+	'content-type: application/json' \
+	'authorization: bearer {access-token}'
 ```
 
 > Replace the `{id}` above with the entity's `osid` you saved from the create
@@ -364,6 +366,110 @@ This will update the entity in the registry and return the following object:
 	"params": {
 		"resmsgid": "",
 		"msgid": "d51e6e6a-027d-4a42-84bb-2ce00e31d993",
+		"err": "",
+		"status": "SUCCESSFUL",
+		"errmsg": ""
+	},
+	"responseCode": "OK"
+}
+```
+
+## Make A Claim
+
+To make a claim and send it for attestation, we need to make the following
+request:
+
+### Request
+
+```http
+PUT /api/v1/{entity}/{id}/{field}?send=true
+```
+
+| Field          | In     | Type      | Description                                          |
+| -------------- | ------ | --------- | ---------------------------------------------------- |
+| `content-type` | header | `string`  | Set to `application/json`                            |
+| `entity`       | path   | `string`  | The type of entity to modify                         |
+| `id`           | path   | `string`  | The ID of entity to modify                           |
+| `field`        | path   | `string`  | The field whose value we are sending for attestation |
+| `send`         | query  | `boolean` | Set to `true`                                        |
+| `...`          | body   | `any`     | The value of the claim                               |
+
+### Examples
+
+First, let us create a `Student` entity named Prashant Joshi who also goes to UP
+Public School:
+
+**cURL**
+
+```sh
+curl --location \
+	--request 'POST' \
+	--header 'content-type: application/json' \
+	--data-raw '{
+		"name": "Prashant Joshi",
+		"phoneNumber": "9876543210",
+		"email": "prashant@upps.in",
+		"school": "UP Public School"
+	}' \
+	'http://localhost:8081/api/v1/Student/invite'
+```
+
+**HTTPie**
+
+```sh
+echo '{
+	"name": "Prashant Joshi",
+	"phoneNumber": "9876543210",
+	"email": "prashant@upps.in",
+	"school": "UP Public School"
+}' | http post \
+	'http://localhost:8081/api/v1/Student/invite' \
+	'content-type: application/json'
+```
+
+Next, we can get an access token for Prashant by making a POST request to the
+authentication server. See the
+[Authenticating As An Entity](#authenticating-as-an-entity) section to know how
+to do that.
+
+Then, we can send the claim (that Prashant is a student at UP Public School) for
+attestation by making the following request:
+
+```sh
+curl --location \
+	--request 'PUT' \
+	--header 'content-type: application/json' \
+	--header 'authorization: bearer {access-token}' \
+	--data-raw '"UP Public School"' \
+	'http://localhost:8081/api/v1/Student/{id}/school?send=true'
+```
+
+**HTTPie**
+
+```sh
+echo '"UP Public School"' | http put \
+	'http://localhost:8081/api/v1/Student/{id}/school' \
+	'content-type: application/json' \
+	'authorization: bearer {access-token}' \
+	'send==true'
+```
+
+> Replace the `{id}` above with the entity's `osid` you saved from the create
+> entity request. Replace the `{access-token}` with your access token from the
+> authentication step.
+
+### Response
+
+This will send the claim for attestation and return the following object:
+
+```json
+{
+	"id": "open-saber.registry.update",
+	"ver": "1.0",
+	"ets": 1634371946769,
+	"params": {
+		"resmsgid": "",
+		"msgid": "ksi38Dsl-8dIw-492j-6vlS-84KRe0Csop35",
 		"err": "",
 		"status": "SUCCESSFUL",
 		"errmsg": ""
