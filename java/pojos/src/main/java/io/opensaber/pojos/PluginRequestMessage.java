@@ -18,7 +18,6 @@ import java.util.Optional;
 @AllArgsConstructor
 public class PluginRequestMessage {
     String policyName;
-    List<String> properties;
     JsonNode additionalInputs;
     String propertyData;
     String sourceEntity;

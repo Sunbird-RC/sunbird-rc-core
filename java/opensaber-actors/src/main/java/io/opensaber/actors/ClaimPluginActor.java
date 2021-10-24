@@ -67,7 +67,12 @@ public class ClaimPluginActor extends BaseActor {
                 new HttpEntity<>(attestationRequest),
                 ClaimDTO.class
         );
-        pluginRequestMessage.setPropertyData(Objects.requireNonNull(responseEntity.getBody()).getPropertyData());
+        ClaimDTO claimDTO = Objects.requireNonNull(responseEntity.getBody());
+        pluginRequestMessage.setSourceEntity(claimDTO.getEntity());
+        pluginRequestMessage.setSourceOSID(claimDTO.getEntityId());
+        pluginRequestMessage.setAttestationOSID(claimDTO.getAttestationId());
+        pluginRequestMessage.setPolicyName(claimDTO.getAttestationName());
+        pluginRequestMessage.setPropertyData(claimDTO.getPropertyData());
         callPluginResponseActor(pluginRequestMessage, claimId, Action.valueOf(status));
         logger.info("Claim has successfully attested {}", responseEntity.toString());
     }
@@ -89,6 +94,7 @@ public class ClaimPluginActor extends BaseActor {
         claimDTO.setConditions(pluginRequestMessage.getConditions());
         claimDTO.setAttestationId(pluginRequestMessage.getAttestationOSID());
         claimDTO.setNotes(notes);
+        claimDTO.setAttestationName(pluginRequestMessage.getPolicyName());
 //        claimDTO.setRequestorName(requestorName);
 
         JsonNode response = restTemplate.postForObject(claimRequestUrl + CLAIMS_PATH, claimDTO, JsonNode.class);
@@ -98,7 +104,7 @@ public class ClaimPluginActor extends BaseActor {
         callPluginResponseActor(pluginRequestMessage, claimId, Action.RAISE_CLAIM);
     }
 
-    private void callPluginResponseActor(PluginRequestMessage pluginRequestMessage, String claimId, Action raiseClaim) throws IOException, JsonLDException, GeneralSecurityException, ParseException {
+    private void callPluginResponseActor(PluginRequestMessage pluginRequestMessage, String claimId, Action raiseClaim) throws IOException {
         PluginResponseMessage pluginResponseMessage = PluginResponseMessageCreator.createClaimResponseMessage(claimId, raiseClaim, pluginRequestMessage);
         if(Action.valueOf(pluginRequestMessage.getStatus()).equals(Action.GRANT_CLAIM)) {
             ObjectMapper objectMapper = new ObjectMapper();

@@ -492,7 +492,7 @@ public class JSONUtil {
 		return "";
 	}
 
-	public static JsonNode extractPropertyDataFromEntity(JsonNode entityNode, Map<String, String> attestationProperties, Map<String, Set<String>> propertyOSIDMapper) {
+	public static JsonNode extractPropertyDataFromEntity(JsonNode entityNode, Map<String, String> attestationProperties, Map<String, List<String>> propertyOSIDMapper) {
 		ObjectNode result = JsonNodeFactory.instance.objectNode();
 		DocumentContext documentContext = JsonPath.parse(entityNode.toString());
 		for(Map.Entry<String, String> entry : attestationProperties.entrySet()) {
@@ -502,7 +502,7 @@ public class JSONUtil {
 			JsonNode readNode = new ObjectMapper().convertValue(read, JsonNode.class);
 			result.set(key, readNode);
 			if(readNode.isArray() && propertyOSIDMapper.containsKey(key)) {
-				Set<String> osids = propertyOSIDMapper.get(key);
+				List<String> osids = propertyOSIDMapper.get(key);
 				ArrayNode arrayNode = (ArrayNode) readNode;
 				ArrayNode filteredArrNode = JsonNodeFactory.instance.arrayNode();
 

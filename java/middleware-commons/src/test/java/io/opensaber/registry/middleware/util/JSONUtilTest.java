@@ -239,9 +239,9 @@ public class JSONUtilTest {
                 put("experienceDetails", "$.experience");
             }
         };
-        Map<String, Set<String>> properyOSIDMapper = new HashMap<String, Set<String>>() {
+        Map<String, List<String>> properyOSIDMapper = new HashMap<String, List<String>>() {
             {
-                put("educationDetails", new HashSet<>(Arrays.asList("1", "2")));
+                put("educationDetails", new ArrayList<>(Arrays.asList("1", "2")));
             }
         };
         JsonNode actualPropertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationProperties, properyOSIDMapper);
