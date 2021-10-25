@@ -2,7 +2,6 @@ package io.opensaber.registry.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,6 +18,7 @@ import io.opensaber.registry.transform.Configuration;
 import io.opensaber.registry.transform.Data;
 import io.opensaber.registry.transform.ITransformer;
 import io.opensaber.validators.ValidationException;
+import org.abstractj.kalium.crypto.Hash;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
@@ -248,18 +248,30 @@ public class RegistryEntityController extends AbstractController {
 
         if(attestationPolicy.getType().equals(AttestationType.MANUAL)) {
             try {
-                ((ObjectNode)requestBody).set("properties", JsonNodeFactory.instance.pojoNode(attestationPolicy.getAttestationProperties()));
+                // Generate property Data
+                String userId = registryHelper.getKeycloakUserId(request);
+                JsonNode entityNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false)
+                        .get(entityName);
+                // TODO: should throw err bcoz Map is not a class
+                Map<String, List<String>> propertyOSIDMapper = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
+                JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationPolicy.getAttestationProperties(), propertyOSIDMapper);
+
+                // Resolve condition for REQUESTER
+                ((ObjectNode)requestBody).put("propertyData", propertyData.toString());
                 registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
                 String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
-                String propertyDataStr = requestBody.get("propertyData").asText();
-                JsonNode propertyData = new ObjectMapper().readTree(propertyDataStr);
-                String properties = requestBody.get("properties").asText();
                 String condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
-                PluginRequestMessage message = PluginRequestMessageCreator.createClaimPluginMessage(propertyDataStr, properties, condition, attestationPolicy, attestationOSID, entityName, entityId);
+
+                // Rise claim
+                PluginRequestMessage message = PluginRequestMessageCreator.createClaimPluginMessage(propertyData.toString(), condition, attestationPolicy, attestationOSID, entityName, entityId);
                 PluginRouter.route(message);
             } catch (Exception exception) {
                 logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
                 exception.printStackTrace();
+                ResponseParams responseParams = new ResponseParams();
+                responseParams.setErrmsg(exception.getMessage());
+                Response response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
+                return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
         ResponseParams responseParams = new ResponseParams();

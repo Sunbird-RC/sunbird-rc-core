@@ -12,6 +12,7 @@ public class ClaimDTO {
     private String requestorName;
     private String propertyData;
     private String attestationId;
+    private String attestationName;
 
     public String getRequestorName() {
         return requestorName;
@@ -91,5 +92,13 @@ public class ClaimDTO {
 
     public void setAttestationId(String attestationId) {
         this.attestationId = attestationId;
+    }
+
+    public String getAttestationName() {
+        return attestationName;
+    }
+
+    public void setAttestationName(String attestationName) {
+        this.attestationName = attestationName;
     }
 }

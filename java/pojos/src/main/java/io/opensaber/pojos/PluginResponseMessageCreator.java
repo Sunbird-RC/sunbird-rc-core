@@ -11,7 +11,7 @@ public class PluginResponseMessageCreator {
         ObjectNode additionalData = JsonNodeFactory.instance.objectNode();
         additionalData.put("claimId", claimId);
         return PluginResponseMessage.builder()
-                .sourceEntity(pluginRequestMessage.getSourceEntity()).sourceOSID(pluginRequestMessage.getSourceOSID())
+                .sourceEntity(pluginRequestMessage.getSourceEntity())
                 .sourceOSID(pluginRequestMessage.getSourceOSID())
                 .attestationOSID(pluginRequestMessage.getAttestationOSID())
                 .attestorPlugin(pluginRequestMessage.getAttestorPlugin())

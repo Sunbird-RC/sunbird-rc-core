@@ -45,6 +45,8 @@ public class Claim {
     private String propertyData;
     @Column
     private String attestationId;
+    @Column
+    private String attestationName;
 
     @PrePersist
     protected void onCreate() {
@@ -149,6 +151,7 @@ public class Claim {
         claim.setRequestorName(claimDTO.getRequestorName());
         claim.setPropertyData(claimDTO.getPropertyData());
         claim.setAttestationId(claimDTO.getAttestationId());
+        claim.setAttestationName(claimDTO.getAttestationName());
         return claim;
     }
 
@@ -168,11 +171,19 @@ public class Claim {
         this.propertyData = propertyData;
     }
 
-    public String getAttestationOSID() {
+    public String getAttestationId() {
         return attestationId;
     }
 
     public void setAttestationId(String attestationOSID) {
         this.attestationId = attestationOSID;
+    }
+
+    public String getAttestationName() {
+        return attestationName;
+    }
+
+    public void setAttestationName(String attestationName) {
+        this.attestationName = attestationName;
     }
 }
