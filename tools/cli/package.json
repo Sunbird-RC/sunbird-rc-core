@@ -60,7 +60,7 @@
 	},
 	"engines": {
 		"node": "v16.11.1",
-		"pnpm": "6.18.0"
+		"pnpm": "6.19.0"
 	},
 	"prettier": "./config/prettier.json"
 }
