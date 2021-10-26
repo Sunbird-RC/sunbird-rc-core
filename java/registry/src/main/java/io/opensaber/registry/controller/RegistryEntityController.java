@@ -118,6 +118,7 @@ public class RegistryEntityController extends AbstractController {
             // TODO: get userID from auth header
             JsonNode existingNode = registryHelper.readEntity(newRootNode, "");
             registryHelper.updateEntityAndState(newRootNode, "");
+            registryHelper.invalidateAttestation(entityName, entityId);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
