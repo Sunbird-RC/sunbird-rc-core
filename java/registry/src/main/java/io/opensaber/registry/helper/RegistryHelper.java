@@ -33,6 +33,7 @@ import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.*;
 import io.opensaber.validators.IValidate;
 import io.opensaber.verifiablecredentials.CredentialService;
+import io.opensaber.verifiablecredentials.JsonLDCreator;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
 import lombok.Setter;
@@ -124,6 +125,9 @@ public class RegistryHelper {
 
     @Autowired
     private EntityTypeHandler entityTypeHandler;
+
+    @Autowired
+    private CredentialService credentialService;
 
     public String getAttestationOSID(JsonNode requestBody, String entityName, String entityId, String propertyName) throws Exception {
         JsonNode resultNode = readEntity("", entityName, entityId, false, null, false)
@@ -703,7 +707,7 @@ public class RegistryHelper {
         }
         ObjectNode newRoot = JsonNodeFactory.instance.objectNode();
         newRoot.set(entityName,entity);
-        updateEntity(entity, userId);
+        updateEntity(newRoot, userId);
     }
 
     private void updateAttestation(JsonNode entity, AttestationPolicy attestationPolicy, ArrayNode attestations) throws JsonLDException, GeneralSecurityException, IOException {
@@ -711,16 +715,12 @@ public class RegistryHelper {
             if(attestation.get(_osState.name()).asText().equals(States.PUBLISHED.name())) {
                 Map<String, List<String>> propertiesOSIDMapper = objectMapper.convertValue(attestation.get("propertiesOSID"), Map.class);
                 JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entity, attestationPolicy.getAttestationProperties(), propertiesOSIDMapper);
-                // TODO: setup key pair in config, need to find a better because you can't mock it for testing
-                CredentialService credentialService = new CredentialService("", "", "", "", "");
                 String proof = attestation.get(_osAttestedData.name()).asText();
                 LdProof ldProof = new ObjectMapper().readValue(proof, LdProof.class);
                 boolean isValid = credentialService.verify(propertyData.toString(), ldProof);
-
                 if(!isValid) {
-                    // update attestation
+                    // update attestation status
                     ((ObjectNode)attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.INVALID.name()));
-                    ((ObjectNode)attestation).set(_osAttestedData.name(), JsonNodeFactory.instance.textNode(""));
                 }
             }
         }

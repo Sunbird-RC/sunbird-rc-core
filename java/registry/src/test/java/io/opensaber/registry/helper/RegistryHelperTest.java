@@ -21,6 +21,7 @@ import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ViewTemplateManager;
 import io.opensaber.validators.IValidate;
+import io.opensaber.verifiablecredentials.CredentialService;
 import io.opensaber.workflow.KieConfiguration;
 import io.opensaber.workflow.RuleEngineService;
 import org.junit.Assert;
@@ -38,6 +39,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
@@ -75,6 +78,9 @@ public class RegistryHelperTest {
 
     @Mock
     RegistryService registryService;
+
+    @Mock
+    CredentialService credentialService;
 
     @Mock
     IReadService readService;
@@ -403,5 +409,20 @@ public class RegistryHelperTest {
                 "    ]\n" +
                 "}");
         assertEquals(expectedNode,registryHelper.removeFormatAttr(requestBody));
+    }
+
+    public void shouldAbleToInvalidateTheAttestation() throws Exception {
+//        String testInputJsonPath = "src/test/resources/registryHelper/invalidateAttestation.json";
+//        String entity = "Student";
+//        String entityId = "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f";
+//        JsonNode testInput = objectMapper.readTree(new File(testInputJsonPath));
+//        JsonNode inputNode = testInput.get("input");
+//        JsonNode expectedUpdatedNode = testInput.get("expected");
+//
+//        when(shardManager.getShard(any())).thenReturn(new Shard());
+//        when(registryService).thenReturn(new Shard());
+//        registryHelper.invalidateAttestation(entity, entityId);
+//
+//        verify(registryService)
     }
 }

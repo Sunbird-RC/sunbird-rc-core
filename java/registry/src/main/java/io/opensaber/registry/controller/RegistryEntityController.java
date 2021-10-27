@@ -225,6 +225,7 @@ public class RegistryEntityController extends AbstractController {
             if (send.isPresent() && send.get()) {
                 registryHelper.sendForAttestation(entityName, entityId, notes, request, "");
             }
+            registryHelper.invalidateAttestation(entityName, entityId);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             responseParams.setErrmsg(e.getMessage());
