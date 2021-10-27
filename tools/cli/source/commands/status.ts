@@ -4,8 +4,8 @@ import Chalk from 'chalk'
 import spin from 'ora'
 import doesCommandExist from 'command-exists'
 
-import * as Docker from '../helpers/docker'
-import Print from '../utils/print'
+import * as Docker from '../helpers/docker.js'
+import Print from '../utils/print.js'
 
 export default async () => {
 	const spinner = spin('Checking environment...').start()

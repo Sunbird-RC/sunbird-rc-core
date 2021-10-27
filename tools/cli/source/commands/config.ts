@@ -2,8 +2,8 @@
 
 import Chalk from 'chalk'
 
-import Config from '../utils/config'
-import Print from '../utils/print'
+import Config from '../utils/config.js'
+import Print from '../utils/print.js'
 
 const recursivelyPrint = (objectToPrint: any, namespace?: string) => {
 	for (const [name, value] of Object.entries(objectToPrint)) {
