@@ -9,12 +9,12 @@ import spin from 'ora'
 import got from 'got'
 import doesCommandExist from 'command-exists'
 // @ts-expect-error -- No types for this module
-import clone from 'git-clone/promise'
+import clone from 'git-clone/promise.js'
 
 import replaceInFilePackage from 'replace-in-file'
 const { replaceInFile } = replaceInFilePackage
 
-import Config from '../utils/config'
+import Config from '../utils/config.js'
 
 export default async () => {
 	let spinner = spin('Checking environment...').start()
@@ -107,8 +107,8 @@ export default async () => {
 	})
 	spinner.succeed('Setup files contain necessary info for starting registry')
 
-	// Start dependent services
-	spinner = spin('Starting dependent services...').start()
+	// Start elastic search, postgres and keycloak
+	spinner = spin('Starting elastic search, postgres and keycloak...').start()
 	// Run the docker-compose up command
 	await Compose.upMany(
 		(Config.get('containers.names') as string[]).slice(1)

@@ -1,15 +1,19 @@
-#!/usr/bin/env -S node --no-warnings --es-module-specifier-resolution node
+#!/usr/bin/env node
 // Entrypoint for CLI
 
+import Fs from 'node:fs/promises'
 import { Command } from 'commander'
 
-import createRegistryInstance from './commands/init'
-import restartContainers from './commands/restart'
-import stopContainers from './commands/stop'
-import startContainers from './commands/start'
-import showContainerStatus from './commands/status'
-import showOrChangeConfig from './commands/config'
-import PackageMetadata from '../package.json'
+import createRegistryInstance from './commands/init.js'
+import restartContainers from './commands/restart.js'
+import stopContainers from './commands/stop.js'
+import startContainers from './commands/start.js'
+import showContainerStatus from './commands/status.js'
+import showOrChangeConfig from './commands/config.js'
+
+const PackageMetadata = JSON.parse(
+	(await Fs.readFile(new URL('../package.json', import.meta.url))).toString()
+)
 
 // Create the command-and-option parser
 const program = new Command()
