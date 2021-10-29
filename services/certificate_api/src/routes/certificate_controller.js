@@ -169,7 +169,9 @@ async function createPDF(templateFileURL, data) {
         waitUntil: 'domcontentloaded'
     });
     const pdfBuffer = await page.pdf({
-        format: 'A4'
+        format: 'A4',
+        printBackground: true,
+        displayHeaderFooter: true
     });
 
     // close the browser
@@ -181,42 +183,9 @@ async function createPDF(templateFileURL, data) {
 function prepareDataForVaccineCertificateTemplate(certificateRaw, dataURL) {
     console.log("Preparing data for certificate template")
     certificateRaw = JSON.parse(certificateRaw);
-    // const {certificate: {credentialSubject, evidence}} = certificateRaw;
-    // const certificateData = {
-    //     name: credentialSubject.name,
-    //     age: credentialSubject.age,
-    //     gender: credentialSubject.gender,
-    //     identity: formatId(credentialSubject.id),
-    //     beneficiaryId: credentialSubject.refId,
-    //     recipientAddress: formatRecipientAddress(credentialSubject.address),
-    //     vaccine: evidence[0].vaccine,
-    //     vaccinationDate: formatDate(evidence[0].date) + ` (Batch no. ${evidence[0].batch} )`,
-    //     vaccineValidDays: `after ${getVaccineValidDays(evidence[0].effectiveStart, evidence[0].effectiveUntil)} days`,
-    //     vaccinatedBy: evidence[0].verifier.name,
-    //     vaccinatedAt: formatFacilityAddress(evidence[0]),
-    //     qrCode: dataURL,
-    //     dose: evidence[0].dose,
-    //     totalDoses: evidence[0].totalDoses,
-    //     isFinalDose: evidence[0].dose === evidence[0].totalDoses,
-    //     currentDoseText: `(${getNumberWithOrdinal(evidence[0].dose)} Dose)`
-    // };
     const certificateData = {
-        name: "credentialSubject.name",
-        age: "credentialSubject.age",
-        gender: "credentialSubject.gender",
-        identity: "formatId(credentialSubject.id)",
-        beneficiaryId: "credentialSubject.refId",
-        recipientAddress: "formatRecipientAddress(credentialSubject.address)",
-        vaccine: "evidence[0].vaccine",
-        vaccinationDate: "formatDate(evidence[0].date) + ` (Batch no. ${evidence[0].batch} )`",
-        vaccineValidDays: "`after ${getVaccineValidDays(evidence[0].effectiveStart, evidence[0].effectiveUntil)} days`",
-        vaccinatedBy: "evidence[0].verifier.name",
-        vaccinatedAt: "formatFacilityAddress(evidence[0])",
-        qrCode: "dataURL",
-        dose: "evidence[0].dose",
-        totalDoses: "evidence[0].totalDoses",
-        isFinalDose: "evidence[0].dose === evidence[0].totalDoses",
-        currentDoseText: "`(${getNumberWithOrdinal(evidence[0].dose)} Dose)`"
+        ...certificateRaw,
+        qrCode: dataURL
     };
 
     return certificateData;
