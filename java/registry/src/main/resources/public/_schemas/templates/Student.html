@@ -2,9 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Profile</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>Student certificate</title>
 </head>
 <body>
-
+    <div class="card">
+        <div class="card-title">
+            Student Profile
+        </div>
+        <div class="card-body">
+            Name: {{name}}
+            DOB: {{dob}}
+        </div>
+    </div>
+    <div>
+        <img src="{{qrCode}}" alt="qr_code"/>
+    </div>
 </body>
 </html>
