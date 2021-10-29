@@ -4,7 +4,7 @@ const Handlebars = require('handlebars');
 const puppeteer = require('puppeteer');
 const QRCode = require('qrcode');
 const JSZip = require("jszip");
-const vaccineCertificateTemplateFilePath = `${__dirname}/../../configs/templates/certificate_template.html`;
+const { default: axios } = require('axios');
 
 function getNumberWithOrdinal(n) {
     const s = ["th", "st", "nd", "rd"],
@@ -105,7 +105,7 @@ function padDigit(digit, totalDigits = 2) {
 async function createCertificatePDF(certificateInputReq, res) {
     let certificateRaw = certificateInputReq.data;
     // TODO: based on type template will be picked
-    let certificateType = certificateInputReq.type;
+    const certificateTemplateUrl = certificateInputReq.templateUrl;
     const zip = new JSZip();
     zip.file("certificate.json", certificateRaw, {
         compression: "DEFLATE"
@@ -118,7 +118,7 @@ async function createCertificatePDF(certificateInputReq, res) {
 
     const dataURL = await QRCode.toDataURL(zippedData, {scale: 2});
     const certificateData = prepareDataForVaccineCertificateTemplate(certificateRaw, dataURL);
-    const pdfBuffer = await createPDF(vaccineCertificateTemplateFilePath, certificateData);
+    const pdfBuffer = await createPDF(certificateTemplateUrl, certificateData);
     res.statusCode = 200;
     return pdfBuffer;
 }
@@ -142,9 +142,16 @@ async function getCertificatePDF(req, res) {
     }
 }
 
-async function createPDF(templateFile, data) {
+async function getTemplate(templateFileURL) {
+    const templateContent = await axios.get(templateFileURL).then(res => res.data);
+    return templateContent;
+}
+
+async function createPDF(templateFileURL, data) {
     console.log("Creating pdf")
-    const htmlData = fs.readFileSync(templateFile, 'utf8');
+    // const htmlData = fs.readFileSync(templateFileURL, 'utf8');
+    const htmlData = await getTemplate(templateFileURL);
+    console.log('Received ', htmlData);
     const template = Handlebars.compile(htmlData);
     let certificate = template(data);
     const browser = await puppeteer.launch({
