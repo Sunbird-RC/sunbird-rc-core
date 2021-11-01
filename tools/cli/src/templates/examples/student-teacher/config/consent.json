@@ -1,0 +1,16 @@
+{
+	"scopes": [
+		{
+			"name": "school",
+			"description": "Access the entity's school name",
+			"protocol": "openid-connect",
+			"mapper": {
+				"type": "oidc-usermodel-property-mapper",
+				"attribute": {
+					"path": "school",
+					"type": "String"
+				}
+			}
+		}
+	]
+}

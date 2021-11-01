@@ -1,3 +1,9 @@
-/node_modules
-/build
-/dist
+node_modules
+
+out
+.vscode
+
+.DS_Store
+*-debug.log
+
+!bin
