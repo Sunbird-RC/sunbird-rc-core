@@ -186,7 +186,7 @@ audit:
 keycloak:
   #publicKey:  ${sunbird_sso_publickey:pk}
   auth-server-url: ${sunbird_sso_url:https://localhost:8888/auth}
-  realm: ${sunbird_sso_realm:realm}
+  realm: ${sunbird_sso_realm:sunbird-rc}
   resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
   client-id: ${sunbird_sso_admin_client_id:client}
@@ -198,7 +198,7 @@ claims:
 authentication:
     enabled: ${authentication_enabled:false}
     publicKey:  ${authentication_publickey:}
-    realm:  ${authentication_realm:}
+    realm:  ${authentication_realm:sunbird-rc}
     url:  ${authentication_url:localhost:8443/auth}
 
 
