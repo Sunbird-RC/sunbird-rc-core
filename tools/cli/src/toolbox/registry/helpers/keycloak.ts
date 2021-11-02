@@ -17,11 +17,17 @@ const convertToUrlEncodedForm = (data: Record<string, any>): string => {
 // Wrapper around keycloak API calls
 class KeycloakWrapper {
 	httpClient: ApisauceInstance
+	user: string
+	pass: string
+	realm: string
 
-	constructor() {
+	constructor(options: { user: string; pass: string; realm: string }) {
 		this.httpClient = http.create({
 			baseURL: 'http://localhost:8080',
 		})
+		this.user = options.user
+		this.pass = options.pass
+		this.realm = options.realm
 	}
 
 	// Return an access token
@@ -30,8 +36,8 @@ class KeycloakWrapper {
 			'/auth/realms/master/protocol/openid-connect/token',
 			convertToUrlEncodedForm({
 				client_id: 'admin-cli',
-				username: 'admin',
-				password: 'admin',
+				username: this.user,
+				password: this.pass,
 				grant_type: 'password',
 			}),
 			{
@@ -41,6 +47,7 @@ class KeycloakWrapper {
 			}
 		)) as ApiResponse
 		if (!response.ok) {
+			console.debug(response.originalError)
 			throw new Error(
 				`There was an error while retrieving an access token from keycloak: ${
 					response.originalError ?? response.problem
@@ -54,7 +61,7 @@ class KeycloakWrapper {
 	// Get the keycloak client ID of a client
 	async getInternalClientId(clientId: string): Promise<string> {
 		const response = (await this.httpClient.get(
-			'/auth/admin/realms/sunbird-rc/clients',
+			`/auth/admin/realms/${this.realm}/clients`,
 			{ clientId },
 			{
 				headers: {
@@ -63,13 +70,14 @@ class KeycloakWrapper {
 			}
 		)) as ApiResponse
 		if (!response.ok) {
+			console.debug(response.originalError)
 			throw new Error(
 				`There was an error while retrieving the internal client ID from keycloak: ${
 					response.originalError ?? response.problem
 				}`
 			)
 		}
-		if (!response.data[0].id) {
+		if (!response.data[0]?.id) {
 			throw new Error(`Could not find a client with ID ${clientId} in keycloak`)
 		}
 
@@ -79,7 +87,7 @@ class KeycloakWrapper {
 	// Regenerate the client secret for a client in keycloak
 	async regenerateClientSecret(internalClientId: string): Promise<string> {
 		const response = (await this.httpClient.post(
-			`/auth/admin/realms/sunbird-rc/clients/${internalClientId}/client-secret`,
+			`/auth/admin/realms/${this.realm}/clients/${internalClientId}/client-secret`,
 			{},
 			{
 				headers: {
@@ -88,6 +96,7 @@ class KeycloakWrapper {
 			}
 		)) as ApiResponse
 		if (!response.ok) {
+			console.debug(response.originalError)
 			throw new Error(
 				`There was an error while regenerating the client secret for a client in keycloak: ${
 					response.originalError ?? response.problem
@@ -112,7 +121,7 @@ class KeycloakWrapper {
 		}
 	}): Promise<string> {
 		let createScopeResponse = (await this.httpClient.post(
-			'/auth/admin/realms/sunbird-rc/client-scopes',
+			`/auth/admin/realms/${this.realm}/client-scopes`,
 			{
 				name: scope.name,
 				description: scope.description,
@@ -141,6 +150,7 @@ class KeycloakWrapper {
 			}
 		)) as ApiResponse
 		if (!createScopeResponse.ok) {
+			console.debug(createScopeResponse.originalError)
 			throw new Error(
 				`There was an error while creating a client scope in keycloak: ${
 					createScopeResponse.originalError ?? createScopeResponse.problem
@@ -149,7 +159,7 @@ class KeycloakWrapper {
 		}
 
 		const getScopeResponse = (await this.httpClient.get(
-			'/auth/admin/realms/sunbird-rc/client-scopes',
+			`/auth/admin/realms/${this.realm}/client-scopes`,
 			{},
 			{
 				headers: {
@@ -158,6 +168,7 @@ class KeycloakWrapper {
 			}
 		)) as ApiResponse
 		if (!getScopeResponse.ok) {
+			console.debug(getScopeResponse.originalError)
 			throw new Error(
 				`There was an error while regenerating the client secret for a client in keycloak: ${
 					getScopeResponse.originalError ?? getScopeResponse.problem
@@ -184,7 +195,7 @@ class KeycloakWrapper {
 		internalScopeId: string
 	): Promise<void> {
 		const response = (await this.httpClient.put(
-			`/auth/admin/realms/sunbird-rc/clients/${internalClientId}/optional-client-scopes/${internalScopeId}`,
+			`/auth/admin/realms/${this.realm}/clients/${internalClientId}/optional-client-scopes/${internalScopeId}`,
 			{},
 			{
 				headers: {
@@ -193,6 +204,7 @@ class KeycloakWrapper {
 			}
 		)) as ApiResponse
 		if (!response.ok) {
+			console.debug(response.originalError)
 			throw new Error(
 				`There was an error while making client scope optional for a client in keycloak: ${
 					response.originalError ?? response.problem
@@ -202,4 +214,4 @@ class KeycloakWrapper {
 	}
 }
 
-export default new KeycloakWrapper()
+export default KeycloakWrapper

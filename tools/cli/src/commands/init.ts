@@ -2,13 +2,13 @@
 // `registry init` command
 // Creates a new registry instance
 
-import { CLIEvent, Toolbox } from '../types'
+import { CLIEvent, RegistryConfig, Toolbox } from '../types'
 
 export default {
 	name: 'init',
 	alias: ['i'],
 	run: async (toolbox: Toolbox) => {
-		const { environment, events, print, registry } = toolbox
+		const { environment, events, print, prompt, registry, strings } = toolbox
 
 		// Listen to events and show progress
 		const spinner = print.spin('Loading...').stop()
@@ -52,15 +52,84 @@ export default {
 
 		// Print the title
 		print.info('')
-		print.info(
-			print.colors.green.bold(process.cwd().split('/').slice(-1).join('/'))
-		)
+		print.info(print.colors.green.bold('Registry Setup'))
 		print.info('')
 
 		// Check that all tools are installed
 		await environment.check()
+
+		// Get neccesary information
+		print.info('')
+		const config = await prompt.ask([
+			{
+				type: 'input',
+				message: print.colors.reset('Enter the name of the registry'),
+				name: 'registryName',
+				initial: strings.startCase(
+					process.cwd().split('/').slice(-1).join('/')
+				),
+			},
+			{
+				type: 'input',
+				message: print.colors.reset(
+					'Enter the name of the Keycloak realm to create'
+				),
+				name: 'realmName',
+				initial: 'sunbird-rc',
+			},
+			{
+				type: 'input',
+				message: print.colors.reset(
+					'Enter the ID to assign to the admin client in Keycloak'
+				),
+				name: 'keycloakAdminClientId',
+				initial: 'admin-api',
+			},
+			{
+				type: 'input',
+				message: print.colors.reset(
+					'Enter the ID to assign to the frontend client in Keycloak'
+				),
+				name: 'keycloakFrontendClientId',
+				initial: 'registry-frontend',
+			},
+			{
+				type: 'input',
+				message: print.colors.reset(
+					'Enter a username for the admin account in Keycloak'
+				),
+				name: 'keycloakAdminUser',
+				initial: 'admin',
+			},
+			{
+				type: 'input',
+				message: print.colors.reset(
+					'Enter a password for the admin account in Keycloak'
+				),
+				name: 'keycloakAdminPass',
+				initial: 'admin',
+			},
+			{
+				type: 'input',
+				message: print.colors.reset(
+					'Enter the path to a directory containing entity schemas (leave blank to use the example student-teacher schemas)'
+				),
+				name: 'pathToEntitySchemas',
+				initial: 'use-example-config',
+			},
+			{
+				type: 'input',
+				message: print.colors.reset(
+					'Enter the path to a file containing consent configuration (leave blank to use the example consent configuration)'
+				),
+				name: 'pathToConsentConfiguration',
+				initial: 'use-example-config',
+			},
+		])
+		print.info('')
+
 		// Setup the registry
-		await registry.create()
+		await registry.create(config as unknown as RegistryConfig)
 
 		print.info('')
 	},
