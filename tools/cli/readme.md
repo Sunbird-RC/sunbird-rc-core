@@ -6,8 +6,8 @@ A CLI to create and interact with
 ## Documentation
 
 Take a look at the getting started guide
-[here](https://docs.sunbirdrc.dev/use/dev-docs/installation) to get to know how
-to use the tool.
+[here](https://docs.sunbirdrc.dev/developer-documentation/installation-guide) to
+get to know how to use the CLI.
 
 ## Screenshots
 
