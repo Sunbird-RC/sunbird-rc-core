@@ -1,7 +1,7 @@
 {
-	"id": "sunbird-rc",
-	"realm": "sunbird-rc",
-	"displayName": "Sunbird Registry and Credentials",
+	"id": "<%= props.realmName %>",
+	"realm": "<%= props.realmName %>",
+	"displayName": "<%= props.registryName %>",
 	"notBefore": 0,
 	"defaultSignatureAlgorithm": "RS256",
 	"revokeRefreshToken": false,
@@ -48,7 +48,7 @@
 		"realm": [
 			{
 				"id": "8ce3f968-e251-4ea3-a815-c00f9a40815a",
-				"name": "default-roles-sunbird-rc",
+				"name": "default-roles-<%= props.realmName %>",
 				"description": "${role_default-roles}",
 				"composite": true,
 				"composites": {
@@ -58,7 +58,7 @@
 					}
 				},
 				"clientRole": false,
-				"containerId": "sunbird-rc",
+				"containerId": "<%= props.realmName %>",
 				"attributes": {}
 			},
 			{
@@ -67,7 +67,7 @@
 				"description": "${role_uma_authorization}",
 				"composite": false,
 				"clientRole": false,
-				"containerId": "sunbird-rc",
+				"containerId": "<%= props.realmName %>",
 				"attributes": {}
 			},
 			{
@@ -76,7 +76,7 @@
 				"description": "${role_offline-access}",
 				"composite": false,
 				"clientRole": false,
-				"containerId": "sunbird-rc",
+				"containerId": "<%= props.realmName %>",
 				"attributes": {}
 			}
 		],
@@ -289,7 +289,7 @@
 				}
 			],
 			"security-admin-console": [],
-			"admin-api": [],
+			"<%= props.keycloakAdminClientId %>": [],
 			"admin-cli": [],
 			"account-console": [],
 			"broker": [
@@ -378,17 +378,17 @@
 					"attributes": {}
 				}
 			],
-			"registry-frontend": []
+			"<%= props.keycloakFrontendClientId %>": []
 		}
 	},
 	"groups": [],
 	"defaultRole": {
 		"id": "8ce3f968-e251-4ea3-a815-c00f9a40815a",
-		"name": "default-roles-sunbird-rc",
+		"name": "default-roles-<%= props.realmName %>",
 		"description": "${role_default-roles}",
 		"composite": true,
 		"clientRole": false,
-		"containerId": "sunbird-rc"
+		"containerId": "<%= props.realmName %>"
 	},
 	"requiredCredentials": ["password"],
 	"otpPolicyType": "totp",
@@ -422,14 +422,14 @@
 		{
 			"id": "3cc9ac60-b67d-4c57-8005-acd4d236b2dc",
 			"createdTimestamp": 1634296700339,
-			"username": "service-account-admin-api",
+			"username": "service-account-<%= props.keycloakAdminClientId %>",
 			"enabled": true,
 			"totp": false,
 			"emailVerified": false,
-			"serviceAccountClientId": "admin-api",
+			"serviceAccountClientId": "<%= props.keycloakAdminClientId %>",
 			"disableableCredentialTypes": [],
 			"requiredActions": [],
-			"realmRoles": ["default-roles-sunbird-rc"],
+			"realmRoles": ["default-roles-<%= props.realmName %>"],
 			"clientRoles": {
 				"realm-management": ["manage-users"]
 			},
@@ -457,12 +457,12 @@
 			"clientId": "account",
 			"name": "${client_account}",
 			"rootUrl": "${authBaseUrl}",
-			"baseUrl": "/realms/sunbird-rc/account/",
+			"baseUrl": "/realms/<%= props.realmName %>/account/",
 			"surrogateAuthRequired": false,
 			"enabled": true,
 			"alwaysDisplayInConsole": false,
 			"clientAuthenticatorType": "client-secret",
-			"redirectUris": ["/realms/sunbird-rc/account/*"],
+			"redirectUris": ["/realms/<%= props.realmName %>/account/*"],
 			"webOrigins": [],
 			"notBefore": 0,
 			"bearerOnly": false,
@@ -491,12 +491,12 @@
 			"clientId": "account-console",
 			"name": "${client_account-console}",
 			"rootUrl": "${authBaseUrl}",
-			"baseUrl": "/realms/sunbird-rc/account/",
+			"baseUrl": "/realms/<%= props.realmName %>/account/",
 			"surrogateAuthRequired": false,
 			"enabled": true,
 			"alwaysDisplayInConsole": false,
 			"clientAuthenticatorType": "client-secret",
-			"redirectUris": ["/realms/sunbird-rc/account/*"],
+			"redirectUris": ["/realms/<%= props.realmName %>/account/*"],
 			"webOrigins": [],
 			"notBefore": 0,
 			"bearerOnly": false,
@@ -534,17 +534,21 @@
 		},
 		{
 			"id": "25962708-6d45-47d9-8935-5db159234aac",
-			"clientId": "admin-api",
+			"clientId": "<%= props.keycloakAdminClientId %>",
 			"surrogateAuthRequired": false,
 			"enabled": true,
 			"alwaysDisplayInConsole": false,
 			"clientAuthenticatorType": "client-secret",
 			"secret": "**********",
-			"redirectUris": ["*"],
+			"redirectUris": [
+				"*",
+				"http://localhost:4200/",
+				"http://localhost:4200/*"
+			],
 			"webOrigins": [],
 			"notBefore": 0,
 			"bearerOnly": false,
-			"consentRequired": false,
+			"consentRequired": true,
 			"standardFlowEnabled": true,
 			"implicitFlowEnabled": false,
 			"directAccessGrantsEnabled": true,
@@ -572,7 +576,7 @@
 				"saml.client.signature": "false",
 				"tls.client.certificate.bound.access.tokens": "false",
 				"saml.authnstatement": "false",
-				"display.on.consent.screen": "false",
+				"display.on.consent.screen": "true",
 				"saml.onetimeuse.condition": "false"
 			},
 			"authenticationFlowBindingOverrides": {},
@@ -728,7 +732,7 @@
 		},
 		{
 			"id": "69c04ae8-6669-48e7-8234-08986a7f490d",
-			"clientId": "registry-frontend",
+			"clientId": "<%= props.keycloakFrontendClientId %>",
 			"name": "Registry Frontend",
 			"surrogateAuthRequired": false,
 			"enabled": true,
@@ -785,12 +789,12 @@
 			"clientId": "security-admin-console",
 			"name": "${client_security-admin-console}",
 			"rootUrl": "${authAdminUrl}",
-			"baseUrl": "/admin/sunbird-rc/console/",
+			"baseUrl": "/admin/<%= props.realmName %>/console/",
 			"surrogateAuthRequired": false,
 			"enabled": true,
 			"alwaysDisplayInConsole": false,
 			"clientAuthenticatorType": "client-secret",
-			"redirectUris": ["/admin/sunbird-rc/console/*"],
+			"redirectUris": ["/admin/<%= props.realmName %>/console/*"],
 			"webOrigins": ["+"],
 			"notBefore": 0,
 			"bearerOnly": false,

@@ -7,7 +7,7 @@ import check from '../toolbox/environment/check'
 import create from '../toolbox/registry/create'
 import status from '../toolbox/registry/status'
 
-import { Toolbox } from '../types'
+import { RegistryConfig, Toolbox } from '../types'
 
 export default (toolbox: Toolbox) => {
 	// Event emmitter
@@ -20,7 +20,7 @@ export default (toolbox: Toolbox) => {
 
 	toolbox.registry = {
 		// Create a new registry instance in the current directory
-		create: create(toolbox),
+		create: (registryConfig: RegistryConfig) => create(toolbox, registryConfig),
 		// View registry status
 		status: status(toolbox),
 	}

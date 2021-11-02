@@ -17,7 +17,7 @@ export interface Environment {
 	check(registryPath?: string): Promise<boolean>
 }
 export interface Registry {
-	create(): void
+	create(registryConfig: RegistryConfig): Promise<void>
 	status(): Promise<RegistryContainer[]>
 }
 
@@ -45,4 +45,15 @@ export interface ApiResponse {
 		| 'NETWORK_ERROR'
 		| 'CANCEL_ERROR'
 	originalError?: Error
+}
+
+export interface RegistryConfig {
+	registryName: string
+	realmName: string
+	keycloakAdminClientId: string
+	keycloakFrontendClientId: string
+	keycloakAdminUser: string
+	keycloakAdminPass: string
+	pathToEntitySchemas: 'use-example-config' | string
+	pathToConsentConfiguration: 'use-example-config' | string
 }
