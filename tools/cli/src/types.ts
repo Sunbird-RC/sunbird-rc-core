@@ -32,3 +32,17 @@ export interface CLIEvent {
 	operation: string
 	message: string
 }
+
+export interface ApiResponse {
+	data: any
+	status: number
+	ok: boolean
+	problem?:
+		| 'CLIENT_ERROR'
+		| 'SERVER_ERROR'
+		| 'TIMEOUT_ERROR'
+		| 'CONNECTION_ERROR'
+		| 'NETWORK_ERROR'
+		| 'CANCEL_ERROR'
+	originalError?: Error
+}

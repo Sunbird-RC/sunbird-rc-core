@@ -5,6 +5,7 @@ import { http } from 'gluegun'
 
 // @ts-expect-error: not a direct dependency
 import { ApisauceInstance } from 'apisauce'
+import { ApiResponse } from '../../../types'
 
 // Utility methods
 const convertToUrlEncodedForm = (data: Record<string, any>): string => {
@@ -13,6 +14,7 @@ const convertToUrlEncodedForm = (data: Record<string, any>): string => {
 		.join('&')
 }
 
+// Wrapper around keycloak API calls
 class KeycloakWrapper {
 	httpClient: ApisauceInstance
 
@@ -24,7 +26,6 @@ class KeycloakWrapper {
 
 	// Return an access token
 	async getAccessToken(): Promise<string> {
-		// Fetch an access token
 		const response = (await this.httpClient.post(
 			'/auth/realms/master/protocol/openid-connect/token',
 			convertToUrlEncodedForm({
@@ -38,16 +39,13 @@ class KeycloakWrapper {
 					'content-type': 'application/x-www-form-urlencoded',
 				},
 			}
-		)) as {
-			data: {
-				access_token: string
-				expires_in: number
-			}
-			originalError: Error
-		}
-		if (response.originalError) {
-			console.log(response.originalError)
-			throw response.originalError
+		)) as ApiResponse
+		if (!response.ok) {
+			throw new Error(
+				`There was an error while retrieving an access token from keycloak: ${
+					response.originalError ?? response.problem
+				}`
+			)
 		}
 
 		return response.data.access_token
@@ -63,23 +61,22 @@ class KeycloakWrapper {
 					authorization: `Bearer ${await this.getAccessToken()}`,
 				},
 			}
-		)) as {
-			data: {
-				id: string
-			}[]
-			originalError?: Error
-		}
-		if (response.originalError) {
-			console.log(response.originalError)
-			throw response.originalError
+		)) as ApiResponse
+		if (!response.ok) {
+			throw new Error(
+				`There was an error while retrieving the internal client ID from keycloak: ${
+					response.originalError ?? response.problem
+				}`
+			)
 		}
 		if (!response.data[0].id) {
-			throw new Error('Could not find that client in keycloak')
+			throw new Error(`Could not find a client with ID ${clientId} in keycloak`)
 		}
 
 		return response.data[0].id
 	}
 
+	// Regenerate the client secret for a client in keycloak
 	async regenerateClientSecret(internalClientId: string): Promise<string> {
 		const response = (await this.httpClient.post(
 			`/auth/admin/realms/sunbird-rc/clients/${internalClientId}/client-secret`,
@@ -89,20 +86,19 @@ class KeycloakWrapper {
 					authorization: `Bearer ${await this.getAccessToken()}`,
 				},
 			}
-		)) as {
-			data: {
-				value: string
-			}
-			originalError?: Error
-		}
-		if (response.originalError) {
-			console.log(response.originalError)
-			throw response.originalError
+		)) as ApiResponse
+		if (!response.ok) {
+			throw new Error(
+				`There was an error while regenerating the client secret for a client in keycloak: ${
+					response.originalError ?? response.problem
+				}`
+			)
 		}
 
 		return response.data.value
 	}
 
+	// Add a client scope in keycloak
 	async createClientScope(scope: {
 		name: string
 		description: string
@@ -143,9 +139,14 @@ class KeycloakWrapper {
 					authorization: `Bearer ${await this.getAccessToken()}`,
 				},
 			}
-		)) as { originalError?: Error }
-		if (createScopeResponse.originalError)
-			throw createScopeResponse.originalError
+		)) as ApiResponse
+		if (!createScopeResponse.ok) {
+			throw new Error(
+				`There was an error while creating a client scope in keycloak: ${
+					createScopeResponse.originalError ?? createScopeResponse.problem
+				}`
+			)
+		}
 
 		const getScopeResponse = (await this.httpClient.get(
 			'/auth/admin/realms/sunbird-rc/client-scopes',
@@ -155,26 +156,29 @@ class KeycloakWrapper {
 					authorization: `Bearer ${await this.getAccessToken()}`,
 				},
 			}
-		)) as {
-			data: {
-				id: string
-				name: string
-			}[]
-			originalError?: Error
+		)) as ApiResponse
+		if (!getScopeResponse.ok) {
+			throw new Error(
+				`There was an error while regenerating the client secret for a client in keycloak: ${
+					getScopeResponse.originalError ?? getScopeResponse.problem
+				}`
+			)
 		}
-		if (getScopeResponse.originalError) throw getScopeResponse.originalError
 
 		const clientScope = getScopeResponse.data.filter(
-			(scopeInfo) => scopeInfo.name === scope.name
+			(scopeInfo: { name: string }) => scopeInfo.name === scope.name
 		)[0]
 
 		if (!clientScope) {
-			throw new Error('Could not find that client scope')
+			throw new Error(
+				`Could not find a client scope with name ${scope.name} in keycloak`
+			)
 		}
 
 		return clientScope.id
 	}
 
+	// Make a client scope an optional scope for a client
 	async addOptionalClientScope(
 		internalClientId: string,
 		internalScopeId: string
@@ -187,10 +191,13 @@ class KeycloakWrapper {
 					authorization: `Bearer ${await this.getAccessToken()}`,
 				},
 			}
-		)) as { originalError?: Error }
-		if (response.originalError) {
-			console.log(response.originalError)
-			throw response.originalError
+		)) as ApiResponse
+		if (!response.ok) {
+			throw new Error(
+				`There was an error while making client scope optional for a client in keycloak: ${
+					response.originalError ?? response.problem
+				}`
+			)
 		}
 	}
 }
