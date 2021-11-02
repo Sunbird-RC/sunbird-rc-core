@@ -28,7 +28,7 @@ repository. Feel free to edit it to:
 The CLI is written in Typescript. To contribute to code, first setup your dev
 environment.
 
-### Prepare Up Your Environment
+### Prepare Your Environment
 
 > This guide assumes a some familiarity with basic linux commands. If not,
 > [here](https://ubuntu.com/tutorials/command-line-for-beginners#1-overview) is
@@ -48,7 +48,7 @@ should see `Hi` appear when you hit enter.
 Installation instructions for Git can be found
 [here](https://github.com/git-guides/install-git).
 
-Run `git --version` in the terminal if `git` has been installed correctly:
+Run `git --version` in the terminal if Git has been installed correctly:
 
 ```sh
 $ git --version
@@ -61,7 +61,7 @@ Installation instructions for NodeJS can be found
 [here](https://nodejs.org/en/download/package-manager/). We use the LTS version
 of NodeJS (`16.x`) for developing the CLI.
 
-Run `node --version` in the terminal if `node` has been installed correctly:
+Run `node --version` in the terminal if NodeJS has been installed correctly:
 
 ```sh
 $ node --version
@@ -76,11 +76,11 @@ Once NodeJS is installed, run the following in terminal to install PNPM:
 $ sudo npm install --global pnpm
 ```
 
-Run `pnpm --version` in the terminal if `pnpm` has been installed correctly:
+Run `pnpm --version` in the terminal if PNPM has been installed correctly:
 
 ```sh
 $ pnpm --version
-6.19.1
+6.20.1
 ```
 
 #### Docker
@@ -88,12 +88,12 @@ $ pnpm --version
 Installation instructions for Docker can be found
 [here](https://docs.docker.com/engine/install/).
 
-Run `docker --version` in terminal to check if `docker` has been installed
+Run `docker --version` in terminal to check if Docker has been installed
 correctly:
 
 ```sh
 $ docker --version
-Docker version 20.10.9, build c2ea9bc90b
+Docker version 20.10.10, build b485636f4b
 ```
 
 #### Docker Compose
@@ -101,7 +101,7 @@ Docker version 20.10.9, build c2ea9bc90b
 Installation instructions can be found
 [here](https://docs.docker.com/engine/install/).
 
-Run `docker-compose --version` in terminal to check if `docker-compose` has been
+Run `docker-compose --version` in terminal to check if Docker Compose has been
 installed correctly:
 
 ```sh
@@ -122,9 +122,9 @@ Then, clone the repository on your computer using `git`:
 $ git clone git@github.com:<your github username>/sunbird-rc-core.git sunbird-rc/core
 ```
 
-This will create a directory called `sunbird-rc-core`, which contains the
-registry as well as the source code to run the CLI. Move into the directory by
-typing the following:
+This will create a directory called `sunbird-rc/core`, which contains the
+registry as well as the source code to run the CLI. Move into the directory
+which contains the CLI's code by typing the following:
 
 ```sh
 $ cd sunbird-rc/core/tools/cli
@@ -141,6 +141,7 @@ To merge the latest changes into your fork anytime, run:
 
 ```sh
 $ git pull upstream main
+$ git rebase -i
 ```
 
 ### Create A Branch
@@ -153,9 +154,9 @@ list of common prefixes:
 
 | Name       | Description                                                  |
 | ---------- | ------------------------------------------------------------ |
-| `fix`      | A bug fix                                                    |
+| `fix`      | A bug fix/improvement                                        |
 | `feature`  | A new feature                                                |
-| `docs`     | Documentation changes                                        |
+| `docs`     | A documentation change                                       |
 | `perf`     | A code change that improves performance                      |
 | `refactor` | A code change that neither fixes a bug nor adds a feature    |
 | `test`     | A change to the tests                                        |
@@ -265,7 +266,8 @@ $ git push origin my/branch
 
 From within GitHub, opening a
 [new pull request](https://github.com/sunbird-rc/sunbird-rc-core/compare) will
-present you with a template that should be filled out.
+present you with a template that should be filled out. Remember to mention
+`@gamemaker1` so I can give you feedback as soon as possible!
 
 ### Discuss and update
 
@@ -319,5 +321,4 @@ the pull request can be merged.
 
 ## For Maintainers
 
-To release a new version of the CLI, run `pnpm release`. If releasing manually,
-remember to `build` the CLI before publishing it!
+To release a new version of the CLI, run `pnpm publish`.
