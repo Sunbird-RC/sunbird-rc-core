@@ -5,6 +5,7 @@ import org.keycloak.adapters.springsecurity.KeycloakSecurityComponents;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
 import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,9 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 @EnableWebSecurity
 @ComponentScan(basePackageClasses = KeycloakSecurityComponents.class)
 public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
+
+    @Value("${authentication.enabled:true}") boolean authenticationEnabled;
+
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 
@@ -44,12 +48,18 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
-        http.csrf()
-                .disable()
-                .authorizeRequests()
-                .antMatchers("/**/invite", "/health", "/error", "/_schemas/**", "/**/*.json", "/swagger-ui", "/**/search", "/**/attest/**", "/api/docs/swagger.json")
-                .permitAll()
-                .anyRequest()
-                .authenticated();
+
+        HttpSecurity httpConfig = http.csrf().disable();
+        if (authenticationEnabled) {
+            httpConfig.authorizeRequests()
+                    .antMatchers("/**/invite", "/health", "/error", "/_schemas/**", "/**/*.html", "/**/*.json", "/swagger-ui", "/**/search", "/**/attest/**", "/api/docs/swagger.json")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated();
+        } else {
+            httpConfig.authorizeRequests()
+                    .anyRequest()
+                    .permitAll();
+        }
     }
 }

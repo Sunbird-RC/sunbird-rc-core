@@ -21,9 +21,11 @@ import org.keycloak.KeycloakPrincipal;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +39,7 @@ public class RegistryEntityController extends AbstractController {
     @Autowired
     private SignatureService signatureService;
 
+    @Value("${authentication.enabled:true}") boolean authenticationEnabled;
 
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
@@ -359,21 +362,32 @@ public class RegistryEntityController extends AbstractController {
             @PathVariable String entityName,
             @PathVariable String entityId,
             @RequestHeader HttpHeaders header, HttpServletRequest request) {
-        boolean requireLDResponse = header.getAccept().contains(Constants.LD_JSON_MEDIA_TYPE);
-        try {
-            registryHelper.authorize(entityName, entityId, request);
-        } catch (Exception e) {
+        boolean requireLDResponse = false;
+        for (MediaType t: header.getAccept()) {
+            if (t.toString().equals(Constants.LD_JSON_MEDIA_TYPE)) {
+                requireLDResponse = true;
+                break;
+            }
+        }
+        if (authenticationEnabled) {
             try {
-                registryHelper.authorizeAttestor(entityName, request);
-            } catch (Exception exceptionFromAuthorizeAttestor) {
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                registryHelper.authorize(entityName, entityId, request);
+            } catch (Exception e) {
+                try {
+                    registryHelper.authorizeAttestor(entityName, request);
+                } catch (Exception exceptionFromAuthorizeAttestor) {
+                    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                }
             }
         }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
-            String userId = registryHelper.getKeycloakUserId(request);
-            JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, userId);
+            String readerUserId = authenticationEnabled ? registryHelper.getKeycloakUserId(request) : "unknown";
+            JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId);
+            if(requireLDResponse) {
+                addJsonLDSpec(node);
+            }
             return new ResponseEntity<>(node, HttpStatus.OK);
 
         } catch (NotFoundException e) {
@@ -386,6 +400,10 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private void addJsonLDSpec(JsonNode node) {
+
     }
 
     private JsonNode getEntityJsonNode(@PathVariable String entityName, @PathVariable String entityId, boolean requireLDResponse, String userId) throws Exception {
@@ -401,7 +419,8 @@ public class RegistryEntityController extends AbstractController {
             throw new RuntimeException("Unknown response object " + resultContent);
         }
         JsonNode node = (JsonNode) resultContent.getData();
-        return node.get(entityName);
+        JsonNode entityNode = node.get(entityName);
+        return entityNode!=null?entityNode:node;
     }
 
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.GET)

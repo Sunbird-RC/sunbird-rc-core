@@ -75,7 +75,9 @@ public class KeycloakAdminUtil {
         } else if (response.getStatus() == 409) {
             logger.info("UserID: {} exists", userName);
             return updateExistingUserAttributes(entityName, userName, email, mobile);
-        } else {
+        } else if (response.getStatus() == 500) {
+            throw new OwnerCreationException("Keycloak user creation error");
+        }else {
             throw new OwnerCreationException("Username already invited / registered");
         }
     }
@@ -99,10 +101,11 @@ public class KeycloakAdminUtil {
         UserRepresentation newUser = new UserRepresentation();
         newUser.setEnabled(true);
         newUser.setUsername(userName);
-        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
-        credentialRepresentation.setValue(this.defaultPassword);
-        credentialRepresentation.setType(PASSWORD);
-        newUser.setCredentials(Collections.singletonList(credentialRepresentation));
+//        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
+//        credentialRepresentation.setValue(this.defaultPassword);
+//        credentialRepresentation.setType(PASSWORD);
+//        newUser.setCredentials(Collections.singletonList(credentialRepresentation));
+        newUser.setEmail(email);
         newUser.singleAttribute(MOBILE_NUMBER, mobile);
         newUser.singleAttribute(EMAIL, email);
         newUser.singleAttribute(ENTITY, entityName);
