@@ -77,6 +77,9 @@ public class OSSchemaConfiguration {
     private List<AutoAttestationPolicy> autoAttestationPolicies = new ArrayList<>();
 
 
+    private Map<String, Object> credentialTemplate = new HashMap<>();
+
+
     public String getConditions(String property) {
         return getAttestationPolicy(property).getConditions();
     }

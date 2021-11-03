@@ -86,6 +86,7 @@ public class RegistrySwaggerController {
         addGetOperation("", path, Collections.emptyList());
         paths.set(String.format("/api/docs/%s.json", entityName), path);
         paths.set(String.format("/api/v1/%s/invite", entityName), path);
+        paths.set(String.format("/api/v1/%s/sign", entityName), path);
         path = objectMapper.createObjectNode();
         RefProperty refProperty = new RefProperty();
         refProperty.set$ref(String.format("#/definitions/%s", entityName));

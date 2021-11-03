@@ -14,6 +14,7 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.transform.Configuration;
 import io.opensaber.registry.transform.Data;
 import io.opensaber.registry.transform.ITransformer;
@@ -42,6 +43,8 @@ public class RegistryEntityController extends AbstractController {
 
     private static Logger logger = LoggerFactory.getLogger(RegistryEntityController.class);
     @Value("${authentication.enabled:true}") boolean authenticationEnabled;
+    @Autowired
+    private SignatureService signatureService;
 
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
@@ -571,7 +574,6 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
-
     @RequestMapping(value = "/api/v1/{property}/{propertyId}/attestation/{attestationName}/{attestationId}", method = RequestMethod.PUT)
     public ResponseEntity<ResponseParams> updateAttestationProperty(
             @PathVariable String property,
@@ -601,5 +603,31 @@ public class RegistryEntityController extends AbstractController {
             exception.printStackTrace();
             return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    @RequestMapping(value = "/api/v1/{entityName}/sign", method = RequestMethod.GET)
+    public ResponseEntity<Object> getSignedEntityByToken(@PathVariable String entityName, HttpServletRequest request) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
+        try {
+            JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
+            if (result.get(entityName).size() > 0) {
+                Map<String, Object> requestBodyMap = new HashMap<>();
+                requestBodyMap.put("data", result.get(entityName).get(0));
+                requestBodyMap.put("credentialTemplate", definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate());
+                Object signedCredentials = signatureService.sign(requestBodyMap);
+                return new ResponseEntity<>(signedCredentials, HttpStatus.OK);
+            } else {
+                responseParams.setErrmsg("Entity not found");
+                responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+
+        } catch (Exception e) {
+            logger.error("Exception in controller while searching entities !", e);
+            response.setResult("");
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
