@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.opensaber.actors.factory.PluginRouter;
@@ -418,7 +419,13 @@ public class RegistryEntityController extends AbstractController {
             @PathVariable String entityName,
             @PathVariable String entityId,
             @RequestHeader HttpHeaders header, HttpServletRequest request) {
-        boolean requireLDResponse = header.getAccept().contains(Constants.LD_JSON_MEDIA_TYPE);
+        boolean requireLDResponse = false;
+        for (MediaType t: header.getAccept()) {
+            if (t.toString().equals(Constants.LD_JSON_MEDIA_TYPE)) {
+                requireLDResponse = true;
+                break;
+            }
+        }
         if (authenticationEnabled) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
@@ -435,6 +442,9 @@ public class RegistryEntityController extends AbstractController {
         try {
             String readerUserId = authenticationEnabled ? registryHelper.getKeycloakUserId(request) : "unknown";
             JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId);
+            if(requireLDResponse) {
+                addJsonLDSpec(node);
+            }
             return new ResponseEntity<>(node, HttpStatus.OK);
 
         } catch (NotFoundException e) {
@@ -447,6 +457,10 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private void addJsonLDSpec(JsonNode node) {
+
     }
 
     private JsonNode getEntityJsonNode(@PathVariable String entityName, @PathVariable String entityId, boolean requireLDResponse, String userId) throws Exception {
@@ -462,7 +476,8 @@ public class RegistryEntityController extends AbstractController {
             throw new RuntimeException("Unknown response object " + resultContent);
         }
         JsonNode node = (JsonNode) resultContent.getData();
-        return node.get(entityName);
+        JsonNode entityNode = node.get(entityName);
+        return entityNode!=null?entityNode:node;
     }
 
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.GET)

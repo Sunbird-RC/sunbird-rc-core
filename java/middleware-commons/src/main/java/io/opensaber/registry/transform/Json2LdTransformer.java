@@ -7,6 +7,7 @@ import io.opensaber.registry.middleware.util.JSONUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,12 +30,16 @@ public class Json2LdTransformer implements ITransformer<Object> {
 	public Data<Object> transform(Data<Object> data) throws TransformationException {
 		try {
 			ObjectNode resultNode = (ObjectNode) mapper.readTree(data.getData().toString());
+
+
+
 			String rootType = getTypeFromNode(resultNode);
 			resultNode = (ObjectNode) resultNode.path(rootType);
 
 			// Set the generic context to this entity type
 			String modifiedContext = context.replace("<@type>", rootType);
 			ObjectNode contextNode = (ObjectNode) mapper.readTree(modifiedContext);
+			resultNode.set("@context", contextNode);
 			setNodeTypeToAppend(contextNode);
 
 			// Add prefix to all content
@@ -43,7 +48,6 @@ public class Json2LdTransformer implements ITransformer<Object> {
 
 			// Insert context to the result
 			resultNode.setAll(contextNode);
-
 			return new Data<>(resultNode);
 		} catch (Exception ex) {
 			logger.error("Error trnsx : " + ex.getMessage(), ex);
