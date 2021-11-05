@@ -112,7 +112,7 @@ export default {
 			{
 				type: 'input',
 				message: print.colors.reset(
-					'Enter the path to a directory containing entity schemas (leave blank to use the example student-teacher schemas)'
+					'Enter the path to a directory containing entity schemas'
 				),
 				name: 'pathToEntitySchemas',
 				initial: 'use-example-config',
@@ -120,7 +120,7 @@ export default {
 			{
 				type: 'input',
 				message: print.colors.reset(
-					'Enter the path to a file containing consent configuration (leave blank to use the example consent configuration)'
+					'Enter the path to a file containing consent configuration'
 				),
 				name: 'pathToConsentConfiguration',
 				initial: 'use-example-config',
