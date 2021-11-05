@@ -17,7 +17,7 @@
           "graduationYear": "2021",
           "osid": "1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636",
           "marks": "78",
-          "program": "Mosamana school ama"
+          "program": "ABCD class"
         }
       ],
       "attestationEducationDetails": [
@@ -83,7 +83,7 @@
     }
   },
   "expected": {
-    "Student": [
+    "Student":
       {
         "educationDetails": [
           {
@@ -101,7 +101,7 @@
             "graduationYear": "2021",
             "osid": "1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636",
             "marks": "78",
-            "program": "Mosamana school ama"
+            "program": "ABCD class"
           }
         ],
         "attestationEducationDetails": [
@@ -165,6 +165,5 @@
           "identityValue": ""
         }
       }
-    ]
   }
 }

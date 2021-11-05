@@ -713,7 +713,9 @@ public class RegistryHelper {
     private void updateAttestation(JsonNode entity, AttestationPolicy attestationPolicy, ArrayNode attestations) throws JsonLDException, GeneralSecurityException, IOException {
         for(JsonNode attestation : attestations) {
             if(attestation.get(_osState.name()).asText().equals(States.PUBLISHED.name())) {
-                Map<String, List<String>> propertiesOSIDMapper = objectMapper.convertValue(attestation.get("propertiesOSID"), Map.class);
+                ObjectNode propertiesOSID = attestation.get("propertiesOSID").deepCopy();
+                JSONUtil.removeNode(propertiesOSID, uuidPropertyName);
+                Map<String, List<String>> propertiesOSIDMapper = objectMapper.convertValue(propertiesOSID, Map.class);
                 JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entity, attestationPolicy.getAttestationProperties(), propertiesOSIDMapper);
                 String proof = attestation.get(_osAttestedData.name()).asText();
                 LdProof ldProof = new ObjectMapper().readValue(proof, LdProof.class);

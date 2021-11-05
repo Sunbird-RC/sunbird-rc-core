@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.opensaber.keycloak.KeycloakAdminUtil;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.OwnershipsAttributes;
+import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.middleware.service.ConditionResolverService;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
@@ -43,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -60,12 +62,7 @@ public class RegistryHelperTest {
     @InjectMocks
     private RegistryHelper registryHelper;
 
-    @Autowired
     private ObjectMapper objectMapper;
-
-
-    @Mock
-    private ObjectMapper objectMapperMock;
 
     @Mock
     private ISearchService searchService;
@@ -117,6 +114,8 @@ public class RegistryHelperTest {
 
     @Before
     public void initMocks() {
+        objectMapper = new ObjectMapper();
+        registryHelper.setObjectMapper(objectMapper);
         ReflectionTestUtils.setField(registryHelper, "auditSuffix", "Audit");
         ReflectionTestUtils.setField(registryHelper, "auditSuffixSeparator", "_");
         MockitoAnnotations.initMocks(this);
@@ -142,7 +141,7 @@ public class RegistryHelperTest {
         jsonNode = objectMapper.readTree(inputJson);
         resultNode = objectMapper.readTree(result);
 
-        when(objectMapperMock.createArrayNode()).thenReturn(objectMapper.createArrayNode());
+//        when(objectMapperMock.createArrayNode()).thenReturn(objectMapper.createArrayNode());
         when(searchService.search(ArgumentMatchers.any())).thenReturn(resultNode);
         when(viewTemplateManager.getViewTemplate(ArgumentMatchers.any())).thenReturn(null);
 
@@ -411,18 +410,28 @@ public class RegistryHelperTest {
         assertEquals(expectedNode,registryHelper.removeFormatAttr(requestBody));
     }
 
+    @Test
     public void shouldAbleToInvalidateTheAttestation() throws Exception {
-//        String testInputJsonPath = "src/test/resources/registryHelper/invalidateAttestation.json";
-//        String entity = "Student";
-//        String entityId = "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f";
-//        JsonNode testInput = objectMapper.readTree(new File(testInputJsonPath));
-//        JsonNode inputNode = testInput.get("input");
-//        JsonNode expectedUpdatedNode = testInput.get("expected");
-//
-//        when(shardManager.getShard(any())).thenReturn(new Shard());
-//        when(registryService).thenReturn(new Shard());
-//        registryHelper.invalidateAttestation(entity, entityId);
-//
-//        verify(registryService)
+        String testInputJsonPath = "src/test/resources/registryHelper/invalidateAttestation.json";
+        String entity = "Student";
+        String entityId = "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f";
+        JsonNode testInput = objectMapper.readTree(new File(testInputJsonPath));
+        JsonNode inputNode = testInput.get("input");
+        JsonNode expectedUpdatedNode = testInput.get("expected");
+
+        when(shardManager.getShard(any())).thenReturn(new Shard());
+        when(readService.getEntity(any(), any(), any(), any(), any())).thenReturn(inputNode);
+        AttestationPolicy attestationPolicy1 = new AttestationPolicy();
+        attestationPolicy1.setName("attestationEducationDetails");
+        attestationPolicy1.setAttestationProperties(new HashMap<String, String>(){{
+            put("name", "$.identityDetails.fullName");
+            put("educationDetails", "$.educationDetails");
+        }});
+        AttestationPolicy attestationPolicy2 = new AttestationPolicy();
+        attestationPolicy2.setName("attestationSomething");
+        when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
+        when(definitionsManager.getAttestationPolicy(entity)).thenReturn(Arrays.asList(attestationPolicy1, attestationPolicy2));
+        registryHelper.invalidateAttestation(entity, entityId);
+        verify(registryService, times(1)).updateEntity(any(), any(), any(), eq(expectedUpdatedNode.toString()));
     }
 }

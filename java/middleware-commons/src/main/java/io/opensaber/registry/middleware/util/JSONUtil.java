@@ -501,7 +501,7 @@ public class JSONUtil {
 			Object read = documentContext.read(path);
 			JsonNode readNode = new ObjectMapper().convertValue(read, JsonNode.class);
 			result.set(key, readNode);
-			if(readNode.isArray() && propertiesOSIDMapper.containsKey(key)) {
+			if(readNode.isArray() && propertiesOSIDMapper != null && propertiesOSIDMapper.containsKey(key)) {
 				List<String> osids = propertiesOSIDMapper.get(key);
 				ArrayNode arrayNode = (ArrayNode) readNode;
 				ArrayNode filteredArrNode = JsonNodeFactory.instance.arrayNode();
