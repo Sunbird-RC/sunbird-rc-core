@@ -125,15 +125,18 @@ public class RegistryEntityController extends AbstractController {
         newRootNode.set(entityName, rootNode);
 
         try {
+            String userId = registryHelper.getUserId(request);
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
-            // TODO: get userID from auth header
-            JsonNode existingNode = registryHelper.readEntity(newRootNode, "");
-            registryHelper.updateEntityAndState(newRootNode, "");
+            JsonNode existingNode = registryHelper.readEntity(newRootNode, userId);
+            registryHelper.updateEntityAndState(newRootNode, userId);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             registryHelper.triggerAutoAttestor(entityName, entityId, request, existingNode);
+
+            registryHelper.signDocument(entityName, entityId, userId);
+
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             logger.error("RegistryController: Exception while updating entity (without id)!", e);
@@ -159,13 +162,17 @@ public class RegistryEntityController extends AbstractController {
 
         try {
             registryHelper.authorizeManageEntity(request, entityName);
-            String label = registryHelper.addEntity(newRootNode, ""); //todo add user id from auth scope.
+            String userId = registryHelper.getUserId(request);
+            String label = registryHelper.addEntity(newRootNode, userId); //todo add user id from auth scope.
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             result.put(entityName, resultMap);
             response.setResult(result);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.addToExistingEntity");
+
+            registryHelper.signDocument(entityName, label, userId);
+
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (MiddlewareHaltException e) {
             logger.info("Error in validating the request");
@@ -533,17 +540,14 @@ public class RegistryEntityController extends AbstractController {
         try {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
             if (result.get(entityName).size() > 0) {
-                Map<String, Object> requestBodyMap = new HashMap<>();
-                requestBodyMap.put("data", result.get(entityName).get(0));
-                requestBodyMap.put("credentialTemplate", definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate());
-                Object signedCredentials = signatureService.sign(requestBodyMap);
+                Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
+                Object signedCredentials = registryHelper.getSignedDoc(result.get(entityName).get(0), credentialTemplate);
                 return new ResponseEntity<>(signedCredentials, HttpStatus.OK);
             } else {
                 responseParams.setErrmsg("Entity not found");
                 responseParams.setStatus(Response.Status.UNSUCCESSFUL);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-
         } catch (Exception e) {
             logger.error("Exception in controller while searching entities !", e);
             response.setResult("");

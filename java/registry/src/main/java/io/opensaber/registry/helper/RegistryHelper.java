@@ -13,15 +13,13 @@ import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.keycloak.KeycloakAdminUtil;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.attestation.Action;
+import io.opensaber.registry.exception.SignatureException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.model.attestation.EntityPropertyURI;
-import io.opensaber.registry.service.DecryptionHelper;
-import io.opensaber.registry.service.IReadService;
-import io.opensaber.registry.service.ISearchService;
-import io.opensaber.registry.service.RegistryService;
+import io.opensaber.registry.service.*;
 import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.*;
@@ -114,6 +112,9 @@ public class RegistryHelper {
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
+    @Autowired
+    private SignatureService signatureService;
+
     public JsonNode removeFormatAttr(JsonNode requestBody) {
         String documents = "documents";
         if (requestBody.has(documents)) {
@@ -139,7 +140,7 @@ public class RegistryHelper {
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), false);
         ObjectNode existingNode = objectMapper.createObjectNode();
         existingNode.set(entityType, objectMapper.createObjectNode());
-        entityStateHelper.applyWorkflowTransitions(existingNode, inputJson);
+//        entityStateHelper.applyWorkflowTransitions(existingNode, inputJson);
         return addEntity(inputJson, userId, entityType);
     }
 
@@ -647,5 +648,25 @@ public class RegistryHelper {
                 .getOtherClaims()
                 .get("entity");
         return (List<String>) customAttributes;
+    }
+
+    public Object getSignedDoc(JsonNode result, Map<String, Object> credentialTemplate) throws SignatureException.CreationException, SignatureException.UnreachableException {
+        Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("data", result);
+        requestBodyMap.put("credentialTemplate", credentialTemplate);
+        return signatureService.sign(requestBodyMap);
+    }
+
+    // TODO: can be async?
+    // TODO: do it if signatureEnabled
+    public void signDocument(String entityName, String entityId, String userId) throws Exception {
+        Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
+        ObjectNode updatedNode = (ObjectNode) readEntity(userId, entityName, entityId, false, null, false)
+                .get(entityName);
+        Object signedCredentials = getSignedDoc(updatedNode, credentialTemplate);
+        updatedNode.set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+        ObjectNode updatedNodeParent = JsonNodeFactory.instance.objectNode();
+        updatedNodeParent.set(entityName, updatedNode);
+        updateProperty(updatedNodeParent, userId);
     }
 }
