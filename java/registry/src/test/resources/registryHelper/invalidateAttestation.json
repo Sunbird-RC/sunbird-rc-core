@@ -1,0 +1,169 @@
+{
+  "input": {
+    "Student": {
+      "educationDetails": [
+        {
+          "documents": [
+            {
+              "fileName": "e3266115-0bd0-4456-a347-96f4dc335761-blog_draft",
+              "osid": "1-96abb26d-10e8-4730-965f-1b4bd7ba6824"
+            },
+            {
+              "fileName": "e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt",
+              "osid": "1-adf7ac2a-b255-4cbd-9140-8dc636b69961"
+            }
+          ],
+          "institute": "b62b3d52-cffe-428d-9dd1-61ba7b0a5882",
+          "graduationYear": "2021",
+          "osid": "1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636",
+          "marks": "78",
+          "program": "ABCD class"
+        }
+      ],
+      "attestationEducationDetails": [
+        {
+          "_osState": "DRAFT",
+          "entityName": "Student",
+          "name": "attestationEducationDetails",
+          "entityId": "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f",
+          "osid": "1-100270a5-610b-4ef9-83fe-0a4dbe85331b",
+          "propertiesOSID": {
+            "osid": "1-9c87d779-d216-4128-a15d-1966b6309795",
+            "educationDetails": [
+              "1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636"
+            ]
+          },
+          "propertyData": "{\"name\":\"steve\",\"educationDetails\":[{\"documents\":[{\"fileName\":\"e3266115-0bd0-4456-a347-96f4dc335761-blog_draft\",\"osid\":\"1-96abb26d-10e8-4730-965f-1b4bd7ba6824\"},{\"fileName\":\"e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\",\"osid\":\"1-adf7ac2a-b255-4cbd-9140-8dc636b69961\"}],\"institute\":\"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\"graduationYear\":\"2021\",\"marks\":\"78\",\"program\":\"happy bird\",\"osid\":\"1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636\"}]}"
+        },
+        {
+          "_osState": "PUBLISHED",
+          "entityName": "Student",
+          "name": "attestationEducationDetails",
+          "entityId": "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f",
+          "osid": "1-c32119b5-d00a-4547-b863-30ba9965edb2",
+          "_osAttestedData": "{\"type\":\"Ed25519Signature2018\",\"creator\":\"opensaber\",\"created\":\"2017-10-24T05:33:31Z\",\"domain\":\"opensaber.io\",\"nonce\":\"\",\"proofPurpose\":\"AssertionProofPurpose\",\"jws\":\"eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFZERTQSJ9..Z2sTvbhTjMmik9v5tbuZHbpLwrMtQX6VTB9SYUtK4lg2vvvqN-Qu_H67fz0K47WcQ2lDFtpkArx6MsPBHZeJAw\"}",
+          "propertiesOSID": {
+            "osid": "1-fbe7bbff-8bb6-4c46-9bd5-b1e313c7fc7c",
+            "educationDetails": [
+              "1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636"
+            ]
+          },
+          "_osClaimId": "d43e7f55-b5be-4d0a-8d7a-b068f64ef3b3",
+          "propertyData": "{\"name\":\"steve\",\"educationDetails\":[{\"documents\":[{\"fileName\":\"e3266115-0bd0-4456-a347-96f4dc335761-blog_draft\",\"osid\":\"1-96abb26d-10e8-4730-965f-1b4bd7ba6824\"},{\"fileName\":\"e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\",\"osid\":\"1-adf7ac2a-b255-4cbd-9140-8dc636b69961\"}],\"institute\":\"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\"graduationYear\":\"2021\",\"marks\":\"78\",\"program\":\"happy bird\",\"osid\":\"1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636\"}]}"
+        }
+      ],
+      "contactDetails": {
+        "osid": "1-2a2cee8b-df42-40d6-afb1-de062d7f7f56",
+        "address": {
+          "osid": "1-611b1993-35d7-4271-8fb4-4e15035b9e20",
+          "pincode": "",
+          "plot": "",
+          "street": "",
+          "district": "",
+          "locality": "",
+          "state": "Karnataka",
+          "landmark": "",
+          "village": ""
+        },
+        "mobile": "8000990008",
+        "email": "lordram@sahaj.ai"
+      },
+      "osid": "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f",
+      "osOwner": [
+        "6936d4f1-162b-4057-975d-95d72fd0c749"
+      ],
+      "identityDetails": {
+        "osid": "1-30628cc7-11a9-4935-a148-da14b220c459",
+        "gender": "Male",
+        "identityType": "",
+        "dob": "1999-01-01",
+        "fullName": "steve",
+        "identityValue": ""
+      }
+    }
+  },
+  "expected": {
+    "Student":
+      {
+        "educationDetails": [
+          {
+            "documents": [
+              {
+                "fileName": "e3266115-0bd0-4456-a347-96f4dc335761-blog_draft",
+                "osid": "1-96abb26d-10e8-4730-965f-1b4bd7ba6824"
+              },
+              {
+                "fileName": "e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt",
+                "osid": "1-adf7ac2a-b255-4cbd-9140-8dc636b69961"
+              }
+            ],
+            "institute": "b62b3d52-cffe-428d-9dd1-61ba7b0a5882",
+            "graduationYear": "2021",
+            "osid": "1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636",
+            "marks": "78",
+            "program": "ABCD class"
+          }
+        ],
+        "attestationEducationDetails": [
+          {
+            "_osState": "DRAFT",
+            "entityName": "Student",
+            "name": "attestationEducationDetails",
+            "entityId": "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f",
+            "osid": "1-100270a5-610b-4ef9-83fe-0a4dbe85331b",
+            "propertiesOSID": {
+              "osid": "1-9c87d779-d216-4128-a15d-1966b6309795",
+              "educationDetails": [
+                "1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636"
+              ]
+            },
+            "propertyData": "{\"name\":\"steve\",\"educationDetails\":[{\"documents\":[{\"fileName\":\"e3266115-0bd0-4456-a347-96f4dc335761-blog_draft\",\"osid\":\"1-96abb26d-10e8-4730-965f-1b4bd7ba6824\"},{\"fileName\":\"e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\",\"osid\":\"1-adf7ac2a-b255-4cbd-9140-8dc636b69961\"}],\"institute\":\"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\"graduationYear\":\"2021\",\"marks\":\"78\",\"program\":\"happy bird\",\"osid\":\"1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636\"}]}"
+          },
+          {
+            "_osState": "INVALID",
+            "entityName": "Student",
+            "name": "attestationEducationDetails",
+            "entityId": "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f",
+            "osid": "1-c32119b5-d00a-4547-b863-30ba9965edb2",
+            "_osAttestedData": "{\"type\":\"Ed25519Signature2018\",\"creator\":\"opensaber\",\"created\":\"2017-10-24T05:33:31Z\",\"domain\":\"opensaber.io\",\"nonce\":\"\",\"proofPurpose\":\"AssertionProofPurpose\",\"jws\":\"eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFZERTQSJ9..Z2sTvbhTjMmik9v5tbuZHbpLwrMtQX6VTB9SYUtK4lg2vvvqN-Qu_H67fz0K47WcQ2lDFtpkArx6MsPBHZeJAw\"}",
+            "propertiesOSID": {
+              "osid": "1-fbe7bbff-8bb6-4c46-9bd5-b1e313c7fc7c",
+              "educationDetails": [
+                "1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636"
+              ]
+            },
+            "_osClaimId": "d43e7f55-b5be-4d0a-8d7a-b068f64ef3b3",
+            "propertyData": "{\"name\":\"steve\",\"educationDetails\":[{\"documents\":[{\"fileName\":\"e3266115-0bd0-4456-a347-96f4dc335761-blog_draft\",\"osid\":\"1-96abb26d-10e8-4730-965f-1b4bd7ba6824\"},{\"fileName\":\"e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\",\"osid\":\"1-adf7ac2a-b255-4cbd-9140-8dc636b69961\"}],\"institute\":\"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\"graduationYear\":\"2021\",\"marks\":\"78\",\"program\":\"happy bird\",\"osid\":\"1-d464e9c2-4ad2-4fdd-9ae7-cf08897c0636\"}]}"
+          }
+        ],
+        "contactDetails": {
+          "osid": "1-2a2cee8b-df42-40d6-afb1-de062d7f7f56",
+          "address": {
+            "osid": "1-611b1993-35d7-4271-8fb4-4e15035b9e20",
+            "pincode": "",
+            "plot": "",
+            "street": "",
+            "district": "",
+            "locality": "",
+            "state": "Karnataka",
+            "landmark": "",
+            "village": ""
+          },
+          "mobile": "8000990008",
+          "email": "lordram@sahaj.ai"
+        },
+        "osid": "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f",
+        "osOwner": [
+          "6936d4f1-162b-4057-975d-95d72fd0c749"
+        ],
+        "identityDetails": {
+          "osid": "1-30628cc7-11a9-4935-a148-da14b220c459",
+          "gender": "Male",
+          "identityType": "",
+          "dob": "1999-01-01",
+          "fullName": "steve",
+          "identityValue": ""
+        }
+      }
+  }
+}

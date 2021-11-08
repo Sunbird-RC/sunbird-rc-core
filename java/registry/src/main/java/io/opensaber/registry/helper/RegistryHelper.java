@@ -10,12 +10,15 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
+import foundation.identity.jsonld.JsonLDException;
+import info.weboftrust.ldsignatures.LdProof;
 import io.opensaber.keycloak.KeycloakAdminUtil;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.PluginResponseMessage;
 import io.opensaber.pojos.attestation.Action;
 import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.pojos.attestation.States;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
@@ -29,6 +32,8 @@ import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.*;
 import io.opensaber.validators.IValidate;
+import io.opensaber.verifiablecredentials.CredentialService;
+import io.opensaber.verifiablecredentials.JsonLDCreator;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
 import lombok.Setter;
@@ -39,15 +44,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import scala.util.parsing.json.JSON;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.*;
 
 import static io.opensaber.registry.Constants.*;
 import static io.opensaber.registry.exception.ErrorMessages.*;
 import static io.opensaber.registry.middleware.util.Constants.EMAIL;
 import static io.opensaber.registry.middleware.util.Constants.MOBILE;
+import static io.opensaber.registry.middleware.util.OSSystemFields._osAttestedData;
+import static io.opensaber.registry.middleware.util.OSSystemFields._osState;
 
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
@@ -114,6 +125,9 @@ public class RegistryHelper {
 
     @Autowired
     private EntityTypeHandler entityTypeHandler;
+
+    @Autowired
+    private CredentialService credentialService;
 
     public String getAttestationOSID(JsonNode requestBody, String entityName, String entityId, String propertyName) throws Exception {
         JsonNode resultNode = readEntity("", entityName, entityId, false, null, false)
@@ -339,6 +353,7 @@ public class RegistryHelper {
         return updateEntityAndState(existingNode, inputJson, userId);
     }
 
+    @Async
     public void triggerAutoAttestor(String entityName, String entityId, HttpServletRequest request, JsonNode existingNode) throws Exception {
         JsonNode updatedNode = readEntity("", entityName, entityId, false, null, false);
         registryService.callAutoAttestationActor(existingNode.get(entityName), updatedNode.get(entityName), entityName, entityId, request);
@@ -677,4 +692,39 @@ public class RegistryHelper {
         return (List<String>) customAttributes;
     }
 
+    @Async
+    public void invalidateAttestation(String entityName, String entityId) throws Exception {
+        String userId = "osrc";
+        JsonNode entity = readEntity(userId, entityName, entityId, false, null, false)
+                .get(entityName);
+        for (AttestationPolicy attestationPolicy : definitionsManager.getAttestationPolicy(entityName)) {
+            String policyName = attestationPolicy.getName();
+
+            if(entity.has(policyName) && entity.get(policyName).isArray()) {
+                ArrayNode attestations = (ArrayNode) entity.get(policyName);
+                updateAttestation(entity, attestationPolicy, attestations);
+            }
+        }
+        ObjectNode newRoot = JsonNodeFactory.instance.objectNode();
+        newRoot.set(entityName,entity);
+        updateEntity(newRoot, userId);
+    }
+
+    private void updateAttestation(JsonNode entity, AttestationPolicy attestationPolicy, ArrayNode attestations) throws JsonLDException, GeneralSecurityException, IOException {
+        for(JsonNode attestation : attestations) {
+            if(attestation.get(_osState.name()).asText().equals(States.PUBLISHED.name())) {
+                ObjectNode propertiesOSID = attestation.get("propertiesOSID").deepCopy();
+                JSONUtil.removeNode(propertiesOSID, uuidPropertyName);
+                Map<String, List<String>> propertiesOSIDMapper = objectMapper.convertValue(propertiesOSID, Map.class);
+                JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entity, attestationPolicy.getAttestationProperties(), propertiesOSIDMapper);
+                String proof = attestation.get(_osAttestedData.name()).asText();
+                LdProof ldProof = new ObjectMapper().readValue(proof, LdProof.class);
+                boolean isValid = credentialService.verify(propertyData.toString(), ldProof);
+                if(!isValid) {
+                    // update attestation status
+                    ((ObjectNode)attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.INVALID.name()));
+                }
+            }
+        }
+    }
 }
