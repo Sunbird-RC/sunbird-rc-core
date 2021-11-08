@@ -6,8 +6,12 @@ A CLI to create and interact with
 ## Documentation
 
 Take a look at the getting started guide
-[here](https://github.com/sunbird-rc/sunbird-rc-core/tree/main/docs/installation.md)
-to get to know how to use the tool.
+[here](https://docs.sunbirdrc.dev/developer-documentation/installation-guide) to
+get to know how to use the CLI.
+
+## Screenshots
+
+Take a look at the CLI in action [here](etc/screenshots).
 
 ## Contributing/Issues
 
@@ -16,7 +20,7 @@ feature added?
 [Open an issue](https://github.com/sunbird-rc/community/issues/new/choose)!
 
 Want to contribute? Read the
-[contributing](https://github.com/sunbird-rc/sunbird-rc-core/blob/main/tools/cli/docs/contributing.md)
+[contributing](https://github.com/sunbird-rc/sunbird-rc-core/blob/main/tools/cli/contributing.md)
 file to get started!
 
 ## License
