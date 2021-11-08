@@ -188,9 +188,11 @@ public class RegistryServiceImpl implements RegistryService {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
 
+/*
         if (signatureEnabled) {
             signatureHelper.signJson(rootNode);
         }
+*/
 
         if (persistenceEnabled) {
             DatabaseProvider dbProvider = shard.getDatabaseProvider();
@@ -266,6 +268,7 @@ public class RegistryServiceImpl implements RegistryService {
             logger.debug("After merge the payload is " + mergedNode.toString());
 
             // Re-sign, i.e., remove and add entity signature again
+/*
             if (signatureEnabled) {
                 logger.debug("Removing earlier signature and adding new one");
                 String entitySignUUID = signatureHelper.removeEntitySignature(parentEntityType, (ObjectNode) mergedNode);
@@ -278,6 +281,7 @@ public class RegistryServiceImpl implements RegistryService {
 
                 registryDao.updateVertex(graph, oldEntitySignatureVertex, newSignature, entityType);
             }
+*/
 
             // TODO - Validate before update
             JsonNode validationNode = mergedNode.deepCopy();

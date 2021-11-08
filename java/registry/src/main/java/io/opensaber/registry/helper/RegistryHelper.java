@@ -109,6 +109,9 @@ public class RegistryHelper {
     @Value("${conditionalAccess.private}")
     private String privateFieldsProp;
 
+    @Value("${signature.enabled}")
+    private boolean signatureEnabled;
+
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
@@ -658,8 +661,10 @@ public class RegistryHelper {
     }
 
     // TODO: can be async?
-    // TODO: do it if signatureEnabled
     public void signDocument(String entityName, String entityId, String userId) throws Exception {
+        if(!signatureEnabled) {
+            return;
+        }
         Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
         ObjectNode updatedNode = (ObjectNode) readEntity(userId, entityName, entityId, false, null, false)
                 .get(entityName);
