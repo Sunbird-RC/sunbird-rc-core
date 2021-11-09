@@ -30,9 +30,6 @@ public class Json2LdTransformer implements ITransformer<Object> {
 	public Data<Object> transform(Data<Object> data) throws TransformationException {
 		try {
 			ObjectNode resultNode = (ObjectNode) mapper.readTree(data.getData().toString());
-
-
-
 			String rootType = getTypeFromNode(resultNode);
 			resultNode = (ObjectNode) resultNode.path(rootType);
 

@@ -8,7 +8,7 @@
     "test": "jest --passWithNoTests"
   },
   "author": "",
-  "license": "GPL",
+  "license": "MPL",
   "dependencies": {
     "certificate-signer-library": "^2.0.2",
     "jsonld-signatures": "^6.0.0",
