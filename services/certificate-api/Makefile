@@ -1,5 +1,5 @@
 
-IMAGE:=dockerhub/sunbird-rc-certificateapi
+IMAGE:=dockerhub/sunbird-rc-certificate-api
 
 docker:
 	@docker build -t $(IMAGE) .

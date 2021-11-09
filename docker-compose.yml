@@ -96,3 +96,9 @@ services:
       - PORT=8079
     ports:
       - "8079:8079"
+  certificateapi:
+    image: dockerhub/sunbird-rc-certificate-api
+    environment:
+      - PORT=8078
+    ports:
+      - "8078:8078"
