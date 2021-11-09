@@ -33,44 +33,6 @@ function concatenateReadableString(a, b) {
     return "NA"
 }
 
-function formatRecipientAddress(address) {
-    return concatenateReadableString(address.streetAddress, address.district)
-}
-
-function formatFacilityAddress(evidence) {
-    return concatenateReadableString(evidence.facility.name, evidence.facility.address.district)
-}
-
-function formatId(identity) {
-    const split = identity.split(":");
-    const lastFragment = split[split.length - 1];
-    if (identity.includes("aadhaar") && lastFragment.length >= 4) {
-        return "Aadhaar # XXXX XXXX XXXX " + lastFragment.substr(lastFragment.length - 4)
-    }
-    if (identity.includes("Driving")) {
-        return "Driver’s License # " + lastFragment
-    }
-    if (identity.includes("MNREGA")) {
-        return "MNREGA Job Card # " + lastFragment
-    }
-    if (identity.includes("PAN")) {
-        return "PAN Card # " + lastFragment
-    }
-    if (identity.includes("Passbooks")) {
-        return "Passbook # " + lastFragment
-    }
-    if (identity.includes("Passport")) {
-        return "Passport # " + lastFragment
-    }
-    if (identity.includes("Pension")) {
-        return "Pension Document # " + lastFragment
-    }
-    if (identity.includes("Voter")) {
-        return "Voter ID # " + lastFragment
-    }
-    return lastFragment
-}
-
 const monthNames = [
     "Jan", "Feb", "Mar", "Apr",
     "May", "Jun", "Jul", "Aug",
@@ -102,10 +64,21 @@ function padDigit(digit, totalDigits = 2) {
     return String(digit).padStart(totalDigits, '0')
 }
 
-async function createCertificatePDF(certificateInputReq, res) {
-    let certificateRaw = certificateInputReq.data;
+const getRequestBody = async (req) => {
+    const buffers = []
+    for await (const chunk of req) {
+        buffers.push(chunk)
+    }
+
+    const data = Buffer.concat(buffers).toString();
+    if (data === "") return undefined;
+    return JSON.parse(data);
+};
+
+async function createCertificatePDF(certificate, templateUrl, res) {
+    let certificateRaw = certificate;
     // TODO: based on type template will be picked
-    const certificateTemplateUrl = certificateInputReq.templateUrl;
+    const certificateTemplateUrl = templateUrl;
     const zip = new JSZip();
     zip.file("certificate.json", certificateRaw, {
         compression: "DEFLATE"
@@ -117,28 +90,36 @@ async function createCertificatePDF(certificateInputReq, res) {
         });
 
     const dataURL = await QRCode.toDataURL(zippedData, {scale: 2});
-    const certificateData = prepareDataForVaccineCertificateTemplate(certificateRaw, dataURL);
+    const certificateData = prepareDataForCertificateWithQRCode(certificateRaw, dataURL);
     const pdfBuffer = await createPDF(certificateTemplateUrl, certificateData);
     res.statusCode = 200;
     return pdfBuffer;
 }
+function isEmpty(obj) {
+    return Object.keys(obj).length === 0;
+}
+
+function sendResponse(res, statusCode, message) {
+    res.statusCode=statusCode;
+    res.end(message);
+}
 
 async function getCertificatePDF(req, res) {
     try {
-        const buffers = []
-        for await (const chunk of req) {
-            buffers.push(chunk)
+        const reqBody = await getRequestBody(req)
+        if (!reqBody || isEmpty(reqBody)) {
+            return sendResponse(res, 400, "Bad request");
         }
-
-        const data = Buffer.concat(buffers).toString();
-        const reqBody = JSON.parse(data);
         console.log('Got this req', reqBody);
-        
-        res = await createCertificatePDF(reqBody, res);
+        let {certificate, templateUrl} = reqBody;
+        if (certificate === "" || templateUrl === "") {
+            return sendResponse(res, 400, "Required parameters missing");
+        }
+        res = await createCertificatePDF(certificate, templateUrl, res);
         return res
     } catch (err) {
         console.error(err);
-        res.statusCode = 404;
+        res.statusCode = 500;
     }
 }
 
@@ -180,7 +161,7 @@ async function createPDF(templateFileURL, data) {
     return pdfBuffer
 }
 
-function prepareDataForVaccineCertificateTemplate(certificateRaw, dataURL) {
+function prepareDataForCertificateWithQRCode(certificateRaw, dataURL) {
     console.log("Preparing data for certificate template")
     certificateRaw = JSON.parse(certificateRaw);
     const certificateData = {
