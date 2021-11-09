@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Run all the containers
         run : |
-          docker-compose up -d
+          docker-compose up -f docker-compose.test.yml -d
       - name: Start e2e tests
         working-directory: ./java/apitest
         run: |
