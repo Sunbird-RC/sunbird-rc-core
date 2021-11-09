@@ -2,12 +2,16 @@
 // Register extensions to the toolbox
 
 import EventEmitter from 'events'
+import path from 'path'
+
+import yaml from 'yaml'
 
 import check from '../toolbox/environment/check'
 import create from '../toolbox/registry/create'
 import status from '../toolbox/registry/status'
+import restart from '../toolbox/registry/restart'
 
-import { RegistryConfig, Toolbox } from '../types'
+import { RegistryConfiguration, RegistrySetupOptions, Toolbox } from '../types'
 
 export default (toolbox: Toolbox) => {
 	// Event emmitter
@@ -20,9 +24,19 @@ export default (toolbox: Toolbox) => {
 
 	toolbox.registry = {
 		// Create a new registry instance in the current directory
-		create: (registryConfig: RegistryConfig) => create(toolbox, registryConfig),
+		create: (registryConfig: RegistrySetupOptions) =>
+			create(toolbox, registryConfig),
 		// View registry status
-		status: status(toolbox),
+		status: () => status(toolbox),
+		// Restart all containers
+		restart: () => restart(toolbox),
+		config: async (): Promise<RegistryConfiguration> => {
+			return await yaml.parse(
+				(await toolbox.filesystem.readAsync(
+					path.resolve(process.cwd(), 'registry.yaml')
+				)) ?? ''
+			).registry
+		},
 	}
 
 	return toolbox

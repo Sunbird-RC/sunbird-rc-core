@@ -1,12 +1,12 @@
-// @/commands/status
-// `registry status` command
-// Shows the status of all containers of the registry instance
+// @/commands/restart
+// `registry restart` command
+// Restarts all the containers that are part of a registry instance
 
-import { CLIEvent, RegistryContainer, Toolbox } from '../types'
+import { CLIEvent, Toolbox } from '../types'
 
 export default {
-	name: 'status',
-	alias: ['s'],
+	name: 'restart',
+	alias: ['r'],
 	run: async (toolbox: Toolbox) => {
 		const { environment, events, print, registry } = toolbox
 
@@ -27,10 +27,17 @@ export default {
 				process.exit(1)
 			}
 
-			// If the function has finished, stop loading
+			// Print and continue on success
 			if (event.status === 'success') {
+				// Stop the spinner if it is running...
 				if (spinner.isSpinning) {
-					spinner.stop()
+					// ...and print the success text in its place
+					spinner.succeed(print.colors.success(event.message))
+				} else {
+					// Else just print the message
+					print.success(
+						print.colors.success(`${print.checkmark} ${event.message}`)
+					)
 				}
 			}
 
@@ -41,33 +48,17 @@ export default {
 		}
 
 		events.on('environment.check', handleEvent)
-		events.on('registry.status', handleEvent)
-
-		// Check that all tools are installed
-		await environment.check(process.cwd())
-		// Get the registry status
-		const containers = await registry.status()
+		events.on('registry.restart', handleEvent)
 
 		// Print the name of the registry
 		print.info('')
 		print.info(print.colors.green.bold((await registry.config()).name))
 		print.info('')
 
-		// Print the container details as a table
-		print.table(
-			[
-				['ID', 'Name', 'Status', 'Port'],
-				...containers.map((container: RegistryContainer) => [
-					print.colors.yellow(container.id),
-					print.colors.green(container.name),
-					print.colors.cyan(container.status),
-					print.colors.green(container.ports.join(', ')),
-				]),
-			],
-			{
-				format: 'markdown',
-			}
-		)
+		// Check that all tools are installed
+		await environment.check(process.cwd())
+		// Restart the registry
+		await registry.restart()
 
 		print.info('')
 	},
