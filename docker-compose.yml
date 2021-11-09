@@ -90,3 +90,9 @@ services:
         condition: service_started
       registry:
         condition: service_started
+  certificate-signer:
+    image: dockerhub/certificate-signer
+    environment:
+      - PORT=8079
+    ports:
+      - "8079:8079"
