@@ -4,7 +4,7 @@
 
 import path from 'path'
 
-import { CLIEvent, RegistryConfig, Toolbox } from '../types'
+import { CLIEvent, RegistrySetupOptions, Toolbox } from '../types'
 
 export default {
 	name: 'init',
@@ -82,7 +82,7 @@ export default {
 
 		// Get neccesary information
 		print.info('')
-		const config = await prompt.ask([
+		const options = await prompt.ask([
 			{
 				type: 'input',
 				message: print.colors.reset('Enter the name of the registry'),
@@ -151,7 +151,7 @@ export default {
 		print.info('')
 
 		// Setup the registry
-		await registry.create(config as unknown as RegistryConfig)
+		await registry.create(options as unknown as RegistrySetupOptions)
 
 		print.info('')
 	},

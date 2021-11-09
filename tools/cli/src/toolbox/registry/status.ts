@@ -4,7 +4,7 @@
 import { RegistryContainer, Toolbox } from '../../types'
 
 // Accept a toolbox, return a registry status viewer
-export default (toolbox: Toolbox) => async (): Promise<RegistryContainer[]> => {
+export default async (toolbox: Toolbox): Promise<RegistryContainer[]> => {
 	const { events, system } = toolbox
 
 	events.emit('registry.status', {
@@ -35,7 +35,7 @@ export default (toolbox: Toolbox) => async (): Promise<RegistryContainer[]> => {
 				// Deduplicate the ports
 				...new Set(
 					// Get all the ports
-					rawInfo.Publishers.map((portInfo: { PublishedPort: number }) =>
+					rawInfo.Publishers?.map((portInfo: { PublishedPort: number }) =>
 						portInfo.PublishedPort ? portInfo.PublishedPort : undefined
 					).filter((port?: number) => !!port) // No port should be '0' or NaN
 				),

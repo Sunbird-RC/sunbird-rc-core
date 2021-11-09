@@ -14,5 +14,8 @@ Creates a registry in the current directory.
 
 ## `registry status`
 
-Shows you the status of all containers of the registry created in the current
-directory.
+Shows you the status of all containers of the registry in the current directory.
+
+## `registry restart`
+
+Restarts all containers of the registry in the current directory.

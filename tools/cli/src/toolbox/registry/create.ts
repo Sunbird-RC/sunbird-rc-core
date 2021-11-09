@@ -5,15 +5,15 @@ import path from 'path'
 
 import KeycloakWrapper from './helpers/keycloak'
 
-import { RegistryConfig, Toolbox } from '../../types'
+import { RegistrySetupOptions, Toolbox } from '../../types'
 
 // Accept a toolbox and configuration, create a registry instance in return
-export default async (toolbox: Toolbox, registryConfig: RegistryConfig) => {
+export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 	const { events, filesystem, patching, system, template } = toolbox
 	const keycloak = new KeycloakWrapper({
-		user: registryConfig.keycloakAdminUser,
-		pass: registryConfig.keycloakAdminPass,
-		realm: registryConfig.realmName,
+		user: setupOptions.keycloakAdminUser,
+		pass: setupOptions.keycloakAdminPass,
+		realm: setupOptions.realmName,
 	})
 
 	// Copy over config files with the proper variables
@@ -25,33 +25,33 @@ export default async (toolbox: Toolbox, registryConfig: RegistryConfig) => {
 	template.generate({
 		template: 'registry.yaml',
 		target: 'registry.yaml',
-		props: registryConfig,
+		props: setupOptions,
 	})
 	template.generate({
 		template: 'docker-compose.template',
 		target: 'docker-compose.yaml',
-		props: registryConfig,
+		props: setupOptions,
 	})
 	template.generate({
 		template: 'config/keycloak/realm-export.json',
 		target: 'config/keycloak/realm-export.json',
-		props: registryConfig,
+		props: setupOptions,
 	})
-	if (registryConfig.pathToEntitySchemas === 'use-example-config') {
+	if (setupOptions.pathToEntitySchemas === 'use-example-config') {
 		template.generate({
 			template: 'config/schemas/student.json',
 			target: 'config/schemas/student.json',
-			props: registryConfig,
+			props: setupOptions,
 		})
 		template.generate({
 			template: 'config/schemas/teacher.json',
 			target: 'config/schemas/teacher.json',
-			props: registryConfig,
+			props: setupOptions,
 		})
 	} else {
 		await filesystem
 			.copyAsync(
-				path.resolve(registryConfig.pathToEntitySchemas),
+				path.resolve(setupOptions.pathToEntitySchemas),
 				path.resolve(process.cwd(), 'config/schemas/'),
 				{ overwrite: true }
 			)
@@ -63,16 +63,16 @@ export default async (toolbox: Toolbox, registryConfig: RegistryConfig) => {
 				})
 			})
 	}
-	if (registryConfig.pathToConsentConfiguration === 'use-example-config') {
+	if (setupOptions.pathToConsentConfiguration === 'use-example-config') {
 		template.generate({
 			template: 'config/consent.json',
 			target: 'config/consent.json',
-			props: registryConfig,
+			props: setupOptions,
 		})
 	} else {
 		await filesystem
 			.copyAsync(
-				path.resolve(registryConfig.pathToConsentConfiguration),
+				path.resolve(setupOptions.pathToConsentConfiguration),
 				path.resolve(process.cwd(), 'config/consent.json'),
 				{ overwrite: true }
 			)
@@ -123,7 +123,7 @@ export default async (toolbox: Toolbox, registryConfig: RegistryConfig) => {
 	try {
 		// Regenerate the client secret
 		const clientSecret = await keycloak.regenerateClientSecret(
-			await keycloak.getInternalClientId(registryConfig.keycloakAdminClientId)
+			await keycloak.getInternalClientId(setupOptions.keycloakAdminClientId)
 		)
 		// Replace the old client secret with the new one
 		await patching.replace(
@@ -169,7 +169,7 @@ export default async (toolbox: Toolbox, registryConfig: RegistryConfig) => {
 			)
 
 			const clientId = await keycloak.getInternalClientId(
-				registryConfig.keycloakFrontendClientId
+				setupOptions.keycloakFrontendClientId
 			)
 			for (const scope of consentData.scopes) {
 				const scopeId = await keycloak.createClientScope(scope)
