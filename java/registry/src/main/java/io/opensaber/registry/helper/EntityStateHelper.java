@@ -78,6 +78,7 @@ public class EntityStateHelper {
                 .updated(modified)
                 .metadataNode((ObjectNode) modified)
                 .revertSystemFields(true)
+                .canLogin(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
                 .build();
         allContexts.add(stateContext);
     }
@@ -103,6 +104,7 @@ public class EntityStateHelper {
                     .updated(modifiedNode)
                     .metadataNode((ObjectNode) modified.get(entityName))
                     .ownershipAttribute(ownershipAttribute)
+                    .canLogin(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
                     .build();
             allContexts.add(stateContext);
         }
@@ -144,6 +146,7 @@ public class EntityStateHelper {
                         .attestationPolicy(policy)
                         .metadataNode(metadataNodePointer.getFirst())
                         .pointerFromMetadataNode(metadataNodePointer.getSecond())
+                        .canLogin(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
                         .build();
                 allContexts.add(stateContext);
             }
@@ -237,6 +240,7 @@ public class EntityStateHelper {
                 .metaData(metaData)
                 .metadataNode(metadataNodePointer.getFirst())
                 .pointerFromMetadataNode(metadataNodePointer.getSecond())
+                .canLogin(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
                 .build();
         ruleEngineService.doTransition(stateContext);
         return root;

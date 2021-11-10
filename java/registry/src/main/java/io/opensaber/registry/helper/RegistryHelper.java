@@ -163,21 +163,20 @@ public class RegistryHelper {
      * @throws Exception
      */
     public String addEntity(JsonNode inputJson, String userId) throws Exception {
-        String entityType = inputJson.fields().next().getKey();
-        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), false);
-        ObjectNode existingNode = objectMapper.createObjectNode();
-        existingNode.set(entityType, objectMapper.createObjectNode());
-        entityStateHelper.applyWorkflowTransitions(existingNode, inputJson);
-        return addEntity(inputJson, userId, entityType);
+        return addEntityHandler(inputJson, userId, false);
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
-        String entityType = inputJson.fields().next().getKey();
-        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), true);
-        entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson);
-        String entityId = addEntity(inputJson, userId, entityType);
+        String entityId = addEntityHandler(inputJson, userId, true);
         sendInviteNotification(inputJson);
         return entityId;
+    }
+
+    private String addEntityHandler(JsonNode inputJson, String userId, boolean isInvite) throws Exception {
+        String entityType = inputJson.fields().next().getKey();
+        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), isInvite);
+        entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson);
+        return addEntity(inputJson, userId, entityType);
     }
 
     private void sendInviteNotification(JsonNode inputJson) throws Exception {

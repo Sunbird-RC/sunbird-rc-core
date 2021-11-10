@@ -78,9 +78,16 @@ public class OSSchemaConfiguration {
      */
     private List<AutoAttestationPolicy> autoAttestationPolicies = new ArrayList<>();
 
+    /**
+     * Holds the template for w3c credentials
+     * */
 
     private Map<String, Object> credentialTemplate = new HashMap<>();
 
+    /**
+     * Tells entity should be part of user service or not
+     * */
+    private Boolean enableLogin = true;
 
     public String getConditions(String property) {
         return getAttestationPolicy(property).getConditions();
@@ -112,4 +119,12 @@ public class OSSchemaConfiguration {
                 .filter(attestationPolicy -> attestationPolicy.getName().equals(policyName))
                 .findFirst();
     }
+    public Boolean getEnableLogin() {
+        return enableLogin;
+    }
+
+    public void setEnableLogin(Boolean enableLogin) {
+        this.enableLogin = enableLogin;
+    }
+
 }
