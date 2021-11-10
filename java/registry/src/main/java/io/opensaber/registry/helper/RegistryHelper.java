@@ -53,6 +53,8 @@ import static io.opensaber.registry.middleware.util.Constants.MOBILE;
 @Setter
 public class RegistryHelper {
 
+    public static String ROLE_ANONYMOUS = "anonymous";
+
     private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
 
     @Autowired
@@ -492,7 +494,7 @@ public class RegistryHelper {
 
     }
 
-    public String getKeycloakUserId(HttpServletRequest request) throws Exception {
+    public String getUserId(HttpServletRequest request) throws Exception {
         KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
         if (principal != null) {
             return principal.getAccount().getPrincipal().getName();
@@ -514,8 +516,7 @@ public class RegistryHelper {
     }
 
     private JsonNode getUserInfoFromKeyCloak(HttpServletRequest request, String entityName) {
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        Set<String> roles = principal.getAccount().getRoles();
+        Set<String> roles = getUserRolesFromRequest(request);
         JsonNode rolesNode = objectMapper.convertValue(roles, JsonNode.class);
         ObjectNode result = JsonNodeFactory.instance.objectNode();
         // To maintain the consistency with searchEntity we are using ArrayNode
@@ -544,9 +545,10 @@ public class RegistryHelper {
     }
 
     public void authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
-        String userId = getKeycloakUserId(request);
-        JsonNode resultNode = readEntity(userId, entityName, entityId, false, null, false);
-        if (!isOwner(resultNode.get(entityName), userId)) {
+        String userIdFromRequest = getUserId(request);
+        JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
+        JsonNode entityFromDB = response.get(entityName);
+        if (!isOwner(entityFromDB, userIdFromRequest)) {
             throw new Exception(INVALID_OPERATION_EXCEPTION_MESSAGE);
         }
     }
@@ -596,14 +598,33 @@ public class RegistryHelper {
         return result;
     }
 
-    public void authorizeUser(HttpServletRequest request, String entityName) throws Exception {
-        KeycloakAuthenticationToken userPrincipal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        Set<String> roles = userPrincipal.getAccount().getRoles();
+    public void authorizeInviteEntity(HttpServletRequest request, String entityName) throws Exception {
+        List<String> inviteRoles = definitionsManager.getDefinition(entityName)
+                .getOsSchemaConfiguration()
+                .getInviteRoles();
+        if (inviteRoles.contains(ROLE_ANONYMOUS)){
+            return;
+        }
+        Set<String> userRoles = getUserRolesFromRequest(request);
+        authorizeUserRole(userRoles, inviteRoles);
+    }
+    public void authorizeManageEntity(HttpServletRequest request, String entityName) throws Exception {
+        Set<String> userRoles = getUserRolesFromRequest(request);
 
-        List<String> supportedRoles = definitionsManager.getDefinition(entityName)
+        List<String> managingRoles = definitionsManager.getDefinition(entityName)
                 .getOsSchemaConfiguration()
                 .getRoles();
-        if (!supportedRoles.isEmpty() && supportedRoles.stream().noneMatch(roles::contains)) {
+
+        authorizeUserRole(userRoles, managingRoles);
+    }
+
+    private Set<String> getUserRolesFromRequest(HttpServletRequest request) {
+        KeycloakAuthenticationToken userPrincipal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        return userPrincipal.getAccount().getRoles();
+    }
+
+    public void authorizeUserRole(Set<String> userRoles, List<String> allowedRoles) throws Exception {
+        if (!allowedRoles.isEmpty() && allowedRoles.stream().noneMatch(userRoles::contains)) {
             throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
         }
     }

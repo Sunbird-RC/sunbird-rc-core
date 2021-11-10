@@ -48,7 +48,9 @@ public class OSSchemaConfiguration {
      * Contains which are all the roles (from token) can add this resource
      */
     private List<String> roles = new ArrayList<>();
-    /** 
+
+    private List<String> inviteRoles = new ArrayList<>();;
+    /**
      * Holds field path of the subject of entity
      * */
     private String subjectJsonPath = "";

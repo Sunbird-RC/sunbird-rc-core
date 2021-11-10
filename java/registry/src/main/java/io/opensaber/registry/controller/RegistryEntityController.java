@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.opensaber.keycloak.OwnerCreationException;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
 import io.opensaber.pojos.attestation.AttestationPolicy;
@@ -30,6 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 @RestController
@@ -45,10 +47,12 @@ public class RegistryEntityController extends AbstractController {
     public ResponseEntity<Object> invite(
             @PathVariable String entityName,
             @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode rootNode
+            @RequestBody JsonNode rootNode,
+            HttpServletRequest request
     ) throws Exception {
         final String TAG = "RegistryController:invite";
         logger.info("Inviting entity {}", rootNode);
+        registryHelper.authorizeInviteEntity(request, entityName);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
         Map<String, Object> result = new HashMap<>();
@@ -64,9 +68,17 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.start(TAG);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (MiddlewareHaltException | ValidationException e) {
-            logger.info("Error in validating the request", e);
+        } catch (MiddlewareHaltException | ValidationException | OwnerCreationException e) {
             return badRequestException(responseParams, response, e.getMessage());
+        } catch (Exception e) {
+            if (e.getCause() != null && e.getCause().getCause() != null &&
+                    e.getCause().getCause() instanceof InvocationTargetException) {
+                Throwable targetException = ((InvocationTargetException) (e.getCause().getCause())).getTargetException();
+                if (targetException instanceof OwnerCreationException) {
+                    return badRequestException(responseParams, response, targetException.getMessage());
+                }
+            }
+            return internalErrorResponse(responseParams, response, e);
         }
     }
 
@@ -146,7 +158,7 @@ public class RegistryEntityController extends AbstractController {
         newRootNode.set(entityName, rootNode);
 
         try {
-            registryHelper.authorizeUser(request, entityName);
+            registryHelper.authorizeManageEntity(request, entityName);
             String label = registryHelper.addEntity(newRootNode, ""); //todo add user id from auth scope.
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
@@ -383,7 +395,7 @@ public class RegistryEntityController extends AbstractController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
-            String readerUserId = authenticationEnabled ? registryHelper.getKeycloakUserId(request) : "unknown";
+            String readerUserId = authenticationEnabled ? registryHelper.getUserId(request) : "unknown";
             JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId);
             if(requireLDResponse) {
                 addJsonLDSpec(node);
