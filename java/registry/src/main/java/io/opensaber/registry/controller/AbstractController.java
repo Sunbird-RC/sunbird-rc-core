@@ -9,6 +9,8 @@ import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.transform.ConfigurationHelper;
 import io.opensaber.registry.transform.Transformer;
 import io.opensaber.registry.util.DefinitionsManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public abstract class AbstractController {
+    private static Logger logger = LoggerFactory.getLogger(AbstractController.class);
+
     @Autowired
     ObjectMapper objectMapper;
 
@@ -42,9 +46,17 @@ public abstract class AbstractController {
     public String uuidPropertyName;
 
     ResponseEntity<Object> badRequestException(ResponseParams responseParams, Response response, String errorMessage) {
+        logger.info("Error in handling the invite {}", errorMessage);
         responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         responseParams.setErrmsg(errorMessage);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    ResponseEntity<Object> internalErrorResponse(ResponseParams responseParams, Response response, Exception ex) {
+        logger.info("Error in handling the invite", ex);
+        responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+        responseParams.setErrmsg("Error occurred");
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     ResponseEntity<Object> createUnauthorizedExceptionResponse(Exception e) {
