@@ -1,3 +1,5 @@
+# ignored because need to find a way to setup keycloak attributes
+@ignore
 Feature: Registry api tests
   Background:
     * url baseurl

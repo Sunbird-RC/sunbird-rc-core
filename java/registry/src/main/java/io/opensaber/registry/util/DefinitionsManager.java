@@ -165,4 +165,8 @@ public class DefinitionsManager {
             return Collections.emptyList();
         }
     }
+
+    public Map<String, Object> getCredentialTemplate(String entityName) {
+        return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
+    }
 }

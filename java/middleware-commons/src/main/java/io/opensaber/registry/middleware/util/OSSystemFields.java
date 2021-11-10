@@ -44,7 +44,7 @@ public enum OSSystemFields {
           JSONUtil.addField((ObjectNode) node, osOwner.toString(), ListUtils.emptyIfNull(owners));
       }
     },
-    _osState, _osClaimId, _osAttestedData;
+    _osState, _osClaimId, _osAttestedData, _osSignedData;
 
     public void createdBy(JsonNode node, String userId){};
 

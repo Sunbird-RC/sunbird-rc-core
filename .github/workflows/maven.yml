@@ -23,3 +23,15 @@ jobs:
         distribution: 'adopt'
     - name: Build with Maven
       run: cd java; mvn -B compile --file pom.xml
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run all the containers
+        run : |
+          docker-compose -f docker-compose.test.yml up -d
+      - name: Start e2e tests
+        working-directory: ./java/apitest
+        run: |
+          mvn test -Dcucumber.options="--tags ~@ignore" -DTest=ExampleTest
