@@ -167,7 +167,7 @@ public class RegistryHelper {
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), false);
         ObjectNode existingNode = objectMapper.createObjectNode();
         existingNode.set(entityType, objectMapper.createObjectNode());
-//        entityStateHelper.applyWorkflowTransitions(existingNode, inputJson);
+        entityStateHelper.applyWorkflowTransitions(existingNode, inputJson);
         return addEntity(inputJson, userId, entityType);
     }
 
