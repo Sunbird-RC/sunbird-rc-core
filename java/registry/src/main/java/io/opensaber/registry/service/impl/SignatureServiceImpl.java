@@ -1,5 +1,6 @@
 package io.opensaber.registry.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import io.opensaber.registry.exception.SignatureException;
 import io.opensaber.registry.service.SignatureService;
@@ -25,6 +26,8 @@ public class SignatureServiceImpl implements SignatureService {
 	private String keysURL;
 	@Autowired
 	private RetryRestTemplate retryRestTemplate;
+	@Autowired
+	private ObjectMapper objectMapper;
 
 	/** This method checks signature service is available or not
 	 * @return - true or false
@@ -59,7 +62,7 @@ public class SignatureServiceImpl implements SignatureService {
 		Object result = null;
 		try {
 			response = retryRestTemplate.postForEntity(signURL, propertyValue);
-			result = new Gson().fromJson(response.getBody(), Object.class);
+			result = objectMapper.readTree(response.getBody());
 		} catch (RestClientException ex) {
 			logger.error("RestClientException when signing: ", ex);
 			throw new SignatureException().new UnreachableException(ex.getMessage());
@@ -84,7 +87,7 @@ public class SignatureServiceImpl implements SignatureService {
 		Object result = null;
 		try {
 			response = retryRestTemplate.postForEntity(verifyURL, propertyValue);
-			result = new Gson().fromJson(response.getBody(), Object.class);
+			result =  objectMapper.readTree(response.getBody());
 		} catch (RestClientException ex) {
 			logger.error("RestClientException when verifying: ", ex);
 			throw new SignatureException().new UnreachableException(ex.getMessage());
