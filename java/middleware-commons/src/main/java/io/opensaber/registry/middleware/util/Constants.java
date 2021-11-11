@@ -6,6 +6,7 @@ public class Constants {
 	public static final String SIGN_VALUE = "value";
 	public static final String TOKEN_OBJECT = "x-authenticated-user-token";
 	public static final String LD_JSON_MEDIA_TYPE = "application/ld+json";
+	public static final String VC_JSON_MEDIA_TYPE = "application/vc+ld+json"; //this is not accepted yet, subjected to change.
 
 
 	public static final String OPENSABER_REGISTRY_API_NAME = "opensaber-registry-api";

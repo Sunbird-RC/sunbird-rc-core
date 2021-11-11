@@ -105,7 +105,7 @@ public class RegistryController extends AbstractController {
         JsonNode rootNode = apiMessage.getRequest().getRequestMapNode();
 
         try {
-            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
+            String label = registryHelper.addEntityAndSign(rootNode, apiMessage.getUserID());
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
 
