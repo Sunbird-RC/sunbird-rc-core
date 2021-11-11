@@ -36,7 +36,7 @@ public class StateContext {
     private ObjectNode metadataNode;
     private JsonPointer pointerFromMetadataNode;
     private OwnershipsAttributes ownershipAttribute;
-    private Boolean canLogin;
+    private Boolean loginEnabled;
 
     @Builder.Default
     private boolean revertSystemFields = false;
@@ -96,10 +96,11 @@ public class StateContext {
         return updated != null ? updated : existing;
     }
 
+    public boolean isLoginEnabled() {
+        return loginEnabled;
+    }
+
     public boolean isOwnerNewlyAdded() {
-        if(!canLogin) {
-            return false;
-        }
         if (StringUtils.isEmpty(getStringValue(existing, Constants.USER_ID)) && (StringUtils.isEmpty(getStringValue(existing, Constants.EMAIL)) || StringUtils.isEmpty(getStringValue(existing, Constants.MOBILE)))) {
             return !StringUtils.isEmpty(getStringValue(updated, Constants.USER_ID)) && (!StringUtils.isEmpty(getStringValue(updated, Constants.EMAIL)) || !StringUtils.isEmpty(getStringValue(updated, Constants.MOBILE)));
         }
@@ -136,11 +137,11 @@ public class StateContext {
         return this.revertSystemFields;
     }
 
-    public Boolean getCanLogin() {
-        return canLogin;
+    public Boolean getLoginEnabled() {
+        return loginEnabled;
     }
 
-    public void setCanLogin(Boolean canLogin) {
-        this.canLogin = canLogin;
+    public void setLoginEnabled(Boolean loginEnabled) {
+        this.loginEnabled = loginEnabled;
     }
 }
