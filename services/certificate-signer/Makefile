@@ -1,5 +1,5 @@
 
-IMAGE:=dockerhub/certificate-signer
+IMAGE:=dockerhub/sunbird-rc-certificate-signer
 
 docker:
 	@cp config/keys.js.sample config/keys.js

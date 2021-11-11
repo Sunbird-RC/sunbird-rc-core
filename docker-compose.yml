@@ -91,7 +91,7 @@ services:
       registry:
         condition: service_started
   certificate-signer:
-    image: dockerhub/certificate-signer
+    image: dockerhub/sunbird-rc-certificate-signer
     environment:
       - PORT=8079
     ports:

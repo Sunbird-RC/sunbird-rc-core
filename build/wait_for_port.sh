@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Waiting jenkins to launch on $1..."
+echo "Waiting service to launch on $1..."
 
 while ! curl localhost:$1; do
   sleep 1

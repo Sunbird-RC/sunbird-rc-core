@@ -9,4 +9,5 @@ public class Constants {
     public static final String INVITE = "INVITE";
     public static final String CLAIM_GRANTED = "CLAIM_GRANTED";
     public static final String CLAIM_REJECTED = "CLAIM_REJECTED";
+    public static final String USER_ANONYMOUS = "anonymous";
 }

@@ -13,6 +13,7 @@ import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
+import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.transform.Configuration;
 import io.opensaber.registry.transform.Data;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.Function;
 
 @RestController
 public class RegistryEntityController extends AbstractController {
@@ -161,9 +163,14 @@ public class RegistryEntityController extends AbstractController {
         newRootNode.set(entityName, rootNode);
 
         try {
-            registryHelper.authorizeManageEntity(request, entityName);
-            String userId = registryHelper.getUserId(request);
-            String label = registryHelper.addEntity(newRootNode, userId); //todo add user id from auth scope.
+            String userId;
+            if (authenticationEnabled) {
+                registryHelper.authorizeManageEntity(request, entityName);
+                userId = registryHelper.getUserId(request);
+            } else {
+                userId= io.opensaber.registry.Constants.USER_ANONYMOUS;
+            }
+            String label = registryHelper.addEntityAndSign(newRootNode, userId);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             result.put(entityName, resultMap);
@@ -171,7 +178,7 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.addToExistingEntity");
 
-            registryHelper.signDocument(entityName, label, userId);
+
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (MiddlewareHaltException e) {
@@ -376,16 +383,23 @@ public class RegistryEntityController extends AbstractController {
         return fields;
     }
 
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET, produces = {"application/pdf"})
+    public ResponseEntity<Object> getEntityType(){
+        return new ResponseEntity<>("", HttpStatus.OK);
+    }
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)
     public ResponseEntity<Object> getEntity(
             @PathVariable String entityName,
             @PathVariable String entityId,
             @RequestHeader HttpHeaders header, HttpServletRequest request) {
         boolean requireLDResponse = false;
+        boolean requireVCResponse = false;
         for (MediaType t: header.getAccept()) {
             if (t.toString().equals(Constants.LD_JSON_MEDIA_TYPE)) {
                 requireLDResponse = true;
                 break;
+            } else if (t.toString().equals(Constants.VC_JSON_MEDIA_TYPE)) {
+                requireVCResponse = true;
             }
         }
         if (authenticationEnabled) {
@@ -402,10 +416,13 @@ public class RegistryEntityController extends AbstractController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
-            String readerUserId = authenticationEnabled ? registryHelper.getUserId(request) : "unknown";
+            String readerUserId = authenticationEnabled ? registryHelper.getUserId(request) : io.opensaber.registry.Constants.USER_ANONYMOUS;
             JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId);
             if(requireLDResponse) {
                 addJsonLDSpec(node);
+            } else if (requireVCResponse) {
+                String vcString = node.get(OSSystemFields._osSignedData.name()).textValue();
+                return new ResponseEntity<>(vcString, HttpStatus.OK);
             }
             return new ResponseEntity<>(node, HttpStatus.OK);
 
