@@ -167,6 +167,10 @@ signature:
     config:
       name: SignatureShape
 
+certificate:
+  templateUrl: ${template_url:http://localhost:8081/api/v1/templates/Student.html}
+  pdfUrl: ${pdf_url:http://localhost:8079/api/v1/certificatePDF}
+
 # This audit configuration will enable audit logging in the system, use audit_frame.json to create a schema for database /elastic storage.
 #  data_store can have following values
 #   * FILE     : Store the audit log in files.
