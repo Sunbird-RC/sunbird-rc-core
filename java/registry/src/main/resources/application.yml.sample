@@ -17,7 +17,7 @@ spring:
     ansi:
       enabled: ALWAYS
 name: dev-yaml
-enviroment: development
+environment: development
 
 server:
   # Change this port number if you want to run it on another.
@@ -64,7 +64,7 @@ search:
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
   expandInternal: ${search_expandInternal:true}
-  providerName: ${search_providerName:io.opensaber.registry.service.ElasticSearchService}
+  providerName: ${search_providerName:io.opensaber.registry.service.NativeSearchService}
 
 # This property is to be used for read request
 read:
@@ -115,10 +115,10 @@ database:
       #     ** Example - Postgres - jdbc:postgresql://localhost:5432/yourdb
       #     * 3. NoSQL  databases (Cassandra)
       #     ** Example - cassandra - jdbc:cassandra://localhost:9160/yourdb
-      uri: ${connectionInfo_uri:jdbc:postgresql://localhost:5432/opensaberdb}
+      uri: ${connectionInfo_uri:jdbc:postgresql://localhost:5432/registry}
 
       username: ${connectionInfo_username:postgres}
-      password: ${connectionInfo_password:opensaberdb}
+      password: ${connectionInfo_password:postgres}
 
       # Any other shard information follows...
     #-
@@ -160,10 +160,10 @@ decryption:
     uri: ${decryption_batch_uri:http://localhost:8013/decrypt/obj}
 
 signature:
-  enabled: ${signature_enabled:false}
+  enabled: ${signature_enabled:true}
   healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
-  signURL: ${sign_url:http://localhost:8013/sign}
-  verifyURL: ${verify_url:http://localhost:8013/verify}
+  signURL: ${sign_url:http://localhost:8079/sign}
+  verifyURL: ${verify_url:http://localhost:8079/verify}
   keysURL: ${keys_url:http://localhost:8013/keys/}
   domain: ${domain_url:https://w3id.org/security/v1/}
   schema:
@@ -189,7 +189,7 @@ keycloak:
   realm: ${sunbird_sso_realm:sunbird-rc}
   resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
-  client-id: ${sunbird_sso_admin_client_id:client}
+  client-id: ${sunbird_sso_admin_client_id:admin-api}
   client-secret: ${sunbird_sso_admin_client_secret:client_secret}
 keycloak-user:
     default-password: opensaber@123
@@ -298,7 +298,7 @@ database:
 
   # Providers available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
   # NOTE: Values given against 'shardId' must be unique
-  provider: ${database_provider:TINKERGRAPH}
+  provider: ${database_provider:SQLG}
 
   # Choose "none" as the propertyName if you don't want any shards. Otherwise
   # implement IShardAdvisor interface in your own ways. An example, SerialNumShardAdvisor
