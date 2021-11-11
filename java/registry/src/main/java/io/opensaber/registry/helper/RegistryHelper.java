@@ -144,7 +144,7 @@ public class RegistryHelper {
         ObjectNode existingNode = objectMapper.createObjectNode();
         existingNode.set(entityType, objectMapper.createObjectNode());
         entityStateHelper.applyWorkflowTransitions(existingNode, inputJson);
-        String objectId = addEntityHandler(inputJson, userId, entityType);
+        String objectId = addEntityHandler(inputJson, userId, false);
         signDocument(entityType, objectId, userId);
         return objectId;
     }
