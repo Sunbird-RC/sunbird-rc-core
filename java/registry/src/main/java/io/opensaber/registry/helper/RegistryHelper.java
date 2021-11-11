@@ -138,13 +138,15 @@ public class RegistryHelper {
      * @return
      * @throws Exception
      */
-    public String addEntity(JsonNode inputJson, String userId) throws Exception {
+    public String addEntityAndSign(JsonNode inputJson, String userId) throws Exception {
         String entityType = inputJson.fields().next().getKey();
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), false);
         ObjectNode existingNode = objectMapper.createObjectNode();
         existingNode.set(entityType, objectMapper.createObjectNode());
         entityStateHelper.applyWorkflowTransitions(existingNode, inputJson);
-        return addEntity(inputJson, userId, entityType);
+        String objectId = addEntity(inputJson, userId, entityType);
+        signDocument(entityType, objectId, userId);
+        return objectId;
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {

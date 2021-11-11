@@ -1,4 +1,4 @@
-SOURCES = $(wildcard java/*.java) 
+SOURCES = $(wildcard java/*.java)
 build: java/registry/target/registry.jar
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 

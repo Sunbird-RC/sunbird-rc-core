@@ -138,7 +138,7 @@ async function createPDF(templateFileURL, data) {
     const browser = await puppeteer.launch({
         headless: true,
         //comment to use default
-        // executablePath: '/usr/bin/chromium-browser',
+        executablePath: '/usr/bin/chromium-browser',
         args: [
             "--no-sandbox",
             "--disable-gpu",
