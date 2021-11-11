@@ -4,6 +4,7 @@
 import path from 'path'
 
 import KeycloakWrapper from './helpers/keycloak'
+import { allUp } from './status'
 
 import { RegistrySetupOptions, Toolbox } from '../../types'
 
@@ -15,6 +16,15 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		pass: setupOptions.keycloakAdminPass,
 		realm: setupOptions.realmName,
 	})
+
+	const until = async (conditionFunction: () => Promise<boolean>) => {
+		const poll = async (resolve: (value: unknown) => void) => {
+			if (await conditionFunction()) resolve(true)
+			else setTimeout((_) => poll(resolve), 400)
+		}
+
+		return new Promise(poll)
+	}
 
 	// Copy over config files with the proper variables
 	events.emit('registry.create', {
@@ -103,8 +113,8 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 			message: `An unexpected error occurred while starting the registry: ${error.message}`,
 		})
 	})
-	// Wait for 40 seconds for them to start
-	await new Promise((resolve) => setTimeout(resolve, 40000))
+	// Wait for the containers to start
+	await until(allUp)
 	events.emit('registry.create', {
 		status: 'success',
 		operation: 'starting-containers',
@@ -208,8 +218,8 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 				message: `An unexpected error occurred while restarting the registry: ${error.message}`,
 			})
 		})
-	// Wait for 40 seconds for them to start
-	await new Promise((resolve) => setTimeout(resolve, 40000))
+	// Wait for the containers to start
+	await until(allUp)
 
 	// All done!
 	events.emit('registry.create', {

@@ -51,3 +51,20 @@ export default async (toolbox: Toolbox): Promise<RegistryContainer[]> => {
 	})
 	return containers
 }
+
+// A helper function to check if all the containers are up and running
+import { system } from 'gluegun'
+export const allUp = async (): Promise<boolean> => {
+	// List the containers
+	const rawJson = JSON.parse(
+		await system.run('docker compose ps --format json')
+	)
+
+	for (const rawInfo of rawJson) {
+		if (rawInfo.State !== 'running') {
+			return false
+		}
+	}
+
+	return true
+}

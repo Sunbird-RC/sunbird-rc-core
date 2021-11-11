@@ -1,11 +1,21 @@
 // @/toolbox/registry/restart
 // View registry restart
 
-import { RegistryContainer, Toolbox } from '../../types'
+import { allUp } from './status'
+
+import { Toolbox } from '../../types'
 
 // Accept a toolbox, return a registry restart viewer
 export default async (toolbox: Toolbox) => {
 	const { events, system } = toolbox
+	const until = async (conditionFunction: () => Promise<boolean>) => {
+		const poll = async (resolve: (value: unknown) => void) => {
+			if (await conditionFunction()) resolve(true)
+			else setTimeout((_) => poll(resolve), 400)
+		}
+
+		return new Promise(poll)
+	}
 
 	events.emit('registry.restart', {
 		status: 'progress',
@@ -22,8 +32,8 @@ export default async (toolbox: Toolbox) => {
 				message: `An unexpected error occurred while restarting the registry: ${error.message}`,
 			})
 		})
-	// Wait for 40 seconds for them to start
-	await new Promise((resolve) => setTimeout(resolve, 40000))
+	// Wait for the containers to start
+	await until(allUp)
 
 	// All done!
 	events.emit('registry.restart', {
