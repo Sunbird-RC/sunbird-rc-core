@@ -9,8 +9,8 @@ java/registry/target/registry.jar: $(SOURCES)
 
 test: build
 	@docker-compose up -d
-	@echo "Starting the test" && sh build/wait_for_port.sh 8080 || (docker-compose logs && false)
-	@echo "Starting the test" && sh build/wait_for_port.sh 8081 || (docker-compose logs && false)
+	@echo "Starting the test" && bash build/wait_for_port.sh 8080 || (docker-compose logs && false)
+	@echo "Starting the test" && bash build/wait_for_port.sh 8081 || (docker-compose logs && false)
 	@docker-compose ps
 	@docker-compose logs
 	@curl -v http://localhost:8081/health
