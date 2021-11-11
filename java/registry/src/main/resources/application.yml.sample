@@ -1,13 +1,10 @@
 spring:
-  profiles.active: dev
+  profiles.active: default
 ---
-##################################################################
-#                      DEVELOPMENT PROFILE                       #
-##################################################################
 spring:
   main:
       allow-bean-definition-overriding: true
-  profiles: dev
+  profiles: default
   servlet:
       multipart:
         enabled: true
@@ -16,8 +13,8 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
-name: dev-yaml
-environment: development
+name: default-yaml
+environment: default
 
 server:
   # Change this port number if you want to run it on another.
@@ -261,153 +258,3 @@ filestorage:
   secretkey: ${filestorage_secret_key:XXXXX}
   bucketname: ${filestorage_bucket_key:dummy}
 
----
-##################################################################
-#                      TEST PROFILE                              #
-##################################################################
-spring:
-  main:
-      allow-bean-definition-overriding: true
-  profiles: test
-  output:
-    ansi:
-      enabled: ALWAYS
-name: test-yaml
-enviroment: test
-
-perf:
-  monitoring:
-    enabled: false
-
-registry:
-  context:
-    base: http://example.com/voc/teacher/1.0.0/
-  system:
-    base: http://example.com/voc/opensaber/
-
-# This property is to be used for read request
-read:
-  # The read mechanism to use, values could be either NativeReadService or ElasticReadService
-  providerName: io.opensaber.registry.service.NativeReadService
-
-database:
-  # This property is internal. Clients use this property to perform read/update operation.
-  # NOTE: Once a uuidPropertyName is chosen it must not be changed, unless you're ready to let go the
-  #       existing data in the database.
-  uuidPropertyName: ${database_uuidPropertyName:osid}
-
-  # Providers available are NEO4J, SQLG, TINKERGRAPH, CASSANDRA, ORIENTDB.
-  # NOTE: Values given against 'shardId' must be unique
-  provider: ${database_provider:SQLG}
-
-  # Choose "none" as the propertyName if you don't want any shards. Otherwise
-  # implement IShardAdvisor interface in your own ways. An example, SerialNumShardAdvisor
-  # has been provided for reference. If you'd like to use it, set value "serialNum" here.
-  shardProperty: ${database_shardProperty:none}
-
-  # Any other provider breaks the unit tests, needs a work-item
-
-# File for framing the entity while reading
-frame:
-  file: frame.json
-
-encryption:
-  enabled: true
-  base: https://dev.sunbirded.org/encryption/
-  uri: https://dev.sunbirded.org/encryption/encrypt
-  batch:
-    uri: https://dev.sunbirded.org/encryption/encrypt/obj
-
-decryption:
-  uri: https://dev.sunbirded.org/encryption/decrypt
-  batch:
-    uri: https://dev.sunbirded.org/encryption/decrypt/obj
-
-signature:
-  enabled: ${signature_enabled:true}
-  healthCheckURL: ${sign_health_check_url:https://dev.sunbirded.org/encryption/}
-  signURL: ${sign_url:https://dev.sunbirded.org/encryption/sign}
-  verifyURL: ${verify_url:https://dev.sunbirded.org/encryption/verify}
-  keysURL: ${keys_url:https://dev.sunbirded.org/encryption/keys/}
-  domain: ${domain_url:https://w3id.org/security/v1/}
-  schema:
-    config:
-      name: SignatureShape
-
-# These properties are used to enable the audit log
-# enabled : should be true to enable audit log and false to disable audit log
-# store : specifies the storage option is FILE or DATABASE
-# suffix : specifies the suffix given for schema. If audit schema name is Teacher_Audit.json, the suffix is Audit.
-# suffixSeperator : specifies the separator used between entity name and suffix. If audit schema name is Teacher_Audit.json, the suffixSeperator is _.
-
-audit:
-  enabled: ${audit_enabled:false}
-  frame:
-    store: ${audit_frame_store:DATABASE}
-    suffix: ${audit_suffix:Audit}
-    suffixSeparator: ${audit_suffixSeparator:_}
-
-authentication:
-  enabled: ${authentication_enabled:true}
-  publicKey:  ${authentication_publickey:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqe1lVD9jnQWQce62e2Q44tACqBIt5UZyGzCegxax2gddj4xotY5BDxaxuJRGKDLRpm8lPNHxX8dce8SUVAMBfk85rL+Bxv1mjspKo7Q5qsFm9TGcvE4e/4xhgpMjw6dCFt8+S87jvRjmDHjakGMooOls1kjppQiklSEZ0lW3Crqet4RNjb1FNJ+2Jg26frm8i2cpb2wRnmLDuQ9sAnHCxAD2rGxSGLXhKABptbMeTVx25eh+PVISjc78uOhAnMwOHKApVBGnVCfcUoVYqfkX8XcPQU9ybmAi27vp9xZqMfh6I56Tl4fsWYBgf8ZMl0UWyRR3PNmo/0kxon1d3zqFnwIDAQAB}
-  realm:  ${authentication_realm:PartnerRegistry}
-  url:  ${authentication_url:http://localhost:8443/auth/}
-
-keycloak:
-  sso:
-    publicKey:  ${sunbird_sso_publickey}
-    realm:  ${sunbird_sso_realm}
-    auth_server_url:  ${sunbird_sso_url}
-
-validation:
-  enabled: ${validation_enabled:true}
-  type: ${validation_type:json}
-
-# Sets the service request and retry related configuration
-service:
-  connection:
-    # Set the connection timeout for the underlying request configuration
-    timeout: ${service_connection_timeout:5000}
-    # Set the timeout in milliseconds used when requesting a connection from the connection manager using the underlying request Configuration
-    request:
-      timeout: ${service_connection_request_timeout:5000}
-  # Set the socket read timeout for the underlying request configuration
-  read:
-    timeout: ${service_read_timeout:5000}
-  retry:
-    # The number of times an attempt must be made to reach to the service.
-    maxAttempts: ${service_retry_maxAttempts:5}
-    backoff:
-      # The fixed time interval, in milliseconds, between each such attempt.
-      delay: ${service_retry_backoff_delay:1000}
-
-# Sets the task-executor configuration for threads
-taskExecutor:
-  index:
-    # Specify the prefix to use for the names of newly created threads.
-    threadPoolName: ${taskExecutor_index_threadPoolName:IndexThread-}
-    # Set the ThreadPoolExecutor's core pool size.
-    corePoolSize: ${taskExecutor_index_corePoolSize:2}
-    # Set the ThreadPoolExecutor's maximum pool size.
-    maxPoolSize: ${taskExecutor_index_maxPoolSize:2}
-    # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
-    queueCapacity: ${taskExecutor_index_queueCapacity:3}
-
-# Sets the task-executor configuration for threads while auditing
-auditTaskExecutor:
-  # Specify the prefix to use for the names of newly created threads.
-  threadPoolName: ${auditTaskExecutor_threadPoolName:AuditThread-}
-  # Set the ThreadPoolExecutor's core pool size.
-  corePoolSize: ${auditTaskExecutor_corePoolSize:2}
-  # Set the ThreadPoolExecutor's maximum pool size.
-  maxPoolSize: ${auditTaskExecutor_maxPoolSize:2}
-  # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
-  queueCapacity: ${auditTaskExecutor_queueCapacity:3}
-
-# elastic-search configuration details
-elastic:
-  search:
-    # elastic-search can be enable and disable through this flag
-    enabled: ${elastic_search_enabled:true}
-    # elastic-search connection info
-    connection_url: ${elastic_search_connection_url:localhost:9200}

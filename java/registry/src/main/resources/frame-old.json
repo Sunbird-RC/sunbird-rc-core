@@ -1,0 +1,167 @@
+{
+	"@context": 
+	{
+		"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+		"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+		"teacher": "http://localhost:8080/",
+		"xsd": "http://www.w3.org/2001/XMLSchema#",
+		"sc": "https://w3id.org/security/v1/",
+		"@vocab": "http://localhost:8080/",
+		"gender": 
+		{
+			"@type": "@id"
+		},
+
+		"birthDate": 
+		{
+			"@type": "xsd:date"
+		},
+
+		"socialCategory": 
+		{
+			"@type": "@id"
+		},
+
+		"highestAcademicQualification": 
+		{
+			"@type": "@id"
+		},
+
+		"highestTeacherQualification": 
+		{
+			"@type": "@id"
+		},
+
+		"yearOfJoiningService": 
+		{
+			"@type": "xsd:gYear"
+		},
+
+		"teachingRole": 
+		{
+			"@type": "@id"
+		},
+
+		"teacherType": 
+		{
+			"@type": "@id"
+		},
+
+		"appointmentType": 
+		{
+			"@type": "@id"
+		},
+
+		"classesTaught": 
+		{
+			"@type": "@id"
+		},
+
+		"appointedForSubjects": 
+		{
+			"@type": "@id"
+		},
+
+		"appointmentYear": 
+		{
+			"@type": "xsd:gYear"
+		},
+
+		"inServiceTeacherTrainingFromBRC": 
+		{
+			"@type": "@id"
+		},
+
+		"daysOfInServiceTeacherTraining": 
+		{
+			"@type": "xsd:decimal"
+		},
+
+		"inServiceTeacherTrainingFromCRC": 
+		{
+			"@type": "@id"
+		},
+
+		"inServiceTeacherTrainingFromDIET": 
+		{
+			"@type": "@id"
+		},
+
+		"inServiceTeacherTrainingFromOthers": 
+		{
+			"@type": "@id"
+		},
+
+		"nonTeachingAssignmentsForAcademicCalendar": 
+		{
+			"@type": "@id"
+		},
+
+		"daysOfNonTeachingAssignments": 
+		{
+			"@type": "xsd:decimal"
+		},
+
+		"disabilityType": 
+		{
+			"@type": "@id"
+		},
+
+		"trainedForChildrenSpecialNeeds": 
+		{
+			"@type": "@id"
+		},
+
+		"trainedinUseOfComputer": 
+		{
+			"@type": "@id"
+		},
+
+		"mainSubjectsTaught": 
+		{
+			"@type": "@id"
+		},
+
+		"basicProficiencyLevel": 
+		{
+			"@type": "@id"
+		},
+
+		"proficiencySubject": 
+		{
+			"@type": "@id"
+		},
+
+		"proficiencyAcademicQualification": 
+		{
+			"@type": "@id"
+		},
+
+		"created": 
+		{
+			"@type": "sc:created"
+		},
+
+		"creator": 
+		{
+			"@type": "sc:creator"
+		},
+
+		"nonce": 
+		{
+			"@type": "sc:nonce"
+		},
+
+		"signatureFor": 
+		{
+			"@type": "xsd:anyURI"
+		},
+
+		"signatureValue": 
+		{
+			"@type": "sc:signatureValue"
+		}
+	},
+
+	"@type": "<@type>"
+}
