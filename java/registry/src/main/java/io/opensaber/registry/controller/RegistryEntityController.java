@@ -178,8 +178,6 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.addToExistingEntity");
 
-
-
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (MiddlewareHaltException e) {
             logger.info("Error in validating the request");
@@ -192,7 +190,6 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/attest/**")
     public ResponseEntity<Object> attest(

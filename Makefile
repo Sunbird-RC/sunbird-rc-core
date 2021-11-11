@@ -1,8 +1,12 @@
-SOURCES = $(wildcard java/*.java)
+#SOURCES = $(wildcard java/**/*.java)
+rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
+SOURCES := $(call rwildcard,java/,*.java)
 build: java/registry/target/registry.jar
+	echo ${SOURCES}
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 
 java/registry/target/registry.jar: $(SOURCES)
+	echo $(SOURCES)
 	cd java && ./mvnw -DskipTests clean install
 
 test: build
