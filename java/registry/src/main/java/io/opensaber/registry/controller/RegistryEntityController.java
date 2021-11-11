@@ -188,8 +188,6 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.addToExistingEntity");
 
-
-
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (MiddlewareHaltException e) {
             logger.info("Error in validating the request");

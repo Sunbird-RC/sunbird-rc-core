@@ -11,9 +11,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 11
@@ -22,16 +20,10 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
     - name: Build with Maven
-      run: cd java; mvn -B compile --file pom.xml
-
+      run: make build
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Run all the containers
-        run : |
-          docker-compose -f docker-compose.yml up -d
-      - name: Start e2e tests
-        working-directory: ./java/apitest
-        run: |
-          mvn test -Dcucumber.options="--tags ~@ignore" -DTest=ExampleTest
+      - name: Run all the containers and test
+        run : make test
