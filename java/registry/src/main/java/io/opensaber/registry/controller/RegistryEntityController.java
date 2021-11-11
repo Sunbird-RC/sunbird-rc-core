@@ -41,7 +41,6 @@ import io.opensaber.actors.factory.PluginRouter;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.function.Function;
 
 @RestController
 public class RegistryEntityController extends AbstractController {
@@ -460,7 +459,7 @@ public class RegistryEntityController extends AbstractController {
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
                     .get(entityName);
             node = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
-            return new ResponseEntity<>(certificateService.getPdf(node), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(certificateService.getPdf(node, entityName), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exception.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
