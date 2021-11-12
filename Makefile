@@ -1,11 +1,14 @@
 #SOURCES = $(wildcard java/**/*.java)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SOURCES := $(call rwildcard,java/,*.java)
-build: java/registry/target/registry.jar
-	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
+build: java/registry/target/registry.jar build_claim
+	cd $(WORKING_DIR)/java/target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 
 java/registry/target/registry.jar: $(SOURCES)
 	cd java && ./mvnw -DskipTests clean install
+
+build_claim: $(SOURCES)
+	cd java/claim/target && rm -rf * && jar xvf ../java/claim/target/claim-0.0.1-SNAPSHOT.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 
 test: build
 	@docker-compose up -d
