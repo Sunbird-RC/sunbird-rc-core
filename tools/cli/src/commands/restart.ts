@@ -8,7 +8,7 @@ export default {
 	name: 'restart',
 	alias: ['r'],
 	run: async (toolbox: Toolbox) => {
-		const { environment, events, print, registry } = toolbox
+		const { environment, events, parameters, print, registry } = toolbox
 
 		// Listen to events and show progress
 		const spinner = print.spin('Loading...').stop()
@@ -58,7 +58,7 @@ export default {
 		// Check that all tools are installed
 		await environment.check(process.cwd())
 		// Restart the registry
-		await registry.restart()
+		await registry.restart(parameters.options.s ?? parameters.options.soft)
 
 		print.info('')
 	},

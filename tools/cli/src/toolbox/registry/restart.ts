@@ -6,7 +6,7 @@ import { allUp } from './status'
 import { Toolbox } from '../../types'
 
 // Accept a toolbox, return a registry restart viewer
-export default async (toolbox: Toolbox) => {
+export default async (toolbox: Toolbox, soft: boolean) => {
 	const { events, system } = toolbox
 	const until = async (conditionFunction: () => Promise<boolean>) => {
 		const poll = async (resolve: (value: unknown) => void) => {
@@ -24,7 +24,9 @@ export default async (toolbox: Toolbox) => {
 	})
 
 	await system
-		.exec('docker compose up --force-recreate -d')
+		.exec(
+			soft ? 'docker compose restart' : 'docker compose up --force-recreate -d'
+		)
 		.catch((error: Error) => {
 			events.emit('registry.create', {
 				status: 'error',

@@ -19,7 +19,7 @@ export interface Environment {
 export interface Registry {
 	create(registryConfig: RegistrySetupOptions): Promise<void>
 	status(): Promise<RegistryContainer[]>
-	restart(): Promise<void>
+	restart(soft: boolean): Promise<void>
 	config(): Promise<RegistryConfiguration>
 }
 
