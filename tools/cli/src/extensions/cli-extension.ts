@@ -29,13 +29,23 @@ export default (toolbox: Toolbox) => {
 		// View registry status
 		status: () => status(toolbox),
 		// Restart all containers
-		restart: () => restart(toolbox),
+		restart: (soft: boolean) => restart(toolbox, soft),
+
+		// Read and return the registry configuration
 		config: async (): Promise<RegistryConfiguration> => {
-			return await yaml.parse(
+			const registryMetadata = await yaml.parse(
 				(await toolbox.filesystem.readAsync(
 					path.resolve(process.cwd(), 'registry.yaml')
 				)) ?? ''
-			).registry
+			)
+
+			if (!registryMetadata) {
+				throw new Error(
+					'This directory does not contain the necessary data to setup/manage a registry instance.'
+				)
+			}
+
+			return registryMetadata.registry
 		},
 	}
 
