@@ -5,9 +5,20 @@ import path from 'path'
 
 import { system } from 'gluegun'
 import { build } from 'gluegun'
+import createNotifier from 'update-notifier'
+
+import packageMetadata from '../package.json'
 
 // Create the CLI using gluegun
 async function run(argv: unknown[]) {
+	// Check for updates
+	const updateNotifier = createNotifier({
+		pkg: packageMetadata, // package.json metadata
+		updateCheckInterval: 1000 * 60 * 60, // Every hour
+	})
+	// Show a notification just before the process exits
+	updateNotifier.notify()
+
 	// Get path to global node modules
 	const globalModules = path.resolve(
 		(await system.run('npm config get prefix')) +
