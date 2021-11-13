@@ -14,6 +14,7 @@ import io.opensaber.registry.middleware.MiddlewareHaltException;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
+import io.opensaber.registry.service.ICertificateService;
 import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.transform.Configuration;
 import io.opensaber.registry.transform.Data;
@@ -34,7 +35,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.function.Function;
 
 @RestController
 public class RegistryEntityController extends AbstractController {
@@ -42,6 +42,9 @@ public class RegistryEntityController extends AbstractController {
 
     @Autowired
     private SignatureService signatureService;
+
+    @Autowired
+    private ICertificateService certificateService;
 
     @Value("${authentication.enabled:true}") boolean authenticationEnabled;
 
@@ -381,8 +384,19 @@ public class RegistryEntityController extends AbstractController {
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET, produces = {"application/pdf"})
-    public ResponseEntity<Object> getEntityType(){
-        return new ResponseEntity<>("", HttpStatus.OK);
+    public ResponseEntity<Object> getEntityType(@PathVariable String entityName,
+                                                @PathVariable String entityId,
+                                                HttpServletRequest request) {
+        try {
+            String readerUserId = getUserId(request);
+            JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
+                    .get(entityName);
+            node = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
+            return new ResponseEntity<>(certificateService.getPdf(node, entityName), HttpStatus.BAD_REQUEST);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)
     public ResponseEntity<Object> getEntity(
@@ -413,7 +427,7 @@ public class RegistryEntityController extends AbstractController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
-            String readerUserId = authenticationEnabled ? registryHelper.getUserId(request) : io.opensaber.registry.Constants.USER_ANONYMOUS;
+            String readerUserId = getUserId(request);
             JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId);
             if(requireLDResponse) {
                 addJsonLDSpec(node);
@@ -433,6 +447,10 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private String getUserId(HttpServletRequest request) throws Exception {
+        return authenticationEnabled ? registryHelper.getUserId(request) : io.opensaber.registry.Constants.USER_ANONYMOUS;
     }
 
     private void addJsonLDSpec(JsonNode node) {

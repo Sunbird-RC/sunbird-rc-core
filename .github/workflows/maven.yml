@@ -26,6 +26,8 @@ jobs:
       with:
         java-version: '11'
         distribution: 'adopt'
+    - name: Set up properties
+      run: sh configure-dependencies.sh
     - name: Build and test
       run: make test
 #  test:
