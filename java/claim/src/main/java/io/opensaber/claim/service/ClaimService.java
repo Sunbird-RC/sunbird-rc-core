@@ -14,7 +14,6 @@ import io.opensaber.registry.middleware.util.EntityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -63,7 +62,7 @@ public class ClaimService {
                 .collect(Collectors.toList());
     }
 
-    public ResponseEntity<Object> attestClaim(String claimId, JsonNode requestBody) {
+    public Claim attestClaim(String claimId, JsonNode requestBody) {
         Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));
         logger.info("Processing claim {}", claim.toString());
         if (claim.isClosed()) {
@@ -73,18 +72,17 @@ public class ClaimService {
         if (!claimsAuthorizer.isAuthorizedAttestor(claim, attestorNode)) {
             throw new UnAuthorizedException(USER_NOT_AUTHORIZED);
         }
-        updateClaim(requestBody, claim);
-        return openSaberClient.sendAttestationResponseToRequester(claim, requestBody);
+        return updateClaim(requestBody, claim);
     }
 
-    private void updateClaim(JsonNode requestBody, Claim claim) {
+    private Claim updateClaim(JsonNode requestBody, Claim claim) {
         JsonNode attestorNode = requestBody.get(ATTESTOR_INFO);
         if(requestBody.has(NOTES)) {
             addNotes(requestBody.get(NOTES).asText(), claim, EntityUtil.getFullNameOfTheEntity(attestorNode));
         }
         claim.setAttestedOn(new Date());
         claim.setStatus(ClaimStatus.CLOSED.name());
-        claimRepository.save(claim);
+        return claimRepository.save(claim);
     }
 
     public void addNotes(String notes, Claim claim, String addedBy) {

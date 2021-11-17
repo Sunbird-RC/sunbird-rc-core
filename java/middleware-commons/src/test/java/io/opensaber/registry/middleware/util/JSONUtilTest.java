@@ -9,9 +9,7 @@ import org.junit.Test;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
@@ -224,6 +222,30 @@ public class JSONUtilTest {
         String updatedText = "test_value";
         ((ObjectNode) test.at(jsonPtrExpr.substring(0, jsonPtrExpr.lastIndexOf("/")))).put(jsonPtrExpr.substring(jsonPtrExpr.lastIndexOf("/") + 1), updatedText);
         assertEquals(updatedText, test.at(jsonPtrExpr).textValue());
+    }
+
+    @Test
+    public void shouldAbleToFetchPropertiesFromEntity() throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        final String entityFilePath = "src/test/resources/property-extraction/entity.json";
+        final String expectedPropertyDataFilePath = "src/test/resources/property-extraction/extracted-out.json";
+
+        JsonNode entityNode = mapper.readTree(new File(entityFilePath));
+        JsonNode expectedPropertyNode = mapper.readTree(new File(expectedPropertyDataFilePath));
+        Map<String, String> attestationProperties = new HashMap<String, String>() {
+            {
+                put("name", "$.contactDetails.identityDetails.fullName");
+                put("educationDetails", "$.educationDetails");
+                put("experienceDetails", "$.experience");
+            }
+        };
+        Map<String, List<String>> properyOSIDMapper = new HashMap<String, List<String>>() {
+            {
+                put("educationDetails", new ArrayList<>(Arrays.asList("1", "2")));
+            }
+        };
+        JsonNode actualPropertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationProperties, properyOSIDMapper);
+        assertEquals(expectedPropertyNode, actualPropertyData);
     }
 
 }

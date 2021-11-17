@@ -114,6 +114,11 @@ public class OSSchemaConfiguration {
                 .findFirst().orElse(new AutoAttestationPolicy());
     }
 
+    public Optional<AttestationPolicy> getAttestationPolicyFor(String policyName) {
+        return attestationPolicies.stream()
+                .filter(attestationPolicy -> attestationPolicy.getName().equals(policyName))
+                .findFirst();
+    }
     public Boolean getEnableLogin() {
         return enableLogin;
     }
@@ -121,6 +126,5 @@ public class OSSchemaConfiguration {
     public void setEnableLogin(Boolean enableLogin) {
         this.enableLogin = enableLogin;
     }
-
 
 }

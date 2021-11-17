@@ -23,6 +23,9 @@ public class ClaimsAuthorizer {
     }
 
     public boolean isAuthorizedAttestor(Claim claim, JsonNode attestorNode) {
+        if(attestorNode.isNull()) {
+            return false;
+        }
         try {
             String resolvedCondition = conditionResolverService.resolve(
                     attestorNode,
@@ -38,7 +41,10 @@ public class ClaimsAuthorizer {
     }
 
     public boolean isAuthorizedRequestor(Claim claim, JsonNode attestorNode) {
-        String userEntityId = attestorNode.get(UUID_PROPERTY_NAME).asText();
-        return claim.getEntityId().equals(userEntityId);
+        if(!attestorNode.isNull() && attestorNode.has(UUID_PROPERTY_NAME)) {
+            String userEntityId = attestorNode.get(UUID_PROPERTY_NAME).asText();
+            return claim.getEntityId().equals(userEntityId);
+        }
+        return false;
     }
 }

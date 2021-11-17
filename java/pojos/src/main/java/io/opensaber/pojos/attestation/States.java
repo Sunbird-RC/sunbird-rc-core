@@ -4,5 +4,6 @@ public enum States {
     DRAFT,
     ATTESTATION_REQUESTED,
     PUBLISHED,
-    REJECTED
+    REJECTED,
+    INVALID;
 }

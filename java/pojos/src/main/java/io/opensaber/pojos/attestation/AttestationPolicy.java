@@ -3,15 +3,25 @@ package io.opensaber.pojos.attestation;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AttestationPolicy {
 
+    /**
+    * name property will be used to pick the specific attestation policy
+    * */
+    private String name;
     /*
     * Holds the name of the attestation property. eg. education, certificate, course
     *
     * */
-    private String property;
+    private List<String> properties;
+    /*
+    * Holds the name of the attestation property. eg. education, certificate, course
+    *
+    * */
+    private Map<String, String> attestationProperties;
     /**
      * Holds the value of the jsonpath
      */
@@ -25,9 +35,13 @@ public class AttestationPolicy {
     * */
     private String conditions;
     /*
-    * It will be used as first filter for fetching claims
+    * It will be used to define the actor name
     * */
-    private String attestorEntity;
+    private String attestorPlugin;
+    /*
+    * It will be used for signin redirection eg. consent based screens
+    * */
+    private String attestorSignin;
 
     public List<String> getPaths() {
         return paths;
@@ -45,12 +59,12 @@ public class AttestationPolicy {
         this.type = type;
     }
 
-    public String getProperty() {
-        return property;
+    public List<String> getProperties() {
+        return properties;
     }
 
-    public void setProperty(String property) {
-        this.property = property;
+    public void setProperties(List<String> properties) {
+        this.properties = properties;
     }
 
     public String getConditions() {
@@ -64,21 +78,54 @@ public class AttestationPolicy {
     @Override
     public String toString() {
         return "AttestationPolicy{" +
-                "property='" + property + '\'' +
+                "property='" + properties + '\'' +
                 ", paths=" + paths +
                 ", type=" + type +
                 '}';
     }
 
     public boolean hasProperty(String property) {
-        return getProperty().equals(property);
+        return getProperties().equals(property);
     }
 
     public String getAttestorEntity() {
-        return attestorEntity;
+        String[] split = attestorPlugin.split("entity=");
+        return split.length == 2 ? split[1] : "";
     }
 
-    public void setAttestorEntity(String attestorEntity) {
-        this.attestorEntity = attestorEntity;
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAttestorPlugin() {
+        return attestorPlugin;
+    }
+
+    public void setAttestorPlugin(String attestorPlugin) {
+        this.attestorPlugin = attestorPlugin;
+    }
+
+    public String getAttestorSignin() {
+        return attestorSignin;
+    }
+
+    public void setAttestorSignin(String attestorSignin) {
+        this.attestorSignin = attestorSignin;
+    }
+
+    public String getNodePath() {
+        return name + "/[]";
+    }
+
+    public Map<String, String> getAttestationProperties() {
+        return attestationProperties;
+    }
+
+    public void setAttestationProperties(Map<String, String> attestationProperties) {
+        this.attestationProperties = attestationProperties;
     }
 }

@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.Value;
 import io.opensaber.elastic.ESMessage;
-import io.opensaber.pojos.AuditRecord;
-import io.opensaber.pojos.NotificationMessage;
-import io.opensaber.pojos.OSEvent;
+import io.opensaber.pojos.*;
+import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.attestation.auto.AutoAttestationMessage;
 import io.opensaber.pojos.attestation.auto.AutoAttestationPolicy;
+import io.opensaber.pojos.attestation.exception.PolicyNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 import org.sunbird.akka.core.MessageProtos;
 
@@ -69,6 +69,16 @@ public class MessageFactory {
         return msgBuilder.build();
     }
 
+    public MessageProtos.Message createPluginActorMessage(String pluginActorName, PluginRequestMessage pluginRequestMessage) throws JsonProcessingException {
+        MessageProtos.Message.Builder msgBuilder = MessageProtos.Message.newBuilder();
+        msgBuilder.setTargetActorName(pluginActorName);
+        Value.Builder payloadBuilder = msgBuilder.getPayloadBuilder();
+        ObjectMapper objectMapper = new ObjectMapper();
+        payloadBuilder.setStringValue(objectMapper.writeValueAsString(pluginRequestMessage));
+        msgBuilder.setPayload(payloadBuilder.build());
+        return msgBuilder.build();
+    }
+
     public MessageProtos.Message createNotificationActorMessage(String operation, String to, String subject, String message) throws JsonProcessingException {
         MessageProtos.Message.Builder msgBuilder = MessageProtos.Message.newBuilder();
         msgBuilder.setPerformOperation(operation);
@@ -97,6 +107,27 @@ public class MessageFactory {
         autoAttestationMessage.setAccessToken(accessToken);
         payloadBuilder.setStringValue(objectMapper.writeValueAsString(autoAttestationMessage));
         msgBuilder.setPayload(payloadBuilder.build());
+        return msgBuilder.build();
+    }
+
+    public MessageProtos.Message createPluginResponseMessage(PluginResponseMessage pluginResponseMessage) throws JsonProcessingException {
+        MessageProtos.Message.Builder msgBuilder = MessageProtos.Message.newBuilder();
+        msgBuilder.setTargetActorName(Constants.PLUGIN_RESPONSE_ACTOR);
+        Value.Builder payloadBuilder = msgBuilder.getPayloadBuilder();
+        ObjectMapper objectMapper = new ObjectMapper();
+        payloadBuilder.setStringValue(objectMapper.writeValueAsString(pluginResponseMessage));
+        msgBuilder.setPayload(payloadBuilder.build());
+        return msgBuilder.build();
+    }
+
+    public MessageProtos.Message createPluginMessage(PluginRequestMessage requestMessage) throws Exception {
+        MessageProtos.Message.Builder msgBuilder = MessageProtos.Message.newBuilder();
+        msgBuilder.setPerformOperation("");
+        msgBuilder.setTargetActorName(requestMessage.getActorName().orElseThrow(() ->
+                new Exception("Invalid plugin name " + requestMessage.getAttestorPlugin())));
+        Value.Builder payloadBuilder = msgBuilder.getPayloadBuilder();
+        ObjectMapper objectMapper = new ObjectMapper();
+        payloadBuilder.setStringValue(objectMapper.writeValueAsString(requestMessage));
         return msgBuilder.build();
     }
 }

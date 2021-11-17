@@ -70,6 +70,9 @@ import java.util.Map;
 @EnableAsync
 public class GenericConfiguration implements WebMvcConfigurer {
 
+	private static final String DOMAIN = "opensaber.io";
+	private static final String CREATOR = "opensaber";
+	private static final String NONCE = "";
 	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
 	private final String NONE_STR = "none";
 
@@ -142,7 +145,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Value("${notification.service.connection_url}")
 	private String notificationServiceConnInfo;
-	
+
     @Value("${search.providerName}")
     private String searchProviderName;
 
@@ -152,9 +155,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${server.port}")
 	private long serverPort;
 
-
 	@Value("${registry.schema.url}")
 	private String schemaUrl;
+
+	private String PRIVATE_KEY = "984b589e121040156838303f107e13150be4a80fc5088ccba0b0bdc9b1d89090de8777a28f8da1a74e7a13090ed974d879bf692d001cddee16e4cc9f84b60580";
+	private String PUBLIC_KEY = "de8777a28f8da1a74e7a13090ed974d879bf692d001cddee16e4cc9f84b60580";
 
 	static {
 		Config config = ConfigFactory.parseResources("opensaber-actors.conf");
@@ -165,7 +170,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
-	
+
 	@Bean
 	public ObjectMapper objectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -187,10 +192,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public FrameContext frameContext() {
 		return new FrameContext(frameFile, registryContextBase);
 	}
-	
+
     /**
      * Gets the type of validation configured in the application.yml
-     * 
+     *
      * @return
      * @throws IllegalArgumentException
      *             when value is not in known SchemaType enum
@@ -246,7 +251,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public Middleware authorizationFilter() {
 		return new AuthorizationFilter(new KeyCloakServiceImpl(authUrl, authRealm, authPublicKey));
 	}
-	
+
     @Bean
     public IValidate validationServiceImpl() throws IOException, CustomException {
         // depends on input type,we need to implement validation
@@ -254,16 +259,16 @@ public class GenericConfiguration implements WebMvcConfigurer {
             IValidate validator = new JsonValidationServiceImpl(schemaUrl);
             definitionsManager.getAllDefinitions().forEach(definition->{
                 logger.debug("Definition: title-" + definition.getTitle() + " , content-" + definition.getContent());
-                validator.addDefinitions(definition.getTitle(), definition.getContent());  
+                validator.addDefinitions(definition.getTitle(), definition.getContent());
             });
             logger.info(definitionsManager.getAllDefinitions().size() + " definitions added to validator service ");
             return validator;
         } else {
             logger.error("Fatal - not a known validator mentioned in the application configuration.");
         }
-        return null; 
+        return null;
     }
-    
+
 	@Bean
 	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE,
 			proxyMode = ScopedProxyMode.TARGET_CLASS)
@@ -287,7 +292,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 //	}
 
 	@Bean
-	public IShardAdvisor shardAdvisor() {		
+	public IShardAdvisor shardAdvisor() {
 		ShardAdvisor shardAdvisor = new ShardAdvisor();
 		if (dbConnectionInfoMgr.getShardProperty().equals(NONE_STR)) {
 			return shardAdvisor.getInstance(DefaultShardAdvisor.class.getName());
@@ -296,7 +301,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		}
 	}
     @Bean
-    public ISearchService searchService() {       
+    public ISearchService searchService() {
         ServiceProvider searchProvider = new ServiceProvider();
         return searchProvider.getSearchInstance(searchProviderName, isElasticSearchEnabled());
     }
@@ -322,7 +327,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	/**
 	 * This method create a Map of request endpoints with request id
-	 * 
+	 *
 	 * @return Map
 	 */
 	@Bean
@@ -341,7 +346,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	/**
 	 * This method attaches the required interceptors. The flags that control
 	 * the attachment are read from application configuration.
-	 * 
+	 *
 	 * @param registry
 	 */
 	@Override
