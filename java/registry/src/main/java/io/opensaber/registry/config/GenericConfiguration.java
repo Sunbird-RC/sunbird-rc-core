@@ -35,7 +35,6 @@ import io.opensaber.registry.util.ServiceProvider;
 import io.opensaber.validators.IValidate;
 import io.opensaber.validators.ValidationFilter;
 import io.opensaber.validators.json.jsonschema.JsonValidationServiceImpl;
-import io.opensaber.verifiablecredentials.CredentialService;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -447,10 +446,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return notificationService;
 	}
 
-	@Bean
-	public CredentialService credentialService() {
-		return new CredentialService(PRIVATE_KEY, PUBLIC_KEY, DOMAIN, CREATOR, NONCE);
-	}
 //	/** creates elastic-service bean and instanstiates the indices
 //	 * @return - IElasticService
 //	 * @throws IOException

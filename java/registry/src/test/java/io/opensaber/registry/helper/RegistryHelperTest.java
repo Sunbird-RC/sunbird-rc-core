@@ -22,7 +22,6 @@ import io.opensaber.registry.util.Definition;
 import io.opensaber.registry.util.DefinitionsManager;
 import io.opensaber.registry.util.ViewTemplateManager;
 import io.opensaber.validators.IValidate;
-import io.opensaber.verifiablecredentials.CredentialService;
 import io.opensaber.workflow.KieConfiguration;
 import io.opensaber.workflow.RuleEngineService;
 import org.junit.Assert;
@@ -75,9 +74,6 @@ public class RegistryHelperTest {
 
     @Mock
     RegistryService registryService;
-
-    @Mock
-    CredentialService credentialService;
 
     @Mock
     IReadService readService;

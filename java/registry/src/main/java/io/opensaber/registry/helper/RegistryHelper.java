@@ -10,8 +10,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
-import foundation.identity.jsonld.JsonLDException;
-import info.weboftrust.ldsignatures.LdProof;
 import io.opensaber.keycloak.KeycloakAdminUtil;
 import io.opensaber.pojos.OpenSaberInstrumentation;
 import io.opensaber.pojos.PluginRequestMessage;
@@ -30,8 +28,6 @@ import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import io.opensaber.registry.util.*;
 import io.opensaber.validators.IValidate;
-import io.opensaber.verifiablecredentials.CredentialService;
-import io.opensaber.verifiablecredentials.JsonLDCreator;
 import io.opensaber.views.ViewTemplate;
 import io.opensaber.views.ViewTransformer;
 import lombok.Setter;
@@ -129,9 +125,6 @@ public class RegistryHelper {
 
     @Autowired
     private EntityTypeHandler entityTypeHandler;
-
-    @Autowired
-    private CredentialService credentialService;
 
     public String getAttestationOSID(JsonNode requestBody, String entityName, String entityId, String propertyName) throws Exception {
         JsonNode resultNode = readEntity("", entityName, entityId, false, null, false)
@@ -745,7 +738,7 @@ public class RegistryHelper {
         updateEntity(newRoot, userId);
     }
 
-    private void updateAttestation(JsonNode entity, AttestationPolicy attestationPolicy, ArrayNode attestations) throws JsonLDException, GeneralSecurityException, IOException {
+    private void updateAttestation(JsonNode entity, AttestationPolicy attestationPolicy, ArrayNode attestations) {
         for (JsonNode attestation : attestations) {
             if (attestation.get(_osState.name()).asText().equals(States.PUBLISHED.name())) {
                 ObjectNode propertiesOSID = attestation.get("propertiesOSID").deepCopy();
@@ -753,15 +746,23 @@ public class RegistryHelper {
                 Map<String, List<String>> propertiesOSIDMapper = objectMapper.convertValue(propertiesOSID, Map.class);
                 JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entity, attestationPolicy.getAttestationProperties(), propertiesOSIDMapper);
                 String proof = attestation.get(_osAttestedData.name()).asText();
-                LdProof ldProof = new ObjectMapper().readValue(proof, LdProof.class);
-                boolean isValid = credentialService.verify(propertyData.toString(), ldProof);
+
+                boolean isValid = false;
+                try {
+                    Object result = signatureService.verify(proof);
+
+                } catch (SignatureException.UnreachableException | SignatureException.VerificationException e) {
+                    e.printStackTrace();
+                }
                 if (!isValid) {
                     // update attestation status
                     ((ObjectNode) attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.INVALID.name()));
                 }
+
             }
         }
     }
+
     public Object getSignedDoc (JsonNode result, Map < String, Object > credentialTemplate) throws
     SignatureException.CreationException, SignatureException.UnreachableException {
         Map<String, Object> requestBodyMap = new HashMap<>();

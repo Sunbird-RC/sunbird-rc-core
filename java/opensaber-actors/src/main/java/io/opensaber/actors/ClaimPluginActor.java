@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import foundation.identity.jsonld.JsonLDException;
 import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.PluginResponseMessage;
@@ -21,12 +20,11 @@ import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.text.ParseException;
 import java.util.Objects;
 
 
 public class ClaimPluginActor extends BaseActor {
+    // TODO: read url from config
     private final String claimRequestUrl = "http://localhost:8082";
     private final String CLAIMS_PATH = "/api/v1/claims";
     RestTemplate restTemplate = new RestTemplate();
@@ -51,7 +49,7 @@ public class ClaimPluginActor extends BaseActor {
         }
     }
 
-    private void attestClaim(PluginRequestMessage pluginRequestMessage) throws IOException, JsonLDException, GeneralSecurityException, ParseException {
+    private void attestClaim(PluginRequestMessage pluginRequestMessage) throws IOException {
         JsonNode additionalInputs = pluginRequestMessage.getAdditionalInputs();
         String claimId = additionalInputs.get("claimId").asText();
         JsonNode attestorInfo = additionalInputs.get("attestorInfo");
@@ -77,7 +75,7 @@ public class ClaimPluginActor extends BaseActor {
         logger.info("Claim has successfully attested {}", responseEntity.toString());
     }
 
-    private void riseClaim(PluginRequestMessage pluginRequestMessage) throws IOException, JsonLDException, GeneralSecurityException, ParseException {
+    private void riseClaim(PluginRequestMessage pluginRequestMessage) throws IOException {
         JsonNode additionalInputs = pluginRequestMessage.getAdditionalInputs();
         String notes = "";
         if(additionalInputs.has("notes")) {

@@ -1,5 +1,6 @@
 package io.opensaber.registry.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import io.opensaber.registry.exception.SignatureException;
@@ -80,14 +81,15 @@ public class SignatureServiceImpl implements SignatureService {
 	 * @throws SignatureException.VerificationException
 	 */
 	@Override
-	public Object verify(Object propertyValue)
+	public boolean verify(Object propertyValue)
 			throws SignatureException.UnreachableException, SignatureException.VerificationException {
 		logger.debug("verify method starts with value {}",propertyValue);
 		ResponseEntity<String> response = null;
-		Object result = null;
+		boolean result = false;
 		try {
 			response = retryRestTemplate.postForEntity(verifyURL, propertyValue);
-			result =  objectMapper.readTree(response.getBody());
+			JsonNode resultNode = objectMapper.readTree(response.getBody());
+			result = resultNode.get("verified").asBoolean();
 		} catch (RestClientException ex) {
 			logger.error("RestClientException when verifying: ", ex);
 			throw new SignatureException().new UnreachableException(ex.getMessage());

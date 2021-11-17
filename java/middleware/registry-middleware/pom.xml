@@ -17,6 +17,5 @@
         <module>validation</module>
         <module>keycloak</module>
         <module>workflow</module>
-        <module>verifiable-credentials</module>
     </modules>
 </project>

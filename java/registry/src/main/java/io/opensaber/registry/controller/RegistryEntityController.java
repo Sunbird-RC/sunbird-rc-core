@@ -24,7 +24,6 @@ import io.opensaber.registry.transform.Configuration;
 import io.opensaber.registry.transform.Data;
 import io.opensaber.registry.transform.ITransformer;
 import io.opensaber.validators.ValidationException;
-import org.abstractj.kalium.crypto.Hash;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;

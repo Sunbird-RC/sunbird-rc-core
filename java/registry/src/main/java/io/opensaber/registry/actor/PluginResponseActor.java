@@ -1,32 +1,37 @@
-package io.opensaber.actors;
+package io.opensaber.registry.actor;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.pojos.PluginResponseMessage;
 import io.opensaber.pojos.ResponseParams;
 import io.opensaber.pojos.attestation.Action;
-import io.opensaber.verifiablecredentials.CredentialService;
+import io.opensaber.registry.service.SignatureService;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
 
-
+// TODO: autowire signature service
 public class PluginResponseActor extends BaseActor {
     private static final String SYSTEM_PROPERTY_URL = "/api/v1/%s/%s/attestation/%s/%s";
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
+    private final SignatureService signatureService;
 
-    public PluginResponseActor() {
-        this.objectMapper = new ObjectMapper();
+    public PluginResponseActor(ObjectMapper objectMapper, SignatureService signatureService) {
+        this.objectMapper = objectMapper;
+        this.signatureService = signatureService;
     }
 
     @Override
     public void onReceive(MessageProtos.Message request) throws Throwable {
         logger.debug("Received a message to PluginResponse Actor {}", request.getPerformOperation());
         PluginResponseMessage pluginResponseMessage = objectMapper.readValue(request.getPayload().getStringValue(), PluginResponseMessage.class);
-        CredentialService credentialService = new CredentialService(CredentialConstants.PRIVATE_KEY, CredentialConstants.PUBLIC_KEY, CredentialConstants.DOMAIN, CredentialConstants.CREATOR, CredentialConstants.NONCE);
+//        CredentialService credentialService = new CredentialService(CredentialConstants.PRIVATE_KEY, CredentialConstants.PUBLIC_KEY, CredentialConstants.DOMAIN, CredentialConstants.CREATOR, CredentialConstants.NONCE);
+
         if(Action.GRANT_CLAIM.equals(Action.valueOf(pluginResponseMessage.getStatus()))) {
-            pluginResponseMessage.setSignedData(credentialService.getSignedData(pluginResponseMessage.getSignedData()));
+            JsonNode signedData = objectMapper.readTree(pluginResponseMessage.getSignedData());
+            pluginResponseMessage.setSignedData(signatureService.sign(signedData).toString());
         }
         logger.info("{}", pluginResponseMessage);
         callUpdateAttestationAPI(pluginResponseMessage);

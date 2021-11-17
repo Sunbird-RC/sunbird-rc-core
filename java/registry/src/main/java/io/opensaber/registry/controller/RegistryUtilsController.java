@@ -106,6 +106,7 @@ public class RegistryUtilsController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	@Deprecated
 	@RequestMapping(value = "/utils/verify", method = RequestMethod.POST)
 	public ResponseEntity<Response> verifySignature(HttpServletRequest request) {
 		ResponseParams responseParams = new ResponseParams();
