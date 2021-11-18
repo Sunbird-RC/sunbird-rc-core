@@ -227,10 +227,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new ConfigurationHelper();
 	}
 
-	@Bean
+/*	@Bean
 	public AuthorizationInterceptor authorizationInterceptor() {
 		return new AuthorizationInterceptor(authorizationFilter());
-	}
+	}*/
 
 	@Bean
 	public RequestIdValidationInterceptor requestIdValidationInterceptor() {
@@ -241,12 +241,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public ValidationInterceptor validationInterceptor() throws IOException, CustomException {
 		return new ValidationInterceptor(new ValidationFilter(validationServiceImpl()));
 	}
-
+/*
 	@Bean
 	public Middleware authorizationFilter() {
 		return new AuthorizationFilter(new KeyCloakServiceImpl(authUrl, authRealm, authPublicKey));
 	}
-	
+	*/
     @Bean
     public IValidate validationServiceImpl() throws IOException, CustomException {
         // depends on input type,we need to implement validation
@@ -355,10 +355,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 				.order(orderIdx++);
 
 		// Authenticate and authorization check
-		if (authenticationEnabled) {
+/*		if (authenticationEnabled) {
 			registry.addInterceptor(authorizationInterceptor()).addPathPatterns("/**")
 					.excludePathPatterns("/health", "/error", "/_schemas/**").order(orderIdx++);
-		}
+		}*/
 
 		// Validate the input against the defined schema
 		if (validationEnabled) {
