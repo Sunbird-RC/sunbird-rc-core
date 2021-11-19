@@ -19,6 +19,7 @@ import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.pojos.attestation.States;
 import io.opensaber.registry.exception.SignatureException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
@@ -42,8 +43,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.*;
 
 import static io.opensaber.registry.Constants.*;

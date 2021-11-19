@@ -2,7 +2,6 @@ package io.opensaber.registry.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import io.opensaber.registry.exception.SignatureException;
 import io.opensaber.registry.service.SignatureService;
 import org.slf4j.Logger;

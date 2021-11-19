@@ -1,4 +1,4 @@
-package io.opensaber.registry.actor;
+package io.opensaber.actors;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.pojos.PluginResponseMessage;
 import io.opensaber.pojos.ResponseParams;
 import io.opensaber.pojos.attestation.Action;
-import io.opensaber.registry.app.SpringContext;
-import io.opensaber.registry.service.SignatureService;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import org.sunbird.akka.core.BaseActor;
@@ -16,18 +14,19 @@ import org.sunbird.akka.core.MessageProtos;
 // TODO: autowire signature service
 public class PluginResponseActor extends BaseActor {
     private static final String SYSTEM_PROPERTY_URL = "/api/v1/%s/%s/attestation/%s/%s";
+    ObjectMapper objectMapper;
+//    SignatureService signatureService;
 
     @Override
     public void onReceive(MessageProtos.Message request) throws Throwable {
         logger.debug("Received a message to PluginResponse Actor {}", request.getPerformOperation());
-        ObjectMapper objectMapper = SpringContext.getBean(ObjectMapper.class);
         PluginResponseMessage pluginResponseMessage = objectMapper.readValue(request.getPayload().getStringValue(), PluginResponseMessage.class);
 //        CredentialService credentialService = new CredentialService(CredentialConstants.PRIVATE_KEY, CredentialConstants.PUBLIC_KEY, CredentialConstants.DOMAIN, CredentialConstants.CREATOR, CredentialConstants.NONCE);
 
         if(Action.GRANT_CLAIM.equals(Action.valueOf(pluginResponseMessage.getStatus()))) {
             JsonNode signedData = objectMapper.readTree(pluginResponseMessage.getSignedData());
-            SignatureService signatureService = SpringContext.getBean(SignatureService.class);
-            pluginResponseMessage.setSignedData(signatureService.sign(signedData).toString());
+//            pluginResponseMessage.setSignedData(signatureService.sign(signedData).toString());
+            pluginResponseMessage.setSignedData(signedData.toString());
         }
         logger.info("{}", pluginResponseMessage);
         callUpdateAttestationAPI(pluginResponseMessage);

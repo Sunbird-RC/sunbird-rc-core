@@ -88,8 +88,7 @@ public class ClaimPluginActor extends BaseActor {
         claimDTO.setPropertyURI("");
         claimDTO.setPropertyData(pluginRequestMessage.getPropertyData().toString());
         claimDTO.setConditions(pluginRequestMessage.getConditions());
-        claimDTO.setAttestorEntity(pluginRequestMessage.getConditions());
-        claimDTO.setConditions(pluginRequestMessage.getConditions());
+        claimDTO.setAttestorEntity(pluginRequestMessage.getAttestorEntity());
         claimDTO.setAttestationId(pluginRequestMessage.getAttestationOSID());
         claimDTO.setNotes(notes);
         claimDTO.setAttestationName(pluginRequestMessage.getPolicyName());
