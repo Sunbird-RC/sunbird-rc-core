@@ -14,7 +14,7 @@ import org.sunbird.akka.core.MessageProtos;
 // TODO: autowire signature service
 public class PluginResponseActor extends BaseActor {
     private static final String SYSTEM_PROPERTY_URL = "/api/v1/%s/%s/attestation/%s/%s";
-    ObjectMapper objectMapper;
+    ObjectMapper objectMapper = new ObjectMapper();
 //    SignatureService signatureService;
 
     @Override

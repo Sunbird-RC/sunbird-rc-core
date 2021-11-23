@@ -521,6 +521,8 @@ public class RegistryHelper {
             );
         } else if (action.equals(Action.GRANT_CLAIM)) {
             metaData.put(
+                    // Convert signed data to ldjson, how?
+                    // And Sign using signature service
                     "attestedData",
                     pluginResponseMessage.getSignedData()
             );
