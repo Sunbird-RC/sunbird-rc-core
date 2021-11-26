@@ -520,11 +520,12 @@ public class RegistryHelper {
                     additionalData.get("claimId").asText("")
             );
         } else if (action.equals(Action.GRANT_CLAIM)) {
+            Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getPolicyName());
+            JsonNode signedDataNode = objectMapper.readTree(pluginResponseMessage.getSignedData());
+            Object signedData = getSignedDoc(signedDataNode, credentialTemplate);
             metaData.put(
-                    // Convert signed data to ldjson, how?
-                    // And Sign using signature service
                     "attestedData",
-                    pluginResponseMessage.getSignedData()
+                    signedData.toString()
             );
         }
         String propertyURI = attestationName + "/" + attestationOSID;

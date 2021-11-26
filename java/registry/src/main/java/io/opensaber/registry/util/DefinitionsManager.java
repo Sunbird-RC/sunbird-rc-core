@@ -177,4 +177,12 @@ public class DefinitionsManager {
     public Map<String, Object> getCredentialTemplate(String entityName) {
         return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
     }
+
+    public Map<String, Object> getCredentialTemplate(String sourceEntity, String policyName) {
+        Optional<AttestationPolicy> attestationPolicy = getAttestationPolicy(sourceEntity)
+                .stream()
+                .filter(policy -> policy.getName().equals(policyName))
+                .findFirst();
+        return attestationPolicy.orElse(new AttestationPolicy()).getCredentialTemplate();
+    }
 }
