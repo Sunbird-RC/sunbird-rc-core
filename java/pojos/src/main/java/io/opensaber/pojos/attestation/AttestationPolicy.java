@@ -1,12 +1,12 @@
 package io.opensaber.pojos.attestation;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AttestationPolicy {
+    final static String PLUGIN_SPLITTER = ":";
 
     /**
     * name property will be used to pick the specific attestation policy
@@ -42,6 +42,10 @@ public class AttestationPolicy {
     * It will be used for signin redirection eg. consent based screens
     * */
     private String attestorSignin;
+    /*
+    * Credential template for an attestation
+    * */
+    private Map<String, Object> credentialTemplate;
 
     public List<String> getPaths() {
         return paths;
@@ -127,5 +131,17 @@ public class AttestationPolicy {
 
     public void setAttestationProperties(Map<String, String> attestationProperties) {
         this.attestationProperties = attestationProperties;
+    }
+
+    public Map<String, Object> getCredentialTemplate() {
+        return credentialTemplate;
+    }
+
+    public void setCredentialTemplate(Map<String, Object> credentialTemplate) {
+        this.credentialTemplate = credentialTemplate;
+    }
+
+    public boolean isInternal() {
+        return attestorPlugin.split(PLUGIN_SPLITTER)[1].equals(AttestorPluginType.internal.name());
     }
 }

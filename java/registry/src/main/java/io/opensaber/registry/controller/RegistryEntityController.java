@@ -277,7 +277,7 @@ public class RegistryEntityController extends AbstractController {
         }
         AttestationPolicy attestationPolicy = definitionsManager.getAttestationPolicy(entityName, attestationName);
 
-        if(attestationPolicy.getType().equals(AttestationType.MANUAL)) {
+        if(attestationPolicy.isInternal()) {
             try {
                 // Generate property Data
                 String userId = registryHelper.getUserId(request);
@@ -304,6 +304,8 @@ public class RegistryEntityController extends AbstractController {
                 Response response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
                 return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
             }
+        } else {
+            // TODO: add logic for external plugin
         }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEND, "OK", responseParams);

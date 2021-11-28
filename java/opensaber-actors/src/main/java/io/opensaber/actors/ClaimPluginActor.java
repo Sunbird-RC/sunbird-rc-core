@@ -104,8 +104,7 @@ public class ClaimPluginActor extends BaseActor {
     private void callPluginResponseActor(PluginRequestMessage pluginRequestMessage, String claimId, Action raiseClaim) throws IOException {
         PluginResponseMessage pluginResponseMessage = PluginResponseMessageCreator.createClaimResponseMessage(claimId, raiseClaim, pluginRequestMessage);
         if(Action.valueOf(pluginRequestMessage.getStatus()).equals(Action.GRANT_CLAIM)) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            pluginResponseMessage.setSignedData(objectMapper.writeValueAsString(pluginRequestMessage.getPropertyData()));
+            pluginResponseMessage.setSignedData(pluginRequestMessage.getPropertyData());
         }
         MessageProtos.Message pluginResponseActorMessage = MessageFactory.instance().createPluginResponseMessage(pluginResponseMessage);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(pluginResponseActorMessage, null);
