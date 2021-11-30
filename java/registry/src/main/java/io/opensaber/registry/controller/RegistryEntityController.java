@@ -8,8 +8,8 @@ import io.opensaber.pojos.*;
 import io.opensaber.keycloak.OwnerCreationException;
 import io.opensaber.pojos.Response;
 import io.opensaber.pojos.ResponseParams;
+import io.opensaber.pojos.attestation.Action;
 import io.opensaber.pojos.attestation.AttestationPolicy;
-import io.opensaber.pojos.attestation.AttestationType;
 import io.opensaber.registry.dao.NotFoundException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
@@ -263,7 +263,6 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
-    // TODO: property path resolver
     @RequestMapping(value = "/api/v1/send")
     public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody JsonNode requestBody)  {
         String entityName = requestBody.get("entityName").asText();
@@ -294,7 +293,9 @@ public class RegistryEntityController extends AbstractController {
                 String condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
 
                 // Rise claim
-                PluginRequestMessage message = PluginRequestMessageCreator.createClaimPluginMessage(propertyData.toString(), condition, attestationPolicy, attestationOSID, entityName, entityId);
+                PluginRequestMessage message = PluginRequestMessageCreator.create(
+                        propertyData.toString(), condition, attestationPolicy, attestationOSID,
+                        entityName, entityId, JsonNodeFactory.instance.nullNode(), Action.RAISE_CLAIM.name());
                 PluginRouter.route(message);
             } catch (Exception exception) {
                 logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
@@ -305,7 +306,18 @@ public class RegistryEntityController extends AbstractController {
                 return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } else {
-            // TODO: add logic for external plugin
+            try {
+                JsonNode additionalInput = requestBody.get("additionalInput");
+                registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
+                String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
+                PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
+                        "", "", attestationPolicy, attestationOSID,
+                        entityName, entityId, additionalInput, Action.RAISE_CLAIM.name());
+                PluginRouter.route(pluginRequestMessage);
+            } catch (Exception e) {
+                logger.error("Unable to route to the actor : {}", e.getMessage());
+                e.printStackTrace();
+            }
         }
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
@@ -644,7 +656,6 @@ public class RegistryEntityController extends AbstractController {
             String userId = "";
 
             registryHelper.updateState(pluginResponseMessage);
-//            String response = registryHelper.updateProperty(newRootNode, "");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             responseParams.setResultList(Collections.singletonList("response"));
             return new ResponseEntity<>(responseParams, HttpStatus.OK);

@@ -2,11 +2,9 @@ package io.opensaber.registry.controller;
 
 
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 
@@ -24,5 +22,4 @@ public class RegistryTemplateController{
         }
         return content;
     }
-
 }

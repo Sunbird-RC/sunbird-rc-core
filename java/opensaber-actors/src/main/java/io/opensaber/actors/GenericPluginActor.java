@@ -1,0 +1,55 @@
+package io.opensaber.actors;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import io.opensaber.actors.factory.MessageFactory;
+import io.opensaber.pojos.PluginRequestMessage;
+import io.opensaber.pojos.PluginResponseMessage;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import org.sunbird.akka.core.ActorCache;
+import org.sunbird.akka.core.BaseActor;
+import org.sunbird.akka.core.MessageProtos;
+import org.sunbird.akka.core.Router;
+
+import java.util.Date;
+import java.util.Objects;
+
+import static io.opensaber.pojos.attestation.Action.GRANT_CLAIM;
+import static io.opensaber.pojos.attestation.Action.REJECT_CLAIM;
+
+public class GenericPluginActor extends BaseActor {
+    @Override
+    protected void onReceive(MessageProtos.Message request) throws Throwable {
+        String payLoad = request.getPayload().getStringValue();
+        PluginRequestMessage pluginRequestMessage = new ObjectMapper().readValue(payLoad, PluginRequestMessage.class);
+        logger.info("Received request message {} ", pluginRequestMessage);
+        JsonNode additionalInput = pluginRequestMessage.getAdditionalInputs();
+
+        String url = "http://127.0.0.1:5000/mosip";
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<JsonNode> response = restTemplate.postForEntity(url, additionalInput, JsonNode.class);
+        PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder().policyName(pluginRequestMessage.getPolicyName())
+                .sourceEntity(pluginRequestMessage.getSourceEntity()).sourceOSID(pluginRequestMessage.getSourceOSID())
+                .attestationOSID(pluginRequestMessage.getAttestationOSID())
+                .attestorPlugin(pluginRequestMessage.getAttestorPlugin())
+                .additionalData(JsonNodeFactory.instance.nullNode())
+                .date(new Date())
+                .validUntil(new Date())
+                .version("").build();
+
+        if(response.getStatusCode().is2xxSuccessful()) {
+            JsonNode responseBody = response.getBody();
+            String verified = "verified";
+            if(Objects.requireNonNull(responseBody).has(verified) && responseBody.get(verified).asBoolean()) {
+                pluginResponseMessage.setStatus(GRANT_CLAIM.name());
+                pluginResponseMessage.setResponse(responseBody.get("data").toString());
+            }
+        } else {
+            pluginResponseMessage.setStatus(REJECT_CLAIM.name());
+        }
+        MessageProtos.Message esProtoMessage = MessageFactory.instance().createPluginResponseMessage(pluginResponseMessage);
+        ActorCache.instance().get(Router.ROUTER_NAME).tell(esProtoMessage, null);
+    }
+}

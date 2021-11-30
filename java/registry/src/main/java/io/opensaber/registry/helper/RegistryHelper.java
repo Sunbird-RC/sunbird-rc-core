@@ -514,15 +514,15 @@ public class RegistryHelper {
         ObjectNode metaData = JsonNodeFactory.instance.objectNode();
         JsonNode additionalData = pluginResponseMessage.getAdditionalData();
         Action action = Action.valueOf(pluginResponseMessage.getStatus());
-        if (action.equals(Action.RAISE_CLAIM)) {
+        if (Action.RAISE_CLAIM.name().equals(pluginResponseMessage.getStatus())) {
             metaData.put(
                     "claimId",
                     additionalData.get("claimId").asText("")
             );
-        } else if (action.equals(Action.GRANT_CLAIM)) {
+        } else if (Action.GRANT_CLAIM.name().equals(pluginResponseMessage.getStatus())) {
             Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getPolicyName());
-            JsonNode signedDataNode = objectMapper.readTree(pluginResponseMessage.getSignedData());
-            Object signedData = getSignedDoc(signedDataNode, credentialTemplate);
+            JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
+            Object signedData = getSignedDoc(response, credentialTemplate);
             metaData.put(
                     "attestedData",
                     signedData.toString()
@@ -532,7 +532,6 @@ public class RegistryHelper {
         JsonNode nodeToUpdate = entityStateHelper.manageState(attestationPolicy, root, propertyURI, action, metaData);
         updateEntity(nodeToUpdate, userId);
     }
-
 
     /**
      * Get Audit log information , external api's can use this method to get the

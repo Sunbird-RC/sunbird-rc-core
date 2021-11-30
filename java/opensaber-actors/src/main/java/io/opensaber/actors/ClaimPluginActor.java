@@ -34,7 +34,6 @@ public class ClaimPluginActor extends BaseActor {
     protected void onReceive(MessageProtos.Message request) throws Throwable {
         // TODO: remove the property URI totally, since we have property paths
         // TODO: fix notes and requestorName
-        // TODO: return response to set the claim ID
         String payLoad = request.getPayload().getStringValue();
         PluginRequestMessage pluginRequestMessage = new ObjectMapper().readValue(payLoad, PluginRequestMessage.class);
 
@@ -86,7 +85,7 @@ public class ClaimPluginActor extends BaseActor {
         claimDTO.setEntity(pluginRequestMessage.getSourceEntity());
         claimDTO.setEntityId(pluginRequestMessage.getSourceOSID());
         claimDTO.setPropertyURI("");
-        claimDTO.setPropertyData(pluginRequestMessage.getPropertyData().toString());
+        claimDTO.setPropertyData(pluginRequestMessage.getPropertyData());
         claimDTO.setConditions(pluginRequestMessage.getConditions());
         claimDTO.setAttestorEntity(pluginRequestMessage.getAttestorEntity());
         claimDTO.setAttestationId(pluginRequestMessage.getAttestationOSID());
@@ -104,7 +103,7 @@ public class ClaimPluginActor extends BaseActor {
     private void callPluginResponseActor(PluginRequestMessage pluginRequestMessage, String claimId, Action raiseClaim) throws IOException {
         PluginResponseMessage pluginResponseMessage = PluginResponseMessageCreator.createClaimResponseMessage(claimId, raiseClaim, pluginRequestMessage);
         if(Action.valueOf(pluginRequestMessage.getStatus()).equals(Action.GRANT_CLAIM)) {
-            pluginResponseMessage.setSignedData(pluginRequestMessage.getPropertyData());
+            pluginResponseMessage.setResponse(pluginRequestMessage.getPropertyData());
         }
         MessageProtos.Message pluginResponseActorMessage = MessageFactory.instance().createPluginResponseMessage(pluginResponseMessage);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(pluginResponseActorMessage, null);
