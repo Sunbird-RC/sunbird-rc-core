@@ -83,8 +83,9 @@ public class Response {
 		KEYS("open-saber.utils.keys"),
 		ENCRYPT("open-saber.utils.encrypt"),
 		DECRYPT("open-saber.utils.decrypt"),
+		SEND("open-saber.registry.send"),
 		NONE("");
-		private String id;
+        private String id;
 
 		private API_ID(String id) {
 			this.id = id;

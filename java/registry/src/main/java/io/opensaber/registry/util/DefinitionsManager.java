@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opensaber.pojos.OwnershipsAttributes;
 import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.pojos.attestation.exception.PolicyNotFoundException;
 import io.opensaber.registry.middleware.util.Constants;
 
 import java.util.*;
@@ -33,6 +34,13 @@ public class DefinitionsManager {
     
     @Autowired
     private ResourceLoader resourceLoader;
+
+    public AttestationPolicy getAttestationPolicy(String entityName, String attestationName) {
+        return getDefinition(entityName)
+                .getOsSchemaConfiguration()
+                .getAttestationPolicyFor(attestationName)
+                .orElseThrow(() -> new PolicyNotFoundException("Policy " + attestationName + " is not found"));
+    }
 
     /**
      * Loads the definitions from the _schemas folder
@@ -168,5 +176,13 @@ public class DefinitionsManager {
 
     public Map<String, Object> getCredentialTemplate(String entityName) {
         return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
+    }
+
+    public Map<String, Object> getCredentialTemplate(String sourceEntity, String policyName) {
+        Optional<AttestationPolicy> attestationPolicy = getAttestationPolicy(sourceEntity)
+                .stream()
+                .filter(policy -> policy.getName().equals(policyName))
+                .findFirst();
+        return attestationPolicy.orElse(new AttestationPolicy()).getCredentialTemplate();
     }
 }

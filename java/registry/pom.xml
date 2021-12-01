@@ -125,7 +125,13 @@
 
         <dependency>
             <groupId>io.opensaber</groupId>
-            <artifactId>opensaber-actors</artifactId>
+            <artifactId>sample-external-plugin</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.opensaber</groupId>
+            <artifactId>sample-external-plugin-2</artifactId>
             <version>${revision}</version>
         </dependency>
 
@@ -237,6 +243,7 @@
             <version>1.0.1</version>
             <scope>test</scope>
         </dependency>
+
         <!--<dependency>-->
             <!--<groupId>org.apache.tinkerpop</groupId>-->
             <!--<artifactId>gremlin-driver</artifactId>-->

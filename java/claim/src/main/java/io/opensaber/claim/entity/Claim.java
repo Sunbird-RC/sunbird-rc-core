@@ -41,6 +41,12 @@ public class Claim {
     private String attestorEntity;
     @Column
     private String requestorName;
+    @Column(columnDefinition = "text")
+    private String propertyData;
+    @Column
+    private String attestationId;
+    @Column
+    private String attestationName;
 
     @PrePersist
     protected void onCreate() {
@@ -143,6 +149,9 @@ public class Claim {
         claim.setAttestorEntity(claimDTO.getAttestorEntity());
         claim.setStatus(ClaimStatus.OPEN.name());
         claim.setRequestorName(claimDTO.getRequestorName());
+        claim.setPropertyData(claimDTO.getPropertyData());
+        claim.setAttestationId(claimDTO.getAttestationId());
+        claim.setAttestationName(claimDTO.getAttestationName());
         return claim;
     }
 
@@ -152,5 +161,29 @@ public class Claim {
 
     public void setRequestorName(String requesterName) {
         this.requestorName = requesterName;
+    }
+
+    public String getPropertyData() {
+        return propertyData;
+    }
+
+    public void setPropertyData(String propertyData) {
+        this.propertyData = propertyData;
+    }
+
+    public String getAttestationId() {
+        return attestationId;
+    }
+
+    public void setAttestationId(String attestationOSID) {
+        this.attestationId = attestationOSID;
+    }
+
+    public String getAttestationName() {
+        return attestationName;
+    }
+
+    public void setAttestationName(String attestationName) {
+        this.attestationName = attestationName;
     }
 }

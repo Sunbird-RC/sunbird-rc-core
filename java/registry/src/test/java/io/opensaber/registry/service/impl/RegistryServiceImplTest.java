@@ -12,7 +12,6 @@ import io.opensaber.registry.model.DBConnectionInfoMgr;
 import io.opensaber.registry.sink.DBProviderFactory;
 import io.opensaber.registry.sink.DatabaseProvider;
 import io.opensaber.registry.sink.OSGraph;
-import io.opensaber.registry.sink.shard.Shard;
 import io.opensaber.registry.sink.shard.ShardManager;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.junit.Before;

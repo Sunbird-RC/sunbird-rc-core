@@ -25,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
 import org.slf4j.Logger;
@@ -482,4 +483,37 @@ public class JSONUtil {
         List<String> typeList = JsonPath.using(alwaysReturnListConfig).parse(input.toString()).read(path);
         return typeList.get(0);
     }
+
+	public static String getOSIDFromArrNode(JsonNode resultNode, JsonNode requestBody, List<String> fieldsToRemove) {
+		if (resultNode.isArray()) {
+			ArrayNode arrayNode = (ArrayNode) resultNode;
+			return arrayNode.get(arrayNode.size() - 1).get("osid").asText();
+		}
+		return "";
+	}
+
+	public static JsonNode extractPropertyDataFromEntity(JsonNode entityNode, Map<String, String> attestationProperties, Map<String, List<String>> propertiesOSIDMapper) {
+		ObjectNode result = JsonNodeFactory.instance.objectNode();
+		DocumentContext documentContext = JsonPath.parse(entityNode.toString());
+		for(Map.Entry<String, String> entry : attestationProperties.entrySet()) {
+			String path = entry.getValue();
+			String key = entry.getKey();
+			Object read = documentContext.read(path);
+			JsonNode readNode = new ObjectMapper().convertValue(read, JsonNode.class);
+			result.set(key, readNode);
+			if(readNode.isArray() && propertiesOSIDMapper != null && propertiesOSIDMapper.containsKey(key)) {
+				List<String> osids = propertiesOSIDMapper.get(key);
+				ArrayNode arrayNode = (ArrayNode) readNode;
+				ArrayNode filteredArrNode = JsonNodeFactory.instance.arrayNode();
+
+				for(JsonNode node :arrayNode) {
+					if(node.has("osid") && osids.contains(node.get("osid").asText())) {
+						filteredArrNode.add(node);
+					}
+				}
+				result.set(key, filteredArrNode);
+			}
+		}
+		return result;
+	}
 }

@@ -12,9 +12,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
 import io.opensaber.keycloak.KeycloakAdminUtil;
 import io.opensaber.pojos.OpenSaberInstrumentation;
+import io.opensaber.pojos.PluginRequestMessage;
+import io.opensaber.pojos.PluginResponseMessage;
 import io.opensaber.pojos.attestation.Action;
+import io.opensaber.pojos.attestation.AttestationPolicy;
+import io.opensaber.pojos.attestation.States;
 import io.opensaber.registry.exception.SignatureException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
+import io.opensaber.registry.service.SignatureService;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
 import io.opensaber.registry.model.DBConnectionInfoMgr;
@@ -34,8 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -44,6 +49,8 @@ import static io.opensaber.registry.Constants.*;
 import static io.opensaber.registry.exception.ErrorMessages.*;
 import static io.opensaber.registry.middleware.util.Constants.EMAIL;
 import static io.opensaber.registry.middleware.util.Constants.MOBILE;
+import static io.opensaber.registry.middleware.util.OSSystemFields._osAttestedData;
+import static io.opensaber.registry.middleware.util.OSSystemFields._osState;
 
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
@@ -116,6 +123,13 @@ public class RegistryHelper {
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
+    public String getAttestationOSID(JsonNode requestBody, String entityName, String entityId, String propertyName) throws Exception {
+        JsonNode resultNode = readEntity("", entityName, entityId, false, null, false)
+                .get(entityName)
+                .get(propertyName);
+        List<String> fieldsToRemove = getFieldsToRemove(entityName);
+        return JSONUtil.getOSIDFromArrNode(resultNode, requestBody, fieldsToRemove);
+    }
     @Autowired
     private SignatureService signatureService;
 
@@ -341,6 +355,7 @@ public class RegistryHelper {
         return updateEntityAndState(existingNode, inputJson, userId);
     }
 
+    @Async
     public void triggerAutoAttestor(String entityName, String entityId, HttpServletRequest request, JsonNode existingNode) throws Exception {
         JsonNode updatedNode = readEntity("", entityName, entityId, false, null, false);
         registryService.callAutoAttestationActor(existingNode.get(entityName), updatedNode.get(entityName), entityName, entityId, request);
@@ -365,6 +380,16 @@ public class RegistryHelper {
 
         createOrUpdateProperty(entityName, inputJson, updateNode, propertyName, (ObjectNode) parentNode, propertyNode);
         updateEntityAndState(existingNode, updateNode, "");
+    }
+
+    public String addAttestationProperty(String entityName, String entityId, String propertyName, JsonNode inputJson, HttpServletRequest request) throws Exception {
+        String userId = getUserId(request);
+        JsonNode existingEntityNode = readEntity(userId, entityName, entityId, false, null, false);
+        JsonNode nodeToUpdate = existingEntityNode.deepCopy();
+        JsonNode parentNode = nodeToUpdate.get(entityName);
+        JsonNode propertyNode = parentNode.get(propertyName);
+        createOrUpdateProperty(entityName, inputJson, nodeToUpdate, propertyName, (ObjectNode) parentNode, propertyNode);
+        return updateEntityAndState(existingEntityNode, nodeToUpdate, userId);
     }
 
     private void createOrUpdateProperty(String entityName, JsonNode inputJson, JsonNode updateNode, String propertyName, ObjectNode parentNode, JsonNode propertyNode) throws JsonProcessingException {
@@ -461,6 +486,10 @@ public class RegistryHelper {
         updateEntity(updatedNode, "");
     }
 
+    public void callPluginActor() throws JsonProcessingException {
+        registryService.callPluginActors("CowinActor", PluginRequestMessage.builder().sourceEntity("Student").sourceOSID("234").policyName("education").attestationOSID("432").build());
+    }
+
     public void attest(String entityName, String entityId, String uuidPath, JsonNode attestReq) throws Exception {
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
         JsonNode updatedNode;
@@ -472,6 +501,36 @@ public class RegistryHelper {
             sendNotificationToOwners(updatedNode, CLAIM_REJECTED, String.format(CLAIM_STATUS_SUBJECT_TEMPLATE, CLAIM_REJECTED), String.format(CLAIM_STATUS_BODY_TEMPLATE, CLAIM_REJECTED));
         }
         updateEntity(updatedNode, "");
+    }
+
+    public void updateState(PluginResponseMessage pluginResponseMessage) throws Exception {
+        String attestationName = pluginResponseMessage.getPolicyName();
+        String attestationOSID = pluginResponseMessage.getAttestationOSID();
+        String sourceEntity = pluginResponseMessage.getSourceEntity();
+        AttestationPolicy attestationPolicy = definitionsManager.getAttestationPolicy(sourceEntity, attestationName);
+        String userId = "";
+
+        JsonNode root = readEntity(userId, sourceEntity, pluginResponseMessage.getSourceOSID(), false, null, false);
+        ObjectNode metaData = JsonNodeFactory.instance.objectNode();
+        JsonNode additionalData = pluginResponseMessage.getAdditionalData();
+        Action action = Action.valueOf(pluginResponseMessage.getStatus());
+        if (Action.RAISE_CLAIM.name().equals(pluginResponseMessage.getStatus())) {
+            metaData.put(
+                    "claimId",
+                    additionalData.get("claimId").asText("")
+            );
+        } else if (Action.GRANT_CLAIM.name().equals(pluginResponseMessage.getStatus())) {
+            Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getPolicyName());
+            JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
+            Object signedData = getSignedDoc(response, credentialTemplate);
+            metaData.put(
+                    "attestedData",
+                    signedData.toString()
+            );
+        }
+        String propertyURI = attestationName + "/" + attestationOSID;
+        JsonNode nodeToUpdate = entityStateHelper.manageState(attestationPolicy, root, propertyURI, action, metaData);
+        updateEntity(nodeToUpdate, userId);
     }
 
     /**
@@ -592,7 +651,7 @@ public class RegistryHelper {
     }
 
     @NotNull
-    private List<String> getFieldsToRemove(String entityName) {
+    public List<String> getFieldsToRemove(String entityName) {
         List<String> fieldsToRemove = new ArrayList<>();
         fieldsToRemove.add(uuidPropertyName);
         List<String> systemFields = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields();
@@ -660,7 +719,51 @@ public class RegistryHelper {
         return (List<String>) customAttributes;
     }
 
-    public Object getSignedDoc(JsonNode result, Map<String, Object> credentialTemplate) throws SignatureException.CreationException, SignatureException.UnreachableException {
+    @Async
+    public void invalidateAttestation(String entityName, String entityId) throws Exception {
+        String userId = "osrc";
+        JsonNode entity = readEntity(userId, entityName, entityId, false, null, false)
+                .get(entityName);
+        for (AttestationPolicy attestationPolicy : definitionsManager.getAttestationPolicy(entityName)) {
+            String policyName = attestationPolicy.getName();
+
+            if(entity.has(policyName) && entity.get(policyName).isArray()) {
+                ArrayNode attestations = (ArrayNode) entity.get(policyName);
+                updateAttestation(entity, attestationPolicy, attestations);
+            }
+        }
+        ObjectNode newRoot = JsonNodeFactory.instance.objectNode();
+        newRoot.set(entityName,entity);
+        updateEntity(newRoot, userId);
+    }
+
+    private void updateAttestation(JsonNode entity, AttestationPolicy attestationPolicy, ArrayNode attestations) {
+        for (JsonNode attestation : attestations) {
+            if (attestation.get(_osState.name()).asText().equals(States.PUBLISHED.name())) {
+                ObjectNode propertiesOSID = attestation.get("propertiesOSID").deepCopy();
+                JSONUtil.removeNode(propertiesOSID, uuidPropertyName);
+                Map<String, List<String>> propertiesOSIDMapper = objectMapper.convertValue(propertiesOSID, Map.class);
+                JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entity, attestationPolicy.getAttestationProperties(), propertiesOSIDMapper);
+                String proof = attestation.get(_osAttestedData.name()).asText();
+
+                boolean isValid = false;
+                try {
+                    Object result = signatureService.verify(proof);
+
+                } catch (SignatureException.UnreachableException | SignatureException.VerificationException e) {
+                    e.printStackTrace();
+                }
+                if (!isValid) {
+                    // update attestation status
+                    ((ObjectNode) attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.INVALID.name()));
+                }
+
+            }
+        }
+    }
+
+    public Object getSignedDoc (JsonNode result, Map < String, Object > credentialTemplate) throws
+    SignatureException.CreationException, SignatureException.UnreachableException {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("data", result);
         requestBodyMap.put("credentialTemplate", credentialTemplate);

@@ -80,7 +80,12 @@ public class SunbirdActorFactory {
                 } else if (!stringConfigValueEntry.getKey().contains(Router.ROUTER_NAME)) {
                     // Local actors initialization other than router
                     ActorRef actorRef = null;
-                    String className = actorScanPackage + "." + stringConfigValueEntry.getKey().substring(1);
+                    String className = "";
+                    if (valObj.containsKey("package")) {
+                        className = valObj.get("package").render().replace("\"","") + "." + stringConfigValueEntry.getKey().substring(1);
+                    } else {
+                        className = actorScanPackage + "." + stringConfigValueEntry.getKey().substring(1);
+                    }
                     try {
                         actorRef = createLocalActor(actorSystem, Class.forName(className));
                         actorCache.add(ActorUtils.getName(actorRef), actorRef);

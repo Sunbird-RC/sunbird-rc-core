@@ -1,0 +1,56 @@
+{
+  "name": "Steve Rogers",
+  "experienceDetails": {
+    "osid": "123",
+    "institute": "8e2e8693-97e5-4b0d-b61e-d843eba8b5a3",
+    "employmentType": "Permanent",
+    "start": "1999-06-16",
+    "end": "2022-06-16",
+    "teacherType": "Head teacher",
+    "subjects": [
+      "Science",
+      "Mathematics"
+    ],
+    "notes": "I goval working in the institute",
+    "grades": [
+      "Class I",
+      "Class II"
+    ]
+  },
+  "educationDetails": [
+    {
+      "program": "HSC",
+      "graduationYear": "2015",
+      "marks": "78",
+      "institute": "b62b3d52-cffe-428d-9dd1-61ba7b0a5882",
+      "documents": [
+        {
+          "fileName": "e3266115-0bd0-4456-a347-96f4dc335761-blog_draft",
+          "format": "file"
+        },
+        {
+          "fileName": "e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt",
+          "format": "file"
+        }
+      ],
+      "osid": "1"
+    },
+    {
+      "program": "SSLC",
+      "graduationYear": "2011",
+      "marks": "78",
+      "institute": "b62b3d52-cffe-428d-9dd1-61ba7b0a5882",
+      "documents": [
+        {
+          "fileName": "e3266115-0bd0-4456-a347-96f4dc335761-blog_draft",
+          "format": "file"
+        },
+        {
+          "fileName": "e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt",
+          "format": "file"
+        }
+      ],
+      "osid": "2"
+    }
+  ]
+}

@@ -3,11 +3,11 @@
 Feature: Registry api tests
   Background:
     * url baseurl
-    * string mobile = "0000000010"
+    * string mobile = "00200100010"
     * def password = "opensaber@123"
     * def student = {"contactDetails": {"email": "peter@sahaj.ai","mobile": "#(mobile)"}}
     * string registryUrl = "http://localhost:8081"
-    * string authUrl = "http://localhost:9990"
+    * string authUrl = "http://localhost:8080"
 
   Scenario: health check
     Given path 'health'
@@ -28,7 +28,7 @@ Feature: Registry api tests
 
    * string formRequest = "grant_type=password&client_id=registry-frontend&username=" + mobile + "&password="+password
     Given url authUrl
-    Given path "auth/realms/ndear/protocol/openid-connect/token"
+    Given path "auth/realms/sunbird-rc/protocol/openid-connect/token"
     And header Content-Type = "application/x-www-form-urlencoded"
     And request formRequest
 
