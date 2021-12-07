@@ -1,11 +1,14 @@
 package io.opensaber.plugin;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.PluginResponseMessage;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
@@ -13,36 +16,43 @@ import org.sunbird.akka.core.Router;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.Objects;
 
-public class SampleActor extends BaseActor {
+import static io.opensaber.pojos.attestation.Action.GRANT_CLAIM;
+import static io.opensaber.pojos.attestation.Action.REJECT_CLAIM;
+
+public class DocumentUploadActor extends BaseActor {
     private ObjectMapper objectMapper;
 
 
-    public SampleActor() {
+    public DocumentUploadActor() {
         this.objectMapper = new ObjectMapper();
 
     }
 
     @Override
     public void onReceive(MessageProtos.Message request) throws Throwable {
-        logger.debug("Received a message to Notification Actor {}", request.getPerformOperation());
-        objectMapper = new ObjectMapper();
-        PluginRequestMessage pluginRequestMessage = objectMapper.readValue(request.getPayload().getStringValue(), PluginRequestMessage.class);
-        String cowinResponse = "{\n" +
-                "  \"status\": \"verified\",\n" +
-                "  \"data\": \"b-123\"\n" +
-                "}";
+        String payLoad = request.getPayload().getStringValue();
+        PluginRequestMessage pluginRequestMessage = new ObjectMapper().readValue(payLoad, PluginRequestMessage.class);
+        logger.info("Received request message {} ", pluginRequestMessage);
+        JsonNode additionalInput = pluginRequestMessage.getAdditionalInputs();
+
         PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder().policyName(pluginRequestMessage.getPolicyName())
                 .sourceEntity(pluginRequestMessage.getSourceEntity()).sourceOSID(pluginRequestMessage.getSourceOSID())
                 .attestationOSID(pluginRequestMessage.getAttestationOSID())
                 .attestorPlugin(pluginRequestMessage.getAttestorPlugin())
-                .response(cowinResponse)
                 .additionalData(JsonNodeFactory.instance.nullNode())
-                .status("")
                 .date(new Date())
                 .validUntil(new Date())
                 .version("").build();
-        logger.info("{}", pluginRequestMessage);
+        pluginResponseMessage.setStatus(GRANT_CLAIM.name());
+
+        if(additionalInput.has("fileUrl")) {
+            // Read from s3 and sign
+        }
+        // TODO: Add logic to generate hash
+        String md5 = "dummy hash";
+        pluginResponseMessage.setResponse(md5);
         MessageProtos.Message esProtoMessage = MessageFactory.instance().createPluginResponseMessage(pluginResponseMessage);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(esProtoMessage, null);
     }
