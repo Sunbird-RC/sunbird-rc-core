@@ -282,14 +282,14 @@ public class RegistryEntityController extends AbstractController {
                 String userId = registryHelper.getUserId(request);
                 JsonNode entityNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false)
                         .get(entityName);
-                // TODO: should throw err bcoz Map is not a class
                 Map<String, List<String>> propertyOSIDMapper = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
                 JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationPolicy.getAttestationProperties(), propertyOSIDMapper);
-
-                // Resolve condition for REQUESTER
-                ((ObjectNode)requestBody).put("propertyData", propertyData.toString());
+                if(!propertyData.isNull()) {
+                    ((ObjectNode)requestBody).put("propertyData", propertyData.toString());
+                }
                 registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
                 String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
+                // Resolve condition for REQUESTER
                 String condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
 
                 // Rise claim

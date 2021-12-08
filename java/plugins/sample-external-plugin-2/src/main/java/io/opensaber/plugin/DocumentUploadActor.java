@@ -14,12 +14,9 @@ import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
-import java.util.Collections;
 import java.util.Date;
-import java.util.Objects;
 
-import static io.opensaber.pojos.attestation.Action.GRANT_CLAIM;
-import static io.opensaber.pojos.attestation.Action.REJECT_CLAIM;
+import static io.opensaber.pojos.attestation.Action.*;
 
 public class DocumentUploadActor extends BaseActor {
     private ObjectMapper objectMapper;
@@ -45,7 +42,7 @@ public class DocumentUploadActor extends BaseActor {
                 .date(new Date())
                 .validUntil(new Date())
                 .version("").build();
-        pluginResponseMessage.setStatus(GRANT_CLAIM.name());
+        pluginResponseMessage.setStatus(SELF_ATTEST.name());
 
         if(additionalInput.has("fileUrl")) {
             // Read from s3 and sign
