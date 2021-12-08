@@ -8,10 +8,10 @@ const generateCredentialsRoute = async (req, res) => {
 };
 
 
-const verifyCredentialsRoute = async (req, res, signingKeyType) => {
+const verifyCredentialsRoute = async (req, res) => {
     const reqBody = await getRequestBody(req);
-    const {signedCredentials} = reqBody;
-    return await verifyCredentials(signedCredentials, signingKeyType);
+    const {signedCredentials, signingKeyType, publicKey } = reqBody;
+    return await verifyCredentials(signedCredentials, signingKeyType, publicKey);
 };
 
 

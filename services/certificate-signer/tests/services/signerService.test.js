@@ -116,3 +116,26 @@ test('Should verify credentials by RSA Algo', async () => {
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
 });
+
+test('Should verify credentials with external publickey', async () => {
+    const signedData = {
+        '@context': [
+            'https://www.w3.org/2018/credentials/v1',
+            'https://sunbird.org/credentials/vaccination/v1'
+        ],
+        type: [ 'VerifiableCredential' ],
+        credentialSubject: { type: 'Person', name: 'Tejash' },
+        issuanceDate: '2021-08-27T10:57:57.237Z',
+        issuer: 'did:issuer:cowin',
+        proof: {
+            type: 'Ed25519Signature2018',
+            created: '2021-12-08T08:34:39Z',
+            verificationMethod: 'did:india',
+            proofPurpose: 'assertionMethod',
+            jws: 'eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..fJlWEsijhIsAV8cc2UOCndoEaDJRP14L7orcFstn9f8uzFXqi-jvC-r6g58FQdwc99ZmeYpgy94wBDCuVKj0BQ'
+        }
+    }
+    const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519, "7mQq3uQuK3AL5mPhhCKEHXpdMSHCRMtZntxMMn7YQrY3");
+    console.log(verifiedStatus)
+    expect(verifiedStatus.verified).toBeTruthy();
+});

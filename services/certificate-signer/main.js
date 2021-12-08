@@ -43,7 +43,7 @@ const server = http.createServer(async (req, res) => {
             res.end(JSON.stringify(signedData))
 
         } else if (req.method === 'POST' && req.url.startsWith("/verify")) {
-            const signedData = await verifyCredentialsRoute(req, res, signingKeyType)
+            const signedData = await verifyCredentialsRoute(req, res)
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify(signedData))
 

@@ -15,7 +15,7 @@ const generateCredentials = async (data, credentialTemplate = {}) => {
     return await signJSON(credentialData);
 };
 
-const getPublicKey = (signingKeyType) => {
+const getPublicKey = (signingKeyType, publicKey = null) => {
     switch (signingKeyType) {
         case KeyType.RSA:
             return {
@@ -23,20 +23,21 @@ const getPublicKey = (signingKeyType) => {
                 id: CERTIFICATE_DID,
                 type: 'RsaVerificationKey2018',
                 controller: CERTIFICATE_CONTROLLER_ID,
-                publicKeyPem: publicKeyPem
+                publicKeyPem: publicKey || publicKeyPem
             };
         case KeyType.ED25519:
             return {
                 '@context': jsigs.SECURITY_CONTEXT_URL,
                 id: CERTIFICATE_DID,
                 type: 'Ed25519VerificationKey2018',
-                controller: CERTIFICATE_CONTROLLER_ID
+                controller: CERTIFICATE_CONTROLLER_ID,
+                publicKeyBase58: publicKey || publicKeyBase58
             };
     }
 };
 
-const verifyCredentials = async (signedCredentials, signingKeyType) => {
-    const publicKey = getPublicKey(signingKeyType);
+const verifyCredentials = async (signedCredentials, signingKeyType, externalPublicKey=null) => {
+    const publicKey = getPublicKey(signingKeyType, externalPublicKey);
     const controller = {
         '@context': jsigs.SECURITY_CONTEXT_URL,
         id: CERTIFICATE_CONTROLLER_ID,
@@ -46,16 +47,16 @@ const verifyCredentials = async (signedCredentials, signingKeyType) => {
     };
     switch (signingKeyType) {
         case KeyType.RSA:
-            return await verifyRSACredentials(controller, signedCredentials, signingKeyType);
+            return await verifyRSACredentials(controller, signedCredentials, signingKeyType, externalPublicKey);
         case KeyType.ED25519:
-            return await verifyED25519Credentials(controller, signedCredentials);
+            return await verifyED25519Credentials(controller, signedCredentials, signingKeyType, externalPublicKey);
     }
     console.log(result);
     return result;
 };
 
-const verifyRSACredentials = async (controller, signedCredentials, signingKeyType) => {
-    const key = new RSAKeyPair({...getPublicKey(signingKeyType)});
+const verifyRSACredentials = async (controller, signedCredentials, signingKeyType, externalPublicKey) => {
+    const key = new RSAKeyPair({...getPublicKey(signingKeyType, externalPublicKey)});
     const {AssertionProofPurpose} = jsigs.purposes;
     return await jsigs.verify(signedCredentials, {
         suite: new RsaSignature2018({key}),
@@ -66,13 +67,8 @@ const verifyRSACredentials = async (controller, signedCredentials, signingKeyTyp
 };
 
 
-async function verifyED25519Credentials(controller, signedCredentials) {
-    const key = new Ed25519KeyPair(
-        {
-            publicKeyBase58: publicKeyBase58,
-            id: CERTIFICATE_DID
-        }
-    );
+async function verifyED25519Credentials(controller, signedCredentials, signingKeyType, externalPublicKey) {
+    const key = new Ed25519KeyPair({...getPublicKey(signingKeyType, externalPublicKey)});
     const {AssertionProofPurpose} = jsigs.purposes;
     const purpose = new AssertionProofPurpose({
         controller: controller

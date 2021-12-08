@@ -16,7 +16,7 @@
     </parent>
 
     <modules>
-        <module>sample-external-plugin</module>
+        <module>divoc-external-plugin</module>
         <module>sample-external-plugin-2</module>
     </modules>
     <dependencies>
