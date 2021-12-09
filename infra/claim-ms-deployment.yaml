@@ -29,10 +29,10 @@ spec:
             - name: connectionInfo_uri
               value: jdbc:postgresql://my-release-postgresql.default.svc.cluster.local:5432/claims
             - name: connectionInfo_username
-              value: opensaber
-            - name: opensaber_url
+              value: sunbirdrc
+            - name: sunbirdrc_url
               value: http://registry:8081
-          image: dockerhub/open-saber-claim-ms:latest
+          image: dockerhub/sunbird-rc-claim-ms:latest
           imagePullPolicy: Always
           resources:
             requests:

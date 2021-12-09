@@ -2,7 +2,7 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>io.opensaber</groupId>
+    <groupId>dev.sunbirdrc</groupId>
     <artifactId>registry</artifactId>
     <version>2.0.3</version>
     <packaging>jar</packaging>
@@ -37,7 +37,7 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>io.opensaber</groupId>
+                <groupId>dev.sunbirdrc</groupId>
                 <artifactId>validators</artifactId>
                 <version>2.0.3</version>
                 <type>pom</type>
@@ -103,40 +103,44 @@
             <version>2.1.1</version>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>registry-interceptor</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>keycloak</artifactId>
             <version>2.0.3</version>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>workflow</artifactId>
             <version>2.0.3</version>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>elastic-search</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>sunbirdrc-actors</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>sample-external-plugin</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>sample-external-plugin-2</artifactId>
             <version>${revision}</version>
         </dependency>
-
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>view-templates</artifactId>
             <version>1.0.0</version>
         </dependency>
@@ -381,7 +385,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>jsonschemavalidator</artifactId>
             <version>2.0.3</version>
         </dependency>
@@ -506,7 +510,7 @@
                 </executions>
                 <configuration>
                     <excludes>
-                        <exclude>io/opensaber/pojos/*</exclude>
+                        <exclude>dev/sunbirdrc/pojos/*</exclude>
                         <exclude>**/I*.java</exclude>
                     </excludes>
                 </configuration>

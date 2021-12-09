@@ -4,6 +4,7 @@ SOURCES := $(call rwildcard,java/,*.java)
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
+	make -C java/claim
 
 java/registry/target/registry.jar: $(SOURCES)
 	echo $(SOURCES)
@@ -21,3 +22,4 @@ test: build
 
 clean:
 	@rm -rf target
+	@rm java/registry/target/registry.jar

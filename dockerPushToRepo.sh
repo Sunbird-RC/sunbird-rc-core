@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cd target && jar -xvf ../java/registry/target/registry.jar && cd -
-docker build -t dockerhub/open-saber .
+docker build -t dockerhub/sunbird-rc .
 
 e () {
     echo $( echo ${1} | jq ".${2}" | sed 's/\"//g')

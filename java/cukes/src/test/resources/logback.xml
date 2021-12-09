@@ -7,8 +7,8 @@
     </appender>
 
     <logger name="org.apache.http" level="ERROR"/>
-    <logger name="io.opensaber.registry.client" level="OFF"/>
-    <logger name="io.opensaber.registry.transform" level="OFF"/>
+    <logger name="dev.sunbirdrc.registry.client" level="OFF"/>
+    <logger name="dev.sunbirdrc.registry.transform" level="OFF"/>
 
     <root level="info" additivity="false">
         <appender-ref ref="STDOUT"/>

@@ -29,14 +29,14 @@ services:
   registry:
     image: dockerhub/sunbird-rc-core
     volumes:
-      - ${PWD}/java/registry/src/main/resources/public/_schemas:/home/opensaber/config/public/_schemas
+      - ${PWD}/java/registry/src/main/resources/public/_schemas:/home/sunbirdrc/config/public/_schemas
 
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
       - elastic_search_connection_url=es:9200
-      - search_provider=io.opensaber.registry.service.ElasticSearchService
+      - search_provider=dev.sunbirdrc.registry.service.ElasticSearchService
       - sunbird_sso_realm=sunbird-rc
       - sunbird_sso_url=http://keycloak:8080/auth
       - sunbird_sso_admin_client_id=admin-api
@@ -77,12 +77,12 @@ services:
       db:
         condition: service_started
   claim-ms:
-    image: dockerhub/open-saber-claim-ms
+    image: dockerhub/sunbird-rc-claim-ms
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
-      - opensaber_url=http://registry:8081
+      - sunbirdrc_url=http://registry:8081
     ports:
       - "8082:8082"
     depends_on:

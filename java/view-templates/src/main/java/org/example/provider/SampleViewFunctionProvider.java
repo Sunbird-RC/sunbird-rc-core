@@ -1,6 +1,6 @@
 package org.example.provider;
 
-import io.opensaber.views.IViewFunctionProvider;
+import dev.sunbirdrc.views.IViewFunctionProvider;
 import java.util.List;
 /**
  * This class is a sample implementation class of IViewFunctionProvider<T>
