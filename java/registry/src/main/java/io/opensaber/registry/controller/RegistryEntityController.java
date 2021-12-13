@@ -13,7 +13,6 @@ import io.opensaber.pojos.attestation.AttestationPolicy;
 import io.opensaber.registry.dao.NotFoundException;
 import io.opensaber.registry.exception.RecordNotFoundException;
 import io.opensaber.registry.middleware.MiddlewareHaltException;
-import io.opensaber.registry.middleware.service.ConditionResolverService;
 import io.opensaber.registry.middleware.util.Constants;
 import io.opensaber.registry.middleware.util.JSONUtil;
 import io.opensaber.registry.middleware.util.OSSystemFields;
@@ -34,7 +33,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import io.opensaber.actors.factory.PluginRouter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
@@ -42,8 +40,6 @@ import java.util.*;
 
 @RestController
 public class RegistryEntityController extends AbstractController {
-    @Autowired
-    ConditionResolverService conditionResolverService;
 
     private static Logger logger = LoggerFactory.getLogger(RegistryEntityController.class);
 
@@ -261,67 +257,6 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
-    }
-
-    @RequestMapping(value = "/api/v1/send")
-    public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody JsonNode requestBody)  {
-        String entityName = requestBody.get("entityName").asText();
-        String entityId = requestBody.get("entityId").asText();
-        String attestationName = requestBody.get("name").asText();
-        try {
-            registryHelper.authorize(entityName, entityId, request);
-        } catch (Exception e) {
-            logger.error("Unauthorized exception {}", e.getMessage());
-            return createUnauthorizedExceptionResponse(e);
-        }
-        AttestationPolicy attestationPolicy = definitionsManager.getAttestationPolicy(entityName, attestationName);
-
-        if(attestationPolicy.isInternal()) {
-            try {
-                // Generate property Data
-                String userId = registryHelper.getUserId(request);
-                JsonNode entityNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false)
-                        .get(entityName);
-                // TODO: should throw err bcoz Map is not a class
-                Map<String, List<String>> propertyOSIDMapper = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
-                JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationPolicy.getAttestationProperties(), propertyOSIDMapper);
-
-                // Resolve condition for REQUESTER
-                ((ObjectNode)requestBody).put("propertyData", propertyData.toString());
-                registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
-                String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
-                String condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
-
-                // Rise claim
-                PluginRequestMessage message = PluginRequestMessageCreator.create(
-                        propertyData.toString(), condition, attestationPolicy, attestationOSID,
-                        entityName, entityId, JsonNodeFactory.instance.nullNode(), Action.RAISE_CLAIM.name());
-                PluginRouter.route(message);
-            } catch (Exception exception) {
-                logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
-                exception.printStackTrace();
-                ResponseParams responseParams = new ResponseParams();
-                responseParams.setErrmsg(exception.getMessage());
-                Response response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
-                return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        } else {
-            try {
-                JsonNode additionalInput = requestBody.get("additionalInput");
-                registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
-                String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
-                PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
-                        "", "", attestationPolicy, attestationOSID,
-                        entityName, entityId, additionalInput, Action.RAISE_CLAIM.name());
-                PluginRouter.route(pluginRequestMessage);
-            } catch (Exception e) {
-                logger.error("Unable to route to the actor : {}", e.getMessage());
-                e.printStackTrace();
-            }
-        }
-        ResponseParams responseParams = new ResponseParams();
-        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
-        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Deprecated

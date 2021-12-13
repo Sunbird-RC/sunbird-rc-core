@@ -2,6 +2,7 @@ package io.opensaber.registry.service;
 
 import io.minio.*;
 import io.minio.errors.*;
+import io.minio.http.Method;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
 import io.opensaber.registry.model.dto.DocumentsResponse;
@@ -13,13 +14,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -98,9 +102,9 @@ public class FileStorageService {
         DocumentsResponse documentsResponse = new DocumentsResponse();
         List<DeleteObject> deleteObjects = files.stream().map(DeleteObject::new).collect(Collectors.toList());
         Iterable<Result<DeleteError>> results = minioClient.removeObjects(RemoveObjectsArgs.builder()
-                        .bucket(bucketName)
-                        .objects(deleteObjects)
-                        .build());
+                .bucket(bucketName)
+                .objects(deleteObjects)
+                .build());
         for (Result<DeleteError> result : results) {
             try {
                 documentsResponse.addError(result.get().bucketName());
@@ -110,6 +114,16 @@ public class FileStorageService {
             }
         }
         return documentsResponse;
+    }
+
+    public String getSignedUrl(String objectName) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        return minioClient.getPresignedObjectUrl(
+                GetPresignedObjectUrlArgs.builder()
+                        .method(Method.GET)
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .expiry(2, TimeUnit.HOURS)
+                        .build());
     }
 
     public byte[] getDocument(String requestedURI) {
@@ -123,7 +137,7 @@ public class FileStorageService {
                             .build());
             bytes = IOUtils.toByteArray(inputStream);
         } catch (Exception e) {
-            logger.error("Error has occurred while fetching the document {} {}", objectName,  e.getMessage());
+            logger.error("Error has occurred while fetching the document {} {}", objectName, e.getMessage());
             e.printStackTrace();
         }
         return bytes;
