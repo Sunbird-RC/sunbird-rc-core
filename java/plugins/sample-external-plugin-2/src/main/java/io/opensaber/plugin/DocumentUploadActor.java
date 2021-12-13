@@ -47,7 +47,7 @@ public class DocumentUploadActor extends BaseActor {
             String decodedUrl = decode(fileUrl, StandardCharsets.UTF_8.name());
             ResponseEntity<byte[]> fileResponse = restTemplate.getForEntity(decodedUrl, byte[].class);
             byte[] content = fileResponse.getBody();
-            md5 = DigestUtils.md5DigestAsHex(content);
+            md5 = content == null ? "" : DigestUtils.md5DigestAsHex(content);
         }
         pluginResponseMessage.setResponse(md5);
         MessageProtos.Message esProtoMessage = MessageFactory.instance().createPluginResponseMessage(pluginResponseMessage);
