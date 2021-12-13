@@ -8,24 +8,20 @@ import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.PluginResponseMessage;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.client.RestTemplate;
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import static io.opensaber.pojos.attestation.Action.*;
+import static java.net.URLDecoder.decode;
 
 public class DocumentUploadActor extends BaseActor {
-    private ObjectMapper objectMapper;
-
-
-    public DocumentUploadActor() {
-        this.objectMapper = new ObjectMapper();
-
-    }
 
     @Override
     public void onReceive(MessageProtos.Message request) throws Throwable {
@@ -44,11 +40,15 @@ public class DocumentUploadActor extends BaseActor {
                 .version("").build();
         pluginResponseMessage.setStatus(SELF_ATTEST.name());
 
+        String md5 = "";
         if(additionalInput.has("fileUrl")) {
-            // Read from s3 and sign
+            RestTemplate restTemplate = new RestTemplate();
+            String fileUrl = additionalInput.get("fileUrl").asText();
+            String decodedUrl = decode(fileUrl, StandardCharsets.UTF_8.name());
+            ResponseEntity<byte[]> fileResponse = restTemplate.getForEntity(decodedUrl, byte[].class);
+            byte[] content = fileResponse.getBody();
+            md5 = DigestUtils.md5DigestAsHex(content);
         }
-        // TODO: Add logic to generate hash
-        String md5 = "dummy hash";
         pluginResponseMessage.setResponse(md5);
         MessageProtos.Message esProtoMessage = MessageFactory.instance().createPluginResponseMessage(pluginResponseMessage);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(esProtoMessage, null);
