@@ -25,6 +25,9 @@ public class ConditionResolverService {
      * @param attributes contains pair[key, val] where key will be replaced with its value in the condition
      * */
     public String resolve(JsonNode entityNode, String matcher, String condition, List<String[]> attributes) {
+        if(condition == null || condition.isEmpty()) {
+            return "";
+        }
         String entity = entityNode.toString();
         logger.info("Gonna resolve for the json {}", entity);
         condition = replaceMultipleEntries(condition, attributes);

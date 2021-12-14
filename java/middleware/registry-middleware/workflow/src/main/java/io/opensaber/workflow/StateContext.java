@@ -69,7 +69,7 @@ public class StateContext {
     }
 
     public boolean isClaimApproved() {
-        return action.equals(Action.GRANT_CLAIM);
+        return action.equals(Action.GRANT_CLAIM) || action.equals(Action.SELF_ATTEST);
     }
 
     public boolean isClaimRejected() {

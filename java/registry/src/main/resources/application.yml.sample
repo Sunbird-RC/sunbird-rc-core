@@ -8,8 +8,8 @@ spring:
   servlet:
       multipart:
         enabled: true
-        max-file-size: 128MB
-        max-request-size: 128MB
+        max-file-size: ${max_file_size:5MB}
+        max-request-size: ${max_request_size:5MB}
   output:
     ansi:
       enabled: ALWAYS
@@ -258,7 +258,7 @@ elastic:
     connection_url: ${elastic_search_connection_url:localhost:9200}
 
 filestorage:
-  url: ${filestorage_connection_url:http://localhost:9500}
+  url: ${filestorage_connection_url:http://localhost:9000}
   accesskey: ${filestorage_access_key:XXXXX}
   secretkey: ${filestorage_secret_key:XXXXX}
   bucketname: ${filestorage_bucket_key:dummy}

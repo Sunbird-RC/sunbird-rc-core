@@ -1,48 +1,55 @@
 package io.opensaber.plugin;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.PluginResponseMessage;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.DigestUtils;
+import org.springframework.web.client.RestTemplate;
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-public class SampleActor extends BaseActor {
-    private ObjectMapper objectMapper;
+import static io.opensaber.pojos.attestation.Action.*;
+import static java.net.URLDecoder.decode;
 
-
-    public SampleActor() {
-        this.objectMapper = new ObjectMapper();
-
-    }
+public class DocumentUploadActor extends BaseActor {
 
     @Override
     public void onReceive(MessageProtos.Message request) throws Throwable {
-        logger.debug("Received a message to Notification Actor {}", request.getPerformOperation());
-        objectMapper = new ObjectMapper();
-        PluginRequestMessage pluginRequestMessage = objectMapper.readValue(request.getPayload().getStringValue(), PluginRequestMessage.class);
-        String cowinResponse = "{\n" +
-                "  \"status\": \"verified\",\n" +
-                "  \"data\": \"b-123\"\n" +
-                "}";
+        String payLoad = request.getPayload().getStringValue();
+        PluginRequestMessage pluginRequestMessage = new ObjectMapper().readValue(payLoad, PluginRequestMessage.class);
+        logger.info("Received request message {} ", pluginRequestMessage);
+        JsonNode additionalInput = pluginRequestMessage.getAdditionalInputs();
+
         PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder().policyName(pluginRequestMessage.getPolicyName())
                 .sourceEntity(pluginRequestMessage.getSourceEntity()).sourceOSID(pluginRequestMessage.getSourceOSID())
                 .attestationOSID(pluginRequestMessage.getAttestationOSID())
                 .attestorPlugin(pluginRequestMessage.getAttestorPlugin())
-                .response(cowinResponse)
                 .additionalData(JsonNodeFactory.instance.nullNode())
-                .status("")
                 .date(new Date())
                 .validUntil(new Date())
                 .version("").build();
-        logger.info("{}", pluginRequestMessage);
+        pluginResponseMessage.setStatus(SELF_ATTEST.name());
+
+        String md5 = "";
+        if(additionalInput.has("fileUrl")) {
+            RestTemplate restTemplate = new RestTemplate();
+            String fileUrl = additionalInput.get("fileUrl").asText();
+            String decodedUrl = decode(fileUrl, StandardCharsets.UTF_8.name());
+            ResponseEntity<byte[]> fileResponse = restTemplate.getForEntity(decodedUrl, byte[].class);
+            byte[] content = fileResponse.getBody();
+            md5 = content == null ? "" : DigestUtils.md5DigestAsHex(content);
+        }
+        pluginResponseMessage.setResponse(md5);
         MessageProtos.Message esProtoMessage = MessageFactory.instance().createPluginResponseMessage(pluginResponseMessage);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(esProtoMessage, null);
     }
