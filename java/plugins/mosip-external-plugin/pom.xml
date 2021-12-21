@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>sample-external-plugin-3</artifactId>
+    <artifactId>mosip-external-plugin</artifactId>
 
 
 </project>

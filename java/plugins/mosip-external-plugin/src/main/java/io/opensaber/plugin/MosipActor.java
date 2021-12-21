@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.PluginRequestMessage;
 import io.opensaber.pojos.PluginResponseMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.client.RestTemplate;
@@ -23,6 +25,7 @@ import static io.opensaber.pojos.attestation.Action.*;
 import static java.net.URLDecoder.decode;
 
 public class MosipActor extends BaseActor {
+    private static final Logger logger = LoggerFactory.getLogger(MosipActor.class);
 
     @Override
     public void onReceive(MessageProtos.Message request) throws Throwable {
@@ -33,7 +36,14 @@ public class MosipActor extends BaseActor {
 
         RestTemplate restTemplate = new RestTemplate();
         String mosipUrl = "http://localhost:5000";
-        restTemplate.postForEntity(mosipUrl, additionalInput, Object.class);
+        try {
+            ResponseEntity<Object> responseEntity = restTemplate.postForEntity(mosipUrl, additionalInput, Object.class);
+            if(!responseEntity.getStatusCode().is2xxSuccessful()) {
+                logger.error(responseEntity.toString());
+            }
+        } catch (Exception e) {
+            logger.error("Mosip call failed");
+        }
     }
 
     @Override

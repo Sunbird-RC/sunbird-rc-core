@@ -9,12 +9,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 
 import static io.opensaber.pojos.attestation.Action.GRANT_CLAIM;
@@ -22,7 +20,7 @@ import static io.opensaber.pojos.attestation.Action.GRANT_CLAIM;
 @RestController
 public class MosipController {
     @RequestMapping(value = "/mosip/callback", method = RequestMethod.POST)
-    public void registryHealth(HttpServletResponse httpServletResponse, @RequestBody JsonNode requestBody) throws JsonProcessingException {
+    public void registryHealth(@RequestBody JsonNode requestBody) throws JsonProcessingException {
 
         PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
                 .additionalData(JsonNodeFactory.instance.nullNode())
@@ -30,8 +28,11 @@ public class MosipController {
                 .validUntil(new Date())
                 .version("").build();
         pluginResponseMessage.setStatus(GRANT_CLAIM.name());
-        String response = requestBody.toString();
-        pluginResponseMessage.setResponse(response);
+
+        if(requestBody != null) {
+            String response = requestBody.toString();
+            pluginResponseMessage.setResponse(response);
+        }
         MessageProtos.Message esProtoMessage = MessageFactory.instance().createPluginResponseMessage(pluginResponseMessage);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(esProtoMessage, null);
     }
