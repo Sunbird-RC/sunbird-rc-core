@@ -18,9 +18,9 @@ import java.util.Date;
 import static io.opensaber.pojos.attestation.Action.GRANT_CLAIM;
 
 @RestController
-public class MosipController {
+public class PrintCallbackController {
     @RequestMapping(value = "/mosip/callback", method = RequestMethod.POST)
-    public void registryHealth(@RequestBody JsonNode requestBody) throws JsonProcessingException {
+    public void callbackHandler(@RequestBody JsonNode requestBody) throws JsonProcessingException {
 
         PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
                 .additionalData(JsonNodeFactory.instance.nullNode())

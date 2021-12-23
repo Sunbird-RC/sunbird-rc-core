@@ -3,26 +3,13 @@ package io.opensaber.plugin;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import io.opensaber.actors.factory.MessageFactory;
 import io.opensaber.pojos.PluginRequestMessage;
-import io.opensaber.pojos.PluginResponseMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.client.RestTemplate;
-import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
-import org.sunbird.akka.core.Router;
-
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
-
-import static io.opensaber.pojos.attestation.Action.*;
-import static java.net.URLDecoder.decode;
 
 public class MosipActor extends BaseActor {
     private static final Logger logger = LoggerFactory.getLogger(MosipActor.class);
