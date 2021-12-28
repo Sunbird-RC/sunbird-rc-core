@@ -10,8 +10,8 @@
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Open saber registry and credential api",
-    "title": "Registry and Credential",
+    "description": "Sunbird registry and credential api (SunbirdRC)",
+    "title": "Sunbird Registry and Credential",
     "version": "1.0.0"
   },
   "host": "ndear.xiv.in",

@@ -2,7 +2,7 @@
 # Build script
 set -eo pipefail
 build_tag=$1
-name=opensaber
+name=sunbirdrc
 node=$2
 org=$3
 

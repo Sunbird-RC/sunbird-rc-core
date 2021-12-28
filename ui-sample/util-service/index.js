@@ -141,7 +141,7 @@ const offBoardUser = (req, callback) => {
                 body: JSON.parse(JSON.stringify(req.body)),
                 headers: req.headers
             }
-            readRequest.body["id"] = "open-saber.registry.read";
+            readRequest.body["id"] = "sunbird-rc.registry.read";
             registryService.readRecord(readRequest, (err, data) => {
                 if (data && data.params.status == 'SUCCESSFUL') {
                     callback(null, token, data.result)

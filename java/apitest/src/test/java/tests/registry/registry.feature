@@ -4,7 +4,7 @@ Feature: Registry api tests
   Background:
     * url baseurl
     * string mobile = "00200100010"
-    * def password = "opensaber@123"
+    * def password = "abcd@123"
     * def student = {"contactDetails": {"email": "peter@sahaj.ai","mobile": "#(mobile)"}}
     * string registryUrl = "http://localhost:8081"
     * string authUrl = "http://localhost:8080"

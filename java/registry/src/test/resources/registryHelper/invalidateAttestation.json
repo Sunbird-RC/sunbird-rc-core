@@ -41,7 +41,7 @@
           "name": "attestationEducationDetails",
           "entityId": "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f",
           "osid": "1-c32119b5-d00a-4547-b863-30ba9965edb2",
-          "_osAttestedData": "{\"type\":\"Ed25519Signature2018\",\"creator\":\"opensaber\",\"created\":\"2017-10-24T05:33:31Z\",\"domain\":\"opensaber.io\",\"nonce\":\"\",\"proofPurpose\":\"AssertionProofPurpose\",\"jws\":\"eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFZERTQSJ9..Z2sTvbhTjMmik9v5tbuZHbpLwrMtQX6VTB9SYUtK4lg2vvvqN-Qu_H67fz0K47WcQ2lDFtpkArx6MsPBHZeJAw\"}",
+          "_osAttestedData": "{\"type\":\"Ed25519Signature2018\",\"creator\":\"sunbirdrc\",\"created\":\"2017-10-24T05:33:31Z\",\"domain\":\"sunbirdrc.dev\",\"nonce\":\"\",\"proofPurpose\":\"AssertionProofPurpose\",\"jws\":\"eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFZERTQSJ9..Z2sTvbhTjMmik9v5tbuZHbpLwrMtQX6VTB9SYUtK4lg2vvvqN-Qu_H67fz0K47WcQ2lDFtpkArx6MsPBHZeJAw\"}",
           "propertiesOSID": {
             "osid": "1-fbe7bbff-8bb6-4c46-9bd5-b1e313c7fc7c",
             "educationDetails": [
@@ -125,7 +125,7 @@
             "name": "attestationEducationDetails",
             "entityId": "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f",
             "osid": "1-c32119b5-d00a-4547-b863-30ba9965edb2",
-            "_osAttestedData": "{\"type\":\"Ed25519Signature2018\",\"creator\":\"opensaber\",\"created\":\"2017-10-24T05:33:31Z\",\"domain\":\"opensaber.io\",\"nonce\":\"\",\"proofPurpose\":\"AssertionProofPurpose\",\"jws\":\"eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFZERTQSJ9..Z2sTvbhTjMmik9v5tbuZHbpLwrMtQX6VTB9SYUtK4lg2vvvqN-Qu_H67fz0K47WcQ2lDFtpkArx6MsPBHZeJAw\"}",
+            "_osAttestedData": "{\"type\":\"Ed25519Signature2018\",\"creator\":\"sunbirdrc\",\"created\":\"2017-10-24T05:33:31Z\",\"domain\":\"sunbirdrc.dev\",\"nonce\":\"\",\"proofPurpose\":\"AssertionProofPurpose\",\"jws\":\"eyJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdLCJhbGciOiJFZERTQSJ9..Z2sTvbhTjMmik9v5tbuZHbpLwrMtQX6VTB9SYUtK4lg2vvvqN-Qu_H67fz0K47WcQ2lDFtpkArx6MsPBHZeJAw\"}",
             "propertiesOSID": {
               "osid": "1-fbe7bbff-8bb6-4c46-9bd5-b1e313c7fc7c",
               "educationDetails": [

@@ -72,7 +72,7 @@
         var urlParams = new URLSearchParams(location.search);
         var lang = urlParams.get('lang')
         var cookedVal = {
-            "id": "open-saber.registry.search",
+            "id": "sunbird-rc.registry.search",
             "ver": "1.0",
             "ets": "11234",
             "params": {
@@ -167,14 +167,13 @@
         });
   
         function approveFn(obj) {
-            var localUrl = "file:///Users/rajeshr/IdeaProjects/aishwa8141/open-saber/ui-sample/"
+            var localUrl = "/ui-sample/"
             if (lang === 'English') {
                 localUrl += "profile.html?osid=" + obj + '&lang=' + lang + '&isAdmin=true';
             }
             else if (lang === 'Spanish') {
                 localUrl += "profile.html?osid=" + obj + '&lang=' + lang + '&isAdmin=true';
             }
-            console.log(localUrl)
             window.open(localUrl, '_blank')
         }
 

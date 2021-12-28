@@ -74,7 +74,7 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-  &quot;id&quot;: &quot;open-saber.registry.create&quot;,&#xd;
+  &quot;id&quot;: &quot;sunbird-rc.registry.create&quot;,&#xd;
   &quot;ver&quot;: &quot;1.0&quot;,&#xd;
   &quot;ets&quot;: &quot;11234&quot;,&#xd;
   &quot;params&quot;: {&#xd;
@@ -333,7 +333,7 @@
                 <elementProp name="" elementType="HTTPArgument">
                   <boolProp name="HTTPArgument.always_encode">false</boolProp>
                   <stringProp name="Argument.value">{&#xd;
-  &quot;id&quot;: &quot;open-saber.registry.create&quot;,&#xd;
+  &quot;id&quot;: &quot;sunbird-rc.registry.create&quot;,&#xd;
   &quot;ver&quot;: &quot;1.0&quot;,&#xd;
   &quot;ets&quot;: &quot;11234&quot;,&#xd;
   &quot;params&quot;: {&#xd;
@@ -514,7 +514,7 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-    &quot;id&quot;: &quot;open-saber.registry.read&quot;,&#xd;
+    &quot;id&quot;: &quot;sunbird-rc.registry.read&quot;,&#xd;
     &quot;ver&quot;: &quot;1.0&quot;,&#xd;
     &quot;ets&quot;: &quot;11234&quot;,&#xd;
     &quot;params&quot;: {&#xd;
@@ -631,7 +631,7 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-    &quot;id&quot;: &quot;open-saber.registry.update&quot;,&#xd;
+    &quot;id&quot;: &quot;sunbird-rc.registry.update&quot;,&#xd;
     &quot;ver&quot;: &quot;1.0&quot;,&#xd;
     &quot;ets&quot;: &quot;11234&quot;,&#xd;
     &quot;params&quot;: {&#xd;
@@ -712,7 +712,7 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-    &quot;id&quot;: &quot;open-saber.registry.read&quot;,&#xd;
+    &quot;id&quot;: &quot;sunbird-rc.registry.read&quot;,&#xd;
     &quot;ver&quot;: &quot;1.0&quot;,&#xd;
     &quot;ets&quot;: &quot;11234&quot;,&#xd;
     &quot;params&quot;: {&#xd;
@@ -820,7 +820,7 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-  &quot;id&quot;: &quot;open-saber.registry.search&quot;,&#xd;
+  &quot;id&quot;: &quot;sunbird-rc.registry.search&quot;,&#xd;
   &quot;ver&quot;: &quot;1.0&quot;,&#xd;
   &quot;ets&quot;: &quot;11234&quot;,&#xd;
   &quot;params&quot;: {&#xd;
@@ -922,7 +922,7 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-  &quot;id&quot;: &quot;open-saber.registry.search&quot;,&#xd;
+  &quot;id&quot;: &quot;sunbird-rc.registry.search&quot;,&#xd;
   &quot;ver&quot;: &quot;1.0&quot;,&#xd;
   &quot;ets&quot;: &quot;11234&quot;,&#xd;
   &quot;params&quot;: {&#xd;

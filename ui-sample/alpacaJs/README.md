@@ -1,4 +1,4 @@
-This is a sample utility to demonstrate the OpenSABER API's.
+This is a sample utility to demonstrate the SunbirdRC API's.
 
 This sample UI is auto-generated from the schema using [alpacajs](http://www.alpacajs.org/). The schema is placed under "schema" folder. Presently, this works with the Person schema provided in the src/main/resources.
 
