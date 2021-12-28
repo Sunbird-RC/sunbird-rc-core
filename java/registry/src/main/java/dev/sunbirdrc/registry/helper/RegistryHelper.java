@@ -517,12 +517,19 @@ public class RegistryHelper {
         switch (action) {
             case GRANT_CLAIM:
                 Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getPolicyName());
-                JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
-                Object signedData = getSignedDoc(response, credentialTemplate);
-                metaData.put(
-                        "attestedData",
-                        signedData.toString()
-                );
+                if (credentialTemplate.size() > 0) {
+                    JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
+                    Object signedData = getSignedDoc(response, credentialTemplate);
+                    metaData.put(
+                            "attestedData",
+                            signedData.toString()
+                    );
+                } else {
+                    metaData.put(
+                            "attestedData",
+                            pluginResponseMessage.getResponse()
+                    );
+                }
                 break;
             case SELF_ATTEST:
                 String hashOfTheFile = pluginResponseMessage.getResponse();

@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.Map;
 
 public class DivocActor extends BaseActor {
-    private static final String VERIFY_URL = "http://localhost:4324/verify";
-    private static final String PUBLIC_KEY = "7mQq3uQuK3AL5mPhhCKEHXpdMSHCRMtZntxMMn7YQrY3";
-    private static final String SIGNED_KEY_TYPE = "ED25519";
+    private static final String VERIFY_URL = System.getenv("verify_url");
+    private static final String PUBLIC_KEY = System.getenv("divoc_public_key");
+    private static final String SIGNED_KEY_TYPE = System.getenv("divoc_key_type");
     private ObjectMapper objectMapper;
 
 
@@ -48,7 +48,7 @@ public class DivocActor extends BaseActor {
                 .version("").build();
         if ((Boolean) verificationResponse.get("verified")) {
             pluginResponseMessage.setStatus(Action.GRANT_CLAIM.name());
-            pluginResponseMessage.setResponse(objectMapper.writeValueAsString(((List)verificationResponse.get("results")).get(0)));
+            pluginResponseMessage.setResponse(objectMapper.writeValueAsString(((List) verificationResponse.get("results")).get(0)));
         } else {
             pluginResponseMessage.setStatus(Action.REJECT_CLAIM.name());
             pluginResponseMessage.setResponse("");
