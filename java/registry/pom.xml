@@ -313,6 +313,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.9</version>
+        </dependency>
         <!-- End dependency for Postgres support -->
 
         <!-- Include this dependency for Neo4j support -->
