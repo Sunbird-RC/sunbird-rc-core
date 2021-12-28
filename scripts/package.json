@@ -1,7 +1,7 @@
 {
   "name": "utils",
   "version": "1.0.0",
-  "description": "Open-Saber upload script",
+  "description": "SunbirdRC upload script",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

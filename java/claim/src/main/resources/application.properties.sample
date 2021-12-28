@@ -8,4 +8,4 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.hibernate.ddl-auto=update
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
-opensaber.url=${opensaber_url:http://localhost:8081}
+sunbirdrc.url=${sunbirdrc_url:http://localhost:8081}

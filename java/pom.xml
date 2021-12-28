@@ -2,10 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.opensaber</groupId>
-    <artifactId>opensaber</artifactId>
+    <groupId>dev.sunbirdrc</groupId>
+    <artifactId>sunbird-rc</artifactId>
     <version>2.0.3</version>
-    <name>Open Software Archetype for Building Electronic Registries</name>
+    <name>Open Software for Building Electronic Registries</name>
     <packaging>pom</packaging>
 
     <properties>
@@ -36,7 +36,7 @@
         <module>registry</module>
         <module>elastic-search</module>
 		<module>view-templates</module>
-        <module>opensaber-actors</module>
+        <module>sunbirdrc-actors</module>
         <module>sunbird-actor</module>
         <module>claim</module>
         <module>apitest</module>

@@ -1,11 +1,11 @@
-# API Spec for Open-Saber Registry Application
+# API Spec for SunbirdRC Registry Application
 swagger: '2.0'
 info:
-  title: Open-Saber
-  description: APIs for Open-saber registry
+  title: SunbirdRC
+  description: APIs for Sunbird RC registry
   version: "1.0.0"
 # the domain of the service
-host: io.open-saber
+host: dev.sunbirdrc
 # array of all schemes that your API supports
 schemes:
   - http

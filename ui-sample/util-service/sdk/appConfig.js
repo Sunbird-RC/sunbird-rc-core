@@ -1,10 +1,10 @@
 const appConfig = {
     APP_ID: {
-        CREATE: "open-saber.registry.create",
-        READ: "open-saber.registry.read",
-        UPDATE: "open-saber.registry.update",
-        DELETE: "open-saber.registry.delete",
-        SEARCH: "open-saber.registry.search"
+        CREATE: "sunbird-rc.registry.create",
+        READ: "sunbird-rc.registry.read",
+        UPDATE: "sunbird-rc.registry.update",
+        DELETE: "sunbird-rc.registry.delete",
+        SEARCH: "sunbird-rc.registry.search"
     },
     UTILS_URL_CONFIG: {
         ADD: "/registry/add",

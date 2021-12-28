@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "open-saber-ui": {
+    "sunbird-rc-ui": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
@@ -77,22 +77,22 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "open-saber-ui:build",
+            "browserTarget": "sunbird-rc-ui:build",
             "port": 9082
           },
           "configurations": {
             "production": {
-              "browserTarget": "open-saber-ui:build:production"
+              "browserTarget": "sunbird-rc-ui:build:production"
             },
             "dev": {
-              "browserTarget": "open-saber-ui:build:dev"
+              "browserTarget": "sunbird-rc-ui:build:dev"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "open-saber-ui:build"
+            "browserTarget": "sunbird-rc-ui:build"
           }
         },
         "test": {
@@ -127,5 +127,5 @@
       }
     }
   },
-  "defaultProject": "open-saber-ui"
+  "defaultProject": "sunbird-rc-ui"
 }

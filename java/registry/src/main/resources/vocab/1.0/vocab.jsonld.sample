@@ -38,8 +38,8 @@
       "@id": "sample:",
       "@type": "owl:Ontology",
       "dc11:description": "W3C RDF Schema based sample vocabulary.",
-      "dc11:identifier": "OpenSaber Sample Vocabulary v1.0.0",
-      "dc11:title": "OpenSaber Sample Vocabulary",
+      "dc11:identifier": "SunbirdRC Sample Vocabulary v1.0.0",
+      "dc11:title": "SunbirdRC Sample Vocabulary",
       "dcterms:issued": {
           "@type": "xsd:date",
           "@value": "2018-1-16"

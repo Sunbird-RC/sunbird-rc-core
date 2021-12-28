@@ -40,7 +40,7 @@ registry:
   context:
     base: ${registry_context_base:http://localhost:8081/}
   system:
-    base: ${registry_system_base:http://localhost:8081/opensaber/}
+    base: ${registry_system_base:http://localhost:8081/sunbirdrc/}
   rootEntity:
         type: ${registry_rootentity_type:Teacher}
   schema:
@@ -61,12 +61,12 @@ search:
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
   expandInternal: ${search_expandInternal:true}
-  providerName: ${search_providerName:io.opensaber.registry.service.NativeSearchService}
+  providerName: ${search_providerName:dev.sunbirdrc.registry.service.NativeSearchService}
 
 # This property is to be used for read request
 read:
   # The read mechanism to use, values could be either NativeReadService or ElasticReadService
-  providerName: io.opensaber.registry.service.NativeReadService
+  providerName: dev.sunbirdrc.registry.service.NativeReadService
 
 database:
   # This property is internal and not to be confused with the schema definition.
@@ -86,11 +86,11 @@ database:
   shardProperty: ${database_shardProperty:none}
 
   # This property is instruction to use the shard advisor.
-  # Values could be io.opensaber.registry.sink.shard.DefaultShardAdvisor, OR
-  # io.opensaber.registry.sink.shard.SerialNumberShardAdvisor OR
+  # Values could be dev.sunbirdrc.registry.sink.shard.DefaultShardAdvisor, OR
+  # dev.sunbirdrc.registry.sink.shard.SerialNumberShardAdvisor OR
   # absolute class name of your advisor class.
   # If this property not provided, advisor is set to DefaultShardAdvisor
-  shardAdvisorClassName: io.opensaber.registry.sink.shard.DefaultShardAdvisor
+  shardAdvisorClassName: dev.sunbirdrc.registry.sink.shard.DefaultShardAdvisor
 
   connectionInfo:
     -
@@ -194,7 +194,7 @@ keycloak-admin:
   client-id: ${sunbird_sso_admin_client_id:admin-api}
   client-secret: ${sunbird_sso_admin_client_secret:client_secret}
 keycloak-user:
-    default-password: opensaber@123
+    default-password: abcd@123
 claims:
   url: ${claims_url:http://localhost:8081}
 authentication:

@@ -14,7 +14,7 @@ import appConfig from './services/app.config.json';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  title = 'open-saber-ui';
+  title = 'sunbird-rc-ui';
   public keycloakAngular: KeycloakService;
   public cacheService: CacheService;
   private isUserLoggedIn: boolean;

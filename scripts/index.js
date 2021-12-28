@@ -258,7 +258,7 @@ var csvToJson = function (csvFileName) {
 
 // This is the default payload
 var addApiPayload = {
-    "id": "open-saber.registry.create",
+    "id": "sunbird-rc.registry.create",
     "request": {
     }
 }

@@ -2,12 +2,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.opensaber</groupId>
+        <groupId>dev.sunbirdrc</groupId>
         <artifactId>registry-middleware</artifactId>
         <version>2.0.3</version>
     </parent>
 
-    <groupId>io.opensaber.middleware</groupId>
+    <groupId>dev.sunbirdrc.middleware</groupId>
     <artifactId>validation</artifactId>
     <version>2.0.3</version>
     <name>Validation</name>
@@ -20,7 +20,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>middleware-commons</artifactId>
             <version>2.0.3</version>
         </dependency>
