@@ -5,11 +5,18 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.PluginRouter;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
+import dev.sunbirdrc.pojos.PluginRequestMessageCreator;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
+import dev.sunbirdrc.pojos.attestation.Action;
+import dev.sunbirdrc.pojos.attestation.AttestationPolicy;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
+import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
+import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
+import io.minio.errors.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,18 +27,32 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @RestController
-public class RegistryClaimsController {
+public class RegistryClaimsController extends AbstractController{
     private static final Logger logger = LoggerFactory.getLogger(RegistryClaimsController.class);
     private final ClaimRequestClient claimRequestClient;
     private final RegistryHelper registryHelper;
     private final DefinitionsManager definitionsManager;
+    private final ConditionResolverService conditionResolverService;
+    private final FileStorageService fileStorageService;
 
-    public RegistryClaimsController(ClaimRequestClient claimRequestClient, RegistryHelper registryHelper, DefinitionsManager definitionsManager) {
+    public RegistryClaimsController(ClaimRequestClient claimRequestClient,
+                                    RegistryHelper registryHelper,
+                                    DefinitionsManager definitionsManager,
+                                    ConditionResolverService conditionResolverService,
+                                    FileStorageService fileStorageService) {
         this.registryHelper = registryHelper;
         this.claimRequestClient = claimRequestClient;
         this.definitionsManager = definitionsManager;
+        this.conditionResolverService = conditionResolverService;
+        this.fileStorageService = fileStorageService;
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/claims", method = RequestMethod.GET)
@@ -107,5 +128,82 @@ public class RegistryClaimsController {
         additionalInputs.set("notes", notes);
         additionalInputs.put("claimId", claimId);
         return additionalInputs;
+    }
+
+    @RequestMapping(value = "/api/v1/send")
+    public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody JsonNode requestBody)  {
+        String entityName = requestBody.get("entityName").asText();
+        String entityId = requestBody.get("entityId").asText();
+        String attestationName = requestBody.get("name").asText();
+        JsonNode additionalInput = requestBody.get("additionalInput");
+        try {
+            registryHelper.authorize(entityName, entityId, request);
+        } catch (Exception e) {
+            logger.error("Unauthorized exception {}", e.getMessage());
+            return createUnauthorizedExceptionResponse(e);
+        }
+        AttestationPolicy attestationPolicy = definitionsManager.getAttestationPolicy(entityName, attestationName);
+
+        if(attestationPolicy.isInternal()) {
+            try {
+                // Generate property Data
+                String userId = registryHelper.getUserId(request);
+                JsonNode entityNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false)
+                        .get(entityName);
+                Map<String, List<String>> propertyOSIDMapper = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
+                JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationPolicy.getAttestationProperties(), propertyOSIDMapper);
+                if(!propertyData.isNull()) {
+                    ((ObjectNode)requestBody).put("propertyData", propertyData.toString());
+                }
+                registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
+                String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
+                // Resolve condition for REQUESTER
+                String condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
+                updateGetFileUrl(additionalInput);
+                // Rise claim
+                PluginRequestMessage message = PluginRequestMessageCreator.create(
+                        propertyData.toString(), condition, attestationPolicy, attestationOSID,
+                        entityName, entityId, additionalInput, Action.RAISE_CLAIM.name());
+                PluginRouter.route(message);
+            } catch (Exception exception) {
+                logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
+                exception.printStackTrace();
+                ResponseParams responseParams = new ResponseParams();
+                responseParams.setErrmsg(exception.getMessage());
+                Response response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
+                return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } else {
+            try {
+                registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
+                String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
+                PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
+                        "", "", attestationPolicy, attestationOSID,
+                        entityName, entityId, additionalInput, Action.RAISE_CLAIM.name());
+                PluginRouter.route(pluginRequestMessage);
+            } catch (Exception e) {
+                logger.error("Unable to route to the actor : {}", e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    // TODO: right now ui is sending single file only
+    private void updateGetFileUrl(JsonNode additionalInput) {
+        if(additionalInput.has("fileUrl")) {
+            String fileUrl = additionalInput.get("fileUrl").asText();
+            try {
+                String sharableUrl = fileStorageService.getSignedUrl(fileUrl);
+                ((ObjectNode)additionalInput).put("fileUrl", sharableUrl);
+            } catch (ServerException | InternalException | XmlParserException | InvalidResponseException
+                    | InvalidKeyException | NoSuchAlgorithmException | IOException
+                    | ErrorResponseException | InsufficientDataException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

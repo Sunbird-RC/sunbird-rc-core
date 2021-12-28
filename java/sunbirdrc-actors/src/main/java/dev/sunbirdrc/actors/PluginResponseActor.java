@@ -26,6 +26,10 @@ public class PluginResponseActor extends BaseActor {
             JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
             pluginResponseMessage.setResponse(response.toString());
         }
+        else if(Action.SELF_ATTEST.equals(Action.valueOf(pluginResponseMessage.getStatus()))) {
+            String response = pluginResponseMessage.getResponse();
+            pluginResponseMessage.setResponse(response);
+        }
         logger.info("{}", pluginResponseMessage);
         callUpdateAttestationAPI(pluginResponseMessage);
     }

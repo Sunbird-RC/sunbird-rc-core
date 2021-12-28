@@ -514,19 +514,28 @@ public class RegistryHelper {
         ObjectNode metaData = JsonNodeFactory.instance.objectNode();
         JsonNode additionalData = pluginResponseMessage.getAdditionalData();
         Action action = Action.valueOf(pluginResponseMessage.getStatus());
-        if (Action.RAISE_CLAIM.name().equals(pluginResponseMessage.getStatus())) {
-            metaData.put(
-                    "claimId",
-                    additionalData.get("claimId").asText("")
-            );
-        } else if (Action.GRANT_CLAIM.name().equals(pluginResponseMessage.getStatus())) {
-            Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getPolicyName());
-            JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
-            Object signedData = getSignedDoc(response, credentialTemplate);
-            metaData.put(
-                    "attestedData",
-                    signedData.toString()
-            );
+        switch (action) {
+            case GRANT_CLAIM:
+                Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getPolicyName());
+                JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
+                Object signedData = getSignedDoc(response, credentialTemplate);
+                metaData.put(
+                        "attestedData",
+                        signedData.toString()
+                );
+                break;
+            case SELF_ATTEST:
+                String hashOfTheFile = pluginResponseMessage.getResponse();
+                metaData.put(
+                        "attestedData",
+                        hashOfTheFile
+                );
+                break;
+            case RAISE_CLAIM:
+                metaData.put(
+                        "claimId",
+                        additionalData.get("claimId").asText("")
+                );
         }
         String propertyURI = attestationName + "/" + attestationOSID;
         JsonNode nodeToUpdate = entityStateHelper.manageState(attestationPolicy, root, propertyURI, action, metaData);

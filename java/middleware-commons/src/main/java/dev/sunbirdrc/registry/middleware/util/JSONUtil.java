@@ -493,6 +493,9 @@ public class JSONUtil {
 	}
 
 	public static JsonNode extractPropertyDataFromEntity(JsonNode entityNode, Map<String, String> attestationProperties, Map<String, List<String>> propertiesOSIDMapper) {
+		if(attestationProperties == null) {
+			return JsonNodeFactory.instance.nullNode();
+		}
 		ObjectNode result = JsonNodeFactory.instance.objectNode();
 		DocumentContext documentContext = JsonPath.parse(entityNode.toString());
 		for(Map.Entry<String, String> entry : attestationProperties.entrySet()) {
