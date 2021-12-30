@@ -6,6 +6,8 @@ const QRCode = require('qrcode');
 const JSZip = require("jszip");
 const { default: axios } = require('axios');
 
+Handlebars.registerHelper('dateFormat', require('handlebars-dateformat'));
+
 function getNumberWithOrdinal(n) {
     const s = ["th", "st", "nd", "rd"],
         v = n % 100;
@@ -46,6 +48,24 @@ function formatDate(givenDate) {
     let year = dob.getFullYear();
 
     return `${padDigit(day)}-${monthName}-${year}`;
+}
+
+function month(givenDateTime){
+    const dob = new Date(givenDateTime);
+    let monthName = monthNames[dob.getMonth()];
+    return `${monthName}`
+}
+
+function day(givenDateTime){
+    const dob = new Date(givenDateTime);
+    let day = dob.getDate();
+    return `${day}`
+}
+
+function year(givenDateTime){
+    const dob = new Date(givenDateTime);
+    let year = dob.getFullYear();
+    return `${year}`
 }
 
 function formatDateTime(givenDateTime) {
@@ -89,7 +109,7 @@ async function createCertificatePDF(certificate, templateUrl, res) {
             return content;
         });
 
-    const dataURL = await QRCode.toDataURL(zippedData, {scale: 2});
+    const dataURL = await QRCode.toDataURL(zippedData, {scale: 3});
     const certificateData = prepareDataForCertificateWithQRCode(certificateRaw, dataURL);
     const pdfBuffer = await createPDF(certificateTemplateUrl, certificateData);
     res.statusCode = 200;
@@ -128,11 +148,14 @@ async function getTemplate(templateFileURL) {
     return templateContent;
 }
 
+
+
 async function createPDF(templateFileURL, data) {
     console.log("Creating pdf")
     // const htmlData = fs.readFileSync(templateFileURL, 'utf8');
     const htmlData = await getTemplate(templateFileURL);
     console.log('Received ', htmlData);
+    Handlebars.registerHelper()
     const template = Handlebars.compile(htmlData);
     let certificate = template(data);
     const browser = await puppeteer.launch({
@@ -149,11 +172,15 @@ async function createPDF(templateFileURL, data) {
     await page.setContent(certificate, {
         waitUntil: 'domcontentloaded'
     });
+    // console.log(certificate);
+    // await page.goto('data:text/html,' + certificate, {waitUntil: 'networkidle2'});
+    await page.evaluateHandle('document.fonts.ready');
     const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
         displayHeaderFooter: true
     });
+
 
     // close the browser
     await browser.close();
