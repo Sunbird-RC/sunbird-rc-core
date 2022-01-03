@@ -194,6 +194,7 @@ keycloak-admin:
   client-id: ${sunbird_sso_admin_client_id:admin-api}
   client-secret: ${sunbird_sso_admin_client_secret:client_secret}
 keycloak-user:
+    set-default-password: false
     default-password: abcd@123
 claims:
   url: ${claims_url:http://localhost:8081}
