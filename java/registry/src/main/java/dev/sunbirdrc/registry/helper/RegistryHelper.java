@@ -517,7 +517,7 @@ public class RegistryHelper {
         switch (action) {
             case GRANT_CLAIM:
                 Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getPolicyName());
-                if (credentialTemplate.size() > 0) {
+                if (credentialTemplate != null && credentialTemplate.size() > 0) {
                     JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
                     Object signedData = getSignedDoc(response, credentialTemplate);
                     metaData.put(
@@ -619,7 +619,7 @@ public class RegistryHelper {
             ObjectNode payload = JsonNodeFactory.instance.objectNode();
             payload.set("entityType", JsonNodeFactory.instance.arrayNode().add(entityName));
             ObjectNode filters = JsonNodeFactory.instance.objectNode();
-            filters.set(OSSystemFields.osOwner.toString(), JsonNodeFactory.instance.objectNode().put("eq", userId));
+            filters.set(OSSystemFields.osOwner.toString(), JsonNodeFactory.instance.objectNode().put("contains", userId));
             payload.set("filters", filters);
 
             watch.start("RegistryController.searchEntity");
