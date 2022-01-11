@@ -792,12 +792,14 @@ public class RegistryHelper {
             return;
         }
         Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
-        ObjectNode updatedNode = (ObjectNode) readEntity(userId, entityName, entityId, false, null, false)
-                .get(entityName);
-        Object signedCredentials = getSignedDoc(updatedNode, credentialTemplate);
-        updatedNode.set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
-        ObjectNode updatedNodeParent = JsonNodeFactory.instance.objectNode();
-        updatedNodeParent.set(entityName, updatedNode);
-        updateProperty(updatedNodeParent, userId);
+        if (credentialTemplate.size() > 0) {
+            ObjectNode updatedNode = (ObjectNode) readEntity(userId, entityName, entityId, false, null, false)
+                    .get(entityName);
+            Object signedCredentials = getSignedDoc(updatedNode, credentialTemplate);
+            updatedNode.set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+            ObjectNode updatedNodeParent = JsonNodeFactory.instance.objectNode();
+            updatedNodeParent.set(entityName, updatedNode);
+            updateProperty(updatedNodeParent, userId);
+        }
     }
 }
