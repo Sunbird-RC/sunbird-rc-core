@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.pojos.attestation.Action;
-import dev.sunbirdrc.pojos.attestation.AttestationPolicy;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -32,7 +31,7 @@ public class StateContext {
     private String entityName;
     private JsonNode existing;
     private JsonNode updated;
-    private AttestationPolicy attestationPolicy;
+    private Boolean isAttestationProperty;
     private ObjectNode metadataNode;
     private JsonPointer pointerFromMetadataNode;
     private OwnershipsAttributes ownershipAttribute;
@@ -121,7 +120,7 @@ public class StateContext {
     }
 
     public boolean isAttestationProperty() {
-        return attestationPolicy != null;
+        return isAttestationProperty != null;
     }
 
     public boolean isOwnershipDetailsUpdated() {

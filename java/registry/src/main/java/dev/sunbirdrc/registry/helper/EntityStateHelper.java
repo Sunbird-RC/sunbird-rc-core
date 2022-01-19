@@ -9,12 +9,13 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.pojos.attestation.Action;
-import dev.sunbirdrc.pojos.attestation.AttestationPolicy;
 import dev.sunbirdrc.pojos.dto.ClaimDTO;
+import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.EntityUtil;
 import dev.sunbirdrc.registry.model.attestation.AttestationPath;
 import dev.sunbirdrc.registry.model.attestation.EntityPropertyURI;
+import dev.sunbirdrc.registry.service.AttestationPolicyService;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
 import dev.sunbirdrc.registry.util.RecordIdentifier;
@@ -50,12 +51,15 @@ public class EntityStateHelper {
 
     private final ClaimRequestClient claimRequestClient;
 
+    private final AttestationPolicyService attestationPolicyService;
+
     @Autowired
-    public EntityStateHelper(DefinitionsManager definitionsManager, RuleEngineService ruleEngineService, ConditionResolverService conditionResolverService, ClaimRequestClient claimRequestClient) {
+    public EntityStateHelper(DefinitionsManager definitionsManager, RuleEngineService ruleEngineService, ConditionResolverService conditionResolverService, ClaimRequestClient claimRequestClient, AttestationPolicyService attestationPolicyService) {
         this.definitionsManager = definitionsManager;
         this.ruleEngineService = ruleEngineService;
         this.conditionResolverService = conditionResolverService;
         this.claimRequestClient = claimRequestClient;
+        this.attestationPolicyService = attestationPolicyService;
     }
 
     void applyWorkflowTransitions(JsonNode existing, JsonNode updated) {
@@ -123,7 +127,7 @@ public class EntityStateHelper {
 
     private void addAttestationStateTransitions(JsonNode existing, String entityName, JsonNode modified, List<StateContext> allContexts) {
         List<String> ignoredProperties = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields();
-        List<AttestationPolicy> attestationPolicies = definitionsManager.getAttestationPolicy(entityName);
+        List<AttestationPolicy> attestationPolicies = attestationPolicyService.getAttestationPolicies(entityName);
         for (AttestationPolicy policy : attestationPolicies) {
             Set<EntityPropertyURI> targetPathPointers = new AttestationPath(policy.getNodePath())
                     .getEntityPropertyURIs(modified, uuidPropertyName);
@@ -143,7 +147,7 @@ public class EntityStateHelper {
                         .existing(existingSubNode)
                         .updated(modified.at(tp.getJsonPointer()))
                         .ignoredFields(ignoredProperties)
-                        .attestationPolicy(policy)
+                        .isAttestationProperty(true)
                         .metadataNode(metadataNodePointer.getFirst())
                         .pointerFromMetadataNode(metadataNodePointer.getSecond())
                         .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
@@ -189,7 +193,7 @@ public class EntityStateHelper {
                 .existing(entityNode.at(entityPropertyURI.get().getJsonPointer()))
                 .action(action)
                 .ignoredFields(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields())
-                .attestationPolicy(policy)
+                .isAttestationProperty(policy != null)
                 .metaData(metaData)
                 .metadataNode(metadataNodePointer.getFirst())
                 .pointerFromMetadataNode(metadataNodePointer.getSecond())
@@ -236,7 +240,7 @@ public class EntityStateHelper {
                 .existing(entityNode.at(entityPropertyURI.get().getJsonPointer()))
                 .action(action)
                 .ignoredFields(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields())
-                .attestationPolicy(policy)
+                .isAttestationProperty(policy != null)
                 .metaData(metaData)
                 .metadataNode(metadataNodePointer.getFirst())
                 .pointerFromMetadataNode(metadataNodePointer.getSecond())
@@ -249,7 +253,7 @@ public class EntityStateHelper {
     private Optional<AttestationPolicy> getMatchingAttestationPolicy(String entityName, JsonNode rootNode, String uuidPath) {
         int uuidPathDepth = uuidPath.split("/").length;
         String matchingUUIDPath = "/" + uuidPath;
-        for (AttestationPolicy policy : definitionsManager.getAttestationPolicy(entityName)) {
+        for (AttestationPolicy policy : attestationPolicyService.getAttestationPolicies(entityName)) {
             if (policy.getProperties().get(0).split("/").length != uuidPathDepth) continue;
             if (new AttestationPath(policy.getProperties().get(0))
                     .getEntityPropertyURIs(rootNode, uuidPropertyName)

@@ -1,8 +1,5 @@
 package dev.sunbirdrc.registry.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import java.io.IOException;
@@ -15,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {DefinitionsManager.class, OSResourceLoader.class})
@@ -65,5 +64,17 @@ public class DefinitionsManagerTest {
         String entity = "Common";
         List<OwnershipsAttributes> ownershipsAttributes = definitionsManager.getOwnershipAttributes(entity);
         assertEquals(0, ownershipsAttributes.size());
+    }
+
+    @Test
+    public void testShouldReturnTrueForValidEntityName() {
+        String entity = "Common";
+        assertTrue(definitionsManager.isValidEntityName(entity));
+    }
+
+    @Test
+    public void testShouldReturnFalseForInValidEntityName() {
+        String entity = "XYZ";
+        assertFalse(definitionsManager.isValidEntityName(entity));
     }
 }

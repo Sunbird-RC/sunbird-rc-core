@@ -3,26 +3,17 @@ package dev.sunbirdrc.registry.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
-import dev.sunbirdrc.pojos.attestation.AttestationPolicy;
 import dev.sunbirdrc.registry.middleware.util.Constants;
-import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
-import dev.sunbirdrc.registry.middleware.util.Constants;
-
-import java.util.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import javax.annotation.PostConstruct;
-
 import org.apache.commons.collections.map.HashedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.util.*;
+import java.util.Map.Entry;
 
 @Component("definitionsManager")
 public class DefinitionsManager {
@@ -32,16 +23,9 @@ public class DefinitionsManager {
     private Map<String, Definition> derivedDefinitionMap = new HashedMap();
 
     private OSResourceLoader osResourceLoader;
-    
+
     @Autowired
     private ResourceLoader resourceLoader;
-
-    public AttestationPolicy getAttestationPolicy(String entityName, String attestationName) {
-        return getDefinition(entityName)
-                .getOsSchemaConfiguration()
-                .getAttestationPolicyFor(attestationName)
-                .orElseThrow(() -> new PolicyNotFoundException("Policy " + attestationName + " is not found"));
-    }
 
     /**
      * Loads the definitions from the _schemas folder
@@ -53,7 +37,7 @@ public class DefinitionsManager {
         osResourceLoader = new OSResourceLoader(resourceLoader);
         osResourceLoader.loadResource(Constants.RESOURCE_LOCATION);
 
-        for(Entry<String, String> entry : osResourceLoader.getNameContent().entrySet()) {
+        for (Entry<String, String> entry : osResourceLoader.getNameContent().entrySet()) {
             String filename = entry.getKey();
             String filenameWithoutExtn = filename.substring(0, filename.indexOf('.'));
             JsonNode jsonNode = mapper.readTree(entry.getValue());
@@ -86,7 +70,7 @@ public class DefinitionsManager {
 
     /**
      * Returns the title for all definitions loaded
-     * 
+     *
      * @return
      */
     public Set<String> getAllKnownDefinitions() {
@@ -95,7 +79,7 @@ public class DefinitionsManager {
 
     /**
      * Returns all definitions that are loaded
-     * 
+     *
      * @return
      */
     public List<Definition> getAllDefinitions() {
@@ -108,7 +92,7 @@ public class DefinitionsManager {
 
     /**
      * Provide a definition by given title which is already loaded
-     * 
+     *
      * @param title
      * @return
      */
@@ -120,30 +104,32 @@ public class DefinitionsManager {
      * Returns the map, where key is the index and value is the public fields
      *
      * @return
-     * */
+     */
     public Map<String, Set<String>> getPublicFieldsInfoMap() {
         Map<String, Set<String>> result = new HashMap<>();
-        for (String index: getAllKnownDefinitions()) {
+        for (String index : getAllKnownDefinitions()) {
             List<String> publicFields = getDefinition(index)
                     .getOsSchemaConfiguration()
                     .getPublicFields();
-            if(publicFields != null) {
+            if (publicFields != null) {
                 result.put(index.toLowerCase(), new HashSet<>(publicFields));
             } else {
                 result.put(index.toLowerCase(), Collections.emptySet());
             }
         }
         return result;
-    };
+    }
+
+    ;
 
     /**
      * Returns the map, where key is the index and value is the internal fields
      *
      * @return
-     * */
+     */
     public Map<String, Set<String>> getExcludingFields() {
         Map<String, Set<String>> result = new HashMap<>();
-        for (String index: getAllKnownDefinitions()) {
+        for (String index : getAllKnownDefinitions()) {
             List<String> internalFields = getDefinition(index)
                     .getOsSchemaConfiguration()
                     .getInternalFields();
@@ -160,12 +146,6 @@ public class DefinitionsManager {
         return definitionMap.get(title).getOsSchemaConfiguration().getSubjectJsonPath();
     }
 
-    public List<AttestationPolicy> getAttestationPolicy(String entityType) {
-        return new ArrayList<>(definitionMap.get(entityType)
-                .getOsSchemaConfiguration()
-                .getAttestationPolicies());
-    }
-
     public List<OwnershipsAttributes> getOwnershipAttributes(String entity) {
         Definition entityDefinition = definitionMap.get(entity);
         if (entityDefinition != null) {
@@ -179,11 +159,7 @@ public class DefinitionsManager {
         return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
     }
 
-    public Map<String, Object> getCredentialTemplate(String sourceEntity, String policyName) {
-        Optional<AttestationPolicy> attestationPolicy = getAttestationPolicy(sourceEntity)
-                .stream()
-                .filter(policy -> policy.getName().equals(policyName))
-                .findFirst();
-        return attestationPolicy.orElse(new AttestationPolicy()).getCredentialTemplate();
+    public boolean isValidEntityName(String entityName) {
+        return definitionMap.containsKey(entityName);
     }
 }

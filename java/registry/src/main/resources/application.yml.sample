@@ -3,16 +3,29 @@ spring:
 ---
 spring:
   main:
-      allow-bean-definition-overriding: true
+    allow-bean-definition-overriding: true
   profiles: default
   servlet:
-      multipart:
-        enabled: true
-        max-file-size: ${max_file_size:5MB}
-        max-request-size: ${max_request_size:5MB}
+    multipart:
+      enabled: true
+      max-file-size: ${max_file_size:5MB}
+      max-request-size: ${max_request_size:5MB}
   output:
     ansi:
       enabled: ALWAYS
+  datasource:
+    url: ${connectionInfo_uri}
+    username: ${connectionInfo_username:postgres}
+    password: ${connectionInfo_password:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          lob:
+            non_contextual_creation: true
 name: default-yaml
 environment: default
 
@@ -42,9 +55,12 @@ registry:
   system:
     base: ${registry_system_base:http://localhost:8081/sunbirdrc/}
   rootEntity:
-        type: ${registry_rootentity_type:Teacher}
+    type: ${registry_rootentity_type:Teacher}
   schema:
-      url: ${registry_schema_url:http://localhost:8081/_schemas/}
+    url: ${registry_schema_url:http://localhost:8081/_schemas/}
+  attestationPolicy:
+    createAccess: ${create_attestation_access_entities:User}
+
 
 conditionalAccess:
   internal: _internal
@@ -93,8 +109,7 @@ database:
   shardAdvisorClassName: dev.sunbirdrc.registry.sink.shard.DefaultShardAdvisor
 
   connectionInfo:
-    -
-      # shardId, shardlabel must be a unique identifier to each connection.
+    - # shardId, shardlabel must be a unique identifier to each connection.
       shardId: shard1
 
       # shardLabel is used as prefix for a uuid. Could be any alpha numeric string
@@ -118,7 +133,7 @@ database:
       password: ${connectionInfo_password:postgres}
 
       # Any other shard information follows...
-    #-
+      #-
       #shardId: shard2
       #shardLabel: 2
       #uri: ${connectionInfo_uri:bolt://localhost:7688}
@@ -129,16 +144,16 @@ database:
 # Uncomment the following section to use Cassandra as backend store              #
 ##################################################################################
 cassandra:
-    graphFactory: org.janusgraph.core.JanusGraphFactory
-    backend: "cql"
-    hostname: ${cassandra_host:localhost}
-    keyspace: ${cassandra_keyspace:registry_db}
-    db.cache.size: ${cassandra_db_cache_size:0.25}
-    # wait time in milliseconds to clean the cache
-    db.cache.clean.wait: ${cassandra_db_cache_clean_wait:60}
-    index:
-      storage.backend: ${cassandr_index_storage:elasticsearch}
-      hostname: ${cassandra_index_hostname:localhost}
+  graphFactory: org.janusgraph.core.JanusGraphFactory
+  backend: "cql"
+  hostname: ${cassandra_host:localhost}
+  keyspace: ${cassandra_keyspace:registry_db}
+  db.cache.size: ${cassandra_db_cache_size:0.25}
+  # wait time in milliseconds to clean the cache
+  db.cache.clean.wait: ${cassandra_db_cache_clean_wait:60}
+  index:
+    storage.backend: ${cassandr_index_storage:elasticsearch}
+    hostname: ${cassandra_index_hostname:localhost}
 
 # File for framing the entity while reading
 frame:
@@ -194,15 +209,15 @@ keycloak-admin:
   client-id: ${sunbird_sso_admin_client_id:admin-api}
   client-secret: ${sunbird_sso_admin_client_secret:client_secret}
 keycloak-user:
-    set-default-password: false
-    default-password: abcd@123
+  set-default-password: false
+  default-password: abcd@123
 claims:
   url: ${claims_url:http://localhost:8081}
 authentication:
-    enabled: ${authentication_enabled:false}
-    publicKey:  ${authentication_publickey:}
-    realm:  ${authentication_realm:sunbird-rc}
-    url:  ${authentication_url:localhost:8443/auth}
+  enabled: ${authentication_enabled:false}
+  publicKey:  ${authentication_publickey:}
+  realm:  ${authentication_realm:sunbird-rc}
+  url:  ${authentication_url:localhost:8443/auth}
 
 
 validation:

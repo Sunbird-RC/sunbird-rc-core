@@ -2,8 +2,8 @@ package dev.sunbirdrc.registry.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
-import dev.sunbirdrc.pojos.attestation.AttestationPolicy;
 import dev.sunbirdrc.pojos.attestation.auto.AutoAttestationPolicy;
+import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import lombok.Data;
 
 import java.util.*;

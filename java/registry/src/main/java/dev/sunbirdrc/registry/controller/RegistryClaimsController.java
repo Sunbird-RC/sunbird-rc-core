@@ -9,10 +9,11 @@ import dev.sunbirdrc.pojos.PluginRequestMessageCreator;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.pojos.attestation.Action;
-import dev.sunbirdrc.pojos.attestation.AttestationPolicy;
+import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import dev.sunbirdrc.registry.service.AttestationPolicyService;
 import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
@@ -42,17 +43,19 @@ public class RegistryClaimsController extends AbstractController{
     private final DefinitionsManager definitionsManager;
     private final ConditionResolverService conditionResolverService;
     private final FileStorageService fileStorageService;
+    private final AttestationPolicyService attestationPolicyService;
 
     public RegistryClaimsController(ClaimRequestClient claimRequestClient,
                                     RegistryHelper registryHelper,
                                     DefinitionsManager definitionsManager,
                                     ConditionResolverService conditionResolverService,
-                                    FileStorageService fileStorageService) {
+                                    FileStorageService fileStorageService, AttestationPolicyService attestationPolicyService) {
         this.registryHelper = registryHelper;
         this.claimRequestClient = claimRequestClient;
         this.definitionsManager = definitionsManager;
         this.conditionResolverService = conditionResolverService;
         this.fileStorageService = fileStorageService;
+        this.attestationPolicyService = attestationPolicyService;
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/claims", method = RequestMethod.GET)
@@ -142,12 +145,13 @@ public class RegistryClaimsController extends AbstractController{
             logger.error("Unauthorized exception {}", e.getMessage());
             return createUnauthorizedExceptionResponse(e);
         }
-        AttestationPolicy attestationPolicy = definitionsManager.getAttestationPolicy(entityName, attestationName);
-
+        AttestationPolicy attestationPolicy = attestationPolicyService.getAttestationPolicy(entityName, attestationName);
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
         if(attestationPolicy.isInternal()) {
             try {
                 // Generate property Data
-                String userId = registryHelper.getUserId(request);
+                String userId = registryHelper.getUserId(request, entityName);
                 JsonNode entityNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false)
                         .get(entityName);
                 Map<String, List<String>> propertyOSIDMapper = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
@@ -162,15 +166,17 @@ public class RegistryClaimsController extends AbstractController{
                 updateGetFileUrl(additionalInput);
                 // Rise claim
                 PluginRequestMessage message = PluginRequestMessageCreator.create(
-                        propertyData.toString(), condition, attestationPolicy, attestationOSID,
-                        entityName, entityId, additionalInput, Action.RAISE_CLAIM.name());
+                        propertyData.toString(), condition, attestationOSID,
+                        entityName, entityId, additionalInput, Action.RAISE_CLAIM.name(), attestationPolicy.getName(),
+                        attestationPolicy.getAttestorPlugin(), attestationPolicy.getAttestorEntity(),
+                        attestationPolicy.getAttestorSignin());
                 PluginRouter.route(message);
+                response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
             } catch (Exception exception) {
                 logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
                 exception.printStackTrace();
-                ResponseParams responseParams = new ResponseParams();
                 responseParams.setErrmsg(exception.getMessage());
-                Response response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
+                response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
                 return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } else {
@@ -178,16 +184,17 @@ public class RegistryClaimsController extends AbstractController{
                 registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
                 String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
                 PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
-                        "", "", attestationPolicy, attestationOSID,
-                        entityName, entityId, additionalInput, Action.RAISE_CLAIM.name());
+                        "", "", attestationOSID,
+                        entityName, entityId, additionalInput, Action.RAISE_CLAIM.name(), attestationPolicy.getName(),
+                        attestationPolicy.getAttestorPlugin(), attestationPolicy.getAttestorEntity(),
+                        attestationPolicy.getAttestorSignin());
                 PluginRouter.route(pluginRequestMessage);
+                response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
             } catch (Exception e) {
                 logger.error("Unable to route to the actor : {}", e.getMessage());
                 e.printStackTrace();
             }
         }
-        ResponseParams responseParams = new ResponseParams();
-        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
