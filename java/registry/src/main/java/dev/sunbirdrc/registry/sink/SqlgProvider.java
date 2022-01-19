@@ -29,7 +29,7 @@ public class SqlgProvider extends DatabaseProvider {
         config.setProperty("jdbc.url", connectionInfo.getUri());
         config.setProperty("jdbc.username", connectionInfo.getUsername());
         config.setProperty("jdbc.password", connectionInfo.getPassword());
-        config.setProperty("maxPoolSize", 10);
+        config.setProperty("maxPoolSize", connectionInfo.getMaxPoolSize());
         setProvider(Constants.GraphDatabaseProvider.SQLG);
         setUuidPropertyName(uuidPropertyName);
         graph = SqlgGraph.open(config);

@@ -7,6 +7,7 @@ public class DBConnectionInfo {
 	private String uri;
 	private String username;
 	private String password;
+	private int maxPoolSize;
 	private boolean profilerEnabled = false;
 
 	public String getShardId() {
@@ -57,4 +58,11 @@ public class DBConnectionInfo {
 		this.shardLabel = shardLabel;
 	}
 
+	public int getMaxPoolSize() {
+		return maxPoolSize;
+	}
+
+	public void setMaxPoolSize(int maxPoolSize) {
+		this.maxPoolSize = maxPoolSize;
+	}
 }

@@ -131,6 +131,7 @@ database:
 
       username: ${connectionInfo_username:postgres}
       password: ${connectionInfo_password:postgres}
+      maxPoolSize: ${connectionInfo_maxPoolSize:100}
 
       # Any other shard information follows...
       #-
