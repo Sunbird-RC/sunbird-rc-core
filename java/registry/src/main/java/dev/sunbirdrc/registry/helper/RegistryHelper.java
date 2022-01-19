@@ -11,15 +11,14 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
 import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
-import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
+import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.attestation.Action;
-import dev.sunbirdrc.pojos.attestation.AttestationPolicy;
 import dev.sunbirdrc.pojos.attestation.States;
+import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
-import dev.sunbirdrc.registry.service.SignatureService;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
@@ -41,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -101,6 +101,9 @@ public class RegistryHelper {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AttestationPolicyService attestationPolicyService;
 
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
@@ -383,7 +386,7 @@ public class RegistryHelper {
     }
 
     public String addAttestationProperty(String entityName, String entityId, String propertyName, JsonNode inputJson, HttpServletRequest request) throws Exception {
-        String userId = getUserId(request);
+        String userId = getUserId(request, entityName);
         JsonNode existingEntityNode = readEntity(userId, entityName, entityId, false, null, false);
         JsonNode nodeToUpdate = existingEntityNode.deepCopy();
         JsonNode parentNode = nodeToUpdate.get(entityName);
@@ -507,7 +510,7 @@ public class RegistryHelper {
         String attestationName = pluginResponseMessage.getPolicyName();
         String attestationOSID = pluginResponseMessage.getAttestationOSID();
         String sourceEntity = pluginResponseMessage.getSourceEntity();
-        AttestationPolicy attestationPolicy = definitionsManager.getAttestationPolicy(sourceEntity, attestationName);
+        AttestationPolicy attestationPolicy = attestationPolicyService.getAttestationPolicy(sourceEntity, attestationName);
         String userId = "";
 
         JsonNode root = readEntity(userId, sourceEntity, pluginResponseMessage.getSourceOSID(), false, null, false);
@@ -516,7 +519,7 @@ public class RegistryHelper {
         Action action = Action.valueOf(pluginResponseMessage.getStatus());
         switch (action) {
             case GRANT_CLAIM:
-                Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getPolicyName());
+                Map<String, Object> credentialTemplate = attestationPolicy.getCredentialTemplate();
                 if (credentialTemplate != null && credentialTemplate.size() > 0) {
                     JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
                     Object signedData = getSignedDoc(response, credentialTemplate);
@@ -580,12 +583,20 @@ public class RegistryHelper {
 
     }
 
-    public String getUserId(HttpServletRequest request) throws Exception {
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        if (principal != null) {
-            return principal.getAccount().getPrincipal().getName();
-        }
-        throw new Exception("Forbidden");
+    public boolean doesEntityContainOwnershipAttributes(@PathVariable String entityName) {
+        return definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getOwnershipAttributes().size() > 0;
+    }
+
+    public String getUserId(HttpServletRequest request, String entityName) throws Exception {
+       if (doesEntityContainOwnershipAttributes(entityName)) {
+           KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+           if (principal != null) {
+               return principal.getAccount().getPrincipal().getName();
+           }
+           throw new Exception("Forbidden");
+       } else {
+           return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
+       }
     }
 
     public JsonNode getRequestedUserDetails(HttpServletRequest request, String entityName) throws Exception {
@@ -631,7 +642,7 @@ public class RegistryHelper {
     }
 
     public void authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
-        String userIdFromRequest = getUserId(request);
+        String userIdFromRequest = getUserId(request, entityName);
         JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
         JsonNode entityFromDB = response.get(entityName);
         if (!isOwner(entityFromDB, userIdFromRequest)) {
@@ -716,7 +727,7 @@ public class RegistryHelper {
     }
 
     public void authorizeAttestor(String entity, HttpServletRequest request) throws Exception {
-        List<String> keyCloakEntities = getKeyCloakEntities(request);
+        List<String> keyCloakEntities = getUserEntities(request);
         Set<String> allTheAttestorEntities = definitionsManager.getDefinition(entity)
                 .getOsSchemaConfiguration()
                 .getAllTheAttestorEntities();
@@ -725,7 +736,7 @@ public class RegistryHelper {
         }
     }
 
-    private List<String> getKeyCloakEntities(HttpServletRequest request) {
+    public List<String> getUserEntities(HttpServletRequest request) {
         KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
         Object customAttributes = principal.getAccount()
                 .getKeycloakSecurityContext()
@@ -740,7 +751,7 @@ public class RegistryHelper {
         String userId = "osrc";
         JsonNode entity = readEntity(userId, entityName, entityId, false, null, false)
                 .get(entityName);
-        for (AttestationPolicy attestationPolicy : definitionsManager.getAttestationPolicy(entityName)) {
+        for (AttestationPolicy attestationPolicy : attestationPolicyService.getAttestationPolicies(entityName)) {
             String policyName = attestationPolicy.getName();
 
             if(entity.has(policyName) && entity.get(policyName).isArray()) {

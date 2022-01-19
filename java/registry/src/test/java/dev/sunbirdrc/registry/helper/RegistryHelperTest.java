@@ -7,14 +7,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
-import dev.sunbirdrc.pojos.attestation.AttestationPolicy;
+import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
-import dev.sunbirdrc.registry.service.DecryptionHelper;
-import dev.sunbirdrc.registry.service.IReadService;
-import dev.sunbirdrc.registry.service.ISearchService;
-import dev.sunbirdrc.registry.service.RegistryService;
+import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
@@ -40,7 +37,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,6 +84,9 @@ public class RegistryHelperTest {
     private DefinitionsManager definitionsManager;
 
     @Mock
+    private AttestationPolicyService attestationPolicyService;
+
+    @Mock
     private KeycloakAdminUtil keycloakAdminUtil;
 
     @Mock
@@ -117,7 +116,7 @@ public class RegistryHelperTest {
         MockitoAnnotations.initMocks(this);
         registryHelper.uuidPropertyName = "osid";
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
-        registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
+        registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient, attestationPolicyService);
         registryHelper.setDefinitionsManager(definitionsManager);
     }
 
@@ -426,7 +425,7 @@ public class RegistryHelperTest {
         AttestationPolicy attestationPolicy2 = new AttestationPolicy();
         attestationPolicy2.setName("attestationSomething");
         when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
-        when(definitionsManager.getAttestationPolicy(entity)).thenReturn(Arrays.asList(attestationPolicy1, attestationPolicy2));
+        when(attestationPolicyService.getAttestationPolicies(entity)).thenReturn(Arrays.asList(attestationPolicy1, attestationPolicy2));
         registryHelper.invalidateAttestation(entity, entityId);
         verify(registryService, times(1)).updateEntity(any(), any(), any(), eq(expectedUpdatedNode.toString()));
     }

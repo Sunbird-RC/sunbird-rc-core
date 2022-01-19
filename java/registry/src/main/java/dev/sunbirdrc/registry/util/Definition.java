@@ -11,7 +11,6 @@ import java.util.Map;
 
 /**
  * Creates Definition for a given JsonNode This accepts a schema
- *
  */
 public class Definition {
     private static Logger logger = LoggerFactory.getLogger(Definition.class);
@@ -32,12 +31,12 @@ public class Definition {
 
     /**
      * To parse a jsonNode of given schema type
-     * 
+     *
      * @param schemaNode
      */
     public Definition(JsonNode schemaNode) {
         content = schemaNode.toString();
-        if(!schemaNode.has(TITLE))
+        if (!schemaNode.has(TITLE))
             throw new RuntimeException(TITLE + " not found for schema, " + schemaNode);
         title = schemaNode.get(TITLE).asText();
         ObjectMapper mapper = new ObjectMapper();
@@ -46,6 +45,14 @@ public class Definition {
         if (null != configJson) {
             try {
                 osSchemaConfiguration = mapper.treeToValue(configJson, OSSchemaConfiguration.class);
+                osSchemaConfiguration.getAttestationPolicies().forEach(policy -> {
+                    try {
+                        policy.setAdditionalInputStr(mapper.writeValueAsString(policy.getAdditionalInputs()));
+                        policy.setCredentialTemplateStr(mapper.writeValueAsString(policy.getCredentialTemplates()));
+                    } catch (JsonProcessingException e) {
+                        logger.error("Error processing attestation policies JSON: ", e);
+                    }
+                });
             } catch (JsonProcessingException e) {
                 logger.error("Error processing {} JSON: ", OSCONFIG, e);
                 logger.debug(title + " does not have OS configuration.");
@@ -84,7 +91,7 @@ public class Definition {
 
     /**
      * Holds the title for a given schema
-     * 
+     *
      * @return
      */
     public String getTitle() {
@@ -93,7 +100,7 @@ public class Definition {
 
     /**
      * Holds the String representation of schema
-     * 
+     *
      * @return
      */
     public String getContent() {
@@ -102,6 +109,7 @@ public class Definition {
 
     /**
      * Gets the OSSchemaConfiguration
+     *
      * @return
      */
     public OSSchemaConfiguration getOsSchemaConfiguration() {

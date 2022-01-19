@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
 import dev.sunbirdrc.keycloak.OwnerCreationException;
+import dev.sunbirdrc.registry.service.AttestationPolicyService;
 import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.registry.exception.DuplicateRecordException;
 import dev.sunbirdrc.registry.exception.EntityCreationException;
@@ -50,6 +51,9 @@ public class EntityStateHelperTest {
     @Mock
     KeycloakAdminUtil keycloakAdminUtil;
 
+    @Mock
+    AttestationPolicyService attestationPolicyService;
+
     @Autowired
     DefinitionsManager definitionsManager;
 
@@ -67,7 +71,7 @@ public class EntityStateHelperTest {
 
     private void runTest(JsonNode existing, JsonNode updated, JsonNode expected) {
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
-        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
+        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient, attestationPolicyService);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
         entityStateHelper.applyWorkflowTransitions(existing, updated);
         assertEquals(expected, updated);
@@ -95,7 +99,7 @@ public class EntityStateHelperTest {
     @Test
     public void shouldRaiseClaimWhenSentForAttestation() throws Exception {
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
-        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
+        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient, attestationPolicyService);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldRaiseClaimWhenSentForAttestation.json"));
         String propertyURI = "educationDetails/fgyuhij";

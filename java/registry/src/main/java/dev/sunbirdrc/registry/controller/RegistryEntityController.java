@@ -8,13 +8,14 @@ import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.keycloak.OwnerCreationException;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
-import dev.sunbirdrc.pojos.attestation.AttestationPolicy;
 import dev.sunbirdrc.registry.dao.NotFoundException;
+import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
+import dev.sunbirdrc.registry.service.AttestationPolicyService;
 import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
@@ -43,6 +44,9 @@ public class RegistryEntityController extends AbstractController {
 
     @Autowired
     private ICertificateService certificateService;
+
+    @Autowired
+    private AttestationPolicyService attestationPolicyService;
 
     @Value("${authentication.enabled:true}") boolean authenticationEnabled;
 
@@ -116,7 +120,7 @@ public class RegistryEntityController extends AbstractController {
             HttpServletRequest request) {
 
         logger.info("Updating entityType {} request body {}", entityName, rootNode);
-        if (doesEntityContainOwnershipAttributes(entityName)) {
+        if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -154,9 +158,6 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
-    private boolean doesEntityContainOwnershipAttributes(@PathVariable String entityName) {
-        return definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getOwnershipAttributes().size() > 0;
-    }
 
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.POST)
     public ResponseEntity<Object> postEntity(
@@ -174,9 +175,9 @@ public class RegistryEntityController extends AbstractController {
 
         try {
             String userId;
-            if (doesEntityContainOwnershipAttributes(entityName)) {
+            if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
                 registryHelper.authorizeManageEntity(request, entityName);
-                userId = registryHelper.getUserId(request);
+                userId = registryHelper.getUserId(request, entityName);
             } else {
                 userId= dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
             }
@@ -231,7 +232,7 @@ public class RegistryEntityController extends AbstractController {
             @RequestParam Optional<Boolean> send
 
     ) {
-        if (doesEntityContainOwnershipAttributes(entityName)) {
+        if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -423,7 +424,7 @@ public class RegistryEntityController extends AbstractController {
                 requireVCResponse = true;
             }
         }
-        if (doesEntityContainOwnershipAttributes(entityName)) {
+        if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -460,7 +461,7 @@ public class RegistryEntityController extends AbstractController {
     }
 
     private String getUserId(String entityName, HttpServletRequest request) throws Exception {
-        return doesEntityContainOwnershipAttributes(entityName) ? registryHelper.getUserId(request) : dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
+        return registryHelper.getUserId(request, entityName);
     }
 
     private void addJsonLDSpec(JsonNode node) {
