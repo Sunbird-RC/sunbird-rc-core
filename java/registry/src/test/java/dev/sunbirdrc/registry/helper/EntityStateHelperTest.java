@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
 import dev.sunbirdrc.keycloak.OwnerCreationException;
+import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.registry.exception.DuplicateRecordException;
 import dev.sunbirdrc.registry.exception.EntityCreationException;
@@ -12,6 +14,7 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.workflow.RuleEngineService;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,16 +31,19 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {ObjectMapper.class, DefinitionsManager.class,
-        ConditionResolverService.class, ClaimRequestClient.class, KeycloakAdminUtil.class, KieConfiguration.class})
+@SpringBootTest(classes = {ObjectMapper.class,
+        ConditionResolverService.class, ClaimRequestClient.class, KieConfiguration.class})
 @Import(EntityStateHelperTestConfiguration.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class EntityStateHelperTest {
@@ -51,10 +57,6 @@ public class EntityStateHelperTest {
     @Mock
     KeycloakAdminUtil keycloakAdminUtil;
 
-    @Mock
-    RegistryHelper registryHelper;
-
-    @Autowired
     DefinitionsManager definitionsManager;
 
     @Autowired
@@ -65,35 +67,42 @@ public class EntityStateHelperTest {
     ObjectMapper m = new ObjectMapper();
 
     @Before
-    public void initMocks() {
+    public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
+        definitionsManager = new DefinitionsManager();
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Definition> definitionMap = new HashMap<>();
+        String studentSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
+        String instituteSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
+        definitionMap.put("Student", new Definition(objectMapper.readTree(studentSchema)));
+        definitionMap.put("Institute", new Definition(objectMapper.readTree(instituteSchema)));
+        ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
     }
 
-    private void runTest(JsonNode existing, JsonNode updated, JsonNode expected) {
+    private void runTest(JsonNode existing, JsonNode updated, JsonNode expected, List<AttestationPolicy> attestationPolicies) {
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
         EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
-        entityStateHelper.applyWorkflowTransitions(existing, updated, Collections.emptyList());
+        entityStateHelper.applyWorkflowTransitions(existing, updated, attestationPolicies);
         assertEquals(expected, updated);
     }
 
-    @Test
     public void shouldMarkAsDraftWhenThereIsNewEntry() throws IOException {
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldMarkAsDraftWhenThereIsNewEntry.json"));
-        runTest(test.get("existing"), test.get("updated"), test.get("afterStateChange"));
+        runTest(test.get("existing"), test.get("updated"), test.get("afterStateChange"),
+                definitionsManager.getDefinition("Student").getOsSchemaConfiguration().getAttestationPolicies());
     }
 
-    @Test
     public void shouldMarkAsDraftIfThereIsAChange() throws IOException {
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldMarkAsDraftIfThereIsAChange.json"));
-        runTest(test.get("existing"), test.get("updated"), test.get("afterStateChange"));
+        runTest(test.get("existing"), test.get("updated"), test.get("afterStateChange"), Collections.emptyList());
     }
 
     @Test
     public void shouldBeNoStateChangeIfTheDataDidNotChange() throws IOException {
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldBeNoStateChangeIfTheDataDidNotChange.json"));
         JsonNode beforeUpdate = test.get("updated").deepCopy();
-        runTest(test.get("existing"), test.get("updated"), test.get("existing"));
+        runTest(test.get("existing"), test.get("updated"), test.get("existing"), Collections.emptyList());
     }
 
     @Test
@@ -111,7 +120,7 @@ public class EntityStateHelperTest {
         when(claimRequestClient.riseClaimRequest(ArgumentMatchers.any()))
                 .thenReturn(mockRaiseClaimResponse);
         String notes = "";
-        assertEquals(test.get("expected"), entityStateHelper.sendForAttestation(test.get("existing"), propertyURI, notes, Collections.emptyList()));
+        assertEquals(test.get("expected"), entityStateHelper.sendForAttestation(test.get("existing"), propertyURI, notes, definitionsManager.getDefinition("Student").getOsSchemaConfiguration().getAttestationPolicies()));
 
     }
 
@@ -119,33 +128,33 @@ public class EntityStateHelperTest {
     public void shouldCreateNewOwnersForNewlyAddedOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
         when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldAddNewOwner.json"));
-        runTest(test.get("existing"), test.get("updated"), test.get("expected"));
+        runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
     public void shouldNotCreateNewOwners() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
         when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotAddNewOwner.json"));
-        runTest(test.get("existing"), test.get("updated"), test.get("expected"));
+        runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
     public void shouldNotModifyExistingOwners() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
         when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotModifyExistingOwner.json"));
-        runTest(test.get("existing"), test.get("updated"), test.get("expected"));
+        runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
     public void shouldNotAllowUserModifyingOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException {
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotModifyOwnerDetails.json"));
-        runTest(test.get("existing"), test.get("updated"), test.get("expected"));
+        runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
     public void shouldNotAllowUserModifyingSystemFields() throws IOException, DuplicateRecordException, EntityCreationException {
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotModifyOsStateByUser.json"));
-        runTest(test.get("existing"), test.get("updated"), test.get("expected"));
+        runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
 }

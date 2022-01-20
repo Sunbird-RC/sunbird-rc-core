@@ -1,5 +1,8 @@
 package dev.sunbirdrc.registry.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
@@ -23,6 +26,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
@@ -36,6 +40,8 @@ public class SignatureServiceImplTest {
 	public ExpectedException expectedEx = ExpectedException.none();
 	@Mock
 	private RetryRestTemplate retryRestTemplate;
+	@Mock
+    private ObjectMapper objectMapper;
 	@InjectMocks
 	private SignatureServiceImpl signatureServiceImpl;
 
@@ -57,6 +63,7 @@ public class SignatureServiceImplTest {
                 return ResponseEntity.accepted().body(response);
             }
         });
+        when(objectMapper.readTree(anyString())).thenReturn(JsonNodeFactory.instance.objectNode());
         assertThat(signatureServiceImpl.sign(new Object()), is(notNullValue()));
 	}
 
@@ -82,6 +89,9 @@ public class SignatureServiceImplTest {
                 return ResponseEntity.accepted().body(response);
             }
         });
+        ObjectNode value = JsonNodeFactory.instance.objectNode();
+        value.set("verified", JsonNodeFactory.instance.booleanNode(false));
+        when(objectMapper.readTree(anyString())).thenReturn(value);
         assertThat(signatureServiceImpl.verify(new Object()), is(notNullValue()));
 	}
 
