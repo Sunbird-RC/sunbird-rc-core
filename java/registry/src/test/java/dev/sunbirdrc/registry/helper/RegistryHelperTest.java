@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.helper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
@@ -21,6 +22,7 @@ import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import dev.sunbirdrc.validators.IValidate;
 import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.workflow.RuleEngineService;
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -37,10 +39,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.UUID;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -80,7 +81,6 @@ public class RegistryHelperTest {
     @Mock
     private DecryptionHelper decryptionHelper;
 
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private DefinitionsManager definitionsManager;
 
 
@@ -101,6 +101,9 @@ public class RegistryHelperTest {
 
     @Autowired
     private KieContainer kieContainer;
+
+    @Mock
+    private SignatureService signatureService;
 
 
     private static final String INSTITUTE = "Institute";
@@ -222,7 +225,7 @@ public class RegistryHelperTest {
         String uri = String.format("%s/%s/%s", entityName, entityId, propertyURI);
         when(httpServletRequest.getRequestURI()).thenReturn(uri);
         when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(student);
-        when(definitionsManager.getDefinition(any()).getOsSchemaConfiguration().getSystemFields()).thenReturn(Arrays.asList("_osUpdatedAt", "_osCreatedAt"));
+        mockDefinitionManager();
         String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, httpServletRequest);
         String actualPropertyId = "12345";
         Assert.assertEquals(propertyId, actualPropertyId);
@@ -279,7 +282,7 @@ public class RegistryHelperTest {
         HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
         String uri = String.format("%s/%s/%s", entityName, entityId, propertyURI);
         when(httpServletRequest.getRequestURI()).thenReturn(uri);
-        when(definitionsManager.getDefinition(any()).getOsSchemaConfiguration().getSystemFields()).thenReturn(Arrays.asList("_osUpdatedAt", "_osCreatedAt"));
+        mockDefinitionManager();
         when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(student);
         String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, httpServletRequest);
         String actualPropertyId = "1-7d9dfb25-7789-44da-a6d4-eacf93e3a7aa";
@@ -305,12 +308,7 @@ public class RegistryHelperTest {
     @Test
     public void shouldCreateOwnersForInvite() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
-        when(definitionsManager.getOwnershipAttributes(INSTITUTE))
-                .thenReturn(Collections.singletonList(
-                        OwnershipsAttributes.builder().mobile("").email("/email").userId("/email").build()
-                ));
-        when(definitionsManager.getDefinition(INSTITUTE))
-                .thenReturn(new Definition(new ObjectMapper().readTree("{\"title\":\"Institute\",\"definitions\":{\"Institute\":{\"$id\":\"#\\/properties\\/Institute\",\"title\":\"The Institute Schema\",\"required\":[],\"properties\":{\"contactNumber\":{\"$id\":\"#\\/properties\\/contactNumber\",\"type\":\"string\",\"title\":\"Landline \\/ Mobile\"},\"email\":{\"$id\":\"#\\/properties\\/email\",\"type\":\"string\",\"format\":\"email\",\"title\":\"Email\"}}}},\"_osConfig\":{\"privateFields\":[],\"signedFields\":[],\"indexFields\":[],\"uniqueIndexFields\":[],\"systemFields\":[\"osCreatedAt\",\"osUpdatedAt\",\"osCreatedBy\",\"osUpdatedBy\"],\"attestationPolicies\":[],\"subjectJsonPath\":\"email\",\"ownershipAttributes\":[{\"email\":\"\\/email\",\"mobile\":\"\\/contactNumber\",\"userId\":\"\\/email\"},{\"email\":\"\\/adminEmail\",\"mobile\":\"\\/adminMobile\",\"userId\":\"\\/adminEmail\"}]}}")));
+        mockDefinitionManager();
         String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
         when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
@@ -323,12 +321,7 @@ public class RegistryHelperTest {
     @Test
     public void shouldSendInviteInvitationsAfterCreatingOwners() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
-        when(definitionsManager.getOwnershipAttributes(INSTITUTE))
-                .thenReturn(Collections.singletonList(
-                        OwnershipsAttributes.builder().mobile("").email("/email").userId("/email").build()
-                ));
-        when(definitionsManager.getDefinition(INSTITUTE))
-                .thenReturn(new Definition(new ObjectMapper().readTree("{\"title\":\"Institute\",\"definitions\":{\"Institute\":{\"$id\":\"#\\/properties\\/Institute\",\"title\":\"The Institute Schema\",\"required\":[],\"properties\":{\"contactNumber\":{\"$id\":\"#\\/properties\\/contactNumber\",\"type\":\"string\",\"title\":\"Landline \\/ Mobile\"},\"email\":{\"$id\":\"#\\/properties\\/email\",\"type\":\"string\",\"format\":\"email\",\"title\":\"Email\"}}}},\"_osConfig\":{\"privateFields\":[],\"signedFields\":[],\"indexFields\":[],\"uniqueIndexFields\":[],\"systemFields\":[\"osCreatedAt\",\"osUpdatedAt\",\"osCreatedBy\",\"osUpdatedBy\"],\"attestationPolicies\":[],\"subjectJsonPath\":\"email\",\"ownershipAttributes\":[{\"email\":\"\\/email\",\"mobile\":\"\\/contactNumber\",\"userId\":\"\\/email\"},{\"email\":\"\\/adminEmail\",\"mobile\":\"\\/adminMobile\",\"userId\":\"\\/adminEmail\"}]}}")));
+        mockDefinitionManager();
         String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
         when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
@@ -341,22 +334,29 @@ public class RegistryHelperTest {
         assertEquals("You have been invited to join Institute registry. You can complete your profile here: https://ndear.xiv.in", messageCapture.getValue());
     }
 
+    private void mockDefinitionManager() throws IOException {
+        definitionsManager = new DefinitionsManager();
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Definition> definitionMap = new HashMap<>();
+        String studentSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
+        String instituteSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
+        definitionMap.put("Student", new Definition(objectMapper.readTree(studentSchema)));
+        definitionMap.put("Institute", new Definition(objectMapper.readTree(instituteSchema)));
+        ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
+        ReflectionTestUtils.setField(registryHelper, "definitionsManager", definitionsManager);
+        ReflectionTestUtils.setField(registryHelper.entityStateHelper, "definitionsManager", definitionsManager);
+    }
+
     @Test
     public void shouldSendMultipleInviteInvitationsAfterCreatingOwners() throws Exception {
         JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"contactNumber\": \"123123\", \"adminEmail\": \"admin@email.com\",\n" +
                 "  \"adminMobile\": \"1234\"\n" +
                 "}}");
-        when(definitionsManager.getOwnershipAttributes(INSTITUTE))
-                .thenReturn(Arrays.asList(
-                        OwnershipsAttributes.builder().mobile("/contactNumber").email("/email").userId("/email").build(),
-                        OwnershipsAttributes.builder().mobile("/adminMobile").email("/adminEmail").userId("/adminEmail").build()
-                ));
-        when(definitionsManager.getDefinition(INSTITUTE))
-                .thenReturn(new Definition(new ObjectMapper().readTree("{\"title\":\"Institute\",\"definitions\":{\"Institute\":{\"$id\":\"#\\/properties\\/Institute\",\"title\":\"The Institute Schema\",\"required\":[],\"properties\":{\"contactNumber\":{\"$id\":\"#\\/properties\\/contactNumber\",\"type\":\"string\",\"title\":\"Landline \\/ Mobile\"},\"email\":{\"$id\":\"#\\/properties\\/email\",\"type\":\"string\",\"format\":\"email\",\"title\":\"Email\"}}}},\"_osConfig\":{\"privateFields\":[],\"signedFields\":[],\"indexFields\":[],\"uniqueIndexFields\":[],\"systemFields\":[\"osCreatedAt\",\"osUpdatedAt\",\"osCreatedBy\",\"osUpdatedBy\"],\"attestationPolicies\":[],\"subjectJsonPath\":\"email\",\"ownershipAttributes\":[{\"email\":\"\\/email\",\"mobile\":\"\\/contactNumber\",\"userId\":\"\\/email\"},{\"email\":\"\\/adminEmail\",\"mobile\":\"\\/adminMobile\",\"userId\":\"\\/adminEmail\"}]}}")));
         String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
         when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
         when(shardManager.getShard(any())).thenReturn(new Shard());
+        mockDefinitionManager();
         registryHelper.inviteEntity(inviteJson, "");
         Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());
         Mockito.verify(registryService, times(4)).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
@@ -423,7 +423,15 @@ public class RegistryHelperTest {
         AttestationPolicy attestationPolicy2 = new AttestationPolicy();
         attestationPolicy2.setName("attestationSomething");
         when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
-        when(registryHelper.getAttestationPolicies(entity)).thenReturn(Arrays.asList(attestationPolicy1, attestationPolicy2));
+        definitionsManager = new DefinitionsManager();
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Definition> definitionMap = new HashMap<>();
+        String studentSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
+        String instituteSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
+        definitionMap.put("Student", new Definition(objectMapper.readTree(studentSchema)));
+        definitionMap.put("Institute", new Definition(objectMapper.readTree(instituteSchema)));
+        ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
+        ReflectionTestUtils.setField(registryHelper, "definitionsManager", definitionsManager);
         registryHelper.invalidateAttestation(entity, entityId);
         verify(registryService, times(1)).updateEntity(any(), any(), any(), eq(expectedUpdatedNode.toString()));
     }
