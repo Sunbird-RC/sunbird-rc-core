@@ -83,8 +83,6 @@ public class RegistryHelperTest {
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private DefinitionsManager definitionsManager;
 
-    @Mock
-    private AttestationPolicyService attestationPolicyService;
 
     @Mock
     private KeycloakAdminUtil keycloakAdminUtil;
@@ -116,7 +114,7 @@ public class RegistryHelperTest {
         MockitoAnnotations.initMocks(this);
         registryHelper.uuidPropertyName = "osid";
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
-        registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient, attestationPolicyService);
+        registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
         registryHelper.setDefinitionsManager(definitionsManager);
     }
 
@@ -425,7 +423,7 @@ public class RegistryHelperTest {
         AttestationPolicy attestationPolicy2 = new AttestationPolicy();
         attestationPolicy2.setName("attestationSomething");
         when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
-        when(attestationPolicyService.getAttestationPolicies(entity)).thenReturn(Arrays.asList(attestationPolicy1, attestationPolicy2));
+        when(registryHelper.getAttestationPolicies(entity)).thenReturn(Arrays.asList(attestationPolicy1, attestationPolicy2));
         registryHelper.invalidateAttestation(entity, entityId);
         verify(registryService, times(1)).updateEntity(any(), any(), any(), eq(expectedUpdatedNode.toString()));
     }

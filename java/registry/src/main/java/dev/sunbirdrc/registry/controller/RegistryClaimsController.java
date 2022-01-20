@@ -13,7 +13,6 @@ import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
-import dev.sunbirdrc.registry.service.AttestationPolicyService;
 import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
@@ -43,19 +42,17 @@ public class RegistryClaimsController extends AbstractController{
     private final DefinitionsManager definitionsManager;
     private final ConditionResolverService conditionResolverService;
     private final FileStorageService fileStorageService;
-    private final AttestationPolicyService attestationPolicyService;
 
     public RegistryClaimsController(ClaimRequestClient claimRequestClient,
                                     RegistryHelper registryHelper,
                                     DefinitionsManager definitionsManager,
                                     ConditionResolverService conditionResolverService,
-                                    FileStorageService fileStorageService, AttestationPolicyService attestationPolicyService) {
+                                    FileStorageService fileStorageService) {
         this.registryHelper = registryHelper;
         this.claimRequestClient = claimRequestClient;
         this.definitionsManager = definitionsManager;
         this.conditionResolverService = conditionResolverService;
         this.fileStorageService = fileStorageService;
-        this.attestationPolicyService = attestationPolicyService;
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/claims", method = RequestMethod.GET)
@@ -145,7 +142,7 @@ public class RegistryClaimsController extends AbstractController{
             logger.error("Unauthorized exception {}", e.getMessage());
             return createUnauthorizedExceptionResponse(e);
         }
-        AttestationPolicy attestationPolicy = attestationPolicyService.getAttestationPolicy(entityName, attestationName);
+        AttestationPolicy attestationPolicy = registryHelper.getAttestationPolicy(entityName, attestationName);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
         if(attestationPolicy.isInternal()) {
