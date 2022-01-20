@@ -16,6 +16,7 @@ import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
+import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
@@ -31,6 +32,7 @@ import dev.sunbirdrc.validators.IValidate;
 import dev.sunbirdrc.views.ViewTemplate;
 import dev.sunbirdrc.views.ViewTransformer;
 import lombok.Setter;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
@@ -102,9 +104,6 @@ public class RegistryHelper {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private AttestationPolicyService attestationPolicyService;
-
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
 
@@ -173,10 +172,16 @@ public class RegistryHelper {
         return entityId;
     }
 
+    public String addEntityWithoutValidation(JsonNode inputJson, String userId, String entityName) throws Exception {
+        return addEntity(inputJson, userId, entityName);
+    }
+
     private String addEntityHandler(JsonNode inputJson, String userId, boolean isInvite) throws Exception {
         String entityType = inputJson.fields().next().getKey();
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), isInvite);
-        entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson);
+        String entityName = inputJson.fields().next().getKey();
+        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
+        entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
         return addEntity(inputJson, userId, entityType);
     }
 
@@ -365,7 +370,9 @@ public class RegistryHelper {
     }
 
     private String updateEntityAndState(JsonNode existingNode, JsonNode updatedNode, String userId) throws Exception {
-        entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode);
+        String entityName = updatedNode.fields().next().getKey();
+        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
+        entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
         return updateEntity(updatedNode, userId);
     }
 
@@ -485,7 +492,8 @@ public class RegistryHelper {
             propertyURI = propertyURI + "/" + propertyId;
         }
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
-        JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, propertyURI, notes);
+        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
+        JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, propertyURI, notes, attestationPolicies);
         updateEntity(updatedNode, "");
     }
 
@@ -497,10 +505,10 @@ public class RegistryHelper {
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
         JsonNode updatedNode;
         if (attestReq.get("action").asText().equals(Action.GRANT_CLAIM.toString())) {
-            updatedNode = entityStateHelper.grantClaim(entityNode, uuidPath, attestReq.get("notes").asText());
+            updatedNode = entityStateHelper.grantClaim(entityNode, uuidPath, attestReq.get("notes").asText(), getAttestationPolicies(entityName));
             sendNotificationToOwners(updatedNode, CLAIM_GRANTED, String.format(CLAIM_STATUS_SUBJECT_TEMPLATE, CLAIM_GRANTED), String.format(CLAIM_STATUS_BODY_TEMPLATE, CLAIM_GRANTED));
         } else {
-            updatedNode = entityStateHelper.rejectClaim(entityNode, uuidPath, attestReq.get("notes").asText());
+            updatedNode = entityStateHelper.rejectClaim(entityNode, uuidPath, attestReq.get("notes").asText(), getAttestationPolicies(entityName));
             sendNotificationToOwners(updatedNode, CLAIM_REJECTED, String.format(CLAIM_STATUS_SUBJECT_TEMPLATE, CLAIM_REJECTED), String.format(CLAIM_STATUS_BODY_TEMPLATE, CLAIM_REJECTED));
         }
         updateEntity(updatedNode, "");
@@ -510,7 +518,7 @@ public class RegistryHelper {
         String attestationName = pluginResponseMessage.getPolicyName();
         String attestationOSID = pluginResponseMessage.getAttestationOSID();
         String sourceEntity = pluginResponseMessage.getSourceEntity();
-        AttestationPolicy attestationPolicy = attestationPolicyService.getAttestationPolicy(sourceEntity, attestationName);
+        AttestationPolicy attestationPolicy = getAttestationPolicy(sourceEntity, attestationName);
         String userId = "";
 
         JsonNode root = readEntity(userId, sourceEntity, pluginResponseMessage.getSourceOSID(), false, null, false);
@@ -520,7 +528,8 @@ public class RegistryHelper {
         switch (action) {
             case GRANT_CLAIM:
                 Map<String, Object> credentialTemplate = attestationPolicy.getCredentialTemplate();
-                if (credentialTemplate != null && credentialTemplate.size() > 0) {
+                // checking size greater than 1, bcz empty template contains osid field
+                if (credentialTemplate != null && credentialTemplate.size() > 1) {
                     JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
                     Object signedData = getSignedDoc(response, credentialTemplate);
                     metaData.put(
@@ -751,7 +760,7 @@ public class RegistryHelper {
         String userId = "osrc";
         JsonNode entity = readEntity(userId, entityName, entityId, false, null, false)
                 .get(entityName);
-        for (AttestationPolicy attestationPolicy : attestationPolicyService.getAttestationPolicies(entityName)) {
+        for (AttestationPolicy attestationPolicy : getAttestationPolicies(entityName)) {
             String policyName = attestationPolicy.getName();
 
             if(entity.has(policyName) && entity.get(policyName).isArray()) {
@@ -812,5 +821,106 @@ public class RegistryHelper {
             updatedNodeParent.set(entityName, updatedNode);
             updateProperty(updatedNodeParent, userId);
         }
+    }
+
+    public void deleteEntity(String entityId, String userId) throws Exception {
+        RecordIdentifier recordId = RecordIdentifier.parse(entityId);
+        String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
+        Shard shard = shardManager.activateShard(shardId);
+        registryService.deleteEntityById(shard, userId, recordId.getUuid());
+    }
+
+    //TODO: add cache
+    public List<AttestationPolicy> getAttestationPolicies(String entityName) {
+        List<AttestationPolicy> dbAttestationPolicies = getAttestationsFromRegistry(entityName);
+        List<AttestationPolicy> schemaAttestationPolicies = definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getAttestationPolicies();
+        return ListUtils.union(dbAttestationPolicies, schemaAttestationPolicies);
+    }
+
+    private List<AttestationPolicy> getAttestationsFromRegistry(String entityName) {
+        try {
+            JsonNode searchRequest = objectMapper.readTree("{\n" +
+                    "    \"entityType\": [\n" +
+                    "        \"" + ATTESTATION_POLICY + "\"\n" +
+                    "    ],\n" +
+                    "    \"filters\": {\n" +
+                    "       \"entity\": {\n" +
+                    "           \"eq\": \"" + entityName + "\"\n" +
+                    "       }\n" +
+                    "    }\n" +
+                    "}");
+            JsonNode searchResponse = searchEntity(searchRequest);
+            return convertJsonNodeToAttestationList(searchResponse);
+        } catch (Exception e) {
+            logger.error("Error fetching attestation policy", e);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<AttestationPolicy> convertJsonNodeToAttestationList(JsonNode searchResponse) throws java.io.IOException {
+        TypeReference<List<AttestationPolicy>> typeRef
+                = new TypeReference<List<AttestationPolicy>>() {
+        };
+        ObjectReader reader = objectMapper.readerFor(typeRef);
+        return reader.readValue(searchResponse.get(ATTESTATION_POLICY));
+    }
+
+    public boolean isAttestationPolicyNameAlreadyUsed(String entityName, String policyName) {
+        List<AttestationPolicy> schemaAttestationPolicies = getAttestationPolicies(entityName);
+        return schemaAttestationPolicies.stream().anyMatch(policy -> policy.getName().equals(policyName));
+    }
+
+    public AttestationPolicy getAttestationPolicy(String entityName, String policyName) {
+        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
+        return attestationPolicies.stream()
+                .filter(policy -> policy.getName().equals(policyName))
+                .findFirst()
+                .orElseThrow(() -> new PolicyNotFoundException("Policy " + policyName + " is not found"));
+    }
+
+    public String createAttestationPolicy(AttestationPolicy attestationPolicy, String userId) throws Exception {
+        ObjectNode entity = createJsonNodeForAttestationPolicy(attestationPolicy);
+        return addEntityWithoutValidation(entity, userId, ATTESTATION_POLICY);
+    }
+
+    private ObjectNode createJsonNodeForAttestationPolicy(AttestationPolicy attestationPolicy) {
+        JsonNode inputJson = objectMapper.valueToTree(attestationPolicy);
+        ObjectNode entity = JsonNodeFactory.instance.objectNode();
+        entity.set(ATTESTATION_POLICY, inputJson);
+        return entity;
+    }
+
+    public List<AttestationPolicy> findAttestationPolicyByEntityAndCreatedBy(String entityName, String userId) throws Exception {
+        JsonNode searchRequest = objectMapper.readTree("{\n" +
+                "    \"entityType\": [\n" +
+                "        \"" + "ATTESTATION_POLICY" + "\"\n" +
+                "    ],\n" +
+                "    \"filters\": {\n" +
+                "       \"entity\": {\n" +
+                "           \"eq\": \"" + entityName + "\"\n" +
+                "       },\n" +
+                "       \"createdBy\": {\n" +
+                "           \"eq\": \"" + userId + "\"\n" +
+                "       }\n" +
+                "    }\n" +
+                "}");
+        searchEntity(searchRequest);
+        return Collections.emptyList();
+    }
+
+    public String updateAttestationPolicy(String userId, AttestationPolicy attestationPolicy) throws Exception {
+        JsonNode updateJson = createJsonNodeForAttestationPolicy(attestationPolicy);
+        return updateProperty(updateJson, userId);
+    }
+
+    public Optional<AttestationPolicy> findAttestationPolicyById(String userId, String policyOSID) throws Exception {
+        JsonNode jsonNode = readEntity(userId, ATTESTATION_POLICY, policyOSID, false, null, false)
+                .get(ATTESTATION_POLICY);
+        return Optional.of(objectMapper.treeToValue(jsonNode, AttestationPolicy.class));
+    }
+
+
+    public void deleteAttestationPolicy(AttestationPolicy attestationPolicy) throws Exception {
+        deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
     }
 }

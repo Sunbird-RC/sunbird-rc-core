@@ -45,14 +45,6 @@ public class Definition {
         if (null != configJson) {
             try {
                 osSchemaConfiguration = mapper.treeToValue(configJson, OSSchemaConfiguration.class);
-                osSchemaConfiguration.getAttestationPolicies().forEach(policy -> {
-                    try {
-                        policy.setAdditionalInputStr(mapper.writeValueAsString(policy.getAdditionalInputs()));
-                        policy.setCredentialTemplateStr(mapper.writeValueAsString(policy.getCredentialTemplates()));
-                    } catch (JsonProcessingException e) {
-                        logger.error("Error processing attestation policies JSON: ", e);
-                    }
-                });
             } catch (JsonProcessingException e) {
                 logger.error("Error processing {} JSON: ", OSCONFIG, e);
                 logger.debug(title + " does not have OS configuration.");

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
 import dev.sunbirdrc.keycloak.OwnerCreationException;
-import dev.sunbirdrc.registry.service.AttestationPolicyService;
 import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.registry.exception.DuplicateRecordException;
 import dev.sunbirdrc.registry.exception.EntityCreationException;
@@ -29,6 +28,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
@@ -52,7 +52,7 @@ public class EntityStateHelperTest {
     KeycloakAdminUtil keycloakAdminUtil;
 
     @Mock
-    AttestationPolicyService attestationPolicyService;
+    RegistryHelper registryHelper;
 
     @Autowired
     DefinitionsManager definitionsManager;
@@ -71,9 +71,9 @@ public class EntityStateHelperTest {
 
     private void runTest(JsonNode existing, JsonNode updated, JsonNode expected) {
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
-        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient, attestationPolicyService);
+        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
-        entityStateHelper.applyWorkflowTransitions(existing, updated);
+        entityStateHelper.applyWorkflowTransitions(existing, updated, Collections.emptyList());
         assertEquals(expected, updated);
     }
 
@@ -99,7 +99,7 @@ public class EntityStateHelperTest {
     @Test
     public void shouldRaiseClaimWhenSentForAttestation() throws Exception {
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
-        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient, attestationPolicyService);
+        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
         JsonNode test = m.readTree(new File(TEST_DIR + "shouldRaiseClaimWhenSentForAttestation.json"));
         String propertyURI = "educationDetails/fgyuhij";
@@ -111,7 +111,7 @@ public class EntityStateHelperTest {
         when(claimRequestClient.riseClaimRequest(ArgumentMatchers.any()))
                 .thenReturn(mockRaiseClaimResponse);
         String notes = "";
-        assertEquals(test.get("expected"), entityStateHelper.sendForAttestation(test.get("existing"), propertyURI, notes));
+        assertEquals(test.get("expected"), entityStateHelper.sendForAttestation(test.get("existing"), propertyURI, notes, Collections.emptyList()));
 
     }
 

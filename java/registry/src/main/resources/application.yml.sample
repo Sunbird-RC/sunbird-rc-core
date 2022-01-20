@@ -13,19 +13,7 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
-  datasource:
-    url: ${connectionInfo_uri}
-    username: ${connectionInfo_username:postgres}
-    password: ${connectionInfo_password:postgres}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        jdbc:
-          lob:
-            non_contextual_creation: true
+
 name: default-yaml
 environment: default
 

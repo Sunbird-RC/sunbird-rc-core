@@ -15,7 +15,6 @@ import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
-import dev.sunbirdrc.registry.service.AttestationPolicyService;
 import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
@@ -44,9 +43,6 @@ public class RegistryEntityController extends AbstractController {
 
     @Autowired
     private ICertificateService certificateService;
-
-    @Autowired
-    private AttestationPolicyService attestationPolicyService;
 
     @Value("${authentication.enabled:true}") boolean authenticationEnabled;
 
