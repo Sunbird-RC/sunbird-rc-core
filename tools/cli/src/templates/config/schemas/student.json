@@ -27,6 +27,7 @@
 				"userId": "/phoneNumber"
 			}
 		],
+		"inviteRoles": ["anonymous"],
 		"attestationAttributes": ["school"],
 		"attestationPolicies": [
 			{

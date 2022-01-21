@@ -43,6 +43,7 @@
 				"mobile": "/phoneNumber",
 				"userId": "/phoneNumber"
 			}
-		]
+		],
+		"inviteRoles": ["anonymous"]
 	}
 }
