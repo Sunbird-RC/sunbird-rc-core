@@ -8,7 +8,6 @@ import { CLIEvent, RegistrySetupOptions, Toolbox } from '../types'
 
 export default {
 	name: 'init',
-	alias: ['i'],
 	run: async (toolbox: Toolbox) => {
 		const {
 			environment,

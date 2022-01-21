@@ -74,7 +74,7 @@ services:
       db:
         condition: service_started
   cs:
-    image: dockerhub/sunbird-rc-claim-ms
+    image: dockerhub/open-saber-claim-ms
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
