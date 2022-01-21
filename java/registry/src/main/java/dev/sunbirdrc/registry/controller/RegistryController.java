@@ -130,14 +130,14 @@ public class RegistryController extends AbstractController {
      * @return
      */
     @RequestMapping(value = "/read", method = RequestMethod.POST)
-    public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header, Principal principal) {
-        boolean requireLDResponse = header.getAccept().contains(Constants.LD_JSON_MEDIA_TYPE);
+    public ResponseEntity<Response> readEntity(@RequestHeader HttpHeaders header) {
+        boolean requireLDResponse = header.getAccept().stream().anyMatch(a -> a.toString().equals(Constants.LD_JSON_MEDIA_TYPE));
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         JsonNode inputJson = apiMessage.getRequest().getRequestMapNode();
         try {
-            JsonNode resultNode = registryHelper.readEntity(inputJson, principal.getName(), requireLDResponse);
+            JsonNode resultNode = registryHelper.readEntity(inputJson, apiMessage.getUserID(), requireLDResponse);
             // Transformation based on the mediaType
             Data<Object> data = new Data<>(resultNode);
             Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);

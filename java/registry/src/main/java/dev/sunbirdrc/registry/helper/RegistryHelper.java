@@ -268,7 +268,7 @@ public class RegistryHelper {
 
     private boolean isOwner(JsonNode entity, String userId) {
         String osOwner = OSSystemFields.osOwner.toString();
-        return !entity.has(osOwner) || entity.get(osOwner).toString().contains(userId);
+        return userId != null && ( !entity.has(osOwner) || entity.get(osOwner).toString().contains(userId));
     }
 
     /**
