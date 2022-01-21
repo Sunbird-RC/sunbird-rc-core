@@ -6,7 +6,6 @@ import { CLIEvent, RegistryContainer, Toolbox } from '../types'
 
 export default {
 	name: 'status',
-	alias: ['s'],
 	run: async (toolbox: Toolbox) => {
 		const { environment, events, print, registry } = toolbox
 
