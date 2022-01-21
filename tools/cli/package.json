@@ -51,5 +51,12 @@
 		"useTabs": true,
 		"singleQuote": true,
 		"proseWrap": "always"
+	},
+	"pnpm": {
+		"overrides": {
+			"ansi-regex@>2.1.1 <5.0.1": ">=5.0.1",
+			"yargs-parser@>=16.0.0 <18.1.2": ">=18.1.2",
+			"follow-redirects@<1.14.7": ">=1.14.7"
+		}
 	}
 }

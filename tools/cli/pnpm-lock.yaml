@@ -1,5 +1,10 @@
 lockfileVersion: 5.3
 
+overrides:
+  ansi-regex@>2.1.1 <5.0.1: '>=5.0.1'
+  yargs-parser@>=16.0.0 <18.1.2: '>=18.1.2'
+  follow-redirects@<1.14.7: '>=1.14.7'
+
 specifiers:
   '@types/node': 16.11.21
   '@types/update-notifier': 5.1.0
@@ -351,18 +356,6 @@ packages:
   /ansi-regex/2.1.1:
     resolution: { integrity: sha1-w7M6te42DYbg5ijwRorn7yfWVN8= }
     engines: { node: '>=0.10.0' }
-    dev: true
-
-  /ansi-regex/3.0.0:
-    resolution: { integrity: sha1-7QMXwyIGT3lGbAKWa922Bas32Zg= }
-    engines: { node: '>=4' }
-
-  /ansi-regex/4.1.0:
-    resolution:
-      {
-        integrity: sha512-1apePfXM1UOSqw0o9IiFAovVz9M5S1Dg+4TrDwfMewQ6p/rmMueb7tWZjQ1rx4Loy1ArBggoqGpfqqdI4rondg==,
-      }
-    engines: { node: '>=6' }
     dev: true
 
   /ansi-regex/5.0.1:
@@ -936,6 +929,7 @@ packages:
   /decamelize/1.2.0:
     resolution: { integrity: sha1-9lNNFRSCabIDUue+4m9QH5oZEpA= }
     engines: { node: '>=0.10.0' }
+    dev: true
 
   /decamelize/5.0.1:
     resolution:
@@ -1512,7 +1506,7 @@ packages:
       pluralize: 8.0.0
       semver: 7.3.5
       which: 2.0.2
-      yargs-parser: 16.1.0
+      yargs-parser: 20.2.9
     transitivePeerDependencies:
       - debug
     dev: false
@@ -3769,7 +3763,7 @@ packages:
     resolution: { integrity: sha1-qEeQIusaw2iocTibY1JixQXuNo8= }
     engines: { node: '>=4' }
     dependencies:
-      ansi-regex: 3.0.0
+      ansi-regex: 5.0.1
 
   /strip-ansi/5.2.0:
     resolution:
@@ -3778,7 +3772,7 @@ packages:
       }
     engines: { node: '>=6' }
     dependencies:
-      ansi-regex: 4.1.0
+      ansi-regex: 5.0.1
     dev: true
 
   /strip-ansi/6.0.1:
@@ -4240,23 +4234,12 @@ packages:
       }
     engines: { node: '>= 6' }
 
-  /yargs-parser/16.1.0:
-    resolution:
-      {
-        integrity: sha512-H/V41UNZQPkUMIT5h5hiwg4QKIY1RPvoBV4XcjUbRM8Bk2oKqqyZ0DIEbTFZB0XjbtSPG8SAa/0DxCQmiRgzKg==,
-      }
-    dependencies:
-      camelcase: 5.3.1
-      decamelize: 1.2.0
-    dev: false
-
   /yargs-parser/20.2.9:
     resolution:
       {
         integrity: sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==,
       }
     engines: { node: '>=10' }
-    dev: true
 
   /yauzl/2.10.0:
     resolution: { integrity: sha1-x+sXyT4RLLEIb6bY5R+wZnt5pfk= }
