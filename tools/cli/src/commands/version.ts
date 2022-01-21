@@ -6,7 +6,6 @@ import { Toolbox } from '../types'
 
 export default {
 	name: 'version',
-	alias: ['v'],
 	run: async (toolbox: Toolbox) => {
 		const { meta, print } = toolbox
 

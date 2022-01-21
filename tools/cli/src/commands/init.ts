@@ -2,13 +2,22 @@
 // `registry init` command
 // Creates a new registry instance
 
-import { CLIEvent, RegistryConfig, Toolbox } from '../types'
+import path from 'path'
+
+import { CLIEvent, RegistrySetupOptions, Toolbox } from '../types'
 
 export default {
 	name: 'init',
-	alias: ['i'],
 	run: async (toolbox: Toolbox) => {
-		const { environment, events, print, prompt, registry, strings } = toolbox
+		const {
+			environment,
+			events,
+			filesystem,
+			print,
+			prompt,
+			registry,
+			strings,
+		} = toolbox
 
 		// Listen to events and show progress
 		const spinner = print.spin('Loading...').stop()
@@ -24,6 +33,7 @@ export default {
 					print.error(print.colors.error(`${print.xmark} ${event.message}`))
 				}
 
+				print.error('')
 				process.exit(1)
 			}
 
@@ -58,9 +68,20 @@ export default {
 		// Check that all tools are installed
 		await environment.check()
 
+		// Check if a registry already exists in the current directory
+		if (
+			await filesystem.existsAsync(path.resolve(process.cwd(), 'registry.yaml'))
+		) {
+			events.emit('registry.create', {
+				status: 'error',
+				operation: 'checking-env',
+				message: `A registry has already been setup in the current directory.`,
+			})
+		}
+
 		// Get neccesary information
 		print.info('')
-		const config = await prompt.ask([
+		const options = await prompt.ask([
 			{
 				type: 'input',
 				message: print.colors.reset('Enter the name of the registry'),
@@ -129,7 +150,7 @@ export default {
 		print.info('')
 
 		// Setup the registry
-		await registry.create(config as unknown as RegistryConfig)
+		await registry.create(options as unknown as RegistrySetupOptions)
 
 		print.info('')
 	},

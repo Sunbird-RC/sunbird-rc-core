@@ -6,7 +6,6 @@ import { Toolbox } from '../types'
 
 export default {
 	name: 'help',
-	alias: ['h'],
 	run: async (toolbox: Toolbox) => {
 		const { meta, print } = toolbox
 
@@ -22,8 +21,10 @@ ${print.colors.bold('Commands')}
     Creates a new registry instance
   ${print.colors.dim('>')} ${print.colors.yellow('status')}
     Shows status of a registry and its containers
-  ${print.colors.dim('>')} ${print.colors.yellow('start/stop')}
-    Allows you to start/stop specific containers or an entire instance
+  ${print.colors.dim('>')} ${print.colors.yellow('start')}
+    Starts all the containers of a registry instance
+  ${print.colors.dim('>')} ${print.colors.yellow('restart')}
+    Restart all the containers in a registry instance
   ${print.colors.dim('>')} ${print.colors.yellow('version')}
     Shows the current version of the CLI
     `)

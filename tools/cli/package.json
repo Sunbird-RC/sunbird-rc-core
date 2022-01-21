@@ -1,6 +1,6 @@
 {
 	"name": "registry-cli",
-	"version": "1.1.1",
+	"version": "1.5.0",
 	"description": "A CLI to setup and manage Sunbird RC registry instances",
 	"author": "Vedant K <https://github.com/gamemaker1>",
 	"license": "MIT",
@@ -22,7 +22,7 @@
 	},
 	"scripts": {
 		"clean": "del out",
-		"copy-templates": "cp -r src/templates out",
+		"copy-templates": "cp -r src/templates out/src",
 		"compile": "pnpm clean && tsc -p .",
 		"watch": "tsc -w -p .",
 		"build": "pnpm compile && pnpm copy-templates",
@@ -31,23 +31,32 @@
 		"prepare": "pnpm build"
 	},
 	"dependencies": {
-		"extract-zip": "^2.0.1",
-		"gluegun": "^4.7.0",
-		"yaml": "^1.10.2"
+		"@types/node": "16.11.21",
+		"@types/update-notifier": "5.1.0",
+		"extract-zip": "2.0.1",
+		"gluegun": "4.7.1",
+		"update-notifier": "5.1.0",
+		"yaml": "1.10.2"
 	},
 	"devDependencies": {
-		"@types/node": "^16.11.6",
 		"del-cli": "^4.0.1",
-		"np": "^7.5.0",
+		"np": "7.6.0",
 		"npm-run-all": "^4.1.5",
-		"prettier": "^2.4.1",
+		"prettier": "2.5.1",
 		"ts-node": "^10.4.0",
-		"typescript": "^4.4.4"
+		"typescript": "4.5.5"
 	},
 	"prettier": {
 		"semi": false,
 		"useTabs": true,
 		"singleQuote": true,
 		"proseWrap": "always"
+	},
+	"pnpm": {
+		"overrides": {
+			"ansi-regex@>2.1.1 <5.0.1": ">=5.0.1",
+			"yargs-parser@>=16.0.0 <18.1.2": ">=18.1.2",
+			"follow-redirects@<1.14.7": ">=1.14.7"
+		}
 	}
 }
