@@ -96,9 +96,17 @@ public class RegistryEntityController extends AbstractController {
             ArrayNode entity = JsonNodeFactory.instance.arrayNode();
             entity.add(entityName);
             searchNode.set("entityType", entity);
-            JsonNode result = registryHelper.searchEntity(searchNode);
-            watch.stop("RegistryController.searchEntity");
-            return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
+            if (definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableSearch()) {
+                JsonNode result = registryHelper.searchEntity(searchNode);
+                watch.stop("RegistryController.searchEntity");
+                return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
+            } else {
+                watch.stop("RegistryController.searchEntity");
+                logger.error("Searching on entity {} not allowed", entityName);
+                response.setResult("");
+                responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                responseParams.setErrmsg(String.format("Searching on entity %s not allowed", entityName));
+            }
         } catch (Exception e) {
             logger.error("Exception in controller while searching entities !", e);
             response.setResult("");
