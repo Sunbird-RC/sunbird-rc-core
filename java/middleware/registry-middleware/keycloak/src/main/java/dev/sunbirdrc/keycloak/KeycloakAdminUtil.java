@@ -33,6 +33,7 @@ public class KeycloakAdminUtil {
     private String adminClientId;
     private String authURL;
     private String defaultPassword;
+    private boolean setDefaultPassword;
     private final Keycloak keycloak;
 
     @Autowired
@@ -41,12 +42,14 @@ public class KeycloakAdminUtil {
             @Value("${keycloak-admin.client-secret:}") String adminClientSecret,
             @Value("${keycloak-admin.client-id:}") String adminClientId,
             @Value("${keycloak-user.default-password:}") String defaultPassword,
+            @Value("${keycloak-user.set-default-password:}") boolean setDefaultPassword,
             @Value("${keycloak.auth-server-url:}") String authURL) {
         this.realm = realm;
         this.adminClientSecret = adminClientSecret;
         this.adminClientId = adminClientId;
         this.authURL = authURL;
         this.defaultPassword = defaultPassword;
+        this.setDefaultPassword = setDefaultPassword;
         this.keycloak = buildKeycloak();
     }
 
@@ -101,10 +104,12 @@ public class KeycloakAdminUtil {
         UserRepresentation newUser = new UserRepresentation();
         newUser.setEnabled(true);
         newUser.setUsername(userName);
-//        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
-//        credentialRepresentation.setValue(this.defaultPassword);
-//        credentialRepresentation.setType(PASSWORD);
-//        newUser.setCredentials(Collections.singletonList(credentialRepresentation));
+        if (setDefaultPassword) {
+            CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
+            credentialRepresentation.setValue(this.defaultPassword);
+            credentialRepresentation.setType(PASSWORD);
+            newUser.setCredentials(Collections.singletonList(credentialRepresentation));
+        }
         newUser.setEmail(email);
         newUser.singleAttribute(MOBILE_NUMBER, mobile);
         newUser.singleAttribute(EMAIL, email);

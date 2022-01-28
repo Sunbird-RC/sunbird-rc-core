@@ -1,16 +1,17 @@
-package dev.sunbirdrc.pojos.attestation;
+package dev.sunbirdrc.registry.entities;
 
+import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 public class AttestationPolicyTest {
-    AttestationPolicy attestationPolicy;
+    private AttestationPolicy attestationPolicy;
 
     @Before
     public void setUp() {
-         attestationPolicy = new AttestationPolicy();
+        attestationPolicy = new AttestationPolicy();
     }
 
     @Test

@@ -50,6 +50,7 @@ public class Constants {
 
 
 	public static final String TEST_ENVIRONMENT = "test";
+	public static final String DEFAULT_ENVIRONMENT = "default";
 	public static final String INTEGRATION_TEST_BASE_URL = "http://localhost:8080/";
 
 	// Error messages.

@@ -22,6 +22,7 @@ import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.*;
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -351,12 +352,14 @@ public class RegistryServiceImpl implements RegistryService {
                 .getAutoAttestationPolicy(IteratorUtils.toList(updatedNode.fieldNames()));
         String accessToken = request.getHeader("Authorization");
         String valuePath = autoAttestationPolicy.getValuePath();
-        if (existingNode.isNull() || !JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
-            logger.info("Calling auto attestation actor");
-            logger.info("Url {}", registryBaseUrl);
+        if (!StringUtils.isEmpty(valuePath)) {
+            if (existingNode.isNull() || !JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
+                logger.info("Calling auto attestation actor");
+                logger.info("Url {}", registryBaseUrl);
 
-            MessageProtos.Message message = MessageFactory.instance().createAutoAttestationMessage(autoAttestationPolicy, updatedNode, accessToken, registryBaseUrl);
-            ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
+                MessageProtos.Message message = MessageFactory.instance().createAutoAttestationMessage(autoAttestationPolicy, updatedNode, accessToken, registryBaseUrl);
+                ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
+            }
         }
     }
 
