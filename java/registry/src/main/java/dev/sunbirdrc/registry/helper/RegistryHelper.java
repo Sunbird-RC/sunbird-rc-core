@@ -593,7 +593,11 @@ public class RegistryHelper {
     }
 
     public boolean doesEntityContainOwnershipAttributes(@PathVariable String entityName) {
-        return definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getOwnershipAttributes().size() > 0;
+        if (definitionsManager.getDefinition(entityName) != null) {
+            return definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getOwnershipAttributes().size() > 0;
+        } else {
+            return false;
+        }
     }
 
     public String getUserId(HttpServletRequest request, String entityName) throws Exception {
