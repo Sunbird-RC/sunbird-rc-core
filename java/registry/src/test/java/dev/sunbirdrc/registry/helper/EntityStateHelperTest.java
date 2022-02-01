@@ -15,6 +15,7 @@ import dev.sunbirdrc.workflow.RuleEngineService;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
 import org.apache.commons.io.IOUtils;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,8 +63,6 @@ public class EntityStateHelperTest {
     @Autowired
     KieContainer kieContainer;
 
-    private static final String TEST_DIR = "src/test/resources/entityStateHelper/";
-
     ObjectMapper m = new ObjectMapper();
 
     @Before
@@ -88,19 +87,24 @@ public class EntityStateHelperTest {
     }
 
     public void shouldMarkAsDraftWhenThereIsNewEntry() throws IOException {
-        JsonNode test = m.readTree(new File(TEST_DIR + "shouldMarkAsDraftWhenThereIsNewEntry.json"));
+        JsonNode test = m.readTree(new File(getBaseDir() + "shouldMarkAsDraftWhenThereIsNewEntry.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("afterStateChange"),
                 definitionsManager.getDefinition("Student").getOsSchemaConfiguration().getAttestationPolicies());
     }
 
+    @NotNull
+    private String getBaseDir() {
+        return this.getClass().getResource("../../../../").getPath() + "entityStateHelper/";
+    }
+
     public void shouldMarkAsDraftIfThereIsAChange() throws IOException {
-        JsonNode test = m.readTree(new File(TEST_DIR + "shouldMarkAsDraftIfThereIsAChange.json"));
+        JsonNode test = m.readTree(new File(getBaseDir() + "shouldMarkAsDraftIfThereIsAChange.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("afterStateChange"), Collections.emptyList());
     }
 
     @Test
     public void shouldBeNoStateChangeIfTheDataDidNotChange() throws IOException {
-        JsonNode test = m.readTree(new File(TEST_DIR + "shouldBeNoStateChangeIfTheDataDidNotChange.json"));
+        JsonNode test = m.readTree(new File(getBaseDir() + "shouldBeNoStateChangeIfTheDataDidNotChange.json"));
         JsonNode beforeUpdate = test.get("updated").deepCopy();
         runTest(test.get("existing"), test.get("updated"), test.get("existing"), Collections.emptyList());
     }
@@ -110,7 +114,7 @@ public class EntityStateHelperTest {
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
         EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
-        JsonNode test = m.readTree(new File(TEST_DIR + "shouldRaiseClaimWhenSentForAttestation.json"));
+        JsonNode test = m.readTree(new File(getBaseDir() + "shouldRaiseClaimWhenSentForAttestation.json"));
         String propertyURI = "educationDetails/fgyuhij";
         HashMap<String, Object> mockRaiseClaimResponse = new HashMap<>();
         mockRaiseClaimResponse.put("id", "raised_claim_id");
@@ -127,33 +131,33 @@ public class EntityStateHelperTest {
     @Test
     public void shouldCreateNewOwnersForNewlyAddedOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
         when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
-        JsonNode test = m.readTree(new File(TEST_DIR + "shouldAddNewOwner.json"));
+        JsonNode test = m.readTree(new File(getBaseDir() + "shouldAddNewOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
     public void shouldNotCreateNewOwners() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
         when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
-        JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotAddNewOwner.json"));
+        JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotAddNewOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
     public void shouldNotModifyExistingOwners() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
         when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
-        JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotModifyExistingOwner.json"));
+        JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotModifyExistingOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
     public void shouldNotAllowUserModifyingOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException {
-        JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotModifyOwnerDetails.json"));
+        JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotModifyOwnerDetails.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
     public void shouldNotAllowUserModifyingSystemFields() throws IOException, DuplicateRecordException, EntityCreationException {
-        JsonNode test = m.readTree(new File(TEST_DIR + "shouldNotModifyOsStateByUser.json"));
+        JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotModifyOsStateByUser.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 

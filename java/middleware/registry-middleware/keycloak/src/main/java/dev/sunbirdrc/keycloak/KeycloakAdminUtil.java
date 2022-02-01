@@ -42,7 +42,7 @@ public class KeycloakAdminUtil {
             @Value("${keycloak-admin.client-secret:}") String adminClientSecret,
             @Value("${keycloak-admin.client-id:}") String adminClientId,
             @Value("${keycloak-user.default-password:}") String defaultPassword,
-            @Value("${keycloak-user.set-default-password:}") boolean setDefaultPassword,
+            @Value("${keycloak-user.set-default-password:false}") boolean setDefaultPassword,
             @Value("${keycloak.auth-server-url:}") String authURL) {
         this.realm = realm;
         this.adminClientSecret = adminClientSecret;

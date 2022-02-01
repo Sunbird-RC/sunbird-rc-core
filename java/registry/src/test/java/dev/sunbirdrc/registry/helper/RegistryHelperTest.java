@@ -23,6 +23,7 @@ import dev.sunbirdrc.validators.IValidate;
 import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.workflow.RuleEngineService;
 import org.apache.commons.io.IOUtils;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -54,6 +55,11 @@ public class RegistryHelperTest {
 
     @Rule
     public final ExpectedException exception = ExpectedException.none();
+
+    @NotNull
+    private String getBaseDir() {
+        return this.getClass().getResource("../../../../").getPath();
+    }
 
     @InjectMocks
     private RegistryHelper registryHelper;
@@ -405,7 +411,7 @@ public class RegistryHelperTest {
 
     @Test
     public void shouldAbleToInvalidateTheAttestation() throws Exception {
-        String testInputJsonPath = "src/test/resources/registryHelper/invalidateAttestation.json";
+        String testInputJsonPath = getBaseDir() + "registryHelper/invalidateAttestation.json";
         String entity = "Student";
         String entityId = "1-aeb2498a-a7e5-487e-ac7d-5b271bb43a4f";
         JsonNode testInput = objectMapper.readTree(new File(testInputJsonPath));
