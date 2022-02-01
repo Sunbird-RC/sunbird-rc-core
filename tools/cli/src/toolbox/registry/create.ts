@@ -28,7 +28,7 @@ export default async (toolbox: Toolbox, registryConfig: RegistryConfig) => {
 		props: registryConfig,
 	})
 	template.generate({
-		template: 'docker-compose.yaml',
+		template: 'docker-compose.template',
 		target: 'docker-compose.yaml',
 		props: registryConfig,
 	})
