@@ -85,13 +85,17 @@ public class RegistrySwaggerController {
         path = objectMapper.createObjectNode();
         addGetOperation("", path, Collections.emptyList());
         paths.set(String.format("/api/docs/%s.json", entityName), path);
-        paths.set(String.format("/api/v1/%s/invite", entityName), path);
         paths.set(String.format("/api/v1/%s/sign", entityName), path);
         path = objectMapper.createObjectNode();
         RefProperty refProperty = new RefProperty();
         refProperty.set$ref(String.format("#/definitions/%s", entityName));
         addPostOperation(entityName, path, Collections.singletonList(getSearchBodyParameter()), new ArrayModel().items(refProperty));
         paths.set(String.format("/api/v1/%s/search", entityName), path);
+        path = objectMapper.createObjectNode();
+        addPostOperation(entityName, path, Collections.singletonList(getBodyParameter(entityName)), new ModelImpl());
+        paths.set(String.format("/api/v1/%s/invite", entityName), path);
+
+
         path = objectMapper.createObjectNode();
         addGetOperation(entityName, path, Collections.emptyList());
         addPostOperation(entityName, path, Collections.singletonList(getBodyParameter(entityName)), new RefModel(String.format("#/definitions/%s", entityName)));
