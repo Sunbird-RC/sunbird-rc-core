@@ -601,6 +601,8 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Deprecated
     @RequestMapping(value = "/api/v1/{entityName}/sign", method = RequestMethod.GET)
     public ResponseEntity<Object> getSignedEntityByToken(@PathVariable String entityName, HttpServletRequest request) {
         ResponseParams responseParams = new ResponseParams();
