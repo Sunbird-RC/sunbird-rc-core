@@ -42,6 +42,7 @@ public class FileStorageService {
         if (!isBucketExists()) {
             logger.info("Bucket {} doesn't exist creating new bucket", bucketName);
             createNewBucket();
+            //TODO: check if this can go infinite loop
             save(inputStream, objectName);
         }
         logger.info("Saving the file in the location {}", objectName);
