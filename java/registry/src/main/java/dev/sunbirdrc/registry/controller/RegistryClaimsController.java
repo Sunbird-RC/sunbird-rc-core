@@ -198,7 +198,7 @@ public class RegistryClaimsController extends AbstractController{
 
     // TODO: right now ui is sending single file only
     private void updateGetFileUrl(JsonNode additionalInput) {
-        if(additionalInput.has("fileUrl")) {
+        if(additionalInput!= null && additionalInput.has("fileUrl")) {
             String fileUrl = additionalInput.get("fileUrl").asText();
             try {
                 String sharableUrl = fileStorageService.getSignedUrl(fileUrl);
