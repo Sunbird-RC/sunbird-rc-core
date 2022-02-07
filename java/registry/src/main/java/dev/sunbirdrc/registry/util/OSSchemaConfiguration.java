@@ -89,6 +89,8 @@ public class OSSchemaConfiguration {
      * */
     private Boolean enableLogin = true;
 
+    private Boolean enableSearch = true;
+
     public String getConditions(String property) {
         return getAttestationPolicy(property).getConditions();
     }

@@ -1,0 +1,19 @@
+kafka:
+  bootstrapServers: localhost
+  certifyTopic: certify
+  notifyTopic: notify
+  enable: true
+
+smsapi:
+  url: https://api.msg91.com/api/v2/sendsms
+  authKey: secret
+  enable: true
+  requestTemplate: '{"sender": "SOCKET","route": "4","country": "91","unicode": "1","sms": [{"message": "{{.message}}","to": ["{{.to}}"]}]}'
+
+emailsmtp:
+  fromAddress: from@gmail.com
+  password: secret
+  enable: true
+
+flagr:
+  url: https://sunbirdrc.xiv.in/config

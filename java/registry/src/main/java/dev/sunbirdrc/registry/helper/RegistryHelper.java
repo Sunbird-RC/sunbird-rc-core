@@ -32,6 +32,7 @@ import dev.sunbirdrc.validators.IValidate;
 import dev.sunbirdrc.views.ViewTemplate;
 import dev.sunbirdrc.views.ViewTransformer;
 import lombok.Setter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.*;
@@ -61,6 +63,8 @@ import static dev.sunbirdrc.registry.middleware.util.OSSystemFields._osState;
 @Setter
 public class RegistryHelper {
 
+    private static final String ATTESTED_DATA = "attestedData";
+    private static final String CLAIM_ID = "claimId";
     public static String ROLE_ANONYMOUS = "anonymous";
 
     private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
@@ -104,6 +108,9 @@ public class RegistryHelper {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private FileStorageService fileStorageService;
+
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
 
@@ -132,6 +139,7 @@ public class RegistryHelper {
         List<String> fieldsToRemove = getFieldsToRemove(entityName);
         return JSONUtil.getOSIDFromArrNode(resultNode, requestBody, fieldsToRemove);
     }
+
     @Autowired
     private SignatureService signatureService;
 
@@ -141,7 +149,7 @@ public class RegistryHelper {
             JsonNode documentsNode = requestBody.get(documents);
             String format = "format";
             JSONUtil.removeNodes(documentsNode, Collections.singletonList(format));
-            ObjectNode node =  (ObjectNode)requestBody;
+            ObjectNode node = (ObjectNode) requestBody;
             node.set(documents, documentsNode);
             return node;
         }
@@ -268,7 +276,7 @@ public class RegistryHelper {
 
     private boolean isOwner(JsonNode entity, String userId) {
         String osOwner = OSSystemFields.osOwner.toString();
-        return userId != null && ( !entity.has(osOwner) || entity.get(osOwner).toString().contains(userId));
+        return userId != null && (!entity.has(osOwner) || entity.get(osOwner).toString().contains(userId));
     }
 
     /**
@@ -488,7 +496,7 @@ public class RegistryHelper {
 
     public void sendForAttestation(String entityName, String entityId, String notes, HttpServletRequest request, String propertyId) throws Exception {
         String propertyURI = getPropertyURI(entityId, request);
-        if(!propertyId.isEmpty()) {
+        if (!propertyId.isEmpty()) {
             propertyURI = propertyURI + "/" + propertyId;
         }
         JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
@@ -533,12 +541,12 @@ public class RegistryHelper {
                     JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
                     Object signedData = getSignedDoc(response, credentialTemplate);
                     metaData.put(
-                            "attestedData",
+                            ATTESTED_DATA,
                             signedData.toString()
                     );
                 } else {
                     metaData.put(
-                            "attestedData",
+                            ATTESTED_DATA,
                             pluginResponseMessage.getResponse()
                     );
                 }
@@ -546,19 +554,41 @@ public class RegistryHelper {
             case SELF_ATTEST:
                 String hashOfTheFile = pluginResponseMessage.getResponse();
                 metaData.put(
-                        "attestedData",
+                        ATTESTED_DATA,
                         hashOfTheFile
                 );
                 break;
             case RAISE_CLAIM:
                 metaData.put(
-                        "claimId",
-                        additionalData.get("claimId").asText("")
+                        CLAIM_ID,
+                        additionalData.get(CLAIM_ID).asText("")
                 );
         }
         String propertyURI = attestationName + "/" + attestationOSID;
+        uploadAttestedFiles(pluginResponseMessage, metaData);
         JsonNode nodeToUpdate = entityStateHelper.manageState(attestationPolicy, root, propertyURI, action, metaData);
         updateEntity(nodeToUpdate, userId);
+    }
+
+    private void uploadAttestedFiles(PluginResponseMessage pluginResponseMessage, ObjectNode metaData) throws Exception {
+        if (!CollectionUtils.isEmpty(pluginResponseMessage.getFiles())) {
+            ArrayNode fileUris = JsonNodeFactory.instance.arrayNode();
+            pluginResponseMessage.getFiles().forEach(file -> {
+                String propertyURI = String.format("%s/%s/%s/documents/%s", pluginResponseMessage.getSourceEntity(),
+                        pluginResponseMessage.getSourceOSID(), pluginResponseMessage.getPolicyName(), file.getFileName());
+                try {
+                    fileStorageService.save(new ByteArrayInputStream(file.getFile()), propertyURI);
+                } catch (Exception e) {
+                    logger.error("Failed persisting file", e);
+                    e.printStackTrace();
+                }
+                fileUris.add(propertyURI);
+            });
+            JsonNode jsonNode = metaData.get(ATTESTED_DATA);
+            ObjectNode attestedObjectNode = objectMapper.readValue(jsonNode.asText(), ObjectNode.class);
+            attestedObjectNode.set("files", fileUris);
+            metaData.put(ATTESTED_DATA, attestedObjectNode.toString());
+        }
     }
 
     /**
@@ -593,19 +623,23 @@ public class RegistryHelper {
     }
 
     public boolean doesEntityContainOwnershipAttributes(@PathVariable String entityName) {
-        return definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getOwnershipAttributes().size() > 0;
+        if (definitionsManager.getDefinition(entityName) != null) {
+            return definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getOwnershipAttributes().size() > 0;
+        } else {
+            return false;
+        }
     }
 
     public String getUserId(HttpServletRequest request, String entityName) throws Exception {
-       if (doesEntityContainOwnershipAttributes(entityName)) {
-           KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-           if (principal != null) {
-               return principal.getAccount().getPrincipal().getName();
-           }
-           throw new Exception("Forbidden");
-       } else {
-           return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
-       }
+        if (doesEntityContainOwnershipAttributes(entityName)) {
+            KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+            if (principal != null) {
+                return principal.getAccount().getPrincipal().getName();
+            }
+            throw new Exception("Forbidden");
+        } else {
+            return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
+        }
     }
 
     public JsonNode getRequestedUserDetails(HttpServletRequest request, String entityName) throws Exception {
@@ -708,12 +742,13 @@ public class RegistryHelper {
         List<String> inviteRoles = definitionsManager.getDefinition(entityName)
                 .getOsSchemaConfiguration()
                 .getInviteRoles();
-        if (inviteRoles.contains(ROLE_ANONYMOUS)){
+        if (inviteRoles.contains(ROLE_ANONYMOUS)) {
             return;
         }
         Set<String> userRoles = getUserRolesFromRequest(request);
         authorizeUserRole(userRoles, inviteRoles);
     }
+
     public void authorizeManageEntity(HttpServletRequest request, String entityName) throws Exception {
         Set<String> userRoles = getUserRolesFromRequest(request);
 
@@ -763,13 +798,13 @@ public class RegistryHelper {
         for (AttestationPolicy attestationPolicy : getAttestationPolicies(entityName)) {
             String policyName = attestationPolicy.getName();
 
-            if(entity.has(policyName) && entity.get(policyName).isArray()) {
+            if (entity.has(policyName) && entity.get(policyName).isArray()) {
                 ArrayNode attestations = (ArrayNode) entity.get(policyName);
                 updateAttestation(entity, attestationPolicy, attestations);
             }
         }
         ObjectNode newRoot = JsonNodeFactory.instance.objectNode();
-        newRoot.set(entityName,entity);
+        newRoot.set(entityName, entity);
         updateEntity(newRoot, userId);
     }
 
@@ -798,8 +833,8 @@ public class RegistryHelper {
         }
     }
 
-    public Object getSignedDoc (JsonNode result, Map < String, Object > credentialTemplate) throws
-    SignatureException.CreationException, SignatureException.UnreachableException {
+    public Object getSignedDoc(JsonNode result, Map<String, Object> credentialTemplate) throws
+            SignatureException.CreationException, SignatureException.UnreachableException {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("data", result);
         requestBodyMap.put("credentialTemplate", credentialTemplate);
@@ -808,7 +843,7 @@ public class RegistryHelper {
 
     // TODO: can be async?
     public void signDocument(String entityName, String entityId, String userId) throws Exception {
-        if(!signatureEnabled) {
+        if (!signatureEnabled) {
             return;
         }
         Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
