@@ -118,3 +118,7 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+  notification-ms:
+    image: tejashjl/sunbird-rc-notification-service
+    ports:
+      - "8765:8765"
