@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.model.attestation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -18,13 +19,18 @@ public class AttestationPathTest {
     private JsonNode node;
     private static final String UUID_PROP = "osid";
 
+    @NotNull
+    private String getBaseDir() {
+        return this.getClass().getResource("../../../../../").getPath();
+    }
+
     private Set<String> convertToJsonPaths(Set<EntityPropertyURI> pointers) {
         return pointers.stream().map(EntityPropertyURI::getPropertyURI).collect(Collectors.toSet());
     }
 
     @Before
     public void setUp() throws IOException {
-        node = m.readTree(new File("src/test/resources/attestationPathTest/example.json"));
+        node = m.readTree(new File(getBaseDir() + "/attestationPathTest/example.json"));
     }
 
     @Test

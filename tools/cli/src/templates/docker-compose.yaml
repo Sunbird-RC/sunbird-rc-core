@@ -6,14 +6,14 @@ services:
     environment:
       - discovery.type=single-node
       - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
-    ports:
-      - '9200:9200'
-      - '9300:9300'
     healthcheck:
       test: ['CMD', 'curl', '-f', 'localhost:9200/_cluster/health']
       interval: 30s
       timeout: 10s
       retries: 4
+    ports:
+      - '9200:9200'
+      - '9300:9300'
   db:
     image: postgres
     ports:
@@ -74,7 +74,7 @@ services:
       db:
         condition: service_started
   cs:
-    image: dockerhub/sunbird-rc-claim-ms
+    image: dockerhub/open-saber-claim-ms
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres

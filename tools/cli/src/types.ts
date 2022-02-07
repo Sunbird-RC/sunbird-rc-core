@@ -17,8 +17,10 @@ export interface Environment {
 	check(registryPath?: string): Promise<boolean>
 }
 export interface Registry {
-	create(registryConfig: RegistryConfig): Promise<void>
+	create(registryConfig: RegistrySetupOptions): Promise<void>
 	status(): Promise<RegistryContainer[]>
+	restart(soft: boolean): Promise<void>
+	config(): Promise<RegistryConfiguration>
 }
 
 export interface Toolbox extends GluegunToolbox {
@@ -47,7 +49,12 @@ export interface ApiResponse {
 	originalError?: Error
 }
 
-export interface RegistryConfig {
+export interface RegistryConfiguration {
+	type: 'sunbird-rc'
+	name: string
+}
+
+export interface RegistrySetupOptions {
 	registryName: string
 	realmName: string
 	keycloakAdminClientId: string

@@ -8,7 +8,7 @@ build: java/registry/target/registry.jar
 
 java/registry/target/registry.jar: $(SOURCES)
 	echo $(SOURCES)
-	cd java && ./mvnw -DskipTests clean install
+	cd java && ./mvnw clean install
 
 test: build
 	@docker-compose up -d
@@ -17,7 +17,7 @@ test: build
 	@docker-compose ps
 	@docker-compose logs
 	@curl -v http://localhost:8081/health
-	@cd java/apitest && ../mvnw test || echo 'Tests failed'
+	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
 
 clean:

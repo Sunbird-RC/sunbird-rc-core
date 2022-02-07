@@ -4,7 +4,7 @@
 import { RegistryContainer, Toolbox } from '../../types'
 
 // Accept a toolbox, return a registry status viewer
-export default (toolbox: Toolbox) => async (): Promise<RegistryContainer[]> => {
+export default async (toolbox: Toolbox): Promise<RegistryContainer[]> => {
 	const { events, system } = toolbox
 
 	events.emit('registry.status', {
@@ -35,7 +35,7 @@ export default (toolbox: Toolbox) => async (): Promise<RegistryContainer[]> => {
 				// Deduplicate the ports
 				...new Set(
 					// Get all the ports
-					rawInfo.Publishers.map((portInfo: { PublishedPort: number }) =>
+					rawInfo.Publishers?.map((portInfo: { PublishedPort: number }) =>
 						portInfo.PublishedPort ? portInfo.PublishedPort : undefined
 					).filter((port?: number) => !!port) // No port should be '0' or NaN
 				),
@@ -50,4 +50,21 @@ export default (toolbox: Toolbox) => async (): Promise<RegistryContainer[]> => {
 		message: 'Successfully retrieved registry status',
 	})
 	return containers
+}
+
+// A helper function to check if all the containers are up and running
+import { system } from 'gluegun'
+export const allUp = async (): Promise<boolean> => {
+	// List the containers
+	const rawJson = JSON.parse(
+		await system.run('docker compose ps --format json')
+	)
+
+	for (const rawInfo of rawJson) {
+		if (rawInfo.State !== 'running') {
+			return false
+		}
+	}
+
+	return true
 }
