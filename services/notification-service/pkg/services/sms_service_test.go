@@ -2,7 +2,7 @@ package services
 
 import (
 	"fmt"
-	"github.com/divoc/notification-service/config"
+	"github.com/sunbirdrc/notification-service/config"
 	"testing"
 )
 

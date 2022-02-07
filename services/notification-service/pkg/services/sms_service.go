@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/divoc/notification-service/config"
+	"github.com/sunbirdrc/notification-service/config"
 	"github.com/imroc/req"
 	log "github.com/sirupsen/logrus"
 	"text/template"

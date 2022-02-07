@@ -2,11 +2,11 @@
 
 // Package restapi Notification service
 //
-//  Notification service to integrate with DIVOC
+//  Notification service
 //  Schemes:
 //    https
-//  Host: divoc.xiv.in
-//  BasePath: /divoc/notification-service/v1
+//  Host: sunbirdrc.dev
+//  BasePath: /notification-service/v1
 //  Version: 1.0.0
 //
 //  Consumes:

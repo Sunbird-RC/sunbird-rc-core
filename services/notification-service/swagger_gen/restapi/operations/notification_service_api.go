@@ -19,7 +19,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/divoc/notification-service/swagger_gen/restapi/operations/notification"
+	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations/notification"
 )
 
 // NewNotificationServiceAPI creates a new NotificationService instance
@@ -53,7 +53,7 @@ func NewNotificationServiceAPI(spec *loads.Document) *NotificationServiceAPI {
 	}
 }
 
-/*NotificationServiceAPI Notification service to integrate with DIVOC */
+/*NotificationServiceAPI Notification service */
 type NotificationServiceAPI struct {
 	spec            *loads.Document
 	context         *middleware.Context

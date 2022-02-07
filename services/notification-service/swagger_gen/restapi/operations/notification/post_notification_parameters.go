@@ -12,7 +12,7 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
-	"github.com/divoc/notification-service/swagger_gen/models"
+	"github.com/sunbirdrc/notification-service/swagger_gen/models"
 )
 
 // NewPostNotificationParams creates a new PostNotificationParams object

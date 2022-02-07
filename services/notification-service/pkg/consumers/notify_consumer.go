@@ -3,9 +3,9 @@ package consumers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/divoc/notification-service/config"
-	"github.com/divoc/notification-service/pkg/services"
-	"github.com/divoc/notification-service/swagger_gen/models"
+	"github.com/sunbirdrc/notification-service/config"
+	"github.com/sunbirdrc/notification-service/pkg/services"
+	"github.com/sunbirdrc/notification-service/swagger_gen/models"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 )

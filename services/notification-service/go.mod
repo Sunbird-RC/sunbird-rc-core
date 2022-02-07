@@ -1,4 +1,4 @@
-module github.com/divoc/notification-service
+module github.com/sunbirdrc/notification-service
 
 go 1.15
 

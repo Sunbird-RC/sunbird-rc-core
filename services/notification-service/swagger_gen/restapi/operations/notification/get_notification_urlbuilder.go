@@ -39,7 +39,7 @@ func (o *GetNotificationURL) Build() (*url.URL, error) {
 
 	_basePath := o._basePath
 	if _basePath == "" {
-		_basePath = "/divoc/notification-service/v1"
+		_basePath = "/notification-service/v1"
 	}
 	_result.Path = golangswaggerpaths.Join(_basePath, _path)
 

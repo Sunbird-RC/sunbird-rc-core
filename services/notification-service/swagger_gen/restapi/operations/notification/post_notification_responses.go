@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/divoc/notification-service/swagger_gen/models"
+	"github.com/sunbirdrc/notification-service/swagger_gen/models"
 )
 
 // PostNotificationOKCode is the HTTP code returned for type PostNotificationOK

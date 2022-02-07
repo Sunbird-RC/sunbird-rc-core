@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/divoc/notification-service/config"
-	"github.com/divoc/notification-service/pkg/consumers"
-	"github.com/divoc/notification-service/swagger_gen/restapi"
-	"github.com/divoc/notification-service/swagger_gen/restapi/operations"
+	"github.com/sunbirdrc/notification-service/config"
+	"github.com/sunbirdrc/notification-service/pkg/consumers"
+	"github.com/sunbirdrc/notification-service/swagger_gen/restapi"
+	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations"
 	"github.com/go-openapi/loads"
 	"github.com/jessevdk/go-flags"
 	log "github.com/sirupsen/logrus"
@@ -25,7 +25,7 @@ func main() {
 	defer server.Shutdown()
 
 	parser := flags.NewParser(server, flags.Default)
-	parser.ShortDescription = "Divoc notification service API"
+	parser.ShortDescription = "sunbirdrc notification service API"
 	parser.LongDescription = "Digital infra for notification service"
 	server.ConfigureFlags()
 	for _, optsGroup := range api.CommandLineOptionsGroups {

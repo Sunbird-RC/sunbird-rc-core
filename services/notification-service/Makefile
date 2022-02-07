@@ -26,7 +26,7 @@ build: notification-service
 
 notification-service: $(source) swagger_gen/restapi/server.go
 	@echo "Building Server to $(PWD)/notification-service ..."
-	@CGO_ENABLED=1 GO111MODULE=on go build github.com/divoc/notification-service/cmd/notification-service
+	@CGO_ENABLED=1 GO111MODULE=on go build github.com/sunbirdrc/notification-service/cmd/notification-service
 
 clean:
 	@echo "Cleaning up all the generated files"
@@ -41,4 +41,4 @@ run: ./notification-service
 	./notification-service --scheme http --port 8765
 
 docker:
-	docker build -t tejashjl/sunbird-notification-service .
+	docker build -t dockerhub/sunbird-rc-notification-service .

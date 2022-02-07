@@ -4,10 +4,10 @@ package restapi
 
 import (
 	"crypto/tls"
-	"github.com/divoc/notification-service/pkg/handlers"
+	"github.com/sunbirdrc/notification-service/pkg/handlers"
 	"net/http"
 
-	"github.com/divoc/notification-service/swagger_gen/restapi/operations"
+	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations"
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 )

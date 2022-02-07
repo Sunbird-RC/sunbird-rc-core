@@ -16,4 +16,4 @@ emailsmtp:
   enable: true
 
 flagr:
-  url: https://divoc.xiv.in/config
+  url: https://sunbirdrc.xiv.in/config

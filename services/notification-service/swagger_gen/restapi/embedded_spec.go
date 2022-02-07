@@ -29,12 +29,12 @@ func init() {
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Notification service to integrate with DIVOC",
+    "description": "Notification service",
     "title": "Notification service",
     "version": "1.0.0"
   },
-  "host": "divoc.xiv.in",
-  "basePath": "/divoc/notification-service/v1",
+  "host": "sunbirdrc.dev",
+  "basePath": "/notification-service/v1",
   "paths": {
     "/notification": {
       "get": {
@@ -139,8 +139,8 @@ func init() {
     "hasRole": {
       "type": "oauth2",
       "flow": "accessCode",
-      "authorizationUrl": "https://divoc.xiv.in/keycloak/auth/realms/divoc/protocol/openid-connect/auth",
-      "tokenUrl": "https://divoc.xiv.in/keycloak/auth/realms/divoc/protocol/openid-connect/token",
+      "authorizationUrl": "https://sunbirdrc.dev/keycloak/auth/realms/sunbirdrc/protocol/openid-connect/auth",
+      "tokenUrl": "https://sunbirdrc.dev/keycloak/auth/realms/sunbirdrc/protocol/openid-connect/token",
       "scopes": {
         "admin": "scope of super admin",
         "facility-admin": "scope of facility admin",
@@ -161,12 +161,12 @@ func init() {
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Notification service to integrate with DIVOC",
+    "description": "Notification service",
     "title": "Notification service",
     "version": "1.0.0"
   },
-  "host": "divoc.xiv.in",
-  "basePath": "/divoc/notification-service/v1",
+  "host": "sunbirdrc.dev",
+  "basePath": "/notification-service/v1",
   "paths": {
     "/notification": {
       "get": {
@@ -271,8 +271,8 @@ func init() {
     "hasRole": {
       "type": "oauth2",
       "flow": "accessCode",
-      "authorizationUrl": "https://divoc.xiv.in/keycloak/auth/realms/divoc/protocol/openid-connect/auth",
-      "tokenUrl": "https://divoc.xiv.in/keycloak/auth/realms/divoc/protocol/openid-connect/token",
+      "authorizationUrl": "https://sunbirdrc.dev/keycloak/auth/realms/sunbirdrc/protocol/openid-connect/auth",
+      "tokenUrl": "https://sunbirdrc.dev/keycloak/auth/realms/sunbirdrc/protocol/openid-connect/token",
       "scopes": {
         "admin": "scope of super admin",
         "facility-admin": "scope of facility admin",

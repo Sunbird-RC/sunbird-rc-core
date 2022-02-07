@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/divoc/notification-service/config"
+	"github.com/sunbirdrc/notification-service/config"
 	log "github.com/sirupsen/logrus"
 	"net/smtp"
 )
