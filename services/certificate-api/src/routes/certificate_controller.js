@@ -95,7 +95,7 @@ const getRequestBody = async (req) => {
     return JSON.parse(data);
 };
 
-async function createCertificatePDF(certificate, templateUrl, res) {
+async function generateRawCertificate(certificate, templateUrl) {
     let certificateRaw = certificate;
     // TODO: based on type template will be picked
     const certificateTemplateUrl = templateUrl;
@@ -111,7 +111,12 @@ async function createCertificatePDF(certificate, templateUrl, res) {
 
     const dataURL = await QRCode.toDataURL(zippedData, {scale: 3});
     const certificateData = prepareDataForCertificateWithQRCode(certificateRaw, dataURL);
-    const pdfBuffer = await createPDF(certificateTemplateUrl, certificateData);
+    return await renderDataToTemplate(certificateTemplateUrl, certificateData);
+}
+
+async function createCertificatePDF(certificate, templateUrl, res) {
+    let rawCertificate = await generateRawCertificate(certificate, templateUrl);
+    const pdfBuffer = await createPDF(rawCertificate);
     res.statusCode = 200;
     return pdfBuffer;
 }
@@ -143,21 +148,43 @@ async function getCertificatePDF(req, res) {
     }
 }
 
+async function getCertificate(req, res) {
+    try {
+        const reqBody = await getRequestBody(req)
+        if (!reqBody || isEmpty(reqBody)) {
+            return sendResponse(res, 400, "Bad request");
+        }
+        console.log('Got this req', reqBody);
+        let {certificate, templateUrl} = reqBody;
+        if (certificate === "" || templateUrl === "") {
+            return sendResponse(res, 400, "Required parameters missing");
+        }
+        res = await generateRawCertificate(certificate, templateUrl);
+        return res
+    } catch (err) {
+        console.error(err);
+        res.statusCode = 500;
+    }
+}
+
 async function getTemplate(templateFileURL) {
     const templateContent = await axios.get(templateFileURL).then(res => res.data);
     return templateContent;
 }
 
 
-
-async function createPDF(templateFileURL, data) {
-    console.log("Creating pdf")
+async function renderDataToTemplate(templateFileURL, data) {
+    console.log("rendering data to template")
     // const htmlData = fs.readFileSync(templateFileURL, 'utf8');
     const htmlData = await getTemplate(templateFileURL);
     console.log('Received ', htmlData);
     Handlebars.registerHelper()
     const template = Handlebars.compile(htmlData);
-    let certificate = template(data);
+    return template(data);
+}
+
+async function createPDF(certificate) {
+
     const browser = await puppeteer.launch({
         headless: true,
         //comment to use default
@@ -200,5 +227,6 @@ function prepareDataForCertificateWithQRCode(certificateRaw, dataURL) {
 }
 
 module.exports = {
-    getCertificatePDF
+    getCertificatePDF,
+    getCertificate
 };
