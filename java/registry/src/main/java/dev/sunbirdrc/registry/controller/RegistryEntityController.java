@@ -398,7 +398,8 @@ public class RegistryEntityController extends AbstractController {
         return fields;
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET, produces = {"application/pdf"})
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET, produces =
+            {MediaType.APPLICATION_PDF_VALUE, MediaType.TEXT_HTML_VALUE, Constants.SVG_MEDIA_TYPE})
     public ResponseEntity<Object> getEntityType(@PathVariable String entityName,
                                                 @PathVariable String entityId,
                                                 HttpServletRequest request) {
@@ -407,7 +408,7 @@ public class RegistryEntityController extends AbstractController {
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
                     .get(entityName);
             node = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
-            return new ResponseEntity<>(certificateService.getPdf(node, entityName), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(certificateService.getCertificate(node, entityName, request.getHeader(HttpHeaders.ACCEPT)), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exception.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
