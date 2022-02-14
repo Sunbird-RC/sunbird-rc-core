@@ -1,6 +1,7 @@
 package dev.sunbirdrc.registry.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.PluginRouter;
@@ -196,18 +197,22 @@ public class RegistryClaimsController extends AbstractController{
     }
 
 
-    // TODO: right now ui is sending single file only
     private void updateGetFileUrl(JsonNode additionalInput) {
         if(additionalInput!= null && additionalInput.has("fileUrl")) {
-            String fileUrl = additionalInput.get("fileUrl").asText();
-            try {
-                String sharableUrl = fileStorageService.getSignedUrl(fileUrl);
-                ((ObjectNode)additionalInput).put("fileUrl", sharableUrl);
-            } catch (ServerException | InternalException | XmlParserException | InvalidResponseException
-                    | InvalidKeyException | NoSuchAlgorithmException | IOException
-                    | ErrorResponseException | InsufficientDataException e) {
-                e.printStackTrace();
+            ArrayNode fileUrls = (ArrayNode)(additionalInput.get("fileUrl"));
+            ArrayNode signedUrls = JsonNodeFactory.instance.arrayNode();
+            for (JsonNode fileNode : fileUrls) {
+                String fileUrl = fileNode.asText();
+                try {
+                    String sharableUrl = fileStorageService.getSignedUrl(fileUrl);
+                    signedUrls.add(sharableUrl);
+                } catch (ServerException | InternalException | XmlParserException | InvalidResponseException
+                        | InvalidKeyException | NoSuchAlgorithmException | IOException
+                        | ErrorResponseException | InsufficientDataException e) {
+                    e.printStackTrace();
+                }
             }
+            ((ObjectNode)additionalInput).replace("fileUrl", signedUrls);
         }
     }
 }

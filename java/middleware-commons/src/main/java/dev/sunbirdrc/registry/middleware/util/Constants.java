@@ -109,8 +109,9 @@ public class Constants {
 	public static final String USER_ID = "userId";
 	public static final String EMAIL = "email";
 	public static final String MOBILE = "mobile";
+	public static final String SVG_MEDIA_TYPE = "image/svg+xml";
 
-	public enum GraphDatabaseProvider {
+    public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH");
 
 		private String name;

@@ -15,11 +15,11 @@ public class RegistryTemplateController{
     @Value("${certificate.templateFolderPath}")
     private String templatesFolderPath;
 
-    @RequestMapping(value = "/api/v1/templates/{fileName}.html", method = RequestMethod.GET)
+    @RequestMapping(value = "/api/v1/templates/{fileName}", method = RequestMethod.GET)
     public String getTemplate(@PathVariable String fileName) {
         String content = "";
         try {
-            File file = new ClassPathResource(templatesFolderPath + fileName + ".html").getFile();
+            File file = new ClassPathResource(templatesFolderPath + fileName).getFile();
             content = new String(Files.readAllBytes(file.toPath()));
         } catch (IOException e) {
             e.printStackTrace();
