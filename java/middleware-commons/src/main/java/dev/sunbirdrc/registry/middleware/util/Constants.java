@@ -37,7 +37,7 @@ public class Constants {
 	public static final String CONTEXT_KEYWORD = "@context";
 	public static final String TYPE_STR_JSON_LD = "@type";
 	
-	// Parent Vertex Properies
+	// Parent Vertex Properties
 	public static final String INDEX_FIELDS = "indexFields";
 	public static final String UNIQUE_INDEX_FIELDS = "uniqueIndexFields";
 

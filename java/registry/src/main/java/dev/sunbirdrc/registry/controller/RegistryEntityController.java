@@ -588,7 +588,7 @@ public class RegistryEntityController extends AbstractController {
             @PathVariable String attestationName,
             @PathVariable String attestationId,
             @RequestBody JsonNode requestBody) {
-        logger.info("Got system request to update attestaion property {} {} {} {}", property, propertyId, attestationName, attestationId);
+        logger.info("Got system request to update attestation property {} {} {} {}", property, propertyId, attestationName, attestationId);
         ((ObjectNode) requestBody).put(uuidPropertyName, propertyId);
         ObjectNode newRootNode = objectMapper.createObjectNode();
 

@@ -198,7 +198,7 @@ public class RegistryClaimsController extends AbstractController{
 
 
     private void updateGetFileUrl(JsonNode additionalInput) {
-        if(additionalInput.has("fileUrl")) {
+        if(additionalInput!= null && additionalInput.has("fileUrl")) {
             ArrayNode fileUrls = (ArrayNode)(additionalInput.get("fileUrl"));
             ArrayNode signedUrls = JsonNodeFactory.instance.arrayNode();
             for (JsonNode fileNode : fileUrls) {

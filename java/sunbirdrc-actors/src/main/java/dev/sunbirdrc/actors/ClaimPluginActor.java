@@ -22,10 +22,12 @@ import org.sunbird.akka.core.Router;
 import java.io.IOException;
 import java.util.Objects;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 
 public class ClaimPluginActor extends BaseActor {
     // TODO: read url from config
-    private final String claimRequestUrl = "http://localhost:8082";
+    private final String claimRequestUrl = System.getenv("claims_url");
     private final String CLAIMS_PATH = "/api/v1/claims";
     RestTemplate restTemplate = new RestTemplate();
 
@@ -59,7 +61,7 @@ public class ClaimPluginActor extends BaseActor {
         attestationRequest.put("action", status);
         attestationRequest.put("notes", notes);
         ResponseEntity<ClaimDTO> responseEntity = restTemplate.exchange(
-                claimRequestUrl + CLAIMS_PATH + "/" + claimId,
+                getClaimRequestUrl() + CLAIMS_PATH + "/" + claimId,
                 HttpMethod.POST,
                 new HttpEntity<>(attestationRequest),
                 ClaimDTO.class
@@ -72,6 +74,13 @@ public class ClaimPluginActor extends BaseActor {
         pluginRequestMessage.setPropertyData(claimDTO.getPropertyData());
         callPluginResponseActor(pluginRequestMessage, claimId, Action.valueOf(status));
         logger.info("Claim has successfully attested {}", responseEntity.toString());
+    }
+
+    private String getClaimRequestUrl() {
+        if (isBlank(claimRequestUrl)) {
+            logger.error("claims service url is not set but it seems to be in use.");
+        }
+        return claimRequestUrl;
     }
 
     private void riseClaim(PluginRequestMessage pluginRequestMessage) throws IOException {
@@ -93,7 +102,7 @@ public class ClaimPluginActor extends BaseActor {
         claimDTO.setAttestationName(pluginRequestMessage.getPolicyName());
 //        claimDTO.setRequestorName(requestorName);
 
-        JsonNode response = restTemplate.postForObject(claimRequestUrl + CLAIMS_PATH, claimDTO, JsonNode.class);
+        JsonNode response = restTemplate.postForObject(getClaimRequestUrl() + CLAIMS_PATH, claimDTO, JsonNode.class);
         logger.info("Claim has successfully risen {}", response.toString());
 
         String claimId = response.get("id").asText();
