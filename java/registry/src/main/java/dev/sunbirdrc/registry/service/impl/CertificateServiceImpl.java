@@ -7,11 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,10 +24,11 @@ public class CertificateServiceImpl implements ICertificateService {
     }
 
     @Override
-    public Object getCertificate(JsonNode certificateData, String entityName, String mediaType) {
+    public Object getCertificate(JsonNode certificateData, String entityName, String mediaType, String templateUrl) {
+        String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl);
+
         Map<String, Object> requestBody = new HashMap<String, Object>(){{
-            String templateUrl = templateBaseUrl + entityName + getFileExtension(mediaType);
-            put("templateUrl", templateUrl);
+            put("templateUrl", finalTemplateUrl);
             put("certificate", certificateData.toString());
         }};
         HttpHeaders headers = new HttpHeaders();
@@ -37,6 +36,14 @@ public class CertificateServiceImpl implements ICertificateService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.postForObject(certificateUrl, entity, byte[].class);
+    }
+
+    @NotNull
+    private String inferTemplateUrl(String entityName, String mediaType, String templateUrl) {
+        if (templateUrl == null) {
+            templateUrl = templateBaseUrl + entityName + getFileExtension(mediaType);
+        }
+        return templateUrl;
     }
 
     @NotNull

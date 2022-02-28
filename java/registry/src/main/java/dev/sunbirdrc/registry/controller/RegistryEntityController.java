@@ -45,6 +45,7 @@ public class RegistryEntityController extends AbstractController {
     private ICertificateService certificateService;
 
     @Value("${authentication.enabled:true}") boolean authenticationEnabled;
+    @Value("${certificate.enableExternalTemplates:false}") boolean externalTemplatesEnabled;
 
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
@@ -408,12 +409,25 @@ public class RegistryEntityController extends AbstractController {
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
                     .get(entityName);
             node = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
-            return new ResponseEntity<>(certificateService.getCertificate(node, entityName, request.getHeader(HttpHeaders.ACCEPT)), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(certificateService.getCertificate(node,
+                    entityName,
+                    request.getHeader(HttpHeaders.ACCEPT),
+                    getTemplateUrlFromRequest(request)
+            ), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exception.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
+
+    private String getTemplateUrlFromRequest(HttpServletRequest request) {
+        if (externalTemplatesEnabled) {
+            return request.getHeader("template").toString();
+        } else {
+            return null;
+        }
+    }
+
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)
     public ResponseEntity<Object> getEntity(
             @PathVariable String entityName,

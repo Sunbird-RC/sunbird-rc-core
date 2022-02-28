@@ -175,6 +175,7 @@ certificate:
   templateBaseUrl: ${template_base_url:http://localhost:8081/api/v1/templates/}
   apiUrl: ${pdf_url:http://localhost:8078/api/v1/certificate}
   templateFolderPath: ${template_folder_path:public/_schemas/templates/}
+  enableExternalTemplates: {enable_external_templates:false}
 
 # This audit configuration will enable audit logging in the system, use audit_frame.json to create a schema for database /elastic storage.
 #  data_store can have following values
