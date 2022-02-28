@@ -49,7 +49,8 @@ public class OSSchemaConfiguration {
      */
     private List<String> roles = new ArrayList<>();
 
-    private List<String> inviteRoles = new ArrayList<>();;
+    private List<String> inviteRoles = new ArrayList<>();
+    private List<String> deleteRoles = new ArrayList<>();
     /**
      * Holds field path of the subject of entity
      * */

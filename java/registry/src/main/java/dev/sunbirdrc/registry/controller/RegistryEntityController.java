@@ -11,6 +11,7 @@ import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.dao.NotFoundException;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
+import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -55,13 +56,13 @@ public class RegistryEntityController extends AbstractController {
     ) throws Exception {
         final String TAG = "RegistryController:invite";
         logger.info("Inviting entity {}", rootNode);
-        registryHelper.authorizeInviteEntity(request, entityName);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.INVITE, "OK", responseParams);
         Map<String, Object> result = new HashMap<>();
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
         try {
+            registryHelper.authorizeInviteEntity(request, entityName);
             watch.start(TAG);
             String entityId = registryHelper.inviteEntity(newRootNode, "");
             Map resultMap = new HashMap();
@@ -71,9 +72,11 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.start(TAG);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (MiddlewareHaltException | ValidationException | OwnerCreationException e) {
+        }catch (MiddlewareHaltException | ValidationException | OwnerCreationException e) {
             return badRequestException(responseParams, response, e.getMessage());
-        } catch (Exception e) {
+        }catch (UnAuthorizedException unAuthorizedException){
+            return createUnauthorizedExceptionResponse(unAuthorizedException);
+        }catch (Exception e) {
             if (e.getCause() != null && e.getCause().getCause() != null &&
                     e.getCause().getCause() instanceof InvocationTargetException) {
                 Throwable targetException = ((InvocationTargetException) (e.getCause().getCause())).getTargetException();
@@ -82,6 +85,40 @@ public class RegistryEntityController extends AbstractController {
                 }
             }
             return internalErrorResponse(responseParams, response, e);
+        }
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.DELETE)
+    public ResponseEntity<Object> deleteEntity(
+      @PathVariable String entityName,
+      @PathVariable String entityId,
+      @RequestHeader HttpHeaders header,
+      HttpServletRequest request
+    ) {
+        logger.info("Deleting entityType {} with Id {}", entityName, entityId);
+        if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
+            try {
+                registryHelper.authorizeDeleteEntity(request, entityName, entityId);
+            } catch (Exception e) {
+                return createUnauthorizedExceptionResponse(e);
+            }
+        }
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.DELETE, "OK", responseParams);
+        try {
+            String userId = getUserId(entityName, request);
+            String tag = "RegistryController.delete " + entityName;
+            watch.start(tag);
+            registryHelper.deleteEntity(entityId,userId);
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.stop(tag);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("RegistryController: Exception while Deleting entity", e);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

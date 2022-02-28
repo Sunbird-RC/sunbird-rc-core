@@ -19,6 +19,7 @@ import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.exception.SignatureException;
+import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
@@ -689,7 +690,7 @@ public class RegistryHelper {
         JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
         JsonNode entityFromDB = response.get(entityName);
         if (!isOwner(entityFromDB, userIdFromRequest)) {
-            throw new Exception(INVALID_OPERATION_EXCEPTION_MESSAGE);
+            throw new Exception(UNAUTHORIZED_OPERATION_MESSAGE);
         }
     }
 
@@ -749,6 +750,24 @@ public class RegistryHelper {
         authorizeUserRole(userRoles, inviteRoles);
     }
 
+    public void authorizeDeleteEntity(HttpServletRequest request, String entityName,String entityId) throws Exception {
+        List<String> deleteRoles = definitionsManager.getDefinition(entityName)
+          .getOsSchemaConfiguration()
+          .getDeleteRoles();
+        if (deleteRoles.contains(ROLE_ANONYMOUS)) {
+            return;
+        }
+        Set<String> userRoles = getUserRolesFromRequest(request);
+        String userIdFromRequest = getUserId(request, entityName);
+        JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
+        JsonNode entityFromDB = response.get(entityName);
+        final boolean hasNoValidRole = !deleteRoles.isEmpty() && deleteRoles.stream().noneMatch(userRoles::contains);
+        final boolean hasInValidOwnership = !isOwner(entityFromDB, userIdFromRequest);
+        if(hasNoValidRole || hasInValidOwnership){
+            throw new UnAuthorizedException(UNAUTHORIZED_OPERATION_MESSAGE);
+        }
+    }
+
     public void authorizeManageEntity(HttpServletRequest request, String entityName) throws Exception {
         Set<String> userRoles = getUserRolesFromRequest(request);
 
@@ -761,12 +780,12 @@ public class RegistryHelper {
 
     private Set<String> getUserRolesFromRequest(HttpServletRequest request) {
         KeycloakAuthenticationToken userPrincipal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        return userPrincipal.getAccount().getRoles();
+        return userPrincipal!=null ? userPrincipal.getAccount().getRoles():Collections.emptySet();
     }
 
     public void authorizeUserRole(Set<String> userRoles, List<String> allowedRoles) throws Exception {
         if (!allowedRoles.isEmpty() && allowedRoles.stream().noneMatch(userRoles::contains)) {
-            throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
+            throw new UnAuthorizedException(UNAUTHORIZED_OPERATION_MESSAGE);
         }
     }
 
