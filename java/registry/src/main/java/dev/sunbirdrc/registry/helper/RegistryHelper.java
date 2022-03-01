@@ -763,7 +763,7 @@ public class RegistryHelper {
         JsonNode entityFromDB = response.get(entityName);
         final boolean hasNoValidRole = !deleteRoles.isEmpty() && deleteRoles.stream().noneMatch(userRoles::contains);
         final boolean hasInValidOwnership = !isOwner(entityFromDB, userIdFromRequest);
-        if(hasNoValidRole || hasInValidOwnership){
+        if(hasNoValidRole && hasInValidOwnership){
             throw new UnAuthorizedException(UNAUTHORIZED_OPERATION_MESSAGE);
         }
     }
