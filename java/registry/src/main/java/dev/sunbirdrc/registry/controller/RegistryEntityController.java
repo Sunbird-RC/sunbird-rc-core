@@ -450,7 +450,7 @@ public class RegistryEntityController extends AbstractController {
                     entityName,
                     request.getHeader(HttpHeaders.ACCEPT),
                     getTemplateUrlFromRequest(request)
-            ), HttpStatus.BAD_REQUEST);
+            ), HttpStatus.OK);
         } catch (Exception exception) {
             exception.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
