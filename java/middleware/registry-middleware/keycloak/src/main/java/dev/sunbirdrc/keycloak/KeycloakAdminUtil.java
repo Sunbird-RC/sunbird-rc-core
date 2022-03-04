@@ -3,9 +3,9 @@ package dev.sunbirdrc.keycloak;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
-import org.keycloak.admin.client.resource.UserResource;
-import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.admin.client.resource.*;
 import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,8 +66,9 @@ public class KeycloakAdminUtil {
     public String createUser(String entityName, String userName, String email, String mobile) throws OwnerCreationException {
         logger.info("Creating user with mobile_number : " + userName);
         UserRepresentation newUser = createUserRepresentation(entityName, userName, email, mobile);
+        GroupRepresentation entityGroup = createGroupRepresentation(entityName);
+        keycloak.realm(realm).groups().add(entityGroup);
         UsersResource usersResource = keycloak.realm(realm).users();
-
         Response response = usersResource.create(newUser);
         if (response.getStatus() == 201) {
             logger.info("Response |  Status: {} | Status Info: {}", response.getStatus(), response.getStatusInfo());
@@ -83,6 +84,12 @@ public class KeycloakAdminUtil {
         }else {
             throw new OwnerCreationException("Username already invited / registered");
         }
+    }
+
+    private GroupRepresentation createGroupRepresentation(String entityName) {
+        GroupRepresentation groupRepresentation = new GroupRepresentation();
+        groupRepresentation.setName(entityName);
+        return groupRepresentation;
     }
 
     private String updateExistingUserAttributes(String entityName, String userName, String email, String mobile) throws OwnerCreationException {
@@ -110,6 +117,7 @@ public class KeycloakAdminUtil {
             credentialRepresentation.setType(PASSWORD);
             newUser.setCredentials(Collections.singletonList(credentialRepresentation));
         }
+        newUser.setGroups(Collections.singletonList(entityName));
         newUser.setEmail(email);
         newUser.singleAttribute(MOBILE_NUMBER, mobile);
         newUser.singleAttribute(EMAIL, email);

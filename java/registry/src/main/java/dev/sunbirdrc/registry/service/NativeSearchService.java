@@ -129,12 +129,15 @@ public class NativeSearchService implements ISearchService {
 				} finally {
 					continueSearch = !isSpecificSearch;
 				}
-				
-	        	auditService.auditNativeSearch( 
-	        			new AuditRecord()
-	        			.setUserId(apiMessage.getUserID())
-	        			.setTransactionId(transaction), 
-	        			shard, searchQuery.getEntityTypes(), inputQueryNode);
+				try {
+					auditService.auditNativeSearch(
+							new AuditRecord()
+									.setUserId(apiMessage.getUserID())
+									.setTransactionId(transaction),
+							shard, searchQuery.getEntityTypes(), inputQueryNode);
+				} catch (Exception e) {
+					logger.error("Exception while auditing " + e);
+				}
 
 		 	}
 		}

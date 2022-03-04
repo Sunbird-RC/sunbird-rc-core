@@ -35,6 +35,9 @@ perf:
     enabled: ${perf_monitoring_enabled:false}
 
 registry:
+  perRequest:
+    indexCreation:
+      enabled: ${registry_perRequest_indexCreation_enabled:true}
   baseAPIS:
     enable: ${registry_base_apis_enable:false}
   externalentities: ${external_entities:}

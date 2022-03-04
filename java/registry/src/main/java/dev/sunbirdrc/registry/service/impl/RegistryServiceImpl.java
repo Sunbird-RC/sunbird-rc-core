@@ -39,6 +39,8 @@ import org.sunbird.akka.core.Router;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
+import static dev.sunbirdrc.registry.Constants.Schema;
+
 @Component
 public class RegistryServiceImpl implements RegistryService {
 
@@ -143,11 +145,16 @@ public class RegistryServiceImpl implements RegistryService {
             ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
             VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager);
             Vertex vertex = vertexReader.getVertex(null, uuid);
+            String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
+            if (!StringUtils.isEmpty(index) && index.equals(Schema)) {
+                JsonNode jsonNode = vertexReader.readInternal(vertex);
+                JsonNode schema = jsonNode.get(index).get(Schema.toLowerCase());
+                definitionsManager.removeDefinition(schema);
+            }
             if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
                     && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
                 registryDao.deleteEntity(vertex);
                 databaseProvider.commitTransaction(graph, tx);
-                String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
 
                 auditService.auditDelete(
                         auditService.createAuditRecord(userId, uuid, tx, index),
@@ -214,6 +221,10 @@ public class RegistryServiceImpl implements RegistryService {
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
 
+            if (vertexLabel.equals(Schema)) {
+                JsonNode schema = rootNode.get(vertexLabel).get(Schema.toLowerCase());
+                definitionsManager.appendNewDefinition(schema);
+            }
 
         }
         return entityId;
@@ -305,7 +316,10 @@ public class RegistryServiceImpl implements RegistryService {
                     auditService.createAuditRecord(userId, rootId, tx, entityType),
                     shard, mergedNode, readNode);
 
-
+            if (entityType.equals(Schema)) {
+                JsonNode schema = inputNode.get(entityType).get(Schema.toLowerCase());
+                definitionsManager.appendNewDefinition(schema);
+            }
         }
     }
 
