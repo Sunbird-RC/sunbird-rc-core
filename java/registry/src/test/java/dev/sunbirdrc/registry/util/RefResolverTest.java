@@ -23,7 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {DefinitionsManager.class, OSResourceLoader.class, RefResolver.class})
+@SpringBootTest(classes = {DefinitionsManager.class, OSResourceLoader.class, RefResolver.class, ObjectMapper.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class RefResolverTest {
 

@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.dao.impl;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.Filter;
 import dev.sunbirdrc.pojos.FilterOperators;
 import dev.sunbirdrc.pojos.SearchQuery;
@@ -37,7 +38,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { DefinitionsManager.class, DBProviderFactory.class, DBConnectionInfoMgr.class, OSResourceLoader.class })
+@SpringBootTest(classes = { DefinitionsManager.class, ObjectMapper.class, DBProviderFactory.class, DBConnectionInfoMgr.class, OSResourceLoader.class })
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class SearchDaoImplTest {
