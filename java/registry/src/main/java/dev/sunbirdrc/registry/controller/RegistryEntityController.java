@@ -688,7 +688,7 @@ public class RegistryEntityController extends AbstractController {
         try {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
             if (result.get(entityName).size() > 0) {
-                Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
+                Object credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
                 Object signedCredentials = registryHelper.getSignedDoc(result.get(entityName).get(0), credentialTemplate);
                 return new ResponseEntity<>(signedCredentials, HttpStatus.OK);
             } else {

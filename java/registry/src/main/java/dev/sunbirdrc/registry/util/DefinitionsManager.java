@@ -166,7 +166,7 @@ public class DefinitionsManager {
         }
     }
 
-    public Map<String, Object> getCredentialTemplate(String entityName) {
+    public Object getCredentialTemplate(String entityName) {
         return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
     }
 

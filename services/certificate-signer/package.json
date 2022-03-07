@@ -10,6 +10,7 @@
   "author": "",
   "license": "MPL",
   "dependencies": {
+    "axios": "^0.26.0",
     "certificate-signer-library": "^2.0.2",
     "jsonld-signatures": "^6.0.0",
     "kafkajs": "^1.15.0",

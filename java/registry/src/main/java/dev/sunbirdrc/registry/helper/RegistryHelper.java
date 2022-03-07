@@ -543,9 +543,9 @@ public class RegistryHelper {
         Action action = Action.valueOf(pluginResponseMessage.getStatus());
         switch (action) {
             case GRANT_CLAIM:
-                Map<String, Object> credentialTemplate = attestationPolicy.getCredentialTemplate();
+                Object credentialTemplate = attestationPolicy.getCredentialTemplate();
                 // checking size greater than 1, bcz empty template contains osid field
-                if (credentialTemplate != null && credentialTemplate.size() > 1) {
+                if (credentialTemplate != null) {
                     JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
                     Object signedData = getSignedDoc(response, credentialTemplate);
                     metaData.put(
@@ -871,7 +871,7 @@ public class RegistryHelper {
         }
     }
 
-    public Object getSignedDoc(JsonNode result, Map<String, Object> credentialTemplate) throws
+    public Object getSignedDoc(JsonNode result, Object credentialTemplate) throws
             SignatureException.CreationException, SignatureException.UnreachableException {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("data", result);
@@ -884,8 +884,8 @@ public class RegistryHelper {
         if (!signatureEnabled) {
             return;
         }
-        Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
-        if (credentialTemplate.size() > 0) {
+        Object credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
+        if (credentialTemplate != null) {
             ObjectNode updatedNode = (ObjectNode) readEntity(userId, entityName, entityId, false, null, false)
                     .get(entityName);
             Object signedCredentials = getSignedDoc(updatedNode, credentialTemplate);

@@ -39,7 +39,7 @@ test('Should generate credentials', async () => {
         "issuer": "did:issuer:cowin",
         // "date": "28-09-2021",
     }
-    const signedData = await generateCredentials(entity, template);
+    const signedData = await generateCredentials(entity, JSON.stringify(template));
     console.log(signedData)
     expect(signedData.proof.jws).not.toBeNull();
 });
@@ -61,7 +61,7 @@ test('Should verify credentials', async () => {
         "issuer": "did:issuer:cowin",
         // "date": "28-09-2021",
     }
-    const signedData = await generateCredentials(entity, template);
+    const signedData = await generateCredentials(entity, JSON.stringify(template));
     const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519);
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
@@ -84,7 +84,7 @@ test('Should fail verifying credentials of modified data', async () => {
         "issuer": "did:issuer:cowin",
         // "date": "28-09-2021",
     }
-    const signedData = await generateCredentials(entity, template);
+    const signedData = await generateCredentials(entity, JSON.stringify(template));
     signedData.credentialSubject.name = "XXYY"
     const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519);
     console.log(verifiedStatus)
@@ -110,7 +110,7 @@ test('Should verify credentials by RSA Algo', async () => {
         "issuer": "did:issuer:cowin",
         // "date": "28-09-2021",
     }
-    const signedData = await generateCredentials(entity, template);
+    const signedData = await generateCredentials(entity, JSON.stringify(template));
     console.log(signedData)
     const verifiedStatus = await verifyCredentials(signedData, KeyType.RSA);
     console.log(verifiedStatus)
