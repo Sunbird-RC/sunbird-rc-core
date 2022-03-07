@@ -5,6 +5,9 @@ build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 	make -C java/claim
+	make -C services/certificate-api docker
+	make -C services/certificate-signer docker
+	make -C services/notification-service docker	
 
 java/registry/target/registry.jar: $(SOURCES)
 	echo $(SOURCES)
