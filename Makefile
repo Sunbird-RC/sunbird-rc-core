@@ -8,6 +8,7 @@ build: java/registry/target/registry.jar
 
 java/registry/target/registry.jar: $(SOURCES)
 	echo $(SOURCES)
+	sh configure-dependencies.sh
 	cd java && ./mvnw clean install
 
 test: build
@@ -21,5 +22,5 @@ test: build
 	@docker-compose down
 
 clean:
-	@rm -rf target
-	@rm java/registry/target/registry.jar
+	@rm -rf target || true
+	@rm java/registry/target/registry.jar || true

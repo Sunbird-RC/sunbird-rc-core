@@ -15,6 +15,9 @@ import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static dev.sunbirdrc.registry.Constants.TITLE;
+
+
 @Component("definitionsManager")
 public class DefinitionsManager {
     private static Logger logger = LoggerFactory.getLogger(DefinitionsManager.class);
@@ -27,27 +30,17 @@ public class DefinitionsManager {
     @Autowired
     private ResourceLoader resourceLoader;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     /**
      * Loads the definitions from the _schemas folder
      */
     @PostConstruct
     public void loadDefinition() throws Exception {
 
-        final ObjectMapper mapper = new ObjectMapper();
-        osResourceLoader = new OSResourceLoader(resourceLoader);
-        osResourceLoader.loadResource(Constants.RESOURCE_LOCATION);
-
-        for (Entry<String, String> entry : osResourceLoader.getNameContent().entrySet()) {
-            String filename = entry.getKey();
-            String filenameWithoutExtn = filename.substring(0, filename.indexOf('.'));
-            JsonNode jsonNode = mapper.readTree(entry.getValue());
-            Definition definition = new Definition(jsonNode);
-            logger.info("loading resource:" + entry.getKey() + " with private field size:"
-                    + definition.getOsSchemaConfiguration().getPrivateFields().size() + " & signed fields size:"
-                    + definition.getOsSchemaConfiguration().getSignedFields().size());
-            definitionMap.putIfAbsent(definition.getTitle(), definition);
-            definitionMap.putIfAbsent(filenameWithoutExtn, definition);
-        }
+        loadResourcesFromPath(Constants.RESOURCE_LOCATION);
+        loadResourcesFromPath(Constants.INTERNAL_RESOURCE_LOCATION);
 
         derivedDefinitionMap.putAll(definitionMap);
         Set<Definition> loadedDefinitionsSet = new HashSet<>();
@@ -66,6 +59,24 @@ public class DefinitionsManager {
         });
 
         logger.info("loaded schema resource(s): " + definitionMap.size());
+    }
+
+    private void loadResourcesFromPath(String resourceLocation) throws Exception {
+        final ObjectMapper mapper = new ObjectMapper();
+        osResourceLoader = new OSResourceLoader(resourceLoader);
+        osResourceLoader.loadResource(resourceLocation);
+
+        for (Entry<String, String> entry : osResourceLoader.getNameContent().entrySet()) {
+            String filename = entry.getKey();
+            String filenameWithoutExtn = filename.substring(0, filename.indexOf('.'));
+            JsonNode jsonNode = mapper.readTree(entry.getValue());
+            Definition definition = new Definition(jsonNode);
+            logger.info("loading resource:" + entry.getKey() + " with private field size:"
+                    + definition.getOsSchemaConfiguration().getPrivateFields().size() + " & signed fields size:"
+                    + definition.getOsSchemaConfiguration().getSignedFields().size());
+            definitionMap.putIfAbsent(definition.getTitle(), definition);
+            definitionMap.putIfAbsent(filenameWithoutExtn, definition);
+        }
     }
 
     /**
@@ -159,7 +170,36 @@ public class DefinitionsManager {
         return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
     }
 
+    public Map<String, String> getCertificateTemplates(String entityName) {
+        return getDefinition(entityName).getOsSchemaConfiguration().getCertificateTemplates();
+    }
+
     public boolean isValidEntityName(String entityName) {
         return definitionMap.containsKey(entityName);
+    }
+
+    public void appendNewDefinition(JsonNode jsonNode) {
+        try {
+            String schemaAsText = jsonNode.asText("{}");
+            JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
+            Definition definition = new Definition(schemaJsonNode);
+            logger.info("loading resource:" + definition.getTitle() + " with private field size:"
+                    + definition.getOsSchemaConfiguration().getPrivateFields().size() + " & signed fields size:"
+                    + definition.getOsSchemaConfiguration().getSignedFields().size());
+            definitionMap.put(definition.getTitle(), definition);
+        } catch (Exception e) {
+            logger.error("Failed loading schema from DB", e);
+        }
+    }
+
+    public void removeDefinition(JsonNode jsonNode) {
+        try {
+            String schemaAsText = jsonNode.asText("{}");
+            JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
+            String schemaTitle = schemaJsonNode.get(TITLE).asText();
+            definitionMap.remove(schemaTitle);
+        } catch (Exception e) {
+            logger.error("Failed removing schema from definition manager", e);
+        }
     }
 }

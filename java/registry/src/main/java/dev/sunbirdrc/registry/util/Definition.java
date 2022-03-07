@@ -9,12 +9,14 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static dev.sunbirdrc.registry.Constants.TITLE;
+
 /**
  * Creates Definition for a given JsonNode This accepts a schema
  */
 public class Definition {
     private static Logger logger = LoggerFactory.getLogger(Definition.class);
-    private final static String TITLE = "title";
+
     private final static String OSCONFIG = "_osConfig";
     private final static String DEFINITIONS = "definitions";
     private final static String PROPERTIES = "properties";

@@ -11,6 +11,7 @@ import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
+import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.RecordIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,6 +166,23 @@ public class RegistryController extends AbstractController {
             Set<String> registryList = definitionsManager.getAllKnownDefinitions();
             response.setResult(registryList);
             logger.info("get registers,{}", registryList);
+        } catch (Exception e) {
+            logger.error("Read Api Exception occurred ", e);
+            responseParams.setErrmsg(e.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/registry/{entity}", method = RequestMethod.GET)
+    public ResponseEntity<Response> getRegisters(@PathVariable String entity, @RequestHeader HttpHeaders header) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.READ, "OK", responseParams);
+        try {
+            Definition definition = definitionsManager.getDefinition(entity);
+            response.setResult(definition);
+            logger.info("get registers,{}", entity);
         } catch (Exception e) {
             logger.error("Read Api Exception occurred ", e);
             responseParams.setErrmsg(e.getMessage());
