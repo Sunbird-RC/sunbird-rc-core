@@ -83,7 +83,7 @@ public class OSSchemaConfiguration {
      * Holds the template for w3c credentials
      * */
 
-    private Map<String, Object> credentialTemplate = new HashMap<>();
+    private Object credentialTemplate = new HashMap<>();
 
     /**
      * Holds the certificate template
