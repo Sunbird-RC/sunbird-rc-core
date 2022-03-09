@@ -27,13 +27,22 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
   registry:
-    image: dockerhub/opensaber-rc
+    image: dockerhub/sunbird-rc-core:v0.0.4
+    volumes:
+      - ${PWD}/java/registry/src/main/resources/public/_schemas:/home/sunbirdrc/config/public/_schemas
+
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
       - elastic_search_connection_url=es:9200
-      - search_provider=io.opensaber.registry.service.ElasticSearchService
+      - search_provider=dev.sunbirdrc.registry.service.ElasticSearchService
+      - sunbird_sso_realm=sunbird-rc
+      - sunbird_sso_url=http://keycloak:8080/auth
+      - sunbird_sso_admin_client_id=admin-api
+      - sunbird_sso_client_id=registry-frontend
+      - sunbird_sso_admin_client_secret=0358fa30-6014-4192-9551-7c61b15b774c
+      - claims_url=http://claim-ms:8082
     ports:
       - "8081:8081"
     depends_on:
@@ -42,7 +51,9 @@ services:
       db:
         condition: service_started
   keycloak:
-    image: dockerhub/keycloak
+    image: dockerhub/ndear-keycloak
+    volumes:
+      - ${PWD}/imports:/opt/jboss/keycloak/imports
     environment:
       - DB_VENDOR=postgres
       - DB_ADDR=db
@@ -52,6 +63,7 @@ services:
       - DB_PASSWORD=postgres
       - KEYCLOAK_USER=admin
       - KEYCLOAK_PASSWORD=admin
+      - KEYCLOAK_IMPORT=/opt/jboss/keycloak/imports/realm-export.json
     healthcheck:
       test:
         ["CMD-SHELL", "curl -f http://localhost:9990/ || exit 1"]
@@ -64,3 +76,49 @@ services:
     depends_on:
       db:
         condition: service_started
+  claim-ms:
+    image: dockerhub/sunbird-rc-claim-ms:v0.0.4
+    environment:
+      - connectionInfo_uri=jdbc:postgresql://db:5432/registry
+      - connectionInfo_username=postgres
+      - connectionInfo_password=postgres
+      - sunbirdrc_url=http://registry:8081
+    ports:
+      - "8082:8082"
+    depends_on:
+      db:
+        condition: service_started
+      registry:
+        condition: service_started
+  certificate-signer:
+    image: dockerhub/sunbird-rc-certificate-signer:v0.0.4
+    environment:
+      - PORT=8079
+    ports:
+      - "8079:8079"
+  certificate-api:
+    image: dockerhub/sunbird-rc-certificate-api:v0.0.4
+    environment:
+      - PORT=8078
+    ports:
+      - "8078:8078"
+  file-storage:
+    image: quay.io/minio/minio
+    volumes:
+      - ${HOME}/minio/data:/data
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=12345678
+    command: server --address 0.0.0.0:9000 --console-address 0.0.0.0:9001 /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+  notification-ms:
+    image: dockerhub/sunbird-rc-notification-service:v0.0.4
+    ports:
+      - "8765:8765"

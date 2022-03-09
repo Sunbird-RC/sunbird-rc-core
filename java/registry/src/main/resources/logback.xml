@@ -68,17 +68,17 @@
     <logger name="es.weso" level="ERROR"/>
     <logger name="org.springframework" level="INFO"/>
 
-    <!-- OpenSABER specific loggers. Turn these to INFO in production -->
-    <logger name="io.opensaber.registry.service" level="INFO"/>
+    <!-- SunbirdRC specific loggers. Turn these to INFO in production -->
+    <logger name="dev.sunbirdrc.registry.service" level="INFO"/>
     <logger name="com.steelbridgelabs.oss.neo4j.structure.Neo4JSession" level="INFO"/>
-    <logger name="io.opensaber.registry.dao.RegistryDaoImpl" level="INFO"/>
+    <logger name="dev.sunbirdrc.registry.dao.RegistryDaoImpl" level="INFO"/>
     <logger name="com.mchange.v2.c3p0.impl.NewProxyPreparedStatement" level="INFO"/>
 
-    <logger name="io.opensaber.registry.util.AuditFileWriter" level="INFO" additivity="FALSE">
+    <logger name="dev.sunbirdrc.registry.util.AuditFileWriter" level="INFO" additivity="FALSE">
         <appender-ref ref="AuditFileAppender"/>
     </logger>
 
-    <root level="DEBUG" additivity="FALSE">
+    <root level="INFO" additivity="FALSE">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </root>

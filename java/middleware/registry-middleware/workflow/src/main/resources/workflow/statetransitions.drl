@@ -1,10 +1,10 @@
-package io.opensaber.workflow;
-import io.opensaber.workflow.StateContext;
-import io.opensaber.pojos.attestation.States;
+package dev.sunbirdrc.workflow;
+import dev.sunbirdrc.workflow.StateContext;
+import dev.sunbirdrc.pojos.attestation.States;
 
 dialect  "mvel"
-global io.opensaber.keycloak.KeycloakAdminUtil keycloakAdminUtil;
-global io.opensaber.workflow.RuleEngineService ruleEngineService;
+global dev.sunbirdrc.keycloak.KeycloakAdminUtil keycloakAdminUtil;
+global dev.sunbirdrc.workflow.RuleEngineService ruleEngineService;
 
 rule "Set state as draft if there is a change"
     when
@@ -38,7 +38,7 @@ end
 
 rule "Create entity owner for newly added owner fields"
     when
-        stateDefinition:StateContext(isOwnershipProperty() && isOwnerNewlyAdded());
+        stateDefinition:StateContext(isOwnershipProperty() && isOwnerNewlyAdded() && isLoginEnabled());
     then
         String owner = keycloakAdminUtil.createUser(stateDefinition.getEntityName(), stateDefinition.getUpdated().get("userId").textValue(),
         stateDefinition.getUpdated().get("email").textValue(), stateDefinition.getUpdated().get("mobile").textValue());

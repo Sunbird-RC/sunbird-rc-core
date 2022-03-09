@@ -1,0 +1,26 @@
+{
+  "name": "certificate_processor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "nodemon main.js",
+    "test": "jest --passWithNoTests"
+  },
+  "author": "",
+  "license": "MPL",
+  "dependencies": {
+    "axios": "^0.26.0",
+    "certificate-signer-library": "^2.0.2",
+    "jsonld-signatures": "^6.0.0",
+    "kafkajs": "^1.15.0",
+    "mustache": "^4.2.0",
+    "ramda": "^0.27.1",
+    "vaccination-context": "^1.0.7",
+    "vc-js": "^0.6.4"
+  },
+  "devDependencies": {
+    "jest": "^26.6.3",
+    "nodemon": "^2.0.14"
+  }
+}

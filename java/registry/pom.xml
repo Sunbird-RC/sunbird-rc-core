@@ -2,7 +2,7 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>io.opensaber</groupId>
+    <groupId>dev.sunbirdrc</groupId>
     <artifactId>registry</artifactId>
     <version>2.0.3</version>
     <packaging>jar</packaging>
@@ -37,7 +37,7 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>io.opensaber</groupId>
+                <groupId>dev.sunbirdrc</groupId>
                 <artifactId>validators</artifactId>
                 <version>2.0.3</version>
                 <type>pom</type>
@@ -53,6 +53,7 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -103,45 +104,44 @@
             <version>2.1.1</version>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>registry-interceptor</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>keycloak</artifactId>
             <version>2.0.3</version>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>workflow</artifactId>
             <version>2.0.3</version>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
-            <artifactId>verifiable-credentials</artifactId>
-            <version>2.0.3</version>
-        </dependency>
-        <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>elastic-search</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>sunbirdrc-actors</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>sample-external-plugin</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>sample-external-plugin-2</artifactId>
             <version>${revision}</version>
         </dependency>
-
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>view-templates</artifactId>
             <version>1.0.0</version>
         </dependency>
@@ -318,6 +318,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.9</version>
+        </dependency>
         <!-- End dependency for Postgres support -->
 
         <!-- Include this dependency for Neo4j support -->
@@ -348,7 +353,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.18</version>
         </dependency>
         <dependency>
             <groupId>com.steelbridgelabs.oss</groupId>
@@ -386,7 +390,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>jsonschemavalidator</artifactId>
             <version>2.0.3</version>
         </dependency>
@@ -417,7 +421,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.22.0</version>
+                    <version>3.0.0-M5</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -511,7 +515,7 @@
                 </executions>
                 <configuration>
                     <excludes>
-                        <exclude>io/opensaber/pojos/*</exclude>
+                        <exclude>dev/sunbirdrc/pojos/*</exclude>
                         <exclude>**/I*.java</exclude>
                     </excludes>
                 </configuration>
@@ -523,6 +527,7 @@
                     <includes>
                         <include>${runSuite}</include>
                     </includes>
+                    <forkCount>0</forkCount>
                 </configuration>
             </plugin>
         </plugins>

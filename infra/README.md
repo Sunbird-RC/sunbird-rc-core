@@ -1,4 +1,4 @@
-# OpenSaber-RC Infra setup
+# SunbirdRC Infra setup
 
 ### Docker compose
 

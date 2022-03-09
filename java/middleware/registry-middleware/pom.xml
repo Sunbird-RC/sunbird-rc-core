@@ -7,7 +7,7 @@
     <packaging>pom</packaging>
 
     <parent>
-        <groupId>io.opensaber</groupId>
+        <groupId>dev.sunbirdrc</groupId>
         <version>2.0.3</version>
         <artifactId>middleware-bom</artifactId>
     </parent>
@@ -17,6 +17,5 @@
         <module>validation</module>
         <module>keycloak</module>
         <module>workflow</module>
-        <module>verifiable-credentials</module>
     </modules>
 </project>

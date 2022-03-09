@@ -178,6 +178,9 @@ body {
 }
 
 @media (max-width: 992px) {
+  .ndear-login-wrapper {
+    width: 100%;
+  }
   .login-content {
     flex-direction: column-reverse;
     justify-content: flex-end;

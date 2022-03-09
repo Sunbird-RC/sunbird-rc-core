@@ -2,12 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-    <artifactId>opensaber</artifactId>
-    <groupId>io.opensaber</groupId>
+    <artifactId>sunbird-rc</artifactId>
+    <groupId>dev.sunbirdrc</groupId>
     <version>2.0.3</version>
   </parent>
  
-    <groupId>opensaber.io</groupId>
+    <groupId>dev.sunbirdrc</groupId>
     <artifactId>apitest</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -56,9 +56,45 @@
                 <version>${maven.surefire.version}</version>
                 <configuration>
                     <argLine>-Dfile.encoding=UTF-8</argLine>
+                    <skip>true</skip>
                 </configuration>
-            </plugin>          
-        </plugins>        
-    </build>       
+            </plugin>
+        </plugins>
+    </build>
+    <profiles>
+        <profile>
+            <id>e2e</id>
+            <activation>
+                <property>
+                    <name>e2e</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${maven.compiler.version}</version>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <source>${java.version}</source>
+                            <target>${java.version}</target>
+                            <compilerArgument>-Werror</compilerArgument>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${maven.surefire.version}</version>
+                        <configuration>
+                            <argLine>-Dfile.encoding=UTF-8</argLine>
+                            <skip>false</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
     
 </project>

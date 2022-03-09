@@ -1,0 +1,42 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema",
+	"type": "object",
+	"properties": { "Student": { "$ref": "#/definitions/Student" } },
+	"required": ["Student"],
+	"title": "Student",
+	"definitions": {
+		"Student": {
+			"$id": "#/properties/Student",
+			"type": "object",
+			"title": "Studentschema",
+			"required": ["name", "phoneNumber", "email", "school"],
+			"uniqueIndexFields": ["phoneNumber"],
+			"properties": {
+				"name": { "type": "string" },
+				"phoneNumber": { "type": "string" },
+				"email": { "type": "string" },
+				"school": { "type": "string" }
+			}
+		}
+	},
+	"_osConfig": {
+		"ownershipAttributes": [
+			{
+				"email": "/email",
+				"mobile": "/phoneNumber",
+				"userId": "/phoneNumber"
+			}
+		],
+		"inviteRoles": ["anonymous"],
+		"attestationAttributes": ["school"],
+		"attestationPolicies": [
+			{
+				"property": "school",
+				"paths": ["$.school"],
+				"type": "MANUAL",
+				"attestorEntity": "Teacher",
+				"conditions": "(ATTESTOR#$.school#.contains(REQUESTER#$.school#))"
+			}
+		]
+	}
+}

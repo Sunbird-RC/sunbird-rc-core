@@ -6,8 +6,8 @@
     <description>Elastic Search for OS</description>
 
     <parent>
-        <artifactId>opensaber</artifactId>
-        <groupId>io.opensaber</groupId>
+        <artifactId>sunbird-rc</artifactId>
+        <groupId>dev.sunbirdrc</groupId>
         <version>2.0.3</version>
     </parent>
 
@@ -35,12 +35,12 @@
             <version>${elastic.search.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>pojos</artifactId>
             <version>${version}</version>
         </dependency>
         <dependency>
-            <groupId>io.opensaber</groupId>
+            <groupId>dev.sunbirdrc</groupId>
             <artifactId>middleware-commons</artifactId>
             <version>${version}</version>
         </dependency>
