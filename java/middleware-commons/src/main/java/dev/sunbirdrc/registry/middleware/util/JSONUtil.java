@@ -269,6 +269,10 @@ public class JSONUtil {
 		parent.set(childKey, arrayNode);
 	}
 
+	public static String parseJsonTree(String path, JsonNode input) {
+		return JsonPath.parse(input.toString()).read(path).toString();
+	}
+
 	/**
 	 * Remove a node of given key from parent's hierarchy(including nested objects)
 	 * 
@@ -483,8 +487,7 @@ public class JSONUtil {
         List<String> typeList = JsonPath.using(alwaysReturnListConfig).parse(input.toString()).read(path);
         return typeList.get(0);
     }
-
-	public static String getOSIDFromArrNode(JsonNode resultNode, JsonNode requestBody, List<String> fieldsToRemove) {
+	public static String getOSIDFromArrNode(JsonNode resultNode) {
 		if (resultNode.isArray()) {
 			ArrayNode arrayNode = (ArrayNode) resultNode;
 			return arrayNode.get(arrayNode.size() - 1).get("osid").asText();
