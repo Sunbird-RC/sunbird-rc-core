@@ -319,6 +319,7 @@ public class RegistryHelperTest {
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
         when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
         when(shardManager.getShard(any())).thenReturn(new Shard());
+        when(readService.getEntity(any(),any(),any(),any(),any())).thenReturn(inviteJson);
         registryHelper.inviteEntity(inviteJson, "");
         Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());
         assertEquals("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"osOwner\":[\"" + testUserId + "\"]}}", inputJsonCapture.getValue().toString());
@@ -332,6 +333,7 @@ public class RegistryHelperTest {
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
         when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
         when(shardManager.getShard(any())).thenReturn(new Shard());
+        when(readService.getEntity(any(),any(),any(),any(),any())).thenReturn(inviteJson);
         registryHelper.inviteEntity(inviteJson, "");
         Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());
         Mockito.verify(registryService, atLeastOnce()).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
@@ -362,6 +364,7 @@ public class RegistryHelperTest {
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
         when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
         when(shardManager.getShard(any())).thenReturn(new Shard());
+        when(readService.getEntity(any(),any(),any(),any(),any())).thenReturn(inviteJson);
         mockDefinitionManager();
         registryHelper.inviteEntity(inviteJson, "");
         Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());

@@ -565,30 +565,32 @@ public class RegistryHelper {
                 claimProperties.put("entityId",entityId);
                 claimProperties.put("name",attestationName);
                 JsonNode entityNode = readEntity(userId, entityName, entityId, false, null, false);
-                if(policy.isInternal()) {
-                    Map<String, List<String>> propertyOSIDMapper = objectMapper.convertValue(claimProperties.get("propertiesOSID"), Map.class);
-                    JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode.get(entityName), policy.getAttestationProperties(), propertyOSIDMapper);
-                    if(!propertyData.isNull()) {
-                        claimProperties.put("propertyData", propertyData.toString());
+                if(policy.hasAttestationPlugin()){
+                    if(policy.isInternal()) {
+                        Map<String, List<String>> propertyOSIDMapper = objectMapper.convertValue(claimProperties.get("propertiesOSID"), Map.class);
+                        JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode.get(entityName), policy.getAttestationProperties(), propertyOSIDMapper);
+                        if(!propertyData.isNull()) {
+                            claimProperties.put("propertyData", propertyData.toString());
+                        }
+                        newAddAttestationProperty(entityNode,attestationName, claimProperties);
+                        String attestationOSID = getAttestationOSID(entityName, entityId, attestationName);
+                        String condition = conditionResolverService.resolve(propertyData, "REQUESTER", policy.getConditions(), Collections.emptyList());
+                        PluginRequestMessage message = PluginRequestMessageCreator.create(
+                          propertyData.toString(), condition, attestationOSID,
+                          entityName, entityId, null, Action.RAISE_CLAIM.name(), policy.getName(),
+                          policy.getAttestorPlugin(), policy.getAttestorEntity(),
+                          policy.getAttestorSignin());
+                        PluginRouter.route(message);
+                    } else {
+                        newAddAttestationProperty(entityNode,attestationName, claimProperties);
+                        String attestationOSID = getAttestationOSID(entityName, entityId, attestationName);
+                        PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
+                          "", "", attestationOSID,
+                          entityName, entityId, null, Action.RAISE_CLAIM.name(), policy.getName(),
+                          policy.getAttestorPlugin(), policy.getAttestorEntity(),
+                          policy.getAttestorSignin());
+                        PluginRouter.route(pluginRequestMessage);
                     }
-                    newAddAttestationProperty(entityNode,attestationName, claimProperties);
-                    String attestationOSID = getAttestationOSID(entityName, entityId, attestationName);
-                    String condition = conditionResolverService.resolve(propertyData, "REQUESTER", policy.getConditions(), Collections.emptyList());
-                    PluginRequestMessage message = PluginRequestMessageCreator.create(
-                      propertyData.toString(), condition, attestationOSID,
-                      entityName, entityId, null, Action.RAISE_CLAIM.name(), policy.getName(),
-                      policy.getAttestorPlugin(), policy.getAttestorEntity(),
-                      policy.getAttestorSignin());
-                    PluginRouter.route(message);
-                } else {
-                    newAddAttestationProperty(entityNode,attestationName, claimProperties);
-                    String attestationOSID = getAttestationOSID(entityName, entityId, attestationName);
-                    PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
-                      "", "", attestationOSID,
-                      entityName, entityId, null, Action.RAISE_CLAIM.name(), policy.getName(),
-                      policy.getAttestorPlugin(), policy.getAttestorEntity(),
-                      policy.getAttestorSignin());
-                    PluginRouter.route(pluginRequestMessage);
                 }
             }
         }

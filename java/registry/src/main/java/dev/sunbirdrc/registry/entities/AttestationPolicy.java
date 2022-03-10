@@ -90,6 +90,9 @@ public class AttestationPolicy {
     public boolean isInternal() {
         return this.attestorPlugin.split(PLUGIN_SPLITTER)[1].equals(AttestorPluginType.internal.name());
     }
+    public boolean hasAttestationPlugin(){
+        return this.attestorPlugin!=null;
+    }
 
     public Map<String, String> getAttestationProperties() {
         try {
