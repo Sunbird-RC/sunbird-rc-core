@@ -7,11 +7,13 @@ const {Ed25519Signature2018, RsaSignature2018} = jsigs.suites;
 const {publicKeyPem, publicKeyBase58} = require('../../config/keys');
 const {CERTIFICATE_DID, CERTIFICATE_CONTROLLER_ID, CUSTOM_TEMPLATE_DELIMITERS} = require('../../config/config');
 const vc = require('vc-js');
+const Handlebars = require("handlebars");
 
 const generateCredentials = async (data, credentialTemplate = "") => {
     console.log("Input received", credentialTemplate, data);
     Mustache.tags = CUSTOM_TEMPLATE_DELIMITERS;
-    let renderedTemplate = Mustache.render(credentialTemplate, data);
+    const template = Handlebars.compile(credentialTemplate);
+    let renderedTemplate = template(data);
     const credentialData = JSON.parse(renderedTemplate);
     console.log("Sending", credentialData);
     return await signJSON(credentialData);
