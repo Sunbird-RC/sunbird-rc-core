@@ -14,13 +14,16 @@ import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
+import dev.sunbirdrc.registry.middleware.util.Did;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
+import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
 import dev.sunbirdrc.validators.ValidationException;
+import org.apache.commons.lang3.StringUtils;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
@@ -37,6 +40,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
+import static dev.sunbirdrc.registry.Constants.*;
+
 @RestController
 public class RegistryEntityController extends AbstractController {
 
@@ -45,7 +50,11 @@ public class RegistryEntityController extends AbstractController {
     @Autowired
     private ICertificateService certificateService;
 
+    @Autowired
+    private FileStorageService fileStorageService;
+
     @Value("${authentication.enabled:true}") boolean authenticationEnabled;
+    @Value("${certificate.enableExternalTemplates:false}") boolean externalTemplatesEnabled;
 
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
@@ -215,13 +224,7 @@ public class RegistryEntityController extends AbstractController {
         newRootNode.set(entityName, rootNode);
 
         try {
-            String userId;
-            if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
-                registryHelper.authorizeManageEntity(request, entityName);
-                userId = registryHelper.getUserId(request, entityName);
-            } else {
-                userId= dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
-            }
+            String userId = registryHelper.authorizeManageEntity(request, entityName);
             String label = registryHelper.addEntityAndSign(newRootNode, userId);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
@@ -445,12 +448,41 @@ public class RegistryEntityController extends AbstractController {
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
                     .get(entityName);
             node = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
-            return new ResponseEntity<>(certificateService.getCertificate(node, entityName, request.getHeader(HttpHeaders.ACCEPT)), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(certificateService.getCertificate(node,
+                    entityName,
+                    request.getHeader(HttpHeaders.ACCEPT),
+                    getTemplateUrlFromRequest(request, entityName)
+            ), HttpStatus.OK);
         } catch (Exception exception) {
             exception.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
+
+    private String getTemplateUrlFromRequest(HttpServletRequest request, String entityName) {
+        if (externalTemplatesEnabled && !StringUtils.isEmpty(request.getHeader(Template))) {
+            return request.getHeader(Template);
+        }
+        if (definitionsManager.getCertificateTemplates(entityName).size() > 0 && !StringUtils.isEmpty(request.getHeader(TemplateKey))) {
+            String templateUri = definitionsManager.getCertificateTemplates(entityName).getOrDefault(request.getHeader(TemplateKey), null);
+            if (!StringUtils.isEmpty(templateUri)) {
+                try {
+                    Did did = Did.parse(templateUri);
+                    if (did.getMethod().equals(PATH)) {
+                        return fileStorageService.getSignedUrl(did.getMethodIdentifier());
+                    } else if (did.getMethod().equals(URL)) {
+                        return did.getMethodIdentifier();
+                    }
+                } catch (Exception e) {
+                    logger.error("Exception while parsing certificate templates DID urls", e);
+                    return null;
+                }
+            }
+
+        }
+        return null;
+    }
+
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET)
     public ResponseEntity<Object> getEntity(
             @PathVariable String entityName,
@@ -656,7 +688,7 @@ public class RegistryEntityController extends AbstractController {
         try {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
             if (result.get(entityName).size() > 0) {
-                Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
+                Object credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
                 Object signedCredentials = registryHelper.getSignedDoc(result.get(entityName).get(0), credentialTemplate);
                 return new ResponseEntity<>(signedCredentials, HttpStatus.OK);
             } else {

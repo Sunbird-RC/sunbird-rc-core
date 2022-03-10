@@ -72,13 +72,10 @@ target
 
 # Properties
 config-*.properties
-application.properties
-application.yml
 
 # Json-LD
 schema-configuration.jsonld
 schema-configuration-school-test.jsonld
-frame.json
 
 # Shex file
 validations.shex

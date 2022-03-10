@@ -83,7 +83,12 @@ public class OSSchemaConfiguration {
      * Holds the template for w3c credentials
      * */
 
-    private Map<String, Object> credentialTemplate = new HashMap<>();
+    private Object credentialTemplate = new HashMap<>();
+
+    /**
+     * Holds the certificate template
+     * */
+    private Map<String, String> certificateTemplates = new HashMap<>();
 
     /**
      * Tells entity should be part of user service or not

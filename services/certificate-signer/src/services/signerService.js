@@ -8,9 +8,10 @@ const {publicKeyPem, publicKeyBase58} = require('../../config/keys');
 const {CERTIFICATE_DID, CERTIFICATE_CONTROLLER_ID} = require('../../config/config');
 const vc = require('vc-js');
 
-const generateCredentials = async (data, credentialTemplate = {}) => {
+const generateCredentials = async (data, credentialTemplate = "") => {
     console.log("Input received", credentialTemplate, data);
-    const credentialData = JSON.parse(Mustache.render(JSON.stringify(credentialTemplate), data));
+    let renderedTemplate = Mustache.render(credentialTemplate, data);
+    const credentialData = JSON.parse(renderedTemplate);
     console.log("Sending", credentialData);
     return await signJSON(credentialData);
 };

@@ -57,8 +57,7 @@ import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.EMAIL;
 import static dev.sunbirdrc.registry.middleware.util.Constants.MOBILE;
-import static dev.sunbirdrc.registry.middleware.util.OSSystemFields._osAttestedData;
-import static dev.sunbirdrc.registry.middleware.util.OSSystemFields._osState;
+import static dev.sunbirdrc.registry.middleware.util.OSSystemFields.*;
 
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
@@ -196,6 +195,14 @@ public class RegistryHelper {
         String entityName = inputJson.fields().next().getKey();
         List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
         entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
+        if (!StringUtils.isEmpty(userId)) {
+            ArrayNode jsonNode = (ArrayNode) inputJson.get(entityName).get(osOwner.toString());
+            if (jsonNode == null) {
+                jsonNode = new ObjectMapper().createArrayNode();
+                ((ObjectNode) inputJson.get(entityName)).set(osOwner.toString(), jsonNode);
+            }
+            jsonNode.add(userId);
+        }
         return addEntity(inputJson, userId, entityType);
     }
 
@@ -617,9 +624,9 @@ public class RegistryHelper {
         Action action = Action.valueOf(pluginResponseMessage.getStatus());
         switch (action) {
             case GRANT_CLAIM:
-                Map<String, Object> credentialTemplate = attestationPolicy.getCredentialTemplate();
+                Object credentialTemplate = attestationPolicy.getCredentialTemplate();
                 // checking size greater than 1, bcz empty template contains osid field
-                if (credentialTemplate != null && credentialTemplate.size() > 1) {
+                if (credentialTemplate != null) {
                     JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
                     Object signedData = getSignedDoc(response, credentialTemplate);
                     metaData.put(
@@ -713,15 +720,19 @@ public class RegistryHelper {
     }
 
     public String getUserId(HttpServletRequest request, String entityName) throws Exception {
-        if (doesEntityContainOwnershipAttributes(entityName)) {
-            KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-            if (principal != null) {
-                return principal.getAccount().getPrincipal().getName();
-            }
-            throw new Exception("Forbidden");
+        if (doesEntityContainOwnershipAttributes(entityName) || getManageRoles(entityName).size() > 0) {
+            return fetchUserIdFromToken(request);
         } else {
             return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
         }
+    }
+
+    private String fetchUserIdFromToken(HttpServletRequest request) throws Exception {
+        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        if (principal != null) {
+            return principal.getAccount().getPrincipal().getName();
+        }
+        throw new Exception("Forbidden");
     }
 
     public JsonNode getRequestedUserDetails(HttpServletRequest request, String entityName) throws Exception {
@@ -849,14 +860,22 @@ public class RegistryHelper {
         }
     }
 
-    public void authorizeManageEntity(HttpServletRequest request, String entityName) throws Exception {
-        Set<String> userRoles = getUserRolesFromRequest(request);
+    public String authorizeManageEntity(HttpServletRequest request, String entityName) throws Exception {
 
-        List<String> managingRoles = definitionsManager.getDefinition(entityName)
-                .getOsSchemaConfiguration()
-                .getRoles();
+        List<String> managingRoles = getManageRoles(entityName);
+        if (managingRoles.size() > 0) {
+            Set<String> userRoles = getUserRolesFromRequest(request);
+            authorizeUserRole(userRoles, managingRoles);
+            return fetchUserIdFromToken(request);
+        } else {
+            return ROLE_ANONYMOUS;
+        }
+    }
 
-        authorizeUserRole(userRoles, managingRoles);
+    private List<String> getManageRoles(String entityName) {
+        return definitionsManager.getDefinition(entityName)
+                    .getOsSchemaConfiguration()
+                    .getRoles();
     }
 
     private Set<String> getUserRolesFromRequest(HttpServletRequest request) {
@@ -933,7 +952,7 @@ public class RegistryHelper {
         }
     }
 
-    public Object getSignedDoc(JsonNode result, Map<String, Object> credentialTemplate) throws
+    public Object getSignedDoc(JsonNode result, Object credentialTemplate) throws
             SignatureException.CreationException, SignatureException.UnreachableException {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("data", result);
@@ -946,8 +965,8 @@ public class RegistryHelper {
         if (!signatureEnabled) {
             return;
         }
-        Map<String, Object> credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
-        if (credentialTemplate.size() > 0) {
+        Object credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
+        if (credentialTemplate != null) {
             ObjectNode updatedNode = (ObjectNode) readEntity(userId, entityName, entityId, false, null, false)
                     .get(entityName);
             Object signedCredentials = getSignedDoc(updatedNode, credentialTemplate);

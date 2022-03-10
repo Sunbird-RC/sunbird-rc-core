@@ -5,9 +5,13 @@ build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 	make -C java/claim
+	make -C services/certificate-api docker
+	make -C services/certificate-signer docker
+	make -C services/notification-service docker	
 
 java/registry/target/registry.jar: $(SOURCES)
 	echo $(SOURCES)
+	sh configure-dependencies.sh
 	cd java && ./mvnw clean install
 
 test: build
@@ -21,5 +25,5 @@ test: build
 	@docker-compose down
 
 clean:
-	@rm -rf target
-	@rm java/registry/target/registry.jar
+	@rm -rf target || true
+	@rm java/registry/target/registry.jar || true

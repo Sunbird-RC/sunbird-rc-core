@@ -103,15 +103,4 @@ public class AttestationPolicy {
         }
     }
 
-    public Map<String, Object> getCredentialTemplate() {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            TypeReference<Map<String, Object>> typeRef
-                    = new TypeReference<Map<String, Object>>() {
-            };
-            return objectMapper.readValue(objectMapper.writeValueAsString(this.credentialTemplate), typeRef);
-        } catch (Exception e) {
-            return Collections.emptyMap();
-        }
-    }
 }
