@@ -8,10 +8,11 @@ const {publicKeyPem, publicKeyBase58} = require('../../config/keys');
 const {CERTIFICATE_DID, CERTIFICATE_CONTROLLER_ID, CUSTOM_TEMPLATE_DELIMITERS} = require('../../config/config');
 const vc = require('vc-js');
 const Handlebars = require("handlebars");
+const delimiters = require('handlebars-delimiters');
 
 const generateCredentials = async (data, credentialTemplate = "") => {
+    delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
     console.log("Input received", credentialTemplate, data);
-    Mustache.tags = CUSTOM_TEMPLATE_DELIMITERS;
     const template = Handlebars.compile(credentialTemplate);
     let renderedTemplate = template(data);
     const credentialData = JSON.parse(renderedTemplate);
