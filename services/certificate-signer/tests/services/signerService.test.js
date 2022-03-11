@@ -139,3 +139,67 @@ test('Should verify credentials with external publickey', async () => {
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
 });
+
+test('Should generate credentials with array values', async () => {
+    const entity = {
+        "name": "a",
+        "id": "123",
+        "skills": [{"skill":"a"},{"skill":"b"}]
+    };
+    const template = `{
+        "@context": [
+            "https://www.w3.org/2018/credentials/v1",
+            "https://sunbird.org/credentials/vaccination/v1",
+            {
+                "@context": {
+                    "@version": 1.1,
+                    "@protected": true,
+                    "SkillCertificate": {
+                        "@id": "https://github.com/sunbird-specs/vc-specs#SkillCertificate",
+                        "@context": {
+                            "id": "@id",
+                            "@version": 1.1,
+                            "@protected": true,
+                            "skills": "schema:Text"
+                        }
+                    },
+                
+                    "trainedOn": {
+                        "@id": "https://github.com/sunbird-specs/vc-specs#trainedOn",
+                        "@context": {
+                            "name": "schema:Text"
+                        }
+                    },
+                    "skills": {
+                        "@id": "https://github.com/sunbird-specs/vc-specs#skills",
+                        "@container": "@list"
+                    }
+                }
+            }
+        ],
+        "type": [
+            "VerifiableCredential",
+            "ProofOfVaccinationCredential"
+        ],
+        "credentialSubject": {
+            "type": "Person",
+            "refId": "{{id}}",
+            "name": "{{name}}",
+            "skills": [{{#each skills}}"{{skill}}"{{#unless @last}},{{/unless}}{{/each}}]
+        },
+        "issuanceDate": "2021-08-27T10:57:57.237Z",
+        "issuer": "did:issuer:cowin",
+        "evidence": [
+            {
+                "type": [
+                    "Vaccination"
+                ],
+                "id": "https://sunbird.org/id"
+            }
+        ],
+        "nonTransferable": "true"
+    }`;
+    const signedData = await generateCredentials(entity, template);
+    console.log(signedData.credentialSubject.skills)
+    expect(signedData.credentialSubject.skills.length).toEqual(2);
+});
