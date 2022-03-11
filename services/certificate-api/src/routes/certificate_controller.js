@@ -5,6 +5,8 @@ const puppeteer = require('puppeteer');
 const QRCode = require('qrcode');
 const JSZip = require("jszip");
 const { default: axios } = require('axios');
+const {CUSTOM_TEMPLATE_DELIMITERS} = require('../../configs/config');
+const delimiters = require('handlebars-delimiters');
 
 Handlebars.registerHelper('dateFormat', require('handlebars-dateformat'));
 
@@ -178,7 +180,8 @@ async function renderDataToTemplate(templateFileURL, data) {
     // const htmlData = fs.readFileSync(templateFileURL, 'utf8');
     const htmlData = await getTemplate(templateFileURL);
     console.log('Received ', htmlData);
-    Handlebars.registerHelper()
+    Handlebars.registerHelper();
+    delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
     const template = Handlebars.compile(htmlData);
     return template(data);
 }
