@@ -24,12 +24,13 @@ public class CertificateServiceImpl implements ICertificateService {
     }
 
     @Override
-    public Object getCertificate(JsonNode certificateData, String entityName, String mediaType, String templateUrl) {
+    public Object getCertificate(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl) {
         String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl);
 
         Map<String, Object> requestBody = new HashMap<String, Object>(){{
             put("templateUrl", finalTemplateUrl);
             put("certificate", certificateData.toString());
+            put("entityId", entityId);
         }};
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", mediaType);
