@@ -7,6 +7,9 @@ const JSZip = require("jszip");
 const { default: axios } = require('axios');
 const QRTYPE = 'URL-W3C-VC';
 const envData = require('../../configs/keys');
+const {CUSTOM_TEMPLATE_DELIMITERS} = require('../../configs/config');
+const delimiters = require('handlebars-delimiters');
+
 Handlebars.registerHelper('dateFormat', require('handlebars-dateformat'));
 
 function getNumberWithOrdinal(n) {
@@ -184,7 +187,8 @@ async function renderDataToTemplate(templateFileURL, data) {
     // const htmlData = fs.readFileSync(templateFileURL, 'utf8');
     const htmlData = await getTemplate(templateFileURL);
     console.log('Received ', htmlData);
-    Handlebars.registerHelper()
+    Handlebars.registerHelper();
+    delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
     const template = Handlebars.compile(htmlData);
     return template(data);
 }
