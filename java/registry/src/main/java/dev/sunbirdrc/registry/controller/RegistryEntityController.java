@@ -450,6 +450,7 @@ public class RegistryEntityController extends AbstractController {
             node = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
             return new ResponseEntity<>(certificateService.getCertificate(node,
                     entityName,
+                    entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
                     getTemplateUrlFromRequest(request, entityName)
             ), HttpStatus.OK);
