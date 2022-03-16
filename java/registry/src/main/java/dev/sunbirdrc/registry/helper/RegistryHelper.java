@@ -52,6 +52,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.*;
@@ -521,7 +522,7 @@ public class RegistryHelper {
     }
 
     private boolean hasPolicyPathChanged(AttestationPolicy policy, JsonNode existingNode, JsonNode updatedNode, String entityName){
-        List<String> paths = policy.getPaths();
+        List<String> paths = new ArrayList<>(policy.getAttestationProperties().values());
         boolean result = false;
         for (String path : paths) {
             if (!StringUtils.isEmpty(path)) {
