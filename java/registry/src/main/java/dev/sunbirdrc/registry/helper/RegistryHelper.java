@@ -522,7 +522,7 @@ public class RegistryHelper {
     }
 
     private boolean hasPolicyPathChanged(AttestationPolicy policy, JsonNode existingNode, JsonNode updatedNode, String entityName){
-        List<String> paths = new ArrayList<>(policy.getAttestationProperties().values());
+        List<String> paths = new ArrayList<>(policy.getAttestationProperties()==null?CollectionUtils.emptyCollection():policy.getAttestationProperties().values());
         boolean result = false;
         for (String path : paths) {
             if (!StringUtils.isEmpty(path)) {
