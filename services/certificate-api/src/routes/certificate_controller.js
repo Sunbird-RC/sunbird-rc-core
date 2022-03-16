@@ -116,7 +116,7 @@ async function generateRawCertificate(certificate, templateUrl, entityId) {
     let qrData = zippedData;
     if (zipType) {
         console.log('ZippedData length', String(zippedData).length);
-        qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${envData.qrType}&&data=${zippedData}`;
+        qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${envData.qrType}&data=${zippedData}`;
     }
     
     const dataURL = await QRCode.toDataURL(qrData, {scale: 3});  
