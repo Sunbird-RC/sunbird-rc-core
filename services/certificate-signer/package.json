@@ -12,6 +12,8 @@
   "dependencies": {
     "axios": "^0.26.0",
     "certificate-signer-library": "^2.0.2",
+    "handlebars": "^4.7.7",
+    "handlebars-delimiters": "^1.0.0",
     "jsonld-signatures": "^6.0.0",
     "kafkajs": "^1.15.0",
     "mustache": "^4.2.0",

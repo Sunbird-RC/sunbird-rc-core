@@ -153,28 +153,7 @@ public class EntityStateHelper {
         }
     }
 
-    JsonNode sendForAttestation(JsonNode entityNode, String propertyURL, String notes, List<AttestationPolicy> attestationPolicies) throws Exception {
-        logger.info("Sending {} for attestation", propertyURL);
-        ObjectNode metaData = JsonNodeFactory.instance.objectNode();
-        metaData.set("notes", JsonNodeFactory.instance.textNode(notes));
-        return manageState(entityNode, propertyURL, Action.RAISE_CLAIM, metaData, attestationPolicies);
-    }
-
-    JsonNode grantClaim(JsonNode entityNode, String propertyURI, String notes, List<AttestationPolicy> attestationPolicies) throws Exception {
-        logger.info("Claim related to {} marked as granted. Adding attestedData to metadata", propertyURI);
-        ObjectNode metaData = JsonNodeFactory.instance.objectNode();
-        metaData.set("notes", JsonNodeFactory.instance.textNode(notes));
-        return manageState(entityNode, propertyURI, Action.GRANT_CLAIM, metaData, attestationPolicies);
-    }
-
-    JsonNode rejectClaim(JsonNode entityNode, String propertyURI, String notes, List<AttestationPolicy> attestationPolicies) throws Exception {
-        logger.info("Claim related to {} marked as rejected. Adding notes to metadata", propertyURI);
-        ObjectNode metaData = JsonNodeFactory.instance.objectNode();
-        metaData.set("notes", JsonNodeFactory.instance.textNode(notes));
-        return manageState(entityNode, propertyURI, Action.REJECT_CLAIM, metaData, attestationPolicies);
-    }
-
-    public JsonNode manageState(AttestationPolicy policy, JsonNode root, String propertyURL, Action action, @NotEmpty ObjectNode metaData) throws Exception {
+    JsonNode manageState(AttestationPolicy policy, JsonNode root, String propertyURL, Action action, @NotEmpty ObjectNode metaData) throws Exception {
         String entityName = root.fields().next().getKey();
         JsonNode entityNode = root.get(entityName);
 
@@ -196,81 +175,6 @@ public class EntityStateHelper {
                 .build();
         ruleEngineService.doTransition(stateContext);
         return root;
-    }
-    private JsonNode manageState(JsonNode root, String propertyURL, Action action, @NotEmpty ObjectNode metaData, List<AttestationPolicy> attestationPolicies) throws Exception {
-        String entityName = root.fields().next().getKey();
-        JsonNode entityNode = root.get(entityName);
-        Optional<AttestationPolicy> matchingPolicy = getMatchingAttestationPolicy(entityName, entityNode, propertyURL, attestationPolicies);
-        if (!matchingPolicy.isPresent()) throw new Exception(propertyURL + " did not match any attestation policy");
-        AttestationPolicy policy = matchingPolicy.get();
-
-        Optional<EntityPropertyURI> entityPropertyURI = EntityPropertyURI.fromEntityAndPropertyURI(entityNode, propertyURL, uuidPropertyName);
-        if (!entityPropertyURI.isPresent()) {
-            throw new Exception("Invalid Property Identifier : " + propertyURL);
-        }
-
-        Pair<ObjectNode, JsonPointer> metadataNodePointer = getTargetMetadataNodeInfo(entityNode, entityPropertyURI.get().getJsonPointer());
-
-        if (action.equals(Action.RAISE_CLAIM)) {
-            metaData.set(
-                    "claimId",
-                    JsonNodeFactory.instance.textNode(raiseClaim(
-                            entityName,
-                            entityNode.get(uuidPropertyName).asText(),
-                            propertyURL,
-                            metadataNodePointer.getFirst(),
-                            policy,
-                            EntityUtil.getFullNameOfTheEntity(entityNode),
-                            metaData.get("notes").asText()
-                    ))
-            );
-        } else if (action.equals(Action.GRANT_CLAIM)) {
-            metaData.put(
-                    "attestedData",
-                    generateAttestedData(entityNode, policy, propertyURL)
-            );
-        }
-
-        StateContext stateContext = StateContext.builder()
-                .entityName(entityName)
-                .existing(entityNode.at(entityPropertyURI.get().getJsonPointer()))
-                .action(action)
-                .ignoredFields(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getSystemFields())
-                .isAttestationProperty(policy != null)
-                .metaData(metaData)
-                .metadataNode(metadataNodePointer.getFirst())
-                .pointerFromMetadataNode(metadataNodePointer.getSecond())
-                .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
-                .build();
-        ruleEngineService.doTransition(stateContext);
-        return root;
-    }
-
-    private Optional<AttestationPolicy> getMatchingAttestationPolicy(String entityName, JsonNode rootNode, String uuidPath, List<AttestationPolicy> attestationPolicies) {
-        int uuidPathDepth = uuidPath.split("/").length;
-        String matchingUUIDPath = "/" + uuidPath;
-        for (AttestationPolicy policy : attestationPolicies) {
-            if (policy.getProperties().get(0).split("/").length != uuidPathDepth) continue;
-            if (new AttestationPath(policy.getProperties().get(0))
-                    .getEntityPropertyURIs(rootNode, uuidPropertyName)
-                    .stream().anyMatch(p -> p.getPropertyURI().equals(matchingUUIDPath))) {
-                return Optional.of(policy);
-            }
-        }
-        return Optional.empty();
-    }
-
-    private String raiseClaim(String entityName, String entityId, String propertyURI, JsonNode metadataNode, AttestationPolicy attestationPolicy, String requestorName, String notes) {
-        String resolvedConditions = conditionResolverService.resolve(metadataNode, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
-        ClaimDTO claimDTO = new ClaimDTO();
-        claimDTO.setEntity(entityName);
-        claimDTO.setEntityId(RecordIdentifier.getUUID(entityId));
-        claimDTO.setPropertyURI(propertyURI);
-        claimDTO.setConditions(resolvedConditions);
-        claimDTO.setAttestorEntity(attestationPolicy.getAttestorEntity());
-        claimDTO.setRequestorName(requestorName);
-        claimDTO.setNotes(notes);
-        return claimRequestClient.riseClaimRequest(claimDTO).get("id").toString();
     }
 
     private Pair<ObjectNode, JsonPointer> getTargetMetadataNodeInfo(JsonNode rootNode, JsonPointer targetPointer) {
@@ -285,37 +189,6 @@ public class EntityStateHelper {
                 (ObjectNode) metadataNode,
                 traversed.stream().reduce(JsonPointer.compile(""), JsonPointer::append)
         );
-    }
-
-    public String generateAttestedData(JsonNode entityNode, AttestationPolicy attestationPolicy, String propertyURI) {
-        String PROPERTY_ID = "PROPERTY_ID";
-        String propertyId = "";
-        if (attestationPolicy.getProperties().get(0).endsWith("[]")) {
-            propertyId = JsonPointer.compile("/" + propertyURI).last().getMatchingProperty();
-        }
-
-        Map<String, Object> attestedData = new HashMap<>();
-        for (String path : attestationPolicy.getPaths()) {
-            if (path.contains(PROPERTY_ID)) {
-                path = path.replace(PROPERTY_ID, propertyId);
-            }
-            DocumentContext context = JsonPath.parse(entityNode.toString());
-            Object result = context.read(path);
-            if (result.getClass().equals(JSONArray.class)) {
-                HashMap<String, Object> extractedVal = (HashMap) ((JSONArray) result).get(0);
-                attestedData.putAll(extractedVal);
-            } else if (result.getClass().equals(LinkedHashMap.class)) {
-                attestedData.putAll((HashMap) result);
-            } else {
-                // It means it is just a value,
-                attestedData.putAll(
-                        new HashMap<String, Object>() {{
-                            put(attestationPolicy.getProperties().get(0), result);
-                        }}
-                );
-            }
-        }
-        return new ObjectMapper().valueToTree(attestedData).toString();
     }
 
 

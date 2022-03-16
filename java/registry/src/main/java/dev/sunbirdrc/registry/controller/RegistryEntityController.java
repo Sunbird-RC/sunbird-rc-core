@@ -188,14 +188,12 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             // TODO: get userID from auth header
-            JsonNode existingNode = registryHelper.readEntity(newRootNode, userId);
             registryHelper.updateEntityAndState(newRootNode, userId);
-            registryHelper.invalidateAttestation(entityName, entityId);
+            registryHelper.invalidateAttestation(entityName, entityId, userId);
 
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
-            registryHelper.triggerAutoAttestor(entityName, entityId, request, existingNode);
 
             registryHelper.signDocument(entityName, entityId, userId);
 
@@ -246,34 +244,14 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/attest/**")
-    public ResponseEntity<Object> attest(
-            HttpServletRequest request,
-            @PathVariable String entityName,
-            @PathVariable String entityId,
-            @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode requestBody
-    ) {
-        String propertyURI = request.getRequestURI().split("attest/")[1];
-        logger.info("Received response to raise claim for entityName: {}, entityId: {}, propertyURI: {}", entityName, entityId, propertyURI);
-        // TODO: fetch user details from JWT
-        try {
-            registryHelper.attest(entityName, entityId, propertyURI, requestBody);
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/**", method = RequestMethod.PUT)
     public ResponseEntity<Object> updatePropertyOfTheEntity(
             HttpServletRequest request,
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode requestBody,
-            @RequestParam Optional<Boolean> send
+            @RequestBody JsonNode requestBody
 
     ) {
         if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
@@ -295,42 +273,8 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
-            if (send.isPresent() && send.get()) {
-                registryHelper.sendForAttestation(entityName, entityId, notes, request, "");
-            }
-            registryHelper.invalidateAttestation(entityName, entityId);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            responseParams.setErrmsg(e.getMessage());
-            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @Deprecated
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/send/**", method = RequestMethod.POST)
-    public ResponseEntity<Object> sendForVerification(
-            HttpServletRequest request,
-            @PathVariable String entityName,
-            @PathVariable String entityId,
-            @RequestBody JsonNode requestBody,
-            @RequestHeader HttpHeaders header
-    ) {
-        ResponseParams responseParams = new ResponseParams();
-        Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
-        String propertyURI = request.getRequestURI().split(entityId + "/send/")[1];
-        try {
-            registryHelper.authorize(entityName, entityId, request);
-        } catch (Exception e) {
-            return createUnauthorizedExceptionResponse(e);
-        }
-        try {
-            String tag = "RegistryController.sendForVerification " + entityName;
-            watch.start(tag);
-            String notes = getNotes(requestBody);
-            registryHelper.sendForAttestation(entityName, entityId, notes, request, "");
-            responseParams.setStatus(Response.Status.SUCCESSFUL);
-            watch.stop(tag);
+            String userId = getUserId(entityName, request);
+            registryHelper.invalidateAttestation(entityName, entityId, userId);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             responseParams.setErrmsg(e.getMessage());
@@ -345,8 +289,7 @@ public class RegistryEntityController extends AbstractController {
             @PathVariable String entityName,
             @PathVariable String entityId,
             @RequestHeader HttpHeaders header,
-            @RequestBody JsonNode requestBody,
-            @RequestParam Optional<Boolean> send
+            @RequestBody JsonNode requestBody
     ) {
         try {
             registryHelper.authorize(entityName, entityId, request);
@@ -363,10 +306,6 @@ public class RegistryEntityController extends AbstractController {
             registryHelper.addEntityProperty(entityName, entityId, requestBody, request);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
-            if (send.isPresent() && send.get()) {
-                String propertyId = registryHelper.getPropertyIdAfterSavingTheProperty(entityName, entityId, requestBody, request);
-                registryHelper.sendForAttestation(entityName, entityId, notes, request, propertyId);
-            }
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
@@ -450,6 +389,7 @@ public class RegistryEntityController extends AbstractController {
             node = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
             return new ResponseEntity<>(certificateService.getCertificate(node,
                     entityName,
+                    entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
                     getTemplateUrlFromRequest(request, entityName)
             ), HttpStatus.OK);

@@ -1,6 +1,7 @@
 #SOURCES = $(wildcard java/**/*.java)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SOURCES := $(call rwildcard,java/,*.java)
+RELEASE_VERSION = v0.0.5
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
@@ -27,3 +28,20 @@ test: build
 clean:
 	@rm -rf target || true
 	@rm java/registry/target/registry.jar || true
+release:
+	docker tag dockerhub/sunbird-rc-core dockerhub/sunbird-rc-core:$(RELEASE_VERSION)
+	docker tag dockerhub/sunbird-rc-claim-ms dockerhub/sunbird-rc-claim-ms:$(RELEASE_VERSION)
+	docker tag dockerhub/sunbird-rc-notification-service dockerhub/sunbird-rc-notification-service:$(RELEASE_VERSION)
+	docker tag dockerhub/sunbird-rc-certificate-signer dockerhub/sunbird-rc-certificate-signer:$(RELEASE_VERSION)
+	docker tag dockerhub/sunbird-rc-certificate-api dockerhub/sunbird-rc-certificate-api:$(RELEASE_VERSION)
+	docker push dockerhub/sunbird-rc-core:latest 
+	docker push dockerhub/sunbird-rc-core:$(RELEASE_VERSION)
+	docker push dockerhub/sunbird-rc-claim-ms:latest 
+	docker push dockerhub/sunbird-rc-claim-ms:$(RELEASE_VERSION)
+	docker push dockerhub/sunbird-rc-notification-service:latest 
+	docker push dockerhub/sunbird-rc-notification-service:$(RELEASE_VERSION)
+	docker push dockerhub/sunbird-rc-certificate-signer:latest 
+	docker push dockerhub/sunbird-rc-certificate-signer:$(RELEASE_VERSION)
+	docker push dockerhub/sunbird-rc-certificate-api:latest 
+	docker push dockerhub/sunbird-rc-certificate-api:$(RELEASE_VERSION)
+
