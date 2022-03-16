@@ -519,17 +519,6 @@ public class RegistryHelper {
         JsonPatch.applyInPlace(objectMapper.readTree(patch), node.get(entityName));
         updateEntity(node, userId);
     }
-  
-    public void sendForAttestation(String entityName, String entityId, String notes, HttpServletRequest request, String propertyId) throws Exception {
-        String propertyURI = getPropertyURI(entityId, request);
-        if (!propertyId.isEmpty()) {
-            propertyURI = propertyURI + "/" + propertyId;
-        }
-        JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
-        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
-        JsonNode updatedNode = entityStateHelper.sendForAttestation(entityNode, propertyURI, notes, attestationPolicies);
-        updateEntity(updatedNode, "");
-    }
 
     private boolean hasPolicyPathChanged(AttestationPolicy policy, JsonNode existingNode, JsonNode updatedNode, String entityName){
         List<String> paths = policy.getPaths();
@@ -586,24 +575,7 @@ public class RegistryHelper {
             }
         }
     }
-
-    public void callPluginActor() throws JsonProcessingException {
-        registryService.callPluginActors("CowinActor", PluginRequestMessage.builder().sourceEntity("Student").sourceOSID("234").policyName("education").attestationOSID("432").build());
-    }
-
-    public void attest(String entityName, String entityId, String uuidPath, JsonNode attestReq) throws Exception {
-        JsonNode entityNode = readEntity("", entityName, entityId, false, null, false);
-        JsonNode updatedNode;
-        if (attestReq.get("action").asText().equals(Action.GRANT_CLAIM.toString())) {
-            updatedNode = entityStateHelper.grantClaim(entityNode, uuidPath, attestReq.get("notes").asText(), getAttestationPolicies(entityName));
-            sendNotificationToOwners(updatedNode, CLAIM_GRANTED, String.format(CLAIM_STATUS_SUBJECT_TEMPLATE, CLAIM_GRANTED), String.format(CLAIM_STATUS_BODY_TEMPLATE, CLAIM_GRANTED));
-        } else {
-            updatedNode = entityStateHelper.rejectClaim(entityNode, uuidPath, attestReq.get("notes").asText(), getAttestationPolicies(entityName));
-            sendNotificationToOwners(updatedNode, CLAIM_REJECTED, String.format(CLAIM_STATUS_SUBJECT_TEMPLATE, CLAIM_REJECTED), String.format(CLAIM_STATUS_BODY_TEMPLATE, CLAIM_REJECTED));
-        }
-        updateEntity(updatedNode, "");
-    }
-
+    
     public void updateState(PluginResponseMessage pluginResponseMessage) throws Exception {
         String attestationName = pluginResponseMessage.getPolicyName();
         String attestationOSID = pluginResponseMessage.getAttestationOSID();
