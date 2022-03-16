@@ -5,7 +5,7 @@ const puppeteer = require('puppeteer');
 const QRCode = require('qrcode');
 const JSZip = require("jszip");
 const { default: axios } = require('axios');
-const QRTYPE = 'URL-W3C-VC';
+const URL_BASED_QR = 'URL-W3C-VC';
 const envData = require('../../configs/keys');
 const {CUSTOM_TEMPLATE_DELIMITERS} = require('../../configs/config');
 const delimiters = require('handlebars-delimiters');
@@ -107,7 +107,7 @@ async function generateRawCertificate(certificate, templateUrl, entityId) {
     zip.file("certificate.json", certificateRaw, {
         compression: "DEFLATE"
     });
-    const zipType = (envData.qrType && envData.qrType.toUpperCase() === QRTYPE);
+    const zipType = (envData.qrType && envData.qrType.toUpperCase() === URL_BASED_QR);
     const zippedData = await zip.generateAsync({type: zipType ? 'base64': 'string', compression: "DEFLATE"})
         .then(function (content) {
             // console.log(content)
@@ -115,7 +115,8 @@ async function generateRawCertificate(certificate, templateUrl, entityId) {
         });
     let qrData = zippedData;
     if (zipType) {
-        qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${envData.qrType}&&data=${zippedData}`;   
+        console.log('ZippedData length', String(zippedData).length);
+        qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${envData.qrType}&&data=${zippedData}`;
     }
     
     const dataURL = await QRCode.toDataURL(qrData, {scale: 3});  
