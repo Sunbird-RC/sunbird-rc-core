@@ -3,11 +3,9 @@ package dev.sunbirdrc.registry.helper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
-import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.Constants;
@@ -441,7 +439,7 @@ public class RegistryHelperTest {
         definitionMap.put("Institute", new Definition(objectMapper.readTree(instituteSchema)));
         ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
         ReflectionTestUtils.setField(registryHelper, "definitionsManager", definitionsManager);
-        registryHelper.invalidateAttestation(entity, entityId);
+        registryHelper.invalidateAttestation(entity, entityId, "userId");
         verify(registryService, times(1)).updateEntity(any(), any(), any(), eq(expectedUpdatedNode.toString()));
     }
 }

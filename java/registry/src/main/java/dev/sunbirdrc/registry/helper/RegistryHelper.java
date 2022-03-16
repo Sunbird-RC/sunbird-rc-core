@@ -97,9 +97,6 @@ public class RegistryHelper {
     EntityStateHelper entityStateHelper;
 
     @Autowired
-    private KeycloakAdminUtil keycloakAdminUtil;
-
-    @Autowired
     private DefinitionsManager definitionsManager;
 
     @Autowired
@@ -396,12 +393,6 @@ public class RegistryHelper {
         return updateEntityAndState(existingNode, inputJson, userId);
     }
 
-    @Async
-    public void triggerAutoAttestor(String entityName, String entityId, HttpServletRequest request, JsonNode existingNode) throws Exception {
-        JsonNode updatedNode = readEntity("", entityName, entityId, false, null, false);
-        registryService.callAutoAttestationActor(existingNode.get(entityName), updatedNode.get(entityName), entityName, entityId, request);
-    }
-
     private String updateEntityAndState(JsonNode existingNode, JsonNode updatedNode, String userId) throws Exception {
         String entityName = updatedNode.fields().next().getKey();
         List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
@@ -528,7 +519,7 @@ public class RegistryHelper {
         JsonPatch.applyInPlace(objectMapper.readTree(patch), node.get(entityName));
         updateEntity(node, userId);
     }
-
+  
     public void sendForAttestation(String entityName, String entityId, String notes, HttpServletRequest request, String propertyId) throws Exception {
         String propertyURI = getPropertyURI(entityId, request);
         if (!propertyId.isEmpty()) {
@@ -885,7 +876,7 @@ public class RegistryHelper {
         return userPrincipal!=null ? userPrincipal.getAccount().getRoles():Collections.emptySet();
     }
 
-    public void authorizeUserRole(Set<String> userRoles, List<String> allowedRoles) throws Exception {
+    private void authorizeUserRole(Set<String> userRoles, List<String> allowedRoles) throws Exception {
         if (!allowedRoles.isEmpty() && allowedRoles.stream().noneMatch(userRoles::contains)) {
             throw new UnAuthorizedException(UNAUTHORIZED_OPERATION_MESSAGE);
         }
@@ -912,8 +903,7 @@ public class RegistryHelper {
     }
 
     @Async
-    public void invalidateAttestation(String entityName, String entityId) throws Exception {
-        String userId = "osrc";
+    public void invalidateAttestation(String entityName, String entityId, String userId) throws Exception {
         JsonNode entity = readEntity(userId, entityName, entityId, false, null, false)
                 .get(entityName);
         for (AttestationPolicy attestationPolicy : getAttestationPolicies(entityName)) {
@@ -921,7 +911,7 @@ public class RegistryHelper {
 
             if (entity.has(policyName) && entity.get(policyName).isArray()) {
                 ArrayNode attestations = (ArrayNode) entity.get(policyName);
-                updateAttestation(entity, attestationPolicy, attestations);
+                updateAttestation(attestations);
             }
         }
         ObjectNode newRoot = JsonNodeFactory.instance.objectNode();
@@ -929,27 +919,12 @@ public class RegistryHelper {
         updateEntity(newRoot, userId);
     }
 
-    private void updateAttestation(JsonNode entity, AttestationPolicy attestationPolicy, ArrayNode attestations) {
+    private void updateAttestation(ArrayNode attestations) {
         for (JsonNode attestation : attestations) {
             if (attestation.get(_osState.name()).asText().equals(States.PUBLISHED.name())) {
                 ObjectNode propertiesOSID = attestation.get("propertiesOSID").deepCopy();
                 JSONUtil.removeNode(propertiesOSID, uuidPropertyName);
-                Map<String, List<String>> propertiesOSIDMapper = objectMapper.convertValue(propertiesOSID, Map.class);
-                JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entity, attestationPolicy.getAttestationProperties(), propertiesOSIDMapper);
-                String proof = attestation.get(_osAttestedData.name()).asText();
-
-                boolean isValid = false;
-                try {
-                    Object result = signatureService.verify(proof);
-
-                } catch (SignatureException.UnreachableException | SignatureException.VerificationException e) {
-                    e.printStackTrace();
-                }
-                if (!isValid) {
-                    // update attestation status
-                    ((ObjectNode) attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.INVALID.name()));
-                }
-
+                ((ObjectNode) attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.INVALID.name()));
             }
         }
     }
