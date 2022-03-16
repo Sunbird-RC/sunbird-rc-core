@@ -110,25 +110,6 @@ public class EntityStateHelperTest {
     }
 
     @Test
-    public void shouldRaiseClaimWhenSentForAttestation() throws Exception {
-        RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
-        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
-        ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
-        JsonNode test = m.readTree(new File(getBaseDir() + "shouldRaiseClaimWhenSentForAttestation.json"));
-        String propertyURI = "educationDetails/fgyuhij";
-        HashMap<String, Object> mockRaiseClaimResponse = new HashMap<>();
-        mockRaiseClaimResponse.put("id", "raised_claim_id");
-
-        when(conditionResolverService.resolve(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
-                .thenReturn("");
-        when(claimRequestClient.riseClaimRequest(ArgumentMatchers.any()))
-                .thenReturn(mockRaiseClaimResponse);
-        String notes = "";
-        assertEquals(test.get("expected"), entityStateHelper.sendForAttestation(test.get("existing"), propertyURI, notes, definitionsManager.getDefinition("Student").getOsSchemaConfiguration().getAttestationPolicies()));
-
-    }
-
-    @Test
     public void shouldCreateNewOwnersForNewlyAddedOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
         when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldAddNewOwner.json"));

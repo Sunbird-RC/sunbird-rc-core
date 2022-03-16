@@ -51,10 +51,6 @@ public class OSSchemaConfiguration {
 
     private List<String> inviteRoles = new ArrayList<>();
     private List<String> deleteRoles = new ArrayList<>();
-    /**
-     * Holds field path of the subject of entity
-     * */
-    private String subjectJsonPath = "";
 
     /**
      * Holds fields paths for ownership details of the entity
@@ -75,15 +71,10 @@ public class OSSchemaConfiguration {
     private List<AttestationPolicy> attestationPolicies = new ArrayList<>();
 
     /**
-     * Holds the info of auto attestation policy
-     */
-    private List<AutoAttestationPolicy> autoAttestationPolicies = new ArrayList<>();
-
-    /**
      * Holds the template for w3c credentials
      * */
 
-    private Object credentialTemplate = new HashMap<>();
+    private Object credentialTemplate;
 
     /**
      * Holds the certificate template
@@ -97,42 +88,14 @@ public class OSSchemaConfiguration {
 
     private Boolean enableSearch = true;
 
-    public String getConditions(String property) {
-        return getAttestationPolicy(property).getConditions();
-    }
-
-    private AttestationPolicy getAttestationPolicy(String property) {
-        return attestationPolicies.stream()
-                .filter(policy -> policy.hasProperty(property))
-                .findFirst().orElse(new AttestationPolicy());
-    }
-
     public Set<String> getAllTheAttestorEntities(){
         return attestationPolicies.stream()
                 .map(AttestationPolicy::getAttestorEntity)
                 .collect(Collectors.toSet());
     }
-    public String getAttestorEntity(String property) {
-        return getAttestationPolicy(property).getAttestorEntity();
-    }
 
-    public AutoAttestationPolicy getAutoAttestationPolicy(List<String> fieldNames) {
-        return autoAttestationPolicies.stream()
-                .filter(policy -> fieldNames.contains(policy.getParentProperty()))
-                .findFirst().orElse(new AutoAttestationPolicy());
-    }
-
-    public Optional<AttestationPolicy> getAttestationPolicyFor(String policyName) {
-        return attestationPolicies.stream()
-                .filter(attestationPolicy -> attestationPolicy.getName().equals(policyName))
-                .findFirst();
-    }
     public Boolean getEnableLogin() {
         return enableLogin;
-    }
-
-    public void setEnableLogin(Boolean enableLogin) {
-        this.enableLogin = enableLogin;
     }
 
 }
