@@ -153,10 +153,6 @@ public class DefinitionsManager {
         return result;
     }
 
-    public String getSubjectPath(String title) {
-        return definitionMap.get(title).getOsSchemaConfiguration().getSubjectJsonPath();
-    }
-
     public List<OwnershipsAttributes> getOwnershipAttributes(String entity) {
         Definition entityDefinition = definitionMap.get(entity);
         if (entityDefinition != null) {

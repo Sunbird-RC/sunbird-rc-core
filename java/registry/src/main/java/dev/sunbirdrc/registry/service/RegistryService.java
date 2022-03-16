@@ -1,13 +1,9 @@
 package dev.sunbirdrc.registry.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
-import dev.sunbirdrc.pojos.PluginRequestMessage;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
-
-import javax.servlet.http.HttpServletRequest;
 
 public interface RegistryService {
 
@@ -23,7 +19,4 @@ public interface RegistryService {
 
 	void callNotificationActors(String operation, String to, String subject, String message) throws Exception;
 
-	void callPluginActors(String actorName, PluginRequestMessage pluginRequestMessage) throws JsonProcessingException;
-
-	void callAutoAttestationActor(JsonNode existingNode, JsonNode updatedNode, String entityName, String entityId, HttpServletRequest request) throws Exception;
 }

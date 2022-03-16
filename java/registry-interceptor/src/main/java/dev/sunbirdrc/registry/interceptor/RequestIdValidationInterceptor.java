@@ -2,8 +2,9 @@ package dev.sunbirdrc.registry.interceptor;
 
 import dev.sunbirdrc.pojos.APIMessage;
 import dev.sunbirdrc.pojos.RequestWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
@@ -12,6 +13,7 @@ import java.util.Map;
 
 public class RequestIdValidationInterceptor implements HandlerInterceptor {
 	private Map<String, String> requestIdMap;
+	public static final Logger logger = LoggerFactory.getLogger(RequestIdValidationInterceptor.class);
 
 	@Autowired
 	private APIMessage apiMessage;
@@ -23,7 +25,7 @@ public class RequestIdValidationInterceptor implements HandlerInterceptor {
 	/**
 	 * This method checks for each request it contains a valid request id for
 	 * accessing the api
-	 * 
+	 *
 	 * @param request
 	 * @param response
 	 * @param handler
@@ -35,7 +37,11 @@ public class RequestIdValidationInterceptor implements HandlerInterceptor {
 		RequestWrapper wrapper = apiMessage.getRequestWrapper();
 		String expectedAPI = requestIdMap.getOrDefault(wrapper.getRequestURI(), "");
 
-		return !expectedAPI.isEmpty() && (apiMessage.getRequest().getId().compareTo(expectedAPI) == 0);
+		boolean validRequest = !expectedAPI.isEmpty() && (apiMessage.getRequest().getId().compareTo(expectedAPI) == 0);
+		if (!validRequest) {
+			logger.error("Request id doesnt match the expected format: {}", apiMessage.getRequest().getId());
+		}
+		return validRequest;
 	}
 
 }

@@ -31,16 +31,7 @@ public class AttestationPolicy {
      * Holds the name of the attestation property. eg. education, certificate, course
      *
      * */
-    private List<String> properties;
-    /*
-     * Holds the name of the attestation property. eg. education, certificate, course
-     *
-     * */
     private Object attestationProperties;
-    /**
-     * Holds the value of the jsonpath
-     */
-    private List<String> paths;
     /**
      * Holds the info of manual or automated attestation
      */
@@ -77,10 +68,6 @@ public class AttestationPolicy {
     public String getAttestorEntity() {
         String[] split = this.attestorPlugin.split("entity=");
         return split.length == 2 ? split[1] : "";
-    }
-
-    public boolean hasProperty(String property) {
-        return getProperties().equals(property);
     }
 
     public String getNodePath() {

@@ -341,40 +341,11 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Override
     @Async("taskExecutor")
-    public void callPluginActors(String actorName, PluginRequestMessage pluginRequestMessage) throws JsonProcessingException {
-        logger.debug("callPluginActors started");
-        MessageProtos.Message messageProto = MessageFactory.instance().createPluginActorMessage(actorName, pluginRequestMessage);
-        ActorCache.instance().get(Router.ROUTER_NAME).tell(messageProto, null);
-        logger.debug("callPluginActors ends");
-    }
-
-    @Override
-    @Async("taskExecutor")
     public void callNotificationActors(String operation, String to, String subject, String message) throws JsonProcessingException {
         logger.debug("callNotificationActors started");
         MessageProtos.Message messageProto = MessageFactory.instance().createNotificationActorMessage(operation, to, subject, message);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(messageProto, null);
         logger.debug("callNotificationActors ends");
-    }
-
-    @Async("taskExecutor")
-    @Override
-    public void callAutoAttestationActor(JsonNode existingNode, JsonNode updatedNode, String entityName, String entityId, HttpServletRequest request) throws JsonProcessingException {
-        logger.info("Setting up the message to call auto attestation actor");
-        AutoAttestationPolicy autoAttestationPolicy = definitionsManager.getDefinition(entityName)
-                .getOsSchemaConfiguration()
-                .getAutoAttestationPolicy(IteratorUtils.toList(updatedNode.fieldNames()));
-        String accessToken = request.getHeader("Authorization");
-        String valuePath = autoAttestationPolicy.getValuePath();
-        if (!StringUtils.isEmpty(valuePath)) {
-            if (existingNode.isNull() || !JSONUtil.readValFromJsonTree(valuePath, existingNode).equals(JSONUtil.readValFromJsonTree(valuePath, updatedNode))) {
-                logger.info("Calling auto attestation actor");
-                logger.info("Url {}", registryBaseUrl);
-
-                MessageProtos.Message message = MessageFactory.instance().createAutoAttestationMessage(autoAttestationPolicy, updatedNode, accessToken, registryBaseUrl);
-                ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
-            }
-        }
     }
 
     private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode, String parentName) {
