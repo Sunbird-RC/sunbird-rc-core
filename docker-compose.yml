@@ -1,10 +1,6 @@
 version: "2.4"
 
 services:
-  redis:
-    image: redis
-    ports:
-      - "6379:6379"
   es:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
     environment:
@@ -27,7 +23,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
   registry:
-    image: dockerhub/sunbird-rc-core:v0.0.4
+    image: dockerhub/sunbird-rc-core:v0.0.5
     volumes:
       - ${PWD}/java/registry/src/main/resources/public/_schemas:/home/sunbirdrc/config/public/_schemas
 
@@ -77,7 +73,7 @@ services:
       db:
         condition: service_started
   claim-ms:
-    image: dockerhub/sunbird-rc-claim-ms:v0.0.4
+    image: dockerhub/sunbird-rc-claim-ms:v0.0.5
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
@@ -91,13 +87,13 @@ services:
       registry:
         condition: service_started
   certificate-signer:
-    image: dockerhub/sunbird-rc-certificate-signer:v0.0.4
+    image: dockerhub/sunbird-rc-certificate-signer:v0.0.5
     environment:
       - PORT=8079
     ports:
       - "8079:8079"
   certificate-api:
-    image: dockerhub/sunbird-rc-certificate-api:v0.0.4
+    image: dockerhub/sunbird-rc-certificate-api:v0.0.5
     environment:
       - PORT=8078
     ports:
@@ -119,6 +115,6 @@ services:
       timeout: 20s
       retries: 3
   notification-ms:
-    image: dockerhub/sunbird-rc-notification-service:v0.0.4
+    image: dockerhub/sunbird-rc-notification-service:v0.0.5
     ports:
       - "8765:8765"
