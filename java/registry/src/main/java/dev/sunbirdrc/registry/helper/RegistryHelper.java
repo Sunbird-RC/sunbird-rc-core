@@ -211,8 +211,10 @@ public class RegistryHelper {
         List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
         entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
         String entityId = addEntity(inputJson, userId, entityType);
-        String keyCloakUserId = inputJson.fields().next().getValue().get("osOwner").get(0).asText();
-        autoRaiseClaim(entityName,entityId,objectMapper.createObjectNode(),inputJson,keyCloakUserId);
+        String keyCloakUserId = inputJson.fields().next().getValue().get("osOwner")!=null ?inputJson.fields().next().getValue().get("osOwner").get(0).asText():null;
+        if(keyCloakUserId!=null){
+            autoRaiseClaim(entityName,entityId,objectMapper.createObjectNode(),inputJson,keyCloakUserId);
+        }
         return entityId;
     }
 
