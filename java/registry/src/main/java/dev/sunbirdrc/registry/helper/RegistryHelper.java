@@ -647,9 +647,8 @@ public class RegistryHelper {
     }
 
     private JsonNode getUserInfoFromRegistry(HttpServletRequest request, String entityName) throws Exception {
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        if (principal != null) {
-            String userId = principal.getAccount().getPrincipal().getName();
+        String userId = getUserId(request,entityName);
+        if (userId != null) {
             ObjectNode payload = JsonNodeFactory.instance.objectNode();
             payload.set("entityType", JsonNodeFactory.instance.arrayNode().add(entityName));
             ObjectNode filters = JsonNodeFactory.instance.objectNode();
