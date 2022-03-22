@@ -16,7 +16,7 @@ java/registry/target/registry.jar: $(SOURCES)
 	cd java && ./mvnw clean install
 
 test: build
-	@docker-compose up -d
+	@RELEASE_VERSION=latest docker-compose up -d
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
