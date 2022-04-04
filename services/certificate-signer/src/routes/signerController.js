@@ -4,11 +4,13 @@ const {generateCredentials, verifyCredentials} = require("../services/signerServ
 const generateCredentialsRoute = async (req, res) => {
     const reqBody = await getRequestBody(req);
     const {data, credentialTemplate} = reqBody;
-    let template;
-    if (typeof credentialTemplate === "string" && isValidHttpUrl(credentialTemplate)) {
-        template = await fetchTemplate(credentialTemplate)
-    } else {
-        template = JSON.stringify(credentialTemplate)
+    let template = credentialTemplate;
+    if (typeof template === "string" && isValidHttpUrl(template)) {
+        template = await fetchTemplate(template)
+    }
+
+    if (typeof template !== "string") {
+        template = JSON.stringify(template)
     }
 
     return await generateCredentials(data, template);
