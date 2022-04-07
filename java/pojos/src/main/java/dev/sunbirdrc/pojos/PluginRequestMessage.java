@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.*;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,8 @@ public class PluginRequestMessage {
     String attestorSignin;
     String conditions;
     String status;
+    @Nullable
+    String userId;
 
     public Optional<String> getActorName() {
         // sample names did:plugin:aadhar, did:plugin:claim,

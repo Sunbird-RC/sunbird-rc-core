@@ -7,6 +7,7 @@ public class PluginRequestMessageCreator {
                                               String condition,
                                               String attestationOSID,
                                               String entityName,
+                                              String userId,
                                               String entityId, JsonNode additionalInput, String status,
                                               String name, String attestorPlugin, String attestorEntity,
                                               String attestorSignin) {
@@ -23,6 +24,7 @@ public class PluginRequestMessageCreator {
         pluginRequestMessage.setAttestorSignin(attestorSignin);
         pluginRequestMessage.setConditions(condition);
         pluginRequestMessage.setStatus(status);
+        pluginRequestMessage.setUserId(userId);
         return pluginRequestMessage;
     }
 }
