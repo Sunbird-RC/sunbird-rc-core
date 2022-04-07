@@ -5,7 +5,8 @@ const puppeteer = require('puppeteer');
 const QRCode = require('qrcode');
 const JSZip = require("jszip");
 const { default: axios } = require('axios');
-const URL_BASED_QR = 'URL-W3C-VC';
+const URL_W3C_VC = 'URL-W3C-VC';
+const URL = 'URL';
 const envData = require('../../configs/keys');
 const {CUSTOM_TEMPLATE_DELIMITERS} = require('../../configs/config');
 const delimiters = require('handlebars-delimiters');
@@ -103,20 +104,26 @@ async function generateRawCertificate(certificate, templateUrl, entityId) {
     let certificateRaw = certificate;
     // TODO: based on type template will be picked
     const certificateTemplateUrl = templateUrl;
-    const zip = new JSZip();
-    zip.file("certificate.json", certificateRaw, {
-        compression: "DEFLATE"
-    });
-    const zipType = (envData.qrType && envData.qrType.toUpperCase() === URL_BASED_QR);
-    const zippedData = await zip.generateAsync({type: zipType ? 'base64': 'string', compression: "DEFLATE"})
-        .then(function (content) {
-            // console.log(content)
-            return content;
+    const qrCodeType = envData.qrType || '';
+    let qrData;
+    console.log('QR Code type: ', qrCodeType);
+    if (qrCodeType.toUpperCase() === URL) {
+        qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${qrCodeType}`;
+    } else {
+        const zip = new JSZip();
+        zip.file("certificate.json", certificateRaw, {
+            compression: "DEFLATE"
         });
-    let qrData = zippedData;
-    if (zipType) {
-        console.log('ZippedData length', String(zippedData).length);
-        qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${envData.qrType}&data=${zippedData}`;
+        const zipType = (qrCodeType && qrCodeType.toUpperCase() === URL_W3C_VC);
+        const zippedData = await zip.generateAsync({type: zipType ? 'base64': 'string', compression: "DEFLATE"})
+            .then(function (content) {
+                return content;
+            });
+        qrData = zippedData
+        if (zipType) {
+            console.log('ZippedData length', String(zippedData).length);
+            qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${envData.qrType}&data=${zippedData}`;
+        }
     }
     
     const dataURL = await QRCode.toDataURL(qrData, {scale: 3});  
