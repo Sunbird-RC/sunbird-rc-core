@@ -755,9 +755,14 @@ public class RegistryHelper {
     }
 
     private List<String> getManageRoles(String entityName) {
-        return definitionsManager.getDefinition(entityName)
+        if (definitionsManager.getDefinition(entityName) != null) {
+            return definitionsManager.getDefinition(entityName)
                     .getOsSchemaConfiguration()
                     .getRoles();
+        } else {
+            return Collections.emptyList();
+        }
+
     }
 
     private Set<String> getUserRolesFromRequest(HttpServletRequest request) {

@@ -40,7 +40,7 @@
                     <a class="nav-link register-link" href="#">LOGIN</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link register-link" href="#">SINGUP</a>
+                    <a class="nav-link register-link" href="#">SIGNUP</a>
                 </li>
 
             </ul>
