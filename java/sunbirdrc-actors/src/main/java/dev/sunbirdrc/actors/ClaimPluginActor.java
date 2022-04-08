@@ -100,7 +100,7 @@ public class ClaimPluginActor extends BaseActor {
         claimDTO.setAttestationId(pluginRequestMessage.getAttestationOSID());
         claimDTO.setNotes(notes);
         claimDTO.setAttestationName(pluginRequestMessage.getPolicyName());
-//        claimDTO.setRequestorName(requestorName);
+        claimDTO.setRequestorName(pluginRequestMessage.getUserId());
 
         JsonNode response = restTemplate.postForObject(getClaimRequestUrl() + CLAIMS_PATH, claimDTO, JsonNode.class);
         logger.info("Claim has successfully risen {}", response.toString());
