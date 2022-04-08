@@ -69,6 +69,8 @@ public class RegistryHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
 
+    @Value("${authentication.enabled:true}") boolean securityEnabled;
+
     @Autowired
     private ShardManager shardManager;
 
@@ -610,6 +612,9 @@ public class RegistryHelper {
     }
 
     private String fetchUserIdFromToken(HttpServletRequest request) throws Exception {
+        if(!securityEnabled){
+            return DEFAULT_USER;
+        }
         KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
         if (principal != null) {
             return principal.getAccount().getPrincipal().getName();
@@ -642,9 +647,8 @@ public class RegistryHelper {
     }
 
     private JsonNode getUserInfoFromRegistry(HttpServletRequest request, String entityName) throws Exception {
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        if (principal != null) {
-            String userId = principal.getAccount().getPrincipal().getName();
+        String userId = getUserId(request,entityName);
+        if (userId != null) {
             ObjectNode payload = JsonNodeFactory.instance.objectNode();
             payload.set("entityType", JsonNodeFactory.instance.arrayNode().add(entityName));
             ObjectNode filters = JsonNodeFactory.instance.objectNode();
