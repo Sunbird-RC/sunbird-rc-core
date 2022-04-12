@@ -395,10 +395,20 @@ public class RegistryHelper {
         String parentURIPointer = propertyURIPointer.head().toString();
 
         JsonNode parentNode = getParentNode(entityName, updateNode, parentURIPointer);
-        JsonNode propertyNode = parentNode.get(propertyName);
-
-        createOrUpdateProperty(entityName, inputJson, updateNode, propertyName, (ObjectNode) parentNode, propertyNode);
+        JsonNode propertyNode = getPropertyNode(propertyName, parentNode);
+        createOrUpdateProperty(entityName, inputJson, updateNode, propertyName, parentNode, propertyNode);
         updateEntityAndState(existingNode, updateNode, "");
+    }
+
+    private JsonNode getPropertyNode(String propertyName, JsonNode parentNode) {
+        if(parentNode.isArray()){
+            for (JsonNode item : parentNode) {
+                if (item.get(uuidPropertyName).toString().replaceAll("\"", "").equals(propertyName)) {
+                    return item;
+                }
+            }
+        }
+        return parentNode.get(propertyName);
     }
 
     public String addAttestationProperty(String entityName, String entityId, String propertyName, JsonNode inputJson, HttpServletRequest request) throws Exception {
@@ -407,16 +417,19 @@ public class RegistryHelper {
         JsonNode nodeToUpdate = existingEntityNode.deepCopy();
         JsonNode parentNode = nodeToUpdate.get(entityName);
         JsonNode propertyNode = parentNode.get(propertyName);
-        createOrUpdateProperty(entityName, inputJson, nodeToUpdate, propertyName, (ObjectNode) parentNode, propertyNode);
+        createOrUpdateProperty(entityName, inputJson, nodeToUpdate, propertyName, parentNode, propertyNode);
         return updateEntityAndState(existingEntityNode, nodeToUpdate, userId);
     }
 
-    private void createOrUpdateProperty(String entityName, JsonNode inputJson, JsonNode updateNode, String propertyName, ObjectNode parentNode, JsonNode propertyNode) throws JsonProcessingException {
+    private void createOrUpdateProperty(String entityName, JsonNode inputJson, JsonNode updateNode, String propertyName, JsonNode parentNode, JsonNode propertyNode) throws JsonProcessingException {
         if (propertyNode != null && !propertyNode.isMissingNode()) {
-            updateProperty(inputJson, propertyName, parentNode, propertyNode);
+            if (parentNode.isArray()) {
+                updateItemInArray(inputJson, propertyNode);
+            } else {
+                updateProperty(inputJson, propertyName, (ObjectNode) parentNode, propertyNode);
+            }
         } else {
-            // if array property
-            createProperty(entityName, inputJson, updateNode, propertyName, parentNode);
+            createProperty(entityName, inputJson, updateNode, propertyName, (ObjectNode)parentNode);
         }
     }
 
@@ -440,6 +453,16 @@ public class RegistryHelper {
             });
         } else {
             parentNode.set(propertyName, inputJson);
+        }
+    }
+
+    private void updateItemInArray(JsonNode inputJson, JsonNode propertyNode) {
+        if (propertyNode.isArray()) {
+            ((ArrayNode) propertyNode).add(inputJson);
+        } else if (propertyNode.isObject()) {
+            inputJson.fields().forEachRemaining(f -> {
+                ((ObjectNode) propertyNode).set(f.getKey(), f.getValue());
+            });
         }
     }
 
