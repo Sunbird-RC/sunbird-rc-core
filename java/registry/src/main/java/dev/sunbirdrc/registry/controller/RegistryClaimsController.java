@@ -165,7 +165,7 @@ public class RegistryClaimsController extends AbstractController{
                 // Rise claim
                 PluginRequestMessage message = PluginRequestMessageCreator.create(
                         propertyData.toString(), condition, attestationOSID,
-                        entityName,userId, entityId, additionalInput, Action.RAISE_CLAIM.name(), attestationPolicy.getName(),
+                        entityName,registryHelper.fetchEmailIdFromToken(request, entityName), entityId, additionalInput, Action.RAISE_CLAIM.name(), attestationPolicy.getName(),
                         attestationPolicy.getAttestorPlugin(), attestationPolicy.getAttestorEntity(),
                         attestationPolicy.getAttestorSignin());
                 PluginRouter.route(message);
@@ -183,7 +183,7 @@ public class RegistryClaimsController extends AbstractController{
                 String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
                 PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
                         "", "", attestationOSID,
-                        entityName, registryHelper.getUserId(request, entityName), entityId, additionalInput, Action.RAISE_CLAIM.name(), attestationPolicy.getName(),
+                        entityName, registryHelper.fetchEmailIdFromToken(request, entityName), entityId, additionalInput, Action.RAISE_CLAIM.name(), attestationPolicy.getName(),
                         attestationPolicy.getAttestorPlugin(), attestationPolicy.getAttestorEntity(),
                         attestationPolicy.getAttestorSignin());
                 PluginRouter.route(pluginRequestMessage);
