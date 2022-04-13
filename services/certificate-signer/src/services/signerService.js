@@ -10,19 +10,18 @@ const vc = require('vc-js');
 const Handlebars = require("handlebars");
 const delimiters = require('handlebars-delimiters');
 const hash = require('object-hash');
-
+const {cacheInstance} = require( "../utils" );
 delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
 
-let cachedTemplates = {};
 const getHandleBarTemplate = (credentialTemplate) => {
     const credentialTemplateJson = JSON.parse(credentialTemplate);
     const credentialTemplateHash = hash(credentialTemplateJson);
-    if (credentialTemplateHash in cachedTemplates) {
+    if (cacheInstance.has(credentialTemplateHash)) {
         console.debug("Credential template loaded from cache");
-        return cachedTemplates[credentialTemplateHash];
+        return cacheInstance.get(credentialTemplateHash);
     } else {
         let handleBarTemplate = Handlebars.compile(credentialTemplate);
-        cachedTemplates[credentialTemplateHash] = handleBarTemplate;
+        cacheInstance.set(credentialTemplateHash, handleBarTemplate);
         console.debug("Credential template stored in cache");
         return handleBarTemplate;
     }

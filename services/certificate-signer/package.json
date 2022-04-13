@@ -17,6 +17,7 @@
     "jsonld-signatures": "^6.0.0",
     "kafkajs": "^1.15.0",
     "mustache": "^4.2.0",
+    "node-cache": "^5.1.2",
     "object-hash": "^3.0.0",
     "ramda": "^0.27.1",
     "vaccination-context": "^1.0.7",
