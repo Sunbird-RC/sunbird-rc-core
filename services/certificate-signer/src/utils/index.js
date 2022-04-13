@@ -1,5 +1,5 @@
-const { default: axios } = require('axios');
-const NodeCache = require( "node-cache" );
+const {default: axios} = require('axios');
+const NodeCache = require("node-cache");
 
 const getRequestBody = async (req) => {
     const buffers = []
@@ -39,9 +39,18 @@ function isValidHttpUrl(string) {
 
 const cacheInstance = new NodeCache();
 
+const getContextsFromUrls = async (urls) => {
+    const contexts = {};
+    for (const url of urls.split(",")) {
+        contexts[url] = await fetchTemplate(url);
+    }
+    return contexts;
+};
+
 module.exports = {
     getRequestBody,
     fetchTemplate,
     isValidHttpUrl,
-    cacheInstance
+    cacheInstance,
+    getContextsFromUrls
 };
