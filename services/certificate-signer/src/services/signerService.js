@@ -14,8 +14,7 @@ const {cacheInstance} = require( "../utils" );
 delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
 
 const getHandleBarTemplate = (credentialTemplate) => {
-    const credentialTemplateJson = JSON.parse(credentialTemplate);
-    const credentialTemplateHash = hash(credentialTemplateJson);
+    const credentialTemplateHash = hash(credentialTemplate);
     if (cacheInstance.has(credentialTemplateHash)) {
         console.debug("Credential template loaded from cache");
         return cacheInstance.get(credentialTemplateHash);
