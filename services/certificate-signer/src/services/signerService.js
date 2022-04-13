@@ -9,11 +9,27 @@ const {CERTIFICATE_DID, CERTIFICATE_CONTROLLER_ID, CUSTOM_TEMPLATE_DELIMITERS} =
 const vc = require('vc-js');
 const Handlebars = require("handlebars");
 const delimiters = require('handlebars-delimiters');
+const hash = require('object-hash');
 
+delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
+
+let cachedTemplates = {};
+const getHandleBarTemplate = (credentialTemplate) => {
+    const credentialTemplateJson = JSON.parse(credentialTemplate);
+    const credentialTemplateHash = hash(credentialTemplateJson);
+    if (credentialTemplateHash in cachedTemplates) {
+        console.debug("Credential template loaded from cache");
+        return cachedTemplates[credentialTemplateHash];
+    } else {
+        let handleBarTemplate = Handlebars.compile(credentialTemplate);
+        cachedTemplates[credentialTemplateHash] = handleBarTemplate;
+        console.debug("Credential template stored in cache");
+        return handleBarTemplate;
+    }
+};
 const generateCredentials = async (data, credentialTemplate = "") => {
-    delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
     console.log("Input received", credentialTemplate, data);
-    const template = Handlebars.compile(credentialTemplate);
+    const template = getHandleBarTemplate(credentialTemplate);
     let renderedTemplate = template(data);
     const credentialData = JSON.parse(renderedTemplate);
     console.log("Sending", credentialData);
