@@ -59,7 +59,6 @@ server.listen(port, async () => {
     // add custom schema contexts
     let contextsFromUrls = await getContextsFromUrls(config.CACHE_CONTEXT_URLS);
     const customDocumentLoader = {...contextsFromUrls};
-    console.log(customDocumentLoader);
     customDocumentLoader[CERTIFICATE_NAMESPACE] = vaccinationContext;
     setDocumentLoader(customDocumentLoader, signingConfig);
     console.log(`Server listening on port ${port}`);
