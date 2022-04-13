@@ -622,6 +622,22 @@ public class RegistryHelper {
         throw new Exception("Forbidden");
     }
 
+    public String fetchEmailIdFromToken(HttpServletRequest request, String entityName) throws Exception {
+        if (doesEntityContainOwnershipAttributes(entityName) || getManageRoles(entityName).size() > 0) {
+            KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+            if (principal != null) {
+                try{
+                    return principal.getAccount().getKeycloakSecurityContext().getToken().getEmail();
+                }catch (Exception exception){
+                    return principal.getAccount().getPrincipal().getName();
+                }
+            }
+            throw new Exception("Forbidden");
+        } else {
+            return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
+        }
+    }
+
     public JsonNode getRequestedUserDetails(HttpServletRequest request, String entityName) throws Exception {
         if (isInternalRegistry(entityName)) {
             return getUserInfoFromRegistry(request, entityName);
