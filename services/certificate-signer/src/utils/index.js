@@ -41,8 +41,10 @@ const cacheInstance = new NodeCache();
 
 const getContextsFromUrls = async (urls) => {
     const contexts = {};
-    for (const url of urls.split(",")) {
-        contexts[url] = await fetchTemplate(url);
+    if (urls && urls.length > 0) {
+        for (const url of urls.split(",")) {
+            contexts[url] = await fetchTemplate(url);
+        }
     }
     return contexts;
 };
