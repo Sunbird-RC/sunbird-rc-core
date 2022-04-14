@@ -37,10 +37,10 @@
         <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link register-link" href="#">LOGIN</a>
+                    <a class="nav-link register-link" href="/login">LOGIN</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link register-link" href="#">SIGNUP</a>
+                    <a class="nav-link register-link" href="/">SIGNUP</a>
                 </li>
 
             </ul>

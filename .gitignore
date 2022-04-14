@@ -81,3 +81,5 @@ schema-configuration-school-test.jsonld
 validations.shex
 validations_create.shex
 validations_update.shex
+
+.clinic

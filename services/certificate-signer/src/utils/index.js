@@ -1,4 +1,5 @@
-const { default: axios } = require('axios');
+const {default: axios} = require('axios');
+const NodeCache = require("node-cache");
 
 const getRequestBody = async (req) => {
     const buffers = []
@@ -11,9 +12,18 @@ const getRequestBody = async (req) => {
 };
 
 const fetchTemplate = async (templateFileURL) => {
-    console.log("Fetching credential templates: ", templateFileURL)
-    return await axios.get(templateFileURL).then(res => res.data);
-}
+    console.log("Fetching credential templates: ", templateFileURL);
+    const template = cacheInstance.get(templateFileURL);
+    if (template === undefined) {
+        let template = await axios.get(templateFileURL).then(res => res.data);
+        cacheInstance.set(templateFileURL, template);
+        console.debug("Fetched credential templates from API");
+        return template;
+    } else {
+        console.debug("Fetched credential templates from cache");
+        return template;
+    }
+};
 
 function isValidHttpUrl(string) {
     let url;
@@ -27,8 +37,20 @@ function isValidHttpUrl(string) {
     return url.protocol === "http:" || url.protocol === "https:";
 }
 
+const cacheInstance = new NodeCache();
+
+const getContextsFromUrls = async (urls) => {
+    const contexts = {};
+    for (const url of urls.split(",")) {
+        contexts[url] = await fetchTemplate(url);
+    }
+    return contexts;
+};
+
 module.exports = {
     getRequestBody,
     fetchTemplate,
-    isValidHttpUrl
+    isValidHttpUrl,
+    cacheInstance,
+    getContextsFromUrls
 };
