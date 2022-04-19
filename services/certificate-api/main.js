@@ -3,7 +3,8 @@ const http = require('http');
 const port = process.env.PORT || 4321;
 
 const server = http.createServer(async (req, res) => {
-    console.time(req.url)
+    const label = `${req.url}-${new Date().getTime()}`;
+    console.time(label)
     console.log(`API ${req.method} ${req.url} called`);
     try {
         if (req.method === 'POST' && req.url.startsWith("/api/v1/certificate") && ["application/pdf"].includes(req.headers.accept)) {
@@ -22,7 +23,7 @@ const server = http.createServer(async (req, res) => {
             res.end("Error occurred");
         }
     }
-    console.timeEnd(req.url)
+    console.timeEnd(label)
 });
 
 server.listen(port, async () => {

@@ -10,8 +10,25 @@ const URL = 'URL';
 const envData = require('../../configs/keys');
 const {CUSTOM_TEMPLATE_DELIMITERS} = require('../../configs/config');
 const delimiters = require('handlebars-delimiters');
+const NodeCache = require("node-cache");
+const hash = require('object-hash');
+
+const cacheInstance = new NodeCache();
 
 Handlebars.registerHelper('dateFormat', require('handlebars-dateformat'));
+delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
+let browser;
+(async function () {
+    browser = await puppeteer.launch({
+        headless: true,
+        //comment to use default
+        executablePath: '/usr/bin/chromium-browser',
+        args: [
+            "--no-sandbox",
+            "--disable-gpu",
+        ]
+    });
+})();
 
 function getNumberWithOrdinal(n) {
     const s = ["th", "st", "nd", "rd"],
@@ -184,53 +201,81 @@ async function getCertificate(req, res) {
     }
 }
 
+const fetchCachedTemplate = async (templateFileURL) => {
+    console.log("Fetching credential templates: ", templateFileURL);
+    const template = cacheInstance.get(templateFileURL);
+    if (template === undefined) {
+        let template = await axios.get(templateFileURL).then(res => res.data);
+        cacheInstance.set(templateFileURL, template);
+        console.debug("Fetched credential templates from API");
+        return template;
+    } else {
+        console.debug("Fetched credential templates from cache");
+        return template;
+    }
+};
+
 async function getTemplate(templateFileURL) {
-    const templateContent = await axios.get(templateFileURL).then(res => res.data);
-    return templateContent;
+    return await fetchCachedTemplate(templateFileURL);
 }
 
+const getHandleBarTemplate = (credentialTemplate) => {
+    const credentialTemplateHash = hash(credentialTemplate);
+    if (cacheInstance.has(credentialTemplateHash)) {
+        console.debug("Credential template loaded from cache");
+        return cacheInstance.get(credentialTemplateHash);
+    } else {
+        let handleBarTemplate = Handlebars.compile(credentialTemplate);
+        cacheInstance.set(credentialTemplateHash, handleBarTemplate);
+        console.debug("Credential template stored in cache");
+        return handleBarTemplate;
+    }
+};
 
 async function renderDataToTemplate(templateFileURL, data) {
     console.log("rendering data to template")
     // const htmlData = fs.readFileSync(templateFileURL, 'utf8');
     const htmlData = await getTemplate(templateFileURL);
-    console.log('Received ', htmlData);
-    Handlebars.registerHelper();
-    delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
-    const template = Handlebars.compile(htmlData);
+    // console.log('Received ', htmlData);
+    const template = getHandleBarTemplate(htmlData);
     return template(data);
 }
 
 async function createPDF(certificate) {
+    try {
+        if (!browser) {
+            browser = await puppeteer.launch({
+                headless: true,
+                //comment to use default
+                executablePath: '/usr/bin/chromium-browser',
+                args: [
+                    "--no-sandbox",
+                    "--disable-gpu",
+                ]
+            });
+        }
+        const page = await browser.newPage();
+        await page.evaluateHandle('document.fonts.ready');
+        await page.setContent(certificate, {
+            waitUntil: 'domcontentloaded'
+        });
+        // console.log(certificate);
+        // await page.goto('data:text/html,' + certificate, {waitUntil: 'networkidle2'});
+        await page.evaluateHandle('document.fonts.ready');
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            displayHeaderFooter: true
+        });
 
-    const browser = await puppeteer.launch({
-        headless: true,
-        //comment to use default
-        executablePath: '/usr/bin/chromium-browser',
-        args: [
-            "--no-sandbox",
-            "--disable-gpu",
-        ]
-    });
-    const page = await browser.newPage();
-    await page.evaluateHandle('document.fonts.ready');
-    await page.setContent(certificate, {
-        waitUntil: 'domcontentloaded'
-    });
-    // console.log(certificate);
-    // await page.goto('data:text/html,' + certificate, {waitUntil: 'networkidle2'});
-    await page.evaluateHandle('document.fonts.ready');
-    const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        displayHeaderFooter: true
-    });
 
-
-    // close the browser
-    await browser.close();
-
-    return pdfBuffer
+        // close the browser
+        await page.close()
+        return pdfBuffer
+    } catch (e) {
+        console.log("Failed while creating pdf")
+        console.log(e)
+    }
 }
 
 function prepareDataForCertificateWithQRCode(certificateRaw, dataURL) {
