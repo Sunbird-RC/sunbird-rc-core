@@ -235,6 +235,8 @@ service:
       # The fixed time interval, in milliseconds, between each such attempt.
       delay: ${service_retry_backoff_delay:1000}
 
+httpConnection:
+  maxConnections: ${http_max_connections:100}
 # Sets the task-executor configuration for threads
 taskExecutor:
   index:
