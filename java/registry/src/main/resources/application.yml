@@ -52,6 +52,8 @@ registry:
   attestationPolicy:
     createAccess: ${create_attestation_access_entities:User}
 
+workflow:
+  enable: ${workflow.enable:true}
 
 conditionalAccess:
   internal: _internal
@@ -122,7 +124,7 @@ database:
 
       username: ${connectionInfo_username:postgres}
       password: ${connectionInfo_password:postgres}
-      maxPoolSize: ${connectionInfo_maxPoolSize:100}
+      maxPoolSize: ${connectionInfo_maxPoolSize:200}
 
       # Any other shard information follows...
       #-
@@ -247,7 +249,7 @@ taskExecutor:
     # Set the ThreadPoolExecutor's maximum pool size.
     maxPoolSize: ${taskExecutor_index_maxPoolSize:2}
     # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
-    queueCapacity: ${taskExecutor_index_queueCapacity:3}
+    queueCapacity: ${taskExecutor_index_queueCapacity:100}
 
 # Sets the task-executor configuration for threads while auditing
 auditTaskExecutor:
@@ -258,7 +260,7 @@ auditTaskExecutor:
   # Set the ThreadPoolExecutor's maximum pool size.
   maxPoolSize: ${auditTaskExecutor_maxPoolSize:2}
   # Set the capacity for the ThreadPoolExecutor's BlockingQueue.
-  queueCapacity: ${auditTaskExecutor_queueCapacity:3}
+  queueCapacity: ${auditTaskExecutor_queueCapacity:100}
 
 # elastic-search configuration details
 elastic:
@@ -289,6 +291,8 @@ spring:
       enabled: ALWAYS
 name: test-yaml
 enviroment: test
+workflow:
+  enable: ${workflow.enable:true}
 
 perf:
   monitoring:
