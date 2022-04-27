@@ -68,7 +68,6 @@ public class RegistryHelper {
     private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
-    @Value("${workflow.enable:true}") boolean workflowEnable;
 
     @Autowired
     private ShardManager shardManager;
@@ -127,6 +126,9 @@ public class RegistryHelper {
     @Value("${signature.enabled}")
     private boolean signatureEnabled;
 
+    @Value("${workflow.enable:true}")
+    private boolean workflowEnabled;
+
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
@@ -179,7 +181,7 @@ public class RegistryHelper {
         String entityType = inputJson.fields().next().getKey();
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), isInvite);
         String entityName = inputJson.fields().next().getKey();
-        if (workflowEnable) {
+        if (workflowEnabled) {
             List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
             entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
         }
@@ -375,7 +377,7 @@ public class RegistryHelper {
     }
 
     private String updateEntityAndState(JsonNode existingNode, JsonNode updatedNode, String userId) throws Exception {
-        if (workflowEnable) {
+        if (workflowEnabled) {
             String entityName = updatedNode.fields().next().getKey();
             List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
             entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
