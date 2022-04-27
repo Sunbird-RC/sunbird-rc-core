@@ -4,24 +4,23 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.MessageFactory;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
-import dev.sunbirdrc.pojos.PluginRequestMessage;
-import dev.sunbirdrc.pojos.attestation.auto.AutoAttestationPolicy;
 import dev.sunbirdrc.registry.dao.IRegistryDao;
 import dev.sunbirdrc.registry.dao.RegistryDaoImpl;
 import dev.sunbirdrc.registry.dao.VertexReader;
 import dev.sunbirdrc.registry.dao.VertexWriter;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.*;
-import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -36,7 +35,6 @@ import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
@@ -159,8 +157,9 @@ public class RegistryServiceImpl implements RegistryService {
                 auditService.auditDelete(
                         auditService.createAuditRecord(userId, uuid, tx, index),
                         shard);
-
-                callESActors(null, "DELETE", index, uuid, tx);
+                if (isElasticSearchEnabled()) {
+                    callESActors(null, "DELETE", index, uuid, tx);
+                }
 
 
             }
@@ -174,10 +173,11 @@ public class RegistryServiceImpl implements RegistryService {
      * This method adds the entity into db, calls elastic and audit asynchronously
      *
      * @param rootNode - input value as string
+     * @param skipSignature
      * @return
      * @throws Exception
      */
-    public String addEntity(Shard shard, String userId, JsonNode rootNode) throws Exception {
+    public String addEntity(Shard shard, String userId, JsonNode rootNode, boolean skipSignature) throws Exception {
         Transaction tx = null;
         String entityId = "entityPlaceholderId";
         String vertexLabel = rootNode.fieldNames().next();
@@ -188,11 +188,15 @@ public class RegistryServiceImpl implements RegistryService {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
 
-/*
-        if (signatureEnabled) {
-            signatureHelper.signJson(rootNode);
+        Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
+        if (!skipSignature && signatureEnabled && credentialTemplate != null) {
+            Map<String, Object> requestBodyMap = new HashMap<>();
+            requestBodyMap.put("data", rootNode.get(vertexLabel));
+            requestBodyMap.put("credentialTemplate", credentialTemplate);
+            Object signedCredentials = signatureService.sign(requestBodyMap);
+            ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
         }
-*/
+
 
         if (persistenceEnabled) {
             DatabaseProvider dbProvider = shard.getDatabaseProvider();
@@ -215,8 +219,9 @@ public class RegistryServiceImpl implements RegistryService {
                 entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             }
 
-            callESActors(rootNode, "ADD", vertexLabel, entityId, tx);
-
+            if (isElasticSearchEnabled()) {
+                callESActors(rootNode, "ADD", vertexLabel, entityId, tx);
+            }
             auditService.auditAdd(
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
@@ -309,7 +314,7 @@ public class RegistryServiceImpl implements RegistryService {
 
             databaseProvider.commitTransaction(graph, tx);
 
-            if(isInternalRegistry(entityType)) {
+            if(isInternalRegistry(entityType) && isElasticSearchEnabled()) {
                 callESActors(mergedNode, "UPDATE", entityType, id, tx);
             }
             auditService.auditUpdate(
@@ -332,11 +337,15 @@ public class RegistryServiceImpl implements RegistryService {
     public void callESActors(JsonNode rootNode, String operation, String parentEntityType, String entityRootId, Transaction tx) throws JsonProcessingException {
         logger.debug("callESActors started");
         rootNode = rootNode != null ? rootNode.get(parentEntityType) : rootNode;
-			boolean elasticSearchEnabled = (searchProvider.equals("dev.sunbirdrc.registry.service.ElasticSearchService"));
+        boolean elasticSearchEnabled = isElasticSearchEnabled();
         MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, operation,
                 parentEntityType.toLowerCase(), entityRootId, rootNode, null);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
         logger.debug("callESActors ends");
+    }
+
+    private boolean isElasticSearchEnabled() {
+        return (searchProvider.equals("dev.sunbirdrc.registry.service.ElasticSearchService"));
     }
 
     @Override

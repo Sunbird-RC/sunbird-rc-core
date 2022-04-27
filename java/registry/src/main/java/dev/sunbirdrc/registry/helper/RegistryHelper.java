@@ -10,8 +10,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
-import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
-import dev.sunbirdrc.pojos.PluginRequestMessage;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.attestation.Action;
@@ -128,6 +126,9 @@ public class RegistryHelper {
     @Value("${signature.enabled}")
     private boolean signatureEnabled;
 
+    @Value("${workflow.enable:true}")
+    private boolean workflowEnabled;
+
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
@@ -162,15 +163,8 @@ public class RegistryHelper {
      * @return
      * @throws Exception
      */
-    public String addEntityAndSign(JsonNode inputJson, String userId) throws Exception {
-        String entityType = inputJson.fields().next().getKey();
-//        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), false);
-//        ObjectNode existingNode = objectMapper.createObjectNode();
-//        existingNode.set(entityType, objectMapper.createObjectNode());
-//        entityStateHelper.applyWorkflowTransitions(existingNode, inputJson);
-        String objectId = addEntityHandler(inputJson, userId, false);
-        signDocument(entityType, objectId, userId);
-        return objectId;
+    public String addEntity(JsonNode inputJson, String userId) throws Exception {
+        return addEntityHandler(inputJson, userId, false);
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
@@ -180,15 +174,17 @@ public class RegistryHelper {
     }
 
     public String addEntityWithoutValidation(JsonNode inputJson, String userId, String entityName) throws Exception {
-        return addEntity(inputJson, userId, entityName);
+        return addEntity(inputJson, userId, entityName, true);
     }
 
     private String addEntityHandler(JsonNode inputJson, String userId, boolean isInvite) throws Exception {
         String entityType = inputJson.fields().next().getKey();
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), isInvite);
         String entityName = inputJson.fields().next().getKey();
-        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
-        entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
+        if (workflowEnabled) {
+            List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
+            entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
+        }
         if (!StringUtils.isEmpty(userId)) {
             ArrayNode jsonNode = (ArrayNode) inputJson.get(entityName).get(osOwner.toString());
             if (jsonNode == null) {
@@ -197,7 +193,7 @@ public class RegistryHelper {
             }
             jsonNode.add(userId);
         }
-        return addEntity(inputJson, userId, entityType);
+        return addEntity(inputJson, userId, entityType, isInvite);
     }
 
     private void sendInviteNotification(JsonNode inputJson) throws Exception {
@@ -219,13 +215,13 @@ public class RegistryHelper {
         }
     }
 
-    private String addEntity(JsonNode inputJson, String userId, String entityType) throws Exception {
+    private String addEntity(JsonNode inputJson, String userId, String entityType, boolean skipSignature) throws Exception {
         RecordIdentifier recordId = null;
         try {
             logger.info("Add api: entity type: {} and shard propery: {}", entityType, shardManager.getShardProperty());
             Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
             watch.start("RegistryController.addToExistingEntity");
-            String resultId = registryService.addEntity(shard, userId, inputJson);
+            String resultId = registryService.addEntity(shard, userId, inputJson, skipSignature);
             recordId = new RecordIdentifier(shard.getShardLabel(), resultId);
             watch.stop("RegistryController.addToExistingEntity");
             logger.info("AddEntity,{}", recordId.toString());
@@ -319,22 +315,24 @@ public class RegistryHelper {
     }
 
     private void removeNonPublicFields(ObjectNode searchResultNode) throws Exception {
-        ObjectReader stringListReader = objectMapper.readerFor(new TypeReference<List<String>>() {
-        });
-        List<String> nonPublicNodePathContainers = Arrays.asList(internalFieldsProp, privateFieldsProp);
-        Iterator<Map.Entry<String, JsonNode>> fieldIterator = searchResultNode.fields();
-        while (fieldIterator.hasNext()) {
-            ArrayNode entityResults = (ArrayNode) fieldIterator.next().getValue();
-            for (int i = 0; i < entityResults.size(); i++) {
-                ObjectNode entityResult = (ObjectNode) entityResults.get(i);
-                List<String> nodePathsForRemoval = new ArrayList<>();
-                for (String nodePathContainer : nonPublicNodePathContainers) {
-                    if (entityResult.has(nodePathContainer)) {
-                        nodePathsForRemoval.addAll(stringListReader.readValue(entityResult.get(nodePathContainer)));
+        if (searchResultNode != null) {
+            ObjectReader stringListReader = objectMapper.readerFor(new TypeReference<List<String>>() {
+            });
+            List<String> nonPublicNodePathContainers = Arrays.asList(internalFieldsProp, privateFieldsProp);
+            Iterator<Map.Entry<String, JsonNode>> fieldIterator = searchResultNode.fields();
+            while (fieldIterator.hasNext()) {
+                ArrayNode entityResults = (ArrayNode) fieldIterator.next().getValue();
+                for (int i = 0; i < entityResults.size(); i++) {
+                    ObjectNode entityResult = (ObjectNode) entityResults.get(i);
+                    List<String> nodePathsForRemoval = new ArrayList<>();
+                    for (String nodePathContainer : nonPublicNodePathContainers) {
+                        if (entityResult.has(nodePathContainer)) {
+                            nodePathsForRemoval.addAll(stringListReader.readValue(entityResult.get(nodePathContainer)));
+                        }
                     }
+                    JSONUtil.removeNodesByPath(entityResult, nodePathsForRemoval);
+                    entityResult.remove(nonPublicNodePathContainers);
                 }
-                JSONUtil.removeNodesByPath(entityResult, nodePathsForRemoval);
-                entityResult.remove(nonPublicNodePathContainers);
             }
         }
     }
@@ -379,9 +377,11 @@ public class RegistryHelper {
     }
 
     private String updateEntityAndState(JsonNode existingNode, JsonNode updatedNode, String userId) throws Exception {
-        String entityName = updatedNode.fields().next().getKey();
-        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
-        entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
+        if (workflowEnabled) {
+            String entityName = updatedNode.fields().next().getKey();
+            List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
+            entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
+        }
         return updateEntity(updatedNode, userId);
     }
 

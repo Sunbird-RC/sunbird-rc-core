@@ -158,6 +158,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${registry.schema.url}")
 	private String schemaUrl;
 
+	@Value("${httpConnection.maxConnections:5}")
+	private int httpMaxConnections;
+
 	static {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 
@@ -274,8 +277,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public RestTemplate restTemaplteProvider() throws IOException {
-		HttpClient httpClient = HttpClientBuilder.create().build();
+	public RestTemplate restTemplateProvider() throws IOException {
+		HttpClient httpClient = HttpClientBuilder.create().setMaxConnPerRoute(httpMaxConnections)
+				.setMaxConnTotal(httpMaxConnections*2).build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 		requestFactory.setConnectTimeout(connectionTimeout);
 		requestFactory.setConnectionRequestTimeout(connectionRequestTimeout);
