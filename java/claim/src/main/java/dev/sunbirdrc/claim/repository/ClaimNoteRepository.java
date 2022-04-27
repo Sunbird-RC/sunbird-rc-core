@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface ClaimNoteRepository extends JpaRepository<ClaimNote, String> {
     List<ClaimNote> findByEntityIdAndPropertyURI(String entityId, String propertyURI);
+    List<ClaimNote> findByEntityIdAndClaimId(String entityId, String claimId);
+
 }

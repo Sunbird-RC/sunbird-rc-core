@@ -36,6 +36,9 @@ public class ClaimNote {
     @Column(name = ClaimNote.CREATED_AT)
     private Date createdAt;
 
+    @Column(columnDefinition = "varchar(255) default 'Default Claim Id'")
+    private String claimId;
+
     @PrePersist
     protected void onCreate() {
         createdAt = new Date();

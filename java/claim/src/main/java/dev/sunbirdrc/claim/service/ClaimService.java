@@ -91,11 +91,12 @@ public class ClaimService {
         claimNote.setPropertyURI(claim.getPropertyURI());
         claimNote.setEntityId(claim.getEntityId());
         claimNote.setAddedBy(addedBy);
+        claimNote.setClaimId(claim.getId());
         claimNoteRepository.save(claimNote);
     }
 
     public List<ClaimNote> getClaimWithNotes(Claim claim) {
-        return claimNoteRepository.findByEntityIdAndPropertyURI(claim.getEntityId(), claim.getPropertyURI());
+        return claimNoteRepository.findByEntityIdAndClaimId(claim.getEntityId(), claim.getId());
     }
 
     public ClaimWithNotesDTO generateNotesForTheClaim(Claim claim) {
