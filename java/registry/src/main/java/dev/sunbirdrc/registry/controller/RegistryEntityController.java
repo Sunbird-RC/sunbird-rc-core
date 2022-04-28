@@ -224,7 +224,7 @@ public class RegistryEntityController extends AbstractController {
 
         try {
             String userId = registryHelper.authorizeManageEntity(request, entityName);
-            String label = registryHelper.addEntityAndSign(newRootNode, userId);
+            String label = registryHelper.addEntity(newRootNode, userId);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             result.put(entityName, resultMap);

@@ -39,6 +39,7 @@ public class JSONUtil {
 	private static Type stringObjMapType = new TypeToken<Map<String, Object>>() {
 	}.getType();
 	private static String key = "";
+	private static ObjectMapper objectMapper = new ObjectMapper();
 
 	public static Map<String, Object> convertObjectJsonMap(Object object) {
 		Gson gson = new Gson();
@@ -487,12 +488,43 @@ public class JSONUtil {
         List<String> typeList = JsonPath.using(alwaysReturnListConfig).parse(input.toString()).read(path);
         return typeList.get(0);
     }
-	public static String getOSIDFromArrNode(JsonNode resultNode) {
+
+	public static String getOSIDFromArrNode(JsonNode resultNode, JsonNode requestBody, List<String> fieldsToRemove) {
 		if (resultNode.isArray()) {
 			ArrayNode arrayNode = (ArrayNode) resultNode;
-			return arrayNode.get(arrayNode.size() - 1).get("osid").asText();
+			JsonNode matchingClaim = searchClaimOsIdFromRequestProperties(arrayNode,requestBody);
+			return matchingClaim!=null?matchingClaim.get("osid").asText():"";
 		}
 		return "";
+	}
+
+	private static JsonNode searchClaimOsIdFromRequestProperties(ArrayNode arrayNode, JsonNode requestBody) {
+		if (requestBody.get("propertiesOSID") != null) {
+			Map<String, List<String>> requestBodyProperty = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
+			Iterator<JsonNode> claimIterator = arrayNode.elements();
+			while (claimIterator.hasNext()) {
+				JsonNode claimEntry = claimIterator.next();
+				if (claimEntry.get("propertiesOSID") != null) {
+					JsonNode property = claimEntry.get("propertiesOSID");
+					Map<String, JsonNode> claimEntryProperty = objectMapper.convertValue(property, Map.class);
+					if (isRequestBodyPropertyPresentInClaim(requestBodyProperty, claimEntryProperty)) {
+						return claimEntry;
+					}
+				}
+			}
+		}
+		return arrayNode.get(arrayNode.size() - 1);
+	}
+
+	private static boolean isRequestBodyPropertyPresentInClaim(Map<String,List<String>> requestBodyProperty,Map<String,JsonNode> claimEntryProperty){
+		for(Map.Entry<String,List<String>> entry: requestBodyProperty.entrySet()){
+			List<String> requestBodyPropertyOSID = entry.getValue();
+			String key = entry.getKey();
+			if(!((List<String>) objectMapper.convertValue(claimEntryProperty.get(key), List.class)).containsAll(requestBodyPropertyOSID)){
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public static JsonNode extractPropertyDataFromEntity(JsonNode entityNode, Map<String, String> attestationProperties, Map<String, List<String>> propertiesOSIDMapper) {

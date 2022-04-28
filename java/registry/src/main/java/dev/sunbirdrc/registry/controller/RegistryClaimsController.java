@@ -158,7 +158,7 @@ public class RegistryClaimsController extends AbstractController{
                     ((ObjectNode)requestBody).put("propertyData", propertyData.toString());
                 }
                 registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
-                String attestationOSID = registryHelper.getAttestationOSID(entityName, entityId, attestationName);
+                String attestationOSID = registryHelper.getAttestationOSID(requestBody,entityName, entityId, attestationName);
                 // Resolve condition for REQUESTER
                 String condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
                 updateGetFileUrl(additionalInput);
@@ -180,7 +180,7 @@ public class RegistryClaimsController extends AbstractController{
         } else {
             try {
                 registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
-                String attestationOSID = registryHelper.getAttestationOSID(entityName, entityId, attestationName);
+                String attestationOSID = registryHelper.getAttestationOSID(requestBody,entityName, entityId, attestationName);
                 PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
                         "", "", attestationOSID,
                         entityName, registryHelper.fetchEmailIdFromToken(request, entityName), entityId, additionalInput, Action.RAISE_CLAIM.name(), attestationPolicy.getName(),

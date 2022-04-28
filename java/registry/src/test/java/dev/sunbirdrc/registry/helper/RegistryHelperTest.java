@@ -315,11 +315,12 @@ public class RegistryHelperTest {
         mockDefinitionManager();
         String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
-        when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
+        when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
         when(shardManager.getShard(any())).thenReturn(new Shard());
         when(readService.getEntity(any(),any(),any(),any(),any())).thenReturn(inviteJson);
+        ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
         registryHelper.inviteEntity(inviteJson, "");
-        Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());
+        Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
         assertEquals("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"osOwner\":[\"" + testUserId + "\"]}}", inputJsonCapture.getValue().toString());
     }
 
@@ -329,11 +330,11 @@ public class RegistryHelperTest {
         mockDefinitionManager();
         String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
-        when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
+        when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
         when(shardManager.getShard(any())).thenReturn(new Shard());
         when(readService.getEntity(any(),any(),any(),any(),any())).thenReturn(inviteJson);
         registryHelper.inviteEntity(inviteJson, "");
-        Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());
+        Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
         Mockito.verify(registryService, atLeastOnce()).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
         assertEquals("mailto:gecasu.ihises@tovinit.com", toCapture.getValue());
         assertEquals("INVITATION TO JOIN Institute", subjectCapture.getValue());
@@ -360,12 +361,12 @@ public class RegistryHelperTest {
                 "}}");
         String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
-        when(registryService.addEntity(any(), any(), any())).thenReturn(UUID.randomUUID().toString());
+        when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
         when(shardManager.getShard(any())).thenReturn(new Shard());
         when(readService.getEntity(any(),any(),any(),any(),any())).thenReturn(inviteJson);
         mockDefinitionManager();
         registryHelper.inviteEntity(inviteJson, "");
-        Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture());
+        Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
         Mockito.verify(registryService, times(4)).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
         assertEquals("tel:123123", toCapture.getAllValues().get(0));
         assertEquals("INVITATION TO JOIN Institute", subjectCapture.getAllValues().get(0));

@@ -78,7 +78,6 @@ public class ClaimPluginActor extends BaseActor {
 
     private String getClaimRequestUrl() {
         if (isBlank(claimRequestUrl)) {
-
             logger.error("claims service url is not set but it seems to be in use.");
         }
         return claimRequestUrl;
