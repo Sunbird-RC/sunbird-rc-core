@@ -10,6 +10,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
+import dev.sunbirdrc.actors.factory.PluginRouter;
+import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
+import dev.sunbirdrc.pojos.OwnershipsAttributes;
+import dev.sunbirdrc.pojos.PluginRequestMessage;
+import dev.sunbirdrc.pojos.PluginRequestMessageCreator;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.attestation.Action;
@@ -19,6 +24,7 @@ import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
+import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
@@ -47,6 +53,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.*;
@@ -80,6 +87,9 @@ public class RegistryHelper {
 
     @Autowired
     IValidate validationService;
+
+    @Autowired
+    ConditionResolverService conditionResolverService;
 
     @Autowired
     private ISearchService searchService;
@@ -132,7 +142,7 @@ public class RegistryHelper {
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
-    public String getAttestationOSID(JsonNode requestBody, String entityName, String entityId, String propertyName) throws Exception {
+    public String getAttestationOSID(JsonNode requestBody,String entityName, String entityId, String propertyName) throws Exception {
         JsonNode resultNode = readEntity("", entityName, entityId, false, null, false)
                 .get(entityName)
                 .get(propertyName);
@@ -168,7 +178,7 @@ public class RegistryHelper {
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
-        String entityId = addEntityHandler(inputJson, userId, true);
+        String entityId = newAddEntityHandler(inputJson, userId, true);
         sendInviteNotification(inputJson);
         return entityId;
     }
@@ -194,6 +204,20 @@ public class RegistryHelper {
             jsonNode.add(userId);
         }
         return addEntity(inputJson, userId, entityType, isInvite);
+    }
+
+    private String newAddEntityHandler(JsonNode inputJson, String userId, boolean isInvite) throws Exception {
+        String entityType = inputJson.fields().next().getKey();
+        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), isInvite);
+        String entityName = inputJson.fields().next().getKey();
+        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
+        entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
+        String entityId = addEntity(inputJson, userId, entityType,isInvite);
+        String keyCloakUserId = inputJson.fields().next().getValue().get("osOwner")!=null ?inputJson.fields().next().getValue().get("osOwner").get(0).asText():null;
+        if(keyCloakUserId!=null){
+            autoRaiseClaim(entityName,entityId,objectMapper.createObjectNode(),inputJson,keyCloakUserId);
+        }
+        return entityId;
     }
 
     private void sendInviteNotification(JsonNode inputJson) throws Exception {
@@ -411,6 +435,16 @@ public class RegistryHelper {
         return updateEntityAndState(existingEntityNode, nodeToUpdate, userId);
     }
 
+    public String newAddAttestationProperty(JsonNode existingEntityNode, String propertyName, JsonNode inputJson) throws Exception {
+        JsonNode nodeToUpdate = existingEntityNode.deepCopy();
+        String entityName = existingEntityNode.fields().next().getKey();
+        JsonNode parentNode = nodeToUpdate.get(entityName);
+        JsonNode propertyNode = parentNode.get(propertyName);
+        createOrUpdateProperty(entityName, inputJson, nodeToUpdate, propertyName, (ObjectNode) parentNode, propertyNode);
+        String userId = existingEntityNode.fields().next().getValue().get("osOwner").get(0).asText();
+        return updateEntityAndState(existingEntityNode, nodeToUpdate,userId);
+    }
+
     private void createOrUpdateProperty(String entityName, JsonNode inputJson, JsonNode updateNode, String propertyName, ObjectNode parentNode, JsonNode propertyNode) throws JsonProcessingException {
         if (propertyNode != null && !propertyNode.isMissingNode()) {
             updateProperty(inputJson, propertyName, parentNode, propertyNode);
@@ -493,6 +527,62 @@ public class RegistryHelper {
         String patch = String.format("[{\"op\":\"add\", \"path\": \"attested\", \"value\": {\"attestation\":{\"id\":\"%s\"}, \"path\": \"%s\"}}]", userId, jsonPaths[0]);
         JsonPatch.applyInPlace(objectMapper.readTree(patch), node.get(entityName));
         updateEntity(node, userId);
+    }
+
+    private boolean hasPolicyPathChanged(AttestationPolicy policy, JsonNode existingNode, JsonNode updatedNode, String entityName){
+        List<String> paths = new ArrayList<>(policy.getAttestationProperties()==null?CollectionUtils.emptyCollection():policy.getAttestationProperties().values());
+        boolean result = false;
+        for (String path : paths) {
+            if (!StringUtils.isEmpty(path)) {
+                if (existingNode.isEmpty() || !JSONUtil.parseJsonTree(path, updatedNode.get(entityName)).equals(JSONUtil.parseJsonTree(path, existingNode.get(entityName)))){
+                        result = true;
+                }
+            }
+        }
+        return result;
+    }
+
+    public void autoRaiseClaim(String entityName, String entityId, JsonNode existingNode, JsonNode updatedNode, String userId) throws Exception {
+        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
+        for (AttestationPolicy policy :
+          attestationPolicies) {
+            if(hasPolicyPathChanged(policy,existingNode,updatedNode,entityName)){
+                logger.info("Calling auto attestation actor");
+                String attestationName = policy.getName();
+                ObjectNode claimProperties = objectMapper.createObjectNode();
+                claimProperties.put("entityName",entityName);
+                claimProperties.put("entityId",entityId);
+                claimProperties.put("name",attestationName);
+                JsonNode entityNode = readEntity(userId, entityName, entityId, false, null, false);
+                if(policy.hasAttestationPlugin()){
+                    if(policy.isInternal()) {
+                        Map<String, List<String>> propertyOSIDMapper = objectMapper.convertValue(claimProperties.get("propertiesOSID"), Map.class);
+                        JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode.get(entityName), policy.getAttestationProperties(), propertyOSIDMapper);
+                        if(!propertyData.isNull()) {
+                            claimProperties.put("propertyData", propertyData.toString());
+                        }
+                        newAddAttestationProperty(entityNode,attestationName, claimProperties);
+                        String attestationOSID = getAttestationOSID(null,entityName, entityId, attestationName);
+                        String condition = conditionResolverService.resolve(propertyData, "REQUESTER", policy.getConditions(), Collections.emptyList());
+                        PluginRequestMessage message = PluginRequestMessageCreator.create(
+                          propertyData.toString(), condition, attestationOSID,
+                          entityName,fetchEmailIdFromEntity(entityNode,entityName), entityId, null, Action.RAISE_CLAIM.name(), policy.getName(),
+                          policy.getAttestorPlugin(), policy.getAttestorEntity(),
+                          policy.getAttestorSignin());
+                        PluginRouter.route(message);
+                    } else {
+                        newAddAttestationProperty(entityNode,attestationName, claimProperties);
+                        String attestationOSID = getAttestationOSID(null,entityName, entityId, attestationName);
+                        PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
+                          "", "", attestationOSID,
+                          entityName,fetchEmailIdFromEntity(entityNode,entityName), entityId, null, Action.RAISE_CLAIM.name(), policy.getName(),
+                          policy.getAttestorPlugin(), policy.getAttestorEntity(),
+                          policy.getAttestorSignin());
+                        PluginRouter.route(pluginRequestMessage);
+                    }
+                }
+            }
+        }
     }
 
     public void updateState(PluginResponseMessage pluginResponseMessage) throws Exception {
@@ -622,6 +712,17 @@ public class RegistryHelper {
         throw new Exception("Forbidden");
     }
 
+    private String fetchEmailIdFromEntity(JsonNode entityNode,String entityName){
+        List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityName);
+        String entityEmail="";
+        for (OwnershipsAttributes attributes:ownershipAttributes){
+            String email = entityNode.at(String.format("/%s%s", entityName,attributes.getEmail())).asText("");
+            if(StringUtils.isNotEmpty(email)){
+                entityEmail = email;
+            }
+        }
+        return entityEmail;
+    }
     public String fetchEmailIdFromToken(HttpServletRequest request, String entityName) throws Exception {
         if (doesEntityContainOwnershipAttributes(entityName) || getManageRoles(entityName).size() > 0) {
             KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();

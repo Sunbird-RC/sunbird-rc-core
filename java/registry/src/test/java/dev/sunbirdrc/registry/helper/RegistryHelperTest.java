@@ -317,6 +317,7 @@ public class RegistryHelperTest {
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
         when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
         when(shardManager.getShard(any())).thenReturn(new Shard());
+        when(readService.getEntity(any(),any(),any(),any(),any())).thenReturn(inviteJson);
         ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
         registryHelper.inviteEntity(inviteJson, "");
         Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
@@ -331,6 +332,7 @@ public class RegistryHelperTest {
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
         when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
         when(shardManager.getShard(any())).thenReturn(new Shard());
+        when(readService.getEntity(any(),any(),any(),any(),any())).thenReturn(inviteJson);
         registryHelper.inviteEntity(inviteJson, "");
         Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
         Mockito.verify(registryService, atLeastOnce()).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
@@ -361,6 +363,7 @@ public class RegistryHelperTest {
         when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
         when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
         when(shardManager.getShard(any())).thenReturn(new Shard());
+        when(readService.getEntity(any(),any(),any(),any(),any())).thenReturn(inviteJson);
         mockDefinitionManager();
         registryHelper.inviteEntity(inviteJson, "");
         Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());

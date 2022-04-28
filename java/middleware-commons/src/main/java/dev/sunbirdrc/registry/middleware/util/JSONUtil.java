@@ -270,6 +270,10 @@ public class JSONUtil {
 		parent.set(childKey, arrayNode);
 	}
 
+	public static String parseJsonTree(String path, JsonNode input) {
+		return JsonPath.parse(input.toString()).read(path).toString();
+	}
+
 	/**
 	 * Remove a node of given key from parent's hierarchy(including nested objects)
 	 * 
@@ -495,7 +499,7 @@ public class JSONUtil {
 	}
 
 	private static JsonNode searchClaimOsIdFromRequestProperties(ArrayNode arrayNode, JsonNode requestBody) {
-		if (requestBody.get("propertiesOSID") != null) {
+		if (requestBody!=null && requestBody.get("propertiesOSID") != null) {
 			Map<String, List<String>> requestBodyProperty = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
 			Iterator<JsonNode> claimIterator = arrayNode.elements();
 			while (claimIterator.hasNext()) {
