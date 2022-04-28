@@ -340,7 +340,7 @@ public class ElasticServiceImpl implements IElasticService {
                 break;
 
             case contains:
-                query = query.must(QueryBuilders.matchPhraseQuery(field, value));
+                query = query.must(QueryBuilders.wildcardQuery(field, "*" + value.toString() + "*"));
                 break;
             case startsWith:
                 query = query.must(QueryBuilders.matchPhrasePrefixQuery(field, value.toString()));

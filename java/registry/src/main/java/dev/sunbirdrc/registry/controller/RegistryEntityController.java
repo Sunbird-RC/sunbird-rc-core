@@ -53,7 +53,7 @@ public class RegistryEntityController extends AbstractController {
     @Autowired
     private FileStorageService fileStorageService;
 
-    @Value("${authentication.enabled:true}") boolean authenticationEnabled;
+    @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${certificate.enableExternalTemplates:false}") boolean externalTemplatesEnabled;
 
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
@@ -439,7 +439,7 @@ public class RegistryEntityController extends AbstractController {
                 requireVCResponse = true;
             }
         }
-        if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
+        if (registryHelper.doesEntityContainOwnershipAttributes(entityName) && securityEnabled) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -463,7 +463,7 @@ public class RegistryEntityController extends AbstractController {
             }
             return new ResponseEntity<>(node, HttpStatus.OK);
 
-        } catch (NotFoundException e) {
+        } catch (NotFoundException | RecordNotFoundException e) {
             responseParams.setErrmsg(e.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -514,14 +514,13 @@ public class RegistryEntityController extends AbstractController {
                 responseParams.setStatus(Response.Status.UNSUCCESSFUL);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-
         } catch (Exception e) {
             logger.error("Exception in controller while searching entities !", e);
             response.setResult("");
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping(value = "/api/v1/{entity}/{entityId}/attestationProperties")

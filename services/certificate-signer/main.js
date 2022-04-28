@@ -8,6 +8,7 @@ const {generateCredentialsRoute, verifyCredentialsRoute} = require("./src/routes
 const {setDocumentLoader} = require('certificate-signer-library/signer');
 const {publicKeyPem, privateKeyPem, signingKeyType, publicKeyBase58, privateKeyBase58} = require('./config/keys');
 const http = require('http');
+const {getContextsFromUrls} = require("./src/utils");
 
 console.log('Using ' + publicKeyPem);
 
@@ -26,10 +27,6 @@ let signingConfig = {
     CERTIFICATE_PUBKEY_ID: config.CERTIFICATE_PUBKEY_ID,
     CERTIFICATE_ISSUER: config.CERTIFICATE_ISSUER,
 };
-
-// add custom schema contexts
-const customDocumentLoader = {};
-customDocumentLoader[CERTIFICATE_NAMESPACE] = vaccinationContext;
 
 const port = process.env.PORT || 4324;
 
@@ -59,6 +56,10 @@ const server = http.createServer(async (req, res) => {
 
 
 server.listen(port, async () => {
+    // add custom schema contexts
+    let contextsFromUrls = await getContextsFromUrls(config.CACHE_CONTEXT_URLS);
+    const customDocumentLoader = {...contextsFromUrls};
+    customDocumentLoader[CERTIFICATE_NAMESPACE] = vaccinationContext;
     setDocumentLoader(customDocumentLoader, signingConfig);
     console.log(`Server listening on port ${port}`);
 });
