@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
 import dev.sunbirdrc.actors.factory.PluginRouter;
 import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
+import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
 import dev.sunbirdrc.pojos.PluginRequestMessageCreator;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
@@ -565,7 +566,7 @@ public class RegistryHelper {
                         String condition = conditionResolverService.resolve(propertyData, "REQUESTER", policy.getConditions(), Collections.emptyList());
                         PluginRequestMessage message = PluginRequestMessageCreator.create(
                           propertyData.toString(), condition, attestationOSID,
-                          entityName,"", entityId, null, Action.RAISE_CLAIM.name(), policy.getName(),
+                          entityName,fetchEmailIdFromEntity(entityNode,entityName), entityId, null, Action.RAISE_CLAIM.name(), policy.getName(),
                           policy.getAttestorPlugin(), policy.getAttestorEntity(),
                           policy.getAttestorSignin());
                         PluginRouter.route(message);
@@ -574,7 +575,7 @@ public class RegistryHelper {
                         String attestationOSID = getAttestationOSID(null,entityName, entityId, attestationName);
                         PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
                           "", "", attestationOSID,
-                          entityName,"", entityId, null, Action.RAISE_CLAIM.name(), policy.getName(),
+                          entityName,fetchEmailIdFromEntity(entityNode,entityName), entityId, null, Action.RAISE_CLAIM.name(), policy.getName(),
                           policy.getAttestorPlugin(), policy.getAttestorEntity(),
                           policy.getAttestorSignin());
                         PluginRouter.route(pluginRequestMessage);
@@ -711,6 +712,17 @@ public class RegistryHelper {
         throw new Exception("Forbidden");
     }
 
+    private String fetchEmailIdFromEntity(JsonNode entityNode,String entityName){
+        List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityName);
+        String entityEmail="";
+        for (OwnershipsAttributes attributes:ownershipAttributes){
+            String email = entityNode.at(String.format("/%s%s", entityName,attributes.getEmail())).asText("");
+            if(StringUtils.isNotEmpty(email)){
+                entityEmail = email;
+            }
+        }
+        return entityEmail;
+    }
     public String fetchEmailIdFromToken(HttpServletRequest request, String entityName) throws Exception {
         if (doesEntityContainOwnershipAttributes(entityName) || getManageRoles(entityName).size() > 0) {
             KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();

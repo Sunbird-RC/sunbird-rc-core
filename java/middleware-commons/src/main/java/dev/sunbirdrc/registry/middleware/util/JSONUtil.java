@@ -499,7 +499,7 @@ public class JSONUtil {
 	}
 
 	private static JsonNode searchClaimOsIdFromRequestProperties(ArrayNode arrayNode, JsonNode requestBody) {
-		if (requestBody.get("propertiesOSID") != null) {
+		if (requestBody!=null && requestBody.get("propertiesOSID") != null) {
 			Map<String, List<String>> requestBodyProperty = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
 			Iterator<JsonNode> claimIterator = arrayNode.elements();
 			while (claimIterator.hasNext()) {
