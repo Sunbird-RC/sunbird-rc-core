@@ -29,6 +29,8 @@ const generateCredentials = async (data, credentialTemplate = "") => {
     console.log("Input received", credentialTemplate, data);
     const template = getHandleBarTemplate(credentialTemplate);
     let renderedTemplate = template(data);
+    //TODO: find better ways to escape literals
+    renderedTemplate = renderedTemplate.replaceAll("\\","\\\\");
     const credentialData = JSON.parse(renderedTemplate);
     console.log("Sending", credentialData);
     return await signJSON(credentialData);
