@@ -292,7 +292,7 @@ spring:
 name: test-yaml
 enviroment: test
 workflow:
-  enable: ${workflow_enable:true}
+  enabled: ${workflow.enable:true}
 
 perf:
   monitoring:
