@@ -437,7 +437,7 @@ public class RegistryHelperTest {
         definitionMap.put("Institute", new Definition(objectMapper.readTree(instituteSchema)));
         ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
         ReflectionTestUtils.setField(registryHelper, "definitionsManager", definitionsManager);
-        registryHelper.invalidateAttestation(entity, entityId, "userId");
+        registryHelper.invalidateAttestation(entity, entityId, "userId",null );
         verify(registryService, times(1)).updateEntity(any(), any(), any(), eq(expectedUpdatedNode.toString()));
     }
 }
