@@ -826,7 +826,7 @@ public class RegistryHelper {
 
             if (entity.has(policyName) && entity.get(policyName).isArray()) {
                 ArrayNode attestations = (ArrayNode) entity.get(policyName);
-                updateAttestation(attestations,getPropertyToUpdateFromRequest(request,entityId));
+                updateAttestation(attestations,request!=null ?getPropertyToUpdateFromRequest(request,entityId):null);
             }
         }
         ObjectNode newRoot = JsonNodeFactory.instance.objectNode();
