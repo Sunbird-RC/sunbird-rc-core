@@ -53,7 +53,7 @@ registry:
     createAccess: ${create_attestation_access_entities:User}
 
 workflow:
-  enable: ${workflow_enable:true}
+  enabled: ${workflow.enable:true}
 
 conditionalAccess:
   internal: _internal
