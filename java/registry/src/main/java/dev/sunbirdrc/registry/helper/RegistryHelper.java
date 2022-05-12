@@ -818,7 +818,7 @@ public class RegistryHelper {
     }
 
     @Async
-    public void invalidateAttestation(String entityName, String entityId, String userId, @Nullable HttpServletRequest request) throws Exception {
+    public void invalidateAttestation(String entityName, String entityId, String userId, @Nullable String propertyToUpdate) throws Exception {
         JsonNode entity = readEntity(userId, entityName, entityId, false, null, false)
                 .get(entityName);
         for (AttestationPolicy attestationPolicy : getAttestationPolicies(entityName)) {
@@ -826,7 +826,7 @@ public class RegistryHelper {
 
             if (entity.has(policyName) && entity.get(policyName).isArray()) {
                 ArrayNode attestations = (ArrayNode) entity.get(policyName);
-                updateAttestation(attestations,request!=null ?getPropertyToUpdateFromRequest(request,entityId):null);
+                updateAttestation(attestations,propertyToUpdate);
             }
         }
         ObjectNode newRoot = JsonNodeFactory.instance.objectNode();
@@ -834,7 +834,7 @@ public class RegistryHelper {
         updateEntity(newRoot, userId);
     }
 
-    private String getPropertyToUpdateFromRequest(HttpServletRequest request,String entityId){
+    public String getPropertyToUpdate(HttpServletRequest request, String entityId){
         String propertyURI = getPropertyURI(entityId, request);
         return propertyURI.split("/")[0];
     }
