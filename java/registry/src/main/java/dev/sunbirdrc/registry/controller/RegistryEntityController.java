@@ -189,8 +189,7 @@ public class RegistryEntityController extends AbstractController {
             watch.start(tag);
             // TODO: get userID from auth header
             registryHelper.updateEntityAndState(newRootNode, userId);
-            registryHelper.invalidateAttestation(entityName, entityId, userId);
-
+            registryHelper.invalidateAttestation(entityName, entityId, userId,null);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -274,7 +273,7 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             String userId = getUserId(entityName, request);
-            registryHelper.invalidateAttestation(entityName, entityId, userId);
+            registryHelper.invalidateAttestation(entityName, entityId, userId,registryHelper.getPropertyToUpdate(request,entityId));
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             responseParams.setErrmsg(e.getMessage());

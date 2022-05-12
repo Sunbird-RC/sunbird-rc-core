@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -711,7 +712,7 @@ public class RegistryHelper {
         return "";
     }
 
-    private String getPropertyURI(String entityId, HttpServletRequest request) {
+    public String getPropertyURI(String entityId, HttpServletRequest request) {
         return request.getRequestURI().split(entityId + "/")[1];
     }
 
@@ -817,7 +818,7 @@ public class RegistryHelper {
     }
 
     @Async
-    public void invalidateAttestation(String entityName, String entityId, String userId) throws Exception {
+    public void invalidateAttestation(String entityName, String entityId, String userId, @Nullable String propertyToUpdate) throws Exception {
         JsonNode entity = readEntity(userId, entityName, entityId, false, null, false)
                 .get(entityName);
         for (AttestationPolicy attestationPolicy : getAttestationPolicies(entityName)) {
@@ -825,7 +826,7 @@ public class RegistryHelper {
 
             if (entity.has(policyName) && entity.get(policyName).isArray()) {
                 ArrayNode attestations = (ArrayNode) entity.get(policyName);
-                updateAttestation(attestations);
+                updateAttestation(attestations,propertyToUpdate);
             }
         }
         ObjectNode newRoot = JsonNodeFactory.instance.objectNode();
@@ -833,9 +834,15 @@ public class RegistryHelper {
         updateEntity(newRoot, userId);
     }
 
-    private void updateAttestation(ArrayNode attestations) {
+    public String getPropertyToUpdate(HttpServletRequest request, String entityId){
+        String propertyURI = getPropertyURI(entityId, request);
+        return propertyURI.split("/")[0];
+    }
+    private void updateAttestation(ArrayNode attestations,String propertyToUpdate) {
         for (JsonNode attestation : attestations) {
-            if (attestation.get(_osState.name()).asText().equals(States.PUBLISHED.name())) {
+            if (attestation.get(_osState.name()).asText().equals(States.PUBLISHED.name())
+              && !attestation.get("name").asText().equals(propertyToUpdate)
+            ){
                 ObjectNode propertiesOSID = attestation.get("propertiesOSID").deepCopy();
                 JSONUtil.removeNode(propertiesOSID, uuidPropertyName);
                 ((ObjectNode) attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.INVALID.name()));
