@@ -51,6 +51,7 @@ services:
     volumes:
       - ${PWD}/imports:/opt/jboss/keycloak/imports
     environment:
+      - KEYCLOAK_LOGO=https://svgshare.com/i/hCs.svg
       - DB_VENDOR=postgres
       - DB_ADDR=db
       - DB_PORT=5432

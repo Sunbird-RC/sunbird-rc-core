@@ -32,7 +32,13 @@
     <body>
     <nav class="navbar navbar-expand-lg navbar-light">
         <a class="navbar-brand" href="#">
-            <img src="${url.resourcesPath}/img/ndearLogo.svg" alt="">
+            <#if properties.keycloakLogo = "NA">
+                <img src="${url.resourcesPath}/img/ndearLogo.svg" alt="">
+            <#else>
+                <img src="${properties.keycloakLogo!}" alt="">
+            </#if>
+
+
         </a>
         <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
             <ul class="navbar-nav">
