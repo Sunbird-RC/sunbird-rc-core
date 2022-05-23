@@ -146,53 +146,44 @@ public class RegistryClaimsController extends AbstractController{
         AttestationPolicy attestationPolicy = registryHelper.getAttestationPolicy(entityName, attestationName);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
-        if(attestationPolicy.isInternal()) {
-            try {
-                // Generate property Data
-                String userId = registryHelper.getUserId(request, entityName);
-                JsonNode entityNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false)
-                        .get(entityName);
-                Map<String, List<String>> propertyOSIDMapper = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
-                JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationPolicy.getAttestationProperties(), propertyOSIDMapper);
-                if(!propertyData.isNull()) {
-                    ((ObjectNode)requestBody).put("propertyData", propertyData.toString());
-                }
-                registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
-                String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
+
+        try {
+            // Generate property Data
+            String userId = registryHelper.getUserId(request, entityName);
+            JsonNode entityNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false)
+                    .get(entityName);
+            Map<String, List<String>> propertyOSIDMapper = objectMapper.convertValue(requestBody.get("propertiesOSID"), Map.class);
+            JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entityNode, attestationPolicy.getAttestationProperties(), propertyOSIDMapper);
+            if(!propertyData.isNull()) {
+                ((ObjectNode)requestBody).put("propertyData", propertyData.toString());
+            }
+
+            registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
+            String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
+
+            String condition = "";
+            if (attestationPolicy.isInternal()) {
                 // Resolve condition for REQUESTER
-                String condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
-                updateGetFileUrl(additionalInput);
-                // Rise claim
-                PluginRequestMessage message = PluginRequestMessageCreator.create(
-                        propertyData.toString(), condition, attestationOSID,
-                        entityName,registryHelper.fetchEmailIdFromToken(request, entityName), entityId, additionalInput, Action.RAISE_CLAIM.name(), attestationPolicy.getName(),
-                        attestationPolicy.getAttestorPlugin(), attestationPolicy.getAttestorEntity(),
-                        attestationPolicy.getAttestorSignin());
-                PluginRouter.route(message);
-                response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
-            } catch (Exception exception) {
-                logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
-                exception.printStackTrace();
-                responseParams.setErrmsg(exception.getMessage());
-                response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
-                return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+                condition = conditionResolverService.resolve(propertyData, "REQUESTER", attestationPolicy.getConditions(), Collections.emptyList());
             }
-        } else {
-            try {
-                registryHelper.addAttestationProperty(entityName, entityId, attestationName, requestBody, request);
-                String attestationOSID = registryHelper.getAttestationOSID(requestBody, entityName, entityId, attestationName);
-                PluginRequestMessage pluginRequestMessage = PluginRequestMessageCreator.create(
-                        "", "", attestationOSID,
-                        entityName, registryHelper.fetchEmailIdFromToken(request, entityName), entityId, additionalInput, Action.RAISE_CLAIM.name(), attestationPolicy.getName(),
-                        attestationPolicy.getAttestorPlugin(), attestationPolicy.getAttestorEntity(),
-                        attestationPolicy.getAttestorSignin());
-                PluginRouter.route(pluginRequestMessage);
-                response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
-            } catch (Exception e) {
-                logger.error("Unable to route to the actor : {}", e.getMessage());
-                e.printStackTrace();
-            }
+
+            updateGetFileUrl(additionalInput);
+
+            PluginRequestMessage message = PluginRequestMessageCreator.create(
+                    propertyData.isNull() ? "" : propertyData.toString(), condition, attestationOSID,
+                    entityName,registryHelper.fetchEmailIdFromToken(request, entityName), entityId, additionalInput, Action.RAISE_CLAIM.name(), attestationPolicy.getName(),
+                    attestationPolicy.getAttestorPlugin(), attestationPolicy.getAttestorEntity(),
+                    attestationPolicy.getAttestorSignin());
+            PluginRouter.route(message);
+            response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
+        } catch (Exception exception) {
+            logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
+            exception.printStackTrace();
+            responseParams.setErrmsg(exception.getMessage());
+            response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
