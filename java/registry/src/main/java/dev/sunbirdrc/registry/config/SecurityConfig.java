@@ -55,7 +55,7 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
         if (authenticationEnabled) {
             httpConfig.authorizeRequests()
                     .antMatchers("/**/invite", "/health", "/error",
-                            "/_schemas/**", "/**/templates/**", "/**/*.json",
+                            "/_schemas/**", "/**/templates/**", "/**/*.json", "/**/verify",
                             "/swagger-ui", "/**/search", "/**/attestation/**",
                             "/api/docs/swagger.json","/api/docs/*.json", "/plugin/**")
                     .permitAll()

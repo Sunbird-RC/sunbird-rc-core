@@ -16,18 +16,19 @@ const hash = require('object-hash');
 const cacheInstance = new NodeCache();
 
 Handlebars.registerHelper('dateFormat', require('handlebars-dateformat'));
+const browserConfig = {
+    headless: true,
+    //comment to use default
+    executablePath: '/usr/bin/chromium-browser',
+    args: [
+        "--no-sandbox",
+        "--disable-gpu",
+    ]
+}
 delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
 let browser;
 (async function () {
-    browser = await puppeteer.launch({
-        headless: true,
-        //comment to use default
-        executablePath: '/usr/bin/chromium-browser',
-        args: [
-            "--no-sandbox",
-            "--disable-gpu",
-        ]
-    });
+    browser = await puppeteer.launch(browserConfig);
 })();
 
 function getNumberWithOrdinal(n) {
@@ -244,15 +245,7 @@ async function renderDataToTemplate(templateFileURL, data) {
 async function createPDF(certificate) {
     try {
         if (!browser) {
-            browser = await puppeteer.launch({
-                headless: true,
-                //comment to use default
-                executablePath: '/usr/bin/chromium-browser',
-                args: [
-                    "--no-sandbox",
-                    "--disable-gpu",
-                ]
-            });
+            browser = await puppeteer.launch(browserConfig);
         }
         const page = await browser.newPage();
         await page.evaluateHandle('document.fonts.ready');

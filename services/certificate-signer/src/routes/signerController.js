@@ -1,7 +1,8 @@
 const {getRequestBody, isValidHttpUrl, fetchTemplate} = require("../utils");
 const {generateCredentials, verifyCredentials} = require("../services/signerService");
+const {signingKeyType} = require('../../config/keys');
 
-const generateCredentialsRoute = async (req, res) => {
+const generateCredentialsRoute = async (req) => {
     const reqBody = await getRequestBody(req);
     const {data, credentialTemplate} = reqBody;
     let template = credentialTemplate;
@@ -17,9 +18,10 @@ const generateCredentialsRoute = async (req, res) => {
 };
 
 
-const verifyCredentialsRoute = async (req, res) => {
+const verifyCredentialsRoute = async (req) => {
     const reqBody = await getRequestBody(req);
-    const {signedCredentials, signingKeyType, publicKey } = reqBody;
+    const {signedCredentials, publicKey } = reqBody;
+
     return await verifyCredentials(signedCredentials, signingKeyType, publicKey);
 };
 

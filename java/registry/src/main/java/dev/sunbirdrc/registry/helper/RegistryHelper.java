@@ -127,7 +127,7 @@ public class RegistryHelper {
     @Value("${signature.enabled}")
     private boolean signatureEnabled;
 
-    @Value("${workflow.enable:true}")
+    @Value("${workflow.enabled:true}")
     private boolean workflowEnabled;
 
     @Autowired

@@ -32,7 +32,7 @@ services:
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
       - elastic_search_connection_url=es:9200
-      - search_provider=dev.sunbirdrc.registry.service.ElasticSearchService
+      - search_providerName=dev.sunbirdrc.registry.service.ElasticSearchService
       - sunbird_sso_realm=sunbird-rc
       - sunbird_sso_url=http://keycloak:8080/auth
       - sunbird_sso_admin_client_id=admin-api
