@@ -10,7 +10,7 @@ public class Did {
     private String methodIdentifier;
 
     public static Did parse(String didText) throws Exception {
-        String[] split = didText.split(":");
+        String[] split = didText.split(":", 3);
         if (split.length == 3) {
             return Did.builder().method(split[1]).methodIdentifier(split[2]).build();
         } else {
