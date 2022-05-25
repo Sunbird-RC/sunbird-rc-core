@@ -39,6 +39,15 @@ services:
       - sunbird_sso_client_id=registry-frontend
       - sunbird_sso_admin_client_secret=0358fa30-6014-4192-9551-7c61b15b774c
       - claims_url=http://claim-ms:8082
+      - sign_url=http://certificate-signer:8079/sign
+      - signature_enabled=true
+      - pdf_url=http://certificate-api:8078/api/v1/certificatePDF
+      - template_base_url=http://registry:8081/api/v1/templates/ #Looks for certificate templates for pdf copy of the signed certificate
+      - filestorage_connection_url=http://file-storage:9000
+      - filestorage_access_key=admin
+      - filestorage_secret_key=12345678
+      - filestorage_bucket_key=sunbird
+      - registry_base_apis_enable=false
     ports:
       - "8081:8081"
     depends_on:
