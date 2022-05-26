@@ -406,11 +406,10 @@ public class RegistryEntityController extends AbstractController {
             String templateUri = definitionsManager.getCertificateTemplates(entityName).getOrDefault(request.getHeader(TemplateKey), null);
             if (!StringUtils.isEmpty(templateUri)) {
                 try {
-                    Did did = Did.parse(templateUri);
-                    if (did.getMethod().equals(PATH)) {
-                        return fileStorageService.getSignedUrl(did.getMethodIdentifier());
-                    } else if (did.getMethod().equals(URL)) {
-                        return did.getMethodIdentifier();
+                    if (templateUri.startsWith(MINIO_URI_PREFIX)) {
+                        return fileStorageService.getSignedUrl(templateUri.substring(MINIO_URI_PREFIX.length()));
+                    } else if (templateUri.startsWith(HTTP_URI_PREFIX) || templateUri.startsWith(HTTPS_URI_PREFIX)) {
+                        return templateUri;
                     }
                 } catch (Exception e) {
                     logger.error("Exception while parsing certificate templates DID urls", e);

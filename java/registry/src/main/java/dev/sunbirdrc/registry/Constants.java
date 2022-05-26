@@ -18,4 +18,7 @@ public class Constants {
     public final static String PATH = "path";
     public final static String URL = "url";
     public final static String DEFAULT_USER = "User";
+    public final static String MINIO_URI_PREFIX = "minio://";
+    public final static String HTTP_URI_PREFIX = "http://";
+    public final static String HTTPS_URI_PREFIX = "https://";
 }
