@@ -9,23 +9,21 @@ import dev.sunbirdrc.actors.services.NotificationService;
 import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.AuditRecord;
-import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.Response;
-import dev.sunbirdrc.registry.authorization.AuthorizationFilter;
-import dev.sunbirdrc.registry.authorization.KeyCloakServiceImpl;
+import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.CustomExceptionHandler;
 import dev.sunbirdrc.registry.frame.FrameContext;
-import dev.sunbirdrc.registry.interceptor.AuthorizationInterceptor;
 import dev.sunbirdrc.registry.interceptor.RequestIdValidationInterceptor;
 import dev.sunbirdrc.registry.interceptor.ValidationInterceptor;
-import dev.sunbirdrc.registry.middleware.Middleware;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.Constants.SchemaType;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.service.IReadService;
 import dev.sunbirdrc.registry.service.ISearchService;
-import dev.sunbirdrc.registry.sink.DBProviderFactory;
+import dev.sunbirdrc.registry.service.RegistryService;
+import dev.sunbirdrc.registry.service.impl.RegistryAsyncServiceImpl;
+import dev.sunbirdrc.registry.service.impl.RegistryServiceImpl;
 import dev.sunbirdrc.registry.sink.shard.DefaultShardAdvisor;
 import dev.sunbirdrc.registry.sink.shard.IShardAdvisor;
 import dev.sunbirdrc.registry.sink.shard.ShardAdvisor;
@@ -38,6 +36,12 @@ import dev.sunbirdrc.validators.json.jsonschema.JsonValidationServiceImpl;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +53,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.core.*;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -65,101 +72,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static dev.sunbirdrc.registry.Constants.createEntityGroupId;
+
 @Configuration
 @EnableRetry
 @EnableAsync
+@EnableKafka
 public class GenericConfiguration implements WebMvcConfigurer {
 
 	private static final String DOMAIN = "sunbirdrc.dev";
 	private static final String CREATOR = "sunbirdrc";
 	private static final String NONCE = "";
-	private static Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
-	private final String NONE_STR = "none";
-
-	@Autowired
-	private DefinitionsManager definitionsManager;
-
-	@Value("${service.connection.timeout}")
-	private int connectionTimeout;
-
-	@Value("${service.read.timeout}")
-	private int readTimeout;
-
-	@Value("${service.connection.request.timeout}")
-	private int connectionRequestTimeout;
-
-	@Value("${authentication.enabled}")
-	private boolean authenticationEnabled;
-
-	@Value(("${authentication.url}"))
-	private String authUrl;
-
-	@Value(("${authentication.realm}"))
-	private String authRealm;
-
-
-	@Value(("${authentication.publicKey}"))
-	private String authPublicKey;
-
-	@Value("${perf.monitoring.enabled}")
-	private boolean performanceMonitoringEnabled;
-
-	@Value("${registry.context.base}")
-	private String registryContextBase;
-
-	@Value("${frame.file}")
-	private String frameFile;
-
-	@Value("${validation.type}")
-	private String validationType = "json";
-
-	@Value("${validation.enabled}")
-	private boolean validationEnabled = true;
-
-	@Value("${taskExecutor.index.threadPoolName}")
-	private String indexThreadName;
-
-	@Value("${taskExecutor.index.corePoolSize}")
-	private int indexCorePoolSize;
-
-	@Value("${taskExecutor.index.maxPoolSize}")
-	private int indexMaxPoolSize;
-
-	@Value("${taskExecutor.index.queueCapacity}")
-	private int indexQueueCapacity;
-
-	@Value("${auditTaskExecutor.threadPoolName}")
-	private String auditThreadName;
-
-	@Value("${auditTaskExecutor.corePoolSize}")
-	private int auditCorePoolSize;
-
-	@Value("${auditTaskExecutor.maxPoolSize}")
-	private int auditMaxPoolSize;
-
-	@Value("${auditTaskExecutor.queueCapacity}")
-	private int auditQueueCapacity;
-
-	@Value("${elastic.search.connection_url}")
-	private String elasticConnInfo;
-
-	@Value("${notification.service.connection_url}")
-	private String notificationServiceConnInfo;
-	
-    @Value("${search.providerName}")
-    private String searchProviderName;
-
-	@Value("${read.providerName}")
-	private String readProviderName;
-
-	@Value("${server.port}")
-	private long serverPort;
-
-	@Value("${registry.schema.url}")
-	private String schemaUrl;
-
-	@Value("${httpConnection.maxConnections:5}")
-	private int httpMaxConnections;
+	private static final Logger logger = LoggerFactory.getLogger(GenericConfiguration.class);
 
 	static {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
@@ -168,9 +92,74 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		sunbirdActorFactory.init("sunbirdrc-actors");
 	}
 
+	private final String NONE_STR = "none";
+	@Value("${kafka.createEntityTopic:create_entity}")
+	String createEntityTopic;
+	@Value("${kafka.postCreateEntityTopic:post_create_entity}")
+	String postCreateEntityTopic;
+	@Autowired
+	private DefinitionsManager definitionsManager;
+	@Value("${service.connection.timeout}")
+	private int connectionTimeout;
+	@Value("${service.read.timeout}")
+	private int readTimeout;
+	@Value("${service.connection.request.timeout}")
+	private int connectionRequestTimeout;
+	@Value("${authentication.enabled}")
+	private boolean authenticationEnabled;
+	@Value(("${authentication.url}"))
+	private String authUrl;
+	@Value(("${authentication.realm}"))
+	private String authRealm;
+	@Value(("${authentication.publicKey}"))
+	private String authPublicKey;
+	@Value("${perf.monitoring.enabled}")
+	private boolean performanceMonitoringEnabled;
+	@Value("${registry.context.base}")
+	private String registryContextBase;
+	@Value("${frame.file}")
+	private String frameFile;
+	@Value("${validation.type}")
+	private String validationType = "json";
+	@Value("${validation.enabled}")
+	private boolean validationEnabled = true;
+	@Value("${taskExecutor.index.threadPoolName}")
+	private String indexThreadName;
+	@Value("${taskExecutor.index.corePoolSize}")
+	private int indexCorePoolSize;
+	@Value("${taskExecutor.index.maxPoolSize}")
+	private int indexMaxPoolSize;
+	@Value("${taskExecutor.index.queueCapacity}")
+	private int indexQueueCapacity;
+	@Value("${auditTaskExecutor.threadPoolName}")
+	private String auditThreadName;
+	@Value("${auditTaskExecutor.corePoolSize}")
+	private int auditCorePoolSize;
+	@Value("${auditTaskExecutor.maxPoolSize}")
+	private int auditMaxPoolSize;
+	@Value("${auditTaskExecutor.queueCapacity}")
+	private int auditQueueCapacity;
+	@Value("${elastic.search.connection_url}")
+	private String elasticConnInfo;
+	@Value("${notification.service.connection_url}")
+	private String notificationServiceConnInfo;
+	@Value("${search.providerName}")
+	private String searchProviderName;
+	@Value("${read.providerName}")
+	private String readProviderName;
+	@Value("${server.port}")
+	private long serverPort;
+	@Value("${registry.schema.url}")
+	private String schemaUrl;
+	@Value("${httpConnection.maxConnections:5}")
+	private int httpMaxConnections;
+	@Value(value = "${kafka.bootstrapAddress}")
+	private String bootstrapAddress;
+	@Value(value = "${async.enabled}")
+	private Boolean asyncEnabled;
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
-	
+
 	@Bean
 	public ObjectMapper objectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -193,20 +182,19 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new FrameContext(frameFile, registryContextBase);
 	}
 
-    /**
-     * Gets the type of validation configured in the application.yml
-     *
-     * @return
-     * @throws IllegalArgumentException
-     *             when value is not in known SchemaType enum
-     */
-    @Bean
-    public SchemaType getValidationType() throws IllegalArgumentException {
-        String validationMechanism = validationType.toUpperCase();
-        SchemaType st = SchemaType.valueOf(validationMechanism);
+	/**
+	 * Gets the type of validation configured in the application.yml
+	 *
+	 * @return
+	 * @throws IllegalArgumentException when value is not in known SchemaType enum
+	 */
+	@Bean
+	public SchemaType getValidationType() throws IllegalArgumentException {
+		String validationMechanism = validationType.toUpperCase();
+		SchemaType st = SchemaType.valueOf(validationMechanism);
 
-        return st;
-    }
+		return st;
+	}
 
 	@Bean
 	public Json2LdTransformer json2LdTransformer() {
@@ -225,7 +213,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public Json2JsonTransformer json2JsonTransformer() {return new Json2JsonTransformer();}
+	public Json2JsonTransformer json2JsonTransformer() {
+		return new Json2JsonTransformer();
+	}
 
 	@Bean
 	public ConfigurationHelper configurationHelper() {
@@ -246,40 +236,39 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public ValidationInterceptor validationInterceptor() throws IOException, CustomException {
 		return new ValidationInterceptor(new ValidationFilter(validationServiceImpl()));
 	}
-/*
+
+	/*
+		@Bean
+		public Middleware authorizationFilter() {
+			return new AuthorizationFilter(new KeyCloakServiceImpl(authUrl, authRealm, authPublicKey));
+		}
+		*/
 	@Bean
-	public Middleware authorizationFilter() {
-		return new AuthorizationFilter(new KeyCloakServiceImpl(authUrl, authRealm, authPublicKey));
+	public IValidate validationServiceImpl() throws IOException, CustomException {
+		// depends on input type,we need to implement validation
+		if (getValidationType() == SchemaType.JSON) {
+			IValidate validator = new JsonValidationServiceImpl(schemaUrl);
+			definitionsManager.getAllDefinitions().forEach(definition -> {
+				logger.debug("Definition: title-" + definition.getTitle() + " , content-" + definition.getContent());
+				validator.addDefinitions(definition.getTitle(), definition.getContent());
+			});
+			logger.info(definitionsManager.getAllDefinitions().size() + " definitions added to validator service ");
+			return validator;
+		} else {
+			logger.error("Fatal - not a known validator mentioned in the application configuration.");
+		}
+		return null;
 	}
-	*/
-    @Bean
-    public IValidate validationServiceImpl() throws IOException, CustomException {
-        // depends on input type,we need to implement validation
-        if (getValidationType() == SchemaType.JSON) {
-            IValidate validator = new JsonValidationServiceImpl(schemaUrl);
-            definitionsManager.getAllDefinitions().forEach(definition->{
-                logger.debug("Definition: title-" + definition.getTitle() + " , content-" + definition.getContent());
-                validator.addDefinitions(definition.getTitle(), definition.getContent());
-            });
-            logger.info(definitionsManager.getAllDefinitions().size() + " definitions added to validator service ");
-            return validator;
-        } else {
-            logger.error("Fatal - not a known validator mentioned in the application configuration.");
-        }
-        return null;
-    }
 
 	@Bean
-	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE,
-			proxyMode = ScopedProxyMode.TARGET_CLASS)
+	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE, proxyMode = ScopedProxyMode.TARGET_CLASS)
 	public AuditRecord auditRecord() {
 		return new AuditRecord();
 	}
 
 	@Bean
 	public RestTemplate restTemplateProvider() throws IOException {
-		HttpClient httpClient = HttpClientBuilder.create().setMaxConnPerRoute(httpMaxConnections)
-				.setMaxConnTotal(httpMaxConnections*2).build();
+		HttpClient httpClient = HttpClientBuilder.create().setMaxConnPerRoute(httpMaxConnections).setMaxConnTotal(httpMaxConnections * 2).build();
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 		requestFactory.setConnectTimeout(connectionTimeout);
 		requestFactory.setConnectionRequestTimeout(connectionRequestTimeout);
@@ -301,13 +290,16 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			return shardAdvisor.getInstance(dbConnectionInfoMgr.getShardAdvisorClassName());
 		}
 	}
-    @Bean
-    public ISearchService searchService() {
-        ServiceProvider searchProvider = new ServiceProvider();
-        return searchProvider.getSearchInstance(searchProviderName, isElasticSearchEnabled());
-    }
 
-	/** This method creates read provider implementation bean
+	@Bean
+	public ISearchService searchService() {
+		ServiceProvider searchProvider = new ServiceProvider();
+		return searchProvider.getSearchInstance(searchProviderName, isElasticSearchEnabled());
+	}
+
+	/**
+	 * This method creates read provider implementation bean
+	 *
 	 * @return
 	 */
 	@Bean
@@ -357,8 +349,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 		// Verifying our API identifiers and populating the APIMessage bean
 		// Do not remove this.
-		registry.addInterceptor(requestIdValidationInterceptor()).addPathPatterns(new ArrayList(requestMap.keySet()))
-				.order(orderIdx++);
+		registry.addInterceptor(requestIdValidationInterceptor()).addPathPatterns(new ArrayList(requestMap.keySet())).order(orderIdx++);
 
 		// Authenticate and authorization check
 /*		if (authenticationEnabled) {
@@ -381,8 +372,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addResourceHandlers(ResourceHandlerRegistry registry) {
 		try {
-			registry.addResourceHandler("/resources/**").addResourceLocations("classpath:vocab/1.0/")
-					.setCachePeriod(3600).resourceChain(true).addResolver(new PathResourceResolver());
+			registry.addResourceHandler("/resources/**").addResourceLocations("classpath:vocab/1.0/").setCachePeriod(3600).resourceChain(true).addResolver(new PathResourceResolver());
 		} catch (Exception e) {
 			throw e;
 		}
@@ -394,7 +384,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return new CustomExceptionHandler(gson());
 	}
 
-	/** This method creates ThreadPool task-executor
+	/**
+	 * This method creates ThreadPool task-executor
+	 *
 	 * @return - TaskExecutor
 	 */
 	@Bean(name = "taskExecutor")
@@ -424,7 +416,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return executor;
 	}
 
-	/** creates elastic-service bean and instanstiates the indices
+	/**
+	 * creates elastic-service bean and instanstiates the indices
+	 *
 	 * @return - IElasticService
 	 * @throws IOException
 	 */
@@ -446,6 +440,66 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		notificationService.setConnectionInfo(notificationServiceConnInfo);
 		return notificationService;
 	}
+
+	@Bean
+	public RegistryService registryService() {
+		if (asyncEnabled) {
+			return new RegistryAsyncServiceImpl();
+		} else {
+			return new RegistryServiceImpl();
+		}
+	}
+
+
+	@Bean
+	public KafkaAdmin kafkaAdmin() {
+		Map<String, Object> configs = new HashMap<>();
+		configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
+		return new KafkaAdmin(configs);
+	}
+
+	@Bean
+	public NewTopic createEntityTopic() {
+		return new NewTopic(createEntityTopic, 1, (short) 1);
+	}
+
+	@Bean
+	public NewTopic postCreateEntityTopic() {
+		return new NewTopic(postCreateEntityTopic, 1, (short) 1);
+	}
+
+	@Bean
+	public ProducerFactory<String, String> producerFactory() {
+		Map<String, Object> configProps = new HashMap<>();
+		configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
+		configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+		configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+		return new DefaultKafkaProducerFactory<>(configProps);
+	}
+
+	@Bean
+	public KafkaTemplate<String, String> kafkaTemplate() {
+		return new KafkaTemplate<>(producerFactory());
+	}
+
+	@Bean
+	public ConsumerFactory<String, String> consumerFactory() {
+		Map<String, Object> props = new HashMap<>();
+		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
+		props.put(ConsumerConfig.GROUP_ID_CONFIG, createEntityGroupId);
+		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+		return new DefaultKafkaConsumerFactory<>(props);
+	}
+
+	@Bean
+	public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
+
+		ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
+		factory.setConsumerFactory(consumerFactory());
+		return factory;
+	}
+
 
 //	/** creates elastic-service bean and instanstiates the indices
 //	 * @return - IElasticService

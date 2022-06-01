@@ -1,6 +1,8 @@
 package dev.sunbirdrc.registry;
 
 public class Constants {
+
+    public static final String SUNBIRD_RC = "sunbird-rc";
     public static final String KEY_CONSENT = "consent";
     public static final String INVITE_SUBJECT_TEMPLATE = "INVITATION TO JOIN %s";
     public static final String INVITE_BODY_TEMPLATE = "You have been invited to join %s registry. You can complete your profile here: https://ndear.xiv.in";
@@ -21,4 +23,5 @@ public class Constants {
     public final static String MINIO_URI_PREFIX = "minio://";
     public final static String HTTP_URI_PREFIX = "http://";
     public final static String HTTPS_URI_PREFIX = "https://";
+    public static final String createEntityGroupId = "create-entity-consumer-group";
 }
