@@ -174,7 +174,7 @@ public class RegistryHelper {
         return entityId;
     }
 
-    public String addEntityWithoutValidation(JsonNode inputJson, String userId, String entityName) throws Exception {
+    private String addEntityWithoutValidation(JsonNode inputJson, String userId, String entityName) throws Exception {
         return addEntity(inputJson, userId, entityName, true);
     }
 
