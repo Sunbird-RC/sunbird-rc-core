@@ -52,7 +52,7 @@ public class CreateEntityConsumer {
         this.webhookService = webhookService;
     }
 
-    @KafkaListener(topics = "#{'${kafka.createEntityTopic}'}", groupId = createEntityGroupId)
+    @KafkaListener(topics = "#{'${kafka.createEntityTopic}'}", groupId = createEntityGroupId, autoStartup = "${async.enabled}")
     @SendTo("#{'${kafka.postCreateEntityTopic}'}")
     public void createEntityConsumer(@Payload String message, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key) {
         PostCreateEntityMessage postCreateEntityMessage = PostCreateEntityMessage.builder().build();

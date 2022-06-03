@@ -56,7 +56,7 @@ workflow:
   enabled: ${workflow.enable:true}
 
 async:
-  enabled: ${async_enabled:true}
+  enabled: ${async_enabled:false}
 
 kafka:
   bootstrapAddress: ${kafka_bootstrap_address:localhost:9092}
@@ -64,7 +64,7 @@ kafka:
   postCreateEntityTopic: ${kafka_post_create_entity_topic:post_create_entity}
 
 webhook:
-  enabled: ${webhook_enabled:true}
+  enabled: ${webhook_enabled:false}
   url: ${webhook_url:http://localhost:5001/api/v1/callback}
 
 conditionalAccess:
