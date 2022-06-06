@@ -336,7 +336,7 @@ public class ElasticServiceImpl implements IElasticService {
                 break;
             case or:
                 List<Object> values = (List<Object>) value;
-                query = query.must(QueryBuilders.termsQuery(field, values));
+                query = query.must(QueryBuilders.termsQuery(String.format("%s.keyword", field), values));
                 break;
 
             case contains:
