@@ -45,6 +45,7 @@ import static dev.sunbirdrc.registry.Constants.*;
 @RestController
 public class RegistryEntityController extends AbstractController {
 
+    private static final String TRANSACTION_ID = "transactionId";
     private static Logger logger = LoggerFactory.getLogger(RegistryEntityController.class);
 
     @Autowired
@@ -55,6 +56,9 @@ public class RegistryEntityController extends AbstractController {
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${certificate.enableExternalTemplates:false}") boolean externalTemplatesEnabled;
+
+    @Value(value = "${async.enabled}")
+    private Boolean asyncEnabled;
 
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
@@ -224,7 +228,11 @@ public class RegistryEntityController extends AbstractController {
             String userId = registryHelper.authorizeManageEntity(request, entityName);
             String label = registryHelper.addEntity(newRootNode, userId);
             Map resultMap = new HashMap();
-            resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
+            if (asyncEnabled) {
+                resultMap.put(TRANSACTION_ID, label);
+            } else {
+                resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
+            }
             result.put(entityName, resultMap);
             response.setResult(result);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
