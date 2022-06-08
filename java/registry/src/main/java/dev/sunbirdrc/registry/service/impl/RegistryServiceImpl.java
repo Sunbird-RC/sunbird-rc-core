@@ -87,6 +87,9 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${registry.perRequest.indexCreation.enabled:false}")
     private boolean perRequestIndexCreation;
 
+    @Value("${elastic.search.add_shard_prefix:true}")
+    private boolean addShardPrefixForESRecord;
+
     @Value("${registry.context.base}")
     private String registryBaseUrl;
 
@@ -223,6 +226,11 @@ public class RegistryServiceImpl implements RegistryService {
             }
 
             if (isElasticSearchEnabled()) {
+                if (addShardPrefixForESRecord && !shard.getShardLabel().isEmpty()) {
+                    // Replace osid with shard details
+                    String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
+                    JSONUtil.addPrefix((ObjectNode) rootNode, prefix, new ArrayList<>(Collections.singletonList(uuidPropertyName)));
+                }
                 callESActors(rootNode, "ADD", vertexLabel, entityId, tx);
             }
             auditService.auditAdd(
@@ -318,6 +326,11 @@ public class RegistryServiceImpl implements RegistryService {
             databaseProvider.commitTransaction(graph, tx);
 
             if(isInternalRegistry(entityType) && isElasticSearchEnabled()) {
+                if (addShardPrefixForESRecord && !shard.getShardLabel().isEmpty()) {
+                    // Replace osid with shard details
+                    String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
+                    JSONUtil.addPrefix((ObjectNode) mergedNode, prefix, new ArrayList<>(Collections.singletonList(uuidPropertyName)));
+                }
                 callESActors(mergedNode, "UPDATE", entityType, id, tx);
             }
             auditService.auditUpdate(

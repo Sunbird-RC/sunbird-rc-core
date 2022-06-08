@@ -281,6 +281,7 @@ elastic:
     enabled: ${elastic_search_enabled:false}
     # elastic-search connection info
     connection_url: ${elastic_search_connection_url:localhost:9200}
+    add_shard_prefix: ${elastic_search_add_shard_prefix:true}
 
 filestorage:
   url: ${filestorage_connection_url:http://localhost:9000}
