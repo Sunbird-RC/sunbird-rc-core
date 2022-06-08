@@ -18,13 +18,18 @@
                 }
                 var timer = document.getElementById("resend-timer");
                 var resentCom = document.getElementById("resend-msg");
-                var timerCount = 10;
-                let intervalId = setInterval(() => {
+                var timerCount = 100;
+
+                function setTime() {
                     timer.className = "mt-2";
-                    let minutes = timerCount/60;
-                    let seconds = timerCount%60;
-                    timer.innerHTML = "Resend OTP in " + (minutes < 10 ? "0" + parseInt(minutes) : parseInt(minutes) ) + ":" + (seconds < 10 ? "0" + seconds : seconds )
+                    let minutes = timerCount / 60;
+                    let seconds = timerCount % 60;
+                    timer.innerHTML = "Resend OTP in " + (minutes < 10 ? "0" + parseInt(minutes) : parseInt(minutes)) + ":" + (seconds < 10 ? "0" + seconds : seconds)
                     timerCount--;
+                }
+                setTime()
+                let intervalId = setInterval(() => {
+                    setTime();
                 }, 1000);
                 setTimeout(() => {
                     clearInterval(intervalId)
@@ -34,7 +39,7 @@
             }
         </script>
     <#elseif section = "form">
-        <h3 class="d-flex align-items-center"><img src="${url.resourcesPath}/img/next-btn.svg" alt="" class="pr-3"> Confirm OTP</h3>
+        <h3 class="d-flex align-items-center"><a onclick="window.location.reload()"><img src="${url.resourcesPath}/img/next-btn.svg" alt="" class="pr-3"></a> Confirm OTP</h3>
         <div class="ndear-login-card-wrapper">
             <span id="mobile-label">Enter the code sent to </span>
             <div class="box-container">

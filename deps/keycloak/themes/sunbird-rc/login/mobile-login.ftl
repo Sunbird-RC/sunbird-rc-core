@@ -20,7 +20,6 @@
             }
         </script>
     <#elseif section = "form">
-        <h3>Login</h3>
         <div class="ndear-login-card-wrapper">
 
             <b>Email Id / Mobile Number</b>

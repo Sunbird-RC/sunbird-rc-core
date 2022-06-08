@@ -21,6 +21,17 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
                 integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
                 crossorigin="anonymous"></script>
+        <script>
+            window.onload = function (e) {
+                var errorElement = document.getElementById("kc-error-message");
+                if (errorElement) {
+                    if (errorElement.innerText.toLowerCase().includes("invalid username")) {
+                        document.getElementsByTagName("body")[0].innerHTML = "Redirecting to " +"${properties.signupLink!}"
+                        window.location = "${properties.signupLink!}"
+                    }
+                }
+            }
+        </script>
         <title><#nested "title"></title>
         <#if properties.styles?has_content>
             <#list properties.styles?split(' ') as style>
@@ -30,11 +41,13 @@
     </head>
 
     <body>
+    <#if properties.showBanner = "true">
     <div class="banner">
         <span></span>
-        <span>This is a demo of the ${properties.portalTitle!}. Check documentation <a href="https://docs.sunbirdrc.dev/">here</a></span>
+        <span>This is a demo of the ${properties.portalTitle!} Portal. Check documentation <a href="https://docs.sunbirdrc.dev/">here</a></span>
         <img src="${url.resourcesPath}/img/theme-icon.svg" alt="">
     </div>
+    </#if>
     <nav class="navbar navbar-expand-lg navbar-light">
         <a class="navbar-brand" href="#">
             <#if properties.keycloakLogo = "NA">
@@ -55,7 +68,7 @@
             <#else>
             <div class="container-wrapper title-wrapper" style="background-image: url(${properties.keycloakBackgroundImage})">
             </#if>
-                <h3>Welcome to ${properties.portalTitle!}</h3>
+                <h3>Login to ${properties.portalTitle!} demo portal</h3>
                 <span>${properties.portalSubTitle!}</span>
             </div>
             <div class="ndear-login-wrapper container-wrapper">
