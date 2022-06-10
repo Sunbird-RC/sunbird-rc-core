@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -111,21 +112,21 @@ public class EntityStateHelperTest {
 
     @Test
     public void shouldCreateNewOwnersForNewlyAddedOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
+        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString(), any())).thenReturn("456");
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldAddNewOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
     public void shouldNotCreateNewOwners() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
+        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString(), any())).thenReturn("456");
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotAddNewOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
     public void shouldNotModifyExistingOwners() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn("456");
+        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString(),any())).thenReturn("456");
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotModifyExistingOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
