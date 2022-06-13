@@ -67,7 +67,7 @@ public class CreateEntityConsumer {
 
         } catch (Exception e) {
             logger.error("Creating entity failed, {}", e.getMessage(), e);
-            postCreateEntityMessage = PostCreateEntityMessage.builder().status(CreateEntityStatus.FAILED).message(e.getMessage()).build();
+            postCreateEntityMessage = PostCreateEntityMessage.builder().status(CreateEntityStatus.FAILED).transactionId(key).message(e.getMessage()).build();
         } finally {
             try {
                 kafkaTemplate.send(postCreateEntityTopic, key, objectMapper.writeValueAsString(postCreateEntityMessage));
