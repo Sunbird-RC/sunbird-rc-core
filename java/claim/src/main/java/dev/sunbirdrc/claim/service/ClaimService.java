@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import static dev.sunbirdrc.claim.contants.AttributeNames.ATTESTOR_INFO;
 import static dev.sunbirdrc.claim.contants.AttributeNames.NOTES;
 import static dev.sunbirdrc.claim.contants.ErrorMessages.*;
+import static dev.sunbirdrc.registry.middleware.util.Constants.USER_ID;
 
 @Service
 public class ClaimService {
@@ -82,6 +83,7 @@ public class ClaimService {
         }
         claim.setAttestedOn(new Date());
         claim.setStatus(ClaimStatus.CLOSED.name());
+        claim.setAttestorUserId(requestBody.get(USER_ID).asText());
         return claimRepository.save(claim);
     }
 

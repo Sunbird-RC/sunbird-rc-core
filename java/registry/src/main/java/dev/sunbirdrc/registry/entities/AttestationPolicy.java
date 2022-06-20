@@ -8,10 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
@@ -64,6 +61,8 @@ public class AttestationPolicy {
     private Map<String, Object> additionalInput;
 
     private List<AttestationStep> attestationSteps;
+
+    private String onComplete;
 
     public String getAttestorEntity() {
         String[] split = this.attestorPlugin.split("entity=");

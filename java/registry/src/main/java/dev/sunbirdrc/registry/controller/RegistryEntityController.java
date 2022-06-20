@@ -595,6 +595,7 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
+    //TODO: API called by claim-ms, need to be blocked from external access
     @RequestMapping(value = "/api/v1/{property}/{propertyId}/attestation/{attestationName}/{attestationId}", method = RequestMethod.PUT)
     public ResponseEntity<ResponseParams> updateAttestationProperty(
             @PathVariable String property,
@@ -611,8 +612,6 @@ public class RegistryEntityController extends AbstractController {
         try {
             logger.info("updateAttestationProperty: {}", requestBody);
             PluginResponseMessage pluginResponseMessage = objectMapper.convertValue(requestBody, PluginResponseMessage.class);
-            String userId = "";
-
             registryHelper.updateState(pluginResponseMessage);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             responseParams.setResultList(Collections.singletonList("response"));

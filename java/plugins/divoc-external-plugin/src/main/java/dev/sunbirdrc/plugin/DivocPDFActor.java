@@ -11,6 +11,7 @@ import dev.sunbirdrc.plugin.services.DivocServices;
 import dev.sunbirdrc.pojos.PluginFile;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
+import dev.sunbirdrc.pojos.PluginResponseMessageCreator;
 import dev.sunbirdrc.pojos.attestation.Action;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.*;
@@ -48,15 +49,7 @@ public class DivocPDFActor extends BaseActor {
 		String propertyData = pluginRequestMessage.getPropertyData();
 		Map propertyDataMap = objectMapper.readValue(propertyData, Map.class);
 		byte[] fileBytes = divocServices.fetchDivocPdf(clientToken, pluginRequestMessage.getAdditionalInputs().get("preEnrollmentCode").textValue(), propertyDataMap.get("mobileNumber").toString());
-		PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder().policyName(pluginRequestMessage.getPolicyName())
-				.sourceEntity(pluginRequestMessage.getSourceEntity()).sourceOSID(pluginRequestMessage.getSourceOSID())
-				.attestationOSID(pluginRequestMessage.getAttestationOSID())
-				.attestorPlugin(pluginRequestMessage.getAttestorPlugin())
-				.additionalData(pluginRequestMessage.getAdditionalInputs())
-				.date(new Date())
-				.validUntil(new Date())
-				.version("")
-				.build();
+		PluginResponseMessage pluginResponseMessage = PluginResponseMessageCreator.createPluginResponseMessage(pluginRequestMessage);
 		if (fileBytes != null) {
 			pluginResponseMessage.setFiles(Collections.singletonList(PluginFile.builder().file(fileBytes)
 					.fileName(String.format("%s.pdf", pluginRequestMessage.getAttestationOSID())).build()));
