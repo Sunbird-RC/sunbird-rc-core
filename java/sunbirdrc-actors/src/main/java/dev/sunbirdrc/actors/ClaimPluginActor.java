@@ -22,6 +22,7 @@ import org.sunbird.akka.core.Router;
 import java.io.IOException;
 import java.util.Objects;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.USER_ID;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 
@@ -60,6 +61,7 @@ public class ClaimPluginActor extends BaseActor {
         attestationRequest.set("attestorInfo", attestorInfo);
         attestationRequest.put("action", status);
         attestationRequest.put("notes", notes);
+        attestationRequest.put(USER_ID, pluginRequestMessage.getUserId());
         ResponseEntity<ClaimDTO> responseEntity = restTemplate.exchange(
                 getClaimRequestUrl() + CLAIMS_PATH + "/" + claimId,
                 HttpMethod.POST,

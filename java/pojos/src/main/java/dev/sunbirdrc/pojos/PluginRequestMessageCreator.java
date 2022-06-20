@@ -2,6 +2,9 @@ package dev.sunbirdrc.pojos;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.List;
+import java.util.Map;
+
 public class PluginRequestMessageCreator {
     public static PluginRequestMessage create(String propertyData,
                                               String condition,
@@ -10,7 +13,7 @@ public class PluginRequestMessageCreator {
                                               String userId,
                                               String entityId, JsonNode additionalInput, String status,
                                               String name, String attestorPlugin, String attestorEntity,
-                                              String attestorSignin) {
+                                              String attestorSignin, Map<String, List<String>> propertiesOSID, String emailId) {
 
         PluginRequestMessage pluginRequestMessage = new PluginRequestMessage();
         pluginRequestMessage.setPolicyName(name);
@@ -25,6 +28,9 @@ public class PluginRequestMessageCreator {
         pluginRequestMessage.setConditions(condition);
         pluginRequestMessage.setStatus(status);
         pluginRequestMessage.setUserId(userId);
+        pluginRequestMessage.setPropertiesOSID(propertiesOSID);
+        pluginRequestMessage.setEmailId(emailId);
         return pluginRequestMessage;
     }
+
 }

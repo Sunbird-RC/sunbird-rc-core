@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @JsonSerialize
 @Data
@@ -19,21 +20,24 @@ import java.util.List;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PluginResponseMessage {
-    String policyName;
-    String sourceEntity;
-    String sourceOSID;
-    String attestationOSID;
-    String attestorPlugin;
-    String response;
-    String signedData;
+    private String policyName;
+    private String sourceEntity;
+    private String sourceOSID;
+    private String attestationOSID;
+    private String attestorPlugin;
+    private String response;
+    private String signedData;
     //additional response received:
-    JsonNode additionalData;
-    String status;
-    Date date;
-    Date validUntil;
-    String version;
+    private JsonNode additionalData;
+    private String status;
+    private Date date;
+    private Date validUntil;
+    private String version;
+    private String userId;
+    private Map<String, List<String>> propertiesOSID;
+    private String emailId;
     @Builder.Default
-    List<PluginFile> files = new ArrayList<>();
+    private List<PluginFile> files = new ArrayList<>();
 }
 
 

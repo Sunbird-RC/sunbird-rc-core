@@ -131,7 +131,7 @@
         </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
-            <artifactId>sample-external-plugin</artifactId>
+            <artifactId>divoc-external-plugin</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>

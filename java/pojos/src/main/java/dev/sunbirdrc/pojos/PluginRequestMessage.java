@@ -9,6 +9,7 @@ import lombok.*;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @JsonSerialize
@@ -18,20 +19,22 @@ import java.util.Optional;
 @Builder
 @AllArgsConstructor
 public class PluginRequestMessage {
-    String policyName;
-    JsonNode additionalInputs;
-    String propertyData;
-    String sourceEntity;
-    String sourceOSID;
-    String attestationOSID;
-    String attestationType;
-    String attestorPlugin;
-    String attestorEntity;
-    String attestorSignin;
-    String conditions;
-    String status;
+    private String policyName;
+    private JsonNode additionalInputs;
+    private String propertyData;
+    private String sourceEntity;
+    private String sourceOSID;
+    private String attestationOSID;
+    private String attestationType;
+    private String attestorPlugin;
+    private String attestorEntity;
+    private String attestorSignin;
+    private String conditions;
+    private String status;
     @Nullable
-    String userId;
+    private String userId;
+    private Map<String, List<String>> propertiesOSID;
+    private String emailId;
 
     public Optional<String> getActorName() {
         // sample names did:plugin:aadhar, did:plugin:claim,
@@ -39,4 +42,5 @@ public class PluginRequestMessage {
         String[] split2 = split1[0].split(":");
         return split2.length >= 3 ? Optional.of(split2[2]) : Optional.empty();
     }
+
 }

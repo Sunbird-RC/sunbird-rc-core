@@ -31,6 +31,7 @@ public class Claim {
     private String propertyURI;
     @Column(name = Claim.CREATED_AT)
     private Date createdAt;
+    private Date updatedAt;
     @Column(name=Claim.ATTESTED_ON)
     private Date attestedOn;
     @Column
@@ -48,9 +49,18 @@ public class Claim {
     @Column
     private String attestationName;
 
+    @Column
+    private String attestorUserId;
+
     @PrePersist
     protected void onCreate() {
         createdAt = new Date();
+        updatedAt = new Date();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = new Date();
     }
 
     public String getId() {
@@ -185,5 +195,21 @@ public class Claim {
 
     public void setAttestationName(String attestationName) {
         this.attestationName = attestationName;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getAttestorUserId() {
+        return attestorUserId;
+    }
+
+    public void setAttestorUserId(String attestorUserId) {
+        this.attestorUserId = attestorUserId;
     }
 }

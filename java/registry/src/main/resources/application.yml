@@ -23,6 +23,7 @@ server:
 
 notification:
   service:
+    enabled: ${notification_enabled:false}
     connection_url: ${notification_url:http://localhost:8765/divoc/notification-service/v1/notification}
 
 cors:
@@ -221,7 +222,7 @@ keycloak-user:
 claims:
   url: ${claims_url:http://localhost:8081}
 authentication:
-  enabled: ${authentication_enabled:false}
+  enabled: ${authentication_enabled:true}
   publicKey:  ${authentication_publickey:}
   realm:  ${authentication_realm:sunbird-rc}
   url:  ${authentication_url:localhost:8443/auth}
