@@ -139,7 +139,11 @@
             <artifactId>spring-kafka</artifactId>
             <version>2.8.6</version>
         </dependency>
-
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>mosip-external-plugin</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>sample-external-plugin-2</artifactId>
