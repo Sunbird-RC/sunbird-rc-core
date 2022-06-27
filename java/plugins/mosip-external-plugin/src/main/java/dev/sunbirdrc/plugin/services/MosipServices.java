@@ -22,7 +22,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-@ConditionalOnProperty("${mosip.enabled:#{environment.MOSIP_ENABLED}}")
 public class MosipServices {
     
     @Autowired
