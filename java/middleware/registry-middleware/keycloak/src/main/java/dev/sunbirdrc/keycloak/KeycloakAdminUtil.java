@@ -1,11 +1,14 @@
 package dev.sunbirdrc.keycloak;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.*;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,8 +66,9 @@ public class KeycloakAdminUtil {
                 .build();
     }
 
-    public String createUser(String entityName, String userName, String email, String mobile) throws OwnerCreationException {
+    public String createUser(String entityName, String userName, String email, String mobile, JsonNode realmRoles) throws OwnerCreationException {
         logger.info("Creating user with mobile_number : " + userName);
+        List<String> roles = JSONUtil.convertJsonNodeToList(realmRoles);
         UserRepresentation newUser = createUserRepresentation(entityName, userName, email, mobile);
         GroupRepresentation entityGroup = createGroupRepresentation(entityName);
         keycloak.realm(realm).groups().add(entityGroup);
@@ -75,14 +79,33 @@ public class KeycloakAdminUtil {
             logger.info("User ID path" + response.getLocation().getPath());
             String userID = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
             logger.info("User ID : " + userID);
+            addRolesToUser(roles, userID);
             return userID;
         } else if (response.getStatus() == 409) {
             logger.info("UserID: {} exists", userName);
-            return updateExistingUserAttributes(entityName, userName, email, mobile);
+            return updateExistingUserAttributes(entityName, userName, email, mobile, roles);
         } else if (response.getStatus() == 500) {
             throw new OwnerCreationException("Keycloak user creation error");
         }else {
             throw new OwnerCreationException("Username already invited / registered");
+        }
+    }
+
+    private void addRolesToUser(List<String> roles, String userID){
+        /** Add the 'view-realm' role to client to access the keycloak roles
+         * Go to Keycloak -> open client(which is configured as client_id in application.yml) ->
+         * Service Account Roles -> Client Roles, select 'realm-management' -> Assign 'view-relam' role
+         */
+        if(!roles.isEmpty()) {
+            List<RoleRepresentation> roleToAdd = new ArrayList<>();
+            for (String role : roles) {
+                roleToAdd.add(keycloak.realm(realm).roles().get(role).toRepresentation());
+            }
+            UserResource userResource = keycloak.realm(realm).users().get(userID);
+            userResource.roles().realmLevel().add(roleToAdd);
+            logger.info("Added the roles: {}, to user: {}", roles, userID);
+        } else {
+            logger.info("No roles added to the user: {}", userID);
         }
     }
 
@@ -92,7 +115,7 @@ public class KeycloakAdminUtil {
         return groupRepresentation;
     }
 
-    private String updateExistingUserAttributes(String entityName, String userName, String email, String mobile) throws OwnerCreationException {
+    private String updateExistingUserAttributes(String entityName, String userName, String email, String mobile, List<String> roles) throws OwnerCreationException {
         Optional<UserResource> userRepresentationOptional = getUserByUsername(userName);
         if (userRepresentationOptional.isPresent()) {
             UserResource userResource = userRepresentationOptional.get();
@@ -100,6 +123,7 @@ public class KeycloakAdminUtil {
             checkIfUserRegisteredForEntity(entityName, userRepresentation);
             updateUserAttributes(entityName, email, mobile, userRepresentation);
             userResource.update(userRepresentation);
+            addRolesToUser(roles, userName);
             return userRepresentation.getId();
         } else {
             logger.error("Failed fetching user by username: {}", userName);
