@@ -103,7 +103,9 @@ public class KeycloakAdminUtil {
             }
             UserResource userResource = keycloak.realm(realm).users().get(userID);
             userResource.roles().realmLevel().add(roleToAdd);
-            logger.info("Added the following roles to keycloak user: " + roles);
+            logger.info("Added the roles: {}, to keycloak user: {}", roles, userID);
+        } else {
+            logger.info("No roles added to the user: {}", userID);
         }
     }
 
