@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
+@ConditionalOnProperty("${mosip.enabled:#{environment.MOSIP_ENABLED}}")
 public class MosipServices {
     
     @Autowired
@@ -46,13 +48,18 @@ public class MosipServices {
     @Value("${mosip.print.url:#{environment.PRINT_URL}}")
     private String printUrl;
 
+    @Value("${mosip.enabled:#{environment.MOSIP_ENABLED}}")
+    private Boolean mosipEnabled = Boolean.FALSE;
+
     @Autowired
     private MosipAuthService mosipAuthService;
 
     public void initSubscriptions() {
-        LOGGER.info("Initializing subscriptions..");
-        registerTopic();
-        subscribeForPrintServiceEvents();
+        if (mosipEnabled) {
+            LOGGER.info("Initializing subscriptions..");
+            registerTopic();
+            subscribeForPrintServiceEvents();
+        }
     }
 
     @Scheduled(fixedDelay = Constants.SUBSCRIBE_RETRY_SECONDS, initialDelay = Constants.SUBSCRIBE_RETRY_SECONDS)
