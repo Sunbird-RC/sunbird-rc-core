@@ -18,6 +18,7 @@
     <modules>
         <module>divoc-external-plugin</module>
         <module>sample-external-plugin-2</module>
+        <module>mosip-external-plugin</module>
     </modules>
     <dependencies>
         <dependency>
