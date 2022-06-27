@@ -221,7 +221,7 @@ keycloak-user:
   # email actions which will be trigger by keycloak
   # example email actions: VERIFY_EMAIL, UPDATE_PROFILE, UPDATE_PASSWORD, TERMS_AND_CONDITIONS etc.
   # email details should be configured in keycloak realm settings
-  emailActions: ${keycloack_user_email_actions:UPDATE_PASSWORD}
+  email-actions: ${keycloack_user_email_actions:}
 claims:
   url: ${claims_url:http://localhost:8081}
 authentication:

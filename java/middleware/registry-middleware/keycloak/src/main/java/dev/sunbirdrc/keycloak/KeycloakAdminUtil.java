@@ -45,7 +45,7 @@ public class KeycloakAdminUtil {
             @Value("${keycloak-user.default-password:}") String defaultPassword,
             @Value("${keycloak-user.set-default-password:false}") boolean setDefaultPassword,
             @Value("${keycloak.auth-server-url:}") String authURL,
-            @Value("${keycloak-user.emailActions:}") List<String> emailActions) {
+            @Value("${keycloak-user.email-actions:}") List<String> emailActions) {
         this.realm = realm;
         this.adminClientSecret = adminClientSecret;
         this.adminClientId = adminClientId;
