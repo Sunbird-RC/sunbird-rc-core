@@ -218,6 +218,10 @@ keycloak-admin:
 keycloak-user:
   set-default-password: ${sunbird_keycloak_user_set_password:false}
   default-password: ${sunbird_keycloak_user_password:abcd@123}
+  # email actions which will be trigger by keycloak
+  # example email actions: VERIFY_EMAIL, UPDATE_PROFILE, UPDATE_PASSWORD, TERMS_AND_CONDITIONS etc.
+  # email details should be configured in keycloak realm settings
+  email-actions: ${keycloack_user_email_actions:}
 claims:
   url: ${claims_url:http://localhost:8081}
 authentication:
