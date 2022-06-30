@@ -80,7 +80,7 @@ public class ViewTransformer {
                 	}
                 }
                 
-                IEvaluator<Object> evaluator = EvaluatorFactory.getInstance(funcDef, actualValues);
+                IEvaluator<Object> evaluator = EvaluatorFactory.getInstance(funcDef, actualValues, new String[0]);
                 if (field.getDisplay()) {
                     Object evaluatedValue = evaluator.evaluate();
                     if(evaluatedValue instanceof String){

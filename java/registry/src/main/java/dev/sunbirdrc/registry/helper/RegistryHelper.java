@@ -19,6 +19,7 @@ import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.entities.FlowType;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
@@ -33,6 +34,8 @@ import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.util.*;
 import dev.sunbirdrc.validators.IValidate;
+import dev.sunbirdrc.views.FunctionDefinition;
+import dev.sunbirdrc.views.FunctionExecutor;
 import dev.sunbirdrc.views.ViewTemplate;
 import dev.sunbirdrc.views.ViewTransformer;
 import io.minio.errors.*;
@@ -73,6 +76,7 @@ public class RegistryHelper {
 
     private static final String ATTESTED_DATA = "attestedData";
     private static final String CLAIM_ID = "claimId";
+    private static final String ATTESTATION_RESPONSE = "attestationResponse";
     public static String ROLE_ANONYMOUS = "anonymous";
 
     private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
@@ -148,6 +152,8 @@ public class RegistryHelper {
 
     @Autowired
     private ConditionResolverService conditionResolverService;
+
+    private FunctionExecutor functionExecutor = new FunctionExecutor();
 
     public JsonNode removeFormatAttr(JsonNode requestBody) {
         String documents = "documents";
@@ -602,19 +608,59 @@ public class RegistryHelper {
         uploadAttestedFiles(pluginResponseMessage, metaData);
         JsonNode nodeToUpdate = entityStateHelper.manageState(attestationPolicy, root, propertyURI, action, metaData);
         updateEntity(nodeToUpdate, userId);
+        triggerNextFLowIfExists(pluginResponseMessage, sourceEntity, attestationPolicy, action, nodeToUpdate, userId);
+    }
+
+    private void triggerNextFLowIfExists(PluginResponseMessage pluginResponseMessage, String sourceEntity,
+                                         AttestationPolicy attestationPolicy, Action action, JsonNode sourceNode, String userId) throws Exception {
         if (action == GRANT_CLAIM && !StringUtils.isEmpty(attestationPolicy.getOnComplete())) {
-            try {
-                AttestationPolicy nextAttestationPolicy = getAttestationPolicy(sourceEntity, attestationPolicy.getOnComplete());
-                AttestationRequest attestationRequest = AttestationRequest.builder().entityName(pluginResponseMessage.getSourceEntity())
-                        .entityId(pluginResponseMessage.getSourceOSID()).name(attestationPolicy.getOnComplete())
-                        .additionalInput(pluginResponseMessage.getAdditionalData()).emailId(pluginResponseMessage.getEmailId())
-                        .userId(pluginResponseMessage.getUserId()).propertiesOSID(pluginResponseMessage.getPropertiesOSID())
-                        .propertyData(JSONUtil.convertStringJsonNode(pluginResponseMessage.getResponse())).build();
-                triggerAttestation(attestationRequest, nextAttestationPolicy);
-            } catch (PolicyNotFoundException e) {
-                logger.error("Next level attestation policy not found:", e);
+            if (attestationPolicy.getCompletionType() == FlowType.ATTESTATION) {
+                try {
+                    AttestationPolicy nextAttestationPolicy = getAttestationPolicy(sourceEntity, attestationPolicy.getCompletionValue());
+                    AttestationRequest attestationRequest = AttestationRequest.builder().entityName(pluginResponseMessage.getSourceEntity())
+                            .entityId(pluginResponseMessage.getSourceOSID()).name(attestationPolicy.getCompletionValue())
+                            .additionalInput(pluginResponseMessage.getAdditionalData()).emailId(pluginResponseMessage.getEmailId())
+                            .userId(pluginResponseMessage.getUserId()).propertiesOSID(pluginResponseMessage.getPropertiesOSID())
+                            .propertyData(JSONUtil.convertStringJsonNode(pluginResponseMessage.getResponse())).build();
+                    triggerAttestation(attestationRequest, nextAttestationPolicy);
+                } catch (PolicyNotFoundException e) {
+                    logger.error("Next level attestation policy not found:", e);
+                }
+            } else if (attestationPolicy.getCompletionType() == FlowType.FUNCTION) {
+                FunctionDefinition functionDefinition = definitionsManager.getDefinition(sourceEntity).getOsSchemaConfiguration()
+                        .getFunctionDefinition(attestationPolicy.getCompletionFunctionName());
+                if (functionDefinition != null ) {
+                    try {
+                        JsonNode inputJsonNode = generateInputForFunctionExecutor(sourceEntity, sourceNode.deepCopy(), pluginResponseMessage);
+                        JsonNode executedJsonNode = functionExecutor.execute(attestationPolicy.getCompletionValue(), functionDefinition, inputJsonNode);
+                        ObjectNode updatedNode = convertToSourceNode(sourceEntity, (ObjectNode) executedJsonNode);
+                        if (JSONUtil.diffJsonNode(sourceNode, updatedNode).size() > 0) {
+                            updateEntity(updatedNode, userId);
+                        }
+                    } catch (JsonProcessingException e) {
+                        logger.error("Exception while executing function definition: {} {}", attestationPolicy.getOnComplete(), functionDefinition, e);
+                    }
+                } else {
+                    logger.error("Invalid function name specified for onComplete: {}", attestationPolicy.getOnComplete());
+                }
+            } else {
+                logger.error("Invalid on complete config {}", attestationPolicy.getOnComplete());
             }
         }
+    }
+
+    @NotNull
+    private ObjectNode convertToSourceNode(String sourceEntity, ObjectNode executedJsonNode) {
+        ObjectNode updatedNode = JsonNodeFactory.instance.objectNode();
+        executedJsonNode.remove(ATTESTATION_RESPONSE);
+        updatedNode.set(sourceEntity, executedJsonNode);
+        return updatedNode;
+    }
+
+    private JsonNode generateInputForFunctionExecutor(String sourceEntity, JsonNode sourceNode, PluginResponseMessage pluginResponseMessage) throws IOException {
+        ObjectNode jsonNode = (ObjectNode) sourceNode.get(sourceEntity);
+        jsonNode.set(ATTESTATION_RESPONSE, JSONUtil.convertObjectJsonNode(pluginResponseMessage));
+        return jsonNode;
     }
 
     private void uploadAttestedFiles(PluginResponseMessage pluginResponseMessage, ObjectNode metaData) throws Exception {
