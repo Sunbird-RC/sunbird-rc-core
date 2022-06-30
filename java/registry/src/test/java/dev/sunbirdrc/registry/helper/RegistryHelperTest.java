@@ -23,6 +23,8 @@ import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
 import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import dev.sunbirdrc.validators.IValidate;
+import dev.sunbirdrc.views.FunctionDefinition;
+import dev.sunbirdrc.views.FunctionExecutor;
 import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.workflow.RuleEngineService;
 import org.apache.commons.io.IOUtils;
@@ -46,6 +48,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -476,7 +479,7 @@ public class RegistryHelperTest {
 		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
 		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
 		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
-		mockAttestationPolicy.set("onComplete", JsonNodeFactory.instance.textNode("nextAttestationPolicy"));
+		mockAttestationPolicy.set("onComplete", JsonNodeFactory.instance.textNode("attestation:nextAttestationPolicy"));
 		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
 		attestationArrayNodes.add(mockAttestationPolicy);
 		ObjectNode mockAttestationPolicy2 = JsonNodeFactory.instance.objectNode();
@@ -525,6 +528,89 @@ public class RegistryHelperTest {
 		sunbirdActorFactory.init("sunbirdrc-actors");
 		registryHelper.updateState(pluginResponseMessage);
 		verify(registryHelper, times(0)).triggerAttestation(any(), any());
+
+	}
+
+	@Test
+	public void shouldTriggerConcatFunctionOnAttestationCompleted() throws Exception {
+		mockDefinitionManager();
+		FunctionExecutor functionExecutorMock = Mockito.spy(FunctionExecutor.class);
+		ReflectionTestUtils.setField(registryHelper, "functionExecutor", functionExecutorMock);
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setFunctionDefinitions(Arrays.asList(
+				FunctionDefinition.builder().name("concat").result("arg1 = arg2 + \" - \" + arg3").build()
+		));
+		PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
+				.policyName("test")
+				.attestationOSID("test-1")
+				.sourceEntity("Student")
+				.policyName("testAttestationPolicy")
+				.sourceOSID("1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb")
+				.status("GRANT_CLAIM")
+				.response("{}")
+				.build();
+		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
+		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
+		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy.set("onComplete", JsonNodeFactory.instance.textNode("function:#/functionDefinitions/concat($.identityDetails.identityValue, $.identityDetails.gender, $.identityDetails.fullName)"));
+		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
+		attestationArrayNodes.add(mockAttestationPolicy);
+		ObjectNode mockAttestationPolicy2 = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy2.set("name", JsonNodeFactory.instance.textNode("nextAttestationPolicy"));
+		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
+		attestationArrayNodes.add(mockAttestationPolicy2);
+		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
+		when(searchService.search(any())).thenReturn(attestationPolicyObject);
+		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(getMockStudent());
+		registryHelper.entityStateHelper = mock(EntityStateHelper.class);
+		when(registryHelper.entityStateHelper.manageState(any(), any(), any(), any(), any())).thenReturn(getMockStudent());
+		when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
+		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
+		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
+		sunbirdActorFactory.init("sunbirdrc-actors");
+		registryHelper.updateState(pluginResponseMessage);
+		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
+
+	}
+
+	@Test
+	public void shouldTriggerProviderFunctionOnAttestationCompleted() throws Exception {
+		mockDefinitionManager();
+		FunctionExecutor functionExecutorMock = Mockito.spy(FunctionExecutor.class);
+		ReflectionTestUtils.setField(registryHelper, "functionExecutor", functionExecutorMock);
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setFunctionDefinitions(Arrays.asList(
+				FunctionDefinition.builder().name("userDefinedConcat").provider("org.example.provider.UUIDFunctionProvider").build()
+		));
+		PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
+				.policyName("test")
+				.attestationOSID("test-1")
+				.sourceEntity("Student")
+				.policyName("testAttestationPolicy")
+				.sourceOSID("1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb")
+				.status("GRANT_CLAIM")
+				.response("{}")
+				.build();
+		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
+		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
+		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy.set("onComplete", JsonNodeFactory.instance.textNode("function:#/functionDefinitions/userDefinedConcat"));
+		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
+		attestationArrayNodes.add(mockAttestationPolicy);
+		ObjectNode mockAttestationPolicy2 = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy2.set("name", JsonNodeFactory.instance.textNode("nextAttestationPolicy"));
+		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
+		attestationArrayNodes.add(mockAttestationPolicy2);
+		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
+		when(searchService.search(any())).thenReturn(attestationPolicyObject);
+		ObjectNode mockStudent = getMockStudent();
+		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(mockStudent);
+		registryHelper.entityStateHelper = mock(EntityStateHelper.class);
+		when(registryHelper.entityStateHelper.manageState(any(), any(), any(), any(), any())).thenReturn(mockStudent);
+		when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
+		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
+		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
+		sunbirdActorFactory.init("sunbirdrc-actors");
+		registryHelper.updateState(pluginResponseMessage);
+		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
 
 	}
 }

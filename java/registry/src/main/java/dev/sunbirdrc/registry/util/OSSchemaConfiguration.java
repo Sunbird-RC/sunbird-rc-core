@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.pojos.attestation.auto.AutoAttestationPolicy;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.views.FunctionDefinition;
 import lombok.Data;
 
 import java.util.*;
@@ -88,6 +89,8 @@ public class OSSchemaConfiguration {
 
     private Boolean enableSearch = true;
 
+    private List<FunctionDefinition> functionDefinitions;
+
     public Set<String> getAllTheAttestorEntities(){
         return attestationPolicies.stream()
                 .map(AttestationPolicy::getAttestorEntity)
@@ -96,6 +99,12 @@ public class OSSchemaConfiguration {
 
     public Boolean getEnableLogin() {
         return enableLogin;
+    }
+
+    public FunctionDefinition getFunctionDefinition(String name) {
+        return this.functionDefinitions.stream()
+                .filter(functionDefinition -> functionDefinition.getName().equals(name))
+                .findFirst().orElse(null);
     }
 
 }
