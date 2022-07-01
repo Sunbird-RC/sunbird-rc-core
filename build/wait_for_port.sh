@@ -3,7 +3,7 @@
 echo "Waiting service to launch on $1..."
 i=0
 while ! curl localhost:$1; do
-  docker-compose logs --tail 100
+  docker-compose logs --tail 100 registry
   sleep 10
   let i=i+1
   if [[ $i -gt 60 ]]; then
