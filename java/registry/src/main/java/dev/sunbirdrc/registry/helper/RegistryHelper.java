@@ -803,13 +803,14 @@ public class RegistryHelper {
         throw new Exception("Forbidden");
     }
 
-    public void authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
+    public String authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
         String userIdFromRequest = getUserId(request, entityName);
         JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
         JsonNode entityFromDB = response.get(entityName);
         if (!isOwner(entityFromDB, userIdFromRequest)) {
             throw new Exception(UNAUTHORIZED_OPERATION_MESSAGE);
         }
+        return userIdFromRequest;
     }
 
     public String getPropertyIdAfterSavingTheProperty(String entityName, String entityId, JsonNode requestBody, HttpServletRequest request) throws Exception {
@@ -868,12 +869,10 @@ public class RegistryHelper {
         authorizeUserRole(userRoles, inviteRoles);
     }
 
-    public void authorizeDeleteEntity(HttpServletRequest request, String entityName,String entityId) throws Exception {
-        List<String> deleteRoles = definitionsManager.getDefinition(entityName)
-          .getOsSchemaConfiguration()
-          .getDeleteRoles();
+    public String authorizeDeleteEntity(HttpServletRequest request, String entityName, String entityId) throws Exception {
+        List<String> deleteRoles = getManageRoles(entityName);
         if (deleteRoles.contains(ROLE_ANONYMOUS)) {
-            return;
+            return entityName;
         }
         Set<String> userRoles = getUserRolesFromRequest(request);
         String userIdFromRequest = getUserId(request, entityName);
@@ -881,9 +880,10 @@ public class RegistryHelper {
         JsonNode entityFromDB = response.get(entityName);
         final boolean hasNoValidRole = !deleteRoles.isEmpty() && deleteRoles.stream().noneMatch(userRoles::contains);
         final boolean hasInValidOwnership = !isOwner(entityFromDB, userIdFromRequest);
-        if(hasNoValidRole && hasInValidOwnership){
+        if(hasNoValidRole || hasInValidOwnership){
             throw new UnAuthorizedException(UNAUTHORIZED_OPERATION_MESSAGE);
         }
+        return userIdFromRequest;
     }
 
     public String authorizeManageEntity(HttpServletRequest request, String entityName) throws Exception {
@@ -1100,5 +1100,14 @@ public class RegistryHelper {
 
     public void deleteAttestationPolicy(AttestationPolicy attestationPolicy) throws Exception {
         deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
+    }
+
+    public boolean doesUpdateRequiresAuthorization(String entity) {
+        return doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0;
+
+    }
+
+    public boolean doesDeleteRequiresAuthorization(String entity) {
+        return doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0;
     }
 }

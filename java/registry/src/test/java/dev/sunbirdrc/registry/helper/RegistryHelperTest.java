@@ -48,10 +48,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.ATTESTATION_POLICY;
 import static org.junit.Assert.assertEquals;
@@ -612,5 +609,53 @@ public class RegistryHelperTest {
 		registryHelper.updateState(pluginResponseMessage);
 		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
 
+	}
+
+	@Test
+	public void shouldReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
+		mockDefinitionManager();
+		String entity = "Student";
+		Assert.assertTrue(registryHelper.doesUpdateRequiresAuthorization(entity));
+	}
+
+	@Test
+	public void shouldReturnTrueIfEntityContainsManageRoles() throws IOException {
+		mockDefinitionManager();
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
+		String entity = "Student";
+		Assert.assertTrue(registryHelper.doesUpdateRequiresAuthorization(entity));
+	}
+
+	@Test
+	public void shouldReturnFalseIfEntityDoesContainRolesAndOwnership() throws IOException {
+		mockDefinitionManager();
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
+		String entity = "Student";
+		Assert.assertFalse(registryHelper.doesUpdateRequiresAuthorization(entity));
+	}
+
+	@Test
+	public void shouldDeleteReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
+		mockDefinitionManager();
+		String entity = "Student";
+		Assert.assertTrue(registryHelper.doesDeleteRequiresAuthorization(entity));
+	}
+
+	@Test
+	public void shouldDeleteReturnTrueIfEntityContainsManageRoles() throws IOException {
+		mockDefinitionManager();
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
+		String entity = "Student";
+		Assert.assertTrue(registryHelper.doesDeleteRequiresAuthorization(entity));
+	}
+
+	@Test
+	public void shouldDeleteReturnFalseIfEntityDoesContainRolesAndOwnership() throws IOException {
+		mockDefinitionManager();
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
+		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
+		String entity = "Student";
+		Assert.assertFalse(registryHelper.doesDeleteRequiresAuthorization(entity));
 	}
 }
