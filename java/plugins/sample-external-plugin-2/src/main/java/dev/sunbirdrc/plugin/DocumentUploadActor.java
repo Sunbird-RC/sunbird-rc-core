@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.MessageFactory;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
+import dev.sunbirdrc.pojos.PluginResponseMessageCreator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.client.RestTemplate;
@@ -33,14 +34,7 @@ public class DocumentUploadActor extends BaseActor {
         logger.info("Received request message {} ", pluginRequestMessage);
         JsonNode additionalInput = pluginRequestMessage.getAdditionalInputs();
 
-        PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder().policyName(pluginRequestMessage.getPolicyName())
-                .sourceEntity(pluginRequestMessage.getSourceEntity()).sourceOSID(pluginRequestMessage.getSourceOSID())
-                .attestationOSID(pluginRequestMessage.getAttestationOSID())
-                .attestorPlugin(pluginRequestMessage.getAttestorPlugin())
-                .additionalData(JsonNodeFactory.instance.nullNode())
-                .date(new Date())
-                .validUntil(new Date())
-                .version("").build();
+        PluginResponseMessage pluginResponseMessage = PluginResponseMessageCreator.createPluginResponseMessage(pluginRequestMessage);
         pluginResponseMessage.setStatus(SELF_ATTEST.name());
 
         ArrayNode signedMd5s = JsonNodeFactory.instance.arrayNode();

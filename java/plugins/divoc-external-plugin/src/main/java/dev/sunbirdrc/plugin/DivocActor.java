@@ -7,6 +7,7 @@ import dev.sunbirdrc.actors.factory.MessageFactory;
 import dev.sunbirdrc.plugin.dto.VerifyRequest;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
+import dev.sunbirdrc.pojos.PluginResponseMessageCreator;
 import dev.sunbirdrc.pojos.attestation.Action;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
@@ -38,14 +39,7 @@ public class DivocActor extends BaseActor {
         PluginRequestMessage pluginRequestMessage = objectMapper.readValue(request.getPayload().getStringValue(), PluginRequestMessage.class);
         Object signedData = pluginRequestMessage.getAdditionalInputs().get("signedCredentials");
         Map verificationResponse = callW3cVerifyAPI(VerifyRequest.builder().publicKey(PUBLIC_KEY).signedCredentials(signedData).signingKeyType(SIGNED_KEY_TYPE).build());
-        PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder().policyName(pluginRequestMessage.getPolicyName())
-                .sourceEntity(pluginRequestMessage.getSourceEntity()).sourceOSID(pluginRequestMessage.getSourceOSID())
-                .attestationOSID(pluginRequestMessage.getAttestationOSID())
-                .attestorPlugin(pluginRequestMessage.getAttestorPlugin())
-                .additionalData(JsonNodeFactory.instance.nullNode())
-                .date(new Date())
-                .validUntil(new Date())
-                .version("").build();
+        PluginResponseMessage pluginResponseMessage = PluginResponseMessageCreator.createPluginResponseMessage(pluginRequestMessage);
         if ((Boolean) verificationResponse.get("verified")) {
             pluginResponseMessage.setStatus(Action.GRANT_CLAIM.name());
             pluginResponseMessage.setResponse(objectMapper.writeValueAsString(((List) verificationResponse.get("results")).get(0)));

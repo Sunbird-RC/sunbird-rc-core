@@ -24,4 +24,7 @@ public class Constants {
     public final static String HTTP_URI_PREFIX = "http://";
     public final static String HTTPS_URI_PREFIX = "https://";
     public static final String createEntityGroupId = "create-entity-consumer-group";
+
+    public static final String REQUESTER = "REQUESTER";
+    public static final String FILE_URL = "fileUrl";
 }

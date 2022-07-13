@@ -5,13 +5,14 @@ import java.util.List;
 public class EvaluatorFactory {
     
     /**
-     * returns the instance of IEvaluator implementations (like:FunctionEvaluator, ProviderEvaluator 
-     * 
-     * @param actualValues
+     * returns the instance of IEvaluator implementations (like:FunctionEvaluator, ProviderEvaluator
+     *
      * @param functiondef
+     * @param actualValues
+     * @param argumentsPath
      * @return
      */
-    public static IEvaluator<Object> getInstance(FunctionDefinition functiondef, List<Object> actualValues) {
+    public static IEvaluator<Object> getInstance(FunctionDefinition functiondef, List<Object> actualValues, String[] argumentsPath) {
         IEvaluator<Object> evaluator = null;
         FieldFunction function = null;
 

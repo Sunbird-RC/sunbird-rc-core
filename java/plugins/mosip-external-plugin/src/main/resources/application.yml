@@ -1,0 +1,6 @@
+mosip:
+  event:
+    hubURL: ${SLUDI_BASE_URL:https://domain.url}/websub
+    callBackUrl: ${CALLBACK_URL:http://domain/registry/plugin/mosip/callback}
+    secret: ${EVENT_SECRET:secret}
+    topic: SunbirdRC/CREDENTIAL_ISSUED

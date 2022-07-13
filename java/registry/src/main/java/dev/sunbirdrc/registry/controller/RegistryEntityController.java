@@ -108,10 +108,11 @@ public class RegistryEntityController extends AbstractController {
       @RequestHeader HttpHeaders header,
       HttpServletRequest request
     ) {
+        String userId = USER_ANONYMOUS;
         logger.info("Deleting entityType {} with Id {}", entityName, entityId);
-        if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
+        if (registryHelper.doesDeleteRequiresAuthorization(entityName)) {
             try {
-                registryHelper.authorizeDeleteEntity(request, entityName, entityId);
+                userId = registryHelper.authorizeDeleteEntity(request, entityName, entityId);
             } catch (Exception e) {
                 return createUnauthorizedExceptionResponse(e);
             }
@@ -119,7 +120,6 @@ public class RegistryEntityController extends AbstractController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.DELETE, "OK", responseParams);
         try {
-            String userId = getUserId(entityName, request);
             String tag = "RegistryController.delete " + entityName;
             watch.start(tag);
             registryHelper.deleteEntity(entityId,userId);
@@ -174,9 +174,10 @@ public class RegistryEntityController extends AbstractController {
             HttpServletRequest request) {
 
         logger.info("Updating entityType {} request body {}", entityName, rootNode);
-        if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
+        String userId = USER_ANONYMOUS;
+        if (registryHelper.doesUpdateRequiresAuthorization(entityName)) {
             try {
-                registryHelper.authorize(entityName, entityId, request);
+                userId = registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
                 return createUnauthorizedExceptionResponse(e);
             }
@@ -188,7 +189,6 @@ public class RegistryEntityController extends AbstractController {
         newRootNode.set(entityName, rootNode);
 
         try {
-            String userId = getUserId(entityName, request);
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             // TODO: get userID from auth header
@@ -227,7 +227,7 @@ public class RegistryEntityController extends AbstractController {
         try {
             String userId = registryHelper.authorizeManageEntity(request, entityName);
             String label = registryHelper.addEntity(newRootNode, userId);
-            Map resultMap = new HashMap();
+            Map<String, String> resultMap = new HashMap<>();
             if (asyncEnabled) {
                 resultMap.put(TRANSACTION_ID, label);
             } else {
@@ -261,7 +261,7 @@ public class RegistryEntityController extends AbstractController {
             @RequestBody JsonNode requestBody
 
     ) {
-        if (registryHelper.doesEntityContainOwnershipAttributes(entityName)) {
+        if (registryHelper.doesUpdateRequiresAuthorization(entityName)) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -595,6 +595,7 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
+    //TODO: API called by claim-ms, need to be blocked from external access
     @RequestMapping(value = "/api/v1/{property}/{propertyId}/attestation/{attestationName}/{attestationId}", method = RequestMethod.PUT)
     public ResponseEntity<ResponseParams> updateAttestationProperty(
             @PathVariable String property,
@@ -611,8 +612,6 @@ public class RegistryEntityController extends AbstractController {
         try {
             logger.info("updateAttestationProperty: {}", requestBody);
             PluginResponseMessage pluginResponseMessage = objectMapper.convertValue(requestBody, PluginResponseMessage.class);
-            String userId = "";
-
             registryHelper.updateState(pluginResponseMessage);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             responseParams.setResultList(Collections.singletonList("response"));

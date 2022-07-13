@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.sunbirdrc.actors.factory.MessageFactory;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
+import dev.sunbirdrc.pojos.PluginResponseMessageCreator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.sunbird.akka.core.ActorCache;
@@ -30,14 +31,7 @@ public class GenericPluginActor extends BaseActor {
         String url = "http://127.0.0.1:5000/mosip";
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<JsonNode> response = restTemplate.postForEntity(url, additionalInput, JsonNode.class);
-        PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder().policyName(pluginRequestMessage.getPolicyName())
-                .sourceEntity(pluginRequestMessage.getSourceEntity()).sourceOSID(pluginRequestMessage.getSourceOSID())
-                .attestationOSID(pluginRequestMessage.getAttestationOSID())
-                .attestorPlugin(pluginRequestMessage.getAttestorPlugin())
-                .additionalData(JsonNodeFactory.instance.nullNode())
-                .date(new Date())
-                .validUntil(new Date())
-                .version("").build();
+        PluginResponseMessage pluginResponseMessage = PluginResponseMessageCreator.createPluginResponseMessage(pluginRequestMessage);
 
         if(response.getStatusCode().is2xxSuccessful()) {
             JsonNode responseBody = response.getBody();

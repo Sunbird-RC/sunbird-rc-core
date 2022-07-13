@@ -36,9 +36,10 @@ public class FunctionEvaluator implements IEvaluator<Object>{
     @Override
     public Object evaluate() {
         prepare();
-        Object result = jexlExpression.evaluate(jexlContext);
-
-        return result;
+        return jexlExpression.evaluate(jexlContext);
     }
 
+    public FieldFunction getFunction() {
+        return function;
+    }
 }

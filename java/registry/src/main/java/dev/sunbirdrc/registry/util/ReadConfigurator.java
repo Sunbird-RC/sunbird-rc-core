@@ -20,7 +20,7 @@ public class ReadConfigurator {
      * Expands the children objects on read
      * 1, by default
      */
-    private int depth = 2;
+    private int depth = 5;
 
     /**
      * Whether or not to include signatures

@@ -105,7 +105,7 @@ public class Constants {
 	public static final String DATABASE="DATABASE";
 
 	//Expand config
-	public static final int MAX_EXPAND_LEVEL=4;
+	public static final int MAX_EXPAND_LEVEL= 10;
 
 	public static final String USER_ID = "userId";
 	public static final String EMAIL = "email";
