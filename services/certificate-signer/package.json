@@ -20,7 +20,6 @@
     "node-cache": "^5.1.2",
     "object-hash": "^3.0.0",
     "ramda": "^0.27.1",
-    "vaccination-context": "^1.0.7",
     "vc-js": "^0.6.4"
   },
   "devDependencies": {

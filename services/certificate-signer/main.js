@@ -1,9 +1,5 @@
-const {
-    CERTIFICATE_NAMESPACE
-} = require("./config/config");
 
 const config = require('./config/config');
-const {vaccinationContext} = require("vaccination-context");
 const {generateCredentialsRoute, verifyCredentialsRoute} = require("./src/routes/signerController");
 const {setDocumentLoader} = require('certificate-signer-library/signer');
 const {publicKeyPem, privateKeyPem, signingKeyType, publicKeyBase58, privateKeyBase58} = require('./config/keys');
@@ -21,7 +17,6 @@ let signingConfig = {
     keyType: signingKeyType,
     REGISTRY_URL: config.REGISTRY_URL,
 
-    CERTIFICATE_NAMESPACE: config.CERTIFICATE_NAMESPACE,
     CERTIFICATE_CONTROLLER_ID: config.CERTIFICATE_CONTROLLER_ID,
     CERTIFICATE_DID: config.CERTIFICATE_DID,
     CERTIFICATE_PUBKEY_ID: config.CERTIFICATE_PUBKEY_ID,
@@ -59,7 +54,6 @@ server.listen(port, async () => {
     // add custom schema contexts
     let contextsFromUrls = await getContextsFromUrls(config.CACHE_CONTEXT_URLS);
     const customDocumentLoader = {...contextsFromUrls};
-    customDocumentLoader[CERTIFICATE_NAMESPACE] = vaccinationContext;
     setDocumentLoader(customDocumentLoader, signingConfig);
     console.log(`Server listening on port ${port}`);
 });

@@ -15,14 +15,12 @@ describe('environmental variables', () => {
             keyType: signingKeyType,
             REGISTRY_URL: config.REGISTRY_URL,
 
-            CERTIFICATE_NAMESPACE: config.CERTIFICATE_NAMESPACE,
             CERTIFICATE_CONTROLLER_ID: config.CERTIFICATE_CONTROLLER_ID,
             CERTIFICATE_DID: config.CERTIFICATE_DID,
             CERTIFICATE_PUBKEY_ID: config.CERTIFICATE_PUBKEY_ID,
             CERTIFICATE_ISSUER: config.CERTIFICATE_ISSUER,
         };
         const customDocumentLoader = {};
-        customDocumentLoader[config.CERTIFICATE_NAMESPACE] = vaccinationContext;
         setDocumentLoader(customDocumentLoader, signingConfig);
 
     });
