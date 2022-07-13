@@ -27,7 +27,7 @@ describe('environmental variables', () => {
 
     });
 
-    test('Should generate credentials with different dellimeter', async () => {
+    test('Should generate credentials with different delimiter', async () => {
         const {generateCredentials, verifyCredentials} = require('../../src/services/signerService');
         const config = require('../../config/config');
 
@@ -37,14 +37,14 @@ describe('environmental variables', () => {
             }
         };
         const template = {
-            "@context": ["https://www.w3.org/2018/credentials/v1", config.CERTIFICATE_NAMESPACE],
+            "@context": ["https://www.w3.org/2018/credentials/v1", {"name": "schema:name"}],
             "type": ["VerifiableCredential"],
             "credentialSubject": {
                 type: "Person",
                 name: "${identityDetails.name}"
             },
             "issuanceDate": "2021-08-27T10:57:57.237Z",
-            "issuer": "did:issuer:cowin",
+            "issuer": "did:authorizedIssuer#23",
             // "date": "28-09-2021",
         }
         const signedData = await generateCredentials(entity, JSON.stringify(template));
