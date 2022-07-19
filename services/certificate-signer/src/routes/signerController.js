@@ -1,6 +1,5 @@
 const {getRequestBody, isValidHttpUrl, fetchTemplate} = require("../utils");
 const {generateCredentials, verifyCredentials} = require("../services/signerService");
-const {signingKeyType} = require('../../config/keys');
 
 const generateCredentialsRoute = async (req) => {
     const reqBody = await getRequestBody(req);
@@ -22,7 +21,7 @@ const verifyCredentialsRoute = async (req) => {
     const reqBody = await getRequestBody(req);
     const {signedCredentials, publicKey } = reqBody;
 
-    return await verifyCredentials(signedCredentials, signingKeyType, publicKey);
+    return await verifyCredentials(signedCredentials, publicKey);
 };
 
 

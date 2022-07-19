@@ -2,7 +2,7 @@ const jsigs = require('jsonld-signatures');
 const {Ed25519KeyPair, RSAKeyPair} = require('crypto-ld');
 const {Ed25519Signature2018, RsaSignature2018} = jsigs.suites;
 const {AssertionProofPurpose} = jsigs.purposes;
-const {CERTIFICATE_DID, CERTIFICATE_CONTROLLER_ID, CUSTOM_TEMPLATE_DELIMITERS} = require('../../config/config');
+const {CERTIFICATE_CONTROLLER_ID, CUSTOM_TEMPLATE_DELIMITERS} = require('../../config/config');
 const vc = require('vc-js');
 const Handlebars = require("handlebars");
 const delimiters = require('handlebars-delimiters');
@@ -41,7 +41,7 @@ const generateCredentials = async (data, credentialTemplate = "") => {
 
 
 function getKeys(issuer) { //todo move this to a config file
-    const privateKeyPem = process.env.CERTIFICATE_PRIVATE_KEY || '-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAnXQalrgztecTpc+INjRQ8s73FSE1kU5QSlwBdICCVJBUKiuQUt7s+Z5epgCvLVAOCbP1mm5lV7bfgV/iYWDio7lzX4MlJwDedWLiufr3Ajq+79CQiqPaIbZTo0i13zijKtX7wgxQ78wT/HkJRLkFpmGeK3za21tEfttytkhmJYlwaDTEc+Kx3RJqVhVh/dfwJGeuV4Xc/e2NH++ht0ENGuTk44KpQ+pwQVqtW7lmbDZQJoOJ7HYmmoKGJ0qt2hrj15uwcD1WEYfY5N7N0ArTzPgctExtZFDmituLGzuAZfv2AZZ9/7Y+igshzfB0reIFdUKw3cdVTzfv5FNrIqN5pwIDAQABAoIBAHPILMUoLt5UTd5f/YnebqgeCRNAmGOBcwk7HtbMqQoGF93qqvZFd30XOAJZ/ncTpz77Vl95ToxxrWk1WQLCe+ZpOK3Dgk5sFSm8zXx1T64UBNPUSnWoh37C1D39+b9rppCZScgnxlyPdSLy3h3q8Hyoy+auqUEkm/ms5W2lT3fJscyN1IAyHrhsOBWjl3Ilq5GxBo5tbYv/Fb1pQiP/p2SIHA1+2ASXNYQP100F5Vn0V6SFtBXTCQnwcvbP083NvlGxs9+xRs3MCUcxCkKepWuzYwOZDmu/2yCz1/EsP6wlsYEHmCZLdIb0tQt0caqzB/RoxfBpNRIlhOtqHvBzUgECgYEAzIRn5Y7lqO3N+V29wXXtVZjYWvBh7xUfOxAwVYv0rKI0y9kHJHhIrU+wOVOKGISxBKmzqBQRPvXtXW8E0/14Zz82g60rRwtNjvW0UoZAY3KPouwruUIjAe2UnKZcQ//MBTrvds8QGpL6nxvPsBqU0y2K+ySAOxBtNtGEjzv8nxUCgYEAxRbMWukIbgVOuQjangkfJEfA1UaRFQqQ8jUmT9aiq2nREnd4mYP8kNKzJa9L7zj6Un6yLH5DbGspZ2gGODeRw3uVFN8XSzRdLvllNEyiG/waiysUtXfG2DPOR6xD8tXXDMm/tl9gTa8cbkvqYy10XT9MpfOAsusEZVmc0/DBBMsCgYAYdAxoKjnThPuHwWma5BrIjUnxNaTADWp6iWj+EYnjylE9vmlYNvmZn1mWwSJV5Ce2QwQ0KJIXURhcf5W4MypeTfSase3mxLc1TLOO2naAbYY3GL3xnLLK3DlUsZ9+kes3BOD097UZOFG3DIA8sjDxPxTLCoY6ibBFSa/r4GRIMQKBgQCranDCgPu79RHLDVBXM0fKnj2xQXbd/hqjDmcL+Xnx7E7S6OYTXyBENX1qwVQh9ESDi34cBJVPrsSME4WVT3+PreS0CnSQDDMfr/m9ywkTnejYMdgJHOvtDuHSpJlUk3g+vxnm3H0+E5d+trhdGiOjFnLrwyWkd5OTMqWcEEFQkQKBgFfXObDz/7KqeSaAxI8RzXWbI3Fa492b4qQUhbKYVpGn98CCVEFJr11vuB/8AXYCa92OtbwgMw6Ah5JOGzRScJKdipoxo7oc2LJ9sSjjw3RB/aWl35ChvnCJhmfSL8Usbj0nWVTrPwRLjMC2bIxkLtnm9qYXPumW1EjEbusjVMpN\n-----END RSA PRIVATE KEY-----\n';
+    /*const privateKeyPem = process.env.CERTIFICATE_PRIVATE_KEY || '-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAnXQalrgztecTpc+INjRQ8s73FSE1kU5QSlwBdICCVJBUKiuQUt7s+Z5epgCvLVAOCbP1mm5lV7bfgV/iYWDio7lzX4MlJwDedWLiufr3Ajq+79CQiqPaIbZTo0i13zijKtX7wgxQ78wT/HkJRLkFpmGeK3za21tEfttytkhmJYlwaDTEc+Kx3RJqVhVh/dfwJGeuV4Xc/e2NH++ht0ENGuTk44KpQ+pwQVqtW7lmbDZQJoOJ7HYmmoKGJ0qt2hrj15uwcD1WEYfY5N7N0ArTzPgctExtZFDmituLGzuAZfv2AZZ9/7Y+igshzfB0reIFdUKw3cdVTzfv5FNrIqN5pwIDAQABAoIBAHPILMUoLt5UTd5f/YnebqgeCRNAmGOBcwk7HtbMqQoGF93qqvZFd30XOAJZ/ncTpz77Vl95ToxxrWk1WQLCe+ZpOK3Dgk5sFSm8zXx1T64UBNPUSnWoh37C1D39+b9rppCZScgnxlyPdSLy3h3q8Hyoy+auqUEkm/ms5W2lT3fJscyN1IAyHrhsOBWjl3Ilq5GxBo5tbYv/Fb1pQiP/p2SIHA1+2ASXNYQP100F5Vn0V6SFtBXTCQnwcvbP083NvlGxs9+xRs3MCUcxCkKepWuzYwOZDmu/2yCz1/EsP6wlsYEHmCZLdIb0tQt0caqzB/RoxfBpNRIlhOtqHvBzUgECgYEAzIRn5Y7lqO3N+V29wXXtVZjYWvBh7xUfOxAwVYv0rKI0y9kHJHhIrU+wOVOKGISxBKmzqBQRPvXtXW8E0/14Zz82g60rRwtNjvW0UoZAY3KPouwruUIjAe2UnKZcQ//MBTrvds8QGpL6nxvPsBqU0y2K+ySAOxBtNtGEjzv8nxUCgYEAxRbMWukIbgVOuQjangkfJEfA1UaRFQqQ8jUmT9aiq2nREnd4mYP8kNKzJa9L7zj6Un6yLH5DbGspZ2gGODeRw3uVFN8XSzRdLvllNEyiG/waiysUtXfG2DPOR6xD8tXXDMm/tl9gTa8cbkvqYy10XT9MpfOAsusEZVmc0/DBBMsCgYAYdAxoKjnThPuHwWma5BrIjUnxNaTADWp6iWj+EYnjylE9vmlYNvmZn1mWwSJV5Ce2QwQ0KJIXURhcf5W4MypeTfSase3mxLc1TLOO2naAbYY3GL3xnLLK3DlUsZ9+kes3BOD097UZOFG3DIA8sjDxPxTLCoY6ibBFSa/r4GRIMQKBgQCranDCgPu79RHLDVBXM0fKnj2xQXbd/hqjDmcL+Xnx7E7S6OYTXyBENX1qwVQh9ESDi34cBJVPrsSME4WVT3+PreS0CnSQDDMfr/m9ywkTnejYMdgJHOvtDuHSpJlUk3g+vxnm3H0+E5d+trhdGiOjFnLrwyWkd5OTMqWcEEFQkQKBgFfXObDz/7KqeSaAxI8RzXWbI3Fa492b4qQUhbKYVpGn98CCVEFJr11vuB/8AXYCa92OtbwgMw6Ah5JOGzRScJKdipoxo7oc2LJ9sSjjw3RB/aWl35ChvnCJhmfSL8Usbj0nWVTrPwRLjMC2bIxkLtnm9qYXPumW1EjEbusjVMpN\n-----END RSA PRIVATE KEY-----\n';
     const publicKeyPem = process.env.CERTIFICATE_PUBLIC_KEY || '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnXQalrgztecTpc+INjRQ8s73FSE1kU5QSlwBdICCVJBUKiuQUt7s+Z5epgCvLVAOCbP1mm5lV7bfgV/iYWDio7lzX4MlJwDedWLiufr3Ajq+79CQiqPaIbZTo0i13zijKtX7wgxQ78wT/HkJRLkFpmGeK3za21tEfttytkhmJYlwaDTEc+Kx3RJqVhVh/dfwJGeuV4Xc/e2NH++ht0ENGuTk44KpQ+pwQVqtW7lmbDZQJoOJ7HYmmoKGJ0qt2hrj15uwcD1WEYfY5N7N0ArTzPgctExtZFDmituLGzuAZfv2AZZ9/7Y+igshzfB0reIFdUKw3cdVTzfv5FNrIqN5pwIDAQAB\n-----END PUBLIC KEY-----\n';
     let ecRefKey = {
         privateKeyStr: "41WN3qJL5Agwg8MERbEmMLKnkNstv5iSD8oJ8sRnDyBUegeGKgjqgKm9qZTmhcLQSWCdTkSN3Cd1tPqMn1rjM3BJ",
@@ -54,10 +54,16 @@ function getKeys(issuer) { //todo move this to a config file
             publicKeyStr: publicKeyPem,
             signatureType: 'RSA'
         }, 'did:authorizedIssuer:23423#21': ecRefKey
-    };
-    if (issuerKeyMap[issuer] !== undefined) {
-        let {publicKeyStr, privateKeyStr, signatureType} = issuerKeyMap[issuer];
-        return {publicKey: publicKeyStr, privateKey: privateKeyStr, signatureType: signatureType};
+    }; */
+    let configPath = (process.env.CONFIG_BASE_PATH || '.' )+ '/../../config.json';
+    console.log('loading config from ' + configPath);
+    let issuerKeyMap = require(configPath)
+    let key = (issuer in issuerKeyMap.issuers)?issuer:"default";
+
+
+    if (issuerKeyMap.issuers[key] !== undefined) {
+        let {publicKey, privateKey, signatureType} = issuerKeyMap.issuers[key];
+        return {publicKey: publicKey, privateKey: privateKey, signatureType: signatureType};
     }
     throw new Error("Invalid issuer");
 }
@@ -127,7 +133,7 @@ function getPublicKey(signingKeyType, publicKey = null, issuerDid = null) {
     const keyType = signingKeyType===KeyType.ED25519?'Ed25519VerificationKey2018':'RsaVerificationKey2018';
     let publicKeyObject =  {
         '@context': jsigs.SECURITY_CONTEXT_URL,
-        id: issuerDid || CERTIFICATE_DID,
+        id: issuerDid,
         type: keyType,
         controller: CERTIFICATE_CONTROLLER_ID,
     };
@@ -136,16 +142,22 @@ function getPublicKey(signingKeyType, publicKey = null, issuerDid = null) {
     return publicKeyObject;
 };
 
-const verifyCredentials = async (signedCredentials, signingKeyType, externalPublicKey = null) => {
+function inferSignatureAlgoType(signedCredentials) {
+    switch (signedCredentials?.proof?.type) {
+        case 'RsaSignature2018':
+        case 'RsaVerificationKey2018':
+            return KeyType.RSA;
+        default:
+            return KeyType.ED25519;
+    };
+}
+
+const verifyCredentials = async (signedCredentials, externalPublicKey = null) => {
+
+
     // const publicKey = getPublicKey(signingKeyType, externalPublicKey);
-    const signingType = signingKeyType === KeyType.RSA ? 'RsaVerificationKey2018' : 'Ed25519VerificationKey2018';
-    // const publicKey = {
-    //     '@context': jsigs.SECURITY_CONTEXT_URL,
-    //     id: signedCredentials.issuer,
-    //     type: signingType,
-    //     controller: CERTIFICATE_CONTROLLER_ID,
-    //     publicKeyPem: externalPublicKey
-    // }
+    const signingKeyType = inferSignatureAlgoType(signedCredentials)
+    // const signingKeyType = typeCode === 'RsaVerificationKey2018'?KeyType.RSA : KeyType.ED25519;
     let publicKeyStr = externalPublicKey;
     if (publicKeyStr === null) {
         let {publicKey} = getKeys(signedCredentials.issuer);
@@ -161,15 +173,15 @@ const verifyCredentials = async (signedCredentials, signingKeyType, externalPubl
     };
     switch (signingKeyType) {
         case KeyType.RSA:
-            return await verifyRSACredentials(controller, signedCredentials, signingKeyType, publicKeyStr);
+            return await verifyRSACredentials(controller, signedCredentials, publicKeyStr);
         case KeyType.ED25519:
-            return await verifyED25519Credentials(controller, signedCredentials, signingKeyType, publicKeyObject);
+            return await verifyED25519Credentials(controller, signedCredentials, publicKeyObject);
     }
     console.log(result);
     return result;
 };
 
-const verifyRSACredentials = async (controller, signedCredentials, signingKeyType, externalPublicKey) => {
+const verifyRSACredentials = async (controller, signedCredentials, externalPublicKey) => {
     // const key = new RSAKeyPair({...getPublicKey(signingKeyType, externalPublicKey)});
     const key = new RSAKeyPair({"id": signedCredentials.issuer, "publicKeyPem": externalPublicKey});
     const {AssertionProofPurpose} = jsigs.purposes;
@@ -182,7 +194,7 @@ const verifyRSACredentials = async (controller, signedCredentials, signingKeyTyp
 };
 
 
-async function verifyED25519Credentials(controller, signedCredentials, signingKeyType, publicKeyObject) {
+async function verifyED25519Credentials(controller, signedCredentials, publicKeyObject) {
     const key = new Ed25519KeyPair({...publicKeyObject});
     const {AssertionProofPurpose} = jsigs.purposes;
     const purpose = new AssertionProofPurpose({

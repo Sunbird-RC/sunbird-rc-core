@@ -43,7 +43,7 @@ test('Should verify credentials', async () => {
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
     // const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519);
-    const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519, "DaipNW4xaH2bh1XGNNdqjnSYyru3hLnUgTBSfSvmZ2hi");
+    const verifiedStatus = await verifyCredentials(signedData, "DaipNW4xaH2bh1XGNNdqjnSYyru3hLnUgTBSfSvmZ2hi");
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
 });
@@ -67,7 +67,7 @@ test('Should fail verifying credentials of modified data', async () => {
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
     signedData.credentialSubject.name = "XXYY"
-    const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519);
+    const verifiedStatus = await verifyCredentials(signedData);
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).not.toBeTruthy();
 });
@@ -92,14 +92,18 @@ test('Should verify credentials by RSA Algo', async () => {
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
     console.log(signedData)
-    const verifiedStatus = await verifyCredentials(signedData, "RSA", publicKeyPem);
+    const verifiedStatus = await verifyCredentials(signedData, publicKeyPem);
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
 });
 
+test("Should infer type key type", () => {
+    const signedData = {"@context":["https://www.w3.org/2018/credentials/v1",{"name":"schema:name"}],"type":["VerifiableCredential"],"credentialSubject":{"type":"Person","name":"Tejash"},"issuanceDate":"2021-08-27T10:57:57.237Z","issuer":"did:authorizedIssuer:23423#21","proof":{"type":"Ed25519Signature2018","created":"2022-07-19T05:11:21Z","verificationMethod":"did:authorizedIssuer:23423#21","proofPurpose":"assertionMethod","jws":"eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..O6u5oAOiOeOt4nCHlJRRn04EyOoi7sRZHcJtvRXQqvKxQUfKdYjB9GJunO5pjnErWJC4U7gTctmUq34qrx98Bw"}};
+});
+
 test('Should verify credentials with external publickey', async () => {
     const signedData = {"@context":["https://www.w3.org/2018/credentials/v1",{"name":"schema:name"}],"type":["VerifiableCredential"],"credentialSubject":{"type":"Person","name":"Tejash"},"issuanceDate":"2021-08-27T10:57:57.237Z","issuer":"did:authorizedIssuer:23423#21","proof":{"type":"Ed25519Signature2018","created":"2022-07-19T05:11:21Z","verificationMethod":"did:authorizedIssuer:23423#21","proofPurpose":"assertionMethod","jws":"eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..O6u5oAOiOeOt4nCHlJRRn04EyOoi7sRZHcJtvRXQqvKxQUfKdYjB9GJunO5pjnErWJC4U7gTctmUq34qrx98Bw"}};
-    const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519, "DaipNW4xaH2bh1XGNNdqjnSYyru3hLnUgTBSfSvmZ2hi");
+    const verifiedStatus = await verifyCredentials(signedData, "DaipNW4xaH2bh1XGNNdqjnSYyru3hLnUgTBSfSvmZ2hi");
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
 });

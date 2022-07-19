@@ -4,22 +4,22 @@ describe('environmental variables', () => {
         jest.resetModules() // Most important - it clears the cache
         process.env.CUSTOM_TEMPLATE_DELIMITERS = '\\${,}';
         // const {setDocumentLoader, KeyType} = require('certificate-signer-library/signer');
-        const {publicKeyPem, privateKeyPem, signingKeyType, publicKeyBase58, privateKeyBase58} = require('../../config/keys');
+        // const {publicKeyPem, privateKeyPem, signingKeyType, publicKeyBase58, privateKeyBase58} = require('../../config/keys');
         // const {vaccinationContext} = require("vaccination-context");
-        const config = require('../../config/config');
-        let signingConfig = {
-            publicKeyPem: publicKeyPem,
-            privateKeyPem: privateKeyPem,
-            publicKeyBase58: publicKeyBase58,
-            privateKeyBase58: privateKeyBase58,
-            keyType: signingKeyType,
-            REGISTRY_URL: config.REGISTRY_URL,
-
-            CERTIFICATE_CONTROLLER_ID: config.CERTIFICATE_CONTROLLER_ID,
-            CERTIFICATE_DID: config.CERTIFICATE_DID,
-            CERTIFICATE_PUBKEY_ID: config.CERTIFICATE_PUBKEY_ID,
-            CERTIFICATE_ISSUER: config.CERTIFICATE_ISSUER,
-        };
+        // const config = require('../../config/config');
+        // let signingConfig = {
+        //     publicKeyPem: publicKeyPem,
+        //     privateKeyPem: privateKeyPem,
+        //     publicKeyBase58: publicKeyBase58,
+        //     privateKeyBase58: privateKeyBase58,
+        //     keyType: signingKeyType,
+        //     REGISTRY_URL: config.REGISTRY_URL,
+        //
+        //     CERTIFICATE_CONTROLLER_ID: config.CERTIFICATE_CONTROLLER_ID,
+        //     CERTIFICATE_DID: config.CERTIFICATE_DID,
+        //     CERTIFICATE_PUBKEY_ID: config.CERTIFICATE_PUBKEY_ID,
+        //     CERTIFICATE_ISSUER: config.CERTIFICATE_ISSUER,
+        // };
         const customDocumentLoader = {};
         // setDocumentLoader(customDocumentLoader, signingConfig);
 
