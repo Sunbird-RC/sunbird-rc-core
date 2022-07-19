@@ -1,22 +1,4 @@
-const config = require('../../config/config');
-const {publicKeyPem, privateKeyPem, signingKeyType, publicKeyBase58, privateKeyBase58} = require('../../config/keys');
-//const {setDocumentLoader, KeyType} = require('certificate-signer-library/signer');
 const {generateCredentials, verifyCredentials, KeyType} = require('../../src/services/signerService');
-
-let signingConfig = {
-    publicKeyPem: publicKeyPem,
-    privateKeyPem: privateKeyPem,
-    publicKeyBase58: publicKeyBase58,
-    privateKeyBase58: privateKeyBase58,
-    keyType: signingKeyType,
-    REGISTRY_URL: config.REGISTRY_URL,
-
-    CERTIFICATE_DID: config.CERTIFICATE_DID,
-    CERTIFICATE_PUBKEY_ID: config.CERTIFICATE_PUBKEY_ID,
-    CERTIFICATE_ISSUER: config.CERTIFICATE_ISSUER,
-};
-const customDocumentLoader = {};
-//setDocumentLoader(customDocumentLoader, signingConfig);
 
 test('Should generate credentials', async () => {
     const entity = {
@@ -91,13 +73,12 @@ test('Should fail verifying credentials of modified data', async () => {
 });
 
 test('Should verify credentials by RSA Algo', async () => {
-    signingConfig.keyType ="RSA";
-    //setDocumentLoader(customDocumentLoader, signingConfig);
     const entity = {
         identityDetails: {
             name: "Tejash"
         }
     };
+    const publicKeyPem = '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnXQalrgztecTpc+INjRQ8s73FSE1kU5QSlwBdICCVJBUKiuQUt7s+Z5epgCvLVAOCbP1mm5lV7bfgV/iYWDio7lzX4MlJwDedWLiufr3Ajq+79CQiqPaIbZTo0i13zijKtX7wgxQ78wT/HkJRLkFpmGeK3za21tEfttytkhmJYlwaDTEc+Kx3RJqVhVh/dfwJGeuV4Xc/e2NH++ht0ENGuTk44KpQ+pwQVqtW7lmbDZQJoOJ7HYmmoKGJ0qt2hrj15uwcD1WEYfY5N7N0ArTzPgctExtZFDmituLGzuAZfv2AZZ9/7Y+igshzfB0reIFdUKw3cdVTzfv5FNrIqN5pwIDAQAB\n-----END PUBLIC KEY-----\n';
     const template = {
         "@context": ["https://www.w3.org/2018/credentials/v1", {"name": "schema:name"}],
         "type": ["VerifiableCredential"],
