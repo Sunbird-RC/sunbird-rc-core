@@ -3,9 +3,9 @@ describe('environmental variables', () => {
     beforeEach(() => {
         jest.resetModules() // Most important - it clears the cache
         process.env.CUSTOM_TEMPLATE_DELIMITERS = '\\${,}';
-        const {setDocumentLoader, KeyType} = require('certificate-signer-library/signer');
+        // const {setDocumentLoader, KeyType} = require('certificate-signer-library/signer');
         const {publicKeyPem, privateKeyPem, signingKeyType, publicKeyBase58, privateKeyBase58} = require('../../config/keys');
-        const {vaccinationContext} = require("vaccination-context");
+        // const {vaccinationContext} = require("vaccination-context");
         const config = require('../../config/config');
         let signingConfig = {
             publicKeyPem: publicKeyPem,
@@ -21,7 +21,7 @@ describe('environmental variables', () => {
             CERTIFICATE_ISSUER: config.CERTIFICATE_ISSUER,
         };
         const customDocumentLoader = {};
-        setDocumentLoader(customDocumentLoader, signingConfig);
+        // setDocumentLoader(customDocumentLoader, signingConfig);
 
     });
 
@@ -42,7 +42,7 @@ describe('environmental variables', () => {
                 name: "${identityDetails.name}"
             },
             "issuanceDate": "2021-08-27T10:57:57.237Z",
-            "issuer": "did:authorizedIssuer#23",
+            "issuer": "did:authorizedIssuer:23423#21",
             // "date": "28-09-2021",
         }
         const signedData = await generateCredentials(entity, JSON.stringify(template));

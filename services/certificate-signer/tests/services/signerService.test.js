@@ -1,7 +1,7 @@
 const config = require('../../config/config');
 const {publicKeyPem, privateKeyPem, signingKeyType, publicKeyBase58, privateKeyBase58} = require('../../config/keys');
-const {setDocumentLoader, KeyType} = require('certificate-signer-library/signer');
-const {generateCredentials, verifyCredentials} = require('../../src/services/signerService');
+//const {setDocumentLoader, KeyType} = require('certificate-signer-library/signer');
+const {generateCredentials, verifyCredentials, KeyType} = require('../../src/services/signerService');
 
 let signingConfig = {
     publicKeyPem: publicKeyPem,
@@ -16,7 +16,7 @@ let signingConfig = {
     CERTIFICATE_ISSUER: config.CERTIFICATE_ISSUER,
 };
 const customDocumentLoader = {};
-setDocumentLoader(customDocumentLoader, signingConfig);
+//setDocumentLoader(customDocumentLoader, signingConfig);
 
 test('Should generate credentials', async () => {
     const entity = {
@@ -32,7 +32,7 @@ test('Should generate credentials', async () => {
             name: "{{identityDetails.name}}"
         },
         "issuanceDate": "2021-08-27T10:57:57.237Z",
-        "issuer": "did:issuer:authorizedIssuer#23",
+        "issuer": "did:authorizedIssuer:23423#21",
         // "date": "28-09-2021",
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
@@ -56,7 +56,7 @@ test('Should verify credentials', async () => {
             name: "{{identityDetails.name}}"
         },
         "issuanceDate": "2021-08-27T10:57:57.237Z",
-        "issuer": "did:issuer:authorizedIssuer#23",
+        "issuer": "did:authorizedIssuer:23423#21",
         // "date": "28-09-2021",
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
@@ -80,7 +80,7 @@ test('Should fail verifying credentials of modified data', async () => {
             name: "{{identityDetails.name}}"
         },
         "issuanceDate": "2021-08-27T10:57:57.237Z",
-        "issuer": "did:authorizedIssuer:23423#23",
+        "issuer": "did:authorizedIssuer:23423#21",
         // "date": "28-09-2021",
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
@@ -91,8 +91,8 @@ test('Should fail verifying credentials of modified data', async () => {
 });
 
 test('Should verify credentials by RSA Algo', async () => {
-    signingConfig.keyType = KeyType.RSA;
-    setDocumentLoader(customDocumentLoader, signingConfig);
+    signingConfig.keyType ="RSA";
+    //setDocumentLoader(customDocumentLoader, signingConfig);
     const entity = {
         identityDetails: {
             name: "Tejash"
@@ -111,25 +111,13 @@ test('Should verify credentials by RSA Algo', async () => {
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
     console.log(signedData)
-    const verifiedStatus = await verifyCredentials(signedData, KeyType.RSA);
+    const verifiedStatus = await verifyCredentials(signedData, "RSA", publicKeyPem);
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
 });
 
 test('Should verify credentials with external publickey', async () => {
-    const signedData = {"@context":["https://www.w3.org/2018/credentials/v1",
-            {"name":"schema:name"}],
-        "type":["VerifiableCredential"],
-        "credentialSubject":{"type":"Person","name":"Tejash"},
-        "issuanceDate":"2021-08-27T10:57:57.237Z",
-        "issuer":"did:issuer:authorizedIssuer#23",
-        "proof":{
-            "type":"Ed25519Signature2018",
-            "created":"2022-07-13T07:18:35Z",
-            "verificationMethod":"did:authorizedSigner:123456789",
-            "proofPurpose":"assertionMethod",
-            "jws":"eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..OWfu7zX1WFI5bWYRAo7I40yjhdtmP4Tvn_0m74E_U7PvsYGBWi72MtbPotrn3jtwZw2qkWrSD4UF8WXSPnW0Bg"
-    }};
+    const signedData = {"@context":["https://www.w3.org/2018/credentials/v1",{"name":"schema:name"}],"type":["VerifiableCredential"],"credentialSubject":{"type":"Person","name":"Tejash"},"issuanceDate":"2021-08-27T10:57:57.237Z","issuer":"did:authorizedIssuer:23423#21","proof":{"type":"Ed25519Signature2018","created":"2022-07-19T05:11:21Z","verificationMethod":"did:authorizedIssuer:23423#21","proofPurpose":"assertionMethod","jws":"eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..O6u5oAOiOeOt4nCHlJRRn04EyOoi7sRZHcJtvRXQqvKxQUfKdYjB9GJunO5pjnErWJC4U7gTctmUq34qrx98Bw"}};
     const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519, "DaipNW4xaH2bh1XGNNdqjnSYyru3hLnUgTBSfSvmZ2hi");
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
@@ -182,7 +170,7 @@ test('Should generate credentials with array values', async () => {
             "skills": [{{#each skills}}"{{skill}}"{{#unless @last}},{{/unless}}{{/each}}]
         },
         "issuanceDate": "2021-08-27T10:57:57.237Z",
-        "issuer": "did:issuer:skill-master#23",
+        "issuer": "did:authorizedIssuer:23423#21",
         "evidence": [
             {
                 "type": [
