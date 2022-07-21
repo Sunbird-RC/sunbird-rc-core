@@ -11,15 +11,25 @@ const server = http.createServer(async (req, res) => {
     console.time(req.url);
     console.log(`API ${req.method} ${req.url} called`);
     try {
-        if (req.method === 'POST' && req.url.startsWith("/sign")) {
+        if (req.method === 'GET' && req.url.startsWith("/health")) {
+            res.end("OK")
+        } else if (req.method === 'POST' && req.url.startsWith("/sign")) {
             const signedData = await generateCredentialsRoute(req, res)
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify(signedData))
 
         } else if (req.method === 'POST' && req.url.startsWith("/verify")) {
-            const signedData = await verifyCredentialsRoute(req, res)
-            res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify(signedData))
+            try {
+                const signedData = await verifyCredentialsRoute(req, res)
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(signedData))
+            } catch (ex) {
+                console.debug(ex);
+                if (ex.code >=400) {
+                    res.statusCode = ex.code;
+                }
+                return res.end(ex.message)
+            }
 
         } else {
             res.end(`{"error": "${http.STATUS_CODES[404]}"}`)

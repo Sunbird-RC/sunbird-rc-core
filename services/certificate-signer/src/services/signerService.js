@@ -55,7 +55,7 @@ function getKeys(issuer) { //todo move this to a config file
             signatureType: 'RSA'
         }, 'did:authorizedIssuer:23423#21': ecRefKey
     }; */
-    let configPath = (process.env.CONFIG_BASE_PATH || '.' )+ '/../../config.json';
+    let configPath = (process.env.CONFIG_BASE_PATH || './../..' )+ '/config.json';
     console.log('loading config from ' + configPath);
     let issuerKeyMap = require(configPath)
     let key = (issuer in issuerKeyMap.issuers)?issuer:"default";
@@ -182,7 +182,6 @@ const verifyCredentials = async (signedCredentials, externalPublicKey = null) =>
 };
 
 const verifyRSACredentials = async (controller, signedCredentials, externalPublicKey) => {
-    // const key = new RSAKeyPair({...getPublicKey(signingKeyType, externalPublicKey)});
     const key = new RSAKeyPair({"id": signedCredentials.issuer, "publicKeyPem": externalPublicKey});
     const {AssertionProofPurpose} = jsigs.purposes;
     return await jsigs.verify(signedCredentials, {

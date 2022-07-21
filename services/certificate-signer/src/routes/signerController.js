@@ -17,12 +17,27 @@ const generateCredentialsRoute = async (req) => {
 };
 
 
-const verifyCredentialsRoute = async (req) => {
+const verifyCredentialsRoute = async (req, res) => {
     const reqBody = await getRequestBody(req);
     const {signedCredentials, publicKey } = reqBody;
 
-    return await verifyCredentials(signedCredentials, publicKey);
+    if (isValidSignedCredentials(signedCredentials)) {
+        return await verifyCredentials(signedCredentials, publicKey);
+    } else {
+        throw {"code":400, "message":"Bad request"}
+    }
 };
+
+function isValidSignedCredentials(signedCredentials) {
+    if (typeof(signedCredentials) !== "object") {
+        return false;
+    }
+    if (!("issuer" in signedCredentials) ||
+        !("proof" in signedCredentials))
+        return false;
+
+    return true;
+}
 
 
 module.exports = {
