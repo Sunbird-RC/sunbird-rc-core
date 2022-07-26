@@ -44,6 +44,7 @@ public class FileStorageService {
             createNewBucket();
             //TODO: check if this can go infinite loop
             save(inputStream, objectName);
+            return;
         }
         logger.info("Saving the file in the location {}", objectName);
         minioClient.putObject(PutObjectArgs.builder()
