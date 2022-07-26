@@ -1,5 +1,7 @@
 package dev.sunbirdrc.validators.json.jsonschema;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.validators.IValidate;
 import org.everit.json.schema.Schema;
@@ -9,6 +11,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,14 +20,19 @@ import java.util.stream.Collectors;
 
 public class JsonValidationServiceImpl implements IValidate {
 	private static Logger logger = LoggerFactory.getLogger(JsonValidationServiceImpl.class);
+
+	public final static String TITLE = "title";
 	private final String REQUIRED_KEYWORD = "required";
 
 	private Map<String, Schema> entitySchemaMap = new HashMap<>();
 	private Map<String, String> definitionMap = new HashMap<>();;
 	private final String schemaUrl;
 
+	private final ObjectMapper objectMapper;
+
 	public JsonValidationServiceImpl(String schemaUrl) {
 		this.schemaUrl = schemaUrl;
+		this.objectMapper = new ObjectMapper();
 	}
 
 	private Schema getEntitySchema(String entityType) throws MiddlewareHaltException {
@@ -103,5 +111,12 @@ public class JsonValidationServiceImpl implements IValidate {
 			flattenedValidationExceptions.add(e);
 		}
 		return flattenedValidationExceptions;
+	}
+
+	@Override
+	public void addDefinitions(JsonNode schema) throws IOException {
+		JsonNode schemaJsonNode = objectMapper.readTree(schema.asText("{}"));
+		String title = schemaJsonNode.get(TITLE).asText();
+		this.addDefinitions(title, schema.asText("{}"));
 	}
 }
