@@ -21,6 +21,7 @@ import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.*;
+import dev.sunbirdrc.validators.IValidate;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -101,6 +102,9 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private IAuditService auditService;
+
+    @Autowired
+    private IValidate validator;
 
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
@@ -240,6 +244,7 @@ public class RegistryServiceImpl implements RegistryService {
             if (vertexLabel.equals(Schema)) {
                 JsonNode schema = rootNode.get(vertexLabel).get(Schema.toLowerCase());
                 definitionsManager.appendNewDefinition(schema);
+                validator.addDefinitions(schema);
             }
 
         }
@@ -340,6 +345,7 @@ public class RegistryServiceImpl implements RegistryService {
             if (entityType.equals(Schema)) {
                 JsonNode schema = inputNode.get(entityType).get(Schema.toLowerCase());
                 definitionsManager.appendNewDefinition(schema);
+                validator.addDefinitions(schema);
             }
         }
     }
