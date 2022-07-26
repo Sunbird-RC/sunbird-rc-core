@@ -1,12 +1,14 @@
 package dev.sunbirdrc.registry.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.APIMessage;
 import dev.sunbirdrc.registry.service.ISearchService;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.validators.IValidate;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
+import static dev.sunbirdrc.registry.Constants.TITLE;
 
 @Component
 public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> {
@@ -28,6 +31,12 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 
     @Autowired
     private DefinitionsManager definitionsManager;
+
+    @Autowired
+    private IValidate validator;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public void onApplicationEvent(@NotNull ContextRefreshedEvent contextRefreshedEvent) {
@@ -40,9 +49,13 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
         objectNode.set("filters", JsonNodeFactory.instance.objectNode());
         try {
             JsonNode searchResults = searchService.search(objectNode);
-            searchResults.get(Schema).forEach(schemaNode -> {
-                definitionsManager.appendNewDefinition(schemaNode.get(Schema.toLowerCase()));
-            });
+            for (JsonNode schemaNode : searchResults.get(Schema)) {
+                JsonNode schema = schemaNode.get(Schema.toLowerCase());
+                definitionsManager.appendNewDefinition(schema);
+                JsonNode schemaJsonNode = objectMapper.readTree(schema.asText("{}"));
+                String title = schemaJsonNode.get(TITLE).asText();
+                validator.addDefinitions(title, schema.asText("{}"));
+            }
             logger.info("Loaded {} schema from DB", searchResults.get(Schema).size());
         } catch (IOException e) {
             e.printStackTrace();
