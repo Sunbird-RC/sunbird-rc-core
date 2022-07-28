@@ -32,6 +32,7 @@ const server = http.createServer(async (req, res) => {
             }
 
         } else {
+            res.statusCode = 404;
             res.end(`{"error": "${http.STATUS_CODES[404]}"}`)
         }
         console.timeEnd(req.url)
