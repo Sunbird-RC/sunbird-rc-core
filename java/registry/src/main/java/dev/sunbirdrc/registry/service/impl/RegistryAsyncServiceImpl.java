@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.registry.model.dto.CreateEntityMessage;
 import dev.sunbirdrc.registry.service.RegistryService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
@@ -30,9 +31,13 @@ public class RegistryAsyncServiceImpl extends RegistryServiceImpl implements Reg
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	@Autowired
+	private AsyncRequest asyncRequest;
+
 	@Override
 	public String addEntity(Shard shard, String userId, JsonNode inputJson, boolean skipSignature) throws Exception {
-		CreateEntityMessage createEntityMessage = CreateEntityMessage.builder().userId(userId).inputJson(inputJson).skipSignature(skipSignature).build();
+		CreateEntityMessage createEntityMessage = CreateEntityMessage.builder().userId(userId).inputJson(inputJson)
+				.skipSignature(skipSignature).webhookUrl(asyncRequest.getWebhookUrl()).build();
 		String message = objectMapper.writeValueAsString(createEntityMessage);
 		String transactionId = UUID.randomUUID().toString();
 		ListenableFuture<SendResult<String, String>> future =

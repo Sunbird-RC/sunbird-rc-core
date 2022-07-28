@@ -12,6 +12,7 @@ import dev.sunbirdrc.registry.service.WebhookService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +44,12 @@ public class CreateEntityConsumer {
     @Value("${kafka.postCreateEntityTopic:post_create_entity}")
     String postCreateEntityTopic;
 
+    @Value("${webhook.url}")
+    private String webhookUrl;
+
     @Autowired
-    public CreateEntityConsumer(ObjectMapper objectMapper, ShardManager shardManager, KafkaTemplate<String, String> kafkaTemplate, @Qualifier("sync") RegistryService registryService, WebhookService webhookService) {
+    public CreateEntityConsumer(ObjectMapper objectMapper, ShardManager shardManager, KafkaTemplate<String, String> kafkaTemplate,
+                                @Qualifier("sync") RegistryService registryService, WebhookService webhookService) {
         this.objectMapper = objectMapper;
         this.shardManager = shardManager;
         this.kafkaTemplate = kafkaTemplate;
@@ -53,17 +58,20 @@ public class CreateEntityConsumer {
     }
 
     @KafkaListener(topics = "#{'${kafka.createEntityTopic}'}", groupId = createEntityGroupId, autoStartup = "${async.enabled}")
-    @SendTo("#{'${kafka.postCreateEntityTopic}'}")
     public void createEntityConsumer(@Payload String message, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key) {
         PostCreateEntityMessage postCreateEntityMessage = PostCreateEntityMessage.builder().build();
         try {
             logger.debug("Received message: {}, key: {}", message, key);
             CreateEntityMessage createEntityMessage = objectMapper.readValue(message, CreateEntityMessage.class);
+            if (!StringUtils.isEmpty(createEntityMessage.getWebhookUrl())) {
+                webhookUrl = createEntityMessage.getWebhookUrl();
+            }
             JsonNode inputJson = createEntityMessage.getInputJson();
             String entityType = inputJson.fields().next().getKey();
             Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
             String entityOsid = registryService.addEntity(shard, createEntityMessage.getUserId(), inputJson, createEntityMessage.isSkipSignature());
-            postCreateEntityMessage = PostCreateEntityMessage.builder().entityType(entityType).osid(entityOsid).transactionId(key).userId(createEntityMessage.getUserId()).status(CreateEntityStatus.SUCCESSFUL).message("").build();
+            postCreateEntityMessage = PostCreateEntityMessage.builder().entityType(entityType).osid(entityOsid)
+                    .transactionId(key).userId(createEntityMessage.getUserId()).status(CreateEntityStatus.SUCCESSFUL).message("").build();
 
         } catch (Exception e) {
             logger.error("Creating entity failed, {}", e.getMessage(), e);
@@ -73,8 +81,9 @@ public class CreateEntityConsumer {
                 kafkaTemplate.send(postCreateEntityTopic, key, objectMapper.writeValueAsString(postCreateEntityMessage));
                 webhookService.postEvent(WebhookEvent.builder().event(String.format("%s-create", SUNBIRD_RC))
                         .data(postCreateEntityMessage)
+                        .webhookUrl(webhookUrl)
                         .timestamp(Timestamp.from(Instant.now())).build());
-            } catch (JsonProcessingException e) {
+            } catch (Exception e) {
                 logger.error("Sending message to {} topic failed: {}", postCreateEntityTopic, e.getMessage(), e);
             }
         }

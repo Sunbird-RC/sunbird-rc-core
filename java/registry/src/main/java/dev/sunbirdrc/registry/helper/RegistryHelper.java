@@ -11,10 +11,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
 import dev.sunbirdrc.actors.factory.PluginRouter;
-import dev.sunbirdrc.pojos.PluginRequestMessage;
-import dev.sunbirdrc.pojos.PluginRequestMessageCreator;
-import dev.sunbirdrc.pojos.PluginResponseMessage;
-import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
+import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
@@ -48,6 +45,7 @@ import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
@@ -89,6 +87,10 @@ public class RegistryHelper {
 
     @Autowired
     RegistryService registryService;
+
+    @Autowired
+    @Qualifier("async")
+    RegistryService registryAsyncService;
 
     @Autowired
     IReadService readService;
@@ -154,6 +156,9 @@ public class RegistryHelper {
     private ConditionResolverService conditionResolverService;
 
     private FunctionExecutor functionExecutor = new FunctionExecutor();
+
+    @Autowired
+    private AsyncRequest asyncRequest;
 
     public JsonNode removeFormatAttr(JsonNode requestBody) {
         String documents = "documents";
@@ -235,7 +240,12 @@ public class RegistryHelper {
             logger.info("Add api: entity type: {} and shard propery: {}", entityType, shardManager.getShardProperty());
             Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
             watch.start("RegistryController.addToExistingEntity");
-            String resultId = registryService.addEntity(shard, userId, inputJson, skipSignature);
+            String resultId;
+            if (asyncRequest.isEnabled()) {
+                resultId = registryAsyncService.addEntity(shard, userId, inputJson, skipSignature);
+            } else {
+                resultId = registryService.addEntity(shard, userId, inputJson, skipSignature);
+            }
             recordId = new RecordIdentifier(shard.getShardLabel(), resultId);
             watch.stop("RegistryController.addToExistingEntity");
             logger.info("AddEntity,{}", recordId.toString());
