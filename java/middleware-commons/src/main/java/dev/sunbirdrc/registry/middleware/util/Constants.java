@@ -110,6 +110,7 @@ public class Constants {
 	public static final String USER_ID = "userId";
 	public static final String EMAIL = "email";
 	public static final String MOBILE = "mobile";
+	public static final String ROLES = "roles";
 	public static final String SVG_MEDIA_TYPE = "image/svg+xml";
 
     public enum GraphDatabaseProvider {

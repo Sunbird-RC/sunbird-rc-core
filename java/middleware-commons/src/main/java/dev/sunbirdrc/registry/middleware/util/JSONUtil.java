@@ -69,6 +69,10 @@ public class JSONUtil {
 		return mapObject;
 	}
 
+	public static List<String> convertJsonNodeToList(Object obj){
+		return new ObjectMapper().convertValue(obj, List.class);
+	}
+
 	public static String getStringWithReplacedText(String payload, String value, String replacement) {
 		Pattern pattern = Pattern.compile(value);
 		Matcher matcher = pattern.matcher(payload);
