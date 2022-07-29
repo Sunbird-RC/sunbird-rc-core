@@ -15,4 +15,5 @@ public class WebhookEvent {
 	private String event;
 	private Timestamp timestamp;
 	private Object data;
+	private String webhookUrl;
 }

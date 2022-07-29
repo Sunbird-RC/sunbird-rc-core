@@ -138,8 +138,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String schemaUrl;
 	@Value("${httpConnection.maxConnections:5}")
 	private int httpMaxConnections;
-	@Value(value = "${async.enabled}")
-	private Boolean asyncEnabled;
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 
@@ -426,11 +424,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Bean
 	public RegistryService registryService() {
-		if (asyncEnabled) {
-			return new RegistryAsyncServiceImpl();
-		} else {
-			return new RegistryServiceImpl();
-		}
+		return new RegistryServiceImpl();
 	}
 
 //	/** creates elastic-service bean and instanstiates the indices

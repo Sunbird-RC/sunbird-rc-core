@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
+import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
@@ -38,6 +39,7 @@ import org.junit.runner.RunWith;
 import org.kie.api.runtime.KieContainer;
 import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -85,6 +87,10 @@ public class RegistryHelperTest {
 
 	@Mock
 	RegistryService registryService;
+
+	@Mock
+	@Qualifier("async")
+	RegistryService registryAsyncService;
 
 	@Mock
 	IReadService readService;
@@ -326,6 +332,9 @@ public class RegistryHelperTest {
 	ArgumentCaptor<String> subjectCapture;
 	@Captor
 	ArgumentCaptor<String> messageCapture;
+
+	@Mock
+	AsyncRequest asyncRequest;
 
 	@Test
 	public void shouldCreateOwnersForInvite() throws Exception {
@@ -657,5 +666,18 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
 		Assert.assertFalse(registryHelper.doesDeleteRequiresAuthorization(entity));
+	}
+
+	@Test
+	public void shouldTriggerAsyncFlow() throws Exception {
+		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
+		when(shardManager.getShard(any())).thenReturn(new Shard());
+
+		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
+		when(registryAsyncService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
+		when(asyncRequest.isEnabled()).thenReturn(Boolean.TRUE);
+		String entity = registryHelper.addEntity(inviteJson, "");
+		verify(registryService, never()).addEntity(any(), anyString(), any(), anyBoolean());
+		verify(registryAsyncService, atLeastOnce()).addEntity(any(), anyString(), any(), anyBoolean());
 	}
 }

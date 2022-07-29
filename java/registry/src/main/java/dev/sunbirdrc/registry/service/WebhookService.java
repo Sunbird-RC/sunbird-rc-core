@@ -17,9 +17,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class WebhookService {
     private static final Logger logger = LoggerFactory.getLogger(WebhookService.class);
-
-    @Value("${webhook.url}")
-    private String webhookUrl;
     @Value("${webhook.enabled}")
     private Boolean webhookEnabled;
     @Autowired
@@ -34,7 +31,7 @@ public class WebhookService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             try {
                 HttpEntity<String> entity = new HttpEntity<>(objectMapper.writeValueAsString(event), headers);
-                ResponseEntity<String> response = retryRestTemplate.postForEntity(webhookUrl, entity);
+                ResponseEntity<String> response = retryRestTemplate.postForEntity(event.getWebhookUrl(), entity);
 
             } catch (JsonProcessingException e) {
                 logger.error("Failed calling webhook event, {}", e.getMessage(), e);

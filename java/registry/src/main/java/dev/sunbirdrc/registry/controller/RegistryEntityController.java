@@ -54,11 +54,11 @@ public class RegistryEntityController extends AbstractController {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @Autowired
+    private AsyncRequest asyncRequest;
+
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${certificate.enableExternalTemplates:false}") boolean externalTemplatesEnabled;
-
-    @Value(value = "${async.enabled}")
-    private Boolean asyncEnabled;
 
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
@@ -215,8 +215,12 @@ public class RegistryEntityController extends AbstractController {
             @PathVariable String entityName,
             @RequestHeader HttpHeaders header,
             @RequestBody JsonNode rootNode,
+            @RequestParam(defaultValue = "sync") String mode,
+            @RequestParam(defaultValue = "${webhook.url}") String callbackUrl,
             HttpServletRequest request
     ) {
+        logger.info("MODE: {}", asyncRequest.isEnabled());
+        logger.info("MODE: {}", asyncRequest.getWebhookUrl());
         logger.info("Adding entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.CREATE, "OK", responseParams);
@@ -228,7 +232,7 @@ public class RegistryEntityController extends AbstractController {
             String userId = registryHelper.authorizeManageEntity(request, entityName);
             String label = registryHelper.addEntity(newRootNode, userId);
             Map<String, String> resultMap = new HashMap<>();
-            if (asyncEnabled) {
+            if (asyncRequest.isEnabled()) {
                 resultMap.put(TRANSACTION_ID, label);
             } else {
                 resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);

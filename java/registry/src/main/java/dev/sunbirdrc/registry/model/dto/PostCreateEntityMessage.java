@@ -16,5 +16,6 @@ public class PostCreateEntityMessage {
     private String transactionId;
     private CreateEntityStatus status;
     private String message;
+    private String webhookUrl;
 }
 
