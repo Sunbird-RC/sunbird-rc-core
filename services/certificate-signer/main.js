@@ -38,7 +38,8 @@ const server = http.createServer(async (req, res) => {
         console.timeEnd(req.url)
     } catch (e) {
         console.error(e)
-        res.end(`{"error": "${http.STATUS_CODES[404]}", "message": ${e}`)
+        res.statusCode = e["code"] || 500;
+        res.end(`{"error": "${http.STATUS_CODES[res.statusCode]}", "message": ${e.message}}`)
     }
 });
 

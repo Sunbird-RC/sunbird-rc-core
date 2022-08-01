@@ -3,6 +3,17 @@ const {generateCredentials, verifyCredentials} = require("../services/signerServ
 
 const generateCredentialsRoute = async (req) => {
     const reqBody = await getRequestBody(req);
+
+    function isValidRequestBody(reqBody) {
+        if ("data" in reqBody && "credentialTemplate" in reqBody) {
+            return true;
+        }
+        return false;
+    }
+
+    if (!isValidRequestBody(reqBody)) {
+        throw {"code":400, "message":"Bad request"}
+    }
     const {data, credentialTemplate} = reqBody;
     let template = credentialTemplate;
     if (typeof template === "string" && isValidHttpUrl(template)) {
