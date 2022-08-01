@@ -34,6 +34,7 @@ public class KeycloakAdminUtil {
     private String authURL;
     private String defaultPassword;
     private boolean setDefaultPassword;
+    private List<String> emailActions;
     private final Keycloak keycloak;
 
     @Autowired
@@ -43,13 +44,15 @@ public class KeycloakAdminUtil {
             @Value("${keycloak-admin.client-id:}") String adminClientId,
             @Value("${keycloak-user.default-password:}") String defaultPassword,
             @Value("${keycloak-user.set-default-password:false}") boolean setDefaultPassword,
-            @Value("${keycloak.auth-server-url:}") String authURL) {
+            @Value("${keycloak.auth-server-url:}") String authURL,
+            @Value("${keycloak-user.email-actions:}") List<String> emailActions) {
         this.realm = realm;
         this.adminClientSecret = adminClientSecret;
         this.adminClientId = adminClientId;
         this.authURL = authURL;
         this.defaultPassword = defaultPassword;
         this.setDefaultPassword = setDefaultPassword;
+        this.emailActions = emailActions;
         this.keycloak = buildKeycloak();
     }
 
@@ -75,6 +78,8 @@ public class KeycloakAdminUtil {
             logger.info("User ID path" + response.getLocation().getPath());
             String userID = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
             logger.info("User ID : " + userID);
+            if(!emailActions.isEmpty())
+                usersResource.get(userID).executeActionsEmail(emailActions);
             return userID;
         } else if (response.getStatus() == 409) {
             logger.info("UserID: {} exists", userName);
