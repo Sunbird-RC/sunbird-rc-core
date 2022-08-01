@@ -7,10 +7,13 @@ const vc = require('vc-js');
 const Handlebars = require("handlebars");
 const delimiters = require('handlebars-delimiters');
 const hash = require('object-hash');
-const {cacheInstance} = require("../utils");
+const {cacheInstance, getContextsFromUrls} = require("../utils");
 const {contexts} = require('security-context');
 const credentialsv1 = require('./credentialsv1.json');
+const axios = require("axios");
 delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
+const {documentLoaders} = require('jsonld');
+const {node: documentLoader} = documentLoaders;
 
 const KeyType = {
     RSA: "RSA", ED25519: "ED25519"
@@ -114,7 +117,6 @@ documentLoaderMapping["https://www.w3.org/2018/credentials/v1"] = credentialsv1;
 
 const customLoader = url => {
     console.log("checking " + url);
-
     let context = documentLoaderMapping[url];
     if (context === undefined) {
         context = contexts[url];
