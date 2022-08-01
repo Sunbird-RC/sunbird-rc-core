@@ -107,11 +107,13 @@ async function signJSON(certificate) {
 }
 
 
+let documentLoaderMapping = {"https://w3id.org/security/v1": contexts.get("https://w3id.org/security/v1")};
+documentLoaderMapping['https://www.w3.org/2018/credentials#'] = credentialsv1;
+documentLoaderMapping["https://www.w3.org/2018/credentials/v1"] = credentialsv1;
+
+
 const customLoader = url => {
     console.log("checking " + url);
-    let documentLoaderMapping = {"https://w3id.org/security/v1": contexts.get("https://w3id.org/security/v1")};
-    documentLoaderMapping['https://www.w3.org/2018/credentials#'] = credentialsv1;
-    documentLoaderMapping["https://www.w3.org/2018/credentials/v1"] = credentialsv1;
 
     let context = documentLoaderMapping[url];
     if (context === undefined) {
@@ -126,7 +128,9 @@ const customLoader = url => {
         return JSON.parse(url);
     }
     console.log("Fallback url lookup for document :" + url);
-    return documentLoader()(url);
+    const loadedContext = documentLoader()(url);
+    documentLoaderMapping[url] = loadedContext;
+    return loadedContext;
 };
 
 function getPublicKey(signingKeyType, publicKey = null, issuerDid = null) {
