@@ -11,7 +11,6 @@
   "license": "MPL",
   "dependencies": {
     "axios": "^0.26.0",
-    "certificate-signer-library": "^2.0.2",
     "handlebars": "^4.7.7",
     "handlebars-delimiters": "^1.0.0",
     "jsonld-signatures": "^6.0.0",
@@ -20,7 +19,7 @@
     "node-cache": "^5.1.2",
     "object-hash": "^3.0.0",
     "ramda": "^0.27.1",
-    "vaccination-context": "^1.0.7",
+    "security-context": "^4.0.0",
     "vc-js": "^0.6.4"
   },
   "devDependencies": {
