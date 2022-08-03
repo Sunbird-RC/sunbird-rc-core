@@ -9,6 +9,7 @@ import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.transform.ConfigurationHelper;
 import dev.sunbirdrc.registry.transform.Transformer;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,9 @@ public abstract class AbstractController {
         logger.info("Error in handling the invite", ex);
         responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         responseParams.setErrmsg("Error occurred");
+        if (!StringUtils.isEmpty(ex.getMessage())) {
+            responseParams.setErrmsg(ex.getMessage());
+        }
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
