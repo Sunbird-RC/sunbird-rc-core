@@ -39,12 +39,6 @@ public class FileStorageService {
     }
 
     public void save(InputStream inputStream, String objectName) throws Exception {
-        if (!isBucketExists()) {
-            logger.info("Bucket {} doesn't exist creating new bucket", bucketName);
-            createNewBucket();
-            //TODO: check if this can go infinite loop
-            save(inputStream, objectName);
-        }
         logger.info("Saving the file in the location {}", objectName);
         minioClient.putObject(PutObjectArgs.builder()
                 .bucket(bucketName)
@@ -52,20 +46,6 @@ public class FileStorageService {
                 .stream(inputStream, -1, 10485760)
                 .build());
         logger.info("File has successfully saved");
-    }
-
-    private void createNewBucket() throws ErrorResponseException, InsufficientDataException, InternalException, InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
-        minioClient.makeBucket(MakeBucketArgs
-                .builder()
-                .bucket(bucketName)
-                .build());
-    }
-
-    private boolean isBucketExists() throws ErrorResponseException, InsufficientDataException, InternalException, InvalidKeyException, InvalidResponseException, IOException, NoSuchAlgorithmException, ServerException, XmlParserException {
-        return minioClient.bucketExists(BucketExistsArgs
-                .builder()
-                .bucket(bucketName)
-                .build());
     }
 
     public DocumentsResponse saveAndFetchFileNames(MultipartFile[] files, String requestedURI) {
