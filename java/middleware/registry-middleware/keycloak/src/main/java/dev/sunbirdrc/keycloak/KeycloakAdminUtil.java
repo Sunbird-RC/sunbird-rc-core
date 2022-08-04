@@ -97,7 +97,6 @@ public class KeycloakAdminUtil {
         if (userRepresentationOptional.isPresent()) {
             UserResource userResource = userRepresentationOptional.get();
             UserRepresentation userRepresentation = userResource.toRepresentation();
-            checkIfUserRegisteredForEntity(entityName, userRepresentation);
             updateUserAttributes(entityName, email, mobile, userRepresentation);
             userResource.update(userRepresentation);
             return userRepresentation.getId();
@@ -127,7 +126,9 @@ public class KeycloakAdminUtil {
 
     private void updateUserAttributes(String entityName, String email, String mobile, UserRepresentation userRepresentation) {
         List<String> entities = userRepresentation.getAttributes().getOrDefault(ENTITY, Collections.emptyList());
-        entities.add(entityName);
+        if (!entities.contains(entityName)) {
+            entities.add(entityName);
+        }
         addAttributeIfNotExists(userRepresentation, EMAIL, email);
         addAttributeIfNotExists(userRepresentation, MOBILE_NUMBER, mobile);
     }
