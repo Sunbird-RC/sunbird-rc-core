@@ -13,7 +13,7 @@ test('Should render json template', async () => {
         "data": {
             "name": "{{identityDetails.name}}"
         },
-        "issuer": "did:issuer:sunbird",
+        "issuer": "https://sunbird.org/",
         // "date": "28-09-2021",
     }
     const output = JSON.parse(Mustache.render(JSON.stringify(template), entity));
