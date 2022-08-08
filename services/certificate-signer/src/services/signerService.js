@@ -65,23 +65,23 @@ function getKeys(issuer) { //todo move this to a config file
 
 
     if (issuerKeyMap.issuers[key] !== undefined) {
-        let {publicKey, privateKey, signatureType} = issuerKeyMap.issuers[key];
-        return {publicKey: publicKey, privateKey: privateKey, signatureType: signatureType};
+        let {publicKey, privateKey, signatureType, verificationMethod} = issuerKeyMap.issuers[key];
+        return {publicKey: publicKey, privateKey: privateKey, signatureType: signatureType, verificationMethod};
     }
     throw new Error("Invalid issuer");
 }
 
 function getSignatureSuite(issuer) {
     let suite = null;
-    let {privateKey, publicKey, signatureType} = getKeys(issuer);
+    let {privateKey, publicKey, signatureType, verificationMethod} = getKeys(issuer);
     switch (signatureType) {
         case KeyType.RSA: {
-            const key = new RSAKeyPair({id: issuer, publicKeyPem: publicKey, privateKeyPem: privateKey});
+            const key = new RSAKeyPair({id: verificationMethod, publicKeyPem: publicKey, privateKeyPem: privateKey});
             suite = new RsaSignature2018({key});
             break;
         }
         case KeyType.ED25519: {
-            const key = new Ed25519KeyPair({publicKeyBase58: publicKey, privateKeyBase58: privateKey, id: issuer});
+            const key = new Ed25519KeyPair({publicKeyBase58: publicKey, privateKeyBase58: privateKey, id: verificationMethod});
             suite = new Ed25519Signature2018({key});
         }
     }
@@ -165,21 +165,23 @@ const verifyCredentials = async (signedCredentials, externalPublicKey = null) =>
     const signingKeyType = inferSignatureAlgoType(signedCredentials)
     // const signingKeyType = typeCode === 'RsaVerificationKey2018'?KeyType.RSA : KeyType.ED25519;
     let publicKeyStr = externalPublicKey;
+    let {publicKey, verificationMethod} = getKeys(signedCredentials.issuer);
     if (publicKeyStr === null) {
-        let {publicKey} = getKeys(signedCredentials.issuer);
         publicKeyStr = publicKey;
     }
 
-    const publicKeyObject = getPublicKey(signingKeyType, publicKeyStr, signedCredentials.issuer);
+    const publicKeyObject = getPublicKey(signingKeyType, publicKeyStr, verificationMethod);
     const controller = {
         '@context': jsigs.SECURITY_CONTEXT_URL,
-        id: signedCredentials.issuer,
+        id: verificationMethod,
         publicKey: [publicKeyObject], // this authorizes this key to be used for making assertions
         assertionMethod: [publicKeyObject.id]
     };
     switch (signingKeyType) {
         case KeyType.RSA:
-            return await verifyRSACredentials(controller, signedCredentials, publicKeyStr);
+            console.log("Verifying RSA");
+            console.log(JSON.stringify(controller));
+            return await verifyRSACredentials(controller, signedCredentials, publicKeyStr, verificationMethod);
         case KeyType.ED25519:
             return await verifyED25519Credentials(controller, signedCredentials, publicKeyObject);
     }
@@ -187,8 +189,8 @@ const verifyCredentials = async (signedCredentials, externalPublicKey = null) =>
     return result;
 };
 
-const verifyRSACredentials = async (controller, signedCredentials, externalPublicKey) => {
-    const key = new RSAKeyPair({"id": signedCredentials.issuer, "publicKeyPem": externalPublicKey});
+const verifyRSACredentials = async (controller, signedCredentials, externalPublicKey, verificationMethod) => {
+    const key = new RSAKeyPair({"id": verificationMethod, "publicKeyPem": externalPublicKey});
     const {AssertionProofPurpose} = jsigs.purposes;
     return await jsigs.verify(signedCredentials, {
         suite: new RsaSignature2018({key}),

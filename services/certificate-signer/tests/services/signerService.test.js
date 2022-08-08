@@ -87,7 +87,7 @@ test('Should verify credentials by RSA Algo', async () => {
             name: "{{identityDetails.name}}"
         },
         "issuanceDate": "2021-08-27T10:57:57.237Z",
-        "issuer": "did:authorizedIssuer:23423#23",
+        "issuer": "https://test.com/issuer",
         // "date": "28-09-2021",
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
