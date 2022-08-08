@@ -1,0 +1,111 @@
+swagger: "2.0"
+info:
+  title: Sunbird Signer API
+  description: Sunbird Signer API
+  version: 1.0.0
+host: sunbirdrc.dev
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /sign:
+    post:
+      summary: Sign a certificate
+      description: Sign a certificate
+      parameters:
+        - in: body
+          name: body
+          schema:
+              $ref: '#/definitions/SignatureRequest'
+        - name: signerId
+          in: query
+          description: signerId
+          required: true
+          type: string
+        - name: signerType
+          in: query
+          description: signerType
+          required: true
+          type: string
+          enum:
+            - rsa
+            - ed25519
+      responses:
+          '200':
+            description: Ok
+            schema:
+              $ref: '#/definitions/SignatureResponse'
+          '400':
+            description: Bad Request
+            schema:
+              $ref: '#/definitions/SignatureError'
+  /verify:
+    post:
+      summary: Verify a certificate
+      description: Verify a certificate
+      parameters:
+        - in: body
+          name: body
+          schema:
+              $ref: '#/definitions/VerificationRequest'
+        - name: signerId
+          in: query
+          description: signerId
+          required: true
+          type: string
+        - name: signerType
+          in: query
+          description: signerType
+          required: true
+          type: string
+          enum:
+            - rsa
+            - ed25519
+      responses:
+          '200':
+            description: Ok
+            schema:
+              $ref: '#/definitions/VerificationResponse'
+          '400':
+            description: Bad Request
+            schema:
+              $ref: '#/definitions/VerificationError'
+  /health:
+    get:
+      summary: Health check
+      description: Health check
+      responses:
+          '200':
+            description: Ok
+            schema:
+              type: string
+          '500':
+            description: Internal Server Error
+            schema:
+              type: string
+definitions:
+  VerificationRequest:
+    type: object
+    required:
+      - signedCredentials
+    properties:
+      signedCredentials:
+        type: object
+        description: Certificate json object to be verified
+  SignatureRequest:
+    type: object
+    properties:
+      data:
+        type: object
+      credentialTemplate:
+        type: string
+  SignatureResponse:
+    type: object
+  SignatureError:
+    type: object
+
+
+  
