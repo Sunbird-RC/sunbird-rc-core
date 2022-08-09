@@ -1,35 +1,33 @@
-const fs = require('fs');
-var url = require('url');
-const Handlebars = require('handlebars');
-const puppeteer = require('puppeteer');
-const QRCode = require('qrcode');
-const JSZip = require("jszip");
-const { default: axios } = require('axios');
+import fs from 'fs';
+import url from 'url';
+import Handlebars from 'handlebars';
+import puppeteer from 'puppeteer';
+import QRCode from 'qrcode';
+import JSZip from "jszip";
+import  axios from 'axios';
 const URL_W3C_VC = 'URL-W3C-VC';
 const URL = 'URL';
-const envData = require('../../configs/keys');
-const {CUSTOM_TEMPLATE_DELIMITERS} = require('../../configs/config');
-const delimiters = require('handlebars-delimiters');
-const NodeCache = require("node-cache");
-const hash = require('object-hash');
+import delimiters from 'handlebars-delimiters';
+import NodeCache from "node-cache";
+import hash from 'object-hash';
+
+import envData from '../../config/keys.js';
+import {CUSTOM_TEMPLATE_DELIMITERS} from '../../config/index.js';
+import { createClient, createCredential } from '../utilities/cord.js';
 
 const cacheInstance = new NodeCache();
 
-Handlebars.registerHelper('dateFormat', require('handlebars-dateformat'));
+Handlebars.registerHelper('dateFormat', await import('handlebars-dateformat'));
 const browserConfig = {
     headless: true,
-    //comment to use default
-    executablePath: '/usr/bin/chromium-browser',
     args: [
         "--no-sandbox",
         "--disable-gpu",
     ]
 }
 delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
-let browser;
-(async function () {
-    browser = await puppeteer.launch(browserConfig);
-})();
+const browser = await puppeteer.launch(browserConfig);
+await createClient()
 
 function getNumberWithOrdinal(n) {
     const s = ["th", "st", "nd", "rd"],
@@ -146,6 +144,9 @@ async function generateRawCertificate(certificate, templateUrl, entityId) {
     
     const dataURL = await QRCode.toDataURL(qrData, {scale: 3});  
     const certificateData = prepareDataForCertificateWithQRCode(certificateRaw, dataURL);
+
+    await createCredential(certificateData, entityId)
+
     return await renderDataToTemplate(certificateTemplateUrl, certificateData);
 }
 
@@ -282,7 +283,7 @@ function prepareDataForCertificateWithQRCode(certificateRaw, dataURL) {
     return certificateData;
 }
 
-module.exports = {
+export default {
     getCertificatePDF,
     getCertificate
 };
