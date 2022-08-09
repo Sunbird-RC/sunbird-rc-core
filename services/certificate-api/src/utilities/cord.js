@@ -9,21 +9,34 @@ import { CORD_CHAIN_ADDRESS } from '../../config/index.js'
 await cord.init({ address: CORD_CHAIN_ADDRESS })
 
 // Retrieve the identities used to create schemas and credentials.
-const signer = cord.Identity.buildFromURI('//SA', {
+// TODO: `Alice` works, but a newly created account doesn't. Why?
+const signer = cord.Identity.buildFromURI('//Alice', {
 	signingKeyPairType: 'sr25519',
 })
 // Create the schema and register it once `createClient` is called.
 const schemaContent = {
-	$schema: 'http://json-schema.org/draft-07/schema#',
-	title: 'Sunbird RC VC Schema',
-	description: 'Schema for signed VCs.',
-	$metadata: {
-		version: '1.0.0',
-		discoverable: true
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Basic Demo",
+	"description": "Test Demo Schema",
+	"$metadata": {
+		"version": "1.0.0",
+		"discoverable": true
 	},
-	properties: {},
-	type: 'object',
-	additionalProperties: true
+	"properties": {
+		"name": {
+			"type": "string"
+		},
+		"age": {
+			"type": "integer"
+		},
+		"gender": {
+			"type": "string"
+		},
+		"credit": {
+			"type": "integer"
+		}
+	},
+	"type": "object"
 }
 const spaceContent = {
 	title: 'Signed VC Space',
@@ -64,13 +77,15 @@ export const createClient = async () => {
  */
 export const createCredential = async (certificate, holderId) => {
 	// Get the identity of the holder.
-	const holder = cord.Identity.buildFromURI(`//${holderId}`, {
+	// TODO: Make this `holderId`, but that would need all the holders to be
+	// registered on the chain.
+	const holder = cord.Identity.buildFromURI(`//Bob`, {
 		signingKeyPairType: 'sr25519',
 	})
 
 	// Save the certificate data as a stream.
 	const streamContent = cord.ContentStream.fromContent(
-		content.fromSchemaAndContent(
+		cord.Content.fromSchemaAndContent(
 			createdSchema,
 			certificate,
 			signer.address,
