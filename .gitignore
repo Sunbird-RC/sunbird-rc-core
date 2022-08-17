@@ -83,3 +83,5 @@ validations_create.shex
 validations_update.shex
 
 .clinic
+coverage
+out

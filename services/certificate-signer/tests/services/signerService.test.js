@@ -1,26 +1,4 @@
-const {vaccinationContext} = require("vaccination-context");
-const config = require('../../config/config');
-const {publicKeyPem, privateKeyPem, signingKeyType, publicKeyBase58, privateKeyBase58} = require('../../config/keys');
-const {setDocumentLoader, KeyType} = require('certificate-signer-library/signer');
-const {generateCredentials, verifyCredentials} = require('../../src/services/signerService');
-
-let signingConfig = {
-    publicKeyPem: publicKeyPem,
-    privateKeyPem: privateKeyPem,
-    publicKeyBase58: publicKeyBase58,
-    privateKeyBase58: privateKeyBase58,
-    keyType: signingKeyType,
-    REGISTRY_URL: config.REGISTRY_URL,
-
-    CERTIFICATE_NAMESPACE: config.CERTIFICATE_NAMESPACE,
-    CERTIFICATE_CONTROLLER_ID: config.CERTIFICATE_CONTROLLER_ID,
-    CERTIFICATE_DID: config.CERTIFICATE_DID,
-    CERTIFICATE_PUBKEY_ID: config.CERTIFICATE_PUBKEY_ID,
-    CERTIFICATE_ISSUER: config.CERTIFICATE_ISSUER,
-};
-const customDocumentLoader = {};
-customDocumentLoader[config.CERTIFICATE_NAMESPACE] = vaccinationContext;
-setDocumentLoader(customDocumentLoader, signingConfig);
+const {generateCredentials, verifyCredentials, KeyType} = require('../../src/services/signerService');
 
 test('Should generate credentials', async () => {
     const entity = {
@@ -29,14 +7,14 @@ test('Should generate credentials', async () => {
         }
     };
     const template = {
-        "@context": ["https://www.w3.org/2018/credentials/v1", config.CERTIFICATE_NAMESPACE],
+        "@context": ["https://www.w3.org/2018/credentials/v1", {"name": "schema:name"}],
         "type": ["VerifiableCredential"],
         "credentialSubject": {
             type: "Person",
             name: "{{identityDetails.name}}"
         },
         "issuanceDate": "2021-08-27T10:57:57.237Z",
-        "issuer": "did:issuer:cowin",
+        "issuer": "did:authorizedIssuer:23423#21",
         // "date": "28-09-2021",
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
@@ -51,18 +29,21 @@ test('Should verify credentials', async () => {
         }
     };
     const template = {
-        "@context": ["https://www.w3.org/2018/credentials/v1", config.CERTIFICATE_NAMESPACE],
+        "@context": ["https://www.w3.org/2018/credentials/v1",
+            {"name": "schema:name"}
+        ],
         "type": ["VerifiableCredential"],
         "credentialSubject": {
             type: "Person",
             name: "{{identityDetails.name}}"
         },
         "issuanceDate": "2021-08-27T10:57:57.237Z",
-        "issuer": "did:issuer:cowin",
+        "issuer": "did:authorizedIssuer:23423#21",
         // "date": "28-09-2021",
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
-    const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519);
+    // const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519);
+    const verifiedStatus = await verifyCredentials(signedData, "DaipNW4xaH2bh1XGNNdqjnSYyru3hLnUgTBSfSvmZ2hi");
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
 });
@@ -74,68 +55,51 @@ test('Should fail verifying credentials of modified data', async () => {
         }
     };
     const template = {
-        "@context": ["https://www.w3.org/2018/credentials/v1", config.CERTIFICATE_NAMESPACE],
+        "@context": ["https://www.w3.org/2018/credentials/v1", {"name": "schema:name"}],
         "type": ["VerifiableCredential"],
         "credentialSubject": {
             type: "Person",
             name: "{{identityDetails.name}}"
         },
         "issuanceDate": "2021-08-27T10:57:57.237Z",
-        "issuer": "did:issuer:cowin",
+        "issuer": "did:authorizedIssuer:23423#21",
         // "date": "28-09-2021",
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
     signedData.credentialSubject.name = "XXYY"
-    const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519);
+    const verifiedStatus = await verifyCredentials(signedData);
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).not.toBeTruthy();
 });
 
 test('Should verify credentials by RSA Algo', async () => {
-    signingConfig.keyType = KeyType.RSA;
-    setDocumentLoader(customDocumentLoader, signingConfig);
     const entity = {
         identityDetails: {
             name: "Tejash"
         }
     };
+    const publicKeyPem = '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnXQalrgztecTpc+INjRQ8s73FSE1kU5QSlwBdICCVJBUKiuQUt7s+Z5epgCvLVAOCbP1mm5lV7bfgV/iYWDio7lzX4MlJwDedWLiufr3Ajq+79CQiqPaIbZTo0i13zijKtX7wgxQ78wT/HkJRLkFpmGeK3za21tEfttytkhmJYlwaDTEc+Kx3RJqVhVh/dfwJGeuV4Xc/e2NH++ht0ENGuTk44KpQ+pwQVqtW7lmbDZQJoOJ7HYmmoKGJ0qt2hrj15uwcD1WEYfY5N7N0ArTzPgctExtZFDmituLGzuAZfv2AZZ9/7Y+igshzfB0reIFdUKw3cdVTzfv5FNrIqN5pwIDAQAB\n-----END PUBLIC KEY-----\n';
     const template = {
-        "@context": ["https://www.w3.org/2018/credentials/v1", config.CERTIFICATE_NAMESPACE],
+        "@context": ["https://www.w3.org/2018/credentials/v1", {"name": "schema:name"}],
         "type": ["VerifiableCredential"],
         "credentialSubject": {
             type: "Person",
             name: "{{identityDetails.name}}"
         },
         "issuanceDate": "2021-08-27T10:57:57.237Z",
-        "issuer": "did:issuer:cowin",
+        "issuer": "https://test.com/issuer",
         // "date": "28-09-2021",
     }
     const signedData = await generateCredentials(entity, JSON.stringify(template));
     console.log(signedData)
-    const verifiedStatus = await verifyCredentials(signedData, KeyType.RSA);
+    const verifiedStatus = await verifyCredentials(signedData, publicKeyPem);
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
 });
 
 test('Should verify credentials with external publickey', async () => {
-    const signedData = {
-        '@context': [
-            'https://www.w3.org/2018/credentials/v1',
-            'https://sunbird.org/credentials/vaccination/v1'
-        ],
-        type: [ 'VerifiableCredential' ],
-        credentialSubject: { type: 'Person', name: 'Tejash' },
-        issuanceDate: '2021-08-27T10:57:57.237Z',
-        issuer: 'did:issuer:cowin',
-        proof: {
-            type: 'Ed25519Signature2018',
-            created: '2021-12-08T08:34:39Z',
-            verificationMethod: 'did:india',
-            proofPurpose: 'assertionMethod',
-            jws: 'eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..fJlWEsijhIsAV8cc2UOCndoEaDJRP14L7orcFstn9f8uzFXqi-jvC-r6g58FQdwc99ZmeYpgy94wBDCuVKj0BQ'
-        }
-    }
-    const verifiedStatus = await verifyCredentials(signedData, KeyType.ED25519, "7mQq3uQuK3AL5mPhhCKEHXpdMSHCRMtZntxMMn7YQrY3");
+    const signedData = {"@context":["https://www.w3.org/2018/credentials/v1",{"name":"schema:name"}],"type":["VerifiableCredential"],"credentialSubject":{"type":"Person","name":"Tejash"},"issuanceDate":"2021-08-27T10:57:57.237Z","issuer":"did:authorizedIssuer:23423#21","proof":{"type":"Ed25519Signature2018","created":"2022-07-19T05:11:21Z","verificationMethod":"did:authorizedIssuer:23423#21","proofPurpose":"assertionMethod","jws":"eyJhbGciOiJFZERTQSIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19..O6u5oAOiOeOt4nCHlJRRn04EyOoi7sRZHcJtvRXQqvKxQUfKdYjB9GJunO5pjnErWJC4U7gTctmUq34qrx98Bw"}};
+    const verifiedStatus = await verifyCredentials(signedData, "DaipNW4xaH2bh1XGNNdqjnSYyru3hLnUgTBSfSvmZ2hi");
     console.log(verifiedStatus)
     expect(verifiedStatus.verified).toBeTruthy();
 });
@@ -149,7 +113,6 @@ test('Should generate credentials with array values', async () => {
     const template = `{
         "@context": [
             "https://www.w3.org/2018/credentials/v1",
-            "https://sunbird.org/credentials/vaccination/v1",
             {
                 "@context": {
                     "@version": 1.1,
@@ -160,35 +123,35 @@ test('Should generate credentials with array values', async () => {
                             "id": "@id",
                             "@version": 1.1,
                             "@protected": true,
-                            "skills": "schema:Text"
+                            "skills": {
+                                "@id": "https://github.com/sunbird-specs/vc-specs#skills",
+                                "@container": "@list"
+                            },
+                            "name":"schema:Text",
+                            "refId":"schema:Text"
                         }
                     },
-                
+                    
                     "trainedOn": {
                         "@id": "https://github.com/sunbird-specs/vc-specs#trainedOn",
                         "@context": {
                             "name": "schema:Text"
                         }
-                    },
-                    "skills": {
-                        "@id": "https://github.com/sunbird-specs/vc-specs#skills",
-                        "@container": "@list"
                     }
                 }
             }
         ],
         "type": [
-            "VerifiableCredential",
-            "ProofOfVaccinationCredential"
+            "VerifiableCredential","SkillCertificate"
         ],
         "credentialSubject": {
-            "type": "Person",
+            "type": "SkillCertificate",
             "refId": "{{id}}",
             "name": "{{name}}",
             "skills": [{{#each skills}}"{{skill}}"{{#unless @last}},{{/unless}}{{/each}}]
         },
         "issuanceDate": "2021-08-27T10:57:57.237Z",
-        "issuer": "did:issuer:cowin",
+        "issuer": "did:authorizedIssuer:23423#21",
         "evidence": [
             {
                 "type": [
@@ -196,8 +159,7 @@ test('Should generate credentials with array values', async () => {
                 ],
                 "id": "https://sunbird.org/id"
             }
-        ],
-        "nonTransferable": "true"
+        ]
     }`;
     const signedData = await generateCredentials(entity, template);
     console.log(signedData.credentialSubject.skills)

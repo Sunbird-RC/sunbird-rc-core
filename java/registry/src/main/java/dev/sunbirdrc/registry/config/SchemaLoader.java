@@ -1,12 +1,12 @@
 package dev.sunbirdrc.registry.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import dev.sunbirdrc.pojos.APIMessage;
 import dev.sunbirdrc.registry.service.ISearchService;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.validators.IValidate;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,31 +21,39 @@ import static dev.sunbirdrc.registry.Constants.Schema;
 
 @Component
 public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> {
-    public static final Logger logger = LoggerFactory.getLogger(SchemaLoader.class);
+	public static final Logger logger = LoggerFactory.getLogger(SchemaLoader.class);
 
-    @Autowired
-    private ISearchService searchService;
+	@Autowired
+	private ISearchService searchService;
 
-    @Autowired
-    private DefinitionsManager definitionsManager;
+	@Autowired
+	private DefinitionsManager definitionsManager;
 
-    @Override
-    public void onApplicationEvent(@NotNull ContextRefreshedEvent contextRefreshedEvent) {
-        loadSchemasFromDB();
-    }
+	@Autowired
+	private IValidate validator;
 
-    private void loadSchemasFromDB() {
-        ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
-        objectNode.set("entityType", JsonNodeFactory.instance.arrayNode().add(Schema));
-        objectNode.set("filters", JsonNodeFactory.instance.objectNode());
-        try {
-            JsonNode searchResults = searchService.search(objectNode);
-            searchResults.get(Schema).forEach(schemaNode -> {
-                definitionsManager.appendNewDefinition(schemaNode.get(Schema.toLowerCase()));
-            });
-            logger.info("Loaded {} schema from DB", searchResults.get(Schema).size());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+	@Autowired
+	private ObjectMapper objectMapper;
+
+	@Override
+	public void onApplicationEvent(@NotNull ContextRefreshedEvent contextRefreshedEvent) {
+		loadSchemasFromDB();
+	}
+
+	private void loadSchemasFromDB() {
+		ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+		objectNode.set("entityType", JsonNodeFactory.instance.arrayNode().add(Schema));
+		objectNode.set("filters", JsonNodeFactory.instance.objectNode());
+		try {
+			JsonNode searchResults = searchService.search(objectNode);
+			for (JsonNode schemaNode : searchResults.get(Schema)) {
+				JsonNode schema = schemaNode.get(Schema.toLowerCase());
+				definitionsManager.appendNewDefinition(schema);
+				validator.addDefinitions(schema);
+			}
+			logger.info("Loaded {} schema from DB", searchResults.get(Schema).size());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
