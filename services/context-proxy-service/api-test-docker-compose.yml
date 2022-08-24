@@ -1,0 +1,23 @@
+version: "3.3"
+services:
+  context-proxy-service:
+    image: dockerhub/sunbird-rc-context-proxy-service
+    ports:
+      - "4400:4400"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "localhost:4400/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 4
+  test-runner:
+    image: dockerhub/python-papermill
+    command:
+      - "/usr/local/bin/papermill"
+      - "--log-output"
+      - "/tests/context-proxy.ipynb"
+      - "out"
+      - "-p"
+      - "host"
+      - "context-proxy-service"
+    volumes:
+      - ./:/tests/

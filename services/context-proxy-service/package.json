@@ -1,0 +1,18 @@
+{
+  "name": "public-key-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "jest --passWithNoTests"
+  },
+  "author": "",
+  "license": "MPL",
+  "dependencies": {
+    "express": "^4.18.1",
+    "http-proxy-middleware": "^2.0.6",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {}
+}

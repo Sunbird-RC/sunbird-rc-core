@@ -1,0 +1,27 @@
+version: "3.3"
+services:
+  public-keys-service:
+    image: dockerhub/sunbird-rc-public-key-service
+    environment:
+      - CONFIG_BASE_PATH=/etc/keys
+    ports:
+      - "3300:3300"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "localhost:3300/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 4
+    volumes:
+      - ./tests/config:/etc/keys
+  test-runner:
+    image: dockerhub/python-papermill
+    command:
+      - "/usr/local/bin/papermill"
+      - "--log-output"
+      - "/tests/public-keys.ipynb"
+      - "out"
+      - "-p"
+      - "host"
+      - "public-keys-service"
+    volumes:
+      - ./:/tests/
