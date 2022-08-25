@@ -85,3 +85,5 @@ validations_update.shex
 .clinic
 coverage
 out
+
+.ipynb_checkpoints
