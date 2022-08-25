@@ -10,7 +10,7 @@ services:
       timeout: 10s
       retries: 4
   test-runner:
-    image: tejashjl/python-papermill
+    image: dockerhub/python-papermill
     command:
       - "/usr/local/bin/papermill"
       - "--log-output"

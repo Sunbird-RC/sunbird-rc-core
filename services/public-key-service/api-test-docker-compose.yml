@@ -14,7 +14,7 @@ services:
     volumes:
       - ./tests/config:/etc/keys
   test-runner:
-    image: tejashjl/python-papermill
+    image: dockerhub/python-papermill
     command:
       - "/usr/local/bin/papermill"
       - "--log-output"
