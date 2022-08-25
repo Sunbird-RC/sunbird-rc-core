@@ -1,7 +1,7 @@
 #SOURCES = $(wildcard java/**/*.java)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SOURCES := $(call rwildcard,java/,*.java)
-RELEASE_VERSION = v0.0.8
+RELEASE_VERSION = v0.0.9
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
@@ -42,6 +42,9 @@ release:
 	docker tag dockerhub/sunbird-rc-certificate-signer dockerhub/sunbird-rc-certificate-signer:$(RELEASE_VERSION)
 	docker tag dockerhub/sunbird-rc-certificate-api dockerhub/sunbird-rc-certificate-api:$(RELEASE_VERSION)
 	docker tag dockerhub/ndear-keycloak dockerhub/ndear-keycloak:$(RELEASE_VERSION)
+	docker tag dockerhub/sunbird-rc-public-key-service dockerhub/sunbird-rc-public-key-service:$(RELEASE_VERSION)
+	docker tag dockerhub/sunbird-rc-context-proxy-service dockerhub/sunbird-rc-context-proxy-service:$(RELEASE_VERSION)
+	docker tag dockerhub/sunbird-rc-nginx dockerhub/sunbird-rc-nginx:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-core:latest
 	docker push dockerhub/sunbird-rc-core:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-claim-ms:latest 
@@ -52,6 +55,12 @@ release:
 	docker push dockerhub/sunbird-rc-certificate-signer:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-certificate-api:latest 
 	docker push dockerhub/sunbird-rc-certificate-api:$(RELEASE_VERSION)
+	docker push dockerhub/ndear-keycloak:latest
 	docker push dockerhub/ndear-keycloak:$(RELEASE_VERSION)
-	docker push dockerhub/ndear-keycloak:$(RELEASE_VERSION)
+	docker push dockerhub/sunbird-rc-public-key-service:latest
+	docker push dockerhub/sunbird-rc-public-key-service:$(RELEASE_VERSION)
+	docker push dockerhub/sunbird-rc-context-proxy-service:latest
+	docker push dockerhub/sunbird-rc-context-proxy-service:$(RELEASE_VERSION)
+	docker push dockerhub/sunbird-rc-nginx:latest
+	docker push dockerhub/sunbird-rc-nginx:$(RELEASE_VERSION)
 
