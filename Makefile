@@ -4,12 +4,15 @@ SOURCES := $(call rwildcard,java/,*.java)
 RELEASE_VERSION = v0.0.8
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
-	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
+	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 	make -C java/claim
 	make -C services/certificate-api docker
 	make -C services/certificate-signer docker
 	make -C services/notification-service docker
 	make -C deps/keycloak build
+	make -C services/public-key-service docker
+	make -C services/context-proxy-service docker
+	docker build -t dockerhub/sunbird-rc-nginx .
 
 java/registry/target/registry.jar: $(SOURCES)
 	echo $(SOURCES)
@@ -25,6 +28,9 @@ test: build
 	@curl -v http://localhost:8081/health
 	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
+	make -C services/certificate-signer test
+	make -C services/public-key-service test
+	make -C services/context-proxy-service test
 
 clean:
 	@rm -rf target || true

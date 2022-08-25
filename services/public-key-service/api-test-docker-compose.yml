@@ -1,27 +1,27 @@
 version: "3.3"
 services:
-  certificate-signer:
-    image: docker.io/dockerhub/sunbird-rc-certificate-signer
+  public-keys-service:
+    image: dockerhub/sunbird-rc-public-key-service
     environment:
-      - CONFIG_BASE_PATH=/etc/signer
+      - CONFIG_BASE_PATH=/etc/keys
     ports:
-      - "4324:4324"
+      - "3300:3300"
     healthcheck:
-      test: ["CMD", "curl", "-f", "localhost:4324/health"]
+      test: ["CMD", "curl", "-f", "localhost:3300/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 4
     volumes:
-      - ./tests/config:/etc/signer
+      - ./tests/config:/etc/keys
   test-runner:
     image: tejashjl/python-papermill
     command:
       - "/usr/local/bin/papermill"
       - "--log-output"
-      - "/tests/certificate-signer.ipynb"
+      - "/tests/public-keys.ipynb"
       - "out"
       - "-p"
       - "host"
-      - "certificate-signer"
+      - "public-keys-service"
     volumes:
       - ./:/tests/

@@ -1,0 +1,51 @@
+swagger: "2.0"
+info:
+  title: Sunbird context proxy service
+  description: Sunbird context proxy service
+  version: 1.0.0
+host: sunbirdrc.dev
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/
+basePath: /api/v1
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Health check
+      responses:
+        '200':
+          description: Ok
+          schema:
+            type: string
+        '500':
+          description: Internal Server Error
+          schema:
+            type: string
+  /proxy/{path}:
+    get:
+      parameters:
+        - in: path
+          name: path
+          type: string
+          required: true
+          description: Proxy path
+        - name: target
+          in: header
+          description: The target host to proxy the request
+          required: true
+          type: string
+      summary: Proxy API
+      responses:
+        '200':
+          description: Ok
+          schema:
+            type: string
+        '500':
+          description: Internal Server Error
+          schema:
+            type: string
+  

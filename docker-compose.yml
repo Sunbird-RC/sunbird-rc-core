@@ -37,8 +37,27 @@ services:
       - sunbird_sso_url=http://keycloak:8080/auth
       - sunbird_sso_admin_client_id=admin-api
       - sunbird_sso_client_id=registry-frontend
-      - sunbird_sso_admin_client_secret=0358fa30-6014-4192-9551-7c61b15b774c
+      - sunbird_sso_admin_client_secret=${KEYCLOAK_SECRET}
       - claims_url=http://claim-ms:8082
+      - sign_url=http://certificate-signer:8079/sign
+      - sign_health_check_url=http://certificate-signer:8079/health
+      - signature_enabled=true
+      - pdf_url=http://certificate-api:8078/api/v1/certificatePDF
+      - template_base_url=http://registry:8081/api/v1/templates/ #Looks for certificate templates for pdf copy of the signed certificate
+      - sunbird_keycloak_user_set_password=true
+      - filestorage_connection_url=http://file-storage:9000
+      - filestorage_access_key=admin
+      - filestorage_secret_key=12345678
+      - filestorage_bucket_key=issuance
+      - registry_base_apis_enable=false
+      - sunbird_keycloak_user_password=abcd@123
+      - logging.level.root=INFO
+      - enable_external_templates=true
+      - async_enabled=false
+      - authentication_enabled=true
+      - kafka_bootstrap_address=kafka:9092
+      - webhook_enabled=false
+      - webhook_url=http://localhost:5001/api/v1/callback
     ports:
       - "8081:8081"
     depends_on:
@@ -94,6 +113,8 @@ services:
       - PORT=8079
     ports:
       - "8079:8079"
+    volumes:
+      - ./imports:/etc/signer
   certificate-api:
     image: dockerhub/sunbird-rc-certificate-api:${RELEASE_VERSION}
     environment:
@@ -147,3 +168,29 @@ services:
       interval: 30s
       timeout: 10s
       retries: 4
+  public-key-service:
+    image: dockerhub/sunbird-rc-public-key-service
+    environment:
+      - CONFIG_BASE_PATH=/etc/keys
+    ports:
+      - "3300:3300"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "localhost:3300/api/v1/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 4
+    volumes:
+      - ./imports:/etc/keys
+  context-proxy-service:
+    image: dockerhub/sunbird-rc-context-proxy-service
+    ports:
+      - "4400:4400"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "localhost:4400/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 4
+  nginx:
+    image: dockerhub/sunbird-rc-nginx
+    ports:
+      - "80:80"

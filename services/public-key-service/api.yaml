@@ -1,0 +1,89 @@
+swagger: "2.0"
+info:
+  title: Sunbird public key service
+  description: Sunbird public key service
+  version: 1.0.0
+host: sunbirdrc.dev
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/
+basePath: /api/v1
+paths:
+  /public-keys:
+    get:
+      summary: Get all public keys
+      description: Get all public keys
+      responses:
+        '200':
+          description: Ok
+          schema:
+            $ref: '#/definitions/PublicKeysResponse'
+        '500':
+          description: Internal Server Error
+          schema:
+            type: object
+  /public-key/{issuerId}:
+    get:
+      summary: Get public key for a specific issuer id
+      description: Get public key for a specific issuer id
+      parameters:
+        - in: path
+          name: issuerId
+          schema:
+            type: string
+          required: true
+          description: Issuer id
+      responses:
+        '200':
+          description: Ok
+          schema:
+            $ref: '#/definitions/PublicKeyResponse'
+        '500':
+          description: Internal Server Error
+          schema:
+            type: object
+  /health:
+    get:
+      summary: Health check
+      description: Health check
+      responses:
+          '200':
+            description: Ok
+            schema:
+              type: string
+          '500':
+            description: Internal Server Error
+            schema:
+              type: string
+definitions:
+  PublicKeysResponse:
+    type: object
+    required:
+      - issuers
+    properties:
+      issuers:
+        type: object
+        description: public key
+        properties:
+          default:
+            $ref: '#/definitions/PublicKeyResponse'
+        additionalProperties:
+          $ref: '#/definitions/PublicKeyResponse'
+  PublicKeyResponse:
+    type: object
+    required:
+      - publicKey
+      - signatureType
+    properties:
+      publicKey:
+        type: string
+        description: public key
+      signatureType:
+        type: string
+        description: signature type
+
+
+  
