@@ -60,7 +60,7 @@
         </a>
 
     </nav>
-    <#nested "header">
+<#--    <#nested "header">-->
     <div class="container-fluid ndear-wrapper">
         <div class="form-wrapper">
             <#if properties.keycloakBackgroundImage = "NA">
@@ -68,7 +68,7 @@
             <#else>
             <div class="container-wrapper title-wrapper" style="background-image: url(${properties.keycloakBackgroundImage})">
             </#if>
-                <h3>Login to ${properties.portalTitle!} demo portal</h3>
+                <h3>Login to ${properties.portalTitle!} </h3>
                 <span>${properties.portalSubTitle!}</span>
             </div>
             <div class="ndear-login-wrapper container-wrapper">
@@ -79,6 +79,7 @@
             </div>
         </div>
     </div>
+    <#if properties.showFooter = "true">
     <footer class="footer">
         <span>Sunbird RC</span>
         <div>
@@ -87,6 +88,7 @@
             <a href=""><img src="${url.resourcesPath}/img/youtube.svg" alt=""></a>
         </div>
     </footer>
+    </#if>
     </body>
     </html>
 </#macro>
