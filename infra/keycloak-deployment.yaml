@@ -16,7 +16,7 @@ spec:
         k8s-app: keycloak-service
     spec:
       containers:
-        - image: dockerhub/ndear-keycloak:latest
+        - image: dockerhub/sunbird-rc-keycloak:latest
           imagePullPolicy: Always
           readinessProbe:
             tcpSocket:
