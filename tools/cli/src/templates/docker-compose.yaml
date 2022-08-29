@@ -48,7 +48,7 @@ services:
       kc:
         condition: service_healthy
   kc:
-    image: dockerhub/ndear-keycloak
+    image: dockerhub/sunbird-rc-keycloak
     volumes:
       - ./config/keycloak:/opt/jboss/keycloak/imports
     environment:

@@ -41,7 +41,7 @@ release:
 	docker tag dockerhub/sunbird-rc-notification-service dockerhub/sunbird-rc-notification-service:$(RELEASE_VERSION)
 	docker tag dockerhub/sunbird-rc-certificate-signer dockerhub/sunbird-rc-certificate-signer:$(RELEASE_VERSION)
 	docker tag dockerhub/sunbird-rc-certificate-api dockerhub/sunbird-rc-certificate-api:$(RELEASE_VERSION)
-	docker tag dockerhub/ndear-keycloak dockerhub/ndear-keycloak:$(RELEASE_VERSION)
+	docker tag dockerhub/sunbird-rc-keycloak dockerhub/sunbird-rc-keycloak:$(RELEASE_VERSION)
 	docker tag dockerhub/sunbird-rc-public-key-service dockerhub/sunbird-rc-public-key-service:$(RELEASE_VERSION)
 	docker tag dockerhub/sunbird-rc-context-proxy-service dockerhub/sunbird-rc-context-proxy-service:$(RELEASE_VERSION)
 	docker tag dockerhub/sunbird-rc-nginx dockerhub/sunbird-rc-nginx:$(RELEASE_VERSION)
@@ -55,8 +55,8 @@ release:
 	docker push dockerhub/sunbird-rc-certificate-signer:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-certificate-api:latest 
 	docker push dockerhub/sunbird-rc-certificate-api:$(RELEASE_VERSION)
-	docker push dockerhub/ndear-keycloak:latest
-	docker push dockerhub/ndear-keycloak:$(RELEASE_VERSION)
+	docker push dockerhub/sunbird-rc-keycloak:latest
+	docker push dockerhub/sunbird-rc-keycloak:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-public-key-service:latest
 	docker push dockerhub/sunbird-rc-public-key-service:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-context-proxy-service:latest
