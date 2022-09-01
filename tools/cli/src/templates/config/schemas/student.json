@@ -28,6 +28,7 @@
 			}
 		],
 		"inviteRoles": ["anonymous"],
+		"enableLogin": true,
 		"attestationAttributes": ["school"],
 		"attestationPolicies": [
 			{

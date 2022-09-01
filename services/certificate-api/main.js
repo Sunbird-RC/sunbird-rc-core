@@ -1,5 +1,5 @@
-const certificateController = require("./src/routes/certificate_controller");
-const http = require('http');
+import certificateController from "./src/routes/certificate_controller.js";
+import http from 'http';
 const port = process.env.PORT || 4321;
 
 const server = http.createServer(async (req, res) => {

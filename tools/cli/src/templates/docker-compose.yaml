@@ -37,6 +37,8 @@ services:
       - sunbird_sso_admin_client_id=<%= props.keycloakAdminClientId %>
       - sunbird_sso_client_id=<%= props.keycloakFrontendClientId %>
       - sunbird_sso_admin_client_secret=INSERT_SECRET_HERE
+      - sunbird_keycloak_user_set_password=true
+      - sunbird_keycloak_user_password=test
       - claims_url=http://cs:8082
     ports:
       - '8081:8081'
