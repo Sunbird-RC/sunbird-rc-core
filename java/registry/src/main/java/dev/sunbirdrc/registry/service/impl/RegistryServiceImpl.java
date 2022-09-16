@@ -40,6 +40,7 @@ import org.sunbird.akka.core.Router;
 
 import java.util.*;
 
+import static dev.sunbirdrc.registry.Constants.CREDENTIAL_TEMPLATE;
 import static dev.sunbirdrc.registry.Constants.Schema;
 
 @Service
@@ -202,7 +203,7 @@ public class RegistryServiceImpl implements RegistryService {
         if (!skipSignature && signatureEnabled && credentialTemplate != null) {
             Map<String, Object> requestBodyMap = new HashMap<>();
             requestBodyMap.put("data", rootNode.get(vertexLabel));
-            requestBodyMap.put("credentialTemplate", credentialTemplate);
+            requestBodyMap.put(CREDENTIAL_TEMPLATE, credentialTemplate);
             Object signedCredentials = signatureService.sign(requestBodyMap);
             ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
         }

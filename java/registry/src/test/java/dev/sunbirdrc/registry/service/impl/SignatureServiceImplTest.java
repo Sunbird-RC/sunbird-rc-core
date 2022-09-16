@@ -22,6 +22,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestClientException;
 
+import java.util.Collections;
+
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -64,7 +66,7 @@ public class SignatureServiceImplTest {
             }
         });
         when(objectMapper.readTree(anyString())).thenReturn(JsonNodeFactory.instance.objectNode());
-        assertThat(signatureServiceImpl.sign(new Object()), is(notNullValue()));
+        assertThat(signatureServiceImpl.sign(Collections.emptyMap()), is(notNullValue()));
 	}
 
     /** Test case to throw restclient exception
@@ -74,7 +76,7 @@ public class SignatureServiceImplTest {
     public void test_sign_api_restclient_exception() throws Exception {
         expectedEx.expect(SignatureException.UnreachableException.class);
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class))).thenThrow(RestClientException.class);
-        signatureServiceImpl.sign(new Object());
+        signatureServiceImpl.sign(Collections.emptyMap());
     }
 
 	/** Test case for verify api with simple string as value
