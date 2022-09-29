@@ -16,10 +16,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static dev.sunbirdrc.claim.contants.AttributeNames.ATTESTOR_INFO;
 import static dev.sunbirdrc.claim.contants.AttributeNames.NOTES;
@@ -52,15 +54,62 @@ public class ClaimServiceTest {
         Claim claim2 = getClaim("2");
         Claim claim3 = getClaim("3");
         List<Claim> allClaimsForEntity = Arrays.asList(claim1, claim2, claim3);
+        Pageable pageable = PageRequest.of(0, 3);
         String entity = "Teacher";
         JsonNode dummyNode = new ObjectMapper().nullNode();
         when(claimRepository.findByAttestorEntity(entity)).thenReturn(allClaimsForEntity);
         when(claimsAuthorizer.isAuthorizedAttestor(claim1, dummyNode)).thenReturn(true);
         when(claimsAuthorizer.isAuthorizedAttestor(claim2, dummyNode)).thenReturn(false);
         when(claimsAuthorizer.isAuthorizedAttestor(claim3, dummyNode)).thenReturn(true);
+        Map<String, Object> actualClaims = new HashMap<>();
+        actualClaims.put("content", Arrays.asList(claim1, claim3));
+        actualClaims.put("totalPages", 1);
+        actualClaims.put("totalElements", 2);
+        assertEquals(claimService.findClaimsForAttestor(entity, dummyNode, pageable), actualClaims);
+    }
 
-        List<Claim> actualClaims = Arrays.asList(claim1, claim3);
-        assertEquals(claimService.findClaimsForAttestor(entity, dummyNode), actualClaims);
+    @Test
+    public void shouldReturnAppropriateClaimsInPaginationFormat() {
+        Claim claim1 = getClaim("1");
+        Claim claim2 = getClaim("2");
+        Claim claim3 = getClaim("3");
+        Claim claim4 = getClaim("4");
+        List<Claim> allClaimsForEntity = Arrays.asList(claim1, claim2, claim3, claim4);
+        Pageable pageable = PageRequest.of(1, 2);
+        String entity = "Teacher";
+        JsonNode dummyNode = new ObjectMapper().nullNode();
+        when(claimRepository.findByAttestorEntity(entity)).thenReturn(allClaimsForEntity);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim1, dummyNode)).thenReturn(true);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim2, dummyNode)).thenReturn(true);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim3, dummyNode)).thenReturn(true);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim4, dummyNode)).thenReturn(true);
+        Map<String, Object> actualClaims = new HashMap<>();
+        actualClaims.put("content", Arrays.asList(claim3, claim4));
+        actualClaims.put("totalPages", 2);
+        actualClaims.put("totalElements", 4);
+        assertEquals(claimService.findClaimsForAttestor(entity, dummyNode, pageable), actualClaims);
+    }
+
+    @Test
+    public void shouldReturnEmptyClaimsIfOffsetGreaterThanClaimSize() {
+        Claim claim1 = getClaim("1");
+        Claim claim2 = getClaim("2");
+        Claim claim3 = getClaim("3");
+        Claim claim4 = getClaim("4");
+        List<Claim> allClaimsForEntity = Arrays.asList(claim1, claim2, claim3, claim4);
+        Pageable pageable = PageRequest.of(2, 2);
+        String entity = "Teacher";
+        JsonNode dummyNode = new ObjectMapper().nullNode();
+        when(claimRepository.findByAttestorEntity(entity)).thenReturn(allClaimsForEntity);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim1, dummyNode)).thenReturn(true);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim2, dummyNode)).thenReturn(true);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim3, dummyNode)).thenReturn(true);
+        when(claimsAuthorizer.isAuthorizedAttestor(claim4, dummyNode)).thenReturn(true);
+        Map<String, Object> actualClaims = new HashMap<>();
+        actualClaims.put("content", new ArrayList<>());
+        actualClaims.put("totalPages", 2);
+        actualClaims.put("totalElements", 4);
+        assertEquals(claimService.findClaimsForAttestor(entity, dummyNode, pageable), actualClaims);
     }
 
     @Test(expected = ResourceNotFoundException.class)
