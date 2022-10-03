@@ -20,8 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static dev.sunbirdrc.claim.contants.AttributeNames.ATTESTOR_INFO;
-import static dev.sunbirdrc.claim.contants.AttributeNames.NOTES;
+import static dev.sunbirdrc.claim.contants.AttributeNames.*;
 import static dev.sunbirdrc.claim.contants.ErrorMessages.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.USER_ID;
 
@@ -65,15 +64,15 @@ public class ClaimService {
 
     private Map<String, Object> toMap(List<Claim> claims, Pageable pageable) {
         Map<String, Object> response = new HashMap<>();
-        response.put("totalPages", (int)(Math.ceil(claims.size() * 1.0/pageable.getPageSize())));
-        response.put("totalElements", claims.size());
+        response.put(TOTAL_PAGES, (int)(Math.ceil(claims.size() * 1.0/pageable.getPageSize())));
+        response.put(TOTAL_ELEMENTS, claims.size());
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), claims.size());
         if(start > claims.size()) {
-            response.put("content", new ArrayList<>());
+            response.put(CONTENT, new ArrayList<>());
             return response;
         }
-        response.put("content", claims.subList(start, end));
+        response.put(CONTENT, claims.subList(start, end));
         return response;
     }
     public Claim attestClaim(String claimId, JsonNode requestBody) {

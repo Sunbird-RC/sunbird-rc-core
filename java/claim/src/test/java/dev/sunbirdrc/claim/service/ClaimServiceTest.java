@@ -23,8 +23,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.*;
 
-import static dev.sunbirdrc.claim.contants.AttributeNames.ATTESTOR_INFO;
-import static dev.sunbirdrc.claim.contants.AttributeNames.NOTES;
+import static dev.sunbirdrc.claim.contants.AttributeNames.*;
 import static dev.sunbirdrc.claim.model.ClaimStatus.CLOSED;
 import static dev.sunbirdrc.claim.model.ClaimStatus.OPEN;
 import static org.junit.Assert.assertEquals;
@@ -62,9 +61,9 @@ public class ClaimServiceTest {
         when(claimsAuthorizer.isAuthorizedAttestor(claim2, dummyNode)).thenReturn(false);
         when(claimsAuthorizer.isAuthorizedAttestor(claim3, dummyNode)).thenReturn(true);
         Map<String, Object> actualClaims = new HashMap<>();
-        actualClaims.put("content", Arrays.asList(claim1, claim3));
-        actualClaims.put("totalPages", 1);
-        actualClaims.put("totalElements", 2);
+        actualClaims.put(CONTENT, Arrays.asList(claim1, claim3));
+        actualClaims.put(TOTAL_PAGES, 1);
+        actualClaims.put(TOTAL_ELEMENTS, 2);
         assertEquals(claimService.findClaimsForAttestor(entity, dummyNode, pageable), actualClaims);
     }
 
@@ -84,9 +83,9 @@ public class ClaimServiceTest {
         when(claimsAuthorizer.isAuthorizedAttestor(claim3, dummyNode)).thenReturn(true);
         when(claimsAuthorizer.isAuthorizedAttestor(claim4, dummyNode)).thenReturn(true);
         Map<String, Object> actualClaims = new HashMap<>();
-        actualClaims.put("content", Arrays.asList(claim3, claim4));
-        actualClaims.put("totalPages", 2);
-        actualClaims.put("totalElements", 4);
+        actualClaims.put(CONTENT, Arrays.asList(claim3, claim4));
+        actualClaims.put(TOTAL_PAGES, 2);
+        actualClaims.put(TOTAL_ELEMENTS, 4);
         assertEquals(claimService.findClaimsForAttestor(entity, dummyNode, pageable), actualClaims);
     }
 
@@ -106,9 +105,9 @@ public class ClaimServiceTest {
         when(claimsAuthorizer.isAuthorizedAttestor(claim3, dummyNode)).thenReturn(true);
         when(claimsAuthorizer.isAuthorizedAttestor(claim4, dummyNode)).thenReturn(true);
         Map<String, Object> actualClaims = new HashMap<>();
-        actualClaims.put("content", new ArrayList<>());
-        actualClaims.put("totalPages", 2);
-        actualClaims.put("totalElements", 4);
+        actualClaims.put(CONTENT, new ArrayList<>());
+        actualClaims.put(TOTAL_PAGES, 2);
+        actualClaims.put(TOTAL_ELEMENTS, 4);
         assertEquals(claimService.findClaimsForAttestor(entity, dummyNode, pageable), actualClaims);
     }
 
