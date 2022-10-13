@@ -60,6 +60,10 @@ public class RegistryEntityController extends AbstractController {
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${certificate.enableExternalTemplates:false}") boolean externalTemplatesEnabled;
 
+    @RequestMapping(value = "/health", method = RequestMethod.GET)
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("");
+    }
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
             @PathVariable String entityName,

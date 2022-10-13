@@ -21,7 +21,6 @@ import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.*;
-import dev.sunbirdrc.validators.IValidate;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -32,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.MessageProtos;
@@ -106,6 +104,9 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SchemaService schemaService;
 
+    @Autowired
+    private RevocationService revocationService;
+
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
         boolean databaseServiceup = shard.getDatabaseProvider().isDatabaseServiceUp();
@@ -160,8 +161,8 @@ public class RegistryServiceImpl implements RegistryService {
             if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
                     && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
                 registryDao.deleteEntity(vertex);
+                revocationService.storeCredential(index, uuid, userId, vertex);
                 databaseProvider.commitTransaction(graph, tx);
-
                 auditService.auditDelete(
                         auditService.createAuditRecord(userId, uuid, tx, index),
                         shard);

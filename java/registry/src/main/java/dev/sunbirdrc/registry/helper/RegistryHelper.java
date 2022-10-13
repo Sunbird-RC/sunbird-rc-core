@@ -1071,6 +1071,12 @@ public class RegistryHelper {
         return addEntityWithoutValidation(entity, userId, ATTESTATION_POLICY);
     }
 
+    public String addRevokedCredential(JsonNode credential, String userId) throws Exception {
+        ObjectNode entity = JsonNodeFactory.instance.objectNode();
+        entity.set(ATTESTATION_POLICY, credential);
+        return addEntityWithoutValidation(entity, userId, REVOKED_CREDENTIAL);
+    }
+
     private ObjectNode createJsonNodeForAttestationPolicy(AttestationPolicy attestationPolicy) {
         JsonNode inputJson = objectMapper.valueToTree(attestationPolicy);
         ObjectNode entity = JsonNodeFactory.instance.objectNode();
