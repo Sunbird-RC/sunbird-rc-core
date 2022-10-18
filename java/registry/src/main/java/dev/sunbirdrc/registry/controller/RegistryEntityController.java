@@ -112,7 +112,7 @@ public class RegistryEntityController extends AbstractController {
         logger.info("Deleting entityType {} with Id {}", entityName, entityId);
         if (registryHelper.doesDeleteRequiresAuthorization(entityName)) {
             try {
-                userId = registryHelper.authorizeDeleteEntity(request, entityName, entityId);
+                userId = registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
                 return createUnauthorizedExceptionResponse(e);
             }
