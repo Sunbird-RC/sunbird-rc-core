@@ -14,4 +14,5 @@ public class RevokedCredential {
 	private String attestationPropertyId;
 	private String signedData;
 	private String signedHash;
+	private String userId;
 }

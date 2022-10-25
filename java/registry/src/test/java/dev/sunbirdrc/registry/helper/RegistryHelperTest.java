@@ -53,7 +53,9 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.ATTESTATION_POLICY;
-import static org.junit.Assert.assertEquals;
+import static dev.sunbirdrc.registry.Constants.REVOKED_CREDENTIAL;
+import static dev.sunbirdrc.registry.middleware.util.Constants.FILTERS;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -162,7 +164,7 @@ public class RegistryHelperTest {
 		when(viewTemplateManager.getViewTemplate(ArgumentMatchers.any())).thenReturn(null);
 
 		JsonNode node = registryHelper.getAuditLog(jsonNode);
-		assertEquals(jsonNode.get("Teacher").get("filters").get("recordId").get("eq"), node.get("Teacher_Audit").get(0).get("recordId"));
+		assertEquals(jsonNode.get("Teacher").get(FILTERS).get("recordId").get("eq"), node.get("Teacher_Audit").get(0).get("recordId"));
 	}
 
 	@Test
@@ -641,7 +643,7 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
-		Assert.assertFalse(registryHelper.doesUpdateRequiresAuthorization(entity));
+		assertFalse(registryHelper.doesUpdateRequiresAuthorization(entity));
 	}
 
 	@Test
@@ -665,7 +667,7 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
-		Assert.assertFalse(registryHelper.doesDeleteRequiresAuthorization(entity));
+		assertFalse(registryHelper.doesDeleteRequiresAuthorization(entity));
 	}
 
 	@Test
@@ -679,5 +681,37 @@ public class RegistryHelperTest {
 		String entity = registryHelper.addEntity(inviteJson, "");
 		verify(registryService, never()).addEntity(any(), anyString(), any(), anyBoolean());
 		verify(registryAsyncService, atLeastOnce()).addEntity(any(), anyString(), any(), anyBoolean());
+	}
+
+	@Test
+	public void shouldStoredSignedDataInRevokedCredentialsRegistry() throws Exception {
+		when(shardManager.getShard(any())).thenReturn(new Shard());
+		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
+		registryHelper.revokeExistingCredentials("Student", "student-osid", "userId", "signed-data");
+		verify(registryService, atLeastOnce()).addEntity(any(), anyString(), any(), anyBoolean());
+	}
+
+	@Test
+	public void shouldNotStoredSignedDataIfNullOrEmptyInRevokedCredentialsRegistry() throws Exception {
+		when(shardManager.getShard(any())).thenReturn(new Shard());
+		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
+		registryHelper.revokeExistingCredentials("Student", "student-osid", "userId", "");
+		verify(registryService, never()).addEntity(any(), anyString(), any(), anyBoolean());
+		registryHelper.revokeExistingCredentials("Student", "student-osid", "userId", null);
+		verify(registryService, never()).addEntity(any(), anyString(), any(), anyBoolean());
+	}
+
+	@Test
+	public void shouldReturnTrueIFSignedDataIsRevoked() throws Exception {
+		JsonNode searchResponse = JsonNodeFactory.instance.objectNode().set(REVOKED_CREDENTIAL, JsonNodeFactory.instance.arrayNode().add(JsonNodeFactory.instance.objectNode().put("signedData", "xyz")));
+		when(searchService.search(any())).thenReturn(searchResponse);
+		assertTrue(registryHelper.checkIfCredentialIsRevoked("signedData"));
+	}
+
+	@Test
+	public void shouldReturnFalseIfSignedDataIsNotRevoked() throws Exception {
+		JsonNode searchResponse = JsonNodeFactory.instance.objectNode().set(REVOKED_CREDENTIAL, JsonNodeFactory.instance.arrayNode());
+		when(searchService.search(any())).thenReturn(searchResponse);
+		assertFalse(registryHelper.checkIfCredentialIsRevoked("signedData"));
 	}
 }

@@ -13,6 +13,7 @@ import dev.sunbirdrc.registry.dao.IRegistryDao;
 import dev.sunbirdrc.registry.dao.RegistryDaoImpl;
 import dev.sunbirdrc.registry.dao.VertexReader;
 import dev.sunbirdrc.registry.dao.VertexWriter;
+import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
@@ -104,9 +105,6 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SchemaService schemaService;
 
-    @Autowired
-    private RevocationService revocationService;
-
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
         boolean databaseServiceup = shard.getDatabaseProvider().isDatabaseServiceUp();
@@ -142,10 +140,11 @@ public class RegistryServiceImpl implements RegistryService {
      * delete the vertex and changes the status
      *
      * @param uuid
+     * @return
      * @throws Exception
      */
     @Override
-    public void deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
+    public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -161,7 +160,6 @@ public class RegistryServiceImpl implements RegistryService {
             if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
                     && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
                 registryDao.deleteEntity(vertex);
-                revocationService.storeCredential(index, uuid, userId, vertex);
                 databaseProvider.commitTransaction(graph, tx);
                 auditService.auditDelete(
                         auditService.createAuditRecord(userId, uuid, tx, index),
@@ -173,6 +171,7 @@ public class RegistryServiceImpl implements RegistryService {
 
             }
             logger.info("Entity {} marked deleted", uuid);
+            return vertex;
         }
 
 
@@ -197,13 +196,8 @@ public class RegistryServiceImpl implements RegistryService {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
 
-        Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
-        if (!skipSignature && signatureEnabled && credentialTemplate != null) {
-            Map<String, Object> requestBodyMap = new HashMap<>();
-            requestBodyMap.put("data", rootNode.get(vertexLabel));
-            requestBodyMap.put("credentialTemplate", credentialTemplate);
-            Object signedCredentials = signatureService.sign(requestBodyMap);
-            ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+        if (!skipSignature) {
+            generateCredentials(rootNode, vertexLabel);
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.addSchema(rootNode);
@@ -246,6 +240,17 @@ public class RegistryServiceImpl implements RegistryService {
 
         }
         return entityId;
+    }
+
+    private void generateCredentials(JsonNode rootNode, String vertexLabel) throws SignatureException.UnreachableException, SignatureException.CreationException {
+        Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
+        if (signatureEnabled && credentialTemplate != null) {
+            Map<String, Object> requestBodyMap = new HashMap<>();
+            requestBodyMap.put("data", rootNode.get(vertexLabel));
+            requestBodyMap.put("credentialTemplate", credentialTemplate);
+            Object signedCredentials = signatureService.sign(requestBodyMap);
+            ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+        }
     }
 
     @Override
@@ -321,6 +326,8 @@ public class RegistryServiceImpl implements RegistryService {
                 String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                 JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
             }
+
+            generateCredentials(inputNode, entityType);
 
             if (entityType.equals(Schema)) {
                 schemaService.updateSchema(readNode, inputNode);

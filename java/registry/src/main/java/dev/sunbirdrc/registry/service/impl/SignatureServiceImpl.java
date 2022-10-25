@@ -63,6 +63,7 @@ public class SignatureServiceImpl implements SignatureService {
 		try {
 			response = retryRestTemplate.postForEntity(signURL, propertyValue);
 			result = objectMapper.readTree(response.getBody());
+			logger.info("Successfully generated signed credentials");
 		} catch (RestClientException ex) {
 			logger.error("RestClientException when signing: ", ex);
 			throw new SignatureException().new UnreachableException(ex.getMessage());
