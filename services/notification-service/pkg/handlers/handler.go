@@ -3,12 +3,13 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"github.com/go-openapi/runtime/middleware"
+	log "github.com/sirupsen/logrus"
+	"github.com/sunbirdrc/notification-service/config"
 	"github.com/sunbirdrc/notification-service/pkg/services"
 	"github.com/sunbirdrc/notification-service/swagger_gen/models"
 	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations"
 	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations/notification"
-	"github.com/go-openapi/runtime/middleware"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -17,11 +18,16 @@ func SetupHandlers(api *operations.NotificationServiceAPI) {
 	api.NotificationGetNotificationHandler = notification.GetNotificationHandlerFunc(getLastSentNotifications)
 
 }
+
 var messages = make(map[string]string)
 
-func getLastSentNotifications(params notification.GetNotificationParams) middleware.Responder  {
+func getLastSentNotifications(params notification.GetNotificationParams) middleware.Responder {
 	response := notification.NewGetNotificationOK()
-	response.Payload = messages
+	if config.Config.TrackNotifications {
+		response.Payload = messages
+	} else {
+		response.Payload = map[string]string{}
+	}
 	return response
 }
 

@@ -10,7 +10,7 @@ public class NotificationService {
     public void setConnectionInfo(String connection) {
         connectionInfo = connection;
     }
-    public Response callNotificationService(NotificationMessage notificationMessage) throws IOException {
+    public Response notify(NotificationMessage notificationMessage) throws IOException {
         OkHttpClient client = new OkHttpClient();
         MediaType JSON = MediaType.parse("application/json; charset=utf-8");
         RequestBody requestBody = RequestBody.create("{\n" +

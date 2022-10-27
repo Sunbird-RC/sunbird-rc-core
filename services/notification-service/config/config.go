@@ -32,4 +32,5 @@ var Config = struct {
 		Password    string `env:"SENDER_PASSWORD" yaml:"password"`
 		Enable      bool   `env:"ENABLE_EMAIL" yaml:"enable"`
 	}
+	TrackNotifications bool `env:"TRACK_NOTIFICATIONS" default:"false"`
 }{}
