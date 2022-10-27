@@ -78,6 +78,7 @@ public class RegistryEntityController extends AbstractController {
             registryHelper.authorizeInviteEntity(request, entityName);
             watch.start(TAG);
             String entityId = registryHelper.inviteEntity(newRootNode, "");
+            registryHelper.autoRaiseClaim(entityName, entityId, "", null, newRootNode, dev.sunbirdrc.registry.Constants.USER_ANONYMOUS);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), entityId);
             result.put(entityName, resultMap);
@@ -192,8 +193,11 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             // TODO: get userID from auth header
+            JsonNode existingNode = registryHelper.readEntity(newRootNode, userId);
             registryHelper.updateEntityAndState(newRootNode, userId);
+            String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
             registryHelper.invalidateAttestation(entityName, entityId, userId,null);
+            registryHelper.autoRaiseClaim(entityName, entityId, userId, existingNode, newRootNode, emailId);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -231,10 +235,12 @@ public class RegistryEntityController extends AbstractController {
         try {
             String userId = registryHelper.authorizeManageEntity(request, entityName);
             String label = registryHelper.addEntity(newRootNode, userId);
+            String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
             Map<String, String> resultMap = new HashMap<>();
             if (asyncRequest.isEnabled()) {
                 resultMap.put(TRANSACTION_ID, label);
             } else {
+                registryHelper.autoRaiseClaim(entityName, label, userId, null, newRootNode, emailId);
                 resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             }
             result.put(entityName, resultMap);
