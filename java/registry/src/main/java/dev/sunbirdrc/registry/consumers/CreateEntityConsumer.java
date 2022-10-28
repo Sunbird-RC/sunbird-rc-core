@@ -72,7 +72,7 @@ public class CreateEntityConsumer {
             String entityType = inputJson.fields().next().getKey();
             Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
             String entityOsid = registryService.addEntity(shard, createEntityMessage.getUserId(), inputJson, createEntityMessage.isSkipSignature());
-            registryHelper.autoRaiseClaim(entityType, entityOsid, createEntityMessage.getUserId(), null, inputJson, Constants.USER_ANONYMOUS);
+            registryHelper.autoRaiseClaim(entityType, entityOsid, createEntityMessage.getUserId(), null, inputJson, createEntityMessage.getEmailId());
             postCreateEntityMessage = PostCreateEntityMessage.builder().entityType(entityType).osid(entityOsid)
                     .transactionId(key).userId(createEntityMessage.getUserId()).status(CreateEntityStatus.SUCCESSFUL).message("").build();
 
