@@ -1112,12 +1112,18 @@ public class RegistryHelper {
         deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
     }
 
+    private List<String> getEntityValidRoles(String entity) {
+        List<String> manageRoles = getManageRoles(entity);
+        manageRoles.remove(ROLE_ANONYMOUS);
+        return manageRoles;
+    }
+
     public boolean doesUpdateRequiresAuthorization(String entity) {
-        return doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0;
+        return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
 
     }
 
     public boolean doesDeleteRequiresAuthorization(String entity) {
-        return doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0;
+        return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
     }
 }
