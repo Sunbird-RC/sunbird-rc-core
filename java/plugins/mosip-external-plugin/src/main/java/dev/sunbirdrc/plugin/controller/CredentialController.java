@@ -4,12 +4,14 @@ import dev.sunbirdrc.plugin.dto.FetchCredentialsDto;
 import dev.sunbirdrc.plugin.dto.SendOTPDto;
 import dev.sunbirdrc.plugin.services.MosipServices;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+@ConditionalOnExpression("#{(environment.MOSIP_ENABLED?:'false').equals('true')}")
 @RestController
 public class CredentialController {
 

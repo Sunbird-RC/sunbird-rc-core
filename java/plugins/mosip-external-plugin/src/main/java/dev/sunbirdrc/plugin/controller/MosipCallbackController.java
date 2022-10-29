@@ -13,6 +13,7 @@ import dev.sunbirdrc.pojos.attestation.Action;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
@@ -27,6 +28,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
+@ConditionalOnExpression("#{(environment.MOSIP_ENABLED?:'false').equals('true')}")
 @RestController
 public class MosipCallbackController {
     private static final Logger LOGGER = LoggerFactory.getLogger(MosipCallbackController.class);
