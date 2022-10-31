@@ -1146,7 +1146,7 @@ public class RegistryHelper {
     public void autoRaiseClaim(String entityName, String entityId, String userId, JsonNode existingNode, JsonNode newRootNode, String emailId) throws Exception {
         List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
         for(AttestationPolicy attestationPolicy : attestationPolicies) {
-            if(attestationPolicy.getType().equals(AttestationType.AUTOMATED)) {
+            if(attestationPolicy.getType() != null && attestationPolicy.getType().equals(AttestationType.AUTOMATED)) {
                 JsonNode updatedNode = readEntity(newRootNode, entityId).get(entityName);
                 if(existingNode == null || hasAttestationPropertiesChanged(updatedNode, existingNode, attestationPolicy, entityName)) {
                     AttestationRequest attestationRequest = new AttestationRequest();
