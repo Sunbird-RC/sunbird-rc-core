@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.registry.exception.SignatureException;
+import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.service.SignatureService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
+
+import java.util.Map;
+
+import static dev.sunbirdrc.registry.Constants.CREDENTIAL_TEMPLATE;
+import static dev.sunbirdrc.registry.Constants.MINIO_URI_PREFIX;
 
 @Component
 public class SignatureServiceImpl implements SignatureService {
@@ -28,6 +34,9 @@ public class SignatureServiceImpl implements SignatureService {
 	private RetryRestTemplate retryRestTemplate;
 	@Autowired
 	private ObjectMapper objectMapper;
+
+	@Autowired
+	private FileStorageService fileStorageService;
 
 	/** This method checks signature service is available or not
 	 * @return - true or false
@@ -48,7 +57,12 @@ public class SignatureServiceImpl implements SignatureService {
 		}
 		return isSignServiceUp;
 	}
-
+	private void replaceMinioURIWithSignedURL(Map<String, Object> signRequestObject) throws Exception {
+		if (signRequestObject.containsKey(CREDENTIAL_TEMPLATE) &&  signRequestObject.get(CREDENTIAL_TEMPLATE) instanceof String
+				&& ((String) signRequestObject.get(CREDENTIAL_TEMPLATE)).startsWith(MINIO_URI_PREFIX)) {
+			signRequestObject.put(CREDENTIAL_TEMPLATE, fileStorageService.getSignedUrl(((String) signRequestObject.get(CREDENTIAL_TEMPLATE)).substring(MINIO_URI_PREFIX.length())));
+		}
+	}
 	/** This method calls signature service for signing the object
 	 * @param propertyValue - contains input need to be signed
 	 * @return - signed data with key
@@ -56,11 +70,12 @@ public class SignatureServiceImpl implements SignatureService {
 	 * @throws SignatureException.CreationException
 	 */
 	@Override
-	public Object sign(Object propertyValue)
+	public Object sign(Map<String, Object> propertyValue)
 			throws SignatureException.UnreachableException, SignatureException.CreationException {
 		ResponseEntity<String> response = null;
 		Object result = null;
 		try {
+			replaceMinioURIWithSignedURL(propertyValue);
 			response = retryRestTemplate.postForEntity(signURL, propertyValue);
 			result = objectMapper.readTree(response.getBody());
 		} catch (RestClientException ex) {

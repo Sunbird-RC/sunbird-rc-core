@@ -40,6 +40,7 @@ import org.sunbird.akka.core.Router;
 
 import java.util.*;
 
+import static dev.sunbirdrc.registry.Constants.CREDENTIAL_TEMPLATE;
 import static dev.sunbirdrc.registry.Constants.Schema;
 
 @Service
@@ -104,7 +105,7 @@ public class RegistryServiceImpl implements RegistryService {
     private IAuditService auditService;
 
     @Autowired
-    private IValidate validator;
+    private SchemaService schemaService;
 
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
@@ -155,9 +156,7 @@ public class RegistryServiceImpl implements RegistryService {
             Vertex vertex = vertexReader.getVertex(null, uuid);
             String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
             if (!StringUtils.isEmpty(index) && index.equals(Schema)) {
-                JsonNode jsonNode = vertexReader.readInternal(vertex);
-                JsonNode schema = jsonNode.get(index).get(Schema.toLowerCase());
-                definitionsManager.removeDefinition(schema);
+                schemaService.deleteSchemaIfExists(vertex);
             }
             if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
                     && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
@@ -202,11 +201,13 @@ public class RegistryServiceImpl implements RegistryService {
         if (!skipSignature && signatureEnabled && credentialTemplate != null) {
             Map<String, Object> requestBodyMap = new HashMap<>();
             requestBodyMap.put("data", rootNode.get(vertexLabel));
-            requestBodyMap.put("credentialTemplate", credentialTemplate);
+            requestBodyMap.put(CREDENTIAL_TEMPLATE, credentialTemplate);
             Object signedCredentials = signatureService.sign(requestBodyMap);
             ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
         }
-
+        if (vertexLabel.equals(Schema)) {
+            schemaService.addSchema(rootNode);
+        }
 
         if (persistenceEnabled) {
             DatabaseProvider dbProvider = shard.getDatabaseProvider();
@@ -241,11 +242,7 @@ public class RegistryServiceImpl implements RegistryService {
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
 
-            if (vertexLabel.equals(Schema)) {
-                JsonNode schema = rootNode.get(vertexLabel).get(Schema.toLowerCase());
-                definitionsManager.appendNewDefinition(schema);
-                validator.addDefinitions(schema);
-            }
+
 
         }
         return entityId;
@@ -291,7 +288,7 @@ public class RegistryServiceImpl implements RegistryService {
             // Merge the new changes
             JsonNode mergedNode = mergeWrapper("/" + parentEntityType, (ObjectNode) readNode, (ObjectNode) inputNode);
             logger.debug("After merge the payload is " + mergedNode.toString());
-
+            // TODO: need to revoke and re-sign the entity
             // Re-sign, i.e., remove and add entity signature again
 /*
             if (signatureEnabled) {
@@ -325,6 +322,10 @@ public class RegistryServiceImpl implements RegistryService {
                 JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
             }
 
+            if (entityType.equals(Schema)) {
+                schemaService.updateSchema(readNode, inputNode);
+            }
+
             // The entity type is a child and so could be different from parent entity type.
             doUpdate(shard, graph, registryDao, vr, inputNode.get(entityType), entityType, null);
 
@@ -342,11 +343,7 @@ public class RegistryServiceImpl implements RegistryService {
                     auditService.createAuditRecord(userId, rootId, tx, entityType),
                     shard, mergedNode, readNode);
 
-            if (entityType.equals(Schema)) {
-                JsonNode schema = inputNode.get(entityType).get(Schema.toLowerCase());
-                definitionsManager.appendNewDefinition(schema);
-                validator.addDefinitions(schema);
-            }
+
         }
     }
 

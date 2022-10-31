@@ -991,7 +991,7 @@ public class RegistryHelper {
             SignatureException.CreationException, SignatureException.UnreachableException {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("data", result);
-        requestBodyMap.put("credentialTemplate", credentialTemplate);
+        requestBodyMap.put(CREDENTIAL_TEMPLATE, credentialTemplate);
         return signatureService.sign(requestBodyMap);
     }
 
@@ -1113,13 +1113,19 @@ public class RegistryHelper {
         deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
     }
 
+    private List<String> getEntityValidRoles(String entity) {
+        List<String> manageRoles = getManageRoles(entity);
+        manageRoles.remove(ROLE_ANONYMOUS);
+        return manageRoles;
+    }
+
     public boolean doesUpdateRequiresAuthorization(String entity) {
-        return doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0;
+        return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
 
     }
 
     public boolean doesDeleteRequiresAuthorization(String entity) {
-        return doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0;
+        return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
     }
 
     boolean hasAttestationPropertiesChanged(JsonNode updatedNode, JsonNode existingNode, AttestationPolicy attestationPolicy, String entityName) {
