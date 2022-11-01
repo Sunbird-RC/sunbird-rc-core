@@ -1119,13 +1119,9 @@ public class RegistryHelper {
         return manageRoles;
     }
 
-    public boolean doesUpdateRequiresAuthorization(String entity) {
+    public boolean doesRequiresAuthorization(String entity) {
         return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
 
-    }
-
-    public boolean doesDeleteRequiresAuthorization(String entity) {
-        return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
     }
 
     boolean hasAttestationPropertiesChanged(JsonNode updatedNode, JsonNode existingNode, AttestationPolicy attestationPolicy, String entityName) {

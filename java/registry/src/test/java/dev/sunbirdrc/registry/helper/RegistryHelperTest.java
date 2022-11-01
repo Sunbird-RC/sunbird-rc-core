@@ -13,7 +13,6 @@ import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
-import dev.sunbirdrc.registry.entities.AttestationType;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
@@ -626,7 +625,7 @@ public class RegistryHelperTest {
 	public void shouldReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
 		mockDefinitionManager();
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesUpdateRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesRequiresAuthorization(entity));
 	}
 
 	@Test
@@ -634,7 +633,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesUpdateRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesRequiresAuthorization(entity));
 	}
 
 	@Test
@@ -643,14 +642,14 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
-		Assert.assertFalse(registryHelper.doesUpdateRequiresAuthorization(entity));
+		Assert.assertFalse(registryHelper.doesRequiresAuthorization(entity));
 	}
 
 	@Test
 	public void shouldDeleteReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
 		mockDefinitionManager();
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesDeleteRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesRequiresAuthorization(entity));
 	}
 
 	@Test
@@ -658,7 +657,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesDeleteRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesRequiresAuthorization(entity));
 	}
 
 	@Test
@@ -667,7 +666,7 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
-		Assert.assertFalse(registryHelper.doesDeleteRequiresAuthorization(entity));
+		Assert.assertFalse(registryHelper.doesRequiresAuthorization(entity));
 	}
 
 	@Test

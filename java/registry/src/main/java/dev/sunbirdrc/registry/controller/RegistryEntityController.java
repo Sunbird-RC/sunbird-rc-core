@@ -14,7 +14,6 @@ import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
-import dev.sunbirdrc.registry.middleware.util.Did;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.service.FileStorageService;
@@ -111,7 +110,7 @@ public class RegistryEntityController extends AbstractController {
     ) {
         String userId = USER_ANONYMOUS;
         logger.info("Deleting entityType {} with Id {}", entityName, entityId);
-        if (registryHelper.doesDeleteRequiresAuthorization(entityName)) {
+        if (registryHelper.doesRequiresAuthorization(entityName)) {
             try {
                 userId = registryHelper.authorizeDeleteEntity(request, entityName, entityId);
             } catch (Exception e) {
@@ -176,7 +175,7 @@ public class RegistryEntityController extends AbstractController {
 
         logger.info("Updating entityType {} request body {}", entityName, rootNode);
         String userId = USER_ANONYMOUS;
-        if (registryHelper.doesUpdateRequiresAuthorization(entityName)) {
+        if (registryHelper.doesRequiresAuthorization(entityName)) {
             try {
                 userId = registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -271,7 +270,7 @@ public class RegistryEntityController extends AbstractController {
             @RequestBody JsonNode requestBody
 
     ) {
-        if (registryHelper.doesUpdateRequiresAuthorization(entityName)) {
+        if (registryHelper.doesRequiresAuthorization(entityName)) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -399,6 +398,17 @@ public class RegistryEntityController extends AbstractController {
     public ResponseEntity<Object> getEntityType(@PathVariable String entityName,
                                                 @PathVariable String entityId,
                                                 HttpServletRequest request) {
+        if (registryHelper.doesRequiresAuthorization(entityName) && securityEnabled) {
+            try {
+                registryHelper.authorize(entityName, entityId, request);
+            } catch (Exception e) {
+                try {
+                    registryHelper.authorizeAttestor(entityName, request);
+                } catch (Exception exceptionFromAuthorizeAttestor) {
+                    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                }
+            }
+        }
         try {
             String readerUserId = getUserId(entityName, request);
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
@@ -454,7 +464,7 @@ public class RegistryEntityController extends AbstractController {
                 requireVCResponse = true;
             }
         }
-        if (registryHelper.doesEntityContainOwnershipAttributes(entityName) && securityEnabled) {
+        if (registryHelper.doesRequiresAuthorization(entityName) && securityEnabled) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {

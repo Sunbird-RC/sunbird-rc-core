@@ -74,14 +74,11 @@ public class VertexReader {
     /**
      * Returns whether or not the given key could be added in response or not.
      * @param key
-     * @param privatePropertyList
      * @return
      */
-    private boolean canAdd(String key, List<String> privatePropertyList) {
+    private boolean canAdd(String key) {
         boolean canAdd = true;
-        if (privatePropertyList.contains(key)) {
-            canAdd &= configurator.isIncludeEncryptedProp();
-        } else if (key.equals(Constants.ROOT_KEYWORD)) {
+        if (key.equals(Constants.ROOT_KEYWORD)) {
             canAdd &= configurator.isIncludeRootIdentifiers();
         } else if (key.equals(uuidPropertyName)){
             canAdd &= configurator.isIncludeIdentifiers();
@@ -100,12 +97,12 @@ public class VertexReader {
     public ObjectNode constructObject(Vertex currVertex) {
 
         ObjectNode contentNode = JsonNodeFactory.instance.objectNode();
-        String entityType = currVertex.label();
-        Definition definition = definitionsManager.getDefinition(entityType);
-        List<String> privatePropertyList = new ArrayList<>();
-        if (definition != null) {
-            privatePropertyList = definition.getOsSchemaConfiguration().getPrivateFields();
-        }
+//        String entityType = currVertex.label();
+//        Definition definition = definitionsManager.getDefinition(entityType);
+//        List<String> privatePropertyList = new ArrayList<>();
+//        if (definition != null) {
+//            privatePropertyList = definition.getOsSchemaConfiguration().getPrivateFields();
+//        }
 
         Iterator<VertexProperty<Object>> properties = currVertex.properties();
         while (properties.hasNext()) {
@@ -135,7 +132,7 @@ public class VertexReader {
                     }
                 } else {
                     logger.debug("{} is a simple value", prop.key());
-                    if (canAdd(prop.key(), privatePropertyList)) {
+                    if (canAdd(prop.key())) {
                         if (isArrayType) {
                             ArrayNode arrayNode = ArrayHelper.constructArrayNode(prop.value().toString());
                             contentNode.set(prop.key(), arrayNode);
