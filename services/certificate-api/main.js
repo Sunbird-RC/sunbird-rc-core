@@ -7,7 +7,9 @@ const server = http.createServer(async (req, res) => {
     console.time(label)
     console.log(`API ${req.method} ${req.url} called`);
     try {
-        if (req.method === 'POST' && req.url.startsWith("/api/v1/certificate") && ["application/pdf"].includes(req.headers.accept)) {
+        if (req.method === 'GET' && req.url.startsWith("/health")) {
+            res.end("OK")
+        } else if (req.method === 'POST' && req.url.startsWith("/api/v1/certificate") && ["application/pdf"].includes(req.headers.accept)) {
             const data = await certificateController.getCertificatePDF(req, res);
             res.end(data)
         } else if (req.method === 'POST' && req.url.startsWith("/api/v1/certificate") && ["text/html", "image/svg+xml"].includes(req.headers.accept)) {

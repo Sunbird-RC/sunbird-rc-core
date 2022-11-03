@@ -1,10 +1,11 @@
 package dev.sunbirdrc.registry.service;
 
+import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.exception.EncryptionException;
 
 import java.util.Map;
 
-public interface EncryptionService {
+public interface EncryptionService extends HealthIndicator {
 
 	public String encrypt(Object propertyValue) throws EncryptionException;
 
@@ -13,7 +14,5 @@ public interface EncryptionService {
 	public Map<String, Object> encrypt(Map<String, Object> propertyValue) throws EncryptionException;
 
 	public Map<String, Object> decrypt(Map<String, Object> propertyValue) throws EncryptionException;
-
-	public boolean isEncryptionServiceUp();
 
 }

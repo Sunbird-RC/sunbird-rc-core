@@ -128,6 +128,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String elasticConnInfo;
 	@Value("${notification.service.connection_url}")
 	private String notificationServiceConnInfo;
+	@Value("${notification.service.enabled}")
+	private boolean notificationServiceEnabled;
+	@Value("${notification.service.health_url}")
+	private String notificationServiceHealthUrl;
 	@Value("${search.providerName}")
 	private String searchProviderName;
 	@Value("${read.providerName}")
@@ -417,9 +421,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 
 	@Bean
 	public NotificationService notificationService() {
-		NotificationService notificationService = new NotificationService();
-		notificationService.setConnectionInfo(notificationServiceConnInfo);
-		return notificationService;
+		return new NotificationService(notificationServiceConnInfo, notificationServiceHealthUrl, notificationServiceEnabled);
 	}
 
 	@Bean
