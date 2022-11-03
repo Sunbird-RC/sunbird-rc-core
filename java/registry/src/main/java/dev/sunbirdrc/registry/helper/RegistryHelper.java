@@ -813,9 +813,16 @@ public class RegistryHelper {
 
     public String authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
         String userIdFromRequest = getUserId(request, entityName);
+        if (getManageRoles(entityName).size() > 0) {
+            try {
+                return authorizeManageEntity(request, entityName);
+            } catch (Exception e) {
+                logger.error("Exception while authorizing roles", e);
+            }
+        }
         JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
         JsonNode entityFromDB = response.get(entityName);
-        if (!isOwner(entityFromDB, userIdFromRequest)) {
+        if (doesEntityContainOwnershipAttributes(entityName) && !isOwner(entityFromDB, userIdFromRequest)) {
             throw new Exception(UNAUTHORIZED_OPERATION_MESSAGE);
         }
         return userIdFromRequest;

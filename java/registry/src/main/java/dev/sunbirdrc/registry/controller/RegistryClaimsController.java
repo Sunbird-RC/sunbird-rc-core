@@ -16,6 +16,7 @@ import dev.sunbirdrc.registry.util.DefinitionsManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,11 +43,11 @@ public class RegistryClaimsController extends AbstractController{
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/claims", method = RequestMethod.GET)
-    public ResponseEntity<Object> getAllClaims(@PathVariable String entityName,
+    public ResponseEntity<Object> getAllClaims(@PathVariable String entityName, Pageable pageable,
                                                HttpServletRequest request) {
         try {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
-            JsonNode claims = claimRequestClient.getClaims(result.get(entityName).get(0), entityName);
+            JsonNode claims = claimRequestClient.getClaims(result.get(entityName).get(0), pageable, entityName);
             logger.info("Received {} claims", claims.size());
             return new ResponseEntity<>(claims, HttpStatus.OK);
         } catch (Exception e) {
