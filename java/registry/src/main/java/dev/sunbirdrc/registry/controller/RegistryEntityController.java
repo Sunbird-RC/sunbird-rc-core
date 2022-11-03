@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -10,6 +11,7 @@ import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.dao.NotFoundException;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
@@ -335,6 +337,20 @@ public class RegistryEntityController extends AbstractController {
         return notes;
     }
 
+    private JsonNode getAttestationNode(String attestationId, JsonNode node) throws AttestationNotFoundException, JsonProcessingException {
+        Iterator<JsonNode> iterator = node.iterator();
+        JsonNode attestationNode = null;
+        while(iterator.hasNext()) {
+            attestationNode = iterator.next();
+            if (attestationNode.get(uuidPropertyName).toString().equals(attestationId)) {
+                break;
+            }
+        }
+        if(attestationNode.get(OSSystemFields._osAttestedData.name()) == null) throw new AttestationNotFoundException();
+        attestationNode = objectMapper.readTree(attestationNode.get(OSSystemFields._osAttestedData.name()).asText());
+        return attestationNode;
+    }
+
     @RequestMapping(value = "/partner/api/v1/{entityName}", method = RequestMethod.GET)
     public ResponseEntity<Object> getEntityWithConsent(
             @PathVariable String entityName,
@@ -651,5 +667,29 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setErrmsg(e.getMessage());
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/api/v1/{entityName}/{entityId}/attestation/{attestationName}/{attestationId}",
+            produces = {MediaType.APPLICATION_PDF_VALUE, MediaType.TEXT_HTML_VALUE, Constants.SVG_MEDIA_TYPE})
+    public ResponseEntity<Object> getAttestationCertificate(HttpServletRequest request, @PathVariable String entityName, @PathVariable String entityId,
+                                                            @PathVariable String attestationName, @PathVariable String attestationId) {
+        try {
+            String readerUserId = getUserId(entityName, request);
+            JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
+                    .get(entityName).get(attestationName);
+            JsonNode attestationNode = getAttestationNode(attestationId, node);
+            return new ResponseEntity<>(certificateService.getCertificate(attestationNode,
+                    entityName,
+                    entityId,
+                    request.getHeader(HttpHeaders.ACCEPT),
+                    getTemplateUrlFromRequest(request, entityName)
+            ), HttpStatus.OK);
+        } catch (AttestationNotFoundException e) {
+            logger.error(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 }
