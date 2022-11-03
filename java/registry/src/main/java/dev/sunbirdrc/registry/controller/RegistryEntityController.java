@@ -110,7 +110,7 @@ public class RegistryEntityController extends AbstractController {
     ) {
         String userId = USER_ANONYMOUS;
         logger.info("Deleting entityType {} with Id {}", entityName, entityId);
-        if (registryHelper.doesRequiresAuthorization(entityName)) {
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
             try {
                 userId = registryHelper.authorizeDeleteEntity(request, entityName, entityId);
             } catch (Exception e) {
@@ -175,7 +175,7 @@ public class RegistryEntityController extends AbstractController {
 
         logger.info("Updating entityType {} request body {}", entityName, rootNode);
         String userId = USER_ANONYMOUS;
-        if (registryHelper.doesRequiresAuthorization(entityName)) {
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
             try {
                 userId = registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -270,7 +270,7 @@ public class RegistryEntityController extends AbstractController {
             @RequestBody JsonNode requestBody
 
     ) {
-        if (registryHelper.doesRequiresAuthorization(entityName)) {
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -398,7 +398,7 @@ public class RegistryEntityController extends AbstractController {
     public ResponseEntity<Object> getEntityType(@PathVariable String entityName,
                                                 @PathVariable String entityId,
                                                 HttpServletRequest request) {
-        if (registryHelper.doesRequiresAuthorization(entityName) && securityEnabled) {
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName) && securityEnabled) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -464,7 +464,7 @@ public class RegistryEntityController extends AbstractController {
                 requireVCResponse = true;
             }
         }
-        if (registryHelper.doesRequiresAuthorization(entityName) && securityEnabled) {
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName) && securityEnabled) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {

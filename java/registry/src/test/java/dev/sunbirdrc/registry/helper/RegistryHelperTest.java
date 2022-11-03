@@ -625,7 +625,7 @@ public class RegistryHelperTest {
 	public void shouldReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
 		mockDefinitionManager();
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -633,7 +633,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -642,14 +642,14 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
-		Assert.assertFalse(registryHelper.doesRequiresAuthorization(entity));
+		Assert.assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
 	public void shouldDeleteReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
 		mockDefinitionManager();
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -657,7 +657,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -666,7 +666,7 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
-		Assert.assertFalse(registryHelper.doesRequiresAuthorization(entity));
+		Assert.assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test

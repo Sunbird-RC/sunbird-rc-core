@@ -97,13 +97,6 @@ public class VertexReader {
     public ObjectNode constructObject(Vertex currVertex) {
 
         ObjectNode contentNode = JsonNodeFactory.instance.objectNode();
-//        String entityType = currVertex.label();
-//        Definition definition = definitionsManager.getDefinition(entityType);
-//        List<String> privatePropertyList = new ArrayList<>();
-//        if (definition != null) {
-//            privatePropertyList = definition.getOsSchemaConfiguration().getPrivateFields();
-//        }
-
         Iterator<VertexProperty<Object>> properties = currVertex.properties();
         while (properties.hasNext()) {
             VertexProperty<Object> prop = properties.next();

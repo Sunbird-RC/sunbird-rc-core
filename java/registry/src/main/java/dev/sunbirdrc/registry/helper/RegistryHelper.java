@@ -1119,7 +1119,7 @@ public class RegistryHelper {
         return manageRoles;
     }
 
-    public boolean doesRequiresAuthorization(String entity) {
+    public boolean doesEntityOperationRequireAuthorization(String entity) {
         return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
 
     }
