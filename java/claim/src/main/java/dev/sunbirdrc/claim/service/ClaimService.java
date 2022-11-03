@@ -14,15 +14,13 @@ import dev.sunbirdrc.registry.middleware.util.EntityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static dev.sunbirdrc.claim.contants.AttributeNames.ATTESTOR_INFO;
-import static dev.sunbirdrc.claim.contants.AttributeNames.NOTES;
+import static dev.sunbirdrc.claim.contants.AttributeNames.*;
 import static dev.sunbirdrc.claim.contants.ErrorMessages.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.USER_ID;
 
@@ -55,14 +53,28 @@ public class ClaimService {
         return claimRepository.findAll();
     }
 
-    public List<Claim> findClaimsForAttestor(String entity, JsonNode attestorNode) {
+    public Map<String, Object> findClaimsForAttestor(String entity, JsonNode attestorNode, Pageable pageable) {
         List<Claim> claims = claimRepository.findByAttestorEntity(entity);
         logger.info("Found {} claims to process", claims.size());
-        return claims.stream()
+        List<Claim> claimsToAttestor = claims.stream()
                 .filter(claim -> claimsAuthorizer.isAuthorizedAttestor(claim, attestorNode))
                 .collect(Collectors.toList());
+        return toMap(claimsToAttestor, pageable);
     }
 
+    private Map<String, Object> toMap(List<Claim> claims, Pageable pageable) {
+        Map<String, Object> response = new HashMap<>();
+        response.put(TOTAL_PAGES, (int)(Math.ceil(claims.size() * 1.0/pageable.getPageSize())));
+        response.put(TOTAL_ELEMENTS, claims.size());
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), claims.size());
+        if(start > claims.size()) {
+            response.put(CONTENT, new ArrayList<>());
+            return response;
+        }
+        response.put(CONTENT, claims.subList(start, end));
+        return response;
+    }
     public Claim attestClaim(String claimId, JsonNode requestBody) {
         Claim claim = findById(claimId).orElseThrow(() -> new ResourceNotFoundException(CLAIM_NOT_FOUND));
         logger.info("Processing claim {}", claim.toString());
