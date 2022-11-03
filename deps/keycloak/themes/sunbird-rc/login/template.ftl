@@ -60,7 +60,7 @@
         </a>
 
     </nav>
-<#--    <#nested "header">-->
+    <#nested "header">
     <div class="container-fluid ndear-wrapper">
         <div class="form-wrapper">
             <#if properties.keycloakBackgroundImage = "NA">

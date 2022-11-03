@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.Filter;
 import dev.sunbirdrc.pojos.FilterOperators;
 import dev.sunbirdrc.pojos.SearchQuery;
@@ -13,12 +14,11 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.get.GetRequest;
@@ -43,6 +43,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+
+import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
+import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ELASTIC_SERVICE_NAME;
 
 public class ElasticServiceImpl implements IElasticService {
     private static Map<String, Set<String>> indexWiseExcludeFields = new HashMap<>();
@@ -289,6 +292,23 @@ public class ElasticServiceImpl implements IElasticService {
 
         return resultArray;
 
+    }
+
+    @Override
+    public String getServiceName() {
+        return SUNBIRD_ELASTIC_SERVICE_NAME;
+    }
+
+    @Override
+    public ComponentHealthInfo getHealthInfo() {
+        ClusterHealthRequest request = new ClusterHealthRequest();
+        try {
+            ClusterHealthResponse health = getClient("schema").cluster().health(request, RequestOptions.DEFAULT);
+            return new ComponentHealthInfo(getServiceName(), Arrays.asList("yellow", "green").contains(health.getStatus().name().toLowerCase()), "", "");
+        } catch (IOException e) {
+            logger.error("Elastic health status", e);
+            return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
+        }
     }
 
     /**

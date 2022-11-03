@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.service.SignatureService;
@@ -11,7 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
+
+import java.util.Arrays;
+
+import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
+import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_SIGNATURE_SERVICE_NAME;
 
 import java.util.Map;
 
@@ -22,6 +29,8 @@ import static dev.sunbirdrc.registry.Constants.MINIO_URI_PREFIX;
 public class SignatureServiceImpl implements SignatureService {
 
 	private static Logger logger = LoggerFactory.getLogger(SignatureService.class);
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
 	@Value("${signature.healthCheckURL}")
 	private String healthCheckURL;
 	@Value("${signature.signURL}")
@@ -40,22 +49,25 @@ public class SignatureServiceImpl implements SignatureService {
 
 	/** This method checks signature service is available or not
 	 * @return - true or false
-	 * @throws SignatureException.UnreachableException
 	 */
 	@Override
-	public boolean isServiceUp() throws SignatureException.UnreachableException {
-		boolean isSignServiceUp = false;
-		try {
-			ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckURL);
-			if (response.getBody().equalsIgnoreCase("UP")) {
-				isSignServiceUp = true;
-				logger.debug("Signature service running !");
+	public ComponentHealthInfo getHealthInfo() {
+		if (signatureEnabled) {
+			try {
+				ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckURL);
+				if (!StringUtils.isEmpty(response.getBody()) && Arrays.asList("UP", "OK").contains(response.getBody().toUpperCase())) {
+					logger.debug("Signature service running !");
+					return new ComponentHealthInfo(getServiceName(), true);
+				} else {
+					return new ComponentHealthInfo(getServiceName(), false);
+				}
+			} catch (RestClientException ex) {
+				logger.error("RestClientException when checking the health of the Sunbird signature service: ", ex);
+				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
 			}
-		} catch (RestClientException ex) {
-			logger.error("RestClientException when checking the health of the Sunbird signature service: ", ex);
-			throw new SignatureException().new UnreachableException(ex.getMessage());
+		} else {
+			return new ComponentHealthInfo(getServiceName(), true, "SIGNATURE_ENABLED", "false");
 		}
-		return isSignServiceUp;
 	}
 	private void replaceMinioURIWithSignedURL(Map<String, Object> signRequestObject) throws Exception {
 		if (signRequestObject.containsKey(CREDENTIAL_TEMPLATE) &&  signRequestObject.get(CREDENTIAL_TEMPLATE) instanceof String
@@ -78,6 +90,7 @@ public class SignatureServiceImpl implements SignatureService {
 			replaceMinioURIWithSignedURL(propertyValue);
 			response = retryRestTemplate.postForEntity(signURL, propertyValue);
 			result = objectMapper.readTree(response.getBody());
+			logger.info("Successfully generated signed credentials");
 		} catch (RestClientException ex) {
 			logger.error("RestClientException when signing: ", ex);
 			throw new SignatureException().new UnreachableException(ex.getMessage());
@@ -139,5 +152,14 @@ public class SignatureServiceImpl implements SignatureService {
 		}
 		logger.debug("getKey method ends with value {}",result);
 		return result;
+	}
+
+	@Override
+	public String getServiceName() {
+		return SUNBIRD_SIGNATURE_SERVICE_NAME;
+	}
+
+	public boolean isServiceUp() {
+		return getHealthInfo().isHealthy();
 	}
 }

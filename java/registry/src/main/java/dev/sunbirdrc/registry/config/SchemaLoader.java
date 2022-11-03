@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
+import static dev.sunbirdrc.registry.middleware.util.Constants.FILTERS;
 
 @Component
 public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> {
@@ -42,8 +44,8 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 
 	private void loadSchemasFromDB() {
 		ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
-		objectNode.set("entityType", JsonNodeFactory.instance.arrayNode().add(Schema));
-		objectNode.set("filters", JsonNodeFactory.instance.objectNode());
+		objectNode.set(ENTITY_TYPE, JsonNodeFactory.instance.arrayNode().add(Schema));
+		objectNode.set(FILTERS, JsonNodeFactory.instance.objectNode());
 		try {
 			JsonNode searchResults = searchService.search(objectNode);
 			for (JsonNode schemaNode : searchResults.get(Schema)) {

@@ -9,7 +9,7 @@
             window.onload = function (e) {
                 var mobileNumber = sessionStorage.getItem("mobile_number");
                 document.getElementById("mobile_number").value = mobileNumber;
-                document.getElementById("mobile-label").innerText = "Enter the code sent to " + mobileNumber;
+                document.getElementById("mobile-label").innerText = "Enter the code sent to " + (mobileNumber.length > 3 ? "***"+mobileNumber.substring(3) : mobileNumber);
                 if(window.location.protocol === "https:") {
                     let formField = document.getElementById("kc-form-login");
                     if (formField) {
@@ -18,7 +18,7 @@
                 }
                 var timer = document.getElementById("resend-timer");
                 var resentCom = document.getElementById("resend-msg");
-                var timerCount = 100;
+                var timerCount = ${properties.resendTimer};
 
                 function setTime() {
                     timer.className = "mt-2";
@@ -65,6 +65,11 @@
                             </div>
                             <div class="mt-2" id="resend-timer"></div>
                             <div class="mt-2 d-none" id="resend-msg">Didn’t receive code? <a class="register-link" onclick="window.location.reload()">Send again</a></div>
+                            <#if properties.mockOTP = "true">
+                                <div class="green-label">
+                                    <span>Please enter OTP as '${properties.mockOTPValue}' as this is a demo portal</span>
+                                </div>
+                            </#if>
                             <input type="hidden" id="type-hidden-input" name="form_type" value="verify_otp"/>
                             <button class="submit" type="submit" tabindex="3">
                                 <span>Verify</span>

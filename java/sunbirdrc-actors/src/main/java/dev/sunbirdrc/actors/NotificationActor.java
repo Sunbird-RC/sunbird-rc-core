@@ -18,7 +18,7 @@ public class NotificationActor extends BaseActor {
         objectMapper = new ObjectMapper();
         notificationService = new NotificationService();
         NotificationMessage notificationMessage = objectMapper.readValue(request.getPayload().getStringValue(), NotificationMessage.class);
-        Response response = notificationService.callNotificationService(notificationMessage);
+        Response response = notificationService.notify(notificationMessage);
         logger.info("{}", response.body());
     }
 

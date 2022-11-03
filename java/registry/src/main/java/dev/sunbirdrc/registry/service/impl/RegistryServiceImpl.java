@@ -7,12 +7,15 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.MessageFactory;
+import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
+import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.dao.IRegistryDao;
 import dev.sunbirdrc.registry.dao.RegistryDaoImpl;
 import dev.sunbirdrc.registry.dao.VertexReader;
 import dev.sunbirdrc.registry.dao.VertexWriter;
+import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
@@ -21,7 +24,6 @@ import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.*;
-import dev.sunbirdrc.validators.IValidate;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -32,13 +34,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static dev.sunbirdrc.registry.Constants.CREDENTIAL_TEMPLATE;
 import static dev.sunbirdrc.registry.Constants.Schema;
@@ -107,33 +109,26 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SchemaService schemaService;
 
+    @Autowired
+    private IElasticService elasticService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    private List<HealthIndicator> healthIndicators;
+
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
-        boolean databaseServiceup = shard.getDatabaseProvider().isDatabaseServiceUp();
-        boolean overallHealthStatus = databaseServiceup;
+        AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
         List<ComponentHealthInfo> checks = new ArrayList<>();
+        healthIndicators.parallelStream().forEach(healthIndicator -> {
+            ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
+            checks.add(healthInfo);
+            overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
+        });
 
-        ComponentHealthInfo databaseServiceInfo = new ComponentHealthInfo(Constants.SUNBIRDRC_DATABASE_NAME,
-                databaseServiceup);
-        checks.add(databaseServiceInfo);
-
-        if (encryptionEnabled) {
-            boolean encryptionServiceStatusUp = encryptionService.isEncryptionServiceUp();
-            ComponentHealthInfo encryptionHealthInfo = new ComponentHealthInfo(
-                    Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, encryptionServiceStatusUp);
-            checks.add(encryptionHealthInfo);
-            overallHealthStatus = overallHealthStatus && encryptionServiceStatusUp;
-        }
-
-        if (signatureEnabled) {
-            boolean signatureServiceStatusUp = signatureService.isServiceUp();
-            ComponentHealthInfo signatureServiceInfo = new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME,
-                    signatureServiceStatusUp);
-            checks.add(signatureServiceInfo);
-            overallHealthStatus = overallHealthStatus && signatureServiceStatusUp;
-        }
-
-        healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus, checks);
+        healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus.get(), checks);
         logger.info("Heath Check :  ", checks.toArray().toString());
         return healthCheck;
     }
@@ -142,10 +137,11 @@ public class RegistryServiceImpl implements RegistryService {
      * delete the vertex and changes the status
      *
      * @param uuid
+     * @return
      * @throws Exception
      */
     @Override
-    public void deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
+    public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -162,7 +158,6 @@ public class RegistryServiceImpl implements RegistryService {
                     && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
                 registryDao.deleteEntity(vertex);
                 databaseProvider.commitTransaction(graph, tx);
-
                 auditService.auditDelete(
                         auditService.createAuditRecord(userId, uuid, tx, index),
                         shard);
@@ -173,6 +168,7 @@ public class RegistryServiceImpl implements RegistryService {
 
             }
             logger.info("Entity {} marked deleted", uuid);
+            return vertex;
         }
 
 
@@ -197,13 +193,8 @@ public class RegistryServiceImpl implements RegistryService {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
 
-        Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
-        if (!skipSignature && signatureEnabled && credentialTemplate != null) {
-            Map<String, Object> requestBodyMap = new HashMap<>();
-            requestBodyMap.put("data", rootNode.get(vertexLabel));
-            requestBodyMap.put(CREDENTIAL_TEMPLATE, credentialTemplate);
-            Object signedCredentials = signatureService.sign(requestBodyMap);
-            ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+        if (!skipSignature) {
+            generateCredentials(rootNode, vertexLabel);
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.addSchema(rootNode);
@@ -246,6 +237,17 @@ public class RegistryServiceImpl implements RegistryService {
 
         }
         return entityId;
+    }
+
+    private void generateCredentials(JsonNode rootNode, String vertexLabel) throws SignatureException.UnreachableException, SignatureException.CreationException {
+        Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
+        if (signatureEnabled && credentialTemplate != null) {
+            Map<String, Object> requestBodyMap = new HashMap<>();
+            requestBodyMap.put("data", rootNode.get(vertexLabel));
+            requestBodyMap.put("credentialTemplate", credentialTemplate);
+            Object signedCredentials = signatureService.sign(requestBodyMap);
+            ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+        }
     }
 
     @Override
@@ -321,6 +323,8 @@ public class RegistryServiceImpl implements RegistryService {
                 String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                 JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
             }
+
+            generateCredentials(inputNode, entityType);
 
             if (entityType.equals(Schema)) {
                 schemaService.updateSchema(readNode, inputNode);

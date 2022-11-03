@@ -105,7 +105,7 @@ async function signJSON(certificate) {
     let signed = "";
     const issuer = getIssuer(certificate);
     let suite = getSignatureSuite(issuer);
-    var controller = {
+    const controller = {
         '@context': jsigs.SECURITY_CONTEXT_URL,
         id: 'controller_id',
         publicKey: [getPublicKey(suite.type, null, issuer)], //todo add key // this authorizes this key to be used for making assertions
@@ -128,7 +128,7 @@ documentLoaderMapping['https://www.w3.org/2018/credentials#'] = credentialsv1;
 documentLoaderMapping["https://www.w3.org/2018/credentials/v1"] = credentialsv1;
 
 
-const customLoader = url => {
+const customLoader = async url => {
     console.log("checking " + url);
     let context = documentLoaderMapping[url];
     if (context === undefined) {
@@ -144,7 +144,7 @@ const customLoader = url => {
     }
     console.log("Fallback url lookup for document :" + url);
     const loadedContext = documentLoader()(url);
-    documentLoaderMapping[url] = loadedContext;
+    documentLoaderMapping[url] = JSON.parse((await loadedContext).document);
     return loadedContext;
 };
 
