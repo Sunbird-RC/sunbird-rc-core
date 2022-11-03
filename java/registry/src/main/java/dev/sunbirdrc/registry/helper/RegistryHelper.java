@@ -238,7 +238,7 @@ public class RegistryHelper {
     }
 
     private String addEntity(JsonNode inputJson, String userId, String entityType, boolean skipSignature) throws Exception {
-        RecordIdentifier recordId = null;
+        RecordIdentifier recordId;
         try {
             logger.info("Add api: entity type: {} and shard propery: {}", entityType, shardManager.getShardProperty());
             Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
@@ -246,10 +246,11 @@ public class RegistryHelper {
             String resultId;
             if (asyncRequest.isEnabled()) {
                 resultId = registryAsyncService.addEntity(shard, userId, inputJson, skipSignature);
+                recordId = new RecordIdentifier(null, resultId);
             } else {
                 resultId = registryService.addEntity(shard, userId, inputJson, skipSignature);
+                recordId = new RecordIdentifier(shard.getShardLabel(), resultId);
             }
-            recordId = new RecordIdentifier(shard.getShardLabel(), resultId);
             watch.stop("RegistryController.addToExistingEntity");
             logger.info("AddEntity,{}", recordId.toString());
         } catch (Exception e) {

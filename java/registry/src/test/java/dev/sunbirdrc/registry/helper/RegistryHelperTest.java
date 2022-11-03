@@ -714,4 +714,36 @@ public class RegistryHelperTest {
 		when(searchService.search(any())).thenReturn(searchResponse);
 		assertFalse(registryHelper.checkIfCredentialIsRevoked("signedData"));
 	}
+
+	@Test
+	public void shouldNotContainShardIdInAsyncMode() throws Exception {
+		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
+		Shard shard = mock(Shard.class);
+		when(shard.getShardLabel()).thenReturn("1");
+		when(shardManager.getShard(any())).thenReturn(shard);
+
+		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
+		when(registryAsyncService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
+		when(asyncRequest.isEnabled()).thenReturn(Boolean.TRUE);
+		String entity = registryHelper.addEntity(inviteJson, "");
+		verify(registryService, never()).addEntity(any(), anyString(), any(), anyBoolean());
+		verify(registryAsyncService, atLeastOnce()).addEntity(any(), anyString(), any(), anyBoolean());
+		assertFalse(entity.startsWith("1-"));
+	}
+
+	@Test
+	public void shouldContainShardIdInSyncMode() throws Exception {
+		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
+		Shard shard = mock(Shard.class);
+		when(shard.getShardLabel()).thenReturn("1");
+		when(shardManager.getShard(any())).thenReturn(shard);
+
+		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
+		when(registryAsyncService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
+		when(asyncRequest.isEnabled()).thenReturn(Boolean.FALSE);
+		String entity = registryHelper.addEntity(inviteJson, "");
+		verify(registryService, atLeastOnce()).addEntity(any(), anyString(), any(), anyBoolean());
+		verify(registryAsyncService, never()).addEntity(any(), anyString(), any(), anyBoolean());
+		assertTrue(entity.startsWith("1-"));
+	}
 }
