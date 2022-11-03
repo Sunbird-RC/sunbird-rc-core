@@ -40,7 +40,6 @@ public class SignatureServiceImpl implements SignatureService {
 
 	/** This method checks signature service is available or not
 	 * @return - true or false
-	 * @throws SignatureException.UnreachableException
 	 */
 	@Override
 	public ComponentHealthInfo getHealthInfo() {
