@@ -53,6 +53,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.ATTESTATION_POLICY;
+import static dev.sunbirdrc.registry.Constants.REQUESTER;
 import static dev.sunbirdrc.registry.Constants.REVOKED_CREDENTIAL;
 import static dev.sunbirdrc.registry.middleware.util.Constants.FILTERS;
 import static org.junit.Assert.*;
@@ -626,7 +627,7 @@ public class RegistryHelperTest {
 	public void shouldReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
 		mockDefinitionManager();
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesUpdateRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -634,7 +635,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesUpdateRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -643,14 +644,14 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
-		assertFalse(registryHelper.doesUpdateRequiresAuthorization(entity));
+		assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
 	public void shouldDeleteReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
 		mockDefinitionManager();
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesDeleteRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -658,7 +659,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.singletonList("Admin"));
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesDeleteRequiresAuthorization(entity));
+		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -667,7 +668,7 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setRoles(Collections.emptyList());
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
-		assertFalse(registryHelper.doesDeleteRequiresAuthorization(entity));
+		assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -684,6 +685,112 @@ public class RegistryHelperTest {
 	}
 
 	@Test
+	public void shouldRaiseClaimIfAttestationTypeIsAutomated() throws Exception {
+		mockDefinitionManager();
+		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
+		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
+		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
+		mockAttestationPolicy.set("type", JsonNodeFactory.instance.textNode("AUTOMATED"));
+		mockAttestationPolicy.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
+		ObjectNode mockAttestationProperties = JsonNodeFactory.instance.objectNode();
+		mockAttestationProperties.set("fullName", JsonNodeFactory.instance.textNode("$.identityDetails.fullName"));
+		mockAttestationProperties.set("gender", JsonNodeFactory.instance.textNode("$.identityDetails.gender"));
+		mockAttestationPolicy.set("attestationProperties", mockAttestationProperties);
+		attestationArrayNodes.add(mockAttestationPolicy);
+		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
+		JsonNode requestBody = new ObjectMapper().readTree("{\"Student\": {\n" +
+				"    \"program\": \"Class C\",\n" +
+				"    \"graduationYear\": \"2021\",\n" +
+				"    \"marks\": \"78\",\n" +
+				"	 \"osid\": \"12345\", \n" +
+				"    \"institute\": \"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\n" +
+				"    \"documents\": [\n" +
+				"        {\n" +
+				"            \"fileName\": \"e3266115-0bd0-4456-a347-96f4dc335761-blog_draft\"\n" +
+				"        },\n" +
+				"        {\n" +
+				"            \"fileName\": \"e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\"\n" +
+				"        }\n" +
+				"    ]\n" +
+				"}\n}");
+		when(searchService.search(any())).thenReturn(attestationPolicyObject);
+		when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
+		ObjectNode student = new ObjectMapper().createObjectNode();
+		JsonNode studentNodeContent = new ObjectMapper().readTree("{\n" +
+				"   \"educationDetails\":[\n" +
+				"      {\n" +
+				"         \"osid\": \"12345\",\n" +
+				"         \"program\":\"Class C\",\n" +
+				"         \"graduationYear\":\"2021\",\n" +
+				"         \"marks\":\"78\",\n" +
+				"         \"institute\":\"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\n" +
+				"         \"documents\":[\n" +
+				"            {\n" +
+				"\"osid\": \"007\",\n" +
+				"               \"fileName\":\"e3266115-0bd0-4456-a347-96f4dc335761-blog_draft\"\n" +
+				"            },\n" +
+				"            {\n" +
+				"\"osid\":\"008\",\n" +
+				"               \"fileName\":\"e56dab1b-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\"\n" +
+				"            }\n" +
+				"         ]\n" +
+				"      },\n" +
+				"      {\n" +
+				"         \"osid\":\"7890\",\n" +
+				"         \"program\":\"Class C\",\n" +
+				"         \"graduationYear\":\"2021\",\n" +
+				"         \"marks\":\"78\",\n" +
+				"         \"institute\":\"b62b3d52-cffe-428d-9dd1-61ba7b0a5882\",\n" +
+				"         \"documents\":[\n" +
+				"            {\n" +
+				"         \"osid\":\"123\",\n" +
+				"               \"fileName\":\"23266111-0bd0-4456-a347-96f4dc335761-blog_draft\"\n" +
+				"            },\n" +
+				"            {\n" +
+				"         \"osid\":\"456\",\n" +
+				"               \"fileName\":\"156dab12-bd92-41bb-b9e5-e991438f27b8-NDEAR.txt\"\n" +
+				"            }\n" +
+				"         ]\n" +
+				"      }\n" +
+				"   ],\n" +
+				"   \"contactDetails\":{\n" +
+				"      \"osid\":\"1-096cd663-6ba9-49f8-af31-1ace9e31bc31\",\n" +
+				"      \"mobile\":\"9000090000\",\n" +
+				"      \"osOwner\":\"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\",\n" +
+				"      \"email\":\"ram@gmail.com\"\n" +
+				"   },\n" +
+				"   \"osid\":\"1-b4907dc2-d3a8-49dc-a933-2b473bdd2ddb\",\n" +
+				"   \"identityDetails\":{\n" +
+				"      \"osid\":\"1-9f50f1b3-99cc-4fcb-9e51-e0dbe0be19f9\",\n" +
+				"      \"gender\":\"Male\",\n" +
+				"      \"identityType\":\"\",\n" +
+				"      \"dob\":\"1999-01-01\",\n" +
+				"      \"fullName\":\"First Avenger\",\n" +
+				"      \"identityValue\":\"\",\n" +
+				"      \"osOwner\":\"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\"\n" +
+				"   },\n" +
+				"   \"osOwner\":\"556302c9-d8b4-4f60-9ac1-c16c8839a9f3\",\n" +
+				"	\"testAttestationPolicy\": [{\n" +
+				"	  \"osid\": \"1-7f50f1b3-1234-4fcb-1e51-e0dbe0be19f7\"" +
+				"	}], \n" +
+				"    \"nextAttestationPolicy\": [{\n" +
+				"      \"osid\":\"1-9f50f1b3-1234-4fcb-9e51-e0dbe0be19f9\"\n" +
+				"    }]\n" +
+				"}");
+		student.set("Student", studentNodeContent);
+		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(student);
+		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
+		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
+		sunbirdActorFactory.init("sunbirdrc-actors");
+		ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+		objectNode.set("fullName", JsonNodeFactory.instance.textNode("First Avenger"));
+		objectNode.set("gender", JsonNodeFactory.instance.textNode("Male"));
+		registryHelper.autoRaiseClaim("Student", "12345", "556302c9-d8b4-4f60-9ac1-c16c8839a9f3", null, requestBody, "");
+		verify(conditionResolverService, times(1)).resolve(objectNode, REQUESTER, null, Collections.emptyList());
+		verify(registryHelper, times(1)).triggerAttestation(any(), any());
+	}
+	
 	public void shouldStoredSignedDataInRevokedCredentialsRegistry() throws Exception {
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());

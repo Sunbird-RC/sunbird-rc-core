@@ -15,4 +15,5 @@ public class CreateEntityMessage {
     private JsonNode inputJson;
     private boolean skipSignature;
     private String webhookUrl;
+    private String emailId;
 }

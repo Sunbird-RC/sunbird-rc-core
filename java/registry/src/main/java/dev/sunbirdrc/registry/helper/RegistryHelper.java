@@ -10,12 +10,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.zjsonpatch.JsonPatch;
+import com.jayway.jsonpath.PathNotFoundException;
 import dev.sunbirdrc.actors.factory.PluginRouter;
 import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.entities.AttestationType;
 import dev.sunbirdrc.registry.entities.FlowType;
 import dev.sunbirdrc.registry.entities.RevokedCredential;
 import dev.sunbirdrc.registry.exception.SignatureException;
@@ -274,7 +276,6 @@ public class RegistryHelper {
         boolean includeSignatures = inputJson.get(entityType).get("includeSignatures") != null;
 
         return readEntity(userId, entityType, label, includeSignatures, viewTemplateManager.getViewTemplate(inputJson), requireLDResponse);
-
     }
 
     public JsonNode readEntity(String userId, String entityType, String label, boolean includeSignatures, ViewTemplate viewTemplate, boolean requireLDResponse) throws Exception {
@@ -1132,13 +1133,50 @@ public class RegistryHelper {
         return manageRoles;
     }
 
-    public boolean doesUpdateRequiresAuthorization(String entity) {
+    public boolean doesEntityOperationRequireAuthorization(String entity) {
         return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
 
     }
 
-    public boolean doesDeleteRequiresAuthorization(String entity) {
-        return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
+    boolean hasAttestationPropertiesChanged(JsonNode updatedNode, JsonNode existingNode, AttestationPolicy attestationPolicy, String entityName) {
+        boolean result = false;
+        List<String> paths = new ArrayList<>(attestationPolicy == null ? CollectionUtils.emptyCollection() : attestationPolicy.getAttestationProperties().values());
+        for(String path : paths) {
+            JsonNode extractedExistingAttestationNode = null;
+            JsonNode extractedUpdatedAttestationNode = null;
+            try {
+                extractedExistingAttestationNode = JSONUtil.extractPropertyDataFromEntity(existingNode.get(entityName), attestationPolicy.getAttestationProperties(), null);
+                extractedUpdatedAttestationNode = JSONUtil.extractPropertyDataFromEntity(updatedNode, attestationPolicy.getAttestationProperties(), null);
+                if(!StringUtils.isEmpty(path) && !(extractedExistingAttestationNode.toString())
+                        .equals(extractedUpdatedAttestationNode.toString())) {
+                    result = true;
+                }
+            } catch (PathNotFoundException e) {
+                result = true;
+            }
+
+        }
+        return result;
+    }
+
+    public void autoRaiseClaim(String entityName, String entityId, String userId, JsonNode existingNode, JsonNode newRootNode, String emailId) throws Exception {
+        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
+        for(AttestationPolicy attestationPolicy : attestationPolicies) {
+            if(attestationPolicy.getType() != null && attestationPolicy.getType().equals(AttestationType.AUTOMATED)) {
+                JsonNode updatedNode = readEntity(newRootNode, entityId).get(entityName);
+                if(existingNode == null || hasAttestationPropertiesChanged(updatedNode, existingNode, attestationPolicy, entityName)) {
+                    AttestationRequest attestationRequest = new AttestationRequest();
+                    attestationRequest.setEntityId(entityId);
+                    attestationRequest.setName(attestationPolicy.getName());
+                    attestationRequest.setEntityName(entityName);
+                    JsonNode node = JSONUtil.extractPropertyDataFromEntity(updatedNode, attestationPolicy.getAttestationProperties(), new HashMap<>());
+                    attestationRequest.setPropertyData(node);
+                    attestationRequest.setUserId(userId);
+                    attestationRequest.setEmailId(emailId);
+                    triggerAttestation(attestationRequest, attestationPolicy);
+                }
+            }
+        }
     }
 
     public void revokeExistingCredentials(String entity, String entityId, String userId, String signedData) throws Exception {
