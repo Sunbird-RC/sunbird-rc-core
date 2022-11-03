@@ -39,6 +39,7 @@ import org.sunbird.akka.core.Router;
 
 import java.util.*;
 
+import static dev.sunbirdrc.registry.Constants.CREDENTIAL_TEMPLATE;
 import static dev.sunbirdrc.registry.Constants.Schema;
 
 @Service
