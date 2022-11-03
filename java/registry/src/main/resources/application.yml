@@ -181,7 +181,7 @@ decryption:
 
 signature:
   enabled: ${signature_enabled:true}
-  healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
+  healthCheckURL: ${sign_health_check_url:http://localhost:8079/health}
   signURL: ${sign_url:http://localhost:8079/sign}
   verifyURL: ${verify_url:http://localhost:8079/verify}
   keysURL: ${keys_url:http://localhost:8013/keys/}
@@ -192,6 +192,7 @@ signature:
 
 certificate:
   templateBaseUrl: ${template_base_url:http://localhost:8081/api/v1/templates/}
+  healthCheckURL: ${certificate_health_check_url:http://localhost:8078/health}
   apiUrl: ${pdf_url:http://localhost:8078/api/v1/certificate}
   templateFolderPath: ${template_folder_path:public/_schemas/templates/}
   enableExternalTemplates: ${enable_external_templates:false}
