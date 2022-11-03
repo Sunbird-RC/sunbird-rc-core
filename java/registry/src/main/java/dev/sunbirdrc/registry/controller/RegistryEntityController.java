@@ -83,6 +83,7 @@ public class RegistryEntityController extends AbstractController {
             registryHelper.authorizeInviteEntity(request, entityName);
             watch.start(TAG);
             String entityId = registryHelper.inviteEntity(newRootNode, "");
+            registryHelper.autoRaiseClaim(entityName, entityId, "", null, newRootNode, dev.sunbirdrc.registry.Constants.USER_ANONYMOUS);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), entityId);
             result.put(entityName, resultMap);
@@ -115,7 +116,7 @@ public class RegistryEntityController extends AbstractController {
     ) {
         String userId = USER_ANONYMOUS;
         logger.info("Deleting entityType {} with Id {}", entityName, entityId);
-        if (registryHelper.doesDeleteRequiresAuthorization(entityName)) {
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
             try {
                 userId = registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -181,7 +182,7 @@ public class RegistryEntityController extends AbstractController {
 
         logger.info("Updating entityType {} request body {}", entityName, rootNode);
         String userId = USER_ANONYMOUS;
-        if (registryHelper.doesUpdateRequiresAuthorization(entityName)) {
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
             try {
                 userId = registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -199,10 +200,12 @@ public class RegistryEntityController extends AbstractController {
             watch.start(tag);
             // TODO: get userID from auth header
             JsonNode existingNode = registryHelper.readEntity(newRootNode, userId);
+            String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
             registryHelper.updateEntityAndState(existingNode, newRootNode, userId);
             registryHelper.revokeExistingCredentials(entityName, entityId, userId,
                     existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
             registryHelper.invalidateAttestation(entityName, entityId, userId,null);
+            registryHelper.autoRaiseClaim(entityName, entityId, userId, existingNode, newRootNode, emailId);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -238,10 +241,12 @@ public class RegistryEntityController extends AbstractController {
         try {
             String userId = registryHelper.authorizeManageEntity(request, entityName);
             String label = registryHelper.addEntity(newRootNode, userId);
+            String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
             Map<String, String> resultMap = new HashMap<>();
             if (asyncRequest.isEnabled()) {
                 resultMap.put(TRANSACTION_ID, label);
             } else {
+                registryHelper.autoRaiseClaim(entityName, label, userId, null, newRootNode, emailId);
                 resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             }
             result.put(entityName, resultMap);
@@ -273,7 +278,7 @@ public class RegistryEntityController extends AbstractController {
 
     ) {
         String userId = USER_ANONYMOUS;
-        if (registryHelper.doesUpdateRequiresAuthorization(entityName)) {
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
             try {
                 userId = registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
@@ -416,6 +421,17 @@ public class RegistryEntityController extends AbstractController {
     public ResponseEntity<Object> getEntityType(@PathVariable String entityName,
                                                 @PathVariable String entityId,
                                                 HttpServletRequest request) {
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName) && securityEnabled) {
+            try {
+                registryHelper.authorize(entityName, entityId, request);
+            } catch (Exception e) {
+                try {
+                    registryHelper.authorizeAttestor(entityName, request);
+                } catch (Exception exceptionFromAuthorizeAttestor) {
+                    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                }
+            }
+        }
         try {
             String readerUserId = getUserId(entityName, request);
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
@@ -471,7 +487,7 @@ public class RegistryEntityController extends AbstractController {
                 requireVCResponse = true;
             }
         }
-        if (registryHelper.doesEntityContainOwnershipAttributes(entityName) && securityEnabled) {
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName) && securityEnabled) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
