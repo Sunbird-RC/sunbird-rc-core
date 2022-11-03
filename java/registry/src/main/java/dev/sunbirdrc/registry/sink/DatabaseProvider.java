@@ -1,5 +1,7 @@
 package dev.sunbirdrc.registry.sink;
 
+import dev.sunbirdrc.pojos.ComponentHealthInfo;
+import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -14,7 +16,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public abstract class DatabaseProvider {
+import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
+
+public abstract class DatabaseProvider implements HealthIndicator {
     private Constants.GraphDatabaseProvider provider;
     private String uuidPropertyName;
     private Optional<Boolean> supportsTransaction = Optional.empty();
@@ -33,18 +37,7 @@ public abstract class DatabaseProvider {
      * @return
      */
     public boolean isDatabaseServiceUp() {
-        boolean databaseStatusUp = false;
-        try {
-            try (OSGraph osGraph = getOSGraph()) {
-                Graph graph = osGraph.getGraphStore();
-
-                long count = IteratorUtils.count(graph.traversal().clone().V().has(T.label, "HealthCheckLabel"));
-                databaseStatusUp = count >= 0;
-            }
-        } catch (Exception ex) {
-            logger.error("Database service is not running. " + ex);
-        }
-        return databaseStatusUp;
+        return getHealthInfo().isHealthy();
     }
 
     /**
@@ -166,5 +159,27 @@ public abstract class DatabaseProvider {
 
     protected void setProvider(Constants.GraphDatabaseProvider provider) {
         this.provider = provider;
+    }
+
+    @Override
+    public String getServiceName() {
+        return Constants.SUNBIRDRC_DATABASE_NAME;
+    }
+
+    @Override
+    public ComponentHealthInfo getHealthInfo() {
+        boolean databaseStatusUp;
+        try {
+            try (OSGraph osGraph = getOSGraph()) {
+                Graph graph = osGraph.getGraphStore();
+
+                long count = IteratorUtils.count(graph.traversal().clone().V().has(T.label, "HealthCheckLabel"));
+                databaseStatusUp = count >= 0;
+                return new ComponentHealthInfo(getServiceName(), databaseStatusUp);
+            }
+        } catch (Exception ex) {
+            logger.error("Database service is not running. " + ex);
+            return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
+        }
     }
 }

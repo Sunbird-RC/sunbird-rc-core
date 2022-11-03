@@ -17,6 +17,7 @@ import org.mockito.stubbing.Answer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
@@ -53,6 +54,7 @@ public class EncryptionServiceImplTest{
 	@Before
 	public void setUp(){
 		MockitoAnnotations.initMocks(this);
+		ReflectionTestUtils.setField(encryptionServiceImpl, "encryptionEnabled", true);
 	}
 
 	@Test

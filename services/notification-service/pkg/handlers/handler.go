@@ -9,6 +9,7 @@ import (
 	"github.com/sunbirdrc/notification-service/pkg/services"
 	"github.com/sunbirdrc/notification-service/swagger_gen/models"
 	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations"
+	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations/health"
 	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations/notification"
 	"net/http"
 )
@@ -16,10 +17,19 @@ import (
 func SetupHandlers(api *operations.NotificationServiceAPI) {
 	api.NotificationPostNotificationHandler = notification.PostNotificationHandlerFunc(postNotificationHandler)
 	api.NotificationGetNotificationHandler = notification.GetNotificationHandlerFunc(getLastSentNotifications)
+	api.HealthGetHealthHandler = health.GetHealthHandlerFunc(getHealthHandle)
 
 }
 
 var messages = make(map[string]string)
+
+func getHealthHandle(params health.GetHealthParams) middleware.Responder {
+	response := health.NewGetHealthOK()
+	response.Payload = map[string]string{
+		"status": "UP",
+	}
+	return response
+}
 
 func getLastSentNotifications(params notification.GetNotificationParams) middleware.Responder {
 	response := notification.NewGetNotificationOK()

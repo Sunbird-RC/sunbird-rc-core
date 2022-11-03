@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.service.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.exception.EncryptionException;
 import dev.sunbirdrc.registry.service.EncryptionService;
@@ -16,16 +17,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
+import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME;
+
 @Component
 public class EncryptionServiceImpl implements EncryptionService {
 
 	private static Logger logger = LoggerFactory.getLogger(EncryptionServiceImpl.class);
+	@Value("${encryption.enabled}")
+	private boolean encryptionEnabled;
 	@Value("${encryption.uri}")
 	private String encryptionUri;
 	@Value("${decryption.uri}")
@@ -151,23 +158,38 @@ public class EncryptionServiceImpl implements EncryptionService {
 		}
 	}
 
+	@Override
+	public String getServiceName() {
+		return SUNBIRD_ENCRYPTION_SERVICE_NAME;
+	}
+
 	/**
 	 * This method is used to check if the sunbird encryption service is up
 	 * 
 	 * @return boolean true/false
 	 */
+
 	@Override
-	public boolean isEncryptionServiceUp() {
-		boolean isEncryptionServiceUp = false;
-		try {
-			ResponseEntity<String> response = retryRestTemplate.getForEntity(encryptionServiceHealthCheckUri);
-			if (response.getBody().equalsIgnoreCase("UP")) {
-				isEncryptionServiceUp = true;
-				logger.debug("Encryption service running !");
+	public ComponentHealthInfo getHealthInfo() {
+		if (encryptionEnabled) {
+			try {
+				ResponseEntity<String> response = retryRestTemplate.getForEntity(encryptionServiceHealthCheckUri);
+				if (!StringUtils.isEmpty(response.getBody()) && response.getBody().equalsIgnoreCase("UP")) {
+					logger.debug("Encryption service running !");
+					return new ComponentHealthInfo(getServiceName(), true);
+				} else {
+					return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, response.getBody());
+				}
+			} catch (RestClientException ex) {
+				logger.error("RestClientException when checking the health of the Sunbird encryption service: ", ex);
+				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
 			}
-		} catch (RestClientException ex) {
-			logger.error("RestClientException when checking the health of the Sunbird encryption service: ", ex);
+		} else {
+			return new ComponentHealthInfo(getServiceName(), true, "ENCRYPTION_ENABLED", "false");
 		}
-		return isEncryptionServiceUp;
+	}
+
+	public boolean isEncryptionServiceUp() {
+		return getHealthInfo().isHealthy();
 	}
 }

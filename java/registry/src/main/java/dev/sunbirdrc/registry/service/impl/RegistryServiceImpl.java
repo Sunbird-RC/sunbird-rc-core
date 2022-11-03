@@ -7,8 +7,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.MessageFactory;
+import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
+import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.dao.IRegistryDao;
 import dev.sunbirdrc.registry.dao.RegistryDaoImpl;
 import dev.sunbirdrc.registry.dao.VertexReader;
@@ -38,6 +40,7 @@ import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static dev.sunbirdrc.registry.Constants.CREDENTIAL_TEMPLATE;
 import static dev.sunbirdrc.registry.Constants.Schema;
@@ -106,33 +109,26 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SchemaService schemaService;
 
+    @Autowired
+    private IElasticService elasticService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    private List<HealthIndicator> healthIndicators;
+
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
-        boolean databaseServiceup = shard.getDatabaseProvider().isDatabaseServiceUp();
-        boolean overallHealthStatus = databaseServiceup;
+        AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
         List<ComponentHealthInfo> checks = new ArrayList<>();
+        healthIndicators.parallelStream().forEach(healthIndicator -> {
+            ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
+            checks.add(healthInfo);
+            overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
+        });
 
-        ComponentHealthInfo databaseServiceInfo = new ComponentHealthInfo(Constants.SUNBIRDRC_DATABASE_NAME,
-                databaseServiceup);
-        checks.add(databaseServiceInfo);
-
-        if (encryptionEnabled) {
-            boolean encryptionServiceStatusUp = encryptionService.isEncryptionServiceUp();
-            ComponentHealthInfo encryptionHealthInfo = new ComponentHealthInfo(
-                    Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, encryptionServiceStatusUp);
-            checks.add(encryptionHealthInfo);
-            overallHealthStatus = overallHealthStatus && encryptionServiceStatusUp;
-        }
-
-        if (signatureEnabled) {
-            boolean signatureServiceStatusUp = signatureService.isServiceUp();
-            ComponentHealthInfo signatureServiceInfo = new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME,
-                    signatureServiceStatusUp);
-            checks.add(signatureServiceInfo);
-            overallHealthStatus = overallHealthStatus && signatureServiceStatusUp;
-        }
-
-        healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus, checks);
+        healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus.get(), checks);
         logger.info("Heath Check :  ", checks.toArray().toString());
         return healthCheck;
     }

@@ -1,5 +1,7 @@
 package dev.sunbirdrc.keycloak;
 
+import dev.sunbirdrc.pojos.ComponentHealthInfo;
+import dev.sunbirdrc.pojos.HealthIndicator;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -18,10 +20,13 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import javax.ws.rs.core.Response;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
+import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_KEYCLOAK_SERVICE_NAME;
+
 
 @Component
 @PropertySource(value = "classpath:application.yml", ignoreResourceNotFound = true)
-public class KeycloakAdminUtil {
+public class KeycloakAdminUtil implements HealthIndicator {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakAdminUtil.class);
     private static final String EMAIL = "email_id";
     private static final String ENTITY = "entity";
@@ -37,9 +42,12 @@ public class KeycloakAdminUtil {
     private boolean setDefaultPassword;
     private List<String> emailActions;
     private final Keycloak keycloak;
+    private boolean authenticationEnabled;
 
     @Autowired
     public KeycloakAdminUtil(
+            @Value("${authentication.enabled}")
+            boolean authenticationEnabled,
             @Value("${keycloak.realm:}") String realm,
             @Value("${keycloak-admin.client-secret:}") String adminClientSecret,
             @Value("${keycloak-admin.client-id:}") String adminClientId,
@@ -48,6 +56,7 @@ public class KeycloakAdminUtil {
             @Value("${keycloak.auth-server-url:}") String authURL,
             @Value("${keycloak-user.email-actions:}") List<String> emailActions,
             @Value("${httpConnection.maxConnections:5}") int httpMaxConnections) {
+        this.authenticationEnabled = authenticationEnabled;
         this.realm = realm;
         this.adminClientSecret = adminClientSecret;
         this.adminClientId = adminClientId;
@@ -170,5 +179,24 @@ public class KeycloakAdminUtil {
         keycloak.realm(realm).groups().groups().stream()
                 .filter(g -> g.getName().equals(groupName)).findFirst()
                 .ifPresent(g -> keycloak.realm(realm).users().get(user.getId()).joinGroup(g.getId()));
+    }
+
+    @Override
+    public String getServiceName() {
+        return SUNBIRD_KEYCLOAK_SERVICE_NAME;
+    }
+
+    @Override
+    public ComponentHealthInfo getHealthInfo() {
+        if (authenticationEnabled) {
+            try {
+                return new ComponentHealthInfo(getServiceName(), keycloak.realms().findAll().size() > 0);
+            } catch (Exception e) {
+                return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
+            }
+        } else {
+            return new ComponentHealthInfo(getServiceName(), true, "AUTHENTICATION_ENABLED", "false");
+        }
+
     }
 }
