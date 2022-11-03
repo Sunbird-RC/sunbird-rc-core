@@ -74,4 +74,110 @@ public class JsonValidationServiceImplTest {
                 "}", false);
 
     }
+
+    @Test
+    public void shouldTestSchemaValidations() throws Exception {
+        JsonNode jsonNode = JsonNodeFactory.instance.textNode("{\n" +
+                "  \"$schema\": \"http://json-schema.org/draft-07/schema\",\n" +
+                "  \"type\": \"object\",\n" +
+                "  \"properties\": {\n" +
+                "    \"TrainingCertificate\": {\n" +
+                "      \"$ref\": \"#/definitions/TrainingCertificate\"\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"required\": [\n" +
+                "    \"TrainingCertificate\"\n" +
+                "  ],\n" +
+                "  \"title\": \"TrainingCertificate\",\n" +
+                "  \"definitions\": {\n" +
+                "    \"TrainingCertificate\": {\n" +
+                "      \"$id\": \"#/properties/TrainingCertificate\",\n" +
+                "      \"type\": \"object\",\n" +
+                "      \"title\": \"The TrainingCertificate Schema\",\n" +
+                "      \"required\": [\n" +
+                "        \"name\",\n" +
+                "        \"contact\"\n" +
+                "      ],\n" +
+                "      \"additionalProperties\": false,\n" +
+                "      \"properties\": {\n" +
+                "        \"name\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"enum\": [\"A\",\"B\"]\n" +
+                "        },\n" +
+                "        \"trainingTitle\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"const\": \"ABC\" \n" +
+                "        },\n" +
+                "        \"contact\": {\n" +
+                "          \"type\": \"number\",\n" +
+                "          \"multipleOf\": 3,\n" +
+                "          \"maximum\": 99,\n" +
+                "          \"minimum\": 9\n" +
+                "        },\n" +
+                "        \"date\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"format\": \"date\"\n" +
+                "        },\n" +
+                "        \"note\": {\n" +
+                "          \"type\": \"string\",\n" +
+                "          \"maxLength\": 10,\n" +
+                "          \"minLength\": 5\n" +
+                "        },\n" +
+                "        \"items\": {\n" +
+                "          \"type\": \"array\",\n" +
+                "          \"maxItems\": 3,\n" +
+                "          \"minItems\": 1,\n" +
+                "          \"uniqueItems\": true,\n" +
+                "          \"items\": {\n" +
+                "            \"type\": \"string\"\n" +
+                "          }\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"_osConfig\": {\n" +
+                "    \"uniqueIndexFields\": [\n" +
+                "      \"contact\"\n" +
+                "    ],\n" +
+                "    \"ownershipAttributes\": [],\n" +
+                "    \"roles\": [],\n" +
+                "    \"inviteRoles\": [\n" +
+                "      \"anonymous\"\n" +
+                "    ],\n" +
+                "    \"enableLogin\": false,\n" +
+                "    \"credentialTemplate\": {\n" +
+                "      \"@context\": [\n" +
+                "        \"https://www.w3.org/2018/credentials/v1\",\n" +
+                "        \"https://gist.githubusercontent.com/dileepbapat/eb932596a70f75016411cc871113a789/raw/498e5af1d94784f114b32c1ab827f951a8a24def/skill\"\n" +
+                "      ],\n" +
+                "      \"type\": [\n" +
+                "        \"VerifiableCredential\"\n" +
+                "      ],\n" +
+                "      \"issuanceDate\": \"2021-08-27T10:57:57.237Z\",\n" +
+                "      \"credentialSubject\": {\n" +
+                "        \"type\": \"Person\",\n" +
+                "        \"name\": \"{{name}}\",\n" +
+                "        \"trainedOn\": \"{{trainingTitle}}\"\n" +
+                "      },\n" +
+                "      \"issuer\": \"did:web:sunbirdrc.dev/vc/skill\"\n" +
+                "    },\n" +
+                "    \"certificateTemplates\": {\n" +
+                "      \"html\": \"https://raw.githubusercontent.com/dileepbapat/ref-sunbirdrc-certificate/main/schemas/templates/TrainingCertificate.html\",\n" +
+                "      \"svg\": \"https://raw.githubusercontent.com/dileepbapat/ref-sunbirdrc-certificate/main/schemas/templates/TrainingCertificate.svg\"\n" +
+                "    }\n" +
+                "  }\n" +
+                "}");
+        jsonValidationService.addDefinitions(jsonNode);
+        jsonValidationService.validate("TrainingCertificate", "{\n" +
+                "  \"TrainingCertificate\": {\n" +
+                "    \"trainingTitle\": \"ABC\",\n" +
+                "    \"name\": \"A\",\n" +
+                "    \"date\": \"2022-10-20\",\n" +
+                "    \"note\": \"12345\",\n" +
+                "    \"items\": [\"1\",\"@\"],\n" +
+                "    \"contact\": 99\n" +
+                "  }\n" +
+                "}", false);
+
+    }
 }

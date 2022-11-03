@@ -16,7 +16,6 @@ import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
-import dev.sunbirdrc.registry.middleware.util.Did;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.service.FileStorageService;
@@ -26,6 +25,7 @@ import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
 import dev.sunbirdrc.validators.ValidationException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
@@ -43,6 +43,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.*;
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
 
 @RestController
 public class RegistryEntityController extends AbstractController {
@@ -58,6 +59,8 @@ public class RegistryEntityController extends AbstractController {
 
     @Autowired
     private AsyncRequest asyncRequest;
+
+
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${certificate.enableExternalTemplates:false}") boolean externalTemplatesEnabled;
@@ -124,7 +127,8 @@ public class RegistryEntityController extends AbstractController {
         try {
             String tag = "RegistryController.delete " + entityName;
             watch.start(tag);
-            registryHelper.deleteEntity(entityId,userId);
+            Vertex deletedEntity = registryHelper.deleteEntity(entityId, userId);
+            registryHelper.revokeExistingCredentials(entityName, entityId, userId, deletedEntity.value(OSSystemFields._osSignedData.name()));
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -147,7 +151,7 @@ public class RegistryEntityController extends AbstractController {
             watch.start("RegistryController.searchEntity");
             ArrayNode entity = JsonNodeFactory.instance.arrayNode();
             entity.add(entityName);
-            searchNode.set("entityType", entity);
+            searchNode.set(ENTITY_TYPE, entity);
             if (definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableSearch()) {
                 JsonNode result = registryHelper.searchEntity(searchNode);
                 watch.stop("RegistryController.searchEntity");
@@ -194,13 +198,14 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
             // TODO: get userID from auth header
-            registryHelper.updateEntityAndState(newRootNode, userId);
+            JsonNode existingNode = registryHelper.readEntity(newRootNode, userId);
+            registryHelper.updateEntityAndState(existingNode, newRootNode, userId);
+            registryHelper.revokeExistingCredentials(entityName, entityId, userId,
+                    existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
             registryHelper.invalidateAttestation(entityName, entityId, userId,null);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
-
-            registryHelper.signDocument(entityName, entityId, userId);
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
@@ -267,9 +272,10 @@ public class RegistryEntityController extends AbstractController {
             @RequestBody JsonNode requestBody
 
     ) {
+        String userId = USER_ANONYMOUS;
         if (registryHelper.doesUpdateRequiresAuthorization(entityName)) {
             try {
-                registryHelper.authorize(entityName, entityId, request);
+                userId = registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
                 return createUnauthorizedExceptionResponse(e);
             }
@@ -280,14 +286,15 @@ public class RegistryEntityController extends AbstractController {
         try {
             String tag = "RegistryController.update " + entityName;
             watch.start(tag);
-            String notes = getNotes(requestBody);
             requestBody = registryHelper.removeFormatAttr(requestBody);
-            registryHelper.updateEntityProperty(entityName, entityId, requestBody, request);
+            JsonNode existingNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
+            registryHelper.updateEntityProperty(entityName, entityId, requestBody, request, existingNode);
+            registryHelper.revokeExistingCredentials(entityName, entityId, userId,
+                    existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
-            watch.stop(tag);
-            String userId = getUserId(entityName, request);
             registryHelper.invalidateAttestation(entityName, entityId, userId,registryHelper.getPropertyToUpdate(request,entityId));
+            watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             responseParams.setErrmsg(e.getMessage());

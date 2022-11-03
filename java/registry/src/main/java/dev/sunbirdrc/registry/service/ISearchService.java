@@ -15,6 +15,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
+import static dev.sunbirdrc.registry.middleware.util.Constants.FILTERS;
+
 
 public interface ISearchService {
 
@@ -31,7 +34,7 @@ public interface ISearchService {
      */
     default SearchQuery getSearchQuery(JsonNode inputQueryNode, int offset, int limit) {
         // get entityType array values
-        JsonNode typeNode = inputQueryNode.get("entityType");
+        JsonNode typeNode = inputQueryNode.get(ENTITY_TYPE);
         if (!typeNode.isArray() || typeNode.size() == 0)
             throw new IllegalArgumentException("entityType invalid!");
 
@@ -44,7 +47,7 @@ public interface ISearchService {
 
         List<Filter> filterList = new ArrayList<>();
         // get common filter/queries to apply
-        JsonNode queryNode = inputQueryNode.has("filters") ? inputQueryNode.get("filters")
+        JsonNode queryNode = inputQueryNode.has(FILTERS) ? inputQueryNode.get(FILTERS)
                 : inputQueryNode.get("queries");
 
         if (queryNode == null) {

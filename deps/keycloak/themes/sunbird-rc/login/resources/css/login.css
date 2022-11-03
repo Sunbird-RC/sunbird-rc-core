@@ -112,10 +112,11 @@ body {
   color: #ffffff;
   border-style: none;
   background: #0098AB;
-  border-radius: 8px;
+  border-radius: 20px;
   width: 100%;
   padding: 1rem;
-  margin-top: 2rem;
+  margin-top: 20px;
+
 }
 .login-content .box .visibility {
   position: relative;
@@ -238,4 +239,14 @@ body {
 
 .forgot-password-wrapper a {
   color: #0098AB;
+}
+
+.green-label {
+  background: #e9f7ea;
+  border: 1px solid #f4f4f4;
+  box-shadow: 0px 2px 5px rgb(0 0 0 / 5%);
+  border-radius: 4px;
+  margin-top: 12px;
+  padding: 1rem;
+  font-weight: bold;
 }

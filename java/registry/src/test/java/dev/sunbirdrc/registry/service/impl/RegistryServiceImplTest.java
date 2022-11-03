@@ -183,7 +183,7 @@ public class RegistryServiceImplTest {
 
 	@Test
 	public void shouldAddSchemaToDefinitionManager() throws Exception {
-		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
+		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
 		ObjectNode object = JsonNodeFactory.instance.objectNode();
@@ -191,12 +191,12 @@ public class RegistryServiceImplTest {
 		object.put("status", SchemaStatus.PUBLISHED.toString());
 		schemaNode.set(Schema, object);
 		registryService.addEntity(shard, "", schemaNode, true);
-		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
+		assertEquals(3, definitionsManager.getAllKnownDefinitions().size());
 	}
 
 	@Test
 	public void shouldNotAddSchemaToDefinitionManagerForDraftStatus() throws Exception {
-		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
+		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
 		ObjectNode object = JsonNodeFactory.instance.objectNode();
@@ -205,7 +205,7 @@ public class RegistryServiceImplTest {
 		assertNull(schemaNode.get("status"));
 		registryService.addEntity(shard, "", schemaNode, true);
 		assertNotNull(schemaNode.get(Schema).get("status"));
-		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
+		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
 	}
 
 }

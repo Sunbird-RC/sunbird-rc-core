@@ -13,6 +13,7 @@ import dev.sunbirdrc.registry.dao.IRegistryDao;
 import dev.sunbirdrc.registry.dao.RegistryDaoImpl;
 import dev.sunbirdrc.registry.dao.VertexReader;
 import dev.sunbirdrc.registry.dao.VertexWriter;
+import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
@@ -21,7 +22,6 @@ import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.*;
-import dev.sunbirdrc.validators.IValidate;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -32,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.MessageProtos;
@@ -142,10 +141,11 @@ public class RegistryServiceImpl implements RegistryService {
      * delete the vertex and changes the status
      *
      * @param uuid
+     * @return
      * @throws Exception
      */
     @Override
-    public void deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
+    public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -162,7 +162,6 @@ public class RegistryServiceImpl implements RegistryService {
                     && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
                 registryDao.deleteEntity(vertex);
                 databaseProvider.commitTransaction(graph, tx);
-
                 auditService.auditDelete(
                         auditService.createAuditRecord(userId, uuid, tx, index),
                         shard);
@@ -173,6 +172,7 @@ public class RegistryServiceImpl implements RegistryService {
 
             }
             logger.info("Entity {} marked deleted", uuid);
+            return vertex;
         }
 
 
@@ -197,13 +197,8 @@ public class RegistryServiceImpl implements RegistryService {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
 
-        Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
-        if (!skipSignature && signatureEnabled && credentialTemplate != null) {
-            Map<String, Object> requestBodyMap = new HashMap<>();
-            requestBodyMap.put("data", rootNode.get(vertexLabel));
-            requestBodyMap.put(CREDENTIAL_TEMPLATE, credentialTemplate);
-            Object signedCredentials = signatureService.sign(requestBodyMap);
-            ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+        if (!skipSignature) {
+            generateCredentials(rootNode, vertexLabel);
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.addSchema(rootNode);
@@ -246,6 +241,17 @@ public class RegistryServiceImpl implements RegistryService {
 
         }
         return entityId;
+    }
+
+    private void generateCredentials(JsonNode rootNode, String vertexLabel) throws SignatureException.UnreachableException, SignatureException.CreationException {
+        Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
+        if (signatureEnabled && credentialTemplate != null) {
+            Map<String, Object> requestBodyMap = new HashMap<>();
+            requestBodyMap.put("data", rootNode.get(vertexLabel));
+            requestBodyMap.put("credentialTemplate", credentialTemplate);
+            Object signedCredentials = signatureService.sign(requestBodyMap);
+            ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+        }
     }
 
     @Override
@@ -321,6 +327,8 @@ public class RegistryServiceImpl implements RegistryService {
                 String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                 JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
             }
+
+            generateCredentials(inputNode, entityType);
 
             if (entityType.equals(Schema)) {
                 schemaService.updateSchema(readNode, inputNode);

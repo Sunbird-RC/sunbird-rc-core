@@ -13,6 +13,7 @@ public class Constants {
     public static final String CLAIM_REJECTED = "CLAIM_REJECTED";
     public static final String USER_ANONYMOUS = "anonymous";
     public static final String ATTESTATION_POLICY = "AttestationPolicy";
+    public static final String REVOKED_CREDENTIAL = "RevokedCredential";
     public static final String Schema = "Schema";
     public static final String Template = "template";
     public static final String TemplateKey = "template-key";
