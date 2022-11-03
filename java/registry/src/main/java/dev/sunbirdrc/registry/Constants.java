@@ -28,4 +28,6 @@ public class Constants {
 
     public static final String REQUESTER = "REQUESTER";
     public static final String FILE_URL = "fileUrl";
+
+    public static final String CREDENTIAL_TEMPLATE = "credentialTemplate";
 }

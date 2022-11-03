@@ -42,6 +42,7 @@ import org.sunbird.akka.core.Router;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static dev.sunbirdrc.registry.Constants.CREDENTIAL_TEMPLATE;
 import static dev.sunbirdrc.registry.Constants.Schema;
 
 @Service

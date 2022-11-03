@@ -991,7 +991,7 @@ public class RegistryHelper {
             SignatureException.CreationException, SignatureException.UnreachableException {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("data", result);
-        requestBodyMap.put("credentialTemplate", credentialTemplate);
+        requestBodyMap.put(CREDENTIAL_TEMPLATE, credentialTemplate);
         return signatureService.sign(requestBodyMap);
     }
 
