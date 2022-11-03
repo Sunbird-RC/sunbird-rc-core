@@ -36,6 +36,23 @@ func init() {
   "host": "sunbirdrc.dev",
   "basePath": "/notification-service/v1",
   "paths": {
+    "/health": {
+      "get": {
+        "description": "API to get the notification health status",
+        "tags": [
+          "health"
+        ],
+        "summary": "Get the health status",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
     "/notification": {
       "get": {
         "description": "Temporary API to get the last notifications sent",
@@ -168,6 +185,23 @@ func init() {
   "host": "sunbirdrc.dev",
   "basePath": "/notification-service/v1",
   "paths": {
+    "/health": {
+      "get": {
+        "description": "API to get the notification health status",
+        "tags": [
+          "health"
+        ],
+        "summary": "Get the health status",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
     "/notification": {
       "get": {
         "description": "Temporary API to get the last notifications sent",

@@ -19,6 +19,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
+	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations/health"
 	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations/notification"
 )
 
@@ -44,6 +45,9 @@ func NewNotificationServiceAPI(spec *loads.Document) *NotificationServiceAPI {
 
 		JSONProducer: runtime.JSONProducer(),
 
+		HealthGetHealthHandler: health.GetHealthHandlerFunc(func(params health.GetHealthParams) middleware.Responder {
+			return middleware.NotImplemented("operation health.GetHealth has not yet been implemented")
+		}),
 		NotificationGetNotificationHandler: notification.GetNotificationHandlerFunc(func(params notification.GetNotificationParams) middleware.Responder {
 			return middleware.NotImplemented("operation notification.GetNotification has not yet been implemented")
 		}),
@@ -84,6 +88,8 @@ type NotificationServiceAPI struct {
 	//   - application/json
 	JSONProducer runtime.Producer
 
+	// HealthGetHealthHandler sets the operation handler for the get health operation
+	HealthGetHealthHandler health.GetHealthHandler
 	// NotificationGetNotificationHandler sets the operation handler for the get notification operation
 	NotificationGetNotificationHandler notification.GetNotificationHandler
 	// NotificationPostNotificationHandler sets the operation handler for the post notification operation
@@ -164,6 +170,9 @@ func (o *NotificationServiceAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
+	if o.HealthGetHealthHandler == nil {
+		unregistered = append(unregistered, "health.GetHealthHandler")
+	}
 	if o.NotificationGetNotificationHandler == nil {
 		unregistered = append(unregistered, "notification.GetNotificationHandler")
 	}
@@ -258,6 +267,10 @@ func (o *NotificationServiceAPI) initHandlerCache() {
 		o.handlers = make(map[string]map[string]http.Handler)
 	}
 
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/health"] = health.NewGetHealth(o.context, o.HealthGetHealthHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

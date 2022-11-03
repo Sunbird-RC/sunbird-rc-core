@@ -3,7 +3,9 @@ package dev.sunbirdrc.registry.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
+import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.dao.IRegistryDao;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.middleware.util.Constants;
@@ -40,6 +42,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static org.junit.Assert.*;
@@ -89,6 +92,9 @@ public class RegistryServiceImplTest {
 	private EncryptionServiceImpl encryptionService;
 	@Mock
 	private SignatureServiceImpl signatureService;
+
+	@Mock
+	private HealthIndicator healthIndicator;
 	@Mock
 	private DatabaseProvider mockDatabaseProvider;
 
@@ -145,8 +151,9 @@ public class RegistryServiceImplTest {
 
 	@Test
 	public void test_health_check_up_scenario() throws Exception {
-		when(encryptionService.isEncryptionServiceUp()).thenReturn(true);
-		when(mockDatabaseProvider.isDatabaseServiceUp()).thenReturn(true);
+		when(encryptionService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, true));
+		when(mockDatabaseProvider.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRDRC_DATABASE_NAME, true));
+		ReflectionTestUtils.setField(registryServiceForHealth, "healthIndicators", Arrays.asList(encryptionService, mockDatabaseProvider));
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		when(shardManager.getDefaultShard()).thenReturn(shard);
 		when(signatureService.isServiceUp()).thenReturn(true);
@@ -157,9 +164,10 @@ public class RegistryServiceImplTest {
 
 	@Test
 	public void test_health_check_down_scenario() throws Exception {
-		when(signatureService.isServiceUp()).thenReturn(true);
-		when(encryptionService.isEncryptionServiceUp()).thenReturn(false);
-		when(mockDatabaseProvider.isDatabaseServiceUp()).thenReturn(true);
+		when(signatureService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, true));
+		when(encryptionService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, false));
+		when(mockDatabaseProvider.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRDRC_DATABASE_NAME, true));
+		ReflectionTestUtils.setField(registryServiceForHealth, "healthIndicators", Arrays.asList(signatureService, encryptionService, mockDatabaseProvider));
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		when(shardManager.getDefaultShard()).thenReturn(shard);
 		when(signatureService.isServiceUp()).thenReturn(true);

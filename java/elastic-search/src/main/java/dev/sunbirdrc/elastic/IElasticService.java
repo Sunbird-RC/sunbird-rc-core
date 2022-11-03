@@ -1,6 +1,7 @@
 package dev.sunbirdrc.elastic;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.pojos.SearchQuery;
 import java.io.IOException;
 import java.util.Map;
@@ -9,7 +10,7 @@ import org.elasticsearch.rest.RestStatus;
 /**
  * This interface contains unimplemented abstract methods with respect to ElasticSearch
  */
-public interface IElasticService {
+public interface IElasticService extends HealthIndicator {
 
     /** Saves document into ES(ElasticSearch)
      * @param index - ElasticSearch Index
@@ -46,4 +47,5 @@ public interface IElasticService {
      * @return
      */
     JsonNode search(String index, SearchQuery searchQuery) throws IOException;
+
 }

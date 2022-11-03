@@ -117,7 +117,7 @@ public class RegistryClaimsController extends AbstractController{
         return additionalInputs;
     }
 
-    @PostMapping(value = "/api/v1/send")
+    @RequestMapping(method = {RequestMethod.PUT, RequestMethod.POST},value = "/api/v1/send")
     public ResponseEntity<Object> riseAttestation(HttpServletRequest request, @RequestBody AttestationRequest attestationRequest)  {
         try {
             registryHelper.authorize(attestationRequest.getEntityName(), attestationRequest.getEntityId(), request);
