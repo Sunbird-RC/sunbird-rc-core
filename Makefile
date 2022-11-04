@@ -1,7 +1,7 @@
 #SOURCES = $(wildcard java/**/*.java)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SOURCES := $(call rwildcard,java/,*.java)
-RELEASE_VERSION = v0.0.9
+RELEASE_VERSION = v0.0.10
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
@@ -35,7 +35,7 @@ test: build
 clean:
 	@rm -rf target || true
 	@rm java/registry/target/registry.jar || true
-release:
+release: test
 	docker tag dockerhub/sunbird-rc-core dockerhub/sunbird-rc-core:$(RELEASE_VERSION)
 	docker tag dockerhub/sunbird-rc-claim-ms dockerhub/sunbird-rc-claim-ms:$(RELEASE_VERSION)
 	docker tag dockerhub/sunbird-rc-notification-service dockerhub/sunbird-rc-notification-service:$(RELEASE_VERSION)
