@@ -765,7 +765,7 @@ public class RegistryHelper {
                     return principal.getAccount().getPrincipal().getName();
                 }
             }
-            throw new Exception("Forbidden");
+            return USER_ANONYMOUS;
         } else {
             return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
         }
