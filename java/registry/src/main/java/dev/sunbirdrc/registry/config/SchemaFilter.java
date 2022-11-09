@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.config;
 
 import dev.sunbirdrc.plugin.components.SpringContext;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
@@ -17,12 +18,12 @@ public class SchemaFilter implements Filter {
     private static final String INVITE_URL_ENDPOINT = "/invite";
     private static final String SEND_URL_ENDPOINT = "/send";
     private static final String URL_ENDPOINT = "/api/v1/";
+    @Autowired
+    private DefinitionsManager definitionsManager;
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
-        ApplicationContext context = SpringContext.getAppContext();
-        DefinitionsManager definitionsManager = (DefinitionsManager) context.getBean("definitionsManager");
         String entityName;
         List<String> rolesArr;
         try {

@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.config;
 
+import dev.sunbirdrc.registry.util.DefinitionsManager;
 import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
 import org.keycloak.adapters.springsecurity.KeycloakSecurityComponents;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
@@ -27,6 +28,8 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
 
     @Value("${authentication.enabled:true}") boolean authenticationEnabled;
 
+    @Autowired
+    private SchemaFilter schemaFilter;
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 
@@ -61,7 +64,7 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                             "/api/docs/swagger.json","/api/docs/*.json", "/plugin/**")
                     .permitAll()
                     .and()
-                    .addFilterBefore(new SchemaFilter(), WebAsyncManagerIntegrationFilter.class)
+                    .addFilterBefore(schemaFilter, WebAsyncManagerIntegrationFilter.class)
                     .authorizeRequests()
                     .anyRequest()
                     .authenticated();
