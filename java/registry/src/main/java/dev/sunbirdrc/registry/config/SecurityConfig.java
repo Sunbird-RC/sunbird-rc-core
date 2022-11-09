@@ -17,6 +17,7 @@ import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -59,6 +60,9 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                             "/swagger-ui", "/**/search", "/**/attestation/**",
                             "/api/docs/swagger.json","/api/docs/*.json", "/plugin/**")
                     .permitAll()
+                    .and()
+                    .addFilterBefore(new SchemaFilter(), WebAsyncManagerIntegrationFilter.class)
+                    .authorizeRequests()
                     .anyRequest()
                     .authenticated();
         } else {
