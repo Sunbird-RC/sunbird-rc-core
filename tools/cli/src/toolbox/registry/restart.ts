@@ -7,16 +7,8 @@ import { Toolbox } from '../../types'
 
 // Accept a toolbox, return a registry restart viewer
 export default async (toolbox: Toolbox, soft: boolean) => {
-	const { events, system } = toolbox
-	const until = async (conditionFunction: () => Promise<boolean>) => {
-		const poll = async (resolve: (value: unknown) => void) => {
-			if (await conditionFunction()) resolve(true)
-			else setTimeout((_) => poll(resolve), 400)
-		}
-
-		return new Promise(poll)
-	}
-
+	const { events, system, until } = toolbox
+	
 	events.emit('registry.restart', {
 		status: 'progress',
 		operation: 'restart-registry',

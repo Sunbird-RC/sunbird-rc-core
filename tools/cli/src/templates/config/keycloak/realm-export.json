@@ -71,6 +71,14 @@
 				"attributes": {}
 			},
 			{
+				"id": "42dba8cf-f483-4668-a087-cba46ed86ad2",
+				"name": "admin",
+				"composite": false,
+				"clientRole": false,
+				"containerId": "<%= props.realmName %>",
+				"attributes": {}
+			},
+			{
 				"id": "5fa4077d-1686-4506-97a6-5bce1bce59dc",
 				"name": "offline_access",
 				"description": "${role_offline-access}",
@@ -756,6 +764,7 @@
 				"saml.force.post.binding": "false",
 				"saml.multivalued.roles": "false",
 				"saml.encrypt": "false",
+				"login_theme": "sunbird-rc",
 				"oauth2.device.authorization.grant.enabled": "false",
 				"backchannel.logout.revoke.offline.tokens": "false",
 				"saml.server.signature": "false",

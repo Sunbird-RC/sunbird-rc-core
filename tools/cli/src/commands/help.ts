@@ -25,6 +25,10 @@ ${print.colors.bold('Commands')}
     Starts all the containers of a registry instance
   ${print.colors.dim('>')} ${print.colors.yellow('restart')}
     Restart all the containers in a registry instance
+  ${print.colors.dim('>')} ${print.colors.yellow('down')}
+    Stop and remove resources
+  ${print.colors.dim('>')} ${print.colors.yellow('health')}
+    Shows health check of a registry
   ${print.colors.dim('>')} ${print.colors.yellow('version')}
     Shows the current version of the CLI
     `)
