@@ -4,6 +4,7 @@ SOURCES := $(call rwildcard,java/,*.java)
 RELEASE_VERSION = v0.0.10
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
+	rm -rf java/claim/target/*.jar
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 	make -C java/claim
 	make -C services/certificate-api docker
