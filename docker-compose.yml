@@ -22,11 +22,15 @@ services:
       - POSTGRES_DB=registry
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   registry:
     image: dockerhub/sunbird-rc-core:${RELEASE_VERSION}
     volumes:
-      - ${PWD}/java/registry/src/main/resources/public/_schemas:/home/sunbirdrc/config/public/_schemas
-
+      - ${PWD}/${SCHEMA_DIR-java/registry/src/main/resources/public/_schemas}:/home/sunbirdrc/config/public/_schemas
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
@@ -43,6 +47,7 @@ services:
       - sign_health_check_url=http://certificate-signer:8079/health
       - signature_enabled=true
       - pdf_url=http://certificate-api:8078/api/v1/certificatePDF
+      - certificate_health_check_url=http://certificate-api:8078/health
       - template_base_url=http://registry:8081/api/v1/templates/ #Looks for certificate templates for pdf copy of the signed certificate
       - sunbird_keycloak_user_set_password=true
       - filestorage_connection_url=http://file-storage:9000
@@ -64,7 +69,12 @@ services:
       es:
         condition: service_healthy
       db:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8081/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 4
   keycloak:
     image: dockerhub/sunbird-rc-keycloak:latest
     volumes:
@@ -92,7 +102,7 @@ services:
       - "9990:9990"
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
   claim-ms:
     image: dockerhub/sunbird-rc-claim-ms:${RELEASE_VERSION}
     environment:
@@ -107,6 +117,11 @@ services:
         condition: service_started
       registry:
         condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8082/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 4
   certificate-signer:
     image: dockerhub/sunbird-rc-certificate-signer:${RELEASE_VERSION}
     environment:
@@ -115,12 +130,24 @@ services:
       - "8079:8079"
     volumes:
       - ./imports:/etc/signer
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "curl -f http://localhost:8079/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
   certificate-api:
     image: dockerhub/sunbird-rc-certificate-api:${RELEASE_VERSION}
     environment:
       - PORT=8078
     ports:
       - "8078:8078"
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8078/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
   file-storage:
     image: quay.io/minio/minio
     volumes:
@@ -141,6 +168,12 @@ services:
     image: dockerhub/sunbird-rc-notification-service:${RELEASE_VERSION}
     ports:
       - "8765:8765"
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8765/notification-service/v1/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
@@ -175,7 +208,7 @@ services:
     ports:
       - "3300:3300"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "localhost:3300/api/v1/health" ]
+      test: [ "CMD", "curl", "-f", "localhost:3300/public-key-service/api/v1/health" ]
       interval: 30s
       timeout: 10s
       retries: 4
@@ -194,3 +227,21 @@ services:
     image: dockerhub/sunbird-rc-nginx
     ports:
       - "80:80"
+    depends_on:
+      registry:
+        condition: service_healthy
+      context-proxy-service:
+        condition: service_started
+      public-key-service:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      claim-ms:
+        condition: service_started
+      file-storage:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "localhost:80" ]
+      interval: 30s
+      timeout: 10s
+      retries: 4
