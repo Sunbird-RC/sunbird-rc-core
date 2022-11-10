@@ -16,6 +16,8 @@ services:
       retries: 4
   db:
     image: postgres
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     environment:
@@ -37,10 +39,10 @@ services:
       - connectionInfo_password=postgres
       - elastic_search_connection_url=es:9200
       - search_providerName=dev.sunbirdrc.registry.service.ElasticSearchService
-      - sunbird_sso_realm=sunbird-rc
+      - sunbird_sso_realm=${KEYCLOAK_REALM-sunbird-rc}
       - sunbird_sso_url=http://keycloak:8080/auth
-      - sunbird_sso_admin_client_id=admin-api
-      - sunbird_sso_client_id=registry-frontend
+      - sunbird_sso_admin_client_id=${KEYCLOAK_ADMIN_CLIENT_ID-admin-api}
+      - sunbird_sso_client_id=${KEYCLOAK_CLIENT_ID-registry-frontend}
       - sunbird_sso_admin_client_secret=${KEYCLOAK_SECRET}
       - claims_url=http://claim-ms:8082
       - sign_url=http://certificate-signer:8079/sign
@@ -87,8 +89,8 @@ services:
       - DB_DATABASE=registry
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - KEYCLOAK_USER=admin
-      - KEYCLOAK_PASSWORD=admin
+      - KEYCLOAK_USER=${KEYCLOAK_ADMIN_USER-admin}
+      - KEYCLOAK_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD-admin}
       - KEYCLOAK_IMPORT=/opt/jboss/keycloak/imports/realm-export.json
       - PROXY_ADDRESS_FORWARDING=true
     healthcheck:

@@ -7,37 +7,7 @@ import { CLIEvent, RegistryContainer, Toolbox } from '../types'
 export default {
 	name: 'status',
 	run: async (toolbox: Toolbox) => {
-		const { environment, events, print, registry } = toolbox
-
-		// Listen to events and show progress
-		const spinner = print.spin('Loading...').stop()
-		const handleEvent = (event: CLIEvent) => {
-			// Print and exit on error
-			if (event.status === 'error') {
-				// Stop the spinner if it is running...
-				if (spinner.isSpinning) {
-					// ...and print the error text in its place
-					spinner.fail(print.colors.error(event.message))
-				} else {
-					// Else just print the message
-					print.error(print.colors.error(`${print.xmark} ${event.message}`))
-				}
-
-				process.exit(1)
-			}
-
-			// If the function has finished, stop loading
-			if (event.status === 'success') {
-				if (spinner.isSpinning) {
-					spinner.stop()
-				}
-			}
-
-			// If it is a progress event, show a spinner
-			if (event.status === 'progress') {
-				spinner.start(print.colors.highlight(`${event.message}...`))
-			}
-		}
+		const { environment, events, print, registry, handleEvent } = toolbox
 
 		events.on('environment.check', handleEvent)
 		events.on('registry.status', handleEvent)
