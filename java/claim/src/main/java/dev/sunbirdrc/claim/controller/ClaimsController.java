@@ -77,4 +77,9 @@ public class ClaimsController {
         return new ResponseEntity<>(updatedClaim, HttpStatus.OK);
     }
 
+    @GetMapping(value = "/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok().build();
+    }
+
 }
