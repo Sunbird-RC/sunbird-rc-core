@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -24,6 +25,9 @@ public class SchemaService {
 	private static final String STATUS = "status";
 	@Autowired
 	private DefinitionsManager definitionsManager;
+
+	@Autowired
+	private boolean isElasticSearchEnabled;
 
 	@Autowired
 	private IValidate validator;
@@ -46,6 +50,10 @@ public class SchemaService {
 		if (schemaNode.get(Schema).get(STATUS).textValue().equals(SchemaStatus.PUBLISHED.toString())) {
 			definitionsManager.appendNewDefinition(schema);
 			validator.addDefinitions(schema);
+			if(isElasticSearchEnabled) {
+				ElasticServiceImpl elasticService = new ElasticServiceImpl();
+				elasticService.setIndexWiseExcludeFields(definitionsManager.getExcludingFields());
+			}
 		}
 	}
 
