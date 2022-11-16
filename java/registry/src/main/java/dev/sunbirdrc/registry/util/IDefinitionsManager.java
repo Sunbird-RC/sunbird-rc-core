@@ -16,8 +16,12 @@ public interface IDefinitionsManager {
     Map<String, Set<String>> getPublicFieldsInfoMap();
     Map<String, Set<String>> getExcludingFields();
     List<OwnershipsAttributes> getOwnershipAttributes(String entity);
-    Object getCredentialTemplate(String entityName);
-    Map<String, String> getCertificateTemplates(String entityName);
+    default Object getCredentialTemplate(String entityName) {
+        return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
+    }
+    default Map<String, String> getCertificateTemplates(String entityName) {
+        return getDefinition(entityName).getOsSchemaConfiguration().getCertificateTemplates();
+    }
     boolean isValidEntityName(String entityName);
     void appendNewDefinition(JsonNode jsonNode);
     void removeDefinition(JsonNode jsonNode);
