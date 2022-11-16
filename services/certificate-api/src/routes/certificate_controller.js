@@ -118,7 +118,7 @@ const getRequestBody = async (req) => {
     return JSON.parse(data);
 };
 
-async function generateRawCertificate(certificate, templateUrl, entityId) {
+async function generateRawCertificate(certificate, templateUrl, entityId, entityName) {
     let certificateRaw = certificate;
     // TODO: based on type template will be picked
     const certificateTemplateUrl = templateUrl;
@@ -126,7 +126,7 @@ async function generateRawCertificate(certificate, templateUrl, entityId) {
     let qrData;
     console.log('QR Code type: ', qrCodeType);
     if (qrCodeType.toUpperCase() === URL) {
-        qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${qrCodeType}`;
+        qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${qrCodeType}&entity=${entityName}${process.env.ADDITIONAL_QUERY_PARAMS || ""}`;
     } else {
         const zip = new JSZip();
         zip.file("certificate.json", certificateRaw, {
@@ -140,7 +140,7 @@ async function generateRawCertificate(certificate, templateUrl, entityId) {
         qrData = zippedData
         if (zipType) {
             console.log('ZippedData length', String(zippedData).length);
-            qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${envData.qrType}&data=${zippedData}`;
+            qrData = `${envData.certDomainUrl}/certs/${entityId}?t=${envData.qrType}&data=${zippedData}&entity=${entityName}${process.env.ADDITIONAL_QUERY_PARAMS || ""}`;
         }
     }
     
@@ -149,8 +149,8 @@ async function generateRawCertificate(certificate, templateUrl, entityId) {
     return await renderDataToTemplate(certificateTemplateUrl, certificateData);
 }
 
-async function createCertificatePDF(certificate, templateUrl, res, entityId) {
-    let rawCertificate = await generateRawCertificate(certificate, templateUrl, entityId);
+async function createCertificatePDF(certificate, templateUrl, res, entityId, entityName) {
+    let rawCertificate = await generateRawCertificate(certificate, templateUrl, entityId, entityName);
     const pdfBuffer = await createPDF(rawCertificate);
     res.statusCode = 200;
     return pdfBuffer;
@@ -171,11 +171,11 @@ async function getCertificatePDF(req, res) {
             return sendResponse(res, 400, "Bad request");
         }
         console.log('Got this req', reqBody);
-        let {certificate, templateUrl, entityId} = reqBody;
+        let {certificate, templateUrl, entityId, entityName} = reqBody;
         if (certificate === "" || templateUrl === "") {
             return sendResponse(res, 400, "Required parameters missing");
         }
-        res = await createCertificatePDF(certificate, templateUrl, res, entityId);
+        res = await createCertificatePDF(certificate, templateUrl, res, entityId, entityName);
         return res
     } catch (err) {
         console.error(err);
@@ -190,11 +190,11 @@ async function getCertificate(req, res) {
             return sendResponse(res, 400, "Bad request");
         }
         console.log('Got this req', reqBody);
-        let {certificate, templateUrl, entityId} = reqBody;
+        let {certificate, templateUrl, entityId, entityName} = reqBody;
         if (certificate === "" || templateUrl === "") {
             return sendResponse(res, 400, "Required parameters missing");
         }
-        res = await generateRawCertificate(certificate, templateUrl, entityId);
+        res = await generateRawCertificate(certificate, templateUrl, entityId, entityName);
         return res
     } catch (err) {
         console.error(err);
