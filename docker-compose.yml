@@ -194,3 +194,7 @@ services:
     image: dockerhub/sunbird-rc-nginx
     ports:
       - "80:80"
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"

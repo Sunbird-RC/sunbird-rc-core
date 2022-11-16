@@ -39,7 +39,7 @@ public class ViewTemplateManager {
     private ResourceLoader resourceLoader;
 
 	@Autowired
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
 
     /**
      * Loads the templates from the views folder

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -17,7 +17,7 @@ import java.util.List;
 
 public class RegistryDaoImpl implements IRegistryDao {
     public String uuidPropertyName;
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
     private DatabaseProvider databaseProvider;
     private List<String> privatePropertyList;
 
@@ -33,7 +33,7 @@ public class RegistryDaoImpl implements IRegistryDao {
         this.privatePropertyList = privatePropertyList;
     }
 
-    public RegistryDaoImpl(DatabaseProvider dbProvider, DefinitionsManager defnManager, String uuidPropName) {
+    public RegistryDaoImpl(DatabaseProvider dbProvider, IDefinitionsManager defnManager, String uuidPropName) {
         databaseProvider = dbProvider;
         definitionsManager = defnManager;
         uuidPropertyName = uuidPropName;

@@ -113,7 +113,7 @@ public class RegistryHelper {
     EntityStateHelper entityStateHelper;
 
     @Autowired
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
 
     @Autowired
     private DBConnectionInfoMgr dbConnectionInfoMgr;

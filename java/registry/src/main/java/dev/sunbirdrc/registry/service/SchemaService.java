@@ -9,7 +9,7 @@ import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.validators.IValidate;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,7 @@ import static dev.sunbirdrc.registry.Constants.Schema;
 public class SchemaService {
 	private static final String STATUS = "status";
 	@Autowired
-	private DefinitionsManager definitionsManager;
+	private IDefinitionsManager definitionsManager;
 
 	@Autowired
 	private boolean isElasticSearchEnabled;
