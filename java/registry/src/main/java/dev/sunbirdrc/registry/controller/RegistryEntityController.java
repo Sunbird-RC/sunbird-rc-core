@@ -129,7 +129,9 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.delete " + entityName;
             watch.start(tag);
             Vertex deletedEntity = registryHelper.deleteEntity(entityId, userId);
-            registryHelper.revokeExistingCredentials(entityName, entityId, userId, deletedEntity.value(OSSystemFields._osSignedData.name()));
+            if (deletedEntity.keys().contains(OSSystemFields._osSignedData.name())) {
+                registryHelper.revokeExistingCredentials(entityName, entityId, userId, deletedEntity.value(OSSystemFields._osSignedData.name()));
+            }
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
