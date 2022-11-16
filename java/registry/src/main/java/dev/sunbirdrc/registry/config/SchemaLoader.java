@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.service.ISearchService;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.validators.IValidate;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 	private ISearchService searchService;
 
 	@Autowired
-	private DefinitionsManager definitionsManager;
+	private IDefinitionsManager definitionsManager;
 
 	@Autowired
 	private IValidate validator;

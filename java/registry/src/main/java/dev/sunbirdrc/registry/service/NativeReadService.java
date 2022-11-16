@@ -21,7 +21,7 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 import dev.sunbirdrc.registry.util.RecordIdentifier;
 
@@ -36,7 +36,7 @@ public class NativeReadService implements IReadService {
 	private static Logger logger = LoggerFactory.getLogger(NativeReadService.class);
 
 	@Autowired
-	private DefinitionsManager definitionsManager;
+	private IDefinitionsManager definitionsManager;
 
 	@Autowired
 	private IAuditService auditService;

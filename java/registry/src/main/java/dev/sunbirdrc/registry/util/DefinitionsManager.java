@@ -8,6 +8,8 @@ import org.apache.commons.collections.map.HashedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +20,7 @@ import java.util.Map.Entry;
 import static dev.sunbirdrc.registry.Constants.TITLE;
 
 
-@Component("definitionsManager")
-public class DefinitionsManager {
+public class DefinitionsManager implements IDefinitionsManager{
     private static Logger logger = LoggerFactory.getLogger(DefinitionsManager.class);
 
     private Map<String, Definition> definitionMap = new HashMap<>();
@@ -37,6 +38,7 @@ public class DefinitionsManager {
      * Loads the definitions from the _schemas folder
      */
     @PostConstruct
+    @Override
     public void loadDefinition() throws Exception {
 
         loadResourcesFromPath(Constants.RESOURCE_LOCATION);

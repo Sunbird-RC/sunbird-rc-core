@@ -18,7 +18,7 @@ import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.util.Definition;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 
 /**
  * Audit service implementation for audit layer in the application

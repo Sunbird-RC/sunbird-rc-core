@@ -22,13 +22,12 @@ import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.service.IReadService;
 import dev.sunbirdrc.registry.service.ISearchService;
 import dev.sunbirdrc.registry.service.RegistryService;
-import dev.sunbirdrc.registry.service.impl.RegistryAsyncServiceImpl;
 import dev.sunbirdrc.registry.service.impl.RegistryServiceImpl;
 import dev.sunbirdrc.registry.sink.shard.DefaultShardAdvisor;
 import dev.sunbirdrc.registry.sink.shard.IShardAdvisor;
 import dev.sunbirdrc.registry.sink.shard.ShardAdvisor;
 import dev.sunbirdrc.registry.transform.*;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ServiceProvider;
 import dev.sunbirdrc.validators.IValidate;
 import dev.sunbirdrc.validators.ValidationFilter;
@@ -83,7 +82,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private final String NONE_STR = "none";
 
 	@Autowired
-	private DefinitionsManager definitionsManager;
+	private IDefinitionsManager iDefinitionsManager;
 	@Value("${service.connection.timeout}")
 	private int connectionTimeout;
 	@Value("${service.read.timeout}")
@@ -233,11 +232,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		// depends on input type,we need to implement validation
 		if (getValidationType() == SchemaType.JSON) {
 			IValidate validator = new JsonValidationServiceImpl(schemaUrl);
-			definitionsManager.getAllDefinitions().forEach(definition -> {
+			iDefinitionsManager.getAllDefinitions().forEach(definition -> {
 				logger.debug("Definition: title-" + definition.getTitle() + " , content-" + definition.getContent());
 				validator.addDefinitions(definition.getTitle(), definition.getContent());
 			});
-			logger.info(definitionsManager.getAllDefinitions().size() + " definitions added to validator service ");
+			logger.info(iDefinitionsManager.getAllDefinitions().size() + " definitions added to validator service ");
 			return validator;
 		} else {
 			logger.error("Fatal - not a known validator mentioned in the application configuration.");
@@ -414,7 +413,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (isElasticSearchEnabled()) {
 			elasticService.setType(Constants.ES_DOC_TYPE);
 			elasticService.setConnectionInfo(elasticConnInfo);
-			elasticService.init(definitionsManager.getAllKnownDefinitions(), definitionsManager.getExcludingFields());
+			elasticService.init(iDefinitionsManager.getAllKnownDefinitions(), iDefinitionsManager.getExcludingFields());
 		}
 		return elasticService;
 	}
@@ -428,7 +427,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public RegistryService registryService() {
 		return new RegistryServiceImpl();
 	}
-
 //	/** creates elastic-service bean and instanstiates the indices
 //	 * @return - IElasticService
 //	 * @throws IOException
