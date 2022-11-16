@@ -105,38 +105,6 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     }
 
     @Override
-    public Map<String, Set<String>> getPublicFieldsInfoMap() {
-        Map<String, Set<String>> result = new HashMap<>();
-        for (String index : getAllKnownDefinitions()) {
-            List<String> publicFields = getDefinition(index)
-                    .getOsSchemaConfiguration()
-                    .getPublicFields();
-            if (publicFields != null) {
-                result.put(index.toLowerCase(), new HashSet<>(publicFields));
-            } else {
-                result.put(index.toLowerCase(), Collections.emptySet());
-            }
-        }
-        return result;
-    }
-
-    @Override
-    public Map<String, Set<String>> getExcludingFields() {
-        Map<String, Set<String>> result = new HashMap<>();
-        for (String index : getAllKnownDefinitions()) {
-            List<String> internalFields = getDefinition(index)
-                    .getOsSchemaConfiguration()
-                    .getInternalFields();
-            List<String> privateFields = getDefinition(index)
-                    .getOsSchemaConfiguration()
-                    .getPrivateFields();
-            internalFields.addAll(privateFields);
-            result.put(index.toLowerCase(), new HashSet<>(internalFields));
-        }
-        return result;
-    }
-
-    @Override
     public List<OwnershipsAttributes> getOwnershipAttributes(String entity) {
         try(Jedis jedis = jedisPool.getResource()) {
             JsonNode schemaJson = objectMapper.readTree(jedis.get(entity));
