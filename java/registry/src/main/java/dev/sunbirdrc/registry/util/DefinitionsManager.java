@@ -164,14 +164,6 @@ public class DefinitionsManager implements IDefinitionsManager{
         }
     }
 
-    public Object getCredentialTemplate(String entityName) {
-        return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
-    }
-
-    public Map<String, String> getCertificateTemplates(String entityName) {
-        return getDefinition(entityName).getOsSchemaConfiguration().getCertificateTemplates();
-    }
-
     public boolean isValidEntityName(String entityName) {
         return definitionMap.containsKey(entityName);
     }

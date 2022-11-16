@@ -153,16 +153,6 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     }
 
     @Override
-    public Object getCredentialTemplate(String entityName) {
-        return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
-    }
-
-    @Override
-    public Map<String, String> getCertificateTemplates(String entityName) {
-        return getDefinition(entityName).getOsSchemaConfiguration().getCertificateTemplates();
-    }
-
-    @Override
     public boolean isValidEntityName(String entityName) {
         try(Jedis jedis = jedisPool.getResource()) {
             return jedis.exists(entityName);
