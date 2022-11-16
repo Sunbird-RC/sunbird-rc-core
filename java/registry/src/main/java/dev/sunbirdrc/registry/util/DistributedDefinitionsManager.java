@@ -149,6 +149,8 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
             throw new RuntimeException(e);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        } catch (NullPointerException e) {
+            return Collections.emptyList();
         }
     }
 
