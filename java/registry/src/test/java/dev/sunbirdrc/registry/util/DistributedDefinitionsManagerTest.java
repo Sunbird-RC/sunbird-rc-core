@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
+import org.springframework.boot.test.autoconfigure.properties.PropertyMapping;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.test.context.ActiveProfiles;
@@ -53,14 +54,19 @@ public class DistributedDefinitionsManagerTest {
 
     @Test
     public void shouldGetAllKnownDefinitionsFromRedis() {
-        distributedDefinitionsManager.getAllKnownDefinitions();
+        Set<String> keys = new HashSet<>();
+        keys.add("SCHEMA_TrainingCertificate");
+        when(jedis.keys("*")).thenReturn(keys);
+        Set<String> expectedKeys = distributedDefinitionsManager.getAllKnownDefinitions();
         verify(jedis, times(1)).keys("*");
+        assertEquals(1, expectedKeys.size());
+        assertEquals("TrainingCertificate", expectedKeys.toArray(new String[keys.size()])[0]);
     }
 
     @Test
     public void shouldGetAllDefinitionsFromRedis() throws IOException {
         Set<String> keys = new HashSet<>();
-        keys.add("TrainingCertificate");
+        keys.add("SCHEMA_TrainingCertificate");
         when(jedis.keys("*")).thenReturn(keys);
         List<String> definitionsStr = new ArrayList<>();
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
@@ -78,7 +84,8 @@ public class DistributedDefinitionsManagerTest {
     @Test
     public void shouldGetValidDefinitionIfCorrectTitlePassed() throws IOException {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
-        when(jedis.get("TrainingCertificate")).thenReturn(schema);
+        final String SCHEMA = "SCHEMA_";
+        when(jedis.get(SCHEMA + "TrainingCertificate")).thenReturn(schema);
         ObjectMapper objectMapper1 = new ObjectMapper();
         JsonNode node = objectMapper1.readTree(schema);
         when(objectMapper.readTree(schema)).thenReturn(node);
@@ -94,10 +101,11 @@ public class DistributedDefinitionsManagerTest {
     @Test
     public void shouldReturnPublicFieldsFromDefinition() throws IOException {
         Set<String> keys = new HashSet<>();
-        keys.add("TrainingCertificate");
+        final String SCHEMA = "SCHEMA_";
+        keys.add(SCHEMA + "TrainingCertificate");
         when(jedis.keys("*")).thenReturn(keys);
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
-        when(jedis.get("TrainingCertificate")).thenReturn(schema);
+        when(jedis.get("SCHEMA_TrainingCertificate")).thenReturn(schema);
         ObjectMapper objectMapper1 = new ObjectMapper();
         JsonNode node = objectMapper1.readTree(schema);
         when(objectMapper.readTree(schema)).thenReturn(node);
@@ -110,10 +118,11 @@ public class DistributedDefinitionsManagerTest {
     @Test
     public void shouldReturnExcludingFieldsFromDefinition() throws IOException {
         Set<String> keys = new HashSet<>();
-        keys.add("TrainingCertificate");
+        final String SCHEMA = "SCHEMA_";
+        keys.add("SCHEMA_TrainingCertificate");
         when(jedis.keys("*")).thenReturn(keys);
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
-        when(jedis.get("TrainingCertificate")).thenReturn(schema);
+        when(jedis.get("SCHEMA_TrainingCertificate")).thenReturn(schema);
         ObjectMapper objectMapper1 = new ObjectMapper();
         JsonNode node = objectMapper1.readTree(schema);
         when(objectMapper.readTree(schema)).thenReturn(node);
@@ -126,8 +135,9 @@ public class DistributedDefinitionsManagerTest {
     @Test
     public void shouldReturnOwnershipAttributesForKnownEntity() throws IOException {
         String entity = "TrainingCertificate";
+        final String SCHEMA = "SCHEMA_";
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
-        when(jedis.get("TrainingCertificate")).thenReturn(schema);
+        when(jedis.get(SCHEMA + "TrainingCertificate")).thenReturn(schema);
         ObjectMapper objectMapper1 = new ObjectMapper();
         JsonNode node = objectMapper1.readTree(schema);
         when(objectMapper.readTree(schema)).thenReturn(node);
@@ -137,7 +147,6 @@ public class DistributedDefinitionsManagerTest {
         assertEquals("/contact", ownershipsAttributes.get(0).getMobile());
         assertEquals("/contact", ownershipsAttributes.get(0).getUserId());
     }
-
     @Test
     public void shouldReturnEmptyOwnershipAttributesForUnknownEntity() {
         String entity = "UnknownEntity";
@@ -149,7 +158,8 @@ public class DistributedDefinitionsManagerTest {
     @Test
     public void shouldReturnTrueForValidEntityName() {
         String entity = "TrainingCertificate";
-        when(jedis.exists(entity)).thenReturn(true);
+        final String SCHEMA = "SCHEMA_";
+        when(jedis.exists(SCHEMA + entity)).thenReturn(true);
         assertTrue(distributedDefinitionsManager.isValidEntityName(entity));
     }
 
@@ -167,7 +177,7 @@ public class DistributedDefinitionsManagerTest {
         ObjectMapper objectMapper1 = new ObjectMapper();
         when(objectMapper.readTree(schema)).thenReturn(objectMapper1.readTree(schema));
         distributedDefinitionsManager.appendNewDefinition(node);
-        verify(jedis, times(1)).set("Place", schema);
+        verify(jedis, times(1)).set("SCHEMA_Place", schema);
     }
 
     @Test
@@ -177,6 +187,6 @@ public class DistributedDefinitionsManagerTest {
         ObjectMapper objectMapper1 = new ObjectMapper();
         when(objectMapper.readTree(schema)).thenReturn(objectMapper1.readTree(schema));
         distributedDefinitionsManager.removeDefinition(node);
-        verify(jedis, times(1)).del("Place");
+        verify(jedis, times(1)).del("SCHEMA_Place");
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationContext;
@@ -25,12 +26,12 @@ import java.time.Duration;
 public class SunbirdRCApplication {
     private static ApplicationContext context;
     private static SpringApplication application = new SpringApplication(SunbirdRCApplication.class);
-    @Value("${manager.type}")
+    @Value("${registry.manager.type}")
     private String definitionManagerType;
 
-    @Value("${redis.host:localhost}")
+    @Value("${registry.redis.host:localhost}")
     private String redisHost;
-    @Value("${redis.port:6379}")
+    @Value("${registry.redis.port:6379}")
     private String redisPort;
 
 
@@ -71,23 +72,21 @@ public class SunbirdRCApplication {
     }
 
     @Bean
+    @ConditionalOnProperty(value = "registry.manager.type", havingValue = "DistributedDefinitionsManager")
     public JedisPool jedisPool() {
-        if(!definitionManagerType.equals("DefinitionsManager")) {
-            final JedisPoolConfig poolConfig = new JedisPoolConfig();
-            JedisPool jedisPool = new JedisPool(poolConfig, redisHost, Integer.parseInt(redisPort));
-            poolConfig.setMaxTotal(128);
-            poolConfig.setMaxIdle(128);
-            poolConfig.setMinIdle(16);
-            poolConfig.setTestOnBorrow(true);
-            poolConfig.setTestOnReturn(true);
-            poolConfig.setTestWhileIdle(true);
-			poolConfig.setMinEvictableIdleTimeMillis(Duration.ofSeconds(60).toMillis());
-			poolConfig.setTimeBetweenEvictionRunsMillis(Duration.ofSeconds(30).toMillis());
-			poolConfig.setNumTestsPerEvictionRun(3);
-			poolConfig.setBlockWhenExhausted(true);
-            return jedisPool;
-        }
-        return null;
+        final JedisPoolConfig poolConfig = new JedisPoolConfig();
+        JedisPool jedisPool = new JedisPool(poolConfig, redisHost, Integer.parseInt(redisPort));
+        poolConfig.setMaxTotal(128);
+        poolConfig.setMaxIdle(128);
+        poolConfig.setMinIdle(16);
+        poolConfig.setTestOnBorrow(true);
+        poolConfig.setTestOnReturn(true);
+        poolConfig.setTestWhileIdle(true);
+        poolConfig.setMinEvictableIdleTimeMillis(Duration.ofSeconds(60).toMillis());
+        poolConfig.setTimeBetweenEvictionRunsMillis(Duration.ofSeconds(30).toMillis());
+        poolConfig.setNumTestsPerEvictionRun(3);
+        poolConfig.setBlockWhenExhausted(true);
+        return jedisPool;
     }
 
     @Bean

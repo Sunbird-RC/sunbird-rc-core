@@ -16,11 +16,13 @@ import redis.clients.jedis.JedisPool;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.TITLE;
 
 public class DistributedDefinitionsManager implements IDefinitionsManager {
 
+    private static final String SCHEMA = "SCHEMA_";
     @Autowired
     private JedisPool jedisPool;
     @Autowired
@@ -49,8 +51,8 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
             JsonNode schemaJson = objectMapper.readTree(schemaAsText);
             Definition definition = new Definition(schemaJson);
             try(Jedis jedis = jedisPool.getResource()) {
-                jedis.set(definition.getTitle(), schemaAsText);
-                jedis.set(filenameWithoutExtn, schemaAsText);
+                jedis.set(SCHEMA + definition.getTitle(), schemaAsText);
+                jedis.set(SCHEMA + filenameWithoutExtn, schemaAsText);
             }
 
             logger.info("loading resource:" + entry.getKey() + " with private field size:"
@@ -62,7 +64,11 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     @Override
     public Set<String> getAllKnownDefinitions() {
         try(Jedis jedis = jedisPool.getResource()) {
-            return jedis.keys("*");
+            Set<String> keys = jedis.keys("*");
+            keys = keys.stream().map(key ->
+                key.contains(SCHEMA) ? key.substring(key.indexOf(SCHEMA) + SCHEMA.length()) : key
+            ).collect(Collectors.toSet());
+            return keys;
         }
     }
 
@@ -89,7 +95,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     @Override
     public Definition getDefinition(String title) {
         try(Jedis jedis = jedisPool.getResource()) {
-            String schemaAsText = jedis.get(title);
+            String schemaAsText = jedis.get(SCHEMA + title);
             if(schemaAsText == null) {
                 return null;
             }
@@ -106,7 +112,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     @Override
     public List<OwnershipsAttributes> getOwnershipAttributes(String entity) {
         try(Jedis jedis = jedisPool.getResource()) {
-            JsonNode schemaJson = objectMapper.readTree(jedis.get(entity));
+            JsonNode schemaJson = objectMapper.readTree(jedis.get(SCHEMA + entity));
             Definition definition = new Definition(schemaJson);
             if(definition != null) {
                 return definition.getOsSchemaConfiguration().getOwnershipAttributes();
@@ -124,7 +130,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     @Override
     public boolean isValidEntityName(String entityName) {
         try(Jedis jedis = jedisPool.getResource()) {
-            return jedis.exists(entityName);
+            return jedis.exists(SCHEMA + entityName);
         }
     }
 
@@ -139,7 +145,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
         }
         Definition definition = new Definition(schemaJsonNode);
         try(Jedis jedis = jedisPool.getResource()) {
-            jedis.set(definition.getTitle(), jsonNode.asText("{}"));
+            jedis.set(SCHEMA+definition.getTitle(), jsonNode.asText("{}"));
         }
     }
 
@@ -148,7 +154,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
         try(Jedis jedis = jedisPool.getResource()) {
             String schemaAsText = jsonNode.asText("{}");
             JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
-            String schemaTitle = schemaJsonNode.get(TITLE).asText();
+            String schemaTitle = SCHEMA + schemaJsonNode.get(TITLE).asText();
             jedis.del(schemaTitle);
         } catch (JsonMappingException e) {
             throw new RuntimeException(e);
