@@ -32,7 +32,6 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     @PostConstruct
     @Override
-    @Profile("!test")
     public void loadDefinition() throws Exception {
         loadResourcesFromPath(Constants.RESOURCE_LOCATION);
         loadResourcesFromPath(Constants.INTERNAL_RESOURCE_LOCATION);

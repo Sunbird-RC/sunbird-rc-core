@@ -41,7 +41,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { DistributedDefinitionsManager.class, OSResourceLoader.class, ObjectMapper.class, JedisPool.class, Jedis.class })
+@SpringBootTest(classes = { OSResourceLoader.class, ObjectMapper.class, JedisPool.class, Jedis.class })
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class DistributedDefinitionsManagerTest {
     @InjectMocks
