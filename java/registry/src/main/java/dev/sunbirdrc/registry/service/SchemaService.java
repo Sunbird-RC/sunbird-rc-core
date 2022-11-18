@@ -31,6 +31,8 @@ public class SchemaService {
 
 	@Autowired
 	private IValidate validator;
+	@Autowired
+	private ElasticServiceImpl elasticService;
 
 	public void deleteSchemaIfExists(Vertex vertex) throws SchemaException {
 		if (vertex.property(STATUS) != null && vertex.property(STATUS).value().equals(SchemaStatus.PUBLISHED.toString())) {
@@ -51,7 +53,6 @@ public class SchemaService {
 			definitionsManager.appendNewDefinition(schema);
 			validator.addDefinitions(schema);
 			if(isElasticSearchEnabled) {
-				ElasticServiceImpl elasticService = new ElasticServiceImpl();
 				elasticService.setIndexWiseExcludeFields(definitionsManager.getExcludingFields());
 			}
 		}

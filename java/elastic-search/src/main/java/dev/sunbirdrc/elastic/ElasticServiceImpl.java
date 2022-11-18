@@ -276,7 +276,6 @@ public class ElasticServiceImpl implements IElasticService {
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public JsonNode search(String index, SearchQuery searchQuery) throws IOException {
         BoolQueryBuilder query = buildQuery(searchQuery);
-        System.out.println(query);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
                 .query(query)
                 .size(searchQuery.getLimit())
