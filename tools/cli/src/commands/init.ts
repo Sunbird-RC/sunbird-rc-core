@@ -17,46 +17,9 @@ export default {
 			prompt,
 			registry,
 			strings,
+			handleEvent
 		} = toolbox
-
-		// Listen to events and show progress
-		const spinner = print.spin('Loading...').stop()
-		const handleEvent = (event: CLIEvent) => {
-			// Print and exit on error
-			if (event.status === 'error') {
-				// Stop the spinner if it is running...
-				if (spinner.isSpinning) {
-					// ...and print the error text in its place
-					spinner.fail(print.colors.error(event.message))
-				} else {
-					// Else just print the message
-					print.error(print.colors.error(`${print.xmark} ${event.message}`))
-				}
-
-				print.error('')
-				process.exit(1)
-			}
-
-			// Print and continue on success
-			if (event.status === 'success') {
-				// Stop the spinner if it is running...
-				if (spinner.isSpinning) {
-					// ...and print the success text in its place
-					spinner.succeed(print.colors.success(event.message))
-				} else {
-					// Else just print the message
-					print.success(
-						print.colors.success(`${print.checkmark} ${event.message}`)
-					)
-				}
-			}
-
-			// If it is a progress event, show a spinner
-			if (event.status === 'progress') {
-				spinner.start(print.colors.highlight(`${event.message}...`))
-			}
-		}
-
+		
 		events.on('environment.check', handleEvent)
 		events.on('registry.create', handleEvent)
 
@@ -153,5 +116,6 @@ export default {
 		await registry.create(options as unknown as RegistrySetupOptions)
 
 		print.info('')
+		print.highlight('Sunbird-RC is configured with test/default keys for signing. It is required to be updated `imports/config.json` before going live/production')
 	},
 }

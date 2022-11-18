@@ -3,7 +3,6 @@
 
 import { http } from 'gluegun'
 
-// @ts-expect-error: not a direct dependency
 import { ApisauceInstance } from 'apisauce'
 import { ApiResponse } from '../../../types'
 
