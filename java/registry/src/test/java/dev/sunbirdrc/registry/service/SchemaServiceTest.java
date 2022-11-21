@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
@@ -20,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -30,7 +32,7 @@ import java.util.Map;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -39,6 +41,9 @@ public class SchemaServiceTest {
 	private static final String TRAINING_CERTIFICATE = "TrainingCertificate";
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	DefinitionsManager definitionsManager = new DefinitionsManager();
+
+	@Mock
+	ElasticServiceImpl elasticService;
 
 	@Mock
 	IValidate validator;
@@ -113,6 +118,22 @@ public class SchemaServiceTest {
 		object.put("status", SchemaStatus.PUBLISHED.toString());
 		schemaNode.set(Schema, object);
 		schemaService.addSchema(schemaNode);
+		verify(elasticService, times(0)).setIndexWiseExcludeFields(any());
+		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
+	}
+
+	@Test
+	public void shouldAddSchemaToDefinitionManagerAndAddEntityToElasticSearch() throws IOException {
+		ReflectionTestUtils.setField(schemaService, "isElasticSearchEnabled", true);
+		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
+		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
+		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
+		ObjectNode object = JsonNodeFactory.instance.objectNode();
+		object.put(Schema.toLowerCase(), schema);
+		object.put("status", SchemaStatus.PUBLISHED.toString());
+		schemaNode.set(Schema, object);
+		schemaService.addSchema(schemaNode);
+		verify(elasticService, times(1)).setIndexWiseExcludeFields(any());
 		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
 	}
 
