@@ -1,15 +1,15 @@
-package examples;
+package e2e.registry;
 
 import com.intuit.karate.Results;
 import com.intuit.karate.Runner;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
-class ExamplesTest {
+class E2ETests {
 
     @Test
     void testParallel() {
-        Results results = Runner.path("classpath:tests")
+        Results results = Runner.path("classpath:e2e")
                 .tags("~@ignore")
                 //.outputCucumberJson(true)
                 .parallel(5);

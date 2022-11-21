@@ -80,7 +80,7 @@ services:
   keycloak:
     image: dockerhub/sunbird-rc-keycloak:latest
     volumes:
-      - ${PWD}/imports:/opt/jboss/keycloak/imports
+      - ${PWD}/${KEYCLOAK_IMPORT_DIR-imports}:/opt/jboss/keycloak/imports
     environment:
       - KEYCLOAK_LOGO=https://svgshare.com/i/hCs.svg
       - DB_VENDOR=postgres
