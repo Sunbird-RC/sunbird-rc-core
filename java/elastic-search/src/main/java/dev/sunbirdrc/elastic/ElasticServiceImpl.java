@@ -81,6 +81,10 @@ public class ElasticServiceImpl implements IElasticService {
         });
     }
 
+    public void setIndexWiseExcludeFields(Map<String, Set<String>> indexWiseExcludeFields) {
+        ElasticServiceImpl.indexWiseExcludeFields = indexWiseExcludeFields;
+    }
+
     /**
      * This method creates the high-level-client w.r.to index, if client is not created. for every index one client object is created
      *
@@ -273,7 +277,6 @@ public class ElasticServiceImpl implements IElasticService {
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public JsonNode search(String index, SearchQuery searchQuery) throws IOException {
         BoolQueryBuilder query = buildQuery(searchQuery);
-
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
                 .query(query)
                 .size(searchQuery.getLimit())
