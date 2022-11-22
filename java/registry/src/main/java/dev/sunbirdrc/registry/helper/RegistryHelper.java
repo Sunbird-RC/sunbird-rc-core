@@ -1060,6 +1060,9 @@ public class RegistryHelper {
                 = new TypeReference<List<AttestationPolicy>>() {
         };
         ObjectReader reader = objectMapper.readerFor(typeRef);
+        if (searchResponse.size() == 0) {
+            return Collections.emptyList();
+        }
         return reader.readValue(searchResponse.get(ATTESTATION_POLICY));
     }
 

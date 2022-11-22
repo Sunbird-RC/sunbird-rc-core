@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import static dev.sunbirdrc.registry.Constants.TITLE;
+import static dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
 
 
 @Component("definitionsManager")
@@ -197,5 +198,28 @@ public class DefinitionsManager {
         } catch (Exception e) {
             logger.error("Failed removing schema from definition manager", e);
         }
+    }
+
+
+    public List<String> getEntitiesWithAnonymousInviteRoles() {
+        List<String> anonymousEntities = new ArrayList<>();
+        for (Entry<String, Definition> definitionEntry : definitionMap.entrySet()) {
+            Definition definition = definitionEntry.getValue();
+            if (definition.getOsSchemaConfiguration().getInviteRoles().contains(USER_ANONYMOUS)) {
+                anonymousEntities.add(definitionEntry.getKey());
+            }
+        }
+        return anonymousEntities;
+    }
+
+    public List<String> getEntitiesWithAnonymousManageRoles() {
+        List<String> anonymousEntities = new ArrayList<>();
+        for (Entry<String, Definition> definitionEntry : definitionMap.entrySet()) {
+            Definition definition = definitionEntry.getValue();
+            if (definition.getOsSchemaConfiguration().getRoles().contains(USER_ANONYMOUS)) {
+                anonymousEntities.add(definitionEntry.getKey());
+            }
+        }
+        return anonymousEntities;
     }
 }

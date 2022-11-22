@@ -1,13 +1,13 @@
 package dev.sunbirdrc.registry.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -17,7 +17,6 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
@@ -34,6 +33,7 @@ public class DefinitionsManagerTest {
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
         definitionMap.put("TrainingCertificate", new Definition(objectMapper.readTree(schema)));
         ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
+        ReflectionTestUtils.setField(definitionsManager, "objectMapper", objectMapper);
     }
 
     @Test
@@ -75,5 +75,24 @@ public class DefinitionsManagerTest {
     public void testShouldReturnFalseForInValidEntityName() {
         String entity = "XYZ";
         assertFalse(definitionsManager.isValidEntityName(entity));
+    }
+
+    @Test
+    public void testShouldReturnEntitiesWithAnonymousInviteRoles() throws IOException {
+        String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
+        schema = schema.replaceAll("TrainingCertificate", "SkillCertificate");
+        definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
+        List<String> entities = definitionsManager.getEntitiesWithAnonymousInviteRoles();
+        assertEquals(Arrays.asList("TrainingCertificate", "SkillCertificate"), entities);
+    }
+
+    @Test
+    public void testShouldReturnEntitiesWithAnonymousManageRoles() throws IOException {
+        String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
+        schema = schema.replaceAll("TrainingCertificate", "SkillCertificate");
+        schema = schema.replaceAll("admin", "anonymous");
+        definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
+        List<String> entities = definitionsManager.getEntitiesWithAnonymousManageRoles();
+        assertEquals(Arrays.asList("SkillCertificate"), entities);
     }
 }
