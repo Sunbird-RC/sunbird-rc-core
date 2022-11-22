@@ -584,6 +584,7 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
+    //TODO: check the usage and deprecate the api if not used
     @GetMapping(value = "/api/v1/{entity}/{entityId}/attestationProperties")
     public ResponseEntity<Object> getEntityForAttestation(
             @PathVariable String entity,
@@ -604,7 +605,7 @@ public class RegistryEntityController extends AbstractController {
         }
 
     }
-
+    //TODO: check the usage and deprecate the api if not used
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.PATCH)
     public ResponseEntity<Object> attestEntity(
             @PathVariable String entityName,
@@ -627,6 +628,7 @@ public class RegistryEntityController extends AbstractController {
         return null;
     }
 
+    //TODO: check the usage and deprecate the api if not used
     @RequestMapping(value = "/api/v1/system/{property}/{propertyId}", method = RequestMethod.POST)
     public ResponseEntity<ResponseParams> updateProperty(
             @PathVariable String property,
