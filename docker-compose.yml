@@ -17,7 +17,7 @@ services:
   db:
     image: postgres
     volumes:
-      - ./db-data:/var/lib/postgresql/data
+      - ./${DB_DIR-db-data}:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     environment:
@@ -67,7 +67,7 @@ services:
       - webhook_url=http://localhost:5001/api/v1/callback
       - redis_host=redis
       - redis_port=6379
-      - manager_type=${MANAGER_TYPE-DefinitionsManager}
+      - manager_type=DefinitionsManager
     ports:
       - "8081:8081"
     depends_on:
@@ -254,5 +254,3 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
-    healthcheck:
-      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
