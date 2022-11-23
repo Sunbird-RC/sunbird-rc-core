@@ -67,7 +67,7 @@ services:
       - webhook_url=http://localhost:5001/api/v1/callback
       - redis_host=redis
       - redis_port=6379
-      - manager_type=DefinitionsManager
+      - manager_type=${MANAGER_TYPE-DefinitionsManager}
     ports:
       - "8081:8081"
     depends_on:
@@ -254,3 +254,5 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
