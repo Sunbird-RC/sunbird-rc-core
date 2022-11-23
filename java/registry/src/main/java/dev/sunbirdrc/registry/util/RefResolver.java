@@ -18,9 +18,9 @@ public class RefResolver {
     private static Logger logger = LoggerFactory.getLogger(RefResolver.class);
     private final static String REF = "$ref";
 
-    private final DefinitionsManager definitionsManager;
+    private final IDefinitionsManager definitionsManager;
 
-    public RefResolver(DefinitionsManager definitionsManager) {
+    public RefResolver(IDefinitionsManager definitionsManager) {
         this.definitionsManager = definitionsManager;
     }
 

@@ -30,7 +30,7 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.service.IAuditService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.Definition;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.OSSystemFieldsHelper;
 
 /**
@@ -57,7 +57,7 @@ public class AuditServiceImpl implements IAuditService {
     private String auditSuffixSeparator;
 
     @Autowired
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
     
     @Autowired
     private OSSystemFieldsHelper systemFieldsHelper;

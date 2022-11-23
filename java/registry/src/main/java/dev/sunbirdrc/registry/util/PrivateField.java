@@ -19,7 +19,7 @@ public class PrivateField {
     @Autowired
     public EncryptionService encryptionService;
     @Autowired
-    public DefinitionsManager definitionsManager;
+    public IDefinitionsManager definitionsManager;
     private Logger logger = LoggerFactory.getLogger(PrivateField.class);
 
     /**

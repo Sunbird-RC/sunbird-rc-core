@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.config;
 
+import dev.sunbirdrc.registry.util.DefinitionsManager;
 import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
 import org.keycloak.adapters.springsecurity.KeycloakSecurityComponents;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
@@ -17,6 +18,7 @@ import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -26,6 +28,8 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
 
     @Value("${authentication.enabled:true}") boolean authenticationEnabled;
 
+    @Autowired
+    private SchemaFilter schemaFilter;
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 
@@ -60,6 +64,9 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                             "/swagger-ui", "/**/search", "/**/attestation/**",
                             "/api/docs/swagger.json","/api/docs/*.json", "/plugin/**")
                     .permitAll()
+                    .and()
+                    .addFilterBefore(schemaFilter, WebAsyncManagerIntegrationFilter.class)
+                    .authorizeRequests()
                     .anyRequest()
                     .authenticated();
         } else {

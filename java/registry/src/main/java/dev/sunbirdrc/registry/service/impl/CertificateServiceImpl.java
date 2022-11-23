@@ -56,6 +56,7 @@ public class CertificateServiceImpl implements ICertificateService {
                 put("templateUrl", finalTemplateUrl);
                 put("certificate", certificateData.toString());
                 put("entityId", entityId);
+                put("entityName", entityName);
             }};
             HttpHeaders headers = new HttpHeaders();
             headers.set("Accept", mediaType);

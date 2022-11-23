@@ -10,7 +10,7 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.ArrayHelper;
 import dev.sunbirdrc.registry.util.Definition;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 import dev.sunbirdrc.registry.util.RefLabelHelper;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
@@ -42,14 +42,14 @@ public class VertexReader {
     private String uuidPropertyName;
     private LinkedHashMap<String, ObjectNode> uuidNodeMap = new LinkedHashMap<>();
     private String entityType;
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
     private Vertex rootVertex;
     private LinkedHashMap<String, Vertex> uuidVertexMap = new LinkedHashMap<>();
 
     private Logger logger = LoggerFactory.getLogger(VertexReader.class);
 
     public VertexReader(DatabaseProvider databaseProvider, Graph graph, ReadConfigurator configurator, String uuidPropertyName,
-                        DefinitionsManager definitionsManager) {
+                        IDefinitionsManager definitionsManager) {
         this.databaseProvider = databaseProvider;
         this.graph = graph;
         this.configurator = configurator;

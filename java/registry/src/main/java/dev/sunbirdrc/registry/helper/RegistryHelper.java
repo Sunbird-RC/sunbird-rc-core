@@ -113,7 +113,7 @@ public class RegistryHelper {
     EntityStateHelper entityStateHelper;
 
     @Autowired
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
 
     @Autowired
     private DBConnectionInfoMgr dbConnectionInfoMgr;
@@ -765,7 +765,7 @@ public class RegistryHelper {
                     return principal.getAccount().getPrincipal().getName();
                 }
             }
-            throw new Exception("Forbidden");
+            return USER_ANONYMOUS;
         } else {
             return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
         }
@@ -1060,6 +1060,9 @@ public class RegistryHelper {
                 = new TypeReference<List<AttestationPolicy>>() {
         };
         ObjectReader reader = objectMapper.readerFor(typeRef);
+        if (searchResponse.size() == 0) {
+            return Collections.emptyList();
+        }
         return reader.readValue(searchResponse.get(ATTESTATION_POLICY));
     }
 

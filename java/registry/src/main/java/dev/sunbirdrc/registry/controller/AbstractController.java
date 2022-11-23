@@ -8,7 +8,7 @@ import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.transform.ConfigurationHelper;
 import dev.sunbirdrc.registry.transform.Transformer;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,7 @@ public abstract class AbstractController {
     ConfigurationHelper configurationHelper;
 
     @Autowired
-    DefinitionsManager definitionsManager;
+    IDefinitionsManager definitionsManager;
 
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;

@@ -59,7 +59,7 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SignatureService signatureService;
     @Autowired
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
 
     @Autowired
     private EncryptionHelper encryptionHelper;

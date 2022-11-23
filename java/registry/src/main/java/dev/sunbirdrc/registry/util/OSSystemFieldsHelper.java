@@ -16,7 +16,7 @@ public class OSSystemFieldsHelper {
     private static Logger logger = LoggerFactory.getLogger(OSSystemFieldsHelper.class);
 
     @Autowired
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
 
     /**
      * ensure the system fields(createdAt, createdBy) at time of adding a fresh record/node

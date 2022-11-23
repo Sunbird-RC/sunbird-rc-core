@@ -53,6 +53,11 @@ registry:
     url: ${registry_schema_url:http://localhost:8081/_schemas/}
   attestationPolicy:
     createAccess: ${create_attestation_access_entities:User}
+  manager:
+    type: ${manager_type:DefinitionsManager}
+  redis:
+    host: ${redis_host:localhost}
+    port: ${redis_port:6379}
 
 workflow:
   enabled: ${workflow.enable:true}

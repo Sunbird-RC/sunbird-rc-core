@@ -16,7 +16,7 @@ import dev.sunbirdrc.registry.middleware.util.EntityUtil;
 import dev.sunbirdrc.registry.model.attestation.AttestationPath;
 import dev.sunbirdrc.registry.model.attestation.EntityPropertyURI;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.RecordIdentifier;
 import dev.sunbirdrc.workflow.RuleEngineService;
 import dev.sunbirdrc.workflow.StateContext;
@@ -42,7 +42,7 @@ public class EntityStateHelper {
     @Value("${database.uuidPropertyName}")
     private String uuidPropertyName;
 
-    private final DefinitionsManager definitionsManager;
+    private final IDefinitionsManager definitionsManager;
 
     private final RuleEngineService ruleEngineService;
 
@@ -51,7 +51,7 @@ public class EntityStateHelper {
     private final ClaimRequestClient claimRequestClient;
 
     @Autowired
-    public EntityStateHelper(DefinitionsManager definitionsManager, RuleEngineService ruleEngineService,
+    public EntityStateHelper(IDefinitionsManager definitionsManager, RuleEngineService ruleEngineService,
                              ConditionResolverService conditionResolverService, ClaimRequestClient claimRequestClient) {
         this.definitionsManager = definitionsManager;
         this.ruleEngineService = ruleEngineService;

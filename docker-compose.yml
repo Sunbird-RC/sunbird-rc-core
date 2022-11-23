@@ -65,6 +65,9 @@ services:
       - kafka_bootstrap_address=kafka:9092
       - webhook_enabled=false
       - webhook_url=http://localhost:5001/api/v1/callback
+      - redis_host=redis
+      - redis_port=6379
+      - manager_type=DefinitionsManager
     ports:
       - "8081:8081"
     depends_on:
@@ -247,3 +250,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 4
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"

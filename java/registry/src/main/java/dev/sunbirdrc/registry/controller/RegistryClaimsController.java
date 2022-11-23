@@ -12,7 +12,7 @@ import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.dto.AttestationRequest;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,7 @@ public class RegistryClaimsController extends AbstractController{
 
     public RegistryClaimsController(ClaimRequestClient claimRequestClient,
                                     RegistryHelper registryHelper,
-                                    DefinitionsManager definitionsManager) {
+                                    IDefinitionsManager definitionsManager) {
         this.registryHelper = registryHelper;
         this.claimRequestClient = claimRequestClient;
         this.definitionsManager = definitionsManager;
