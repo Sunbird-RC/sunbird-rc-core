@@ -1,7 +1,6 @@
 package dev.sunbirdrc.registry.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
@@ -9,7 +8,6 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ResourceLoader;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -23,12 +21,13 @@ import static dev.sunbirdrc.registry.Constants.TITLE;
 public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     private static final String SCHEMA = "SCHEMA_";
+    private static final String SCHEMA_WILDCARD = SCHEMA + "*";
     @Autowired
     private JedisPool jedisPool;
     @Autowired
     private ObjectMapper objectMapper;
     private OSResourceLoader osResourceLoader;
-    private static Logger logger = LoggerFactory.getLogger(DistributedDefinitionsManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(DistributedDefinitionsManager.class);
     @Autowired
     private ResourceLoader resourceLoader;
 
@@ -64,10 +63,8 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     @Override
     public Set<String> getAllKnownDefinitions() {
         try(Jedis jedis = jedisPool.getResource()) {
-            Set<String> keys = jedis.keys("*");
-            keys = keys.stream().map(key ->
-                key.contains(SCHEMA) ? key.substring(key.indexOf(SCHEMA) + SCHEMA.length()) : key
-            ).collect(Collectors.toSet());
+            Set<String> keys = jedis.keys(SCHEMA_WILDCARD);
+            keys = keys.stream().map(key -> key.substring(SCHEMA.length())).collect(Collectors.toSet());
             return keys;
         }
     }
@@ -75,8 +72,8 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     @Override
     public List<Definition> getAllDefinitions() {
         try(Jedis jedis = jedisPool.getResource()) {
-            Set<String> keys = jedis.keys("*");
-            String[] keysArr = keys.toArray(new String[keys.size()]);
+            Set<String> keys = jedis.keys(SCHEMA_WILDCARD);
+            String[] keysArr = keys.toArray(new String[0]);
             List<String> definitionsStr = jedis.mget(keysArr);
             List<Definition> definitions = new ArrayList<>();
             for(String definitionStr : definitionsStr) {
@@ -85,8 +82,6 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
                 definitions.add(definition);
             }
             return definitions;
-        } catch (JsonMappingException e) {
-            throw new RuntimeException(e);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -100,10 +95,26 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
                 return null;
             }
             JsonNode schemaNode = objectMapper.readTree(schemaAsText);
-            Definition definition = new Definition(schemaNode);
-            return definition;
-        } catch (JsonMappingException e) {
+            return new Definition(schemaNode);
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Map<String, Definition> getDefinitionMap() {
+        Map<String, Definition> definitionMap = new HashMap<>();
+        try(Jedis jedis = jedisPool.getResource()) {
+            Set<String> keys = jedis.keys(SCHEMA_WILDCARD);
+            String[] keysArr = keys.toArray(new String[0]);
+            List<String> definitionsStr = jedis.mget(keysArr);
+            for (int i = 0; i < definitionsStr.size(); i++) {
+                String definitionStr = definitionsStr.get(i);
+                JsonNode jsonNode = objectMapper.readTree(definitionStr);
+                Definition definition = new Definition(jsonNode);
+                definitionMap.put(keysArr[i], definition);
+            }
+            return definitionMap;
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -112,14 +123,13 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     @Override
     public List<OwnershipsAttributes> getOwnershipAttributes(String entity) {
         try(Jedis jedis = jedisPool.getResource()) {
-            JsonNode schemaJson = objectMapper.readTree(jedis.get(SCHEMA + entity));
-            Definition definition = new Definition(schemaJson);
-            if(definition != null) {
+            String value = jedis.get(SCHEMA + entity);
+            if(value != null) {
+                JsonNode schemaJson = objectMapper.readTree(value);
+                Definition definition = new Definition(schemaJson);
                 return definition.getOsSchemaConfiguration().getOwnershipAttributes();
             }
             return Collections.emptyList();
-        } catch (JsonMappingException e) {
-            throw new RuntimeException(e);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         } catch (NullPointerException e) {
@@ -156,8 +166,6 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
             JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
             String schemaTitle = SCHEMA + schemaJsonNode.get(TITLE).asText();
             jedis.del(schemaTitle);
-        } catch (JsonMappingException e) {
-            throw new RuntimeException(e);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

@@ -114,6 +114,11 @@ public class DefinitionsManager implements IDefinitionsManager{
         return definitionMap.getOrDefault(title, null);
     }
 
+    @Override
+    public Map<String, Definition> getDefinitionMap() {
+        return definitionMap;
+    }
+
     public List<OwnershipsAttributes> getOwnershipAttributes(String entity) {
         Definition entityDefinition = definitionMap.get(entity);
         if (entityDefinition != null) {
@@ -152,26 +157,4 @@ public class DefinitionsManager implements IDefinitionsManager{
         }
     }
 
-
-    public List<String> getEntitiesWithAnonymousInviteRoles() {
-        List<String> anonymousEntities = new ArrayList<>();
-        for (Entry<String, Definition> definitionEntry : definitionMap.entrySet()) {
-            Definition definition = definitionEntry.getValue();
-            if (definition.getOsSchemaConfiguration().getInviteRoles().contains(USER_ANONYMOUS)) {
-                anonymousEntities.add(definitionEntry.getKey());
-            }
-        }
-        return anonymousEntities;
-    }
-
-    public List<String> getEntitiesWithAnonymousManageRoles() {
-        List<String> anonymousEntities = new ArrayList<>();
-        for (Entry<String, Definition> definitionEntry : definitionMap.entrySet()) {
-            Definition definition = definitionEntry.getValue();
-            if (definition.getOsSchemaConfiguration().getRoles().contains(USER_ANONYMOUS)) {
-                anonymousEntities.add(definitionEntry.getKey());
-            }
-        }
-        return anonymousEntities;
-    }
 }

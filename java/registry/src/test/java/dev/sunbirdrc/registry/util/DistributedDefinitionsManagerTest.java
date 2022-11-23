@@ -33,6 +33,8 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(classes = { OSResourceLoader.class, ObjectMapper.class, JedisPool.class, Jedis.class })
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
 public class DistributedDefinitionsManagerTest {
+    private static final String SCHEMA = "SCHEMA_";
+    private static final String SCHEMA_WILDCARD = SCHEMA + "*";
     @InjectMocks
     @Spy
     private DistributedDefinitionsManager distributedDefinitionsManager;
@@ -56,9 +58,9 @@ public class DistributedDefinitionsManagerTest {
     public void shouldGetAllKnownDefinitionsFromRedis() {
         Set<String> keys = new HashSet<>();
         keys.add("SCHEMA_TrainingCertificate");
-        when(jedis.keys("*")).thenReturn(keys);
+        when(jedis.keys(SCHEMA_WILDCARD)).thenReturn(keys);
         Set<String> expectedKeys = distributedDefinitionsManager.getAllKnownDefinitions();
-        verify(jedis, times(1)).keys("*");
+        verify(jedis, times(1)).keys(SCHEMA_WILDCARD);
         assertEquals(1, expectedKeys.size());
         assertEquals("TrainingCertificate", expectedKeys.toArray(new String[keys.size()])[0]);
     }
@@ -67,7 +69,7 @@ public class DistributedDefinitionsManagerTest {
     public void shouldGetAllDefinitionsFromRedis() throws IOException {
         Set<String> keys = new HashSet<>();
         keys.add("SCHEMA_TrainingCertificate");
-        when(jedis.keys("*")).thenReturn(keys);
+        when(jedis.keys(SCHEMA_WILDCARD)).thenReturn(keys);
         List<String> definitionsStr = new ArrayList<>();
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
         definitionsStr.add(schema);
@@ -76,7 +78,7 @@ public class DistributedDefinitionsManagerTest {
         JsonNode node = objectMapper1.readTree(schema);
         when(objectMapper.readTree(schema)).thenReturn(node);
         List<Definition> definitions = distributedDefinitionsManager.getAllDefinitions();
-        verify(jedis, times(1)).keys("*");
+        verify(jedis, times(1)).keys(SCHEMA_WILDCARD);
         verify(objectMapper, times(1)).readTree(schema);
         assertEquals(1, definitions.size());
     }
@@ -103,7 +105,7 @@ public class DistributedDefinitionsManagerTest {
         Set<String> keys = new HashSet<>();
         final String SCHEMA = "SCHEMA_";
         keys.add(SCHEMA + "TrainingCertificate");
-        when(jedis.keys("*")).thenReturn(keys);
+        when(jedis.keys(SCHEMA_WILDCARD)).thenReturn(keys);
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
         when(jedis.get("SCHEMA_TrainingCertificate")).thenReturn(schema);
         ObjectMapper objectMapper1 = new ObjectMapper();
@@ -120,7 +122,7 @@ public class DistributedDefinitionsManagerTest {
         Set<String> keys = new HashSet<>();
         final String SCHEMA = "SCHEMA_";
         keys.add("SCHEMA_TrainingCertificate");
-        when(jedis.keys("*")).thenReturn(keys);
+        when(jedis.keys(SCHEMA_WILDCARD)).thenReturn(keys);
         String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
         when(jedis.get("SCHEMA_TrainingCertificate")).thenReturn(schema);
         ObjectMapper objectMapper1 = new ObjectMapper();

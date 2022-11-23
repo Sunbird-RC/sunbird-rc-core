@@ -5,12 +5,17 @@ import dev.sunbirdrc.pojos.OwnershipsAttributes;
 
 import java.util.*;
 
+import static dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
+
 public interface IDefinitionsManager {
     void loadDefinition() throws Exception;
 
     Set<String> getAllKnownDefinitions();
     List<Definition> getAllDefinitions();
     Definition getDefinition(String title);
+
+    Map<String, Definition> getDefinitionMap();
+
 
     /**
      * Returns the map, where key is the index and value is the public fields
@@ -61,4 +66,26 @@ public interface IDefinitionsManager {
     boolean isValidEntityName(String entityName);
     void appendNewDefinition(JsonNode jsonNode);
     void removeDefinition(JsonNode jsonNode);
+
+    default List<String> getEntitiesWithAnonymousInviteRoles() {
+        List<String> anonymousEntities = new ArrayList<>();
+        for (Map.Entry<String, Definition> definitionEntry : getDefinitionMap().entrySet()) {
+            Definition definition = definitionEntry.getValue();
+            if (definition.getOsSchemaConfiguration().getInviteRoles().contains(USER_ANONYMOUS)) {
+                anonymousEntities.add(definitionEntry.getKey());
+            }
+        }
+        return anonymousEntities;
+    }
+
+    default List<String> getEntitiesWithAnonymousManageRoles() {
+        List<String> anonymousEntities = new ArrayList<>();
+        for (Map.Entry<String, Definition> definitionEntry : getDefinitionMap().entrySet()) {
+            Definition definition = definitionEntry.getValue();
+            if (definition.getOsSchemaConfiguration().getRoles().contains(USER_ANONYMOUS)) {
+                anonymousEntities.add(definitionEntry.getKey());
+            }
+        }
+        return anonymousEntities;
+    }
 }

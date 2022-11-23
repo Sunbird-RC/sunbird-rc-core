@@ -1,6 +1,6 @@
 package dev.sunbirdrc.registry.config;
 
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ public class SchemaFilter implements Filter {
     private static final Logger logger = LoggerFactory.getLogger(SchemaFilter.class);
     private static final String INVITE_URL_ENDPOINT = "/invite";
     @Autowired
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws ServletException, IOException {
