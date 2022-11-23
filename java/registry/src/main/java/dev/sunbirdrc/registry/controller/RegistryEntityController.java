@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.keycloak.OwnerCreationException;
+import dev.sunbirdrc.pojos.AsyncRequest;
+import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.dao.NotFoundException;
@@ -204,8 +205,10 @@ public class RegistryEntityController extends AbstractController {
             JsonNode existingNode = registryHelper.readEntity(newRootNode, userId);
             String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
             registryHelper.updateEntityAndState(existingNode, newRootNode, userId);
-            registryHelper.revokeExistingCredentials(entityName, entityId, userId,
-                    existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
+            if (existingNode.get(entityName).has(OSSystemFields._osSignedData.name())) {
+                registryHelper.revokeExistingCredentials(entityName, entityId, userId,
+                        existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
+            }
             registryHelper.invalidateAttestation(entityName, entityId, userId,null);
             registryHelper.autoRaiseClaim(entityName, entityId, userId, existingNode, newRootNode, emailId);
             responseParams.setErrmsg("");
@@ -296,8 +299,10 @@ public class RegistryEntityController extends AbstractController {
             requestBody = registryHelper.removeFormatAttr(requestBody);
             JsonNode existingNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
             registryHelper.updateEntityProperty(entityName, entityId, requestBody, request, existingNode);
-            registryHelper.revokeExistingCredentials(entityName, entityId, userId,
-                    existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
+            if (existingNode.get(entityName).has(OSSystemFields._osSignedData.name())) {
+                registryHelper.revokeExistingCredentials(entityName, entityId, userId,
+                        existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
+            }
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             registryHelper.invalidateAttestation(entityName, entityId, userId,registryHelper.getPropertyToUpdate(request,entityId));
@@ -564,6 +569,12 @@ public class RegistryEntityController extends AbstractController {
                 responseParams.setStatus(Response.Status.UNSUCCESSFUL);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
+        } catch (RecordNotFoundException e) {
+            logger.error("Exception in controller while searching entities !", e);
+            response.setResult("");
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             logger.error("Exception in controller while searching entities !", e);
             response.setResult("");
@@ -573,6 +584,7 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
+    //TODO: check the usage and deprecate the api if not used
     @GetMapping(value = "/api/v1/{entity}/{entityId}/attestationProperties")
     public ResponseEntity<Object> getEntityForAttestation(
             @PathVariable String entity,
@@ -593,7 +605,7 @@ public class RegistryEntityController extends AbstractController {
         }
 
     }
-
+    //TODO: check the usage and deprecate the api if not used
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.PATCH)
     public ResponseEntity<Object> attestEntity(
             @PathVariable String entityName,
@@ -616,6 +628,7 @@ public class RegistryEntityController extends AbstractController {
         return null;
     }
 
+    //TODO: check the usage and deprecate the api if not used
     @RequestMapping(value = "/api/v1/system/{property}/{propertyId}", method = RequestMethod.POST)
     public ResponseEntity<ResponseParams> updateProperty(
             @PathVariable String property,

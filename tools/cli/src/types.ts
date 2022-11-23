@@ -13,6 +13,7 @@ export interface RegistryContainer {
 	ports: number[]
 }
 
+
 export interface Environment {
 	check(registryPath?: string): Promise<boolean>
 }
@@ -21,12 +22,16 @@ export interface Registry {
 	status(): Promise<RegistryContainer[]>
 	restart(soft: boolean): Promise<void>
 	config(): Promise<RegistryConfiguration>
+	down (): Promise<void>
+	health(): Promise<RegistryHealth[]>
 }
 
 export interface Toolbox extends GluegunToolbox {
 	events: EventEmitter
 	environment: Environment
 	registry: Registry
+	handleEvent: (event: CLIEvent) => void
+	until: (conditionFunction: () => Promise<boolean>) => Promise<any>
 }
 
 export interface CLIEvent {
@@ -63,4 +68,45 @@ export interface RegistrySetupOptions {
 	keycloakAdminPass: string
 	pathToEntitySchemas: 'use-example-config' | string
 	pathToConsentConfiguration: 'use-example-config' | string
+}
+
+export interface RegistryTearDownOptions {
+	stopConfirmation: string
+}
+
+export interface RegistryHealthResponse {
+	id:           string;
+	ver:          string;
+	ets:          number;
+	params:       Params;
+	responseCode: string;
+	result:       Result;
+}
+
+interface Params {
+	resmsgid: string;
+	msgid:    string;
+	err:      string;
+	status:   string;
+	errmsg:   string;
+}
+
+interface Result {
+	name:    string;
+	healthy: boolean;
+	checks:  Check[];
+}
+
+interface Check {
+	name:    string;
+	healthy: boolean;
+	err:     string;
+	errmsg:  string;
+}
+
+
+export interface RegistryHealth {
+	name: string
+	status: 'UP' | 'DOWN'
+	err: string
 }

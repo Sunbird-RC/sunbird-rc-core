@@ -48,6 +48,7 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ELASTIC_SERVICE_NAME;
 
 public class ElasticServiceImpl implements IElasticService {
+    //TODO: refactor to remove `indexWiseExcludeFields` field
     private static Map<String, Set<String>> indexWiseExcludeFields = new HashMap<>();
     private static Map<String, RestHighLevelClient> esClient = new HashMap<String, RestHighLevelClient>();
     private static Logger logger = LoggerFactory.getLogger(ElasticServiceImpl.class);
@@ -238,7 +239,7 @@ public class ElasticServiceImpl implements IElasticService {
 
     private DocumentContext getDocumentContextAfterRemovingExcludedFields(String index, JsonNode inputEntity) throws com.fasterxml.jackson.core.JsonProcessingException {
         DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(inputEntity));
-        for (String jsonPath : indexWiseExcludeFields.get(index)) {
+        for (String jsonPath : indexWiseExcludeFields.getOrDefault(index, Collections.emptySet())) {
             try {
                 doc.delete(jsonPath);
             } catch (Exception e) {

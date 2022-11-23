@@ -51,6 +51,7 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                 new SessionRegistryImpl());
     }
 
+    //TODO: verify all paths
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
