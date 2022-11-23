@@ -38,7 +38,7 @@ services:
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
       - elastic_search_connection_url=es:9200
-      - search_providerName=dev.sunbirdrc.registry.service.ElasticSearchService
+      - search_providerName=${SEARCH_PROVIDER_NAME-dev.sunbirdrc.registry.service.ElasticSearchService}
       - sunbird_sso_realm=${KEYCLOAK_REALM-sunbird-rc}
       - sunbird_sso_url=http://keycloak:8080/auth
       - sunbird_sso_admin_client_id=${KEYCLOAK_ADMIN_CLIENT_ID-admin-api}
@@ -67,7 +67,7 @@ services:
       - webhook_url=http://localhost:5001/api/v1/callback
       - redis_host=redis
       - redis_port=6379
-      - manager_type=DefinitionsManager
+      - manager_type=${MANAGER_TYPE-DefinitionsManager}
     ports:
       - "8081:8081"
     depends_on:

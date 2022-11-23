@@ -20,21 +20,79 @@
       ],
       "properties": {
         "identityDetails": {
-          "$ref": "Common.json/#/definitions/IdentityDetails"
+          "type": "object",
+          "title": "Identity Details",
+          "description": "Identity Details",
+          "required": [],
+          "properties": {
+            "fullName": {
+              "$id": "#/properties/fullName",
+              "type": "string",
+              "title": "Full name"
+            },
+            "gender": {
+              "$id": "#/properties/gender",
+              "type": "string",
+              "enum": [
+                "Male",
+                "Female",
+                "Other"
+              ],
+              "title": "Gender"
+            },
+            "dob": {
+              "$id": "#/properties/dob",
+              "type": "string",
+              "format": "date",
+              "title": "DOB"
+            },
+            "identityHolder": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "$id": "#/properties/type",
+                  "type": "string",
+                  "$comment": "Nationality",
+                  "title": "ID Type",
+                  "enum": [
+                    "AADHAR",
+                    "PAN",
+                    "LICENSE",
+                    "OTHER"
+                  ]
+                },
+                "value": {
+                  "$id": "#/properties/value",
+                  "type": "string",
+                  "$comment": "Nationality",
+                  "title": "ID Value"
+                }
+              }
+            }
+          }
         },
         "contactDetails": {
-          "$ref": "Common.json/#/definitions/ContactDetails"
-        },
-        "educationDetails": {
-          "type": "array",
-          "items": {
-            "$ref": "Common.json/#/definitions/EducationType"
-          },
-          "title": "Education Details"
-        },
-        "guardianDetails": {
-          "$ref": "Common.json/#/definitions/GuardianDetails",
-          "title": "Guardian Details"
+          "type": "object",
+          "title": "Contact Details",
+          "description": "Contact Details",
+          "required": [],
+          "properties": {
+            "email": {
+              "$id": "#/properties/email",
+              "type": "string",
+              "title": "Email"
+            },
+            "mobile": {
+              "$id": "#/properties/mobile",
+              "type": "string",
+              "title": "Mobile"
+            },
+            "address": {
+              "$id": "#/properties/address",
+              "$ref": "#/definitions/Address",
+              "title": "Address"
+            }
+          }
         }
       }
     }
@@ -50,7 +108,9 @@
     "privateFields": [
       "$.identityDetails.dob",
       "$.identityDetails.identityType",
-      "$.identityDetails.identityValue",
+      "$.identityDetails.identityValue"
+    ],
+    "internalFields": [
       "$.contactDetails.email",
       "$.contactDetails.mobile",
       "$.contactDetails.address.plot",

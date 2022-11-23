@@ -332,7 +332,6 @@ public class RegistryHelper {
     public JsonNode searchEntity(JsonNode inputJson) throws Exception {
         logger.debug("searchEntity starts");
         JsonNode resultNode = searchService.search(inputJson);
-        removeNonPublicFields((ObjectNode) resultNode);
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
@@ -341,29 +340,6 @@ public class RegistryHelper {
         // Search is tricky to support LD. Needs a revisit here.
         logger.debug("searchEntity ends");
         return resultNode;
-    }
-
-    private void removeNonPublicFields(ObjectNode searchResultNode) throws Exception {
-        if (searchResultNode != null) {
-            ObjectReader stringListReader = objectMapper.readerFor(new TypeReference<List<String>>() {
-            });
-            List<String> nonPublicNodePathContainers = Arrays.asList(internalFieldsProp, privateFieldsProp);
-            Iterator<Map.Entry<String, JsonNode>> fieldIterator = searchResultNode.fields();
-            while (fieldIterator.hasNext()) {
-                ArrayNode entityResults = (ArrayNode) fieldIterator.next().getValue();
-                for (int i = 0; i < entityResults.size(); i++) {
-                    ObjectNode entityResult = (ObjectNode) entityResults.get(i);
-                    List<String> nodePathsForRemoval = new ArrayList<>();
-                    for (String nodePathContainer : nonPublicNodePathContainers) {
-                        if (entityResult.has(nodePathContainer)) {
-                            nodePathsForRemoval.addAll(stringListReader.readValue(entityResult.get(nodePathContainer)));
-                        }
-                    }
-                    JSONUtil.removeNodesByPath(entityResult, nodePathsForRemoval);
-                    entityResult.remove(nonPublicNodePathContainers);
-                }
-            }
-        }
     }
 
     /**

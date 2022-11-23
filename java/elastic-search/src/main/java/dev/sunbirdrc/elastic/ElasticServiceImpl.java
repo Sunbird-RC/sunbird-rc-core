@@ -48,8 +48,6 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ELASTIC_SERVICE_NAME;
 
 public class ElasticServiceImpl implements IElasticService {
-    //TODO: refactor to remove `indexWiseExcludeFields` field
-    private static Map<String, Set<String>> indexWiseExcludeFields = new HashMap<>();
     private static Map<String, RestHighLevelClient> esClient = new HashMap<String, RestHighLevelClient>();
     private static Logger logger = LoggerFactory.getLogger(ElasticServiceImpl.class);
 
@@ -70,8 +68,7 @@ public class ElasticServiceImpl implements IElasticService {
      * @param indices
      * @throws RuntimeException
      */
-    public void init(Set<String> indices, Map<String, Set<String>> indexWiseExcludeFields) throws RuntimeException {
-        this.indexWiseExcludeFields = indexWiseExcludeFields;
+    public void init(Set<String> indices) throws RuntimeException {
         indices.iterator().forEachRemaining(index -> {
             try {
                 addIndex(index.toLowerCase(), searchType);
@@ -79,10 +76,6 @@ public class ElasticServiceImpl implements IElasticService {
                 throw new RuntimeException(e);
             }
         });
-    }
-
-    public void setIndexWiseExcludeFields(Map<String, Set<String>> indexWiseExcludeFields) {
-        ElasticServiceImpl.indexWiseExcludeFields = indexWiseExcludeFields;
     }
 
     /**
@@ -183,9 +176,7 @@ public class ElasticServiceImpl implements IElasticService {
         logger.debug("addEntity starts with index {} and entityId {}", index, entityId);
         IndexResponse response = null;
         try {
-            DocumentContext doc = getDocumentContextAfterRemovingExcludedFields(index, inputEntity);
-            JsonNode filteredNode = JSONUtil.convertStringJsonNode(doc.jsonString());
-            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(filteredNode);
+            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
             response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in adding record to ElasticSearch", e);
@@ -225,9 +216,7 @@ public class ElasticServiceImpl implements IElasticService {
         logger.debug("updateEntity starts with index {} and entityId {}", index, osid);
         UpdateResponse response = null;
         try {
-            DocumentContext doc = getDocumentContextAfterRemovingExcludedFields(index, inputEntity);
-            JsonNode filteredNode = JSONUtil.convertStringJsonNode(doc.jsonString());
-            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(filteredNode);
+            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
             logger.debug("updateEntity inputMap {}", inputMap);
             logger.debug("updateEntity inputEntity {}", inputEntity);
             response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
@@ -235,18 +224,6 @@ public class ElasticServiceImpl implements IElasticService {
             logger.error("Exception in updating a record to ElasticSearch", e);
         }
         return response.status();
-    }
-
-    private DocumentContext getDocumentContextAfterRemovingExcludedFields(String index, JsonNode inputEntity) throws com.fasterxml.jackson.core.JsonProcessingException {
-        DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(inputEntity));
-        for (String jsonPath : indexWiseExcludeFields.getOrDefault(index, Collections.emptySet())) {
-            try {
-                doc.delete(jsonPath);
-            } catch (Exception e) {
-                logger.error("Path not found {} {}", jsonPath, e.getMessage());
-            }
-        }
-        return doc;
     }
 
     /**

@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.sink;
 
+import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ public class TinkerGraphProvider extends DatabaseProvider {
 		graph = TinkerGraph.open();
 		osGraph = new OSGraph(graph, false);
 		environment = inputEnv;
+		setProvider(Constants.GraphDatabaseProvider.TINKERGRAPH);
 	}
 
 	@PostConstruct
@@ -39,5 +41,10 @@ public class TinkerGraphProvider extends DatabaseProvider {
 	@Override
 	public OSGraph getOSGraph() {
 		return osGraph;
+	}
+
+	@Override
+	public Constants.GraphDatabaseProvider getProvider() {
+		return super.getProvider();
 	}
 }

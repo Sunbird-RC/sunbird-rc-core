@@ -144,18 +144,18 @@ public class JSONUtilTest {
     @Test
     public void removeNodesByPathTest() throws Exception {
         JsonNode node = mapper.readTree(new File("src/test/resources/jsonUtils-removeNodes/student.json"));
-        List<String> removalPaths = Arrays.asList(
-                "/age",
-                "/address/street",
-                "/address/pincode",
-                "/education/0",
-                "/education/1/fromDate",
-                "/education/2",
-                "/edulcation/2/fromDate"
-        );
-        JSONUtil.removeNodesByPath((ObjectNode) node, removalPaths);
+        Set<String> removalPaths = new HashSet<>(Arrays.asList(
+                "$.age",
+                "$.address.street",
+                "$.address.pincode",
+                "$.education[0]",
+                "$.education[0].fromDate",
+                "$.education[2]",
+                "$.education[1].fromDate"
+        ));
+        JsonNode removeNodesByPath = JSONUtil.removeNodesByPath(node, removalPaths);
         JsonNode expected = mapper.readTree(new File("src/test/resources/jsonUtils-removeNodes/student_afterRemoval.json"));
-        assertEquals(node, expected);
+        assertEquals(expected, removeNodesByPath);
     }
 
     @Test

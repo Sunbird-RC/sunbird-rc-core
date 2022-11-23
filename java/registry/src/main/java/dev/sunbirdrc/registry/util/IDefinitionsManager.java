@@ -56,6 +56,20 @@ public interface IDefinitionsManager {
         }
         return result;
     }
+
+    default Set<String> getExcludingFieldsForEntity(String entity) {
+        Definition definition = getDefinition(entity);
+        Set<String> excludeFields = new HashSet<>();
+        List<String> internalFields = definition
+                .getOsSchemaConfiguration()
+                .getInternalFields();
+        List<String> privateFields = definition
+                .getOsSchemaConfiguration()
+                .getPrivateFields();
+        excludeFields.addAll(internalFields);
+        excludeFields.addAll(privateFields);
+        return excludeFields;
+    }
     List<OwnershipsAttributes> getOwnershipAttributes(String entity);
     default Object getCredentialTemplate(String entityName) {
         return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
