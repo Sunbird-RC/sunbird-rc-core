@@ -40,7 +40,7 @@ test: build
 	@docker-compose down
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
-	make -C services/context-proxy-service testcd
+	make -C services/context-proxy-service test
 
 clean:
 	@rm -rf target || true
