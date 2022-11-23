@@ -54,7 +54,7 @@ registry:
   attestationPolicy:
     createAccess: ${create_attestation_access_entities:User}
   manager:
-    type: ${manager_type:DistributedDefinitionsManager}
+    type: ${manager_type:DefinitionsManager}
   redis:
     host: ${redis_host:localhost}
     port: ${redis_port:6379}

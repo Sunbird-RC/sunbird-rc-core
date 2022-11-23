@@ -60,7 +60,7 @@ services:
       - webhook_url=http://localhost:5001/api/v1/callback
       - redis_host=redis
       - redis_port=6379
-      - manager_type=DistributedDefinitionsManager
+      - manager_type=DefinitionsManager
     ports:
       - "8081:8081"
     depends_on:
