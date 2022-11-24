@@ -84,7 +84,7 @@ public class RegistryUtilsController {
 		try {
 			watch.start("RegistryUtilsController.generateSignature");
 			Map<String, Object> requestBodyMap = apiMessage.getRequest().getRequestMap();
-			if (null !=requestBodyMap && (requestBodyMap.containsKey(Constants.SIGN_ENTITY) || requestBodyMap.containsKey(Constants.SIGN_VALUE))){
+			if (null !=requestBodyMap && (requestBodyMap.containsKey(Constants.SIGN_DATA) && requestBodyMap.containsKey(Constants.SIGN_CREDENTIAL_TEMPLATE))){
 				Object result = signatureService
 						.sign(requestBodyMap);
 				response.setResult(result);
