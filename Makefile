@@ -22,19 +22,27 @@ java/registry/target/registry.jar: $(SOURCES)
 
 test: build
 	@docker-compose down
+	# test with ES & standard definition manager
 	@RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-1 docker-compose up -d
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
-	@docker-compose logs
 	@curl -v http://localhost:8081/health
 	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
+	# test with distributed definition manager
 	@RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 MANAGER_TYPE=DistributedDefinitionsManager DB_DIR=db-data-2 docker-compose up -d
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
-	@docker-compose logs
+	@curl -v http://localhost:8081/health
+	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
+	@docker-compose down
+	# test with native search service
+	@RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 MANAGER_TYPE=DistributedDefinitionsManager DB_DIR=db-data-3 SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService docker-compose up -d
+	@echo "Starting the test" && sh build/wait_for_port.sh 8080
+	@echo "Starting the test" && sh build/wait_for_port.sh 8081
+	@docker-compose ps
 	@curl -v http://localhost:8081/health
 	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down

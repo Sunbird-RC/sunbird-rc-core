@@ -413,7 +413,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (isElasticSearchEnabled()) {
 			elasticService.setType(Constants.ES_DOC_TYPE);
 			elasticService.setConnectionInfo(elasticConnInfo);
-			elasticService.init(iDefinitionsManager.getAllKnownDefinitions(), iDefinitionsManager.getExcludingFields());
+			elasticService.init(iDefinitionsManager.getAllKnownDefinitions());
 		}
 		return elasticService;
 	}

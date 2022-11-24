@@ -386,13 +386,8 @@ public class VertexReader {
                 itrV = graph.vertices(osid);
                 break;
             case SQLG:
-                if (null != entityType) {
-                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
-                } else {
-                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
-                }
-                break;
             case CASSANDRA:
+            case TINKERGRAPH:
                 if (null != entityType) {
                     itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
                 } else {

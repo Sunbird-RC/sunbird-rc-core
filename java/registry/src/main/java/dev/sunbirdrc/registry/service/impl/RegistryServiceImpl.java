@@ -211,7 +211,9 @@ public class RegistryServiceImpl implements RegistryService {
                     dbProvider.commitTransaction(graph, tx);
                 }
             } finally {
-                tx.close();
+                if (tx != null) {
+                    tx.close();
+                }
             }
             // Add indices: executes only once.
             if (perRequestIndexCreation) {
@@ -227,7 +229,9 @@ public class RegistryServiceImpl implements RegistryService {
                     String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                     JSONUtil.addPrefix((ObjectNode) rootNode, prefix, new ArrayList<>(Collections.singletonList(uuidPropertyName)));
                 }
-                callESActors(rootNode, "ADD", vertexLabel, entityId, tx);
+                JsonNode nodeWithPublicData = JsonNodeFactory.instance.objectNode().set(vertexLabel,
+                        JSONUtil.removeNodesByPath(rootNode.get(vertexLabel), definitionsManager.getExcludingFieldsForEntity(vertexLabel)));
+                callESActors(nodeWithPublicData, "ADD", vertexLabel, entityId, tx);
             }
             auditService.auditAdd(
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
@@ -238,6 +242,7 @@ public class RegistryServiceImpl implements RegistryService {
         }
         return entityId;
     }
+
 
     private void generateCredentials(JsonNode rootNode, String vertexLabel) throws SignatureException.UnreachableException, SignatureException.CreationException {
         Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
@@ -341,7 +346,9 @@ public class RegistryServiceImpl implements RegistryService {
                     String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                     JSONUtil.addPrefix((ObjectNode) mergedNode, prefix, new ArrayList<>(Collections.singletonList(uuidPropertyName)));
                 }
-                callESActors(mergedNode, "UPDATE", entityType, id, tx);
+                JsonNode nodeWithPublicData = JsonNodeFactory.instance.objectNode().set(entityType,
+                        JSONUtil.removeNodesByPath(mergedNode.get(entityType), definitionsManager.getExcludingFieldsForEntity(entityType)));
+                callESActors(nodeWithPublicData, "UPDATE", entityType, id, tx);
             }
             auditService.auditUpdate(
                     auditService.createAuditRecord(userId, rootId, tx, entityType),

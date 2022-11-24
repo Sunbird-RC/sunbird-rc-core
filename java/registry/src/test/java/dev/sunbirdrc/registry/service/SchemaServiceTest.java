@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
@@ -42,8 +41,6 @@ public class SchemaServiceTest {
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	DefinitionsManager definitionsManager = new DefinitionsManager();
 
-	@Mock
-	ElasticServiceImpl elasticService;
 
 	@Mock
 	IValidate validator;
@@ -118,7 +115,6 @@ public class SchemaServiceTest {
 		object.put("status", SchemaStatus.PUBLISHED.toString());
 		schemaNode.set(Schema, object);
 		schemaService.addSchema(schemaNode);
-		verify(elasticService, times(0)).setIndexWiseExcludeFields(any());
 		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
 	}
 
@@ -133,7 +129,6 @@ public class SchemaServiceTest {
 		object.put("status", SchemaStatus.PUBLISHED.toString());
 		schemaNode.set(Schema, object);
 		schemaService.addSchema(schemaNode);
-		verify(elasticService, times(1)).setIndexWiseExcludeFields(any());
 		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
 	}
 
