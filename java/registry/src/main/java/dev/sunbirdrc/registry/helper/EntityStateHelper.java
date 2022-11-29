@@ -119,6 +119,7 @@ public class EntityStateHelper {
         objectNode.put(MOBILE, entityNode.at(String.format("/%s%s", entityName, mobilePath)).asText(""));
         objectNode.put(EMAIL, entityNode.at(String.format("/%s%s", entityName, emailPath)).asText(""));
         objectNode.put(USER_ID, entityNode.at(String.format("/%s%s", entityName, userIdPath)).asText(""));
+        objectNode.set(ROLES, entityNode.at(String.format("/%s", entityName)).has(ROLES) ? entityNode.at(String.format("/%s%s", entityName, "/roles")) : new ObjectMapper().createArrayNode());
         return objectNode;
     }
 
