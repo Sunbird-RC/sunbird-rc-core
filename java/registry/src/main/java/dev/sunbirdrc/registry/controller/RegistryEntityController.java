@@ -44,6 +44,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.*;
+import static dev.sunbirdrc.registry.exception.ErrorMessages.NOT_PART_OF_THE_SYSTEM_EXCEPTION;
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
 
 @RestController
@@ -167,6 +168,10 @@ public class RegistryEntityController extends AbstractController {
                 responseParams.setStatus(Response.Status.UNSUCCESSFUL);
                 responseParams.setErrmsg(String.format("Searching on entity %s not allowed", entityName));
             }
+        } catch (NullPointerException e) {
+            response.setResult("");
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(NOT_PART_OF_THE_SYSTEM_EXCEPTION);
         } catch (Exception e) {
             logger.error("Exception in controller while searching entities !", e);
             response.setResult("");
