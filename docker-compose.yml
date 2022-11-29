@@ -60,7 +60,7 @@ services:
       - sunbird_keycloak_user_password=abcd@123
       - logging.level.root=INFO
       - enable_external_templates=true
-      - async_enabled=false
+      - async_enabled=${ASYNC_ENABLED-false}
       - authentication_enabled=true
       - kafka_bootstrap_address=kafka:9092
       - webhook_enabled=false

@@ -9,6 +9,7 @@ class E2ETests {
 
     @Test
     void testParallel() {
+        System.setProperty("karate.env", System.getenv().getOrDefault("MODE", "sync"));
         Results results = Runner.path("classpath:e2e")
                 .tags("~@ignore")
                 //.outputCucumberJson(true)
