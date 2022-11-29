@@ -97,12 +97,13 @@ public class KeycloakAdminUtil implements HealthIndicator {
                 logger.info("User ID path" + response.getLocation().getPath());
                 String userID = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
                 logger.info("User ID : " + userID);
+                addRolesToUser(roles, userID);
                 if (!emailActions.isEmpty())
                     usersResource.get(userID).executeActionsEmail(emailActions);
                 return userID;
             } else if (response.getStatus() == 409) {
                 logger.info("UserID: {} exists", userName);
-                return updateExistingUserAttributes(entityName, userName, email, mobile);
+                return updateExistingUserAttributes(entityName, userName, email, mobile, roles);
             } else if (response.getStatus() == 500) {
                 throw new OwnerCreationException("Keycloak user creation error");
             } else {
