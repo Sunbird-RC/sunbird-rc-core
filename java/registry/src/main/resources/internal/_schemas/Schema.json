@@ -27,6 +27,11 @@
         },
         "schema": {
           "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["DRAFT", "PUBLISHED"],
+          "default": "DRAFT"
         }
       }
     }

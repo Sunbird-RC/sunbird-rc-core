@@ -84,7 +84,7 @@ public class RegistryUtilsController {
 		try {
 			watch.start("RegistryUtilsController.generateSignature");
 			Map<String, Object> requestBodyMap = apiMessage.getRequest().getRequestMap();
-			if (null !=requestBodyMap && (requestBodyMap.containsKey(Constants.SIGN_ENTITY) || requestBodyMap.containsKey(Constants.SIGN_VALUE))){
+			if (null !=requestBodyMap && (requestBodyMap.containsKey(Constants.SIGN_DATA) && requestBodyMap.containsKey(Constants.SIGN_CREDENTIAL_TEMPLATE))){
 				Object result = signatureService
 						.sign(requestBodyMap);
 				response.setResult(result);
@@ -206,7 +206,7 @@ public class RegistryUtilsController {
 		Response response = new Response(Response.API_ID.HEALTH, "OK", responseParams);
 
 		try {
-			boolean healthCheckResult = signatureService.isServiceUp();
+			boolean healthCheckResult = signatureService.getHealthInfo().isHealthy();
 			HealthCheckResponse healthCheck = new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME,
 					healthCheckResult, null);
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheck));

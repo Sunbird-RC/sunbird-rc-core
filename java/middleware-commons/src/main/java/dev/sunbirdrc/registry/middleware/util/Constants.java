@@ -3,7 +3,9 @@ package dev.sunbirdrc.registry.middleware.util;
 public class Constants {
 
 	public static final String SIGN_ENTITY = "entity";
+	public static final String SIGN_DATA = "data";
 	public static final String SIGN_VALUE = "value";
+	public static final String SIGN_CREDENTIAL_TEMPLATE = "credentialTemplate";
 	public static final String TOKEN_OBJECT = "x-authenticated-user-token";
 	public static final String LD_JSON_MEDIA_TYPE = "application/ld+json";
 	public static final String VC_JSON_MEDIA_TYPE = "application/vc+ld+json"; //this is not accepted yet, subjected to change.
@@ -12,6 +14,14 @@ public class Constants {
 	public static final String SUNBIRDRC_REGISTRY_API = "sunbirdrc-registry-api"; //todo make it configurable for backward compatibility
 	public static final String SUNBIRD_ENCRYPTION_SERVICE_NAME = "sunbird.encryption.service";
 	public static final String SUNBIRD_SIGNATURE_SERVICE_NAME = "sunbird.signature.service";
+
+	public static final String SUNBIRD_ELASTIC_SERVICE_NAME = "sunbird.elastic.service";
+	public static final String SUNBIRD_FILE_STORAGE_SERVICE_NAME = "sunbird.file-storage.service";
+	public static final String SUNBIRD_KAFKA_SERVICE_NAME = "sunbird.kafka.service";
+	public static final String SUNBIRD_KEYCLOAK_SERVICE_NAME = "sunbird.keycloak.service";
+
+	public static final String SUNBIRD_CERTIFICATE_SERVICE_NAME = "sunbird.certificate-api.service";
+	public static final String SUNBIRD_NOTIFICATION_SERVICE_NAME = "sunbird.notification.service";
 	public static final String SUNBIRDRC_DATABASE_NAME = "sunbirdrc.database";
 	public static final String GRAPH_GLOBAL_CONFIG = "graph_global_config";
 	public static final String PERSISTENT_GRAPH = "persisten_graph";
@@ -99,7 +109,10 @@ public class Constants {
 	public static final String AUTO_ATTESTOR_ACTOR = "AutoAttestorActor";
 	public static final String AUDIT_ACTOR = "AuditActor";
 	public static final String OS_ACTOR = "OSActor";
-	
+
+	public static final String ENTITY_TYPE = "entityType";
+	public static final String FILTERS = "filters";
+
 	//Audit Data Store Type
 	public static final String FILE="FILE";
 	public static final String DATABASE="DATABASE";
@@ -112,6 +125,7 @@ public class Constants {
 	public static final String MOBILE = "mobile";
 	public static final String ROLES = "roles";
 	public static final String SVG_MEDIA_TYPE = "image/svg+xml";
+	public static final String CONNECTION_FAILURE = "CONNECTION_FAILURE";
 
     public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH");

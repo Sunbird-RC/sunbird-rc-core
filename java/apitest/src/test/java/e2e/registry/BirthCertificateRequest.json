@@ -1,0 +1,11 @@
+{
+  "name": "user 1234 demo",
+  "contact": "+91-123321123916",
+  "gender": "male",
+  "date_of_birth": "2022-10-28T06:00:00Z",
+  "hospital": "Apollo",
+  "place_of_birth": "Bangalore",
+  "name_of_mother": "Lakshmi",
+  "name_of_father": "Ram",
+  "present_address": "200, bangalore"
+}

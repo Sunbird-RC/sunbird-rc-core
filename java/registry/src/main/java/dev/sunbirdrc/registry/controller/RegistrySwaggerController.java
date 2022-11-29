@@ -3,7 +3,7 @@ package dev.sunbirdrc.registry.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.RefResolver;
 import io.swagger.models.*;
 import io.swagger.models.parameters.BodyParameter;
@@ -23,14 +23,14 @@ import java.util.*;
 
 @RestController
 public class RegistrySwaggerController {
-    private final DefinitionsManager definitionsManager;
+    private final IDefinitionsManager definitionsManager;
     private final RefResolver refResolver;
     private final ObjectMapper objectMapper;
     @Value("${registry.schema.url}")
     private String schemaUrl;
 
     @Autowired
-    public RegistrySwaggerController(DefinitionsManager definitionsManager, ObjectMapper objectMapper, RefResolver refResolver) {
+    public RegistrySwaggerController(IDefinitionsManager definitionsManager, ObjectMapper objectMapper, RefResolver refResolver) {
         this.definitionsManager = definitionsManager;
         this.objectMapper = objectMapper;
         this.refResolver = refResolver;

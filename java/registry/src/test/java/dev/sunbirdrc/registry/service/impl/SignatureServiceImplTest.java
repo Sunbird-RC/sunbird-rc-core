@@ -20,12 +20,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClientException;
+
+import java.util.Collections;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsNull.notNullValue;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.any;
@@ -48,6 +50,7 @@ public class SignatureServiceImplTest {
 	@Before
 	public void setUp(){
 		MockitoAnnotations.initMocks(this);
+		ReflectionTestUtils.setField(signatureServiceImpl, "signatureEnabled", true);
 	}
 
 	/** Test case for sign api
@@ -64,7 +67,7 @@ public class SignatureServiceImplTest {
             }
         });
         when(objectMapper.readTree(anyString())).thenReturn(JsonNodeFactory.instance.objectNode());
-        assertThat(signatureServiceImpl.sign(new Object()), is(notNullValue()));
+        assertThat(signatureServiceImpl.sign(Collections.emptyMap()), is(notNullValue()));
 	}
 
     /** Test case to throw restclient exception
@@ -74,7 +77,7 @@ public class SignatureServiceImplTest {
     public void test_sign_api_restclient_exception() throws Exception {
         expectedEx.expect(SignatureException.UnreachableException.class);
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class))).thenThrow(RestClientException.class);
-        signatureServiceImpl.sign(new Object());
+        signatureServiceImpl.sign(Collections.emptyMap());
     }
 
 	/** Test case for verify api with simple string as value
@@ -136,10 +139,10 @@ public class SignatureServiceImplTest {
         assertTrue(signatureServiceImpl.isServiceUp());
     }
 
-    @Test(expected = SignatureException.UnreachableException.class)
+    @Test
     public void test_encryption_isup_throw_restclientexception() throws Exception {
         when(retryRestTemplate.getForEntity(nullable(String.class))).thenThrow(RestClientException.class);
-        signatureServiceImpl.isServiceUp();
+        assertFalse(signatureServiceImpl.isServiceUp());
     }
 
 }

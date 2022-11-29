@@ -10,7 +10,7 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.ArrayHelper;
 import dev.sunbirdrc.registry.util.Definition;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 import dev.sunbirdrc.registry.util.RefLabelHelper;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
@@ -42,14 +42,14 @@ public class VertexReader {
     private String uuidPropertyName;
     private LinkedHashMap<String, ObjectNode> uuidNodeMap = new LinkedHashMap<>();
     private String entityType;
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
     private Vertex rootVertex;
     private LinkedHashMap<String, Vertex> uuidVertexMap = new LinkedHashMap<>();
 
     private Logger logger = LoggerFactory.getLogger(VertexReader.class);
 
     public VertexReader(DatabaseProvider databaseProvider, Graph graph, ReadConfigurator configurator, String uuidPropertyName,
-                        DefinitionsManager definitionsManager) {
+                        IDefinitionsManager definitionsManager) {
         this.databaseProvider = databaseProvider;
         this.graph = graph;
         this.configurator = configurator;
@@ -74,14 +74,11 @@ public class VertexReader {
     /**
      * Returns whether or not the given key could be added in response or not.
      * @param key
-     * @param privatePropertyList
      * @return
      */
-    private boolean canAdd(String key, List<String> privatePropertyList) {
+    private boolean canAdd(String key) {
         boolean canAdd = true;
-        if (privatePropertyList.contains(key)) {
-            canAdd &= configurator.isIncludeEncryptedProp();
-        } else if (key.equals(Constants.ROOT_KEYWORD)) {
+        if (key.equals(Constants.ROOT_KEYWORD)) {
             canAdd &= configurator.isIncludeRootIdentifiers();
         } else if (key.equals(uuidPropertyName)){
             canAdd &= configurator.isIncludeIdentifiers();
@@ -100,13 +97,6 @@ public class VertexReader {
     public ObjectNode constructObject(Vertex currVertex) {
 
         ObjectNode contentNode = JsonNodeFactory.instance.objectNode();
-        String entityType = currVertex.label();
-        Definition definition = definitionsManager.getDefinition(entityType);
-        List<String> privatePropertyList = new ArrayList<>();
-        if (definition != null) {
-            privatePropertyList = definition.getOsSchemaConfiguration().getPrivateFields();
-        }
-
         Iterator<VertexProperty<Object>> properties = currVertex.properties();
         while (properties.hasNext()) {
             VertexProperty<Object> prop = properties.next();
@@ -135,7 +125,7 @@ public class VertexReader {
                     }
                 } else {
                     logger.debug("{} is a simple value", prop.key());
-                    if (canAdd(prop.key(), privatePropertyList)) {
+                    if (canAdd(prop.key())) {
                         if (isArrayType) {
                             ArrayNode arrayNode = ArrayHelper.constructArrayNode(prop.value().toString());
                             contentNode.set(prop.key(), arrayNode);
@@ -396,13 +386,8 @@ public class VertexReader {
                 itrV = graph.vertices(osid);
                 break;
             case SQLG:
-                if (null != entityType) {
-                    itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
-                } else {
-                    itrV = graph.traversal().clone().V().has(uuidPropertyName, osid);
-                }
-                break;
             case CASSANDRA:
+            case TINKERGRAPH:
                 if (null != entityType) {
                     itrV = graph.traversal().clone().V().hasLabel(entityType).has(uuidPropertyName, osid);
                 } else {

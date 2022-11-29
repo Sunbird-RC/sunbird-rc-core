@@ -8,6 +8,8 @@ import org.apache.commons.collections.map.HashedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
@@ -16,10 +18,10 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import static dev.sunbirdrc.registry.Constants.TITLE;
+import static dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
 
 
-@Component("definitionsManager")
-public class DefinitionsManager {
+public class DefinitionsManager implements IDefinitionsManager{
     private static Logger logger = LoggerFactory.getLogger(DefinitionsManager.class);
 
     private Map<String, Definition> definitionMap = new HashMap<>();
@@ -37,6 +39,7 @@ public class DefinitionsManager {
      * Loads the definitions from the _schemas folder
      */
     @PostConstruct
+    @Override
     public void loadDefinition() throws Exception {
 
         loadResourcesFromPath(Constants.RESOURCE_LOCATION);
@@ -111,46 +114,9 @@ public class DefinitionsManager {
         return definitionMap.getOrDefault(title, null);
     }
 
-    /**
-     * Returns the map, where key is the index and value is the public fields
-     *
-     * @return
-     */
-    public Map<String, Set<String>> getPublicFieldsInfoMap() {
-        Map<String, Set<String>> result = new HashMap<>();
-        for (String index : getAllKnownDefinitions()) {
-            List<String> publicFields = getDefinition(index)
-                    .getOsSchemaConfiguration()
-                    .getPublicFields();
-            if (publicFields != null) {
-                result.put(index.toLowerCase(), new HashSet<>(publicFields));
-            } else {
-                result.put(index.toLowerCase(), Collections.emptySet());
-            }
-        }
-        return result;
-    }
-
-    ;
-
-    /**
-     * Returns the map, where key is the index and value is the internal fields
-     *
-     * @return
-     */
-    public Map<String, Set<String>> getExcludingFields() {
-        Map<String, Set<String>> result = new HashMap<>();
-        for (String index : getAllKnownDefinitions()) {
-            List<String> internalFields = getDefinition(index)
-                    .getOsSchemaConfiguration()
-                    .getInternalFields();
-            List<String> privateFields = getDefinition(index)
-                    .getOsSchemaConfiguration()
-                    .getPrivateFields();
-            internalFields.addAll(privateFields);
-            result.put(index.toLowerCase(), new HashSet<>(internalFields));
-        }
-        return result;
+    @Override
+    public Map<String, Definition> getDefinitionMap() {
+        return definitionMap;
     }
 
     public List<OwnershipsAttributes> getOwnershipAttributes(String entity) {
@@ -160,14 +126,6 @@ public class DefinitionsManager {
         } else {
             return Collections.emptyList();
         }
-    }
-
-    public Object getCredentialTemplate(String entityName) {
-        return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
-    }
-
-    public Map<String, String> getCertificateTemplates(String entityName) {
-        return getDefinition(entityName).getOsSchemaConfiguration().getCertificateTemplates();
     }
 
     public boolean isValidEntityName(String entityName) {
@@ -198,4 +156,5 @@ public class DefinitionsManager {
             logger.error("Failed removing schema from definition manager", e);
         }
     }
+
 }

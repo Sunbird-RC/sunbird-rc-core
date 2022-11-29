@@ -34,7 +34,7 @@ import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
-import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.RecordIdentifier;
 /**
  * This class provides native search which hits the native database
@@ -50,7 +50,7 @@ public class NativeSearchService implements ISearchService {
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 
 	@Autowired
-	private DefinitionsManager definitionsManager;
+	private IDefinitionsManager definitionsManager;
 
 	@Autowired
 	private ShardManager shardManager;

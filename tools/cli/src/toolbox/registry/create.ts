@@ -10,21 +10,12 @@ import { RegistrySetupOptions, Toolbox } from '../../types'
 
 // Accept a toolbox and configuration, create a registry instance in return
 export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
-	const { events, filesystem, patching, system, template } = toolbox
+	const { events, filesystem, patching, system, template, until } = toolbox
 	const keycloak = new KeycloakWrapper({
 		user: setupOptions.keycloakAdminUser,
 		pass: setupOptions.keycloakAdminPass,
 		realm: setupOptions.realmName,
 	})
-
-	const until = async (conditionFunction: () => Promise<boolean>) => {
-		const poll = async (resolve: (value: unknown) => void) => {
-			if (await conditionFunction()) resolve(true)
-			else setTimeout((_) => poll(resolve), 400)
-		}
-
-		return new Promise(poll)
-	}
 
 	// Copy over config files with the proper variables
 	events.emit('registry.create', {
@@ -38,13 +29,28 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		props: setupOptions,
 	})
 	template.generate({
-		template: 'docker-compose.yaml',
-		target: 'docker-compose.yaml',
+		template: 'docker-compose.yml',
+		target: 'docker-compose.yml',
+		props: setupOptions,
+	})
+	template.generate({
+		template: '.env',
+		target: '.env',
+		props: setupOptions,
+	})
+	template.generate({
+		template: '.env-cli',
+		target: '.env-cli',
+		props: setupOptions,
+	})
+	template.generate({
+		template: 'config.json',
+		target: 'imports/config.json',
 		props: setupOptions,
 	})
 	template.generate({
 		template: 'config/keycloak/realm-export.json',
-		target: 'config/keycloak/realm-export.json',
+		target: 'imports/realm-export.json',
 		props: setupOptions,
 	})
 	if (setupOptions.pathToEntitySchemas === 'use-example-config') {
@@ -106,11 +112,19 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		operation: 'starting-containers',
 		message: 'Starting all services',
 	})
+	//merge multiple env files
+	await system.run('cat .env-cli >> .env').catch((error: Error) => {
+		events.emit('registry.create', {
+			status: 'error',
+			operation: 'starting-containers',
+			message: `An unexpected error occurred while merging multiple env files: ${error.message}`,
+		})
+	})
 	await system.exec('docker compose up -d').catch((error: Error) => {
 		events.emit('registry.create', {
 			status: 'error',
 			operation: 'starting-containers',
-			message: `An unexpected error occurred while starting the registry: ${error.message}`,
+			message: `An unexpected error occurred while starting the registry: ${error.message} ${error.stack}`,
 		})
 	})
 	// Wait for the containers to start
@@ -137,8 +151,8 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		)
 		// Replace the old client secret with the new one
 		await patching.replace(
-			path.resolve(process.cwd(), 'docker-compose.yaml'),
-			'INSERT_SECRET_HERE',
+			path.resolve(process.cwd(), 'docker-compose.yml'),
+			'${KEYCLOAK_SECRET}',
 			clientSecret
 		)
 
@@ -210,7 +224,7 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		message: 'Restarting all services',
 	})
 	await system
-		.exec('docker compose up --force-recreate -d')
+		.exec('docker compose up --force-recreate --no-deps -d registry keycloak')
 		.catch((error: Error) => {
 			events.emit('registry.create', {
 				status: 'error',

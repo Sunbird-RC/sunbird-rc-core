@@ -3,25 +3,41 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"github.com/go-openapi/runtime/middleware"
+	log "github.com/sirupsen/logrus"
+	"github.com/sunbirdrc/notification-service/config"
 	"github.com/sunbirdrc/notification-service/pkg/services"
 	"github.com/sunbirdrc/notification-service/swagger_gen/models"
 	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations"
+	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations/health"
 	"github.com/sunbirdrc/notification-service/swagger_gen/restapi/operations/notification"
-	"github.com/go-openapi/runtime/middleware"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
 func SetupHandlers(api *operations.NotificationServiceAPI) {
 	api.NotificationPostNotificationHandler = notification.PostNotificationHandlerFunc(postNotificationHandler)
 	api.NotificationGetNotificationHandler = notification.GetNotificationHandlerFunc(getLastSentNotifications)
+	api.HealthGetHealthHandler = health.GetHealthHandlerFunc(getHealthHandle)
 
 }
+
 var messages = make(map[string]string)
 
-func getLastSentNotifications(params notification.GetNotificationParams) middleware.Responder  {
+func getHealthHandle(params health.GetHealthParams) middleware.Responder {
+	response := health.NewGetHealthOK()
+	response.Payload = map[string]string{
+		"status": "UP",
+	}
+	return response
+}
+
+func getLastSentNotifications(params notification.GetNotificationParams) middleware.Responder {
 	response := notification.NewGetNotificationOK()
-	response.Payload = messages
+	if config.Config.TrackNotifications {
+		response.Payload = messages
+	} else {
+		response.Payload = map[string]string{}
+	}
 	return response
 }
 

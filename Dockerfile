@@ -1,10 +1,12 @@
-FROM frolvlad/alpine-java:jdk8-slim
-#COPY ./java/registry/target/registry.jar /home/sunbirdrc/registry.jar
-COPY ./BOOT-INF/lib /home/sunbirdrc/BOOT-INF/lib
-COPY ./META-INF  /home/sunbirdrc/META-INF
-COPY ./org  /home/sunbirdrc/org
-COPY ./BOOT-INF/classes /home/sunbirdrc/BOOT-INF/classes
-COPY ./BOOT-INF/classes/application.yml.sample /home/sunbirdrc/BOOT-INF/classes/application.yml
-COPY ./BOOT-INF/classes/frame.json.sample /home/sunbirdrc/BOOT-INF/classes/frame.json
-RUN mkdir -p /home/sunbirdrc/config/public/_schemas
-CMD ["java", "-Xms1024m", "-Xmx2048m", "-XX:+UseG1GC", "-Dserver.port=8081", "-cp", "/home/sunbirdrc/config:/home/sunbirdrc", "org.springframework.boot.loader.JarLauncher"]
+FROM node:lts-alpine3.13 as verification_ui
+WORKDIR /app
+ENV PATH /app/node_modules/.bin:$PATH
+COPY services/verification-ui ./
+RUN npm install
+RUN npm run build
+
+FROM nginx:stable-alpine
+COPY --from=verification_ui /app/build /usr/share/nginx/html
+COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

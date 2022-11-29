@@ -1,8 +1,15 @@
 {
 	"name": "registry-cli",
-	"version": "1.5.0",
+	"version": "1.6.1",
 	"description": "A CLI to setup and manage Sunbird RC registry instances",
 	"author": "Vedant K <https://github.com/gamemaker1>",
+	"keywords": ["registry-cli", "sbrc", "sb-rc", "sunbird-rc", "verifiable-credentials", "registry"],
+	"contributors": [
+		{
+			"name": "Tejash JL",
+			"url": "https://github.com/tejash-jl"
+		}
+	],
 	"license": "MIT",
 	"types": "out/types/types.d.ts",
 	"bin": {

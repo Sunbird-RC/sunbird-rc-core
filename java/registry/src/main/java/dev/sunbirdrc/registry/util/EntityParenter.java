@@ -39,7 +39,7 @@ public class EntityParenter {
     @Autowired
     private DBProviderFactory dbProviderFactory;
 
-    private DefinitionsManager definitionsManager;
+    private IDefinitionsManager definitionsManager;
     private DBConnectionInfoMgr dbConnectionInfoMgr;
 
     private Set<String> defintionNames;
@@ -56,7 +56,7 @@ public class EntityParenter {
 
 
     @Autowired
-    public EntityParenter(DefinitionsManager definitionsManager, DBConnectionInfoMgr dbConnectionInfoMgr) {
+    public EntityParenter(IDefinitionsManager definitionsManager, DBConnectionInfoMgr dbConnectionInfoMgr) {
         this.definitionsManager = definitionsManager;
         this.dbConnectionInfoMgr = dbConnectionInfoMgr;
 

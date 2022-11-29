@@ -165,3 +165,30 @@ test('Should generate credentials with array values', async () => {
     console.log(signedData.credentialSubject.skills)
     expect(signedData.credentialSubject.skills.length).toEqual(2);
 });
+
+test('Should cache remote context urls and generate VC without error', async () => {
+    const entity = {
+        identityDetails: {
+            "name": "Ade Hastuti",
+            "account_number": "229899429"
+        }
+    };
+    const template = {
+        "@context": ["https://www.w3.org/2018/credentials/v1", "https://gist.githubusercontent.com/tejash-jl/181288c54e573304398de78b311d2055/raw/a655e82f0d99e9779c15dbc7d70f7d8b978df6f1/c2.json"],
+        "type": ["VerifiableCredential"],
+        "credentialSubject": {
+            type: "Beneficiary",
+            name: "{{identityDetails.name}}",
+            "account_number": "{{account_number}}"
+        },
+        "issuanceDate": "2021-08-27T10:57:57.237Z",
+        "issuer": "did:authorizedIssuer:23423#21",
+        // "date": "28-09-2021",
+    }
+    let signedData = await generateCredentials(entity, JSON.stringify(template));
+    console.log(signedData)
+    expect(signedData.proof.jws).not.toBeNull();
+    signedData = await generateCredentials(entity, JSON.stringify(template));
+    console.log(signedData)
+    expect(signedData.proof.jws).not.toBeNull();
+});

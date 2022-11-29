@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.Filter;
 import dev.sunbirdrc.pojos.FilterOperators;
 import dev.sunbirdrc.pojos.SearchQuery;
@@ -13,12 +14,11 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.get.GetRequest;
@@ -44,8 +44,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
+import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ELASTIC_SERVICE_NAME;
+
 public class ElasticServiceImpl implements IElasticService {
-    private static Map<String, Set<String>> indexWiseExcludeFields = new HashMap<>();
     private static Map<String, RestHighLevelClient> esClient = new HashMap<String, RestHighLevelClient>();
     private static Logger logger = LoggerFactory.getLogger(ElasticServiceImpl.class);
 
@@ -66,8 +68,7 @@ public class ElasticServiceImpl implements IElasticService {
      * @param indices
      * @throws RuntimeException
      */
-    public void init(Set<String> indices, Map<String, Set<String>> indexWiseExcludeFields) throws RuntimeException {
-        this.indexWiseExcludeFields = indexWiseExcludeFields;
+    public void init(Set<String> indices) throws RuntimeException {
         indices.iterator().forEachRemaining(index -> {
             try {
                 addIndex(index.toLowerCase(), searchType);
@@ -175,9 +176,7 @@ public class ElasticServiceImpl implements IElasticService {
         logger.debug("addEntity starts with index {} and entityId {}", index, entityId);
         IndexResponse response = null;
         try {
-            DocumentContext doc = getDocumentContextAfterRemovingExcludedFields(index, inputEntity);
-            JsonNode filteredNode = JSONUtil.convertStringJsonNode(doc.jsonString());
-            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(filteredNode);
+            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
             response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
             logger.error("Exception in adding record to ElasticSearch", e);
@@ -217,9 +216,7 @@ public class ElasticServiceImpl implements IElasticService {
         logger.debug("updateEntity starts with index {} and entityId {}", index, osid);
         UpdateResponse response = null;
         try {
-            DocumentContext doc = getDocumentContextAfterRemovingExcludedFields(index, inputEntity);
-            JsonNode filteredNode = JSONUtil.convertStringJsonNode(doc.jsonString());
-            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(filteredNode);
+            Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
             logger.debug("updateEntity inputMap {}", inputMap);
             logger.debug("updateEntity inputEntity {}", inputEntity);
             response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
@@ -227,18 +224,6 @@ public class ElasticServiceImpl implements IElasticService {
             logger.error("Exception in updating a record to ElasticSearch", e);
         }
         return response.status();
-    }
-
-    private DocumentContext getDocumentContextAfterRemovingExcludedFields(String index, JsonNode inputEntity) throws com.fasterxml.jackson.core.JsonProcessingException {
-        DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(inputEntity));
-        for (String jsonPath : indexWiseExcludeFields.get(index)) {
-            try {
-                doc.delete(jsonPath);
-            } catch (Exception e) {
-                logger.error("Path not found {} {}", jsonPath, e.getMessage());
-            }
-        }
-        return doc;
     }
 
     /**
@@ -269,7 +254,6 @@ public class ElasticServiceImpl implements IElasticService {
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public JsonNode search(String index, SearchQuery searchQuery) throws IOException {
         BoolQueryBuilder query = buildQuery(searchQuery);
-
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
                 .query(query)
                 .size(searchQuery.getLimit())
@@ -289,6 +273,23 @@ public class ElasticServiceImpl implements IElasticService {
 
         return resultArray;
 
+    }
+
+    @Override
+    public String getServiceName() {
+        return SUNBIRD_ELASTIC_SERVICE_NAME;
+    }
+
+    @Override
+    public ComponentHealthInfo getHealthInfo() {
+        ClusterHealthRequest request = new ClusterHealthRequest();
+        try {
+            ClusterHealthResponse health = getClient("schema").cluster().health(request, RequestOptions.DEFAULT);
+            return new ComponentHealthInfo(getServiceName(), Arrays.asList("yellow", "green").contains(health.getStatus().name().toLowerCase()), "", "");
+        } catch (IOException e) {
+            logger.error("Elastic health status", e);
+            return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
+        }
     }
 
     /**

@@ -119,4 +119,16 @@ public class JsonValidationServiceImpl implements IValidate {
 		String title = schemaJsonNode.get(TITLE).asText();
 		this.addDefinitions(title, schema.asText("{}"));
 	}
+
+	@Override
+	public void removeDefinition(JsonNode jsonNode) {
+		try {
+			String schemaAsText = jsonNode.asText("{}");
+			JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
+			String schemaTitle = schemaJsonNode.get(TITLE).asText();
+			definitionMap.remove(schemaTitle);
+		} catch (Exception e) {
+			logger.error("Failed removing schema from definition manager", e);
+		}
+	}
 }

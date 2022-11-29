@@ -1,17 +1,18 @@
 package dev.sunbirdrc.registry.service;
 
+import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.exception.SignatureException;
 
-public interface SignatureService {
+import java.util.Map;
 
-	Object sign(Object propertyValue)
+public interface SignatureService extends HealthIndicator {
+
+	Object sign(Map<String, Object> propertyValue)
 			throws SignatureException.UnreachableException, SignatureException.CreationException;
 
 	boolean verify(Object propertyValue)
 			throws SignatureException.UnreachableException, SignatureException.VerificationException;
 
 	String getKey(String keyId) throws SignatureException.UnreachableException, SignatureException.KeyNotFoundException;
-
-	boolean isServiceUp() throws SignatureException.UnreachableException;
 
 }

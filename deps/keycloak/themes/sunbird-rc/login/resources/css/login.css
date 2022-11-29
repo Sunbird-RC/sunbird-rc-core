@@ -30,7 +30,7 @@ body {
 .ndear-wrapper .form-wrapper .container-wrapper{
   width: 50%;
   padding-top: 12rem;
-  padding-left: 5rem
+  align-items: center;
 }
 .title-wrapper {
   background-repeat: no-repeat;
@@ -90,11 +90,10 @@ body {
 }
 .login-content .box .form {
 }
-
-.login-content .box .login-field {
+.login-field {
   width: 100px;
   letter-spacing: 1px;
-  border: none;
+  border: none !important;
   outline: none;
 }
 .login-content .box input[type="text"]:focus, .login-content .box input[type="password"]:focus {
@@ -113,10 +112,11 @@ body {
   color: #ffffff;
   border-style: none;
   background: #0098AB;
-  border-radius: 8px;
+  border-radius: 20px;
   width: 100%;
   padding: 1rem;
-  margin-top: 2rem;
+  margin-top: 20px;
+
 }
 .login-content .box .visibility {
   position: relative;
@@ -134,6 +134,9 @@ body {
   opacity: .54;
   position: relative;
   top: 50px;
+}
+.kc-feedback-text {
+  color: #b8082a;
 }
 .message-text {
   width: 322px;
@@ -220,4 +223,30 @@ body {
     padding: 1rem !important;
     height: 100%;
   }
+}
+
+.bold-text {
+  font-weight: bold;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.forgot-password-wrapper {
+  text-align: right;
+}
+
+.forgot-password-wrapper a {
+  color: #0098AB;
+}
+
+.green-label {
+  background: #e9f7ea;
+  border: 1px solid #f4f4f4;
+  box-shadow: 0px 2px 5px rgb(0 0 0 / 5%);
+  border-radius: 4px;
+  margin-top: 12px;
+  padding: 1rem;
+  font-weight: bold;
 }

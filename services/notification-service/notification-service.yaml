@@ -21,6 +21,17 @@ consumes:
 produces:
   - application/json
 paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Get the health status
+      description: API to get the notification health status
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
   /notification:
     get:
       tags:

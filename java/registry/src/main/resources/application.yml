@@ -24,7 +24,8 @@ server:
 notification:
   service:
     enabled: ${notification_enabled:false}
-    connection_url: ${notification_url:http://localhost:8765/divoc/notification-service/v1/notification}
+    connection_url: ${notification_url:http://localhost:8765/notification-service/v1/notification}
+    health_url: ${notification_url:http://localhost:8765/notification-service/v1/health}
 
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
@@ -52,6 +53,11 @@ registry:
     url: ${registry_schema_url:http://localhost:8081/_schemas/}
   attestationPolicy:
     createAccess: ${create_attestation_access_entities:User}
+  manager:
+    type: ${manager_type:DefinitionsManager}
+  redis:
+    host: ${redis_host:localhost}
+    port: ${redis_port:6379}
 
 workflow:
   enabled: ${workflow.enable:true}
@@ -180,7 +186,7 @@ decryption:
 
 signature:
   enabled: ${signature_enabled:true}
-  healthCheckURL: ${sign_health_check_url:http://localhost:8013/}
+  healthCheckURL: ${sign_health_check_url:http://localhost:8079/health}
   signURL: ${sign_url:http://localhost:8079/sign}
   verifyURL: ${verify_url:http://localhost:8079/verify}
   keysURL: ${keys_url:http://localhost:8013/keys/}
@@ -191,6 +197,7 @@ signature:
 
 certificate:
   templateBaseUrl: ${template_base_url:http://localhost:8081/api/v1/templates/}
+  healthCheckURL: ${certificate_health_check_url:http://localhost:8078/health}
   apiUrl: ${pdf_url:http://localhost:8078/api/v1/certificate}
   templateFolderPath: ${template_folder_path:public/_schemas/templates/}
   enableExternalTemplates: ${enable_external_templates:false}

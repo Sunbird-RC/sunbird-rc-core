@@ -9,13 +9,15 @@ import dev.sunbirdrc.pojos.dto.ClaimDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static dev.sunbirdrc.claim.contants.AttributeNames.ATTESTOR_INFO;
@@ -35,11 +37,11 @@ public class ClaimsController {
     }
 
     @RequestMapping(value = "/api/v1/getClaims", method = RequestMethod.POST)
-    public ResponseEntity<List<Claim>> getClaims(@RequestHeader HttpHeaders headers,
-                                                 @RequestBody JsonNode requestBody) {
+    public ResponseEntity<Map<String, Object>> getClaims(@RequestHeader HttpHeaders headers,
+                                                @RequestBody JsonNode requestBody, Pageable pageable) {
         String entity = requestBody.get(LOWERCASE_ENTITY).asText();
         JsonNode attestorNode = requestBody.get(ATTESTOR_INFO);
-        List<Claim> claims = claimService.findClaimsForAttestor(entity, attestorNode);
+        Map<String, Object> claims = claimService.findClaimsForAttestor(entity, attestorNode, pageable);
         return new ResponseEntity<>(claims, HttpStatus.OK);
     }
 
@@ -73,6 +75,11 @@ public class ClaimsController {
         logger.info("Attesting claim : {}", claimId);
         Claim updatedClaim = claimService.attestClaim(claimId, requestBody);
         return new ResponseEntity<>(updatedClaim, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok().build();
     }
 
 }

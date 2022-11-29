@@ -2,7 +2,6 @@ package dev.sunbirdrc.registry.middleware.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -297,33 +296,16 @@ public class JSONUtil {
 		parent.remove(removeKey);
 	}
 
-	public static void removeNodesByPath(ObjectNode root, List<String> nodePaths) throws Exception {
-		Map<JsonPointer, List<Integer>> arrayNodePathsMap = new HashMap<>();
-		for(String nodePath: nodePaths) {
-			JsonPointer jsonPointer = JsonPointer.compile(nodePath);
-			JsonPointer parentPtr = jsonPointer.head();
-			String leafFieldName = jsonPointer.last().getMatchingProperty();
-			JsonNode parent = root.at(jsonPointer.head());
-
-			if(parent.isMissingNode()) continue;
-			if(parent instanceof ObjectNode) ((ObjectNode) parent).remove(leafFieldName);
-			else if (parent instanceof ArrayNode) {
-				if(!arrayNodePathsMap.containsKey(parentPtr)) {
-					arrayNodePathsMap.put(parentPtr, new ArrayList<>(Collections.singletonList(Integer.parseInt(leafFieldName))));
-				} else {
-					arrayNodePathsMap.get(parentPtr).add(Integer.parseInt(leafFieldName));
-				}
-			} else {
-				throw new Exception("Illegal Path");
+	public static JsonNode removeNodesByPath(JsonNode root, Set<String> nodePaths) throws Exception {
+		DocumentContext doc = JsonPath.parse(convertObjectJsonString(root));
+		for (String jsonPath : nodePaths) {
+			try {
+				doc.delete(jsonPath);
+			} catch (Exception e) {
+				logger.error("Path not found {} {}", jsonPath, e.getMessage());
 			}
 		}
-		for (JsonPointer targetPtr: arrayNodePathsMap.keySet()) {
-			List<Integer> removalPaths = arrayNodePathsMap.get(targetPtr);
-			removalPaths.sort(Comparator.reverseOrder());
-			for(int index: removalPaths) {
-				((ArrayNode)root.at(targetPtr)).remove(index);
-			}
-		}
+		return convertStringJsonNode(doc.jsonString());
 	}
 
 	/**
