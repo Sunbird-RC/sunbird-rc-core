@@ -2,7 +2,10 @@ package dev.sunbirdrc.registry.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.RefResolver;
 import io.swagger.models.*;
@@ -18,8 +21,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.*;
+
+import static dev.sunbirdrc.registry.Constants.Schema;
+import static dev.sunbirdrc.registry.Constants.TITLE;
 
 @RestController
 public class RegistrySwaggerController {
@@ -29,21 +36,52 @@ public class RegistrySwaggerController {
     @Value("${registry.schema.url}")
     private String schemaUrl;
 
+    private RegistryHelper registryHelper;
+
     @Autowired
-    public RegistrySwaggerController(IDefinitionsManager definitionsManager, ObjectMapper objectMapper, RefResolver refResolver) {
+    public RegistrySwaggerController(IDefinitionsManager definitionsManager, ObjectMapper objectMapper, RefResolver refResolver, RegistryHelper registryHelper) {
         this.definitionsManager = definitionsManager;
         this.objectMapper = objectMapper;
         this.refResolver = refResolver;
+        this.registryHelper = registryHelper;
     }
 
     @RequestMapping(value = "/api/docs/swagger.json", method = RequestMethod.GET, produces = "application/json")
-    public ResponseEntity<Object> getSwaggerDoc() throws IOException {
+    public ResponseEntity<Object> getSwaggerDoc(HttpServletRequest request) throws IOException {
+
+        ObjectNode apiDoc = generateAPIMethods(definitionsManager.getAllKnownDefinitions(), request);
+        return new ResponseEntity<>(objectMapper.writeValueAsString(apiDoc), HttpStatus.OK);
+    }
+
+    private TextNode getHost(HttpServletRequest request) {
+        return TextNode.valueOf(request.getRequestURL().toString()
+                .replace(request.getRequestURI(), "")
+                .replace(request.getScheme(), "")
+                .replace("://", "")
+        );
+    }
+
+    @GetMapping(value = "/api/docs/user/swagger.json", produces = "application/json")
+    public ResponseEntity<Object> getUserSwaggerDoc(HttpServletRequest request) throws Exception {
+        JsonNode userCreatedSchemas = registryHelper.getRequestedUserDetails(request, Schema);
+        Set<String> schemas = new HashSet<>();
+        for (JsonNode schemaRes : userCreatedSchemas.get(Schema)) {
+            JsonNode schema = objectMapper.readTree(schemaRes.get(Schema.toLowerCase()).asText());
+            schemas.add(schema.get(TITLE).textValue());
+        }
+        ObjectNode apiDoc = generateAPIMethods(schemas, request);
+        return new ResponseEntity<>(objectMapper.writeValueAsString(apiDoc), HttpStatus.OK);
+    }
+
+    private ObjectNode generateAPIMethods(Set<String> entities, HttpServletRequest request) throws IOException {
         ObjectNode doc = (ObjectNode) objectMapper.reader().readTree(new ClassPathResource("/baseSwagger.json").getInputStream());
         ObjectNode paths = objectMapper.createObjectNode();
         ObjectNode definitions = objectMapper.createObjectNode();
         doc.set("paths", paths);
         doc.set("definitions", definitions);
-        for (String entityName : definitionsManager.getAllKnownDefinitions()) {
+        doc.set("host", getHost(request));
+        doc.set("schemes", JsonNodeFactory.instance.arrayNode().add(request.getScheme()));
+        for (String entityName : entities) {
             if (Character.isUpperCase(entityName.charAt(0))) {
                 populateEntityActions(paths, entityName);
                 populateSubEntityActions(paths, entityName);
@@ -52,14 +90,14 @@ public class RegistrySwaggerController {
 //                definitions.set(entityName, schemaDefinition.get("definitions").get(entityName));
                 for (Iterator<String> it = schemaDefinition.get("definitions").fieldNames(); it.hasNext(); ) {
                     String fieldName = it.next();
-                    definitions.set(fieldName, refResolver.resolveDefinitions(fieldName,schemaDefinition.get("definitions").get(fieldName)));
+                    definitions.set(fieldName, refResolver.resolveDefinitions(fieldName, schemaDefinition.get("definitions").get(fieldName)));
                     if (schemaDefinition.get("_osConfig") != null) {
                         definitions.set(String.format("%sOsConfig", fieldName), schemaDefinition.get("_osConfig"));
                     }
                 }
             }
         }
-        return new ResponseEntity<>(objectMapper.writeValueAsString(doc), HttpStatus.OK);
+        return doc;
     }
 
 
