@@ -621,7 +621,8 @@
       ],
       "clientRoles": {
         "realm-management": [
-          "manage-users"
+          "manage-users",
+          "manage-realm"
         ],
         "admin-api": [
           "api"
