@@ -49,6 +49,15 @@ test: build
 	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
 	@rm -rf db-data-3 || echo "no permission to delete"
+	# test with kafka(async)
+	@ASYNC_ENABLED=true RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-4 docker-compose up -d
+	@echo "Starting the test" && sh build/wait_for_port.sh 8080
+	@echo "Starting the test" && sh build/wait_for_port.sh 8081
+	@docker-compose ps
+	@curl -v http://localhost:8081/health
+	@cd java/apitest && MODE=async ../mvnw -Pe2e test || echo 'Tests failed'
+	@docker-compose down
+	@rm -rf db-data-4 || echo "no permission to delete"
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
@@ -68,13 +77,13 @@ release: test
 	docker tag dockerhub/sunbird-rc-nginx dockerhub/sunbird-rc-nginx:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-core:latest
 	docker push dockerhub/sunbird-rc-core:$(RELEASE_VERSION)
-	docker push dockerhub/sunbird-rc-claim-ms:latest 
+	docker push dockerhub/sunbird-rc-claim-ms:latest
 	docker push dockerhub/sunbird-rc-claim-ms:$(RELEASE_VERSION)
-	docker push dockerhub/sunbird-rc-notification-service:latest 
+	docker push dockerhub/sunbird-rc-notification-service:latest
 	docker push dockerhub/sunbird-rc-notification-service:$(RELEASE_VERSION)
-	docker push dockerhub/sunbird-rc-certificate-signer:latest 
+	docker push dockerhub/sunbird-rc-certificate-signer:latest
 	docker push dockerhub/sunbird-rc-certificate-signer:$(RELEASE_VERSION)
-	docker push dockerhub/sunbird-rc-certificate-api:latest 
+	docker push dockerhub/sunbird-rc-certificate-api:latest
 	docker push dockerhub/sunbird-rc-certificate-api:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-keycloak:latest
 	docker push dockerhub/sunbird-rc-keycloak:$(RELEASE_VERSION)

@@ -783,11 +783,12 @@ public class RegistryHelperTest {
 		ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
 		objectNode.set("fullName", JsonNodeFactory.instance.textNode("First Avenger"));
 		objectNode.set("gender", JsonNodeFactory.instance.textNode("Male"));
+		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
 		registryHelper.autoRaiseClaim("Student", "12345", "556302c9-d8b4-4f60-9ac1-c16c8839a9f3", null, requestBody, "");
 		verify(conditionResolverService, times(1)).resolve(objectNode, REQUESTER, null, Collections.emptyList());
 		verify(registryHelper, times(1)).triggerAttestation(any(), any());
 	}
-	
+
 	public void shouldStoredSignedDataInRevokedCredentialsRegistry() throws Exception {
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());

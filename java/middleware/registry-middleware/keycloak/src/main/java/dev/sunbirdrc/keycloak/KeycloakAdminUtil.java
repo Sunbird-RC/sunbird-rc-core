@@ -119,6 +119,14 @@ public class KeycloakAdminUtil implements HealthIndicator {
             UserResource userResource = userRepresentationOptional.get();
             UserRepresentation userRepresentation = userResource.toRepresentation();
             updateUserAttributes(entityName, email, mobile, userRepresentation);
+            List<String> groups = userRepresentation.getGroups();
+            if (groups == null) {
+                groups = new ArrayList<>();
+            }
+            if (!groups.contains(entityName)) {
+                groups.add(entityName);
+                userRepresentation.setGroups(groups);
+            }
             userResource.update(userRepresentation);
             return userRepresentation.getId();
         } else {
