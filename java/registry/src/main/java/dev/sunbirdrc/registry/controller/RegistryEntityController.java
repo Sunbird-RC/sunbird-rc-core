@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.keycloak.OwnerCreationException;
-import dev.sunbirdrc.pojos.AsyncRequest;
-import dev.sunbirdrc.pojos.PluginResponseMessage;
-import dev.sunbirdrc.pojos.Response;
-import dev.sunbirdrc.pojos.ResponseParams;
+import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.registry.dao.NotFoundException;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
@@ -27,8 +24,6 @@ import dev.sunbirdrc.registry.transform.ITransformer;
 import dev.sunbirdrc.validators.ValidationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.keycloak.KeycloakPrincipal;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,8 +55,6 @@ public class RegistryEntityController extends AbstractController {
 
     @Autowired
     private AsyncRequest asyncRequest;
-
-
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${certificate.enableExternalTemplates:false}") boolean externalTemplatesEnabled;
@@ -368,59 +361,6 @@ public class RegistryEntityController extends AbstractController {
         if(attestationNode.get(OSSystemFields._osAttestedData.name()) == null) throw new AttestationNotFoundException();
         attestationNode = objectMapper.readTree(attestationNode.get(OSSystemFields._osAttestedData.name()).asText());
         return attestationNode;
-    }
-
-    @RequestMapping(value = "/partner/api/v1/{entityName}", method = RequestMethod.GET)
-    public ResponseEntity<Object> getEntityWithConsent(
-            @PathVariable String entityName,
-            HttpServletRequest request) {
-        try {
-            ArrayList<String> fields = getConsentFields(request);
-            JsonNode userInfoFromRegistry = registryHelper.getRequestedUserDetails(request, entityName);
-            JsonNode jsonNode = userInfoFromRegistry.get(entityName);
-            if (jsonNode instanceof ArrayNode) {
-                ArrayNode values = (ArrayNode) jsonNode;
-                if (values.size() > 0) {
-                    JsonNode node = values.get(0);
-                    if (node instanceof ObjectNode) {
-                        ObjectNode entityNode = copyWhiteListedFields(fields, node);
-                        return new ResponseEntity<>(entityNode, HttpStatus.OK);
-                    }
-                }
-            }
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (RecordNotFoundException ex) {
-            logger.error("Error in finding the entity", ex);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            logger.error("Error in partner api access", e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    private ObjectNode copyWhiteListedFields(ArrayList<String> fields, JsonNode dataNode) {
-        ObjectNode node = JsonNodeFactory.instance.objectNode();
-        for (String key : fields) {
-            node.set(key, dataNode.get(key));
-        }
-        return node;
-    }
-
-    private ArrayList<String> getConsentFields(HttpServletRequest request) {
-        ArrayList<String> fields = new ArrayList<>();
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        try {
-            Map<String, Object> otherClaims = ((KeycloakPrincipal) principal.getPrincipal()).getKeycloakSecurityContext().getToken().getOtherClaims();
-            if (otherClaims.keySet().contains(dev.sunbirdrc.registry.Constants.KEY_CONSENT) && otherClaims.get(dev.sunbirdrc.registry.Constants.KEY_CONSENT) instanceof Map) {
-                Map consentFields = (Map) otherClaims.get(dev.sunbirdrc.registry.Constants.KEY_CONSENT);
-                for (Object key : consentFields.keySet()) {
-                    fields.add(key.toString());
-                }
-            }
-        } catch (Exception ex) {
-            logger.error("Error while extracting other claims", ex);
-        }
-        return fields;
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.GET, produces =

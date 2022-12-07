@@ -31,6 +31,11 @@ public class PluginRequestMessage {
     private String attestorSignin;
     private String conditions;
     private String status;
+    private String consentEntityName;
+    private String consentEntityId;
+    private List<String> consentEntityOsOwner;
+    private Map<String, String> consentFieldPath;
+    private String expirationTime;
     @Nullable
     private String userId;
     private Map<String, List<String>> propertiesOSID;
