@@ -55,21 +55,24 @@
 			<artifactId>bcprov-jdk15on</artifactId>
 			<version>1.70</version>
 		</dependency>
-		<dependency>
-			<groupId>in.divoc.api</groupId>
-			<artifactId>keycloak-mobile-number-login-spi</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>in.divoc.api</groupId>
-			<artifactId>keycloak-mobile-number-login-spi</artifactId>
-			<version>1.70</version>
-		</dependency>
         <dependency>
             <groupId>dev.sunbirdrc</groupId>
             <artifactId>pojos</artifactId>
             <version>2.0.3</version>
             <scope>compile</scope>
         </dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>2.12.0</version>
+			<scope>test</scope>
+		</dependency>
     </dependencies>
 
 	<build>

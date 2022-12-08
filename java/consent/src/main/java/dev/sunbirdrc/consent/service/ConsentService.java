@@ -20,8 +20,7 @@ public class ConsentService {
     }
 
     public Consent retrieveConsents(String id) throws ConsentDefinitionNotFoundException {
-        Consent consent = consentRepository.findById(id).get();
-        if(consent == null) throw new ConsentDefinitionNotFoundException("Invalid ID of consent");
+        Consent consent = consentRepository.findById(id).orElseThrow(() -> new ConsentDefinitionNotFoundException("Invalid ID of consent"));
         return consent;
     }
 

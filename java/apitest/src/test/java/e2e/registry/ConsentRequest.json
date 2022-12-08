@@ -1,0 +1,13 @@
+{
+  "entityName": "Place",
+  "entityId": "1-eab84a8b-72f2-448e-af65-d2082bee589d",
+  "status": "false",
+  "requestorName": "Random",
+  "requestorId": "1",
+  "consentFieldsPath": {
+    "name": "$.name",
+    "country": ""
+  },
+  "osOwner": ["c8211527-9d2f-4e08-8d8a-b57ef8be6eba","anonymous"],
+  "consentExpiryTime": "1000"
+}
