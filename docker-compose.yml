@@ -142,6 +142,11 @@ services:
         condition: service_started
       registry:
         condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8083/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 4
   certificate-signer:
     image: dockerhub/sunbird-rc-certificate-signer:${RELEASE_VERSION}
     environment:

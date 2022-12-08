@@ -48,4 +48,9 @@ public class ConsentController {
         List<Consent> consent = consentService.retrieveConsentByOwnerId(ownerId);
         return new ResponseEntity<>(consent, HttpStatus.OK);
     }
+
+    @GetMapping(value = "/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok().build();
+    }
 }
