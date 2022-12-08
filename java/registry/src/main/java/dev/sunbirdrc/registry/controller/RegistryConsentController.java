@@ -135,6 +135,13 @@ public class RegistryConsentController extends AbstractController {
         return new ResponseEntity<>(consentNotGranted, HttpStatus.OK);
     }
 
+    @GetMapping("/api/v1/consent")
+    public ResponseEntity<Object> getConsentByOwner(HttpServletRequest request) throws Exception {
+        String userId = registryHelper.getKeycloakUserId(request);
+        JsonNode node = consentRequestClient.getConsentByOwner(userId);
+        return new ResponseEntity<>(node, HttpStatus.OK);
+    }
+
     @RequestMapping(value = "/partner/api/v1/{entityName}", method = RequestMethod.GET)
     public ResponseEntity<Object> getEntityWithConsent(
             @PathVariable String entityName,

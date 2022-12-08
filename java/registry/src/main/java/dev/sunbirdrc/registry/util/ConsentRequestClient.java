@@ -79,4 +79,8 @@ public class ConsentRequestClient {
         PluginRouter.route(pluginRequestMessage);
         return null;
     }
+
+    public JsonNode getConsentByOwner(String ownerId) {
+        return restTemplate.getForObject(consentUrl + "/api/v1/consent/owner/" + ownerId, JsonNode.class);
+    }
 }

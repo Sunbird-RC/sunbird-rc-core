@@ -6,6 +6,7 @@ import dev.sunbirdrc.consent.repository.ConsentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 import static dev.sunbirdrc.consent.constants.ConstentStatus.GRANTED;
@@ -32,5 +33,9 @@ public class ConsentService {
         }).orElse(null);
         if(consent == null) throw new ConsentDefinitionNotFoundException("Invalid ID of consent");
         return consentRepository.save(consent);
+    }
+
+    public List<Consent> retrieveConsentByOwnerId(String ownerId) {
+        return consentRepository.findByOsOwner(ownerId);
     }
 }

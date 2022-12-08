@@ -7,8 +7,8 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name="consent")
@@ -28,8 +28,10 @@ public class Consent {
     @Column
     private String entityName;
 
+    @ElementCollection
+    @CollectionTable(name = "consent_owner_list", joinColumns = @JoinColumn(name = "id"))
     @Column
-    private String osOwner;
+    private List<String> osOwner;
     @Column
     private String entityId;
     @Column(name = Consent.CREATED_AT)
@@ -69,7 +71,7 @@ public class Consent {
         consent.requestorId = consentDTO.getRequestorId();
         consent.consentFields = consentDTO.getConsentFieldsPath();
         consent.expirationTime = consentDTO.getConsentExpiryTime();
-        consent.osOwner = consentDTO.getOsOwner().stream().collect(Collectors.joining(","));
+        consent.osOwner = consentDTO.getOsOwner();
         return consent;
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -40,5 +41,11 @@ public class ConsentController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    @GetMapping(value = "/api/v1/consent/owner/{ownerId}")
+    public ResponseEntity<List<Consent>> getConsentByOwnerId(@PathVariable String ownerId) {
+        List<Consent> consent = consentService.retrieveConsentByOwnerId(ownerId);
+        return new ResponseEntity<>(consent, HttpStatus.OK);
     }
 }
