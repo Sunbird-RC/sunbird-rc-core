@@ -13,6 +13,12 @@ spring:
   output:
     ansi:
       enabled: ALWAYS
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/auth/realms/sunbird-rc
+
 
 name: default-yaml
 environment: default
