@@ -16,10 +16,7 @@ import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
-import dev.sunbirdrc.registry.entities.AttestationPolicy;
-import dev.sunbirdrc.registry.entities.AttestationType;
-import dev.sunbirdrc.registry.entities.FlowType;
-import dev.sunbirdrc.registry.entities.RevokedCredential;
+import dev.sunbirdrc.registry.entities.*;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
@@ -45,7 +42,6 @@ import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +49,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -62,13 +60,15 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.util.*;
 
 import static dev.sunbirdrc.pojos.attestation.Action.GRANT_CLAIM;
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
-import static dev.sunbirdrc.registry.middleware.util.OSSystemFields.*;
+import static dev.sunbirdrc.registry.middleware.util.OSSystemFields._osState;
+import static dev.sunbirdrc.registry.middleware.util.OSSystemFields.osOwner;
 
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
@@ -724,27 +724,25 @@ public class RegistryHelper {
     }
 
     public String getKeycloakUserId(HttpServletRequest request) throws Exception {
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+        Principal principal = request.getUserPrincipal();
         if (principal != null) {
-            return principal.getAccount().getPrincipal().getName();
+            return principal.getName();
         }
         throw new Exception("Forbidden");
     }
 
     public String fetchEmailIdFromToken(HttpServletRequest request, String entityName) throws Exception {
         if (doesEntityContainOwnershipAttributes(entityName) || getManageRoles(entityName).size() > 0) {
-            KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+            UserToken principal = (UserToken) request.getUserPrincipal();
             if (principal != null) {
                 try{
-                    return principal.getAccount().getKeycloakSecurityContext().getToken().getEmail();
+                    return principal.getEmail();
                 }catch (Exception exception){
-                    return principal.getAccount().getPrincipal().getName();
+                    return principal.getName();
                 }
             }
-            return USER_ANONYMOUS;
-        } else {
-            return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
         }
+        return USER_ANONYMOUS;
     }
 
     public JsonNode getRequestedUserDetails(HttpServletRequest request, String entityName) throws Exception {
@@ -905,8 +903,12 @@ public class RegistryHelper {
     }
 
     private Set<String> getUserRolesFromRequest(HttpServletRequest request) {
-        KeycloakAuthenticationToken userPrincipal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        return userPrincipal!=null ? userPrincipal.getAccount().getRoles():Collections.emptySet();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Set<String> roles = new HashSet<>();
+        if (authentication != null) {
+            authentication.getAuthorities().forEach(authority -> roles.add(authority.getAuthority()));
+        }
+        return roles;
     }
 
     private void authorizeUserRole(Set<String> userRoles, List<String> allowedRoles) throws Exception {
@@ -926,13 +928,8 @@ public class RegistryHelper {
     }
 
     public List<String> getUserEntities(HttpServletRequest request) {
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        Object customAttributes = principal.getAccount()
-                .getKeycloakSecurityContext()
-                .getToken()
-                .getOtherClaims()
-                .get("entity");
-        return (List<String>) customAttributes;
+        UserToken principal = (UserToken) request.getUserPrincipal();
+        return principal.getEntities();
     }
 
     @Async

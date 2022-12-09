@@ -12,6 +12,7 @@ import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.dao.NotFoundException;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.entities.UserToken;
 import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
@@ -28,7 +29,6 @@ import dev.sunbirdrc.validators.ValidationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.keycloak.KeycloakPrincipal;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +37,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
+import java.security.Principal;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.*;
@@ -407,13 +409,11 @@ public class RegistryEntityController extends AbstractController {
     }
 
     private ArrayList<String> getConsentFields(HttpServletRequest request) {
+        UserToken userToken = (UserToken) SecurityContextHolder.getContext().getAuthentication();
         ArrayList<String> fields = new ArrayList<>();
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
         try {
-            Map<String, Object> otherClaims = ((KeycloakPrincipal) principal.getPrincipal()).getKeycloakSecurityContext().getToken().getOtherClaims();
-            if (otherClaims.keySet().contains(dev.sunbirdrc.registry.Constants.KEY_CONSENT) && otherClaims.get(dev.sunbirdrc.registry.Constants.KEY_CONSENT) instanceof Map) {
-                Map consentFields = (Map) otherClaims.get(dev.sunbirdrc.registry.Constants.KEY_CONSENT);
-                for (Object key : consentFields.keySet()) {
+            if (userToken != null && userToken.getConsentFields().size() > 0) {
+                for (Object key : userToken.getConsentFields().keySet()) {
                     fields.add(key.toString());
                 }
             }
