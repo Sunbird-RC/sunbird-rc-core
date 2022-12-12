@@ -7,6 +7,7 @@ build: java/registry/target/registry.jar
 	rm -rf java/claim/target/*.jar
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
 	make -C java/claim
+	make -C java/consent
 	make -C services/certificate-api docker
 	make -C services/certificate-signer docker
 	make -C services/notification-service docker
