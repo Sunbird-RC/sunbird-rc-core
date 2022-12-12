@@ -2,6 +2,7 @@ package dev.sunbirdrc.consent.service;
 
 import dev.sunbirdrc.consent.entity.Consent;
 import dev.sunbirdrc.consent.exceptions.ConsentDefinitionNotFoundException;
+import dev.sunbirdrc.consent.exceptions.ConsentForbiddenException;
 import dev.sunbirdrc.consent.repository.ConsentRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,10 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static dev.sunbirdrc.consent.constants.ConstentStatus.GRANTED;
 import static org.junit.Assert.assertEquals;
@@ -46,12 +44,14 @@ public class ConsentServiceTest {
     }
 
     @Test
-    public void shouldRetrieveConsentsBasedOnId() throws ConsentDefinitionNotFoundException {
+    public void shouldRetrieveConsentsBasedOnId() throws ConsentDefinitionNotFoundException, ConsentForbiddenException {
         Consent expectedConsent = new Consent();
         List<String> osOwners = new ArrayList<>();
         osOwners.add("789");
         expectedConsent.setEntityName("Teacher");
         expectedConsent.setEntityId("123");
+        expectedConsent.setStatus(true);
+        expectedConsent.setCreatedAt(new Date());
         expectedConsent.setRequestorName("Institute");
         expectedConsent.setRequestorId("456");
         HashMap map = new HashMap();
@@ -60,15 +60,91 @@ public class ConsentServiceTest {
         expectedConsent.setExpirationTime("1000");
         expectedConsent.setOsOwner(osOwners);
         when(consentRepository.findById("123")).thenReturn(Optional.of(expectedConsent));
-        Consent actualConsent = consentService.retrieveConsents("123");
+        Consent actualConsent = consentService.retrieveConsents("123", "456");
         verify(consentRepository, times(1)).findById("123");
         assertEquals(expectedConsent, actualConsent);
     }
 
     @Test
+    public void shouldThrowExceptionWhenConsentNotGranted() throws ConsentDefinitionNotFoundException, ConsentForbiddenException {
+        Consent expectedConsent = new Consent();
+        List<String> osOwners = new ArrayList<>();
+        osOwners.add("789");
+        expectedConsent.setEntityName("Teacher");
+        expectedConsent.setEntityId("123");
+        expectedConsent.setStatus(false);
+        expectedConsent.setCreatedAt(new Date());
+        expectedConsent.setRequestorName("Institute");
+        expectedConsent.setRequestorId("456");
+        HashMap map = new HashMap();
+        map.put("name", 1);
+        expectedConsent.setConsentFields(map);
+        expectedConsent.setExpirationTime("1000");
+        expectedConsent.setOsOwner(osOwners);
+        when(consentRepository.findById("123")).thenReturn(Optional.of(expectedConsent));
+        String expectedMessage = "Consent denied or not approved until now";
+        String message = assertThrows(ConsentForbiddenException.class, () ->  {
+            consentService.retrieveConsents("123", "456");
+        }).getMessage();
+        assertEquals(expectedMessage, message);
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenConsentTimeExpired() throws ConsentDefinitionNotFoundException, ConsentForbiddenException {
+        Consent expectedConsent = new Consent();
+        List<String> osOwners = new ArrayList<>();
+        osOwners.add("789");
+        expectedConsent.setEntityName("Teacher");
+        expectedConsent.setEntityId("123");
+        expectedConsent.setStatus(true);
+        Date d = new Date();
+        d.setTime(d.getTime() - 1001 * 1000);
+        expectedConsent.setCreatedAt(d);
+        expectedConsent.setRequestorName("Institute");
+        expectedConsent.setRequestorId("456");
+        HashMap map = new HashMap();
+        map.put("name", 1);
+        expectedConsent.setConsentFields(map);
+        expectedConsent.setExpirationTime("1000");
+        expectedConsent.setOsOwner(osOwners);
+        when(consentRepository.findById("123")).thenReturn(Optional.of(expectedConsent));
+        String message = assertThrows(ConsentForbiddenException.class, () ->  {
+            consentService.retrieveConsents("123", "456");
+        }).getMessage();
+        String expectedMessage = "Consent Time Expired";
+        assertEquals(expectedMessage, message);
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenConsentOwnerIsIncorrect() throws ConsentDefinitionNotFoundException, ConsentForbiddenException {
+        Consent expectedConsent = new Consent();
+        List<String> osOwners = new ArrayList<>();
+        osOwners.add("789");
+        expectedConsent.setEntityName("Teacher");
+        expectedConsent.setEntityId("123");
+        expectedConsent.setStatus(true);
+        Date d = new Date();
+        d.setTime(d.getTime() - 1001 * 1000);
+        expectedConsent.setCreatedAt(d);
+        expectedConsent.setRequestorName("Institute");
+        expectedConsent.setRequestorId("457");
+        HashMap map = new HashMap();
+        map.put("name", 1);
+        expectedConsent.setConsentFields(map);
+        expectedConsent.setExpirationTime("1000");
+        expectedConsent.setOsOwner(osOwners);
+        when(consentRepository.findById("123")).thenReturn(Optional.of(expectedConsent));
+        String message = assertThrows(ConsentForbiddenException.class, () ->  {
+            consentService.retrieveConsents("123", "456");
+        }).getMessage();
+        String expectedMessage = "You are not authorized to access this consent";
+        assertEquals(expectedMessage, message);
+    }
+
+    @Test
     public void shouldThrowExceptionIfConsentIsNotAvailableForId() {
         when(consentRepository.findById("123")).thenReturn(Optional.ofNullable(null));
-        assertThrows(ConsentDefinitionNotFoundException.class, () -> consentService.retrieveConsents("123"));
+        assertThrows(ConsentDefinitionNotFoundException.class, () -> consentService.retrieveConsents("123", "456"));
     }
 
     @Test
@@ -86,7 +162,7 @@ public class ConsentServiceTest {
         consent.setExpirationTime("1000");
         consent.setOsOwner(osOwners);
         when(consentRepository.findById("123")).thenReturn(Optional.of(consent));
-        consentService.grantOrDenyConsent(GRANTED.name(), "123");
+        consentService.grantOrDenyConsent(GRANTED.name(), "123", "789");
         consent.setStatus(true);
         verify(consentRepository, times(1)).findById("123");
         verify(consentRepository, times(1)).save(consent);

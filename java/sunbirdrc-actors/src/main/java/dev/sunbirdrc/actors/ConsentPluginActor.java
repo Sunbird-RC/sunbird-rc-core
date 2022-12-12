@@ -3,6 +3,7 @@ package dev.sunbirdrc.actors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.NullNode;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
 import dev.sunbirdrc.pojos.dto.ConsentDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ public class ConsentPluginActor extends BaseActor {
     @Override
     protected void onReceive(MessageProtos.Message request) throws Throwable {
         PluginRequestMessage pluginRequestMessage = new ObjectMapper().readValue(request.getPayload().getStringValue(), PluginRequestMessage.class);
-        if(pluginRequestMessage.getUserId() == null) {
+        if(!(pluginRequestMessage.getAdditionalInputs() instanceof NullNode)) {
             grantOrRejectConsent(pluginRequestMessage);
             return;
         }
@@ -34,8 +35,9 @@ public class ConsentPluginActor extends BaseActor {
     private void grantOrRejectConsent(PluginRequestMessage pluginRequestMessage) throws IOException {
         String requestBody = "{\"status\": " + "\"" + pluginRequestMessage.getStatus() + "\"" + "}";
         String consentId = pluginRequestMessage.getAdditionalInputs().get("consentId").asText();
+        String consenterId = pluginRequestMessage.getUserId();
         JsonNode jsonNode = new ObjectMapper().readValue(requestBody, JsonNode.class);
-        restTemplate.exchange(consentUrl + "/api/v1/consent/" + consentId, HttpMethod.PUT,new HttpEntity<>(jsonNode), Object.class);
+        restTemplate.exchange(consentUrl + "/api/v1/consent/" + consentId + "/" + consenterId, HttpMethod.PUT,new HttpEntity<>(jsonNode), Object.class);
     }
 
     private void createConsent(PluginRequestMessage pluginRequestMessage) {

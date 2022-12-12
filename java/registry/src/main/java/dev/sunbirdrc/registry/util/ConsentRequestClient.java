@@ -37,13 +37,6 @@ public class ConsentRequestClient {
         this.restTemplate = restTemplate;
     }
 
-    public JsonNode getConsent(String consentId) throws Exception{
-        return restTemplate.getForObject(
-                consentUrl + "/api/v1/consent/" + consentId,
-                JsonNode.class
-        );
-    }
-
     public JsonNode searchUser(String entityName, String userId) throws Exception {
         ObjectNode payload = JsonNodeFactory.instance.objectNode();
         payload.set(ENTITY_TYPE, JsonNodeFactory.instance.arrayNode().add(entityName));
@@ -68,10 +61,11 @@ public class ConsentRequestClient {
         PluginRouter.route(pluginRequestMessage);
     }
 
-    public ResponseEntity<Object> grantOrRejectClaim(String consentId, JsonNode jsonNode) throws Exception {
+    public ResponseEntity<Object> grantOrRejectClaim(String consentId, String userId, JsonNode jsonNode) throws Exception {
         final String attestorPlugin = "did:internal:ConsentPluginActor";
         PluginRequestMessage pluginRequestMessage = PluginRequestMessage.builder().build();
         pluginRequestMessage.setAttestorPlugin(attestorPlugin);
+        pluginRequestMessage.setUserId(userId);
         pluginRequestMessage.setStatus(jsonNode.get("status").asText());
         String consent = "{\"consentId\" : " + "\"" + consentId + "\"" + "}";
         JsonNode additionalInput = objectMapper.readValue(consent, JsonNode.class);
@@ -82,5 +76,12 @@ public class ConsentRequestClient {
 
     public JsonNode getConsentByOwner(String ownerId) {
         return restTemplate.getForObject(consentUrl + "/api/v1/consent/owner/" + ownerId, JsonNode.class);
+    }
+
+    public JsonNode getConsentByConsentIdAndCreator(String consentId, String keycloakUserId) {
+        return restTemplate.getForObject(
+                consentUrl + "/api/v1/consent/" + consentId + "/" + keycloakUserId,
+                JsonNode.class
+        );
     }
 }

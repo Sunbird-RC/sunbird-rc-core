@@ -98,41 +98,24 @@ public class RegistryConsentController extends AbstractController {
         JsonNode consent = null;
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
-        try {
-            consent = consentRequestClient.getConsent(consentId);
-        } catch (Exception exception) {
-            return internalErrorResponse(responseParams, response, exception);
-        }
-        boolean status = consent.get("status").asText().equals("true");
         String keycloakUserId = registryHelper.getKeycloakUserId(request);
-        boolean isOwner = keycloakUserId.equals(consent.get("requestorId").asText());
         try {
-            if(isConsentTimeExpired(consent.get("createdAt").asText(), consent.get("expirationTime").asText())) {
-                final String consentTimeExpired = "Consent Time Expired";
-                throw new ConsentForbiddenException(consentTimeExpired);
-            }
-            if(!isOwner) {
-                final String forbidden = "You are not authorized to access this consent";
-                throw new ConsentForbiddenException(forbidden);
-            }
-        } catch (ConsentForbiddenException consentForbiddenException) {
-            return forbiddenExceptionResponse(consentForbiddenException);
+            consent = consentRequestClient.getConsentByConsentIdAndCreator(consentId, keycloakUserId);
+        } catch (Exception e) {
+            return forbiddenExceptionResponse(e);
         }
-        if(status) {
-            JsonNode userInfoFromRegistry = null;
-            String[] osOwners = consent.get("osOwner").asText().split(",");
-            String entityName = consent.get("entityName").asText();
-            for(String owner : osOwners) {
-                userInfoFromRegistry = consentRequestClient.searchUser(entityName, owner);
-                if (userInfoFromRegistry != null)
-                    break;
-            }
-            ArrayList<String> consentFields = new ArrayList<>(objectMapper.convertValue(consent.get("consentFields"), Map.class).keySet());
-            ResponseEntity<Object> entityNode = getJsonNodeResponseEntity(userInfoFromRegistry, entityName, consentFields);
-            if (entityNode != null) return entityNode;
+        JsonNode userInfoFromRegistry = null;
+        String[] osOwners = consent.get("osOwner").asText().split(",");
+        String entityName = consent.get("entityName").asText();
+        for(String owner : osOwners) {
+            userInfoFromRegistry = consentRequestClient.searchUser(entityName, owner);
+            if (userInfoFromRegistry != null)
+                break;
         }
-        final String consentNotGranted = "Consent is rejected or not granted until now";
-        return new ResponseEntity<>(consentNotGranted, HttpStatus.OK);
+        ArrayList<String> consentFields = new ArrayList<>(objectMapper.convertValue(consent.get("consentFields"), Map.class).keySet());
+        ResponseEntity<Object> entityNode = getJsonNodeResponseEntity(userInfoFromRegistry, entityName, consentFields);
+        response.setResult(entityNode.getBody());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/api/v1/consent")
@@ -166,18 +149,12 @@ public class RegistryConsentController extends AbstractController {
     public ResponseEntity<Object> grantOrRejectClaim(@PathVariable String consentId, @RequestBody JsonNode jsonNode, HttpServletRequest request) throws Exception {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
-        JsonNode consent;
+        String userId = registryHelper.getKeycloakUserId(request);
         try {
-            consent = consentRequestClient.getConsent(consentId);
+             response.setResult(consentRequestClient.grantOrRejectClaim(consentId, userId, jsonNode));
         } catch (Exception e) {
-            return internalErrorResponse(responseParams, response, e);
+            return forbiddenExceptionResponse(e);
         }
-        String userId = registryHelper.getUserId(request, consent.get("entityName").asText());
-        String[] osOwners = consent.get("osOwner").asText().split(",");
-        boolean isOwner = Arrays.stream(osOwners).filter(owner -> owner.equals(userId)) != null;
-        if(isOwner) {
-            return consentRequestClient.grantOrRejectClaim(consentId, jsonNode);
-        }
-        return forbiddenExceptionResponse(new ConsentForbiddenException("You are not authorized to update this consent"));
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
