@@ -710,7 +710,7 @@ public class RegistryHelper {
 
     public String getUserId(HttpServletRequest request, String entityName) throws Exception {
         List<String> manageRoles = getManageRoles(entityName);
-        if (!manageRoles.contains("anonymous") && (doesEntityContainOwnershipAttributes(entityName) || manageRoles.size() > 0)) {
+        if (doesEntityContainOwnershipAttributes(entityName) || manageRoles.size() > 0) {
             return fetchUserIdFromToken(request);
         } else {
             return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
@@ -896,9 +896,11 @@ public class RegistryHelper {
 
     private List<String> getManageRoles(String entityName) {
         if (definitionsManager.getDefinition(entityName) != null) {
-            return definitionsManager.getDefinition(entityName)
+            List<String> manageRoles = definitionsManager.getDefinition(entityName)
                     .getOsSchemaConfiguration()
                     .getRoles();
+            manageRoles.remove(ROLE_ANONYMOUS);
+            return manageRoles;
         } else {
             return Collections.emptyList();
         }
@@ -1115,7 +1117,7 @@ public class RegistryHelper {
     }
 
     public boolean doesEntityOperationRequireAuthorization(String entity) {
-        return !getManageRoles(entity).contains("anonymous") && (doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0);
+        return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
     }
 
     boolean hasAttestationPropertiesChanged(JsonNode updatedNode, JsonNode existingNode, AttestationPolicy attestationPolicy, String entityName) {
