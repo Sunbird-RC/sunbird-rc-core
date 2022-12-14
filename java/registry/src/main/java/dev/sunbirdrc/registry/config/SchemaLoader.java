@@ -33,14 +33,6 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 	@Autowired
 	private ISearchService searchService;
 
-	@Autowired
-	private IDefinitionsManager definitionsManager;
-
-	@Autowired
-	private IValidate validator;
-
-	@Autowired
-	private ObjectMapper objectMapper;
 
 	@Override
 	public void onApplicationEvent(@NotNull ContextRefreshedEvent contextRefreshedEvent) {
@@ -55,7 +47,7 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 			JsonNode searchResults = searchService.search(objectNode);
 			for (JsonNode schemaNode : searchResults.get(Schema)) {
 				try {
-					schemaService.addSchema(schemaNode);
+					schemaService.addSchema(JsonNodeFactory.instance.objectNode().set(Schema, schemaNode));
 				} catch (Exception e) {
 					logger.error("Failed loading schema to definition manager:", e);
 				}

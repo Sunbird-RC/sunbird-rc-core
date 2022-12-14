@@ -21,7 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -208,7 +207,7 @@ public class SchemaServiceTest {
 				"    ]\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.updateSchema(updatedSchema);
 		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 		assertNull(updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact"));
 		assertEquals(1, updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile").size());
@@ -251,7 +250,7 @@ public class SchemaServiceTest {
 				"    \"status\": \"PUBLISHED\"\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.validateUpdateSchema(existingSchema, updatedSchema);
 		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 		assertNull(updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact"));
 		assertEquals(1, updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile").size());
@@ -294,7 +293,7 @@ public class SchemaServiceTest {
 				"    \"status\": \"DRAFT\"\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.validateUpdateSchema(existingSchema, updatedSchema);
 		objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 	}
 
@@ -335,7 +334,7 @@ public class SchemaServiceTest {
 				"    \"status\": \"DRAFT\"\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.updateSchema(updatedSchema);
 		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 		assertNull(updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact"));
 		assertEquals(1, updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile").size());
@@ -378,7 +377,7 @@ public class SchemaServiceTest {
 				"    \"status\": \"PUBLISHED\"\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.updateSchema(updatedSchema);
 		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 		assertNull(updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact"));
 		assertEquals(1, updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile").size());
@@ -422,7 +421,7 @@ public class SchemaServiceTest {
 				"    \"status\": \"PUBLISHED\"\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.updateSchema(updatedSchema);
 		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 		assertNotNull(updatedDefinition.get("_osConfig").get("certificateTemplates"));
 		assertEquals(1, updatedDefinition.get("_osConfig").get("certificateTemplates").size());

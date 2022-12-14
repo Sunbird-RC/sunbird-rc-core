@@ -42,7 +42,6 @@ import org.sunbird.akka.core.Router;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static dev.sunbirdrc.registry.Constants.CREDENTIAL_TEMPLATE;
 import static dev.sunbirdrc.registry.Constants.Schema;
 
 @Service
@@ -197,7 +196,7 @@ public class RegistryServiceImpl implements RegistryService {
             generateCredentials(rootNode, vertexLabel);
         }
         if (vertexLabel.equals(Schema)) {
-            schemaService.addSchema(rootNode);
+            schemaService.validateNewSchema(rootNode);
         }
 
         if (persistenceEnabled) {
@@ -239,6 +238,9 @@ public class RegistryServiceImpl implements RegistryService {
 
 
 
+        }
+        if (vertexLabel.equals(Schema)) {
+            schemaService.addSchema(rootNode);
         }
         return entityId;
     }
@@ -332,11 +334,15 @@ public class RegistryServiceImpl implements RegistryService {
             generateCredentials(inputNode, entityType);
 
             if (entityType.equals(Schema)) {
-                schemaService.updateSchema(readNode, inputNode);
+                schemaService.validateUpdateSchema(readNode, inputNode);
             }
 
             // The entity type is a child and so could be different from parent entity type.
             doUpdate(shard, graph, registryDao, vr, inputNode.get(entityType), entityType, null);
+
+            if (entityType.equals(Schema)) {
+                schemaService.updateSchema(inputNode);
+            }
 
             databaseProvider.commitTransaction(graph, tx);
 

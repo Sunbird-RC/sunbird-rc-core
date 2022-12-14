@@ -58,12 +58,7 @@ public class SchemaService {
 		}
 	}
 
-	public void updateSchema(JsonNode existingSchema, JsonNode updatedSchema) throws IOException, SchemaException {
-		JsonNode existingSchemaStatus = existingSchema.get(Schema).get(STATUS);
-		if (existingSchemaStatus != null) {
-			checkIfSchemaDefinitionUpdatedForPublishedSchema(existingSchema, updatedSchema, existingSchemaStatus);
-			checkIfSchemaStatusUpdatedForPublishedSchema(updatedSchema, existingSchemaStatus);
-		}
+	public void updateSchema(JsonNode updatedSchema) throws IOException {
 		JsonNode schema = updatedSchema.get(Schema).get(Schema.toLowerCase());
 		definitionsManager.appendNewDefinition(schema);
 		validator.addDefinitions(schema);
@@ -90,4 +85,33 @@ public class SchemaService {
 			}
 		}
 	}
+
+	public void validateNewSchema(JsonNode schemaNode) throws SchemaException {
+		JsonNode schema = schemaNode.get(Schema).get(Schema.toLowerCase());
+		try {
+			Definition definition = Definition.toDefinition(schema);
+			if (definitionsManager.getDefinition(definition.getTitle()) != null) {
+				throw new SchemaException("Duplicate Error: Schema already exists");
+			}
+		} catch (JsonProcessingException e) {
+			throw new SchemaException("Schema definition is not valid", e);
+		}
+	}
+
+
+	public void validateUpdateSchema(JsonNode existingSchemaNode, JsonNode updatedSchemaNode) throws SchemaException, JsonProcessingException {
+		JsonNode existingSchemaStatus = existingSchemaNode.get(Schema).get(STATUS);
+		JsonNode updatedSchema = updatedSchemaNode.get(Schema).get(Schema.toLowerCase());
+		try {
+			Definition.toDefinition(updatedSchema);
+		} catch (JsonProcessingException e) {
+			throw new SchemaException("Schema definition is not valid", e);
+		}
+		if (existingSchemaStatus != null) {
+			checkIfSchemaDefinitionUpdatedForPublishedSchema(existingSchemaNode, updatedSchemaNode, existingSchemaStatus);
+			checkIfSchemaStatusUpdatedForPublishedSchema(updatedSchemaNode, existingSchemaStatus);
+		}
+	}
+
+
 }
