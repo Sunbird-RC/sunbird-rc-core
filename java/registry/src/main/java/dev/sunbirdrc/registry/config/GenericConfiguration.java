@@ -125,6 +125,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private int auditQueueCapacity;
 	@Value("${elastic.search.connection_url}")
 	private String elasticConnInfo;
+	@Value("${elastic.search.auth_enabled}")
+	private String authEnabled;
+	@Value("${elastic.search.elastic_username}")
+	private String username;
+	@Value("${elastic.search.elastic_password}")
+	private String password;
 	@Value("${notification.service.connection_url}")
 	private String notificationServiceConnInfo;
 	@Value("${notification.service.enabled}")
@@ -413,6 +419,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (isElasticSearchEnabled()) {
 			elasticService.setType(Constants.ES_DOC_TYPE);
 			elasticService.setConnectionInfo(elasticConnInfo);
+			elasticService.setAuthEnabled(Boolean.parseBoolean(authEnabled));
+			elasticService.setUserName(username);
+			elasticService.setPassword(password);
 			elasticService.init(iDefinitionsManager.getAllKnownDefinitions());
 		}
 		return elasticService;
