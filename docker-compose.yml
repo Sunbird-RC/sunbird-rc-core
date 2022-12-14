@@ -42,7 +42,7 @@ services:
       - elastic_search_connection_url=es:9200
       - elastic_search_username=elastic
       - elastic_search_auth_enabled=true
-      - elastic_search_password=DkIedPPSCb
+      - elastic_search_password=${ELASTIC_SEARCH_PASSWORD}
       - search_providerName=${SEARCH_PROVIDER_NAME-dev.sunbirdrc.registry.service.ElasticSearchService}
       - sunbird_sso_realm=${KEYCLOAK_REALM-sunbird-rc}
       - sunbird_sso_url=http://keycloak:8080/auth
