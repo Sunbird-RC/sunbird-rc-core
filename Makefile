@@ -94,6 +94,6 @@ release: test
 	docker push dockerhub/sunbird-rc-context-proxy-service:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-nginx:latest
 	docker push dockerhub/sunbird-rc-nginx:$(RELEASE_VERSION)
-	@cd tools/cli/ && yarn publish
+	@cd tools/cli/ && npm publish
 
 
