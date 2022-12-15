@@ -439,7 +439,7 @@
 			"requiredActions": [],
 			"realmRoles": ["default-roles-<%= props.realmName %>"],
 			"clientRoles": {
-				"realm-management": ["manage-users"]
+				"realm-management": ["manage-users","manage-realm"]
 			},
 			"notBefore": 0,
 			"groups": []
