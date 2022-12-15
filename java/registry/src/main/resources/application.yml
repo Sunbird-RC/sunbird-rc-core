@@ -295,9 +295,9 @@ elastic:
     connection_url: ${elastic_search_connection_url:localhost:9200}
     add_shard_prefix: ${elastic_search_add_shard_prefix:true}
     #if authentication is enabled
-    auth_enabled: ${elastic_search_auth_enabled:true}
+    auth_enabled: ${elastic_search_auth_enabled:false}
     elastic_username: ${elastic_search_username:elastic}
-    elastic_password: ${elastic_search_password:DkIedPPSCb}
+    elastic_password: ${elastic_search_password:XXXXXXX}
 filestorage:
   url: ${filestorage_connection_url:http://localhost:9000}
   accesskey: ${filestorage_access_key:XXXXX}
