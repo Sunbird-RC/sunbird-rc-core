@@ -895,11 +895,9 @@ public class RegistryHelper {
 
     private List<String> getManageRoles(String entityName) {
         if (definitionsManager.getDefinition(entityName) != null) {
-            List<String> manageRoles = definitionsManager.getDefinition(entityName)
+            return definitionsManager.getDefinition(entityName)
                     .getOsSchemaConfiguration()
                     .getRoles();
-            manageRoles.remove(ROLE_ANONYMOUS);
-            return manageRoles;
         } else {
             return Collections.emptyList();
         }
