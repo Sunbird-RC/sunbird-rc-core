@@ -88,7 +88,7 @@ public class CreateEntityConsumer {
                         .webhookUrl(webhookUrl)
                         .timestamp(Timestamp.from(Instant.now())).build());
             } catch (Exception e) {
-                logger.error("Sending message to {} topic failed: {}", postCreateEntityTopic, e.getMessage(), e);
+                logger.error("Sending message to {} topic failed: {}", postCreateEntityMessage, e.getMessage(), e);
             }
             acknowledgment.acknowledge();
         }
