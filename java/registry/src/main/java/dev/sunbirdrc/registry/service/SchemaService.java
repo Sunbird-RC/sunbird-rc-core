@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.validators.IValidate;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -41,14 +42,19 @@ public class SchemaService {
 	}
 
 
-	public void addSchema(JsonNode schemaNode) throws IOException {
+	public void addSchema(JsonNode schemaNode) throws IOException, SchemaException {
 		if (schemaNode.get(Schema).get(STATUS) == null) {
 			((ObjectNode) schemaNode.get(Schema)).put(STATUS, SchemaStatus.DRAFT.toString());
 		}
 		JsonNode schema = schemaNode.get(Schema).get(Schema.toLowerCase());
 		if (schemaNode.get(Schema).get(STATUS).textValue().equals(SchemaStatus.PUBLISHED.toString())) {
-			definitionsManager.appendNewDefinition(schema);
-			validator.addDefinitions(schema);
+			Definition definition = Definition.toDefinition(schema);
+			if (definitionsManager.getDefinition(definition.getTitle()) == null) {
+				definitionsManager.appendNewDefinition(definition);
+				validator.addDefinitions(schema);
+			} else {
+				throw new SchemaException("Duplicate Error: Schema already exists");
+			}
 		}
 	}
 

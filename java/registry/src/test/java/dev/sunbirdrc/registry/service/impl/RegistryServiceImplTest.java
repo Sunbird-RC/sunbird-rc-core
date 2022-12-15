@@ -308,7 +308,7 @@ public class RegistryServiceImplTest {
 
 	@Test
 	public void shouldUpdateOnlyPublicFieldsInES() throws Exception {
-		
+
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
 		ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
@@ -391,5 +391,34 @@ public class RegistryServiceImplTest {
 		return vertexWriter.writeNodeEntity(objectMapper.readTree("{\"Teacher\":  {\n" +
 				"  \"fullName\": \"abc\"\n" +
 				"}}"));
+	}
+
+	@Test
+	public void shouldNotAddDuplicateSchemaToDefinitionManager() throws Exception {
+		ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
+		ReflectionTestUtils.setField(registryService, "uuidPropertyName", "osid");
+		ReflectionTestUtils.setField(registryService, "searchProvider", "dev.sunbirdrc.registry.service.ElasticSearchService");
+		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
+		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
+		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
+		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
+		ObjectNode object = JsonNodeFactory.instance.objectNode();
+		object.put(Schema.toLowerCase(), schema);
+		object.put("status", SchemaStatus.PUBLISHED.toString());
+		schemaNode.set(Schema, object);
+		registryService.addEntity(shard, "", schemaNode, true);
+		assertEquals(3, definitionsManager.getAllKnownDefinitions().size());
+		ObjectNode schemaObjectNode = (ObjectNode) objectMapper.readTree(schema);
+		((ObjectNode)schemaObjectNode.get("definitions").get("TrainingCertificate").get("properties")).remove("date");
+		((ObjectNode)schemaObjectNode.get("definitions").get("TrainingCertificate").get("properties")).remove("note");
+		object.put(Schema.toLowerCase(), objectMapper.writeValueAsString(schemaObjectNode));
+		try {
+			registryService.addEntity(shard, "", schemaNode, true);
+		} catch (Exception e) {
+			assertEquals("Duplicate Error: Schema already exists", e.getMessage());
+		}
+
+
+		assertEquals(5, JSONUtil.convertStringJsonNode(definitionsManager.getDefinition("TrainingCertificate").getContent()).get("definitions").get("TrainingCertificate").get("properties").size());
 	}
 }
