@@ -17,6 +17,7 @@ import org.springframework.kafka.annotation.KafkaListeners;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.*;
+import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.MessageListenerContainer;
 
 import java.util.Collection;
@@ -84,6 +85,7 @@ public class KafkaConfiguration {
 		props.put(ConsumerConfig.GROUP_ID_CONFIG, createEntityGroupId);
 		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+		props.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, false);
 		return new DefaultKafkaConsumerFactory<>(props);
 	}
 
@@ -92,6 +94,7 @@ public class KafkaConfiguration {
 
 		ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
 		factory.setConsumerFactory(consumerFactory());
+		factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 		return factory;
 	}
 
