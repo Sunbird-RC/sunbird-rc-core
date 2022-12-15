@@ -1,9 +1,14 @@
 package dev.sunbirdrc.registry.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
+import dev.sunbirdrc.registry.middleware.util.Constants;
+import org.springframework.core.io.ResourceLoader;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
 
@@ -15,6 +20,9 @@ public interface IDefinitionsManager {
     Definition getDefinition(String title);
 
     Map<String, Definition> getDefinitionMap();
+
+    void setInternalSchemas() throws Exception;
+    List<String> getInternalSchemas();
 
 
     /**
@@ -79,6 +87,7 @@ public interface IDefinitionsManager {
     }
     boolean isValidEntityName(String entityName);
     void appendNewDefinition(JsonNode jsonNode);
+    void appendNewDefinition(Definition definition);
     void removeDefinition(JsonNode jsonNode);
 
     default List<String> getEntitiesWithAnonymousInviteRoles() {
@@ -101,5 +110,22 @@ public interface IDefinitionsManager {
             }
         }
         return anonymousEntities;
+    }
+
+    default List<String> getInternalSchemasNames(ResourceLoader resourceLoader) throws Exception {
+        final ObjectMapper mapper = new ObjectMapper();
+        OSResourceLoader osResourceLoader = new OSResourceLoader(resourceLoader);
+        osResourceLoader.loadResource(Constants.INTERNAL_RESOURCE_LOCATION);
+        return osResourceLoader.getNameContent().values().stream().map(s -> {
+            try {
+                JsonNode jsonNode = mapper.readTree(s);
+                Definition definition = new Definition(jsonNode);
+                return definition.getTitle();
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+        }).collect(Collectors.toList());
+
     }
 }

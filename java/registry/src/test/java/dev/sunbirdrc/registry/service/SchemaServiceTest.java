@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
+import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
 import dev.sunbirdrc.validators.IValidate;
@@ -106,7 +107,7 @@ public class SchemaServiceTest {
 	}
 
 	@Test
-	public void shouldAddSchemaToDefinitionManager() throws IOException {
+	public void shouldAddSchemaToDefinitionManager() throws IOException, SchemaException {
 		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -119,7 +120,7 @@ public class SchemaServiceTest {
 	}
 
 	@Test
-	public void shouldAddSchemaToDefinitionManagerAndAddEntityToElasticSearch() throws IOException {
+	public void shouldAddSchemaToDefinitionManagerAndAddEntityToElasticSearch() throws IOException, SchemaException {
 		ReflectionTestUtils.setField(schemaService, "isElasticSearchEnabled", true);
 		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
@@ -134,7 +135,7 @@ public class SchemaServiceTest {
 
 
 	@Test
-	public void shouldAddStatusToNewSchemasIfNotPresent() throws IOException {
+	public void shouldAddStatusToNewSchemasIfNotPresent() throws IOException, SchemaException {
 		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -148,7 +149,7 @@ public class SchemaServiceTest {
 	}
 
 	@Test
-	public void shouldAddSchemaToDefinitionManagerOnlyForPublishedStatus() throws IOException {
+	public void shouldAddSchemaToDefinitionManagerOnlyForPublishedStatus() throws IOException, SchemaException {
 		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -161,7 +162,7 @@ public class SchemaServiceTest {
 	}
 
 	@Test
-	public void shouldNotAddSchemaToDefinitionManagerForDraftStatus() throws IOException {
+	public void shouldNotAddSchemaToDefinitionManagerForDraftStatus() throws IOException, SchemaException {
 		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -425,5 +426,26 @@ public class SchemaServiceTest {
 		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 		assertNotNull(updatedDefinition.get("_osConfig").get("certificateTemplates"));
 		assertEquals(1, updatedDefinition.get("_osConfig").get("certificateTemplates").size());
+	}
+
+	@Test
+	public void shouldNotAddDuplicateSchemaToDefinitionManager() throws IOException, SchemaException {
+		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
+		assertEquals(5, JSONUtil.convertStringJsonNode(definitionsManager.getDefinition("TrainingCertificate").getContent()).get("definitions").get("TrainingCertificate").get("properties").size());
+		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
+		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
+		ObjectNode object = JsonNodeFactory.instance.objectNode();
+		ObjectNode schemaObjectNode = (ObjectNode) objectMapper.readTree(schema);
+		((ObjectNode)schemaObjectNode.get("definitions").get("TrainingCertificate").get("properties")).remove("date");
+		((ObjectNode)schemaObjectNode.get("definitions").get("TrainingCertificate").get("properties")).remove("note");
+		object.put(Schema.toLowerCase(), objectMapper.writeValueAsString(schemaObjectNode));
+		object.put("status", SchemaStatus.PUBLISHED.toString());
+		schemaNode.set(Schema, object);
+		try {
+			schemaService.addSchema(schemaNode);
+		} catch (Exception e) {
+			assertEquals("Duplicate Error: Schema already exists", e.getMessage());
+		}
+		assertEquals(5, JSONUtil.convertStringJsonNode(definitionsManager.getDefinition("TrainingCertificate").getContent()).get("definitions").get("TrainingCertificate").get("properties").size());
 	}
 }

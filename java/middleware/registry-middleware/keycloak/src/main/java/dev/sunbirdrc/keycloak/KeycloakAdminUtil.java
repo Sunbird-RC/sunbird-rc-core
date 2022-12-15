@@ -235,7 +235,7 @@ public class KeycloakAdminUtil implements HealthIndicator {
     public ComponentHealthInfo getHealthInfo() {
         if (authenticationEnabled) {
             try {
-                return new ComponentHealthInfo(getServiceName(), keycloak.realms().findAll().size() > 0);
+                return new ComponentHealthInfo(getServiceName(), keycloak.serverInfo().getInfo().getSystemInfo().getUptimeMillis() > 0);
             } catch (Exception e) {
                 return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
             }
