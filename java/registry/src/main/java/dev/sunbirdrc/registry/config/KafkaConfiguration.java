@@ -85,7 +85,7 @@ public class KafkaConfiguration {
 		props.put(ConsumerConfig.GROUP_ID_CONFIG, createEntityGroupId);
 		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-		props.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, false);
+		props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
 		return new DefaultKafkaConsumerFactory<>(props);
 	}
 
