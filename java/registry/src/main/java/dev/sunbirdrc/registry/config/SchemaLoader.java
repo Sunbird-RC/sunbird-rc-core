@@ -16,6 +16,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
@@ -49,9 +50,13 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 		try {
 			JsonNode searchResults = searchService.search(objectNode);
 			for (JsonNode schemaNode : searchResults.get(Schema)) {
-				JsonNode schema = schemaNode.get(Schema.toLowerCase());
-				definitionsManager.appendNewDefinition(schema);
-				validator.addDefinitions(schema);
+				try {
+					JsonNode schema = schemaNode.get(Schema.toLowerCase());
+					definitionsManager.appendNewDefinition(schema);
+					validator.addDefinitions(schema);
+				} catch (Exception e) {
+					logger.error("Failed loading schema to definition manager:", e);
+				}
 			}
 			logger.info("Loaded {} schema from DB", searchResults.get(Schema).size());
 		} catch (IOException e) {
