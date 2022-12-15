@@ -120,8 +120,7 @@ public class NativeSearchService implements ISearchService {
 							String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
 							JSONUtil.addPrefix((ObjectNode) shardResult, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
 						}
-
-						result.add(shardResult);
+						removeNonPublicFields(result, searchQuery, shardResult);
 						transaction.add(tx.hashCode());
 					}
 				} catch (Exception e) {
@@ -144,20 +143,16 @@ public class NativeSearchService implements ISearchService {
 		
 		return buildResultNode(searchQuery, result);
 	}
-	
-	/**
-	 * combines all the nodes for an entity
-	 * @param entity
-	 * @param allShardResult
-	 * @return
-	 */
-	private ArrayNode getEntityAttibute(String entity, ArrayNode allShardResult) {
-		ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
-		for (int i = 0; i < allShardResult.size(); i++) {
-			resultArray.addAll((ArrayNode) allShardResult.get(i).get(entity));
+
+	private void removeNonPublicFields(ArrayNode result, SearchQuery searchQuery, ObjectNode shardResult) throws Exception {
+		for(String entityType: searchQuery.getEntityTypes()) {
+			ArrayNode arrayNode = (ArrayNode) shardResult.get(entityType);
+			for(JsonNode node : arrayNode) {
+				result.add(JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityType)));
+			}
 		}
-		return resultArray;
 	}
+
 	/**
 	 * Builds result node from given array of shard nodes 
 	 * @param searchQuery
@@ -167,8 +162,7 @@ public class NativeSearchService implements ISearchService {
 	private JsonNode buildResultNode(SearchQuery searchQuery, ArrayNode allShardResult) {
 		ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
 		for (String entity : searchQuery.getEntityTypes()) {
-			ArrayNode entityResult = getEntityAttibute(entity, allShardResult);
-			resultNode.set(entity, entityResult);
+			resultNode.set(entity, allShardResult);
 		}
 		return resultNode;
 	}
