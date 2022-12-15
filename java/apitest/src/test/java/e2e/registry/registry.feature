@@ -167,6 +167,16 @@ Feature: Registry api tests
     When method get
     Then status 200
     And response[0].name == "xyz"
+  # get student
+    Given url registryUrl
+    And path 'api/v1/Student/search'
+    And request {"filters":{}}
+    When method post
+    Then status 200
+    * print response
+    And response.length == 1
+    And match response[0].contact == '#notpresent'
+    And match response[0].favoriteSubject == '#notpresent'
   # delete student info
     Given url registryUrl
     And path 'api/v1/Student/' + studentOsid
@@ -220,6 +230,7 @@ Feature: Registry api tests
     Then status 200
     * print response
     And response.length == 1
+    And response[0].contact == '#notpresent'
 
   Scenario: Create Board and invite institutes
     #    get admin token
