@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.PluginRouter;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
+import dev.sunbirdrc.pojos.dto.ConsentDTO;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,18 +47,17 @@ public class ConsentRequestClient {
         return registryHelper.searchEntity(payload);
     }
 
-    public void addConsent(ObjectNode objectNode, HttpServletRequest request) throws Exception {
+    public void addConsent(ConsentDTO consentDTO, HttpServletRequest request) throws Exception {
         final String attestorPlugin = "did:internal:ConsentPluginActor";
         PluginRequestMessage pluginRequestMessage = PluginRequestMessage.builder().build();
         pluginRequestMessage.setAttestorPlugin(attestorPlugin);
-        pluginRequestMessage.setConsentEntityName(objectNode.get("entityName").asText());
-        pluginRequestMessage.setConsentEntityId(objectNode.get("entityId").asText());
-        pluginRequestMessage.setExpirationTime(objectNode.get("consentExpiryTime").asText());
-        pluginRequestMessage.setSourceEntity(objectNode.get("requestorName").asText());
+        pluginRequestMessage.setConsentEntityName(consentDTO.getEntityName());
+        pluginRequestMessage.setConsentEntityId(consentDTO.getEntityId());
+        pluginRequestMessage.setExpirationTime(consentDTO.getConsentExpiryTime());
+        pluginRequestMessage.setSourceEntity(consentDTO.getRequestorName());
         pluginRequestMessage.setUserId(registryHelper.getKeycloakUserId(request));
-        pluginRequestMessage.setStatus(objectNode.get("status").asText());
-        pluginRequestMessage.setConsentFieldPath(objectMapper.convertValue(objectNode.get("consentFieldsPath"), Map.class));
-        pluginRequestMessage.setConsentEntityOsOwner(objectMapper.convertValue(objectNode.get("osOwner"), List.class));
+        pluginRequestMessage.setConsentFieldPath(consentDTO.getConsentFieldsPath());
+        pluginRequestMessage.setConsentEntityOsOwner(consentDTO.getOsOwner());
         PluginRouter.route(pluginRequestMessage);
     }
 

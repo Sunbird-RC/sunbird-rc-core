@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
+import dev.sunbirdrc.pojos.dto.ConsentDTO;
 import dev.sunbirdrc.registry.exception.ConsentForbiddenException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
@@ -86,9 +87,9 @@ public class RegistryConsentController extends AbstractController {
     }
 
     @PostMapping(value = "/api/v1/consent")
-    public ResponseEntity<Object> createConsent(@RequestBody ObjectNode objectNode, HttpServletRequest request) throws Exception {
+    public ResponseEntity<Object> createConsent(@RequestBody ConsentDTO consentDTO, HttpServletRequest request) throws Exception {
         ResponseParams responseParams = new ResponseParams();
-        consentRequestClient.addConsent(objectNode, request);
+        consentRequestClient.addConsent(consentDTO, request);
         responseParams.setStatus(Response.Status.SUCCESSFUL);
         return new ResponseEntity<>(responseParams, HttpStatus.OK);
     }

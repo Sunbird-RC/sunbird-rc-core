@@ -1,7 +1,6 @@
 {
   "entityName": "Place",
   "entityId": "1-eab84a8b-72f2-448e-af65-d2082bee589d",
-  "status": "false",
   "requestorName": "Random",
   "consentFieldsPath": {
     "name": "$.name",
