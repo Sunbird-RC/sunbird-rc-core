@@ -14,8 +14,11 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.URL;
 import java.util.*;
 
+import org.apache.commons.collections4.KeyValue;
+import org.apache.commons.collections4.keyvalue.DefaultKeyValue;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -57,6 +60,7 @@ public class ElasticServiceImpl implements IElasticService {
     private static boolean authEnabled;
     private static String userName;
     private static String password;
+    private static String defaultScheme;
 
     public void setConnectionInfo(String connection) {
         connectionInfo = connection;
@@ -93,13 +97,19 @@ public class ElasticServiceImpl implements IElasticService {
         credentialsProvider.setCredentials(AuthScope.ANY,
                 new UsernamePasswordCredentials(userName, password));
         if (!esClient.containsKey(indexName)) {
-            Map<String, Integer> hostPort = new HashMap<String, Integer>();
+            Map<String, KeyValue<Integer, String>> hostPort = new HashMap<>();
             for (String info : connectionInfo.split(",")) {
-                hostPort.put(info.split(":")[0], Integer.valueOf(info.split(":")[1]));
+                try {
+                    URL url = new URL(info);
+                    hostPort.put(url.getHost(), new DefaultKeyValue<>(url.getPort(), url.getProtocol()));
+                } catch (Exception e) {
+                    String port = Optional.ofNullable(info.split(":").length == 1 ? "-1" : info.split(":")[1]).get();
+                    hostPort.put(info.split(":")[0], new DefaultKeyValue<>(Integer.valueOf(port), defaultScheme));
+                }
             }
             List<HttpHost> httpHosts = new ArrayList<>();
             for (String host : hostPort.keySet()) {
-                httpHosts.add(new HttpHost(host, hostPort.get(host)));
+                httpHosts.add(new HttpHost(host, hostPort.get(host).getKey(), hostPort.get(host).getValue()));
             }
             RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[httpHosts.size()]));
             if(authEnabled) {
@@ -109,6 +119,10 @@ public class ElasticServiceImpl implements IElasticService {
             if (null != client)
                 esClient.put(indexName, client);
         }
+    }
+
+    public void setScheme(String scheme) {
+        this.defaultScheme = scheme;
     }
 
     /**
