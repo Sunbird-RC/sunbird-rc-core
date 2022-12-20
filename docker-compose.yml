@@ -50,6 +50,7 @@ services:
       - sunbird_sso_client_id=${KEYCLOAK_CLIENT_ID-registry-frontend}
       - sunbird_sso_admin_client_secret=${KEYCLOAK_SECRET}
       - claims_url=http://claim-ms:8082
+      - consent_url=http://consent-ms:8083
       - sign_url=http://certificate-signer:8079/sign
       - sign_health_check_url=http://certificate-signer:8079/health
       - signature_enabled=true
@@ -129,6 +130,25 @@ services:
         condition: service_started
     healthcheck:
       test: [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8082/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 4
+  consent-ms:
+    image: dockerhub/sunbird-rc-consent-ms:${RELEASE_VERSION}
+    environment:
+      - connectionInfo_uri=jdbc:postgresql://db:5432/registry
+      - connectionInfo_username=postgres
+      - connectionInfo_password=postgres
+      - sunbirdrc_url=http://registry:8081
+    ports:
+      - "8083:8083"
+    depends_on:
+      db:
+        condition: service_started
+      registry:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8083/health || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 4

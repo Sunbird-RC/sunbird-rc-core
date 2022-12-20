@@ -232,6 +232,8 @@ keycloak-user:
   email-actions: ${keycloack_user_email_actions:}
 claims:
   url: ${claims_url:http://localhost:8081}
+consent:
+  url: ${consent_url:http://localhost:8083}
 authentication:
   enabled: ${authentication_enabled:true}
   publicKey:  ${authentication_publickey:}

@@ -63,6 +63,14 @@ public abstract class AbstractController {
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    ResponseEntity<Object> forbiddenExceptionResponse(Exception e) {
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.READ, "OK", responseParams);
+        responseParams.setErrmsg(e.getMessage());
+        responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
+
     ResponseEntity<Object> createUnauthorizedExceptionResponse(Exception e) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
