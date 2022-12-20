@@ -13,6 +13,7 @@ import dev.sunbirdrc.registry.service.WebhookService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -60,7 +62,7 @@ public class CreateEntityConsumer {
     }
 
     @KafkaListener(topics = "#{'${kafka.createEntityTopic}'}", groupId = createEntityGroupId, autoStartup = "${async.enabled}")
-    public void createEntityConsumer(@Payload String message, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key) {
+    public void createEntityConsumer(@Payload String message, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, Acknowledgment acknowledgment) {
         PostCreateEntityMessage postCreateEntityMessage = PostCreateEntityMessage.builder().build();
         try {
             logger.debug("Received message: {}, key: {}", message, key);
@@ -75,7 +77,6 @@ public class CreateEntityConsumer {
             registryHelper.autoRaiseClaim(entityType, entityOsid, createEntityMessage.getUserId(), null, inputJson, createEntityMessage.getEmailId());
             postCreateEntityMessage = PostCreateEntityMessage.builder().entityType(entityType).osid(entityOsid)
                     .transactionId(key).userId(createEntityMessage.getUserId()).status(CreateEntityStatus.SUCCESSFUL).message("").build();
-
         } catch (Exception e) {
             logger.error("Creating entity failed, {}", e.getMessage(), e);
             postCreateEntityMessage = PostCreateEntityMessage.builder().status(CreateEntityStatus.FAILED).transactionId(key).message(e.getMessage()).build();
@@ -87,8 +88,9 @@ public class CreateEntityConsumer {
                         .webhookUrl(webhookUrl)
                         .timestamp(Timestamp.from(Instant.now())).build());
             } catch (Exception e) {
-                logger.error("Sending message to {} topic failed: {}", postCreateEntityTopic, e.getMessage(), e);
+                logger.error("Sending message to {} topic failed: {}", postCreateEntityMessage, e.getMessage(), e);
             }
+            acknowledgment.acknowledge();
         }
     }
 }

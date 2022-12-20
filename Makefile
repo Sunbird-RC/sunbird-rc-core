@@ -1,7 +1,7 @@
 #SOURCES = $(wildcard java/**/*.java)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SOURCES := $(call rwildcard,java/,*.java)
-RELEASE_VERSION = v0.0.12
+RELEASE_VERSION = v0.0.13
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	rm -rf java/claim/target/*.jar
@@ -95,4 +95,6 @@ release: test
 	docker push dockerhub/sunbird-rc-context-proxy-service:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-nginx:latest
 	docker push dockerhub/sunbird-rc-nginx:$(RELEASE_VERSION)
+	@cd tools/cli/ && npm publish
+
 
