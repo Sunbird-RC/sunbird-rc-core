@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.PluginRouter;
 import dev.sunbirdrc.pojos.PluginRequestMessage;
 import dev.sunbirdrc.pojos.dto.ConsentDTO;
+import dev.sunbirdrc.registry.exception.ConsentForbiddenException;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 import java.util.Map;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
@@ -28,6 +28,8 @@ public class ConsentRequestClient {
     private final String consentUrl;
     private final RestTemplate restTemplate;
 
+    @Autowired
+    IDefinitionsManager definitionsManager;
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
@@ -48,6 +50,10 @@ public class ConsentRequestClient {
     }
 
     public void addConsent(ConsentDTO consentDTO, HttpServletRequest request) throws Exception {
+        if(!(definitionsManager.getDefinition(consentDTO.getEntityName()) != null &&
+                isAllConsentFieldsInPrivate(consentDTO.getConsentFieldsPath(), consentDTO.getEntityName()))) {
+            throw new ConsentForbiddenException("Consent cannot be requested on these fields");
+        }
         final String attestorPlugin = "did:internal:ConsentPluginActor";
         PluginRequestMessage pluginRequestMessage = PluginRequestMessage.builder().build();
         pluginRequestMessage.setAttestorPlugin(attestorPlugin);
@@ -59,6 +65,12 @@ public class ConsentRequestClient {
         pluginRequestMessage.setConsentFieldPath(consentDTO.getConsentFieldsPath());
         pluginRequestMessage.setConsentEntityOsOwner(consentDTO.getOsOwner());
         PluginRouter.route(pluginRequestMessage);
+    }
+
+    private boolean isAllConsentFieldsInPrivate(Map<String, String> consentFieldsPath, String entityName) {
+        return consentFieldsPath.keySet().stream().allMatch(field ->
+                definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getPrivateFields().contains(field)
+        );
     }
 
     public ResponseEntity<Object> grantOrRejectClaim(String consentId, String userId, JsonNode jsonNode) throws Exception {

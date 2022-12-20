@@ -89,7 +89,13 @@ public class RegistryConsentController extends AbstractController {
     @PostMapping(value = "/api/v1/consent")
     public ResponseEntity<Object> createConsent(@RequestBody ConsentDTO consentDTO, HttpServletRequest request) throws Exception {
         ResponseParams responseParams = new ResponseParams();
-        consentRequestClient.addConsent(consentDTO, request);
+        try {
+            consentRequestClient.addConsent(consentDTO, request);
+        } catch (Exception e) {
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
         responseParams.setStatus(Response.Status.SUCCESSFUL);
         return new ResponseEntity<>(responseParams, HttpStatus.OK);
     }

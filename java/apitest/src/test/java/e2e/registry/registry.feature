@@ -251,6 +251,18 @@ Feature: Registry api tests
       Then status 200
       * sleep(3000)
 
+#   create consent for entity Place but without private fields
+    Given url registryUrl
+    And path 'api/v1/consent'
+    And header Authorization = admin_token
+    * def consentRequest = read('FailingConsentRequest.json')
+    * consentRequest.entityId = placeOsid
+    * consentRequest.osOwner = placeOwner
+    And request consentRequest
+    When method post
+    Then status 500
+    * sleep(3000)
+
   #   fetch consent by owner
       Given url registryUrl
       And path 'api/v1/consent/'
