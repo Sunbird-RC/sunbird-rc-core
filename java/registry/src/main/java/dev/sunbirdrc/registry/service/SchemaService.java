@@ -59,9 +59,12 @@ public class SchemaService {
 	}
 
 	public void updateSchema(JsonNode updatedSchema) throws IOException {
-		JsonNode schema = updatedSchema.get(Schema).get(Schema.toLowerCase());
-		definitionsManager.appendNewDefinition(schema);
-		validator.addDefinitions(schema);
+		JsonNode schemaNode = updatedSchema.get(Schema);
+		if (schemaNode.get(STATUS) != null && schemaNode.get(STATUS).textValue().equals(SchemaStatus.PUBLISHED.toString())) {
+			JsonNode schema = schemaNode.get(Schema.toLowerCase());
+			definitionsManager.appendNewDefinition(schema);
+			validator.addDefinitions(schema);
+		}
 	}
 
 	private void checkIfSchemaStatusUpdatedForPublishedSchema(JsonNode updatedSchema, JsonNode existingSchemaStatus) throws SchemaException {
@@ -90,8 +93,11 @@ public class SchemaService {
 		JsonNode schema = schemaNode.get(Schema).get(Schema.toLowerCase());
 		try {
 			Definition definition = Definition.toDefinition(schema);
+			if (definitionsManager.getInternalSchemas().contains(definition.getTitle())) {
+				throw new SchemaException(String.format("Duplicate Error: Internal schema \"%s\" already exists", definition.getTitle()));
+			}
 			if (definitionsManager.getDefinition(definition.getTitle()) != null) {
-				throw new SchemaException("Duplicate Error: Schema already exists");
+				throw new SchemaException(String.format("Duplicate Error: Schema \"%s\" already exists", definition.getTitle()));
 			}
 		} catch (JsonProcessingException e) {
 			throw new SchemaException("Schema definition is not valid", e);
@@ -103,7 +109,10 @@ public class SchemaService {
 		JsonNode existingSchemaStatus = existingSchemaNode.get(Schema).get(STATUS);
 		JsonNode updatedSchema = updatedSchemaNode.get(Schema).get(Schema.toLowerCase());
 		try {
-			Definition.toDefinition(updatedSchema);
+			Definition definition = Definition.toDefinition(updatedSchema);
+			if (definitionsManager.getInternalSchemas().contains(definition.getTitle())) {
+				throw new SchemaException(String.format("Duplicate Error: Internal schema \"%s\" already exists", definition.getTitle()));
+			}
 		} catch (JsonProcessingException e) {
 			throw new SchemaException("Schema definition is not valid", e);
 		}
