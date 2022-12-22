@@ -125,6 +125,7 @@ public class Constants {
 	public static final String MOBILE = "mobile";
 	public static final String SVG_MEDIA_TYPE = "image/svg+xml";
 	public static final String CONNECTION_FAILURE = "CONNECTION_FAILURE";
+	public static final String DID_TYPE = "did";
 
     public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH");

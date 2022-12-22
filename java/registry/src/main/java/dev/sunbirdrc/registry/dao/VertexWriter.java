@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.DID_TYPE;
+
 /**
  * Helps in writing a vertex, edge into the database
  */
@@ -31,7 +33,7 @@ public class VertexWriter {
     private DatabaseProvider databaseProvider;
     private String parentOSid;
     private static final String EMPTY_STR = "";
-
+    private static final String DID_SEPERATOR = ":";
     private Logger logger = LoggerFactory.getLogger(VertexWriter.class);
 
     public VertexWriter(Graph graph, DatabaseProvider databaseProvider, String uuidPropertyName) {
@@ -215,8 +217,9 @@ public class VertexWriter {
         jsonObject.fields().forEachRemaining(entry -> {
             JsonNode entryValue = entry.getValue();
             logger.debug("Processing {} -> {}", entry.getKey(), entry.getValue());
-
-            if (entryValue.isValueNode()) {
+            if (entryValue.isValueNode() && entryValue.asText().startsWith(DID_TYPE)) {
+                updateParentForReferencingNode(vertex, entry, entryValue);
+            } else if (entryValue.isValueNode()) {
                 // Directly add under the vertex as a property
                 vertex.property(entry.getKey(), ValueType.getValue(entryValue));
             } else if (entryValue.isObject()) {
@@ -227,6 +230,16 @@ public class VertexWriter {
             }
         });
         return vertex;
+    }
+
+    private void updateParentForReferencingNode(Vertex vertex, Map.Entry<String, JsonNode> entry, JsonNode entryValue) {
+        String[] dids = entryValue.asText().split(DID_SEPERATOR);
+        Iterator<Vertex> vertexIterator = graph.traversal().clone().V().hasLabel(dids[1]).has(uuidPropertyName, dids[2]);
+        while(vertexIterator.hasNext()) {
+            Vertex dependent = vertexIterator.next();
+            addEdge(entry.getKey(), vertex, dependent);
+            vertex.property(RefLabelHelper.getLabel(entry.getKey(), uuidPropertyName), dids[2]);
+        }
     }
 
     /**

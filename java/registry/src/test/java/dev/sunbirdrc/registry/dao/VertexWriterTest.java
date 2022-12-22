@@ -90,7 +90,7 @@ public class VertexWriterTest {
 
     @Test
     public void writeNodeEntity() {
-        String recordStr = "{\"entityName\": {\"a\":\"b\", \"cObj\": {\"d\":\"e\"}, \"fArr\": [\"i1\", \"i2\"], \"gObjArr\": [{\"i1\": \"v1\"}, {\"i2\":\"v2\"}]}}";
+        String recordStr = "{\"entityName\": {\"ref\": \"did:anotherEntity:1234\", \"a\":\"b\", \"cObj\": {\"d\":\"e\"}, \"fArr\": [\"i1\", \"i2\"], \"gObjArr\": [{\"i1\": \"v1\"}, {\"i2\":\"v2\"}]}}";
         JsonNode recordNode = null;
         try {
             recordNode = new ObjectMapper().readTree(recordStr);
