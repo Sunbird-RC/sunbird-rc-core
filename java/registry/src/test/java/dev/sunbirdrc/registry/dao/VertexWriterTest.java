@@ -3,19 +3,26 @@ package dev.sunbirdrc.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
-import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.process.traversal.P;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
@@ -23,6 +30,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
 
 
 @RunWith(SpringRunner.class)
@@ -42,20 +54,51 @@ public class VertexWriterTest {
     private static final String testUuidPropertyName = "tid";
 
     private VertexWriter vertexWriter;
+    Vertex vertex;
 
     @Before
     public void setUp() throws Exception {
         dbConnectionInfoMgr.setUuidPropertyName(testUuidPropertyName);
-        mockDatabaseProvider = dbProviderFactory.getInstance(null);
-        try (OSGraph osGraph = mockDatabaseProvider.getOSGraph()) {
-            graph = osGraph.getGraphStore();
-            vertexWriter = new VertexWriter(graph, mockDatabaseProvider, testUuidPropertyName);
-        }
+        mockDatabaseProvider = Mockito.mock(DatabaseProvider.class);
+        graph = Mockito.mock(Graph.class);
+        OSGraph osGraph = Mockito.mock(OSGraph.class);
+        Mockito.when(mockDatabaseProvider.getOSGraph()).thenReturn(osGraph);
+        Mockito.when(osGraph.getGraphStore()).thenReturn(graph);
+        vertex = Mockito.mock(Vertex.class);
+        Mockito.when(graph.addVertex(anyString())).thenReturn(vertex);
+        vertexWriter = new VertexWriter(graph, mockDatabaseProvider, testUuidPropertyName);
     }
 
     @Test
-    public void ensureParentVertex() {
+    public void ensureParentVertexWhenParentIndexAlreadyExists() {
+        String parentLabel = "Test_Group";
+        GraphTraversalSource graphTraversalSource = Mockito.mock(GraphTraversalSource.class);
+        GraphTraversal graphTraversal = Mockito.mock(GraphTraversal.class);
+        Mockito.when(graph.traversal()).thenReturn(graphTraversalSource);
+        Mockito.when(graphTraversalSource.clone()).thenReturn(graphTraversalSource);
+        Mockito.when(graphTraversalSource.V()).thenReturn(graphTraversal);
+        Mockito.when(graphTraversal.hasLabel(P.eq(parentLabel))).thenReturn(graphTraversal);
+        Mockito.when(graphTraversal.hasNext()).thenReturn(true);
+        Mockito.when(graphTraversal.next()).thenReturn(vertex);
+        Vertex actualVertex = vertexWriter.ensureParentVertex(parentLabel);
+        assertEquals(vertex, actualVertex);
+    }
 
+    @Test
+    public void ensureParentVertexWhenParentIndexDoesNotExist() {
+        String parentLabel = "Test_Group";
+        GraphTraversalSource graphTraversalSource = Mockito.mock(GraphTraversalSource.class);
+        GraphTraversal graphTraversal = Mockito.mock(GraphTraversal.class);
+        Mockito.when(graph.traversal()).thenReturn(graphTraversalSource);
+        Mockito.when(graphTraversalSource.clone()).thenReturn(graphTraversalSource);
+        Mockito.when(graphTraversalSource.V()).thenReturn(graphTraversal);
+        Mockito.when(graphTraversal.hasLabel(P.eq(parentLabel))).thenReturn(graphTraversal);
+        Mockito.when(graphTraversal.hasNext()).thenReturn(false);
+        Mockito.when(vertex.id()).thenReturn("123");
+        Vertex actualVertex = vertexWriter.ensureParentVertex(parentLabel);
+        assertEquals(vertex, actualVertex);
+        Mockito.verify(actualVertex, Mockito.times(1)).property(Constants.INDEX_FIELDS, "");
+        Mockito.verify(actualVertex, Mockito.times(1)).property(Constants.UNIQUE_INDEX_FIELDS, "");
     }
 
     private Vertex createVertexImpl(String lblStr) {
@@ -65,15 +108,25 @@ public class VertexWriterTest {
     @Test
     public void createVertex() {
         String lblStr = "LabelStr1";
+        Mockito.when(mockDatabaseProvider.generateId(vertex)).thenReturn("123");
         Vertex vertexCreated = createVertexImpl(lblStr);
-        Assert.assertTrue(vertexCreated != null &&
-                vertexCreated.label().equals(lblStr) &&
-                vertexCreated.value(testUuidPropertyName) != null &&
-                vertexCreated.value(Constants.TYPE_STR_JSON_LD) != null);
+        Mockito.verify(vertexCreated, Mockito.times(1)).property("@type", lblStr);
+        Mockito.verify(vertexCreated, Mockito.times(1)).property(testUuidPropertyName, "123");
     }
 
     @Test
     public void writeSingleNode() {
+        Vertex parentVertex = Mockito.mock(Vertex.class);
+        String label = "dummy_lbl";
+        ObjectNode entryValue = JsonNodeFactory.instance.objectNode();
+        TextNode value = JsonNodeFactory.instance.textNode("value1");
+        entryValue.set("field1", value);
+        Mockito.when(mockDatabaseProvider.getId(vertex)).thenReturn("123");
+        Vertex actualVertex = vertexWriter.writeSingleNode(parentVertex, label, entryValue);
+
+        Mockito.verify(parentVertex, Mockito.times(1)).addEdge(label, vertex);
+        Mockito.verify(parentVertex, Mockito.times(1)).property(label + "_" + testUuidPropertyName, "123");
+        assertEquals(vertex, actualVertex);
     }
 
     @Test
@@ -84,8 +137,18 @@ public class VertexWriterTest {
 
         vertexWriter.addEdge(eLabel, v1, v2);
 
-        Assert.assertTrue(v1.vertices(Direction.OUT).next() != null &&
-                            !v2.vertices(Direction.OUT).hasNext());
+        Mockito.verify(v1, Mockito.times(1)).addEdge(eLabel, v2);
+    }
+
+    @Test
+    public void test_shouldUpdateParentIndexProperty() {
+        List<String> indexFields = new ArrayList<>();
+        indexFields.add("name");
+        indexFields.add("rollNo");
+        Vertex parentVertex = Mockito.mock(Vertex.class);
+        String propertyName = "test";
+        vertexWriter.updateParentIndexProperty(parentVertex, propertyName, indexFields);
+        Mockito.verify(parentVertex, Mockito.times(1)).property(propertyName, "name,rollNo");
     }
 
     @Test
@@ -97,7 +160,22 @@ public class VertexWriterTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        GraphTraversalSource graphTraversalSource = Mockito.mock(GraphTraversalSource.class);
+        GraphTraversal graphTraversal = Mockito.mock(GraphTraversal.class);
+        VertexProperty vertexProperty = Mockito.mock(VertexProperty.class);
+        Mockito.when(mockDatabaseProvider.generateId(any())).thenReturn("123");
+        Mockito.when(mockDatabaseProvider.getId(vertex)).thenReturn("123");
+        Mockito.when(graph.traversal()).thenReturn(graphTraversalSource);
+        Mockito.when(graphTraversalSource.clone()).thenReturn(graphTraversalSource);
+        Mockito.when(graphTraversalSource.V()).thenReturn(graphTraversal);
+        Mockito.when(graphTraversal.hasLabel("anotherEntity")).thenReturn(graphTraversal);
+        Mockito.when(graphTraversal.has(testUuidPropertyName, "1234")).thenReturn(graphTraversal);
+        Mockito.when(graphTraversal.hasNext()).thenReturn(true).thenReturn(false);
+        Mockito.when(graphTraversal.next()).thenReturn(vertex);
+        Mockito.when(vertexProperty.isPresent()).thenReturn(false);
+        Mockito.when(vertex.property(anyString())).thenReturn(vertexProperty);
         String id = vertexWriter.writeNodeEntity(recordNode);
         Assert.assertTrue(id != null);
+        assertEquals("123", id);
     }
 }
