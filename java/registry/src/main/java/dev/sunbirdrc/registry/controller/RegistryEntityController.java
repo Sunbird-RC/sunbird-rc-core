@@ -464,7 +464,7 @@ public class RegistryEntityController extends AbstractController {
         if (externalTemplatesEnabled && !StringUtils.isEmpty(request.getHeader(Template))) {
             return request.getHeader(Template);
         }
-        if (definitionsManager.getCertificateTemplates(entityName).size() > 0 && !StringUtils.isEmpty(request.getHeader(TemplateKey))) {
+        if (definitionsManager.getCertificateTemplates(entityName) != null && definitionsManager.getCertificateTemplates(entityName).size() > 0 && !StringUtils.isEmpty(request.getHeader(TemplateKey))) {
             String templateUri = definitionsManager.getCertificateTemplates(entityName).getOrDefault(request.getHeader(TemplateKey), null);
             if (!StringUtils.isEmpty(templateUri)) {
                 try {
@@ -598,6 +598,9 @@ public class RegistryEntityController extends AbstractController {
             JsonNode resultNode = registryHelper.readEntity("", entity, entityId, false, null, false);
             ObjectNode objectNode = objectMapper.createObjectNode();
             objectNode.set("entity", resultNode.get(entity));
+            if(definitionsManager.getDefinition(entity) == null) {
+                throw new RecordNotFoundException(NOT_PART_OF_THE_SYSTEM_EXCEPTION);
+            }
             List<AttestationPolicy> attestationPolicies = definitionsManager.getDefinition(entity)
                     .getOsSchemaConfiguration()
                     .getAttestationPolicies();
