@@ -15,10 +15,10 @@ public class UserToken extends AbstractAuthenticationToken {
 	private final Jwt source;
 	private final String email;
 
-	private final Map consentFields;
+	private final Map<String, Integer> consentFields;
 
-	public UserToken(Jwt source, String email, Map consentFields, List<String> entities, List<SimpleGrantedAuthority> collect) {
-		super(collect);
+	public UserToken(Jwt source, String email, Map<String, Integer> consentFields, List<String> entities, List<SimpleGrantedAuthority> authorities) {
+		super(authorities);
 		this.source = source;
 		this.email = email;
 		this.consentFields = consentFields;
@@ -33,6 +33,6 @@ public class UserToken extends AbstractAuthenticationToken {
 
 	@Override
 	public Object getPrincipal() {
-		return (Principal) () -> this.source.getId();
+		return (Principal) this.source::getId;
 	}
 }
