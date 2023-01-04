@@ -179,7 +179,7 @@ public class DistributedDefinitionsManagerTest {
         ObjectMapper objectMapper1 = new ObjectMapper();
         when(objectMapper.readTree(schema)).thenReturn(objectMapper1.readTree(schema));
         distributedDefinitionsManager.appendNewDefinition(node);
-        verify(jedis, times(1)).set("SCHEMA_Place", schema);
+        verify(jedis, times(1)).set("SCHEMA_Place", objectMapper1.readTree(node.textValue()).toString());
     }
 
     @Test

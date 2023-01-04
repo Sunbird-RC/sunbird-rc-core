@@ -750,7 +750,7 @@
 			"webOrigins": [],
 			"notBefore": 0,
 			"bearerOnly": false,
-			"consentRequired": true,
+			"consentRequired": false,
 			"standardFlowEnabled": true,
 			"implicitFlowEnabled": false,
 			"directAccessGrantsEnabled": true,

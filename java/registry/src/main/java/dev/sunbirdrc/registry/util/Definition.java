@@ -121,4 +121,10 @@ public class Definition {
     public Map<String, String> getSubSchemaNames() {
         return subSchemaNames;
     }
+
+    public static Definition toDefinition(JsonNode jsonNode) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode schemaJsonNode = objectMapper.readTree(jsonNode.asText());
+        return new Definition(schemaJsonNode);
+    }
 }

@@ -16,6 +16,8 @@ public interface IDefinitionsManager {
 
     Map<String, Definition> getDefinitionMap();
 
+    Set<String> getInternalSchemas();
+
 
     /**
      * Returns the map, where key is the index and value is the public fields
@@ -79,6 +81,7 @@ public interface IDefinitionsManager {
     }
     boolean isValidEntityName(String entityName);
     void appendNewDefinition(JsonNode jsonNode);
+    void appendNewDefinition(Definition definition);
     void removeDefinition(JsonNode jsonNode);
 
     default List<String> getEntitiesWithAnonymousInviteRoles() {
@@ -102,4 +105,5 @@ public interface IDefinitionsManager {
         }
         return anonymousEntities;
     }
+
 }

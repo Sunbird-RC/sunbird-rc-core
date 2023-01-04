@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.service.ISearchService;
+import dev.sunbirdrc.registry.service.SchemaService;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.validators.IValidate;
 import org.jetbrains.annotations.NotNull;
@@ -27,16 +28,11 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 	public static final Logger logger = LoggerFactory.getLogger(SchemaLoader.class);
 
 	@Autowired
+	private SchemaService schemaService;
+
+	@Autowired
 	private ISearchService searchService;
 
-	@Autowired
-	private IDefinitionsManager definitionsManager;
-
-	@Autowired
-	private IValidate validator;
-
-	@Autowired
-	private ObjectMapper objectMapper;
 
 	@Override
 	public void onApplicationEvent(@NotNull ContextRefreshedEvent contextRefreshedEvent) {
@@ -51,9 +47,7 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 			JsonNode searchResults = searchService.search(objectNode);
 			for (JsonNode schemaNode : searchResults.get(Schema)) {
 				try {
-					JsonNode schema = schemaNode.get(Schema.toLowerCase());
-					definitionsManager.appendNewDefinition(schema);
-					validator.addDefinitions(schema);
+					schemaService.addSchema(JsonNodeFactory.instance.objectNode().set(Schema, schemaNode));
 				} catch (Exception e) {
 					logger.error("Failed loading schema to definition manager:", e);
 				}

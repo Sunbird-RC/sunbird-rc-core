@@ -22,11 +22,12 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     private static final String SCHEMA = "SCHEMA_";
     private static final String SCHEMA_WILDCARD = SCHEMA + "*";
+
+    private Set<String> internalSchemas = new HashSet<>();
     @Autowired
     private JedisPool jedisPool;
     @Autowired
     private ObjectMapper objectMapper;
-    private OSResourceLoader osResourceLoader;
     private static final Logger logger = LoggerFactory.getLogger(DistributedDefinitionsManager.class);
     @Autowired
     private ResourceLoader resourceLoader;
@@ -40,7 +41,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     }
 
     private void loadResourcesFromPath(String resourceLocation) throws Exception {
-        osResourceLoader = new OSResourceLoader(resourceLoader);
+        OSResourceLoader osResourceLoader = new OSResourceLoader(resourceLoader);
         osResourceLoader.loadResource(resourceLocation);
 
         for (Map.Entry<String, String> entry : osResourceLoader.getNameContent().entrySet()) {
@@ -57,6 +58,8 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
             logger.info("loading resource:" + entry.getKey() + " with private field size:"
                     + definition.getOsSchemaConfiguration().getPrivateFields().size() + " & signed fields size:"
                     + definition.getOsSchemaConfiguration().getSignedFields().size());
+            internalSchemas.add(definition.getTitle());
+            internalSchemas.add(filenameWithoutExtn);
         }
     }
 
@@ -121,6 +124,11 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     }
 
     @Override
+    public Set<String> getInternalSchemas() {
+        return internalSchemas;
+    }
+
+    @Override
     public List<OwnershipsAttributes> getOwnershipAttributes(String entity) {
         try(Jedis jedis = jedisPool.getResource()) {
             String value = jedis.get(SCHEMA + entity);
@@ -146,16 +154,17 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     @Override
     public void appendNewDefinition(JsonNode jsonNode) {
-        String schemaAsText = jsonNode.asText("{}");
-        JsonNode schemaJsonNode = null;
         try {
-            schemaJsonNode = objectMapper.readTree(schemaAsText);
-        } catch (JsonProcessingException e) {
+            appendNewDefinition(Definition.toDefinition(jsonNode));
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Definition definition = new Definition(schemaJsonNode);
+    }
+
+    @Override
+    public void appendNewDefinition(Definition definition) {
         try(Jedis jedis = jedisPool.getResource()) {
-            jedis.set(SCHEMA+definition.getTitle(), jsonNode.asText("{}"));
+            jedis.set(SCHEMA+definition.getTitle(), definition.getContent());
         }
     }
 
