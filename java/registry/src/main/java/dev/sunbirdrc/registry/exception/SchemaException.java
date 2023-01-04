@@ -8,4 +8,8 @@ public class SchemaException extends Exception {
     public SchemaException(String message) {
         super(message);
     }
+
+    public SchemaException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
