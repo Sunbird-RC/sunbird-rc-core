@@ -11,6 +11,7 @@ import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.AuditRecord;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
+import dev.sunbirdrc.registry.authorization.SchemaAuthFilter;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.CustomExceptionHandler;
 import dev.sunbirdrc.registry.frame.FrameContext;
@@ -248,6 +249,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			logger.error("Fatal - not a known validator mentioned in the application configuration.");
 		}
 		return null;
+	}
+
+	@Bean
+	public SchemaAuthFilter schemaAuthFilter() {
+		SchemaAuthFilter schemaAuthFilter = new SchemaAuthFilter();
+		schemaAuthFilter.appendAnonymousInviteSchema(iDefinitionsManager.getEntitiesWithAnonymousInviteRoles());
+		schemaAuthFilter.appendAnonymousSchema(iDefinitionsManager.getEntitiesWithAnonymousManageRoles());
+		logger.info("Added anonymous schema to auth filters");
+		return schemaAuthFilter;
 	}
 
 	@Bean

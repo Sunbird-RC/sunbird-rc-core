@@ -1,4 +1,4 @@
-package dev.sunbirdrc.registry.entities;
+package dev.sunbirdrc.registry.authorization.pojos;
 
 import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;

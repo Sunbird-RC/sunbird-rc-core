@@ -3,7 +3,7 @@ package dev.sunbirdrc.registry.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.AsyncRequest;
-import dev.sunbirdrc.registry.entities.UserToken;
+import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import dev.sunbirdrc.registry.model.dto.CreateEntityMessage;
 import dev.sunbirdrc.registry.service.RegistryService;
 import dev.sunbirdrc.registry.sink.shard.Shard;

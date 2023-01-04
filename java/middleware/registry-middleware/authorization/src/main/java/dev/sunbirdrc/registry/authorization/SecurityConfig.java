@@ -1,7 +1,7 @@
-package dev.sunbirdrc.registry.config;
+package dev.sunbirdrc.registry.authorization;
 
-import dev.sunbirdrc.registry.model.OAuth2Configuration;
-import dev.sunbirdrc.registry.model.OAuth2Resources;
+import dev.sunbirdrc.registry.authorization.pojos.OAuth2Configuration;
+import dev.sunbirdrc.registry.authorization.pojos.OAuth2Resources;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -30,7 +30,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	private OAuth2Configuration oAuth2Configuration;
 
 	@Autowired
-	private SchemaFilter schemaFilter;
+	private SchemaAuthFilter schemaAuthFilter;
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -39,7 +39,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			Map<String, AuthenticationManager> authenticationManagers = new HashMap<>();
 			this.oAuth2Configuration.getResources().forEach(issuer -> addManager(authenticationManagers, issuer));
 			httpConfig
-					.addFilterBefore(schemaFilter, WebAsyncManagerIntegrationFilter.class)
+					.addFilterBefore(schemaAuthFilter, WebAsyncManagerIntegrationFilter.class)
 					.authorizeRequests(auth -> auth
 							.antMatchers("/**/invite", "/health", "/error",
 									"/_schemas/**", "/**/templates/**", "/**/*.json", "/**/verify",

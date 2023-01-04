@@ -21,13 +21,7 @@ spring:
 
 oauth2:
   resources:
-    -
-      uri: https://demo-admin-portal.xiv.in/auth/realms/sunbird-rc
-      properties:
-        consent: consent
-    - uri: https://demo-education-registry.xiv.in/auth/realms/sunbird-rc
-      properties:
-        consent: consent
+    - uri: http://localhost:8080/auth/realms/sunbird-rc
 
 
 name: default-yaml

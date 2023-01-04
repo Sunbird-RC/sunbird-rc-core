@@ -1,11 +1,9 @@
-package dev.sunbirdrc.registry.config;
+package dev.sunbirdrc.registry.authorization;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
-import dev.sunbirdrc.registry.entities.UserToken;
-import dev.sunbirdrc.registry.model.OAuth2Properties;
-import dev.sunbirdrc.registry.util.Definition;
+import dev.sunbirdrc.registry.authorization.pojos.UserToken;
+import dev.sunbirdrc.registry.authorization.pojos.OAuth2Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.converter.Converter;

@@ -16,6 +16,7 @@ import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
+import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import dev.sunbirdrc.registry.entities.*;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;

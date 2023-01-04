@@ -1,8 +1,7 @@
-package dev.sunbirdrc.registry.model;
+package dev.sunbirdrc.registry.authorization.pojos;
 
 import lombok.Data;
 
-import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotBlank;
 
 @Data

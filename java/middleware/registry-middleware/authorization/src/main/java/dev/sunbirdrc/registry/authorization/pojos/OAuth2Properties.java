@@ -1,4 +1,4 @@
-package dev.sunbirdrc.registry.model;
+package dev.sunbirdrc.registry.authorization.pojos;
 
 
 import lombok.Data;

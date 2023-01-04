@@ -12,7 +12,7 @@ import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.dao.NotFoundException;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
-import dev.sunbirdrc.registry.entities.UserToken;
+import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
@@ -28,7 +28,6 @@ import dev.sunbirdrc.registry.transform.ITransformer;
 import dev.sunbirdrc.validators.ValidationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.keycloak.KeycloakPrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +41,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
-import java.security.Principal;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.*;
