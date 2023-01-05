@@ -415,7 +415,7 @@ public class RegistryServiceImplTest {
 		try {
 			registryService.addEntity(shard, "", schemaNode, true);
 		} catch (Exception e) {
-			assertEquals("Duplicate Error: Schema already exists", e.getMessage());
+			assertEquals("Duplicate Error: Schema \"TrainingCertificate\" already exists", e.getMessage());
 		}
 
 

@@ -84,7 +84,7 @@ services:
       test: [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8081/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
   keycloak:
     image: dockerhub/sunbird-rc-keycloak:latest
     volumes:
@@ -106,7 +106,7 @@ services:
         ["CMD-SHELL", "curl -f http://localhost:9990/ || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
     ports:
       - "8080:8080"
       - "9990:9990"
@@ -131,7 +131,7 @@ services:
       test: [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8082/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
   certificate-signer:
     image: dockerhub/sunbird-rc-certificate-signer:${RELEASE_VERSION}
     environment:
@@ -145,7 +145,7 @@ services:
         [ "CMD-SHELL", "curl -f http://localhost:8079/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
   certificate-api:
     image: dockerhub/sunbird-rc-certificate-api:${RELEASE_VERSION}
     environment:
@@ -157,7 +157,7 @@ services:
         [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8078/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
   file-storage:
     image: quay.io/minio/minio
     volumes:
@@ -173,7 +173,7 @@ services:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 20s
-      retries: 3
+      retries: 10
   notification-ms:
     image: dockerhub/sunbird-rc-notification-service:${RELEASE_VERSION}
     ports:
@@ -183,7 +183,7 @@ services:
         [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8765/notification-service/v1/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
@@ -210,7 +210,7 @@ services:
         [ "CMD", "kafka-topics", "--list", "--zookeeper", "zookeeper:2181" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
   public-key-service:
     image: dockerhub/sunbird-rc-public-key-service
     environment:
@@ -221,7 +221,7 @@ services:
       test: [ "CMD", "curl", "-f", "localhost:3300/public-key-service/api/v1/health" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
     volumes:
       - ./imports:/etc/keys
   context-proxy-service:
@@ -232,7 +232,7 @@ services:
       test: [ "CMD", "curl", "-f", "localhost:4400/health" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
   nginx:
     image: dockerhub/sunbird-rc-nginx
     ports:
@@ -254,7 +254,7 @@ services:
       test: [ "CMD", "curl", "-f", "localhost:80" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
   redis:
     image: redis:latest
     ports:
