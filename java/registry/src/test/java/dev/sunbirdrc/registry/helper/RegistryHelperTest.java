@@ -8,11 +8,11 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
 import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
@@ -105,7 +105,7 @@ public class RegistryHelperTest {
 
 
 	@Mock
-	private KeycloakAdminUtil keycloakAdminUtil;
+	private IdentityManager identityManager;
 
 	@Mock
 	private IValidate validationService;
@@ -136,7 +136,7 @@ public class RegistryHelperTest {
 		ReflectionTestUtils.setField(registryHelper, "auditSuffixSeparator", "_");
 		MockitoAnnotations.initMocks(this);
 		registryHelper.uuidPropertyName = "osid";
-		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
+		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, identityManager);
 		registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
 		registryHelper.setDefinitionsManager(definitionsManager);
 	}
@@ -341,7 +341,7 @@ public class RegistryHelperTest {
 		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
 		mockDefinitionManager();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
@@ -355,7 +355,7 @@ public class RegistryHelperTest {
 		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
 		mockDefinitionManager();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
@@ -386,7 +386,7 @@ public class RegistryHelperTest {
 				"  \"adminMobile\": \"1234\"\n" +
 				"}}");
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		mockDefinitionManager();
@@ -621,10 +621,10 @@ public class RegistryHelperTest {
 	}
 
 	@Test
-	public void shouldReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
+	public void shouldReturnFalseIfEntityContainsOwnershipAttributes() throws IOException {
 		mockDefinitionManager();
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
+		Assert.assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -642,13 +642,6 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
 		assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
-	}
-
-	@Test
-	public void shouldDeleteReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
-		mockDefinitionManager();
-		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test

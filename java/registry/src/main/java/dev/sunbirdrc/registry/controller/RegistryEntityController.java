@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import dev.sunbirdrc.keycloak.OwnerCreationException;
 import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.Response;
@@ -16,6 +15,7 @@ import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -92,7 +92,7 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.start(TAG);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        }catch (MiddlewareHaltException | ValidationException | OwnerCreationException e) {
+        }catch (MiddlewareHaltException | ValidationException | IdentityException e) {
             return badRequestException(responseParams, response, e.getMessage());
         }catch (UnAuthorizedException unAuthorizedException){
             return createUnauthorizedExceptionResponse(unAuthorizedException);
@@ -100,7 +100,7 @@ public class RegistryEntityController extends AbstractController {
             if (e.getCause() != null && e.getCause().getCause() != null &&
                     e.getCause().getCause() instanceof InvocationTargetException) {
                 Throwable targetException = ((InvocationTargetException) (e.getCause().getCause())).getTargetException();
-                if (targetException instanceof OwnerCreationException) {
+                if (targetException instanceof IdentityException) {
                     return badRequestException(responseParams, response, targetException.getMessage());
                 }
             }

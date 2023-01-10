@@ -15,6 +15,7 @@ import dev.sunbirdrc.registry.authorization.SchemaAuthFilter;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.CustomExceptionHandler;
 import dev.sunbirdrc.registry.frame.FrameContext;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityProviderConfiguration;
 import dev.sunbirdrc.registry.interceptor.RequestIdValidationInterceptor;
 import dev.sunbirdrc.registry.interceptor.ValidationInterceptor;
 import dev.sunbirdrc.registry.middleware.util.Constants;
@@ -57,11 +58,11 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 import org.sunbird.akka.core.SunbirdActorFactory;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
+import dev.sunbirdrc.registry.identity_providers.providers.IdentityProvider;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Configuration
 @EnableRetry
@@ -150,6 +151,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private int httpMaxConnections;
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
+	@Autowired
+	private IdentityProviderConfiguration identityProviderConfiguration;
 
 	@Bean
 	public ObjectMapper objectMapper() {
@@ -455,4 +458,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 //		IAuditService auditService = new AuditProviderFactory().getAuditService(auditFrameStore);
 //		return auditService;
 //	}
+
+	@Bean
+	public IdentityManager identityManager() {
+		ServiceLoader<IdentityProvider> loader = ServiceLoader.load(IdentityProvider.class);
+		for (IdentityProvider provider : loader) {
+			if (identityProviderConfiguration.getProvider().equals(provider.getClass().getName())) {
+				return provider.createManager(identityProviderConfiguration);
+			}
+		}
+		throw new RuntimeException("Identity provider " + identityProviderConfiguration.getProvider() + " not found");
+	}
 }
