@@ -225,6 +225,16 @@ audit:
     suffix: ${audit_suffix:Audit}
     suffixSeparator: ${audit_suffixSeparator:_}
 
+identity:
+  provider: ${identity_provider:dev.sunbirdrc.keycloak.KeycloakProviderImpl}
+  url: ${identity_url:https://demo-education-registry.xiv.in/auth/}
+  realm: ${identity_realm:sunbird-rc}
+  client_id: ${identity_client_id:admin-api}
+  client_secret: ${identity_client_secret:062292a7-9297-4498-9900-18045fd60d1b}
+  set_default_password: ${identity_set_default_password:true}
+  default_password: ${identity_default_password:abcd@1234}
+  user_actions: ${identity_user_actions:UPDATE_PROFILE}
+
 keycloak:
   #publicKey:  ${sunbird_sso_publickey:pk}
   auth-server-url: ${sunbird_sso_url:https://localhost:8888/auth}
