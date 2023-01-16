@@ -58,7 +58,7 @@ registry:
   redis:
     host: ${redis_host:localhost}
     port: ${redis_port:6379}
-
+  expandReference: ${expand_reference:false}
 workflow:
   enabled: ${workflow.enable:true}
 
@@ -331,7 +331,7 @@ registry:
     base: http://example.com/voc/teacher/1.0.0/
   system:
     base: http://example.com/voc/opensaber/
-
+  expandReference: ${expand_reference:false}
 # This property is to be used for read request
 read:
   # The read mechanism to use, values could be either NativeReadService or ElasticReadService

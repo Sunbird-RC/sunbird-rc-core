@@ -22,7 +22,6 @@ import dev.sunbirdrc.registry.service.IAuditService;
 import dev.sunbirdrc.registry.service.SchemaService;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
-import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.util.*;
@@ -31,11 +30,9 @@ import dev.sunbirdrc.validators.json.jsonschema.JsonValidationServiceImpl;
 import org.apache.commons.io.IOUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.*;
@@ -52,7 +49,6 @@ import org.sunbird.akka.core.SunbirdActorFactory;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Iterator;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static org.junit.Assert.*;
@@ -66,6 +62,8 @@ public class RegistryServiceImplTest {
 	@Value("${registry.schema.url}")
 	private String schemaUrl;
 	private String validationType = "json";
+	@Value("${registry.expandReference}")
+	private boolean expandReferenceObj;
 
 	public Constants.SchemaType getValidationType() throws IllegalArgumentException {
 		String validationMechanism = validationType.toUpperCase();
@@ -166,7 +164,7 @@ public class RegistryServiceImplTest {
 	}
 
 	private void populateGraph() {
-		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid");
+		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid", expandReferenceObj);
 		Vertex v1 = vertexWriter.createVertex("Teacher");
 		v1.property("serialNum", 1);
 		v1.property("teacherName", "marko");
@@ -380,14 +378,14 @@ public class RegistryServiceImplTest {
 	}
 
 	private String addStudentToGraph() throws JsonProcessingException {
-		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid");
+		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid", expandReferenceObj);
 		return vertexWriter.writeNodeEntity(objectMapper.readTree("{\"Student\":  {\n" +
 				"  \"name\": \"abc\"\n" +
 				"}}"));
 	}
 
 	private String addTeacherToGraph() throws JsonProcessingException {
-		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid");
+		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid", expandReferenceObj);
 		return vertexWriter.writeNodeEntity(objectMapper.readTree("{\"Teacher\":  {\n" +
 				"  \"fullName\": \"abc\"\n" +
 				"}}"));

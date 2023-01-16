@@ -116,6 +116,8 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private List<HealthIndicator> healthIndicators;
+    @Value("${registry.expandReference}")
+    private boolean expandReferenceObj;
 
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
@@ -142,7 +144,7 @@ public class RegistryServiceImpl implements RegistryService {
     @Override
     public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
-        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
+        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
@@ -202,7 +204,7 @@ public class RegistryServiceImpl implements RegistryService {
 
         if (persistenceEnabled) {
             DatabaseProvider dbProvider = shard.getDatabaseProvider();
-            IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
+            IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
             try (OSGraph osGraph = dbProvider.getOSGraph()) {
                 Graph graph = osGraph.getGraphStore();
                 tx = dbProvider.startTransaction(graph);
@@ -268,7 +270,7 @@ public class RegistryServiceImpl implements RegistryService {
         }
 
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
-        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
+        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
@@ -399,7 +401,7 @@ public class RegistryServiceImpl implements RegistryService {
         Set<Object> updatedUuids = new HashSet<Object>();
         Set<String> previousArrayItemsUuids = vr.getArrayItemUuids(blankArrVertex);
 
-        VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
+        VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName, expandReferenceObj);
 
         for (JsonNode item : arrayNode) {
             if (item.isObject()) {
@@ -491,7 +493,7 @@ public class RegistryServiceImpl implements RegistryService {
                             // updateArrayItems one by one
                             doUpdateArray(shard, graph, registryDao, vr, existArrayVertex, (ArrayNode) oneElementNode, userInputKey);
                         } else {
-                            VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
+                            VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName, expandReferenceObj);
                             vertexWriter.createArrayNode(rootVertex, oneElement.getKey(), (ArrayNode) oneElementNode);
                         }
                         registryDao.updateVertex(graph, existArrayVertex, oneElementNode, oneElement.getKey());

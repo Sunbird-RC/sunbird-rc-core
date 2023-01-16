@@ -16,6 +16,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -35,11 +36,13 @@ public class VertexWriter {
     private static final String EMPTY_STR = "";
     private static final String DID_SEPERATOR = ":";
     private Logger logger = LoggerFactory.getLogger(VertexWriter.class);
+    private boolean expandReferenceObj;
 
-    public VertexWriter(Graph graph, DatabaseProvider databaseProvider, String uuidPropertyName) {
+    public VertexWriter(Graph graph, DatabaseProvider databaseProvider, String uuidPropertyName, boolean expandReferenceObj) {
         this.graph = graph;
         this.databaseProvider = databaseProvider;
         this.uuidPropertyName = uuidPropertyName;
+        this.expandReferenceObj = expandReferenceObj;
     }
 
     /**
@@ -217,7 +220,7 @@ public class VertexWriter {
         jsonObject.fields().forEachRemaining(entry -> {
             JsonNode entryValue = entry.getValue();
             logger.debug("Processing {} -> {}", entry.getKey(), entry.getValue());
-            if (entryValue.isValueNode() && entryValue.asText().startsWith(DID_TYPE)) {
+            if (entryValue.isValueNode() && entryValue.asText().startsWith(DID_TYPE) && expandReferenceObj) {
                 updateParentForReferencingNode(vertex, entry, entryValue);
             } else if (entryValue.isValueNode()) {
                 // Directly add under the vertex as a property

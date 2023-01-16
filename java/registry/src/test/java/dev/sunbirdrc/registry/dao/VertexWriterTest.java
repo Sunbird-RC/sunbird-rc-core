@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
@@ -55,6 +56,8 @@ public class VertexWriterTest {
 
     private VertexWriter vertexWriter;
     Vertex vertex;
+    @Value("${registry.expandReference}")
+    private boolean expandReferenceObj;
 
     @Before
     public void setUp() throws Exception {
@@ -66,7 +69,7 @@ public class VertexWriterTest {
         Mockito.when(osGraph.getGraphStore()).thenReturn(graph);
         vertex = Mockito.mock(Vertex.class);
         Mockito.when(graph.addVertex(anyString())).thenReturn(vertex);
-        vertexWriter = new VertexWriter(graph, mockDatabaseProvider, testUuidPropertyName);
+        vertexWriter = new VertexWriter(graph, mockDatabaseProvider, testUuidPropertyName, expandReferenceObj);
     }
 
     @Test

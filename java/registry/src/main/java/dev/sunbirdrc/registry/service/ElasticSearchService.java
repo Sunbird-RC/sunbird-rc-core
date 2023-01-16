@@ -63,6 +63,9 @@ public class ElasticSearchService implements ISearchService {
     @Value("${audit.frame.suffix}")
     private String auditSuffix;
 
+    @Value("${registry.expandReference}")
+    private boolean expandReferenceObj;
+
     @Autowired
     ObjectMapper objectMapper;
 
@@ -90,9 +93,11 @@ public class ElasticSearchService implements ISearchService {
         ObjectNode resultNode = JsonNodeFactory.instance.objectNode();
         for(String indexName : searchQuery.getEntityTypes()){
             try{
-                JsonNode node =  elasticService.search(indexName.toLowerCase(), searchQuery);
-                node = expandReference(node);
-                resultNode.set(indexName, node);
+                JsonNode searchedNode =  elasticService.search(indexName.toLowerCase(), searchQuery);
+                if(expandReferenceObj) {
+                    searchedNode = expandReference(searchedNode);
+                }
+                resultNode.set(indexName, searchedNode);
             }
             catch (Exception e) {
                 logger.error("Elastic search operation - {}", e);
@@ -110,29 +115,29 @@ public class ElasticSearchService implements ISearchService {
 
     }
 
-    private ArrayNode expandReference(JsonNode node) {
-        ArrayNode arrayNode = (ArrayNode) node;
-        ArrayNode ans = JsonNodeFactory.instance.arrayNode();
-        for (JsonNode node1 : arrayNode) {
-            ObjectNode objectNode = (ObjectNode) node1;
+    private ArrayNode expandReference(JsonNode searchedNode) {
+        ArrayNode arrayNode = (ArrayNode) searchedNode;
+        ArrayNode nodeWithExpandedReference = JsonNodeFactory.instance.arrayNode();
+        for (JsonNode node : arrayNode) {
+            ObjectNode objectNode = (ObjectNode) node;
             List<String> removableReferenceKeys = new ArrayList<>();
             objectNode.fields().forEachRemaining(objectField -> {
-                if(objectField.getValue().asText().contains("did:")) {
+                if(objectField.getValue().asText().startsWith("did:")) {
                     String[] splits = objectField.getValue().asText().split(":");
                     String indexName = splits[1].toLowerCase();
                     String osid = splits[2];
-                    SearchQuery searchQuery1 = null;
-                    ArrayNode node2 = null;
+                    SearchQuery searchQuery = null;
+                    ArrayNode referenceNode = null;
                     try {
-                        searchQuery1 = getSearchQuery(splits, osid);
-                        node2 = (ArrayNode) elasticService.search(indexName, searchQuery1);
+                        searchQuery = getSearchQuery(splits[1], osid);
+                        referenceNode = (ArrayNode) elasticService.search(indexName, searchQuery);
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    if(node2.size() > 0) {
-                        objectField.setValue(node2.get(0));
+                    if(referenceNode.size() > 0) {
+                        objectField.setValue(referenceNode.get(0));
                     } else {
                         removableReferenceKeys.add(objectField.getKey());
                     }
@@ -141,16 +146,16 @@ public class ElasticSearchService implements ISearchService {
             for (String referenceKeys: removableReferenceKeys) {
                 objectNode.remove(referenceKeys);
             }
-            ans.add(objectNode);
+            nodeWithExpandedReference.add(objectNode);
         }
-        return ans;
+        return nodeWithExpandedReference;
     }
 
-    private SearchQuery getSearchQuery(String[] splits, String osid) throws JsonProcessingException {
+    private SearchQuery getSearchQuery(String entityName, String osid) throws JsonProcessingException {
         String filter = "{\"filters\": {\"osid\":{ \"eq\":\"" + osid + "\"}}}";
         ObjectNode jsonNode = (ObjectNode) objectMapper.readTree(filter);
         ArrayNode entity = JsonNodeFactory.instance.arrayNode();
-        entity.add(splits[1]);
+        entity.add(entityName);
         jsonNode.set(ENTITY_TYPE, entity);
         SearchQuery searchQuery1 = getSearchQuery(jsonNode, offset, limit);
         return searchQuery1;
