@@ -73,6 +73,7 @@ services:
       - redis_host=redis
       - redis_port=6379
       - manager_type=${MANAGER_TYPE-DefinitionsManager}
+      - expand_reference=${EXPAND_REFERENCE-false}
     ports:
       - "8081:8081"
     depends_on:
