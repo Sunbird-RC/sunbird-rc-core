@@ -1,8 +1,7 @@
 package dev.sunbirdrc.registry.service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -118,34 +117,51 @@ public class ElasticSearchService implements ISearchService {
     private ArrayNode expandReference(JsonNode searchedNode) {
         ArrayNode arrayNode = (ArrayNode) searchedNode;
         ArrayNode nodeWithExpandedReference = JsonNodeFactory.instance.arrayNode();
+        HashMap<String, List<String>> indexOsidsMap = new HashMap<>();
         for (JsonNode node : arrayNode) {
             ObjectNode objectNode = (ObjectNode) node;
-            List<String> removableReferenceKeys = new ArrayList<>();
             objectNode.fields().forEachRemaining(objectField -> {
                 if(objectField.getValue().asText().startsWith("did:")) {
-                    String[] splits = objectField.getValue().asText().split(":");
-                    String indexName = splits[1].toLowerCase();
-                    String osid = splits[2];
-                    SearchQuery searchQuery = null;
-                    ArrayNode referenceNode = null;
-                    try {
-                        searchQuery = getSearchQuery(splits[1], osid);
-                        referenceNode = (ArrayNode) elasticService.search(indexName, searchQuery);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    if(referenceNode.size() > 0) {
-                        objectField.setValue(referenceNode.get(0));
+                    String[] referenceStrSplit = objectField.getValue().asText().split(":");
+                    String indexName = referenceStrSplit[1].toLowerCase();
+                    String osid = referenceStrSplit[2];
+                    List<String> osids;
+                    if(indexOsidsMap.get(indexName) == null) {
+                        osids = new ArrayList();
                     } else {
-                        removableReferenceKeys.add(objectField.getKey());
+                        osids = indexOsidsMap.get(indexName);
+                    }
+                    osids.add(osid);
+                    indexOsidsMap.put(indexName, osids);
+                }
+            });
+        }
+        SearchQuery searchQuery = null;
+        ArrayNode referenceNodes = JsonNodeFactory.instance.arrayNode();
+        for (Map.Entry<String, List<String>> indexOsidEntry: indexOsidsMap.entrySet()) {
+            try {
+                searchQuery = getSearchQuery(indexOsidEntry.getKey(), indexOsidEntry.getValue());
+                referenceNodes.addAll((ArrayNode) elasticService.search(indexOsidEntry.getKey(), searchQuery));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        for (JsonNode node : arrayNode) {
+            ObjectNode objectNode = (ObjectNode) node;
+            ArrayNode finalReferenceNodes = referenceNodes;
+            objectNode.fields().forEachRemaining(objectField -> {
+                if (objectField.getValue().asText().startsWith("did:")) {
+                    String[] referenceStrSplit = objectField.getValue().asText().split(":");
+                    String osid = referenceStrSplit[2];
+                    for(JsonNode referenceNode: finalReferenceNodes) {
+                        if(referenceNode.get("osid").textValue().equals(osid)) {
+                            objectNode.set(objectField.getKey(), referenceNode);
+                        }
                     }
                 }
             });
-            for (String referenceKeys: removableReferenceKeys) {
-                objectNode.remove(referenceKeys);
-            }
             nodeWithExpandedReference.add(objectNode);
         }
         return nodeWithExpandedReference;
@@ -158,6 +174,24 @@ public class ElasticSearchService implements ISearchService {
         entity.add(entityName);
         jsonNode.set(ENTITY_TYPE, entity);
         SearchQuery searchQuery1 = getSearchQuery(jsonNode, offset, limit);
+        return searchQuery1;
+    }
+
+    private SearchQuery getSearchQuery(String entityName, List<String> osids) throws JsonProcessingException {
+        ArrayNode osidsArrayNode = JsonNodeFactory.instance.arrayNode();
+        for (String osid: osids) {
+            osidsArrayNode.add(osid);
+        }
+        ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+        ObjectNode conditionNode = JsonNodeFactory.instance.objectNode();
+        conditionNode.set("or", osidsArrayNode);
+        ObjectNode osidFilterNode = JsonNodeFactory.instance.objectNode();
+        osidFilterNode.set("osid", conditionNode);
+        objectNode.set("filters", osidFilterNode);
+        ArrayNode entity = JsonNodeFactory.instance.arrayNode();
+        entity.add(entityName);
+        objectNode.set(ENTITY_TYPE, entity);
+        SearchQuery searchQuery1 = getSearchQuery(objectNode, offset, limit);
         return searchQuery1;
     }
 
