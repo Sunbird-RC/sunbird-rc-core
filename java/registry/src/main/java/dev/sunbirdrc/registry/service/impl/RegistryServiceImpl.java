@@ -11,10 +11,7 @@ import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
-import dev.sunbirdrc.registry.dao.IRegistryDao;
-import dev.sunbirdrc.registry.dao.RegistryDaoImpl;
-import dev.sunbirdrc.registry.dao.VertexReader;
-import dev.sunbirdrc.registry.dao.VertexWriter;
+import dev.sunbirdrc.registry.dao.*;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -394,7 +391,7 @@ public class RegistryServiceImpl implements RegistryService {
         logger.debug("callNotificationActors ends");
     }
 
-    private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode, String parentName) {
+    private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode, String parentName, Vertex parentVertex) throws Exception {
         HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
         Set<Object> updatedUuids = new HashSet<Object>();
         Set<String> previousArrayItemsUuids = vr.getArrayItemUuids(blankArrVertex);
@@ -407,7 +404,7 @@ public class RegistryServiceImpl implements RegistryService {
                     Vertex existingItem = uuidVertexMap.getOrDefault(item.get(uuidPropertyName).textValue(), null);
                     if (existingItem != null) {
                         try {
-                            registryDao.updateVertex(graph, existingItem, item, parentName);
+                            doUpdate(shard, graph, registryDao, vr, item, parentName, parentVertex);
                         } catch (Exception e) {
                             logger.error("Can't update item {}", item.toString());
                         }
@@ -447,7 +444,8 @@ public class RegistryServiceImpl implements RegistryService {
         }
     }
 
-    private void doUpdate(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, JsonNode userInputNode, String userInputKey, Vertex parentVertex) throws Exception {
+    private void doUpdate(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, JsonNode userInputNode,
+                          String userInputKey, Vertex parentVertex) throws Exception {
         HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
         Vertex rootVertex = vr.getRootVertex();
 
@@ -489,14 +487,13 @@ public class RegistryServiceImpl implements RegistryService {
 
                         if (null != existArrayVertex) {
                             // updateArrayItems one by one
-                            doUpdateArray(shard, graph, registryDao, vr, existArrayVertex, (ArrayNode) oneElementNode, userInputKey);
+                            doUpdateArray(shard, graph, registryDao, vr, existArrayVertex, (ArrayNode) oneElementNode, userInputKey, parentVertex);
                         } else {
                             VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
-                            vertexWriter.createArrayNode(rootVertex, oneElement.getKey(), (ArrayNode) oneElementNode);
+                            vertexWriter.createArrayNode(existingVertex, oneElement.getKey(), (ArrayNode) oneElementNode);
                         }
-                        registryDao.updateVertex(graph, existArrayVertex, oneElementNode, oneElement.getKey());
                     } else {
-                        registryDao.updateVertex(graph, existingVertex, userInputNode, userInputKey);
+                        existingVertex.property(oneElement.getKey(), ValueType.getValue(oneElement.getValue()));
                     }
                 } else if (oneElementNode.isObject()) {
                     logger.info("Object node {}", oneElement.toString());
