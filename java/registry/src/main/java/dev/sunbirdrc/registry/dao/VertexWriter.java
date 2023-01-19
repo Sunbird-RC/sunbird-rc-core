@@ -2,10 +2,12 @@ package dev.sunbirdrc.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.ArrayHelper;
+import dev.sunbirdrc.registry.util.RecordIdentifier;
 import dev.sunbirdrc.registry.util.RefLabelHelper;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
@@ -237,11 +239,12 @@ public class VertexWriter {
 
     private void updateParentForReferencingNode(Vertex vertex, Map.Entry<String, JsonNode> entry, JsonNode entryValue) {
         String[] dids = entryValue.asText().split(DID_SEPERATOR);
-        Iterator<Vertex> vertexIterator = graph.traversal().clone().V().hasLabel(dids[1]).has(uuidPropertyName, dids[2]);
+        String osid = RecordIdentifier.parse(dids[2]).getUuid();
+        Iterator<Vertex> vertexIterator = graph.traversal().clone().V().hasLabel(dids[1]).has(uuidPropertyName, osid);
         while(vertexIterator.hasNext()) {
             Vertex dependent = vertexIterator.next();
             addEdge(entry.getKey(), vertex, dependent);
-            vertex.property(RefLabelHelper.getLabel(entry.getKey(), uuidPropertyName), dids[2]);
+            vertex.property(RefLabelHelper.getLabel(entry.getKey(), uuidPropertyName), osid);
         }
     }
 
