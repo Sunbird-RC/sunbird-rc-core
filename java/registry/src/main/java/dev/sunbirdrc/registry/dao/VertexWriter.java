@@ -36,7 +36,6 @@ public class VertexWriter {
     private DatabaseProvider databaseProvider;
     private String parentOSid;
     private static final String EMPTY_STR = "";
-    private static final String DID_SEPERATOR = ":";
     private Logger logger = LoggerFactory.getLogger(VertexWriter.class);
 
     public VertexWriter(Graph graph, DatabaseProvider databaseProvider, String uuidPropertyName) {
@@ -231,17 +230,6 @@ public class VertexWriter {
             }
         });
         return vertex;
-    }
-
-    private void updateParentForReferencingNode(Vertex vertex, Map.Entry<String, JsonNode> entry, JsonNode entryValue) {
-        String[] dids = entryValue.asText().split(DID_SEPERATOR);
-        String osid = RecordIdentifier.parse(dids[2]).getUuid();
-        Iterator<Vertex> vertexIterator = graph.traversal().clone().V().hasLabel(dids[1]).has(uuidPropertyName, osid);
-        while(vertexIterator.hasNext()) {
-            Vertex dependent = vertexIterator.next();
-            addEdge(entry.getKey(), vertex, dependent);
-            vertex.property(RefLabelHelper.getLabel(entry.getKey(), uuidPropertyName), osid);
-        }
     }
 
     /**
