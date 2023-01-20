@@ -327,4 +327,5 @@ Feature: Registry api tests
     When method get
     Then status 200
     And response[0].osid.length > 0
+    And match response[0].references == '#present'
 

@@ -35,8 +35,6 @@ public class EntityParenter {
 
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
-    @Value("${registry.expandReference}")
-    public boolean expandReferenceObj;
 
     @Autowired
     private DBProviderFactory dbProviderFactory;
@@ -137,7 +135,7 @@ public class EntityParenter {
                             String parentLabel = ParentLabelGenerator.getLabel(defintionName);
                             parentLabels.add(parentLabel);
 
-                            VertexWriter vertexWriter = new VertexWriter(graph, dbProvider, uuidPropertyName, expandReferenceObj);
+                            VertexWriter vertexWriter = new VertexWriter(graph, dbProvider, uuidPropertyName);
                             Vertex v = vertexWriter.ensureParentVertex(parentLabel);
 
                             ShardParentInfo shardParentInfo = new ShardParentInfo(defintionName, v);
@@ -294,7 +292,7 @@ public class EntityParenter {
             Graph graph = osGraph.getGraphStore();
             try (Transaction tx = dbProvider.startTransaction(graph)) {
 
-                VertexWriter vertexWriter = new VertexWriter(graph, dbProvider, uuidPropertyName, expandReferenceObj);
+                VertexWriter vertexWriter = new VertexWriter(graph, dbProvider, uuidPropertyName);
                 Vertex v = graph.vertices(parentVertex.id()).next();
 
                 vertexWriter.updateParentIndexProperty(v, Constants.INDEX_FIELDS, indexFields);

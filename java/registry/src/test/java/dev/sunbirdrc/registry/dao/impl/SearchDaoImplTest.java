@@ -180,7 +180,7 @@ public class SearchDaoImplTest {
     }
 
     private void populateGraph() {
-        VertexWriter vertexWriter = new VertexWriter(graph, databaseProvider, "tid", expandReferenceObj);
+        VertexWriter vertexWriter = new VertexWriter(graph, databaseProvider, "tid");
         Vertex v1 = vertexWriter.createVertex("Teacher");
         v1.property("serialNum", 1);
         v1.property("teacherName", "marko");

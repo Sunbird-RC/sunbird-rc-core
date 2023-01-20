@@ -52,7 +52,7 @@ public class RegistryDaoImpl implements IRegistryDao {
      * @return
      */
     public String addEntity(Graph graph, JsonNode rootNode) {
-        VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName, expandReferenceObj);
+        VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName);
         String entityId = vertexWriter.writeNodeEntity(rootNode);
         return entityId;
     }
@@ -66,7 +66,7 @@ public class RegistryDaoImpl implements IRegistryDao {
      */
     public JsonNode getEntity(Graph graph, String entityType, String uuid, ReadConfigurator readConfigurator) throws Exception {
 
-        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
+        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager, expandReferenceObj);
         JsonNode result = vr.read(entityType, uuid);
 
         return result;
@@ -75,7 +75,7 @@ public class RegistryDaoImpl implements IRegistryDao {
 
     public JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator, boolean expandInternal) throws Exception {
 
-        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
+        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager, expandReferenceObj);
         ObjectNode constructObject = vr.constructObject(vertex);
         if (expandInternal) {
             String entityType = (String) ValueType.getValue(constructObject.get(TypePropertyHelper.getTypeName()));
@@ -106,7 +106,7 @@ public class RegistryDaoImpl implements IRegistryDao {
             if (databaseProvider.getId(vertex).equals(osidVal)) {
                 updateObject(graph, vertex, (ObjectNode) inputJsonNode);
             } else {
-                VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName, expandReferenceObj);
+                VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName);
                 if(inputJsonNode.get(uuidPropertyName) != null) {
                     vertexWriter.writeSingleNode(vertex, objectName, inputJsonNode.get(objectName));
                 } else {

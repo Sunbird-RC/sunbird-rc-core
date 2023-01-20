@@ -164,7 +164,7 @@ public class RegistryServiceImplTest {
 	}
 
 	private void populateGraph() {
-		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid", expandReferenceObj);
+		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid");
 		Vertex v1 = vertexWriter.createVertex("Teacher");
 		v1.property("serialNum", 1);
 		v1.property("teacherName", "marko");
@@ -372,20 +372,20 @@ public class RegistryServiceImplTest {
 	public void shouldTestVertexWriter() throws Exception {
 		String v1 = addStudentToGraph();
 		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, expandReferenceObj);
 		JsonNode student = vertexReader.read("Student", v1);
 		assertNotNull(student);
 	}
 
 	private String addStudentToGraph() throws JsonProcessingException {
-		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid", expandReferenceObj);
+		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid");
 		return vertexWriter.writeNodeEntity(objectMapper.readTree("{\"Student\":  {\n" +
 				"  \"name\": \"abc\"\n" +
 				"}}"));
 	}
 
 	private String addTeacherToGraph() throws JsonProcessingException {
-		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid", expandReferenceObj);
+		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid");
 		return vertexWriter.writeNodeEntity(objectMapper.readTree("{\"Teacher\":  {\n" +
 				"  \"fullName\": \"abc\"\n" +
 				"}}"));

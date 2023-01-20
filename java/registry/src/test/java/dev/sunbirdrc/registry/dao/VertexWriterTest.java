@@ -56,8 +56,6 @@ public class VertexWriterTest {
 
     private VertexWriter vertexWriter;
     Vertex vertex;
-    @Value("${registry.expandReference}")
-    private boolean expandReferenceObj;
 
     @Before
     public void setUp() throws Exception {
@@ -69,7 +67,7 @@ public class VertexWriterTest {
         Mockito.when(osGraph.getGraphStore()).thenReturn(graph);
         vertex = Mockito.mock(Vertex.class);
         Mockito.when(graph.addVertex(anyString())).thenReturn(vertex);
-        vertexWriter = new VertexWriter(graph, mockDatabaseProvider, testUuidPropertyName, expandReferenceObj);
+        vertexWriter = new VertexWriter(graph, mockDatabaseProvider, testUuidPropertyName);
     }
 
     @Test
@@ -124,9 +122,12 @@ public class VertexWriterTest {
         ObjectNode entryValue = JsonNodeFactory.instance.objectNode();
         TextNode value = JsonNodeFactory.instance.textNode("value1");
         entryValue.set("field1", value);
+        TextNode references = JsonNodeFactory.instance.textNode("did:some_entity:123");
+        entryValue.set("references", references);
         Mockito.when(mockDatabaseProvider.getId(vertex)).thenReturn("123");
         Vertex actualVertex = vertexWriter.writeSingleNode(parentVertex, label, entryValue);
-
+        Mockito.verify(vertex, Mockito.times(1)).property("references", "did:some_entity:123");
+        Mockito.verify(vertex, Mockito.times(1)).property("field1", "value1");
         Mockito.verify(parentVertex, Mockito.times(1)).addEdge(label, vertex);
         Mockito.verify(parentVertex, Mockito.times(1)).property(label + "_" + testUuidPropertyName, "123");
         assertEquals(vertex, actualVertex);

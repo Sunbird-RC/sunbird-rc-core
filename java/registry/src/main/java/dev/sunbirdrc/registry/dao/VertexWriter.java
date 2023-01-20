@@ -38,13 +38,11 @@ public class VertexWriter {
     private static final String EMPTY_STR = "";
     private static final String DID_SEPERATOR = ":";
     private Logger logger = LoggerFactory.getLogger(VertexWriter.class);
-    private boolean expandReferenceObj;
 
-    public VertexWriter(Graph graph, DatabaseProvider databaseProvider, String uuidPropertyName, boolean expandReferenceObj) {
+    public VertexWriter(Graph graph, DatabaseProvider databaseProvider, String uuidPropertyName) {
         this.graph = graph;
         this.databaseProvider = databaseProvider;
         this.uuidPropertyName = uuidPropertyName;
-        this.expandReferenceObj = expandReferenceObj;
     }
 
     /**
@@ -222,9 +220,7 @@ public class VertexWriter {
         jsonObject.fields().forEachRemaining(entry -> {
             JsonNode entryValue = entry.getValue();
             logger.debug("Processing {} -> {}", entry.getKey(), entry.getValue());
-            if (entryValue.isValueNode() && entryValue.asText().startsWith(DID_TYPE) && expandReferenceObj) {
-                updateParentForReferencingNode(vertex, entry, entryValue);
-            } else if (entryValue.isValueNode()) {
+            if (entryValue.isValueNode()) {
                 // Directly add under the vertex as a property
                 vertex.property(entry.getKey(), ValueType.getValue(entryValue));
             } else if (entryValue.isObject()) {

@@ -149,7 +149,7 @@ public class RegistryServiceImpl implements RegistryService {
             Graph graph = osGraph.getGraphStore();
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
                 ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
-                VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager);
+                VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager, expandReferenceObj);
                 Vertex vertex = vertexReader.getVertex(null, uuid);
                 String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
                 if (!StringUtils.isEmpty(index) && index.equals(Schema)) {
@@ -278,7 +278,7 @@ public class RegistryServiceImpl implements RegistryService {
                 // Read the node and
                 // TODO - decrypt properties to pass validation
                 ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-                VertexReader vr = new VertexReader(databaseProvider, graph, readConfigurator, uuidPropertyName, definitionsManager);
+                VertexReader vr = new VertexReader(databaseProvider, graph, readConfigurator, uuidPropertyName, definitionsManager, expandReferenceObj);
                 JsonNode readNode = vr.read(entityType, id);
 
                 String rootId = readNode.findPath(Constants.ROOT_KEYWORD).textValue();
@@ -401,7 +401,7 @@ public class RegistryServiceImpl implements RegistryService {
         Set<Object> updatedUuids = new HashSet<Object>();
         Set<String> previousArrayItemsUuids = vr.getArrayItemUuids(blankArrVertex);
 
-        VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName, expandReferenceObj);
+        VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
 
         for (JsonNode item : arrayNode) {
             if (item.isObject()) {
@@ -493,7 +493,7 @@ public class RegistryServiceImpl implements RegistryService {
                             // updateArrayItems one by one
                             doUpdateArray(shard, graph, registryDao, vr, existArrayVertex, (ArrayNode) oneElementNode, userInputKey);
                         } else {
-                            VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName, expandReferenceObj);
+                            VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
                             vertexWriter.createArrayNode(rootVertex, oneElement.getKey(), (ArrayNode) oneElementNode);
                         }
                         registryDao.updateVertex(graph, existArrayVertex, oneElementNode, oneElement.getKey());
