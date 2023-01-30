@@ -27,6 +27,7 @@ import dev.sunbirdrc.registry.transform.ITransformer;
 import dev.sunbirdrc.validators.ValidationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.jetbrains.annotations.Nullable;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
@@ -356,7 +357,15 @@ public class RegistryEntityController extends AbstractController {
         return notes;
     }
 
-    private JsonNode getAttestationNode(String attestationId, JsonNode node) throws AttestationNotFoundException, JsonProcessingException {
+    private JsonNode getAttestationSignedData(String attestationId, JsonNode node) throws AttestationNotFoundException, JsonProcessingException {
+        JsonNode attestationNode = getAttestationNode(attestationId, node);
+        if(attestationNode.get(OSSystemFields._osAttestedData.name()) == null) throw new AttestationNotFoundException();
+        attestationNode = objectMapper.readTree(attestationNode.get(OSSystemFields._osAttestedData.name()).asText());
+        return attestationNode;
+    }
+
+    @Nullable
+    private JsonNode getAttestationNode(String attestationId, JsonNode node) {
         Iterator<JsonNode> iterator = node.iterator();
         JsonNode attestationNode = null;
         while(iterator.hasNext()) {
@@ -365,8 +374,6 @@ public class RegistryEntityController extends AbstractController {
                 break;
             }
         }
-        if(attestationNode.get(OSSystemFields._osAttestedData.name()) == null) throw new AttestationNotFoundException();
-        attestationNode = objectMapper.readTree(attestationNode.get(OSSystemFields._osAttestedData.name()).asText());
         return attestationNode;
     }
 
@@ -448,7 +455,8 @@ public class RegistryEntityController extends AbstractController {
                     entityName,
                     entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
-                    getTemplateUrlFromRequest(request, entityName)
+                    getTemplateUrlFromRequest(request, entityName),
+                    JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityName))
             ), HttpStatus.OK);
         } catch (Exception exception) {
             exception.printStackTrace();
@@ -715,12 +723,13 @@ public class RegistryEntityController extends AbstractController {
             String readerUserId = getUserId(entityName, request);
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
                     .get(entityName).get(attestationName);
-            JsonNode attestationNode = getAttestationNode(attestationId, node);
+            JsonNode attestationNode = getAttestationSignedData(attestationId, node);
             return new ResponseEntity<>(certificateService.getCertificate(attestationNode,
                     entityName,
                     entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
-                    getTemplateUrlFromRequest(request, entityName)
+                    getTemplateUrlFromRequest(request, entityName),
+                    JSONUtil.removeNodesByPath(getAttestationNode(attestationId, node), definitionsManager.getExcludingFieldsForEntity(entityName))
             ), HttpStatus.OK);
         } catch (AttestationNotFoundException e) {
             logger.error(e.getMessage());
