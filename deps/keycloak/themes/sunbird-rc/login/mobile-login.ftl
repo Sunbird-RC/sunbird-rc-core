@@ -23,7 +23,7 @@
         <div class="ndear-login-card-wrapper">
             <h3>Login</h3>
             <br/>
-            <b>Email Id / Mobile Number</b>
+            <b>${properties.userIdTitle!}</b>
             <div class="box-container">
                 <#if realm.password>
                     <div>
