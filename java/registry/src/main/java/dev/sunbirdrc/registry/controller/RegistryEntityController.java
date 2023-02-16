@@ -450,8 +450,8 @@ public class RegistryEntityController extends AbstractController {
             String readerUserId = getUserId(entityName, request);
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
                     .get(entityName);
-            node = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
-            return new ResponseEntity<>(certificateService.getCertificate(node,
+            JsonNode signedNode = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
+            return new ResponseEntity<>(certificateService.getCertificate(signedNode,
                     entityName,
                     entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
@@ -729,7 +729,7 @@ public class RegistryEntityController extends AbstractController {
                     entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
                     getTemplateUrlFromRequest(request, entityName),
-                    JSONUtil.removeNodesByPath(getAttestationNode(attestationId, node), definitionsManager.getExcludingFieldsForEntity(entityName))
+                    getAttestationNode(attestationId, node)
             ), HttpStatus.OK);
         } catch (AttestationNotFoundException e) {
             logger.error(e.getMessage());
