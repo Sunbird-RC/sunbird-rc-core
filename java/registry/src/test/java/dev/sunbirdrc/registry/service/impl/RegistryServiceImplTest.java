@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.typesafe.config.Config;
@@ -307,6 +308,58 @@ public class RegistryServiceImplTest {
 	}
 
 	@Test
+	public void shouldUpdateArrayFieldsInEntity() throws Exception {
+		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
+		definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
+		ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
+		ReflectionTestUtils.setField(registryService, "uuidPropertyName", "osid");
+		ReflectionTestUtils.setField(registryService, "searchProvider", "dev.sunbirdrc.registry.service.ElasticSearchService");
+		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
+		String instituteOsid = addInstituteToGraph();
+		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
+		ObjectNode affiliationNode = (ObjectNode) instituteNode.get("Institute").get("affiliation").get(0);
+		ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+		arrayNode.add("Class XII");
+		affiliationNode.set("classes", arrayNode);
+		when(shard.getShardLabel()).thenReturn("");
+		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode));
+		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
+		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
+		esNodeCaptor.getValue();
+		System.out.println(esNodeCaptor);
+		JsonNode output = esNodeCaptor.getValue().get("Institute").get("affiliation").get(0).get("classes");
+		assertTrue(output.get(0).textValue().equals("Class XII"));
+		assertEquals(1, output.size());
+		definitionsManager.removeDefinition(JsonNodeFactory.instance.textNode(schema));
+	}
+
+	@Test
+	public void shouldUpdateTextFieldsInEntity() throws Exception {
+		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
+		definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
+		ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
+		ReflectionTestUtils.setField(registryService, "uuidPropertyName", "osid");
+		ReflectionTestUtils.setField(registryService, "searchProvider", "dev.sunbirdrc.registry.service.ElasticSearchService");
+		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
+		String instituteOsid = addInstituteToGraph();
+		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
+		((ObjectNode)instituteNode.get("Institute")).set("instituteName", JsonNodeFactory.instance.textNode("Holy Cross"));
+		when(shard.getShardLabel()).thenReturn("");
+		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode));
+		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
+		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
+		esNodeCaptor.getValue();
+		System.out.println(esNodeCaptor);
+		JsonNode output = esNodeCaptor.getValue().get("Institute").get("instituteName");
+		assertTrue(output.textValue().equals("Holy Cross"));
+		definitionsManager.removeDefinition(JsonNodeFactory.instance.textNode(schema));
+	}
+
+	@Test
 	public void shouldUpdateOnlyPublicFieldsInES() throws Exception {
 
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
@@ -383,6 +436,23 @@ public class RegistryServiceImplTest {
 		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid");
 		return vertexWriter.writeNodeEntity(objectMapper.readTree("{\"Student\":  {\n" +
 				"  \"name\": \"abc\"\n" +
+				"}}"));
+	}
+
+	private String addInstituteToGraph() throws JsonProcessingException {
+		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid");
+		return vertexWriter.writeNodeEntity(objectMapper.readTree("{\"Institute\": {\n" +
+				"  \"instituteName\": \"Don bosco\",\n" +
+				"  \"email\": \"admin@gmail.com\",\n" +
+				"  \"contactNumber\": \"1234\",\n" +
+				" \"affiliation\": [{\n" +
+				" \"medium\": \"English\"," +
+				" \"board\": \"cbse\"," +
+				" \"affiliationNumber\": \"123\"," +
+				" \"grantYear\": \"2000\"," +
+				" \"expiryYear\": \"2030\"," +
+				" \"classes\": [\"Class XII\", \"Class X\"]" +
+				"}]" +
 				"}}"));
 	}
 
