@@ -5,18 +5,16 @@ import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.umlg.sqlg.structure.SqlgGraph;
-import org.umlg.sqlg.structure.topology.Index;
-import org.umlg.sqlg.structure.topology.IndexType;
-import org.umlg.sqlg.structure.topology.PropertyColumn;
-import org.umlg.sqlg.structure.topology.VertexLabel;
+import org.umlg.sqlg.structure.topology.*;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SqlgProvider extends DatabaseProvider {
 
@@ -98,12 +96,20 @@ public class SqlgProvider extends DatabaseProvider {
      * @param propertyNames
      */
     private void createIndexByIndexType(Graph graph, IndexType indexType, String label, List<String> propertyNames) {
-        VertexLabel vertexLabel = getVertex(graph, label);
         for (String propertyName : propertyNames) {
-            List<PropertyColumn> properties = new ArrayList<>();
-            properties.add(vertexLabel.getProperty(propertyName).get());
-            ensureIndex(vertexLabel, indexType, properties);
+            List<String> properties1 = Arrays.stream(propertyName.split("[.]")).collect(Collectors.toList());
+            if(properties1.size() == 1) {
+                VertexLabel vertexLabel = getVertex(graph, label);
+                List<PropertyColumn> properties = new ArrayList<>();
+                properties.add(vertexLabel.getProperty(propertyName.split("[.]")[0]).get());
+                ensureIndex(vertexLabel, indexType, properties);
+            }
+            else {
+                createIndexByIndexType(graph, indexType, properties1.get(0), properties1.subList(1, properties1.size()));
+            }
         }
+//        createIndexByIndexType(graph, indexType, propertyNames.get(0).split("[.]")[0], propertyNames.subList(1, propertyNames.size()));
+//        VertexLabel vertexLabel1 = getVertex(graph, propertyNames.get(0).split("[.]")[0]);
     }
     /**
      * ensures composite index for a given label for non-unique index type
