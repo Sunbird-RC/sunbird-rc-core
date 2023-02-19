@@ -105,12 +105,38 @@ public class SqlgProvider extends DatabaseProvider {
                 ensureIndex(vertexLabel, indexType, properties);
             }
             else {
-                createIndexByIndexType(graph, indexType, properties1.get(0), properties1.subList(1, properties1.size()));
+                List<String> subsequentPropertyNames = getSubsequentPropertyNames(properties1);
+                createIndexByIndexType(graph, indexType, properties1.get(0), subsequentPropertyNames);
             }
         }
 //        createIndexByIndexType(graph, indexType, propertyNames.get(0).split("[.]")[0], propertyNames.subList(1, propertyNames.size()));
 //        VertexLabel vertexLabel1 = getVertex(graph, propertyNames.get(0).split("[.]")[0]);
     }
+
+    private List<String> getSubsequentPropertyNames(List<String> properties) {
+        List<String> subsequentProperties = new ArrayList<>();
+        properties = properties.subList(1, properties.size());
+        String sep = ".";
+        int totalLengthOfSubsequentProperties = getStringLengthWithSeparator(properties, sep);
+        String propertyString = getPropertyString(properties, sep, totalLengthOfSubsequentProperties);
+        subsequentProperties.add(propertyString);
+        return subsequentProperties;
+    }
+
+    private String getPropertyString(List<String> properties, String separator, int totalLengthOfSubsequentProperties) {
+        StringBuilder stringBuilder = new StringBuilder(totalLengthOfSubsequentProperties);
+        properties.forEach(property -> stringBuilder.append(separator).append(property));
+        return stringBuilder.substring(separator.length());
+    }
+
+    private int getStringLengthWithSeparator(List<String> properties, String sep) {
+        int length = sep.length() * properties.size();
+        for(String property: properties) {
+            length += property.length();
+        }
+        return length;
+    }
+
     /**
      * ensures composite index for a given label for non-unique index type
      * @param graph
