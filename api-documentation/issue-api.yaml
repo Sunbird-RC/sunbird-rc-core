@@ -19,11 +19,11 @@ tags:
 - name: Verifying
   description: The following APIs are defined for verifying a Verifiable Credential
 paths:
-  /credentials/issue:
+  /credentials/claim:
     post:
       tags:
         - Issuing
-      summary: Credential issue API
+      summary: Credential claim API
       operationId: credentialIssue
       requestBody:
         description: Credential payload
@@ -31,6 +31,40 @@ paths:
           'appliation/json':
             schema:
               $ref: '#/components/schemas/credentialRequest'
+        required: true
+      responses:
+        201:
+          description: Credential successfully issued!
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/credentialResponse'
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+      x-codegen-request-body-name: body
+  /credentials/sign:
+    post:
+      tags:
+        - Issuing
+      summary: Credential sign API
+      operationId: credentialSign
+      requestBody:
+        description: Credential payload
+        content:
+          'appliation/json':
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    credentialId:
+                      type: string
+                      example: credentialDID
+                      description: Optional field, required if a claim is already made
+                - $ref: '#/components/schemas/credentialRequest'
         required: true
       responses:
         201:
@@ -63,7 +97,7 @@ paths:
         required: false
         schema:
           type: string
-      - name: Accept
+      - name: accept
         in: header
         required: true
         schema:
@@ -91,11 +125,38 @@ paths:
         500:
           description: Error
           content: {}
+    delete:
+      tags:
+        - Issuing
+      summary: Revoke credentials by id
+      operationId: revokeCredentialsById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            'appliation/json':
+              schema:
+                $ref: '#/components/schemas/revokedResponse'
+        401:
+          description: Not Authorized
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        500:
+          description: Error
+          content: {}
   /credentials/search:
     post:
       tags:
         - Issuing
-      summary: Search credentials by issuer and subject
+      summary: Search credentials by issuer and subject 
       operationId: searchCredentials
       requestBody:
         description: Search payload
@@ -106,8 +167,17 @@ paths:
               properties:
                 issuer:
                   type: object
+                  properties:
+                    id:
+                      type: string
                 subject:
                   type: object
+                  properties:
+                    id:
+                      type: string
+                type:
+                  type: string
+                  enum: ["claim", "sign"]
         required: true
       responses:
         200:
@@ -127,21 +197,20 @@ paths:
         500:
           description: Error
           content: {}
-  /credentials/verify:
-    post:
+  /credentials/{id}/verify:
+    get:
       tags:
         - Verifying
       summary: Verifies a verifiableCredential and returns a verificationResult in
         the response body.
       description: Verifies a verifiableCredential and returns a verificationResult
         in the response body.
-      requestBody:
-        description: Credential payload
-        content:
-          'appliation/json':
-            schema:
-              $ref: '#/components/schemas/verifyRequest'
+      parameters:
+      - name: id
+        in: path
         required: true
+        schema:
+          type: string
       responses:
         200:
           description: OK
@@ -149,16 +218,51 @@ paths:
             'appliation/json':
               schema:
                 $ref: '#/components/schemas/verifyResponse'
+  /revocation-list:
+    get:
+      tags: 
+        - Revocation
+      summary: Complete list of revoked credentials (Need to be discussed).
+      responses:
+        200:
+          description: OK
+          content:
+            'appliation/json':
+              schema:
+                type: array
+                items:
+                 type: object
 components:
   schemas:
-  
+    revokedResponse:
+      type: object
+      properties:
+        revocationListIndex:
+          type: string
     verifyResponse:
       type: object
       properties:
+        status:
+          type: string
+          enum: ["Active", "Revoked", "Expired"]
         checks:
           type: array
           items: 
-            type: string
+            type: object
+            properties:
+              active:
+                type: string
+                enum: ["OK"]
+              revoked:
+                type: string
+                enum: ["OK"]
+              expired:
+                type: string
+                enum: ["OK"]
+              proof:
+                description: "Check if the issuer "
+                type: string
+                enum: ["OK"]
         warnings:
           type: array
           items: 
@@ -182,17 +286,59 @@ components:
     credentialResponse:
       type: object
       properties:
-        verifiableCredential:
-          $ref: '#/components/schemas/verifiableCredentialType'
+        credential:
+          allOf:
+            - $ref: '#/components/schemas/verifiableCredentialType'
+            - type: object
+              properties:
+               proof:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  created:
+                    type: string
+                  challenge:
+                    type: string
+                  domain:
+                    type: string
+                  nonce:
+                    type: string
+                  verificationMethod:
+                    type: string
+                  proofPurpose:
+                    type: string
+                  jws:
+                    type: string
+                  proofValue:
+                    type: string
+        credentialSchemaId:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        createdBy:
+          type: string
+        updatedBy:
+          type: string
     credentialRequest:
       type: object
       properties:
         credential:
           $ref: '#/components/schemas/verifiableCredentialType'
-        options:
-          $ref: '#/components/schemas/credentialOptions'
-        credentialSchema:
+        credentialSchemaId:
           type: string
+        tags:
+          type: array
+          items:
+            type: string
+        
     credentialOptions:
       type: object
       properties:
@@ -230,27 +376,7 @@ components:
         credentialSubject:
           type: object
           properties: {}
-        proof:
-          type: object
-          properties:
-            type:
-              type: string
-            created:
-              type: string
-            challenge:
-              type: string
-            domain:
-              type: string
-            nonce:
-              type: string
-            verificationMethod:
-              type: string
-            proofPurpose:
-              type: string
-            jws:
-              type: string
-            proofValue:
-              type: string
+      
   securitySchemes:
     Authorization:
       type: apiKey
