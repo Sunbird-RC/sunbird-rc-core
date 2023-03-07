@@ -40,6 +40,7 @@ import dev.sunbirdrc.views.ViewTemplate;
 import dev.sunbirdrc.views.ViewTransformer;
 import io.minio.errors.*;
 import lombok.Setter;
+import org.agrona.Strings;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -107,6 +108,9 @@ public class RegistryHelper {
 
     @Autowired
     private ISearchService searchService;
+
+    @Autowired
+    private NativeSearchService nativeSearchService;
 
     @Autowired
     private ViewTemplateManager viewTemplateManager;
@@ -332,8 +336,12 @@ public class RegistryHelper {
      * @throws Exception
      */
     public JsonNode searchEntity(JsonNode inputJson) throws Exception {
+        return searchEntity(inputJson, searchService);
+    }
+
+    private JsonNode searchEntity(JsonNode inputJson, ISearchService service) throws Exception {
         logger.debug("searchEntity starts");
-        JsonNode resultNode = searchService.search(inputJson);
+        JsonNode resultNode = service.search(inputJson);
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
@@ -776,11 +784,7 @@ public class RegistryHelper {
     private JsonNode getUserInfoFromRegistry(HttpServletRequest request, String entityName) throws Exception {
         String userId = getUserId(request,entityName);
         if (userId != null) {
-            ObjectNode payload = JsonNodeFactory.instance.objectNode();
-            payload.set(ENTITY_TYPE, JsonNodeFactory.instance.arrayNode().add(entityName));
-            ObjectNode filters = JsonNodeFactory.instance.objectNode();
-            filters.set(OSSystemFields.osOwner.toString(), JsonNodeFactory.instance.objectNode().put("contains", userId));
-            payload.set(FILTERS, filters);
+            ObjectNode payload = getSearchByOwnerQuery(entityName, userId);
 
             watch.start("RegistryController.searchEntity");
             JsonNode result = searchEntity(payload);
@@ -788,6 +792,16 @@ public class RegistryHelper {
             return result;
         }
         throw new Exception("Forbidden");
+    }
+
+    @NotNull
+    private ObjectNode getSearchByOwnerQuery(String entityName, String userId) {
+        ObjectNode payload = JsonNodeFactory.instance.objectNode();
+        payload.set(ENTITY_TYPE, JsonNodeFactory.instance.arrayNode().add(entityName));
+        ObjectNode filters = JsonNodeFactory.instance.objectNode();
+        filters.set(OSSystemFields.osOwner.toString(), JsonNodeFactory.instance.objectNode().put("contains", userId));
+        payload.set(FILTERS, filters);
+        return payload;
     }
 
     public String authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
@@ -850,6 +864,13 @@ public class RegistryHelper {
             result.add(dbResponse.get(entity));
         }
         return result;
+    }
+    public JsonNode searchEntitiesByUserId(String entity, String userId, String viewTemplateId) throws Exception {
+        ObjectNode searchByOwnerQuery = getSearchByOwnerQuery(entity, userId);
+        if (!Strings.isEmpty(viewTemplateId)) {
+            searchByOwnerQuery.put(VIEW_TEMPLATE_ID, viewTemplateId);
+        }
+        return searchEntity(searchByOwnerQuery, nativeSearchService);
     }
 
     public void authorizeInviteEntity(HttpServletRequest request, String entityName) throws Exception {

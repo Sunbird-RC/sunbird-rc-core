@@ -14,9 +14,14 @@ public class SampleViewFunctionProvider implements IViewFunctionProvider<String>
         return concat(values);
     }
 
+    @Override
+    public String doAction(List<Object> values, String[] paths) {
+        return doAction(values);
+    }
+
     /**
      * simple concat for the values as string and comma(',') as seperator
-     * 
+     *
      * @param args
      * @return
      */
