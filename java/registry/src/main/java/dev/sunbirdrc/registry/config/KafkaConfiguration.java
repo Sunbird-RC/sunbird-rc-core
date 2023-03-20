@@ -9,6 +9,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,7 +30,7 @@ import static dev.sunbirdrc.registry.Constants.createEntityGroupId;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_KAFKA_SERVICE_NAME;
 
 @Configuration
-@ConditionalOnProperty("async.enabled")
+@ConditionalOnExpression("${async.enabled} or ${metrics.enabled}")
 @EnableKafka
 public class KafkaConfiguration {
 	@Value("${kafka.createEntityTopic:create_entity}")
@@ -38,6 +39,8 @@ public class KafkaConfiguration {
 	String postCreateEntityTopic;
 	@Value(value = "${kafka.bootstrapAddress}")
 	private String bootstrapAddress;
+	@Value(value = "${metrics.topic}")
+	private String createMetricsTopic;
 
 	@Bean
 	public KafkaAdmin kafkaAdmin() {
@@ -52,14 +55,20 @@ public class KafkaConfiguration {
 		configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
 		return KafkaAdminClient.create(configs);
 	}
-
+	@Bean
+	@ConditionalOnProperty("metrics.enabled")
+	public NewTopic createMetricsTopic() {
+		return new NewTopic(createMetricsTopic, 1, (short) 1);
+	}
 
 	@Bean
+	@ConditionalOnProperty("async.enabled")
 	public NewTopic createEntityTopic() {
 		return new NewTopic(createEntityTopic, 1, (short) 1);
 	}
 
 	@Bean
+	@ConditionalOnProperty("async.enabled")
 	public NewTopic postCreateEntityTopic() {
 		return new NewTopic(postCreateEntityTopic, 1, (short) 1);
 	}
