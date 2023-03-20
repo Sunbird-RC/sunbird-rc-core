@@ -16,6 +16,8 @@ import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
+import dev.sunbirdrc.registry.model.Event;
+import dev.sunbirdrc.registry.model.EventType;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
@@ -62,6 +64,8 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SignatureHelper signatureHelper;
     @Autowired
+    MaskService maskService;
+    @Autowired
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
@@ -101,6 +105,9 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private IAuditService auditService;
+
+    @Autowired
+    private IEventService eventService;
 
     @Autowired
     private SchemaService schemaService;
@@ -183,6 +190,7 @@ public class RegistryServiceImpl implements RegistryService {
         Transaction tx = null;
         String entityId = "entityPlaceholderId";
         String vertexLabel = rootNode.fieldNames().next();
+        Definition definition = null;
 
         systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
@@ -216,7 +224,7 @@ public class RegistryServiceImpl implements RegistryService {
             if (perRequestIndexCreation) {
                 String shardId = shard.getShardId();
                 Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
-                Definition definition = definitionsManager.getDefinition(vertexLabel);
+                definition = definitionsManager.getDefinition(vertexLabel);
                 entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             }
 
@@ -233,9 +241,12 @@ public class RegistryServiceImpl implements RegistryService {
             auditService.auditAdd(
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
-
-
-
+            JsonNode maskedNode = maskService.updatePrivateAndInternalFields(
+                    rootNode.get(vertexLabel),
+                    definition.getOsSchemaConfiguration()
+            );
+            Event event = eventService.createTelemetryObject(EventType.ADD.name(), userId, "USER", entityId, vertexLabel, maskedNode);
+            eventService.pushEvents(event);
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.addSchema(rootNode);
