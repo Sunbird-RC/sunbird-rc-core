@@ -12,7 +12,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-@Primary
 public class KafkaEventService implements IEventService {
 
     @Value("${kafka.metricsTopic:metrics}")

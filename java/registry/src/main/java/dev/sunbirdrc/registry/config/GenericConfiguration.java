@@ -19,6 +19,7 @@ import dev.sunbirdrc.registry.interceptor.ValidationInterceptor;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.Constants.SchemaType;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
+import dev.sunbirdrc.registry.service.IEventService;
 import dev.sunbirdrc.registry.service.IReadService;
 import dev.sunbirdrc.registry.service.ISearchService;
 import dev.sunbirdrc.registry.service.RegistryService;
@@ -139,6 +140,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String notificationServiceHealthUrl;
 	@Value("${search.providerName}")
 	private String searchProviderName;
+	@Value("${event.providerName}")
+	private String eventProviderName;
 	@Value("${read.providerName}")
 	private String readProviderName;
 	@Value("${server.port}")
@@ -285,6 +288,26 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public ISearchService searchService() {
 		ServiceProvider searchProvider = new ServiceProvider();
 		return searchProvider.getSearchInstance(searchProviderName, isElasticSearchEnabled());
+	}
+
+	@Bean
+	public IEventService eventService() {
+		IEventService eventService = null;
+		String DEFAULT_EVENT_PROVIDER_NAME = "dev.sunbirdrc.registry.service.impl.KafkaEventService";
+		try {
+			if (eventProviderName == null || eventProviderName.isEmpty()) {
+				// default is set to native search service
+				eventProviderName = DEFAULT_EVENT_PROVIDER_NAME;
+			}
+			Class<?> advisorClass = Class.forName(eventProviderName);
+			eventService = (IEventService) advisorClass.newInstance();
+			logger.info("Invoked search provider class with classname: " + eventProviderName);
+		} catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
+				 | IllegalArgumentException e) {
+			logger.error("Search provider class {} cannot be instantiate with exception:", eventProviderName, e);
+		}
+
+		return eventService;
 	}
 
 	/**
