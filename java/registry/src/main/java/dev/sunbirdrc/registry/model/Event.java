@@ -3,7 +3,6 @@ package dev.sunbirdrc.registry.model;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.context.ApplicationContext;
 
 import java.util.HashMap;
 import java.util.Map;
