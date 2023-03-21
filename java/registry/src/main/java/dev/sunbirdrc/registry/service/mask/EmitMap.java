@@ -12,6 +12,7 @@ public class EmitMap {
         map.put(EventConfig.NONE, new NoneEmitStrategy());
         map.put(EventConfig.FULL, new FullEmitStrategy());
         map.put(EventConfig.HASH, new HashEmitStrategy());
+        map.put(EventConfig.HASH_MASK, new HashMaskEmitStrategy());
         return map.get(config);
     }
 }
