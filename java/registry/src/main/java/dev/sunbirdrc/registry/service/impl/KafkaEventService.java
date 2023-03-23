@@ -8,9 +8,7 @@ import dev.sunbirdrc.registry.service.IEventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Component;
 
-@Component
 public class KafkaEventService implements IEventService {
 
     @Value("${kafka.metricsTopic:metrics}")

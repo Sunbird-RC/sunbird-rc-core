@@ -41,10 +41,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.*;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.retry.annotation.EnableRetry;
@@ -140,8 +139,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String notificationServiceHealthUrl;
 	@Value("${search.providerName}")
 	private String searchProviderName;
-	@Value("${event.providerName}")
-	private String eventProviderName;
 	@Value("${read.providerName}")
 	private String readProviderName;
 	@Value("${server.port}")
@@ -290,26 +287,32 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		return searchProvider.getSearchInstance(searchProviderName, isElasticSearchEnabled());
 	}
 
-	@Bean
-	public IEventService eventService() {
-		IEventService eventService = null;
-		String DEFAULT_EVENT_PROVIDER_NAME = "dev.sunbirdrc.registry.service.impl.KafkaEventService";
-		try {
-			if (eventProviderName == null || eventProviderName.isEmpty()) {
-				// default is set to native search service
-				eventProviderName = DEFAULT_EVENT_PROVIDER_NAME;
-			}
-			Class<?> advisorClass = Class.forName(eventProviderName);
-			eventService = (IEventService) advisorClass.newInstance();
-			logger.info("Invoked search provider class with classname: " + eventProviderName);
-		} catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
-				 | IllegalArgumentException e) {
-			logger.error("Search provider class {} cannot be instantiate with exception:", eventProviderName, e);
-		}
-
-		return eventService;
+	@Bean(name = "kafkaEventService")
+	@ConditionalOnProperty(name = "metrics.providerName", havingValue = "dev.sunbirdrc.registry.service.impl.KafkaEventService", matchIfMissing = true)
+	public IEventService kafkaEventService() {
+		String PROVIDER = "dev.sunbirdrc.registry.service.impl.KafkaEventService";
+		return getEventService(PROVIDER);
 	}
 
+	@Bean(name = "fileEventService")
+	@ConditionalOnProperty(name = "metrics.providerName", havingValue = "dev.sunbirdrc.registry.service.impl.FileEventService")
+	public IEventService fileEventService() {
+		String PROVIDER = "dev.sunbirdrc.registry.service.impl.FileEventService";
+		return getEventService(PROVIDER);
+	}
+
+	private IEventService getEventService(String PROVIDER) {
+		IEventService eventService = null;
+		try {
+			Class<?> advisorClass = Class.forName(PROVIDER);
+			eventService = (IEventService) advisorClass.newInstance();
+			logger.info("Invoked search provider class with classname: " + PROVIDER);
+		} catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
+				 | IllegalArgumentException e) {
+			logger.error("Search provider class {} cannot be instantiate with exception:", PROVIDER, e);
+		}
+		return eventService;
+	}
 	/**
 	 * This method creates read provider implementation bean
 	 *
