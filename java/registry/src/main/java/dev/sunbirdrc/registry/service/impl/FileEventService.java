@@ -1,6 +1,9 @@
 package dev.sunbirdrc.registry.service.impl;
 
-import dev.sunbirdrc.registry.model.Event;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.IEventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +14,9 @@ public class FileEventService implements IEventService {
 
     private static Logger logger = LoggerFactory.getLogger(FileEventService.class);
     @Override
-    public void pushEvents(Event event) {
-        logger.info("{}", event.toString());
+    public void pushEvents(Event event) throws JsonProcessingException {
+        ObjectWriter objectWriter = new ObjectMapper().writer();
+        String message = objectWriter.writeValueAsString(event);
+        logger.info("{}", message);
     }
 }

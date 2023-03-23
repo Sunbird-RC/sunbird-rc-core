@@ -2,8 +2,7 @@ package dev.sunbirdrc.registry.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import dev.sunbirdrc.registry.model.Event;
-import dev.sunbirdrc.registry.util.Definition;
+import dev.sunbirdrc.registry.model.event.Event;
 
 import java.util.Date;
 import java.util.UUID;

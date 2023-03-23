@@ -16,7 +16,7 @@ import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
-import dev.sunbirdrc.registry.model.Event;
+import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.model.EventType;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
