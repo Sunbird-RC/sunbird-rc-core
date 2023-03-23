@@ -64,7 +64,7 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SignatureHelper signatureHelper;
     @Autowired
-    MaskService maskService;
+    private MaskService maskService;
     @Autowired
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
@@ -243,7 +243,7 @@ public class RegistryServiceImpl implements RegistryService {
                     shard, rootNode);
             JsonNode maskedNode = maskService.updatePrivateAndInternalFields(
                     rootNode.get(vertexLabel),
-                    definition.getOsSchemaConfiguration()
+                    definitionsManager.getDefinition(vertexLabel).getOsSchemaConfiguration()
             );
             Event event = eventService.createTelemetryObject(EventType.ADD.name(), userId, "USER", entityId, vertexLabel, maskedNode);
             eventService.pushEvents(event);
