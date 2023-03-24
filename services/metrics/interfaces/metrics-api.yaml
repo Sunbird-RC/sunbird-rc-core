@@ -1,0 +1,33 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Metrics
+  description: Metrics API
+security:
+  - hasRole: []
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /v1/metrics:
+    get:
+      tags:
+        - metrics
+      summary: get all metrics
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/LoginResponse'
+definitions:
+  LoginResponse:
+    type: object
+    properties:
+      count:
+        type: object
