@@ -2,10 +2,7 @@ package dev.sunbirdrc.registry.service.mask;
 
 import dev.sunbirdrc.registry.model.EventConfig;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class EmitMap {
+public class EmitStrategyFactory {
     public static IEmitStrategy getMaskConfig(EventConfig config) {
         switch (config) {
             case MASK:
