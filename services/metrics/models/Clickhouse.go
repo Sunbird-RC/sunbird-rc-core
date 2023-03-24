@@ -84,7 +84,7 @@ func (c *Clickhouse) GetCount() map[string]string {
 		tables = append(tables, tableName)
 	}
 	for i := range tables {
-		rows, err = c.connection.Query(ctx, "SELECT count(entity.name) FROM student")
+		rows, err = c.connection.Query(ctx, "SELECT count(*) FROM "+tables[i])
 		if err != nil {
 			log.Fatal(err)
 		}

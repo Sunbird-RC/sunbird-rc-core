@@ -57,12 +57,7 @@ func init() {
   },
   "definitions": {
     "LoginResponse": {
-      "type": "object",
-      "properties": {
-        "count": {
-          "type": "object"
-        }
-      }
+      "type": "object"
     }
   },
   "security": [
@@ -111,12 +106,7 @@ func init() {
   },
   "definitions": {
     "LoginResponse": {
-      "type": "object",
-      "properties": {
-        "count": {
-          "type": "object"
-        }
-      }
+      "type": "object"
     }
   },
   "security": [

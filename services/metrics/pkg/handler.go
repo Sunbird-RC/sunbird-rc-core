@@ -3,7 +3,6 @@ package pkg
 import (
 	"metrics/config"
 	"metrics/models"
-	apiResponse "metrics/swagger_gen/models"
 	"metrics/swagger_gen/restapi/operations"
 	"metrics/swagger_gen/restapi/operations/metrics"
 
@@ -18,9 +17,6 @@ func getAllMetrics(params metrics.GetV1MetricsParams) middleware.Responder {
 	response := metrics.NewGetV1MetricsOK()
 	dbInstance := models.GetDBInstance(config.Config.Database.Name)
 	count := dbInstance.GetCount()
-	countResponse := apiResponse.LoginResponse{
-		Count: count,
-	}
-	response.SetPayload(&countResponse)
+	response.SetPayload(count)
 	return response
 }

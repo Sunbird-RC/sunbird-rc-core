@@ -39,6 +39,9 @@ services:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
+      - metrics_enabled=true
+      - metrics_topic=metrics
+      - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
       - elastic_search_connection_url=es:9200
       - elastic_search_auth_enabled=${ELASTIC_SECURITY_ENABLED-false}
       - elastic_search_username=${ELASTIC_SEARCH_USERNAME-elastic}
@@ -198,6 +201,7 @@ services:
         condition: service_started
     ports:
       - "9092:9092"
+      - "9094:9094"
     environment:
       KAFKA_BROKER_ID: "1"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
@@ -255,7 +259,25 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+  metrics:
+    image: dockerhub/sunbird-rc-metrics
+    environment:
+      CLICK_HOUSE_URL: clickhouse:9000
+      CLICKHOUSE_DATABASE: default
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_METRICS_TOPIC: metrics
+    ports:
+      - "8070:8070"
+    depends_on:
+      kafka:
+        condition: service_started
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
+  clickhouse:
+    image: clickhouse/clickhouse-server:head-alpine
+    ports:
+      - "9002:9000"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1

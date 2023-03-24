@@ -25,7 +25,7 @@ type GetV1MetricsOK struct {
 	/*
 	  In: Body
 	*/
-	Payload *models.LoginResponse `json:"body,omitempty"`
+	Payload models.LoginResponse `json:"body,omitempty"`
 }
 
 // NewGetV1MetricsOK creates GetV1MetricsOK with default headers values
@@ -35,13 +35,13 @@ func NewGetV1MetricsOK() *GetV1MetricsOK {
 }
 
 // WithPayload adds the payload to the get v1 metrics o k response
-func (o *GetV1MetricsOK) WithPayload(payload *models.LoginResponse) *GetV1MetricsOK {
+func (o *GetV1MetricsOK) WithPayload(payload models.LoginResponse) *GetV1MetricsOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get v1 metrics o k response
-func (o *GetV1MetricsOK) SetPayload(payload *models.LoginResponse) {
+func (o *GetV1MetricsOK) SetPayload(payload models.LoginResponse) {
 	o.Payload = payload
 }
 
@@ -49,10 +49,8 @@ func (o *GetV1MetricsOK) SetPayload(payload *models.LoginResponse) {
 func (o *GetV1MetricsOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.WriteHeader(200)
-	if o.Payload != nil {
-		payload := o.Payload
-		if err := producer.Produce(rw, payload); err != nil {
-			panic(err) // let the recovery middleware deal with this
-		}
+	payload := o.Payload
+	if err := producer.Produce(rw, payload); err != nil {
+		panic(err) // let the recovery middleware deal with this
 	}
 }

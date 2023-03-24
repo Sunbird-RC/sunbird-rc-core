@@ -28,6 +28,3 @@ paths:
 definitions:
   LoginResponse:
     type: object
-    properties:
-      count:
-        type: object
