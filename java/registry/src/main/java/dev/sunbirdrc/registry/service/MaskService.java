@@ -39,7 +39,7 @@ public class MaskService {
     }
 
     private String updateValue(String value, EventConfig config) {
-        IEmitStrategy maskConfig = EmitMap.getMaskConfig(config);
+        IEmitStrategy maskConfig = EmitStrategyFactory.getMaskConfig(config);
         return maskConfig.updateValue(value);
     }
 
