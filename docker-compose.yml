@@ -277,12 +277,6 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
-  clickhouse:
-    image: clickhouse/clickhouse-server:head-alpine
-    ports:
-      - "9002:9000"
-    healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
   digilocker-certificate-api:
     image: dockerhub/sunbird-rc-digilocker-certificate-api
     volumes:
@@ -302,3 +296,9 @@ services:
     environment:
       REGISTRY_BASE_URL: http://registry:8081/
       DATABASE_HOST: db
+  clickhouse:
+    image: clickhouse/clickhouse-server:head-alpine
+    ports:
+      - "9002:9000"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
