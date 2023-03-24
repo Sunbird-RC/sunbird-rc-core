@@ -7,8 +7,12 @@ import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.IEventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
 
+@Service
+@ConditionalOnProperty(name = "metrics.providerName", havingValue = "dev.sunbirdrc.registry.service.impl.KafkaEventService", matchIfMissing = true)
 public class KafkaEventService implements IEventService {
 
     @Value("${kafka.metricsTopic:metrics}")

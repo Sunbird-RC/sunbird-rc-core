@@ -19,7 +19,6 @@ import dev.sunbirdrc.registry.interceptor.ValidationInterceptor;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.Constants.SchemaType;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
-import dev.sunbirdrc.registry.service.IEventService;
 import dev.sunbirdrc.registry.service.IReadService;
 import dev.sunbirdrc.registry.service.ISearchService;
 import dev.sunbirdrc.registry.service.RegistryService;
@@ -41,9 +40,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.retry.annotation.EnableRetry;
@@ -285,33 +285,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	public ISearchService searchService() {
 		ServiceProvider searchProvider = new ServiceProvider();
 		return searchProvider.getSearchInstance(searchProviderName, isElasticSearchEnabled());
-	}
-
-	@Bean(name = "kafkaEventService")
-	@ConditionalOnProperty(name = "metrics.providerName", havingValue = "dev.sunbirdrc.registry.service.impl.KafkaEventService", matchIfMissing = true)
-	public IEventService kafkaEventService() {
-		String PROVIDER = "dev.sunbirdrc.registry.service.impl.KafkaEventService";
-		return getEventService(PROVIDER);
-	}
-
-	@Bean(name = "fileEventService")
-	@ConditionalOnProperty(name = "metrics.providerName", havingValue = "dev.sunbirdrc.registry.service.impl.FileEventService")
-	public IEventService fileEventService() {
-		String PROVIDER = "dev.sunbirdrc.registry.service.impl.FileEventService";
-		return getEventService(PROVIDER);
-	}
-
-	private IEventService getEventService(String PROVIDER) {
-		IEventService eventService = null;
-		try {
-			Class<?> advisorClass = Class.forName(PROVIDER);
-			eventService = (IEventService) advisorClass.newInstance();
-			logger.info("Invoked search provider class with classname: " + PROVIDER);
-		} catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
-				 | IllegalArgumentException e) {
-			logger.error("Search provider class {} cannot be instantiate with exception:", PROVIDER, e);
-		}
-		return eventService;
 	}
 	/**
 	 * This method creates read provider implementation bean
