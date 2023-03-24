@@ -15,7 +15,7 @@ public class NoneEmitStrategyTest {
     }
 
     @Test
-    public void shouldEmitCompleteValueAsIs() {
+    public void shouldNotEmitAnyValue() {
         final String value = "testValue";
         final String actualValue = noneEmitStrategy.updateValue(value);
         assertNull(actualValue);

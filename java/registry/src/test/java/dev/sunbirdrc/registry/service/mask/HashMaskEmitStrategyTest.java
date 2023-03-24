@@ -14,7 +14,7 @@ public class HashMaskEmitStrategyTest {
     }
 
     @Test
-    public void shouldEmitCompleteValueAsIs() {
+    public void shouldEmitHashedMaskedValue() {
         final String value = "testValue";
         final String actualValue = hashMaskEmitStrategy.updateValue(value);
         boolean isEndCorrect = actualValue.endsWith("XXXXValue");

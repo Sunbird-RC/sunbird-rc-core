@@ -14,7 +14,7 @@ public class MaskEmitStrategyTest {
     }
 
     @Test
-    public void shouldEmitCompleteValueAsIs() {
+    public void shouldEmitMaskedValue() {
         final String value = "testValue";
         final String expectedValue = "XXXXValue";
         final String actualValue = maskEmitStrategy.updateValue(value);

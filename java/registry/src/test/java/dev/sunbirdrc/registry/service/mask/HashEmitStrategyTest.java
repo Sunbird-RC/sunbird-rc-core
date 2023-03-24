@@ -14,7 +14,7 @@ public class HashEmitStrategyTest {
     }
 
     @Test
-    public void shouldEmitCompleteValueAsIs() {
+    public void shouldEmitHashedValue() {
         final String value = "testValue";
         final String actualValue = hashEmitStrategy.updateValue(value);
         assertNotEquals(actualValue, value);
