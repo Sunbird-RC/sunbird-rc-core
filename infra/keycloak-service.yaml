@@ -4,7 +4,7 @@ metadata:
   finalizers:
     - service.kubernetes.io/load-balancer-cleanup
   labels:
-    k8s-app: keycloak-service
+    app: keycloak-service
   name: keycloak-service
 spec:
   externalTrafficPolicy: Cluster
@@ -15,6 +15,6 @@ spec:
       targetPort: 8080
       nodePort: 30009
   selector:
-    k8s-app: keycloak-service
+    app: keycloak-service
   sessionAffinity: None
   type: LoadBalancer

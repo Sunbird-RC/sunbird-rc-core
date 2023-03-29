@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../../docker-compose.yml
+    kompose.version: 1.28.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: certificate-api
+  name: certificate-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: certificate-api
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f ../../docker-compose.yml
+        kompose.version: 1.28.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/sunbird-rc-core-default: "true"
+        io.kompose.service: certificate-api
+    spec:
+      containers:
+        - env:
+            - name: PORT
+              value: "8078"
+          image: dockerhub/sunbird-rc-certificate-api:${RELEASE_VERSION}
+          livenessProbe:
+            exec:
+              command:
+                - wget -nv -t1 --spider http://localhost:8078/health || exit 1
+            failureThreshold: 10
+            periodSeconds: 30
+            timeoutSeconds: 10
+          name: certificate-api
+          ports:
+            - containerPort: 8078
+          resources: {}
+      restartPolicy: Always
+status: {}

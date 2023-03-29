@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../../docker-compose.yml
+    kompose.version: 1.28.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: registry
+  name: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: registry
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f ../../docker-compose.yml
+        kompose.version: 1.28.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/sunbird-rc-core-default: "true"
+        io.kompose.service: registry
+    spec:
+      containers:
+        - env:
+            - name: async_enabled
+              value: ${ASYNC_ENABLED-false}
+            - name: authentication_enabled
+              value: "true"
+            - name: certificate_health_check_url
+              value: http://certificate-api:8078/health
+            - name: claims_url
+              value: http://claim-ms:8082
+            - name: connectionInfo_password
+              value: postgres
+            - name: connectionInfo_uri
+              value: jdbc:postgresql://db:5432/registry
+            - name: connectionInfo_username
+              value: postgres
+            - name: elastic_search_auth_enabled
+              value: ${ELASTIC_SECURITY_ENABLED-false}
+            - name: elastic_search_connection_url
+              value: es:9200
+            - name: elastic_search_password
+              value: ${ELASTIC_SEARCH_PASSWORD}
+            - name: elastic_search_username
+              value: ${ELASTIC_SEARCH_USERNAME-elastic}
+            - name: enable_external_templates
+              value: "true"
+            - name: filestorage_access_key
+              value: admin
+            - name: filestorage_bucket_key
+              value: issuance
+            - name: filestorage_connection_url
+              value: http://file-storage:9000
+            - name: filestorage_secret_key
+              value: "12345678"
+            - name: kafka_bootstrap_address
+              value: kafka:9092
+            - name: logging.level.root
+              value: INFO
+            - name: manager_type
+              value: ${MANAGER_TYPE-DefinitionsManager}
+            - name: pdf_url
+              value: http://certificate-api:8078/api/v1/certificatePDF
+            - name: redis_host
+              value: redis
+            - name: redis_port
+              value: "6379"
+            - name: registry_base_apis_enable
+              value: "false"
+            - name: search_providerName
+              value: ${SEARCH_PROVIDER_NAME-dev.sunbirdrc.registry.service.ElasticSearchService}
+            - name: sign_health_check_url
+              value: http://certificate-signer:8079/health
+            - name: sign_url
+              value: http://certificate-signer:8079/sign
+            - name: signature_enabled
+              value: "true"
+            - name: sunbird_keycloak_user_password
+              value: abcd@123
+            - name: sunbird_keycloak_user_set_password
+              value: "true"
+            - name: sunbird_sso_admin_client_id
+              value: ${KEYCLOAK_ADMIN_CLIENT_ID-admin-api}
+            - name: sunbird_sso_admin_client_secret
+              value: ${KEYCLOAK_SECRET}
+            - name: sunbird_sso_client_id
+              value: ${KEYCLOAK_CLIENT_ID-registry-frontend}
+            - name: sunbird_sso_realm
+              value: ${KEYCLOAK_REALM-sunbird-rc}
+            - name: sunbird_sso_url
+              value: http://keycloak:8080/auth
+            - name: template_base_url
+              value: http://registry:8081/api/v1/templates/
+            - name: webhook_enabled
+              value: "false"
+            - name: webhook_url
+              value: http://localhost:5001/api/v1/callback
+          image: dockerhub/sunbird-rc-core:${RELEASE_VERSION}
+          livenessProbe:
+            exec:
+              command:
+                - wget -nv -t1 --spider http://localhost:8081/health || exit 1
+            failureThreshold: 10
+            periodSeconds: 30
+            timeoutSeconds: 10
+          name: registry
+          ports:
+            - containerPort: 8081
+          resources: {}
+          volumeMounts:
+            - mountPath: /home/sunbirdrc/config/public/_schemas
+              name: registry-claim0
+      restartPolicy: Always
+      volumes:
+        - name: registry-claim0
+          persistentVolumeClaim:
+            claimName: registry-claim0
+status: {}

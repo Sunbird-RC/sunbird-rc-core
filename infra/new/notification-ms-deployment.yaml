@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../../docker-compose.yml
+    kompose.version: 1.28.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: notification-ms
+  name: notification-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: notification-ms
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f ../../docker-compose.yml
+        kompose.version: 1.28.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/sunbird-rc-core-default: "true"
+        io.kompose.service: notification-ms
+    spec:
+      containers:
+        - image: dockerhub/sunbird-rc-notification-service:${RELEASE_VERSION}
+          livenessProbe:
+            exec:
+              command:
+                - wget -nv -t1 --spider http://localhost:8765/notification-service/v1/health || exit 1
+            failureThreshold: 10
+            periodSeconds: 30
+            timeoutSeconds: 10
+          name: notification-ms
+          ports:
+            - containerPort: 8765
+          resources: {}
+      restartPolicy: Always
+status: {}
