@@ -22,11 +22,10 @@ import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.IAuditService;
 import dev.sunbirdrc.registry.service.IEventService;
-import dev.sunbirdrc.registry.service.MaskService;
+import dev.sunbirdrc.registry.service.UpdateEntityService;
 import dev.sunbirdrc.registry.service.SchemaService;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
-import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.util.*;
@@ -35,11 +34,9 @@ import dev.sunbirdrc.validators.json.jsonschema.JsonValidationServiceImpl;
 import org.apache.commons.io.IOUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.*;
@@ -56,7 +53,6 @@ import org.sunbird.akka.core.SunbirdActorFactory;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Iterator;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static org.junit.Assert.*;
@@ -115,7 +111,7 @@ public class RegistryServiceImplTest {
 	@Mock
 	private IEventService eventService;
 	@Mock
-	private MaskService maskService;
+	private UpdateEntityService updateEntityService;
 
 	private DatabaseProvider mockDatabaseProvider;
 
@@ -160,7 +156,7 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(registryService, "schemaService", schemaService);
 		ReflectionTestUtils.setField(registryService, "objectMapper", objectMapper);
 		ReflectionTestUtils.setField(registryService, "eventService", eventService);
-		ReflectionTestUtils.setField(registryService, "maskService", maskService);
+		ReflectionTestUtils.setField(registryService, "maskService", updateEntityService);
 	}
 
 	@Before

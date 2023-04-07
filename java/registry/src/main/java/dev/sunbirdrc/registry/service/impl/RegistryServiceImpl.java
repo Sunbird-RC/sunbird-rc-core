@@ -64,7 +64,7 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SignatureHelper signatureHelper;
     @Autowired
-    private MaskService maskService;
+    private UpdateEntityService updateEntityService;
     @Autowired
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
@@ -241,7 +241,7 @@ public class RegistryServiceImpl implements RegistryService {
             auditService.auditAdd(
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
-            JsonNode maskedNode = maskService.updatePrivateAndInternalFields(
+            JsonNode maskedNode = updateEntityService.updatePrivateAndInternalFields(
                     rootNode.get(vertexLabel),
                     definitionsManager.getDefinition(vertexLabel).getOsSchemaConfiguration()
             );
