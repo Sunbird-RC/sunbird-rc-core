@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.controller;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.dto.DocumentsResponse;
 import dev.sunbirdrc.registry.service.FileStorageService;
+import io.minio.errors.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 // TODO: Get should be viewed by both attestor and reviewer
@@ -40,12 +45,31 @@ public class FileStorageController {
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
     }
 
-    @DeleteMapping("/api/v1/{entity}/{entityId}/{property}/documents")
-    public ResponseEntity<DocumentsResponse> deleteMultipleFiles(@PathVariable String entity,
+    @PutMapping("/api/v1/{entity}/{entityId}/{property}/documents/{documentId}")//response content type will depend on the default content type configured by the server or the client.
+    public ResponseEntity<DocumentsResponse> update(@RequestParam MultipartFile[] files,
+                                                   @PathVariable String entity,
                                                     @PathVariable String entityId,
-                                                    @PathVariable String property,
-                                                    @RequestBody List<String> files,
-                                                    HttpServletRequest httpServletRequest) {
+                                                   @PathVariable String documentId,
+                                                   @PathVariable String property,
+                                                    HttpServletRequest httpServletRequest) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException//MultipartFile[] represents the updated file(s) that will be uploaded to the server.
+    //httpServletRequest extract information about the incoming request
+    {
+        try {
+            registryHelper.authorize(entity, entityId, httpServletRequest);// authorize() to authorize the request
+       } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);// if authorization gets fail this response
+        }
+        DocumentsResponse documentsResponse = fileStorageService.updateFiles(files,httpServletRequest.getRequestURI());// if authorization succeed then call updateFiles()
+        return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
+   }
+
+   @DeleteMapping("/api/v1/{entity}/{entityId}/{property}/documents")
+    public ResponseEntity<DocumentsResponse> deleteMultipleFiles(@PathVariable String entity,
+                                                                 @PathVariable String entityId,
+                                                                 @PathVariable String property,
+                                                                 @RequestBody List<String> files,
+                                                                 HttpServletRequest httpServletRequest) {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
@@ -58,10 +82,10 @@ public class FileStorageController {
 
     @DeleteMapping(value = "/api/v1/{entity}/{entityId}/{property}/documents/{documentId}")
     public ResponseEntity deleteAFile(@PathVariable String entity,
-                              @PathVariable String entityId,
-                              @PathVariable String property,
-                              @PathVariable String documentId,
-                              HttpServletRequest httpServletRequest) {
+                                      @PathVariable String entityId,
+                                      @PathVariable String property,
+                                      @PathVariable String documentId,
+                                      HttpServletRequest httpServletRequest) {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
@@ -71,7 +95,7 @@ public class FileStorageController {
         return fileStorageService.deleteDocument(httpServletRequest.getRequestURI());
     }
 
-    @GetMapping(value = "/api/v1/{entity}/{entityId}/{property}/documents/{documentId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/api/v1/{entity}/{entityId}/{property}/documents/{documentId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)//it returns binary data, such as a file or an image.
     public ResponseEntity<byte[]> get(@PathVariable String entity,
                                       @PathVariable String entityId,
                                       @PathVariable String property,
@@ -89,4 +113,7 @@ public class FileStorageController {
         byte[] document = fileStorageService.getDocument(httpServletRequest.getRequestURI());
         return ResponseEntity.ok().body(document);
     }
+
+
+
 }

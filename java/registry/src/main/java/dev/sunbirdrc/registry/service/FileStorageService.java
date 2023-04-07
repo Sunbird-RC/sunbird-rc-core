@@ -19,8 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -49,6 +48,16 @@ public class FileStorageService implements HealthIndicator {
 		logger.info("File has successfully saved");
 	}
 
+
+	public void update(InputStream inputStream, String objectName) throws Exception//inputStream is a file to be saved,Returns a new InputStream that reads no bytes. The returned stream is initially open. The stream is closed by calling the close() method. Subsequent calls to close() have no effect.
+	{
+		logger.info("Updating the file in the location {}", objectName);//logger used to log msg, bojectname is filename
+		minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(objectName).stream(inputStream, -1, 10485760).build());
+		logger.info("File has successfully updated");
+		//putObject method takes a PutObjectArgs object as a parameter, which is created using a builder pattern.and its initialized with some parameters
+
+	}
+
 	public DocumentsResponse saveAndFetchFileNames(MultipartFile[] files, String requestedURI) {
 		String objectPath = getDirectoryPath(requestedURI);
 
@@ -68,16 +77,18 @@ public class FileStorageService implements HealthIndicator {
 		return documentsResponse;
 	}
 
+
 	private String getDirectoryPath(String requestedURI) {
 		String versionDelimiter = "/v1/";
-		String[] split = requestedURI.split(versionDelimiter);
-		return split[1];
+		String[] split = requestedURI.split(versionDelimiter);//splits this URI into two parts using the delimiter "/v1/" by calling the split() method on the requestedURI string.
+		return split[1];//return the 2nd part of uri meand directory path
 	}
 
 	@NotNull
 	private String getFileName(String file) {
-		String uuid = UUID.randomUUID().toString();
-		return uuid + "-" + file;
+		String uuid = UUID.randomUUID().toString();//generates a unique identifier using the UUID.randomUUID() method,
+		// which generates a random UUID (Universally Unique Identifier) in the form of a String.
+		return uuid + "-" + file;// generated UUID with a hyphen and the original file name, creating a new unique file name that includes the UUID in it.
 	}
 
 	public DocumentsResponse deleteFiles(List<String> files) {
@@ -138,5 +149,47 @@ public class FileStorageService implements HealthIndicator {
 		} catch (Exception e) {
 			return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
 		}
+	}
+
+	public DocumentsResponse updateFiles(MultipartFile[] files, String requestedURI) {
+		String objectPath = getDirectoryPath(requestedURI);
+
+		DocumentsResponse documentsResponse = new DocumentsResponse();
+		for (MultipartFile file : files) {
+			String fileName = getFileName(file.getOriginalFilename());
+			try {
+				String objectName = objectPath;
+
+				boolean objectExists = minioClient.statObject(
+						StatObjectArgs.builder().bucket(bucketName).object(objectName).build()
+				) != null;
+
+				if (objectExists) {
+					save(file.getInputStream(),objectName);
+					documentsResponse.addDocumentLocation(objectName);
+					return documentsResponse;
+				}
+
+				for (MultipartFile file1 : files) {
+					if (file1.getOriginalFilename().equals(fileName)) {
+						minioClient.putObject(
+								PutObjectArgs.builder()
+										.bucket(bucketName)
+										.object(objectName)
+										.contentType(file1.getContentType())
+										.stream(file1.getInputStream(), file1.getSize(), -1)
+										.build()
+						);
+					}
+				}
+
+				documentsResponse.addDocumentLocation(objectName);
+			} catch (Exception e) {
+				documentsResponse.addError(file.getOriginalFilename());
+				logger.error("Error has occurred while trying to save the file {}", fileName);
+				e.printStackTrace();
+			}
+		}
+		return documentsResponse;
 	}
 }
