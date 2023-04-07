@@ -55,12 +55,10 @@ public class FileStorageService implements HealthIndicator {
 		minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(objectName).stream(inputStream, -1, 10485760).build());
 		logger.info("File has successfully updated");
 		//putObject method takes a PutObjectArgs object as a parameter, which is created using a builder pattern.and its initialized with some parameters
-
 	}
 
 	public DocumentsResponse saveAndFetchFileNames(MultipartFile[] files, String requestedURI) {
 		String objectPath = getDirectoryPath(requestedURI);
-
 		DocumentsResponse documentsResponse = new DocumentsResponse();
 		for (MultipartFile file : files) {
 			String fileName = getFileName(file.getOriginalFilename());
