@@ -44,26 +44,23 @@ public class FileStorageController {
         DocumentsResponse documentsResponse = fileStorageService.saveAndFetchFileNames(files, httpServletRequest.getRequestURI());
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
     }
-
-    @PutMapping("/api/v1/{entity}/{entityId}/{property}/documents/{documentId}")//response content type will depend on the default content type configured by the server or the client.
+    @PutMapping("/api/v1/{entity}/{entityId}/{property}/documents/{documentId}")
     public ResponseEntity<DocumentsResponse> update(@RequestParam MultipartFile[] files,
                                                    @PathVariable String entity,
                                                     @PathVariable String entityId,
                                                    @PathVariable String documentId,
                                                    @PathVariable String property,
-                                                    HttpServletRequest httpServletRequest) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException//MultipartFile[] represents the updated file(s) that will be uploaded to the server.
-    //httpServletRequest extract information about the incoming request
+                                                    HttpServletRequest httpServletRequest) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException
     {
         try {
-            registryHelper.authorize(entity, entityId, httpServletRequest);// authorize() to authorize the request
+            registryHelper.authorize(entity, entityId, httpServletRequest);
        } catch (Exception e) {
             e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);// if authorization gets fail this response
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
-        DocumentsResponse documentsResponse = fileStorageService.updateFiles(files,httpServletRequest.getRequestURI());// if authorization succeed then call updateFiles()
+        DocumentsResponse documentsResponse = fileStorageService.updateFiles(files,httpServletRequest.getRequestURI());
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
    }
-
    @DeleteMapping("/api/v1/{entity}/{entityId}/{property}/documents")
     public ResponseEntity<DocumentsResponse> deleteMultipleFiles(@PathVariable String entity,
                                                                  @PathVariable String entityId,
@@ -79,7 +76,6 @@ public class FileStorageController {
         DocumentsResponse documentsResponse = fileStorageService.deleteFiles(files);
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
     }
-
     @DeleteMapping(value = "/api/v1/{entity}/{entityId}/{property}/documents/{documentId}")
     public ResponseEntity deleteAFile(@PathVariable String entity,
                                       @PathVariable String entityId,
@@ -94,7 +90,6 @@ public class FileStorageController {
         }
         return fileStorageService.deleteDocument(httpServletRequest.getRequestURI());
     }
-
     @GetMapping(value = "/api/v1/{entity}/{entityId}/{property}/documents/{documentId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)//it returns binary data, such as a file or an image.
     public ResponseEntity<byte[]> get(@PathVariable String entity,
                                       @PathVariable String entityId,
@@ -113,7 +108,4 @@ public class FileStorageController {
         byte[] document = fileStorageService.getDocument(httpServletRequest.getRequestURI());
         return ResponseEntity.ok().body(document);
     }
-
-
-
 }
