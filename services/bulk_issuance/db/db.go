@@ -62,11 +62,11 @@ func GetDBFileData(id int) (*DBFileData, error) {
 	return filesUpload, nil
 }
 
-func CreateDBFileData(data *DBFileData) error {
+func CreateDBFileData(data *DBFileData) (uint, error) {
 	log.Info("Creating DBFileData entry")
 	result := db.Create(&data)
 	utils.LogErrorIfAny("Error while adding DBFileData : %v", result.Error)
-	return nil
+	return data.ID, nil
 }
 
 func GetAllUploadedFilesData() ([]DBFiles, error) {

@@ -60,24 +60,25 @@ func createRecords(params upload_and_create_records.PostV1UploadFilesVCNameParam
 	if err != nil {
 		return upload_and_create_records.NewPostV1UploadFilesVCNameNotFound().WithPayload(err.Error())
 	}
-	successFailureCount := map[string]int{
-		"success":   totalSuccess,
-		"error":     totalErrors,
-		"totalRows": totalSuccess + totalErrors,
-	}
 	response := upload_and_create_records.NewPostV1UploadFilesVCNameOK()
-	response.SetPayload(successFailureCount)
 	_, fileHeader, err := params.HTTPRequest.FormFile("file")
 	utils.LogErrorIfAny("Error retrieving file from request : %v", err)
 	fileName := fileHeader.Filename
 	err = addEntryForDbUploadToDatabase(fileName, totalSuccess, totalErrors, principal)
 	utils.LogErrorIfAny("Error while adding entry to table DBFiles : %v", err)
-	err = addEntryForDbFilesToDatabase(rows, fileName, data)
+	id, err := addEntryForDbFilesToDatabase(rows, fileName, data)
+    	successFailureCount := map[string]uint{
+    		"success":   uint(totalSuccess),
+    		"error":     uint(totalErrors),
+    		"totalRows": uint(totalSuccess + totalErrors),
+    		"ID":        id,
+    	}
+    	response.SetPayload(successFailureCount)
 	utils.LogErrorIfAny("Error while adding entry to table DBFileData : %v", err)
 	return response
 }
 
-func addEntryForDbFilesToDatabase(rows [][]string, fileName string, data Scanner) error {
+func addEntryForDbFilesToDatabase(rows [][]string, fileName string, data Scanner) (uint, error) {
 	log.Info("adding entry to dbFileData")
 	bytes, err := json.Marshal(rows)
 	utils.LogErrorIfAny("Error while marshalling data for database : %v", err)
