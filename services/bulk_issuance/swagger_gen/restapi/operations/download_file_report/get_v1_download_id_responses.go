@@ -77,6 +77,48 @@ func (o *GetV1DownloadIDOK) WriteResponse(rw http.ResponseWriter, producer runti
 	}
 }
 
+// GetV1DownloadIDForbiddenCode is the HTTP code returned for type GetV1DownloadIDForbidden
+const GetV1DownloadIDForbiddenCode int = 403
+
+/*GetV1DownloadIDForbidden Forbidden
+
+swagger:response getV1DownloadIdForbidden
+*/
+type GetV1DownloadIDForbidden struct {
+
+	/*
+	  In: Body
+	*/
+	Payload string `json:"body,omitempty"`
+}
+
+// NewGetV1DownloadIDForbidden creates GetV1DownloadIDForbidden with default headers values
+func NewGetV1DownloadIDForbidden() *GetV1DownloadIDForbidden {
+
+	return &GetV1DownloadIDForbidden{}
+}
+
+// WithPayload adds the payload to the get v1 download Id forbidden response
+func (o *GetV1DownloadIDForbidden) WithPayload(payload string) *GetV1DownloadIDForbidden {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the get v1 download Id forbidden response
+func (o *GetV1DownloadIDForbidden) SetPayload(payload string) {
+	o.Payload = payload
+}
+
+// WriteResponse to the client
+func (o *GetV1DownloadIDForbidden) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.WriteHeader(403)
+	payload := o.Payload
+	if err := producer.Produce(rw, payload); err != nil {
+		panic(err) // let the recovery middleware deal with this
+	}
+}
+
 // GetV1DownloadIDNotFoundCode is the HTTP code returned for type GetV1DownloadIDNotFound
 const GetV1DownloadIDNotFoundCode int = 404
 

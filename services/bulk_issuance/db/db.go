@@ -19,6 +19,7 @@ type DBFiles struct {
 	Filename     string
 	TotalRecords int
 	UserID       string
+	UserName     string
 	Date         string
 }
 
@@ -27,6 +28,8 @@ type DBFileData struct {
 	Filename string
 	Headers  string
 	RowData  []byte
+	UserID   string
+	UserName string
 }
 
 func Init() {
@@ -51,7 +54,7 @@ func CreateDBFiles(data *DBFiles) error {
 	return nil
 }
 
-func GetDBFileData(id int) (*DBFileData, error) {
+func GetDBFileData(id int, userId string) (*DBFileData, error) {
 	filesUpload := &DBFileData{}
 	log.Infof("Getting file data with id : %v", id)
 	result := db.First(&filesUpload, "id=?", id)
@@ -69,10 +72,10 @@ func CreateDBFileData(data *DBFileData) (uint, error) {
 	return data.ID, nil
 }
 
-func GetAllUploadedFilesData() ([]DBFiles, error) {
+func GetAllUploadedFilesData(userId string) ([]DBFiles, error) {
 	var files []DBFiles
 	log.Info("Getting all uploaded files")
-	if err := db.Find(&files).Error; err != nil {
+	if err := db.Find(&files, "user_id = ?", userId).Error; err != nil {
 		log.Errorf("Error while requesting for all uploaded files : %v", err)
 		return nil, errors.New("No files uploaded")
 	}

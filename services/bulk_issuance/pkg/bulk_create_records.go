@@ -66,19 +66,19 @@ func createRecords(params upload_and_create_records.PostV1UploadFilesVCNameParam
 	fileName := fileHeader.Filename
 	err = addEntryForDbUploadToDatabase(fileName, totalSuccess, totalErrors, principal)
 	utils.LogErrorIfAny("Error while adding entry to table DBFiles : %v", err)
-	id, err := addEntryForDbFilesToDatabase(rows, fileName, data)
-    	successFailureCount := map[string]uint{
-    		"success":   uint(totalSuccess),
-    		"error":     uint(totalErrors),
-    		"totalRows": uint(totalSuccess + totalErrors),
-    		"ID":        id,
-    	}
-    	response.SetPayload(successFailureCount)
+	id, err := addEntryForDbFilesToDatabase(rows, fileName, data, principal)
+	successFailureCount := map[string]uint{
+		"success":   uint(totalSuccess),
+		"error":     uint(totalErrors),
+		"totalRows": uint(totalSuccess + totalErrors),
+		"ID":        id,
+	}
+	response.SetPayload(successFailureCount)
 	utils.LogErrorIfAny("Error while adding entry to table DBFileData : %v", err)
 	return response
 }
 
-func addEntryForDbFilesToDatabase(rows [][]string, fileName string, data Scanner) (uint, error) {
+func addEntryForDbFilesToDatabase(rows [][]string, fileName string, data Scanner, principal *models.JWTClaimBody) (uint, error) {
 	log.Info("adding entry to dbFileData")
 	bytes, err := json.Marshal(rows)
 	utils.LogErrorIfAny("Error while marshalling data for database : %v", err)
@@ -86,6 +86,8 @@ func addEntryForDbFilesToDatabase(rows [][]string, fileName string, data Scanner
 		Filename: fileName,
 		Headers:  getHeaders(data.Head),
 		RowData:  bytes,
+		UserID:   principal.UserId,
+		UserName: principal.PreferredUsername,
 	}
 	return db.CreateDBFileData(&fileUpload)
 }
@@ -95,7 +97,8 @@ func addEntryForDbUploadToDatabase(fileName string, totalSuccess int, totalError
 	dbUpload := db.DBFiles{
 		Filename:     fileName,
 		TotalRecords: totalSuccess + totalErrors,
-		UserID:       principal.PreferredUsername,
+		UserID:       principal.UserId,
+		UserName:     principal.PreferredUsername,
 		Date:         time.Now().Format("2006-01-02"),
 	}
 	return db.CreateDBFiles(&dbUpload)
