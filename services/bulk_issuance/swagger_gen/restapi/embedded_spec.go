@@ -69,6 +69,12 @@ func init() {
               }
             }
           },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "string"
+            }
+          },
           "404": {
             "description": "Not found",
             "schema": {
@@ -299,6 +305,12 @@ func init() {
               "Content-Disposition": {
                 "type": "string"
               }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "string"
             }
           },
           "404": {

@@ -136,7 +136,10 @@ paths:
           description: Not found
           schema:
             type: string
-          
+        '403':
+          description: Forbidden
+          schema:
+            type: string
 
 definitions:
   SampleTemplateResponse:

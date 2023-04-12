@@ -17,7 +17,10 @@ import (
 func downloadReportFile(params download_file_report.GetV1DownloadIDParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Infof("Downloading report file with ID : %v", params.ID)
 	response := download_file_report.GetV1DownloadFileNameOK{}
-	file, err := db.GetDBFileData(int(params.ID))
+	file, err := db.GetDBFileData(int(params.ID), principal.UserId)
+	if file.UserID != principal.UserId {
+		return download_file_report.NewGetV1DownloadIDForbidden().WithPayload("User is not allowed to access this file")
+	}
 	if err != nil {
 		return download_file_report.NewGetV1DownloadIDNotFound().WithPayload(err.Error())
 	}

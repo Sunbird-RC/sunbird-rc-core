@@ -10,6 +10,7 @@ type JWTClaimBody struct {
 	Scope             string              `json:"scope"`
 	PreferredUsername string              `json:"preferred_username"`
 	FacilityCode      string              `json:"facility_code"`
+	UserId            string              `json:"sub"`
 }
 
 type Group struct {
