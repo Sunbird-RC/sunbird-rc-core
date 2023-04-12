@@ -139,7 +139,13 @@ func appendErrorsToCurrentRow(res *http.Response, data *Scanner, lastColIndex in
 	resBody, err := ioutil.ReadAll(res.Body)
 	utils.LogErrorIfAny("Error while reading error reponse from adding single record : %v", err)
 	data.Head["Errors"] = lastColIndex
-	currRow = append(currRow, string(resBody))
+	var responseMap map[string]interface{}
+	err = json.Unmarshal(resBody, &responseMap)
+	if err != nil {
+		log.Errorf("Unmarshal Error : %v", err)
+	}
+	errObj := responseMap["params"].(map[string]interface{})
+	currRow = append(currRow, errObj["errmsg"].(string))
 	return currRow
 }
 
