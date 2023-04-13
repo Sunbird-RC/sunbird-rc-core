@@ -19,7 +19,9 @@
     "kafkajs": "^1.15.0",
     "node-cache": "^5.1.2",
     "object-hash": "^3.0.0",
+    "pdfkit": "^0.13.0",
     "puppeteer": "^8.0.0",
-    "qrcode": "^1.4.4"
+    "qrcode": "^1.4.4",
+    "svg-to-pdfkit": "^0.1.8"
   }
 }

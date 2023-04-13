@@ -12,7 +12,8 @@ const {CUSTOM_TEMPLATE_DELIMITERS} = require('../../configs/config');
 const delimiters = require('handlebars-delimiters');
 const NodeCache = require("node-cache");
 const hash = require('object-hash');
-
+const SVGToPDF = require('svg-to-pdfkit');
+const PDFDocument = require('pdfkit');
 const cacheInstance = new NodeCache();
 
 Handlebars.registerHelper('dateFormat', require('handlebars-dateformat'));
@@ -247,6 +248,14 @@ async function renderDataToTemplate(templateFileURL, data) {
 
 async function createPDF(certificate) {
     try {
+        if(certificate.indexOf("svg") !== -1) {
+            const doc = new PDFDocument({
+                layout: "portrait",
+                size: "A4"
+            });
+            SVGToPDF(doc, certificate)
+            return doc;
+        }
         if (!browser) {
             browser = await puppeteer.launch(browserConfig);
         }
