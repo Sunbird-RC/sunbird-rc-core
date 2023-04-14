@@ -8,7 +8,7 @@ const { default: axios } = require('axios');
 const URL_W3C_VC = 'URL-W3C-VC';
 const URL = 'URL';
 const envData = require('../../configs/keys');
-const {CUSTOM_TEMPLATE_DELIMITERS} = require('../../configs/config');
+const {CUSTOM_TEMPLATE_DELIMITERS, CERTIFICATE_ORIENTATION, CERTIFICATE_PAGE_SIZE} = require('../../configs/config');
 const delimiters = require('handlebars-delimiters');
 const NodeCache = require("node-cache");
 const hash = require('object-hash');
@@ -250,8 +250,8 @@ async function createPDF(certificate) {
     try {
         if(certificate.indexOf("svg") !== -1) {
             const doc = new PDFDocument({
-                layout: "portrait",
-                size: "A4"
+                layout: CERTIFICATE_ORIENTATION,
+                size: CERTIFICATE_PAGE_SIZE
             });
             SVGToPDF(doc, certificate)
             return doc;
