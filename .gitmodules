@@ -1,0 +1,9 @@
+[submodule "services/Credential-MS"]
+	path = services/Credential-MS
+	url = https://github.com/Unified-Learner-Passbook/Credential-MS
+[submodule "services/Cred-Schema-MS"]
+	path = services/Cred-Schema-MS
+	url = https://github.com/Unified-Learner-Passbook/Cred-Schema-MS
+[submodule "services/Identity"]
+	path = services/Identity
+	url = https://github.com/Unified-Learner-Passbook/Identity
