@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "VCV2" ADD COLUMN IF NOT EXISTS     "createdBy" TEXT,
+ADD COLUMN IF NOT EXISTS    "tags" TEXT[],
+ADD COLUMN IF NOT EXISTS    "updatedBy" TEXT;

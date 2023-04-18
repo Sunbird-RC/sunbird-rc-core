@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  shortdb:
+    container_name: shortdb
+    image: postgres:12
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+    ports:
+      - 5432:5432
+    volumes:
+      - ./scripts/1-init.sql:/docker-entrypoint-initdb.d/1-init.sql
+      - ./pgdata:/var/lib/postgresql/data
+
+  gql:
+    image: hasura/graphql-engine:v2.7.0
+    ports:
+      - 15003:8080
+    env_file:
+      - .env
+    environment:
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@shortdb:5432/${POSTGRES_DB}
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@shortdb:5432/${POSTGRES_DB}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET}
+    depends_on:
+      - shortdb
+    restart: always

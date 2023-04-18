@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum VCStatus {
+  PENDING
+  ISSUED
+  REVOKED
+}
+
+model VC {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  type              String
+  subject           String
+  issuer            String
+  status            VCStatus  @default(PENDING)
+  credential_schema String
+  unsigned          Json
+  signed            Json?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime? @default(now())
+}
+
+model VCV2 {
+  id                String         @id @default(auto()) @map("_id") @db.ObjectId
+  seqid             Int            @unique
+  type              String[]
+  issuer            String
+  issuanceDate      String
+  expirationDate    String
+  // subject         Json (as per the VC doc this is JSON)
+  credential_schema String
+  subject           String
+  subjectId         String
+  unsigned          Json?
+  signed            Json?
+  proof             Json?
+  status            VCStatus       @default(ISSUED)
+  created_at        DateTime       @default(now())
+  updated_at        DateTime?      @default(now())
+  Presentations     Presentations? @relation(fields: [presentationsId], references: [id])
+  presentationsId   String?        @db.ObjectId
+}
+
+model Counter {
+  id                  String @id @default(auto()) @map("_id") @db.ObjectId
+  type_of_entity      String @default("Credential")
+  for_next_credential Int    @default(0)
+}
+
+model Presentations {
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+  type                 String[]
+  holder               Json
+  verifiableCredential VCV2[]
+  proof                Json?
+  status               VCStatus  @default(PENDING)
+  created_at           DateTime  @default(now())
+  updated_at           DateTime? @default(now())
+}
