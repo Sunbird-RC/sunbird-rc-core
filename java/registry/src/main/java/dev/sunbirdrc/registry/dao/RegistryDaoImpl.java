@@ -5,21 +5,31 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
+import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import  javax.sql.DataSource;
+import java.sql.Connection;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.UUID;
 
 public class RegistryDaoImpl implements IRegistryDao {
     public String uuidPropertyName;
     private IDefinitionsManager definitionsManager;
     private DatabaseProvider databaseProvider;
     private List<String> privatePropertyList;
+    @Autowired
+    private DataSource dataSource;
 
     private Logger logger = LoggerFactory.getLogger(RegistryDaoImpl.class);
 
@@ -55,7 +65,9 @@ public class RegistryDaoImpl implements IRegistryDao {
         return entityId;
     }
 
-    /**
+    /**public void deleteEntity(Vertex vertex) {
+      if (null != vertex) {
+
      * Retrieves a record from the database
      *
      * @param uuid             entity identifier to retrieve
@@ -88,7 +100,8 @@ public class RegistryDaoImpl implements IRegistryDao {
      * This method update the inputJsonNode related vertices in the database
      * Notes:
      * This graph object is the same one used for reading the entire record
-     *  @param vertex
+     *
+     * @param vertex
      * @param inputJsonNode
      * @param parentName
      */
@@ -105,7 +118,7 @@ public class RegistryDaoImpl implements IRegistryDao {
                 updateObject(graph, vertex, (ObjectNode) inputJsonNode);
             } else {
                 VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName);
-                if(inputJsonNode.get(uuidPropertyName) != null) {
+                if (inputJsonNode.get(uuidPropertyName) != null) {
                     vertexWriter.writeSingleNode(vertex, objectName, inputJsonNode.get(objectName));
                 } else {
                     // Set parent name as label for new node.
@@ -116,7 +129,6 @@ public class RegistryDaoImpl implements IRegistryDao {
             logger.error("Unexpected input passed here.");
         }
     }
-
 
 
     private void updateObject(Graph graph, Vertex vertex, ObjectNode inputJsonNode) {
@@ -134,13 +146,44 @@ public class RegistryDaoImpl implements IRegistryDao {
         });
     }
 
-
-    public void deleteEntity(Vertex vertex) {
-        if (null != vertex) {
+    //deleteEntity() used in RegistryServiceImpl
+    public void deleteEntity(Vertex vertex) //this is a soft delete code
+    //Vertex is a class that represents a node in a graph,
+    // object represents an entity or a record in the graph
+    {
+        if (null != vertex)//it checks of the input is not null
+        {
             vertex.property(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
+            //if vertex is not null method proceeds to mark the vertex as deleted
+            //property is a method of vertex that returns a Property object representing the value of a named property on the vertex.
+            //This effectively marks the entity as deleted or inactive,
             logger.debug("Vertex {} {} marked deleted", vertex.label(), databaseProvider.getId(vertex));
         } else {
-            logger.error("Can't mark delete - Null vertex passed");
+            logger.error("Can't mark delete - Null vertex passed");// if vertex is null then error msg
         }
+        //this is a soft delete operation, where the entity is not physically removed from the graph,
+        // but instead flagged as deleted by updating its properties.
     }
+
+    @Override
+    public void hardDeleteEntity(Vertex vertex) {
+        if (null != vertex) {
+            vertex.remove();
+           // logger.debug("Vertex with ID {} deleted", databaseProvider.getId(vertex));
+        } else {
+            logger.error("Can't delete - Null vertex passed");
+        }
+
+    }
+
 }
+
+
+
+
+
+
+
+
+
+

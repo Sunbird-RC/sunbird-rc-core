@@ -58,6 +58,8 @@ registry:
   redis:
     host: ${redis_host:localhost}
     port: ${redis_port:6379}
+  HARD_DELETE_ENABLED: true
+
 
 workflow:
   enabled: ${workflow.enable:true}
@@ -89,7 +91,7 @@ search:
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
   expandInternal: ${search_expandInternal:true}
-  providerName: ${search_providerName:dev.sunbirdrc.registry.service.NativeSearchService}
+  providerName: ${search_providerName:dev.sunbirdrc.registry.service.ElasticSearchService}
 
 # This property is to be used for read request
 read:
@@ -144,6 +146,9 @@ database:
       username: ${connectionInfo_username:postgres}
       password: ${connectionInfo_password:postgres}
       maxPoolSize: ${connectionInfo_maxPoolSize:200}
+
+
+
 
       # Any other shard information follows...
       #-
@@ -217,12 +222,12 @@ audit:
 
 keycloak:
   #publicKey:  ${sunbird_sso_publickey:pk}
-  auth-server-url: ${sunbird_sso_url:https://localhost:8888/auth}
+  auth-server-url: ${sunbird_sso_url:http://keycloak:8080/auth}
   realm: ${sunbird_sso_realm:sunbird-rc}
   resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
   client-id: ${sunbird_sso_admin_client_id:admin-api}
-  client-secret: ${sunbird_sso_admin_client_secret:client_secret}
+  client-secret: ${sunbird_sso_admin_client_secret:652cc530-1a59-48ef-849f-02e96ff3b3a8}
 keycloak-user:
   set-default-password: ${sunbird_keycloak_user_set_password:false}
   default-password: ${sunbird_keycloak_user_password:abcd@123}
@@ -300,9 +305,9 @@ elastic:
     elastic_password: ${elastic_search_password:elastic}
 filestorage:
   url: ${filestorage_connection_url:http://localhost:9000}
-  accesskey: ${filestorage_access_key:XXXXX}
-  secretkey: ${filestorage_secret_key:XXXXX}
-  bucketname: ${filestorage_bucket_key:dummy}
+  accesskey: ${filestorage_access_key:admin}
+  secretkey: ${filestorage_secret_key:12345678}
+  bucketname: ${filestorage_bucket_key:issuance}
 
 
 

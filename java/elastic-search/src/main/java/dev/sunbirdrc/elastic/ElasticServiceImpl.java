@@ -26,6 +26,8 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -206,12 +208,12 @@ public class ElasticServiceImpl implements IElasticService {
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
     public Map<String, Object> readEntity(String index, String osid) throws IOException {
         logger.debug("readEntity starts with index {} and entityId {}", index, osid);
-        
+
         GetResponse response = null;
         response = getClient(index).get(new GetRequest(index, searchType, osid), RequestOptions.DEFAULT);
         return response.getSourceAsMap();
     }
-    
+
 
     /**
      * Updates the document with updated inputEntity
@@ -249,7 +251,7 @@ public class ElasticServiceImpl implements IElasticService {
         try {
             String indexL = index.toLowerCase();
             Map<String, Object> readMap = readEntity(indexL, osid);
-           // Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
+            // Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
             readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
         } catch (NullPointerException | IOException e) {
@@ -258,7 +260,18 @@ public class ElasticServiceImpl implements IElasticService {
         }
         return response.status();
     }
-
+   // code for hard delete
+    public RestStatus hardDeleteEntity(String index, String osid) {
+        DeleteResponse response = null;
+        try {
+            String indexL = index.toLowerCase();
+            response = getClient(indexL).delete(new DeleteRequest(indexL, searchType, osid), RequestOptions.DEFAULT);
+        } catch (NullPointerException | IOException e) {
+            logger.error("exception in hardDeleteEntity {}", e);
+            return RestStatus.NOT_FOUND;
+        }
+        return response.status();
+    }
     @Override
     @Retryable(value = {IOException.class, ConnectException.class}, maxAttemptsExpression = "#{${service.retry.maxAttempts}}",
             backoff = @Backoff(delayExpression = "#{${service.retry.backoff.delay}}"))
@@ -271,15 +284,15 @@ public class ElasticServiceImpl implements IElasticService {
         SearchRequest searchRequest = new SearchRequest(index).source(sourceBuilder);
         ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
         ObjectMapper mapper = new ObjectMapper();
-            SearchResponse searchResponse = getClient(index).search(searchRequest, RequestOptions.DEFAULT);
-            for (SearchHit hit : searchResponse.getHits()) {
-                JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
-                // TODO: Add draft mode condition
-                if(node.get("_status") == null || node.get("_status").asBoolean()) {
-                    resultArray.add(node);
-                }
+        SearchResponse searchResponse = getClient(index).search(searchRequest, RequestOptions.DEFAULT);
+        for (SearchHit hit : searchResponse.getHits()) {
+            JsonNode node = mapper.readValue(hit.getSourceAsString(), JsonNode.class);
+            // TODO: Add draft mode condition
+            if(node.get("_status") == null || node.get("_status").asBoolean()) {
+                resultArray.add(node);
             }
-            logger.debug("Total search records found " + resultArray.size());
+        }
+        logger.debug("Total search records found " + resultArray.size());
 
         return resultArray;
 
@@ -322,58 +335,58 @@ public class ElasticServiceImpl implements IElasticService {
                 field = path + "." + field;
             }
             switch (operator) {
-            case eq:
-                query = query.must(QueryBuilders.matchPhraseQuery(field, value));
-                break;
-            case neq:
-                query = query.mustNot(QueryBuilders.matchPhraseQuery(field, value));
-                break;
-            case gt:
-                query = query.must(QueryBuilders.rangeQuery(field).gt(value));
-                break;
-            case lt:
-                query = query.must(QueryBuilders.rangeQuery(field).lt(value));
-                break;
-            case gte:
-                query = query.must(QueryBuilders.rangeQuery(field).gte(value));
-                break;
-            case lte:
-                query = query.must(QueryBuilders.rangeQuery(field).lte(value));
-                break;
-            case between:
-                List<Object> objects = (List<Object>) value;
-                query = query
-                        .must(QueryBuilders.rangeQuery(field).from(objects.get(0)).to(objects.get(objects.size() - 1)));
-                break;
-            case or:
-                List<Object> values = (List<Object>) value;
-                query = query.must(QueryBuilders.termsQuery(String.format("%s.keyword", field), values));
-                break;
+                case eq:
+                    query = query.must(QueryBuilders.matchPhraseQuery(field, value));
+                    break;
+                case neq:
+                    query = query.mustNot(QueryBuilders.matchPhraseQuery(field, value));
+                    break;
+                case gt:
+                    query = query.must(QueryBuilders.rangeQuery(field).gt(value));
+                    break;
+                case lt:
+                    query = query.must(QueryBuilders.rangeQuery(field).lt(value));
+                    break;
+                case gte:
+                    query = query.must(QueryBuilders.rangeQuery(field).gte(value));
+                    break;
+                case lte:
+                    query = query.must(QueryBuilders.rangeQuery(field).lte(value));
+                    break;
+                case between:
+                    List<Object> objects = (List<Object>) value;
+                    query = query
+                            .must(QueryBuilders.rangeQuery(field).from(objects.get(0)).to(objects.get(objects.size() - 1)));
+                    break;
+                case or:
+                    List<Object> values = (List<Object>) value;
+                    query = query.must(QueryBuilders.termsQuery(String.format("%s.keyword", field), values));
+                    break;
 
-            case contains:
-                query = query.must(QueryBuilders.matchPhraseQuery(field, value));
-                break;
-            case startsWith:
-                query = query.must(QueryBuilders.matchPhrasePrefixQuery(field, value.toString()));
-                break;
-            case endsWith:
-                query = query.must(QueryBuilders.wildcardQuery(field, "*" + value));
-                break;
-            case notContains:
-                query = query.mustNot(QueryBuilders.matchPhraseQuery(field, value));
-                break;
-            case notStartsWith:
-                query = query.mustNot(QueryBuilders.matchPhrasePrefixQuery(field, value.toString()));
-                break;
-            case notEndsWith:
-                query = query.mustNot(QueryBuilders.wildcardQuery(field, "*" + value));
-                break;                
-            case queryString:
-                query = query.must(QueryBuilders.queryStringQuery(value.toString()));
-                break;
-            default:
-                query = query.must(QueryBuilders.matchQuery(field, value));
-                break;
+                case contains:
+                    query = query.must(QueryBuilders.matchPhraseQuery(field, value));
+                    break;
+                case startsWith:
+                    query = query.must(QueryBuilders.matchPhrasePrefixQuery(field, value.toString()));
+                    break;
+                case endsWith:
+                    query = query.must(QueryBuilders.wildcardQuery(field, "*" + value));
+                    break;
+                case notContains:
+                    query = query.mustNot(QueryBuilders.matchPhraseQuery(field, value));
+                    break;
+                case notStartsWith:
+                    query = query.mustNot(QueryBuilders.matchPhrasePrefixQuery(field, value.toString()));
+                    break;
+                case notEndsWith:
+                    query = query.mustNot(QueryBuilders.wildcardQuery(field, "*" + value));
+                    break;
+                case queryString:
+                    query = query.must(QueryBuilders.queryStringQuery(value.toString()));
+                    break;
+                default:
+                    query = query.must(QueryBuilders.matchQuery(field, value));
+                    break;
             }
         }
 

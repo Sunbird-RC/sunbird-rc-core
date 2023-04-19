@@ -46,6 +46,10 @@ public interface IElasticService extends HealthIndicator {
      * @param searchQuery - which contains details for search
      * @return
      */
+
+
     JsonNode search(String index, SearchQuery searchQuery) throws IOException;
+
+    public RestStatus hardDeleteEntity(String index, String osid);
 
 }

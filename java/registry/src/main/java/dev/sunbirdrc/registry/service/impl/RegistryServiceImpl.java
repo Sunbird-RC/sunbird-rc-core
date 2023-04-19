@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.MessageFactory;
+import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
@@ -65,6 +66,8 @@ public class RegistryServiceImpl implements RegistryService {
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
+    @Value("${registry.HARD_DELETE_ENABLED}")
+    private boolean isHardDeleteEnabled;
 
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
@@ -136,7 +139,7 @@ public class RegistryServiceImpl implements RegistryService {
      * @return
      * @throws Exception
      */
-    @Override
+    @Override  //deleteEntityById used in RegistryHelper
     public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
@@ -150,20 +153,31 @@ public class RegistryServiceImpl implements RegistryService {
                 if (!StringUtils.isEmpty(index) && index.equals(Schema)) {
                     schemaService.deleteSchemaIfExists(vertex);
                 }
-                if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
-                        && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
+                 if (isHardDeleteEnabled) {
+                    registryDao.hardDeleteEntity(vertex);
+
+                    databaseProvider.commitTransaction(graph, tx);
+                   auditService.auditDelete(
+                            auditService.createAuditRecord(userId, uuid, tx, index),
+                            shard);
+                   if (isElasticSearchEnabled()) {
+                        callESActors(null, "DELETE", index, uuid, tx);
+                    }
+                }
+                  else /*  if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
+                        && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE)))*/{
                     registryDao.deleteEntity(vertex);
                     databaseProvider.commitTransaction(graph, tx);
                     auditService.auditDelete(
                             auditService.createAuditRecord(userId, uuid, tx, index),
                             shard);
-                    if (isElasticSearchEnabled()) {
+                   if (isElasticSearchEnabled()) {
                         callESActors(null, "DELETE", index, uuid, tx);
                     }
 
-
                 }
-                logger.info("Entity {} marked deleted", uuid);
+
+               logger.info("Entity {} marked deleted", uuid);
                 return vertex;
             }
         }
@@ -372,6 +386,10 @@ public class RegistryServiceImpl implements RegistryService {
         logger.debug("callESActors started");
         rootNode = rootNode != null ? rootNode.get(parentEntityType) : rootNode;
         boolean elasticSearchEnabled = isElasticSearchEnabled();
+        if (operation.equalsIgnoreCase("DELETE") && elasticSearchEnabled)
+        {
+            elasticService.hardDeleteEntity(parentEntityType,entityRootId);
+        }
         MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, operation,
                 parentEntityType.toLowerCase(), entityRootId, rootNode, null);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
@@ -381,7 +399,6 @@ public class RegistryServiceImpl implements RegistryService {
     private boolean isElasticSearchEnabled() {
         return (searchProvider.equals("dev.sunbirdrc.registry.service.ElasticSearchService"));
     }
-
     @Override
     @Async("taskExecutor")
     public void callNotificationActors(String operation, String to, String subject, String message) throws JsonProcessingException {

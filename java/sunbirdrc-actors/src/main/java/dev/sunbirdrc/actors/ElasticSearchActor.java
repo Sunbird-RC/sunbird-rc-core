@@ -19,6 +19,7 @@ public class ElasticSearchActor extends BaseActor {
         MessageProtos.Message.Builder msgBuilder = MessageProtos.Message.newBuilder();
         elasticSearch = new ElasticServiceImpl();
         objectMapper = new ObjectMapper();
+
         ESMessage esMessage = objectMapper.readValue(request.getPayload().getStringValue(), ESMessage.class);
         //ESMessage es =  objectMapper.writeValue(request.getPayload(), ESMessage.class);
         switch (request.getPerformOperation()) {
@@ -27,10 +28,14 @@ public class ElasticSearchActor extends BaseActor {
                 break;
             case "UPDATE":
                 elasticSearch.updateEntity(esMessage.getIndexName(), esMessage.getOsid(), esMessage.getInput());
+                case "DELETE":
+                if (esMessage.getDeleteType().equals("hard")) {
+                    elasticSearch.hardDeleteEntity(esMessage.getIndexName(), esMessage.getOsid());
+                } else {
+                    elasticSearch.deleteEntity(esMessage.getIndexName(), esMessage.getOsid());
+                }
                 break;
-            case "DELETE":
-                elasticSearch.deleteEntity(esMessage.getIndexName(), esMessage.getOsid());
-                break;
+
             case "READ":
                 break;
         }
