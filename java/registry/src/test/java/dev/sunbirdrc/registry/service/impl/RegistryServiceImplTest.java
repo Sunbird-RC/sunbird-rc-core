@@ -156,7 +156,7 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(registryService, "schemaService", schemaService);
 		ReflectionTestUtils.setField(registryService, "objectMapper", objectMapper);
 		ReflectionTestUtils.setField(registryService, "eventService", eventService);
-		ReflectionTestUtils.setField(registryService, "maskService", updateEntityService);
+		ReflectionTestUtils.setField(registryService, "updateEntityService", updateEntityService);
 	}
 
 	@Before
@@ -333,7 +333,10 @@ public class RegistryServiceImplTest {
 		arrayNode.add("Class XII");
 		affiliationNode.set("classes", arrayNode);
 		when(shard.getShardLabel()).thenReturn("");
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
 		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode));
+		verify(eventService, times(1)).pushEvents(event);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
 		esNodeCaptor.getValue();
@@ -358,7 +361,10 @@ public class RegistryServiceImplTest {
 		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
 		((ObjectNode)instituteNode.get("Institute")).set("instituteName", JsonNodeFactory.instance.textNode("Holy Cross"));
 		when(shard.getShardLabel()).thenReturn("");
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
 		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode));
+		verify(eventService, times(1)).pushEvents(event);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
 		esNodeCaptor.getValue();
@@ -390,8 +396,11 @@ public class RegistryServiceImplTest {
 				"  }\n" +
 				"}"));
 		when(shard.getShardLabel()).thenReturn("");
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
 		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson));
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
+		verify(eventService, times(1)).pushEvents(event);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
 		esNodeCaptor.getValue();
 		System.out.println(esNodeCaptor);
@@ -420,7 +429,10 @@ public class RegistryServiceImplTest {
 				"  \"dob\": \"10-10-1995\"\n" +
 				"}"));
 		when(shard.getShardLabel()).thenReturn("");
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
 		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson));
+		verify(eventService, times(1)).pushEvents(event);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
 		esNodeCaptor.getValue();

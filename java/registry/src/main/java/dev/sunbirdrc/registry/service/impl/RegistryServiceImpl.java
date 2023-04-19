@@ -167,8 +167,13 @@ public class RegistryServiceImpl implements RegistryService {
                     if (isElasticSearchEnabled()) {
                         callESActors(null, "DELETE", index, uuid, tx);
                     }
-
-
+                    JsonNode deletedNode = vertexReader.constructObject(vertex);
+                    JsonNode maskedNode = updateEntityService.updatePrivateAndInternalFields(
+                            deletedNode,
+                            definitionsManager.getDefinition(index).getOsSchemaConfiguration()
+                    );
+                    Event event = eventService.createTelemetryObject(EventType.DELETE.name(), userId, "USER", uuid, index, maskedNode);
+                    eventService.pushEvents(event);
                 }
                 logger.info("Entity {} marked deleted", uuid);
                 return vertex;
@@ -368,7 +373,12 @@ public class RegistryServiceImpl implements RegistryService {
                 auditService.auditUpdate(
                         auditService.createAuditRecord(userId, rootId, tx, entityType),
                         shard, mergedNode, readNode);
-
+                JsonNode maskedNode = updateEntityService.updatePrivateAndInternalFields(
+                        inputNode.get(entityType),
+                        definitionsManager.getDefinition(entityType).getOsSchemaConfiguration()
+                );
+                Event event = eventService.createTelemetryObject(EventType.UPDATE.name(), userId, "USER", id, entityType, maskedNode);
+                eventService.pushEvents(event);
             }
         }
     }
