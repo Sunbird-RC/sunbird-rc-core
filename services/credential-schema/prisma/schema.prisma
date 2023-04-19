@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+  REVOKED
+}
+
+model VerifiableCredentialSchema {
+  id        String    @id @default(cuid())
+  type      String
+  version   String
+  name      String
+  author    String
+  authored  DateTime
+  schema    Json
+  proof     Json
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  tags      String[]
+  status    Status    @default(DRAFT)
+
+  @@index([type], type: Hash)
+  @@index([name], type: Hash)
+}
+
+model VerifiablePresentationSchema {
+  id        String    @id @default(cuid())
+  type      String
+  version   Int
+  name      String
+  author    String
+  authored  DateTime
+  schema    Json
+  proof     Json
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  tags      String[]
+
+  @@index([type], type: Hash)
+  @@index([name], type: Hash)
+}
+
+model Template {
+  id        String     @id @default(cuid())
+  schema    String
+  template  String
+  type      String
+  deleted   Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  createdBy String?
+  updatedBy String?     
+}
