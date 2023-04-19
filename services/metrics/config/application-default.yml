@@ -5,4 +5,4 @@ kafka:
   bootstrapServers: localhost:9094
   metricsTopic: metrics
 database:
-  name: clickhouse
+  providerName: clickhouse

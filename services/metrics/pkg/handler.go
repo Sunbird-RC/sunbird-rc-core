@@ -15,7 +15,7 @@ func SetupHandlers(api *operations.MetricsAPI) {
 
 func getAllMetrics(params metrics.GetV1MetricsParams) middleware.Responder {
 	response := metrics.NewGetV1MetricsOK()
-	dbInstance := models.GetDBInstance(config.Config.Database.Name)
+	dbInstance := models.GetDBInstance(config.Config.Database.ProviderName)
 	count := dbInstance.GetCount()
 	response.SetPayload(count)
 	return response

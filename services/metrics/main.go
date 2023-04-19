@@ -15,7 +15,7 @@ import (
 
 func main() {
 	config.Initialize("config/application-default.yml")
-	c := models.GetDBInstance(config.Config.Database.Name)
+	c := models.GetDBInstance(config.Config.Database.ProviderName)
 	c.InitDB()
 	servers := config.Config.Kafka.BootstrapServers
 	go kafka.StartConsumer(servers, "metrics_group", "earliest", "false", c)

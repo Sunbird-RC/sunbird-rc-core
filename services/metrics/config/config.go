@@ -21,6 +21,6 @@ var Config = struct {
 		KAFKA_METRICS_TOPIC string `env:"KAFKA_METRICS_TOPIC" yaml:"metricsTopic" default:"metrics"`
 	}
 	Database struct {
-		Name string `env:"DATABASE_NAME" yaml:"name" defaults:"clickhouse"`
+		ProviderName string `env:"DATABASE_PROVIDER_NAME" yaml:"providerName" defaults:"clickhouse"`
 	}
 }{}
