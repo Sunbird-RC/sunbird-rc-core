@@ -49,18 +49,18 @@ func (o *Scanner) Scan() bool {
 	return e == nil
 }
 
-func createRecords(params upload_and_create_records.PostV1UploadFilesVCNameParams, principal *models.JWTClaimBody) middleware.Responder {
+func createRecords(params upload_and_create_records.PostV1EntityNameUploadParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Info("Creating records")
 	data, err := NewScanner(params.File)
 	csvError, _, _ := csvlint.Validate(params.File, ',', false)
 	if data.Reader == nil || err != nil || len(csvError) != 0 {
-		return upload_and_create_records.NewPostV1UploadFilesVCNameInternalServerError().WithPayload("Invalid CSV File")
+		return upload_and_create_records.NewPostV1EntityNameUploadOK().WithPayload("Invalid CSV File")
 	}
-	totalSuccess, totalErrors, rows, err := processDataFromCSV(&data, params.HTTPRequest.Header, params.VCName)
+	totalSuccess, totalErrors, rows, err := processDataFromCSV(&data, params.HTTPRequest.Header, params.EntityName)
 	if err != nil {
-		return upload_and_create_records.NewPostV1UploadFilesVCNameNotFound().WithPayload(err.Error())
+		return upload_and_create_records.NewPostV1EntityNameUploadNotFound().WithPayload(err.Error())
 	}
-	response := upload_and_create_records.NewPostV1UploadFilesVCNameOK()
+	response := upload_and_create_records.NewPostV1EntityNameUploadOK()
 	_, fileHeader, err := params.HTTPRequest.FormFile("file")
 	utils.LogErrorIfAny("Error retrieving file from request : %v", err)
 	fileName := fileHeader.Filename

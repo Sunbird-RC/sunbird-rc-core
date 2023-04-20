@@ -11,12 +11,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func downloadSampleFile(params sample_template.GetV1SampleSchemaNameParams, principal *models.JWTClaimBody) middleware.Responder {
+func downloadSampleFile(params sample_template.GetV1SchemaNameSampleCsvParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Infof("Downloading sample file with name %v", (params.SchemaName + ".csv"))
-	response := sample_template.GetV1BulkSampleSchemaNameOK{}
+	response := sample_template.NewGetV1SchemaNameSampleCsvOK()
 	schemaProperties, sampleValues, err := utils.GetSchemaPropertiesAndSampleValues(params.SchemaName)
 	if err != nil {
-		response := sample_template.NewGetV1BulkSampleSchemaNameNotFound()
+		response := sample_template.NewGetV1SchemaNameSampleCsvNotFound()
 		response.SetPayload(err.Error())
 		return response
 	}
@@ -29,5 +29,5 @@ func downloadSampleFile(params sample_template.GetV1SampleSchemaNameParams, prin
 	log.Infof("Headers for schema %v : %v", params.SchemaName, csvData)
 	utils.LogErrorIfAny("Error while opening file : %v", err)
 	response.WithContentDisposition("attachment; filename=\"" + params.SchemaName + ".csv\"").WithPayload(b)
-	return &response
+	return response
 }

@@ -13,40 +13,40 @@ import (
 	"bulk_issuance/swagger_gen/models"
 )
 
-// GetV1UploadedFilesHandlerFunc turns a function with the right signature into a get v1 uploaded files handler
-type GetV1UploadedFilesHandlerFunc func(GetV1UploadedFilesParams, *models.JWTClaimBody) middleware.Responder
+// GetV1UploadHandlerFunc turns a function with the right signature into a get v1 upload handler
+type GetV1UploadHandlerFunc func(GetV1UploadParams, *models.JWTClaimBody) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn GetV1UploadedFilesHandlerFunc) Handle(params GetV1UploadedFilesParams, principal *models.JWTClaimBody) middleware.Responder {
+func (fn GetV1UploadHandlerFunc) Handle(params GetV1UploadParams, principal *models.JWTClaimBody) middleware.Responder {
 	return fn(params, principal)
 }
 
-// GetV1UploadedFilesHandler interface for that can handle valid get v1 uploaded files params
-type GetV1UploadedFilesHandler interface {
-	Handle(GetV1UploadedFilesParams, *models.JWTClaimBody) middleware.Responder
+// GetV1UploadHandler interface for that can handle valid get v1 upload params
+type GetV1UploadHandler interface {
+	Handle(GetV1UploadParams, *models.JWTClaimBody) middleware.Responder
 }
 
-// NewGetV1UploadedFiles creates a new http.Handler for the get v1 uploaded files operation
-func NewGetV1UploadedFiles(ctx *middleware.Context, handler GetV1UploadedFilesHandler) *GetV1UploadedFiles {
-	return &GetV1UploadedFiles{Context: ctx, Handler: handler}
+// NewGetV1Upload creates a new http.Handler for the get v1 upload operation
+func NewGetV1Upload(ctx *middleware.Context, handler GetV1UploadHandler) *GetV1Upload {
+	return &GetV1Upload{Context: ctx, Handler: handler}
 }
 
-/*GetV1UploadedFiles swagger:route GET /v1/uploadedFiles uploadedFiles getV1UploadedFiles
+/*GetV1Upload swagger:route GET /v1/upload uploadedFiles getV1Upload
 
 get uploaded files
 
 */
-type GetV1UploadedFiles struct {
+type GetV1Upload struct {
 	Context *middleware.Context
-	Handler GetV1UploadedFilesHandler
+	Handler GetV1UploadHandler
 }
 
-func (o *GetV1UploadedFiles) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (o *GetV1Upload) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, rCtx, _ := o.Context.RouteInfo(r)
 	if rCtx != nil {
 		r = rCtx
 	}
-	var Params = NewGetV1UploadedFilesParams()
+	var Params = NewGetV1UploadParams()
 
 	uprinc, aCtx, err := o.Context.Authorize(r, route)
 	if err != nil {

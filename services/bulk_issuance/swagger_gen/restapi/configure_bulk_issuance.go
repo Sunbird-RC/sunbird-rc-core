@@ -57,24 +57,24 @@ func configureAPI(api *operations.BulkIssuanceAPI) http.Handler {
 	//
 	// Example:
 	// api.APIAuthorizer = security.Authorized()
-	if api.SampleTemplateGetV1SampleSchemaNameHandler == nil {
-		api.SampleTemplateGetV1SampleSchemaNameHandler = sample_template.GetV1SampleSchemaNameHandlerFunc(func(params sample_template.GetV1SampleSchemaNameParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation sample_template.GetV1BulkSampleSchemaName has not yet been implemented")
+	if api.DownloadFileReportGetV1IDReportHandler == nil {
+		api.DownloadFileReportGetV1IDReportHandler = download_file_report.GetV1IDReportHandlerFunc(func(params download_file_report.GetV1IDReportParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation download_file_report.GetV1IDReport has not yet been implemented")
 		})
 	}
-	if api.UploadedFilesGetV1UploadedFilesHandler == nil {
-		api.UploadedFilesGetV1UploadedFilesHandler = uploaded_files.GetV1UploadedFilesHandlerFunc(func(params uploaded_files.GetV1UploadedFilesParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation uploaded_files.GetV1BulkUploadedFiles has not yet been implemented")
+	if api.SampleTemplateGetV1SchemaNameSampleCsvHandler == nil {
+		api.SampleTemplateGetV1SchemaNameSampleCsvHandler = sample_template.GetV1SchemaNameSampleCsvHandlerFunc(func(params sample_template.GetV1SchemaNameSampleCsvParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation sample_template.GetV1SchemaNameSampleCsv has not yet been implemented")
 		})
 	}
-	if api.DownloadFileReportGetV1DownloadIDHandler == nil {
-		api.DownloadFileReportGetV1DownloadIDHandler = download_file_report.GetV1DownloadIDHandlerFunc(func(params download_file_report.GetV1DownloadIDParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation download_file_report.GetV1DownloadIDHandlerFunc has not yet been implemented")
+	if api.UploadedFilesGetV1UploadHandler == nil {
+		api.UploadedFilesGetV1UploadHandler = uploaded_files.GetV1UploadHandlerFunc(func(params uploaded_files.GetV1UploadParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation uploaded_files.GetV1Upload has not yet been implemented")
 		})
 	}
-	if api.UploadAndCreateRecordsPostV1UploadFilesVCNameHandler == nil {
-		api.UploadAndCreateRecordsPostV1UploadFilesVCNameHandler = upload_and_create_records.PostV1UploadFilesVCNameHandlerFunc(func(params upload_and_create_records.PostV1UploadFilesVCNameParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation upload_and_create_records.PostV1UploadFilesVCName has not yet been implemented")
+	if api.UploadAndCreateRecordsPostV1EntityNameUploadHandler == nil {
+		api.UploadAndCreateRecordsPostV1EntityNameUploadHandler = upload_and_create_records.PostV1EntityNameUploadHandlerFunc(func(params upload_and_create_records.PostV1EntityNameUploadParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation upload_and_create_records.PostV1EntityNameUpload has not yet been implemented")
 		})
 	}
 

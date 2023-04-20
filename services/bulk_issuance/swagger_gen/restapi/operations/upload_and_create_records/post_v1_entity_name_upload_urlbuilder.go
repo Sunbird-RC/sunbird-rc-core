@@ -12,9 +12,9 @@ import (
 	"strings"
 )
 
-// PostV1UploadFilesVCNameURL generates an URL for the post v1 upload files v c name operation
-type PostV1UploadFilesVCNameURL struct {
-	VCName string
+// PostV1EntityNameUploadURL generates an URL for the post v1 entity name upload operation
+type PostV1EntityNameUploadURL struct {
+	EntityName string
 
 	_basePath string
 	// avoid unkeyed usage
@@ -24,7 +24,7 @@ type PostV1UploadFilesVCNameURL struct {
 // WithBasePath sets the base path for this url builder, only required when it's different from the
 // base path specified in the swagger spec.
 // When the value of the base path is an empty string
-func (o *PostV1UploadFilesVCNameURL) WithBasePath(bp string) *PostV1UploadFilesVCNameURL {
+func (o *PostV1EntityNameUploadURL) WithBasePath(bp string) *PostV1EntityNameUploadURL {
 	o.SetBasePath(bp)
 	return o
 }
@@ -32,21 +32,21 @@ func (o *PostV1UploadFilesVCNameURL) WithBasePath(bp string) *PostV1UploadFilesV
 // SetBasePath sets the base path for this url builder, only required when it's different from the
 // base path specified in the swagger spec.
 // When the value of the base path is an empty string
-func (o *PostV1UploadFilesVCNameURL) SetBasePath(bp string) {
+func (o *PostV1EntityNameUploadURL) SetBasePath(bp string) {
 	o._basePath = bp
 }
 
 // Build a url path and query string
-func (o *PostV1UploadFilesVCNameURL) Build() (*url.URL, error) {
+func (o *PostV1EntityNameUploadURL) Build() (*url.URL, error) {
 	var _result url.URL
 
-	var _path = "/v1/uploadFiles/{VCName}"
+	var _path = "/v1/{entityName}/upload"
 
-	vCName := o.VCName
-	if vCName != "" {
-		_path = strings.Replace(_path, "{VCName}", vCName, -1)
+	entityName := o.EntityName
+	if entityName != "" {
+		_path = strings.Replace(_path, "{entityName}", entityName, -1)
 	} else {
-		return nil, errors.New("vCName is required on PostV1UploadFilesVCNameURL")
+		return nil, errors.New("entityName is required on PostV1EntityNameUploadURL")
 	}
 
 	_basePath := o._basePath
@@ -56,7 +56,7 @@ func (o *PostV1UploadFilesVCNameURL) Build() (*url.URL, error) {
 }
 
 // Must is a helper function to panic when the url builder returns an error
-func (o *PostV1UploadFilesVCNameURL) Must(u *url.URL, err error) *url.URL {
+func (o *PostV1EntityNameUploadURL) Must(u *url.URL, err error) *url.URL {
 	if err != nil {
 		panic(err)
 	}
@@ -67,17 +67,17 @@ func (o *PostV1UploadFilesVCNameURL) Must(u *url.URL, err error) *url.URL {
 }
 
 // String returns the string representation of the path with query string
-func (o *PostV1UploadFilesVCNameURL) String() string {
+func (o *PostV1EntityNameUploadURL) String() string {
 	return o.Must(o.Build()).String()
 }
 
 // BuildFull builds a full url with scheme, host, path and query string
-func (o *PostV1UploadFilesVCNameURL) BuildFull(scheme, host string) (*url.URL, error) {
+func (o *PostV1EntityNameUploadURL) BuildFull(scheme, host string) (*url.URL, error) {
 	if scheme == "" {
-		return nil, errors.New("scheme is required for a full url on PostV1UploadFilesVCNameURL")
+		return nil, errors.New("scheme is required for a full url on PostV1EntityNameUploadURL")
 	}
 	if host == "" {
-		return nil, errors.New("host is required for a full url on PostV1UploadFilesVCNameURL")
+		return nil, errors.New("host is required for a full url on PostV1EntityNameUploadURL")
 	}
 
 	base, err := o.Build()
@@ -91,6 +91,6 @@ func (o *PostV1UploadFilesVCNameURL) BuildFull(scheme, host string) (*url.URL, e
 }
 
 // StringFull returns the string representation of a complete url
-func (o *PostV1UploadFilesVCNameURL) StringFull(scheme, host string) string {
+func (o *PostV1EntityNameUploadURL) StringFull(scheme, host string) string {
 	return o.Must(o.BuildFull(scheme, host)).String()
 }

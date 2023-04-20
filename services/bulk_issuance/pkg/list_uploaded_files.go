@@ -9,12 +9,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func listFiles(params uploaded_files.GetV1UploadedFilesParams, principal *models.JWTClaimBody) middleware.Responder {
+func listFiles(params uploaded_files.GetV1UploadParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Info("Compiling a list of all uploaded files")
-	response := uploaded_files.GetV1BulkUploadedFilesOK{}
+	response := uploaded_files.GetV1UploadOK{}
 	files, err := db.GetAllUploadedFilesData(principal.UserId)
 	if err != nil {
-		return uploaded_files.NewGetV1BulkUploadedFilesNotFound().WithPayload(err.Error())
+		return uploaded_files.NewGetV1UploadNotFound().WithPayload(err.Error())
 	}
 	response.SetPayload(files)
 	return &response

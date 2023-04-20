@@ -14,15 +14,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func downloadReportFile(params download_file_report.GetV1DownloadIDParams, principal *models.JWTClaimBody) middleware.Responder {
+func downloadReportFile(params download_file_report.GetV1IDReportParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Infof("Downloading report file with ID : %v", params.ID)
-	response := download_file_report.GetV1DownloadFileNameOK{}
+	response := download_file_report.NewGetV1IDReportOK()
 	file, err := db.GetDBFileData(int(params.ID), principal.UserId)
 	if file.UserID != principal.UserId {
-		return download_file_report.NewGetV1DownloadIDForbidden().WithPayload("User is not allowed to access this file")
+		return download_file_report.NewGetV1IDReportForbidden().WithPayload("User is not allowed to access this file")
 	}
 	if err != nil {
-		return download_file_report.NewGetV1DownloadIDNotFound().WithPayload(err.Error())
+		return download_file_report.NewGetV1IDReportNotFound().WithPayload(err.Error())
 	}
 	var data [][]string
 	err = json.Unmarshal(file.RowData, &data)
@@ -34,5 +34,5 @@ func downloadReportFile(params download_file_report.GetV1DownloadIDParams, princ
 	utils.LogErrorIfAny("Error while opening a file with name %v : %v ", err, file.Filename)
 	response.WithContentDisposition("attachment; filename=\"" + file.Filename + "\"").WithPayload(b)
 	log.Infof("Downloading file with name : %v", file.Filename)
-	return &response
+	return response
 }
