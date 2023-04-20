@@ -11,20 +11,21 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 )
 
-// NewGetV1DownloadFileNameParams creates a new GetV1DownloadFileNameParams object
+// NewGetV1IDReportParams creates a new GetV1IDReportParams object
 // no default values defined in spec.
-func NewGetV1DownloadFileNameParams() GetV1DownloadFileNameParams {
+func NewGetV1IDReportParams() GetV1IDReportParams {
 
-	return GetV1DownloadFileNameParams{}
+	return GetV1IDReportParams{}
 }
 
-// GetV1DownloadFileNameParams contains all the bound params for the get v1 download file name operation
+// GetV1IDReportParams contains all the bound params for the get v1 ID report operation
 // typically these are obtained from a http.Request
 //
-// swagger:parameters GetV1DownloadFileName
-type GetV1DownloadFileNameParams struct {
+// swagger:parameters GetV1IDReport
+type GetV1IDReportParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
@@ -33,20 +34,20 @@ type GetV1DownloadFileNameParams struct {
 	  Required: true
 	  In: path
 	*/
-	FileName string
+	ID int64
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
 // for simple values it will use straight method calls.
 //
-// To ensure default values, the struct must have been initialized with NewGetV1DownloadFileNameParams() beforehand.
-func (o *GetV1DownloadFileNameParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
+// To ensure default values, the struct must have been initialized with NewGetV1IDReportParams() beforehand.
+func (o *GetV1IDReportParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
 	var res []error
 
 	o.HTTPRequest = r
 
-	rFileName, rhkFileName, _ := route.Params.GetOK("fileName")
-	if err := o.bindFileName(rFileName, rhkFileName, route.Formats); err != nil {
+	rID, rhkID, _ := route.Params.GetOK("id")
+	if err := o.bindID(rID, rhkID, route.Formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -56,8 +57,8 @@ func (o *GetV1DownloadFileNameParams) BindRequest(r *http.Request, route *middle
 	return nil
 }
 
-// bindFileName binds and validates parameter FileName from path.
-func (o *GetV1DownloadFileNameParams) bindFileName(rawData []string, hasKey bool, formats strfmt.Registry) error {
+// bindID binds and validates parameter ID from path.
+func (o *GetV1IDReportParams) bindID(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	var raw string
 	if len(rawData) > 0 {
 		raw = rawData[len(rawData)-1]
@@ -66,7 +67,11 @@ func (o *GetV1DownloadFileNameParams) bindFileName(rawData []string, hasKey bool
 	// Required: true
 	// Parameter is provided by construction from the route
 
-	o.FileName = raw
+	value, err := swag.ConvertInt64(raw)
+	if err != nil {
+		return errors.InvalidType("id", "path", "int64", raw)
+	}
+	o.ID = value
 
 	return nil
 }

@@ -13,40 +13,40 @@ import (
 	"bulk_issuance/swagger_gen/models"
 )
 
-// GetV1DownloadIDHandlerFunc turns a function with the right signature into a get v1 download ID handler
-type GetV1DownloadIDHandlerFunc func(GetV1DownloadIDParams, *models.JWTClaimBody) middleware.Responder
+// GetV1IDReportHandlerFunc turns a function with the right signature into a get v1 ID report handler
+type GetV1IDReportHandlerFunc func(GetV1IDReportParams, *models.JWTClaimBody) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn GetV1DownloadIDHandlerFunc) Handle(params GetV1DownloadIDParams, principal *models.JWTClaimBody) middleware.Responder {
+func (fn GetV1IDReportHandlerFunc) Handle(params GetV1IDReportParams, principal *models.JWTClaimBody) middleware.Responder {
 	return fn(params, principal)
 }
 
-// GetV1DownloadIDHandler interface for that can handle valid get v1 download ID params
-type GetV1DownloadIDHandler interface {
-	Handle(GetV1DownloadIDParams, *models.JWTClaimBody) middleware.Responder
+// GetV1IDReportHandler interface for that can handle valid get v1 ID report params
+type GetV1IDReportHandler interface {
+	Handle(GetV1IDReportParams, *models.JWTClaimBody) middleware.Responder
 }
 
-// NewGetV1DownloadID creates a new http.Handler for the get v1 download ID operation
-func NewGetV1DownloadID(ctx *middleware.Context, handler GetV1DownloadIDHandler) *GetV1DownloadID {
-	return &GetV1DownloadID{Context: ctx, Handler: handler}
+// NewGetV1IDReport creates a new http.Handler for the get v1 ID report operation
+func NewGetV1IDReport(ctx *middleware.Context, handler GetV1IDReportHandler) *GetV1IDReport {
+	return &GetV1IDReport{Context: ctx, Handler: handler}
 }
 
-/*GetV1DownloadID swagger:route GET /v1/download/{id} downloadFileReport getV1DownloadId
+/*GetV1IDReport swagger:route GET /v1/{id}/report downloadFileReport getV1IdReport
 
 download the success and error report of file uploaded
 
 */
-type GetV1DownloadID struct {
+type GetV1IDReport struct {
 	Context *middleware.Context
-	Handler GetV1DownloadIDHandler
+	Handler GetV1IDReportHandler
 }
 
-func (o *GetV1DownloadID) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (o *GetV1IDReport) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, rCtx, _ := o.Context.RouteInfo(r)
 	if rCtx != nil {
 		r = rCtx
 	}
-	var Params = NewGetV1DownloadIDParams()
+	var Params = NewGetV1IDReportParams()
 
 	uprinc, aCtx, err := o.Context.Authorize(r, route)
 	if err != nil {

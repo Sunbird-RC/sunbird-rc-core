@@ -4,29 +4,21 @@ info:
   title: Bulk Issuance
   description: Bulk Issuance API
 security:
-  - hasRole: []
+  - hasRole: ["Issuer"]
 securityDefinitions:
   hasRole:
-    # This scheme uses the header: "Authorization: Bearer {base64 encoded string representing a JWT}"
-    # Alternatively, the query param: "access_token" may be used.
-    #
-    # In our scenario, we must use the query param version in order to avoid
-    # passing several headers with key 'Authorization'
     type: oauth2
-    # The flow and URLs in spec are for documentary purpose: go-swagger does not implement OAuth workflows
     flow: accessCode
     authorizationUrl: 'https://dummy.oauth.net/auth'
     tokenUrl: 'https://dumy.oauth.net/token'
-    # Required scopes are passed by the runtime to the authorizer
     scopes:
-      admin: scope of super admin
-      facility-admin: scope of facility admin
+      Issuer: scope of Issuer
 consumes:
   - application/json
 produces:
   - application/json
 paths:
-  /v1/sample/{schemaName}:
+  /v1/{schemaName}/sample-csv:
     get:
       tags:
         - sampleTemplate
@@ -34,8 +26,6 @@ paths:
       produces:
         - application/octet-stream
         - application/json
-      security:
-        - hasRole: ["Issuer"]
       parameters:
         - name: schemaName
           in: path
@@ -54,7 +44,7 @@ paths:
           description: Not found
           schema:
             type: string
-  /v1/uploadedFiles:
+  /v1/upload:
     get:
       tags:
         - uploadedFiles
@@ -63,8 +53,6 @@ paths:
         - application/json
       produces:
         - application/json
-      security:
-        - hasRole: ["Issuer"]
       responses:
         '200':
           description: OK
@@ -74,7 +62,7 @@ paths:
           description: Not found
           schema:
             type: string
-  /v1/uploadFiles/{VCName}:
+  /v1/{entityName}/upload:
     post:
       tags:
         - uploadAndCreateRecords
@@ -83,15 +71,13 @@ paths:
         - application/json
       consumes:
         - multipart/form-data
-      security: 
-        - hasRole: ["Issuer"]
       parameters:
         - in: formData
           name: file
           type: file
           description: Certification data in the form of csv
         - in: path
-          name: VCName
+          name: entityName
           type: string
           required: true
           description: VerifiableCredential you are issuing
@@ -108,7 +94,7 @@ paths:
           description: Internal Server Error
           schema:
             type: string
-  /v1/download/{id}:
+  /v1/{id}/report:
     get:
       tags:
         - downloadFileReport
@@ -116,8 +102,6 @@ paths:
       produces:
         - application/json
         - application/octet-stream
-      security:
-        - hasRole: ["Issuer"]
       parameters:
         - name: id
           in: path

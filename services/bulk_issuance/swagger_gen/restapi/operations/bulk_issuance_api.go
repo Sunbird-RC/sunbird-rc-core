@@ -50,17 +50,17 @@ func NewBulkIssuanceAPI(spec *loads.Document) *BulkIssuanceAPI {
 		BinProducer:  runtime.ByteStreamProducer(),
 		JSONProducer: runtime.JSONProducer(),
 
-		DownloadFileReportGetV1DownloadIDHandler: download_file_report.GetV1DownloadIDHandlerFunc(func(params download_file_report.GetV1DownloadIDParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation download_file_report.GetV1DownloadID has not yet been implemented")
+		DownloadFileReportGetV1IDReportHandler: download_file_report.GetV1IDReportHandlerFunc(func(params download_file_report.GetV1IDReportParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation download_file_report.GetV1IDReport has not yet been implemented")
 		}),
-		SampleTemplateGetV1SampleSchemaNameHandler: sample_template.GetV1SampleSchemaNameHandlerFunc(func(params sample_template.GetV1SampleSchemaNameParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation sample_template.GetV1SampleSchemaName has not yet been implemented")
+		SampleTemplateGetV1SchemaNameSampleCsvHandler: sample_template.GetV1SchemaNameSampleCsvHandlerFunc(func(params sample_template.GetV1SchemaNameSampleCsvParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation sample_template.GetV1SchemaNameSampleCsv has not yet been implemented")
 		}),
-		UploadedFilesGetV1UploadedFilesHandler: uploaded_files.GetV1UploadedFilesHandlerFunc(func(params uploaded_files.GetV1UploadedFilesParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation uploaded_files.GetV1UploadedFiles has not yet been implemented")
+		UploadedFilesGetV1UploadHandler: uploaded_files.GetV1UploadHandlerFunc(func(params uploaded_files.GetV1UploadParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation uploaded_files.GetV1Upload has not yet been implemented")
 		}),
-		UploadAndCreateRecordsPostV1UploadFilesVCNameHandler: upload_and_create_records.PostV1UploadFilesVCNameHandlerFunc(func(params upload_and_create_records.PostV1UploadFilesVCNameParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation upload_and_create_records.PostV1UploadFilesVCName has not yet been implemented")
+		UploadAndCreateRecordsPostV1EntityNameUploadHandler: upload_and_create_records.PostV1EntityNameUploadHandlerFunc(func(params upload_and_create_records.PostV1EntityNameUploadParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation upload_and_create_records.PostV1EntityNameUpload has not yet been implemented")
 		}),
 
 		HasRoleAuth: func(token string, scopes []string) (*models.JWTClaimBody, error) {
@@ -115,14 +115,14 @@ type BulkIssuanceAPI struct {
 	// APIAuthorizer provides access control (ACL/RBAC/ABAC) by providing access to the request and authenticated principal
 	APIAuthorizer runtime.Authorizer
 
-	// DownloadFileReportGetV1DownloadIDHandler sets the operation handler for the get v1 download ID operation
-	DownloadFileReportGetV1DownloadIDHandler download_file_report.GetV1DownloadIDHandler
-	// SampleTemplateGetV1SampleSchemaNameHandler sets the operation handler for the get v1 sample schema name operation
-	SampleTemplateGetV1SampleSchemaNameHandler sample_template.GetV1SampleSchemaNameHandler
-	// UploadedFilesGetV1UploadedFilesHandler sets the operation handler for the get v1 uploaded files operation
-	UploadedFilesGetV1UploadedFilesHandler uploaded_files.GetV1UploadedFilesHandler
-	// UploadAndCreateRecordsPostV1UploadFilesVCNameHandler sets the operation handler for the post v1 upload files v c name operation
-	UploadAndCreateRecordsPostV1UploadFilesVCNameHandler upload_and_create_records.PostV1UploadFilesVCNameHandler
+	// DownloadFileReportGetV1IDReportHandler sets the operation handler for the get v1 ID report operation
+	DownloadFileReportGetV1IDReportHandler download_file_report.GetV1IDReportHandler
+	// SampleTemplateGetV1SchemaNameSampleCsvHandler sets the operation handler for the get v1 schema name sample csv operation
+	SampleTemplateGetV1SchemaNameSampleCsvHandler sample_template.GetV1SchemaNameSampleCsvHandler
+	// UploadedFilesGetV1UploadHandler sets the operation handler for the get v1 upload operation
+	UploadedFilesGetV1UploadHandler uploaded_files.GetV1UploadHandler
+	// UploadAndCreateRecordsPostV1EntityNameUploadHandler sets the operation handler for the post v1 entity name upload operation
+	UploadAndCreateRecordsPostV1EntityNameUploadHandler upload_and_create_records.PostV1EntityNameUploadHandler
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
 	ServeError func(http.ResponseWriter, *http.Request, error)
@@ -209,17 +209,17 @@ func (o *BulkIssuanceAPI) Validate() error {
 		unregistered = append(unregistered, "HasRoleAuth")
 	}
 
-	if o.DownloadFileReportGetV1DownloadIDHandler == nil {
-		unregistered = append(unregistered, "download_file_report.GetV1DownloadIDHandler")
+	if o.DownloadFileReportGetV1IDReportHandler == nil {
+		unregistered = append(unregistered, "download_file_report.GetV1IDReportHandler")
 	}
-	if o.SampleTemplateGetV1SampleSchemaNameHandler == nil {
-		unregistered = append(unregistered, "sample_template.GetV1SampleSchemaNameHandler")
+	if o.SampleTemplateGetV1SchemaNameSampleCsvHandler == nil {
+		unregistered = append(unregistered, "sample_template.GetV1SchemaNameSampleCsvHandler")
 	}
-	if o.UploadedFilesGetV1UploadedFilesHandler == nil {
-		unregistered = append(unregistered, "uploaded_files.GetV1UploadedFilesHandler")
+	if o.UploadedFilesGetV1UploadHandler == nil {
+		unregistered = append(unregistered, "uploaded_files.GetV1UploadHandler")
 	}
-	if o.UploadAndCreateRecordsPostV1UploadFilesVCNameHandler == nil {
-		unregistered = append(unregistered, "upload_and_create_records.PostV1UploadFilesVCNameHandler")
+	if o.UploadAndCreateRecordsPostV1EntityNameUploadHandler == nil {
+		unregistered = append(unregistered, "upload_and_create_records.PostV1EntityNameUploadHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -326,19 +326,19 @@ func (o *BulkIssuanceAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/v1/download/{id}"] = download_file_report.NewGetV1DownloadID(o.context, o.DownloadFileReportGetV1DownloadIDHandler)
+	o.handlers["GET"]["/v1/{id}/report"] = download_file_report.NewGetV1IDReport(o.context, o.DownloadFileReportGetV1IDReportHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/v1/sample/{schemaName}"] = sample_template.NewGetV1SampleSchemaName(o.context, o.SampleTemplateGetV1SampleSchemaNameHandler)
+	o.handlers["GET"]["/v1/{schemaName}/sample-csv"] = sample_template.NewGetV1SchemaNameSampleCsv(o.context, o.SampleTemplateGetV1SchemaNameSampleCsvHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/v1/uploadedFiles"] = uploaded_files.NewGetV1UploadedFiles(o.context, o.UploadedFilesGetV1UploadedFilesHandler)
+	o.handlers["GET"]["/v1/upload"] = uploaded_files.NewGetV1Upload(o.context, o.UploadedFilesGetV1UploadHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
-	o.handlers["POST"]["/v1/uploadFiles/{VCName}"] = upload_and_create_records.NewPostV1UploadFilesVCName(o.context, o.UploadAndCreateRecordsPostV1UploadFilesVCNameHandler)
+	o.handlers["POST"]["/v1/{entityName}/upload"] = upload_and_create_records.NewPostV1EntityNameUpload(o.context, o.UploadAndCreateRecordsPostV1EntityNameUploadHandler)
 }
 
 // Serve creates a http handler to serve the API over HTTP

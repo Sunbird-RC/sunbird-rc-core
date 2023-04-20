@@ -13,18 +13,18 @@ import (
 	"github.com/go-openapi/strfmt"
 )
 
-// NewGetV1SampleSchemaNameParams creates a new GetV1SampleSchemaNameParams object
+// NewGetV1SchemaNameSampleCsvParams creates a new GetV1SchemaNameSampleCsvParams object
 // no default values defined in spec.
-func NewGetV1SampleSchemaNameParams() GetV1SampleSchemaNameParams {
+func NewGetV1SchemaNameSampleCsvParams() GetV1SchemaNameSampleCsvParams {
 
-	return GetV1SampleSchemaNameParams{}
+	return GetV1SchemaNameSampleCsvParams{}
 }
 
-// GetV1SampleSchemaNameParams contains all the bound params for the get v1 sample schema name operation
+// GetV1SchemaNameSampleCsvParams contains all the bound params for the get v1 schema name sample csv operation
 // typically these are obtained from a http.Request
 //
-// swagger:parameters GetV1SampleSchemaName
-type GetV1SampleSchemaNameParams struct {
+// swagger:parameters GetV1SchemaNameSampleCsv
+type GetV1SchemaNameSampleCsvParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
@@ -39,8 +39,8 @@ type GetV1SampleSchemaNameParams struct {
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
 // for simple values it will use straight method calls.
 //
-// To ensure default values, the struct must have been initialized with NewGetV1SampleSchemaNameParams() beforehand.
-func (o *GetV1SampleSchemaNameParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
+// To ensure default values, the struct must have been initialized with NewGetV1SchemaNameSampleCsvParams() beforehand.
+func (o *GetV1SchemaNameSampleCsvParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
 	var res []error
 
 	o.HTTPRequest = r
@@ -57,7 +57,7 @@ func (o *GetV1SampleSchemaNameParams) BindRequest(r *http.Request, route *middle
 }
 
 // bindSchemaName binds and validates parameter SchemaName from path.
-func (o *GetV1SampleSchemaNameParams) bindSchemaName(rawData []string, hasKey bool, formats strfmt.Registry) error {
+func (o *GetV1SchemaNameSampleCsvParams) bindSchemaName(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	var raw string
 	if len(rawData) > 0 {
 		raw = rawData[len(rawData)-1]

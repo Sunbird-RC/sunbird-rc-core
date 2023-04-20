@@ -11,15 +11,15 @@ import (
 	golangswaggerpaths "path"
 )
 
-// GetV1BulkUploadedFilesURL generates an URL for the get v1 bulk uploaded files operation
-type GetV1BulkUploadedFilesURL struct {
+// GetV1UploadURL generates an URL for the get v1 upload operation
+type GetV1UploadURL struct {
 	_basePath string
 }
 
 // WithBasePath sets the base path for this url builder, only required when it's different from the
 // base path specified in the swagger spec.
 // When the value of the base path is an empty string
-func (o *GetV1BulkUploadedFilesURL) WithBasePath(bp string) *GetV1BulkUploadedFilesURL {
+func (o *GetV1UploadURL) WithBasePath(bp string) *GetV1UploadURL {
 	o.SetBasePath(bp)
 	return o
 }
@@ -27,15 +27,15 @@ func (o *GetV1BulkUploadedFilesURL) WithBasePath(bp string) *GetV1BulkUploadedFi
 // SetBasePath sets the base path for this url builder, only required when it's different from the
 // base path specified in the swagger spec.
 // When the value of the base path is an empty string
-func (o *GetV1BulkUploadedFilesURL) SetBasePath(bp string) {
+func (o *GetV1UploadURL) SetBasePath(bp string) {
 	o._basePath = bp
 }
 
 // Build a url path and query string
-func (o *GetV1BulkUploadedFilesURL) Build() (*url.URL, error) {
+func (o *GetV1UploadURL) Build() (*url.URL, error) {
 	var _result url.URL
 
-	var _path = "/v1/bulk/uploadedFiles"
+	var _path = "/v1/upload"
 
 	_basePath := o._basePath
 	_result.Path = golangswaggerpaths.Join(_basePath, _path)
@@ -44,7 +44,7 @@ func (o *GetV1BulkUploadedFilesURL) Build() (*url.URL, error) {
 }
 
 // Must is a helper function to panic when the url builder returns an error
-func (o *GetV1BulkUploadedFilesURL) Must(u *url.URL, err error) *url.URL {
+func (o *GetV1UploadURL) Must(u *url.URL, err error) *url.URL {
 	if err != nil {
 		panic(err)
 	}
@@ -55,17 +55,17 @@ func (o *GetV1BulkUploadedFilesURL) Must(u *url.URL, err error) *url.URL {
 }
 
 // String returns the string representation of the path with query string
-func (o *GetV1BulkUploadedFilesURL) String() string {
+func (o *GetV1UploadURL) String() string {
 	return o.Must(o.Build()).String()
 }
 
 // BuildFull builds a full url with scheme, host, path and query string
-func (o *GetV1BulkUploadedFilesURL) BuildFull(scheme, host string) (*url.URL, error) {
+func (o *GetV1UploadURL) BuildFull(scheme, host string) (*url.URL, error) {
 	if scheme == "" {
-		return nil, errors.New("scheme is required for a full url on GetV1BulkUploadedFilesURL")
+		return nil, errors.New("scheme is required for a full url on GetV1UploadURL")
 	}
 	if host == "" {
-		return nil, errors.New("host is required for a full url on GetV1BulkUploadedFilesURL")
+		return nil, errors.New("host is required for a full url on GetV1UploadURL")
 	}
 
 	base, err := o.Build()
@@ -79,6 +79,6 @@ func (o *GetV1BulkUploadedFilesURL) BuildFull(scheme, host string) (*url.URL, er
 }
 
 // StringFull returns the string representation of a complete url
-func (o *GetV1BulkUploadedFilesURL) StringFull(scheme, host string) string {
+func (o *GetV1UploadURL) StringFull(scheme, host string) string {
 	return o.Must(o.BuildFull(scheme, host)).String()
 }

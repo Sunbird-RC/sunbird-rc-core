@@ -31,15 +31,85 @@ func init() {
     "version": "1.0.0"
   },
   "paths": {
-    "/v1/download/{id}": {
+    "/v1/upload": {
       "get": {
-        "security": [
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "uploadedFiles"
+        ],
+        "summary": "get uploaded files",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/v1/{entityName}/upload": {
+      "post": {
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "uploadAndCreateRecords"
+        ],
+        "summary": "upload the file and create records",
+        "parameters": [
           {
-            "hasRole": [
-              "Issuer"
-            ]
+            "type": "file",
+            "description": "Certification data in the form of csv",
+            "name": "file",
+            "in": "formData"
+          },
+          {
+            "type": "string",
+            "description": "VerifiableCredential you are issuing",
+            "name": "entityName",
+            "in": "path",
+            "required": true
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CreateRecordResponse"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/v1/{id}/report": {
+      "get": {
         "produces": [
           "application/json",
           "application/octet-stream"
@@ -84,15 +154,8 @@ func init() {
         }
       }
     },
-    "/v1/sample/{schemaName}": {
+    "/v1/{schemaName}/sample-csv": {
       "get": {
-        "security": [
-          {
-            "hasRole": [
-              "Issuer"
-            ]
-          }
-        ],
         "produces": [
           "application/octet-stream",
           "application/json"
@@ -130,16 +193,85 @@ func init() {
           }
         }
       }
+    }
+  },
+  "definitions": {
+    "CreateRecordResponse": {
+      "type": "object"
     },
-    "/v1/uploadFiles/{VCName}": {
-      "post": {
-        "security": [
-          {
-            "hasRole": [
-              "Issuer"
-            ]
-          }
+    "FileDownload": {
+      "type": "object"
+    },
+    "SampleTemplateResponse": {
+      "type": "object"
+    },
+    "UploadedFiles": {
+      "type": "object"
+    }
+  },
+  "securityDefinitions": {
+    "hasRole": {
+      "type": "oauth2",
+      "flow": "accessCode",
+      "authorizationUrl": "https://dummy.oauth.net/auth",
+      "tokenUrl": "https://dumy.oauth.net/token",
+      "scopes": {
+        "Issuer": "scope of Issuer"
+      }
+    }
+  },
+  "security": [
+    {
+      "hasRole": [
+        "Issuer"
+      ]
+    }
+  ]
+}`))
+	FlatSwaggerJSON = json.RawMessage([]byte(`{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "Bulk Issuance API",
+    "title": "Bulk Issuance",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/upload": {
+      "get": {
+        "consumes": [
+          "application/json"
         ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "uploadedFiles"
+        ],
+        "summary": "get uploaded files",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/v1/{entityName}/upload": {
+      "post": {
         "consumes": [
           "multipart/form-data"
         ],
@@ -160,7 +292,7 @@ func init() {
           {
             "type": "string",
             "description": "VerifiableCredential you are issuing",
-            "name": "VCName",
+            "name": "entityName",
             "in": "path",
             "required": true
           }
@@ -187,97 +319,8 @@ func init() {
         }
       }
     },
-    "/v1/uploadedFiles": {
+    "/v1/{id}/report": {
       "get": {
-        "security": [
-          {
-            "hasRole": [
-              "Issuer"
-            ]
-          }
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "uploadedFiles"
-        ],
-        "summary": "get uploaded files",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "object"
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    }
-  },
-  "definitions": {
-    "CreateRecordResponse": {
-      "type": "object"
-    },
-    "FileDownload": {
-      "type": "object"
-    },
-    "SampleTemplateResponse": {
-      "type": "object"
-    },
-    "UploadedFiles": {
-      "type": "object"
-    }
-  },
-  "securityDefinitions": {
-    "hasRole": {
-      "type": "oauth2",
-      "flow": "accessCode",
-      "authorizationUrl": "https://dummy.oauth.net/auth",
-      "tokenUrl": "https://dumy.oauth.net/token",
-      "scopes": {
-        "admin": "scope of super admin",
-        "facility-admin": "scope of facility admin"
-      }
-    }
-  },
-  "security": [
-    {
-      "hasRole": []
-    }
-  ]
-}`))
-	FlatSwaggerJSON = json.RawMessage([]byte(`{
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
-  "swagger": "2.0",
-  "info": {
-    "description": "Bulk Issuance API",
-    "title": "Bulk Issuance",
-    "version": "1.0.0"
-  },
-  "paths": {
-    "/v1/download/{id}": {
-      "get": {
-        "security": [
-          {
-            "hasRole": [
-              "Issuer"
-            ]
-          }
-        ],
         "produces": [
           "application/json",
           "application/octet-stream"
@@ -322,15 +365,8 @@ func init() {
         }
       }
     },
-    "/v1/sample/{schemaName}": {
+    "/v1/{schemaName}/sample-csv": {
       "get": {
-        "security": [
-          {
-            "hasRole": [
-              "Issuer"
-            ]
-          }
-        ],
         "produces": [
           "application/json",
           "application/octet-stream"
@@ -368,97 +404,6 @@ func init() {
           }
         }
       }
-    },
-    "/v1/uploadFiles/{VCName}": {
-      "post": {
-        "security": [
-          {
-            "hasRole": [
-              "Issuer"
-            ]
-          }
-        ],
-        "consumes": [
-          "multipart/form-data"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "uploadAndCreateRecords"
-        ],
-        "summary": "upload the file and create records",
-        "parameters": [
-          {
-            "type": "file",
-            "description": "Certification data in the form of csv",
-            "name": "file",
-            "in": "formData"
-          },
-          {
-            "type": "string",
-            "description": "VerifiableCredential you are issuing",
-            "name": "VCName",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/CreateRecordResponse"
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "schema": {
-              "type": "string"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "/v1/uploadedFiles": {
-      "get": {
-        "security": [
-          {
-            "hasRole": [
-              "Issuer"
-            ]
-          }
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "uploadedFiles"
-        ],
-        "summary": "get uploaded files",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "object"
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -482,14 +427,15 @@ func init() {
       "authorizationUrl": "https://dummy.oauth.net/auth",
       "tokenUrl": "https://dumy.oauth.net/token",
       "scopes": {
-        "admin": "scope of super admin",
-        "facility-admin": "scope of facility admin"
+        "Issuer": "scope of Issuer"
       }
     }
   },
   "security": [
     {
-      "hasRole": []
+      "hasRole": [
+        "Issuer"
+      ]
     }
   ]
 }`))
