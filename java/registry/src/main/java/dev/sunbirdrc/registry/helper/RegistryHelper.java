@@ -166,6 +166,22 @@ public class RegistryHelper {
 
     @Autowired
     private AsyncRequest asyncRequest;
+    @Value("${notification.service.createSubjectTemplate}")
+    private String CREATE_SUBJECT_TEMPLATE;
+
+    @Value("${notification.service.createBodyTemplate}")
+    private String CREATE_BODY_TEMPLATE;
+
+    @Value("${notification.service.updateSubjectTemplate}")
+    private String UPDATE_SUBJECT_TEMPLATE;
+
+    @Value("${notification.service.inviteBodyTemplate}")
+    private String UPDATE_BODY_TEMPLATE;
+    @Value("${notification.service.inviteSubjectTemplate}")
+    private String INVITE_SUBJECT_TEMPLATE;
+
+    @Value("${notification.service.inviteBodyTemplate}")
+    private String INVITE_BODY_TEMPLATE;
 
     public JsonNode removeFormatAttr(JsonNode requestBody) {
         String documents = "documents";
@@ -188,12 +204,14 @@ public class RegistryHelper {
      * @throws Exception
      */
     public String addEntity(JsonNode inputJson, String userId) throws Exception {
-        return addEntityHandler(inputJson, userId, false, false);
+        String entityId = addEntityHandler(inputJson, userId, false, false);
+        sendNotification(inputJson, CREATE, CREATE_SUBJECT_TEMPLATE, CREATE_BODY_TEMPLATE);
+        return entityId;
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
         String entityId = addEntityHandler(inputJson, userId, skipRequiredValidationForInvite, skipSignatureForInvite);
-        sendInviteNotification(inputJson);
+        sendNotification(inputJson, INVITE, INVITE_SUBJECT_TEMPLATE, INVITE_BODY_TEMPLATE);
         return entityId;
     }
 
@@ -220,9 +238,9 @@ public class RegistryHelper {
         return addEntity(inputJson, userId, entityType, skipSignature);
     }
 
-    private void sendInviteNotification(JsonNode inputJson) throws Exception {
+    private void sendNotification(JsonNode inputJson, String operationType, String subject, String template) throws Exception {
         String entityType = inputJson.fields().next().getKey();
-        sendNotificationToOwners(inputJson, INVITE, String.format(INVITE_SUBJECT_TEMPLATE, entityType), String.format(INVITE_BODY_TEMPLATE, entityType));
+        sendNotificationToOwners(inputJson, operationType, String.format(subject, entityType), String.format(template, entityType));
     }
 
     private void sendNotificationToOwners(JsonNode inputJson, String operation, String subject, String message) throws Exception {
@@ -361,6 +379,7 @@ public class RegistryHelper {
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
         registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString);
+        sendNotification(inputJson, UPDATE, UPDATE_SUBJECT_TEMPLATE, UPDATE_BODY_TEMPLATE);
         logger.debug("updateEntity ends");
     }
 
@@ -373,6 +392,7 @@ public class RegistryHelper {
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
         registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString);
+        sendNotification(inputJson, UPDATE, UPDATE_SUBJECT_TEMPLATE, UPDATE_BODY_TEMPLATE);
         return "SUCCESS";
     }
 
