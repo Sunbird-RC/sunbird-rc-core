@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.sunbird.akka.core.ActorCache;
@@ -93,6 +95,15 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${registry.context.base}")
     private String registryBaseUrl;
 
+    @Value("${notification.async.enabled}")
+    private boolean asyncEnabled;
+
+    @Value("${notification.topic}")
+    private String notifyTopic;
+
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+
     @Autowired
     private EntityParenter entityParenter;
 
@@ -113,7 +124,6 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private List<HealthIndicator> healthIndicators;
-
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
         AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
@@ -385,6 +395,11 @@ public class RegistryServiceImpl implements RegistryService {
     @Override
     @Async("taskExecutor")
     public void callNotificationActors(String operation, String to, String subject, String message) throws JsonProcessingException {
+        if(asyncEnabled) {
+            String payload = "{\"message\":\"" + message + "\", \"subject\": \"" + subject + "\", \"recipient\": \"" + to + "\"}";
+            kafkaTemplate.send(notifyTopic, null, payload);
+            return;
+        }
         logger.debug("callNotificationActors started");
         MessageProtos.Message messageProto = MessageFactory.instance().createNotificationActorMessage(operation, to, subject, message);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(messageProto, null);

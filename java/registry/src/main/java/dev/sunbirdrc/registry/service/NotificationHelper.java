@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -26,7 +25,7 @@ import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.EMAIL;
 import static dev.sunbirdrc.registry.middleware.util.Constants.MOBILE;
 
-@Component
+@Service
 public class NotificationHelper {
     private static Logger logger = LoggerFactory.getLogger(NotificationHelper.class);
     @Value("${notification.service.enabled}") boolean notificationEnabled;
