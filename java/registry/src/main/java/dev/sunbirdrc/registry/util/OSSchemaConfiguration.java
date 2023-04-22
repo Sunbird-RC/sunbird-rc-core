@@ -90,6 +90,12 @@ public class OSSchemaConfiguration {
     private Boolean enableSearch = true;
 
     private List<FunctionDefinition> functionDefinitions;
+    private String createNotificationBodyTemplate = "{{name}}, Your {{entityType}} credential has been created";
+    private String createNotificationSubjectTemplate = "Credential Created";
+    private String updateNotificationBodyTemplate = "{{name}}, Your {{entityType}} credential has been updated";
+    private String updateNotificationSubjectTemplate = "Credential Updated";
+    private String inviteNotificationBodyTemplate = "{{name}}, You have been invited";
+    private String inviteNotificationSubjectTemplate = "Invitation";
 
     public Set<String> getAllTheAttestorEntities(){
         return attestationPolicies.stream()

@@ -26,12 +26,7 @@ notification:
     enabled: ${notification_enabled:true}
     connection_url: ${notification_url:http://localhost:8765/notification-service/v1/notification}
     health_url: ${notification_url:http://localhost:8765/notification-service/v1/health}
-    createSubjectTemplate: ${create_subject_template:createSubjectTemplate}
-    updateSubjectTemplate: ${update_subject_template:updateSubjectTemplate}
-    createBodyTemplate: ${create_body_template:createBodyTemplate}
-    updateBodyTemplate: ${update_body_template:updateBodyTemplate}
-    inviteBodyTemplate: ${invite_body_template:inviteBodyTemplate}
-    inviteSubjectTemplate: ${invite_subject_template:inviteSubjectTemplate}
+
 invite:
   required_validation_enabled: ${invite_required_validation_enabled:true}
   signature_enabled: ${invite_signature_enabled:true}

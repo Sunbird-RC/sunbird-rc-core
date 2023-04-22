@@ -130,27 +130,10 @@ public class RegistryHelperTest {
 	@Mock
 	private SignatureService signatureService;
 
-
-	private static final String INSTITUTE = "Institute";
-	private String createBodyTemplate = "createBodyTemplate";
-	private String updateBodyTemplate = "updateBodyTemplate";
-	private String inviteBodyTemplate = "inviteBodyTemplate";
-	private String updateSubjectTemplate = "updateSubjectTemplate";
-	private String createSubjectTemplate = "createSubjectTemplate";
-	private String inviteSubjectTemplate = "inviteSubjectTemplate";
-
 	@Before
 	public void initMocks() {
 		objectMapper = new ObjectMapper();
 		registryHelper.setObjectMapper(objectMapper);
-		ReflectionTestUtils.setField(registryHelper, "auditSuffix", "Audit");
-		ReflectionTestUtils.setField(registryHelper, "auditSuffixSeparator", "_");
-		ReflectionTestUtils.setField(registryHelper, "CREATE_BODY_TEMPLATE", createBodyTemplate);
-		ReflectionTestUtils.setField(registryHelper, "CREATE_SUBJECT_TEMPLATE", createSubjectTemplate);
-		ReflectionTestUtils.setField(registryHelper, "UPDATE_BODY_TEMPLATE", updateBodyTemplate);
-		ReflectionTestUtils.setField(registryHelper, "UPDATE_SUBJECT_TEMPLATE", updateSubjectTemplate);
-		ReflectionTestUtils.setField(registryHelper, "INVITE_BODY_TEMPLATE", inviteBodyTemplate);
-		ReflectionTestUtils.setField(registryHelper, "INVITE_SUBJECT_TEMPLATE", inviteSubjectTemplate);
 		MockitoAnnotations.initMocks(this);
 		registryHelper.uuidPropertyName = "osid";
 		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
@@ -353,6 +336,9 @@ public class RegistryHelperTest {
 	@Mock
 	AsyncRequest asyncRequest;
 
+	@Mock
+	NotificationHelper notificationHelper;
+
 	@Test
 	public void shouldCreateOwnersForInvite() throws Exception {
 		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
@@ -362,9 +348,11 @@ public class RegistryHelperTest {
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		registryHelper.inviteEntity(inviteJson, "");
 		Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
 		assertEquals("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"osOwner\":[\"" + testUserId + "\"]}}", inputJsonCapture.getValue().toString());
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	@Test
@@ -376,12 +364,10 @@ public class RegistryHelperTest {
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		registryHelper.inviteEntity(inviteJson, "");
 		Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
-		Mockito.verify(registryService, atLeastOnce()).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
-		assertEquals("mailto:gecasu.ihises@tovinit.com", toCapture.getValue());
-		assertEquals(inviteSubjectTemplate, subjectCapture.getValue());
-		assertEquals(inviteBodyTemplate, messageCapture.getValue());
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	private void mockDefinitionManager() throws IOException {
@@ -408,15 +394,10 @@ public class RegistryHelperTest {
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		mockDefinitionManager();
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		registryHelper.inviteEntity(inviteJson, "");
 		Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
-		Mockito.verify(registryService, times(4)).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
-		assertEquals("tel:123123", toCapture.getAllValues().get(0));
-		assertEquals(inviteSubjectTemplate, subjectCapture.getAllValues().get(0));
-		assertEquals(inviteBodyTemplate, messageCapture.getAllValues().get(0));
-		assertEquals("mailto:gecasu.ihises@tovinit.com", toCapture.getAllValues().get(1));
-		assertEquals("tel:1234", toCapture.getAllValues().get(2));
-		assertEquals("mailto:admin@email.com", toCapture.getAllValues().get(3));
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	@Test
@@ -499,6 +480,7 @@ public class RegistryHelperTest {
 				.status("GRANT_CLAIM")
 				.response("{}")
 				.build();
+		ObjectNode studentJson = getMockStudent();
 		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
 		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
 		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
@@ -511,16 +493,17 @@ public class RegistryHelperTest {
 		attestationArrayNodes.add(mockAttestationPolicy2);
 		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
 		when(searchService.search(any())).thenReturn(attestationPolicyObject);
-		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(getMockStudent());
+		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(studentJson);
 		registryHelper.entityStateHelper = mock(EntityStateHelper.class);
-		when(registryHelper.entityStateHelper.manageState(any(), any(), any(), any(), any())).thenReturn(getMockStudent());
+		when(registryHelper.entityStateHelper.manageState(any(), any(), any(), any(), any())).thenReturn(studentJson);
 		when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
 		registryHelper.updateState(pluginResponseMessage);
 		verify(registryHelper, times(1)).triggerAttestation(any(), any());
-
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	@Test
@@ -551,7 +534,6 @@ public class RegistryHelperTest {
 		sunbirdActorFactory.init("sunbirdrc-actors");
 		registryHelper.updateState(pluginResponseMessage);
 		verify(registryHelper, times(0)).triggerAttestation(any(), any());
-
 	}
 
 	@Test
@@ -592,7 +574,6 @@ public class RegistryHelperTest {
 		sunbirdActorFactory.init("sunbirdrc-actors");
 		registryHelper.updateState(pluginResponseMessage);
 		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
-
 	}
 
 	@Test
@@ -634,7 +615,6 @@ public class RegistryHelperTest {
 		sunbirdActorFactory.init("sunbirdrc-actors");
 		registryHelper.updateState(pluginResponseMessage);
 		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
-
 	}
 
 	@Test
@@ -801,9 +781,11 @@ public class RegistryHelperTest {
 		objectNode.set("fullName", JsonNodeFactory.instance.textNode("First Avenger"));
 		objectNode.set("gender", JsonNodeFactory.instance.textNode("Male"));
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		registryHelper.autoRaiseClaim("Student", "12345", "556302c9-d8b4-4f60-9ac1-c16c8839a9f3", null, requestBody, "");
 		verify(conditionResolverService, times(1)).resolve(objectNode, REQUESTER, null, Collections.emptyList());
 		verify(registryHelper, times(1)).triggerAttestation(any(), any());
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	public void shouldStoredSignedDataInRevokedCredentialsRegistry() throws Exception {
@@ -860,7 +842,7 @@ public class RegistryHelperTest {
 		Shard shard = mock(Shard.class);
 		when(shard.getShardLabel()).thenReturn("1");
 		when(shardManager.getShard(any())).thenReturn(shard);
-
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(registryAsyncService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(asyncRequest.isEnabled()).thenReturn(Boolean.FALSE);
@@ -868,11 +850,8 @@ public class RegistryHelperTest {
 		String entity = registryHelper.addEntity(inviteJson, "");
 		verify(registryService, atLeastOnce()).addEntity(any(), anyString(), any(), anyBoolean());
 		verify(registryAsyncService, never()).addEntity(any(), anyString(), any(), anyBoolean());
-		verify(registryService, atLeastOnce()).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
-		assertEquals("mailto:gecasu.ihises@tovinit.com", toCapture.getValue());
-		assertEquals(createSubjectTemplate, subjectCapture.getValue());
-		assertEquals(createBodyTemplate, messageCapture.getValue());
 		assertTrue(entity.startsWith("1-"));
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	void mockValidationService() throws IOException {
@@ -914,9 +893,11 @@ public class RegistryHelperTest {
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
 		ReflectionTestUtils.setField(registryHelper, "skipRequiredValidationForInvite", true);
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		registryHelper.inviteEntity(inviteJson, "");
 		Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
 		assertEquals("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"osOwner\":[\"" + testUserId + "\"]}}", inputJsonCapture.getValue().toString());
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	@Test
@@ -929,11 +910,9 @@ public class RegistryHelperTest {
 		when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
 		doNothing().when(registryService).updateEntity(any(), any(), any(), any());
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		registryHelper.updateEntityAndState(existingJson, updateJson, "");
 		verify(registryService, times(1)).updateEntity(any(), any(), any(), any());
-		verify(registryService, atLeastOnce()).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
-		assertEquals("mailto:gecasu.ihises@tovinit.com", toCapture.getValue());
-		assertEquals(updateSubjectTemplate, subjectCapture.getValue());
-		assertEquals(updateBodyTemplate, messageCapture.getValue());
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 }
