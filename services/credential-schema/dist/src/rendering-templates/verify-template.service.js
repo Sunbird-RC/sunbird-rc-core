@@ -28,7 +28,7 @@ let VerifyTemplateService = class VerifyTemplateService {
     async verify(template, schemaID) {
         try {
             let HBSfields = this.parseHBS(template);
-            let requiredFields = (await this.schemaService.credentialSchema({ id: schemaID })).schema["required"];
+            let requiredFields = (await this.schemaService.getCredentialSchema({ id: schemaID })).schema["required"];
             console.log(requiredFields);
             if (HBSfields.length == requiredFields.length) {
                 requiredFields.sort();

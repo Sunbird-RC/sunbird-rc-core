@@ -25,7 +25,7 @@ let SchemaController = class SchemaController {
         this.cacheManager = cacheManager;
     }
     getCredentialSchema(id) {
-        return this.schemaService.credentialSchema({ id: id });
+        return this.schemaService.getCredentialSchema({ id: id });
     }
     getCredentialSchemaByTags(tags) {
         console.log(tags);

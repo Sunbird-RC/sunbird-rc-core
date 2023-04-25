@@ -28,7 +28,7 @@ let ValidateTemplateService = class ValidateTemplateService {
     async verify(template, schemaID) {
         try {
             let HBSfields = this.parseHBS(template);
-            let requiredFields = (await this.schemaService.credentialSchema({ id: schemaID })).schema["schema"]["required"];
+            let requiredFields = (await this.schemaService.getCredentialSchema({ id: schemaID })).schema["schema"]["required"];
             if (HBSfields.length == requiredFields.length) {
                 requiredFields.sort();
                 for (let index = 0; index < HBSfields.length; index++) {

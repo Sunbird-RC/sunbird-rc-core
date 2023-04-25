@@ -94,7 +94,7 @@ export class SchemaController {
     description: 'The record has not been found.',
   })
   getCredentialSchema(@Param('id') id: string) {
-    return this.schemaService.credentialSchema({ id: id });
+    return this.schemaService.getCredentialSchema({ id: id });
   }
 
   @Get()

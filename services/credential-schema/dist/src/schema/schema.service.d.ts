@@ -14,7 +14,7 @@ type schemaResponse = {
 export declare class SchemaService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    credentialSchema(userWhereUniqueInput: Prisma.VerifiableCredentialSchemaWhereUniqueInput): Promise<schemaResponse>;
+    getCredentialSchema(userWhereUniqueInput: Prisma.VerifiableCredentialSchemaWhereUniqueInput): Promise<schemaResponse>;
     createCredentialSchema(createCredentialDto: CreateCredentialDTO): Promise<schemaResponse>;
     updateCredentialSchema(params: {
         where: Prisma.VerifiableCredentialSchemaWhereUniqueInput;

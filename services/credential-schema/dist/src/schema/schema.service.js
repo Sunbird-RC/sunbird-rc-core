@@ -18,7 +18,7 @@ let SchemaService = class SchemaService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async credentialSchema(userWhereUniqueInput) {
+    async getCredentialSchema(userWhereUniqueInput) {
         const schema = await this.prisma.verifiableCredentialSchema.findUnique({
             where: userWhereUniqueInput,
         });
