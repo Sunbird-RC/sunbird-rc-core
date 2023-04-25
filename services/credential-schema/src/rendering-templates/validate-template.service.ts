@@ -11,29 +11,29 @@ export class ValidateTemplateService{
 
     private parseHBSTemplate(HBSstr: string):Array<string>{
         //console.log(HBSstr);
-        let HBSfields: Array<string> = HBSstr.match(/{{[{]?(.*?)[}]?}}/g)
-        HBSfields.forEach((fieldname:string) => {     
+        let hbsFields: Array<string> = HBSstr.match(/{{[{]?(.*?)[}]?}}/g)
+        hbsFields.forEach((fieldname:string) => {     
             //console.log(fieldname);       
             let len = fieldname.length
             fieldname = fieldname.slice(2, len-2);
         })
-        HBSfields.sort()
-        return HBSfields;
+        hbsFields.sort()
+        return hbsFields;
 
     }
 
      async validateTemplateAgainstSchema(template: string, schemaID: string): Promise<boolean> {
         try{
-        let HBSfields: Array<string> = this.parseHBSTemplate(template);
+        let hbsFields: Array<string> = this.parseHBSTemplate(template);
 
         let requiredFields:Array<string> = ( await this.schemaService.credentialSchema({id:schemaID})).schema["schema"]["required"];
         //console.log(requiredFields);
-        if (HBSfields.length == requiredFields.length){
+        if (hbsFields.length == requiredFields.length){
             requiredFields.sort()
-            for (let index = 0; index < HBSfields.length; index++) {
+            for (let index = 0; index < hbsFields.length; index++) {
                 let field = '{{'+requiredFields[index]+'}}'
                 //if strings do not match:
-                if (field.localeCompare(HBSfields[index])===1 || field.localeCompare(HBSfields[index])===-1){
+                if (field.localeCompare(hbsFields[index])===1 || field.localeCompare(hbsFields[index])===-1){
                     return false;
                 }
 
