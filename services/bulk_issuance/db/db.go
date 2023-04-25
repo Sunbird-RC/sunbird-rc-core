@@ -14,22 +14,15 @@ import (
 
 var db *gorm.DB
 
-type DBFiles struct {
+type FileData struct {
 	gorm.Model
 	Filename     string
 	TotalRecords int
 	UserID       string
 	UserName     string
+	Headers      string
+	RowData      []byte
 	Date         string
-}
-
-type DBFileData struct {
-	gorm.Model
-	Filename string
-	Headers  string
-	RowData  []byte
-	UserID   string
-	UserName string
 }
 
 func Init() {
@@ -43,37 +36,29 @@ func Init() {
 	if e != nil {
 		panic("failed to connect to database")
 	}
-	db.AutoMigrate(&DBFiles{})
-	db.AutoMigrate(&DBFileData{})
+	db.AutoMigrate(&FileData{})
 }
 
-func CreateDBFiles(data *DBFiles) error {
-	log.Info("Creating DBFiles entry")
-	result := db.Create(&data)
-	utils.LogErrorIfAny("Error while adding DBFiles : %v", result.Error)
-	return nil
-}
-
-func GetDBFileData(id int, userId string) (*DBFileData, error) {
-	filesUpload := &DBFileData{}
+func GetFileDataByIdAndUser(id int, userId string) (*FileData, error) {
+	filesUpload := &FileData{}
 	log.Infof("Getting file data with id : %v", id)
 	result := db.First(&filesUpload, "id=?", id)
 	if result.Error != nil {
-		log.Errorf("Error while getting DBFileData : %v", result.Error)
+		log.Errorf("Error while getting FileData : %v", result.Error)
 		return nil, result.Error
 	}
 	return filesUpload, nil
 }
 
-func CreateDBFileData(data *DBFileData) (uint, error) {
-	log.Info("Creating DBFileData entry")
+func Insert(data *FileData) (uint, error) {
+	log.Info("Creating FileData entry")
 	result := db.Create(&data)
-	utils.LogErrorIfAny("Error while adding DBFileData : %v", result.Error)
+	utils.LogErrorIfAny("Error while adding FileData : %v", result.Error)
 	return data.ID, nil
 }
 
-func GetAllUploadedFilesData(userId string) ([]DBFiles, error) {
-	var files []DBFiles
+func GetAllFileDataForUserID(userId string) ([]FileData, error) {
+	var files []FileData
 	log.Info("Getting all uploaded files")
 	if err := db.Find(&files, "user_id = ?", userId).Error; err != nil {
 		log.Errorf("Error while requesting for all uploaded files : %v", err)

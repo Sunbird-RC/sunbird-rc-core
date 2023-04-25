@@ -14,7 +14,7 @@ func Initialize(fileName string) {
 		panic("Unable to read configurations")
 	}
 	if Config.Keycloak.PublicKey == "" {
-		updatePublicKeyFromKeycloak()
+		getPublicKeyFromKeycloak()
 	}
 }
 
@@ -36,7 +36,7 @@ var Config = struct {
 	}
 }{}
 
-func updatePublicKeyFromKeycloak() error {
+func getPublicKeyFromKeycloak() error {
 	url := Config.Keycloak.Url + "/realms/" + Config.Keycloak.Realm
 	log.Infof("Public key url : %v", url)
 	resp, err := req.Get(url)

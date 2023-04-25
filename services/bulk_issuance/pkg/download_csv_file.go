@@ -14,10 +14,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var getFileByIdAndUser = db.GetFileDataByIdAndUser
+
 func downloadReportFile(params download_file_report.GetV1IDReportParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Infof("Downloading report file with ID : %v", params.ID)
 	response := download_file_report.NewGetV1IDReportOK()
-	file, err := db.GetDBFileData(int(params.ID), principal.UserId)
+	file, err := getFileByIdAndUser(int(params.ID), principal.UserId)
 	if file.UserID != principal.UserId {
 		return download_file_report.NewGetV1IDReportForbidden().WithPayload("User is not allowed to access this file")
 	}

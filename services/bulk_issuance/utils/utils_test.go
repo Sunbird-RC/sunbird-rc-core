@@ -114,7 +114,7 @@ func Test_getSampleValueByType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getSampleValueByType(tt.args.value); got != tt.want {
+			if got := GetSampleValueByType(tt.args.value); got != tt.want {
 				t.Errorf("getSampleValueByType() = %v, want %v", got, tt.want)
 			}
 		})

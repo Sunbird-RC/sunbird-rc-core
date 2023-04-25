@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bulk_issuance/services"
 	"bulk_issuance/swagger_gen/models"
 	"bulk_issuance/swagger_gen/restapi/operations/sample_template"
 	"bulk_issuance/utils"
@@ -11,10 +12,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+
+var getSchemaProperties = services.GetSchemaPropertiesAndSampleValues
+
 func downloadSampleFile(params sample_template.GetV1SchemaNameSampleCsvParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Infof("Downloading sample file with name %v", (params.SchemaName + ".csv"))
 	response := sample_template.NewGetV1SchemaNameSampleCsvOK()
-	schemaProperties, sampleValues, err := utils.GetSchemaPropertiesAndSampleValues(params.SchemaName)
+	schemaProperties, sampleValues, err := getSchemaProperties(params.SchemaName)
 	if err != nil {
 		response := sample_template.NewGetV1SchemaNameSampleCsvNotFound()
 		response.SetPayload(err.Error())
