@@ -68,7 +68,7 @@ let RenderingTemplatesService = class RenderingTemplatesService {
     }
     async addTemplate(addTemplateDto) {
         try {
-            if (await this.verifier.verify(addTemplateDto.template, addTemplateDto.schema)) {
+            if (await this.verifier.validateTemplateAgainstSchema(addTemplateDto.template, addTemplateDto.schema)) {
                 const template = await this.prisma.template.create({
                     data: {
                         schema: addTemplateDto.schema,
