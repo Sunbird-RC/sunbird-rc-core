@@ -26,7 +26,7 @@ export class ValidateTemplateService{
         try{
         let hbsFields: Array<string> = this.parseHBSTemplate(template);
 
-        let requiredFields:Array<string> = ( await this.schemaService.credentialSchema({id:schemaID})).schema["schema"]["required"];
+        let requiredFields:Array<string> = ( await this.schemaService.getCredentialSchema({id:schemaID})).schema["schema"]["required"];
         //console.log(requiredFields);
         if (hbsFields.length == requiredFields.length){
             requiredFields.sort()

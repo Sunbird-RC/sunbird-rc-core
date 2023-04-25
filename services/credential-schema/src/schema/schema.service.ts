@@ -51,7 +51,7 @@ export class SchemaService {
   //   return schemas[fileName];
   // }
 
-  /*  async credentialSchemas(params: {
+  /*  async getCredentialSchemas(params: {
       skip?: number;
       take?: number;
       cursor?: Prisma.VerifiableCredentialSchemaWhereUniqueInput;
@@ -68,7 +68,7 @@ export class SchemaService {
       });
     }*/
 
-  async credentialSchema(
+  async getCredentialSchema(
     userWhereUniqueInput: Prisma.VerifiableCredentialSchemaWhereUniqueInput,
   ): Promise<schemaResponse> {
 
