@@ -9,7 +9,7 @@ export class ValidateTemplateService{
     constructor (private schemaService: SchemaService) {}
 
 
-    private parseHBS(HBSstr: string):Array<string>{
+    private parseHBSTemplate(HBSstr: string):Array<string>{
         //console.log(HBSstr);
         let HBSfields: Array<string> = HBSstr.match(/{{[{]?(.*?)[}]?}}/g)
         HBSfields.forEach((fieldname:string) => {     
@@ -22,9 +22,9 @@ export class ValidateTemplateService{
 
     }
 
-     async verify(template: string, schemaID: string): Promise<boolean> {
+     async validateTemplateAgainstSchema(template: string, schemaID: string): Promise<boolean> {
         try{
-        let HBSfields: Array<string> = this.parseHBS(template);
+        let HBSfields: Array<string> = this.parseHBSTemplate(template);
 
         let requiredFields:Array<string> = ( await this.schemaService.credentialSchema({id:schemaID})).schema["schema"]["required"];
         //console.log(requiredFields);
