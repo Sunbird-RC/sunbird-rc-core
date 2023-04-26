@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.pojos.attestation.auto.AutoAttestationPolicy;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.model.NotificationTemplates;
 import dev.sunbirdrc.views.FunctionDefinition;
 import lombok.Data;
 
@@ -90,12 +91,7 @@ public class OSSchemaConfiguration {
     private Boolean enableSearch = true;
 
     private List<FunctionDefinition> functionDefinitions;
-    private String createNotificationBodyTemplate = "{{name}}, Your {{entityType}} credential has been created";
-    private String createNotificationSubjectTemplate = "Credential Created";
-    private String updateNotificationBodyTemplate = "{{name}}, Your {{entityType}} credential has been updated";
-    private String updateNotificationSubjectTemplate = "Credential Updated";
-    private String inviteNotificationBodyTemplate = "{{name}}, You have been invited";
-    private String inviteNotificationSubjectTemplate = "Invitation";
+    private NotificationTemplates notificationTemplates = new NotificationTemplates();
 
     public Set<String> getAllTheAttestorEntities(){
         return attestationPolicies.stream()

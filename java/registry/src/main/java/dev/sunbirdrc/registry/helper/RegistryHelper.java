@@ -16,6 +16,7 @@ import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
+import dev.sunbirdrc.registry.dao.VertexReader;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.entities.AttestationType;
 import dev.sunbirdrc.registry.entities.FlowType;
@@ -355,6 +356,7 @@ public class RegistryHelper {
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
         registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString);
+        notificationHelper.sendNotification(inputJson, UPDATE);
         return "SUCCESS";
     }
 
@@ -982,11 +984,16 @@ public class RegistryHelper {
         }
     }
 
-    public Vertex deleteEntity(String entityId, String userId) throws Exception {
+    public Vertex deleteEntity(String entityName, String entityId, String userId) throws Exception {
         RecordIdentifier recordId = RecordIdentifier.parse(entityId);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         Shard shard = shardManager.activateShard(shardId);
-        return registryService.deleteEntityById(shard, userId, recordId.getUuid());
+        ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
+        Vertex vertex = registryService.deleteEntityById(shard, entityName, userId, recordId.getUuid());
+        VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager);
+        JsonNode deletedNode = JsonNodeFactory.instance.objectNode().set(entityName, vertexReader.constructObject(vertex));
+        notificationHelper.sendNotification(deletedNode, DELETE);
+        return vertex;
     }
 
     //TODO: add cache
@@ -1088,8 +1095,8 @@ public class RegistryHelper {
     }
 
 
-    public void deleteAttestationPolicy(AttestationPolicy attestationPolicy) throws Exception {
-        deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
+    public void deleteAttestationPolicy(String entityName, AttestationPolicy attestationPolicy) throws Exception {
+        deleteEntity(entityName, attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
     }
 
     public boolean doesEntityOperationRequireAuthorization(String entity) {

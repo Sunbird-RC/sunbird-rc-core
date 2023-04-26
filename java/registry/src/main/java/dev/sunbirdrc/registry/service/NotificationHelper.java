@@ -1,16 +1,14 @@
 package dev.sunbirdrc.registry.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import dev.sunbirdrc.registry.helper.EntityStateHelper;
+import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.OSSchemaConfiguration;
-import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import static dev.sunbirdrc.registry.Constants.*;
@@ -28,78 +27,40 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.MOBILE;
 @Service
 public class NotificationHelper {
     private static Logger logger = LoggerFactory.getLogger(NotificationHelper.class);
-    @Value("${notification.service.enabled}") boolean notificationEnabled;
-    @Autowired
+    boolean notificationEnabled;
     private IDefinitionsManager definitionsManager;
-    @Autowired
-    @Setter
     private EntityStateHelper entityStateHelper;
-    @Autowired
     private RegistryService registryService;
-
-    @Autowired
-    @Setter
     private ObjectMapper objectMapper;
+    @Autowired
+    public NotificationHelper(@Value("${notification.service.enabled}") boolean notificationEnabled, IDefinitionsManager definitionsManager, EntityStateHelper entityStateHelper, RegistryService registryService, ObjectMapper objectMapper) {
+        this.notificationEnabled = notificationEnabled;
+        this.definitionsManager = definitionsManager;
+        this.entityStateHelper = entityStateHelper;
+        this.registryService = registryService;
+        this.objectMapper = objectMapper;
+    }
+
+    public NotificationHelper() {
+    }
 
     public void sendNotification(JsonNode inputJson, String operationType) throws Exception {
         String entityType = inputJson.fields().next().getKey();
-        String messageTemplateBody = getNotificationTemplateBody(entityType, operationType);
-        String messageTemplateSubject = getNotificationTemplateSubject(entityType, operationType);
-        Map<String, Object> objectNodeMap = convertEntityToMap(inputJson, entityType);
-        String subjectString = getMessageString(messageTemplateSubject, objectNodeMap, operationType);
-        String bodyString = getMessageString(messageTemplateBody, objectNodeMap, operationType);
-        sendNotificationToOwners(inputJson, operationType, subjectString, bodyString);
+        String messageBodySubject = getNotificationBodyTemplate(entityType, operationType);
+        String messageSubjectTemplate = getNotificationSubjectTemplate(entityType, operationType);
+        Map<String, Object> objectNodeMap = JSONUtil.convertJsonNodeToMap(inputJson);
+        objectNodeMap.put("entityType", entityType);
+        String subjectString = compileMessageFromTemplate(messageSubjectTemplate, objectNodeMap);
+        String bodyString = compileMessageFromTemplate(messageBodySubject, objectNodeMap);
+        List<ObjectNode> owners = entityStateHelper.getOwnersData(inputJson, entityType);
+        sendNotificationToOwners(owners, operationType, subjectString, bodyString);
     }
 
-    private String getNotificationTemplateBody(String entityType, String operationType) {
-        OSSchemaConfiguration osSchemaConfiguration = definitionsManager.getDefinition(entityType).getOsSchemaConfiguration();
-        switch(operationType) {
-            case CREATE:
-                return osSchemaConfiguration.getCreateNotificationBodyTemplate();
-            case UPDATE:
-                return osSchemaConfiguration.getUpdateNotificationBodyTemplate();
-            case INVITE:
-                return osSchemaConfiguration.getInviteNotificationBodyTemplate();
-        }
-        return null;
-    }
-
-    private String getNotificationTemplateSubject(String entityType, String operationType) {
-        OSSchemaConfiguration osSchemaConfiguration = definitionsManager.getDefinition(entityType).getOsSchemaConfiguration();
-        switch(operationType) {
-            case CREATE:
-                return osSchemaConfiguration.getCreateNotificationSubjectTemplate();
-            case UPDATE:
-                return osSchemaConfiguration.getUpdateNotificationSubjectTemplate();
-            case INVITE:
-                return osSchemaConfiguration.getInviteNotificationSubjectTemplate();
-        }
-        return null;
-    }
-
-    private Map<String, Object> convertEntityToMap(JsonNode inputJson, String entityName) throws JsonProcessingException {
-        final String osSignedData = "_osSignedData";
-        final String entityType = "entityType";
-        if(inputJson.get(entityName).has(osSignedData)) {
-            JsonNode signedDataNode = objectMapper.readTree(inputJson.get(entityName).get(osSignedData).asText());
-            inputJson = ((ObjectNode)inputJson.get(entityName)).set(osSignedData, signedDataNode);
-        }
-        Map<String, Object> objectNodeMap = objectMapper.convertValue(inputJson, new TypeReference<Map<String, Object>>(){});
-        objectNodeMap.put(entityType, entityName);
-        return objectNodeMap;
-    }
-
-    private String getMessageString(String messageTemplateBody, Map<String, Object> objectNodeMap, String operationType) throws IOException {
-        Handlebars handlebars = new Handlebars();
-        Template messageTemplate = handlebars.compileInline(messageTemplateBody);
-        return messageTemplate.apply(objectNodeMap);
-    }
-    private void sendNotificationToOwners(JsonNode inputJson, String operation, String subject, String message) throws Exception {
+    private void sendNotificationToOwners(List<ObjectNode> owners, String operation, String subject, String message) throws Exception {
         if (notificationEnabled) {
-            String entityType = inputJson.fields().next().getKey();
-            for (ObjectNode owners : entityStateHelper.getOwnersData(inputJson, entityType)) {
-                String ownerMobile = owners.get(MOBILE).asText("");
-                String ownerEmail = owners.get(EMAIL).asText("");
+            for (ObjectNode owner :owners) {
+                String ownerMobile = owner.get(MOBILE).asText("");
+                String ownerEmail = owner.get(EMAIL).asText("");
                 if (!StringUtils.isEmpty(ownerMobile)) {
                     registryService.callNotificationActors(operation, String.format("tel:%s", ownerMobile), subject, message);
                 }
@@ -109,4 +70,40 @@ public class NotificationHelper {
             }
         }
     }
+    private String getNotificationBodyTemplate(String entityType, String operationType) {
+        OSSchemaConfiguration osSchemaConfiguration = definitionsManager.getDefinition(entityType).getOsSchemaConfiguration();
+        switch(operationType) {
+            case CREATE:
+                return osSchemaConfiguration.getNotificationTemplates().getCreateNotificationTemplates().getBody();
+            case UPDATE:
+                return osSchemaConfiguration.getNotificationTemplates().getUpdateNotificationTemplates().getBody();
+            case INVITE:
+                return osSchemaConfiguration.getNotificationTemplates().getInviteNotificationTemplates().getBody();
+            case DELETE:
+                return osSchemaConfiguration.getNotificationTemplates().getDeleteNotificationTemplates().getBody();
+        }
+        return null;
+    }
+
+    private String getNotificationSubjectTemplate(String entityType, String operationType) {
+        OSSchemaConfiguration osSchemaConfiguration = definitionsManager.getDefinition(entityType).getOsSchemaConfiguration();
+        switch(operationType) {
+            case CREATE:
+                return osSchemaConfiguration.getNotificationTemplates().getCreateNotificationTemplates().getSubject();
+            case UPDATE:
+                return osSchemaConfiguration.getNotificationTemplates().getUpdateNotificationTemplates().getSubject();
+            case INVITE:
+                return osSchemaConfiguration.getNotificationTemplates().getInviteNotificationTemplates().getSubject();
+            case DELETE:
+                return osSchemaConfiguration.getNotificationTemplates().getDeleteNotificationTemplates().getSubject();
+        }
+        return null;
+    }
+
+    private String compileMessageFromTemplate(String messageBodySubject, Map<String, Object> objectNodeMap) throws IOException {
+        Handlebars handlebars = new Handlebars();
+        Template messageTemplate = handlebars.compileInline(messageBodySubject);
+        return messageTemplate.apply(objectNodeMap);
+    }
+
 }

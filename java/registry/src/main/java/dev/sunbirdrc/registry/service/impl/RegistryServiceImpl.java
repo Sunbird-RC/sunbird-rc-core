@@ -147,7 +147,7 @@ public class RegistryServiceImpl implements RegistryService {
      * @throws Exception
      */
     @Override
-    public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
+    public Vertex deleteEntityById(Shard shard, String entityName, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -155,7 +155,7 @@ public class RegistryServiceImpl implements RegistryService {
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
                 ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
                 VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager);
-                Vertex vertex = vertexReader.getVertex(null, uuid);
+                Vertex vertex = vertexReader.getVertex(entityName, uuid);
                 String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
                 if (!StringUtils.isEmpty(index) && index.equals(Schema)) {
                     schemaService.deleteSchemaIfExists(vertex);
