@@ -395,6 +395,7 @@ public class RegistryServiceImpl implements RegistryService {
     @Override
     @Async("taskExecutor")
     public void callNotificationActors(String operation, String to, String subject, String message) throws JsonProcessingException {
+        message = message.replace("\"", "\\\"");
         if(asyncEnabled) {
             String payload = "{\"message\":\"" + message + "\", \"subject\": \"" + subject + "\", \"recipient\": \"" + to + "\"}";
             kafkaTemplate.send(notifyTopic, null, payload);

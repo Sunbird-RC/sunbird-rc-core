@@ -48,7 +48,7 @@ public class NotificationHelper {
         String entityType = inputJson.fields().next().getKey();
         String messageBodySubject = getNotificationBodyTemplate(entityType, operationType);
         String messageSubjectTemplate = getNotificationSubjectTemplate(entityType, operationType);
-        Map<String, Object> objectNodeMap = JSONUtil.convertJsonNodeToMap(inputJson);
+        Map<String, Object> objectNodeMap = (Map<String, Object>) JSONUtil.convertJsonNodeToMap(inputJson).get(entityType);
         objectNodeMap.put("entityType", entityType);
         String subjectString = compileMessageFromTemplate(messageSubjectTemplate, objectNodeMap);
         String bodyString = compileMessageFromTemplate(messageBodySubject, objectNodeMap);
