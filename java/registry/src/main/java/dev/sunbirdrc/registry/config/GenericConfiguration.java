@@ -147,6 +147,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String schemaUrl;
 	@Value("${httpConnection.maxConnections:5}")
 	private int httpMaxConnections;
+
+	@Value("${registry.HARD_DELETE_ENABLED}")
+	private boolean isHardDeleteEnabled;
+
+	@Value("${search.providerName}")
+	private String searchProvider;
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 
@@ -423,6 +429,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			elasticService.setUserName(username);
 			elasticService.setPassword(password);
 			elasticService.init(iDefinitionsManager.getAllKnownDefinitions());
+			elasticService.setIsHardDeleteEnabled(isHardDeleteEnabled);
 		}
 		return elasticService;
 	}

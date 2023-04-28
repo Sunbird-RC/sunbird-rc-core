@@ -6,12 +6,34 @@ import dev.sunbirdrc.elastic.ESMessage;
 import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.elastic.IElasticService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
+
+
+
 
 public class ElasticSearchActor extends BaseActor {
     public IElasticService elasticSearch;
     public ObjectMapper objectMapper;
+
+
+    //@Value("${registry.HARD_DELETE_ENABLED}")
+    private boolean isHardDeleteEnabled;
+
+    @Value("${search.providerName}")
+    private String searchProvider;
+
+
+    @Autowired
+    //public RegistryService registryService1;
+
+ /*   private boolean isElasticSearchEnabled() {
+        return (searchProvider.equals("dev.sunbirdrc.registry.service.ElasticSearchService"));
+    }*/
 
     @Override
     public void onReceive(MessageProtos.Message request) throws Throwable {
@@ -28,18 +50,15 @@ public class ElasticSearchActor extends BaseActor {
                 break;
             case "UPDATE":
                 elasticSearch.updateEntity(esMessage.getIndexName(), esMessage.getOsid(), esMessage.getInput());
-                case "DELETE":
-                if (esMessage.getDeleteType().equals("hard")) {
-                    elasticSearch.hardDeleteEntity(esMessage.getIndexName(), esMessage.getOsid());
-                } else {
-                    elasticSearch.deleteEntity(esMessage.getIndexName(), esMessage.getOsid());
-                }
                 break;
-
-            case "READ":
-                break;
-        }
+            case "DELETE":
+                elasticSearch.deleteEntity(esMessage.getIndexName(), esMessage.getOsid());
+                    break;
+        case "READ":
+        break;
     }
+    }
+
 
     @Override
     public void onFailure(MessageProtos.Message message) {
@@ -50,5 +69,5 @@ public class ElasticSearchActor extends BaseActor {
     public void onSuccess(MessageProtos.Message message) {
         logger.info("Send hello answered successfully {}", message.toString());
     }
-
 }
+

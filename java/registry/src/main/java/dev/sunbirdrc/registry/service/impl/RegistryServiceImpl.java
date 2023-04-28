@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.MessageFactory;
+import dev.sunbirdrc.elastic.ESMessage;
 import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
@@ -90,6 +91,7 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${registry.perRequest.indexCreation.enabled:false}")
     private boolean perRequestIndexCreation;
 
+
     @Value("${elastic.search.add_shard_prefix:true}")
     private boolean addShardPrefixForESRecord;
 
@@ -116,6 +118,7 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private List<HealthIndicator> healthIndicators;
+    public ESMessage esMessage;
 
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
@@ -139,7 +142,7 @@ public class RegistryServiceImpl implements RegistryService {
      * @return
      * @throws Exception
      */
-    @Override  //deleteEntityById used in RegistryHelper
+    @Override
     public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
@@ -153,37 +156,31 @@ public class RegistryServiceImpl implements RegistryService {
                 if (!StringUtils.isEmpty(index) && index.equals(Schema)) {
                     schemaService.deleteSchemaIfExists(vertex);
                 }
-                 if (isHardDeleteEnabled) {
+                if (isHardDeleteEnabled) {
                     registryDao.hardDeleteEntity(vertex);
-
-                    databaseProvider.commitTransaction(graph, tx);
-                   auditService.auditDelete(
-                            auditService.createAuditRecord(userId, uuid, tx, index),
-                            shard);
-                   if (isElasticSearchEnabled()) {
-                        callESActors(null, "DELETE", index, uuid, tx);
-                    }
-                }
-                  else /*  if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
-                        && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE)))*/{
-                    registryDao.deleteEntity(vertex);
                     databaseProvider.commitTransaction(graph, tx);
                     auditService.auditDelete(
                             auditService.createAuditRecord(userId, uuid, tx, index),
                             shard);
-                   if (isElasticSearchEnabled()) {
+                    if (isElasticSearchEnabled()) {
                         callESActors(null, "DELETE", index, uuid, tx);
                     }
-
+                } else {
+                    registryDao.deleteEntity(vertex);
+                    databaseProvider.commitTransaction(graph, tx);
+                    auditService.auditDelete(auditService.createAuditRecord(userId, uuid, tx, index),
+                            shard);
+                    if (isElasticSearchEnabled()) {
+                        callESActors(null, "DELETE", index, uuid, tx);
+                    }
                 }
-
-               logger.info("Entity {} marked deleted", uuid);
+                logger.info("Entity {} marked deleted", uuid);
                 return vertex;
             }
         }
-
-
     }
+
+    @Override
 
     /**
      * This method adds the entity into db, calls elastic and audit asynchronously
@@ -233,7 +230,6 @@ public class RegistryServiceImpl implements RegistryService {
                 Definition definition = definitionsManager.getDefinition(vertexLabel);
                 entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             }
-
             if (isElasticSearchEnabled()) {
                 if (addShardPrefixForESRecord && !shard.getShardLabel().isEmpty()) {
                     // Replace osid with shard details
@@ -247,9 +243,6 @@ public class RegistryServiceImpl implements RegistryService {
             auditService.auditAdd(
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
-
-
-
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.addSchema(rootNode);
@@ -380,16 +373,12 @@ public class RegistryServiceImpl implements RegistryService {
         return definitionsManager.getAllKnownDefinitions().contains(entityType);
     }
 
-    @Override
+
     @Async("taskExecutor")
     public void callESActors(JsonNode rootNode, String operation, String parentEntityType, String entityRootId, Transaction tx) throws JsonProcessingException {
         logger.debug("callESActors started");
         rootNode = rootNode != null ? rootNode.get(parentEntityType) : rootNode;
         boolean elasticSearchEnabled = isElasticSearchEnabled();
-        if (operation.equalsIgnoreCase("DELETE") && elasticSearchEnabled)
-        {
-            elasticService.hardDeleteEntity(parentEntityType,entityRootId);
-        }
         MessageProtos.Message message = MessageFactory.instance().createOSActorMessage(elasticSearchEnabled, operation,
                 parentEntityType.toLowerCase(), entityRootId, rootNode, null);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(message, null);
@@ -399,6 +388,7 @@ public class RegistryServiceImpl implements RegistryService {
     private boolean isElasticSearchEnabled() {
         return (searchProvider.equals("dev.sunbirdrc.registry.service.ElasticSearchService"));
     }
+
     @Override
     @Async("taskExecutor")
     public void callNotificationActors(String operation, String to, String subject, String message) throws JsonProcessingException {
@@ -546,5 +536,4 @@ public class RegistryServiceImpl implements RegistryService {
         });
         return result;
     }
-
 }

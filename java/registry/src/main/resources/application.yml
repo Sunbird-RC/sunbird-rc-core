@@ -61,6 +61,7 @@ registry:
   HARD_DELETE_ENABLED: true
 
 
+
 workflow:
   enabled: ${workflow.enable:true}
 
@@ -91,7 +92,7 @@ search:
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
   expandInternal: ${search_expandInternal:true}
-  providerName: ${search_providerName:dev.sunbirdrc.registry.service.ElasticSearchService}
+  providerName: ${search_providerName:dev.sunbirdrc.registry.service.SearchService}
 
 # This property is to be used for read request
 read:
@@ -222,12 +223,12 @@ audit:
 
 keycloak:
   #publicKey:  ${sunbird_sso_publickey:pk}
-  auth-server-url: ${sunbird_sso_url:http://keycloak:8080/auth}
+  auth-server-url: ${sunbird_sso_url:http://localhost:8080/auth}
   realm: ${sunbird_sso_realm:sunbird-rc}
   resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
   client-id: ${sunbird_sso_admin_client_id:admin-api}
-  client-secret: ${sunbird_sso_admin_client_secret:652cc530-1a59-48ef-849f-02e96ff3b3a8}
+  client-secret: ${sunbird_sso_admin_client_secret:client_secret}
 keycloak-user:
   set-default-password: ${sunbird_keycloak_user_set_password:false}
   default-password: ${sunbird_keycloak_user_password:abcd@123}
