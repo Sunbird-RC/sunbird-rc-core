@@ -7,6 +7,8 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import dev.sunbirdrc.registry.helper.EntityStateHelper;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import dev.sunbirdrc.registry.model.NotificationTemplate;
+import dev.sunbirdrc.registry.model.NotificationTemplates;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.OSSchemaConfiguration;
 import org.apache.commons.lang3.StringUtils;
@@ -46,14 +48,17 @@ public class NotificationHelper {
 
     public void sendNotification(JsonNode inputJson, String operationType) throws Exception {
         String entityType = inputJson.fields().next().getKey();
-        String messageBodySubject = getNotificationBodyTemplate(entityType, operationType);
-        String messageSubjectTemplate = getNotificationSubjectTemplate(entityType, operationType);
+        List<NotificationTemplate> templates = getNotificationTemplate(entityType, operationType);
         Map<String, Object> objectNodeMap = (Map<String, Object>) JSONUtil.convertJsonNodeToMap(inputJson).get(entityType);
         objectNodeMap.put("entityType", entityType);
-        String subjectString = compileMessageFromTemplate(messageSubjectTemplate, objectNodeMap);
-        String bodyString = compileMessageFromTemplate(messageBodySubject, objectNodeMap);
-        List<ObjectNode> owners = entityStateHelper.getOwnersData(inputJson, entityType);
-        sendNotificationToOwners(owners, operationType, subjectString, bodyString);
+        for(NotificationTemplate template: templates) {
+            String bodyTemplate = template.getBody();
+            String subjectTemplate = template.getSubject();
+            String bodyString = compileMessageFromTemplate(bodyTemplate, objectNodeMap);
+            String subjectString = compileMessageFromTemplate(subjectTemplate, objectNodeMap);
+            List<ObjectNode> owners = entityStateHelper.getOwnersData(inputJson, entityType);
+            sendNotificationToOwners(owners, operationType, subjectString, bodyString);
+        }
     }
 
     private void sendNotificationToOwners(List<ObjectNode> owners, String operation, String subject, String message) throws Exception {
@@ -70,32 +75,17 @@ public class NotificationHelper {
             }
         }
     }
-    private String getNotificationBodyTemplate(String entityType, String operationType) {
+    private List<NotificationTemplate> getNotificationTemplate(String entityType, String operationType) {
         OSSchemaConfiguration osSchemaConfiguration = definitionsManager.getDefinition(entityType).getOsSchemaConfiguration();
         switch(operationType) {
             case CREATE:
-                return osSchemaConfiguration.getNotificationTemplates().getCreateNotificationTemplates().getBody();
+                return osSchemaConfiguration.getNotificationTemplates().getCreateNotificationTemplates();
             case UPDATE:
-                return osSchemaConfiguration.getNotificationTemplates().getUpdateNotificationTemplates().getBody();
+                return osSchemaConfiguration.getNotificationTemplates().getUpdateNotificationTemplates();
             case INVITE:
-                return osSchemaConfiguration.getNotificationTemplates().getInviteNotificationTemplates().getBody();
+                return osSchemaConfiguration.getNotificationTemplates().getInviteNotificationTemplates();
             case DELETE:
-                return osSchemaConfiguration.getNotificationTemplates().getDeleteNotificationTemplates().getBody();
-        }
-        return null;
-    }
-
-    private String getNotificationSubjectTemplate(String entityType, String operationType) {
-        OSSchemaConfiguration osSchemaConfiguration = definitionsManager.getDefinition(entityType).getOsSchemaConfiguration();
-        switch(operationType) {
-            case CREATE:
-                return osSchemaConfiguration.getNotificationTemplates().getCreateNotificationTemplates().getSubject();
-            case UPDATE:
-                return osSchemaConfiguration.getNotificationTemplates().getUpdateNotificationTemplates().getSubject();
-            case INVITE:
-                return osSchemaConfiguration.getNotificationTemplates().getInviteNotificationTemplates().getSubject();
-            case DELETE:
-                return osSchemaConfiguration.getNotificationTemplates().getDeleteNotificationTemplates().getSubject();
+                return osSchemaConfiguration.getNotificationTemplates().getDeleteNotificationTemplates();
         }
         return null;
     }

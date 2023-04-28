@@ -35,9 +35,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.EMAIL;
 import static dev.sunbirdrc.registry.middleware.util.Constants.MOBILE;
@@ -81,7 +79,9 @@ public class NotificationHelperTest {
 
     @Test
     public void shouldSendNotificationForCreateEntity() throws Exception {
-        when(notificationTemplates.getCreateNotificationTemplates()).thenReturn(new NotificationTemplate("Credential Created", "{{name}}, Your {{entityType}} credential has been created"));
+        List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
+        notificationTemplates1.add(new NotificationTemplate("Credential Created", "{{name}}, Your {{entityType}} credential has been created"));
+        when(notificationTemplates.getCreateNotificationTemplates()).thenReturn(notificationTemplates1);
         doNothing().when(registryService).callNotificationActors("CREATE", "mailto:gecasu.ihises@tovinit.com", "Credential Created", ", Your Institute credential has been created");
         doNothing().when(registryService).callNotificationActors("CREATE", "tel:1234123423", "Credential Created", ", Your Institute credential has been created");
         notificationHelper.sendNotification(inputJson, "CREATE");
@@ -92,7 +92,9 @@ public class NotificationHelperTest {
     @Test
     public void shouldSendNotificationForUpdateEntity() throws Exception {
         JsonNode inputJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"contactNumber\": \"1234123423\", \"instituteName\": \"Insitute2\", \"osid\": \"123\"}}");
-        when(notificationTemplates.getUpdateNotificationTemplates()).thenReturn(new NotificationTemplate("Credential Updated", "{{name}}, Your {{entityType}} credential has been updated"));
+        List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
+        notificationTemplates1.add(new NotificationTemplate("Credential Updated", "{{name}}, Your {{entityType}} credential has been updated"));
+        when(notificationTemplates.getUpdateNotificationTemplates()).thenReturn(notificationTemplates1);
         doNothing().when(registryService).callNotificationActors("UPDATE", "mailto:gecasu.ihises@tovinit.com", "Credential Updated", ", Your Institute credential has been updated");
         doNothing().when(registryService).callNotificationActors("UPDATE", "tel:1234123423", "Credential Updated", ", Your Institute credential has been updated");
         notificationHelper.sendNotification(inputJson, "UPDATE");
@@ -102,7 +104,9 @@ public class NotificationHelperTest {
 
     @Test
     public void shouldSendNotificationForInviteEntity() throws Exception {
-        when(notificationTemplates.getInviteNotificationTemplates()).thenReturn(new NotificationTemplate("Invitation", "{{name}}, You have been invited"));
+        List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
+        notificationTemplates1.add(new NotificationTemplate("Invitation", "{{name}}, You have been invited"));
+        when(notificationTemplates.getInviteNotificationTemplates()).thenReturn(notificationTemplates1);
         doNothing().when(registryService).callNotificationActors("INVITE", "mailto:gecasu.ihises@tovinit.com", "Invitation", ", You have been invited");
         doNothing().when(registryService).callNotificationActors("INVITE", "tel:1234123423", "Invitation", ", You have been invited");
         notificationHelper.sendNotification(inputJson, "INVITE");
@@ -112,7 +116,9 @@ public class NotificationHelperTest {
 
     @Test
     public void shouldSendNotificationForDeleteEntity() throws Exception {
-        when(notificationTemplates.getDeleteNotificationTemplates()).thenReturn(new NotificationTemplate("Revoked", "{{name}}, Your credential has been revoked"));
+        List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
+        notificationTemplates1.add(new NotificationTemplate("Revoked", "{{name}}, Your credential has been revoked"));
+        when(notificationTemplates.getDeleteNotificationTemplates()).thenReturn(notificationTemplates1);
         doNothing().when(registryService).callNotificationActors("DELETE", "mailto:gecasu.ihises@tovinit.com", "Revoked", ", Your credential has been revoked");
         doNothing().when(registryService).callNotificationActors("DELETE", "tel:1234123423", "Revoked", ", Your credential has been revoked");
         notificationHelper.sendNotification(inputJson, "DELETE");
