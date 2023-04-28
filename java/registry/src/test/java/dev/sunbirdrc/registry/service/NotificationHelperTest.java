@@ -1,10 +1,12 @@
 package dev.sunbirdrc.registry.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.jsonldjava.utils.Obj;
 import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
 import dev.sunbirdrc.registry.helper.EntityStateHelper;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
@@ -124,5 +126,52 @@ public class NotificationHelperTest {
         notificationHelper.sendNotification(inputJson, "DELETE");
         verify(registryService, times(1)).callNotificationActors("DELETE", "mailto:gecasu.ihises@tovinit.com", "Revoked", ", Your credential has been revoked");
         verify(registryService, times(1)).callNotificationActors("DELETE", "tel:1234123423", "Revoked", ", Your credential has been revoked");
+    }
+
+    @Test
+    public void shouldSendMultipleNotificationsIfMultipleOwnersPresent() throws Exception {
+        JsonNode inputJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"contactNumber\": \"123123\", \"adminEmail\": \"admin@email.com\",\n" +
+                "  \"adminMobile\": \"1234\"\n" +
+                "}}");
+        ObjectNode owner1 = mock(ObjectNode.class);
+        ObjectNode owner2 = mock(ObjectNode.class);
+        when(owner1.get(MOBILE)).thenReturn(JsonNodeFactory.instance.textNode("123123"));
+        when(owner2.get(MOBILE)).thenReturn(JsonNodeFactory.instance.textNode("1234"));
+        when(owner1.get(EMAIL)).thenReturn(JsonNodeFactory.instance.textNode("gecasu.ihises@tovinit.com"));
+        when(owner2.get(EMAIL)).thenReturn(JsonNodeFactory.instance.textNode("admin@email.com"));
+        List<ObjectNode> owners = new ArrayList<>();
+        owners.add(owner1);
+        owners.add(owner2);
+        when(entityStateHelper.getOwnersData(inputJson, "Institute")).thenReturn(owners);
+
+        List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
+        notificationTemplates1.add(new NotificationTemplate("Invitation", "{{name}}, You have been invited"));
+        when(notificationTemplates.getInviteNotificationTemplates()).thenReturn(notificationTemplates1);
+        doNothing().when(registryService).callNotificationActors("INVITE", "mailto:gecasu.ihises@tovinit.com", "Invitation", ", You have been invited");
+        doNothing().when(registryService).callNotificationActors("INVITE", "mailto:admin@email.com", "Invitation", ", You have been invited");
+        doNothing().when(registryService).callNotificationActors("INVITE", "tel:123123", "Invitation", ", You have been invited");
+        doNothing().when(registryService).callNotificationActors("INVITE", "tel:1234", "Invitation", ", You have been invited");
+        notificationHelper.sendNotification(inputJson, "INVITE");
+        verify(registryService, times(1)).callNotificationActors("INVITE", "mailto:gecasu.ihises@tovinit.com", "Invitation", ", You have been invited");
+        verify(registryService, times(1)).callNotificationActors("INVITE", "mailto:admin@email.com", "Invitation", ", You have been invited");
+        verify(registryService, times(1)).callNotificationActors("INVITE", "tel:123123", "Invitation", ", You have been invited");
+        verify(registryService, times(1)).callNotificationActors("INVITE", "tel:1234", "Invitation", ", You have been invited");
+    }
+
+    @Test
+    public void shouldSendMultipleNotificationsIfMultipleTemplatesConfigured() throws Exception {
+        List<NotificationTemplate> notificationTemplates1 = new ArrayList<>();
+        notificationTemplates1.add(new NotificationTemplate("Revoked", "{{name}}, Your credential has been revoked"));
+        notificationTemplates1.add(new NotificationTemplate("Revoked", "{{instituteName}}, Your credential has been revoked"));
+        when(notificationTemplates.getDeleteNotificationTemplates()).thenReturn(notificationTemplates1);
+        doNothing().when(registryService).callNotificationActors("DELETE", "mailto:gecasu.ihises@tovinit.com", "Revoked", ", Your credential has been revoked");
+        doNothing().when(registryService).callNotificationActors("DELETE", "mailto:gecasu.ihises@tovinit.com", "Revoked", "Insitute2, Your credential has been revoked");
+        doNothing().when(registryService).callNotificationActors("DELETE", "tel:1234123423", "Revoked", ", Your credential has been revoked");
+        doNothing().when(registryService).callNotificationActors("DELETE", "tel:1234123423", "Revoked", "Insitute2, Your credential has been revoked");
+        notificationHelper.sendNotification(inputJson, "DELETE");
+        verify(registryService, times(1)).callNotificationActors("DELETE", "mailto:gecasu.ihises@tovinit.com", "Revoked", ", Your credential has been revoked");
+        verify(registryService, times(1)).callNotificationActors("DELETE", "mailto:gecasu.ihises@tovinit.com", "Revoked", "Insitute2, Your credential has been revoked");
+        verify(registryService, times(1)).callNotificationActors("DELETE", "tel:1234123423", "Revoked", ", Your credential has been revoked");
+        verify(registryService, times(1)).callNotificationActors("DELETE", "tel:1234123423", "Revoked", "Insitute2, Your credential has been revoked");
     }
 }

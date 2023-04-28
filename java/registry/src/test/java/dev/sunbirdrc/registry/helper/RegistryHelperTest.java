@@ -57,9 +57,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 
-import static dev.sunbirdrc.registry.Constants.ATTESTATION_POLICY;
-import static dev.sunbirdrc.registry.Constants.REQUESTER;
-import static dev.sunbirdrc.registry.Constants.REVOKED_CREDENTIAL;
+import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.FILTERS;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -367,10 +365,10 @@ public class RegistryHelperTest {
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
-		doNothing().when(notificationHelper).sendNotification(any(), any());
+		doNothing().when(notificationHelper).sendNotification(inviteJson, INVITE);
 		registryHelper.inviteEntity(inviteJson, "");
 		Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
-		verify(notificationHelper, times(1)).sendNotification(any(), any());
+		verify(notificationHelper, times(1)).sendNotification(inviteJson, INVITE);
 	}
 
 	private void mockDefinitionManager() throws IOException {
