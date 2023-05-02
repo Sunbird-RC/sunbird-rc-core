@@ -13,6 +13,7 @@ build: java/registry/target/registry.jar
 	make -C deps/keycloak build
 	make -C services/public-key-service docker
 	make -C services/context-proxy-service docker
+	make -C services/bulk_issuance docker
 	docker build -t dockerhub/sunbird-rc-nginx .
 
 java/registry/target/registry.jar: $(SOURCES)

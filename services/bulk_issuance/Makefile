@@ -30,6 +30,7 @@ run: ./bulk_issuance
 	./bulk_issuance --scheme http --port 5665
 
 docker:
+	@make bulk_issuance-server
 	@docker build -t $(IMAGE) .
 publish:
 	@docker push $(IMAGE)

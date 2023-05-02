@@ -9,7 +9,6 @@ type JWTClaimBody struct {
 	RealmAccess       map[string][]string `json:"realm_access"`
 	Scope             string              `json:"scope"`
 	PreferredUsername string              `json:"preferred_username"`
-	FacilityCode      string              `json:"facility_code"`
 	UserId            string              `json:"sub"`
 }
 

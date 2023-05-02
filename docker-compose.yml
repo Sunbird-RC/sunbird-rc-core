@@ -259,3 +259,10 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
+  bulk_issuance:
+    image: dockerhub/sunbird-rc-bulk-issuance
+    ports:
+      - "5665:5665"
+    environment:
+      REGISTRY_BASE_URL: http://registry:8081/
+      DATABASE_HOST: db

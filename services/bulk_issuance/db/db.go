@@ -42,7 +42,7 @@ func Init() {
 func GetFileDataByIdAndUser(id int, userId string) (*FileData, error) {
 	filesUpload := &FileData{}
 	log.Infof("Getting file data with id : %v", id)
-	result := db.First(&filesUpload, "id=?", id)
+	result := db.First(&filesUpload, "id=? AND user_id=?", id, userId)
 	if result.Error != nil {
 		log.Errorf("Error while getting FileData : %v", result.Error)
 		return nil, result.Error
