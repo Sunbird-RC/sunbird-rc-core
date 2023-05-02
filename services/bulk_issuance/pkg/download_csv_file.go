@@ -20,7 +20,7 @@ func downloadReportFile(params download_file_report.GetV1IDReportParams, princip
 	log.Infof("Downloading report file with ID : %v", params.ID)
 	response := download_file_report.NewGetV1IDReportOK()
 	file, err := getFileByIdAndUser(int(params.ID), principal.UserId)
-	if file.UserID != principal.UserId {
+	if err != nil {
 		return download_file_report.NewGetV1IDReportForbidden().WithPayload("User is not allowed to access this file")
 	}
 	if err != nil {

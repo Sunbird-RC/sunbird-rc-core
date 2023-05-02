@@ -295,3 +295,10 @@ services:
       DIGILOCKER_HMAC_AUTHKEY: ${DIGILOCKER_HMAC_AUTHKEY}
       DIGILOCKER_AUTH_KEYNAME: x-digilocker-hmac
       PORT: 8087
+  bulk_issuance:
+    image: dockerhub/sunbird-rc-bulk-issuance
+    ports:
+      - "5665:5665"
+    environment:
+      REGISTRY_BASE_URL: http://registry:8081/
+      DATABASE_HOST: db
