@@ -12,23 +12,38 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_downloadReportFile(t *testing.T) {
-	old := getFileByIdAndUser
-	defer func() { getFileByIdAndUser = old }()
+type MockRepository struct {
+	db.Repository
+}
+
+func (mock *MockRepository) GetFileDataByIdAndUser(id int, userId string) (*db.FileData, error) {
+	var file db.FileData
 	rows := [][]string{{"row11"}, {"row12"}, {"row13"}}
 	headers := "col1,col2,col3"
 	rowBytes, _ := json.Marshal(rows)
-	getFileByIdAndUser = func(id int, userId string) (*db.FileData, error) {
-		var file db.FileData
-		file.Filename = "Temp.csv"
-		file.RowData = rowBytes
-		file.Headers = headers
-		file.UserID = "1"
-		return &file, nil
+	file.Filename = "Temp.csv"
+	file.RowData = rowBytes
+	file.Headers = headers
+	file.UserID = "1"
+	return &file, nil
+}
+
+func (mock *MockService) DownloadCSVReport(id int, userId string) (*string, *bytes.Buffer, error) {
+	data := [][]string{{"col1", "col2", "col3"}, {"row11"}, {"row12"}, {"row13"}}
+	b := new(bytes.Buffer)
+	w := csv.NewWriter(b)
+	w.WriteAll(data)
+	fileName := "Temp.csv"
+	return &fileName, b, nil
+}
+
+func Test_downloadReportFile(t *testing.T) {
+	controllers := Controllers{
+		&MockService{},
 	}
 	params := download_file_report.GetV1IDReportParams{ID: 1}
 	principal := models.JWTClaimBody{UserId: "1"}
-	actualResponse := downloadReportFile(params, &principal)
+	actualResponse := controllers.downloadReportFile(params, &principal)
 	expectedResponse := download_file_report.NewGetV1IDReportOK()
 	data := [][]string{{"col1", "col2", "col3"}, {"row11"}, {"row12"}, {"row13"}}
 	b := new(bytes.Buffer)

@@ -4,6 +4,7 @@ import (
 	"bulk_issuance/config"
 	"bulk_issuance/db"
 	"bulk_issuance/pkg"
+	"bulk_issuance/services"
 	"bulk_issuance/swagger_gen/restapi"
 	"bulk_issuance/swagger_gen/restapi/operations"
 	"os"
@@ -16,8 +17,9 @@ import (
 
 func main() {
 	config.Initialize("./application-default.yml")
-	pkg.Init()
-	db.Init()
+	repo := db.Init()
+	services := services.Init(repo)
+	pkg.Init(services)
 	swaggerSpec, err := loads.Embedded(restapi.SwaggerJSON, restapi.FlatSwaggerJSON)
 	if err != nil {
 		log.Fatalln(err)

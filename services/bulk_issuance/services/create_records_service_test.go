@@ -14,12 +14,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAddEntryForDbFilesToDatabase(t *testing.T) {
+type MockRepository struct {
+	db.Repository
+}
+
+func (mock *MockRepository) Insert(data *db.FileData) (uint, error) {
+	return 1, nil
+}
+
+type MockService struct {
+	Services
+}
+
+func Test_AddEntryForDbFilesToDatabase(t *testing.T) {
 	rows := [][]string{
 		{"col1", "col2", "col3"}, {"row11", "row12", "row13"},
 	}
-	old := insert
-	defer func() { insert = old }()
+	mockService := MockService{
+		Services{
+			&MockRepository{},
+		},
+	}
 	fileName := "temp.csv"
 	var data Scanner = Scanner{
 		Head: map[string]int{
@@ -32,10 +47,7 @@ func TestAddEntryForDbFilesToDatabase(t *testing.T) {
 		UserId:            "1",
 		PreferredUsername: "Temp",
 	}
-	insert = func(data *db.FileData) (uint, error) {
-		return 1, nil
-	}
-	response, _ := InsertIntoFileData(rows, fileName, data, &principal)
+	response, _ := mockService.InsertIntoFileData(rows, fileName, data, &principal)
 	log.Infof("Response : %v", response)
 	expected := uint(1)
 	assert := assert.New(t)
@@ -120,15 +132,8 @@ func Test_appendErrorsToCurrentRow(t *testing.T) {
 			"errmsg": "",
 		},
 	}
-	old := read
-	defer func() {
-		read = old
-	}()
 	b := new(newbytes.Buffer)
 	json.NewEncoder(b).Encode(response)
-	read = func(r io.Reader) ([]byte, error) {
-		return json.Marshal(response)
-	}
 	res := &http.Response{
 		Body: NopCloser(b),
 	}

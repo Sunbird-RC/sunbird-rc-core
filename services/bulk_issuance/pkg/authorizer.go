@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"bulk_issuance/config"
+	"bulk_issuance/services"
 	"bulk_issuance/swagger_gen/models"
 	"bulk_issuance/utils"
 	"crypto/rsa"
@@ -21,7 +22,18 @@ var (
 	verifyKey *rsa.PublicKey
 )
 
-func Init() {
+type Controllers struct {
+	services services.IService
+}
+
+var controllers Controllers
+
+func Init(services services.IService) {
+
+	controllers = Controllers{
+		services: services,
+	}
+
 	verifyBytes := ([]byte)("-----BEGIN PUBLIC KEY-----\n" + config.Config.Keycloak.PublicKey + "\n-----END PUBLIC KEY-----\n")
 	log.Infof("Using the public key %s", string(verifyBytes))
 	var err error
@@ -49,7 +61,7 @@ func RoleAuthorizer(bearerToken string, expectedRole []string) (*models.JWTClaim
 func getClaimBody(bearerToken string) (*models.JWTClaimBody, error) {
 
 	if verifyKey == nil {
-		Init()
+		Init(controllers.services)
 	}
 
 	token, err := jwt.ParseWithClaims(bearerToken, &models.JWTClaimBody{}, func(token *jwt.Token) (interface{}, error) {

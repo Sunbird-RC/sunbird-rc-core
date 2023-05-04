@@ -9,8 +9,8 @@ import (
 )
 
 func SetupHandlers(api *operations.BulkIssuanceAPI) {
-	api.SampleTemplateGetV1SchemaNameSampleCsvHandler = sample_template.GetV1SchemaNameSampleCsvHandlerFunc(downloadSampleFile)
-	api.UploadedFilesGetV1UploadHandler = uploaded_files.GetV1UploadHandlerFunc(listFiles)
-	api.DownloadFileReportGetV1IDReportHandler = download_file_report.GetV1IDReportHandlerFunc(downloadReportFile)
-	api.UploadAndCreateRecordsPostV1EntityNameUploadHandler = upload_and_create_records.PostV1EntityNameUploadHandlerFunc(createRecords)
+	api.SampleTemplateGetV1SchemaNameSampleCsvHandler = sample_template.GetV1SchemaNameSampleCsvHandlerFunc(controllers.downloadSampleFile)
+	api.UploadedFilesGetV1UploadHandler = uploaded_files.GetV1UploadHandlerFunc(controllers.listFiles)
+	api.DownloadFileReportGetV1IDReportHandler = download_file_report.GetV1IDReportHandlerFunc(controllers.downloadReportFile)
+	api.UploadAndCreateRecordsPostV1EntityNameUploadHandler = upload_and_create_records.PostV1EntityNameUploadHandlerFunc(controllers.createRecords)
 }
