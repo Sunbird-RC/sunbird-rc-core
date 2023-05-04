@@ -31,6 +31,8 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/validate v0.21.0 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/jarcoal/httpmock v1.3.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/lib/pq v1.1.1 // indirect

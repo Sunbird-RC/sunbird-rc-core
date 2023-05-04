@@ -5,9 +5,10 @@ import (
 	"bulk_issuance/db"
 	"bulk_issuance/swagger_gen/models"
 	"bulk_issuance/utils"
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"strings"
@@ -16,9 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var insert = db.Insert
 var client = &http.Client{}
-var read = ioutil.ReadAll
 
 type Scanner struct {
 	Reader *csv.Reader
@@ -26,7 +25,26 @@ type Scanner struct {
 	Row    []string
 }
 
-func InsertIntoFileData(rows [][]string, fileName string, data Scanner, principal *models.JWTClaimBody) (uint, error) {
+type Services struct {
+	repo db.IRepo
+}
+
+type IService interface {
+	GetSampleCSVForSchema(schemaName string) (*bytes.Buffer, error)
+	InsertIntoFileData(rows [][]string, fileName string, data Scanner, principal *models.JWTClaimBody) (uint, error)
+	ProcessDataFromCSV(data *Scanner, header http.Header, vcName string) (int, int, [][]string, error)
+	DownloadCSVReport(id int, userId string) (*string, *bytes.Buffer, error)
+	ListFileForUser(userId string) ([]db.FileData, error)
+}
+
+func Init(repository db.IRepo) IService {
+	services := Services{
+		repo: repository,
+	}
+	return &services
+}
+
+func (services *Services) InsertIntoFileData(rows [][]string, fileName string, data Scanner, principal *models.JWTClaimBody) (uint, error) {
 	log.Info("adding entry to dbFileData")
 	bytes, err := json.Marshal(rows)
 	utils.LogErrorIfAny("Error while marshalling data for database : %v", err)
@@ -39,7 +57,8 @@ func InsertIntoFileData(rows [][]string, fileName string, data Scanner, principa
 		UserName:     principal.PreferredUsername,
 		Date:         time.Now().Format("2006-01-02"),
 	}
-	return insert(&fileUpload)
+
+	return services.repo.Insert(&fileUpload)
 }
 
 func (o *Scanner) Scan() bool {
@@ -51,7 +70,7 @@ func (o *Scanner) Scan() bool {
 	return e == nil
 }
 
-func ProcessDataFromCSV(data *Scanner, header http.Header, vcName string) (int, int, [][]string, error) {
+func (services *Services) ProcessDataFromCSV(data *Scanner, header http.Header, vcName string) (int, int, [][]string, error) {
 	var (
 		totalSuccess int = 0
 		totalErrors  int = 0
@@ -111,7 +130,7 @@ func getHeaders(head map[string]int) string {
 }
 
 func appendErrorsToCurrentRow(res *http.Response, data *Scanner, lastColIndex int, currRow []string) []string {
-	resBody, err := read(res.Body)
+	resBody, err := io.ReadAll(res.Body)
 	utils.LogErrorIfAny("Error while reading error reponse from adding single record : %v", err)
 	data.Head["Errors"] = lastColIndex
 	var responseMap map[string]interface{}

@@ -29,6 +29,9 @@ run: ./bulk_issuance
 	@echo "Running api server"
 	./bulk_issuance --scheme http --port 5665
 
+test:
+	@go test -v ./...
+
 docker:
 	@make bulk_issuance-server
 	@docker build -t $(IMAGE) .
