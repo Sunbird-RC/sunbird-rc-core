@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"bulk_issuance/services"
 	"bulk_issuance/swagger_gen/restapi/operations"
 	"bulk_issuance/swagger_gen/restapi/operations/download_file_report"
 	"bulk_issuance/swagger_gen/restapi/operations/sample_template"
@@ -8,9 +9,21 @@ import (
 	"bulk_issuance/swagger_gen/restapi/operations/uploaded_files"
 )
 
+type Controllers struct {
+	services services.IService
+}
+
+var controllers Controllers
+
+func Init(services services.IService) {
+	controllers = Controllers{
+		services: services,
+	}
+}
+
 func SetupHandlers(api *operations.BulkIssuanceAPI) {
 	api.SampleTemplateGetV1SchemaNameSampleCsvHandler = sample_template.GetV1SchemaNameSampleCsvHandlerFunc(controllers.downloadSampleFile)
-	api.UploadedFilesGetV1UploadHandler = uploaded_files.GetV1UploadHandlerFunc(controllers.listFiles)
+	api.UploadedFilesGetV1UploadsHandler = uploaded_files.GetV1UploadsHandlerFunc(controllers.listFiles)
 	api.DownloadFileReportGetV1IDReportHandler = download_file_report.GetV1IDReportHandlerFunc(controllers.downloadReportFile)
-	api.UploadAndCreateRecordsPostV1EntityNameUploadHandler = upload_and_create_records.PostV1EntityNameUploadHandlerFunc(controllers.createRecords)
+	api.UploadAndCreateRecordsPostV1SchemaNameUploadHandler = upload_and_create_records.PostV1SchemaNameUploadHandlerFunc(controllers.createRecords)
 }

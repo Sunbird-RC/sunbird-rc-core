@@ -16,7 +16,7 @@ type MockRepository struct {
 	db.Repository
 }
 
-func (mock *MockRepository) GetFileDataByIdAndUser(id int, userId string) (*db.FileData, error) {
+func (mock *MockRepository) GetFileDataByIdAndUser(_ int, userId string) (*db.FileData, error) {
 	var file db.FileData
 	rows := [][]string{{"row11"}, {"row12"}, {"row13"}}
 	headers := "col1,col2,col3"
@@ -42,7 +42,7 @@ func Test_downloadReportFile(t *testing.T) {
 		&MockService{},
 	}
 	params := download_file_report.GetV1IDReportParams{ID: 1}
-	principal := models.JWTClaimBody{UserId: "1"}
+	principal := models.JWTClaimBody{UserID: "1"}
 	actualResponse := controllers.downloadReportFile(params, &principal)
 	expectedResponse := download_file_report.NewGetV1IDReportOK()
 	data := [][]string{{"col1", "col2", "col3"}, {"row11"}, {"row12"}, {"row13"}}

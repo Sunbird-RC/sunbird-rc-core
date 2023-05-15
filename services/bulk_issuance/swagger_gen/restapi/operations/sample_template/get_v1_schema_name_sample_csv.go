@@ -31,10 +31,10 @@ func NewGetV1SchemaNameSampleCsv(ctx *middleware.Context, handler GetV1SchemaNam
 	return &GetV1SchemaNameSampleCsv{Context: ctx, Handler: handler}
 }
 
-/*GetV1SchemaNameSampleCsv swagger:route GET /v1/{schemaName}/sample-csv sampleTemplate getV1SchemaNameSampleCsv
+/*
+	GetV1SchemaNameSampleCsv swagger:route GET /v1/{schemaName}/sample-csv sampleTemplate getV1SchemaNameSampleCsv
 
 get sample template
-
 */
 type GetV1SchemaNameSampleCsv struct {
 	Context *middleware.Context
@@ -44,17 +44,16 @@ type GetV1SchemaNameSampleCsv struct {
 func (o *GetV1SchemaNameSampleCsv) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, rCtx, _ := o.Context.RouteInfo(r)
 	if rCtx != nil {
-		r = rCtx
+		*r = *rCtx
 	}
 	var Params = NewGetV1SchemaNameSampleCsvParams()
-
 	uprinc, aCtx, err := o.Context.Authorize(r, route)
 	if err != nil {
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 	if aCtx != nil {
-		r = aCtx
+		*r = *aCtx
 	}
 	var principal *models.JWTClaimBody
 	if uprinc != nil {
@@ -67,7 +66,6 @@ func (o *GetV1SchemaNameSampleCsv) ServeHTTP(rw http.ResponseWriter, r *http.Req
 	}
 
 	res := o.Handler.Handle(Params, principal) // actually handle the request
-
 	o.Context.Respond(rw, r, route.Produces, route, res)
 
 }

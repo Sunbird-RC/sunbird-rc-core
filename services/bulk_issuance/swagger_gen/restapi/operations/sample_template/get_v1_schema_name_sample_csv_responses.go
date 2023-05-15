@@ -16,7 +16,8 @@ import (
 // GetV1SchemaNameSampleCsvOKCode is the HTTP code returned for type GetV1SchemaNameSampleCsvOK
 const GetV1SchemaNameSampleCsvOKCode int = 200
 
-/*GetV1SchemaNameSampleCsvOK OK
+/*
+GetV1SchemaNameSampleCsvOK OK
 
 swagger:response getV1SchemaNameSampleCsvOK
 */
@@ -80,7 +81,8 @@ func (o *GetV1SchemaNameSampleCsvOK) WriteResponse(rw http.ResponseWriter, produ
 // GetV1SchemaNameSampleCsvNotFoundCode is the HTTP code returned for type GetV1SchemaNameSampleCsvNotFound
 const GetV1SchemaNameSampleCsvNotFoundCode int = 404
 
-/*GetV1SchemaNameSampleCsvNotFound Not found
+/*
+GetV1SchemaNameSampleCsvNotFound Not found
 
 swagger:response getV1SchemaNameSampleCsvNotFound
 */

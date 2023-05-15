@@ -8,6 +8,7 @@ import (
 	"bulk_issuance/swagger_gen/restapi"
 	"bulk_issuance/swagger_gen/restapi/operations"
 	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -17,16 +18,27 @@ import (
 
 func main() {
 	config.Initialize("./application-default.yml")
+	pkg.ParseAndLoadPublicKey()
+	if level, err := log.ParseLevel(strings.ToLower(config.Config.LogLevel)); err == nil {
+		log.SetLevel(level)
+	} else {
+		log.Error("Error parsing log level", err)
+	}
 	repo := db.Init()
-	services := services.Init(repo)
-	pkg.Init(services)
+	servicesObj := services.Init(repo)
+	pkg.Init(servicesObj)
 	swaggerSpec, err := loads.Embedded(restapi.SwaggerJSON, restapi.FlatSwaggerJSON)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	api := operations.NewBulkIssuanceAPI(swaggerSpec)
 	server := restapi.NewServer(api)
-	defer server.Shutdown()
+	defer func(server *restapi.Server) {
+		err := server.Shutdown()
+		if err != nil {
+			log.Error("Error while shutdown", err)
+		}
+	}(server)
 	server.ConfigureFlags()
 	parser := flags.NewParser(server, flags.Default)
 	for _, optsGroup := range api.CommandLineOptionsGroups {
@@ -44,8 +56,12 @@ func main() {
 		}
 		os.Exit(code)
 	}
+	pkg.SetupHandlers(api)
+	api.HasRoleAuth = pkg.RoleAuthorizer
+
 	server.ConfigureAPI()
 	if err := server.Serve(); err != nil {
 		log.Fatalln(err)
 	}
+
 }

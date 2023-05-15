@@ -8,12 +8,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (controllers *Controllers) listFiles(params uploaded_files.GetV1UploadParams, principal *models.JWTClaimBody) middleware.Responder {
+func (controller *Controllers) listFiles(_ uploaded_files.GetV1UploadsParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Info("Compiling a list of all uploaded files")
-	response := uploaded_files.GetV1UploadOK{}
-	files, err := controllers.services.ListFileForUser(principal.UserId)
+	response := uploaded_files.GetV1UploadsOK{}
+	files, err := controller.services.ListFileForUser(principal.UserID)
 	if err != nil {
-		return uploaded_files.NewGetV1UploadNotFound().WithPayload(err.Error())
+		return uploaded_files.NewGetV1UploadsNotFound().WithPayload(err.Error())
 	}
 	response.SetPayload(files)
 	return &response

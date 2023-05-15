@@ -2,15 +2,12 @@ package pkg
 
 import (
 	"bulk_issuance/config"
-	"bulk_issuance/services"
 	"bulk_issuance/swagger_gen/models"
 	"bulk_issuance/utils"
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"strings"
-
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,18 +19,23 @@ var (
 	verifyKey *rsa.PublicKey
 )
 
-type Controllers struct {
-	services services.IService
+type CustomJWTClaimBody struct {
+	*jwt.RegisteredClaims
+	*models.JWTClaimBody
 }
 
-var controllers Controllers
-
-func Init(services services.IService) {
-
-	controllers = Controllers{
-		services: services,
+func (customJwt CustomJWTClaimBody) toJWTClaim() *models.JWTClaimBody {
+	return &models.JWTClaimBody{
+		PreferredUsername: customJwt.PreferredUsername,
+		RealmAccess:       customJwt.RealmAccess,
+		ResourceAccess:    customJwt.ResourceAccess,
+		Scope:             customJwt.Scope,
+		TokenType:         customJwt.TokenType,
+		UserID:            customJwt.UserID,
 	}
+}
 
+func ParseAndLoadPublicKey() {
 	verifyBytes := ([]byte)("-----BEGIN PUBLIC KEY-----\n" + config.Config.Keycloak.PublicKey + "\n-----END PUBLIC KEY-----\n")
 	log.Infof("Using the public key %s", string(verifyBytes))
 	var err error
@@ -41,30 +43,36 @@ func Init(services services.IService) {
 	utils.LogErrorIfAny("Error parsing public key from keycloak : %v", err)
 }
 
-func HasResourceRole(clientId string, role string, principal *models.JWTClaimBody) bool {
-	return utils.Contains(principal.ResourceAccess[clientId].Roles, role)
-}
-
-func RoleAuthorizer(bearerToken string, expectedRole []string) (*models.JWTClaimBody, error) {
+func RoleAuthorizer(bearerToken string, swaggerRoles []string) (*models.JWTClaimBody, error) {
 	claimBody, err := getClaimBody(bearerToken)
 	if err != nil {
 		return nil, err
 	}
-	for _, role := range expectedRole {
-		if utils.Contains(claimBody.RealmAccess[roles], role) {
-			return claimBody, err
+	expectedRoles := getExpectedRoles(swaggerRoles)
+	for _, role := range expectedRoles {
+		if utils.Contains(claimBody.RealmAccess.Roles, role) {
+			return claimBody.toJWTClaim(), err
 		}
 	}
-	return nil, errors.New("unauthorized")
+	log.Debugf("Expected roles: %v, Actual roles: %v", expectedRoles, claimBody.RealmAccess)
+	return nil, errors.New("user unauthorized to perform operation")
 }
 
-func getClaimBody(bearerToken string) (*models.JWTClaimBody, error) {
+func getExpectedRoles(swaggerRoles []string) (roles []string) {
+	roles = swaggerRoles
+	if len(config.Config.GetRoles()) > 0 {
+		roles = config.Config.GetRoles()
+	}
+	return roles
+}
+
+func getClaimBody(bearerToken string) (*CustomJWTClaimBody, error) {
 
 	if verifyKey == nil {
 		Init(controllers.services)
 	}
 
-	token, err := jwt.ParseWithClaims(bearerToken, &models.JWTClaimBody{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(bearerToken, &CustomJWTClaimBody{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("error decoding token")
 		}
@@ -74,18 +82,9 @@ func getClaimBody(bearerToken string) (*models.JWTClaimBody, error) {
 		return nil, err
 	}
 	if token.Valid {
-		claims := token.Claims.(*models.JWTClaimBody)
+		claims := token.Claims.(*CustomJWTClaimBody)
 		return claims, nil
 	}
 
 	return nil, errors.New("invalid token")
-}
-
-func getToken(bearerHeader string) (string, error) {
-	bearerTokenArr := strings.Split(bearerHeader, " ")
-	if len(bearerTokenArr) <= 1 {
-		return "", errors.New("invalid token")
-	}
-	bearerToken := bearerTokenArr[1]
-	return bearerToken, nil
 }

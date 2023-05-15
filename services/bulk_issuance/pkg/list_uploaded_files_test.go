@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (mock *MockService) ListFileForUser(userId string) ([]db.FileData, error) {
+func (mock *MockService) ListFileForUser(_ string) ([]db.FileData, error) {
 	var files []db.FileData
 	var file db.FileData
 	file.Filename = "File"
@@ -23,9 +23,9 @@ func TestReturnAllFilesForThisUser(t *testing.T) {
 	controllers := Controllers{
 		&MockService{},
 	}
-	params := uploaded_files.GetV1UploadParams{}
+	params := uploaded_files.GetV1UploadsParams{}
 	principal := models.JWTClaimBody{
-		UserId: "123",
+		UserID: "123",
 	}
 	response := controllers.listFiles(params, &principal)
 	log.Infof("%v", response)

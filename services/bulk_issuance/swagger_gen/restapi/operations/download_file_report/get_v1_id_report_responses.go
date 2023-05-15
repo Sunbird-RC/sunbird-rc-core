@@ -16,7 +16,8 @@ import (
 // GetV1IDReportOKCode is the HTTP code returned for type GetV1IDReportOK
 const GetV1IDReportOKCode int = 200
 
-/*GetV1IDReportOK OK
+/*
+GetV1IDReportOK OK
 
 swagger:response getV1IdReportOK
 */
@@ -80,7 +81,8 @@ func (o *GetV1IDReportOK) WriteResponse(rw http.ResponseWriter, producer runtime
 // GetV1IDReportForbiddenCode is the HTTP code returned for type GetV1IDReportForbidden
 const GetV1IDReportForbiddenCode int = 403
 
-/*GetV1IDReportForbidden Forbidden
+/*
+GetV1IDReportForbidden Forbidden
 
 swagger:response getV1IdReportForbidden
 */
@@ -122,7 +124,8 @@ func (o *GetV1IDReportForbidden) WriteResponse(rw http.ResponseWriter, producer 
 // GetV1IDReportNotFoundCode is the HTTP code returned for type GetV1IDReportNotFound
 const GetV1IDReportNotFoundCode int = 404
 
-/*GetV1IDReportNotFound Not found
+/*
+GetV1IDReportNotFound Not found
 
 swagger:response getV1IdReportNotFound
 */

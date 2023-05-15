@@ -44,7 +44,7 @@ paths:
           description: Not found
           schema:
             type: string
-  /v1/upload:
+  /v1/uploads:
     get:
       tags:
         - uploadedFiles
@@ -62,7 +62,7 @@ paths:
           description: Not found
           schema:
             type: string
-  /v1/{entityName}/upload:
+  /v1/{schemaName}/upload:
     post:
       tags:
         - uploadAndCreateRecords
@@ -77,15 +77,22 @@ paths:
           type: file
           description: Certification data in the form of csv
         - in: path
-          name: entityName
+          name: schemaName
           type: string
           required: true
-          description: VerifiableCredential you are issuing
+          description: Schema name you're uploading for
       responses:
         '200':
           description: OK
           schema:
             $ref: '#/definitions/CreateRecordResponse'
+        '400':
+          description: Bad Request
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
         '404':
           description: Not found
           schema:
@@ -134,4 +141,32 @@ definitions:
     type: object
   CreateRecordResponse:
     type: object
-  
+  Group:
+    type: object
+    properties:
+      roles:
+        type: array
+        items:
+          type: string
+  JWTClaimBody:
+    type: object
+    properties:
+      token_type:
+        type: string
+      resource_access:
+        type: object
+        additionalProperties:
+          $ref: "#/definitions/Group"
+      realm_access:
+        type: object
+        properties:
+          roles:
+            type: array
+            items:
+              type: string
+      scope:
+        type: string
+      preferred_username:
+        type: string
+      user_id:
+        type: string
