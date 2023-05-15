@@ -9,6 +9,8 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/runtime"
+
+	"bulk_issuance/swagger_gen/models"
 )
 
 // GetV1UploadsOKCode is the HTTP code returned for type GetV1UploadsOK
@@ -24,7 +26,7 @@ type GetV1UploadsOK struct {
 	/*
 	  In: Body
 	*/
-	Payload interface{} `json:"body,omitempty"`
+	Payload *models.UploadedFilesResponse `json:"body,omitempty"`
 }
 
 // NewGetV1UploadsOK creates GetV1UploadsOK with default headers values
@@ -34,13 +36,13 @@ func NewGetV1UploadsOK() *GetV1UploadsOK {
 }
 
 // WithPayload adds the payload to the get v1 uploads o k response
-func (o *GetV1UploadsOK) WithPayload(payload interface{}) *GetV1UploadsOK {
+func (o *GetV1UploadsOK) WithPayload(payload *models.UploadedFilesResponse) *GetV1UploadsOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get v1 uploads o k response
-func (o *GetV1UploadsOK) SetPayload(payload interface{}) {
+func (o *GetV1UploadsOK) SetPayload(payload *models.UploadedFilesResponse) {
 	o.Payload = payload
 }
 
@@ -48,9 +50,11 @@ func (o *GetV1UploadsOK) SetPayload(payload interface{}) {
 func (o *GetV1UploadsOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.WriteHeader(200)
-	payload := o.Payload
-	if err := producer.Produce(rw, payload); err != nil {
-		panic(err) // let the recovery middleware deal with this
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
 	}
 }
 

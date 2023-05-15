@@ -70,7 +70,7 @@ paths:
         '200':
           description: OK
           schema:
-            type: object
+            $ref: '#/definitions/UploadedFilesResponse'
         '404':
           description: Not found
           schema:
@@ -146,9 +146,34 @@ paths:
             type: string
 
 definitions:
-  SampleTemplateResponse:
+  UploadedFilesResponse:
     type: object
+    properties:
+      files:
+        type: array
+        items:
+          $ref: '#/definitions/UploadedFiles'
+        default: []
   UploadedFiles:
+    type: object
+    properties:
+      id:
+        type: integer
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+      filename:
+        type: string
+      totalRecord:
+        type: integer
+      userId:
+        type: string
+      username:
+        type: string
+      date:
+        type: string
+  SampleTemplateResponse:
     type: object
   FileDownload:
     type: object

@@ -11,10 +11,12 @@ import (
 func (c *Controllers) listFiles(_ uploaded_files.GetV1UploadsParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Info("Compiling a list of all uploaded files")
 	response := uploaded_files.GetV1UploadsOK{}
-	files, err := c.services.ListFileForUser(principal.UserID)
+	files, err := c.services.GetUploadedFiles(principal.UserID)
 	if err != nil {
 		return uploaded_files.NewGetV1UploadsNotFound().WithPayload(err.Error())
 	}
-	response.SetPayload(files)
+	response.SetPayload(&models.UploadedFilesResponse{
+		Files: files,
+	})
 	return &response
 }

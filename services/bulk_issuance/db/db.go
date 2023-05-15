@@ -2,6 +2,7 @@ package db
 
 import (
 	"bulk_issuance/config"
+	"bulk_issuance/swagger_gen/models"
 	"bulk_issuance/utils"
 	"errors"
 	"fmt"
@@ -31,6 +32,19 @@ type FileData struct {
 	Headers      string
 	RowData      []byte
 	Date         string
+}
+
+func (f FileData) ToDTO() *models.UploadedFiles {
+	return &models.UploadedFiles{
+		ID:          int64(f.ID),
+		CreatedAt:   f.CreatedAt.String(),
+		Date:        f.Date,
+		Filename:    f.Filename,
+		TotalRecord: int64(f.TotalRecords),
+		UpdatedAt:   f.UpdatedAt.String(),
+		UserID:      f.UserID,
+		Username:    f.UserName,
+	}
 }
 
 func Init() IRepo {

@@ -2,13 +2,14 @@ package services
 
 import (
 	"bulk_issuance/db"
+	"bulk_issuance/swagger_gen/models"
 	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func createTempFile() db.FileData{
+func createTempFile() db.FileData {
 	rows := [][]string{{
 		"row11", "row12", "row13",
 	}}
@@ -33,9 +34,9 @@ func Test_ListFileForUser(t *testing.T) {
 			&MockRepository{},
 		},
 	}
-	actualFiles, err := mockService.ListFileForUser("1")
+	actualFiles, err := mockService.GetUploadedFiles("1")
 	file := createTempFile()
-	expectedFiles := []db.FileData{file}
+	expectedFiles := []*models.UploadedFiles{file.ToDTO()}
 	assert := assert.New(t)
 	assert.Equal(expectedFiles, actualFiles)
 	assert.Nil(err)

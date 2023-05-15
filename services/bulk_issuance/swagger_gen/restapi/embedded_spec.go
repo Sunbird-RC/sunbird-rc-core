@@ -47,7 +47,7 @@ func init() {
           "200": {
             "description": "OK",
             "schema": {
-              "type": "object"
+              "$ref": "#/definitions/UploadedFilesResponse"
             }
           },
           "404": {
@@ -288,7 +288,45 @@ func init() {
       "type": "object"
     },
     "UploadedFiles": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "totalRecord": {
+          "type": "integer"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "UploadedFilesResponse": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "default": null,
+          "items": {
+            "$ref": "#/definitions/UploadedFiles"
+          }
+        }
+      }
     }
   },
   "securityDefinitions": {
@@ -340,7 +378,7 @@ func init() {
           "200": {
             "description": "OK",
             "schema": {
-              "type": "object"
+              "$ref": "#/definitions/UploadedFilesResponse"
             }
           },
           "404": {
@@ -592,7 +630,45 @@ func init() {
       "type": "object"
     },
     "UploadedFiles": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "totalRecord": {
+          "type": "integer"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "UploadedFilesResponse": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/definitions/UploadedFiles"
+          }
+        }
+      }
     }
   },
   "securityDefinitions": {

@@ -9,13 +9,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (mock *MockService) ListFileForUser(_ string) ([]db.FileData, error) {
-	var files []db.FileData
+func (mock *MockService) GetUploadedFiles(_ string) ([]*models.UploadedFiles, error) {
+	var files []*models.UploadedFiles
 	var file db.FileData
 	file.Filename = "File"
 	file.ID = 1
 	file.UserID = "123"
-	files = append(files, file)
+	files = append(files, file.ToDTO())
 	return files, nil
 }
 
