@@ -1,22 +1,61 @@
 package services
 
 import (
-	"digilocker_certificate_api/config"
+	"bytes"
+	"digilocker-certificate-api/config"
 	"encoding/json"
 	"errors"
+	"html/template"
+	"strconv"
 
 	req "github.com/imroc/req/v3"
 	log "github.com/sirupsen/logrus"
 )
 
-type RegistryService struct {
-}
-
 type TokenResponse struct {
 	AccessToken string `json:"access_token"`
 }
 
-func (service RegistryService) GetCertificate(documentType string, certificateId string) ([]byte, error) {
+type RegistryService struct {
+}
+
+type SearchResult struct {
+	Osid string `json:"osid"`
+}
+
+func (service RegistryService) getEntityOsid(schema string, parameters ...string) (string, error) {
+	templateStr, err := service.getENVMapper(schema, config.Config.Registry.SearchBodyMapper)
+	if err != nil {
+		return "", err
+	}
+	searchTemplate := template.Must(template.New("").Parse(templateStr))
+	buf := bytes.Buffer{}
+	parameterMap := make(map[string]string)
+	for i, parameter := range parameters {
+		parameterMap["parameter"+strconv.Itoa(i+1)] = parameter
+	}
+	log.Debugf("ParameterMap : %v", parameterMap)
+	if err = searchTemplate.Execute(&buf, parameterMap); err == nil {
+		client := req.C()
+		resp, err := client.R().
+			SetHeader("Content-Type", "application/json").
+			SetBody(buf.Bytes()).
+			Post(config.Config.Registry.URL + "api/v1/" + schema + "/search")
+		if err != nil {
+			return "", err
+		}
+		var responseBody []SearchResult
+		err = json.Unmarshal(resp.Bytes(), &responseBody)
+		if err == nil && len(responseBody) > 0 {
+			return responseBody[0].Osid, nil
+		}
+		return "", err
+	} else {
+		return "", err
+	}
+}
+
+func (service RegistryService) getCertificate(documentType string, certificateId string) ([]byte, error) {
 	schema, err := service.getSchemaMapper(documentType)
 	if err != nil {
 		return nil, err
@@ -34,12 +73,16 @@ func (service RegistryService) GetCertificate(documentType string, certificateId
 	if err != nil {
 		return nil, err
 	}
+	osid, err := service.getEntityOsid(schema, certificateId)
+	if err != nil {
+		return nil, err
+	}
 	resp, err := client.R().
 		SetHeader("Accept", "application/pdf").
 		SetHeader("template-key", template).
 		SetBearerAuthToken(token).
 		SetPathParam("schema", schema).
-		SetPathParam("osid", certificateId).
+		SetPathParam("osid", osid).
 		Get(config.Config.Registry.URL + "api/v1/{schema}/{osid}")
 	if err != nil {
 		log.Error("error:", err)
@@ -101,7 +144,6 @@ func (service RegistryService) getServiceAccountToken() (string, error) {
 		log.Error(resp.Dump())
 		return "", errors.New("received error response from keycloak token api" + resp.Dump())
 	}
-
 	log.Debugf("Keycloak API response, %v", resp.Dump())
 	return tokenResponse.AccessToken, nil
 }
