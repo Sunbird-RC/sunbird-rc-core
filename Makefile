@@ -14,6 +14,7 @@ build: java/registry/target/registry.jar
 	make -C services/public-key-service docker
 	make -C services/context-proxy-service docker
 	make -C services/metrics docker
+	make -C services/digilocker-certificate-api docker
 	docker build -t dockerhub/sunbird-rc-nginx .
 
 java/registry/target/registry.jar: $(SOURCES)

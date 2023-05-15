@@ -16,6 +16,7 @@ var Config = struct {
 	Registry struct {
 		URL            string `env:"REGISTRY_URL" default:"https://demo-education-registry.xiv.in/registry/"`
 		SchemaMapper   string `env:"SCHEMA_MAPPER" default:"{\"doctype\": \"Schema\"}"`
+		SearchBodyMapper   string `env:"SEARCH_BODY_MAPPER" default:"{\"Schema\": \"{\\\"filters\\\": {\\\"osid\\\": {\\\"eq\\\": \\\"{{.parameter1}}\\\"}}}\"}"`
 		TemplateMapper string `env:"TEMPLATE_MAPPER" default:"{\"doctype\": \"template\"}"`
 	}
 	LogLevel string `env:"LOG_LEVEL" yaml:"log_level" default:"DEBUG"`
