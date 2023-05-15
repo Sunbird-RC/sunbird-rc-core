@@ -46,14 +46,14 @@ func Init(repository db.IRepo) IService {
 
 func (services *Services) InsertIntoFileData(rows [][]string, fileName string, data Scanner, principal *models.JWTClaimBody) (uint, error) {
 	log.Info("adding entry to dbFileData")
-	bytes, err := json.Marshal(rows)
+	rowBytes, err := json.Marshal(rows)
 	utils.LogErrorIfAny("Error while marshalling data for database : %v", err)
 	fileUpload := db.FileData{
 		Filename:     fileName,
 		Headers:      getHeaders(data.Head),
 		TotalRecords: len(rows),
-		RowData:      bytes,
-		UserID:       principal.UserId,
+		RowData:      rowBytes,
+		UserID:       principal.UserID,
 		UserName:     principal.PreferredUsername,
 		Date:         time.Now().Format("2006-01-02"),
 	}
@@ -82,9 +82,8 @@ func (services *Services) ProcessDataFromCSV(data *Scanner, header http.Header, 
 		return 0, 0, rows, err
 	}
 	for data.Scan() {
-		jsonBody := make(map[string]interface{})
-		bytes := createReqBody(properties, jsonBody, data)
-		res, err := createSingleRecord(vcName, bytes, header)
+		reqBodyAsBytes := createReqBodyAsBytes(properties, data)
+		res, err := createSingleRecord(vcName, reqBodyAsBytes, header)
 		utils.LogErrorIfAny("Error in creating a record : %v", err)
 		currRow := data.Row
 		if res.StatusCode != 200 {
@@ -109,7 +108,8 @@ func createSingleRecord(vcName string, bytes []byte, header http.Header) (*http.
 	return client.Do(req)
 }
 
-func createReqBody(properties []string, jsonBody map[string]interface{}, data *Scanner) []byte {
+func createReqBodyAsBytes(properties []string, data *Scanner) []byte {
+	jsonBody := make(map[string]interface{})
 	for _, k := range properties {
 		jsonBody[k] = data.Row[data.Head[k]]
 	}

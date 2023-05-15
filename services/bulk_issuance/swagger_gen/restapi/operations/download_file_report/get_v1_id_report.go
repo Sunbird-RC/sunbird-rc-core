@@ -31,10 +31,10 @@ func NewGetV1IDReport(ctx *middleware.Context, handler GetV1IDReportHandler) *Ge
 	return &GetV1IDReport{Context: ctx, Handler: handler}
 }
 
-/*GetV1IDReport swagger:route GET /v1/{id}/report downloadFileReport getV1IdReport
+/*
+	GetV1IDReport swagger:route GET /v1/{id}/report downloadFileReport getV1IdReport
 
 download the success and error report of file uploaded
-
 */
 type GetV1IDReport struct {
 	Context *middleware.Context
@@ -44,17 +44,16 @@ type GetV1IDReport struct {
 func (o *GetV1IDReport) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, rCtx, _ := o.Context.RouteInfo(r)
 	if rCtx != nil {
-		r = rCtx
+		*r = *rCtx
 	}
 	var Params = NewGetV1IDReportParams()
-
 	uprinc, aCtx, err := o.Context.Authorize(r, route)
 	if err != nil {
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 	if aCtx != nil {
-		r = aCtx
+		*r = *aCtx
 	}
 	var principal *models.JWTClaimBody
 	if uprinc != nil {
@@ -67,7 +66,6 @@ func (o *GetV1IDReport) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	res := o.Handler.Handle(Params, principal) // actually handle the request
-
 	o.Context.Respond(rw, r, route.Produces, route, res)
 
 }

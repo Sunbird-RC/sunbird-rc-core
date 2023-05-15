@@ -44,7 +44,7 @@ func Test_AddEntryForDbFilesToDatabase(t *testing.T) {
 		},
 	}
 	principal := models.JWTClaimBody{
-		UserId:            "1",
+		UserID:            "1",
 		PreferredUsername: "Temp",
 	}
 	response, _ := mockService.InsertIntoFileData(rows, fileName, data, &principal)
@@ -68,7 +68,6 @@ func Test_getHeaders(t *testing.T) {
 
 func Test_createReqBody(t *testing.T) {
 	properties := []string{"col1", "col2", "col3"}
-	jsonBody := map[string]interface{}{}
 	data := Scanner{
 		Head: map[string]int{
 			"col1": 0,
@@ -84,7 +83,7 @@ func Test_createReqBody(t *testing.T) {
 	}
 	expectedBytes, _ := json.Marshal(expectedJson)
 	assert := assert.New(t)
-	assert.Equal(expectedBytes, createReqBody(properties, jsonBody, &data))
+	assert.Equal(expectedBytes, createReqBodyAsBytes(properties, &data))
 }
 
 type RoundTripFunc func(req *http.Request) *http.Response

@@ -2,23 +2,14 @@ package config
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/imroc/req"
 	"github.com/jinzhu/configor"
 	log "github.com/sirupsen/logrus"
 )
 
-func Initialize(fileName string) {
-	err := configor.Load(&Config, fileName)
-	if err != nil {
-		panic("Unable to read configurations")
-	}
-	if Config.Keycloak.PublicKey == "" {
-		getPublicKeyFromKeycloak()
-	}
-}
-
-var Config = struct {
+type definition struct {
 	Registry struct {
 		BaseUrl string `env:"REGISTRY_BASE_URL" yaml:"baseUrl" default:"http://localhost:8081/"`
 	}
@@ -34,7 +25,28 @@ var Config = struct {
 		Password string `env:"DATABASE_PASSWORD" yaml:"password" default:"postgres"`
 		DBName   string `env:"DATABASE_NAME" yaml:"dbName" default:"registry"`
 	}
-}{}
+	LogLevel string `env:"LOG_LEVEL" yaml:"log_level" default:"info"`
+	Roles    string `env:"ROLES" yaml:"roles" default:""`
+}
+
+var Config = definition{}
+
+func (d definition) GetRoles() []string {
+	return strings.Split(d.Roles, ",")
+}
+
+func Initialize(fileName string) {
+	err := configor.Load(&Config, fileName)
+	if err != nil {
+		panic("Unable to read configurations")
+	}
+	if Config.Keycloak.PublicKey == "" {
+		err := getPublicKeyFromKeycloak()
+		if err != nil {
+			log.Error("Error while fetching public key from keycloak", err)
+		}
+	}
+}
 
 func getPublicKeyFromKeycloak() error {
 	url := Config.Keycloak.Url + "/realms/" + Config.Keycloak.Realm
@@ -50,5 +62,8 @@ func getPublicKeyFromKeycloak() error {
 			Config.Keycloak.PublicKey = publicKey
 		}
 	}
-	return errors.New("unable to get public key from keycloak")
+	if Config.Keycloak.PublicKey == "" {
+		return errors.New("unable to get public key from keycloak")
+	}
+	return nil
 }

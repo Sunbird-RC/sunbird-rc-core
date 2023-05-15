@@ -13,48 +13,47 @@ import (
 	"bulk_issuance/swagger_gen/models"
 )
 
-// GetV1UploadHandlerFunc turns a function with the right signature into a get v1 upload handler
-type GetV1UploadHandlerFunc func(GetV1UploadParams, *models.JWTClaimBody) middleware.Responder
+// GetV1UploadsHandlerFunc turns a function with the right signature into a get v1 uploads handler
+type GetV1UploadsHandlerFunc func(GetV1UploadsParams, *models.JWTClaimBody) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn GetV1UploadHandlerFunc) Handle(params GetV1UploadParams, principal *models.JWTClaimBody) middleware.Responder {
+func (fn GetV1UploadsHandlerFunc) Handle(params GetV1UploadsParams, principal *models.JWTClaimBody) middleware.Responder {
 	return fn(params, principal)
 }
 
-// GetV1UploadHandler interface for that can handle valid get v1 upload params
-type GetV1UploadHandler interface {
-	Handle(GetV1UploadParams, *models.JWTClaimBody) middleware.Responder
+// GetV1UploadsHandler interface for that can handle valid get v1 uploads params
+type GetV1UploadsHandler interface {
+	Handle(GetV1UploadsParams, *models.JWTClaimBody) middleware.Responder
 }
 
-// NewGetV1Upload creates a new http.Handler for the get v1 upload operation
-func NewGetV1Upload(ctx *middleware.Context, handler GetV1UploadHandler) *GetV1Upload {
-	return &GetV1Upload{Context: ctx, Handler: handler}
+// NewGetV1Uploads creates a new http.Handler for the get v1 uploads operation
+func NewGetV1Uploads(ctx *middleware.Context, handler GetV1UploadsHandler) *GetV1Uploads {
+	return &GetV1Uploads{Context: ctx, Handler: handler}
 }
 
-/*GetV1Upload swagger:route GET /v1/upload uploadedFiles getV1Upload
+/*
+	GetV1Uploads swagger:route GET /v1/uploads uploadedFiles getV1Uploads
 
 get uploaded files
-
 */
-type GetV1Upload struct {
+type GetV1Uploads struct {
 	Context *middleware.Context
-	Handler GetV1UploadHandler
+	Handler GetV1UploadsHandler
 }
 
-func (o *GetV1Upload) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (o *GetV1Uploads) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, rCtx, _ := o.Context.RouteInfo(r)
 	if rCtx != nil {
-		r = rCtx
+		*r = *rCtx
 	}
-	var Params = NewGetV1UploadParams()
-
+	var Params = NewGetV1UploadsParams()
 	uprinc, aCtx, err := o.Context.Authorize(r, route)
 	if err != nil {
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 	if aCtx != nil {
-		r = aCtx
+		*r = *aCtx
 	}
 	var principal *models.JWTClaimBody
 	if uprinc != nil {
@@ -67,7 +66,6 @@ func (o *GetV1Upload) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	res := o.Handler.Handle(Params, principal) // actually handle the request
-
 	o.Context.Respond(rw, r, route.Produces, route, res)
 
 }

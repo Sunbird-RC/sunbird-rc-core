@@ -56,11 +56,11 @@ func NewBulkIssuanceAPI(spec *loads.Document) *BulkIssuanceAPI {
 		SampleTemplateGetV1SchemaNameSampleCsvHandler: sample_template.GetV1SchemaNameSampleCsvHandlerFunc(func(params sample_template.GetV1SchemaNameSampleCsvParams, principal *models.JWTClaimBody) middleware.Responder {
 			return middleware.NotImplemented("operation sample_template.GetV1SchemaNameSampleCsv has not yet been implemented")
 		}),
-		UploadedFilesGetV1UploadHandler: uploaded_files.GetV1UploadHandlerFunc(func(params uploaded_files.GetV1UploadParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation uploaded_files.GetV1Upload has not yet been implemented")
+		UploadedFilesGetV1UploadsHandler: uploaded_files.GetV1UploadsHandlerFunc(func(params uploaded_files.GetV1UploadsParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation uploaded_files.GetV1Uploads has not yet been implemented")
 		}),
-		UploadAndCreateRecordsPostV1EntityNameUploadHandler: upload_and_create_records.PostV1EntityNameUploadHandlerFunc(func(params upload_and_create_records.PostV1EntityNameUploadParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation upload_and_create_records.PostV1EntityNameUpload has not yet been implemented")
+		UploadAndCreateRecordsPostV1SchemaNameUploadHandler: upload_and_create_records.PostV1SchemaNameUploadHandlerFunc(func(params upload_and_create_records.PostV1SchemaNameUploadParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation upload_and_create_records.PostV1SchemaNameUpload has not yet been implemented")
 		}),
 
 		HasRoleAuth: func(token string, scopes []string) (*models.JWTClaimBody, error) {
@@ -87,9 +87,11 @@ type BulkIssuanceAPI struct {
 	// BasicAuthenticator generates a runtime.Authenticator from the supplied basic auth function.
 	// It has a default implementation in the security package, however you can replace it for your particular usage.
 	BasicAuthenticator func(security.UserPassAuthentication) runtime.Authenticator
+
 	// APIKeyAuthenticator generates a runtime.Authenticator from the supplied token auth function.
 	// It has a default implementation in the security package, however you can replace it for your particular usage.
 	APIKeyAuthenticator func(string, string, security.TokenAuthentication) runtime.Authenticator
+
 	// BearerAuthenticator generates a runtime.Authenticator from the supplied bearer token auth function.
 	// It has a default implementation in the security package, however you can replace it for your particular usage.
 	BearerAuthenticator func(string, security.ScopedTokenAuthentication) runtime.Authenticator
@@ -119,10 +121,11 @@ type BulkIssuanceAPI struct {
 	DownloadFileReportGetV1IDReportHandler download_file_report.GetV1IDReportHandler
 	// SampleTemplateGetV1SchemaNameSampleCsvHandler sets the operation handler for the get v1 schema name sample csv operation
 	SampleTemplateGetV1SchemaNameSampleCsvHandler sample_template.GetV1SchemaNameSampleCsvHandler
-	// UploadedFilesGetV1UploadHandler sets the operation handler for the get v1 upload operation
-	UploadedFilesGetV1UploadHandler uploaded_files.GetV1UploadHandler
-	// UploadAndCreateRecordsPostV1EntityNameUploadHandler sets the operation handler for the post v1 entity name upload operation
-	UploadAndCreateRecordsPostV1EntityNameUploadHandler upload_and_create_records.PostV1EntityNameUploadHandler
+	// UploadedFilesGetV1UploadsHandler sets the operation handler for the get v1 uploads operation
+	UploadedFilesGetV1UploadsHandler uploaded_files.GetV1UploadsHandler
+	// UploadAndCreateRecordsPostV1SchemaNameUploadHandler sets the operation handler for the post v1 schema name upload operation
+	UploadAndCreateRecordsPostV1SchemaNameUploadHandler upload_and_create_records.PostV1SchemaNameUploadHandler
+
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
 	ServeError func(http.ResponseWriter, *http.Request, error)
@@ -215,11 +218,11 @@ func (o *BulkIssuanceAPI) Validate() error {
 	if o.SampleTemplateGetV1SchemaNameSampleCsvHandler == nil {
 		unregistered = append(unregistered, "sample_template.GetV1SchemaNameSampleCsvHandler")
 	}
-	if o.UploadedFilesGetV1UploadHandler == nil {
-		unregistered = append(unregistered, "uploaded_files.GetV1UploadHandler")
+	if o.UploadedFilesGetV1UploadsHandler == nil {
+		unregistered = append(unregistered, "uploaded_files.GetV1UploadsHandler")
 	}
-	if o.UploadAndCreateRecordsPostV1EntityNameUploadHandler == nil {
-		unregistered = append(unregistered, "upload_and_create_records.PostV1EntityNameUploadHandler")
+	if o.UploadAndCreateRecordsPostV1SchemaNameUploadHandler == nil {
+		unregistered = append(unregistered, "upload_and_create_records.PostV1SchemaNameUploadHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -334,11 +337,11 @@ func (o *BulkIssuanceAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/v1/upload"] = uploaded_files.NewGetV1Upload(o.context, o.UploadedFilesGetV1UploadHandler)
+	o.handlers["GET"]["/v1/uploads"] = uploaded_files.NewGetV1Uploads(o.context, o.UploadedFilesGetV1UploadsHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
-	o.handlers["POST"]["/v1/{entityName}/upload"] = upload_and_create_records.NewPostV1EntityNameUpload(o.context, o.UploadAndCreateRecordsPostV1EntityNameUploadHandler)
+	o.handlers["POST"]["/v1/{schemaName}/upload"] = upload_and_create_records.NewPostV1SchemaNameUpload(o.context, o.UploadAndCreateRecordsPostV1SchemaNameUploadHandler)
 }
 
 // Serve creates a http handler to serve the API over HTTP

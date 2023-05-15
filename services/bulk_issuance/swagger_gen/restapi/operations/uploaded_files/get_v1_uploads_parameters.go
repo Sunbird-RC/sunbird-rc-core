@@ -12,18 +12,19 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 )
 
-// NewGetV1UploadParams creates a new GetV1UploadParams object
-// no default values defined in spec.
-func NewGetV1UploadParams() GetV1UploadParams {
+// NewGetV1UploadsParams creates a new GetV1UploadsParams object
+//
+// There are no default values defined in the spec.
+func NewGetV1UploadsParams() GetV1UploadsParams {
 
-	return GetV1UploadParams{}
+	return GetV1UploadsParams{}
 }
 
-// GetV1UploadParams contains all the bound params for the get v1 upload operation
+// GetV1UploadsParams contains all the bound params for the get v1 uploads operation
 // typically these are obtained from a http.Request
 //
-// swagger:parameters GetV1Upload
-type GetV1UploadParams struct {
+// swagger:parameters GetV1Uploads
+type GetV1UploadsParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
@@ -32,8 +33,8 @@ type GetV1UploadParams struct {
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
 // for simple values it will use straight method calls.
 //
-// To ensure default values, the struct must have been initialized with NewGetV1UploadParams() beforehand.
-func (o *GetV1UploadParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
+// To ensure default values, the struct must have been initialized with NewGetV1UploadsParams() beforehand.
+func (o *GetV1UploadsParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
 	var res []error
 
 	o.HTTPRequest = r

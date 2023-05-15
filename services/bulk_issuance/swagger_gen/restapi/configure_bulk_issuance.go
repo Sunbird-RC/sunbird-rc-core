@@ -10,7 +10,6 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
-	"bulk_issuance/pkg"
 	"bulk_issuance/swagger_gen/models"
 	"bulk_issuance/swagger_gen/restapi/operations"
 	"bulk_issuance/swagger_gen/restapi/operations/download_file_report"
@@ -41,8 +40,7 @@ func configureAPI(api *operations.BulkIssuanceAPI) http.Handler {
 
 	api.JSONConsumer = runtime.JSONConsumer()
 	api.MultipartformConsumer = runtime.DiscardConsumer
-	pkg.SetupHandlers(api)
-	api.HasRoleAuth = pkg.RoleAuthorizer
+
 	api.BinProducer = runtime.ByteStreamProducer()
 	api.JSONProducer = runtime.JSONProducer()
 
@@ -57,6 +55,9 @@ func configureAPI(api *operations.BulkIssuanceAPI) http.Handler {
 	//
 	// Example:
 	// api.APIAuthorizer = security.Authorized()
+	// You may change here the memory limit for this multipart form parser. Below is the default (32 MB).
+	// upload_and_create_records.PostV1SchemaNameUploadMaxParseMemory = 32 << 20
+
 	if api.DownloadFileReportGetV1IDReportHandler == nil {
 		api.DownloadFileReportGetV1IDReportHandler = download_file_report.GetV1IDReportHandlerFunc(func(params download_file_report.GetV1IDReportParams, principal *models.JWTClaimBody) middleware.Responder {
 			return middleware.NotImplemented("operation download_file_report.GetV1IDReport has not yet been implemented")
@@ -67,14 +68,14 @@ func configureAPI(api *operations.BulkIssuanceAPI) http.Handler {
 			return middleware.NotImplemented("operation sample_template.GetV1SchemaNameSampleCsv has not yet been implemented")
 		})
 	}
-	if api.UploadedFilesGetV1UploadHandler == nil {
-		api.UploadedFilesGetV1UploadHandler = uploaded_files.GetV1UploadHandlerFunc(func(params uploaded_files.GetV1UploadParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation uploaded_files.GetV1Upload has not yet been implemented")
+	if api.UploadedFilesGetV1UploadsHandler == nil {
+		api.UploadedFilesGetV1UploadsHandler = uploaded_files.GetV1UploadsHandlerFunc(func(params uploaded_files.GetV1UploadsParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation uploaded_files.GetV1Uploads has not yet been implemented")
 		})
 	}
-	if api.UploadAndCreateRecordsPostV1EntityNameUploadHandler == nil {
-		api.UploadAndCreateRecordsPostV1EntityNameUploadHandler = upload_and_create_records.PostV1EntityNameUploadHandlerFunc(func(params upload_and_create_records.PostV1EntityNameUploadParams, principal *models.JWTClaimBody) middleware.Responder {
-			return middleware.NotImplemented("operation upload_and_create_records.PostV1EntityNameUpload has not yet been implemented")
+	if api.UploadAndCreateRecordsPostV1SchemaNameUploadHandler == nil {
+		api.UploadAndCreateRecordsPostV1SchemaNameUploadHandler = upload_and_create_records.PostV1SchemaNameUploadHandlerFunc(func(params upload_and_create_records.PostV1SchemaNameUploadParams, principal *models.JWTClaimBody) middleware.Responder {
+			return middleware.NotImplemented("operation upload_and_create_records.PostV1SchemaNameUpload has not yet been implemented")
 		})
 	}
 
@@ -93,18 +94,18 @@ func configureTLS(tlsConfig *tls.Config) {
 // As soon as server is initialized but not run yet, this function will be called.
 // If you need to modify a config, store server instance to stop it individually later, this is the place.
 // This function can be called multiple times, depending on the number of serving schemes.
-// scheme value will be set accordingly: "http", "https" or "unix"
+// scheme value will be set accordingly: "http", "https" or "unix".
 func configureServer(s *http.Server, scheme, addr string) {
 }
 
 // The middleware configuration is for the handler executors. These do not apply to the swagger.json document.
-// The middleware executes after routing but before authentication, binding and validation
+// The middleware executes after routing but before authentication, binding and validation.
 func setupMiddlewares(handler http.Handler) http.Handler {
 	return handler
 }
 
 // The middleware configuration happens before anything, this middleware also applies to serving the swagger.json document.
-// So this is a good place to plug in a panic handling middleware, logging and metrics
+// So this is a good place to plug in a panic handling middleware, logging and metrics.
 func setupGlobalMiddleware(handler http.Handler) http.Handler {
 	return handler
 }

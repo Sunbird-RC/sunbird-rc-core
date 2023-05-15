@@ -15,7 +15,8 @@ import (
 )
 
 // NewGetV1IDReportParams creates a new GetV1IDReportParams object
-// no default values defined in spec.
+//
+// There are no default values defined in the spec.
 func NewGetV1IDReportParams() GetV1IDReportParams {
 
 	return GetV1IDReportParams{}
@@ -50,7 +51,6 @@ func (o *GetV1IDReportParams) BindRequest(r *http.Request, route *middleware.Mat
 	if err := o.bindID(rID, rhkID, route.Formats); err != nil {
 		res = append(res, err)
 	}
-
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}

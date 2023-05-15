@@ -14,7 +14,8 @@ import (
 )
 
 // NewGetV1SchemaNameSampleCsvParams creates a new GetV1SchemaNameSampleCsvParams object
-// no default values defined in spec.
+//
+// There are no default values defined in the spec.
 func NewGetV1SchemaNameSampleCsvParams() GetV1SchemaNameSampleCsvParams {
 
 	return GetV1SchemaNameSampleCsvParams{}
@@ -49,7 +50,6 @@ func (o *GetV1SchemaNameSampleCsvParams) BindRequest(r *http.Request, route *mid
 	if err := o.bindSchemaName(rSchemaName, rhkSchemaName, route.Formats); err != nil {
 		res = append(res, err)
 	}
-
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
@@ -65,7 +65,6 @@ func (o *GetV1SchemaNameSampleCsvParams) bindSchemaName(rawData []string, hasKey
 
 	// Required: true
 	// Parameter is provided by construction from the route
-
 	o.SchemaName = raw
 
 	return nil

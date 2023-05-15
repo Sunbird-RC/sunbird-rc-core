@@ -31,7 +31,7 @@ func init() {
     "version": "1.0.0"
   },
   "paths": {
-    "/v1/upload": {
+    "/v1/uploads": {
       "get": {
         "consumes": [
           "application/json"
@@ -52,55 +52,6 @@ func init() {
           },
           "404": {
             "description": "Not found",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "/v1/{entityName}/upload": {
-      "post": {
-        "consumes": [
-          "multipart/form-data"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "uploadAndCreateRecords"
-        ],
-        "summary": "upload the file and create records",
-        "parameters": [
-          {
-            "type": "file",
-            "description": "Certification data in the form of csv",
-            "name": "file",
-            "in": "formData"
-          },
-          {
-            "type": "string",
-            "description": "VerifiableCredential you are issuing",
-            "name": "entityName",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/CreateRecordResponse"
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "schema": {
-              "type": "string"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
             "schema": {
               "type": "string"
             }
@@ -193,6 +144,66 @@ func init() {
           }
         }
       }
+    },
+    "/v1/{schemaName}/upload": {
+      "post": {
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "uploadAndCreateRecords"
+        ],
+        "summary": "upload the file and create records",
+        "parameters": [
+          {
+            "type": "file",
+            "description": "Certification data in the form of csv",
+            "name": "file",
+            "in": "formData"
+          },
+          {
+            "type": "string",
+            "description": "Schema name you're uploading for",
+            "name": "schemaName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CreateRecordResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -201,6 +212,51 @@ func init() {
     },
     "FileDownload": {
       "type": "object"
+    },
+    "Group": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "JWTClaimBody": {
+      "type": "object",
+      "properties": {
+        "preferred_username": {
+          "type": "string"
+        },
+        "realm_access": {
+          "type": "object",
+          "properties": {
+            "roles": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "resource_access": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Group"
+          }
+        },
+        "scope": {
+          "type": "string"
+        },
+        "token_type": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string"
+        }
+      }
     },
     "SampleTemplateResponse": {
       "type": "object"
@@ -242,7 +298,7 @@ func init() {
     "version": "1.0.0"
   },
   "paths": {
-    "/v1/upload": {
+    "/v1/uploads": {
       "get": {
         "consumes": [
           "application/json"
@@ -263,55 +319,6 @@ func init() {
           },
           "404": {
             "description": "Not found",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "/v1/{entityName}/upload": {
-      "post": {
-        "consumes": [
-          "multipart/form-data"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "uploadAndCreateRecords"
-        ],
-        "summary": "upload the file and create records",
-        "parameters": [
-          {
-            "type": "file",
-            "description": "Certification data in the form of csv",
-            "name": "file",
-            "in": "formData"
-          },
-          {
-            "type": "string",
-            "description": "VerifiableCredential you are issuing",
-            "name": "entityName",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/CreateRecordResponse"
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "schema": {
-              "type": "string"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
             "schema": {
               "type": "string"
             }
@@ -404,6 +411,66 @@ func init() {
           }
         }
       }
+    },
+    "/v1/{schemaName}/upload": {
+      "post": {
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "uploadAndCreateRecords"
+        ],
+        "summary": "upload the file and create records",
+        "parameters": [
+          {
+            "type": "file",
+            "description": "Certification data in the form of csv",
+            "name": "file",
+            "in": "formData"
+          },
+          {
+            "type": "string",
+            "description": "Schema name you're uploading for",
+            "name": "schemaName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/CreateRecordResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -412,6 +479,62 @@ func init() {
     },
     "FileDownload": {
       "type": "object"
+    },
+    "Group": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "JWTClaimBody": {
+      "type": "object",
+      "properties": {
+        "preferred_username": {
+          "type": "string"
+        },
+        "realm_access": {
+          "type": "object",
+          "properties": {
+            "roles": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "resource_access": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Group"
+          }
+        },
+        "scope": {
+          "type": "string"
+        },
+        "token_type": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string"
+        }
+      }
+    },
+    "JWTClaimBodyRealmAccess": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "SampleTemplateResponse": {
       "type": "object"
