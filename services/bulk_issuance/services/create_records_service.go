@@ -34,7 +34,7 @@ type IService interface {
 	InsertIntoFileData(rows [][]string, fileName string, data Scanner, principal *models.JWTClaimBody) (uint, error)
 	ProcessDataFromCSV(data *Scanner, header http.Header, vcName string) (int, int, [][]string, error)
 	DownloadCSVReport(id int, userId string) (*string, *bytes.Buffer, error)
-	ListFileForUser(userId string) ([]db.FileData, error)
+	GetUploadedFiles(userId string) ([]*models.UploadedFiles, error)
 }
 
 func Init(repository db.IRepo) IService {
