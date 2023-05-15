@@ -8,10 +8,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (controller *Controllers) downloadReportFile(params download_file_report.GetV1IDReportParams, principal *models.JWTClaimBody) middleware.Responder {
+func (c *Controllers) downloadReportFile(params download_file_report.GetV1IDReportParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Infof("Downloading report file with ID : %v", params.ID)
 	response := download_file_report.NewGetV1IDReportOK()
-	fileName, bytes, err := controller.services.DownloadCSVReport(int(params.ID), principal.UserID)
+	fileName, bytes, err := c.services.DownloadCSVReport(int(params.ID), principal.UserID)
 	if err != nil {
 		return download_file_report.NewGetV1IDReportForbidden().WithPayload("User is not allowed to access this file")
 	}

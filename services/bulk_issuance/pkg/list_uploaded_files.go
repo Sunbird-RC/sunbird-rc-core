@@ -8,10 +8,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (controller *Controllers) listFiles(_ uploaded_files.GetV1UploadsParams, principal *models.JWTClaimBody) middleware.Responder {
+func (c *Controllers) listFiles(_ uploaded_files.GetV1UploadsParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Info("Compiling a list of all uploaded files")
 	response := uploaded_files.GetV1UploadsOK{}
-	files, err := controller.services.ListFileForUser(principal.UserID)
+	files, err := c.services.ListFileForUser(principal.UserID)
 	if err != nil {
 		return uploaded_files.NewGetV1UploadsNotFound().WithPayload(err.Error())
 	}
