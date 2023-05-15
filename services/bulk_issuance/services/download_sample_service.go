@@ -8,7 +8,7 @@ import (
 )
 
 func (services *Services) GetSampleCSVForSchema(schemaName string) (*bytes.Buffer, error) {
-	schemaProperties, sampleValues, err := services.GetSchemaPropertiesAndSampleValues(schemaName)
+	schemaProperties, sampleValues, err := getSchemaPropertiesAndSampleValues(schemaName)
 	if err != nil {
 		return nil, err
 	}
@@ -17,7 +17,11 @@ func (services *Services) GetSampleCSVForSchema(schemaName string) (*bytes.Buffe
 	csvData = append(csvData, sampleValues)
 	b := new(bytes.Buffer)
 	w := csv.NewWriter(b)
-	w.WriteAll(csvData)
+	err = w.WriteAll(csvData)
+	if err != nil {
+		log.Error("Error while writing data to csv file", err)
+		return nil, err
+	}
 	log.Infof("Headers for schema %v : %v", schemaName, csvData)
 	return b, nil
 }
