@@ -28,7 +28,7 @@ func NewScanner(o io.Reader) (services.Scanner, error) {
 	return services.Scanner{Reader: csv_o, Head: m}, nil
 }
 
-func (controller *Controllers) createRecords(params upload_and_create_records.PostV1SchemaNameUploadParams, principal *models.JWTClaimBody) middleware.Responder {
+func (c *Controllers) createRecords(params upload_and_create_records.PostV1SchemaNameUploadParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Info("Creating records")
 	data, err := NewScanner(params.File)
 	csvError, _, _ := csvlint.Validate(params.File, ',', false)
@@ -38,7 +38,7 @@ func (controller *Controllers) createRecords(params upload_and_create_records.Po
 				Message: "Invalid CSV File",
 			})
 	}
-	totalSuccess, totalErrors, rows, err := controllers.services.ProcessDataFromCSV(&data, params.HTTPRequest.Header, params.SchemaName)
+	totalSuccess, totalErrors, rows, err := c.services.ProcessDataFromCSV(&data, params.HTTPRequest.Header, params.SchemaName)
 	if err != nil {
 		return upload_and_create_records.NewPostV1SchemaNameUploadNotFound().WithPayload(err.Error())
 	}
@@ -46,7 +46,7 @@ func (controller *Controllers) createRecords(params upload_and_create_records.Po
 	_, fileHeader, err := params.HTTPRequest.FormFile("file")
 	utils.LogErrorIfAny("Error retrieving file from request : %v", err)
 	fileName := fileHeader.Filename
-	id, err := controllers.services.InsertIntoFileData(rows, fileName, data, principal)
+	id, err := c.services.InsertIntoFileData(rows, fileName, data, principal)
 	successFailureCount := map[string]uint{
 		"success":   uint(totalSuccess),
 		"error":     uint(totalErrors),
