@@ -42,8 +42,21 @@ paths:
             $ref: '#/definitions/SampleTemplateResponse'
         '404':
           description: Not found
+          headers:
+            Content-Type:
+              type: string
+              default: 'application/json'
           schema:
-            type: string
+            $ref: '#/definitions/ErrorPayload'
+        '400':
+          description: Bad Request
+          headers:
+            Content-Type:
+              type: string
+              default: 'application/json'
+          schema:
+            $ref: '#/definitions/ErrorPayload'
+
   /v1/uploads:
     get:
       tags:
@@ -169,4 +182,9 @@ definitions:
       preferred_username:
         type: string
       user_id:
+        type: string
+  ErrorPayload:
+    type: object
+    properties:
+      message:
         type: string
