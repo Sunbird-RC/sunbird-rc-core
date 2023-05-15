@@ -24,7 +24,7 @@ func GetSchemaProperties(key string) ([]string, error) {
 	}
 }
 
-func (services *Services) GetSchemaPropertiesAndSampleValues(key string) ([]string, []string, error) {
+func getSchemaPropertiesAndSampleValues(key string) ([]string, []string, error) {
 	schemaProperties, err := getJsonSchemaProperties(key)
 	if err == nil {
 		properties := make([]string, 0)
