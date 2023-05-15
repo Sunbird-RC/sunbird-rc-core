@@ -14,7 +14,7 @@ func (c *Controllers) downloadSampleFile(params sample_template.GetV1SchemaNameS
 	sampleCSVBytes, err := c.services.GetSampleCSVForSchema(params.SchemaName)
 	if err != nil {
 		response := sample_template.NewGetV1SchemaNameSampleCsvNotFound()
-		response.SetPayload(err.Error())
+		response.SetPayload(&models.ErrorPayload{Message: err.Error()})
 		return response
 	}
 	response.WithContentDisposition("attachment; filename=\"" + params.SchemaName + ".csv\"").WithPayload(sampleCSVBytes)

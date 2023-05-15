@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/go-openapi/spec"
 	"time"
 
 	"github.com/lucasjones/reggen"
@@ -22,14 +23,15 @@ func LogErrorIfAny(description string, err error, data ...interface{}) {
 	}
 }
 
-func GetSampleValueByType(value map[string]interface{}) string {
-	if jsonType, ok := value["type"]; ok {
+func GetSampleValueByType(value spec.Schema) string {
+	if len(value.Type) > 0 {
+		jsonType := value.Type[0]
 		switch jsonType {
 		case "string":
-			if format, ok := value["format"]; ok {
-				return getSampleStringValueBasedOnFormat(format.(string))
+			if format := value.Format; len(format) > 0 {
+				return getSampleStringValueBasedOnFormat(format)
 			}
-			if pattern, ok := value["pattern"]; ok {
+			if pattern := value.Pattern; len(pattern) > 0 {
 				if randomString, err := generateRandomString(pattern); err == nil {
 					return randomString
 				}

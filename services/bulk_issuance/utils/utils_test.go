@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/go-openapi/spec"
 	"testing"
 	"time"
 )
@@ -53,68 +54,79 @@ func Test_getSampleStringValueBasedOnFormat(t *testing.T) {
 }
 
 func Test_getSampleValueByType(t *testing.T) {
-	type args struct {
-		value map[string]interface{}
-	}
 	tests := []struct {
 		name string
-		args args
+		args spec.Schema
 		want string
 	}{
 		{
 			name: "Should return default value for string",
-			args: args{value: map[string]interface{}{
-				"type": "string",
-			}},
+			args: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"string"},
+				},
+			},
 			want: "string",
 		},
 		{
 			name: "Should return random string for string with pattern",
-			args: args{value: map[string]interface{}{
-				"type":    "string",
-				"pattern": "^a",
-			}},
+			args: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type:    []string{"string"},
+					Pattern: "^a",
+				},
+			},
 			want: "a",
 		},
 		{
 			name: "Should return default value for number",
-			args: args{value: map[string]interface{}{
-				"type": "number",
-			}},
+			args: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"number"},
+				},
+			},
 			want: "0",
 		},
 		{
 			name: "Should return default value for integer",
-			args: args{value: map[string]interface{}{
-				"type": "integer",
-			}},
+			args: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"integer"},
+				},
+			},
 			want: "0",
 		},
 		{
 			name: "Should return default value for object",
-			args: args{value: map[string]interface{}{
-				"type": "object",
-			}},
+			args: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"object"},
+				},
+			},
 			want: "{}",
 		},
 		{
 			name: "Should return default value for array",
-			args: args{value: map[string]interface{}{
-				"type": "array",
-			}},
+			args: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"array"},
+				},
+			},
 			want: "[]",
 		},
 		{
 			name: "Should return default value for boolean",
-			args: args{value: map[string]interface{}{
-				"type": "boolean",
-			}},
+			args: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"boolean"},
+				},
+			},
 			want: "true",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetSampleValueByType(tt.args.value); got != tt.want {
+			if got := GetSampleValueByType(tt.args); got != tt.want {
 				t.Errorf("getSampleValueByType() = %v, want %v", got, tt.want)
 			}
 		})

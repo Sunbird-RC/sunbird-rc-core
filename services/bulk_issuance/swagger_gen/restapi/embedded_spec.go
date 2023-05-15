@@ -136,10 +136,28 @@ func init() {
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/ErrorPayload"
+            },
+            "headers": {
+              "Content-Type": {
+                "type": "string",
+                "default": "application/json"
+              }
+            }
+          },
           "404": {
             "description": "Not found",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/ErrorPayload"
+            },
+            "headers": {
+              "Content-Type": {
+                "type": "string",
+                "default": "application/json"
+              }
             }
           }
         }
@@ -209,6 +227,14 @@ func init() {
   "definitions": {
     "CreateRecordResponse": {
       "type": "object"
+    },
+    "ErrorPayload": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
     },
     "FileDownload": {
       "type": "object"
@@ -403,10 +429,28 @@ func init() {
               }
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/ErrorPayload"
+            },
+            "headers": {
+              "Content-Type": {
+                "type": "string",
+                "default": "application/json"
+              }
+            }
+          },
           "404": {
             "description": "Not found",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/ErrorPayload"
+            },
+            "headers": {
+              "Content-Type": {
+                "type": "string",
+                "default": "application/json"
+              }
             }
           }
         }
@@ -476,6 +520,14 @@ func init() {
   "definitions": {
     "CreateRecordResponse": {
       "type": "object"
+    },
+    "ErrorPayload": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
     },
     "FileDownload": {
       "type": "object"

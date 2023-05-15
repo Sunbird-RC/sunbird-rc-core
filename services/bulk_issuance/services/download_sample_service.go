@@ -15,13 +15,13 @@ func (services *Services) GetSampleCSVForSchema(schemaName string) (*bytes.Buffe
 	csvData := make([][]string, 0)
 	csvData = append(csvData, schemaProperties)
 	csvData = append(csvData, sampleValues)
-	b := new(bytes.Buffer)
-	w := csv.NewWriter(b)
-	err = w.WriteAll(csvData)
+	buf := new(bytes.Buffer)
+	csvWriter := csv.NewWriter(buf)
+	err = csvWriter.WriteAll(csvData)
 	if err != nil {
 		log.Error("Error while writing data to csv file", err)
 		return nil, err
 	}
-	log.Infof("Headers for schema %v : %v", schemaName, csvData)
-	return b, nil
+	log.Debugf("Headers for schema %v : %v", schemaName, csvData)
+	return buf, nil
 }
