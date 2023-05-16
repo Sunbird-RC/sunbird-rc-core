@@ -20,7 +20,7 @@ import (
 type UploadedFilesResponse struct {
 
 	// files
-	Files []*UploadedFiles `json:"files"`
+	Files []*UploadedFileDTO `json:"files"`
 }
 
 // Validate validates this uploaded files response

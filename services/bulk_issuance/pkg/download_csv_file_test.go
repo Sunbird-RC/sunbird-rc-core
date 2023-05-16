@@ -16,8 +16,8 @@ type MockRepository struct {
 	db.Repository
 }
 
-func (mock *MockRepository) GetFileDataByIdAndUser(_ int, userId string) (*db.FileData, error) {
-	var file db.FileData
+func (mock *MockRepository) GetFileDataByIdAndUser(_ int, userId string) (*db.UploadedFile, error) {
+	var file db.UploadedFile
 	rows := [][]string{{"row11"}, {"row12"}, {"row13"}}
 	headers := "col1,col2,col3"
 	rowBytes, _ := json.Marshal(rows)
@@ -28,7 +28,7 @@ func (mock *MockRepository) GetFileDataByIdAndUser(_ int, userId string) (*db.Fi
 	return &file, nil
 }
 
-func (mock *MockService) DownloadCSVReport(id int, userId string) (*string, *bytes.Buffer, error) {
+func (mock *MockService) GetCSVReport(id int, userId string) (*string, *bytes.Buffer, error) {
 	data := [][]string{{"col1", "col2", "col3"}, {"row11"}, {"row12"}, {"row13"}}
 	b := new(bytes.Buffer)
 	w := csv.NewWriter(b)

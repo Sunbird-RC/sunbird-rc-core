@@ -9,9 +9,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (mock *MockService) GetUploadedFiles(_ string) ([]*models.UploadedFiles, error) {
-	var files []*models.UploadedFiles
-	var file db.FileData
+func (mock *MockService) GetUploadedFiles(_ string, limit *int64, offset *int64) ([]*models.UploadedFileDTO, error) {
+	var files []*models.UploadedFileDTO
+	var file db.UploadedFile
 	file.Filename = "File"
 	file.ID = 1
 	file.UserID = "123"

@@ -33,8 +33,8 @@ type IService interface {
 	GetSampleCSVForSchema(schemaName string) (*bytes.Buffer, error)
 	InsertIntoFileData(rows [][]string, fileName string, data Scanner, principal *models.JWTClaimBody) (uint, error)
 	ProcessDataFromCSV(data *Scanner, header http.Header, vcName string) (int, int, [][]string, error)
-	DownloadCSVReport(id int, userId string) (*string, *bytes.Buffer, error)
-	GetUploadedFiles(userId string) ([]*models.UploadedFiles, error)
+	GetCSVReport(id int, userId string) (*string, *bytes.Buffer, error)
+	GetUploadedFiles(userId string, limit *int64, offset *int64) ([]*models.UploadedFileDTO, error)
 }
 
 func Init(repository db.IRepo) IService {
@@ -48,7 +48,7 @@ func (services *Services) InsertIntoFileData(rows [][]string, fileName string, d
 	log.Info("adding entry to dbFileData")
 	rowBytes, err := json.Marshal(rows)
 	utils.LogErrorIfAny("Error while marshalling data for database : %v", err)
-	fileUpload := db.FileData{
+	fileUpload := db.UploadedFile{
 		Filename:     fileName,
 		Headers:      getHeaders(data.Head),
 		TotalRecords: len(rows),

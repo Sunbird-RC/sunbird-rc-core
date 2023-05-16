@@ -5,10 +5,11 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
+	log "github.com/sirupsen/logrus"
 	"strings"
 )
 
-func (services *Services) DownloadCSVReport(id int, userId string) (*string, *bytes.Buffer, error) {
+func (services *Services) GetCSVReport(id int, userId string) (*string, *bytes.Buffer, error) {
 	file, err := services.repo.GetFileDataByIdAndUser(id, userId)
 	if err != nil {
 		return nil, nil, err
@@ -19,6 +20,10 @@ func (services *Services) DownloadCSVReport(id int, userId string) (*string, *by
 	data = append([][]string{strings.Split(file.Headers, ",")}, data...)
 	b := new(bytes.Buffer)
 	w := csv.NewWriter(b)
-	w.WriteAll(data)
+	err = w.WriteAll(data)
+	if err != nil {
+		log.Error("Error while writing data to csv, ", err)
+		return nil, nil, err
+	}
 	return &file.Filename, b, nil
 }
