@@ -2,6 +2,7 @@ package utils
 
 import (
 	"github.com/go-openapi/spec"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -128,6 +129,55 @@ func Test_getSampleValueByType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GetSampleValueByType(tt.args); got != tt.want {
 				t.Errorf("getSampleValueByType() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_createCSVBuffer(t *testing.T) {
+	type args struct {
+		data [][]string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "Should return csv buffer",
+			args: args{
+				data: [][]string{{"a", "b", "c"}},
+			},
+			want:    "a,b,c\n",
+			wantErr: false,
+		},
+		{
+			name: "Should return multiple row csv buffer",
+			args: args{
+				data: [][]string{{"a", "b", "c"}, {"1", "2", "3"}},
+			},
+			want:    "a,b,c\n1,2,3\n",
+			wantErr: false,
+		},
+		{
+			name: "Should return multiple row csv buffer",
+			args: args{
+				data: nil,
+			},
+			want:    "",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := CreateCSVBuffer(tt.args.data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CreateCSVBuffer() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got.String(), tt.want) {
+				t.Errorf("CreateCSVBuffer() got = %v, want %v", got.String(), tt.want)
 			}
 		})
 	}

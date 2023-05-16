@@ -109,13 +109,25 @@ func init() {
           "403": {
             "description": "Forbidden",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/ErrorPayload"
+            },
+            "headers": {
+              "Content-Type": {
+                "type": "string",
+                "default": "application/json"
+              }
             }
           },
           "404": {
             "description": "Not found",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/ErrorPayload"
+            },
+            "headers": {
+              "Content-Type": {
+                "type": "string",
+                "default": "application/json"
+              }
             }
           }
         }
@@ -456,13 +468,25 @@ func init() {
           "403": {
             "description": "Forbidden",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/ErrorPayload"
+            },
+            "headers": {
+              "Content-Type": {
+                "type": "string",
+                "default": "application/json"
+              }
             }
           },
           "404": {
             "description": "Not found",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/ErrorPayload"
+            },
+            "headers": {
+              "Content-Type": {
+                "type": "string",
+                "default": "application/json"
+              }
             }
           }
         }

@@ -87,37 +87,71 @@ GetV1IDReportForbidden Forbidden
 swagger:response getV1IdReportForbidden
 */
 type GetV1IDReportForbidden struct {
+	/*
+
+	  Default: "application/json"
+	*/
+	ContentType string `json:"Content-Type"`
 
 	/*
 	  In: Body
 	*/
-	Payload string `json:"body,omitempty"`
+	Payload *models.ErrorPayload `json:"body,omitempty"`
 }
 
 // NewGetV1IDReportForbidden creates GetV1IDReportForbidden with default headers values
 func NewGetV1IDReportForbidden() *GetV1IDReportForbidden {
 
-	return &GetV1IDReportForbidden{}
+	var (
+		// initialize headers with default values
+
+		contentTypeDefault = string("application/json")
+	)
+
+	return &GetV1IDReportForbidden{
+
+		ContentType: contentTypeDefault,
+	}
+}
+
+// WithContentType adds the contentType to the get v1 Id report forbidden response
+func (o *GetV1IDReportForbidden) WithContentType(contentType string) *GetV1IDReportForbidden {
+	o.ContentType = contentType
+	return o
+}
+
+// SetContentType sets the contentType to the get v1 Id report forbidden response
+func (o *GetV1IDReportForbidden) SetContentType(contentType string) {
+	o.ContentType = contentType
 }
 
 // WithPayload adds the payload to the get v1 Id report forbidden response
-func (o *GetV1IDReportForbidden) WithPayload(payload string) *GetV1IDReportForbidden {
+func (o *GetV1IDReportForbidden) WithPayload(payload *models.ErrorPayload) *GetV1IDReportForbidden {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get v1 Id report forbidden response
-func (o *GetV1IDReportForbidden) SetPayload(payload string) {
+func (o *GetV1IDReportForbidden) SetPayload(payload *models.ErrorPayload) {
 	o.Payload = payload
 }
 
 // WriteResponse to the client
 func (o *GetV1IDReportForbidden) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
+	// response header Content-Type
+
+	contentType := o.ContentType
+	if contentType != "" {
+		rw.Header().Set("Content-Type", contentType)
+	}
+
 	rw.WriteHeader(403)
-	payload := o.Payload
-	if err := producer.Produce(rw, payload); err != nil {
-		panic(err) // let the recovery middleware deal with this
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
 	}
 }
 
@@ -130,36 +164,70 @@ GetV1IDReportNotFound Not found
 swagger:response getV1IdReportNotFound
 */
 type GetV1IDReportNotFound struct {
+	/*
+
+	  Default: "application/json"
+	*/
+	ContentType string `json:"Content-Type"`
 
 	/*
 	  In: Body
 	*/
-	Payload string `json:"body,omitempty"`
+	Payload *models.ErrorPayload `json:"body,omitempty"`
 }
 
 // NewGetV1IDReportNotFound creates GetV1IDReportNotFound with default headers values
 func NewGetV1IDReportNotFound() *GetV1IDReportNotFound {
 
-	return &GetV1IDReportNotFound{}
+	var (
+		// initialize headers with default values
+
+		contentTypeDefault = string("application/json")
+	)
+
+	return &GetV1IDReportNotFound{
+
+		ContentType: contentTypeDefault,
+	}
+}
+
+// WithContentType adds the contentType to the get v1 Id report not found response
+func (o *GetV1IDReportNotFound) WithContentType(contentType string) *GetV1IDReportNotFound {
+	o.ContentType = contentType
+	return o
+}
+
+// SetContentType sets the contentType to the get v1 Id report not found response
+func (o *GetV1IDReportNotFound) SetContentType(contentType string) {
+	o.ContentType = contentType
 }
 
 // WithPayload adds the payload to the get v1 Id report not found response
-func (o *GetV1IDReportNotFound) WithPayload(payload string) *GetV1IDReportNotFound {
+func (o *GetV1IDReportNotFound) WithPayload(payload *models.ErrorPayload) *GetV1IDReportNotFound {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get v1 Id report not found response
-func (o *GetV1IDReportNotFound) SetPayload(payload string) {
+func (o *GetV1IDReportNotFound) SetPayload(payload *models.ErrorPayload) {
 	o.Payload = payload
 }
 
 // WriteResponse to the client
 func (o *GetV1IDReportNotFound) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
+	// response header Content-Type
+
+	contentType := o.ContentType
+	if contentType != "" {
+		rw.Header().Set("Content-Type", contentType)
+	}
+
 	rw.WriteHeader(404)
-	payload := o.Payload
-	if err := producer.Produce(rw, payload); err != nil {
-		panic(err) // let the recovery middleware deal with this
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
 	}
 }
