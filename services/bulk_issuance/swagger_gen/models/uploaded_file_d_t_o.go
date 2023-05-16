@@ -12,10 +12,10 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// UploadedFiles uploaded files
+// UploadedFileDTO uploaded file d t o
 //
-// swagger:model UploadedFiles
-type UploadedFiles struct {
+// swagger:model UploadedFileDTO
+type UploadedFileDTO struct {
 
 	// created at
 	CreatedAt string `json:"createdAt,omitempty"`
@@ -42,18 +42,18 @@ type UploadedFiles struct {
 	Username string `json:"username,omitempty"`
 }
 
-// Validate validates this uploaded files
-func (m *UploadedFiles) Validate(formats strfmt.Registry) error {
+// Validate validates this uploaded file d t o
+func (m *UploadedFileDTO) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this uploaded files based on context it is used
-func (m *UploadedFiles) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validates this uploaded file d t o based on context it is used
+func (m *UploadedFileDTO) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 
 // MarshalBinary interface implementation
-func (m *UploadedFiles) MarshalBinary() ([]byte, error) {
+func (m *UploadedFileDTO) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -61,8 +61,8 @@ func (m *UploadedFiles) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *UploadedFiles) UnmarshalBinary(b []byte) error {
-	var res UploadedFiles
+func (m *UploadedFileDTO) UnmarshalBinary(b []byte) error {
+	var res UploadedFileDTO
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

@@ -1,12 +1,16 @@
 package services
 
 import (
+	"bulk_issuance/db"
 	"bulk_issuance/swagger_gen/models"
 )
 
-func (services *Services) GetUploadedFiles(userId string) ([]*models.UploadedFiles, error) {
-	filesUploaded, err := services.repo.GetAllFileDataForUserID(userId)
-	uploadedFileReport := make([]*models.UploadedFiles, 0)
+func (services *Services) GetUploadedFiles(userId string, limit *int64, offset *int64) ([]*models.UploadedFileDTO, error) {
+	filesUploaded, err := services.repo.GetAllFileDataForUserID(userId, db.Pagination{
+		Limit:  *limit,
+		Offset: *offset,
+	})
+	uploadedFileReport := make([]*models.UploadedFileDTO, 0)
 	for _, file := range filesUploaded {
 		uploadedFileReport = append(uploadedFileReport, file.ToDTO())
 	}

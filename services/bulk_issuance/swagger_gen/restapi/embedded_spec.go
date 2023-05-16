@@ -43,6 +43,22 @@ func init() {
           "uploadedFiles"
         ],
         "summary": "get uploaded files",
+        "parameters": [
+          {
+            "type": "integer",
+            "default": 20,
+            "description": "Pagination limit",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "default": 0,
+            "description": "Pagination offset",
+            "name": "offset",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -287,7 +303,7 @@ func init() {
     "SampleTemplateResponse": {
       "type": "object"
     },
-    "UploadedFiles": {
+    "UploadedFileDTO": {
       "type": "object",
       "properties": {
         "createdAt": {
@@ -323,7 +339,7 @@ func init() {
           "type": "array",
           "default": null,
           "items": {
-            "$ref": "#/definitions/UploadedFiles"
+            "$ref": "#/definitions/UploadedFileDTO"
           }
         }
       }
@@ -374,6 +390,22 @@ func init() {
           "uploadedFiles"
         ],
         "summary": "get uploaded files",
+        "parameters": [
+          {
+            "type": "integer",
+            "default": 20,
+            "description": "Pagination limit",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "default": 0,
+            "description": "Pagination offset",
+            "name": "offset",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -629,7 +661,7 @@ func init() {
     "SampleTemplateResponse": {
       "type": "object"
     },
-    "UploadedFiles": {
+    "UploadedFileDTO": {
       "type": "object",
       "properties": {
         "createdAt": {
@@ -665,7 +697,7 @@ func init() {
           "type": "array",
           "default": [],
           "items": {
-            "$ref": "#/definitions/UploadedFiles"
+            "$ref": "#/definitions/UploadedFileDTO"
           }
         }
       }

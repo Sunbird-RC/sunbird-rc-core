@@ -18,7 +18,7 @@ type MockRepository struct {
 	db.Repository
 }
 
-func (mock *MockRepository) Insert(data *db.FileData) (uint, error) {
+func (mock *MockRepository) Insert(data *db.UploadedFile) (uint, error) {
 	return 1, nil
 }
 

@@ -11,12 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func (mockRepo *MockRepository) GetFileDataByIdAndUser(id int, userId string) (*db.FileData, error) {
+func (mockRepo *MockRepository) GetFileDataByIdAndUser(id int, userId string) (*db.UploadedFile, error) {
 	rows := [][]string{{
 		"row11", "row12", "row13",
 	}}
 	bytes, _ := json.Marshal(rows)
-	file := db.FileData{
+	file := db.UploadedFile{
 		Filename: "Temp.csv",
 		RowData:  []byte(bytes),
 		Headers:  "col1,col2,col3",
@@ -30,7 +30,7 @@ func Test_DownloadCSVReport(t *testing.T) {
 			&MockRepository{},
 		},
 	}
-	actualFileName, actualBytes, err := mockService.DownloadCSVReport(1, "2")
+	actualFileName, actualBytes, err := mockService.GetCSVReport(1, "2")
 	fileWithHeaders := [][]string{
 		{"col1", "col2", "col3"},
 		{"row11", "row12", "row13"},

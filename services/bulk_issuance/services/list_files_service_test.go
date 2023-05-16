@@ -9,12 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func createTempFile() db.FileData {
+func createTempFile() db.UploadedFile {
 	rows := [][]string{{
 		"row11", "row12", "row13",
 	}}
 	bytes, _ := json.Marshal(rows)
-	fileData := db.FileData{
+	fileData := db.UploadedFile{
 		Filename: "Temp.csv",
 		RowData:  []byte(bytes),
 		Headers:  "col1,col2,col3",
@@ -23,9 +23,9 @@ func createTempFile() db.FileData {
 	return fileData
 }
 
-func (mockRepo *MockRepository) GetAllFileDataForUserID(userId string) ([]db.FileData, error) {
+func (mockRepo *MockRepository) GetAllFileDataForUserID(userId string, pagination db.Pagination) ([]db.UploadedFile, error) {
 	fileData := createTempFile()
-	return []db.FileData{fileData}, nil
+	return []db.UploadedFile{fileData}, nil
 }
 
 func Test_ListFileForUser(t *testing.T) {
@@ -34,9 +34,10 @@ func Test_ListFileForUser(t *testing.T) {
 			&MockRepository{},
 		},
 	}
-	actualFiles, err := mockService.GetUploadedFiles("1")
+	var defaultValue int64 = 0
+	actualFiles, err := mockService.GetUploadedFiles("1", &defaultValue, &defaultValue)
 	file := createTempFile()
-	expectedFiles := []*models.UploadedFiles{file.ToDTO()}
+	expectedFiles := []*models.UploadedFileDTO{file.ToDTO()}
 	assert := assert.New(t)
 	assert.Equal(expectedFiles, actualFiles)
 	assert.Nil(err)

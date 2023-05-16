@@ -66,6 +66,17 @@ paths:
         - application/json
       produces:
         - application/json
+      parameters:
+        - in: query
+          name: limit
+          type: integer
+          description: Pagination limit
+          default: 20
+        - in: query
+          name: offset
+          type: integer
+          description: Pagination offset
+          default: 0
       responses:
         '200':
           description: OK
@@ -152,9 +163,9 @@ definitions:
       files:
         type: array
         items:
-          $ref: '#/definitions/UploadedFiles'
+          $ref: '#/definitions/UploadedFileDTO'
         default: []
-  UploadedFiles:
+  UploadedFileDTO:
     type: object
     properties:
       id:

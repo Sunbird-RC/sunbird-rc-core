@@ -14,16 +14,21 @@ import (
 )
 
 type IRepo interface {
-	GetFileDataByIdAndUser(id int, userId string) (*FileData, error)
-	Insert(data *FileData) (uint, error)
-	GetAllFileDataForUserID(userId string) ([]FileData, error)
+	GetFileDataByIdAndUser(id int, userId string) (*UploadedFile, error)
+	Insert(data *UploadedFile) (uint, error)
+	GetAllFileDataForUserID(userId string, pagination Pagination) ([]UploadedFile, error)
 }
 
 type Repository struct {
 	db *gorm.DB
 }
 
-type FileData struct {
+type Pagination struct {
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"page"`
+}
+
+type UploadedFile struct {
 	gorm.Model
 	Filename     string
 	TotalRecords int
@@ -34,8 +39,8 @@ type FileData struct {
 	Date         string
 }
 
-func (f FileData) ToDTO() *models.UploadedFiles {
-	return &models.UploadedFiles{
+func (f UploadedFile) ToDTO() *models.UploadedFileDTO {
+	return &models.UploadedFileDTO{
 		ID:          int64(f.ID),
 		CreatedAt:   f.CreatedAt.String(),
 		Date:        f.Date,
@@ -59,32 +64,36 @@ func Init() IRepo {
 	if e != nil {
 		panic("failed to connect to database")
 	}
-	repo.db.AutoMigrate(&FileData{})
+	repo.db.AutoMigrate(&UploadedFile{})
 	return &repo
 }
 
-func (repo *Repository) GetFileDataByIdAndUser(id int, userId string) (*FileData, error) {
-	filesUpload := &FileData{}
+func (repo *Repository) GetFileDataByIdAndUser(id int, userId string) (*UploadedFile, error) {
+	filesUpload := &UploadedFile{}
 	log.Infof("Getting file data with id : %v", id)
 	result := repo.db.First(&filesUpload, "id=? AND user_id=?", id, userId)
 	if result.Error != nil {
-		log.Errorf("Error while getting FileData : %v", result.Error)
+		log.Errorf("Error while getting UploadedFile : %v", result.Error)
 		return nil, result.Error
 	}
 	return filesUpload, nil
 }
 
-func (repo *Repository) Insert(data *FileData) (uint, error) {
-	log.Info("Creating FileData entry")
+func (repo *Repository) Insert(data *UploadedFile) (uint, error) {
+	log.Info("Creating UploadedFile entry")
 	result := repo.db.Create(&data)
-	utils.LogErrorIfAny("Error while adding FileData : %v", result.Error)
+	utils.LogErrorIfAny("Error while adding UploadedFile : %v", result.Error)
 	return data.ID, nil
 }
 
-func (repo *Repository) GetAllFileDataForUserID(userId string) ([]FileData, error) {
-	var files []FileData
+func (repo *Repository) GetAllFileDataForUserID(userId string, pagination Pagination) ([]UploadedFile, error) {
+	var files []UploadedFile
 	log.Info("Getting all uploaded files")
-	if err := repo.db.Find(&files, "user_id = ?", userId).Error; err != nil {
+	if err := repo.db.
+		Limit(pagination.Limit).
+		Offset(pagination.Offset).
+		Find(&files, "user_id = ?", userId).
+		Error; err != nil {
 		log.Errorf("Error while requesting for all uploaded files : %v", err)
 		return nil, errors.New("no files uploaded")
 	}
