@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/csv"
 	"github.com/go-openapi/spec"
 	"time"
 
@@ -67,4 +69,15 @@ func getSampleStringValueBasedOnFormat(format string) string {
 		return "yyy@xx.com"
 	}
 	return ""
+}
+
+func CreateCSVBuffer(data [][]string) (*bytes.Buffer, error) {
+	buf := new(bytes.Buffer)
+	csvWriter := csv.NewWriter(buf)
+	err := csvWriter.WriteAll(data)
+	if err != nil {
+		log.Error("Error while writing data to csv, ", err)
+		return nil, err
+	}
+	return buf, err
 }
