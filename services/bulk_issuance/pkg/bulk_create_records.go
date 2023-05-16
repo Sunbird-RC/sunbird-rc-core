@@ -1,59 +1,51 @@
 package pkg
 
 import (
-	"bulk_issuance/services"
 	"bulk_issuance/swagger_gen/models"
 	"bulk_issuance/swagger_gen/restapi/operations/upload_and_create_records"
 	"bulk_issuance/utils"
-	"encoding/csv"
-	"io"
-	"strings"
-
 	"github.com/Clever/csvlint"
 	"github.com/go-openapi/runtime/middleware"
 	log "github.com/sirupsen/logrus"
+	"io"
+	"strings"
 )
 
-func NewScanner(o io.Reader) (services.Scanner, error) {
-	csv_o := csv.NewReader(o)
-	header, e := csv_o.Read()
-	if e != nil {
-		log.Errorf("Parsing error : %v", e)
-		return services.Scanner{}, e
-	}
-	m := map[string]int{}
-	for n, s := range header {
-		m[strings.TrimSpace(s)] = n
-	}
-	return services.Scanner{Reader: csv_o, Head: m}, nil
-}
-
-func (c *Controllers) createRecords(params upload_and_create_records.PostV1SchemaNameUploadParams, principal *models.JWTClaimBody) middleware.Responder {
+func (c *Controllers) createRecords(params upload_and_create_records.PostV1SchemaNameUploadParams,
+	principal *models.JWTClaimBody) middleware.Responder {
 	log.Info("Creating records")
-	data, err := NewScanner(params.File)
-	csvError, _, _ := csvlint.Validate(params.File, ',', false)
-	if data.Reader == nil || err != nil || len(csvError) != 0 {
+	fileBytes, err := io.ReadAll(params.File)
+	csvError, _, _ := csvlint.Validate(strings.NewReader(string(fileBytes)), ',', false)
+	if len(csvError) != 0 {
 		return upload_and_create_records.NewPostV1SchemaNameUploadBadRequest().
-			WithPayload(&upload_and_create_records.PostV1SchemaNameUploadBadRequestBody{
+			WithPayload(&models.ErrorPayload{
 				Message: "Invalid CSV File",
 			})
 	}
-	totalSuccess, totalErrors, rows, err := c.services.ProcessDataFromCSV(&data, params.HTTPRequest.Header, params.SchemaName)
+	totalSuccess, totalErrors, rows, header, err := c.services.
+		ProcessDataFromCSV(params.HTTPRequest.Header, params.SchemaName, strings.NewReader(string(fileBytes)))
+
 	if err != nil {
-		return upload_and_create_records.NewPostV1SchemaNameUploadNotFound().WithPayload(err.Error())
+		return upload_and_create_records.NewPostV1SchemaNameUploadNotFound().WithPayload(&models.ErrorPayload{
+			Message: err.Error(),
+		})
 	}
-	response := upload_and_create_records.NewPostV1SchemaNameUploadOK()
-	_, fileHeader, err := params.HTTPRequest.FormFile("file")
-	utils.LogErrorIfAny("Error retrieving file from request : %v", err)
-	fileName := fileHeader.Filename
-	id, err := c.services.InsertIntoFileData(rows, fileName, data, principal)
+
+	fileName := getFileName(params)
+	id, err := c.services.InsertIntoFileData(rows, fileName, header, principal)
+	utils.LogErrorIfAny("Error while adding entry to table FileData : %v", err)
 	successFailureCount := map[string]uint{
 		"success":   uint(totalSuccess),
 		"error":     uint(totalErrors),
 		"totalRows": uint(totalSuccess + totalErrors),
 		"ID":        id,
 	}
-	response.SetPayload(successFailureCount)
-	utils.LogErrorIfAny("Error while adding entry to table FileData : %v", err)
+	response := upload_and_create_records.NewPostV1SchemaNameUploadOK().WithPayload(successFailureCount)
 	return response
+}
+
+func getFileName(params upload_and_create_records.PostV1SchemaNameUploadParams) string {
+	_, fileHeader, err := params.HTTPRequest.FormFile("file")
+	utils.LogErrorIfAny("Error retrieving file from request : %v", err)
+	return fileHeader.Filename
 }

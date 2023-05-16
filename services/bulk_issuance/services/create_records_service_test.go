@@ -36,32 +36,14 @@ func Test_AddEntryForDbFilesToDatabase(t *testing.T) {
 		},
 	}
 	fileName := "temp.csv"
-	var data Scanner = Scanner{
-		Head: map[string]int{
-			"col1": 1,
-			"col2": 2,
-			"col3": 3,
-		},
-	}
+
 	principal := models.JWTClaimBody{
 		UserID:            "1",
 		PreferredUsername: "Temp",
 	}
-	response, _ := mockService.InsertIntoFileData(rows, fileName, data, &principal)
+	response, _ := mockService.InsertIntoFileData(rows, fileName, "col1,col2,col3", &principal)
 	log.Infof("Response : %v", response)
 	expected := uint(1)
-	assert := assert.New(t)
-	assert.Equal(expected, response)
-}
-
-func Test_getHeaders(t *testing.T) {
-	head := map[string]int{
-		"col1": 1,
-		"col2": 2,
-		"col3": 3,
-	}
-	expected := "col1,col2,col3"
-	response := getHeaders(head)
 	assert := assert.New(t)
 	assert.Equal(expected, response)
 }
@@ -81,9 +63,8 @@ func Test_createReqBody(t *testing.T) {
 		"col2": "row12",
 		"col3": "row13",
 	}
-	expectedBytes, _ := json.Marshal(expectedJson)
 	assert := assert.New(t)
-	assert.Equal(expectedBytes, createReqBodyAsBytes(properties, &data))
+	assert.Equal(expectedJson, createSchemaRequest(properties, data.Row, data.Head))
 }
 
 type RoundTripFunc func(req *http.Request) *http.Response
@@ -106,11 +87,8 @@ func Test_createSingleRecord(t *testing.T) {
 		"col2": "row12",
 		"col3": "row13",
 	}
-	header := http.Header{
-		"Authorization": []string{"Bearer asd"},
-	}
-	bytes, _ := json.Marshal(jsonBody)
-	response, _ := createSingleRecord(vcName, bytes, header)
+
+	response, _ := callRegistryAPI(vcName, jsonBody, "Bearer asd")
 	assert := assert.New(t)
 	assert.Equal(response.StatusCode, 200)
 }
@@ -136,16 +114,10 @@ func Test_appendErrorsToCurrentRow(t *testing.T) {
 	res := &http.Response{
 		Body: NopCloser(b),
 	}
-	data := Scanner{
-		Head: map[string]int{
-			"col1": 0,
-			"col2": 1,
-			"col3": 2,
-		},
-	}
+
 	currRow := []string{"row11", "row12", "row13"}
 	expectedRow := []string{"row11", "row12", "row13", ""}
-	actualRow := appendErrorsToCurrentRow(res, &data, 3, currRow)
+	actualRow := appendErrorsToCurrentRow(res, currRow)
 	assert := assert.New(t)
 	assert.Equal(expectedRow, actualRow)
 }
