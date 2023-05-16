@@ -6,12 +6,9 @@ package upload_and_create_records
 // Editing this file might prove futile when you re-run the generate command
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
 
 	"bulk_issuance/swagger_gen/models"
 )
@@ -71,41 +68,4 @@ func (o *PostV1SchemaNameUpload) ServeHTTP(rw http.ResponseWriter, r *http.Reque
 	res := o.Handler.Handle(Params, principal) // actually handle the request
 	o.Context.Respond(rw, r, route.Produces, route, res)
 
-}
-
-// PostV1SchemaNameUploadBadRequestBody post v1 schema name upload bad request body
-//
-// swagger:model PostV1SchemaNameUploadBadRequestBody
-type PostV1SchemaNameUploadBadRequestBody struct {
-
-	// message
-	Message string `json:"message,omitempty"`
-}
-
-// Validate validates this post v1 schema name upload bad request body
-func (o *PostV1SchemaNameUploadBadRequestBody) Validate(formats strfmt.Registry) error {
-	return nil
-}
-
-// ContextValidate validates this post v1 schema name upload bad request body based on context it is used
-func (o *PostV1SchemaNameUploadBadRequestBody) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (o *PostV1SchemaNameUploadBadRequestBody) MarshalBinary() ([]byte, error) {
-	if o == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(o)
-}
-
-// UnmarshalBinary interface implementation
-func (o *PostV1SchemaNameUploadBadRequestBody) UnmarshalBinary(b []byte) error {
-	var res PostV1SchemaNameUploadBadRequestBody
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*o = res
-	return nil
 }

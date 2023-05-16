@@ -32,7 +32,11 @@ type definition struct {
 var Config = definition{}
 
 func (d definition) GetRoles() []string {
-	return strings.Split(d.Roles, ",")
+	if len(strings.Trim(d.Roles, " ")) > 0 {
+		return strings.Split(d.Roles, ",")
+	} else {
+		return []string{}
+	}
 }
 
 func Initialize(fileName string) {

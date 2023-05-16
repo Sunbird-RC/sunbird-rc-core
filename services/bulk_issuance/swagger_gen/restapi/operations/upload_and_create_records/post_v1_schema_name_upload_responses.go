@@ -69,7 +69,7 @@ type PostV1SchemaNameUploadBadRequest struct {
 	/*
 	  In: Body
 	*/
-	Payload *PostV1SchemaNameUploadBadRequestBody `json:"body,omitempty"`
+	Payload *models.ErrorPayload `json:"body,omitempty"`
 }
 
 // NewPostV1SchemaNameUploadBadRequest creates PostV1SchemaNameUploadBadRequest with default headers values
@@ -79,13 +79,13 @@ func NewPostV1SchemaNameUploadBadRequest() *PostV1SchemaNameUploadBadRequest {
 }
 
 // WithPayload adds the payload to the post v1 schema name upload bad request response
-func (o *PostV1SchemaNameUploadBadRequest) WithPayload(payload *PostV1SchemaNameUploadBadRequestBody) *PostV1SchemaNameUploadBadRequest {
+func (o *PostV1SchemaNameUploadBadRequest) WithPayload(payload *models.ErrorPayload) *PostV1SchemaNameUploadBadRequest {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the post v1 schema name upload bad request response
-func (o *PostV1SchemaNameUploadBadRequest) SetPayload(payload *PostV1SchemaNameUploadBadRequestBody) {
+func (o *PostV1SchemaNameUploadBadRequest) SetPayload(payload *models.ErrorPayload) {
 	o.Payload = payload
 }
 
@@ -114,7 +114,7 @@ type PostV1SchemaNameUploadNotFound struct {
 	/*
 	  In: Body
 	*/
-	Payload string `json:"body,omitempty"`
+	Payload *models.ErrorPayload `json:"body,omitempty"`
 }
 
 // NewPostV1SchemaNameUploadNotFound creates PostV1SchemaNameUploadNotFound with default headers values
@@ -124,13 +124,13 @@ func NewPostV1SchemaNameUploadNotFound() *PostV1SchemaNameUploadNotFound {
 }
 
 // WithPayload adds the payload to the post v1 schema name upload not found response
-func (o *PostV1SchemaNameUploadNotFound) WithPayload(payload string) *PostV1SchemaNameUploadNotFound {
+func (o *PostV1SchemaNameUploadNotFound) WithPayload(payload *models.ErrorPayload) *PostV1SchemaNameUploadNotFound {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the post v1 schema name upload not found response
-func (o *PostV1SchemaNameUploadNotFound) SetPayload(payload string) {
+func (o *PostV1SchemaNameUploadNotFound) SetPayload(payload *models.ErrorPayload) {
 	o.Payload = payload
 }
 
@@ -138,9 +138,11 @@ func (o *PostV1SchemaNameUploadNotFound) SetPayload(payload string) {
 func (o *PostV1SchemaNameUploadNotFound) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.WriteHeader(404)
-	payload := o.Payload
-	if err := producer.Produce(rw, payload); err != nil {
-		panic(err) // let the recovery middleware deal with this
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
 	}
 }
 
@@ -157,7 +159,7 @@ type PostV1SchemaNameUploadInternalServerError struct {
 	/*
 	  In: Body
 	*/
-	Payload string `json:"body,omitempty"`
+	Payload *models.ErrorPayload `json:"body,omitempty"`
 }
 
 // NewPostV1SchemaNameUploadInternalServerError creates PostV1SchemaNameUploadInternalServerError with default headers values
@@ -167,13 +169,13 @@ func NewPostV1SchemaNameUploadInternalServerError() *PostV1SchemaNameUploadInter
 }
 
 // WithPayload adds the payload to the post v1 schema name upload internal server error response
-func (o *PostV1SchemaNameUploadInternalServerError) WithPayload(payload string) *PostV1SchemaNameUploadInternalServerError {
+func (o *PostV1SchemaNameUploadInternalServerError) WithPayload(payload *models.ErrorPayload) *PostV1SchemaNameUploadInternalServerError {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the post v1 schema name upload internal server error response
-func (o *PostV1SchemaNameUploadInternalServerError) SetPayload(payload string) {
+func (o *PostV1SchemaNameUploadInternalServerError) SetPayload(payload *models.ErrorPayload) {
 	o.Payload = payload
 }
 
@@ -181,8 +183,10 @@ func (o *PostV1SchemaNameUploadInternalServerError) SetPayload(payload string) {
 func (o *PostV1SchemaNameUploadInternalServerError) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.WriteHeader(500)
-	payload := o.Payload
-	if err := producer.Produce(rw, payload); err != nil {
-		panic(err) // let the recovery middleware deal with this
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
 	}
 }

@@ -58,12 +58,11 @@ func RoleAuthorizer(bearerToken string, swaggerRoles []string) (*models.JWTClaim
 	return nil, errors.New("user unauthorized to perform operation")
 }
 
-func getExpectedRoles(swaggerRoles []string) (roles []string) {
-	roles = swaggerRoles
-	if len(config.Config.GetRoles()) > 0 {
-		roles = config.Config.GetRoles()
+func getExpectedRoles(swaggerRoles []string) []string {
+	if configRoles := config.Config.GetRoles(); len(configRoles) > 0 {
+		return configRoles
 	}
-	return roles
+	return swaggerRoles
 }
 
 func getClaimBody(bearerToken string) (*CustomJWTClaimBody, error) {

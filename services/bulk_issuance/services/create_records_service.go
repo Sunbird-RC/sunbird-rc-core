@@ -6,12 +6,9 @@ import (
 	"bulk_issuance/swagger_gen/models"
 	"bulk_issuance/utils"
 	"bytes"
-	"encoding/csv"
 	"encoding/json"
 	"io"
 	"net/http"
-	"sort"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -19,20 +16,14 @@ import (
 
 var client = &http.Client{}
 
-type Scanner struct {
-	Reader *csv.Reader
-	Head   map[string]int
-	Row    []string
-}
-
 type Services struct {
 	repo db.IRepo
 }
 
 type IService interface {
 	GetSampleCSVForSchema(schemaName string) (*bytes.Buffer, error)
-	InsertIntoFileData(rows [][]string, fileName string, data Scanner, principal *models.JWTClaimBody) (uint, error)
-	ProcessDataFromCSV(data *Scanner, header http.Header, vcName string) (int, int, [][]string, error)
+	InsertIntoFileData(rows [][]string, fileName string, header string, principal *models.JWTClaimBody) (uint, error)
+	ProcessDataFromCSV(header http.Header, vcName string, file io.Reader) (int, int, [][]string, string, error)
 	GetCSVReport(id int, userId string) (*string, *bytes.Buffer, error)
 	GetUploadedFiles(userId string, limit *int64, offset *int64) ([]*models.UploadedFileDTO, error)
 }
@@ -44,13 +35,13 @@ func Init(repository db.IRepo) IService {
 	return &services
 }
 
-func (services *Services) InsertIntoFileData(rows [][]string, fileName string, data Scanner, principal *models.JWTClaimBody) (uint, error) {
+func (services *Services) InsertIntoFileData(rows [][]string, fileName string, header string, principal *models.JWTClaimBody) (uint, error) {
 	log.Info("adding entry to dbFileData")
 	rowBytes, err := json.Marshal(rows)
 	utils.LogErrorIfAny("Error while marshalling data for database : %v", err)
 	fileUpload := db.UploadedFile{
 		Filename:     fileName,
-		Headers:      getHeaders(data.Head),
+		Headers:      header,
 		TotalRecords: len(rows),
 		RowData:      rowBytes,
 		UserID:       principal.UserID,
@@ -61,34 +52,29 @@ func (services *Services) InsertIntoFileData(rows [][]string, fileName string, d
 	return services.repo.Insert(&fileUpload)
 }
 
-func (o *Scanner) Scan() bool {
-	a, e := o.Reader.Read()
-	if e != nil {
-		log.Errorf("Parsing error : %v", e)
+func (services *Services) ProcessDataFromCSV(header http.Header, schemaName string, file io.Reader) (int, int, [][]string, string, error) {
+	csvScanner, err := NewScanner(file)
+	if err != nil {
+		return 0, 0, nil, "", err
 	}
-	o.Row = a
-	return e == nil
-}
-
-func (services *Services) ProcessDataFromCSV(data *Scanner, header http.Header, vcName string) (int, int, [][]string, error) {
 	var (
-		totalSuccess int = 0
-		totalErrors  int = 0
+		totalSuccess = 0
+		totalErrors  = 0
 	)
 	rows := make([][]string, 0)
 	log.Info("processing all rows from csv")
-	properties, err := GetSchemaProperties(vcName)
+	properties, err := GetSchemaProperties(schemaName)
 	if err != nil {
-		return 0, 0, rows, err
+		return 0, 0, rows, "", err
 	}
-	for data.Scan() {
-		reqBodyAsBytes := createReqBodyAsBytes(properties, data)
-		res, err := createSingleRecord(vcName, reqBodyAsBytes, header)
+	for csvScanner.Scan() {
+		currRow := csvScanner.Row
+		schemaRequest := createSchemaRequest(properties, currRow, csvScanner.Head)
+		res, err := callRegistryAPI(schemaName, schemaRequest, header["Authorization"][0])
 		utils.LogErrorIfAny("Error in creating a record : %v", err)
-		currRow := data.Row
 		if res.StatusCode != 200 {
-			lastColIndex := len(properties) + 1
-			currRow = appendErrorsToCurrentRow(res, data, lastColIndex, currRow)
+			csvScanner.appendHeader("Errors")
+			currRow = appendErrorsToCurrentRow(res, currRow)
 			totalErrors += 1
 		} else {
 			totalSuccess += 1
@@ -96,43 +82,31 @@ func (services *Services) ProcessDataFromCSV(data *Scanner, header http.Header, 
 		rows = append(rows, currRow)
 	}
 	log.Info("processed all rows from csv")
-	return totalSuccess, totalErrors, rows, nil
+	return totalSuccess, totalErrors, rows, csvScanner.getHeaderAsString(), nil
 }
 
-func createSingleRecord(vcName string, bytes []byte, header http.Header) (*http.Response, error) {
+func callRegistryAPI(schemaName string, schemaRequest map[string]interface{}, token string) (*http.Response, error) {
 	methodName := "POST"
-	req, err := http.NewRequest(methodName, config.Config.Registry.BaseUrl+"api/v1/"+vcName, strings.NewReader(string(bytes)))
-	utils.LogErrorIfAny("Error in creating request %v : %v", err, config.Config.Registry.BaseUrl+"api/v1/"+vcName)
-	req.Header.Set("Authorization", header["Authorization"][0])
+	postBody, err := json.Marshal(schemaRequest)
+	utils.LogErrorIfAny("Error in creating request %v : %v", err, config.Config.Registry.BaseUrl+"api/v1/"+schemaName)
+	req, err := http.NewRequest(methodName, config.Config.Registry.BaseUrl+"api/v1/"+schemaName, bytes.NewBuffer(postBody))
+	utils.LogErrorIfAny("Error in creating request %v : %v", err, config.Config.Registry.BaseUrl+"api/v1/"+schemaName)
+	req.Header.Set("Authorization", token)
 	req.Header.Set("Content-Type", "application/json")
 	return client.Do(req)
 }
 
-func createReqBodyAsBytes(properties []string, data *Scanner) []byte {
+func createSchemaRequest(properties []string, row []string, head map[string]int) map[string]interface{} {
 	jsonBody := make(map[string]interface{})
-	for _, k := range properties {
-		jsonBody[k] = data.Row[data.Head[k]]
+	for _, property := range properties {
+		jsonBody[property] = row[head[property]]
 	}
-	bytes, err := json.Marshal(jsonBody)
-	utils.LogErrorIfAny("Error while marshalling data for creating req body : %v", err)
-	return bytes
+	return jsonBody
 }
 
-func getHeaders(head map[string]int) string {
-	headers := make([]string, 0)
-	for k := range head {
-		headers = append(headers, k)
-	}
-	sort.SliceStable(headers, func(i, j int) bool {
-		return head[headers[i]] < head[headers[j]]
-	})
-	return strings.Join(headers, ",")
-}
-
-func appendErrorsToCurrentRow(res *http.Response, data *Scanner, lastColIndex int, currRow []string) []string {
+func appendErrorsToCurrentRow(res *http.Response, currRow []string) []string {
 	resBody, err := io.ReadAll(res.Body)
-	utils.LogErrorIfAny("Error while reading error reponse from adding single record : %v", err)
-	data.Head["Errors"] = lastColIndex
+	utils.LogErrorIfAny("Error while reading error response from adding single record : %v", err)
 	var responseMap map[string]interface{}
 	err = json.Unmarshal(resBody, &responseMap)
 	if err != nil {

@@ -228,24 +228,19 @@ func init() {
           "400": {
             "description": "Bad Request",
             "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/ErrorPayload"
             }
           },
           "404": {
             "description": "Not found",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/ErrorPayload"
             }
           },
           "500": {
             "description": "Internal Server Error",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/ErrorPayload"
             }
           }
         }
@@ -587,24 +582,19 @@ func init() {
           "400": {
             "description": "Bad Request",
             "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/ErrorPayload"
             }
           },
           "404": {
             "description": "Not found",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/ErrorPayload"
             }
           },
           "500": {
             "description": "Internal Server Error",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/ErrorPayload"
             }
           }
         }
