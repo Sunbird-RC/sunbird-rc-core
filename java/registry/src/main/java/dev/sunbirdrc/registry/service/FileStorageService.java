@@ -141,11 +141,14 @@ public class FileStorageService implements HealthIndicator {
 				) != null;
 
 				if (objectExists) {
-					save(file.getInputStream(),objectName);
+					save(file.getInputStream(), objectName);
 					documentsResponse.addDocumentLocation(objectName);
-					return documentsResponse;
 				}
-			} catch (Exception e) {
+				else {
+						documentsResponse.addError(file.getOriginalFilename() +" not found");
+					}
+
+				} catch (Exception e) {
 				documentsResponse.addError(file.getOriginalFilename());
 				logger.error("Error has occurred while trying to save the file {}", fileName);
 				e.printStackTrace();
