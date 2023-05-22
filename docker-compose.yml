@@ -34,7 +34,7 @@ services:
   registry:
     image: dockerhub/sunbird-rc-core:${RELEASE_VERSION}
     volumes:
-      - ${PWD}/${SCHEMA_DIR-java/registry/src/main/resources/public/_schemas}:/home/sunbirdrc/config/public/_schemas
+     - /home/ttpl-rt-49/sunbird_rc_core/demo-education-registry/schemas:/home/sunbirdrc/config/public/_schemas
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
@@ -51,6 +51,7 @@ services:
       - sunbird_sso_admin_client_secret=${KEYCLOAK_SECRET}
       - claims_url=http://claim-ms:8082
       - sign_url=http://certificate-signer:8079/sign
+      - verify_url=http://certificate-signer:8079/verify
       - sign_health_check_url=http://certificate-signer:8079/health
       - signature_enabled=true
       - pdf_url=http://certificate-api:8078/api/v1/certificatePDF
@@ -88,7 +89,7 @@ services:
   keycloak:
     image: dockerhub/sunbird-rc-keycloak:latest
     volumes:
-      - ${PWD}/${KEYCLOAK_IMPORT_DIR-imports}:/opt/jboss/keycloak/imports
+    - ./imports:/opt/jboss/keycloak/imports
     environment:
       - KEYCLOAK_LOGO=https://svgshare.com/i/hCs.svg
       - DB_VENDOR=postgres
