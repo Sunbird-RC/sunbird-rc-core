@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	newbytes "bytes"
 
+	"github.com/jarcoal/httpmock"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -120,4 +122,106 @@ func Test_appendErrorsToCurrentRow(t *testing.T) {
 	actualRow := appendErrorsToCurrentRow(res, currRow)
 	assert := assert.New(t)
 	assert.Equal(expectedRow, actualRow)
+}
+
+func Test_ProcessDataFromCSVForSuccess(t *testing.T) {
+	file := io.NopCloser(strings.NewReader("col1,col2\nrow11,row12"))
+	header := http.Header{
+		"Authorization": []string{"Bearer abc"},
+	}
+	definitions := map[string]interface{}{
+		"definitions": map[string]interface{}{
+			"Temp": map[string]interface{}{
+				"properties": map[string]interface{}{
+					"col1": map[string]interface{}{
+						"type": "string",
+					},
+					"col2": map[string]interface{}{
+						"type": "string",
+					},
+				},
+			},
+		},
+	}
+	httpmock.Activate()
+	jsonResponder, _ := httpmock.NewJsonResponder(200, definitions)
+	httpmock.RegisterResponder("GET", "api/docs/swagger.json",
+		jsonResponder)
+	success := map[string]interface{}{
+		"id":  "sunbird-rc.registry.create",
+		"ver": "1.0",
+		"ets": 1684827230790,
+		"params": map[string]interface{}{
+			"resmsgid": "",
+			"msgid":    "b7af768b-f636-4877-9c98-2dbbfce4eead",
+			"err":      "",
+			"status":   "SUCCESSFUL",
+			"errmsg":   "",
+		},
+		"responseCode": "OK",
+		"result": map[string]interface{}{
+			"Temp": map[string]interface{}{
+				"osid": "1-be03d210-db98-45ac-a3a8-95f45e826f0d",
+			},
+		},
+	}
+	jsonResponder, _ = httpmock.NewJsonResponder(200, success)
+	httpmock.RegisterResponder("POST", "api/v1/Temp", jsonResponder)
+	schemaName := "Temp"
+	services := Services{}
+	totalSuccess, totalErrors, rows, headers, error := services.ProcessDataFromCSV(header, schemaName, file)
+	assert := assert.New(t)
+	assert.Equal(1, totalSuccess)
+	assert.Equal(0, totalErrors)
+	assert.Equal(nil, error)
+	assert.Equal([][]string{{"row11", "row12"}}, rows)
+	assert.Equal("col1,col2", headers)
+}
+
+func Test_ProcessDataFromCSVForError(t *testing.T) {
+	file := io.NopCloser(strings.NewReader("col1,col2\nrow11,row12"))
+	header := http.Header{
+		"Authorization": []string{"Bearer abc"},
+	}
+	definitions := map[string]interface{}{
+		"definitions": map[string]interface{}{
+			"Temp": map[string]interface{}{
+				"properties": map[string]interface{}{
+					"col1": map[string]interface{}{
+						"type": "string",
+					},
+					"col2": map[string]interface{}{
+						"type": "string",
+					},
+				},
+			},
+		},
+	}
+	httpmock.Activate()
+	jsonResponder, _ := httpmock.NewJsonResponder(200, definitions)
+	httpmock.RegisterResponder("GET", "api/docs/swagger.json",
+		jsonResponder)
+	failure := map[string]interface{}{
+		"id":  "sunbird-rc.registry.create",
+		"ver": "1.0",
+		"ets": 1684827230790,
+		"params": map[string]interface{}{
+			"resmsgid": "",
+			"msgid":    "b7af768b-f636-4877-9c98-2dbbfce4eead",
+			"err":      "",
+			"status":   "UNSUCCESSFUL",
+			"errmsg":   "Some Error Happened",
+		},
+	}
+	jsonResponder, _ = httpmock.NewJsonResponder(400, failure)
+	httpmock.RegisterResponder("POST", "api/v1/Temp", jsonResponder)
+	schemaName := "Temp"
+	services := Services{}
+	totalSuccess, totalErrors, rows, headers, error := services.ProcessDataFromCSV(header, schemaName, file)
+	assert := assert.New(t)
+	assert.Equal(0, totalSuccess)
+	assert.Equal(1, totalErrors)
+	assert.Equal(nil, error)
+	assert.Equal([][]string{{"row11", "row12", "Some Error Happened"}}, rows)
+	assert.Equal("col1,col2,Errors", headers)
 }
