@@ -6,7 +6,7 @@ import (
 )
 
 func (services *Services) GetUploadedFiles(userId string, limit *int64, offset *int64) ([]*models.UploadedFileDTO, error) {
-	filesUploaded, err := services.repo.GetAllFileDataForUserID(userId, db.Pagination{
+	filesUploaded, err := services.repo.GetAllUploadedFilesByUserId(userId, db.Pagination{
 		Limit:  *limit,
 		Offset: *offset,
 	})

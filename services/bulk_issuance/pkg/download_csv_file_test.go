@@ -16,7 +16,7 @@ type MockRepository struct {
 	db.Repository
 }
 
-func (mock *MockRepository) GetFileDataByIdAndUser(_ int, userId string) (*db.UploadedFile, error) {
+func (mock *MockRepository) GetUploadedFileByIdAndUserId(_ int, userId string) (*db.UploadedFile, error) {
 	var file db.UploadedFile
 	rows := [][]string{{"row11"}, {"row12"}, {"row13"}}
 	headers := "col1,col2,col3"

@@ -8,7 +8,7 @@ import (
 )
 
 func (services *Services) GetCSVReport(id int, userId string) (*string, *bytes.Buffer, error) {
-	file, err := services.repo.GetFileDataByIdAndUser(id, userId)
+	file, err := services.repo.GetUploadedFileByIdAndUserId(id, userId)
 	if err != nil {
 		return nil, nil, err
 	}

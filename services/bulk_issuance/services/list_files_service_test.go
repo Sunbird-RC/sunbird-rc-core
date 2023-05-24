@@ -23,7 +23,7 @@ func createTempFile() db.UploadedFile {
 	return fileData
 }
 
-func (mockRepo *MockRepository) GetAllFileDataForUserID(userId string, pagination db.Pagination) ([]db.UploadedFile, error) {
+func (mockRepo *MockRepository) GetAllUploadedFilesByUserId(userId string, pagination db.Pagination) ([]db.UploadedFile, error) {
 	fileData := createTempFile()
 	return []db.UploadedFile{fileData}, nil
 }
