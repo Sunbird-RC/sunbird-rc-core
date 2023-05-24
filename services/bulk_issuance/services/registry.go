@@ -11,8 +11,8 @@ import (
 	"sort"
 )
 
-func GetSchemaProperties(key string) ([]string, error) {
-	schemaProperties, err := getSchemaProperties(key)
+func getSchemaPropertyNames(schemaName string) ([]string, error) {
+	schemaProperties, err := getSchemaProperties(schemaName)
 	if err == nil {
 		properties := make([]string, 0)
 		for k := range schemaProperties {
