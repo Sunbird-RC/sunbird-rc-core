@@ -49,7 +49,7 @@ func Test_createRecords(t *testing.T) {
 		},
 		SchemaName: "dummySchema",
 	}
-	actualResponse := controllers.createRecords(params, nil)
+	actualResponse := controllers.createRecordsForSchema(params, nil)
 	assert := assert.New(t)
 	assert.Equal(expectedResponse, actualResponse)
 }
