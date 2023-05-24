@@ -27,6 +27,6 @@ func TestReturnAllFilesForThisUser(t *testing.T) {
 	principal := models.JWTClaimBody{
 		UserID: "123",
 	}
-	response := controllers.listFiles(params, &principal)
+	response := controllers.getUserUploadedFiles(params, &principal)
 	log.Infof("%v", response)
 }

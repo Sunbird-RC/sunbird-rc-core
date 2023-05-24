@@ -43,7 +43,7 @@ func Test_downloadReportFile(t *testing.T) {
 	}
 	params := download_file_report.GetV1IDReportParams{ID: 1}
 	principal := models.JWTClaimBody{UserID: "1"}
-	actualResponse := controllers.downloadReportFile(params, &principal)
+	actualResponse := controllers.getCSVReportById(params, &principal)
 	expectedResponse := download_file_report.NewGetV1IDReportOK()
 	data := [][]string{{"col1", "col2", "col3"}, {"row11"}, {"row12"}, {"row13"}}
 	b := new(bytes.Buffer)

@@ -22,8 +22,8 @@ func Init(services services.IService) {
 }
 
 func SetupHandlers(api *operations.BulkIssuanceAPI) {
-	api.SampleTemplateGetV1SchemaNameSampleCsvHandler = sample_template.GetV1SchemaNameSampleCsvHandlerFunc(controllers.downloadSampleFile)
-	api.UploadedFilesGetV1UploadsHandler = uploaded_files.GetV1UploadsHandlerFunc(controllers.listFiles)
-	api.DownloadFileReportGetV1IDReportHandler = download_file_report.GetV1IDReportHandlerFunc(controllers.downloadReportFile)
-	api.UploadAndCreateRecordsPostV1SchemaNameUploadHandler = upload_and_create_records.PostV1SchemaNameUploadHandlerFunc(controllers.createRecords)
+	api.SampleTemplateGetV1SchemaNameSampleCsvHandler = sample_template.GetV1SchemaNameSampleCsvHandlerFunc(controllers.getSampleCSVForSchema)
+	api.UploadedFilesGetV1UploadsHandler = uploaded_files.GetV1UploadsHandlerFunc(controllers.getUserUploadedFiles)
+	api.DownloadFileReportGetV1IDReportHandler = download_file_report.GetV1IDReportHandlerFunc(controllers.getCSVReportById)
+	api.UploadAndCreateRecordsPostV1SchemaNameUploadHandler = upload_and_create_records.PostV1SchemaNameUploadHandlerFunc(controllers.createRecordsForSchema)
 }

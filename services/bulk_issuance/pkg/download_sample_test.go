@@ -29,7 +29,7 @@ func Test_sampleCSV(t *testing.T) {
 		&MockService{},
 	}
 	params := sample_template.GetV1SchemaNameSampleCsvParams{SchemaName: "Temp"}
-	actualResp := controllers.downloadSampleFile(params, nil)
+	actualResp := controllers.getSampleCSVForSchema(params, nil)
 	expectedResp := &sample_template.GetV1SchemaNameSampleCsvOK{}
 	csvData := make([][]string, 0)
 	csvData = append(csvData, []string{"col1", "col2", "col3"})
