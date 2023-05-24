@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func (mockRepo *MockRepository) GetFileDataByIdAndUser(id int, userId string) (*db.UploadedFile, error) {
+func (mockRepo *MockRepository) GetUploadedFileByIdAndUserId(id int, userId string) (*db.UploadedFile, error) {
 	rows := [][]string{{
 		"row11", "row12", "row13",
 	}}

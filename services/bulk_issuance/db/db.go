@@ -14,9 +14,9 @@ import (
 )
 
 type IRepo interface {
-	GetFileDataByIdAndUser(id int, userId string) (*UploadedFile, error)
+	GetUploadedFileByIdAndUserId(id int, userId string) (*UploadedFile, error)
 	Insert(data *UploadedFile) (uint, error)
-	GetAllFileDataForUserID(userId string, pagination Pagination) ([]UploadedFile, error)
+	GetAllUploadedFilesByUserId(userId string, pagination Pagination) ([]UploadedFile, error)
 }
 
 type Repository struct {
@@ -68,7 +68,7 @@ func Init() IRepo {
 	return &repo
 }
 
-func (repo *Repository) GetFileDataByIdAndUser(id int, userId string) (*UploadedFile, error) {
+func (repo *Repository) GetUploadedFileByIdAndUserId(id int, userId string) (*UploadedFile, error) {
 	filesUpload := &UploadedFile{}
 	log.Infof("Getting file data with id : %v", id)
 	result := repo.db.First(&filesUpload, "id=? AND user_id=?", id, userId)
@@ -86,7 +86,7 @@ func (repo *Repository) Insert(data *UploadedFile) (uint, error) {
 	return data.ID, nil
 }
 
-func (repo *Repository) GetAllFileDataForUserID(userId string, pagination Pagination) ([]UploadedFile, error) {
+func (repo *Repository) GetAllUploadedFilesByUserId(userId string, pagination Pagination) ([]UploadedFile, error) {
 	var files []UploadedFile
 	log.Info("Getting all uploaded files")
 	if err := repo.db.
