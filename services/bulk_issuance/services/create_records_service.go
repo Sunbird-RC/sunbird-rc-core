@@ -63,7 +63,7 @@ func (services *Services) ProcessDataFromCSV(header http.Header, schemaName stri
 	)
 	rows := make([][]string, 0)
 	log.Info("processing all rows from csv")
-	properties, err := GetSchemaProperties(schemaName)
+	properties, err := getSchemaPropertyNames(schemaName)
 	if err != nil {
 		return 0, 0, rows, "", err
 	}
