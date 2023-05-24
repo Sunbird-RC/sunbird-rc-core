@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type definition struct {
+type config struct {
 	Registry struct {
 		BaseUrl string `env:"REGISTRY_BASE_URL" yaml:"baseUrl" default:"http://localhost:8081/"`
 	}
@@ -29,11 +29,11 @@ type definition struct {
 	Roles    string `env:"ROLES" yaml:"roles" default:""`
 }
 
-var Config = definition{}
+var Config = config{}
 
-func (d definition) GetRoles() []string {
-	if len(strings.Trim(d.Roles, " ")) > 0 {
-		return strings.Split(d.Roles, ",")
+func (c config) GetRoles() []string {
+	if len(strings.Trim(c.Roles, " ")) > 0 {
+		return strings.Split(c.Roles, ",")
 	} else {
 		return []string{}
 	}
