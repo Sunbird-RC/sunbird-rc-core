@@ -13,6 +13,7 @@ build: java/registry/target/registry.jar
 	make -C deps/keycloak build
 	make -C services/public-key-service docker
 	make -C services/context-proxy-service docker
+	make -C services/bulk_issuance docker
 	docker build -t dockerhub/sunbird-rc-nginx .
 
 java/registry/target/registry.jar: $(SOURCES)
@@ -62,6 +63,7 @@ test:
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
+	make -C services/bulk_issuance test
 
 clean:
 	@rm -rf target || true
