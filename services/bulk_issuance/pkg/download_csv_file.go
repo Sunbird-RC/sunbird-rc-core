@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *Controllers) downloadReportFile(params download_file_report.GetV1IDReportParams, principal *models.JWTClaimBody) middleware.Responder {
+func (c *Controllers) getCSVReportById(params download_file_report.GetV1IDReportParams, principal *models.JWTClaimBody) middleware.Responder {
 	log.Infof("Downloading report file with ID : %v", params.ID)
 	response := download_file_report.NewGetV1IDReportOK()
 	fileName, fileBytes, err := c.services.GetCSVReport(int(params.ID), principal.UserID)

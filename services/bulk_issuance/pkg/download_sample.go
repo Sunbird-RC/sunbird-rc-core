@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *Controllers) downloadSampleFile(params sample_template.GetV1SchemaNameSampleCsvParams, _ *models.JWTClaimBody) middleware.Responder {
+func (c *Controllers) getSampleCSVForSchema(params sample_template.GetV1SchemaNameSampleCsvParams, _ *models.JWTClaimBody) middleware.Responder {
 	log.Infof("Downloading sample file with name %v", params.SchemaName+".csv")
 	response := sample_template.NewGetV1SchemaNameSampleCsvOK()
 	sampleCSVBytes, err := c.services.GetSampleCSVForSchema(params.SchemaName)

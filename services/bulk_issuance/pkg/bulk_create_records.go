@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *Controllers) createRecords(params upload_and_create_records.PostV1SchemaNameUploadParams,
+func (c *Controllers) createRecordsForSchema(params upload_and_create_records.PostV1SchemaNameUploadParams,
 	principal *models.JWTClaimBody) middleware.Responder {
 	log.Info("Creating records")
 	fileBytes, err := io.ReadAll(params.File)
