@@ -262,6 +262,8 @@ services:
       - "6379:6379"
   digilocker-certificate-api:
     image: dockerhub/sunbird-rc-digilocker-certificate-api
+    volumes:
+      - ${PWD}/services/digilocker-certificate-api/config/:/go/config/
     ports:
       - "8087:8087"
     environment:
