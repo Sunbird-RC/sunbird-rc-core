@@ -1,10 +1,17 @@
 package config
 
-import "github.com/jinzhu/configor"
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/jinzhu/configor"
+)
 
 var Config = struct {
 	Keycloak struct {
-		TokenURL     string `env:"KEYCLOAK_TOKEN_URL" default:"http://localhost/token"`
+		TokenURL     string `env:"KEYCLOAK_TOKEN_URL" default:"http://keycloak:8080/auth/realms/sunbird-rc/protocol/openid-connect/token"`
 		ClientId     string `env:"KEYCLOAK_CLIENT_ID" default:"admin-api"`
 		ClientSecret string `env:"KEYCLOAK_CLIENT_SECRET" default:"**"`
 	}
@@ -14,10 +21,7 @@ var Config = struct {
 		AuthHMACKey string `env:"DIGILOCKER_HMAC_AUTHKEY" default:"***"`
 	}
 	Registry struct {
-		URL            string `env:"REGISTRY_URL" default:"https://demo-education-registry.xiv.in/registry/"`
-		SchemaMapper   string `env:"SCHEMA_MAPPER" default:"{\"doctype\": \"Schema\"}"`
-		SearchBodyMapper   string `env:"SEARCH_BODY_MAPPER" default:"{\"Schema\": \"{\\\"filters\\\": {\\\"osid\\\": {\\\"eq\\\": \\\"{{.parameter1}}\\\"}}}\"}"`
-		TemplateMapper string `env:"TEMPLATE_MAPPER" default:"{\"doctype\": \"template\"}"`
+		URL           string `env:"REGISTRY_URL" default:"https://demo-education-registry.xiv.in/registry/"`
 	}
 	LogLevel string `env:"LOG_LEVEL" yaml:"log_level" default:"DEBUG"`
 	Host     string `env:"HOST" yaml:"host" default:"0.0.0.0"`
@@ -25,10 +29,23 @@ var Config = struct {
 	MODE     string `env:"MODE" yaml:"mode" default:"debug" `
 }{}
 
+var SchemaDocTypeMapper map[string]interface{}
+
 func Init() {
 	err := configor.Load(&Config, "./config/application-default.yml") //"config/application.yml"
 	if err != nil {
 		panic("Unable to read configurations")
 	}
-
+	jsonFile, err := os.Open("./config/docType.json")
+	if err != nil {
+		fmt.Printf("Error : %v", err)
+	}
+	str, err := io.ReadAll(jsonFile)
+	if err != nil {
+		fmt.Printf("Error occurred while reading json file :  %v", err)
+	}
+	if err := json.Unmarshal([]byte(str), &SchemaDocTypeMapper); err != nil {
+		fmt.Printf("Error Unmarshalling Json file: %v", err)
+	}
+	defer jsonFile.Close()
 }
