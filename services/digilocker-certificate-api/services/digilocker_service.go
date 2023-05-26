@@ -13,6 +13,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Map map[string]string
+
 type PullURIRequest struct {
 	XMLName    xml.Name `xml:"PullURIRequest"`
 	Text       string   `xml:",chardata"`
@@ -22,22 +24,30 @@ type PullURIRequest struct {
 	Txn        string   `xml:"txn,attr"`
 	OrgId      string   `xml:"orgId,attr"`
 	Format     string   `xml:"format,attr"`
-	DocDetails struct {
-		Text          string `xml:",chardata"`
-		DocType       string `xml:"DocType"`
-		DigiLockerId  string `xml:"DigiLockerId"`
-		UID           string `xml:"UID"`
-		FullName      string `xml:"FullName"`
-		DOB           string `xml:"DOB"`
-		Photo         string `xml:"Photo"`
-		TrackingId    string `xml:"tracking_id"`
-		Mobile        string `xml:"Mobile"`
-		CertificateId string `xml:"certificate_id"`
-		UDF1          string `xml:"UDF1"`
-		UDF2          string `xml:"UDF2"`
-		UDF3          string `xml:"UDF3"`
-		UDFn          string `xml:"UDFn"`
-	} `xml:"DocDetails"`
+	DocDetails Map      `xml:"DocDetails"`
+}
+
+func (docDetails *Map) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	docDetailsMap := make(map[string]string)
+	for {
+		t, _ := d.Token()
+		switch tt := t.(type) {
+		case xml.StartElement:
+			var val string
+			if err := d.DecodeElement(&val, &tt); err != nil {
+				log.Debug("Error while unmarshalling xml for Map : %v", err)
+			}
+			docDetailsMap[tt.Name.Local] = val
+
+		case xml.EndElement:
+			if tt.Name == start.Name {
+				*docDetails = docDetailsMap
+				return nil
+			}
+		}
+
+	}
+
 }
 
 type PullURIResponse struct {
@@ -87,17 +97,17 @@ func (service DigiLockerService) ProcessURIRequest(context *gin.Context) (any, e
 	validRequest := service.validateHMAC(actualHMAC, hmacFromRequest)
 	if validRequest {
 		var pullUriRequest PullURIRequest
+
 		err := xml.Unmarshal(rawData, &pullUriRequest)
 		if err != nil {
-			log.Error("Failed while unmarshalling request body", err)
+			log.Error("Failed while unmarshalling request body %v", err)
 			return nil, err
 		}
-		certificate, err := service.registryService.getCertificate(pullUriRequest.DocDetails.DocType,
-			pullUriRequest.DocDetails.CertificateId)
+		certificate, certificate_id, err := service.registryService.getCertificate(pullUriRequest)
 		if err != nil {
 			return nil, err
 		}
-		pullURIResponse := service.generatePullURIResponse(pullUriRequest, certificate)
+		pullURIResponse := service.generatePullURIResponse(pullUriRequest, certificate, certificate_id)
 		log.Debugf("pullURIResponse %v", pullURIResponse)
 		return pullURIResponse, nil
 	} else {
@@ -131,16 +141,16 @@ func (service DigiLockerService) getHMACFromRequest(context *gin.Context) ([]byt
 	return hmacSignByteArray, nil
 }
 
-func (service DigiLockerService) generatePullURIResponse(request PullURIRequest, certificate []byte) PullURIResponse {
+func (service DigiLockerService) generatePullURIResponse(request PullURIRequest, certificate []byte, certificate_id string) PullURIResponse {
 	response := PullURIResponse{}
 	response.ResponseStatus.Ts = request.Ts
 	response.ResponseStatus.Txn = request.Txn
-	response.DocDetails.URI = config.Config.Digilocker.IDPrefix + "-" + request.DocDetails.DocType + "-" + request.DocDetails.CertificateId
+	response.DocDetails.URI = config.Config.Digilocker.IDPrefix + "-" + request.DocDetails["DocType"] + "-" + certificate_id
 	response.ResponseStatus.Status = "1"
-	response.DocDetails.DocType = request.DocDetails.DocType
-	response.DocDetails.DigiLockerId = request.DocDetails.DigiLockerId
-	response.DocDetails.FullName = request.DocDetails.FullName
-	response.DocDetails.DOB = request.DocDetails.DOB
+	response.DocDetails.DocType = request.DocDetails["DocType"]
+	response.DocDetails.DigiLockerId = request.DocDetails["DigiLockerId"]
+	response.DocDetails.FullName = request.DocDetails["FullName"]
+	response.DocDetails.DOB = request.DocDetails["DOB"]
 	response.DocDetails.DocContent = base64.StdEncoding.EncodeToString(certificate)
 	return response
 }

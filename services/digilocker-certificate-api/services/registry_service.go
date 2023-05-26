@@ -5,8 +5,7 @@ import (
 	"digilocker-certificate-api/config"
 	"encoding/json"
 	"errors"
-	"html/template"
-	"strconv"
+	"text/template"
 
 	req "github.com/imroc/req/v3"
 	log "github.com/sirupsen/logrus"
@@ -23,19 +22,11 @@ type SearchResult struct {
 	Osid string `json:"osid"`
 }
 
-func (service RegistryService) getEntityOsid(schema string, parameters ...string) (string, error) {
-	templateStr, err := service.getENVMapper(schema, config.Config.Registry.SearchBodyMapper)
-	if err != nil {
-		return "", err
-	}
+func (service RegistryService) getEntityOsid(schema string, templateStr string, docDetails map[string]string) (string, error) {
 	searchTemplate := template.Must(template.New("").Parse(templateStr))
 	buf := bytes.Buffer{}
-	parameterMap := make(map[string]string)
-	for i, parameter := range parameters {
-		parameterMap["parameter"+strconv.Itoa(i+1)] = parameter
-	}
-	log.Debugf("ParameterMap : %v", parameterMap)
-	if err = searchTemplate.Execute(&buf, parameterMap); err == nil {
+	if err := searchTemplate.Execute(&buf, docDetails); err == nil {
+		log.Debugf("Calling Search API with %v request body", buf.String())
 		client := req.C()
 		resp, err := client.R().
 			SetHeader("Content-Type", "application/json").
@@ -55,15 +46,10 @@ func (service RegistryService) getEntityOsid(schema string, parameters ...string
 	}
 }
 
-func (service RegistryService) getCertificate(documentType string, certificateId string) ([]byte, error) {
-	schema, err := service.getSchemaMapper(documentType)
-	if err != nil {
-		return nil, err
-	}
-	template, err := service.getTemplateMapper(documentType)
-	if err != nil {
-		return nil, err
-	}
+func (service RegistryService) getCertificate(pullUriRequest PullURIRequest) ([]byte, string, error) {
+	docTypeMapper := config.SchemaDocTypeMapper[pullUriRequest.DocDetails["DocType"]].(map[string]interface{})
+	schema := docTypeMapper["schema"].(string)
+	template := docTypeMapper["template"].(string)
 	log.Debugf("Schema %s", schema)
 	log.Debugf("Template %s", template)
 	client := req.C()
@@ -71,11 +57,16 @@ func (service RegistryService) getCertificate(documentType string, certificateId
 	token, err := service.getServiceAccountToken()
 	log.Debugf("Token %s", token)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	osid, err := service.getEntityOsid(schema, certificateId)
+	searchFilter, err := json.Marshal(docTypeMapper["searchFilter"])
 	if err != nil {
-		return nil, err
+		log.Errorf("Error in marshalling searchFilter : %v", searchFilter)
+	}
+	osid, err := service.getEntityOsid(schema, string(searchFilter), pullUriRequest.DocDetails)
+	log.Debugf("Searched Entity OSID : %v", osid)
+	if err != nil {
+		return nil, "", err
 	}
 	resp, err := client.R().
 		SetHeader("Accept", "application/pdf").
@@ -88,35 +79,16 @@ func (service RegistryService) getCertificate(documentType string, certificateId
 		log.Error("error:", err)
 		log.Error("raw content:")
 		log.Debugf(resp.Dump())
-		return nil, err
+		return nil, "", err
 	}
 
 	if resp.IsErrorState() {
 		log.Error(resp.Dump())
-		return nil, errors.New("received error response from registry" + resp.Dump())
+		return nil, "", errors.New("received error response from registry" + resp.Dump())
 	}
 
 	log.Debugf("Registry API response, %v", resp.Dump())
-	return resp.Bytes(), nil
-}
-
-func (service RegistryService) getSchemaMapper(documentType string) (string, error) {
-	return service.getENVMapper(documentType, config.Config.Registry.SchemaMapper)
-}
-
-func (service RegistryService) getENVMapper(documentType string, envMapper string) (string, error) {
-	var schemaMapper map[string]string
-	err := json.Unmarshal([]byte(envMapper), &schemaMapper)
-	if err != nil {
-		log.Error("Failed parsing mapper config", err)
-		return "", err
-	}
-	schema, found := schemaMapper[documentType]
-	if found {
-		return schema, nil
-	} else {
-		return "", errors.New("no mapping found for document type: " + documentType)
-	}
+	return resp.Bytes(), osid, nil
 }
 
 // TODO: cache token˳
@@ -146,8 +118,4 @@ func (service RegistryService) getServiceAccountToken() (string, error) {
 	}
 	log.Debugf("Keycloak API response, %v", resp.Dump())
 	return tokenResponse.AccessToken, nil
-}
-
-func (service RegistryService) getTemplateMapper(documentType string) (string, error) {
-	return service.getENVMapper(documentType, config.Config.Registry.TemplateMapper)
 }
