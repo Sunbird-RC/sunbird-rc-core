@@ -28,7 +28,7 @@ java/registry/target/registry.jar: $(SOURCES)
 	sh configure-dependencies.sh
 	cd java && ./mvnw clean install
 
-test:
+test: build
 	@docker-compose down
 	@rm -rf db-data* || echo "no permission to delete"
 	# test with ES & standard definition manager
