@@ -23,6 +23,7 @@ func NewRouter() *gin.Engine {
 		digilockerGroup := v1.Group("digilocker")
 		{
 			var digilocker controllers.Digilocker
+			digilocker.Init()
 			digilockerGroup.POST("/pullUriRequest", digilocker.PullURIRequest)
 		}
 	}
