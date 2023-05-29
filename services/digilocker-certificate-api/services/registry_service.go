@@ -5,25 +5,25 @@ import (
 	"digilocker-certificate-api/config"
 	"encoding/json"
 	"errors"
-<<<<<<< HEAD
 	"text/template"
 	"time"
-=======
-	"html/template"
-	"strconv"
->>>>>>> 126d964b (Add digilocker-certificate-api by removing swagger and creating with gin framework)
 
 	req "github.com/imroc/req/v3"
+	"github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
 )
 
 type TokenResponse struct {
 	AccessToken string `json:"access_token"`
-<<<<<<< HEAD
 	ExpiresIn   int    `json:"expires_in"`
 }
 
 type RegistryService struct {
+	cacheService *cache.Cache
+}
+
+func (registryService *RegistryService) Init() {
+	registryService.cacheService = cache.New(12*time.Hour, 24*time.Hour)
 }
 
 type SearchResult struct {
@@ -35,30 +35,6 @@ func (service RegistryService) getEntityOsid(schema string, templateStr string, 
 	buf := bytes.Buffer{}
 	if err := searchTemplate.Execute(&buf, docDetails); err == nil {
 		log.Debugf("Calling Search API with %v request body", buf.String())
-=======
-}
-
-type RegistryService struct {
-}
-
-type SearchResult struct {
-	Osid string `json:"osid"`
-}
-
-func (service RegistryService) getEntityOsid(schema string, parameters ...string) (string, error) {
-	templateStr, err := service.getENVMapper(schema, config.Config.Registry.SearchBodyMapper)
-	if err != nil {
-		return "", err
-	}
-	searchTemplate := template.Must(template.New("").Parse(templateStr))
-	buf := bytes.Buffer{}
-	parameterMap := make(map[string]string)
-	for i, parameter := range parameters {
-		parameterMap["parameter"+strconv.Itoa(i+1)] = parameter
-	}
-	log.Debugf("ParameterMap : %v", parameterMap)
-	if err = searchTemplate.Execute(&buf, parameterMap); err == nil {
->>>>>>> 126d964b (Add digilocker-certificate-api by removing swagger and creating with gin framework)
 		client := req.C()
 		resp, err := client.R().
 			SetHeader("Content-Type", "application/json").
@@ -75,20 +51,6 @@ func (service RegistryService) getEntityOsid(schema string, parameters ...string
 		return "", err
 	} else {
 		return "", err
-<<<<<<< HEAD
-=======
-	}
-}
-
-func (service RegistryService) getCertificate(documentType string, certificateId string) ([]byte, error) {
-	schema, err := service.getSchemaMapper(documentType)
-	if err != nil {
-		return nil, err
-	}
-	template, err := service.getTemplateMapper(documentType)
-	if err != nil {
-		return nil, err
->>>>>>> 126d964b (Add digilocker-certificate-api by removing swagger and creating with gin framework)
 	}
 }
 
@@ -115,10 +77,6 @@ func (service RegistryService) getCertificate(pullUriRequest PullURIRequest) ([]
 	if err != nil {
 		return nil, "", err
 	}
-	osid, err := service.getEntityOsid(schema, certificateId)
-	if err != nil {
-		return nil, err
-	}
 	resp, err := client.R().
 		SetHeader("Accept", "application/pdf").
 		SetHeader("template-key", template).
@@ -144,7 +102,7 @@ func (service RegistryService) getCertificate(pullUriRequest PullURIRequest) ([]
 
 // TODO: cache token˳
 func (service RegistryService) getServiceAccountToken() (string, error) {
-	if token, found := config.CacheService.Get("clientSecretServiceToken"); found {
+	if token, found := service.cacheService.Get("clientSecretServiceToken"); found {
 		log.Debug("In Cache")
 		return token.(string), nil
 	}
@@ -171,10 +129,7 @@ func (service RegistryService) getServiceAccountToken() (string, error) {
 		log.Error(resp.Dump())
 		return "", errors.New("received error response from keycloak token api" + resp.Dump())
 	}
-<<<<<<< HEAD
-	config.CacheService.Set("clientSecretServiceToken", tokenResponse.AccessToken, time.Duration(tokenResponse.ExpiresIn)*time.Millisecond)
-=======
->>>>>>> 126d964b (Add digilocker-certificate-api by removing swagger and creating with gin framework)
+	service.cacheService.Set("clientSecretServiceToken", tokenResponse.AccessToken, time.Duration(tokenResponse.ExpiresIn)*time.Millisecond)
 	log.Debugf("Keycloak API response, %v", resp.Dump())
 	return tokenResponse.AccessToken, nil
 }

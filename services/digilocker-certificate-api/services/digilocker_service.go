@@ -80,6 +80,10 @@ type DigiLockerService struct {
 	registryService RegistryService
 }
 
+func (digilockerService *DigiLockerService) Init() {
+	digilockerService.registryService.Init()
+}
+
 func (service DigiLockerService) ProcessURIRequest(context *gin.Context) (any, error) {
 	rawData, err := context.GetRawData()
 	if err != nil {

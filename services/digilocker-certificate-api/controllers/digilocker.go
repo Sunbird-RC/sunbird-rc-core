@@ -11,6 +11,9 @@ import (
 type Digilocker struct {
 	service services.DigiLockerService
 }
+func (handler *Digilocker) Init() {
+	handler.service.Init()
+}
 
 func (handler Digilocker) PullURIRequest(c *gin.Context) {
 	log.Info("PullURIRequest triggered")

@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"github.com/jinzhu/configor"
-	"github.com/patrickmn/go-cache"
 )
 
 var Config = struct {
@@ -32,7 +30,6 @@ var Config = struct {
 }{}
 
 var SchemaDocTypeMapper map[string]interface{}
-var CacheService *cache.Cache
 
 func Init() {
 	err := configor.Load(&Config, "./config/application-default.yml") //"config/application.yml"
@@ -50,6 +47,5 @@ func Init() {
 	if err := json.Unmarshal([]byte(str), &SchemaDocTypeMapper); err != nil {
 		fmt.Printf("Error Unmarshalling Json file: %v", err)
 	}
-	CacheService = cache.New(12*time.Hour, 24*time.Hour)
 	defer jsonFile.Close()
 }
