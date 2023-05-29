@@ -22,8 +22,8 @@ type RegistryService struct {
 	cacheService *cache.Cache
 }
 
-func (registryService *RegistryService) Init() {
-	registryService.cacheService = cache.New(12*time.Hour, 24*time.Hour)
+func (service *RegistryService) Init() {
+	service.cacheService = cache.New(12*time.Hour, 24*time.Hour)
 }
 
 type SearchResult struct {
@@ -57,9 +57,9 @@ func (service RegistryService) getEntityOsid(schema string, templateStr string, 
 func (service RegistryService) getCertificate(pullUriRequest PullURIRequest) ([]byte, string, error) {
 	docTypeMapper := config.SchemaDocTypeMapper[pullUriRequest.DocDetails["DocType"]].(map[string]interface{})
 	schema := docTypeMapper["schema"].(string)
-	template := docTypeMapper["template"].(string)
+	schemaTemplate := docTypeMapper["template"].(string)
 	log.Debugf("Schema %s", schema)
-	log.Debugf("Template %s", template)
+	log.Debugf("Template %s", schemaTemplate)
 	client := req.C()
 
 	token, err := service.getServiceAccountToken()
@@ -79,7 +79,7 @@ func (service RegistryService) getCertificate(pullUriRequest PullURIRequest) ([]
 	}
 	resp, err := client.R().
 		SetHeader("Accept", "application/pdf").
-		SetHeader("template-key", template).
+		SetHeader("template-key", schemaTemplate).
 		SetBearerAuthToken(token).
 		SetPathParam("schema", schema).
 		SetPathParam("osid", osid).
@@ -100,7 +100,6 @@ func (service RegistryService) getCertificate(pullUriRequest PullURIRequest) ([]
 	return resp.Bytes(), osid, nil
 }
 
-// TODO: cache token˳
 func (service RegistryService) getServiceAccountToken() (string, error) {
 	if token, found := service.cacheService.Get("clientSecretServiceToken"); found {
 		log.Debug("In Cache")
