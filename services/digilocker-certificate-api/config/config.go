@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/jinzhu/configor"
+	"github.com/patrickmn/go-cache"
 )
 
 var Config = struct {
@@ -21,7 +23,7 @@ var Config = struct {
 		AuthHMACKey string `env:"DIGILOCKER_HMAC_AUTHKEY" default:"***"`
 	}
 	Registry struct {
-		URL           string `env:"REGISTRY_URL" default:"https://demo-education-registry.xiv.in/registry/"`
+		URL string `env:"REGISTRY_URL" default:"https://demo-education-registry.xiv.in/registry/"`
 	}
 	LogLevel string `env:"LOG_LEVEL" yaml:"log_level" default:"DEBUG"`
 	Host     string `env:"HOST" yaml:"host" default:"0.0.0.0"`
@@ -30,6 +32,7 @@ var Config = struct {
 }{}
 
 var SchemaDocTypeMapper map[string]interface{}
+var CacheService *cache.Cache
 
 func Init() {
 	err := configor.Load(&Config, "./config/application-default.yml") //"config/application.yml"
@@ -47,5 +50,6 @@ func Init() {
 	if err := json.Unmarshal([]byte(str), &SchemaDocTypeMapper); err != nil {
 		fmt.Printf("Error Unmarshalling Json file: %v", err)
 	}
+	CacheService = cache.New(12*time.Hour, 24*time.Hour)
 	defer jsonFile.Close()
 }

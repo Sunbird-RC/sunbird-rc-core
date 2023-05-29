@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"text/template"
+	"time"
 
 	req "github.com/imroc/req/v3"
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,7 @@ import (
 
 type TokenResponse struct {
 	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
 }
 
 type RegistryService struct {
@@ -63,6 +65,7 @@ func (service RegistryService) getCertificate(pullUriRequest PullURIRequest) ([]
 	if err != nil {
 		log.Errorf("Error in marshalling searchFilter : %v", searchFilter)
 	}
+	log.Debugf("SearchFilter : %v", string(searchFilter))
 	osid, err := service.getEntityOsid(schema, string(searchFilter), pullUriRequest.DocDetails)
 	log.Debugf("Searched Entity OSID : %v", osid)
 	if err != nil {
@@ -93,6 +96,10 @@ func (service RegistryService) getCertificate(pullUriRequest PullURIRequest) ([]
 
 // TODO: cache token˳
 func (service RegistryService) getServiceAccountToken() (string, error) {
+	if token, found := config.CacheService.Get("clientSecretServiceToken"); found {
+		log.Debug("In Cache")
+		return token.(string), nil
+	}
 	log.Infof("Get service account token")
 	client := req.C()
 	var tokenResponse TokenResponse
@@ -116,6 +123,7 @@ func (service RegistryService) getServiceAccountToken() (string, error) {
 		log.Error(resp.Dump())
 		return "", errors.New("received error response from keycloak token api" + resp.Dump())
 	}
+	config.CacheService.Set("clientSecretServiceToken", tokenResponse.AccessToken, time.Duration(tokenResponse.ExpiresIn)*time.Millisecond)
 	log.Debugf("Keycloak API response, %v", resp.Dump())
 	return tokenResponse.AccessToken, nil
 }
