@@ -468,86 +468,6 @@
       "realmRoles": [],
       "clientRoles": {},
       "subGroups": []
-    },
-    {
-      "id": "5ea4e456-bf79-4a16-8903-ce6b95d9f328",
-      "name": "controller",
-      "path": "/controller",
-      "attributes": {},
-      "realmRoles": [],
-      "clientRoles": {},
-      "subGroups": []
-    },
-    {
-      "id": "860560da-911e-4db1-92f2-0cbbaad8f7b3",
-      "name": "facility admin",
-      "path": "/facility admin",
-      "attributes": {},
-      "realmRoles": [],
-      "clientRoles": {
-        "realm-management": [
-          "manage-users"
-        ]
-      },
-      "subGroups": []
-    },
-    {
-      "id": "84682840-4c21-428d-b2d5-06e6298be1cc",
-      "name": "facility staff",
-      "path": "/facility staff",
-      "attributes": {},
-      "realmRoles": [],
-      "clientRoles": {
-        "realm-management": [
-          "view-users"
-        ]
-      },
-      "subGroups": []
-    },
-    {
-      "id": "ee4cbc2d-f6a0-4424-9fcd-5dd876c2580c",
-      "name": "monitoring",
-      "path": "/monitoring",
-      "attributes": {},
-      "realmRoles": [],
-      "clientRoles": {},
-      "subGroups": []
-    },
-    {
-      "id": "7a859744-fae3-4d24-9f1c-4aeed92ba383",
-      "name": "recipient",
-      "path": "/recipient",
-      "attributes": {},
-      "realmRoles": [],
-      "clientRoles": {
-        "certificate-login": [
-          "recipient"
-        ]
-      },
-      "subGroups": []
-    },
-    {
-      "id": "691ef8ed-110d-4855-84a6-7c68171e9579",
-      "name": "system admin",
-      "path": "/system admin",
-      "attributes": {},
-      "realmRoles": [],
-      "clientRoles": {
-        "account": [
-          "manage-account",
-          "view-profile"
-        ]
-      },
-      "subGroups": []
-    },
-    {
-      "id": "dd163e2a-7bc6-4509-be7d-c18055bf3049",
-      "name": "test",
-      "path": "/test",
-      "attributes": {},
-      "realmRoles": [],
-      "clientRoles": {},
-      "subGroups": []
     }
   ],
   "defaultRole": {
@@ -612,7 +532,8 @@
       ],
       "clientRoles": {
         "realm-management": [
-          "manage-users"
+          "manage-users",
+          "manage-realm"
         ],
         "admin-api": [
           "api"

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
+import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
 import dev.sunbirdrc.validators.IValidate;
@@ -20,7 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -106,7 +106,7 @@ public class SchemaServiceTest {
 	}
 
 	@Test
-	public void shouldAddSchemaToDefinitionManager() throws IOException {
+	public void shouldAddSchemaToDefinitionManager() throws IOException, SchemaException {
 		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -119,7 +119,7 @@ public class SchemaServiceTest {
 	}
 
 	@Test
-	public void shouldAddSchemaToDefinitionManagerAndAddEntityToElasticSearch() throws IOException {
+	public void shouldAddSchemaToDefinitionManagerAndAddEntityToElasticSearch() throws IOException, SchemaException {
 		ReflectionTestUtils.setField(schemaService, "isElasticSearchEnabled", true);
 		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
@@ -134,7 +134,7 @@ public class SchemaServiceTest {
 
 
 	@Test
-	public void shouldAddStatusToNewSchemasIfNotPresent() throws IOException {
+	public void shouldAddStatusToNewSchemasIfNotPresent() throws IOException, SchemaException {
 		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -148,7 +148,7 @@ public class SchemaServiceTest {
 	}
 
 	@Test
-	public void shouldAddSchemaToDefinitionManagerOnlyForPublishedStatus() throws IOException {
+	public void shouldAddSchemaToDefinitionManagerOnlyForPublishedStatus() throws IOException, SchemaException {
 		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -161,7 +161,7 @@ public class SchemaServiceTest {
 	}
 
 	@Test
-	public void shouldNotAddSchemaToDefinitionManagerForDraftStatus() throws IOException {
+	public void shouldNotAddSchemaToDefinitionManagerForDraftStatus() throws IOException, SchemaException {
 		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
@@ -198,6 +198,7 @@ public class SchemaServiceTest {
 				"    \"osUpdatedAt\": \"2022-09-14T05:38:41.909Z\",\n" +
 				"    \"osCreatedAt\": \"2022-09-14T05:34:04.862Z\",\n" +
 				"    \"osUpdatedBy\": \"anonymous\",\n" +
+				"    \"status\": \"PUBLISHED\",\n" +
 				"    \"@type\": \"Schema\",\n" +
 				"    \"name\": \"schema_new\",\n" +
 				"    \"osCreatedBy\": \"anonymous\",\n" +
@@ -207,7 +208,7 @@ public class SchemaServiceTest {
 				"    ]\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.updateSchema(updatedSchema);
 		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 		assertNull(updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact"));
 		assertEquals(1, updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile").size());
@@ -250,7 +251,7 @@ public class SchemaServiceTest {
 				"    \"status\": \"PUBLISHED\"\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.validateUpdateSchema(existingSchema, updatedSchema);
 		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 		assertNull(updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact"));
 		assertEquals(1, updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile").size());
@@ -293,7 +294,7 @@ public class SchemaServiceTest {
 				"    \"status\": \"DRAFT\"\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.validateUpdateSchema(existingSchema, updatedSchema);
 		objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 	}
 
@@ -334,10 +335,8 @@ public class SchemaServiceTest {
 				"    \"status\": \"DRAFT\"\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
-		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
-		assertNull(updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact"));
-		assertEquals(1, updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile").size());
+		schemaService.validateUpdateSchema(existingSchema, updatedSchema);
+
 	}
 
 	@Test
@@ -377,7 +376,7 @@ public class SchemaServiceTest {
 				"    \"status\": \"PUBLISHED\"\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.updateSchema(updatedSchema);
 		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 		assertNull(updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact"));
 		assertEquals(1, updatedDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile").size());
@@ -421,9 +420,99 @@ public class SchemaServiceTest {
 				"    \"status\": \"PUBLISHED\"\n" +
 				"  }\n" +
 				"}");
-		schemaService.updateSchema(existingSchema, updatedSchema);
+		schemaService.updateSchema(updatedSchema);
 		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
 		assertNotNull(updatedDefinition.get("_osConfig").get("certificateTemplates"));
 		assertEquals(1, updatedDefinition.get("_osConfig").get("certificateTemplates").size());
+	}
+
+	@Test
+	public void shouldNotAddDuplicateSchemaToDefinitionManager() throws IOException, SchemaException {
+		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
+		assertEquals(5, JSONUtil.convertStringJsonNode(definitionsManager.getDefinition("TrainingCertificate").getContent()).get("definitions").get("TrainingCertificate").get("properties").size());
+		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("TrainingCertificate.json"), Charset.defaultCharset());
+		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
+		ObjectNode object = JsonNodeFactory.instance.objectNode();
+		ObjectNode schemaObjectNode = (ObjectNode) objectMapper.readTree(schema);
+		((ObjectNode)schemaObjectNode.get("definitions").get("TrainingCertificate").get("properties")).remove("date");
+		((ObjectNode)schemaObjectNode.get("definitions").get("TrainingCertificate").get("properties")).remove("note");
+		object.put(Schema.toLowerCase(), objectMapper.writeValueAsString(schemaObjectNode));
+		object.put("status", SchemaStatus.PUBLISHED.toString());
+		schemaNode.set(Schema, object);
+		try {
+			schemaService.addSchema(schemaNode);
+		} catch (Exception e) {
+			assertEquals("Duplicate Error: Schema already exists", e.getMessage());
+		}
+		assertEquals(5, JSONUtil.convertStringJsonNode(definitionsManager.getDefinition("TrainingCertificate").getContent()).get("definitions").get("TrainingCertificate").get("properties").size());
+	}
+
+	@Test
+	public void shouldNotAddSchemaToDefinitionManagerIfInDraftStatus() throws IOException, SchemaException {
+		assertNull(definitionsManager.getDefinition("BirthCertificate"));
+
+		JsonNode updatedSchema = objectMapper.readTree("{\n" +
+				"  \"Schema\": {\n" +
+				"    \"schema\": \"{\\n  \\\"$schema\\\": \\\"http://json-schema.org/draft-07/schema\\\",\\n  \\\"type\\\": \\\"object\\\",\\n  \\\"properties\\\": {\\n    \\\"BirthCertificate\\\": {\\n      \\\"$ref\\\": \\\"#/definitions/BirthCertificate\\\"\\n    }\\n  },\\n  \\\"required\\\": [\\n    \\\"BirthCertificate\\\"\\n  ],\\n  \\\"title\\\": \\\"BirthCertificate\\\",\\n  \\\"definitions\\\": {\\n    \\\"BirthCertificate\\\": {\\n      \\\"$id\\\": \\\"#/properties/BirthCertificate\\\",\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"title\\\": \\\"The BirthCertificate Schema\\\",\\n      \\\"required\\\": [\\n        \\\"name\\\",\\n        \\\"mobile\\\"\\n      ],\\n      \\\"properties\\\": {\\n        \\\"name\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"trainingTitle\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"mobile\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"date\\\": {\\n          \\\"type\\\": \\\"string\\\",\\n          \\\"format\\\": \\\"date\\\"\\n        },\\n        \\\"note\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        }\\n      }\\n    }\\n  },\\n  \\\"_osConfig\\\": {\\n    \\\"uniqueIndexFields\\\": [\\n      \\\"mobile\\\"\\n    ],\\n    \\\"ownershipAttributes\\\": [],\\n    \\\"roles\\\": [],\\n    \\\"inviteRoles\\\": [\\n      \\\"anonymous\\\"\\n    ],\\n    \\\"enableLogin\\\": false,\\n    \\\"credentialTemplate\\\": {\\n      \\\"@context\\\": [\\n        \\\"https://www.w3.org/2018/credentials/v1\\\",\\n        \\\"https://gist.githubusercontent.com/dileepbapat/eb932596a70f75016411cc871113a789/raw/498e5af1d94784f114b32c1ab827f951a8a24def/skill\\\"\\n      ],\\n      \\\"type\\\": [\\n        \\\"VerifiableCredential\\\"\\n      ],\\n      \\\"issuanceDate\\\": \\\"2021-08-27T10:57:57.237Z\\\",\\n      \\\"credentialSubject\\\": {\\n        \\\"type\\\": \\\"Person\\\",\\n        \\\"name\\\": \\\"{{name}}\\\",\\n        \\\"trainedOn\\\": \\\"{{trainingTitle}}\\\"\\n      },\\n      \\\"issuer\\\": \\\"did:web:sunbirdrc.dev/vc/skill\\\"\\n    },\\n    \\\"certificateTemplates\\\": {\\n      \\\"html\\\": \\\"https://raw.githubusercontent.com/dileepbapat/ref-sunbirdrc-certificate/main/schemas/templates/BirthCertificate.html\\\",\\n      \\\"svg\\\": \\\"https://raw.githubusercontent.com/dileepbapat/ref-sunbirdrc-certificate/main/schemas/templates/BirthCertificate.svg\\\"\\n    }\\n  }\\n}\",\n" +
+				"    \"osUpdatedAt\": \"2022-09-14T05:38:41.909Z\",\n" +
+				"    \"osCreatedAt\": \"2022-09-14T05:34:04.862Z\",\n" +
+				"    \"osUpdatedBy\": \"anonymous\",\n" +
+				"    \"@type\": \"Schema\",\n" +
+				"    \"name\": \"schema_new\",\n" +
+				"    \"osCreatedBy\": \"anonymous\",\n" +
+				"    \"osid\": \"756cea4b-93a0-44d5-affd-bb605cf30abd\",\n" +
+				"    \"osOwner\": [\n" +
+				"      \"anonymous\"\n" +
+				"    ],\n" +
+				"    \"status\": \"DRAFT\"\n" +
+				"  }\n" +
+				"}");
+		schemaService.updateSchema(updatedSchema);
+		assertNull(definitionsManager.getDefinition("BirthCertificate"));
+	}
+
+	@Test
+	public void shouldNotAddSchemaToDefinitionManagerWithInternalSchemaNames() throws Exception {
+		definitionsManager.loadDefinition();
+		JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
+		assertEquals(1, existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("contact").size());
+		assertNull(existingDefinition.get("definitions").get(TRAINING_CERTIFICATE).get("properties").get("mobile"));
+		JsonNode existingSchema = objectMapper.readTree("{\n" +
+				"  \"Schema\": {\n" +
+				"    \"schema\": \"{\\n  \\\"$schema\\\": \\\"http://json-schema.org/draft-07/schema\\\",\\n  \\\"type\\\": \\\"object\\\",\\n  \\\"properties\\\": {\\n    \\\"Schema\\\": {\\n      \\\"$ref\\\": \\\"#/definitions/Schema\\\"\\n    }\\n  },\\n  \\\"required\\\": [\\n    \\\"Schema\\\"\\n  ],\\n  \\\"title\\\": \\\"Schema\\\",\\n  \\\"definitions\\\": {\\n    \\\"Schema\\\": {\\n      \\\"$id\\\": \\\"#/properties/Schema\\\",\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"title\\\": \\\"The Schema Schema\\\",\\n      \\\"required\\\": [\\n        \\\"name\\\",\\n        \\\"contact\\\"\\n      ],\\n      \\\"properties\\\": {\\n        \\\"name\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"trainingTitle\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"contact\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"date\\\": {\\n          \\\"type\\\": \\\"string\\\",\\n          \\\"format\\\": \\\"date\\\"\\n        },\\n        \\\"note\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        }\\n      }\\n    }\\n  },\\n  \\\"_osConfig\\\": {\\n    \\\"uniqueIndexFields\\\": [\\n      \\\"contact\\\"\\n    ],\\n    \\\"ownershipAttributes\\\": [],\\n    \\\"roles\\\": [],\\n    \\\"inviteRoles\\\": [\\n      \\\"anonymous\\\"\\n    ],\\n    \\\"enableLogin\\\": false,\\n    \\\"credentialTemplate\\\": {\\n      \\\"@context\\\": [\\n        \\\"https://www.w3.org/2018/credentials/v1\\\",\\n        \\\"https://gist.githubusercontent.com/dileepbapat/eb932596a70f75016411cc871113a789/raw/498e5af1d94784f114b32c1ab827f951a8a24def/skill\\\"\\n      ],\\n      \\\"type\\\": [\\n        \\\"VerifiableCredential\\\"\\n      ],\\n      \\\"issuanceDate\\\": \\\"2021-08-27T10:57:57.237Z\\\",\\n      \\\"credentialSubject\\\": {\\n        \\\"type\\\": \\\"Person\\\",\\n        \\\"name\\\": \\\"{{name}}\\\",\\n        \\\"trainedOn\\\": \\\"{{trainingTitle}}\\\"\\n      },\\n      \\\"issuer\\\": \\\"did:web:sunbirdrc.dev/vc/skill\\\"\\n    },\\n    \\\"certificateTemplates\\\": {\\n      \\\"html\\\": \\\"https://raw.githubusercontent.com/dileepbapat/ref-sunbirdrc-certificate/main/schemas/templates/Schema.html\\\",\\n      \\\"svg\\\": \\\"https://raw.githubusercontent.com/dileepbapat/ref-sunbirdrc-certificate/main/schemas/templates/Schema.svg\\\"\\n    }\\n  }\\n}\",\n" +
+				"    \"osUpdatedAt\": \"2022-09-14T05:38:41.909Z\",\n" +
+				"    \"osCreatedAt\": \"2022-09-14T05:34:04.862Z\",\n" +
+				"    \"osUpdatedBy\": \"anonymous\",\n" +
+				"    \"@type\": \"Schema\",\n" +
+				"    \"name\": \"schema_new\",\n" +
+				"    \"osCreatedBy\": \"anonymous\",\n" +
+				"    \"osid\": \"756cea4b-93a0-44d5-affd-bb605cf30abd\",\n" +
+				"    \"osOwner\": [\n" +
+				"      \"anonymous\"\n" +
+				"    ],\n" +
+				"    \"status\": \"PUBLISHED\"\n" +
+				"  }\n" +
+				"}");
+		JsonNode updatedSchema = objectMapper.readTree("{\n" +
+				"  \"Schema\": {\n" +
+				"    \"schema\": \"{\\n  \\\"$schema\\\": \\\"http://json-schema.org/draft-07/schema\\\",\\n  \\\"type\\\": \\\"object\\\",\\n  \\\"properties\\\": {\\n    \\\"Schema\\\": {\\n      \\\"$ref\\\": \\\"#/definitions/Schema\\\"\\n    }\\n  },\\n  \\\"required\\\": [\\n    \\\"Schema\\\"\\n  ],\\n  \\\"title\\\": \\\"Schema\\\",\\n  \\\"definitions\\\": {\\n    \\\"Schema\\\": {\\n      \\\"$id\\\": \\\"#/properties/Schema\\\",\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"title\\\": \\\"The Schema Schema\\\",\\n      \\\"required\\\": [\\n        \\\"name\\\",\\n        \\\"contact\\\"\\n      ],\\n      \\\"properties\\\": {\\n        \\\"name\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"trainingTitle\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"mobile\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"date\\\": {\\n          \\\"type\\\": \\\"string\\\",\\n          \\\"format\\\": \\\"date\\\"\\n        },\\n        \\\"note\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        }\\n      }\\n    }\\n  },\\n  \\\"_osConfig\\\": {\\n    \\\"uniqueIndexFields\\\": [\\n      \\\"contact\\\"\\n    ],\\n    \\\"ownershipAttributes\\\": [],\\n    \\\"roles\\\": [],\\n    \\\"inviteRoles\\\": [\\n      \\\"anonymous\\\"\\n    ],\\n    \\\"enableLogin\\\": false,\\n    \\\"credentialTemplate\\\": {\\n      \\\"@context\\\": [\\n        \\\"https://www.w3.org/2018/credentials/v1\\\",\\n        \\\"https://gist.githubusercontent.com/dileepbapat/eb932596a70f75016411cc871113a789/raw/498e5af1d94784f114b32c1ab827f951a8a24def/skill\\\"\\n      ],\\n      \\\"type\\\": [\\n        \\\"VerifiableCredential\\\"\\n      ],\\n      \\\"issuanceDate\\\": \\\"2021-08-27T10:57:57.237Z\\\",\\n      \\\"credentialSubject\\\": {\\n        \\\"type\\\": \\\"Person\\\",\\n        \\\"name\\\": \\\"{{name}}\\\",\\n        \\\"trainedOn\\\": \\\"{{trainingTitle}}\\\"\\n      },\\n      \\\"issuer\\\": \\\"did:web:sunbirdrc.dev/vc/skill\\\"\\n    },\\n    \\\"certificateTemplates\\\": {\\n      \\\"html\\\": \\\"https://raw.githubusercontent.com/dileepbapat/ref-sunbirdrc-certificate/main/schemas/templates/Schema.html\\\",\\n      \\\"svg\\\": \\\"https://raw.githubusercontent.com/dileepbapat/ref-sunbirdrc-certificate/main/schemas/templates/Schema.svg\\\"\\n    }\\n  }\\n}\",\n" +
+				"    \"osUpdatedAt\": \"2022-09-14T05:38:41.909Z\",\n" +
+				"    \"osCreatedAt\": \"2022-09-14T05:34:04.862Z\",\n" +
+				"    \"osUpdatedBy\": \"anonymous\",\n" +
+				"    \"@type\": \"Schema\",\n" +
+				"    \"name\": \"schema_new\",\n" +
+				"    \"osCreatedBy\": \"anonymous\",\n" +
+				"    \"osid\": \"756cea4b-93a0-44d5-affd-bb605cf30abd\",\n" +
+				"    \"osOwner\": [\n" +
+				"      \"anonymous\"\n" +
+				"    ],\n" +
+				"    \"status\": \"PUBLISHED\"\n" +
+				"  }\n" +
+				"}");
+		try {
+			schemaService.validateUpdateSchema(existingSchema, updatedSchema);
+		} catch (SchemaException e) {
+			assertEquals("Duplicate Error: Internal schema \"Schema\" already exists", e.getMessage());
+		}
 	}
 }

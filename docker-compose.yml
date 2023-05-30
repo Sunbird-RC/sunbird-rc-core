@@ -6,11 +6,13 @@ services:
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ELASTIC_PASSWORD=${ELASTIC_SEARCH_PASSWORD}
+      - xpack.security.enabled=${ELASTIC_SECURITY_ENABLED-false}
     ports:
       - "9200:9200"
       - "9300:9300"
     healthcheck:
-      test: ["CMD", "curl", "-f", "localhost:9200/_cluster/health"]
+      test: [ "CMD", "curl", "-f", "localhost:9200/_cluster/health", "--header",  "Authorization: Basic ZWxhc3RpYzpEa0llZFBQU0Ni" ]
       interval: 30s
       timeout: 10s
       retries: 4
@@ -38,6 +40,9 @@ services:
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
       - elastic_search_connection_url=es:9200
+      - elastic_search_auth_enabled=${ELASTIC_SECURITY_ENABLED-false}
+      - elastic_search_username=${ELASTIC_SEARCH_USERNAME-elastic}
+      - elastic_search_password=${ELASTIC_SEARCH_PASSWORD}
       - search_providerName=${SEARCH_PROVIDER_NAME-dev.sunbirdrc.registry.service.ElasticSearchService}
       - sunbird_sso_realm=${KEYCLOAK_REALM-sunbird-rc}
       - sunbird_sso_url=http://keycloak:8080/auth
@@ -46,6 +51,7 @@ services:
       - sunbird_sso_admin_client_secret=${KEYCLOAK_SECRET}
       - claims_url=http://claim-ms:8082
       - sign_url=http://certificate-signer:8079/sign
+      - verify_url=http://certificate-signer:8079/verify
       - sign_health_check_url=http://certificate-signer:8079/health
       - signature_enabled=true
       - pdf_url=http://certificate-api:8078/api/v1/certificatePDF
@@ -60,7 +66,7 @@ services:
       - sunbird_keycloak_user_password=abcd@123
       - logging.level.root=INFO
       - enable_external_templates=true
-      - async_enabled=false
+      - async_enabled=${ASYNC_ENABLED-false}
       - authentication_enabled=true
       - kafka_bootstrap_address=kafka:9092
       - webhook_enabled=false
@@ -79,7 +85,7 @@ services:
       test: [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8081/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
   keycloak:
     image: dockerhub/sunbird-rc-keycloak:latest
     volumes:
@@ -101,7 +107,7 @@ services:
         ["CMD-SHELL", "curl -f http://localhost:9990/ || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
     ports:
       - "8080:8080"
       - "9990:9990"
@@ -126,7 +132,7 @@ services:
       test: [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8082/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
   certificate-signer:
     image: dockerhub/sunbird-rc-certificate-signer:${RELEASE_VERSION}
     environment:
@@ -140,7 +146,7 @@ services:
         [ "CMD-SHELL", "curl -f http://localhost:8079/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
   certificate-api:
     image: dockerhub/sunbird-rc-certificate-api:${RELEASE_VERSION}
     environment:
@@ -152,7 +158,7 @@ services:
         [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8078/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
   file-storage:
     image: quay.io/minio/minio
     volumes:
@@ -168,7 +174,7 @@ services:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 20s
-      retries: 3
+      retries: 10
   notification-ms:
     image: dockerhub/sunbird-rc-notification-service:${RELEASE_VERSION}
     ports:
@@ -178,7 +184,7 @@ services:
         [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8765/notification-service/v1/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
@@ -205,7 +211,7 @@ services:
         [ "CMD", "kafka-topics", "--list", "--zookeeper", "zookeeper:2181" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
   public-key-service:
     image: dockerhub/sunbird-rc-public-key-service
     environment:
@@ -216,7 +222,7 @@ services:
       test: [ "CMD", "curl", "-f", "localhost:3300/public-key-service/api/v1/health" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
     volumes:
       - ./imports:/etc/keys
   context-proxy-service:
@@ -227,7 +233,7 @@ services:
       test: [ "CMD", "curl", "-f", "localhost:4400/health" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
   nginx:
     image: dockerhub/sunbird-rc-nginx
     ports:
@@ -249,8 +255,27 @@ services:
       test: [ "CMD", "curl", "-f", "localhost:80" ]
       interval: 30s
       timeout: 10s
-      retries: 4
+      retries: 10
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
+  digilocker-certificate-api:
+    image: dockerhub/sunbird-rc-digilocker-certificate-api
+    volumes:
+      - ${PWD}/services/digilocker-certificate-api/config/:/go/config/
+    ports:
+      - "8087:8087"
+    environment:
+      KEYCLOAK_CLIENT_ID: admin-api
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_SECRET}
+      DIGILOCKER_HMAC_AUTHKEY: ${DIGILOCKER_HMAC_AUTHKEY}
+      DIGILOCKER_AUTH_KEYNAME: x-digilocker-hmac
+      PORT: 8087
+  bulk_issuance:
+    image: dockerhub/sunbird-rc-bulk-issuance
+    ports:
+      - "5665:5665"
+    environment:
+      REGISTRY_BASE_URL: http://registry:8081/
+      DATABASE_HOST: db

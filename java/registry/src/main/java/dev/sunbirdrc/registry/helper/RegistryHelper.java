@@ -86,6 +86,8 @@ public class RegistryHelper {
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${notification.service.enabled}") boolean notificationEnabled;
+    @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
+    @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
 
     @Autowired
     private ShardManager shardManager;
@@ -186,11 +188,11 @@ public class RegistryHelper {
      * @throws Exception
      */
     public String addEntity(JsonNode inputJson, String userId) throws Exception {
-        return addEntityHandler(inputJson, userId, false);
+        return addEntityHandler(inputJson, userId, false, false);
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
-        String entityId = addEntityHandler(inputJson, userId, true);
+        String entityId = addEntityHandler(inputJson, userId, skipRequiredValidationForInvite, skipSignatureForInvite);
         sendInviteNotification(inputJson);
         return entityId;
     }
@@ -199,9 +201,9 @@ public class RegistryHelper {
         return addEntity(inputJson, userId, entityName, true);
     }
 
-    private String addEntityHandler(JsonNode inputJson, String userId, boolean isInvite) throws Exception {
+    private String addEntityHandler(JsonNode inputJson, String userId, boolean skipRequiredValidation, boolean skipSignature) throws Exception {
         String entityType = inputJson.fields().next().getKey();
-        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), isInvite);
+        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), skipRequiredValidation);
         String entityName = inputJson.fields().next().getKey();
         if (workflowEnabled) {
             List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
@@ -215,7 +217,7 @@ public class RegistryHelper {
             }
             jsonNode.add(userId);
         }
-        return addEntity(inputJson, userId, entityType, isInvite);
+        return addEntity(inputJson, userId, entityType, skipSignature);
     }
 
     private void sendInviteNotification(JsonNode inputJson) throws Exception {
@@ -709,7 +711,7 @@ public class RegistryHelper {
     }
 
     public String getUserId(HttpServletRequest request, String entityName) throws Exception {
-        if (doesEntityContainOwnershipAttributes(entityName) || getManageRoles(entityName).size() > 0) {
+        if (doesEntityOperationRequireAuthorization(entityName)) {
             return fetchUserIdFromToken(request);
         } else {
             return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
@@ -1107,15 +1109,8 @@ public class RegistryHelper {
         deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
     }
 
-    private List<String> getEntityValidRoles(String entity) {
-        List<String> manageRoles = getManageRoles(entity);
-        manageRoles.remove(ROLE_ANONYMOUS);
-        return manageRoles;
-    }
-
     public boolean doesEntityOperationRequireAuthorization(String entity) {
-        return doesEntityContainOwnershipAttributes(entity) || getEntityValidRoles(entity).size() > 0;
-
+        return !getManageRoles(entity).contains("anonymous") && (doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0);
     }
 
     boolean hasAttestationPropertiesChanged(JsonNode updatedNode, JsonNode existingNode, AttestationPolicy attestationPolicy, String entityName) {
@@ -1140,20 +1135,22 @@ public class RegistryHelper {
     }
 
     public void autoRaiseClaim(String entityName, String entityId, String userId, JsonNode existingNode, JsonNode newRootNode, String emailId) throws Exception {
-        List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
-        for(AttestationPolicy attestationPolicy : attestationPolicies) {
-            if(attestationPolicy.getType() != null && attestationPolicy.getType().equals(AttestationType.AUTOMATED)) {
-                JsonNode updatedNode = readEntity(newRootNode, entityId).get(entityName);
-                if(existingNode == null || hasAttestationPropertiesChanged(updatedNode, existingNode, attestationPolicy, entityName)) {
-                    AttestationRequest attestationRequest = new AttestationRequest();
-                    attestationRequest.setEntityId(entityId);
-                    attestationRequest.setName(attestationPolicy.getName());
-                    attestationRequest.setEntityName(entityName);
-                    JsonNode node = JSONUtil.extractPropertyDataFromEntity(updatedNode, attestationPolicy.getAttestationProperties(), new HashMap<>());
-                    attestationRequest.setPropertyData(node);
-                    attestationRequest.setUserId(userId);
-                    attestationRequest.setEmailId(emailId);
-                    triggerAttestation(attestationRequest, attestationPolicy);
+        if (workflowEnabled) {
+            List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
+            for (AttestationPolicy attestationPolicy : attestationPolicies) {
+                if (attestationPolicy.getType() != null && attestationPolicy.getType().equals(AttestationType.AUTOMATED)) {
+                    JsonNode updatedNode = readEntity(newRootNode, entityId).get(entityName);
+                    if (existingNode == null || hasAttestationPropertiesChanged(updatedNode, existingNode, attestationPolicy, entityName)) {
+                        AttestationRequest attestationRequest = new AttestationRequest();
+                        attestationRequest.setEntityId(entityId);
+                        attestationRequest.setName(attestationPolicy.getName());
+                        attestationRequest.setEntityName(entityName);
+                        JsonNode node = JSONUtil.extractPropertyDataFromEntity(updatedNode, attestationPolicy.getAttestationProperties(), new HashMap<>());
+                        attestationRequest.setPropertyData(node);
+                        attestationRequest.setUserId(userId);
+                        attestationRequest.setEmailId(emailId);
+                        triggerAttestation(attestationRequest, attestationPolicy);
+                    }
                 }
             }
         }

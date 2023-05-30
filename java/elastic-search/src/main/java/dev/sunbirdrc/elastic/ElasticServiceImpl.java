@@ -17,6 +17,11 @@ import java.net.ConnectException;
 import java.util.*;
 
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -29,11 +34,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.*;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
@@ -53,6 +54,9 @@ public class ElasticServiceImpl implements IElasticService {
 
     private static String connectionInfo;
     private static String searchType;
+    private static boolean authEnabled;
+    private static String userName;
+    private static String password;
 
     public void setConnectionInfo(String connection) {
         connectionInfo = connection;
@@ -85,6 +89,9 @@ public class ElasticServiceImpl implements IElasticService {
      * @param connectionInfo of ElasticSearch
      */
     private static void createClient(String indexName, String connectionInfo) {
+        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(AuthScope.ANY,
+                new UsernamePasswordCredentials(userName, password));
         if (!esClient.containsKey(indexName)) {
             Map<String, Integer> hostPort = new HashMap<String, Integer>();
             for (String info : connectionInfo.split(",")) {
@@ -94,8 +101,11 @@ public class ElasticServiceImpl implements IElasticService {
             for (String host : hostPort.keySet()) {
                 httpHosts.add(new HttpHost(host, hostPort.get(host)));
             }
-            RestHighLevelClient client = new RestHighLevelClient(
-                    RestClient.builder(httpHosts.toArray(new HttpHost[httpHosts.size()])));
+            RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[httpHosts.size()]));
+            if(authEnabled) {
+                restClientBuilder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+            }
+            RestHighLevelClient client = new RestHighLevelClient(restClientBuilder);
             if (null != client)
                 esClient.put(indexName, client);
         }
@@ -370,4 +380,15 @@ public class ElasticServiceImpl implements IElasticService {
         return query;
     }
 
+    public void setAuthEnabled(boolean authEnabled) {
+        this.authEnabled = authEnabled;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }

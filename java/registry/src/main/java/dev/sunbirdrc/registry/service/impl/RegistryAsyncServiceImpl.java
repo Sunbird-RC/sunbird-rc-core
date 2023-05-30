@@ -41,7 +41,7 @@ public class RegistryAsyncServiceImpl extends RegistryServiceImpl implements Reg
 		KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 		CreateEntityMessage createEntityMessage = CreateEntityMessage.builder().userId(userId).inputJson(inputJson)
 				.skipSignature(skipSignature).webhookUrl(asyncRequest.getWebhookUrl())
-				.emailId(keycloakAuthenticationToken.getAccount().getKeycloakSecurityContext().getToken().getEmail())
+				.emailId(keycloakAuthenticationToken == null ? "" : keycloakAuthenticationToken.getAccount().getKeycloakSecurityContext().getToken().getEmail())
 				.build();
 		String message = objectMapper.writeValueAsString(createEntityMessage);
 		String transactionId = UUID.randomUUID().toString();

@@ -76,7 +76,7 @@ public class JsonValidationServiceImpl implements IValidate {
 
 					if (!flattenedExceptions.isEmpty()) {
 						String errMsg = flattenedExceptions.stream()
-								.map(ve -> String.format("%s : %s", e.getPointerToViolation(), e.getMessage()))
+								.map(ve -> String.format("%s : %s", ve.getPointerToViolation(), ve.getMessage()))
 								.collect(Collectors.joining("; "));
 						throw new MiddlewareHaltException("Validation Exception : " + errMsg);
 					}
