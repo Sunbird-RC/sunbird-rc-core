@@ -36,7 +36,7 @@ func Init(database *models.IDatabase) {
 
 	cronJob := gocron.NewScheduler(time.UTC)
 	cronJob.WithDistributedLocker(locker)
-	_, err = cronJob.Every(1).Day().At("19:30").Do(cron.SaveWeeklyMetrics, database)
+	_, err = cronJob.Every(7).Day().At("19:30").Do(cron.SaveWeeklyMetrics, database)
 	if err != nil {
 		log.Errorf("Failed Creating a scheduler : %v", err)
 	}
