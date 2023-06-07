@@ -25,6 +25,23 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/LoginResponse'
+  /v1/aggregates/weekly:
+    get:
+      tags:
+        - aggregates
+      summary: get aggregates for weekly added records
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/AggregatesResponse'
 definitions:
   LoginResponse:
+    type: object
+  AggregatesResponse:
     type: object

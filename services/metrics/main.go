@@ -9,6 +9,8 @@ import (
 	"metrics/swagger_gen/restapi/operations"
 	"os"
 
+	"metrics/cron"
+
 	"github.com/go-openapi/loads"
 	"github.com/jessevdk/go-flags"
 )
@@ -17,6 +19,9 @@ func main() {
 	config.Initialize("config/application-default.yml")
 	c := models.GetDBInstance(config.Config.Database.ProviderName)
 	c.InitDB()
+	if config.Config.Cron.Enable {
+		cron.Init(&c)
+	}
 	servers := config.Config.Kafka.BootstrapServers
 	go kafka.StartConsumer(servers, "metrics_group", "earliest", "false", c)
 	swaggerSpec, err := loads.Embedded(restapi.SwaggerJSON, restapi.FlatSwaggerJSON)

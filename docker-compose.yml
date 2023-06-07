@@ -266,6 +266,7 @@ services:
       CLICKHOUSE_DATABASE: default
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_METRICS_TOPIC: metrics
+      REDIS_URL: redis:6379
     ports:
       - "8070:8070"
     depends_on:

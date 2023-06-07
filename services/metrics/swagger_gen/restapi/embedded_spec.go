@@ -31,6 +31,29 @@ func init() {
     "version": "1.0.0"
   },
   "paths": {
+    "/v1/aggregates/weekly": {
+      "get": {
+        "security": [],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "aggregates"
+        ],
+        "summary": "get aggregates for weekly added records",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/AggregatesResponse"
+            }
+          }
+        }
+      }
+    },
     "/v1/metrics": {
       "get": {
         "security": [],
@@ -56,6 +79,9 @@ func init() {
     }
   },
   "definitions": {
+    "AggregatesResponse": {
+      "type": "object"
+    },
     "LoginResponse": {
       "type": "object"
     }
@@ -80,6 +106,29 @@ func init() {
     "version": "1.0.0"
   },
   "paths": {
+    "/v1/aggregates/weekly": {
+      "get": {
+        "security": [],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "aggregates"
+        ],
+        "summary": "get aggregates for weekly added records",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/AggregatesResponse"
+            }
+          }
+        }
+      }
+    },
     "/v1/metrics": {
       "get": {
         "security": [],
@@ -105,6 +154,9 @@ func init() {
     }
   },
   "definitions": {
+    "AggregatesResponse": {
+      "type": "object"
+    },
     "LoginResponse": {
       "type": "object"
     }

@@ -19,6 +19,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
+	"metrics/swagger_gen/restapi/operations/aggregates"
 	"metrics/swagger_gen/restapi/operations/metrics"
 )
 
@@ -44,6 +45,9 @@ func NewMetricsAPI(spec *loads.Document) *MetricsAPI {
 
 		JSONProducer: runtime.JSONProducer(),
 
+		AggregatesGetV1AggregatesWeeklyHandler: aggregates.GetV1AggregatesWeeklyHandlerFunc(func(params aggregates.GetV1AggregatesWeeklyParams) middleware.Responder {
+			return middleware.NotImplemented("operation aggregates.GetV1AggregatesWeekly has not yet been implemented")
+		}),
 		MetricsGetV1MetricsHandler: metrics.GetV1MetricsHandlerFunc(func(params metrics.GetV1MetricsParams) middleware.Responder {
 			return middleware.NotImplemented("operation metrics.GetV1Metrics has not yet been implemented")
 		}),
@@ -66,9 +70,11 @@ type MetricsAPI struct {
 	// BasicAuthenticator generates a runtime.Authenticator from the supplied basic auth function.
 	// It has a default implementation in the security package, however you can replace it for your particular usage.
 	BasicAuthenticator func(security.UserPassAuthentication) runtime.Authenticator
+
 	// APIKeyAuthenticator generates a runtime.Authenticator from the supplied token auth function.
 	// It has a default implementation in the security package, however you can replace it for your particular usage.
 	APIKeyAuthenticator func(string, string, security.TokenAuthentication) runtime.Authenticator
+
 	// BearerAuthenticator generates a runtime.Authenticator from the supplied bearer token auth function.
 	// It has a default implementation in the security package, however you can replace it for your particular usage.
 	BearerAuthenticator func(string, security.ScopedTokenAuthentication) runtime.Authenticator
@@ -81,8 +87,11 @@ type MetricsAPI struct {
 	//   - application/json
 	JSONProducer runtime.Producer
 
+	// AggregatesGetV1AggregatesWeeklyHandler sets the operation handler for the get v1 aggregates weekly operation
+	AggregatesGetV1AggregatesWeeklyHandler aggregates.GetV1AggregatesWeeklyHandler
 	// MetricsGetV1MetricsHandler sets the operation handler for the get v1 metrics operation
 	MetricsGetV1MetricsHandler metrics.GetV1MetricsHandler
+
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
 	ServeError func(http.ResponseWriter, *http.Request, error)
@@ -159,6 +168,9 @@ func (o *MetricsAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
+	if o.AggregatesGetV1AggregatesWeeklyHandler == nil {
+		unregistered = append(unregistered, "aggregates.GetV1AggregatesWeeklyHandler")
+	}
 	if o.MetricsGetV1MetricsHandler == nil {
 		unregistered = append(unregistered, "metrics.GetV1MetricsHandler")
 	}
@@ -250,6 +262,10 @@ func (o *MetricsAPI) initHandlerCache() {
 		o.handlers = make(map[string]map[string]http.Handler)
 	}
 
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/v1/aggregates/weekly"] = aggregates.NewGetV1AggregatesWeekly(o.context, o.AggregatesGetV1AggregatesWeeklyHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

@@ -73,8 +73,34 @@ func (c *Clickhouse) InsertRecord(metricData Metrics) error {
 
 func (c *Clickhouse) GetCount() map[string]string {
 	ctx := context.Background()
-	rows, err := c.connection.Query(ctx, "SHOW TABLES")
+	tables, err := getTables(c, ctx)
+	if err != nil {
+		log.Errorf("Error occurred while fetching table names : %v", err)
+	}
 	mapping := map[string]string{}
+	for i := range tables {
+		var query string
+		query = "SELECT count(*) FROM " + tables[i]
+		rows, err := c.connection.Query(ctx, query)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var count *uint64
+		for rows.Next() {
+			if err := rows.Scan(&count); err != nil {
+				log.Fatal(err)
+			}
+		}
+		mapping[tables[i]] = strconv.FormatUint(*count, 10)
+	}
+	return mapping
+}
+
+func getTables(c *Clickhouse, ctx context.Context) ([]string, error) {
+	rows, err := c.connection.Query(ctx, "SHOW TABLES")
+	if err != nil {
+		return nil, err
+	}
 	tables := []string{}
 	for rows.Next() {
 		var tableName string
@@ -83,8 +109,20 @@ func (c *Clickhouse) GetCount() map[string]string {
 		}
 		tables = append(tables, tableName)
 	}
+	return tables, nil
+}
+
+func (c *Clickhouse) GetAggregates(clauses string) map[string]string {
+	ctx := context.Background()
+	tables, err := getTables(c, ctx)
+	if err != nil {
+		log.Errorf("Error occurred while fetching table names : %v", err)
+	}
+	mapping := map[string]string{}
 	for i := range tables {
-		rows, err = c.connection.Query(ctx, "SELECT count(*) FROM "+tables[i])
+		query := "SELECT count(*) FROM " + tables[i] + " " + clauses
+		log.Debugf("Query : %v", query)
+		rows, err := c.connection.Query(ctx, query)
 		if err != nil {
 			log.Fatal(err)
 		}

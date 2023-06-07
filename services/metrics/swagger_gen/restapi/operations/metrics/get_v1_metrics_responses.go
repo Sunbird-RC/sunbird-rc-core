@@ -16,7 +16,8 @@ import (
 // GetV1MetricsOKCode is the HTTP code returned for type GetV1MetricsOK
 const GetV1MetricsOKCode int = 200
 
-/*GetV1MetricsOK OK
+/*
+GetV1MetricsOK OK
 
 swagger:response getV1MetricsOK
 */

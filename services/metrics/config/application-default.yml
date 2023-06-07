@@ -6,3 +6,5 @@ kafka:
   metricsTopic: metrics
 database:
   providerName: clickhouse
+redis:
+  url: localhost:6379

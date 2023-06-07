@@ -21,6 +21,12 @@ var Config = struct {
 		KAFKA_METRICS_TOPIC string `env:"KAFKA_METRICS_TOPIC" yaml:"metricsTopic" default:"metrics"`
 	}
 	Database struct {
-		ProviderName string `env:"DATABASE_PROVIDER_NAME" yaml:"providerName" defaults:"clickhouse"`
+		ProviderName string `env:"DATABASE_PROVIDER_NAME" yaml:"providerName" default:"clickhouse"`
+	}
+	Redis struct {
+		Url string `env:"REDIS_URL" yaml:"url" default:"redis:6379"`
+	}
+	Cron struct {
+		Enable bool `env:"CRON_ENABLE" yaml:"enable" default:"true"`
 	}
 }{}

@@ -4,6 +4,7 @@ type IDatabase interface {
 	InitDB()
 	InsertRecord(metricData Metrics) error
 	GetCount() map[string]string
+	GetAggregates(whereClauseCondition string) map[string]string
 }
 
 var clickhouseObj = &Clickhouse{}
