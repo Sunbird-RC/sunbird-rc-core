@@ -118,8 +118,6 @@ public class RegistryEntityController extends AbstractController {
 
     @NotNull
     private void createSchemaNotFoundResponse(String errorMessage, ResponseParams responseParams) {
-
-       // String errorMessage = String.format(ErrorMessages.NOT_PART_OF_THE_SYSTEM_EXCEPTION, entityName);
         responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         responseParams.setErrmsg(errorMessage);
 
