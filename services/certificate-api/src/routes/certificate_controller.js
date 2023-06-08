@@ -19,6 +19,27 @@ const pdfConfig = require("../../configs/pdf_config.json");
 const cacheInstance = new NodeCache();
 
 Handlebars.registerHelper('dateFormat', require('handlebars-dateformat'));
+Handlebars.registerHelper({
+    eq: (v1, v2) => v1 === v2,
+    ne: (v1, v2) => v1 !== v2,
+    lt: (v1, v2) => v1 < v2,
+    gt: (v1, v2) => v1 > v2,
+    lte: (v1, v2) => v1 <= v2,
+    gte: (v1, v2) => v1 >= v2,
+    and() {
+        return Array.prototype.every.call(arguments, Boolean);
+    },
+    or() {
+        return Array.prototype.slice.call(arguments, 0, -1).some(Boolean);
+    },
+    lowercase: (v1) => {
+        if(v1 && typeof v1 === "string") {
+            return v1.toLowerCase();
+        }
+        return '';
+    },
+    titlecase: (v1) => v1.replace(/(^\w|\s\w)(\S*)/g, (_,m1,m2) => m1.toUpperCase()+m2.toLowerCase())
+});
 const browserConfig = {
     headless: true,
     //comment to use default
