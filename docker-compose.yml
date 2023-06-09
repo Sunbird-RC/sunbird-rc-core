@@ -39,8 +39,8 @@ services:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
-      - metrics_enabled=true
-      - metrics_topic=metrics
+      - event_enabled=false
+      - event_topic=metrics
       - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
       - elastic_search_connection_url=es:9200
       - elastic_search_auth_enabled=${ELASTIC_SECURITY_ENABLED-false}
@@ -202,7 +202,6 @@ services:
         condition: service_started
     ports:
       - "9092:9092"
-      - "9094:9094"
     environment:
       KAFKA_BROKER_ID: "1"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
@@ -297,7 +296,7 @@ services:
       REGISTRY_BASE_URL: http://registry:8081/
       DATABASE_HOST: db
   clickhouse:
-    image: clickhouse/clickhouse-server:head-alpine
+    image: clickhouse/clickhouse-server:23.4.2.11-alpine
     ports:
       - "9002:9000"
     healthcheck:

@@ -30,7 +30,7 @@ import static dev.sunbirdrc.registry.Constants.createEntityGroupId;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_KAFKA_SERVICE_NAME;
 
 @Configuration
-@ConditionalOnExpression("${async.enabled} or ${metrics.enabled}")
+@ConditionalOnExpression("${async.enabled} or ${event.enabled}")
 @EnableKafka
 public class KafkaConfiguration {
 	@Value("${kafka.createEntityTopic:create_entity}")
@@ -39,8 +39,8 @@ public class KafkaConfiguration {
 	String postCreateEntityTopic;
 	@Value(value = "${kafka.bootstrapAddress}")
 	private String bootstrapAddress;
-	@Value(value = "${metrics.topic}")
-	private String createMetricsTopic;
+	@Value(value = "${event.topic}")
+	private String eventTopic;
 
 	@Bean
 	public KafkaAdmin kafkaAdmin() {
@@ -56,9 +56,9 @@ public class KafkaConfiguration {
 		return KafkaAdminClient.create(configs);
 	}
 	@Bean
-	@ConditionalOnProperty("metrics.enabled")
-	public NewTopic createMetricsTopic() {
-		return new NewTopic(createMetricsTopic, 1, (short) 1);
+	@ConditionalOnProperty("event.enabled")
+	public NewTopic createEventsTopic() {
+		return new NewTopic(eventTopic, 1, (short) 1);
 	}
 
 	@Bean

@@ -68,9 +68,9 @@ workflow:
 async:
   enabled: ${async_enabled:false}
 
-metrics:
-  enabled: ${metrics_enabled:true}
-  topic: ${metrics_topic:metrics}
+event:
+  enabled: ${event_enabled:false}
+  topic: ${event_topic:metrics}
   providerName: ${event_providerName:dev.sunbirdrc.registry.service.impl.KafkaEventService}
 
 kafka:

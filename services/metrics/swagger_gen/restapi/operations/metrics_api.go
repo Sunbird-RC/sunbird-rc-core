@@ -45,8 +45,8 @@ func NewMetricsAPI(spec *loads.Document) *MetricsAPI {
 
 		JSONProducer: runtime.JSONProducer(),
 
-		AggregatesGetV1AggregatesWeeklyHandler: aggregates.GetV1AggregatesWeeklyHandlerFunc(func(params aggregates.GetV1AggregatesWeeklyParams) middleware.Responder {
-			return middleware.NotImplemented("operation aggregates.GetV1AggregatesWeekly has not yet been implemented")
+		AggregatesGetV1AggregatesHandler: aggregates.GetV1AggregatesHandlerFunc(func(params aggregates.GetV1AggregatesParams) middleware.Responder {
+			return middleware.NotImplemented("operation aggregates.GetV1Aggregates has not yet been implemented")
 		}),
 		MetricsGetV1MetricsHandler: metrics.GetV1MetricsHandlerFunc(func(params metrics.GetV1MetricsParams) middleware.Responder {
 			return middleware.NotImplemented("operation metrics.GetV1Metrics has not yet been implemented")
@@ -87,8 +87,8 @@ type MetricsAPI struct {
 	//   - application/json
 	JSONProducer runtime.Producer
 
-	// AggregatesGetV1AggregatesWeeklyHandler sets the operation handler for the get v1 aggregates weekly operation
-	AggregatesGetV1AggregatesWeeklyHandler aggregates.GetV1AggregatesWeeklyHandler
+	// AggregatesGetV1AggregatesHandler sets the operation handler for the get v1 aggregates operation
+	AggregatesGetV1AggregatesHandler aggregates.GetV1AggregatesHandler
 	// MetricsGetV1MetricsHandler sets the operation handler for the get v1 metrics operation
 	MetricsGetV1MetricsHandler metrics.GetV1MetricsHandler
 
@@ -168,8 +168,8 @@ func (o *MetricsAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
-	if o.AggregatesGetV1AggregatesWeeklyHandler == nil {
-		unregistered = append(unregistered, "aggregates.GetV1AggregatesWeeklyHandler")
+	if o.AggregatesGetV1AggregatesHandler == nil {
+		unregistered = append(unregistered, "aggregates.GetV1AggregatesHandler")
 	}
 	if o.MetricsGetV1MetricsHandler == nil {
 		unregistered = append(unregistered, "metrics.GetV1MetricsHandler")
@@ -265,7 +265,7 @@ func (o *MetricsAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/v1/aggregates/weekly"] = aggregates.NewGetV1AggregatesWeekly(o.context, o.AggregatesGetV1AggregatesWeeklyHandler)
+	o.handlers["GET"]["/v1/aggregates"] = aggregates.NewGetV1Aggregates(o.context, o.AggregatesGetV1AggregatesHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

@@ -18,8 +18,8 @@ import java.util.List;
 import static dev.sunbirdrc.registry.middleware.util.JSONUtil.convertObjectJsonString;
 
 @Service
-public class UpdateEntityService {
-    private static Logger logger = LoggerFactory.getLogger(UpdateEntityService.class);
+public class EntityTransformer {
+    private static Logger logger = LoggerFactory.getLogger(EntityTransformer.class);
     private JsonNode updateFields(JsonNode jsonNode, List<String> fields, EventConfig eventConfig) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         DocumentContext documentContext = JsonPath.parse(convertObjectJsonString(jsonNode));

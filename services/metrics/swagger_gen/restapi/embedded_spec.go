@@ -31,7 +31,7 @@ func init() {
     "version": "1.0.0"
   },
   "paths": {
-    "/v1/aggregates/weekly": {
+    "/v1/aggregates": {
       "get": {
         "security": [],
         "consumes": [
@@ -106,7 +106,7 @@ func init() {
     "version": "1.0.0"
   },
   "paths": {
-    "/v1/aggregates/weekly": {
+    "/v1/aggregates": {
       "get": {
         "security": [],
         "consumes": [

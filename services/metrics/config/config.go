@@ -28,5 +28,7 @@ var Config = struct {
 	}
 	Cron struct {
 		Enable bool `env:"CRON_ENABLE" yaml:"enable" default:"true"`
+		ScheduleInterval int `env:"SCHEDULE_INTERVAL" yaml:"scheduleInterval" default:"7"`
+		ScheduleTime string `env:"SCHEDULE_TIME" yaml:"scheduleTime" default:"00:00"`
 	}
 }{}

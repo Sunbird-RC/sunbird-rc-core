@@ -36,25 +36,25 @@ func Init(database *models.IDatabase) {
 
 	cronJob := gocron.NewScheduler(time.UTC)
 	cronJob.WithDistributedLocker(locker)
-	_, err = cronJob.Every(7).Day().At("19:30").Do(cron.SaveWeeklyMetrics, database)
+	_, err = cronJob.Every(config.Config.Cron.ScheduleInterval).Day().At(config.Config.Cron.ScheduleTime).Do(cron.SaveWeeklyMetrics)
 	if err != nil {
 		log.Errorf("Failed Creating a scheduler : %v", err)
 	}
 	CronObj = &cron
 }
 
-func (cron *Cron) SaveWeeklyMetrics(db models.IDatabase) {
-	days := 7
+func (cron *Cron) SaveWeeklyMetrics() {
+	days := config.Config.Cron.ScheduleInterval
 	backDatedDate := time.Now().Add(-1 * time.Duration(24*time.Duration(days)*time.Hour)).Format("2006-01-02")
-	whereClause := "WHERE date > '" + backDatedDate + "'"
-	aggregate := db.GetAggregates(whereClause)
+	whereClause := "WHERE createdAt > '" + backDatedDate + "'"
+	aggregate := (*cron.db).GetAggregates(whereClause)
 	bytes, err := json.Marshal(aggregate)
 	if err != nil {
 		log.Infof("Error in marshalling : %v", err)
 	}
 	ctx := context.Background()
 	log.Infof(string(bytes))
-	err = cron.redisClient.Set(ctx, "weeklyUpdates", string(bytes), 24*time.Duration(days)*time.Hour).Err()
+	err = cron.redisClient.Set(ctx, "weeklyUpdates", string(bytes), 0).Err()
 	if err != nil {
 		log.Infof("Error in saving to redis : %v", err)
 	}

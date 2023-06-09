@@ -38,9 +38,9 @@ func createTableIfNotExists(tableName string, c *Clickhouse) error {
 	createTableCmd := `CREATE TABLE IF NOT EXISTS ` + strings.ToLower(tableName) + ` (
 		operationType 	String,
 		entity			JSON,
-		date 			Date,
+		createdAt 			Date,
 		id 				String
-	) ENGINE = MergeTree() order by date`
+	) ENGINE = MergeTree() order by createdAt`
 	err := c.connection.Exec(ctx, createTableCmd)
 	if err != nil {
 		log.Fatal(err)

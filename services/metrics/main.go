@@ -28,7 +28,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
+	cron.CronObj.SaveWeeklyMetrics()
 	api := operations.NewMetricsAPI(swaggerSpec)
 	server := restapi.NewServer(api)
 	defer server.Shutdown()

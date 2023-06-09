@@ -15,7 +15,7 @@ import (
 
 func SetupHandlers(api *operations.MetricsAPI) {
 	api.MetricsGetV1MetricsHandler = metrics.GetV1MetricsHandlerFunc(getAllMetrics)
-	api.AggregatesGetV1AggregatesWeeklyHandler = aggregates.GetV1AggregatesWeeklyHandlerFunc(getWeeklyAggregates)
+	api.AggregatesGetV1AggregatesHandler = aggregates.GetV1AggregatesHandlerFunc(getWeeklyAggregates)
 }
 
 func getAllMetrics(params metrics.GetV1MetricsParams) middleware.Responder {
@@ -26,8 +26,8 @@ func getAllMetrics(params metrics.GetV1MetricsParams) middleware.Responder {
 	return response
 }
 
-func getWeeklyAggregates(params aggregates.GetV1AggregatesWeeklyParams) middleware.Responder {
-	response := aggregates.NewGetV1AggregatesWeeklyOK()
+func getWeeklyAggregates(params aggregates.GetV1AggregatesParams) middleware.Responder {
+	response := aggregates.NewGetV1AggregatesOK()
 	aggregatesStr, err := cron.CronObj.GetWeeklyAggregates()
 	if err != nil {
 		response.WithPayload("Failed")

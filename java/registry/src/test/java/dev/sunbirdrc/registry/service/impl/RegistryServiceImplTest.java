@@ -22,7 +22,7 @@ import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.IAuditService;
 import dev.sunbirdrc.registry.service.IEventService;
-import dev.sunbirdrc.registry.service.UpdateEntityService;
+import dev.sunbirdrc.registry.service.EntityTransformer;
 import dev.sunbirdrc.registry.service.SchemaService;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
@@ -111,7 +111,7 @@ public class RegistryServiceImplTest {
 	@Mock
 	private IEventService eventService;
 	@Mock
-	private UpdateEntityService updateEntityService;
+	private EntityTransformer entityTransformer;
 
 	private DatabaseProvider mockDatabaseProvider;
 
@@ -156,7 +156,7 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(registryService, "schemaService", schemaService);
 		ReflectionTestUtils.setField(registryService, "objectMapper", objectMapper);
 		ReflectionTestUtils.setField(registryService, "eventService", eventService);
-		ReflectionTestUtils.setField(registryService, "updateEntityService", updateEntityService);
+		ReflectionTestUtils.setField(registryService, "updateEntityService", entityTransformer);
 	}
 
 	@Before

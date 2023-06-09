@@ -8,3 +8,7 @@ database:
   providerName: clickhouse
 redis:
   url: localhost:6379
+cron:
+  scheduleTime: 00:00
+  scheduleInterval: 7
+  enable: true
