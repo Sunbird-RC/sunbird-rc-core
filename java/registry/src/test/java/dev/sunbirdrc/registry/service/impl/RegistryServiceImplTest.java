@@ -156,7 +156,7 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(registryService, "schemaService", schemaService);
 		ReflectionTestUtils.setField(registryService, "objectMapper", objectMapper);
 		ReflectionTestUtils.setField(registryService, "eventService", eventService);
-		ReflectionTestUtils.setField(registryService, "updateEntityService", entityTransformer);
+		ReflectionTestUtils.setField(registryService, "entityTransformer", entityTransformer);
 	}
 
 	@Before

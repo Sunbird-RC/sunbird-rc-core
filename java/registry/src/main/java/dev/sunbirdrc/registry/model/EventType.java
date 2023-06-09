@@ -1,5 +1,5 @@
 package dev.sunbirdrc.registry.model;
 
 public enum EventType {
-    ADD, UPDATE, DELETE
+    ADD, UPDATE, DELETE, READ
 }

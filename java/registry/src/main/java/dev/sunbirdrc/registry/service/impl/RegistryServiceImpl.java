@@ -174,7 +174,7 @@ public class RegistryServiceImpl implements RegistryService {
             }
         }
     }
-    private void maskAndEmitEvent(JsonNode deletedNode, String index, EventType delete, String userId, String uuid) throws JsonProcessingException {
+    public void maskAndEmitEvent(JsonNode deletedNode, String index, EventType delete, String userId, String uuid) throws JsonProcessingException {
         JsonNode maskedNode = entityTransformer.updatePrivateAndInternalFields(
                 deletedNode,
                 definitionsManager.getDefinition(index).getOsSchemaConfiguration()
