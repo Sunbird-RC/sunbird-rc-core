@@ -40,7 +40,7 @@ services:
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
       - event_enabled=false
-      - event_topic=metrics
+      - event_topic=events
       - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
       - elastic_search_connection_url=es:9200
       - elastic_search_auth_enabled=${ELASTIC_SECURITY_ENABLED-false}
@@ -265,7 +265,7 @@ services:
       CLICK_HOUSE_URL: clickhouse:9000
       CLICKHOUSE_DATABASE: default
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      KAFKA_METRICS_TOPIC: metrics
+      KAFKA_METRICS_TOPIC: events
       REDIS_URL: redis:6379
     ports:
       - "8070:8070"
