@@ -12,10 +12,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-@ConditionalOnProperty(name = "metrics.providerName", havingValue = "dev.sunbirdrc.registry.service.impl.KafkaEventService", matchIfMissing = true)
+@ConditionalOnProperty(name = "event.providerName", havingValue = "dev.sunbirdrc.registry.service.impl.KafkaEventService", matchIfMissing = true)
 public class KafkaEventService implements IEventService {
 
-    @Value("${events.topic:metrics}")
+    @Value("${events.topic:events}")
     String metricsTopic;
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;

@@ -70,7 +70,7 @@ async:
 
 event:
   enabled: ${event_enabled:false}
-  topic: ${event_topic:metrics}
+  topic: ${event_topic:events}
   providerName: ${event_providerName:dev.sunbirdrc.registry.service.impl.KafkaEventService}
 
 kafka:
