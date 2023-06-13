@@ -4,6 +4,7 @@ import (
 	"log"
 	"metrics/config"
 	"metrics/models"
+	"metrics/pkg"
 	"metrics/services/kafka"
 	"metrics/swagger_gen/restapi"
 	"metrics/swagger_gen/restapi/operations"
@@ -28,7 +29,6 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	cron.CronObj.SaveWeeklyMetrics()
 	api := operations.NewMetricsAPI(swaggerSpec)
 	server := restapi.NewServer(api)
 	defer server.Shutdown()
@@ -40,6 +40,7 @@ func main() {
 			log.Fatalln(err)
 		}
 	}
+	pkg.SetupHandlers(api)
 	if _, err := parser.Parse(); err != nil {
 		code := 1
 		if fe, ok := err.(*flags.Error); ok {
