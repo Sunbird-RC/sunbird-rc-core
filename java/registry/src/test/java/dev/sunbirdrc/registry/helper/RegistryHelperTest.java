@@ -343,7 +343,7 @@ public class RegistryHelperTest {
 		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
 		mockDefinitionManager();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(keycloakAdminUtil.createUser(any(), any(), any(), any(), any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
@@ -357,7 +357,7 @@ public class RegistryHelperTest {
 		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
 		mockDefinitionManager();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(keycloakAdminUtil.createUser(any(), any(), any(), any(), any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
@@ -388,7 +388,7 @@ public class RegistryHelperTest {
 				"  \"adminMobile\": \"1234\"\n" +
 				"}}");
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(keycloakAdminUtil.createUser(any(), any(), any(), any(), any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		mockDefinitionManager();
@@ -870,7 +870,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		mockValidationService();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(keycloakAdminUtil.createUser(any(), any(), any(), any(), any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
@@ -888,7 +888,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		mockValidationService();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(keycloakAdminUtil.createUser(any(), any(), any(), any(), any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);

@@ -70,6 +70,11 @@ public class EntityStateHelper {
         addAttestationStateTransitions(existing, entityName, modified, allContexts, attestationPolicies);
         addOwnershipStateTransitions(existing, entityName, updated, allContexts);
         ruleEngineService.doTransition(allContexts);
+        removePasswordField(entityName, updated);
+    }
+
+    private void removePasswordField(String entityName, JsonNode inputJson) {
+        ((ObjectNode) inputJson.get(entityName)).remove("password");
     }
 
     private void addSystemFieldsStateTransition(JsonNode existing, JsonNode modified, String entityName, List<StateContext> allContexts) {
@@ -115,10 +120,12 @@ public class EntityStateHelper {
         String mobilePath = ownershipAttribute.getMobile();
         String emailPath = ownershipAttribute.getEmail();
         String userIdPath = ownershipAttribute.getUserId();
+        String passwordPath = ownershipAttribute.getPassword();
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
         objectNode.put(MOBILE, entityNode.at(String.format("/%s%s", entityName, mobilePath)).asText(""));
         objectNode.put(EMAIL, entityNode.at(String.format("/%s%s", entityName, emailPath)).asText(""));
         objectNode.put(USER_ID, entityNode.at(String.format("/%s%s", entityName, userIdPath)).asText(""));
+        objectNode.put(PASSWORD, entityNode.at(String.format("/%s%s", entityName, passwordPath)).asText(""));
         return objectNode;
     }
 
