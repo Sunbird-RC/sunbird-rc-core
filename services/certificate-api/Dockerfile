@@ -66,6 +66,7 @@ RUN apk update && apk add --no-cache nmap && \
 RUN fc-cache -f && rm -rf /var/cache/*
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH='/usr/bin/chromium-browser'
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
 COPY package.json ./
