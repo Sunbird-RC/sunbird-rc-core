@@ -115,7 +115,7 @@ paths:
           content:
             'appliation/json':
               schema:
-                $ref: '#/components/schemas/verifiableCredentialType'
+                $ref: '#/components/schemas/verifiableCredential'
         401:
           description: Not Authorized
           content: {}
@@ -187,7 +187,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/verifiableCredentialType'
+                  $ref: '#/components/schemas/verifiableCredential'
         401:
           description: Not Authorized
           content: {}
@@ -376,6 +376,30 @@ components:
         credentialSubject:
           type: object
           properties: {}
+
+    verifiableCredential:
+      type: object
+      properties:
+        context:
+          type: array
+          items:
+            type: string
+        id:
+          type: string
+        type:
+          type: string
+        issuer:
+          type: object
+          properties: {}
+        issuanceDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+        credentialSubject:
+          type: object
+          properties: {}
         proof:
           type: object
           properties: 
@@ -398,6 +422,7 @@ components:
               type: string
             proofValue:
               type: string
+
             
 
       
