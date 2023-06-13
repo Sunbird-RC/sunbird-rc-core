@@ -32,7 +32,7 @@ func getWeeklyAggregates(params aggregates.GetV1AggregatesParams) middleware.Res
 	if err != nil {
 		response.WithPayload("Failed")
 	}
-	var aggregates map[string]string
+	var aggregates map[string]map[string]string
 	if err := json.Unmarshal([]byte(aggregatesStr), &aggregates); err != nil {
 		log.Errorf("Error while unmarshalling aggregates : %v", err)
 	}

@@ -71,27 +71,29 @@ func (c *Clickhouse) InsertRecord(metricData Metrics) error {
 	return nil
 }
 
-func (c *Clickhouse) GetCount() map[string]string {
+func (c *Clickhouse) GetCount() map[string]map[string]string {
 	ctx := context.Background()
 	tables, err := getTables(c, ctx)
 	if err != nil {
 		log.Errorf("Error occurred while fetching table names : %v", err)
 	}
-	mapping := map[string]string{}
+	mapping := map[string]map[string]string{}
 	for i := range tables {
-		var query string
-		query = "SELECT count(*) FROM " + tables[i]
+		query := "SELECT operationType, count(*) FROM " + tables[i] + " group by operationType"
 		rows, err := c.connection.Query(ctx, query)
 		if err != nil {
 			log.Fatal(err)
 		}
 		var count *uint64
+		var operationType string
+		operationCountMap := map[string]string{}
 		for rows.Next() {
-			if err := rows.Scan(&count); err != nil {
+			if err := rows.Scan(&operationType, &count); err != nil {
 				log.Fatal(err)
 			}
+			operationCountMap[operationType] = strconv.FormatUint(*count, 10)
 		}
-		mapping[tables[i]] = strconv.FormatUint(*count, 10)
+		mapping[tables[i]] = operationCountMap
 	}
 	return mapping
 }
@@ -112,27 +114,30 @@ func getTables(c *Clickhouse, ctx context.Context) ([]string, error) {
 	return tables, nil
 }
 
-func (c *Clickhouse) GetAggregates(clauses string) map[string]string {
+func (c *Clickhouse) GetAggregates(clauses string) map[string]map[string]string {
 	ctx := context.Background()
 	tables, err := getTables(c, ctx)
 	if err != nil {
 		log.Errorf("Error occurred while fetching table names : %v", err)
 	}
-	mapping := map[string]string{}
+	mapping := map[string]map[string]string{}
 	for i := range tables {
-		query := "SELECT count(*) FROM " + tables[i] + " " + clauses
+		query := "SELECT operationType, count(*) FROM " + tables[i] + " " + clauses
 		log.Debugf("Query : %v", query)
 		rows, err := c.connection.Query(ctx, query)
 		if err != nil {
 			log.Fatal(err)
 		}
 		var count *uint64
+		var operationType string
+		operationCountMap := map[string]string{}
 		for rows.Next() {
-			if err := rows.Scan(&count); err != nil {
+			if err := rows.Scan(&operationType, &count); err != nil {
 				log.Fatal(err)
 			}
+			operationCountMap[operationType] = strconv.FormatUint(*count, 10)
 		}
-		mapping[tables[i]] = strconv.FormatUint(*count, 10)
+		mapping[tables[i]] = operationCountMap
 	}
 	return mapping
 }

@@ -46,8 +46,8 @@ func Init(database *models.IDatabase) {
 func (cron *Cron) SaveWeeklyMetrics() {
 	days := config.Config.Cron.ScheduleInterval
 	backDatedDate := time.Now().Add(-1 * time.Duration(24*time.Duration(days)*time.Hour)).Format("2006-01-02")
-	whereClause := "WHERE createdAt > '" + backDatedDate + "'"
-	aggregate := (*cron.db).GetAggregates(whereClause)
+	clauses := "WHERE createdAt > '" + backDatedDate + "' group by operationType"
+	aggregate := (*cron.db).GetAggregates(clauses)
 	bytes, err := json.Marshal(aggregate)
 	if err != nil {
 		log.Infof("Error in marshalling : %v", err)
