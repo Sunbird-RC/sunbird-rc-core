@@ -77,10 +77,6 @@ func (service RegistryService) getCertificate(pullUriRequest PullURIRequest) ([]
 	if err != nil {
 		return nil, "", err
 	}
-	osid, err := service.getEntityOsid(schema, certificateId)
-	if err != nil {
-		return nil, err
-	}
 	resp, err := client.R().
 		SetHeader("Accept", "application/pdf").
 		SetHeader("template-key", schemaTemplate).
