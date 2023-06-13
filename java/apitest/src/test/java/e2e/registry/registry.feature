@@ -2,12 +2,12 @@
 Feature: Registry api tests
   Background:
     * string registryUrl = "http://localhost:8081"
+    * string metricsUrl = "http://localhost:8070"
     * string authUrl = "http://localhost:8080"
     * url registryUrl
     * def admin_token = ""
     * def client_secret = 'a52c5f4a-89fd-40b9-aea2-3f711f14c889'
     * def sleep = function(millis){ java.lang.Thread.sleep(millis) }
-
   Scenario: health check
     Given path 'health'
     When method get
@@ -344,3 +344,13 @@ Feature: Registry api tests
     Then status 200
     And assert response[0].address[0].phoneNo.length == 1
     And assert response[0].address[0].phoneNo[0] == "444"
+
+  @env=events
+  Scenario: Check if events are published
+  # should get metrics
+    * sleep(11000)
+    Given url metricsUrl
+    And path '/v1/metrics'
+    When method get
+    Then status 200
+    And assert response.birthcertificate == "8"

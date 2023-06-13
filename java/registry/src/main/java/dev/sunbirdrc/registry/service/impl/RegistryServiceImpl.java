@@ -70,6 +70,9 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
 
+    @Value("${event.enabled}")
+    private boolean isEventsEnabled;
+
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
 
@@ -167,7 +170,9 @@ public class RegistryServiceImpl implements RegistryService {
                     if (isElasticSearchEnabled()) {
                         callESActors(null, "DELETE", index, uuid, tx);
                     }
-                    maskAndEmitEvent(vertexReader.constructObject(vertex), index, EventType.DELETE, userId, uuid);
+                    if(isEventsEnabled) {
+                        maskAndEmitEvent(vertexReader.constructObject(vertex), index, EventType.DELETE, userId, uuid);
+                    }
                 }
                 logger.info("Entity {} marked deleted", uuid);
                 return vertex;
@@ -246,7 +251,9 @@ public class RegistryServiceImpl implements RegistryService {
             auditService.auditAdd(
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
-            maskAndEmitEvent(rootNode.get(vertexLabel), vertexLabel, EventType.ADD, userId, entityId);
+            if(isEventsEnabled) {
+                maskAndEmitEvent(rootNode.get(vertexLabel), vertexLabel, EventType.ADD, userId, entityId);
+            }
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.addSchema(rootNode);
@@ -368,7 +375,9 @@ public class RegistryServiceImpl implements RegistryService {
                 auditService.auditUpdate(
                         auditService.createAuditRecord(userId, rootId, tx, entityType),
                         shard, mergedNode, readNode);
-                maskAndEmitEvent(inputNode.get(entityType), entityType, EventType.UPDATE, userId, id);
+                if(isEventsEnabled) {
+                    maskAndEmitEvent(inputNode.get(entityType), entityType, EventType.UPDATE, userId, id);
+                }
             }
         }
     }

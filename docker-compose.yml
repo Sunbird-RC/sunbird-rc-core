@@ -39,7 +39,7 @@ services:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
-      - event_enabled=false
+      - event_enabled=${EVENT_ENABLED-false}
       - event_topic=events
       - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
       - elastic_search_connection_url=es:9200
@@ -273,6 +273,8 @@ services:
     depends_on:
       kafka:
         condition: service_started
+      registry:
+        condition: service_healthy
   redis:
     image: redis:latest
     ports:

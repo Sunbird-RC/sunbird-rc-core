@@ -138,7 +138,8 @@ public class RegistryHelper {
 
     @Value("${audit.frame.suffix}")
     public String auditSuffix;
-
+    @Value("${event.enabled}")
+    private boolean isEventsEnabled;
     @Value("${audit.frame.suffixSeparator}")
     public String auditSuffixSeparator;
 
@@ -306,7 +307,9 @@ public class RegistryHelper {
             resultNode = vTransformer.transform(viewTemplate, resultNode);
         }
         logger.debug("readEntity ends");
-        registryService.maskAndEmitEvent(resultNode.get(entityType), entityType, EventType.READ, userId, label);
+        if(isEventsEnabled) {
+            registryService.maskAndEmitEvent(resultNode.get(entityType), entityType, EventType.READ, userId, label);
+        }
         return resultNode;
     }
 
