@@ -87,6 +87,8 @@ public class RegistryHelper {
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${notification.service.enabled}") boolean notificationEnabled;
+    @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
+    @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
 
     @Autowired
     private ShardManager shardManager;
@@ -187,11 +189,11 @@ public class RegistryHelper {
      * @throws Exception
      */
     public String addEntity(JsonNode inputJson, String userId) throws Exception {
-        return addEntityHandler(inputJson, userId, false);
+        return addEntityHandler(inputJson, userId, false, false);
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
-        String entityId = addEntityHandler(inputJson, userId, true);
+        String entityId = addEntityHandler(inputJson, userId, skipRequiredValidationForInvite, skipSignatureForInvite);
         sendInviteNotification(inputJson);
         return entityId;
     }
@@ -200,9 +202,9 @@ public class RegistryHelper {
         return addEntity(inputJson, userId, entityName, true);
     }
 
-    private String addEntityHandler(JsonNode inputJson, String userId, boolean isInvite) throws Exception {
+    private String addEntityHandler(JsonNode inputJson, String userId, boolean skipRequiredValidation, boolean skipSignature) throws Exception {
         String entityType = inputJson.fields().next().getKey();
-        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), isInvite);
+        validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), skipRequiredValidation);
         String entityName = inputJson.fields().next().getKey();
         if (workflowEnabled) {
             List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
@@ -216,7 +218,7 @@ public class RegistryHelper {
             }
             jsonNode.add(userId);
         }
-        return addEntity(inputJson, userId, entityType, isInvite);
+        return addEntity(inputJson, userId, entityType, skipSignature);
     }
 
     private void sendInviteNotification(JsonNode inputJson) throws Exception {

@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -48,7 +47,7 @@ public class CertificateServiceImpl implements ICertificateService {
     }
 
     @Override
-    public Object getCertificate(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl) {
+    public Object getCertificate(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl, JsonNode entity) {
         try {
             String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl);
 
@@ -57,11 +56,12 @@ public class CertificateServiceImpl implements ICertificateService {
                 put("certificate", certificateData.toString());
                 put("entityId", entityId);
                 put("entityName", entityName);
+                put("entity", entity);
             }};
             HttpHeaders headers = new HttpHeaders();
             headers.set("Accept", mediaType);
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-            return restTemplate.postForObject(certificateUrl, entity, byte[].class);
+            HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, headers);
+            return restTemplate.postForObject(certificateUrl, httpEntity, byte[].class);
         } catch (Exception e) {
             logger.error("Get certificate failed", e);
         }

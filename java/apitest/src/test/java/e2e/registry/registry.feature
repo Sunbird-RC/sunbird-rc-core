@@ -324,4 +324,23 @@ Feature: Registry api tests
     When method get
     Then status 200
     And response[0].osid.length > 0
+    * def instituteOsid = response[0].osid
+    * def address = response[0].address
 
+  # update property of institute
+    Given url registryUrl
+    And path 'api/v1/Institute/'+instituteOsid+'/address/'+address[0].osid
+    And address[0].phoneNo = ["444"]
+    And request address[0]
+    And header Authorization = institute_token
+    When method put
+    Then status 200
+    * print response
+  # check if array updated institute info
+    Given url registryUrl
+    And path 'api/v1/Institute'
+    And header Authorization = institute_token
+    When method get
+    Then status 200
+    And assert response[0].address[0].phoneNo.length == 1
+    And assert response[0].address[0].phoneNo[0] == "444"
