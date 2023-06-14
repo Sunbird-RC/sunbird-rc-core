@@ -292,7 +292,7 @@ public class JSONUtil {
 		parent.remove(removeKey);
 	}
 
-	public static JsonNode removeNodesByPath(JsonNode root, Set<String> nodePaths) throws Exception {
+	public static JsonNode removeNodesByPath(JsonNode root, Set<String> nodePaths) throws IOException {
 		DocumentContext doc = JsonPath.parse(convertObjectJsonString(root));
 		for (String jsonPath : nodePaths) {
 			try {

@@ -5,22 +5,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.pojos.attestation.Action;
-import dev.sunbirdrc.pojos.dto.ClaimDTO;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
-import dev.sunbirdrc.registry.middleware.util.EntityUtil;
+import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.attestation.AttestationPath;
 import dev.sunbirdrc.registry.model.attestation.EntityPropertyURI;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
-import dev.sunbirdrc.registry.util.RecordIdentifier;
 import dev.sunbirdrc.workflow.RuleEngineService;
 import dev.sunbirdrc.workflow.StateContext;
-import net.minidev.json.JSONArray;
 import org.apache.commons.math3.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotEmpty;
+import java.io.IOException;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
@@ -59,7 +55,7 @@ public class EntityStateHelper {
         this.claimRequestClient = claimRequestClient;
     }
 
-    void applyWorkflowTransitions(JsonNode existing, JsonNode updated, List<AttestationPolicy> attestationPolicies) {
+    JsonNode applyWorkflowTransitions(JsonNode existing, JsonNode updated, List<AttestationPolicy> attestationPolicies) throws IOException {
         String entityName = updated.fields().next().getKey();
         JsonNode modified = updated.get(entityName);
         logger.info("Detecting state changes by comparing attestation paths in existing and the updated nodes");
@@ -70,11 +66,21 @@ public class EntityStateHelper {
         addAttestationStateTransitions(existing, entityName, modified, allContexts, attestationPolicies);
         addOwnershipStateTransitions(existing, entityName, updated, allContexts);
         ruleEngineService.doTransition(allContexts);
-        removePasswordField(entityName, updated);
+        updated = removePasswordFields(entityName, updated);
+        return updated;
     }
 
-    private void removePasswordField(String entityName, JsonNode inputJson) {
-        ((ObjectNode) inputJson.get(entityName)).remove("password");
+    private JsonNode removePasswordFields(String entityName, JsonNode inputJson) throws IOException {
+        List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityName);
+        JsonNode updatedNode = inputJson;
+        for (OwnershipsAttributes ownershipAttribute : ownershipAttributes) {
+            String passwordPath = ownershipAttribute.getPassword();
+            if (passwordPath != null) {
+                String jsonPath = String.format("$.%s%s", entityName, passwordPath.replaceAll("/", "."));
+                updatedNode = JSONUtil.removeNodesByPath(updatedNode, Collections.singleton(jsonPath));
+            }
+        }
+        return updatedNode;
     }
 
     private void addSystemFieldsStateTransition(JsonNode existing, JsonNode modified, String entityName, List<StateContext> allContexts) {

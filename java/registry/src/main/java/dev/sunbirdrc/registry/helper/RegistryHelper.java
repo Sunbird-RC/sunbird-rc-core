@@ -207,7 +207,7 @@ public class RegistryHelper {
         String entityName = inputJson.fields().next().getKey();
         if (workflowEnabled) {
             List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
-            entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
+            inputJson = entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
         }
         if (!StringUtils.isEmpty(userId)) {
             ArrayNode jsonNode = (ArrayNode) inputJson.get(entityName).get(osOwner.toString());
@@ -380,7 +380,7 @@ public class RegistryHelper {
         if (workflowEnabled) {
             String entityName = updatedNode.fields().next().getKey();
             List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
-            entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
+            updatedNode = entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
         }
         updateEntity(updatedNode, userId);
     }

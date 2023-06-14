@@ -78,11 +78,11 @@ public class EntityStateHelperTest {
         ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
     }
 
-    private void runTest(JsonNode existing, JsonNode updated, JsonNode expected, List<AttestationPolicy> attestationPolicies) {
+    private void runTest(JsonNode existing, JsonNode updated, JsonNode expected, List<AttestationPolicy> attestationPolicies) throws IOException {
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
         EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
-        entityStateHelper.applyWorkflowTransitions(existing, updated, attestationPolicies);
+        updated = entityStateHelper.applyWorkflowTransitions(existing, updated, attestationPolicies);
         assertEquals(expected, updated);
     }
 
