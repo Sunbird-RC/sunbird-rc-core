@@ -52,7 +52,7 @@ model VerifiableCredentials {
   updatedBy         String?
   tags              String[]
   // Presentations     Presentations? @relation(fields: [presentationsId], references: [id])
-  presentationsId   String?
+  // presentationsId   String?
 }
 
 // model Counter {
