@@ -762,9 +762,12 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.revokeAnExistingCredential" + entityName;
             watch.start(tag);
             JsonNode revokedEntityNode = getEntityJsonNode(entityName, entityId,false, userId);
-            String SignedData = String.valueOf(revokedEntityNode.get(OSSystemFields._osSignedData.name()));
+            String SignedData = revokedEntityNode.get(OSSystemFields._osSignedData.name()).asText();
+            if (SignedData.equals(new String()) || SignedData.equals(null)) {
+                throw new RecordNotFoundException("Credential is already revoked");
+            }
             Vertex revokedEntity = registryHelper.deleteEntity(entityId, userId, true);
-            if (revokedEntityNode != null && !revokedEntityNode.get(OSSystemFields._osSignedData.name()).isNull()) {
+            if (revokedEntity != null) {
                 registryHelper.revokeExistingCredentials(entityName, entityId, userId, SignedData);
             }
             responseParams.setErrmsg("");
