@@ -16,6 +16,8 @@ import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
+import dev.sunbirdrc.registry.model.event.Event;
+import dev.sunbirdrc.registry.model.EventType;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
@@ -62,9 +64,14 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SignatureHelper signatureHelper;
     @Autowired
+    private EntityTransformer entityTransformer;
+    @Autowired
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
+
+    @Value("${event.enabled}")
+    private boolean isEventsEnabled;
 
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
@@ -101,6 +108,9 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private IAuditService auditService;
+
+    @Autowired
+    private IEventService eventService;
 
     @Autowired
     private SchemaService schemaService;
@@ -160,15 +170,22 @@ public class RegistryServiceImpl implements RegistryService {
                     if (isElasticSearchEnabled()) {
                         callESActors(null, "DELETE", index, uuid, tx);
                     }
-
-
+                    if(isEventsEnabled) {
+                        maskAndEmitEvent(vertexReader.constructObject(vertex), index, EventType.DELETE, userId, uuid);
+                    }
                 }
                 logger.info("Entity {} marked deleted", uuid);
                 return vertex;
             }
         }
-
-
+    }
+    public void maskAndEmitEvent(JsonNode deletedNode, String index, EventType delete, String userId, String uuid) throws JsonProcessingException {
+        JsonNode maskedNode = entityTransformer.updatePrivateAndInternalFields(
+                deletedNode,
+                definitionsManager.getDefinition(index).getOsSchemaConfiguration()
+        );
+        Event event = eventService.createTelemetryObject(delete.name(), userId, "USER", uuid, index, maskedNode);
+        eventService.pushEvents(event);
     }
 
     /**
@@ -183,6 +200,7 @@ public class RegistryServiceImpl implements RegistryService {
         Transaction tx = null;
         String entityId = "entityPlaceholderId";
         String vertexLabel = rootNode.fieldNames().next();
+        Definition definition = null;
 
         systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
@@ -216,7 +234,7 @@ public class RegistryServiceImpl implements RegistryService {
             if (perRequestIndexCreation) {
                 String shardId = shard.getShardId();
                 Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
-                Definition definition = definitionsManager.getDefinition(vertexLabel);
+                definition = definitionsManager.getDefinition(vertexLabel);
                 entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             }
 
@@ -233,9 +251,9 @@ public class RegistryServiceImpl implements RegistryService {
             auditService.auditAdd(
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
-
-
-
+            if(isEventsEnabled) {
+                maskAndEmitEvent(rootNode.get(vertexLabel), vertexLabel, EventType.ADD, userId, entityId);
+            }
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.addSchema(rootNode);
@@ -357,7 +375,9 @@ public class RegistryServiceImpl implements RegistryService {
                 auditService.auditUpdate(
                         auditService.createAuditRecord(userId, rootId, tx, entityType),
                         shard, mergedNode, readNode);
-
+                if(isEventsEnabled) {
+                    maskAndEmitEvent(inputNode.get(entityType), entityType, EventType.UPDATE, userId, id);
+                }
             }
         }
     }

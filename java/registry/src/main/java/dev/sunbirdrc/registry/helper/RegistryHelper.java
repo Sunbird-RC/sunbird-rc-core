@@ -27,6 +27,7 @@ import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
+import dev.sunbirdrc.registry.model.EventType;
 import dev.sunbirdrc.registry.model.attestation.EntityPropertyURI;
 import dev.sunbirdrc.registry.model.dto.AttestationRequest;
 import dev.sunbirdrc.registry.service.*;
@@ -137,7 +138,8 @@ public class RegistryHelper {
 
     @Value("${audit.frame.suffix}")
     public String auditSuffix;
-
+    @Value("${event.enabled}")
+    private boolean isEventsEnabled;
     @Value("${audit.frame.suffixSeparator}")
     public String auditSuffixSeparator;
 
@@ -305,6 +307,9 @@ public class RegistryHelper {
             resultNode = vTransformer.transform(viewTemplate, resultNode);
         }
         logger.debug("readEntity ends");
+        if(isEventsEnabled) {
+            registryService.maskAndEmitEvent(resultNode.get(entityType), entityType, EventType.READ, userId, label);
+        }
         return resultNode;
     }
 
