@@ -16,6 +16,7 @@ import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
+import dev.sunbirdrc.registry.Constants;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.entities.AttestationType;
 import dev.sunbirdrc.registry.entities.FlowType;
@@ -1004,11 +1005,11 @@ public class RegistryHelper {
         }
     }
 
-    public Vertex deleteEntity(String entityId, String userId) throws Exception {
+    public Vertex deleteEntity(String entityId, String userId, boolean markSignedDataNull) throws Exception {
         RecordIdentifier recordId = RecordIdentifier.parse(entityId);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         Shard shard = shardManager.activateShard(shardId);
-        return registryService.deleteEntityById(shard, userId, recordId.getUuid());
+        return registryService.deleteEntityById(shard, userId, recordId.getUuid(), markSignedDataNull);
     }
 
     //TODO: add cache
@@ -1111,7 +1112,7 @@ public class RegistryHelper {
 
 
     public void deleteAttestationPolicy(AttestationPolicy attestationPolicy) throws Exception {
-        deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
+        deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy(), false);
     }
 
     public boolean doesEntityOperationRequireAuthorization(String entity) {

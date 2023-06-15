@@ -147,7 +147,7 @@ public class RegistryServiceImpl implements RegistryService {
      * @throws Exception
      */
     @Override
-    public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
+    public Vertex deleteEntityById(Shard shard, String userId, String uuid, boolean markSignedDataNull) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -162,7 +162,11 @@ public class RegistryServiceImpl implements RegistryService {
                 }
                 if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
                         && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
-                    registryDao.deleteEntity(vertex);
+                    if (markSignedDataNull) {
+                        registryDao.markSignedDataAsNullForAnEntity(vertex);
+                    } else {
+                        registryDao.deleteEntity(vertex);
+                    }
                     databaseProvider.commitTransaction(graph, tx);
                     auditService.auditDelete(
                             auditService.createAuditRecord(userId, uuid, tx, index),

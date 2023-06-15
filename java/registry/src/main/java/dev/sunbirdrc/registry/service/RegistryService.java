@@ -12,7 +12,7 @@ public interface RegistryService {
 
 	HealthCheckResponse health(Shard shard) throws Exception;
 
-	Vertex deleteEntityById(Shard shard, String userId, String id) throws Exception;
+	Vertex deleteEntityById(Shard shard, String userId, String id, boolean markSignedDataNull) throws Exception;
 
 	String addEntity(Shard shard, String userId, JsonNode inputJson, boolean skipSignature) throws Exception;
 
