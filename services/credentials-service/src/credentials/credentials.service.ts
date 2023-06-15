@@ -6,7 +6,7 @@ import {
   StreamableFile,
 } from '@nestjs/common';
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces';
-import { VCStatus, VCV2 } from '@prisma/client';
+import { VCStatus, VerifiableCredentials } from '@prisma/client';
 import { verify } from 'crypto';
 import {
   JwtCredentialPayload,
@@ -46,7 +46,7 @@ export class CredentialsService {
 
   async getCredentials(tags: string[]) {
     // console.log('tagsArray', tags);
-    const credentials = await this.prisma.vCV2.findMany({
+    const credentials = await this.prisma.verifiableCredentials.findMany({
       where: {
         tags: {
           hasSome: [...tags],
@@ -57,7 +57,7 @@ export class CredentialsService {
   }
 
   async getCredentialById(id: string) {
-    const credential = await this.prisma.vCV2.findUnique({
+    const credential = await this.prisma.verifiableCredentials.findUnique({
       where: { id: id },
       select: {
         signed: true,
@@ -76,7 +76,7 @@ export class CredentialsService {
 
   async verifyCredential(credId: string) {
     let credToVerify: any = null;
-    credToVerify = await this.prisma.vCV2.findUnique({
+    credToVerify = await this.prisma.verifiableCredentials.findUnique({
       where: {
         id: credId,
       },
@@ -180,7 +180,7 @@ export class CredentialsService {
       /*
       //Code block for unsigned credential
 
-      return await this.prisma.vCV2.create({ //use update incase the above codeblock is uncommented 
+      return await this.prisma.verifiableCredentials.create({ //use update incase the above codeblock is uncommented 
         data: {
           type: credInReq.type,
           issuer: credInReq.issuer as string,
@@ -232,7 +232,7 @@ export class CredentialsService {
       credInReq.id = id.data[0]?.id;
 
       // TODO: add created by and updated by
-      const newCred = await this.prisma.vCV2.create({
+      const newCred = await this.prisma.verifiableCredentials.create({
         //use update incase the above codeblock is uncommented
         data: {
           id: credInReq.id,
@@ -268,7 +268,7 @@ export class CredentialsService {
 
   async deleteCredential(id: string) {
     try {
-      const credential = await this.prisma.vCV2.update({
+      const credential = await this.prisma.verifiableCredentials.update({
         where: { id: id },
         data: {
           status: 'REVOKED',
@@ -285,7 +285,7 @@ export class CredentialsService {
   ) {
     try {
       const filteringSubject = getCreds.subject;
-      const credentials = await this.prisma.vCV2.findMany({
+      const credentials = await this.prisma.verifiableCredentials.findMany({
         where: {
           issuer: getCreds.issuer?.id,
           AND: filteringSubject
@@ -364,8 +364,8 @@ export class CredentialsService {
   }
 
   // UTILITY FUNCTIONS
-  async renderAsQR(cred: VCV2): Promise<any> {
-    // const credential = await this.prisma.vCV2.findUnique({
+  async renderAsQR(cred: VerifiableCredentials): Promise<any> {
+    // const credential = await this.prisma.verifiableCredentials.findUnique({
     //   where: { id: credentialId },
     // });
 
@@ -384,7 +384,7 @@ export class CredentialsService {
 
   async getSchemaByCredId(credId: string) {
     try {
-      const schema = await this.prisma.vCV2.findUnique({
+      const schema = await this.prisma.verifiableCredentials.findUnique({
         where: {
           id: credId,
         },

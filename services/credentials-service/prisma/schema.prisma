@@ -7,9 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 enum VCStatus {
@@ -18,21 +18,21 @@ enum VCStatus {
   REVOKED
 }
 
-model VC {
-  id                String    @id @default(uuid())
-  type              String
-  subject           String
-  issuer            String
-  status            VCStatus  @default(PENDING)
-  credential_schema String
-  unsigned          Json
-  signed            Json?
-  created_at        DateTime  @default(now())
-  updated_at        DateTime? @default(now())
-}
+// model VC {
+//   id                String    @id @default(uuid())
+//   type              String
+//   subject           String
+//   issuer            String
+//   status            VCStatus  @default(PENDING)
+//   credential_schema String
+//   unsigned          Json
+//   signed            Json?
+//   created_at        DateTime  @default(now())
+//   updated_at        DateTime? @default(now())
+// }
 
-model VCV2 {
-  id                String         @id @default(uuid())
+model VerifiableCredentials {
+  id                String    @id @default(uuid())
   // seqid             BigInt // @default((autoincrement())
   type              String[]
   issuer            String
@@ -45,29 +45,29 @@ model VCV2 {
   unsigned          Json?
   signed            Json?
   proof             Json?
-  status            VCStatus       @default(ISSUED)
-  created_at        DateTime       @default(now())
-  updated_at        DateTime?      @default(now())
+  status            VCStatus  @default(ISSUED)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime? @default(now())
   createdBy         String?
   updatedBy         String?
   tags              String[]
-  Presentations     Presentations? @relation(fields: [presentationsId], references: [id])
+  // Presentations     Presentations? @relation(fields: [presentationsId], references: [id])
   presentationsId   String?
 }
 
-model Counter {
-  id                  String @id @default(uuid()) // @map("_id") @db.ObjectId
-  type_of_entity      String @default("Credential")
-  for_next_credential Int    @default(0)
-}
+// model Counter {
+//   id                  String @id @default(uuid()) // @map("_id") @db.ObjectId
+//   type_of_entity      String @default("Credential")
+//   for_next_credential Int    @default(0)
+// }
 
-model Presentations {
-  id                   String    @id @default(uuid()) // @map("_id") @db.ObjectId
-  type                 String[]
-  holder               Json
-  verifiableCredential VCV2[]
-  proof                Json?
-  status               VCStatus  @default(PENDING)
-  created_at           DateTime  @default(now())
-  updated_at           DateTime? @default(now())
-}
+// model Presentations {
+//   id                   String                  @id @default(uuid()) // @map("_id") @db.ObjectId
+//   type                 String[]
+//   holder               Json
+//   verifiableCredential VerifiableCredentials[]
+//   proof                Json?
+//   status               VCStatus                @default(PENDING)
+//   created_at           DateTime                @default(now())
+//   updated_at           DateTime?               @default(now())
+// }

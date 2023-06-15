@@ -1,4 +1,3 @@
-import { VCV2 } from '@prisma/client';
 import { RENDER_OUTPUT } from '../enums/renderOutput.enum';
 
 export class RenderTemplateDTO {
