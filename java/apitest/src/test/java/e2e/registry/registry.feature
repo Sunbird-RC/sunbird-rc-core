@@ -344,3 +344,54 @@ Feature: Registry api tests
     Then status 200
     And assert response[0].address[0].phoneNo.length == 1
     And assert response[0].address[0].phoneNo[0] == "444"
+
+  Scenario: Create student with password schema and verify if password is set
+  #    get admin token
+    * url authUrl
+    * path 'auth/realms/sunbird-rc/protocol/openid-connect/token'
+    * header Content-Type = 'application/x-www-form-urlencoded; charset=utf-8'
+    * header Host = 'keycloak:8080'
+    * form field grant_type = 'client_credentials'
+    * form field client_id = 'admin-api'
+    * form field client_secret = client_secret
+    * method post
+    Then status 200
+    And print response.access_token
+    * def admin_token = 'Bearer ' + response.access_token
+# create student schema
+    Given url registryUrl
+    And path 'api/v1/Schema'
+    And header Authorization = admin_token
+    And request read('StudentWithPasswordSchemaRequest.json')
+    When method post
+    Then status 200
+    And response.params.status == "SUCCESSFUL"
+  # invite entity for student
+    Given url registryUrl
+    And path 'api/v1/StudentWithPassword/invite'
+    * def studentRequest = read('StudentWithPasswordRequest.json')
+    And request studentRequest
+    When method post
+    Then status 200
+    * def studentOsid = response.result.StudentWithPassword.osid
+  #  get student token
+    * url authUrl
+    * path 'auth/realms/sunbird-rc/protocol/openid-connect/token'
+    * header Content-Type = 'application/x-www-form-urlencoded; charset=utf-8'
+    * header Host = 'keycloak:8080'
+    * form field grant_type = 'password'
+    * form field client_id = 'registry-frontend'
+    * form field username = studentRequest.contactDetails.mobile
+    * form field password = studentRequest.userDetails.passkey
+    * method post
+    Then status 200
+    And print response.access_token
+    * def student_token = 'Bearer ' + response.access_token
+    * sleep(3000)
+  # get student info
+    Given url registryUrl
+    And path 'api/v1/StudentWithPassword/' + studentOsid
+    And header Authorization = student_token
+    When method get
+    Then status 200
+    And response.osid.length > 0

@@ -73,7 +73,9 @@ public class EntityStateHelperTest {
         Map<String, Definition> definitionMap = new HashMap<>();
         String studentSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
         String instituteSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
+        String studentWithPasswordSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("StudentWithPassword.json"), Charset.defaultCharset());
         definitionMap.put("Student", new Definition(objectMapper.readTree(studentSchema)));
+        definitionMap.put("StudentWithPassword", new Definition(objectMapper.readTree(studentWithPasswordSchema)));
         definitionMap.put("Institute", new Definition(objectMapper.readTree(instituteSchema)));
         ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
     }
@@ -139,6 +141,13 @@ public class EntityStateHelperTest {
     @Test
     public void shouldNotAllowUserModifyingSystemFields() throws IOException, DuplicateRecordException, EntityCreationException {
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotModifyOsStateByUser.json"));
+        runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
+    }
+
+    @Test
+    public void shouldRemovePasswordOwnershipFields() throws IOException, OwnerCreationException {
+        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn("456");
+        JsonNode test = m.readTree(new File(getBaseDir() + "shouldRemovePasswordOwnershipFields.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
