@@ -68,6 +68,11 @@ workflow:
 async:
   enabled: ${async_enabled:false}
 
+event:
+  enabled: ${event_enabled:false}
+  topic: ${event_topic:events}
+  providerName: ${event_providerName:dev.sunbirdrc.registry.service.impl.KafkaEventService}
+
 kafka:
   bootstrapAddress: ${kafka_bootstrap_address:localhost:9092}
   createEntityTopic: ${kafka_create_entity_topic:create_entity}

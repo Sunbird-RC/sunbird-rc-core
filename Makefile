@@ -17,9 +17,9 @@ build: java/registry/target/registry.jar
 	make -C deps/keycloak build
 	make -C services/public-key-service docker
 	make -C services/context-proxy-service docker
+	make -C services/metrics docker
 	make -C services/digilocker-certificate-api docker
 	make -C services/bulk_issuance docker
-	make -C services/digilocker-certificate-api docker
 	docker build -t dockerhub/sunbird-rc-nginx .
 
 java/registry/target/registry.jar: $(SOURCES)
@@ -66,6 +66,14 @@ test: build
 	@cd java/apitest && MODE=async ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
 	@rm -rf db-data-4 || echo "no permission to delete"
+	@RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources EVENT_ENABLED=true KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-5 SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService docker-compose up -d db keycloak kafka zookeeper keycloak clickhouse registry certificate-signer certificate-api metrics redis
+	@echo "Starting the test" && sh build/wait_for_port.sh 8080
+	@echo "Starting the test" && sh build/wait_for_port.sh 8081
+	@docker-compose ps
+	@curl -v http://localhost:8081/health
+	@cd java/apitest && MODE=events ../mvnw -Pe2e test || echo 'Tests failed'
+	@docker-compose down
+	@rm -rf db-data-5 || echo "no permission to delete"
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
