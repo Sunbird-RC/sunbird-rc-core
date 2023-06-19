@@ -266,7 +266,6 @@ export class CredentialsService {
         // formatting the output as per the spec
         delete signed['id'];
         delete signed['options'];
-        delete signed['proof'];
         return { id: cred.id, ...signed };
       });
     } catch (err) {
@@ -314,7 +313,7 @@ export class CredentialsService {
   // UTILITY FUNCTIONS
   async renderAsQR(cred: W3CCredential) {
     try {
-      const verificationURL = `http://64.227.185.154:3002/credentials/${cred.id}/verify`;
+      const verificationURL = `${process.env.CREDENTIAL_SERVICE_BASE_URL}/credentials/${cred.id}/verify`;
       const QRData = await QRCode.toDataURL(verificationURL);
       return QRData;
     } catch (err) {
