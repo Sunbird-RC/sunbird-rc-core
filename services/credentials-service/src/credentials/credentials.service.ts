@@ -3,12 +3,11 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces';
-import { VCStatus } from '@prisma/client';
+import { VCStatus, VerifiableCredentials } from '@prisma/client';
 import {
-  JwtCredentialPayload,
   CredentialPayload,
   transformCredentialInput,
   Verifiable,
@@ -20,14 +19,11 @@ import { GetCredentialsBySubjectOrIssuer } from './dto/getCredentialsBySubjectOr
 import { IssueCredentialDTO } from './dto/issue-credential.dto';
 import { RenderTemplateDTO } from './dto/renderTemplate.dto';
 import { RENDER_OUTPUT } from './enums/renderOutput.enum';
-import { compile } from 'handlebars';
-import * as wkhtmltopdf from 'wkhtmltopdf';
 import { IssuerType, Proof } from 'did-jwt-vc/lib/types';
 import { JwtCredentialSubject } from 'src/app.interface';
-import { getCredentialSchema, verifyCredentialSubject } from './schema.utils';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const QRCode = require('qrcode');
+import { getCredentialSchema, verifyCredentialSubject } from './utils/schema.utils';
+import { generateDID, resolveDID, signVC } from './utils/identity.utils';
+import { compileHBSTemplate, generateQR, renderAsPDF } from './utils/rendering.utils';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ION = require('@decentralized-identity/ion-tools');
 
@@ -38,7 +34,7 @@ export class CredentialsService {
     private readonly httpService: HttpService,
   ) {}
 
-  async getCredentials(tags: ReadonlyArray<string>) {
+  async getCredentials(tags: ReadonlyArray<string>): Promise<ReadonlyArray<W3CCredential>> {
     const credentials = await this.prisma.verifiableCredentials.findMany({
       where: {
         tags: {
@@ -46,10 +42,17 @@ export class CredentialsService {
         },
       },
     });
-    return credentials;
+
+    if (!credentials || credentials.length == 0) throw new NotFoundException('Credentials not found');
+    return credentials.map((cred: VerifiableCredentials) => {
+      const res = cred.signed;
+      delete res['options'];
+      res['id'] = cred.id;
+      return res as W3CCredential;
+    }) as ReadonlyArray<W3CCredential>;
   }
 
-  async getCredentialById(id: string) {
+  async getCredentialById(id: string): Promise<W3CCredential> {
     const credential = await this.prisma.verifiableCredentials.findUnique({
       where: { id: id },
       select: {
@@ -64,7 +67,7 @@ export class CredentialsService {
     const res = credential.signed;
     delete res['options'];
     res['id'] = id;
-    return res;
+    return res as W3CCredential;
   }
 
   async verifyCredential(credId: string) {
@@ -80,26 +83,23 @@ export class CredentialsService {
         },
       })) as { signed: Verifiable<W3CCredential>; status: VCStatus };
 
-    // invalid request in case credential is not found
-    if (!credToVerify) {
-      throw new NotFoundException({ errors: ['Credential not found'] });
-    }
-    try {
-      // calling identity service to verify the credential
-      const verificationMethod = credToVerify.issuer;
-      const verificationURL = `${process.env.IDENTITY_BASE_URL}/did/resolve/${verificationMethod}`;
-      const dIDResponse: AxiosResponse = await this.httpService.axiosRef.get(
-        verificationURL,
-      );
+    Logger.log('Fetched credntial from db to verify');
 
-      const did: DIDDocument = dIDResponse.data as DIDDocument;
+    // invalid request in case credential is not found
+    if (!credToVerify)
+      throw new NotFoundException({ errors: ['Credential not found'] });
+
+    try {
+      // calling identity service to verify the issuer DID
+      const verificationMethod = credToVerify.issuer;
+      const did: DIDDocument = await resolveDID(verificationMethod, this.httpService);;
 
       // VERIFYING THE JWS
       await ION.verifyJws({
         jws: credToVerify?.proof?.proofValue,
         publicJwk: did.verificationMethod[0].publicKeyJwk,
       });
-
+      Logger.log('Verified JWS');
       return {
         status: status,
         checks: [
@@ -115,107 +115,88 @@ export class CredentialsService {
         ],
       };
     } catch (e) {
-      console.error(e);
+      Logger.error('Error in verifying credentials: ', e);
       return {
         errors: [e],
       };
     }
   }
 
-  async signVC(credentialPlayload: JwtCredentialPayload, did: IssuerType) {
-    const signedVCResponse: AxiosResponse =
-      await this.httpService.axiosRef.post(
-        `${process.env.IDENTITY_BASE_URL}/utils/sign`,
-        {
-          DID: did,
-          payload: JSON.stringify(credentialPlayload),
-        },
-      );
-    return signedVCResponse.data.signed as string;
-  }
-
   async issueCredential(issueRequest: IssueCredentialDTO) {
+    Logger.log(
+      `Received issue credential request`,
+    )
+    const credInReq = issueRequest.credential;
+    // Verify the credential with the credential schema using ajv
+    // get the credential schema
+    const schema = await getCredentialSchema(
+      issueRequest.credentialSchemaId,
+      this.httpService,
+    );
+    Logger.log('fetched schema');
+    const { valid, errors } = verifyCredentialSubject(credInReq, schema);
+    if (!valid) throw new BadRequestException(errors);
+    Logger.log('validated schema');
+    // generate the DID for credential
+    const credDID: ReadonlyArray<DIDDocument> = await generateDID(['verifiable credential'], this.httpService);
+    Logger.log('generated DID');
     try {
-      const credInReq = issueRequest.credential;
-
-      // TODO: Verify the credential with the credential schema using ajv
-      // get the credential schema
-      const schema = await getCredentialSchema(
-        issueRequest.credentialSchemaId,
-        this.httpService,
-      );
-      const { valid, errors } = verifyCredentialSubject(credInReq, schema);
-      if (!valid) throw new BadRequestException(errors);
-
-      // generate the DID for credential
-      const id: AxiosResponse = await this.httpService.axiosRef.post(
-        `${process.env.IDENTITY_BASE_URL}/did/generate`,
-        {
-          content: [
-            {
-              alsoKnownAs: ['verifiable credential'],
-              services: [
-                {
-                  id: 'IdentityHub',
-                  type: 'IdentityHub',
-                  serviceEndpoint: {
-                    '@context': 'schema.identity.foundation/hub',
-                    '@type': 'UserServiceEndpoint',
-                    instance: ['did:test:hub.id'],
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      );
-
-      credInReq.id = id.data[0]?.id;
-
-      // sign the credential
+      credInReq.id = credDID[0].id;
+    } catch (err) {
+      Logger.error('Invalid response from generate DID');
+      throw new InternalServerErrorException('Problem creating DID');
+    }
+    // sign the credential
+    try {
       credInReq['proof'] = {
-        proofValue: await this.signVC(
+        proofValue: await signVC(
           transformCredentialInput(credInReq as CredentialPayload),
           credInReq.issuer,
+          this.httpService
         ),
         type: 'Ed25519Signature2020',
         created: new Date().toISOString(),
         verificationMethod: credInReq.issuer,
         proofPurpose: 'assertionMethod',
       };
-
-      // TODO: add created by and updated by
-      const newCred = await this.prisma.verifiableCredentials.create({
-        data: {
-          id: credInReq.id,
-          type: credInReq.type,
-          issuer: credInReq.issuer as IssuerType as string,
-          issuanceDate: credInReq.issuanceDate,
-          expirationDate: credInReq.expirationDate,
-          subject: credInReq.credentialSubject as JwtCredentialSubject,
-          subjectId: (credInReq.credentialSubject as JwtCredentialSubject).id,
-          proof: credInReq.proof as Proof,
-          credential_schema: issueRequest.credentialSchemaId, //because they can't refer to the schema db from here through an ID
-          signed: credInReq as object,
-          tags: issueRequest.tags,
-        },
-      });
-
-      const res = newCred.signed;
-      delete res['options'];
-      return {
-        credential: res,
-        credentialSchemaId: newCred.credential_schema,
-        createdAt: newCred.created_at,
-        updatedAt: newCred.updated_at,
-        createdBy: '',
-        updatedBy: '',
-        tags: newCred.tags,
-      };
     } catch (err) {
-      console.log('err: ', err);
-      throw new InternalServerErrorException(err);
+      Logger.error('Error signing the credential');
+      throw new InternalServerErrorException('Problem signing the credential');
     }
+
+    Logger.log('signed credential');
+
+    // TODO: add created by and updated by
+    const newCred = await this.prisma.verifiableCredentials.create({
+      data: {
+        id: credInReq.id,
+        type: credInReq.type,
+        issuer: credInReq.issuer as IssuerType as string,
+        issuanceDate: credInReq.issuanceDate,
+        expirationDate: credInReq.expirationDate,
+        subject: credInReq.credentialSubject as JwtCredentialSubject,
+        subjectId: (credInReq.credentialSubject as JwtCredentialSubject).id,
+        proof: credInReq.proof as Proof,
+        credential_schema: issueRequest.credentialSchemaId, //because they can't refer to the schema db from here through an ID
+        signed: credInReq as object,
+        tags: issueRequest.tags,
+      },
+    });
+
+    if (!newCred) throw new InternalServerErrorException('Problem saving credential to db');
+    Logger.log('saved credential to db');
+
+    const res = newCred.signed;
+    delete res['options'];
+    return {
+      credential: res,
+      credentialSchemaId: newCred.credential_schema,
+      createdAt: newCred.created_at,
+      updatedAt: newCred.updated_at,
+      createdBy: '',
+      updatedBy: '',
+      tags: newCred.tags,
+    };
   }
 
   async deleteCredential(id: string) {
@@ -228,114 +209,80 @@ export class CredentialsService {
       });
       return credential;
     } catch (err) {
-      throw new InternalServerErrorException(err);
+      Logger.error('Error revoking/soft deleting the credential: ', err);
+      throw new InternalServerErrorException('Error deleting the credential.');
     }
   }
 
   async getCredentialsBySubjectOrIssuer(
     getCreds: GetCredentialsBySubjectOrIssuer,
   ) {
-    try {
-      const filteringSubject = getCreds.subject;
+    const filteringSubject = getCreds.subject;
+    const credentials = await this.prisma.verifiableCredentials.findMany({
+      where: {
+        issuer: getCreds.issuer?.id,
+        AND: filteringSubject
+          ? Object.keys(filteringSubject).map((key: string) => ({
+            subject: {
+              path: [key.toString()],
+              equals: filteringSubject[key],
+            },
+          }))
+          : [],
+      },
+      select: {
+        id: true,
+        signed: true,
+      },
+    });
 
-      const credentials = await this.prisma.verifiableCredentials.findMany({
-        where: {
-          issuer: getCreds.issuer?.id,
-          AND: filteringSubject
-            ? Object.keys(filteringSubject).map((key: string) => ({
-              subject: {
-                path: [key.toString()],
-                equals: filteringSubject[key],
-              },
-            }))
-            : [],
-        },
-        select: {
-          id: true,
-          signed: true,
-        },
-      });
+    if (!credentials || credentials.length == 0)
+      throw new NotFoundException(
+        'No credentials found for the given filters',
+      );
 
-      if (credentials.length == 0)
-        throw new NotFoundException(
-          'No credentials found for the given filters',
-        );
+    return credentials.map((cred) => {
+      const signed: W3CCredential = cred.signed as W3CCredential;
+      // formatting the output as per the spec
+      delete signed['id'];
+      delete signed['options'];
+      return { id: cred.id, ...signed };
+    });
 
-      return credentials.map((cred) => {
-        const signed: W3CCredential = cred.signed as W3CCredential;
-        // formatting the output as per the spec
-        delete signed['id'];
-        delete signed['options'];
-        return { id: cred.id, ...signed };
-      });
-    } catch (err) {
-      throw new InternalServerErrorException(err);
-    }
   }
 
   async renderCredential(renderingRequest: RenderTemplateDTO) {
-    const output = renderingRequest.output;
-    const rendering_template = renderingRequest.template;
-    const credential = renderingRequest.credential as W3CCredential;
-    const subject = credential.credentialSubject as any;
-    subject.qr = await this.renderAsQR(credential);
-    const template = compile(rendering_template);
-    const data = template(subject);
-
-    delete subject.id;
-    switch (output) {
+    let { output, template, credential, credentialId }: { output: string, template: string, credential?: W3CCredential, credentialId?: string } = renderingRequest;
+    // if (!credential || !credentialId) throw new BadRequestException('Credential or Credential ID is required');
+    if (!credential) credential = await this.getCredentialById(credentialId);
+    switch (output.toUpperCase()) {
       case RENDER_OUTPUT.QR:
-        const QRData = await this.renderAsQR(credential);
+        const QRData = await generateQR(credential);
         return QRData as string;
-        break;
-      case RENDER_OUTPUT.STRING:
-        break;
       case RENDER_OUTPUT.PDF:
-        return wkhtmltopdf(data, {
-          pageSize: 'A4',
-          disableExternalLinks: true,
-          disableInternalLinks: true,
-          disableJavascript: true,
-          encoding: 'UTF-8',
-        });
-
-      case RENDER_OUTPUT.QR_LINK:
-        return data;
+        return renderAsPDF(credential, template);
       case RENDER_OUTPUT.HTML:
-        return data;
+        return await compileHBSTemplate(credential, template);
       case RENDER_OUTPUT.STRING:
-        break;
+        return JSON.stringify(credential);
       case RENDER_OUTPUT.JSON:
-        break;
-    }
-  }
-
-  // UTILITY FUNCTIONS
-  async renderAsQR(cred: W3CCredential) {
-    try {
-      const verificationURL = `${process.env.CREDENTIAL_SERVICE_BASE_URL}/credentials/${cred.id}/verify`;
-      const QRData = await QRCode.toDataURL(verificationURL);
-      return QRData;
-    } catch (err) {
-      console.error(err);
-      return err;
+        return credential;
+      default:
+        throw new BadRequestException('Output type not supported');
     }
   }
 
   async getSchemaByCredId(credId: string) {
-    try {
-      const schema = await this.prisma.verifiableCredentials.findUnique({
-        where: {
-          id: credId,
-        },
-        select: {
-          credential_schema: true,
-        },
-      });
-      return schema;
-    } catch (e) {
-      console.log(e);
-      throw e;
-    }
+    const schema = await this.prisma.verifiableCredentials.findUnique({
+      where: {
+        id: credId,
+      },
+      select: {
+        credential_schema: true,
+      },
+    });
+
+    if (!schema) throw new NotFoundException('Credential not found');
+    return schema;
   }
 }

@@ -14,7 +14,7 @@ export const getCredentialSchema = async (
     return credSchema?.data?.schema;
   } catch (err) {
     throw new InternalServerErrorException(
-      `Error fetching credential schema: ${err}`,
+      `Error fetching credential schema`,
     );
   }
 };
@@ -30,3 +30,4 @@ export const verifyCredentialSubject = (credential, schema) => {
     errors: validate.errors,
   };
 };
+
