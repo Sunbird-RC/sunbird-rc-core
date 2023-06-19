@@ -1,8 +1,9 @@
 import { RENDER_OUTPUT } from '../enums/renderOutput.enum';
+import { W3CCredential } from 'did-jwt-vc';
 
 export class RenderTemplateDTO {
-  credential: any; // VC JSON // TODO: CHANGE WITH THE TYPE FROM TYPES REPO
-  schema: JSON; //SCHEMA JSON // TODO: CHANGE WITH THE TYPE FROM TYPES REPO
+  credential: W3CCredential; // VC JSON
+  schema: JSON; //SCHEMA JSON
   template: string; //TEMPLATE JSON
   output: RENDER_OUTPUT; //OUTPUT JSON
 }

@@ -7,25 +7,32 @@ import {
   Param,
   Post,
   Res,
-  StreamableFile,
 } from '@nestjs/common';
 import { CredentialsService } from './credentials.service';
 import { GetCredentialsBySubjectOrIssuer } from './dto/getCredentialsBySubjectOrIssuer.dto';
 import { IssueCredentialDTO } from './dto/issue-credential.dto';
 import { RenderTemplateDTO } from './dto/renderTemplate.dto';
 import { RENDER_OUTPUT } from './enums/renderOutput.enum';
-import { UpdateStatusDTO } from './dto/update-status.dto';
-import { DeriveCredentialDTO } from './dto/derive-credential.dto';
-import { VerifyCredentialDTO } from './dto/verify-credential.dto';
 import { Response } from 'express';
+import { ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { string } from 'zod';
 
 @Controller('credentials')
 export class CredentialsController {
   constructor(private readonly credentialsService: CredentialsService) {}
 
+  @ApiTags('Issuing')
+  @ApiQuery({
+    name: 'tags',
+    description: 'A comma separated string of tags to filter by',
+    type: string,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successful operation',
+  })
   @Get()
   getCredentials(@Query('tags') tags: string) {
-    // console.log('tags:', tags);
     return this.credentialsService.getCredentials(tags.split(','));
   }
 
@@ -36,7 +43,6 @@ export class CredentialsController {
 
   @Get(':id')
   getCredentialById(@Param() id: { id: string }) {
-    // console.log('id in getByIdController: ', id);
     return this.credentialsService.getCredentialById(id?.id);
   }
 
@@ -45,11 +51,6 @@ export class CredentialsController {
     return this.credentialsService.issueCredential(issueRequest);
   }
 
-  // @Post('status')
-  // updateCredential(@Body() updateRequest: UpdateStatusDTO) {
-  //   return this.credentialsService.updateCredential(updateRequest);
-  // }
-
   @Delete(':id')
   delteCredential(@Param('id') id: string) {
     return this.credentialsService.deleteCredential(id);
@@ -57,14 +58,8 @@ export class CredentialsController {
 
   @Get(':id/verify')
   verifyCredential(@Param('id') credId: string) {
-    // console.log('credId: ', credId);
     return this.credentialsService.verifyCredential(credId);
   }
-
-  // @Post('derive')
-  // deriveCredential(@Body() deriveRequest: DeriveCredentialDTO) {
-  //   return this.credentialsService.deriveCredential(deriveRequest);
-  // }
 
   @Post('render')
   async renderTemplate(
@@ -81,9 +76,6 @@ export class CredentialsController {
         break;
     }
     response.header('Content-Type', contentType);
-    //response.contentType('appplication/pdf');
-    // const res = console.log('res: ', res);
-    // response.send(res);
     return await this.credentialsService.renderCredential(renderRequest);
   }
 

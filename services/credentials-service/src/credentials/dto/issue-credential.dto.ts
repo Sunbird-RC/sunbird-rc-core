@@ -1,14 +1,7 @@
+import { W3CCredential } from 'did-jwt-vc';
+
 export class IssueCredentialDTO {
-  credential: {
-    '@context': string[];
-    id: string;
-    type: string[];
-    issuer: string | { id: string };
-    issuanceDate: string;
-    expirationDate: string;
-    credentialSubject: JSON;
-    proof?: { [k: string]: any };
-  };
-  credentialSchemaId: string; // DID
+  credential: W3CCredential;
+  credentialSchemaId: string; // DID of the schema
   tags: string[];
 }
