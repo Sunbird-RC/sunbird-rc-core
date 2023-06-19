@@ -18,27 +18,12 @@ enum VCStatus {
   REVOKED
 }
 
-// model VC {
-//   id                String    @id @default(uuid())
-//   type              String
-//   subject           String
-//   issuer            String
-//   status            VCStatus  @default(PENDING)
-//   credential_schema String
-//   unsigned          Json
-//   signed            Json?
-//   created_at        DateTime  @default(now())
-//   updated_at        DateTime? @default(now())
-// }
-
 model VerifiableCredentials {
   id                String    @id @default(uuid())
-  // seqid             BigInt // @default((autoincrement())
   type              String[]
   issuer            String
   issuanceDate      String
   expirationDate    String
-  // subject         Json (as per the VC doc this is JSON)
   credential_schema String
   subject           Json
   subjectId         String
@@ -51,23 +36,4 @@ model VerifiableCredentials {
   createdBy         String?
   updatedBy         String?
   tags              String[]
-  // Presentations     Presentations? @relation(fields: [presentationsId], references: [id])
-  // presentationsId   String?
 }
-
-// model Counter {
-//   id                  String @id @default(uuid()) // @map("_id") @db.ObjectId
-//   type_of_entity      String @default("Credential")
-//   for_next_credential Int    @default(0)
-// }
-
-// model Presentations {
-//   id                   String                  @id @default(uuid()) // @map("_id") @db.ObjectId
-//   type                 String[]
-//   holder               Json
-//   verifiableCredential VerifiableCredentials[]
-//   proof                Json?
-//   status               VCStatus                @default(PENDING)
-//   created_at           DateTime                @default(now())
-//   updated_at           DateTime?               @default(now())
-// }
