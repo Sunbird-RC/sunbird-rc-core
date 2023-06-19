@@ -345,6 +345,108 @@ Feature: Registry api tests
     And assert response[0].address[0].phoneNo.length == 1
     And assert response[0].address[0].phoneNo[0] == "444"
 
+  Scenario: Create birth certificate schema, issue credentials then revoke the credential and check for CRUD APIS
+#    get admin token
+    * url authUrl
+    * path 'auth/realms/sunbird-rc/protocol/openid-connect/token'
+    * header Content-Type = 'application/x-www-form-urlencoded; charset=utf-8'
+    * header Host = 'keycloak:8080'
+    * form field grant_type = 'client_credentials'
+    * form field client_id = 'admin-api'
+    * form field client_secret = client_secret
+    * method post
+    Then status 200
+    And print response.access_token
+    * def admin_token = 'Bearer ' + response.access_token
+# create birth certificate schema
+    Given url registryUrl
+    And path 'api/v1/Schema'
+    And header Authorization = admin_token
+    And request read('BirthCertificateSchemaRequestForRevokeFlow.json')
+    When method post
+    Then status 200
+    And response.params.status == "SUCCESSFUL"
+# create entity for birth certificate
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate'
+    And request read('BirthCertificateRequest.json')
+    When method post
+    Then status 200
+    And def birthCertificateOsid = response.result.BirthCertificate.osid
+  # get entity by id
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And header Authorization = admin_token
+    When method get
+    Then status 200
+    And response._osSignedData.length > 0
+  # modify entity
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And header Authorization = admin_token
+    * def requestBody = read('BirthCertificateRequest.json')
+    * requestBody.name = "test"
+    And request requestBody
+    When method put
+    Then status 200
+    And response.params.status == "SUCCESSFUL"
+  # get entity by id
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And header Authorization = admin_token
+    When method get
+    Then status 200
+    And response.name == "test"
+    And response._osSignedData.contains("test")
+  # get certificate for entity
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And header Authorization = admin_token
+    And header Accept = "text/html"
+    And header template-key = "html"
+    When method get
+    Then status 200
+    And response.length > 0
+  # get VC for entity
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And header Authorization = admin_token
+    And header Accept = "application/vc+ld+json"
+    When method get
+    Then status 200
+    And response.credentialSubject.name == "test"
+  # revoke entity by id
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate/' + birthCertificateOsid + '/revoke'
+    And header Authorization = admin_token
+    When method post
+    Then status 200
+    And response.params.status == "SUCCESSFUL"
+  # get entity by id and check wheather signed data got removed and still we are able to fetch the data
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And header Authorization = admin_token
+    When method get
+    Then status 200
+    And response._osSignedData.length = 0
+  # Now try deleting the entity by id
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And header Authorization = admin_token
+    When method delete
+    Then status 200
+    And response.name == "test"
+    And response.params.status == "SUCCESSFUL"
+  # get entity by id and check for its status
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And header Authorization = admin_token
+    When method get
+    Then status 404
+    And response.params.status == "UNSUCCESSFUL"
+    And response.params.errmsg == "entity status is inactive"
+
+
   @env=events
   Scenario: Check if events are published
   # should get metrics
