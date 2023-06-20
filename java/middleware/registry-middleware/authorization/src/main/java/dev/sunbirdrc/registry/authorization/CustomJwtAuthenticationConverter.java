@@ -44,9 +44,7 @@ class CustomJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthent
 	private  <T> T getValue(DocumentContext documentContext, String path, Class<T> type) {
 		try {
 			T value = documentContext.read(path, type);
-			if (value.getClass() == type) {
-				return value;
-			}
+			return type.cast(value);
 		} catch (Exception e) {
 			logger.debug("Fetching {} from token claims failed", path, e);
 		}
