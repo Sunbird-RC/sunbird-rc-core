@@ -63,7 +63,8 @@ test:
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
-
+	make -C services/identity-service test
+	
 clean:
 	@rm -rf target || true
 	@rm java/registry/target/registry.jar || true
