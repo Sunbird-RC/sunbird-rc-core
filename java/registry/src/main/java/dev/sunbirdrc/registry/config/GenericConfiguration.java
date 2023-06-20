@@ -299,7 +299,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		ServiceProvider searchProvider = new ServiceProvider();
 		return searchProvider.getSearchInstance(searchProviderName, isElasticSearchEnabled());
 	}
-
 	/**
 	 * This method creates read provider implementation bean
 	 *
