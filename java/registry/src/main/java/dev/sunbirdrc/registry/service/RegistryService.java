@@ -16,7 +16,7 @@ public interface RegistryService {
 
 	String addEntity(Shard shard, String userId, JsonNode inputJson, boolean skipSignature) throws Exception;
 
-	void updateEntity(Shard shard, String userId, String id, String jsonString, boolean dontSkipSignature) throws Exception;
+	void updateEntity(Shard shard, String userId, String id, String jsonString, boolean skipSignature) throws Exception;
 
 	void callESActors(JsonNode rootNode, String operation, String parentEntityType, String entityRootId, Transaction tx) throws Exception;
 

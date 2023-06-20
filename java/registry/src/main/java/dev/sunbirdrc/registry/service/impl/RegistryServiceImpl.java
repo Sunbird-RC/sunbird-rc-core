@@ -274,7 +274,7 @@ public class RegistryServiceImpl implements RegistryService {
     }
 
     @Override
-    public void updateEntity(Shard shard, String userId, String id, String jsonString, boolean dontSkipSignature) throws Exception {
+    public void updateEntity(Shard shard, String userId, String id, String jsonString, boolean skipSignature) throws Exception {
         JsonNode inputNode = objectMapper.readTree(jsonString);
         String entityType = inputNode.fields().next().getKey();
         systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
@@ -347,7 +347,7 @@ public class RegistryServiceImpl implements RegistryService {
                     JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
                 }
 
-                if (dontSkipSignature) {
+                if (!skipSignature) {
                     generateCredentials(inputNode, entityType);
                 }
 

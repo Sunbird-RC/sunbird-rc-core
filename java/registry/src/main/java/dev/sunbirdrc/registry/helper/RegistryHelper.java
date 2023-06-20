@@ -366,7 +366,7 @@ public class RegistryHelper {
         String label = inputJson.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
-        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString, true);
+        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString, false);
         logger.debug("updateEntity ends");
     }
 
@@ -378,7 +378,7 @@ public class RegistryHelper {
         String label = inputJson.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
-        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString, true);
+        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString, false);
         return "SUCCESS";
     }
 
@@ -1020,7 +1020,7 @@ public class RegistryHelper {
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, JSONUtil.convertObjectJsonNode(currentJsonNode));
         String jsonString = objectMapper.writeValueAsString(newRootNode);
-        registryService.updateEntity(shard, userId, recordId.getUuid(),jsonString, false);
+        registryService.updateEntity(shard, userId, recordId.getUuid(),jsonString, true);
         return currentJsonNode;
     }
 

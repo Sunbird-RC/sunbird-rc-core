@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.middleware.util.Constants;
-import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
@@ -144,6 +143,4 @@ public class RegistryDaoImpl implements IRegistryDao {
             logger.error("Can't mark delete - Null vertex passed");
         }
     }
-
-
 }
