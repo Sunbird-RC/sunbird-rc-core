@@ -127,6 +127,8 @@ export class CredentialsService {
       `Received issue credential request`,
     )
     const credInReq = issueRequest.credential;
+    // check for issuance date
+    if (!credInReq.issuanceDate) credInReq.issuanceDate = new Date(Date.now()).toISOString();
     // Verify the credential with the credential schema using ajv
     // get the credential schema
     const schema = await getCredentialSchema(
