@@ -469,7 +469,7 @@ public class RegistryHelperTest {
 		ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
 		ReflectionTestUtils.setField(registryHelper, "definitionsManager", definitionsManager);
 		registryHelper.invalidateAttestation(entity, entityId, "userId", null);
-		verify(registryService, times(1)).updateEntity(any(), any(), any(), eq(expectedUpdatedNode.toString()));
+		verify(registryService, times(1)).updateEntity(any(), any(), any(), eq(expectedUpdatedNode.toString()), any(boolean.class));
 	}
 
 	@Test
