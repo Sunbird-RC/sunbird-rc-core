@@ -36,15 +36,24 @@ export class CredentialsController {
     status: 200,
     description: 'Successful operation'
   })
-
   @Get()
-  getCredentials(@Query('tags') tags: string) {
-    return this.credentialsService.getCredentials(tags.split(','));
+  getCredentials(@Query('tags') tags: string, @Query('page') page: string, @Query('limit') limit: string) {
+    console.log('page: ', page);
+    console.log('limit: ', limit);
+    return this.credentialsService.getCredentials(
+      tags.split(','),
+      isNaN(parseInt(page)) ? 1 : parseInt(page),
+      isNaN(parseInt(limit)) ? 10 : parseInt(limit)
+    );
   }
 
   @Post('/search')
-  getCredentialsBySubject(@Body() getCreds: GetCredentialsBySubjectOrIssuer) {
-    return this.credentialsService.getCredentialsBySubjectOrIssuer(getCreds);
+  getCredentialsBySubject(@Body() getCreds: GetCredentialsBySubjectOrIssuer, @Query('page') page: string, @Query('limit') limit: string) {
+    return this.credentialsService.getCredentialsBySubjectOrIssuer(
+      getCreds,
+      isNaN(parseInt(page)) ? 1 : parseInt(page),
+      isNaN(parseInt(limit)) ? 10 : parseInt(limit)
+    );
   }
 
   @Get(':id')

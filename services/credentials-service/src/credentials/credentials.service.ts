@@ -34,13 +34,18 @@ export class CredentialsService {
     private readonly httpService: HttpService,
   ) {}
 
-  async getCredentials(tags: ReadonlyArray<string>): Promise<ReadonlyArray<W3CCredential>> {
+  async getCredentials(tags: ReadonlyArray<string>, page = 1, limit = 20): Promise<ReadonlyArray<W3CCredential>> {
     const credentials = await this.prisma.verifiableCredentials.findMany({
       where: {
         tags: {
           hasSome: [...tags],
         },
       },
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: {
+        issuanceDate: 'desc'
+      }
     });
 
     if (!credentials || credentials.length == 0) throw new NotFoundException('Credentials not found');
@@ -218,6 +223,8 @@ export class CredentialsService {
 
   async getCredentialsBySubjectOrIssuer(
     getCreds: GetCredentialsBySubjectOrIssuer,
+    page = 1,
+    limit = 5
   ) {
     const filteringSubject = getCreds.subject;
     const credentials = await this.prisma.verifiableCredentials.findMany({
@@ -236,6 +243,11 @@ export class CredentialsService {
         id: true,
         signed: true,
       },
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: {
+        issuanceDate: 'desc',
+      }
     });
 
     if (!credentials || credentials.length == 0)
