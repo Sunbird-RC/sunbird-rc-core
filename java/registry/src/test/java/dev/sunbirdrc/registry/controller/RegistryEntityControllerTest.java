@@ -80,7 +80,7 @@ public class RegistryEntityControllerTest {
                                 mockHttpServletRequest.addHeader("accept", "application/pdf");
                                 mockHttpServletRequest.addHeader("template", "http://dummy.com");
                                 try {
-                                    Mockito.when(registryHelper.getUserId(mockHttpServletRequest, "Institute")).thenReturn("anonymous");
+                                    Mockito.when(registryHelper.getUserId("Institute")).thenReturn("anonymous");
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }
@@ -102,7 +102,7 @@ public class RegistryEntityControllerTest {
                                 .get("/api/v1/Institute/123/attestation/instituteAffiliation/456")
                                 .with(mockHttpServletRequest -> {
                                     try {
-                                        Mockito.when(registryHelper.getUserId(mockHttpServletRequest, "Institute")).thenReturn("anonymous");
+                                        Mockito.when(registryHelper.getUserId("Institute")).thenReturn("anonymous");
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -124,7 +124,7 @@ public class RegistryEntityControllerTest {
                                 .get("/api/v1/Institute/123/attestation/instituteAffiliation/456")
                                 .with(mockHttpServletRequest -> {
                                     try {
-                                        Mockito.when(registryHelper.getUserId(mockHttpServletRequest, "Institute")).thenThrow(new Exception("Forbidden"));
+                                        Mockito.when(registryHelper.getUserId("Institute")).thenThrow(new Exception("Forbidden"));
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -150,7 +150,7 @@ public class RegistryEntityControllerTest {
                                     mockHttpServletRequest.addHeader("accept", "application/pdf");
                                     mockHttpServletRequest.addHeader("template", "http://dummy.com");
                                     try {
-                                        Mockito.when(registryHelper.getUserId(mockHttpServletRequest, "Institute")).thenThrow(new RecordNotFoundException("Invalid id"));
+                                        Mockito.when(registryHelper.getUserId("Institute")).thenThrow(new RecordNotFoundException("Invalid id"));
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }

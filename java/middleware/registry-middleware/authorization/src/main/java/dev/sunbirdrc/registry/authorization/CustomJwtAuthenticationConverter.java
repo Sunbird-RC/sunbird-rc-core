@@ -27,21 +27,26 @@ class CustomJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthent
 	public AbstractAuthenticationToken convert(Jwt source) {
 		try {
 			DocumentContext documentContext = JsonPath.parse(source.getClaims());
-			List<String> roles = getValue(documentContext, oAuth2Properties.getRoles(), ArrayList.class);
-			String email = getValue(documentContext, oAuth2Properties.getEmail(), String.class);
-			Map<String, Integer> consentFields = getValue(documentContext, oAuth2Properties.getConsent(), Map.class);
-			List<String> entities = getValue(documentContext, oAuth2Properties.getEntity(), ArrayList.class);
-			return new UserToken(source, email, consentFields, entities,
+			List<String> roles = getValue(documentContext, oAuth2Properties.getRolesPath(), ArrayList.class);
+			String email = getValue(documentContext, oAuth2Properties.getEmailPath(), String.class);
+			Map<String, Integer> consentFields = getValue(documentContext, oAuth2Properties.getConsentPath(), Map.class);
+			List<String> entities = getValue(documentContext, oAuth2Properties.getEntityPath(), ArrayList.class);
+			String userId = getValue(documentContext, oAuth2Properties.getUserIdPath(), String.class);
+			return new UserToken(source, userId, email, consentFields, entities,
 					roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
 		} catch (Exception e) {
-			return new UserToken(source, "", Collections.emptyMap(), Collections.emptyList(), Collections.emptyList());
+			logger.error("Error while extracting claim", e);
+			return new UserToken(source, "", "", Collections.emptyMap(), Collections.emptyList(), Collections.emptyList());
 		}
 
 	}
 
 	private  <T> T getValue(DocumentContext documentContext, String path, Class<T> type) {
 		try {
-			return documentContext.read(path, type);
+			T value = documentContext.read(path, type);
+			if (value.getClass() == type) {
+				return value;
+			}
 		} catch (Exception e) {
 			logger.debug("Fetching {} from token claims failed", path, e);
 		}

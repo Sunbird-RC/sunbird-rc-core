@@ -25,7 +25,7 @@ public class SchemaAuthFilter implements Filter {
                     anonymousInviteSchemas.stream().anyMatch(request.getRequestURI()::contains)) {
                 servletRequest.getRequestDispatcher(((HttpServletRequest) servletRequest).getServletPath()).forward(servletRequest, servletResponse);
                 return;
-            } else if (anonymousSchemas.stream().anyMatch(request.getRequestURI()::contains)) {
+            } else if (!request.getRequestURI().contains(INVITE_URL_ENDPOINT) && anonymousSchemas.stream().anyMatch(request.getRequestURI()::contains)) {
                 servletRequest.getRequestDispatcher(((HttpServletRequest) servletRequest).getServletPath()).forward(servletRequest, servletResponse);
                 return;
             }

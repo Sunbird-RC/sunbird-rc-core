@@ -1,1 +1,1 @@
-dev.sunbirdrc.keycloak.KeycloakProviderImpl
+dev.sunbirdrc.auth.keycloak.KeycloakProviderImpl

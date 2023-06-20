@@ -13,13 +13,15 @@ import java.util.Map;
 public class UserToken extends AbstractAuthenticationToken {
 	private final List<String> entities;
 	private final Jwt source;
+	private String userId;
 	private final String email;
 
 	private final Map<String, Integer> consentFields;
 
-	public UserToken(Jwt source, String email, Map<String, Integer> consentFields, List<String> entities, List<SimpleGrantedAuthority> authorities) {
+	public UserToken(Jwt source, String userId, String email, Map<String, Integer> consentFields, List<String> entities, List<SimpleGrantedAuthority> authorities) {
 		super(authorities);
 		this.source = source;
+		this.userId = userId;
 		this.email = email;
 		this.consentFields = consentFields;
 		this.entities = entities;

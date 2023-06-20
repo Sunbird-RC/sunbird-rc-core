@@ -1,7 +1,7 @@
-package dev.sunbirdrc.keycloak;
+package dev.sunbirdrc.auth.keycloak;
 
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
-import dev.sunbirdrc.registry.identity_providers.pojos.IdentityProviderConfiguration;
+import dev.sunbirdrc.registry.identity_providers.pojos.*;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -13,9 +13,6 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import dev.sunbirdrc.registry.identity_providers.pojos.CreateUserRequest;
-import dev.sunbirdrc.registry.identity_providers.pojos.IdentityException;
-import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
 
 import java.util.*;
 import javax.ws.rs.core.Response;

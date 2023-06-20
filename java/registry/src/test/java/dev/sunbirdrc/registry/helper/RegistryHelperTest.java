@@ -503,6 +503,7 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(registryHelper, times(1)).triggerAttestation(any(), any());
 
@@ -534,6 +535,7 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(registryHelper, times(0)).triggerAttestation(any(), any());
 
@@ -575,6 +577,7 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
 
@@ -617,6 +620,7 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
 
@@ -779,6 +783,7 @@ public class RegistryHelperTest {
 		objectNode.set("fullName", JsonNodeFactory.instance.textNode("First Avenger"));
 		objectNode.set("gender", JsonNodeFactory.instance.textNode("Male"));
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.autoRaiseClaim("Student", "12345", "556302c9-d8b4-4f60-9ac1-c16c8839a9f3", null, requestBody, "");
 		verify(conditionResolverService, times(1)).resolve(objectNode, REQUESTER, null, Collections.emptyList());
 		verify(registryHelper, times(1)).triggerAttestation(any(), any());
@@ -863,7 +868,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		mockValidationService();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
@@ -881,7 +886,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		mockValidationService();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
@@ -889,5 +894,47 @@ public class RegistryHelperTest {
 		registryHelper.inviteEntity(inviteJson, "");
 		Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
 		assertEquals("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"osOwner\":[\"" + testUserId + "\"]}}", inputJsonCapture.getValue().toString());
+	}
+
+	@Test
+	public void shouldNotFetchAttestationPolicyFromDBIfDisabled() throws Exception {
+		mockDefinitionManager();
+		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
+		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
+		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy.set("onComplete", JsonNodeFactory.instance.textNode("attestation:nextAttestationPolicy"));
+		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
+		attestationArrayNodes.add(mockAttestationPolicy);
+		ObjectNode mockAttestationPolicy2 = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy2.set("name", JsonNodeFactory.instance.textNode("nextAttestationPolicy"));
+		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
+		attestationArrayNodes.add(mockAttestationPolicy2);
+		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
+		when(searchService.search(any())).thenReturn(attestationPolicyObject);
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", false);
+		List<AttestationPolicy> policies = registryHelper.getAttestationPolicies("Student");
+		assertEquals(1, policies.size());
+		verify(searchService, never()).search(any());
+	}
+
+	@Test
+	public void shouldFetchAttestationPolicyFromDBIfEnabled() throws Exception {
+		mockDefinitionManager();
+		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
+		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
+		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy.set("onComplete", JsonNodeFactory.instance.textNode("attestation:nextAttestationPolicy"));
+		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
+		attestationArrayNodes.add(mockAttestationPolicy);
+		ObjectNode mockAttestationPolicy2 = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy2.set("name", JsonNodeFactory.instance.textNode("nextAttestationPolicy"));
+		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
+		attestationArrayNodes.add(mockAttestationPolicy2);
+		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
+		when(searchService.search(any())).thenReturn(attestationPolicyObject);
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
+		List<AttestationPolicy> policies = registryHelper.getAttestationPolicies("Student");
+		assertEquals(3, policies.size());
+		verify(searchService, atMostOnce()).search(any());
 	}
 }

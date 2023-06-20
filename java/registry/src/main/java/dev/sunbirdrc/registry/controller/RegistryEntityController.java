@@ -537,7 +537,7 @@ public class RegistryEntityController extends AbstractController {
     }
 
     private String getUserId(String entityName, HttpServletRequest request) throws Exception {
-        return registryHelper.getUserId(request, entityName);
+        return registryHelper.getUserId(entityName);
     }
 
     private void addJsonLDSpec(JsonNode node) {

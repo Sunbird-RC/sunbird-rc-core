@@ -24,5 +24,6 @@
         <module>keycloak</module>
         <module>workflow</module>
         <module>identity-provider</module>
+        <module>auth0</module>
     </modules>
 </project>

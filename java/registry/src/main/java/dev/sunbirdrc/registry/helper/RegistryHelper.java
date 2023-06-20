@@ -61,7 +61,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 import java.util.*;
 
 import static dev.sunbirdrc.pojos.attestation.Action.GRANT_CLAIM;
@@ -154,6 +153,8 @@ public class RegistryHelper {
     @Value("${workflow.enabled:true}")
     private boolean workflowEnabled;
 
+    @Value("${attestationPolicy.search_enabled:false}")
+    private boolean attestationPolicySearchEnabled;
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
@@ -711,25 +712,25 @@ public class RegistryHelper {
         }
     }
 
-    public String getUserId(HttpServletRequest request, String entityName) throws Exception {
+    public String getUserId(String entityName) throws Exception {
         if (doesEntityOperationRequireAuthorization(entityName)) {
-            return fetchUserIdFromToken(request);
+            return fetchUserIdFromToken();
         } else {
             return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
         }
     }
 
-    private String fetchUserIdFromToken(HttpServletRequest request) throws Exception {
+    private String fetchUserIdFromToken() throws Exception {
         if(!securityEnabled){
             return DEFAULT_USER;
         }
-        return getKeycloakUserId(request);
+        return getPrincipalUserId();
     }
 
-    public String getKeycloakUserId(HttpServletRequest request) throws Exception {
-        Principal principal = request.getUserPrincipal();
-        if (principal != null) {
-            return principal.getName();
+    public String getPrincipalUserId() throws Exception {
+        UserToken userToken = (UserToken) SecurityContextHolder.getContext().getAuthentication();
+        if (userToken != null) {
+            return userToken.getUserId();
         }
         throw new Exception("Forbidden");
     }
@@ -773,7 +774,7 @@ public class RegistryHelper {
     }
 
     private JsonNode getUserInfoFromRegistry(HttpServletRequest request, String entityName) throws Exception {
-        String userId = getUserId(request,entityName);
+        String userId = getUserId(entityName);
         if (userId != null) {
             ObjectNode payload = JsonNodeFactory.instance.objectNode();
             payload.set(ENTITY_TYPE, JsonNodeFactory.instance.arrayNode().add(entityName));
@@ -790,7 +791,7 @@ public class RegistryHelper {
     }
 
     public String authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
-        String userIdFromRequest = getUserId(request, entityName);
+        String userIdFromRequest = getUserId(entityName);
         if (getManageRoles(entityName).size() > 0) {
             try {
                 return authorizeManageEntity(request, entityName);
@@ -868,7 +869,7 @@ public class RegistryHelper {
             return entityName;
         }
         Set<String> userRoles = getUserRolesFromRequest(request);
-        String userIdFromRequest = getUserId(request, entityName);
+        String userIdFromRequest = getUserId(entityName);
         JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
         JsonNode entityFromDB = response.get(entityName);
         final boolean hasNoValidRole = !deleteRoles.isEmpty() && deleteRoles.stream().noneMatch(userRoles::contains);
@@ -888,7 +889,7 @@ public class RegistryHelper {
             }
             Set<String> userRoles = getUserRolesFromRequest(request);
             authorizeUserRole(userRoles, managingRoles);
-            return fetchUserIdFromToken(request);
+            return fetchUserIdFromToken();
         } else {
             return ROLE_ANONYMOUS;
         }
@@ -1012,21 +1013,25 @@ public class RegistryHelper {
     }
 
     private List<AttestationPolicy> getAttestationsFromRegistry(String entityName) {
-        try {
-            JsonNode searchRequest = objectMapper.readTree("{\n" +
-                    "    \"entityType\": [\n" +
-                    "        \"" + ATTESTATION_POLICY + "\"\n" +
-                    "    ],\n" +
-                    "    \"filters\": {\n" +
-                    "       \"entity\": {\n" +
-                    "           \"eq\": \"" + entityName + "\"\n" +
-                    "       }\n" +
-                    "    }\n" +
-                    "}");
-            JsonNode searchResponse = searchEntity(searchRequest);
-            return convertJsonNodeToAttestationList(searchResponse);
-        } catch (Exception e) {
-            logger.error("Error fetching attestation policy", e);
+        if (attestationPolicySearchEnabled) {
+            try {
+                JsonNode searchRequest = objectMapper.readTree("{\n" +
+                        "    \"entityType\": [\n" +
+                        "        \"" + ATTESTATION_POLICY + "\"\n" +
+                        "    ],\n" +
+                        "    \"filters\": {\n" +
+                        "       \"entity\": {\n" +
+                        "           \"eq\": \"" + entityName + "\"\n" +
+                        "       }\n" +
+                        "    }\n" +
+                        "}");
+                JsonNode searchResponse = searchEntity(searchRequest);
+                return convertJsonNodeToAttestationList(searchResponse);
+            } catch (Exception e) {
+                logger.error("Error fetching attestation policy", e);
+                return Collections.emptyList();
+            }
+        } else {
             return Collections.emptyList();
         }
     }

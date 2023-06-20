@@ -1,4 +1,4 @@
-package dev.sunbirdrc.keycloak;
+package dev.sunbirdrc.auth.keycloak;
 
 import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
 import dev.sunbirdrc.registry.identity_providers.pojos.IdentityProviderConfiguration;
