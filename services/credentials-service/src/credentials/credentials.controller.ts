@@ -78,7 +78,7 @@ export class CredentialsController {
     @Res({ passthrough: true }) response: Response,
   ) {
     let contentType = 'application/json';
-    if (!renderRequest.credential && !renderRequest.credential) throw new BadRequestException('Either credential or credentialId must be provided')
+    if (!renderRequest.credential && !renderRequest.credentialId) throw new BadRequestException('Either credential or credentialId must be provided')
     const res = await this.credentialsService.renderCredential(renderRequest);
     switch (renderRequest.output) {
       case RENDER_OUTPUT.PDF:
