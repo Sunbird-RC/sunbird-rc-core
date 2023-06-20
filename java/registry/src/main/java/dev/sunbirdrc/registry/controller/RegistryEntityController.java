@@ -24,6 +24,7 @@ import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
+import dev.sunbirdrc.registry.util.EntityParenter;
 import dev.sunbirdrc.validators.ValidationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -63,6 +64,8 @@ public class RegistryEntityController extends AbstractController {
     private AsyncRequest asyncRequest;
 
 
+    @Autowired
+    EntityParenter entityParenter;
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${certificate.enableExternalTemplates:false}") boolean externalTemplatesEnabled;
@@ -245,6 +248,11 @@ public class RegistryEntityController extends AbstractController {
         newRootNode.set(entityName, rootNode);
 
         try {
+            if(!entityName.equals("Schema")) {
+                entityParenter.ensureKnownParenters();
+                entityParenter.loadDefinitionIndex();
+                entityParenter.ensureIndexExists();
+            }
             String userId = registryHelper.authorizeManageEntity(request, entityName);
             String label = registryHelper.addEntity(newRootNode, userId);
             String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
