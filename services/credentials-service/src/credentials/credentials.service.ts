@@ -48,7 +48,7 @@ export class CredentialsService {
       }
     });
 
-    if (!credentials || credentials.length == 0) throw new NotFoundException('Credentials not found');
+    if (!credentials) throw new InternalServerErrorException('Error fetching credentials');
     return credentials.map((cred: VerifiableCredentials) => {
       const res = cred.signed;
       delete res['options'];
@@ -250,9 +250,9 @@ export class CredentialsService {
       }
     });
 
-    if (!credentials || credentials.length == 0)
-      throw new NotFoundException(
-        'No credentials found for the given filters',
+    if (!credentials)
+      throw new InternalServerErrorException(
+        'Error fetching credentials',
       );
 
     return credentials.map((cred) => {

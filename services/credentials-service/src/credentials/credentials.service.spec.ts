@@ -165,9 +165,9 @@ describe('CredentialsService', () => {
 
   let issuerDid: string, subjectDid: string;
 
-  beforeAll(async () => {
-    issuerDid = await this.httpService.
-  })
+  // beforeAll(async () => {
+  //   issuerDid = await this.httpService.
+  // })
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
