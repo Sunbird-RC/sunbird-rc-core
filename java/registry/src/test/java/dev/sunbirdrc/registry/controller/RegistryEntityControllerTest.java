@@ -181,7 +181,7 @@ public class RegistryEntityControllerTest {
 
         // Mock registryHelper methods to simulate record not found
         when(registryHelper.doesEntityOperationRequireAuthorization(anyString())).thenReturn(false);
-        when(registryHelper.deleteEntity(anyString(), anyString(), anyBoolean())).thenReturn(null);
+        when(registryHelper.revokeAnEntity(anyString(), anyString(), anyString(), any(JsonNode.class))).thenReturn(null);
 
         // Call the controller method
         ResponseEntity<Object> response = registryEntityController.revokeACredential(request, "mockEntityName", "mockEntityId", headers);
@@ -206,7 +206,7 @@ public class RegistryEntityControllerTest {
 
         // Verify the response
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        verify(registryHelper, never()).deleteEntity(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), anyBoolean());
+        verify(registryHelper, never()).revokeAnEntity(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any(JsonNode.class));
         verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString());
     }
 
@@ -228,8 +228,8 @@ public class RegistryEntityControllerTest {
         JsonNode mockEntityNode = mock(JsonNode.class);
         when(registryHelper.readEntity(anyString(), anyString(), anyString(), anyBoolean(), any(), anyBoolean())).thenReturn(mockEntityNode);
 
-        // Mock the behavior of registryHelper.deleteEntity method
-        when(registryHelper.deleteEntity(anyString(), anyString(), anyBoolean())).thenReturn(mock(Vertex.class));
+        // Mock the behavior of registryHelper.revokeAnEntity method
+        when(registryHelper.revokeAnEntity(anyString(),anyString(), anyString(),any(JsonNode.class))).thenReturn(mock(JsonNode.class));
 
         // Mock the behavior of configurationHelper
         Configuration mockConfig = mock(Configuration.class);
@@ -270,8 +270,8 @@ public class RegistryEntityControllerTest {
         JsonNode mockEntityNode = mock(JsonNode.class);
         when(registryHelper.readEntity(anyString(), anyString(), anyString(), anyBoolean(), any(), anyBoolean())).thenReturn(mockEntityNode);
 
-        // Mock the behavior of registryHelper.deleteEntity method
-        when(registryHelper.deleteEntity(anyString(), anyString(), anyBoolean())).thenReturn(mock(Vertex.class));
+        // Mock the behavior of registryHelper.revokeAnEntity method
+        when(registryHelper.revokeAnEntity(anyString(), anyString(), anyString(), any(JsonNode.class))).thenReturn(mock(JsonNode.class));
 
         // Mock the behavior of configurationHelper
         Configuration mockConfig = mock(Configuration.class);

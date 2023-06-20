@@ -366,7 +366,7 @@ public class RegistryHelper {
         String label = inputJson.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
-        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString);
+        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString, true);
         logger.debug("updateEntity ends");
     }
 
@@ -378,7 +378,7 @@ public class RegistryHelper {
         String label = inputJson.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
-        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString);
+        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString, true);
         return "SUCCESS";
     }
 
@@ -1005,11 +1005,23 @@ public class RegistryHelper {
         }
     }
 
-    public Vertex deleteEntity(String entityId, String userId, boolean markSignedDataNull) throws Exception {
+    public Vertex deleteEntity(String entityId, String userId) throws Exception {
         RecordIdentifier recordId = RecordIdentifier.parse(entityId);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         Shard shard = shardManager.activateShard(shardId);
-        return registryService.deleteEntityById(shard, userId, recordId.getUuid(), markSignedDataNull);
+        return registryService.deleteEntityById(shard, userId, recordId.getUuid());
+    }
+
+    public JsonNode revokeAnEntity (String entityName, String entityId, String userId, JsonNode currentJsonNode) throws Exception {
+        RecordIdentifier recordId = RecordIdentifier.parse(entityId);
+        String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
+        Shard shard = shardManager.activateShard(shardId);
+        ((ObjectNode) currentJsonNode).put(OSSystemFields._osSignedData.name(), "");
+        ObjectNode newRootNode = objectMapper.createObjectNode();
+        newRootNode.set(entityName, JSONUtil.convertObjectJsonNode(currentJsonNode));
+        String jsonString = objectMapper.writeValueAsString(newRootNode);
+        registryService.updateEntity(shard, userId, recordId.getUuid(),jsonString, false);
+        return currentJsonNode;
     }
 
     //TODO: add cache
@@ -1112,7 +1124,7 @@ public class RegistryHelper {
 
 
     public void deleteAttestationPolicy(AttestationPolicy attestationPolicy) throws Exception {
-        deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy(), false);
+        deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
     }
 
     public boolean doesEntityOperationRequireAuthorization(String entity) {

@@ -130,7 +130,7 @@ public class RegistryEntityController extends AbstractController {
         try {
             String tag = "RegistryController.delete " + entityName;
             watch.start(tag);
-            Vertex deletedEntity = registryHelper.deleteEntity(entityId, userId, false);
+            Vertex deletedEntity = registryHelper.deleteEntity(entityId, userId);
             if (deletedEntity != null && deletedEntity.keys().contains(OSSystemFields._osSignedData.name())) {
                 registryHelper.revokeExistingCredentials(entityName, entityId, userId, deletedEntity.value(OSSystemFields._osSignedData.name()));
             }
@@ -761,12 +761,12 @@ public class RegistryEntityController extends AbstractController {
         try {
             String tag = "RegistryController.revokeAnExistingCredential" + entityName;
             watch.start(tag);
-            JsonNode revokedEntityNode = getEntityJsonNode(entityName, entityId,false, userId);
-            String SignedData = revokedEntityNode.get(OSSystemFields._osSignedData.name()).asText();
+            JsonNode existingEntityNode = getEntityJsonNode(entityName, entityId,false, userId);
+            String SignedData = existingEntityNode.get(OSSystemFields._osSignedData.name()).asText();
             if (SignedData.equals(new String()) || SignedData.equals(null)) {
                 throw new RecordNotFoundException("Credential is already revoked");
             }
-            Vertex revokedEntity = registryHelper.deleteEntity(entityId, userId, true);
+            JsonNode revokedEntity = registryHelper.revokeAnEntity( entityName ,entityId, userId, existingEntityNode);
             if (revokedEntity != null) {
                 registryHelper.revokeExistingCredentials(entityName, entityId, userId, SignedData);
             }

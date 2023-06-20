@@ -422,13 +422,21 @@ Feature: Registry api tests
     When method post
     Then status 200
     And response.params.status == "SUCCESSFUL"
-  # get entity by id and check wheather signed data got removed and still we are able to fetch the data
+  # get entity by id and check whether signed data got removed and still we are able to fetch the data
     Given url registryUrl
     And path 'api/v1/BirthCertificate/' + birthCertificateOsid
     And header Authorization = admin_token
     When method get
     Then status 200
     And response._osSignedData.length = 0
+  # Try to revoke the same entity again it should inform that the VC is already revoked
+    Given url registryUrl
+    And path 'api/v1/BirthCertificate/' + birthCertificateOsid + '/revoke'
+    And header Authorization = admin_token
+    When method post
+    Then status 500
+    And response.params.status == "UNSUCCESSFUL"
+    And response.params.errmsg == "Credential is already revoked"
   # Now try deleting the entity by id
     Given url registryUrl
     And path 'api/v1/BirthCertificate/' + birthCertificateOsid

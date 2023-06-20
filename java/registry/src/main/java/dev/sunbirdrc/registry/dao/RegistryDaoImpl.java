@@ -145,13 +145,5 @@ public class RegistryDaoImpl implements IRegistryDao {
         }
     }
 
-    public void markSignedDataAsNullForAnEntity (Vertex vertex) {
-        if (null != vertex) {
-            vertex.property(OSSystemFields._osSignedData.name(), "");
-            logger.debug("Vertex {} {} marked with Signed Data as Null", vertex.label(), databaseProvider.getId(vertex));
-        } else {
-            logger.error("Can't mark delete - Null vertex passed");
-        }
-    }
 
 }

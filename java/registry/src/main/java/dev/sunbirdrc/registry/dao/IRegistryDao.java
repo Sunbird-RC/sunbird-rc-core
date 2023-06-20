@@ -12,6 +12,5 @@ public interface IRegistryDao {
 	JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator, boolean expandInternal) throws Exception;
 	void updateVertex(Graph graph, Vertex rootVertex, JsonNode inputJsonNode, String parentName) throws Exception;
     void deleteEntity(Vertex uuid);
-	void markSignedDataAsNullForAnEntity (Vertex uuid);
 
 }

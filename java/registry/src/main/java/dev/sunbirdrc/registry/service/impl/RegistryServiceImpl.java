@@ -147,7 +147,7 @@ public class RegistryServiceImpl implements RegistryService {
      * @throws Exception
      */
     @Override
-    public Vertex deleteEntityById(Shard shard, String userId, String uuid, boolean markSignedDataNull) throws Exception {
+    public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -162,11 +162,7 @@ public class RegistryServiceImpl implements RegistryService {
                 }
                 if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
                         && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
-                    if (markSignedDataNull) {
-                        registryDao.markSignedDataAsNullForAnEntity(vertex);
-                    } else {
-                        registryDao.deleteEntity(vertex);
-                    }
+                    registryDao.deleteEntity(vertex);
                     databaseProvider.commitTransaction(graph, tx);
                     auditService.auditDelete(
                             auditService.createAuditRecord(userId, uuid, tx, index),
@@ -278,7 +274,7 @@ public class RegistryServiceImpl implements RegistryService {
     }
 
     @Override
-    public void updateEntity(Shard shard, String userId, String id, String jsonString) throws Exception {
+    public void updateEntity(Shard shard, String userId, String id, String jsonString, boolean dontSkipSignature) throws Exception {
         JsonNode inputNode = objectMapper.readTree(jsonString);
         String entityType = inputNode.fields().next().getKey();
         systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
@@ -351,7 +347,9 @@ public class RegistryServiceImpl implements RegistryService {
                     JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
                 }
 
-                generateCredentials(inputNode, entityType);
+                if (dontSkipSignature) {
+                    generateCredentials(inputNode, entityType);
+                }
 
                 if (entityType.equals(Schema)) {
                     schemaService.validateUpdateSchema(readNode, inputNode);

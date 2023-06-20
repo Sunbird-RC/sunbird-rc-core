@@ -79,7 +79,7 @@ public class RegistryController extends AbstractController {
             RecordIdentifier recordId = RecordIdentifier.parse(entityId);
             String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
             Shard shard = shardManager.activateShard(shardId);
-            registryService.deleteEntityById(shard, apiMessage.getUserID(), recordId.getUuid(),false);
+            registryService.deleteEntityById(shard, apiMessage.getUserID(), recordId.getUuid());
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
         } catch (UnsupportedOperationException e) {
