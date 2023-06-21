@@ -15,13 +15,13 @@ export default class KycService {
   constructor(
     private readonly httpService: HttpService,
     private readonly didService: DidService,
-  ) { }
+  ) {}
 
   async triggerKyc(aadhaar: string) {
     const userData = {
       email: aadhaar,
     };
-    let response: AxiosResponse<any, any>;
+    let response: AxiosResponse;
     try {
       response = await lastValueFrom(
         this.httpService.post(
@@ -52,14 +52,11 @@ export default class KycService {
       email: aadhaar,
       otp: otp,
     };
-    console.log(userData);
     const response = await lastValueFrom(
       this.httpService.post('http://64.227.185.154:8000/otp/verify/', userData),
     );
-    console.log(response);
     if (response.data) {
       if (response.data.status == 200) {
-        console.log('Verified');
         const registrationData = {
           registration: {
             generateAuthenticationToken: true,
@@ -75,9 +72,8 @@ export default class KycService {
         const headers = {
           Authorization: process.env.FUSION_API_KEY,
         };
-        console.log(headers);
         try {
-          const fusionResponse = await lastValueFrom(
+          await lastValueFrom(
             this.httpService.post(
               'https://auth.konnect.samagra.io/api/user/registration/',
               registrationData,
@@ -88,8 +84,6 @@ export default class KycService {
             aadhaar,
             username,
           );
-          console.log({ fusionResponse, registrationDid });
-          // return { fusionResponse, registrationDid };
           return registrationDid;
         } catch (err) {
           return err;
@@ -118,6 +112,7 @@ export default class KycService {
           serviceEndpoint: 'http://auth.konnect.samagra.io',
         },
       ],
+      method: 'aadhar',
     };
 
     try {
