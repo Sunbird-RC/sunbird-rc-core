@@ -19,7 +19,7 @@ tags:
 - name: Verifying
   description: The following APIs are defined for verifying a Verifiable Credential
 paths:
-  /credentials/claim:
+  /credentials/issue:
     post:
       tags:
         - Issuing
@@ -31,40 +31,6 @@ paths:
           'appliation/json':
             schema:
               $ref: '#/components/schemas/credentialRequest'
-        required: true
-      responses:
-        201:
-          description: Credential successfully issued!
-          content:
-            'application/json':
-              schema:
-                $ref: '#/components/schemas/credentialResponse'
-        400:
-          description: Invalid Input
-          content: {}
-        500:
-          description: error
-          content: {}
-      x-codegen-request-body-name: body
-  /credentials/sign:
-    post:
-      tags:
-        - Issuing
-      summary: Credential sign API
-      operationId: credentialSign
-      requestBody:
-        description: Credential payload
-        content:
-          'appliation/json':
-            schema:
-              allOf:
-                - type: object
-                  properties:
-                    credentialId:
-                      type: string
-                      example: credentialDID
-                      description: Optional field, required if a claim is already made
-                - $ref: '#/components/schemas/credentialRequest'
         required: true
       responses:
         201:
