@@ -14,6 +14,7 @@ build: java/registry/target/registry.jar
 	make -C services/public-key-service docker
 	make -C services/context-proxy-service docker
 	docker build -t dockerhub/sunbird-rc-nginx .
+	make -C services/identity-service/ docker
 
 java/registry/target/registry.jar: $(SOURCES)
 	echo $(SOURCES)
@@ -62,7 +63,8 @@ test:
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
-
+	make -C services/identity-service test
+	
 clean:
 	@rm -rf target || true
 	@rm java/registry/target/registry.jar || true
@@ -94,6 +96,7 @@ release: test
 	docker push dockerhub/sunbird-rc-context-proxy-service:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-nginx:latest
 	docker push dockerhub/sunbird-rc-nginx:$(RELEASE_VERSION)
+	docker push dockerhub/sunbird-rc-identity-service:$(RELEASE_VERSION)
 	@cd tools/cli/ && npm publish
 
 
