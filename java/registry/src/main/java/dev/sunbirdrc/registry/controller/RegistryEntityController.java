@@ -759,16 +759,16 @@ public class RegistryEntityController extends AbstractController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.REVOKE, "OK", responseParams);
         try {
-            String tag = "RegistryController.revokeAnExistingCredential" + entityName;
+            String tag = "RegistryController.revokeAnExistingCredential " + entityName;
             watch.start(tag);
             JsonNode existingEntityNode = getEntityJsonNode(entityName, entityId,false, userId);
-            String SignedData = existingEntityNode.get(OSSystemFields._osSignedData.name()).asText();
-            if (SignedData.equals(new String()) || SignedData.equals(null)) {
+            String signedData = existingEntityNode.get(OSSystemFields._osSignedData.name()).asText();
+            if (signedData.equals(new String()) || signedData.equals(null)) {
                 throw new RecordNotFoundException("Credential is already revoked");
             }
             JsonNode revokedEntity = registryHelper.revokeAnEntity( entityName ,entityId, userId, existingEntityNode);
             if (revokedEntity != null) {
-                registryHelper.revokeExistingCredentials(entityName, entityId, userId, SignedData);
+                registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
             }
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
