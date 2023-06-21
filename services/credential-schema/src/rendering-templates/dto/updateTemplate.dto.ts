@@ -1,5 +1,5 @@
 export class UpdateTemplateDTO {
-  schema: string;
+  schemaId: string;
   template: string;
   type: string;
 }

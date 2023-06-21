@@ -6,10 +6,11 @@ import {
   Get,
   Inject,
   Param,
-  Put,
+  Patch,
   Post,
   Query,
   UseInterceptors,
+  Put,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -21,38 +22,14 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { Status as PrismaStatus, VerifiableCredentialSchema } from '@prisma/client';
+import { VerifiableCredentialSchema } from '@prisma/client';
 import { Cache } from 'cache-manager';
-import { type } from 'os';
 
 import { VCSModelSchemaInterface } from 'src/types/VCModelSchema.interface';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
 import { VCItem } from './entities/VCItem.entity';
 import { VCModelSchema } from './entities/VCModelSchema.entity';
 import { SchemaService } from './schema.service';
-
-type schemaResponse = {
-  schema: {
-    // type: string,
-    // id: string, 
-    // version: string,
-    // name: string,
-    // author: string,
-    // authored: string,
-    // schema: {
-
-    // }
-    // proof: {
-
-    // }
-  }
-  tags: string[], 
-  status: PrismaStatus, 
-  createdAt: string,
-  createdBy: string,
-  updatedAt: string,
-  updatedBy: string,
-}
 
 @Controller('credential-schema')
 @UseInterceptors(CacheInterceptor)
@@ -62,27 +39,9 @@ export class SchemaController {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  // this should be public
-  // @Get(':id')
-  // @ApiParam({
-  //   name: 'id',
-  //   required: true,
-  //   type: String,
-  //   description: 'ID of the json schema files stored on the server',
-  // })
-  // @ApiOkResponse({ type: VCModelSchema })
-  // @ApiNotFoundResponse({
-  //   status: 404,
-  //   description:
-  //     'The record with the passed query param id has not been found.',
-  // })
-  // getSchema(@Param('id') id: string) {
-  //   return this.schemaService.getSchema(id);
-  // }
-
   // TODO: Add role based guards here
   @Get(':id')
-  // @ApiQuery({ name: 'id', required: true, type: String })
+  @ApiQuery({ name: 'id', required: true, type: String })
   @ApiOperation({ summary: 'Get a Verifiable Credential Schema by id (did)' })
   @ApiOkResponse({
     status: 200,
@@ -93,26 +52,35 @@ export class SchemaController {
     status: 404,
     description: 'The record has not been found.',
   })
-  getCredentialSchema(@Param('id') id: string) {
-    return this.schemaService.getCredentialSchema({ id: id });
+  getCredentialSchema(@Param('id') id) {
+    console.log('id: ', id);
+    return this.schemaService.credentialSchema({ id });
   }
 
   @Get()
-  @ApiQuery({ name: 'tags', required: true, type: String })
-  @ApiOperation({ summary: 'Get a Verifiable Credential Schema by tags' })
+  @ApiQuery({ name: 'id', required: true, type: String })
+  @ApiOperation({ summary: 'Get a Verifiable Credential Schema by id (did)' })
   @ApiOkResponse({
     status: 200,
-    description: 'The record has been successfully obtained',
+    description: 'The record has been successfully created.',
     type: VCItem,
   })
   @ApiNotFoundResponse({
     status: 404,
     description: 'The record has not been found.',
   })
-  getCredentialSchemaByTags(@Query('tags') tags: string){
-    console.log(tags)
+  getCredentialSchemaByTags(
+    @Query('tags') tags: string,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+  ) {
+    console.log('tags: ', tags);
+    console.log('typeof tags: ', typeof tags);
+    // console.log(tags instanceof Array);
     return this.schemaService.getSchemaByTags(
       tags.split(','),
+      isNaN(parseInt(page, 10)) ? 1 : parseInt(page, 10),
+      isNaN(parseInt(limit, 10)) ? 10 : parseInt(limit, 10),
     );
   }
 
@@ -132,15 +100,15 @@ export class SchemaController {
     description: 'There was some problem with the request.',
   })
   createCredentialSchema(
-    @Body() body: CreateCredentialDTO,
-  ): Promise<schemaResponse> {
+    @Body() body: CreateCredentialDTO, //: Promise<VerifiableCredentialSchema>
+  ) {
     console.log(body);
     return this.schemaService.createCredentialSchema(body);
   }
 
   // TODO: Add role based guards here
   @Put(':id')
-  // @ApiQuery({ name: 'id', required: true, type: String })
+  @ApiQuery({ name: 'id', required: true, type: String })
   @ApiBody({
     type: VCModelSchema,
   })
@@ -155,16 +123,15 @@ export class SchemaController {
   @ApiNotFoundResponse({
     status: 404,
     description:
-      'The record with the passed param id has not been found.',
+      'The record with the passed query param id has not been found.',
   })
   @ApiBadRequestResponse({
     status: 400,
-    description: 'There was some problem with the request.',
+    description: 'There was some prioblem with the request.',
   })
-  updateCredentialSchema(
-    @Param('id') id,
-    @Body() data: VCSModelSchemaInterface,
-  ) {
+  updateCredentialSchema(@Param('id') id, @Body() data: CreateCredentialDTO) {
+    // console.log('id: ', query.id);
+    // delete data['id'];
     return this.schemaService.updateCredentialSchema({
       where: { id: id },
       data,

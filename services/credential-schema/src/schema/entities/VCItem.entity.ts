@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Prisma, VerifiableCredentialSchema, Status as PrismaStatus } from '@prisma/client';
+import { Prisma, VerifiableCredentialSchema } from '@prisma/client';
 
 // represents the schema stored in Prisma
 export class VCItem implements VerifiableCredentialSchema {
@@ -25,14 +25,13 @@ export class VCItem implements VerifiableCredentialSchema {
   createdAt: Date;
   @ApiProperty({ type: Date, description: 'updatedAt' })
   updatedAt: Date;
-  @ApiProperty({ type: String, description: 'created by'})
-  createdBy: string;
-  @ApiProperty({ type: String, description: 'updated by on most recent update'})
-  updatedBy: string;
   @ApiProperty({ type: Date, description: 'deletedAt' })
   deletedAt: Date | null;
   @ApiProperty({ type: [String], description: 'tags' })
   tags: string[];
-  @ApiProperty({ enum: PrismaStatus , description: 'Current status of the credential schema'})
-  status: PrismaStatus;
+  @ApiProperty({ type: String, description: 'status' })
+  status: any;
+  createdBy: string;
+  updatedBy: string;
+  deprecatedId: string;
 }

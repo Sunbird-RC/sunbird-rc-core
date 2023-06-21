@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { flatten } from "@nestjs/common";
-import { SchemaService } from "../schema/schema.service";
+import { SchemaService } from "src/schema/schema.service";
 
 
  
@@ -9,31 +9,29 @@ export class ValidateTemplateService{
     constructor (private schemaService: SchemaService) {}
 
 
-    private parseHBSTemplate(HBSstr: string):Array<string>{
-        //console.log(HBSstr);
-        let hbsFields: Array<string> = HBSstr.match(/{{[{]?(.*?)[}]?}}/g)
-        hbsFields.forEach((fieldname:string) => {     
-            //console.log(fieldname);       
+    private parseHBS(HBSstr: string):Array<string>{
+        let HBSfields: Array<string> = HBSstr.match(/{{[{]?(.*?)[}]?}}/g)
+        HBSfields.forEach((fieldname:string) => {
             let len = fieldname.length
             fieldname = fieldname.slice(2, len-2);
         })
-        hbsFields.sort()
-        return hbsFields;
+        HBSfields.sort()
+        return HBSfields;
 
     }
 
-     async validateTemplateAgainstSchema(template: string, schemaID: string): Promise<boolean> {
+     async verify(template: string, schemaID: string): Promise<boolean> {
         try{
-        let hbsFields: Array<string> = this.parseHBSTemplate(template);
+        let HBSfields: Array<string> = this.parseHBS(template);
 
-        let requiredFields:Array<string> = ( await this.schemaService.getCredentialSchema({id:schemaID})).schema["schema"]["required"];
-        //console.log(requiredFields);
-        if (hbsFields.length == requiredFields.length){
+        let requiredFields:Array<string> = ( await this.schemaService.credentialSchema({id:schemaID})).schema["required"];
+        console.log(requiredFields);
+        if (HBSfields.length == requiredFields.length){
             requiredFields.sort()
-            for (let index = 0; index < hbsFields.length; index++) {
+            for (let index = 0; index < HBSfields.length; index++) {
                 let field = '{{'+requiredFields[index]+'}}'
                 //if strings do not match:
-                if (field.localeCompare(hbsFields[index])===1 || field.localeCompare(hbsFields[index])===-1){
+                if (field.localeCompare(HBSfields[index])===1 || field.localeCompare(HBSfields[index])===-1){
                     return false;
                 }
 
