@@ -16,7 +16,6 @@ import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
-import dev.sunbirdrc.registry.Constants;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.entities.AttestationType;
 import dev.sunbirdrc.registry.entities.FlowType;
@@ -210,7 +209,7 @@ public class RegistryHelper {
         String entityName = inputJson.fields().next().getKey();
         if (workflowEnabled) {
             List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
-            entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
+            inputJson = entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
         }
         if (!StringUtils.isEmpty(userId)) {
             ArrayNode jsonNode = (ArrayNode) inputJson.get(entityName).get(osOwner.toString());
@@ -386,7 +385,7 @@ public class RegistryHelper {
         if (workflowEnabled) {
             String entityName = updatedNode.fields().next().getKey();
             List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
-            entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
+            updatedNode = entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
         }
         updateEntity(updatedNode, userId);
     }
