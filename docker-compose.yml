@@ -303,3 +303,75 @@ services:
       - "9002:9000"
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+      
+  vault:
+    image: vault:1.10.3
+    restart: always
+    volumes:
+      - ./vault/vault.json:/vault/config/vault.json
+      - vault-data:/vault/file
+    environment:
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_API_ADDR=http://0.0.0.0:8200
+      - VAULT_ADDRESS=http://0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    command: vault server -config=/vault/config/vault.json
+    ports:
+      - 8200:8200
+
+  identity-service:
+    image: dockerhub/sunbird-rc-identity-service
+    ports: 
+      - '3332:3332'
+    depends_on:
+      - vault
+      - identity-service-db
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@identity-service-db:5432/postgres"
+      VAULT_ADDR: "http://vault:8200"
+      VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
+  identity-service-db:
+    image: postgres:12.1-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes: 
+      - ./did-l3-db:/var/lib/postgresql/dataroot
+
+  credential-schema:
+    image: dockerhub/sunbird-rc-credential-schema
+    ports: 
+      - '3000:3000'
+    depends_on:
+      - credential-schema-db
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@credential-schema-db:5432/postgres"
+  credential-schema-db:
+    image: postgres:12.1-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes: 
+      - ./cred-schema-ms-db:/var/lib/postgresql/data
+
+  credentials-service:
+    image: dockerhub/sunbird-rc-credential-schema
+    ports: 
+      - '3000:3000'
+    depends_on:
+      - credentials-service-db
+      - identity-service
+      - credential-schema
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@credentials-service-db:5432/postgres"
+      IDENTITY_BASE_URL: "http://identity-service:3332"
+  credentials-service-db:
+    image: postgres:12.1-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes: 
+      - ./credential-ms-db:/var/lib/postgresql/data
+  
+
