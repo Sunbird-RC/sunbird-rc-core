@@ -37,7 +37,7 @@ export class RenderingTemplatesService {
   async addTemplate(addTemplateDto: AddTemplateDTO): Promise<Template> {
     try {
       if (
-        await this.verifier.verify(
+        await this.verifier.validateTemplateAgainstSchema(
           addTemplateDto.template,
           addTemplateDto.schemaId,
         )

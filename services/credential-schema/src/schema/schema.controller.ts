@@ -54,7 +54,7 @@ export class SchemaController {
   })
   getCredentialSchema(@Param('id') id) {
     console.log('id: ', id);
-    return this.schemaService.credentialSchema({ id });
+    return this.schemaService.getCredentialSchema({ id });
   }
 
   @Get()

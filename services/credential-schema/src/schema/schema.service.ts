@@ -26,7 +26,7 @@ export class SchemaService {
     return schemas[fileName];
   }
 
-  async credentialSchema(
+  async getCredentialSchema(
     userWhereUniqueInput: Prisma.VerifiableCredentialSchemaWhereUniqueInput, //: Promise<VerifiableCredentialSchema>
   ) {
     console.log(userWhereUniqueInput);
