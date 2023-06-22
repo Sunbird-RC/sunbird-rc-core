@@ -9,7 +9,7 @@ export const getCredentialSchema = async (
 ) => {
   try {
     const credSchema: AxiosResponse = await httpService.axiosRef.get(
-      `${process.env.SCHEMA_BASE_URL}/schema/jsonld?id=${schemaId}`,
+      `${process.env.SCHEMA_BASE_URL}/${schemaId}`,
     );
     return credSchema?.data?.schema;
   } catch (err) {
@@ -18,6 +18,17 @@ export const getCredentialSchema = async (
     );
   }
 };
+
+export const getTemplateById = async (templateId: string, httpService: HttpService) => {
+  try {
+    const template: AxiosResponse = await httpService.axiosRef.get(
+      `${process.env.SCHEMA_BASE_URL}/rendering-template/${templateId}`,
+    );
+    return template?.data;
+  } catch (err) {
+    throw new InternalServerErrorException(`Error fetching template with id ${templateId}`);
+  }
+}
 
 export const verifyCredentialSubject = (credential, schema) => {
   const ajv = new Ajv2019();

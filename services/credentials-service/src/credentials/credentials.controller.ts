@@ -8,13 +8,14 @@ import {
   Post,
   Res,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { CredentialsService } from './credentials.service';
 import { GetCredentialsBySubjectOrIssuer } from './dto/getCredentialsBySubjectOrIssuer.dto';
 import { IssueCredentialDTO } from './dto/issue-credential.dto';
 import { RenderTemplateDTO } from './dto/renderTemplate.dto';
 import { RENDER_OUTPUT } from './enums/renderOutput.enum';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { string } from 'zod';
 import { Credential } from 'src/app.interface';
@@ -62,8 +63,27 @@ export class CredentialsController {
     description: 'Returns a credential with the given id',
   }
   )
-  getCredentialById(@Param() id: { id: string }) {
-    return this.credentialsService.getCredentialById(id?.id);
+  getCredentialById(@Param('id') id: string, @Req() req: Request) {
+    const accept: string = req.headers['accept'];
+    const templateId: string = req.headers['templateid'] as string;
+    let output = RENDER_OUTPUT.JSON;
+    switch (accept.trim()) {
+      case 'application/json':
+        output = RENDER_OUTPUT.JSON;
+        break;
+      case 'application/pdf':
+        output = RENDER_OUTPUT.PDF;
+        break;
+      case 'text/html':
+        output = RENDER_OUTPUT.HTML;
+        break;
+      case 'text/plain':
+        output = RENDER_OUTPUT.STRING;
+        break;
+      case 'image/svg+xml':
+        output = RENDER_OUTPUT.QR;
+    }
+    return this.credentialsService.getCredentialById(id, templateId, output);
   }
 
   @Post('issue')
@@ -81,27 +101,6 @@ export class CredentialsController {
     return this.credentialsService.verifyCredential(credId);
   }
 
-  @Post('render')
-  async renderTemplate(
-    @Body() renderRequest: RenderTemplateDTO,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    let contentType = 'application/json';
-    if (!renderRequest.credential && !renderRequest.credentialId) throw new BadRequestException('Either credential or credentialId must be provided')
-    const res = await this.credentialsService.renderCredential(renderRequest);
-    switch (renderRequest.output) {
-      case RENDER_OUTPUT.PDF:
-        contentType = 'application/pdf';
-        break;
-      case RENDER_OUTPUT.HTML:
-        contentType = 'text/html';
-        break;
-    }
-    response.header('Content-Type', contentType);
-    return res;
-  }
-
-  // TODO: Remove later and merge into cred-schema-ms
   @Get('schema/:id')
   async getSchemaByCredId(@Param('id') id: string) {
     return this.credentialsService.getSchemaByCredId(id);

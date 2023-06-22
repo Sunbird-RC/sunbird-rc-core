@@ -17,11 +17,10 @@ import { DIDDocument } from 'did-resolver';
 import { PrismaService } from '../prisma.service';
 import { GetCredentialsBySubjectOrIssuer } from './dto/getCredentialsBySubjectOrIssuer.dto';
 import { IssueCredentialDTO } from './dto/issue-credential.dto';
-import { RenderTemplateDTO } from './dto/renderTemplate.dto';
 import { RENDER_OUTPUT } from './enums/renderOutput.enum';
 import { IssuerType, Proof } from 'did-jwt-vc/lib/types';
 import { JwtCredentialSubject } from 'src/app.interface';
-import { getCredentialSchema, verifyCredentialSubject } from './utils/schema.utils';
+import { getCredentialSchema, getTemplateById, verifyCredentialSubject } from './utils/schema.utils';
 import { generateDID, resolveDID, signVC } from './utils/identity.utils';
 import { compileHBSTemplate, generateQR, renderAsPDF } from './utils/rendering.utils';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -57,14 +56,14 @@ export class CredentialsService {
     }) as ReadonlyArray<W3CCredential>;
   }
 
-  async getCredentialById(id: string): Promise<W3CCredential> {
+  async getCredentialById(id: string, templateId: string = null, output: string = "json")// : Promise<W3CCredential> 
+  {
     const credential = await this.prisma.verifiableCredentials.findUnique({
       where: { id: id },
       select: {
         signed: true,
       },
     });
-
     if (!credential)
       throw new NotFoundException('Credential for the given id not found');
 
@@ -72,7 +71,27 @@ export class CredentialsService {
     const res = credential.signed;
     delete res['options'];
     res['id'] = id;
-    return res as W3CCredential;
+    let template = null;
+
+    switch (output.toUpperCase()) {
+      case RENDER_OUTPUT.QR:
+        const QRData = await generateQR(res as W3CCredential);
+        return QRData as string;
+      case RENDER_OUTPUT.PDF:
+        // fetch the template 
+        // TODO: Add type here
+        template = await getTemplateById(templateId, this.httpService);
+        return renderAsPDF(res as W3CCredential, template.template);
+      case RENDER_OUTPUT.HTML:
+        template = await getTemplateById(templateId, this.httpService);
+        return await compileHBSTemplate(res as W3CCredential, template.template);
+      case RENDER_OUTPUT.STRING:
+        return JSON.stringify(res);
+      case RENDER_OUTPUT.JSON:
+        return res as W3CCredential;
+      default:
+        throw new BadRequestException('Output type not supported');
+    }
   }
 
   async verifyCredential(credId: string) {
@@ -263,27 +282,6 @@ export class CredentialsService {
       return { id: cred.id, ...signed };
     });
 
-  }
-
-  async renderCredential(renderingRequest: RenderTemplateDTO) {
-    let { output, template, credential, credentialId }: { output: string, template: string, credential?: W3CCredential, credentialId?: string } = renderingRequest;
-    // if (!credential || !credentialId) throw new BadRequestException('Credential or Credential ID is required');
-    if (!credential) credential = await this.getCredentialById(credentialId);
-    switch (output.toUpperCase()) {
-      case RENDER_OUTPUT.QR:
-        const QRData = await generateQR(credential);
-        return QRData as string;
-      case RENDER_OUTPUT.PDF:
-        return renderAsPDF(credential, template);
-      case RENDER_OUTPUT.HTML:
-        return await compileHBSTemplate(credential, template);
-      case RENDER_OUTPUT.STRING:
-        return JSON.stringify(credential);
-      case RENDER_OUTPUT.JSON:
-        return credential;
-      default:
-        throw new BadRequestException('Output type not supported');
-    }
   }
 
   async getSchemaByCredId(credId: string) {
