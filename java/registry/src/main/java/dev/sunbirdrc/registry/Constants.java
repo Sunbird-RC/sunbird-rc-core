@@ -12,6 +12,7 @@ public class Constants {
     public static final String CREATE = "CREATE";
     public static final String UPDATE = "UPDATE";
     public static final String DELETE = "DELETE";
+    public static final String REVOKE = "REVOKE";
     public static final String CLAIM_GRANTED = "CLAIM_GRANTED";
     public static final String CLAIM_REJECTED = "CLAIM_REJECTED";
     public static final String USER_ANONYMOUS = "anonymous";

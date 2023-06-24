@@ -8,7 +8,6 @@ import com.github.jknack.handlebars.Template;
 import dev.sunbirdrc.registry.helper.EntityStateHelper;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.NotificationTemplate;
-import dev.sunbirdrc.registry.model.NotificationTemplates;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.OSSchemaConfiguration;
 import org.apache.commons.lang3.StringUtils;
@@ -79,13 +78,15 @@ public class NotificationHelper {
         OSSchemaConfiguration osSchemaConfiguration = definitionsManager.getDefinition(entityType).getOsSchemaConfiguration();
         switch(operationType) {
             case CREATE:
-                return osSchemaConfiguration.getNotificationTemplates().getCreateNotificationTemplates();
+                return osSchemaConfiguration.getNotificationTemplates().getCreate();
             case UPDATE:
-                return osSchemaConfiguration.getNotificationTemplates().getUpdateNotificationTemplates();
+                return osSchemaConfiguration.getNotificationTemplates().getUpdate();
             case INVITE:
-                return osSchemaConfiguration.getNotificationTemplates().getInviteNotificationTemplates();
+                return osSchemaConfiguration.getNotificationTemplates().getInvite();
             case DELETE:
-                return osSchemaConfiguration.getNotificationTemplates().getDeleteNotificationTemplates();
+                return osSchemaConfiguration.getNotificationTemplates().getDelete();
+            case REVOKE:
+                return osSchemaConfiguration.getNotificationTemplates().getRevoke();
         }
         return null;
     }

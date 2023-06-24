@@ -16,7 +16,8 @@ import (
 // PostNotificationOKCode is the HTTP code returned for type PostNotificationOK
 const PostNotificationOKCode int = 200
 
-/*PostNotificationOK OK
+/*
+PostNotificationOK OK
 
 swagger:response postNotificationOK
 */
@@ -60,7 +61,8 @@ func (o *PostNotificationOK) WriteResponse(rw http.ResponseWriter, producer runt
 // PostNotificationBadRequestCode is the HTTP code returned for type PostNotificationBadRequest
 const PostNotificationBadRequestCode int = 400
 
-/*PostNotificationBadRequest Bad Request
+/*
+PostNotificationBadRequest Bad Request
 
 swagger:response postNotificationBadRequest
 */
