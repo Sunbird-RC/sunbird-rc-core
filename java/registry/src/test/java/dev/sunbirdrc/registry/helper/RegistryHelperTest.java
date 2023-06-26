@@ -910,10 +910,10 @@ public class RegistryHelperTest {
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
-		doNothing().when(registryService).updateEntity(any(), any(), any(), any());
+		doNothing().when(registryService).updateEntity(any(), any(), any(), any(), anyBoolean());
 		doNothing().when(notificationHelper).sendNotification(any(), any());
 		registryHelper.updateEntityAndState(existingJson, updateJson, "");
-		verify(registryService, times(1)).updateEntity(any(), any(), any(), any());
+		verify(registryService, times(1)).updateEntity(any(), any(), any(), any(), anyBoolean());
 		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 }
