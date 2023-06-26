@@ -5,7 +5,7 @@ services:
     restart: always
     volumes:
       - ./vault/vault.json:/vault/config/vault.json
-      - ./vault-data:/vault/file
+      - vault-data:/vault/file
     environment:
       - VAULT_ADDR=http://0.0.0.0:8200
       - VAULT_API_ADDR=http://0.0.0.0:8200
@@ -35,7 +35,9 @@ services:
     environment:
       DATABASE_URL: "postgres://postgres:postgres@db:5432/postgres"
       VAULT_ADDR: "http://vault:8200"
-      VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
+      # This will be replaced automatically
+      VAULT_TOKEN: hvs.u3LN5tyuznyJ5v8Q2XCQgZvK
 
 volumes:
   data:
+  vault-data:
