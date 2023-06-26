@@ -1,0 +1,41 @@
+version: '3'
+services:
+  vault:
+    image: vault:1.13.3
+    restart: always
+    volumes:
+      - ./vault/vault.json:/vault/config/vault.json
+      - ./vault-data:/vault/file
+    environment:
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_API_ADDR=http://0.0.0.0:8200
+      - VAULT_ADDRESS=http://0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    command: vault server -config=/vault/config/vault.json
+    ports:
+      - 8200:8200
+  db:
+    image: postgres:latest
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - data:/var/lib/postgresql/data
+  identity-service:
+    image: identity
+    build: .
+    depends_on: 
+     - db
+    ports: 
+      - 3332:3332
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/postgres"
+      VAULT_ADDR: "http://vault:8200"
+      VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
+
+volumes:
+  data:
