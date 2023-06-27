@@ -78,6 +78,7 @@ release: test
 	docker tag dockerhub/sunbird-rc-public-key-service dockerhub/sunbird-rc-public-key-service:$(RELEASE_VERSION)
 	docker tag dockerhub/sunbird-rc-context-proxy-service dockerhub/sunbird-rc-context-proxy-service:$(RELEASE_VERSION)
 	docker tag dockerhub/sunbird-rc-nginx dockerhub/sunbird-rc-nginx:$(RELEASE_VERSION)
+	docker tag dockerhub/sunbird-rc-identity-service dockerhub/sunbird-rc-identity-service:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-core:latest
 	docker push dockerhub/sunbird-rc-core:$(RELEASE_VERSION)
 	docker push dockerhub/sunbird-rc-claim-ms:latest
