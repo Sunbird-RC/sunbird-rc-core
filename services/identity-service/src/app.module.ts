@@ -9,6 +9,8 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { VcModule } from './vc/vc.module';
 import { VaultService } from './did/vault.service';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './auth/auth.guard';
 
 @Module({
   imports: [
@@ -20,6 +22,12 @@ import { VaultService } from './did/vault.service';
     }),
   ],
   controllers: [AppController, DidController],
-  providers: [AppService, PrismaService, DidService, VaultService],
+  providers: [
+    AppService, PrismaService, DidService, VaultService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+  ],
 })
 export class AppModule {}
