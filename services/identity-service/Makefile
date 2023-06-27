@@ -1,11 +1,15 @@
 IMAGE:=dockerhub/sunbird-rc-identity-service
 
-.PHONY: docker publish test
+.PHONY: docker publish test run unseal
 
 docker:
 	@docker build -t $(IMAGE) .
 publish:
 	@docker push $(IMAGE)
 test:
-	@docker build -f Dockerfile.test -t $(IMAGE)-test .  
-	@docker run $(IMAGE)-test
+	@docker-compose -f docker-compose-test.yml down
+	bash build/setup_vault.sh docker-compose-test.yml vault-test
+	@docker-compose -f docker-compose-test.yml up --build --abort-on-container-exit
+compose-init:
+	bash build/setup_vault.sh
+	@docker-compose up -d
