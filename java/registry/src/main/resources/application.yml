@@ -17,7 +17,7 @@ spring:
 
 oauth2:
   resources:
-    - uri: ${oauth2_resource_uri:http://localhost:9011/}
+    - uri: ${oauth2_resource_uri:http://localhost:8080/auth/realms/sunbird-rc}
       properties:
         emailPath: ${oauth2_resource_email_path:email}
         consentPath: ${oauth2_resource_consent_path:consent}
@@ -238,7 +238,7 @@ audit:
     suffixSeparator: ${audit_suffixSeparator:_}
 
 identity:
-  provider: ${identity_provider:dev.sunbirdrc.auth.genericiam.AuthProviderImpl}
+  provider: ${identity_provider:dev.sunbirdrc.auth.keycloak.KeycloakProviderImpl}
   url: ${sunbird_sso_url:http://localhost:8080/auth/}
   realm: ${sunbird_sso_realm:sunbird-rc}
   client_id: ${sunbird_sso_admin_client_id:admin-api}
