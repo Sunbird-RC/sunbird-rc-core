@@ -7,7 +7,5 @@ docker:
 publish:
 	@docker push $(IMAGE)
 test:
-	@docker build -f Dockerfile.test -t $(IMAGE)-test .  
-	@docker run $(IMAGE)-test
-compose-init:
-	bash ./build/setup_vault.sh
+	bash build/setup_vault.sh docker-compose-test.yml vault-test
+	@docker-compose -f docker-compose-test.yml up --build --abort-on-container-exit

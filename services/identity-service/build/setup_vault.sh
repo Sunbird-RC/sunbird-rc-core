@@ -7,12 +7,16 @@
 # * Prints the unseal keys and root token
 # * This script does not automatically unseal vault on restarts, it only works with fresh installations
 
+COMPOSE_FILE="${1:-docker-compose.yml}"
+SERVICE_NAME="${2:-vault}"
 
-docker-compose up -d vault
+echo "Setting up $SERVICE_NAME in $COMPOSE_FILE"
+
+docker-compose -f "$COMPOSE_FILE" up -d "$SERVICE_NAME"
 
 # Function to check if Vault is ready
 check_vault_status() {
-  vault_status=$(docker-compose exec vault vault status 2>&1)
+  vault_status=$(docker-compose -f "$COMPOSE_FILE" exec "$SERVICE_NAME" vault status 2>&1)
   if [[ $vault_status == *"connection refused"* ]]; then
     echo "Unable to connect to Vault. Waiting for Vault to start..."
     return 1
@@ -32,24 +36,24 @@ until check_vault_status; do
     sleep 1;
 done
 
-docker-compose exec vault vault operator init > keys.txt
+docker-compose -f "$COMPOSE_FILE" exec "$SERVICE_NAME" vault operator init > keys.txt
 sed -n -e 's/^Unseal Key [1-1]: \(.*\)/\1/p' keys.txt > parsed-key.txt
 key=$(cat parsed-key.txt)
-docker-compose exec -T vault vault operator unseal "$key"
+docker-compose -f "$COMPOSE_FILE" exec -T "$SERVICE_NAME" vault operator unseal "$key"
 
 sed -n -e 's/^Unseal Key [2-2]: \(.*\)/\1/p' keys.txt > parsed-key.txt
 key=$(cat parsed-key.txt)
-docker-compose exec -T vault vault operator unseal "$key"
+docker-compose -f "$COMPOSE_FILE" exec -T "$SERVICE_NAME" vault operator unseal "$key"
 
 sed -n -e 's/^Unseal Key [3-3]: \(.*\)/\1/p' keys.txt > parsed-key.txt
 key=$(cat parsed-key.txt)
-docker-compose exec -T vault vault operator unseal "$key"
+docker-compose -f "$COMPOSE_FILE" exec -T "$SERVICE_NAME" vault operator unseal "$key"
 
 root_token=$(sed -n 's/Initial Root Token: \(.*\)/\1/p' keys.txt)
 
-sed -i "s/VAULT_TOKEN:.*/VAULT_TOKEN: $root_token/" docker-compose.yml
+sed -i "s/VAULT_TOKEN:.*/VAULT_TOKEN: $root_token/" "$COMPOSE_FILE"
 
-docker-compose exec -e VAULT_TOKEN=$root_token -T vault vault secrets enable -path=kv kv-v2
+docker-compose -f "$COMPOSE_FILE" exec -e VAULT_TOKEN=$root_token -T "$SERVICE_NAME" vault secrets enable -path=kv kv-v2
 
 cat keys.txt
 rm parsed-key.txt
