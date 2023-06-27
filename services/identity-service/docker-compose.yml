@@ -35,7 +35,8 @@ services:
     environment:
       DATABASE_URL: "postgres://postgres:postgres@db:5432/postgres"
       VAULT_ADDR: "http://vault:8200"
-      # This will be replaced automatically
+      # This will be replaced automatically on initialisation 
+      # make compose-init will call setup_vault.sh
       VAULT_TOKEN: hvs.u3LN5tyuznyJ5v8Q2XCQgZvK
 
 volumes:
