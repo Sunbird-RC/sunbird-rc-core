@@ -927,11 +927,11 @@ public class RegistryHelper {
     }
 
     public void authorizeAttestor(String entity, HttpServletRequest request) throws Exception {
-        List<String> keyCloakEntities = getUserEntities(request);
+        List<String> userEntities = getUserEntities(request);
         Set<String> allTheAttestorEntities = definitionsManager.getDefinition(entity)
                 .getOsSchemaConfiguration()
                 .getAllTheAttestorEntities();
-        if (keyCloakEntities.stream().noneMatch(allTheAttestorEntities::contains)) {
+        if (userEntities.stream().noneMatch(allTheAttestorEntities::contains)) {
             throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
         }
     }
