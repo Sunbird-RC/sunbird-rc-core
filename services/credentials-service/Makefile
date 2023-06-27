@@ -8,4 +8,4 @@ publish:
 	@docker push $(IMAGE)
 test:
 	@docker build -f Dockerfile.test -t $(IMAGE)-test .  
-	@docker run $(IMAGE)-test
+	@docker-compose  -f docker-compose-test.yml up --build --abort-on-container-exit
