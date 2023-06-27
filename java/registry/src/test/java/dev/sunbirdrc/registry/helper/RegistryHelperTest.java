@@ -140,6 +140,7 @@ public class RegistryHelperTest {
 		registryHelper.uuidPropertyName = "osid";
 		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, identityManager);
 		registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
+		ReflectionTestUtils.setField(registryHelper.entityStateHelper, "setDefaultPassword", false);
 		registryHelper.setDefinitionsManager(definitionsManager);
 	}
 

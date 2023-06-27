@@ -85,6 +85,7 @@ public class EntityStateHelperTest {
         RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, identityManager);
         EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
+        ReflectionTestUtils.setField(entityStateHelper, "setDefaultPassword", false);
         updated = entityStateHelper.applyWorkflowTransitions(existing, updated, attestationPolicies);
         assertEquals(expected, updated);
     }
