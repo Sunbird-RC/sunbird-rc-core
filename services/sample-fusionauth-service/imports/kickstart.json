@@ -1,0 +1,90 @@
+{
+  "variables": {
+    "adminEmail": "admin@fusionauth.io",
+    "password": "password",
+    "defaultTenantId": "30663132-6464-6665-3032-326466613934",
+    "keyID":  "#{UUID()}"
+  },
+  "apiKeys": [
+    {
+      "key": "bf69486b-4733-4470-a592-f1bfce7af580",
+      "description": "Standard development API key"
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "url": "/api/user/registration/00000000-0000-0000-0000-000000000001",
+      "body": {
+        "user": {
+          "birthDate": "1981-06-04",
+          "email": "#{adminEmail}",
+          "firstName": "Erlich",
+          "lastName": "Bachman",
+          "password": "#{password}",
+          "data": {
+            "Company": "PiedPiper",
+            "PreviousCompany": "Aviato",
+            "user_type": "iconclast"
+          }
+        },
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/application/85a03867-dccf-4882-adde-1a79aeec50df",
+      "body": {
+        "application": {
+          "name": "Pied Piper",
+          "roles": [
+            {
+              "name": "dev"
+            },
+            {
+              "name": "ceo"
+            },
+            {
+              "name": "intern"
+            }
+          ],
+          "oauthConfiguration": {
+            "clientAuthenticationPolicy": "NotRequired",
+            "enabledGrants": [
+              "password"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/key/generate/#{keyID}",
+      "body": {
+        "key": {
+          "algorithm": "RS256",
+          "issuer": "http://localhost:9011/",
+          "name": "http://localhost:9011/",
+          "length": 2048
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant/#{defaultTenantId}",
+      "body": {
+        "tenant": {
+          "issuer": "http://localhost:9011/",
+          "jwtConfiguration": {
+            "accessTokenKeyId": "#{keyID}"
+          }
+        }
+      }
+    }
+  ]
+}
