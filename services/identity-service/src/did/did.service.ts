@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import * as ION from '@decentralized-identity/ion-tools';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from 'src/utils/prisma.service';
 import { DIDDocument } from 'did-resolver';
 import { uuid } from 'uuidv4';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
@@ -16,7 +16,7 @@ export class DidService {
     try {
       authnKeys = await ION.generateKeyPair(process.env.SIGNING_ALGORITHM as string);
     } catch (err) {
-      Logger.error(`Error generating key pair`);
+      Logger.error(`Error generating key pair: ${err}`);
       throw new InternalServerErrorException('Error generating key pair');
     }
 
@@ -48,14 +48,15 @@ export class DidService {
         },
       });
     } catch (err) {
-      Logger.error(`Error writing DID to database`);
+      Logger.error(`Error writing DID to database ${err}`);
       throw new InternalServerErrorException('Error writing DID to database');
     }
 
     try {
       await this.vault.writePvtKey(authnKeys.privateJwk, didUri);
     } catch (err) {
-      Logger.error(`Error saving private keys to vault`);
+      Logger.error(err);
+      throw new InternalServerErrorException('Error writing private key to vault');
     }
 
     return document;
@@ -68,7 +69,7 @@ export class DidService {
         where: { id },
       });
     } catch (err) {
-      Logger.error(`Error fetching DID: ${id} from db`);
+      Logger.error(`Error fetching DID: ${id} from db, ${err}`);
       throw new InternalServerErrorException(`Error fetching DID: ${id} from db`);
     }
 

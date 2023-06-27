@@ -1,9 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { PrismaService } from 'src/utils/prisma.service';
 import * as ION from '@decentralized-identity/ion-tools';
 import { DidService } from 'src/did/did.service';
 import { DIDDocument } from 'did-resolver';
 import { VaultService } from 'src/did/vault.service';
+import { Identity } from '@prisma/client';
 
 @Injectable()
 export default class VcService {
@@ -14,12 +15,19 @@ export default class VcService {
   ) {}
 
   async sign(signerDID: string, toSign: string) {
-    const did = await this.primsa.identity.findUnique({
-      where: { id: signerDID },
-    });
+    let did: Identity;
+    try {
+      did = await this.primsa.identity.findUnique({
+        where: { id: signerDID },
+      });
+    } catch (err) {
+      Logger.error('Error fetching signerDID:', err);
+      throw new InternalServerErrorException(`Error fetching signerDID`);
+    }
 
-    if (did) {
-      console.log(toSign)
+    if (!did) throw new NotFoundException('Signer DID not found!');
+
+    try {
       const signedJWSEd25519 = await ION.signJws({
         payload: toSign,
         privateJwk: await this.vault.readPvtKey(signerDID),
@@ -27,23 +35,32 @@ export default class VcService {
       return {
         publicKey: (JSON.parse(did.didDoc as string) as DIDDocument)
           .verificationMethod[0].publicKeyJwk,
-        signed: signedJWSEd25519, // TODO: ADD SUPPORT FOR MORE METHODS (take an input on how to sign while issuing)
+        signed: signedJWSEd25519,
       };
-    } else {
-      throw new NotFoundException('DID not found!');
+    } catch (err) {
+      Logger.error('Error signign the document:', err);
+      throw new InternalServerErrorException(`Error signign the document`);
     }
   }
 
   async verify(signerDID: string, signedDoc: string): Promise<boolean> {
-    const didDocument = await this.didService.resolveDID(signerDID);
+    let didDocument: DIDDocument;
+    try {
+      didDocument = await this.didService.resolveDID(signerDID);
+    } catch (err) {
+      Logger.error(`Error resolving signed did: `, err);
+      throw new InternalServerErrorException(`Error resolving signed did`);
+    }
+
     try {
       const verified = await ION.verifyJws({
         jws: signedDoc,
         publicJwk: didDocument.verificationMethod[0].publicKeyJwk,
       });
-      Logger.log('verified: ', verified);
-      return true;
+      if (verified) return true;
+      return false;
     } catch (e) {
+      Logger.error(e);
       return false;
     }
   }

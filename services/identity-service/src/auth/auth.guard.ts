@@ -35,11 +35,12 @@ export class AuthGuard implements CanActivate {
       context.getHandler(),
     );
     if (isPublic) return true;
+    if (process.env.ENABLE_AUTH.trim() === 'false') return true;
 
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer')) {
+    if ((!authHeader || !authHeader.startsWith('Bearer')) && process.env.ENABLE_AUTH.trim() === 'true') {
       this.logger.log('No Bearer token found');
       return false;
     }
@@ -50,7 +51,7 @@ export class AuthGuard implements CanActivate {
           this.logger.log(err);
           resolve(false);
         }
-        if (decoded || process.env.ENABLE_AUTH.trim() === 'false')
+        if (decoded)
           resolve(true);
         resolve(false);
       });

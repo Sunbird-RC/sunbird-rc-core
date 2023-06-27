@@ -21,7 +21,6 @@ import {
 import { DIDDocument } from 'did-resolver';
 import { DidService } from './did.service';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
-import { JwtAuthGuard } from '../auth/roles.guard';
 const pLimit = require('p-limit');
 const limit = pLimit(100);
 
