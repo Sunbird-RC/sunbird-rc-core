@@ -2,6 +2,7 @@ package dev.sunbirdrc.auth.keycloak;
 
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.identity_providers.pojos.*;
+import dev.sunbirdrc.pojos.HealthIndicator;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -136,11 +137,17 @@ public class KeycloakAdminUtil implements IdentityManager {
         UserRepresentation newUser = new UserRepresentation();
         newUser.setEnabled(true);
         newUser.setUsername(createUserRequest.getUserName());
-        if (providerConfiguration.setDefaultPassword()) {
-            CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
-            credentialRepresentation.setValue(providerConfiguration.getDefaultPassword());
-            credentialRepresentation.setType(PASSWORD);
-            newUser.setCredentials(Collections.singletonList(credentialRepresentation));
+        if (!Objects.equals(createUserRequest.getPassword(), "") || providerConfiguration.setDefaultPassword()) {
+            CredentialRepresentation passwordCredential = new CredentialRepresentation();
+            if (!Objects.equals(createUserRequest.getPassword(), "")) {
+                passwordCredential.setValue(createUserRequest.getPassword());
+                passwordCredential.setTemporary(false);
+            } else {
+                passwordCredential.setValue(providerConfiguration.getDefaultPassword());
+                passwordCredential.setTemporary(true);
+            }
+            passwordCredential.setType(PASSWORD);
+            newUser.setCredentials(Collections.singletonList(passwordCredential));
         }
         newUser.setGroups(Collections.singletonList(createUserRequest.getEntity()));
         newUser.setEmail(createUserRequest.getEmail());

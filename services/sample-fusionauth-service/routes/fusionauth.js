@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const request = require('request');
 const {FUSIONAUTH_BASE_URL, FUSIONAUTH_APPLICATION_ID, FUSIONAUTH_API_KEY} = require("../config");
 const axios = require("axios");
 
@@ -101,7 +100,7 @@ const getUser = async (userName) => {
     });
 }
 
-const createUser = async (userName, email, mobile, role, password) => {
+const createUser = async (userName, email, mobile, role, password="") => {
     const options = {
         'method': 'POST',
         'url': `${FUSIONAUTH_BASE_URL}/api/user/registration`,
@@ -113,8 +112,7 @@ const createUser = async (userName, email, mobile, role, password) => {
             "user": {
                 "username": userName,
                 "email": email,
-                //TODO take the value from params
-                "password": "abcd@12345",
+                "password": password,
                 "data": {
                     "entity": [
                         role

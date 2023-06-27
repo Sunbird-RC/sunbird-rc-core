@@ -54,3 +54,11 @@ services:
       - 9011:9011
     volumes:
       - ./imports/:/home/
+  fusionauthwrapper:
+    build: .
+    ports:
+      - 3990:3990
+    environment:
+      FUSIONAUTH_API_KEY: bf69486b-4733-4470-a592-f1bfce7af580
+      FUSIONAUTH_APPLICATION_ID: 85a03867-dccf-4882-adde-1a79aeec50df
+      FUSIONAUTH_BASE_URL: http://fusionauth:9011

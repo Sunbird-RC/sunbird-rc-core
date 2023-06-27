@@ -9,10 +9,14 @@ public class CreateUserRequest {
 	private final String email;
 	private final String mobile;
 	private final String entity;
-	public CreateUserRequest(String entity, String userName, String email, String mobile) {
+
+	private final String password;
+	public CreateUserRequest(String entity, String userName, String email, String mobile, String password) {
 		this.userName = userName;
 		this.email = email;
 		this.mobile = mobile;
 		this.entity = entity;
+		this.password = password;
 	}
+
 }

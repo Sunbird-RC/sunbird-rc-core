@@ -41,8 +41,9 @@ rule "Create entity owner for newly added owner fields"
     when
         stateDefinition:StateContext(isOwnershipProperty() && isOwnerNewlyAdded() && isLoginEnabled());
     then
-        CreateUserRequest createUserRequest = new CreateUserRequest(stateDefinition.getEntityName(), stateDefinition.getUpdated().get("userId").textValue(),
-                                                                            stateDefinition.getUpdated().get("email").textValue(), stateDefinition.getUpdated().get("mobile").textValue());
+        CreateUserRequest createUserRequest = new CreateUserRequest(stateDefinition.getEntityName(),
+        stateDefinition.getUpdated().get("userId").textValue(), stateDefinition.getUpdated().get("email").textValue(),
+        stateDefinition.getUpdated().get("mobile").textValue(), stateDefinition.getUpdated().get("password").textValue());
         String owner = identityManager.createUser(createUserRequest);
         stateDefinition.addOwner(owner);
 end

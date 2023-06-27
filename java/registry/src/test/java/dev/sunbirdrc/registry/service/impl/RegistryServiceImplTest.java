@@ -341,7 +341,7 @@ public class RegistryServiceImplTest {
 		when(shard.getShardLabel()).thenReturn("");
 		Event event = mock(Event.class);
 		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
-		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode));
+		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode),false);
 		verify(eventService, times(1)).pushEvents(event);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
@@ -369,7 +369,7 @@ public class RegistryServiceImplTest {
 		when(shard.getShardLabel()).thenReturn("");
 		Event event = mock(Event.class);
 		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
-		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode));
+		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode),false);
 		verify(eventService, times(1)).pushEvents(event);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
@@ -404,7 +404,7 @@ public class RegistryServiceImplTest {
 		when(shard.getShardLabel()).thenReturn("");
 		Event event = mock(Event.class);
 		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
-		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson));
+		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson), false);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(eventService, times(1)).pushEvents(event);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
@@ -437,7 +437,7 @@ public class RegistryServiceImplTest {
 		when(shard.getShardLabel()).thenReturn("");
 		Event event = mock(Event.class);
 		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
-		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson));
+		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson), false);
 		verify(eventService, times(1)).pushEvents(event);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());

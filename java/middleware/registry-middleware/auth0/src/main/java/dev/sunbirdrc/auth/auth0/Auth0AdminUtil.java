@@ -16,6 +16,7 @@ import com.auth0.json.mgmt.users.UsersPage;
 import com.auth0.net.TokenRequest;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.identity_providers.pojos.IdentityProviderConfiguration;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import dev.sunbirdrc.registry.identity_providers.pojos.CreateUserRequest;
@@ -162,8 +163,8 @@ public class Auth0AdminUtil implements IdentityManager {
 		userMetadata.put(MOBILE_NUMBER, createUserRequest.getMobile());
 		user.setUserMetadata(userMetadata);
 		user.setConnection("Username-Password-Authentication");
-		if (identityProviderConfiguration.setDefaultPassword()) {
-			user.setPassword(identityProviderConfiguration.getDefaultPassword().toCharArray());
+		if (!Strings.isBlank(createUserRequest.getPassword())) {
+			user.setPassword(createUserRequest.getPassword().toCharArray());
 		}
 		return user;
 	}

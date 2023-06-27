@@ -737,4 +737,46 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/revoke", method = RequestMethod.POST)
+    public ResponseEntity<Object> revokeACredential (
+            HttpServletRequest request,
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @RequestHeader HttpHeaders headers
+    ){
+        String userId = USER_ANONYMOUS;
+        logger.info("Revoking the entityType {} with {} Id",entityName, entityId);
+        // Check fot Authorisation
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
+            try {
+                userId = registryHelper.authorize(entityName, entityId, request);
+            } catch (Exception e) {
+                return createUnauthorizedExceptionResponse(e);
+            }
+        }
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.REVOKE, "OK", responseParams);
+        try {
+            String tag = "RegistryController.revokeAnExistingCredential " + entityName;
+            watch.start(tag);
+            JsonNode existingEntityNode = getEntityJsonNode(entityName, entityId,false, userId);
+            String signedData = existingEntityNode.get(OSSystemFields._osSignedData.name()).asText();
+            if (signedData.equals(new String()) || signedData.equals(null)) {
+                throw new RecordNotFoundException("Credential is already revoked");
+            }
+            JsonNode revokedEntity = registryHelper.revokeAnEntity( entityName ,entityId, userId, existingEntityNode);
+            if (revokedEntity != null) {
+                registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
+            }
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.stop(tag);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Registry Controller: Exception while revoking an entity:", e);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+            return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
