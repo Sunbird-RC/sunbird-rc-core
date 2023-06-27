@@ -36,16 +36,18 @@ until check_vault_status; do
     sleep 1;
 done
 
-docker-compose -f "$COMPOSE_FILE" exec "$SERVICE_NAME" vault operator init > keys.txt
-sed -n -e 's/^Unseal Key [1-1]: \(.*\)/\1/p' keys.txt > parsed-key.txt
+# keys contains ansi escape sequences, remove them if any
+docker-compose -f "$COMPOSE_FILE" exec "$SERVICE_NAME" vault operator init > ansi-keys.txt
+sed 's/\x1B\[[0-9;]*[JKmsu]//g' < ansi-keys.txt  > keys.txt
+sed -n 's/Unseal Key [1-1]\+: \(.*\)/\1/p' keys.txt > parsed-key.txt
 key=$(cat parsed-key.txt)
 docker-compose -f "$COMPOSE_FILE" exec -T "$SERVICE_NAME" vault operator unseal "$key"
 
-sed -n -e 's/^Unseal Key [2-2]: \(.*\)/\1/p' keys.txt > parsed-key.txt
+sed -n 's/Unseal Key [2-2]\+: \(.*\)/\1/p' keys.txt > parsed-key.txt
 key=$(cat parsed-key.txt)
 docker-compose -f "$COMPOSE_FILE" exec -T "$SERVICE_NAME" vault operator unseal "$key"
 
-sed -n -e 's/^Unseal Key [3-3]: \(.*\)/\1/p' keys.txt > parsed-key.txt
+sed -n 's/Unseal Key [3-3]\+: \(.*\)/\1/p' keys.txt > parsed-key.txt
 key=$(cat parsed-key.txt)
 docker-compose -f "$COMPOSE_FILE" exec -T "$SERVICE_NAME" vault operator unseal "$key"
 
@@ -56,4 +58,4 @@ sed -i "s/VAULT_TOKEN:.*/VAULT_TOKEN: $root_token/" "$COMPOSE_FILE"
 docker-compose -f "$COMPOSE_FILE" exec -e VAULT_TOKEN=$root_token -T "$SERVICE_NAME" vault secrets enable -path=kv kv-v2
 
 cat keys.txt
-rm parsed-key.txt
+rm parsed-key.txt ansi-keys.txt
