@@ -17,3 +17,5 @@ services:
       - '3333:3333'
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+      IDENTITY_BASE_URL: 
+      SCHEMA_BASE_URL: 
