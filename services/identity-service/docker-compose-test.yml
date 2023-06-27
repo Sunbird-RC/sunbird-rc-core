@@ -32,3 +32,9 @@ services:
       # This will be replaced automatically on initialisation 
       # make compose-init will call setup_vault.sh
       VAULT_TOKEN: 
+      VAULT_BASE_URL: "http://vault:8200/v1"
+      VAULT_ROOT_PATH: "http://vault:8200/v1/kv"
+      VAULT_TIMEOUT: 5000
+      VAULT_PROXY: 'false'
+      SIGNING_ALGORITHM: "RS256"
+      JWKS_URI: 
