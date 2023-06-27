@@ -1,9 +1,9 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/utils/prisma.service';
+import { PrismaService } from '../utils/prisma.service';
 import * as ION from '@decentralized-identity/ion-tools';
-import { DidService } from 'src/did/did.service';
+import { DidService } from '../did/did.service';
 import { DIDDocument } from 'did-resolver';
-import { VaultService } from 'src/did/vault.service';
+import { VaultService } from '../did/vault.service';
 import { Identity } from '@prisma/client';
 
 @Injectable()

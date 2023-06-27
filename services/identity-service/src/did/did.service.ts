@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import * as ION from '@decentralized-identity/ion-tools';
-import { PrismaService } from 'src/utils/prisma.service';
+import { PrismaService } from '../utils/prisma.service';
 import { DIDDocument } from 'did-resolver';
 import { uuid } from 'uuidv4';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
@@ -28,7 +28,7 @@ export class DidService {
       '@context': 'https://w3id.org/did/v1',
       id: didUri,
       alsoKnownAs: doc.alsoKnownAs,
-      service: doc.service,
+      service: doc.services,
       verificationMethod: [
         {
           id: 'auth-key',
