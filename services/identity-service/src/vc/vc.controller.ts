@@ -7,7 +7,7 @@ import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiOkResponse, A
 @ApiTags('VC')
 @Controller('utils')
 export class VcController {
-  constructor(private readonly VcService: VcService) { }
+  constructor(private readonly VcService: VcService) {}
 
   @ApiOperation({ summary: 'Sign an unsigned VC' })
   @ApiOkResponse({ description: 'VC Signed' })
@@ -15,7 +15,6 @@ export class VcController {
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @Post('/sign')
   sign(@Body() body: SignJsonDTO) {
-    console.log('tjis')
     return this.VcService.sign(body.DID, body.payload);
   }
 

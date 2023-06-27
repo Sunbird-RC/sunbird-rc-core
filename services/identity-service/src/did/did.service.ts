@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import * as ION from '@decentralized-identity/ion-tools';
 import { PrismaService } from 'src/prisma.service';
 import { DIDDocument } from 'did-resolver';
@@ -12,10 +12,16 @@ export class DidService {
 
   async generateDID(doc: GenerateDidDTO): Promise<DIDDocument> {
     // Create private/public key pair
-    const authnKeys = await ION.generateKeyPair('Ed25519');
+    let authnKeys;
+    try {
+      authnKeys = await ION.generateKeyPair(process.env.SIGNING_ALGORITHM as string);
+    } catch (err) {
+      Logger.error(`Error generating key pair`);
+      throw new InternalServerErrorException('Error generating key pair');
+    }
 
     // Create a UUID for the DID using uuidv4
-    const didUri = `did:${doc.method}:${uuid()}`;
+    const didUri = `did:${(doc.method && doc.method.trim() !== '') ? doc.method.trim() : 'rcw'}:${uuid()}`;
 
     // Create a DID Document
     const document: DIDDocument = {
@@ -34,13 +40,24 @@ export class DidService {
       authentication: ['auth-key'],
     };
 
-    await this.prisma.identity.create({
-      data: {
-        id: didUri,
-        didDoc: JSON.stringify(document),
-      },
-    });
-    this.vault.writePvtKey(authnKeys.privateJwk, didUri);
+    try {
+      await this.prisma.identity.create({
+        data: {
+          id: didUri,
+          didDoc: JSON.stringify(document),
+        },
+      });
+    } catch (err) {
+      Logger.error(`Error writing DID to database`);
+      throw new InternalServerErrorException('Error writing DID to database');
+    }
+
+    try {
+      await this.vault.writePvtKey(authnKeys.privateJwk, didUri);
+    } catch (err) {
+      Logger.error(`Error saving private keys to vault`);
+    }
+
     return document;
   }
 

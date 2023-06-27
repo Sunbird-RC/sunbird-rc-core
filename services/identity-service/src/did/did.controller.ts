@@ -60,10 +60,4 @@ export class DidController {
       throw new NotFoundException('DID could not be resolved!');
     }
   }
-
-  // @Patch('/update/:id')
-  // @UseGuards(JwtAuthGuard)
-  // async updateDID(@Param('id') id: string, @Body() body: any) {
-  //   return this.didService.updateDID(id, body);
-  // }
 }
