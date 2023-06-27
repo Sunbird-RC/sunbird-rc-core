@@ -21,6 +21,6 @@ export class VcController {
   @ApiOperation({ summary: 'Verify a signed VC' })
   @Post('/verify')
   verify(@Body() body: VerifyJsonDTO) {
-    return this.VcService.sign(body.DID, body.payload);
+    return this.VcService.verify(body.DID, body.payload);
   }
 }

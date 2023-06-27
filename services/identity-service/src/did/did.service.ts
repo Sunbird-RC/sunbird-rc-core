@@ -1,11 +1,11 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import * as ION from '@decentralized-identity/ion-tools';
 import { PrismaService } from 'src/prisma.service';
 import { DIDDocument } from 'did-resolver';
 import { uuid } from 'uuidv4';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
 import { VaultService } from './vault.service';
-
+import { Identity } from '@prisma/client';
 @Injectable()
 export class DidService {
   constructor(private prisma: PrismaService, private vault: VaultService) {}
@@ -62,13 +62,20 @@ export class DidService {
   }
 
   async resolveDID(id: string): Promise<DIDDocument> {
-    const artifact = await this.prisma.identity.findUnique({
-      where: { id },
-    });
+    let artifact: Identity;
+    try {
+      artifact = await this.prisma.identity.findUnique({
+        where: { id },
+      });
+    } catch (err) {
+      Logger.error(`Error fetching DID: ${id} from db`);
+      throw new InternalServerErrorException(`Error fetching DID: ${id} from db`);
+    }
+
     if (artifact) {
       return JSON.parse(artifact.didDoc as string) as DIDDocument;
     } else {
-      return null;
+      throw new NotFoundException(`DID: ${id} not found`);
     }
   }
 }

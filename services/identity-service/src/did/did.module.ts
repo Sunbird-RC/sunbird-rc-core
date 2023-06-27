@@ -2,10 +2,10 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { PrismaService } from 'src/prisma.service';
-import { JwtStrategy } from './auth-jwt.strategy';
+import { JwtStrategy } from '../auth/auth-jwt.strategy';
 import { DidController } from './did.controller';
 import { DidService } from './did.service';
-import { JwtAuthGuard } from './roles.guard';
+import { JwtAuthGuard } from '../auth/roles.guard';
 import { VaultService } from './vault.service';
 
 @Module({
