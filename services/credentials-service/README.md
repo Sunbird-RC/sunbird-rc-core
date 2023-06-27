@@ -67,6 +67,15 @@ $ npx yarn run test:e2e
 $ npx yarn run test:cov
 ```
 
+OR 
+
+```
+# Run tests in container from services/credential-service folder
+$ make test 
+
+# Run tests in container from base folder
+$ make -C services/credentials-service test
+```
 ## Stay in touch
 
 - Author - [Yash Mittal](https://github.com/techsavvyash) and [Radhay Anand](https://github.com/radhay-1199)
