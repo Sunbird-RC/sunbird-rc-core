@@ -74,6 +74,14 @@ test: build
 	@cd java/apitest && MODE=events ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
 	@rm -rf db-data-5 || echo "no permission to delete"
+	@TRACK_NOTIFICATIONS=true KAFKA_BOOTSTRAP_SERVERS=kafka:9092 NOTIFICATION_ENABLED=true NOTIFICATION_ASYNC_ENABLED=false RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-6 docker-compose up -d db es keycloak registry certificate-signer certificate-api notification-ms kafka
+	@echo "Starting the test" && sh build/wait_for_port.sh 8080
+	@echo "Starting the test" && sh build/wait_for_port.sh 8081
+	@docker-compose ps
+	@curl -v http://localhost:8081/health
+	@cd java/apitest && MODE=notification ../mvnw -Pe2e test || echo 'Tests failed'
+	@docker-compose down
+	@rm -rf db-data-6 || echo "no permission to delete"
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test

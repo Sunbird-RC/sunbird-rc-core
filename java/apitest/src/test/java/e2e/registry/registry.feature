@@ -3,6 +3,7 @@ Feature: Registry api tests
   Background:
     * string registryUrl = "http://localhost:8081"
     * string metricsUrl = "http://localhost:8070"
+    * string notificationsUrl = "http://localhost:8765"
     * string authUrl = "http://localhost:8080"
     * url registryUrl
     * def admin_token = ""
@@ -420,21 +421,21 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And response.params.status == "SUCCESSFUL"
 # create entity for birth certificate
     Given url registryUrl
-    And path 'api/v1/BirthCertificate'
+    And path 'api/v1/BirthCertificate1'
     And request read('BirthCertificateRequest.json')
     When method post
     Then status 200
-    And def birthCertificateOsid = response.result.BirthCertificate.osid
+    And def birthCertificateOsid = response.result.BirthCertificate1.osid
 # get entity by id
     Given url registryUrl
-    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And path 'api/v1/BirthCertificate1/' + birthCertificateOsid
     And header Authorization = admin_token
     When method get
     Then status 200
     And response._osSignedData.length > 0
 # modify entity
     Given url registryUrl
-    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And path 'api/v1/BirthCertificate1/' + birthCertificateOsid
     And header Authorization = admin_token
     * def requestBody = read('BirthCertificateRequest.json')
     * requestBody.name = "test"
@@ -444,7 +445,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And response.params.status == "SUCCESSFUL"
 # get entity by id
     Given url registryUrl
-    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And path 'api/v1/BirthCertificate1/' + birthCertificateOsid
     And header Authorization = admin_token
     When method get
     Then status 200
@@ -452,7 +453,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And response._osSignedData.contains("test")
 # get certificate for entity
     Given url registryUrl
-    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And path 'api/v1/BirthCertificate1/' + birthCertificateOsid
     And header Authorization = admin_token
     And header Accept = "text/html"
     And header template-key = "html"
@@ -461,7 +462,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And response.length > 0
 # get VC for entity
     Given url registryUrl
-    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And path 'api/v1/BirthCertificate1/' + birthCertificateOsid
     And header Authorization = admin_token
     And header Accept = "application/vc+ld+json"
     When method get
@@ -469,21 +470,21 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And response.credentialSubject.name == "test"
 # revoke entity by id
     Given url registryUrl
-    And path 'api/v1/BirthCertificate/' + birthCertificateOsid + '/revoke'
+    And path 'api/v1/BirthCertificate1/' + birthCertificateOsid + '/revoke'
     And header Authorization = admin_token
     When method post
     Then status 200
     And response.params.status == "SUCCESSFUL"
 # get entity by id and check whether signed data got removed and still we are able to fetch the data
     Given url registryUrl
-    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And path 'api/v1/BirthCertificate1/' + birthCertificateOsid
     And header Authorization = admin_token
     When method get
     Then status 200
     And response._osSignedData.length = 0
 # Try to revoke the same entity again it should inform that the VC is already revoked
     Given url registryUrl
-    And path 'api/v1/BirthCertificate/' + birthCertificateOsid + '/revoke'
+    And path 'api/v1/BirthCertificate1/' + birthCertificateOsid + '/revoke'
     And header Authorization = admin_token
     When method post
     Then status 500
@@ -491,7 +492,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And response.params.errmsg == "Credential is already revoked"
 # Now try deleting the entity by id
     Given url registryUrl
-    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And path 'api/v1/BirthCertificate1/' + birthCertificateOsid
     And header Authorization = admin_token
     When method delete
     Then status 200
@@ -499,7 +500,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And response.params.status == "SUCCESSFUL"
 # get entity by id and check for its status
     Given url registryUrl
-    And path 'api/v1/BirthCertificate/' + birthCertificateOsid
+    And path 'api/v1/BirthCertificate1/' + birthCertificateOsid
     And header Authorization = admin_token
     When method get
     Then status 404
@@ -519,3 +520,12 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And assert response.birthcertificate.UPDATE == "1"
     And assert response.birthcertificate.ADD == "1"
     And assert response.birthcertificate.DELETE == "1"
+
+  @env=notification
+  Scenario: Check if notifications are sent
+    Given url notificationsUrl
+    And path '/notification-service/v1/notification'
+    When method get
+    Then status 200
+    And print response
+    And assert response != null
