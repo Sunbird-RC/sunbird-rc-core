@@ -52,6 +52,7 @@ describe('DidService', () => {
     const signedPayload = await service.sign(signingDID, 'Hello!');
     const verified = await service.verify(signingDID, (signedPayload.signed as string).slice(1));
     expect(verified).toBeDefined();
+    expect(verified).toBeFalsy();
     expect(verified).toEqual(false);
   });
 });
