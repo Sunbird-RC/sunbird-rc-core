@@ -8,6 +8,8 @@ services:
       - POSTGRES_USER=postgres
     ports:
       - 5432:5432
+    volumes:
+      - data:/var/lib/postgresql/data
   cred:
     image: cred
     build: .
@@ -19,3 +21,5 @@ services:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
       IDENTITY_BASE_URL: 
       SCHEMA_BASE_URL: 
+volumes:
+  data:
