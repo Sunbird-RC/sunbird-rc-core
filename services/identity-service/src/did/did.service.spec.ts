@@ -59,7 +59,7 @@ describe('DidService', () => {
     expect(result).toBeDefined();
     expect(result.verificationMethod).toBeDefined();
     expect(result.verificationMethod[0].publicKeyJwk).toBeDefined();
-    expect(result.id.split(':')[1]).toEqual('C4GT');
+    expect(result.id.split(':')[1]).toEqual('rcw');
   });
 
   it('resolve a DID', async () => {
