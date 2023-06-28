@@ -3,10 +3,17 @@ import VcService from './vc.service';
 import { PrismaService } from '../utils/prisma.service';
 import { DidService } from '../did/did.service';
 import { VaultService } from '../did/vault.service';
+import { setupTestValue } from './test-setup';
 
 describe('DidService', () => {
   let service: VcService;
-  const signingDID: string = '';
+  let didService: DidService;
+  let signingDID: string;
+
+  // beforeAll(async () => {
+  //   // Seed the test value before running the tests
+  //   await setupTestValue();
+  // });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -14,6 +21,13 @@ describe('DidService', () => {
     }).compile();
 
     service = module.get<VcService>(VcService);
+    didService = module.get<DidService>(DidService);
+    const testDidDoc = await didService.generateDID({
+      alsoKnownAs: ['Test DID'],
+      services: [],
+      method: 'test'
+    });
+    signingDID = testDidDoc.id;
   });
 
   it('should be defined', () => {
@@ -38,7 +52,6 @@ describe('DidService', () => {
     const signedPayload = await service.sign(signingDID, 'Hello!');
     const verified = await service.verify(signingDID, (signedPayload.signed as string).slice(1));
     expect(verified).toBeDefined();
-    expect(verified).toBeTruthy();
     expect(verified).toEqual(false);
   });
 });

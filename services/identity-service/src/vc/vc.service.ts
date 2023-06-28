@@ -5,7 +5,6 @@ import { DidService } from '../did/did.service';
 import { DIDDocument } from 'did-resolver';
 import { VaultService } from '../did/vault.service';
 import { Identity } from '@prisma/client';
-
 @Injectable()
 export default class VcService {
   constructor(
