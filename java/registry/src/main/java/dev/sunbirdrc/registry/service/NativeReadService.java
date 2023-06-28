@@ -62,20 +62,21 @@ public class NativeReadService implements IReadService {
 		IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
 		try (OSGraph osGraph = dbProvider.getOSGraph()) {
 			Graph graph = osGraph.getGraphStore();
-			Transaction tx = dbProvider.startTransaction(graph);
-			JsonNode result = registryDao.getEntity(graph, entityType, id, configurator);
+			try (Transaction tx = dbProvider.startTransaction(graph)) {
+				JsonNode result = registryDao.getEntity(graph, entityType, id, configurator);
 
-			if (!shard.getShardLabel().isEmpty()) {
-				// Replace osid with shard details
-				String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
-				JSONUtil.addPrefix((ObjectNode) result, prefix, new ArrayList<String>(Arrays.asList(uuidPropertyName)));
+				if (!shard.getShardLabel().isEmpty()) {
+					// Replace osid with shard details
+					String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
+					JSONUtil.addPrefix((ObjectNode) result, prefix, new ArrayList<String>(Arrays.asList(uuidPropertyName)));
+				}
+
+				dbProvider.commitTransaction(graph, tx);
+
+				auditService.auditRead(auditService.createAuditRecord(userId, id, tx, entityType), shard);
+
+				return result;
 			}
-
-			dbProvider.commitTransaction(graph, tx);
-			
-			auditService.auditRead(auditService.createAuditRecord(userId, id, tx, entityType), shard);
-
-			return result;
 		}
 	}
 

@@ -23,26 +23,26 @@ import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.EntityParenter;
 
 /**
- * 
+ *
  * Save audit details to DB system
  *
  */
 @Component
 public class AuditDBWriter {
 	private static Logger logger = LoggerFactory.getLogger(AuditDBWriter.class);
-	 
+
     @Value("${persistence.commit.enabled:true}")
     private boolean commitEnabled;
 
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
-    
+
     @Autowired
     private IDefinitionsManager definitionsManager;
-    
+
     @Autowired
     private EntityParenter entityParenter;
-    
+
 	public String auditToDB(Shard shard, JsonNode rootNode, String entityType) throws AuditFailedException {
 
     	String entityId = "auditPlaceholderId";
@@ -63,7 +63,9 @@ public class AuditDBWriter {
 
             throw new AuditFailedException("Audit failed : " + e.getMessage());
         } finally {
-            tx.close();
+            if (tx != null) {
+                tx.close();
+            }
         }
         // Add indices: executes only once.
         String shardId = shard.getShardId();

@@ -26,6 +26,9 @@ notification:
     enabled: ${notification_enabled:false}
     connection_url: ${notification_url:http://localhost:8765/notification-service/v1/notification}
     health_url: ${notification_url:http://localhost:8765/notification-service/v1/health}
+invite:
+  required_validation_enabled: ${invite_required_validation_enabled:true}
+  signature_enabled: ${invite_signature_enabled:true}
 
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
@@ -64,6 +67,11 @@ workflow:
 
 async:
   enabled: ${async_enabled:false}
+
+event:
+  enabled: ${event_enabled:false}
+  topic: ${event_topic:events}
+  providerName: ${event_providerName:dev.sunbirdrc.registry.service.impl.KafkaEventService}
 
 kafka:
   bootstrapAddress: ${kafka_bootstrap_address:localhost:9092}
@@ -209,7 +217,7 @@ certificate:
 #   * ELASTIC  : Store the audit log in elastic search configured in elastic properties.
 #  Note : Database Stores the created audit schema in audit_schema folder.
 audit:
-  enabled: ${audit_enabled:false}
+  enabled: ${audit_enabled:true}
   frame:
     store: ${audit_frame_store:DATABASE}
     suffix: ${audit_suffix:Audit}

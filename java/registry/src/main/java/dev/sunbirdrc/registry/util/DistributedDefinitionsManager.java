@@ -23,7 +23,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     private static final String SCHEMA = "SCHEMA_";
     private static final String SCHEMA_WILDCARD = SCHEMA + "*";
 
-    private List<String> internalSchemas = new ArrayList<>();
+    private Set<String> internalSchemas = new HashSet<>();
     @Autowired
     private JedisPool jedisPool;
     @Autowired
@@ -58,6 +58,8 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
             logger.info("loading resource:" + entry.getKey() + " with private field size:"
                     + definition.getOsSchemaConfiguration().getPrivateFields().size() + " & signed fields size:"
                     + definition.getOsSchemaConfiguration().getSignedFields().size());
+            internalSchemas.add(definition.getTitle());
+            internalSchemas.add(filenameWithoutExtn);
         }
     }
 
@@ -122,12 +124,7 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     }
 
     @Override
-    public void setInternalSchemas() throws Exception {
-        internalSchemas = getInternalSchemasNames(resourceLoader);
-    }
-
-    @Override
-    public List<String> getInternalSchemas() {
+    public Set<String> getInternalSchemas() {
         return internalSchemas;
     }
 

@@ -23,7 +23,7 @@ public class DefinitionsManager implements IDefinitionsManager {
 	private Map<String, Definition> definitionMap = new HashMap<>();
 	private Map<String, Definition> derivedDefinitionMap = new HashedMap();
 
-	private List<String> internalSchemas = new ArrayList<>();
+	private Set<String> internalSchemas = new HashSet<>();
 
     @Autowired
 	private ResourceLoader resourceLoader;
@@ -40,7 +40,6 @@ public class DefinitionsManager implements IDefinitionsManager {
 
 		loadResourcesFromPath(Constants.RESOURCE_LOCATION);
 		loadResourcesFromPath(Constants.INTERNAL_RESOURCE_LOCATION);
-		setInternalSchemas();
 		derivedDefinitionMap.putAll(definitionMap);
         Set<Definition> loadedDefinitionsSet = new HashSet<>(definitionMap.values());
 
@@ -74,6 +73,8 @@ public class DefinitionsManager implements IDefinitionsManager {
 					+ definition.getOsSchemaConfiguration().getSignedFields().size());
 			definitionMap.putIfAbsent(definition.getTitle(), definition);
 			definitionMap.putIfAbsent(filenameWithoutExtn, definition);
+			internalSchemas.add(definition.getTitle());
+			internalSchemas.add(filenameWithoutExtn);
 		}
 	}
 
@@ -115,12 +116,7 @@ public class DefinitionsManager implements IDefinitionsManager {
 	}
 
 	@Override
-	public void setInternalSchemas() throws Exception {
-		internalSchemas = getInternalSchemasNames(resourceLoader);
-	}
-
-	@Override
-	public List<String> getInternalSchemas() {
+	public Set<String> getInternalSchemas() {
 		return internalSchemas;
 	}
 
