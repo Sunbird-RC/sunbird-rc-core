@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.registry.dao.VertexWriter;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
@@ -25,6 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static dev.sunbirdrc.registry.Constants.Schema;
 
 @Component("entityParenter")
 public class EntityParenter {
@@ -162,6 +165,59 @@ public class EntityParenter {
         result = Optional.empty();
         return result;
     }
+
+     public Optional<String> ensureKnownParentersNew(JsonNode schemaNode) {
+         logger.info("Start - ensure parent node for defined schema");
+         Optional<String> result;
+
+         dbConnectionInfoList.forEach(dbConnectionInfo -> {
+             logger.info("Starting to parents for {} definitions in shard {}", defintionNames.size(),
+                     dbConnectionInfo.getShardId());
+             DatabaseProvider dbProvider = dbProviderFactory.getInstance(dbConnectionInfo);
+             try {
+                 try (OSGraph osGraph = dbProvider.getOSGraph()) {
+                     Graph graph = osGraph.getGraphStore();
+                     List<ShardParentInfo> shardParentInfoList = new ArrayList<>();
+                     try (Transaction tx = dbProvider.startTransaction(graph)) {
+
+                         List<String> parentLabels = new ArrayList<>();
+                            if(schemaNode.get(Schema)==null && schemaNode.fieldNames().next()!=null) {
+                                String name = schemaNode.fieldNames().next();
+                                defintionNames.forEach(defintionName -> {
+                                    if (defintionName.contains(name)) {
+                                        String parentLabel = ParentLabelGenerator.getLabel(defintionName);
+                                        parentLabels.add(parentLabel);
+
+                                        VertexWriter vertexWriter = new VertexWriter(graph, dbProvider, uuidPropertyName);
+                                        Vertex v = vertexWriter.ensureParentVertex(parentLabel);
+
+                                        ShardParentInfo shardParentInfo = new ShardParentInfo(defintionName, v);
+                                        shardParentInfo.setUuid(dbProvider.getId(v));
+                                        shardParentInfoList.add(shardParentInfo);
+                                    }
+                                });
+
+
+                                ShardParentInfoList valList = new ShardParentInfoList();
+                                valList.setParentInfos(shardParentInfoList);
+
+                                shardParentMap.put(dbConnectionInfo.getShardId(), valList);
+
+                                dbProvider.commitTransaction(graph, tx);
+                            }
+                     }
+                     logger.info("Ensured parents for {} definitions in shard {}", defintionNames.size(),
+                             dbConnectionInfo.getShardId());
+                 }
+             } catch (Exception e) {
+                 logger.error("Can't ensure parents for definitions " + e);
+             }
+         });
+
+         logger.info("End - ensure parent node for defined schema");
+         result = Optional.empty();
+         return result;
+     }
 
     /**
      * Gets a known parent id
