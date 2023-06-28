@@ -25,6 +25,7 @@
   "dependencies": {
     "@fastify/static": "^6.6.0",
     "@handlebars/parser": "^2.1.0",
+    "@nestjs/axios": "^3.0.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.2.0",
     "@nestjs/core": "^9.0.0",
@@ -34,6 +35,7 @@
     "@nestjs/swagger": "^6.1.4",
     "@prisma/client": "4.7.1",
     "ajv": "^8.11.2",
+    "axios": "^1.4.0",
     "cache-manager": "^5.1.4",
     "fastify-swagger": "^5.2.0",
     "flat": "^5.0.2",

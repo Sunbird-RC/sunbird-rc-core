@@ -21,3 +21,4 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@db-test:5432/postgres
+      IDENTITY_BASE_URL: ""

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,13 +9,15 @@ import { PrismaService } from 'src/prisma.service';
 import schemas from './schemas';
 import { validate } from '../utils/schema.validator';
 import { DefinedError } from 'ajv';
-import { VCSModelSchemaInterface } from '../types/VCModelSchema.interface';
-import { VCModelSchema } from './entities/VCModelSchema.entity';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class SchemaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly httpService: HttpService,
+  ) {}
 
   getSchema(fileName: string): JSON {
     if (Object.keys(schemas).indexOf(fileName) === -1) {
@@ -67,6 +70,7 @@ export class SchemaService {
     const data = createCredentialDto.schema;
     const tags = createCredentialDto.tags;
     if (validate(data)) {
+      let VCSchema;
       try {
         const schema = await this.prisma.verifiableCredentialSchema.create({
           data: {
@@ -83,8 +87,7 @@ export class SchemaService {
             deprecatedId: deprecatedId,
           },
         });
-
-        return {
+        VCSchema = {
           schema: {
             type: schema.type,
             id: schema.id,
@@ -105,6 +108,36 @@ export class SchemaService {
         };
       } catch (err) {
         throw new BadRequestException(err.message);
+      }
+      try {
+        const signedVCResponse = await this.httpService.axiosRef.post(
+          `${process.env.IDENTITY_BASE_URL}/utils/sign`,
+          {
+            DID: VCSchema.schema.author,
+            payload: JSON.stringify(VCSchema),
+          },
+        );
+
+        VCSchema.schema.proof = {
+          proofValue: signedVCResponse.data.signed as string,
+          proofPurpose: 'assertionMethod',
+          created: new Date().toISOString(),
+          type: 'Ed25519Signature2020',
+          verificationMethod: VCSchema.schema.author,
+        };
+
+        // store proof in database
+        await this.prisma.verifiableCredentialSchema.update({
+          where: { id: VCSchema.schema.id },
+          data: {
+            proof: VCSchema.schema.proof,
+          },
+        });
+
+        return VCSchema;
+      } catch (err) {
+        console.error(err.response.data);
+        throw new HttpException("Couldn't sign the schema", 500);
       }
     } else {
       for (const err of validate.errors as DefinedError[]) {
