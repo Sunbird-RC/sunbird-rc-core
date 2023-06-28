@@ -98,18 +98,15 @@ public class ElasticServiceImpl implements IElasticService {
                 new UsernamePasswordCredentials(userName, password));
         if (!esClient.containsKey(indexName)) {
             Map<String, KeyValue<Integer, String>> hostPort = new HashMap<>();
+            List<HttpHost> httpHosts = new ArrayList<>();
             for (String info : connectionInfo.split(",")) {
                 try {
                     URL url = new URL(info);
-                    hostPort.put(url.getHost(), new DefaultKeyValue<>(url.getPort(), url.getProtocol()));
+                    httpHosts.add(new HttpHost(url.getHost(), url.getPort(), url.getProtocol()));
                 } catch (Exception e) {
                     String port = Optional.ofNullable(info.split(":").length == 1 ? "-1" : info.split(":")[1]).get();
-                    hostPort.put(info.split(":")[0], new DefaultKeyValue<>(Integer.valueOf(port), defaultScheme));
+                    httpHosts.add(new HttpHost(info.split(":")[0], Integer.valueOf(port), defaultScheme));
                 }
-            }
-            List<HttpHost> httpHosts = new ArrayList<>();
-            for (String host : hostPort.keySet()) {
-                httpHosts.add(new HttpHost(host, hostPort.get(host).getKey(), hostPort.get(host).getValue()));
             }
             RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[httpHosts.size()]));
             if(authEnabled) {
