@@ -46,7 +46,7 @@ import java.util.*;
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
 
-@RestController //used to create restfull web servces, it takes care of mapping request data
+@RestController
 public class RegistryEntityController extends AbstractController {
 
     private static final String TRANSACTION_ID = "transactionId";
@@ -68,7 +68,6 @@ public class RegistryEntityController extends AbstractController {
     boolean externalTemplatesEnabled;
 
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
-    //@RequestHeader annotation binds request header values to method parameters
     public ResponseEntity<Object> invite(
             @PathVariable String entityName,
             @RequestHeader HttpHeaders header,
@@ -100,7 +99,7 @@ public class RegistryEntityController extends AbstractController {
             return createUnauthorizedExceptionResponse(unAuthorizedException);
         } catch (Exception e) {
             if (e.getCause() != null && e.getCause().getCause() != null &&
-                    e.getCause().getCause() instanceof InvocationTargetException) //instanceof keyword checks whether an object is an instance of a specific class or an interface. The instanceof keyword compares the instance with type. The return value is either true or false .
+                    e.getCause().getCause() instanceof InvocationTargetException)
             {
                 Throwable targetException = ((InvocationTargetException) (e.getCause().getCause())).getTargetException();
                 if (targetException instanceof OwnerCreationException) {
@@ -138,17 +137,18 @@ public class RegistryEntityController extends AbstractController {
 
               registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
           }
-
           JsonNode signedDataNode = jsonNode.get(entityName).get(OSSystemFields._osSignedData.name().toString());
-          if (signedDataNode != null) {
-              String signedData = signedDataNode.asText();
-              Vertex deletedEntity = registryHelper.deleteEntity(entityId, userId);
-              if (deletedEntity != null && deletedEntity.keys().contains(OSSystemFields._osSignedData.name())) {
-                  registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
-              }
-          } else {
+          String signedData = null;
+          Vertex deletedEntity = null;
 
-             Vertex deletedEntity = registryHelper.deleteEntity(entityId, userId);
+          if (signedDataNode != null) {
+              signedData = signedDataNode.asText();
+          }
+
+          deletedEntity = registryHelper.deleteEntity(entityId, userId);
+
+          if (deletedEntity != null && deletedEntity.keys().contains(OSSystemFields._osSignedData.name())) {
+              registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
           }
 
           responseParams.setErrmsg("");
@@ -166,34 +166,34 @@ public class RegistryEntityController extends AbstractController {
   @RequestMapping(value = "/api/v1/{entityName}/search", method = RequestMethod.POST)
     public ResponseEntity<Object> searchEntity(@PathVariable String entityName, @RequestHeader HttpHeaders header, @RequestBody ObjectNode searchNode) {
 
-        ResponseParams responseParams = new ResponseParams();//created object of Pojo class ResponseParam
+        ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
 
         try {
-            watch.start("RegistryController.searchEntity");// start watch to measure the time for search
-            ArrayNode entity = JsonNodeFactory.instance.arrayNode();//The method creates a JSON array node containing the entityName and adds it to the searchNode as a property named ENTITY_TYPE. This is done so that the entity name can be passed to the search helper method as a parameter.
+            watch.start("RegistryController.searchEntity");
+            ArrayNode entity = JsonNodeFactory.instance.arrayNode();
             entity.add(entityName);
             searchNode.set(ENTITY_TYPE, entity);
-            if (definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableSearch()) //The method checks whether searching on the entity is allowed by checking a configuration property of the entity type in the definitionsManager object.
+            if (definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableSearch())
             {
-                JsonNode result = registryHelper.searchEntity(searchNode);//If searching on the entity is allowed, the method calls a search helper method with the search criteria represented by the searchNode object.
+                JsonNode result = registryHelper.searchEntity(searchNode);
                 watch.stop("RegistryController.searchEntity");
-                return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);//if search on entity allow respose is ok
+                return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
             } else {
                 watch.stop("RegistryController.searchEntity");
                 logger.error("Searching on entity {} not allowed", entityName);
                 response.setResult("");
-                responseParams.setStatus(Response.Status.UNSUCCESSFUL);//If searching on the entity is not allowed, the method logs an error and sets the response status to unsuccessful with an error message.
+                responseParams.setStatus(Response.Status.UNSUCCESSFUL);
                 responseParams.setErrmsg(String.format("Searching on entity %s not allowed", entityName));
             }
-        } catch (Exception e)//if exception occure during the search
+        } catch (Exception e)
         {
             logger.error("Exception in controller while searching entities !", e);
             response.setResult("");
-            responseParams.setStatus(Response.Status.UNSUCCESSFUL);//response will be unsuccessful
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);//The method returns a ResponseEntity object with the response body and HTTP status code.
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}", method = RequestMethod.PUT)

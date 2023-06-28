@@ -1,15 +1,16 @@
 package dev.sunbirdrc.elastic;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonSerialize
 public class ESMessage {
     String indexName;
     String osid;
-    JsonNode input;
+
+
     public ESMessage() {
     }
+
     public String getIndexName() {
         return indexName;
     }
@@ -24,13 +25,6 @@ public class ESMessage {
 
     public void setOsid(String osid) {
         this.osid = osid;
-    }
-
-    public JsonNode getInput() {
-        return input;
-    }
-    public void setInput(JsonNode input) {
-        this.input = input;
     }
 }
 

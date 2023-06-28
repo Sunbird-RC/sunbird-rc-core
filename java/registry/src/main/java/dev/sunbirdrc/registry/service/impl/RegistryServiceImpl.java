@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.MessageFactory;
-import dev.sunbirdrc.elastic.ESMessage;
-import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
@@ -118,7 +116,7 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private List<HealthIndicator> healthIndicators;
-    public ESMessage esMessage;
+
 
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
@@ -170,9 +168,6 @@ public class RegistryServiceImpl implements RegistryService {
                     databaseProvider.commitTransaction(graph, tx);
                     auditService.auditDelete(auditService.createAuditRecord(userId, uuid, tx, index),
                             shard);
-                    if (isElasticSearchEnabled()) {
-                        callESActors(null, "DELETE", index, uuid, tx);
-                    }
                 }
                 logger.info("Entity {} marked deleted", uuid);
                 return vertex;

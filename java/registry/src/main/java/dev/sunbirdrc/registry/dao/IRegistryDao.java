@@ -4,9 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-
-import java.util.UUID;
-
 public interface IRegistryDao {
 
 	String addEntity(Graph graph, JsonNode rootNode);

@@ -58,7 +58,7 @@ registry:
   redis:
     host: ${redis_host:localhost}
     port: ${redis_port:6379}
-  HARD_DELETE_ENABLED: true
+  hard_delete_enabled: true
 
 
 
@@ -92,7 +92,7 @@ search:
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
   expandInternal: ${search_expandInternal:true}
-  providerName: ${search_providerName:dev.sunbirdrc.registry.service.SearchService}
+  providerName: ${search_providerName:dev.sunbirdrc.registry.service.NativeSearchService}
 
 # This property is to be used for read request
 read:
@@ -223,7 +223,7 @@ audit:
 
 keycloak:
   #publicKey:  ${sunbird_sso_publickey:pk}
-  auth-server-url: ${sunbird_sso_url:http://localhost:8080/auth}
+  auth-server-url: ${sunbird_sso_url:http://localhost:8888/auth}
   realm: ${sunbird_sso_realm:sunbird-rc}
   resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
@@ -306,9 +306,9 @@ elastic:
     elastic_password: ${elastic_search_password:elastic}
 filestorage:
   url: ${filestorage_connection_url:http://localhost:9000}
-  accesskey: ${filestorage_access_key:admin}
-  secretkey: ${filestorage_secret_key:12345678}
-  bucketname: ${filestorage_bucket_key:issuance}
+  accesskey: ${filestorage_access_key:XXXXX}
+  secretkey: ${filestorage_secret_key:XXXXX}
+  bucketname: ${filestorage_bucket_key:dummy}
 
 
 

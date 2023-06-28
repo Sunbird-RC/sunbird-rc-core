@@ -47,6 +47,7 @@ public class FileStorageService implements HealthIndicator {
 		minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(objectName).stream(inputStream, -1, 10485760).build());
 		logger.info("File has successfully saved");
 	}
+
 	public DocumentsResponse saveAndFetchFileNames(MultipartFile[] files, String requestedURI) {
 		String objectPath = getDirectoryPath(requestedURI);
 		DocumentsResponse documentsResponse = new DocumentsResponse();
@@ -64,6 +65,7 @@ public class FileStorageService implements HealthIndicator {
 		}
 		return documentsResponse;
 	}
+
 	private String getDirectoryPath(String requestedURI) {
 		String versionDelimiter = "/v1/";
 		String[] split = requestedURI.split(versionDelimiter);
@@ -90,9 +92,11 @@ public class FileStorageService implements HealthIndicator {
 		}
 		return documentsResponse;
 	}
+
 	public String getSignedUrl(String objectName) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
 		return minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().method(Method.GET).bucket(bucketName).object(objectName).expiry(2, TimeUnit.HOURS).build());
 	}
+
 	public byte[] getDocument(String requestedURI) {
 		String objectName = getDirectoryPath(requestedURI);
 		byte[] bytes = new byte[0];
@@ -104,7 +108,9 @@ public class FileStorageService implements HealthIndicator {
 			e.printStackTrace();
 		}
 		return bytes;
-	}public ResponseEntity deleteDocument(String requestedURI) {
+	}
+
+	public ResponseEntity deleteDocument(String requestedURI) {
 		String objectName = getDirectoryPath(requestedURI);
 		try {
 			minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
@@ -115,10 +121,12 @@ public class FileStorageService implements HealthIndicator {
 		}
 		return new ResponseEntity(HttpStatus.OK);
 	}
+
 	@Override
 	public String getServiceName() {
 		return SUNBIRD_FILE_STORAGE_SERVICE_NAME;
 	}
+
 	@Override
 	public ComponentHealthInfo getHealthInfo() {
 		try {
@@ -127,33 +135,5 @@ public class FileStorageService implements HealthIndicator {
 		} catch (Exception e) {
 			return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
 		}
-	}
-	public DocumentsResponse updateFiles(MultipartFile[] files, String requestedURI) {
-		String objectPath = getDirectoryPath(requestedURI);
-		DocumentsResponse documentsResponse = new DocumentsResponse();
-		for (MultipartFile file : files) {
-			String fileName = getFileName(file.getOriginalFilename());
-			try {
-				String objectName = objectPath;
-
-				boolean objectExists = minioClient.statObject(
-						StatObjectArgs.builder().bucket(bucketName).object(objectName).build()
-				) != null;
-
-				if (objectExists) {
-					save(file.getInputStream(), objectName);
-					documentsResponse.addDocumentLocation(objectName);
-				}
-				else {
-						documentsResponse.addError(file.getOriginalFilename() +" not found");
-					}
-
-				} catch (Exception e) {
-				documentsResponse.addError(file.getOriginalFilename());
-				logger.error("Error has occurred while trying to save the file {}", fileName);
-				e.printStackTrace();
-			}
-		}
-		return documentsResponse;
 	}
 }
