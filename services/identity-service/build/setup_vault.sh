@@ -57,5 +57,7 @@ sed -i "s/VAULT_TOKEN:.*/VAULT_TOKEN: $root_token/" "$COMPOSE_FILE"
 
 docker-compose -f "$COMPOSE_FILE" exec -e VAULT_TOKEN=$root_token -T "$SERVICE_NAME" vault secrets enable -path=kv kv-v2
 
+echo -e "\nNOTE: STORE THE FOLLOWING KEYS SOMEWHERE SAFELY. THESE ARE USED TO UNSEAL VAULT ON RESTARTS"
+
 cat keys.txt
-rm parsed-key.txt ansi-keys.txt
+rm parsed-key.txt ansi-keys.txt keys.txt
