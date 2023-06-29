@@ -586,7 +586,7 @@ public class RegistryHelperTest {
 		FunctionExecutor functionExecutorMock = Mockito.spy(FunctionExecutor.class);
 		ReflectionTestUtils.setField(registryHelper, "functionExecutor", functionExecutorMock);
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setFunctionDefinitions(Arrays.asList(
-				FunctionDefinition.builder().name("userDefinedConcat").provider("org.example.provider.UUIDFunctionProvider").build()
+				FunctionDefinition.builder().name("userDefinedConcat").provider("dev.sunbirdrc.provider.UUIDFunctionProvider").build()
 		));
 		PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
 				.policyName("test")

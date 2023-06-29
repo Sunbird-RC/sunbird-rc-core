@@ -65,6 +65,8 @@ registry:
 workflow:
   enabled: ${workflow.enable:true}
 
+view_template_decrypt_private_fields: ${view_template_decrypt_private_fields:false}
+
 async:
   enabled: ${async_enabled:false}
 

@@ -1,4 +1,4 @@
-package org.example.provider;
+package dev.sunbirdrc.provider;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;

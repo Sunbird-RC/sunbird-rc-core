@@ -14,6 +14,7 @@ import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.transform.ConfigurationHelper;
 import dev.sunbirdrc.registry.transform.Transformer;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
+import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,6 +59,9 @@ public class RegistryEntityControllerTest {
     @Autowired
     private MockMvc mockMvc;
     private AbstractController abstractController;
+
+    @MockBean
+    private ViewTemplateManager viewTemplateManager;
 
     @Before
     public void setUp() {

@@ -1,4 +1,4 @@
-package org.example.provider;
+package dev.sunbirdrc.provider;
 
 import dev.sunbirdrc.views.IViewFunctionProvider;
 import java.util.List;

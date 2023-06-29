@@ -157,6 +157,9 @@ public class RegistryHelper {
     @Value("${workflow.enabled:true}")
     private boolean workflowEnabled;
 
+    @Value("${view_template_decrypt_private_fields:false}")
+    private boolean viewTemplateDecryptPrivateFields;
+
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
@@ -285,7 +288,8 @@ public class RegistryHelper {
         return readEntity(userId, entityType, label, includeSignatures, viewTemplateManager.getViewTemplate(inputJson), requireLDResponse);
     }
 
-    public JsonNode readEntity(String userId, String entityType, String label, boolean includeSignatures, ViewTemplate viewTemplate, boolean requireLDResponse) throws Exception {
+    public JsonNode readEntity(String userId, String entityType, String label, boolean includeSignatures,
+                               ViewTemplate viewTemplate, boolean requireLDResponse) throws Exception {
         boolean includePrivateFields = false;
         JsonNode resultNode = null;
         RecordIdentifier recordId = RecordIdentifier.parse(label);
@@ -305,7 +309,9 @@ public class RegistryHelper {
         }
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
-            resultNode = includePrivateFields ? decryptionHelper.getDecryptedJson(resultNode) : resultNode;
+            if (viewTemplateDecryptPrivateFields) {
+                resultNode = includePrivateFields ? decryptionHelper.getDecryptedJson(resultNode) : resultNode;
+            }
             resultNode = vTransformer.transform(viewTemplate, resultNode);
         }
         logger.debug("readEntity ends");

@@ -26,7 +26,6 @@ import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
 import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import dev.sunbirdrc.validators.ValidationException;
-import dev.sunbirdrc.views.ViewTemplate;
 import org.agrona.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -498,7 +497,8 @@ public class RegistryEntityController extends AbstractController {
     public ResponseEntity<Object> getEntity(
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @RequestHeader HttpHeaders header, HttpServletRequest request) {
+            @RequestHeader HttpHeaders header, HttpServletRequest request,
+            @RequestHeader(required = false) String viewTemplateId) {
         boolean requireLDResponse = false;
         boolean requireVCResponse = false;
         for (MediaType t: header.getAccept()) {
@@ -524,7 +524,7 @@ public class RegistryEntityController extends AbstractController {
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
             String readerUserId = getUserId(entityName, request);
-            JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId);
+            JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId, viewTemplateId);
             if(requireLDResponse) {
                 addJsonLDSpec(node);
             } else if (requireVCResponse) {
@@ -553,8 +553,10 @@ public class RegistryEntityController extends AbstractController {
 
     }
 
-    private JsonNode getEntityJsonNode(@PathVariable String entityName, @PathVariable String entityId, boolean requireLDResponse, String userId) throws Exception {
-        JsonNode resultNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
+    private JsonNode getEntityJsonNode(@PathVariable String entityName, @PathVariable String entityId,
+                                       boolean requireLDResponse, String userId, String viewTemplateId) throws Exception {
+        JsonNode resultNode = registryHelper.readEntity(userId, entityName, entityId, false,
+                viewTemplateManager.getViewTemplateById(viewTemplateId), false);
         // Transformation based on the mediaType
         Data<Object> data = new Data<>(resultNode);
         Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);

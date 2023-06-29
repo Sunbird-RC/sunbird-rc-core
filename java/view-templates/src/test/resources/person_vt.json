@@ -43,7 +43,7 @@
       },
       {
             "name" : "userDefinedConcat",
-            "provider": "org.example.provider.SampleViewFunctionProvider",
+            "provider": "dev.sunbirdrc.provider.SampleViewFunctionProvider",
             "$comment" : "Complex operations that cannot be expressed easily in an in-line function definition can be implemented as a class. "
       },
       {
