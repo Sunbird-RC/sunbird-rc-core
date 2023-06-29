@@ -527,5 +527,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And path '/notification-service/v1/notification'
     When method get
     Then status 200
-    And print response
-    And assert response != null
+    * def studentRequest = read('StudentRequest.json')
+    * def notificationStudent = studentRequest.contact
+    And print response[notificationStudent]
+    And assert response[notificationStudent] != null

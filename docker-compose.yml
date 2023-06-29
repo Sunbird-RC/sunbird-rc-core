@@ -79,6 +79,7 @@ services:
       - manager_type=${MANAGER_TYPE-DefinitionsManager}
       - notification_async_enabled=${NOTIFICATION_ASYNC_ENABLED-true}
       - notification_enabled=${NOTIFICATION_ENABLED-false}
+      - notification_url=${NOTIFICATION_URL-http://notification-ms:8765/notification-service/v1/notification}
     ports:
       - "8081:8081"
     depends_on:
