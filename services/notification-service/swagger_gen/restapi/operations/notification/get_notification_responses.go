@@ -14,7 +14,8 @@ import (
 // GetNotificationOKCode is the HTTP code returned for type GetNotificationOK
 const GetNotificationOKCode int = 200
 
-/*GetNotificationOK OK
+/*
+GetNotificationOK OK
 
 swagger:response getNotificationOK
 */
