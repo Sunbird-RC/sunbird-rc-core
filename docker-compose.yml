@@ -43,6 +43,7 @@ services:
       - event_topic=events
       - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
       - elastic_search_connection_url=es:9200
+      - elastic_search_scheme=${ELASTIC_SEARCH_SCHEME-http}
       - elastic_search_auth_enabled=${ELASTIC_SECURITY_ENABLED-false}
       - elastic_search_username=${ELASTIC_SEARCH_USERNAME-elastic}
       - elastic_search_password=${ELASTIC_SEARCH_PASSWORD}
