@@ -14,6 +14,7 @@ public class OwnershipsAttributes {
     String email;
     String mobile;
     String userId;
+    String password;
 
     public boolean isValid() {
         if (StringUtils.isEmpty(userId)) {
