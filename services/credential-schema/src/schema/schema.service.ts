@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,13 +9,13 @@ import schemas from './schemas';
 import { validate } from '../utils/schema.validator';
 import { DefinedError } from 'ajv';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
-import { HttpService } from '@nestjs/axios';
+import { UtilsService } from 'src/utils/utils.service';
 
 @Injectable()
 export class SchemaService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly httpService: HttpService,
+    private readonly utilService: UtilsService,
   ) {}
 
   getSchema(fileName: string): JSON {
@@ -70,7 +69,6 @@ export class SchemaService {
     const data = createCredentialDto.schema;
     const tags = createCredentialDto.tags;
     if (validate(data)) {
-      let VCSchema;
       try {
         const schema = await this.prisma.verifiableCredentialSchema.create({
           data: {
@@ -87,7 +85,7 @@ export class SchemaService {
             deprecatedId: deprecatedId,
           },
         });
-        VCSchema = {
+        return {
           schema: {
             type: schema.type,
             id: schema.id,
@@ -109,40 +107,43 @@ export class SchemaService {
       } catch (err) {
         throw new BadRequestException(err.message);
       }
-      try {
-        const signedVCResponse = await this.httpService.axiosRef.post(
-          `${process.env.IDENTITY_BASE_URL}/utils/sign`,
-          {
-            DID: VCSchema.schema.author,
-            payload: JSON.stringify(VCSchema),
-          },
-        );
-
-        VCSchema.schema.proof = {
-          proofValue: signedVCResponse.data.signed as string,
-          proofPurpose: 'assertionMethod',
-          created: new Date().toISOString(),
-          type: 'Ed25519Signature2020',
-          verificationMethod: VCSchema.schema.author,
-        };
-
-        // store proof in database
-        await this.prisma.verifiableCredentialSchema.update({
-          where: { id: VCSchema.schema.id },
-          data: {
-            proof: VCSchema.schema.proof,
-          },
-        });
-
-        return VCSchema;
-      } catch (err) {
-        console.error(err.response.data);
-        throw new HttpException("Couldn't sign the schema", 500);
-      }
     } else {
       for (const err of validate.errors as DefinedError[]) {
         throw new BadRequestException(err.message);
       }
+    }
+  }
+
+  async createAndSignSchema(
+    createCredentialDto: CreateCredentialDTO,
+    deprecatedId: string = undefined,
+  ) {
+    const VCSchema = await this.createCredentialSchema(
+      createCredentialDto,
+      deprecatedId,
+    );
+    try {
+      const proof = await this.utilService.sign(
+        VCSchema.schema.author,
+        JSON.stringify(VCSchema),
+      );
+      await this.prisma.verifiableCredentialSchema.update({
+        where: { id: VCSchema.schema.id },
+        data: {
+          proof: proof,
+        },
+      });
+
+      VCSchema.schema.proof = proof;
+      return VCSchema;
+    } catch (err) {
+      // Schema not signed - so deleting the schema entry from DB
+      await this.prisma.verifiableCredentialSchema.delete({
+        where: {
+          id: VCSchema.schema.id,
+        },
+      });
+      throw err;
     }
   }
 
@@ -174,22 +175,6 @@ export class SchemaService {
                 status: SchemaStatus.REVOKED,
               },
             });
-
-          // create a new schema
-          // const semanticVersionRegex = /^\d+(\.\d+)?$/;
-          // const isValidVersion = semanticVersionRegex.test(
-          //   deprecatedSchema.version,
-          // );
-          // semanticVersionRegex.test(deprecatedSchema.version);
-          // if (isValidVersion) {
-          //   const semVer = deprecatedSchema.version.split('.');
-          //   semVer[1] = (parseInt(semVer[2]) + 1).toString();
-          //   const newVersion = semVer.join('.');
-          //   data.schema.version = newVersion;
-          // } else {
-          //   // reset the version if the version of previous credential does not follow sementic versioning
-          //   data.schema.version = '1.0';
-          // }
           return await this.createCredentialSchema(data, deprecatedSchema?.id);
         } catch (err) {
           throw new BadRequestException(err.message);

@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { SchemaController } from './schema.controller';
 import { SchemaService } from './schema.service';
-import { HttpModule, HttpService } from '@nestjs/axios';
+import { HttpModule } from '@nestjs/axios';
+import { UtilsService } from 'src/utils/utils.service';
 
 @Module({
   imports: [HttpModule],
   controllers: [SchemaController],
-  providers: [SchemaService, PrismaService],
+  providers: [SchemaService, PrismaService, UtilsService],
 })
 export class SchemaModule {}

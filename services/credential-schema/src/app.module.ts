@@ -7,6 +7,7 @@ import { PrismaService } from './prisma.service';
 import { ConfigModule } from '@nestjs/config';
 import { RenderingTemplatesModule } from './rendering-templates/rendering-templates.module';
 import { HttpModule } from '@nestjs/axios';
+import { UtilsService } from './utils/utils.service';
 
 @Module({
   imports: [
@@ -22,6 +23,6 @@ import { HttpModule } from '@nestjs/axios';
     HttpModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService, SchemaService],
+  providers: [AppService, PrismaService, SchemaService, UtilsService],
 })
 export class AppModule {}

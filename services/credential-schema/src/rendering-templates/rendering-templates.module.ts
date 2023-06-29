@@ -5,7 +5,8 @@ import { PrismaService } from 'src/prisma.service';
 import { ValidateTemplateService } from './validate-template.service';
 import { SchemaModule } from 'src/schema/schema.module';
 import { SchemaService } from 'src/schema/schema.service';
-import { HttpModule, HttpService } from '@nestjs/axios';
+import { HttpModule } from '@nestjs/axios';
+import { UtilsService } from 'src/utils/utils.service';
 
 @Module({
   imports: [SchemaModule, HttpModule],
@@ -14,6 +15,7 @@ import { HttpModule, HttpService } from '@nestjs/axios';
     PrismaService,
     ValidateTemplateService,
     SchemaService,
+    UtilsService,
   ],
   controllers: [RenderingTemplatesController],
 })
