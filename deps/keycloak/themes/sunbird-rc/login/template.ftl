@@ -68,8 +68,8 @@
             <#else>
             <div class="container-wrapper title-wrapper" style="background-image: url(${properties.keycloakBackgroundImage})">
             </#if>
-                <h3>Login to ${properties.portalTitle!} </h3>
-                <span>${properties.portalSubTitle!}</span>
+                <#if properties.portalTitle != ""><h3>Login to ${properties.portalTitle!} </h3></#if>
+                 <#if properties.portalSubTitle != ""><span>${properties.portalSubTitle!}</span></#if>
             </div>
             <div class="ndear-login-wrapper container-wrapper">
                 <#nested "form">

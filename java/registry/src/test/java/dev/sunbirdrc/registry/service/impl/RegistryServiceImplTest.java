@@ -19,11 +19,13 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
+import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.IAuditService;
+import dev.sunbirdrc.registry.service.IEventService;
+import dev.sunbirdrc.registry.service.EntityTransformer;
 import dev.sunbirdrc.registry.service.SchemaService;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
-import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.util.*;
@@ -32,11 +34,9 @@ import dev.sunbirdrc.validators.json.jsonschema.JsonValidationServiceImpl;
 import org.apache.commons.io.IOUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.*;
@@ -53,7 +53,6 @@ import org.sunbird.akka.core.SunbirdActorFactory;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Iterator;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static org.junit.Assert.*;
@@ -109,6 +108,11 @@ public class RegistryServiceImplTest {
 	@Mock
 	private HealthIndicator healthIndicator;
 
+	@Mock
+	private IEventService eventService;
+	@Mock
+	private EntityTransformer entityTransformer;
+
 	private DatabaseProvider mockDatabaseProvider;
 
 	private IRegistryDao registryDao;
@@ -151,6 +155,9 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(schemaService, "validator", jsonValidationService);
 		ReflectionTestUtils.setField(registryService, "schemaService", schemaService);
 		ReflectionTestUtils.setField(registryService, "objectMapper", objectMapper);
+		ReflectionTestUtils.setField(registryService, "eventService", eventService);
+		ReflectionTestUtils.setField(registryService, "entityTransformer", entityTransformer);
+		ReflectionTestUtils.setField(registryService, "isEventsEnabled", true);
 	}
 
 	@Before
@@ -295,9 +302,12 @@ public class RegistryServiceImplTest {
 				"  \"gender\": \"male\",\n" +
 				"  \"dob\": \"10-10-1995\"\n" +
 				"}"));
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
 		registryService.addEntity(shard, "", inputJson, true);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
+		verify(eventService, times(1)).pushEvents(event);
 		esNodeCaptor.getValue();
 		System.out.println(esNodeCaptor);
 		JsonNode output = esNodeCaptor.getValue().get("Teacher");
@@ -324,7 +334,10 @@ public class RegistryServiceImplTest {
 		arrayNode.add("Class XII");
 		affiliationNode.set("classes", arrayNode);
 		when(shard.getShardLabel()).thenReturn("");
-		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode));
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
+		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode),false);
+		verify(eventService, times(1)).pushEvents(event);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
 		esNodeCaptor.getValue();
@@ -349,7 +362,10 @@ public class RegistryServiceImplTest {
 		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
 		((ObjectNode)instituteNode.get("Institute")).set("instituteName", JsonNodeFactory.instance.textNode("Holy Cross"));
 		when(shard.getShardLabel()).thenReturn("");
-		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode));
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
+		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode),false);
+		verify(eventService, times(1)).pushEvents(event);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
 		esNodeCaptor.getValue();
@@ -381,8 +397,11 @@ public class RegistryServiceImplTest {
 				"  }\n" +
 				"}"));
 		when(shard.getShardLabel()).thenReturn("");
-		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson));
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
+		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson), false);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
+		verify(eventService, times(1)).pushEvents(event);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
 		esNodeCaptor.getValue();
 		System.out.println(esNodeCaptor);
@@ -411,7 +430,10 @@ public class RegistryServiceImplTest {
 				"  \"dob\": \"10-10-1995\"\n" +
 				"}"));
 		when(shard.getShardLabel()).thenReturn("");
-		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson));
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
+		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson), false);
+		verify(eventService, times(1)).pushEvents(event);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
 		esNodeCaptor.getValue();
@@ -476,7 +498,10 @@ public class RegistryServiceImplTest {
 		object.put(Schema.toLowerCase(), schema);
 		object.put("status", SchemaStatus.PUBLISHED.toString());
 		schemaNode.set(Schema, object);
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
 		registryService.addEntity(shard, "", schemaNode, true);
+		verify(eventService, times(1)).pushEvents(event);
 		assertEquals(existingDefinitions+1, definitionsManager.getAllKnownDefinitions().size());
 		ObjectNode schemaObjectNode = (ObjectNode) objectMapper.readTree(schema);
 		((ObjectNode)schemaObjectNode.get("definitions").get("TrainingCertificate").get("properties")).remove("date");

@@ -1,0 +1,399 @@
+openapi: 3.0.1
+info:
+  title: Sunbird RC - Issuance APIs 
+  description: Schema APIs
+  termsOfService: https://sunbirdrc.dev/
+  contact:
+    email: sunbird@example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://sunbirdrc.dev/api/v1
+security:
+- Authorization: []
+tags:
+- name: Issuing
+  description: Issuing api
+- name: Verifying
+  description: The following APIs are defined for verifying a Verifiable Credential
+paths:
+  /credentials/issue:
+    post:
+      tags:
+        - Issuing
+      summary: Credential claim API
+      operationId: credentialIssue
+      requestBody:
+        description: Credential payload
+        content:
+          'appliation/json':
+            schema:
+              $ref: '#/components/schemas/credentialRequest'
+        required: true
+      responses:
+        201:
+          description: Credential successfully issued!
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/credentialResponse'
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+      x-codegen-request-body-name: body
+  /credentials/{id}:
+    get:
+      tags:
+        - Issuing
+      summary: Get credentials by id
+      operationId: getCredentialsById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: templateId
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: accept
+        in: header
+        required: true
+        schema:
+          type: string
+          enum:
+            - application/json
+            - application/vc+ld+json
+            - text/html
+            - image/svg+xml
+            - text/plain
+            - image/jpeg
+      responses:
+        200:
+          description: OK
+          content:
+            'appliation/json':
+              schema:
+                $ref: '#/components/schemas/verifiableCredential'
+        401:
+          description: Not Authorized
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        500:
+          description: Error
+          content: {}
+    delete:
+      tags:
+        - Issuing
+      summary: Revoke credentials by id
+      operationId: revokeCredentialsById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            'appliation/json':
+              schema:
+                $ref: '#/components/schemas/revokedResponse'
+        401:
+          description: Not Authorized
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        500:
+          description: Error
+          content: {}
+  /credentials/search:
+    post:
+      tags:
+        - Issuing
+      summary: Search credentials by issuer and subject 
+      operationId: searchCredentials
+      requestBody:
+        description: Search payload
+        content:
+          'appliation/json':
+            schema:
+              type: object
+              properties:
+                issuer:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                subject:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                type:
+                  type: string
+                  enum: ["claim", "sign"]
+        required: true
+      responses:
+        200:
+          description: OK
+          content:
+            'appliation/json':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/verifiableCredential'
+        401:
+          description: Not Authorized
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+        500:
+          description: Error
+          content: {}
+  /credentials/{id}/verify:
+    get:
+      tags:
+        - Verifying
+      summary: Verifies a verifiableCredential and returns a verificationResult in
+        the response body.
+      description: Verifies a verifiableCredential and returns a verificationResult
+        in the response body.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            'appliation/json':
+              schema:
+                $ref: '#/components/schemas/verifyResponse'
+  /revocation-list:
+    get:
+      tags: 
+        - Revocation
+      summary: Complete list of revoked credentials (Need to be discussed).
+      responses:
+        200:
+          description: OK
+          content:
+            'appliation/json':
+              schema:
+                type: array
+                items:
+                 type: object
+components:
+  schemas:
+    revokedResponse:
+      type: object
+      properties:
+        revocationListIndex:
+          type: string
+    verifyResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: ["Active", "Revoked", "Expired"]
+        checks:
+          type: array
+          items: 
+            type: object
+            properties:
+              active:
+                type: string
+                enum: ["OK"]
+              revoked:
+                type: string
+                enum: ["OK"]
+              expired:
+                type: string
+                enum: ["OK"]
+              proof:
+                description: "Check if the issuer "
+                type: string
+                enum: ["OK"]
+        warnings:
+          type: array
+          items: 
+            type: string
+        errors:
+          type: array
+          items: 
+            type: string
+    verifyRequest:
+      type: object
+      properties:
+        verifiableCredential:
+          $ref: '#/components/schemas/verifiableCredentialType'
+        options:
+          type: object
+          properties:
+            challenge:
+              type: string
+            domain:
+              type: string
+    credentialResponse:
+      type: object
+      properties:
+        credential:
+          allOf:
+            - $ref: '#/components/schemas/verifiableCredentialType'
+            - type: object
+              properties:
+               proof:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  created:
+                    type: string
+                  challenge:
+                    type: string
+                  domain:
+                    type: string
+                  nonce:
+                    type: string
+                  verificationMethod:
+                    type: string
+                  proofPurpose:
+                    type: string
+                  jws:
+                    type: string
+                  proofValue:
+                    type: string
+        credentialSchemaId:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        createdBy:
+          type: string
+        updatedBy:
+          type: string
+    credentialRequest:
+      type: object
+      properties:
+        credential:
+          $ref: '#/components/schemas/verifiableCredentialType'
+        credentialSchemaId:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        
+    credentialOptions:
+      type: object
+      properties:
+        created:
+          type: string
+        challenge:
+          type: string
+        domain:
+          type: string
+        credentialStatus:
+          type: object
+          properties:
+            type:
+              type: string
+    verifiableCredentialType:
+      type: object
+      properties:
+        context:
+          type: array
+          items:
+            type: string
+        id:
+          type: string
+        type:
+          type: string
+        issuer:
+          type: object
+          properties: {}
+        issuanceDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+        credentialSubject:
+          type: object
+          properties: {}
+
+    verifiableCredential:
+      type: object
+      properties:
+        context:
+          type: array
+          items:
+            type: string
+        id:
+          type: string
+        type:
+          type: string
+        issuer:
+          type: object
+          properties: {}
+        issuanceDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date-time
+        credentialSubject:
+          type: object
+          properties: {}
+        proof:
+          type: object
+          properties: 
+            type:
+              type: string
+            created:
+              type: string
+              format: 'date-time'
+            challenge:
+              type: string
+            domain:
+              type: string
+            nonce:
+              type: string
+            verificationMethod:
+              type: string
+            proofPurpose:
+              type: string
+            jws:
+              type: string
+            proofValue:
+              type: string
+
+            
+
+      
+  securitySchemes:
+    Authorization:
+      type: apiKey
+      name: Token
+      in: header

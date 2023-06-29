@@ -1,0 +1,375 @@
+openapi: 3.0.1
+info:
+  title: Sunbird RC - Schema APIs
+  description: Schema APIs
+  termsOfService: https://sunbirdrc.dev/
+  contact:
+    email: sunbird@example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://sunbirdrc.dev/api/v1
+security:
+- Authorization: []
+tags:
+- name: Credential Schemas
+- name: Rendering Templates
+paths:
+  /credential-schema:
+    post:
+      tags:
+        - Credential Schemas
+      summary: Create credential schema
+      operationId: createCredentialSchema
+      requestBody:
+        description: Payload
+        content:
+          'appliation/json':
+            schema:
+              $ref: '#/components/schemas/credentialSchemaRequest'
+        required: true
+      responses:
+        201:
+          description: Credential Schema successfully created!
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/credentialSchemaResponse'
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+    get:
+      tags:
+       - Credential Schemas
+      summary: Get credential schema by tags
+      operationId: getCredentialSchemas
+      parameters:
+        - in: query
+          name: tags
+          schema:
+            type: string
+            example: tag1,tag2
+      responses:
+        201:
+          description: Credential Schemas
+          content:
+            'application/json':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/credentialSchemaResponse'
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+  /credential-schema/{id}:
+    get:
+      tags:
+        - Credential Schemas
+      summary: Get credential schema by id
+      operationId: getCredentialSchema
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Response
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/credentialSchemaResponse'
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+    put:
+      tags:
+        - Credential Schemas
+      summary: Update credential schema by id
+      description: If the schema is updated, a new semver will be generated and the old one will be deprecated. If only metadata (like tags/status) is updated, the semver will not be generated
+      operationId: updateCredentialSchema
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Payload
+        content:
+          'appliation/json':
+            schema:
+              $ref: '#/components/schemas/credentialSchemaRequest'
+        required: true
+      responses:
+        200:
+          description: Credential Schema successfully updated!
+          content:
+            'application/json':
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/credentialSchemaResponse'
+                  - type: object
+                    properties:
+                      deprecatedId:
+                        description: returns back the id of the schema that was deprecated
+                        type: string
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+  /template:
+    post:
+      tags:
+        - Rendering Templates
+      summary: Create redenring templates
+      operationId: createRenderingTemplates
+      requestBody:
+        description: Payload
+        content:
+          'appliation/json':
+            schema:
+              $ref: '#/components/schemas/renderingTemplateRequest'
+        required: true
+      responses:
+        201:
+          description: Rendering template successfully created!
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/renderingTemplateResponse'
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+    get:
+      tags:
+        - Rendering Templates
+      summary: Get rendering templates by schema id
+      operationId: getRenderingTemplatesBySchemaId
+      parameters:
+      - name: schemaId
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Response
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/renderingTemplateResponse'
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+  /template/{id}:
+    get:
+      tags:
+        - Rendering Templates
+      summary: Get rendering templates by id
+      operationId: getRenderingTemplates
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Response
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/renderingTemplateResponse'
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+    put:
+      tags:
+        - Rendering Templates
+      summary: Update rendering templates by id
+      description: Create a new version of template
+      operationId: updateRenderingTemplates
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Payload
+        content:
+          'appliation/json':
+            schema:
+              $ref: '#/components/schemas/renderingTemplateRequest'
+        required: true
+      responses:
+        200:
+          description: Rendering template successfully updated!
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/renderingTemplateResponse'
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+    delete:
+      tags:
+        - Rendering Templates
+      summary: Delete rendering templates by id
+      operationId: deleteRenderingTemplates
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Credential Schema successfully deleted!
+        400:
+          description: Invalid Input
+          content: {}
+        500:
+          description: error
+          content: {}
+
+components:
+  schemas:
+    renderingTemplateResponse:
+      allOf:
+        - $ref: '#/components/schemas/renderingTemplateRequest'
+        - type: object
+          properties:
+            templateId:
+              type: string
+              example: "did:cred-template:MDP8AsFhHzhwUvGNuYkX7T/06e126d1-fa44-4882-a243-1e326fbe21dc;version=1.1"
+            createdAt:
+              type: string
+            updatedAt:
+              type: string
+            createdBy:
+              type: string
+            updatedBy:
+              type: string
+    renderingTemplateRequest:
+      type: object
+      properties:
+        template:
+          description: It should be valid string in handlebar format
+          type: string
+        schemaId:
+          type: string
+          example: "did:cred-schema:MDP8AsFhHzhwUvGNuYkX7T/06e126d1-fa44-4882-a243-1e326fbe21db;version=1.1"
+    updateSchemaRequest:
+      type: object
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [DRAFT,PUBLISHED, REVOKED]
+    credentialSchemaRequest:
+      type: object
+      properties:
+        schema:
+          type: object
+          properties:
+            type: 
+              type: string
+            id:
+              type: string
+              pattern: "^\\d+\\.\\d+$"
+              example: "did:cred-schema:MDP8AsFhHzhwUvGNuYkX7T/06e126d1-fa44-4882-a243-1e326fbe21db;version=1.1"
+            version:
+              type: string
+            name:
+              type: string
+            author:
+              type: string
+            authored:
+              type: string
+            schema:     
+              type: object 
+              example: '{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Email","type":"object","properties":{"emailAddress":{"type":"string","format":"email"}},"required":["emailAddress"],"additionalProperties":false}'
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [DRAFT,PUBLISHED, REVOKED]
+        
+    credentialSchemaResponse:
+      type: object
+      properties:
+        schema:
+          type: object
+          properties:
+            type: 
+              type: string
+            id:
+              type: string
+              pattern: "^\\d+\\.\\d+$"
+              example: "did:cred-schema:MDP8AsFhHzhwUvGNuYkX7T/06e126d1-fa44-4882-a243-1e326fbe21db;version=1.1"
+            version:
+              type: string
+            name:
+              type: string
+            author:
+              type: string
+            authored:
+              type: string
+            schema:     
+              type: object 
+              example: '{"$schema":"https://json-schema.org/draft/2020-12/schema","description":"Email","type":"object","properties":{"emailAddress":{"type":"string","format":"email"}},"required":["emailAddress"],"additionalProperties":false}'
+            proof:
+              type: object
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [DRAFT,PUBLISHED, REVOKED]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        createdBy:
+          type: string
+        updatedBy:
+          type: string
+  securitySchemes:
+    Authorization:
+      type: apiKey
+      name: Token
+      in: header
