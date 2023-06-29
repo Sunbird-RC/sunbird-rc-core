@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { flatten } from '@nestjs/common';
-import { SchemaService } from 'src/schema/schema.service';
+import { SchemaService } from '../schema/schema.service';
 
 @Injectable()
 export class ValidateTemplateService {

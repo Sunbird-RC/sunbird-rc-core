@@ -14,7 +14,7 @@ export interface VCSModelSchemaInterface {
     properties: {
       [k: string]: unknown;
     };
-    required: [] | [string];
+    required: [] | string[];
     additionalProperties: boolean;
   };
   proof?: {

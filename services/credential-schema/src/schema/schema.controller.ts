@@ -22,10 +22,8 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { VerifiableCredentialSchema } from '@prisma/client';
 import { Cache } from 'cache-manager';
 
-import { VCSModelSchemaInterface } from 'src/types/VCModelSchema.interface';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
 import { VCItem } from './entities/VCItem.entity';
 import { VCModelSchema } from './entities/VCModelSchema.entity';
