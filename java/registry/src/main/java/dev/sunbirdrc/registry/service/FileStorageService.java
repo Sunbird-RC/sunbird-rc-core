@@ -104,7 +104,8 @@ public class FileStorageService implements HealthIndicator {
 			e.printStackTrace();
 		}
 		return bytes;
-	}public ResponseEntity deleteDocument(String requestedURI) {
+	}
+	public ResponseEntity deleteDocument(String requestedURI) {
 		String objectName = getDirectoryPath(requestedURI);
 		try {
 			minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
@@ -134,15 +135,15 @@ public class FileStorageService implements HealthIndicator {
 		for (MultipartFile file : files) {
 			String fileName = getFileName(file.getOriginalFilename());
 			try {
-				String objectName = objectPath;
+				//String objectName = objectPath;
 
 				boolean objectExists = minioClient.statObject(
-						StatObjectArgs.builder().bucket(bucketName).object(objectName).build()
+						StatObjectArgs.builder().bucket(bucketName).object(objectPath).build()
 				) != null;
 
 				if (objectExists) {
-					save(file.getInputStream(),objectName);
-					documentsResponse.addDocumentLocation(objectName);
+					save(file.getInputStream(),objectPath);
+					documentsResponse.addDocumentLocation(objectPath);
 					return documentsResponse;
 				}
 			} catch (Exception e) {
