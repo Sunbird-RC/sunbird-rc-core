@@ -97,16 +97,16 @@ public class SqlgProvider extends DatabaseProvider {
      */
     private void createIndexByIndexType(Graph graph, IndexType indexType, String label, List<String> propertyNames) {
         for (String propertyName : propertyNames) {
-            List<String> properties1 = Arrays.stream(propertyName.split("[.]")).collect(Collectors.toList());
-            if(properties1.size() == 1) {
+            List<String> subProperties = Arrays.stream(propertyName.split("[.]")).collect(Collectors.toList());
+            if(subProperties.size() == 1) {
                 VertexLabel vertexLabel = getVertex(graph, label);
                 List<PropertyColumn> properties = new ArrayList<>();
                 properties.add(vertexLabel.getProperty(propertyName.split("[.]")[0]).get());
                 ensureIndex(vertexLabel, indexType, properties);
             }
             else {
-                List<String> subsequentPropertyNames = getSubsequentPropertyNames(properties1);
-                createIndexByIndexType(graph, indexType, properties1.get(0), subsequentPropertyNames);
+                List<String> subsequentPropertyNames = getSubsequentPropertyNames(subProperties);
+                createIndexByIndexType(graph, indexType, subProperties.get(0), subsequentPropertyNames);
             }
         }
 //        createIndexByIndexType(graph, indexType, propertyNames.get(0).split("[.]")[0], propertyNames.subList(1, propertyNames.size()));
