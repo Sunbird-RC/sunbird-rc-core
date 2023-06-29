@@ -83,7 +83,11 @@
             <artifactId>keycloak-spring-security-adapter</artifactId>
             <version>14.0.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.github.jknack</groupId>
+            <artifactId>handlebars</artifactId>
+            <version>4.3.1</version>
+        </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-spring-boot-starter</artifactId>

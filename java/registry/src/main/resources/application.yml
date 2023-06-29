@@ -26,6 +26,10 @@ notification:
     enabled: ${notification_enabled:false}
     connection_url: ${notification_url:http://localhost:8765/notification-service/v1/notification}
     health_url: ${notification_url:http://localhost:8765/notification-service/v1/health}
+  async:
+    enabled: ${notification_async_enabled:false}
+  topic: ${notification_topic:notify}
+
 invite:
   required_validation_enabled: ${invite_required_validation_enabled:true}
   signature_enabled: ${invite_signature_enabled:true}
@@ -225,7 +229,7 @@ audit:
 
 keycloak:
   #publicKey:  ${sunbird_sso_publickey:pk}
-  auth-server-url: ${sunbird_sso_url:https://localhost:8888/auth}
+  auth-server-url: ${sunbird_sso_url:http://localhost:8080/auth}
   realm: ${sunbird_sso_realm:sunbird-rc}
   resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
@@ -239,7 +243,7 @@ keycloak-user:
   # email details should be configured in keycloak realm settings
   email-actions: ${keycloack_user_email_actions:}
 claims:
-  url: ${claims_url:http://localhost:8081}
+  url: ${claims_url:http://localhost:8082}
 authentication:
   enabled: ${authentication_enabled:true}
   publicKey:  ${authentication_publickey:}
@@ -330,7 +334,9 @@ name: test-yaml
 enviroment: test
 workflow:
   enabled: ${workflow.enable:true}
-
+notification:
+  service:
+    enabled: true
 perf:
   monitoring:
     enabled: false

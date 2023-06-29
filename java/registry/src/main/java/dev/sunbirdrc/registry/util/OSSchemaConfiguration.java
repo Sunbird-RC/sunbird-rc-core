@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.pojos.attestation.auto.AutoAttestationPolicy;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.model.NotificationTemplates;
 import dev.sunbirdrc.registry.model.EventConfig;
 import dev.sunbirdrc.views.FunctionDefinition;
 import lombok.Data;
@@ -93,6 +94,7 @@ public class OSSchemaConfiguration {
     private EventConfig internalFieldConfig = EventConfig.NONE;
 
     private List<FunctionDefinition> functionDefinitions;
+    private NotificationTemplates notificationTemplates = new NotificationTemplates();
 
     public Set<String> getAllTheAttestorEntities(){
         return attestationPolicies.stream()
