@@ -581,7 +581,14 @@ public class RegistryEntityController extends AbstractController {
             String userId = registryHelper.getUserId(request, entityName);
             if (!Strings.isEmpty(userId)) {
                 JsonNode responseFromDb = registryHelper.searchEntitiesByUserId(entityName, userId, viewTemplateId);
-                return new ResponseEntity<>(responseFromDb.get(entityName), HttpStatus.OK);
+                JsonNode entities = responseFromDb.get(entityName);
+                if (entities.size() > 0) {
+                    return new ResponseEntity<>(entities, HttpStatus.OK);
+                } else {
+                    responseParams.setErrmsg("No record found");
+                    responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                }
             } else {
                 responseParams.setErrmsg("User id is empty");
                 responseParams.setStatus(Response.Status.UNSUCCESSFUL);

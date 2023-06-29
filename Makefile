@@ -28,6 +28,7 @@ java/registry/target/registry.jar: $(SOURCES)
 	cd java && ./mvnw clean install
 
 test: build
+	@echo "VIEW_DIR=java/apitest/src/test/resources/views" >> .env || echo "no permission to append to file"
 	@docker-compose down
 	@rm -rf db-data* || echo "no permission to delete"
 	# test with ES & standard definition manager

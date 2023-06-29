@@ -337,6 +337,8 @@ name: test-yaml
 enviroment: test
 workflow:
   enabled: ${workflow.enable:true}
+view_template:
+  decrypt_private_fields: ${view_template_decrypt_private_fields:false}
 notification:
   service:
     enabled: true

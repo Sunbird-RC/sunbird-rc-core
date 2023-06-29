@@ -161,7 +161,7 @@ public class RegistryHelper {
     @Value("${workflow.enabled:true}")
     private boolean workflowEnabled;
 
-    @Value("${view_template_decrypt_private_fields:false}")
+    @Value("${view_template.decrypt_private_fields:false}")
     private boolean viewTemplateDecryptPrivateFields;
 
     @Autowired
