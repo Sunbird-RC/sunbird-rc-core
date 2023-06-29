@@ -27,7 +27,7 @@ notification:
     connection_url: ${notification_url:http://localhost:8765/notification-service/v1/notification}
     health_url: ${notification_url:http://localhost:8765/notification-service/v1/health}
   async:
-    enabled: ${notification_async_enabled:true}
+    enabled: ${notification_async_enabled:false}
   topic: ${notification_topic:notify}
 
 invite:
