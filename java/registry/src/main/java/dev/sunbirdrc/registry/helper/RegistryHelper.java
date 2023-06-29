@@ -16,6 +16,7 @@ import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
+import dev.sunbirdrc.registry.dao.VertexReader;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.entities.AttestationType;
 import dev.sunbirdrc.registry.entities.FlowType;
@@ -27,6 +28,7 @@ import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
+import dev.sunbirdrc.registry.model.EventType;
 import dev.sunbirdrc.registry.model.attestation.EntityPropertyURI;
 import dev.sunbirdrc.registry.model.dto.AttestationRequest;
 import dev.sunbirdrc.registry.service.*;
@@ -88,7 +90,8 @@ public class RegistryHelper {
     @Value("${notification.service.enabled}") boolean notificationEnabled;
     @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
     @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
-
+    @Autowired
+    private NotificationHelper notificationHelper;
     @Autowired
     private ShardManager shardManager;
 
@@ -137,7 +140,8 @@ public class RegistryHelper {
 
     @Value("${audit.frame.suffix}")
     public String auditSuffix;
-
+    @Value("${event.enabled}")
+    private boolean isEventsEnabled;
     @Value("${audit.frame.suffixSeparator}")
     public String auditSuffixSeparator;
 
@@ -188,12 +192,14 @@ public class RegistryHelper {
      * @throws Exception
      */
     public String addEntity(JsonNode inputJson, String userId) throws Exception {
-        return addEntityHandler(inputJson, userId, false, false);
+        String entityId = addEntityHandler(inputJson, userId, false, false);
+        notificationHelper.sendNotification(inputJson, CREATE);
+        return entityId;
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
         String entityId = addEntityHandler(inputJson, userId, skipRequiredValidationForInvite, skipSignatureForInvite);
-        sendInviteNotification(inputJson);
+        notificationHelper.sendNotification(inputJson, INVITE);
         return entityId;
     }
 
@@ -207,7 +213,7 @@ public class RegistryHelper {
         String entityName = inputJson.fields().next().getKey();
         if (workflowEnabled) {
             List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
-            entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
+            inputJson = entityStateHelper.applyWorkflowTransitions(JSONUtil.convertStringJsonNode("{}"), inputJson, attestationPolicies);
         }
         if (!StringUtils.isEmpty(userId)) {
             ArrayNode jsonNode = (ArrayNode) inputJson.get(entityName).get(osOwner.toString());
@@ -218,27 +224,6 @@ public class RegistryHelper {
             jsonNode.add(userId);
         }
         return addEntity(inputJson, userId, entityType, skipSignature);
-    }
-
-    private void sendInviteNotification(JsonNode inputJson) throws Exception {
-        String entityType = inputJson.fields().next().getKey();
-        sendNotificationToOwners(inputJson, INVITE, String.format(INVITE_SUBJECT_TEMPLATE, entityType), String.format(INVITE_BODY_TEMPLATE, entityType));
-    }
-
-    private void sendNotificationToOwners(JsonNode inputJson, String operation, String subject, String message) throws Exception {
-        if (notificationEnabled) {
-            String entityType = inputJson.fields().next().getKey();
-            for (ObjectNode owners : entityStateHelper.getOwnersData(inputJson, entityType)) {
-                String ownerMobile = owners.get(MOBILE).asText("");
-                String ownerEmail = owners.get(EMAIL).asText("");
-                if (!StringUtils.isEmpty(ownerMobile)) {
-                    registryService.callNotificationActors(operation, String.format("tel:%s", ownerMobile), subject, message);
-                }
-                if (!StringUtils.isEmpty(ownerEmail)) {
-                    registryService.callNotificationActors(operation, String.format("mailto:%s", ownerEmail), subject, message);
-                }
-            }
-        }
     }
 
     private String addEntity(JsonNode inputJson, String userId, String entityType, boolean skipSignature) throws Exception {
@@ -305,6 +290,9 @@ public class RegistryHelper {
             resultNode = vTransformer.transform(viewTemplate, resultNode);
         }
         logger.debug("readEntity ends");
+        if(isEventsEnabled) {
+            registryService.maskAndEmitEvent(resultNode.get(entityType), entityType, EventType.READ, userId, label);
+        }
         return resultNode;
     }
 
@@ -360,7 +348,7 @@ public class RegistryHelper {
         String label = inputJson.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
-        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString);
+        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString, false);
         logger.debug("updateEntity ends");
     }
 
@@ -372,7 +360,8 @@ public class RegistryHelper {
         String label = inputJson.get(entityType).get(dbConnectionInfoMgr.getUuidPropertyName()).asText();
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
-        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString);
+        registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString, false);
+        notificationHelper.sendNotification(inputJson, UPDATE);
         return "SUCCESS";
     }
 
@@ -380,9 +369,10 @@ public class RegistryHelper {
         if (workflowEnabled) {
             String entityName = updatedNode.fields().next().getKey();
             List<AttestationPolicy> attestationPolicies = getAttestationPolicies(entityName);
-            entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
+            updatedNode = entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
         }
         updateEntity(updatedNode, userId);
+        notificationHelper.sendNotification(updatedNode, UPDATE);
     }
 
     public void addEntityProperty(String entityName, String entityId, JsonNode inputJson, HttpServletRequest request) throws Exception {
@@ -999,11 +989,28 @@ public class RegistryHelper {
         }
     }
 
-    public Vertex deleteEntity(String entityId, String userId) throws Exception {
+    public Vertex deleteEntity(String entityName, String entityId, String userId) throws Exception {
         RecordIdentifier recordId = RecordIdentifier.parse(entityId);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         Shard shard = shardManager.activateShard(shardId);
-        return registryService.deleteEntityById(shard, userId, recordId.getUuid());
+        ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
+        Vertex vertex = registryService.deleteEntityById(shard, entityName, userId, recordId.getUuid());
+        VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager);
+        JsonNode deletedNode = JsonNodeFactory.instance.objectNode().set(entityName, vertexReader.constructObject(vertex));
+        notificationHelper.sendNotification(deletedNode, DELETE);
+        return vertex;
+    }
+
+    public JsonNode revokeAnEntity (String entityName, String entityId, String userId, JsonNode currentJsonNode) throws Exception {
+        RecordIdentifier recordId = RecordIdentifier.parse(entityId);
+        String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
+        Shard shard = shardManager.activateShard(shardId);
+        ((ObjectNode) currentJsonNode).put(OSSystemFields._osSignedData.name(), "");
+        ObjectNode newRootNode = objectMapper.createObjectNode();
+        newRootNode.set(entityName, JSONUtil.convertObjectJsonNode(currentJsonNode));
+        String jsonString = objectMapper.writeValueAsString(newRootNode);
+        registryService.updateEntity(shard, userId, recordId.getUuid(),jsonString, true);
+        return currentJsonNode;
     }
 
     //TODO: add cache
@@ -1105,8 +1112,8 @@ public class RegistryHelper {
     }
 
 
-    public void deleteAttestationPolicy(AttestationPolicy attestationPolicy) throws Exception {
-        deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
+    public void deleteAttestationPolicy(String entityName, AttestationPolicy attestationPolicy) throws Exception {
+        deleteEntity(entityName, attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
     }
 
     public boolean doesEntityOperationRequireAuthorization(String entity) {

@@ -2,18 +2,18 @@
 
 // Package restapi Notification service
 //
-//  Notification service
-//  Schemes:
-//    https
-//  Host: sunbirdrc.dev
-//  BasePath: /notification-service/v1
-//  Version: 1.0.0
+//	Notification service
+//	Schemes:
+//	  https
+//	Host: sunbirdrc.dev
+//	BasePath: /notification-service/v1
+//	Version: 1.0.0
 //
-//  Consumes:
-//    - application/json
+//	Consumes:
+//	  - application/json
 //
-//  Produces:
-//    - application/json
+//	Produces:
+//	  - application/json
 //
 // swagger:meta
 package restapi
