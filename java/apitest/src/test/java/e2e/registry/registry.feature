@@ -2,13 +2,14 @@
 Feature: Registry api tests
   Background:
     * string registryUrl = "http://localhost:8081"
+    * string authUrl = "http://localhost:8080"
     * string metricsUrl = "http://localhost:8070"
     * string notificationsUrl = "http://localhost:8765"
-    * string authUrl = "http://localhost:8080"
     * url registryUrl
     * def admin_token = ""
     * def client_secret = 'a52c5f4a-89fd-40b9-aea2-3f711f14c889'
     * def sleep = function(millis){ java.lang.Thread.sleep(millis) }
+
   Scenario: health check
     Given path 'health'
     When method get
@@ -346,6 +347,144 @@ Feature: Registry api tests
     And assert response[0].address[0].phoneNo.length == 1
     And assert response[0].address[0].phoneNo[0] == "444"
 
+  Scenario: write a api test, to test the schema not found error
+  # get admin token
+    * url authUrl
+    * path 'auth/realms/sunbird-rc/protocol/openid-connect/token'
+    * header Content-Type = 'application/x-www-form-urlencoded; charset=utf-8'
+    * header Host = 'keycloak:8080'
+    * form field grant_type = 'client_credentials'
+    * form field client_id = 'admin-api'
+    * form field client_secret = client_secret
+    * method post
+    Then status 200
+    And print response.access_token
+    * def admin_token = 'Bearer ' + response.access_token
+   # invite schema which is unavailable/not found
+    Given url registryUrl
+    And path 'api/v1/Teacher1/invite'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method post
+    Then status 404
+    And print response
+    And response.params.status == "UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # delete unavailable schema with id
+    Given url registryUrl
+    And path '/api/v1/Teacher1/123'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method delete
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # search unavailable schema
+    Given url registryUrl
+    And path '/api/v1/Teacher1/search'
+    And header Authorization = admin_token
+    And request { "filters": { } }
+    When method post
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # update unavailable schema with id
+    Given url registryUrl
+    And path '/api/v1/Teacher1/{entityId}'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method put
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # post unavailable schema with name
+    Given url registryUrl
+    And path '/api/v1/{entityName}'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method post
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # update unavailable schema
+    Given url registryUrl
+    And path '/api/v1/Teacher1/123/contact/456'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method put
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # update unavailable schema
+    Given url registryUrl
+    And path '/api/v1/Teacher1/123/name/'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method post
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # get unavailable schema
+    Given url registryUrl
+    And path '/partner/api/v1/Teacher1'
+    And header Authorization = admin_token
+    When method get
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # get unavailable schema with id and
+    Given url registryUrl
+    And path '/api/v1/Teacher1/123'
+    And header Authorization = admin_token
+    When method get
+    And request read('TeacherRequest.json')
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # get unavailable schema with id
+    Given url registryUrl
+    And path '/api/v1/Teacher1/{entityId}'
+    And header Authorization = admin_token
+    When method get
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # get unavailable schema with name
+    Given url registryUrl
+    And path '/api/v1/Teacher1'
+    And header Authorization = admin_token
+    When method get
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # patch unavailable schema with name
+    Given url registryUrl
+    And path '/api/v1/{entityName}/{entityId}'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method patch
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+ # patch unavailable schema with sign
+    Given url registryUrl
+    And path '/api/v1/Teacher/sign'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method patch
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+ # get unavailable schema with attestations
+    Given url registryUrl
+    And path '/api/v1/Teacher1/123/attestation/teacherAttest/456'
+    And header Accept = "application/json"
+    And header Content-Type = "application/json"
+    And header Authorization = admin_token
+    When method get
+    Then status 404
+    And response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
 
   Scenario: Create student with password schema and verify if password is set
   #    get admin token
@@ -397,8 +536,15 @@ Feature: Registry api tests
     When method get
     Then status 200
     And response.osid.length > 0
-
-Scenario: Create birth certificate schema, issue credentials then revoke the credential and check for CRUD APIS
+  # get student info with view template
+    Given url registryUrl
+    And path 'api/v1/StudentWithPassword/' + studentOsid
+    And header Authorization = student_token
+    And header viewTemplateId = 'student_view_template.json'
+    When method get
+    Then status 200
+    * match response.contactDetails == { mobile: '#notpresent', email: '#present', osid: '#present' }
+  Scenario: Create birth certificate schema, issue credentials then revoke the credential and check for CRUD APIS
 #    get admin token
     * url authUrl
     * path 'auth/realms/sunbird-rc/protocol/openid-connect/token'
@@ -508,7 +654,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And response.params.errmsg == "entity status is inactive"
 
 
-  @env=events
+  @env=async
   Scenario: Check if events are published
   # should get metrics
     * sleep(11000)
@@ -521,7 +667,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And assert response.birthcertificate.ADD == "1"
     And assert response.birthcertificate.DELETE == "1"
 
-  @env=notification
+  @env=async
   Scenario: Check if notifications are sent
     Given url notificationsUrl
     And path '/notification-service/v1/notification'
@@ -531,3 +677,37 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     * def notificationStudent = studentRequest.contact
     And print response[notificationStudent]
     And assert response[notificationStudent] != null
+
+  Scenario: Test unique constraints with nested and composite fields
+# create entity
+    Given url registryUrl
+    And path 'api/v1/TeacherUnique/invite'
+    * def teacherRequest = read('TeacherUniqueRequest.json')
+    And request teacherRequest
+    When method post
+    Then status 200
+    # create entity with same identity details
+    * sleep(3000)
+    Given url registryUrl
+    And path 'api/v1/TeacherUnique/invite'
+    And request read('TeacherUniqueRequest.json')
+    When method post
+    Then status 500
+    * match response.params.errmsg contains "java.lang.RuntimeException: org.postgresql.util.PSQLException: ERROR: duplicate key value violates unique constraint \"public_V_personal_details_email_sqlgIdx\"\n  Detail: Key (email)=(test@rc.com) already exists."
+    # create entity with different email, violates composite unique index
+    Given url registryUrl
+    And path 'api/v1/TeacherUnique/invite'
+    * teacherRequest.personal_details.email = "xyz@rc.dev"
+    And request teacherRequest
+    When method post
+    Then status 500
+    * match response.params.errmsg contains "java.lang.RuntimeException: org.postgresql.util.PSQLException: ERROR: duplicate key value violates unique constraint \"public_V_identity_details_id_value_sqlgIdx\"\n  Detail: Key (id, value)=(id, 1) already exists."
+    # create entity with different data
+    Given url registryUrl
+    And path 'api/v1/TeacherUnique/invite'
+    * teacherRequest.personal_details.email = "xyz1@rc.dev"
+    * teacherRequest.identity_details.id = "xyz"
+    And request teacherRequest
+    When method post
+    Then status 200
+

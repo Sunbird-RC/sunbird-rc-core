@@ -28,10 +28,12 @@ java/registry/target/registry.jar: $(SOURCES)
 	cd java && ./mvnw clean install
 
 test: build
+	@echo "VIEW_DIR=java/apitest/src/test/resources/views" >> .env || echo "no permission to append to file"
+	@echo "SCHEMA_DIR=java/apitest/src/test/resources/schemas" >> .env || echo "no permission to append to file"
 	@docker-compose down
 	@rm -rf db-data* || echo "no permission to delete"
-	# test with ES & standard definition manager
-	@RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-1 docker-compose up -d db es keycloak registry certificate-signer certificate-api
+	# test with distributed definition manager and native search
+	@SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 MANAGER_TYPE=DistributedDefinitionsManager DB_DIR=db-data-1 docker-compose up -d db keycloak registry certificate-signer certificate-api redis
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
@@ -39,49 +41,15 @@ test: build
 	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
 	@rm -rf db-data-1 || echo "no permission to delete"
-	# test with distributed definition manager
-	@RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 MANAGER_TYPE=DistributedDefinitionsManager DB_DIR=db-data-2 docker-compose up -d db es keycloak registry certificate-signer certificate-api redis
-	@echo "Starting the test" && sh build/wait_for_port.sh 8080
-	@echo "Starting the test" && sh build/wait_for_port.sh 8081
-	@docker-compose ps
-	@curl -v http://localhost:8081/health
-	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
-	@docker-compose down
-	@rm -rf db-data-2 || echo "no permission to delete"
-	# test with native search service
-	@RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-3 SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService docker-compose up -d db keycloak registry certificate-signer certificate-api
-	@echo "Starting the test" && sh build/wait_for_port.sh 8080
-	@echo "Starting the test" && sh build/wait_for_port.sh 8081
-	@docker-compose ps
-	@curl -v http://localhost:8081/health
-	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
-	@docker-compose down
-	@rm -rf db-data-3 || echo "no permission to delete"
-	# test with kafka(async)
-	@ASYNC_ENABLED=true RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-4 docker-compose up -d db es keycloak registry certificate-signer certificate-api kafka zookeeper
+	# test with kafka(async), events, notifications,
+	@NOTIFICATION_ENABLED=true NOTIFICATION_URL=http://notification-ms:8765/notification-service/v1/notification TRACK_NOTIFICATIONS=true EVENT_ENABLED=true ASYNC_ENABLED=true RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-2 docker-compose up -d db es keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
 	@curl -v http://localhost:8081/health
 	@cd java/apitest && MODE=async ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
-	@rm -rf db-data-4 || echo "no permission to delete"
-	@RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources EVENT_ENABLED=true KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-5 SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService docker-compose up -d db keycloak kafka zookeeper keycloak clickhouse registry certificate-signer certificate-api metrics redis
-	@echo "Starting the test" && sh build/wait_for_port.sh 8080
-	@echo "Starting the test" && sh build/wait_for_port.sh 8081
-	@docker-compose ps
-	@curl -v http://localhost:8081/health
-	@cd java/apitest && MODE=events ../mvnw -Pe2e test || echo 'Tests failed'
-	@docker-compose down
-	@rm -rf db-data-5 || echo "no permission to delete"
-	@NOTIFICATION_URL=http://notification-ms:8765/notification-service/v1/notification TRACK_NOTIFICATIONS=true KAFKA_BOOTSTRAP_SERVERS=kafka:9092 NOTIFICATION_ENABLED=true NOTIFICATION_ASYNC_ENABLED=false RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-6 docker-compose up -d db es keycloak registry certificate-signer certificate-api notification-ms kafka
-	@echo "Starting the test" && sh build/wait_for_port.sh 8080
-	@echo "Starting the test" && sh build/wait_for_port.sh 8081
-	@docker-compose ps
-	@curl -v http://localhost:8081/health
-	@cd java/apitest && MODE=notification ../mvnw -Pe2e test || echo 'Tests failed'
-	@docker-compose down
-	@rm -rf db-data-6 || echo "no permission to delete"
+	@rm -rf db-data-2 || echo "no permission to delete"
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
