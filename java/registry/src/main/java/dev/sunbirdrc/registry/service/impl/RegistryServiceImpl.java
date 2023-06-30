@@ -12,6 +12,7 @@ import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.dao.*;
+import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -44,6 +45,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
+import static dev.sunbirdrc.registry.exception.ErrorMessages.INVALID_ID_MESSAGE;
 
 @Service
 @Qualifier("sync")
@@ -166,6 +168,9 @@ public class RegistryServiceImpl implements RegistryService {
                 ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
                 VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager);
                 Vertex vertex = vertexReader.getVertex(entityName, uuid);
+                if (vertex == null) {
+                    throw new RecordNotFoundException(INVALID_ID_MESSAGE);
+                }
                 String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
                 if (!StringUtils.isEmpty(index) && index.equals(Schema)) {
                     schemaService.deleteSchemaIfExists(vertex);
@@ -180,7 +185,7 @@ public class RegistryServiceImpl implements RegistryService {
                     if (isElasticSearchEnabled()) {
                         callESActors(null, "DELETE", index, uuid, tx);
                     }
-                    if(isEventsEnabled) {
+                    if (isEventsEnabled) {
                         maskAndEmitEvent(vertexReader.constructObject(vertex), index, EventType.DELETE, userId, uuid);
                     }
                 }
