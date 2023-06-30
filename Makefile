@@ -29,6 +29,7 @@ java/registry/target/registry.jar: $(SOURCES)
 
 test: build
 	@echo "VIEW_DIR=java/apitest/src/test/resources/views" >> .env || echo "no permission to append to file"
+	@echo "SCHEMA_DIR=java/apitest/src/test/resources/schemas" >> .env || echo "no permission to append to file"
 	@docker-compose down
 	@rm -rf db-data* || echo "no permission to delete"
 	# test with distributed definition manager and native search

@@ -677,3 +677,37 @@ Feature: Registry api tests
     * def notificationStudent = studentRequest.contact
     And print response[notificationStudent]
     And assert response[notificationStudent] != null
+
+  Scenario: Test unique constraints with nested and composite fields
+# create entity
+    Given url registryUrl
+    And path 'api/v1/TeacherUnique/invite'
+    * def teacherRequest = read('TeacherUniqueRequest.json')
+    And request teacherRequest
+    When method post
+    Then status 200
+    # create entity with same identity details
+    * sleep(3000)
+    Given url registryUrl
+    And path 'api/v1/TeacherUnique/invite'
+    And request read('TeacherUniqueRequest.json')
+    When method post
+    Then status 500
+    * match response.params.errmsg contains "java.lang.RuntimeException: org.postgresql.util.PSQLException: ERROR: duplicate key value violates unique constraint \"public_V_personal_details_email_sqlgIdx\"\n  Detail: Key (email)=(test@rc.com) already exists."
+    # create entity with different email, violates composite unique index
+    Given url registryUrl
+    And path 'api/v1/TeacherUnique/invite'
+    * teacherRequest.personal_details.email = "xyz@rc.dev"
+    And request teacherRequest
+    When method post
+    Then status 500
+    * match response.params.errmsg contains "java.lang.RuntimeException: org.postgresql.util.PSQLException: ERROR: duplicate key value violates unique constraint \"public_V_identity_details_id_value_sqlgIdx\"\n  Detail: Key (id, value)=(id, 1) already exists."
+    # create entity with different data
+    Given url registryUrl
+    And path 'api/v1/TeacherUnique/invite'
+    * teacherRequest.personal_details.email = "xyz1@rc.dev"
+    * teacherRequest.identity_details.id = "xyz"
+    And request teacherRequest
+    When method post
+    Then status 200
+
