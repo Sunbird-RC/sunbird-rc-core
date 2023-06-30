@@ -20,15 +20,15 @@ public class DBProviderFactory {
 
 	@Autowired
 	DBConnectionInfoMgr dbConnectionInfoMgr;
-	
+
 	public DatabaseProvider getInstance(DBConnectionInfo connectionInfo) {
 		DatabaseProvider provider = null;
 		String dbProvider = environment.getProperty(Constants.DATABASE_PROVIDER);
 		String uuidPropertyName = dbConnectionInfoMgr.getUuidPropertyName();
-
-		// In tests, we use TinkerGraph presently.
-		if (!dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.TINKERGRAPH.getName()) &&
-				dbProviderInstances.containsKey(connectionInfo.getShardId())) {
+		if (dbProvider == null) {
+			throw new RuntimeException("No Database Provider is configured. Please configure a Database Provider");
+		}
+		if (connectionInfo != null && dbProviderInstances.containsKey(connectionInfo.getShardId())) {
 			provider = dbProviderInstances.get(connectionInfo.getShardId());
 		} else {
 			if (dbProvider.equalsIgnoreCase(Constants.GraphDatabaseProvider.ORIENTDB.getName())) {

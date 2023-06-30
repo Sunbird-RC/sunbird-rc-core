@@ -1,0 +1,22 @@
+{
+  "subject": "Reporter",
+  "fields": [
+    {
+      "name": "name",
+      "title": "name",
+      "display": true
+    },
+    {
+      "name": "address",
+      "title": "address",
+      "function": "#/functionDefinitions/removePath($address, $.line)",
+      "display": true
+    }
+  ],
+  "functionDefinitions": [
+    {
+      "name" : "removePath",
+      "provider": "dev.sunbirdrc.provider.RemovePathFunctionProvider"
+    }
+  ]
+}

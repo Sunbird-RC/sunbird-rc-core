@@ -587,14 +587,14 @@
       "clientId": "account",
       "name": "${client_account}",
       "rootUrl": "${authBaseUrl}",
-      "baseUrl": "/realms/divoc/account/",
+      "baseUrl": "/realms/sunbird-rc/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "secret": "**********",
       "redirectUris": [
-        "/realms/divoc/account/*"
+        "/realms/sunbird-rc/account/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -607,7 +607,9 @@
       "publicClient": false,
       "frontchannelLogout": false,
       "protocol": "openid-connect",
-      "attributes": {},
+      "attributes": {
+        "login_theme": "sunbird-rc"
+      },
       "authenticationFlowBindingOverrides": {},
       "fullScopeAllowed": false,
       "nodeReRegistrationTimeout": 0,
@@ -629,14 +631,14 @@
       "clientId": "account-console",
       "name": "${client_account-console}",
       "rootUrl": "${authBaseUrl}",
-      "baseUrl": "/realms/divoc/account/",
+      "baseUrl": "/realms/sunbird-rc/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "secret": "**********",
       "redirectUris": [
-        "/realms/divoc/account/*"
+        "/realms/sunbird-rc/account/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -650,7 +652,8 @@
       "frontchannelLogout": false,
       "protocol": "openid-connect",
       "attributes": {
-        "pkce.code.challenge.method": "S256"
+        "pkce.code.challenge.method": "S256",
+        "login_theme": "sunbird-rc"
       },
       "authenticationFlowBindingOverrides": {},
       "fullScopeAllowed": false,
@@ -681,8 +684,8 @@
     {
       "id": "cd59dfa9-6289-40f9-b5c1-d76b1565501d",
       "clientId": "admin-api",
-      "rootUrl": "https://divoc.xiv.in/keycloak/auth/realms/divoc/account/",
-      "adminUrl": "https://divoc.xiv.in/keycloak/auth/realms/divoc/account/",
+      "rootUrl": "https://sunbird-rc.xiv.in/keycloak/auth/realms/sunbird-rc/account/",
+      "adminUrl": "https://sunbird-rc.xiv.in/keycloak/auth/realms/sunbird-rc/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
@@ -690,15 +693,15 @@
       "secret": "**********",
       "redirectUris": [
         "https://localhost:4202/*",
-        "https://divoc.xiv.in",
-        "https://divoc.xiv.in/keycloak/auth/realms/divoc/account/*",
+        "https://sunbird-rc.xiv.in",
+        "https://sunbird-rc.xiv.in/keycloak/auth/realms/sunbird-rc/account/*",
         "https://localhost:4200/*",
         "https://oauth.pstmn.io/v1/callback",
         "http://ndear.xiv.in/*"
       ],
       "webOrigins": [
         "https://localhost:4202/*",
-        "https://divoc.xiv.in",
+        "https://sunbird-rc.xiv.in",
         "https://localhost:4200/*"
       ],
       "notBefore": 0,
@@ -878,7 +881,7 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "**********",
       "redirectUris": [
-        "https://divoc-portal.xiv.in/*"
+        "https://sunbird-rc-portal.xiv.in/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -896,7 +899,7 @@
         "saml.force.post.binding": "false",
         "saml.multivalued.roles": "false",
         "saml.encrypt": "false",
-        "login_theme": "divoc",
+        "login_theme": "sunbird-rc",
         "saml.server.signature": "false",
         "saml.server.signature.keyinfo.ext": "false",
         "exclude.session.state.from.auth.response": "false",
@@ -964,7 +967,7 @@
     {
       "id": "ac354645-3c3c-4592-879b-20a2f4f48302",
       "clientId": "certificate-login",
-      "rootUrl": "https://divoc.xiv.in/certificate/",
+      "rootUrl": "https://sunbird-rc.xiv.in/certificate/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
@@ -972,15 +975,15 @@
       "secret": "**********",
       "redirectUris": [
         "http://192.168.0.103:3000/*",
-        "https://divoc.xiv.in/*",
+        "https://sunbird-rc.xiv.in/*",
         "http://localhost:3000/*",
         "*",
-        "https://divoc.xiv.in/certificate/",
+        "https://sunbird-rc.xiv.in/certificate/",
         "http://localhost/certificate/*",
-        "https://divoc.xiv.in/certificate/*"
+        "https://sunbird-rc.xiv.in/certificate/*"
       ],
       "webOrigins": [
-        "https://divoc.xiv.in",
+        "https://sunbird-rc.xiv.in",
         "*",
         "http://localhost",
         "http://192.168.0.103:3000",
@@ -1284,14 +1287,14 @@
       "clientId": "security-admin-console",
       "name": "${client_security-admin-console}",
       "rootUrl": "${authAdminUrl}",
-      "baseUrl": "/admin/divoc/console/",
+      "baseUrl": "/admin/sunbird-rc/console/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "secret": "**********",
       "redirectUris": [
-        "/admin/divoc/console/*"
+        "/admin/sunbird-rc/console/*"
       ],
       "webOrigins": [
         "+"
@@ -1351,7 +1354,7 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "**********",
       "redirectUris": [
-        "https://divoc.xiv.in",
+        "https://sunbird-rc.xiv.in",
         "https://oauth.pstmn.io/v1/callback"
       ],
       "webOrigins": [],

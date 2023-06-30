@@ -397,6 +397,14 @@ Feature: Registry api tests
     When method get
     Then status 200
     And response.osid.length > 0
+  # get student info with view template
+    Given url registryUrl
+    And path 'api/v1/StudentWithPassword/' + studentOsid
+    And header Authorization = student_token
+    And header viewTemplateId = 'student_view_template.json'
+    When method get
+    Then status 200
+    * match response.contactDetails == { mobile: '#notpresent', email: '#present', osid: '#present' }
 
 Scenario: Create birth certificate schema, issue credentials then revoke the credential and check for CRUD APIS
 #    get admin token
@@ -508,7 +516,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And response.params.errmsg == "entity status is inactive"
 
 
-  @env=events
+  @env=async
   Scenario: Check if events are published
   # should get metrics
     * sleep(11000)
@@ -521,7 +529,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And assert response.birthcertificate.ADD == "1"
     And assert response.birthcertificate.DELETE == "1"
 
-  @env=notification
+  @env=async
   Scenario: Check if notifications are sent
     Given url notificationsUrl
     And path '/notification-service/v1/notification'
