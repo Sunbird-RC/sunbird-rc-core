@@ -98,6 +98,7 @@ public class Response {
 		ENCRYPT(getApiName() + ".utils.encrypt"),
 		DECRYPT(getApiName() + ".utils.decrypt"),
         SEND(getApiName() + ".registry.send"),
+		REVOKE(getApiName() + ".utils.revoke"),
 		NONE("");
         private String id;
 
