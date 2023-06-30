@@ -32,7 +32,7 @@ test: build
 	@docker-compose down
 	@rm -rf db-data* || echo "no permission to delete"
 	# test with distributed definition manager and native search
-	@SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 MANAGER_TYPE=DistributedDefinitionsManager DB_DIR=db-data-1 docker-compose up -d db es keycloak registry certificate-signer certificate-api redis
+	@SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 MANAGER_TYPE=DistributedDefinitionsManager DB_DIR=db-data-1 docker-compose up -d db keycloak registry certificate-signer certificate-api redis
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
