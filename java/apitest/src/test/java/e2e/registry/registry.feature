@@ -345,137 +345,224 @@ Feature: Registry api tests
     And assert response[0].address[0].phoneNo.length == 1
     And assert response[0].address[0].phoneNo[0] == "444"
 
-    Scenario: write a api test, to test the schema not found error
-      #  make keycloak authentication enabled:false in file application.yml
-      #  make serach providerName: ${search_providerName:dev.sunbirdrc.registry.service.ElasticSearchService}
-         in file application.yml
-        * url baseUrl(http://localhost:8081)
+  Scenario: write a api test, to test the schema not found error
+  # get admin token
+    * url authUrl
+    * path 'auth/realms/sunbird-rc/protocol/openid-connect/token'
+    * header Content-Type = 'application/x-www-form-urlencoded; charset=utf-8'
+    * header Host = 'keycloak:8080'
+    * form field grant_type = 'client_credentials'
+    * form field client_id = 'admin-api'
+    * form field client_secret = client_secret
+    * method post
+    Then status 200
+    And print response.access_token
+    * def admin_token = 'Bearer ' + response.access_token
+   # invite schema which is unavailable/not found
+    Given url registryUrl
+    And path 'api/v1/Teacher1/invite'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method post
+    Then status 404
+    And print response
+    And response.params.status == "UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # delete unavailable schema with id
+    Given url registryUrl
+    And path '/api/v1/Teacher1/123'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method delete
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # search unavailable schema
+    Given url registryUrl
+    And path '/api/v1/Teacher1/search'
+    And header Authorization = admin_token
+    And request { "filters": { } }
+    When method post
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # update unavailable schema with id
+    Given url registryUrl
+    And path '/api/v1/Teacher1/{entityId}'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method put
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # post unavailable schema with name
+    Given url registryUrl
+    And path '/api/v1/{entityName}'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method post
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # update unavailable schema
+    Given url registryUrl
+    And path '/api/v1/Teacher1/123/contact/456'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method put
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # update unavailable schema
+    Given url registryUrl
+    And path '/api/v1/Teacher1/123/name/'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method post
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # get unavailable schema
+    Given url registryUrl
+    And path '/partner/api/v1/Teacher1'
+    And header Authorization = admin_token
+    When method get
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # get unavailable schema with id and
+    Given url registryUrl
+    And path '/api/v1/Teacher1/123'
+    And header Authorization = admin_token
+    When method get
+    And request read('TeacherRequest.json')
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # get unavailable schema with id
+    Given url registryUrl
+    And path '/api/v1/Teacher1/{entityId}'
+    And header Authorization = admin_token
+    When method get
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # get unavailable schema with name
+    Given url registryUrl
+    And path '/api/v1/Teacher1'
+    And header Authorization = admin_token
+    When method get
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+  # patch unavailable schema with name
+    Given url registryUrl
+    And path '/api/v1/{entityName}/{entityId}'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method patch
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+ # patch unavailable schema with sign
+    Given url registryUrl
+    And path '/api/v1/Teacher/sign'
+    And header Authorization = admin_token
+    And request read('TeacherRequest.json')
+    When method patch
+    Then status 404
+    Then response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
+ # get unavailable schema with attestations
+    Given url registryUrl
+    And path '/api/v1/Teacher1/123/attestation/teacherAttest/456'
+    And header Accept = "application/json"
+    And header Content-Type = "application/json"
+    And header Authorization = admin_token
+    When method get
+    Then status 404
+    And response.params.status =="UNSUCCESSFUL"
+    And response.params.errmsg == "Schema 'Teacher1' not found"
 
-       # invite schema which is unavailable/not found
-        Given url baseUrl
-        And path 'api/v1/{entityName}/invite'
-        method post
-        Body.raw.json - schema data in json format
-        Then status 404
-        And response.params.status == "UNSUCCESSFUL"
-        And response.params.errmsg == "Schema '%s' not found"
+  Scenario: Create student with password schema and verify if password is set
+  #    get admin token
+    * url authUrl
+    * path 'auth/realms/sunbird-rc/protocol/openid-connect/token'
+    * header Content-Type = 'application/x-www-form-urlencoded; charset=utf-8'
+    * header Host = 'keycloak:8080'
+    * form field grant_type = 'client_credentials'
+    * form field client_id = 'admin-api'
+    * form field client_secret = client_secret
+    * method post
+    Then status 200
+    And print response.access_token
+    * def admin_token = 'Bearer ' + response.access_token
+# create student schema
+    Given url registryUrl
+    And path 'api/v1/Schema'
+    And header Authorization = admin_token
+    And request read('StudentWithPasswordSchemaRequest.json')
+    When method post
+    Then status 200
+    And response.params.status == "SUCCESSFUL"
+  # invite entity for student
+    Given url registryUrl
+    And path 'api/v1/StudentWithPassword/invite'
+    * def studentRequest = read('StudentWithPasswordRequest.json')
+    And request studentRequest
+    When method post
+    Then status 200
+    * def studentOsid = response.result.StudentWithPassword.osid
+  #  get student token
+    * url authUrl
+    * path 'auth/realms/sunbird-rc/protocol/openid-connect/token'
+    * header Content-Type = 'application/x-www-form-urlencoded; charset=utf-8'
+    * header Host = 'keycloak:8080'
+    * form field grant_type = 'password'
+    * form field client_id = 'registry-frontend'
+    * form field username = studentRequest.contactDetails.mobile
+    * form field password = studentRequest.userDetails.passkey
+    * method post
+    Then status 200
+    And print response.access_token
+    * def student_token = 'Bearer ' + response.access_token
+    * sleep(3000)
+  # get student info
+    Given url registryUrl
+    And path 'api/v1/StudentWithPassword/' + studentOsid
+    And header Authorization = student_token
+    When method get
+    Then status 200
+    And response.osid.length > 0
+  # get student info with view template
+    Given url registryUrl
+    And path 'api/v1/StudentWithPassword/' + studentOsid
+    And header Authorization = student_token
+    And header viewTemplateId = 'student_view_template.json'
+    When method get
+    Then status 200
+    * match response.contactDetails == { mobile: '#notpresent', email: '#present', osid: '#present' }
 
-      # delete unavailable schema with id
-        Given url baseUrl
-        And path '/api/v1/{entityName}/{entityId}'
-        When method delete
-        Then status 404
-        response.status =="UNSUCCESSFUL"
-        And response.params.errmsg == "Schema '%s' not found"
+  @env=async
+  Scenario: Check if events are published
+  # should get metrics
+    * sleep(11000)
+    Given url metricsUrl
+    And path '/v1/metrics'
+    When method get
+    Then status 200
+    And assert response.birthcertificate.READ == "5"
+    And assert response.birthcertificate.UPDATE == "1"
+    And assert response.birthcertificate.ADD == "1"
+    And assert response.birthcertificate.DELETE == "1"
 
-      # serach unavailable schema
-        Given url baseUrl
-        And path '/api/v1/{entityName}/search'
-        And request { "filters": { "osid": {"eq":"1-ca9f97a9-ecea-406e-ba2c-b38d1c8d8aa8" } } }
-        method post
-        Then status 404
-        response.status =="UNSUCCESSFUL"
-        And response.params.errmsg == "Schema '%s' not found"
-
-       # update unavailable schema with id
-         Given url baseUrl
-         And path '/api/v1/{entityName}/{entityId}'
-         Body.raw.json - schema data in json format
-         method put
-         Then status 404
-         response.status =="UNSUCCESSFUL"
-         And response.params.errmsg == "Schema '%s' not found"
-
-        # post unavailable schema with name
-          Given url baseUrl
-          And path '/api/v1/{entityName}'
-          Body.raw.json - schema data in json format
-          method post
-          Then status 404
-          status =="UNSUCCESSFUL"
-          And response.params.errmsg == "Schema '%s' not found"
-
-         # update unavailable schema
-           Given url baseUrl
-           And path '/api/v1/{entityName}/{entityId}/**'
-           Body.raw.json - schema data in json format
-           method put
-           Then status 404
-           status =="UNSUCCESSFUL"
-           And response.params.errmsg == "Schema '%s' not found"
-
-        # update unavailable schema
-          Given url baseUrl
-          And path '/api/v1/{entityName}/{entityId}/**'
-          Body.raw.json - schema data in json format
-          method post
-          Then status 404
-          status =="UNSUCCESSFUL"
-          And response.params.errmsg == "Schema '%s' not found"
-
-        # get unavailable schema
-          Given url baseUrl
-          And path '/partner/api/v1/{entityName}'
-          method get
-          Then status 404
-          status =="UNSUCCESSFUL"
-          And response.params.errmsg == "Schema '%s' not found"
-
-        # get unavailable schema with id and
-          Given url baseUrl
-          And path '/api/v1/{entityName}/{entityId}'
-          method get
-          header Content-Type - application/pdf or application/json
-          Then status 404
-          status =="UNSUCCESSFUL"
-          And response.params.errmsg == "Schema '%s' not found"
-
-        # get unavailable schema with id
-          Given url baseUrl
-          nd path '/api/v1/{entityName}/{entityId}'
-          method get
-          Then status 404
-          status =="UNSUCCESSFUL"
-          And response.params.errmsg == "Schema '%s' not found"
-
-       # get unavailable schema with name
-         Given url baseUrl
-         And path '/api/v1/{entityName}'
-         method get
-         Then status 404
-         status =="UNSUCCESSFUL"
-         And response.params.errmsg == "Schema '%s' not found"
-
-      # patch unavailable schema with name
-        Given url baseUrl
-        And path '/api/v1/{entityName}/{entityId}'
-        method patch
-        Body.raw.json - schema data in json format
-        Then status 404
-        status =="UNSUCCESSFUL"
-        And response.params.errmsg == "Schema '%s' not found"
-
-     # patch unavailable schema with sign
-       Given url baseUrl
-       And path '/api/v1/{entityName}/sign'
-       method patch
-       Then status 404
-       status =="UNSUCCESSFUL"
-       And response.params.errmsg == "Schema '%s' not found
-
-     # get unavailable schema with attestations
-       Given url baseUrl
-       And path '/api/v1/{entityName}/{entityId}/attestation/{attestationName}/{attestationId}'
-       header Accept - application/json, Content-Type - application/json
-       method get
-       Then status 404
-       status =="UNSUCCESSFUL"
-       And response.params.errmsg == "Schema '%s' not found"
-
-
-
-
-
-
-
-
+  @env=async
+  Scenario: Check if notifications are sent
+    Given url notificationsUrl
+    And path '/notification-service/v1/notification'
+    When method get
+    Then status 200
+    * def studentRequest = read('StudentRequest.json')
+    * def notificationStudent = studentRequest.contact
+    And print response[notificationStudent]
+    And assert response[notificationStudent] != null

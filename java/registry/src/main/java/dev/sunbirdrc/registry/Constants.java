@@ -34,4 +34,5 @@ public class Constants {
     public static final String FILE_URL = "fileUrl";
 
     public static final String CREDENTIAL_TEMPLATE = "credentialTemplate";
+    public static final String VIEW_TEMPLATE_ID = "viewTemplateId";
 }

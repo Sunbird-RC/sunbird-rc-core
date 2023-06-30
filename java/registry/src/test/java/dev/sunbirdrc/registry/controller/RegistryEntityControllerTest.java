@@ -15,6 +15,7 @@ import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.transform.*;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -70,6 +71,9 @@ public class RegistryEntityControllerTest {
     private AbstractController abstractController;
     @InjectMocks
     private RegistryEntityController registryEntityController;
+
+    @MockBean
+    private ViewTemplateManager viewTemplateManager;
 
     @Before
     public void setUp() {
