@@ -2,7 +2,7 @@ version: "2.4"
 
 services:
   es:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.1
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -43,6 +43,7 @@ services:
       - event_topic=events
       - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
       - elastic_search_connection_url=es:9200
+      - elastic_search_scheme=${ELASTIC_SEARCH_SCHEME-http}
       - elastic_search_auth_enabled=${ELASTIC_SECURITY_ENABLED-false}
       - elastic_search_username=${ELASTIC_SEARCH_USERNAME-elastic}
       - elastic_search_password=${ELASTIC_SEARCH_PASSWORD}
@@ -80,6 +81,9 @@ services:
       - redis_host=redis
       - redis_port=6379
       - manager_type=${MANAGER_TYPE-DefinitionsManager}
+      - notification_async_enabled=${NOTIFICATION_ASYNC_ENABLED-false}
+      - notification_enabled=${NOTIFICATION_ENABLED-false}
+      - notification_url=${NOTIFICATION_URL-http://notification-ms:8765/notification-service/v1/notification}
     ports:
       - "8081:8081"
     depends_on:
@@ -193,6 +197,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+    environment:
+      - TRACK_NOTIFICATIONS=${TRACK_NOTIFICATIONS-false}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS-kafka:9092}
+    depends_on:
+      kafka:
+        condition: service_started
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
@@ -216,7 +226,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
     healthcheck:
       test:
-        [ "CMD", "kafka-topics", "--list", "--zookeeper", "zookeeper:2181" ]
+        [ "CMD", "kafka-topics", "--list", "--bootstrap-server", "localhost:9092" ]
       interval: 30s
       timeout: 10s
       retries: 10

@@ -149,6 +149,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String schemaUrl;
 	@Value("${httpConnection.maxConnections:5}")
 	private int httpMaxConnections;
+	@Value("${elastic.search.scheme}")
+	private String scheme;
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 	@Autowired
@@ -434,6 +436,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			elasticService.setAuthEnabled(Boolean.parseBoolean(authEnabled));
 			elasticService.setUserName(username);
 			elasticService.setPassword(password);
+			elasticService.setScheme(scheme);
 			elasticService.init(iDefinitionsManager.getAllKnownDefinitions());
 		}
 		return elasticService;

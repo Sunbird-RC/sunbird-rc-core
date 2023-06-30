@@ -135,7 +135,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
                 if (attestationPolicyOptional.isPresent() && attestationPolicyOptional.get().getCreatedBy().equals(userId)) {
                     logger.info("Updating attestation policy status of id: {}", policyId);
                     AttestationPolicy attestationPolicy = attestationPolicyOptional.get();
-                    registryHelper.deleteAttestationPolicy(attestationPolicy);
+                    registryHelper.deleteAttestationPolicy(entityName, attestationPolicy);
                     response.setResult("deleted");
                     responseParams.setStatus(Response.Status.SUCCESSFUL);
                     return new ResponseEntity<>(response, HttpStatus.OK);

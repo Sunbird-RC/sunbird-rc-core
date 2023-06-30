@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "registry.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "registry.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "registry.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "registry.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "registry.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: "{{ .Release.Name }}-config"
+          env:
+            - name: connectionInfo_password
+              valueFrom:
+                secretKeyRef:
+                  name: rc-secret
+                  key: DB_PASSWORD
+            - name: sunbird_keycloak_user_password
+              valueFrom:
+                secretKeyRef:
+                  name: rc-secret
+                  key: KEYCLOAK_DEFAULT_USER_PASSWORD
+            - name: filestorage_secret_key
+              valueFrom:
+                secretKeyRef:
+                  name: rc-secret
+                  key: MINIO_SECRET_KEY
+            - name: elastic_search_password
+              valueFrom:
+                secretKeyRef:
+                  name: rc-secret
+                  key: ELASTIC_SEARCH_PASSWORD
+            - name: sunbird_sso_admin_client_secret
+              valueFrom:
+                secretKeyRef:
+                  name: rc-secret
+                  key: KEYCLOAK_ADMIN_CLIENT_SECRET
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/docs/swagger.json
+              port: {{ .Values.service.port }}
+            failureThreshold: 20
+            periodSeconds: 30
+            timeoutSeconds: 10
+            initialDelaySeconds: 30
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            failureThreshold: 20
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: {{ .Chart.Name }}-schemas
+              mountPath: /home/sunbirdrc/config/public/_schemas
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ .Chart.Name }}-schemas
+          configMap:
+            name: {{ .Chart.Name }}-schemas
