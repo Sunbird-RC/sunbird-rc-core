@@ -1,7 +1,7 @@
 #SOURCES = $(wildcard java/**/*.java)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SOURCES := $(call rwildcard,java/,*.java)
-RELEASE_VERSION = v0.0.13
+RELEASE_VERSION = v0.0.14
 IMAGES := dockerhub/sunbird-rc-core dockerhub/sunbird-rc-nginx dockerhub/sunbird-rc-context-proxy-service \
 			dockerhub/sunbird-rc-public-key-service dockerhub/sunbird-rc-keycloak dockerhub/sunbird-rc-certificate-api \
 			dockerhub/sunbird-rc-certificate-signer dockerhub/sunbird-rc-notification-service dockerhub/sunbird-rc-claim-ms \
