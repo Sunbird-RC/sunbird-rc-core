@@ -124,7 +124,6 @@ public class RegistryEntityController extends AbstractController {
     private void createSchemaNotFoundResponse(String errorMessage, ResponseParams responseParams) {
         responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         responseParams.setErrmsg(errorMessage);
-
     }
 
     private void checkEntityNameInDefinitionManager(String entityName) throws RecordNotFoundException {
@@ -846,7 +845,11 @@ public class RegistryEntityController extends AbstractController {
         } catch (RecordNotFoundException re) {
             createSchemaNotFoundResponse(re.getMessage(), responseParams);
             Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            try {
+                return new ResponseEntity<>(objectMapper.writeValueAsString(response), HttpStatus.NOT_FOUND);
+            } catch (JsonProcessingException e) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
         } catch (AttestationNotFoundException e) {
             logger.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

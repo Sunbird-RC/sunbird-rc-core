@@ -38,6 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
@@ -104,7 +105,7 @@ public class RegistryEntityControllerTest {
                                 return mockHttpServletRequest;
                             })
                 )
-                .andExpect(status().isOk());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -148,7 +149,7 @@ public class RegistryEntityControllerTest {
                                     return mockHttpServletRequest;
                                 })
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -174,7 +175,7 @@ public class RegistryEntityControllerTest {
                                     return mockHttpServletRequest;
                                 })
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
