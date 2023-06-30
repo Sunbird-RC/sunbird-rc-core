@@ -83,10 +83,6 @@
             <version>4.3.1</version>
         </dependency>
         <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-client</artifactId>
             <version>3.9.1.Final</version>
