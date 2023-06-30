@@ -344,3 +344,138 @@ Feature: Registry api tests
     Then status 200
     And assert response[0].address[0].phoneNo.length == 1
     And assert response[0].address[0].phoneNo[0] == "444"
+
+    Scenario: write a api test, to test the schema not found error
+      #  make keycloak authentication enabled:false in file application.yml
+      #  make serach providerName: ${search_providerName:dev.sunbirdrc.registry.service.ElasticSearchService}
+         in file application.yml
+        * url baseUrl(http://localhost:8081)
+
+       # invite schema which is unavailable/not found
+        Given url baseUrl
+        And path 'api/v1/{entityName}/invite'
+        method post
+        Body.raw.json - schema data in json format
+        Then status 404
+        And response.params.status == "UNSUCCESSFUL"
+        And response.params.errmsg == "Schema '%s' not found"
+
+      # delete unavailable schema with id
+        Given url baseUrl
+        And path '/api/v1/{entityName}/{entityId}'
+        When method delete
+        Then status 404
+        response.status =="UNSUCCESSFUL"
+        And response.params.errmsg == "Schema '%s' not found"
+
+      # serach unavailable schema
+        Given url baseUrl
+        And path '/api/v1/{entityName}/search'
+        And request { "filters": { "osid": {"eq":"1-ca9f97a9-ecea-406e-ba2c-b38d1c8d8aa8" } } }
+        method post
+        Then status 404
+        response.status =="UNSUCCESSFUL"
+        And response.params.errmsg == "Schema '%s' not found"
+
+       # update unavailable schema with id
+         Given url baseUrl
+         And path '/api/v1/{entityName}/{entityId}'
+         Body.raw.json - schema data in json format
+         method put
+         Then status 404
+         response.status =="UNSUCCESSFUL"
+         And response.params.errmsg == "Schema '%s' not found"
+
+        # post unavailable schema with name
+          Given url baseUrl
+          And path '/api/v1/{entityName}'
+          Body.raw.json - schema data in json format
+          method post
+          Then status 404
+          status =="UNSUCCESSFUL"
+          And response.params.errmsg == "Schema '%s' not found"
+
+         # update unavailable schema
+           Given url baseUrl
+           And path '/api/v1/{entityName}/{entityId}/**'
+           Body.raw.json - schema data in json format
+           method put
+           Then status 404
+           status =="UNSUCCESSFUL"
+           And response.params.errmsg == "Schema '%s' not found"
+
+        # update unavailable schema
+          Given url baseUrl
+          And path '/api/v1/{entityName}/{entityId}/**'
+          Body.raw.json - schema data in json format
+          method post
+          Then status 404
+          status =="UNSUCCESSFUL"
+          And response.params.errmsg == "Schema '%s' not found"
+
+        # get unavailable schema
+          Given url baseUrl
+          And path '/partner/api/v1/{entityName}'
+          method get
+          Then status 404
+          status =="UNSUCCESSFUL"
+          And response.params.errmsg == "Schema '%s' not found"
+
+        # get unavailable schema with id and
+          Given url baseUrl
+          And path '/api/v1/{entityName}/{entityId}'
+          method get
+          header Content-Type - application/pdf or application/json
+          Then status 404
+          status =="UNSUCCESSFUL"
+          And response.params.errmsg == "Schema '%s' not found"
+
+        # get unavailable schema with id
+          Given url baseUrl
+          nd path '/api/v1/{entityName}/{entityId}'
+          method get
+          Then status 404
+          status =="UNSUCCESSFUL"
+          And response.params.errmsg == "Schema '%s' not found"
+
+       # get unavailable schema with name
+         Given url baseUrl
+         And path '/api/v1/{entityName}'
+         method get
+         Then status 404
+         status =="UNSUCCESSFUL"
+         And response.params.errmsg == "Schema '%s' not found"
+
+      # patch unavailable schema with name
+        Given url baseUrl
+        And path '/api/v1/{entityName}/{entityId}'
+        method patch
+        Body.raw.json - schema data in json format
+        Then status 404
+        status =="UNSUCCESSFUL"
+        And response.params.errmsg == "Schema '%s' not found"
+
+     # patch unavailable schema with sign
+       Given url baseUrl
+       And path '/api/v1/{entityName}/sign'
+       method patch
+       Then status 404
+       status =="UNSUCCESSFUL"
+       And response.params.errmsg == "Schema '%s' not found
+
+     # get unavailable schema with attestations
+       Given url baseUrl
+       And path '/api/v1/{entityName}/{entityId}/attestation/{attestationName}/{attestationId}'
+       header Accept - application/json, Content-Type - application/json
+       method get
+       Then status 404
+       status =="UNSUCCESSFUL"
+       And response.params.errmsg == "Schema '%s' not found"
+
+
+
+
+
+
+
+
