@@ -133,7 +133,7 @@ public abstract class DatabaseProvider implements HealthIndicator {
     protected void setUuidPropertyName(String uuidPropertyName) {
         this.uuidPropertyName = uuidPropertyName;
     }
-   
+
     /**
      * Creates index
      */
@@ -152,7 +152,11 @@ public abstract class DatabaseProvider implements HealthIndicator {
     public void createCompositeIndex(Graph graph, String label, List<String> propertyNames){
         //Does nothing, suppose to be overridden by extended classes.
     }
-        
+
+    public void createCompositeUniqueIndex(Graph graph, String label, List<String> propertyNames){
+        //Does nothing, suppose to be overridden by extended classes.
+    }
+
     public Constants.GraphDatabaseProvider getProvider() {
         return this.provider;
     }

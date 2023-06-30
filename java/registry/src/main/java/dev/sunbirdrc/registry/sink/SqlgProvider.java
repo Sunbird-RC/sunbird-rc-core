@@ -72,10 +72,19 @@ public class SqlgProvider extends DatabaseProvider {
     @Override
     public void createCompositeIndex(Graph graph, String label, List<String> propertyNames) {
 		if (propertyNames.size() > 0) {
-	        ensureCompositeIndex(graph, label, propertyNames);
+	        ensureCompositeIndex(graph, label, propertyNames, IndexType.NON_UNIQUE);
 		} else {
 			logger.info("Could not create composite index for empty properties");
 		}
+    }
+
+    @Override
+    public void createCompositeUniqueIndex(Graph graph, String label, List<String> propertyNames) {
+        if (propertyNames.size() > 0) {
+            ensureCompositeIndex(graph, label, propertyNames, IndexType.UNIQUE);
+        } else {
+            logger.info("Could not create composite index for empty properties");
+        }
     }
 
     @Override
@@ -89,68 +98,68 @@ public class SqlgProvider extends DatabaseProvider {
 
     /**
      * creates sqlg index for a given index type(unique/non-unique)
-     * 
+     *
      * @param graph
      * @param indexType
      * @param label
      * @param propertyNames
      */
+
     private void createIndexByIndexType(Graph graph, IndexType indexType, String label, List<String> propertyNames) {
         for (String propertyName : propertyNames) {
-            List<String> subProperties = Arrays.stream(propertyName.split("[.]")).collect(Collectors.toList());
-            if(subProperties.size() == 1) {
-                VertexLabel vertexLabel = getVertex(graph, label);
-                List<PropertyColumn> properties = new ArrayList<>();
-                properties.add(vertexLabel.getProperty(propertyName.split("[.]")[0]).get());
-                ensureIndex(vertexLabel, indexType, properties);
+            List<String> indexPropertyPath =  Arrays.stream(propertyName.split("[.]")).collect(Collectors.toList());
+            int indexPropertiesLength = indexPropertyPath.size();
+            if(indexPropertiesLength == 1) {
+                createIndexOnVertex(label, indexPropertyPath.get(0), indexType, graph);
             }
             else {
-                List<String> subsequentPropertyNames = getSubsequentPropertyNames(subProperties);
-                createIndexByIndexType(graph, indexType, subProperties.get(0), subsequentPropertyNames);
+                createIndexOnVertex(indexPropertyPath.get(indexPropertiesLength - 2),
+                        indexPropertyPath.get(indexPropertiesLength - 1), indexType, graph);
             }
         }
-//        createIndexByIndexType(graph, indexType, propertyNames.get(0).split("[.]")[0], propertyNames.subList(1, propertyNames.size()));
-//        VertexLabel vertexLabel1 = getVertex(graph, propertyNames.get(0).split("[.]")[0]);
     }
 
-    private List<String> getSubsequentPropertyNames(List<String> properties) {
-        List<String> subsequentProperties = new ArrayList<>();
-        properties = properties.subList(1, properties.size());
-        String sep = ".";
-        int totalLengthOfSubsequentProperties = getStringLengthWithSeparator(properties, sep);
-        String propertyString = getPropertyString(properties, sep, totalLengthOfSubsequentProperties);
-        subsequentProperties.add(propertyString);
-        return subsequentProperties;
-    }
-
-    private String getPropertyString(List<String> properties, String separator, int totalLengthOfSubsequentProperties) {
-        StringBuilder stringBuilder = new StringBuilder(totalLengthOfSubsequentProperties);
-        properties.forEach(property -> stringBuilder.append(separator).append(property));
-        return stringBuilder.substring(separator.length());
-    }
-
-    private int getStringLengthWithSeparator(List<String> properties, String sep) {
-        int length = sep.length() * properties.size();
-        for(String property: properties) {
-            length += property.length();
-        }
-        return length;
+    private void createIndexOnVertex(String label, String property, IndexType indexType, Graph graph) {
+        VertexLabel vertexLabel = getVertex(graph, label);
+        List<PropertyColumn> properties = new ArrayList<>();
+        Optional<PropertyColumn> propertyColumnOptional = vertexLabel.getProperty(property);
+        propertyColumnOptional.ifPresent(properties::add);
+        propertyColumnOptional.orElseThrow(() -> new RuntimeException("Property not found"));
+        ensureIndex(vertexLabel, indexType, properties);
     }
 
     /**
      * ensures composite index for a given label for non-unique index type
+     *
      * @param graph
      * @param label
      * @param propertyNames
+     * @param indexType
      */
-    private void ensureCompositeIndex(Graph graph, String label, List<String> propertyNames) {
+    private void ensureCompositeIndex(Graph graph, String label, List<String> propertyNames, IndexType indexType) {
         VertexLabel vertexLabel = getVertex(graph, label);
         List<PropertyColumn> properties = new ArrayList<>();
 
         for (String propertyName : propertyNames) {
-            properties.add(vertexLabel.getProperty(propertyName).get());
+            List<String> indexPropertyPath =  Arrays.stream(propertyName.split("[.]")).collect(Collectors.toList());
+            int indexPropertiesLength = indexPropertyPath.size();
+            if(indexPropertiesLength == 1) {
+                Optional<PropertyColumn> property = vertexLabel.getProperty(propertyName);
+                property.ifPresent(properties::add);
+                property.orElseThrow(() -> new RuntimeException("Property not found"));
+            }
+            else {
+                // composite fields should be of the same entity type
+                vertexLabel = getVertex(graph, indexPropertyPath.get(indexPropertiesLength - 2));
+                Optional<PropertyColumn> property = vertexLabel.getProperty(indexPropertyPath.get(indexPropertiesLength - 1));
+                property.ifPresent(properties::add);
+                property.orElseThrow(() -> new RuntimeException("Property not found"));
+            }
+
         }
-        ensureIndex(vertexLabel, IndexType.NON_UNIQUE, properties);
+        if (properties.size() > 0) {
+            ensureIndex(vertexLabel, indexType, properties);
+        }
     }
     /**
      * Ensures that the vertex table exist in the db.
