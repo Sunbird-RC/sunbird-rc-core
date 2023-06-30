@@ -516,7 +516,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And response.params.errmsg == "entity status is inactive"
 
 
-  @env=events
+  @env=async
   Scenario: Check if events are published
   # should get metrics
     * sleep(11000)
@@ -529,7 +529,7 @@ Scenario: Create birth certificate schema, issue credentials then revoke the cre
     And assert response.birthcertificate.ADD == "1"
     And assert response.birthcertificate.DELETE == "1"
 
-  @env=notification
+  @env=async
   Scenario: Check if notifications are sent
     Given url notificationsUrl
     And path '/notification-service/v1/notification'
