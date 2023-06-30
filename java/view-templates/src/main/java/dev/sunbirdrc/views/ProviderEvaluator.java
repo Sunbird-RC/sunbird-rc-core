@@ -11,7 +11,7 @@ public class ProviderEvaluator implements IEvaluator<Object> {
     @Override
     public Object evaluate() {
         IViewFunctionProvider<Object> viewFuntionProvider = getInstance(function.getExpression());
-        Object result = viewFuntionProvider.doAction(function.getArgValues());
+        Object result = viewFuntionProvider.doAction(function.getArgValues(), function.getArgumentsPath());
         return result;
     }
 

@@ -1,4 +1,4 @@
-package org.example.provider;
+package dev.sunbirdrc.provider;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,9 +24,14 @@ public class UUIDFunctionProvider implements IViewFunctionProvider<String> {
         return generateUUID(values);
     }
 
+    @Override
+    public String doAction(List<Object> values, String[] paths) {
+        return doAction(values);
+    }
+
     /**
      * simple concat for the values as string and comma(',') as seperator
-     * 
+     *
      * @param args
      * @return
      */

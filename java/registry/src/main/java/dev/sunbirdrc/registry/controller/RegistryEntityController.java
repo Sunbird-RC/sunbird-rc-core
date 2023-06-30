@@ -24,7 +24,9 @@ import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
+import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import dev.sunbirdrc.validators.ValidationException;
+import org.agrona.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +64,8 @@ public class RegistryEntityController extends AbstractController {
     @Autowired
     private AsyncRequest asyncRequest;
 
+    @Autowired
+    private ViewTemplateManager viewTemplateManager;
 
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
@@ -434,7 +438,8 @@ public class RegistryEntityController extends AbstractController {
             {MediaType.APPLICATION_PDF_VALUE, MediaType.TEXT_HTML_VALUE, Constants.SVG_MEDIA_TYPE})
     public ResponseEntity<Object> getEntityType(@PathVariable String entityName,
                                                 @PathVariable String entityId,
-                                                HttpServletRequest request) {
+                                                HttpServletRequest request,
+                                                @RequestHeader(required = false) String viewTemplateId) {
         if (registryHelper.doesEntityOperationRequireAuthorization(entityName) && securityEnabled) {
             try {
                 registryHelper.authorize(entityName, entityId, request);
@@ -448,7 +453,8 @@ public class RegistryEntityController extends AbstractController {
         }
         try {
             String readerUserId = getUserId(entityName, request);
-            JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
+            JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false,
+                            viewTemplateManager.getViewTemplateById(viewTemplateId), false)
                     .get(entityName);
             JsonNode signedNode = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
             return new ResponseEntity<>(certificateService.getCertificate(signedNode,
@@ -491,7 +497,8 @@ public class RegistryEntityController extends AbstractController {
     public ResponseEntity<Object> getEntity(
             @PathVariable String entityName,
             @PathVariable String entityId,
-            @RequestHeader HttpHeaders header, HttpServletRequest request) {
+            @RequestHeader HttpHeaders header, HttpServletRequest request,
+            @RequestHeader(required = false) String viewTemplateId) {
         boolean requireLDResponse = false;
         boolean requireVCResponse = false;
         for (MediaType t: header.getAccept()) {
@@ -517,7 +524,7 @@ public class RegistryEntityController extends AbstractController {
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
             String readerUserId = getUserId(entityName, request);
-            JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId);
+            JsonNode node = getEntityJsonNode(entityName, entityId, requireLDResponse, readerUserId, viewTemplateId);
             if(requireLDResponse) {
                 addJsonLDSpec(node);
             } else if (requireVCResponse) {
@@ -546,8 +553,10 @@ public class RegistryEntityController extends AbstractController {
 
     }
 
-    private JsonNode getEntityJsonNode(@PathVariable String entityName, @PathVariable String entityId, boolean requireLDResponse, String userId) throws Exception {
-        JsonNode resultNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
+    private JsonNode getEntityJsonNode(@PathVariable String entityName, @PathVariable String entityId,
+                                       boolean requireLDResponse, String userId, String viewTemplateId) throws Exception {
+        JsonNode resultNode = registryHelper.readEntity(userId, entityName, entityId, false,
+                viewTemplateManager.getViewTemplateById(viewTemplateId), false);
         // Transformation based on the mediaType
         Data<Object> data = new Data<>(resultNode);
         Configuration config = configurationHelper.getResponseConfiguration(requireLDResponse);
@@ -564,16 +573,24 @@ public class RegistryEntityController extends AbstractController {
     }
 
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.GET)
-    public ResponseEntity<Object> getEntityByToken(@PathVariable String entityName, HttpServletRequest request) {
+    public ResponseEntity<Object> getEntityByToken(@PathVariable String entityName, HttpServletRequest request,
+                                                   @RequestHeader(required = false) String viewTemplateId) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
         try {
-            JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
-            if (result.get(entityName).size() > 0) {
-                ArrayNode responseFromDb = registryHelper.fetchFromDBUsingEsResponse(entityName, (ArrayNode) result.get(entityName));
-                return new ResponseEntity<>(responseFromDb, HttpStatus.OK);
+            String userId = registryHelper.getUserId(request, entityName);
+            if (!Strings.isEmpty(userId)) {
+                JsonNode responseFromDb = registryHelper.searchEntitiesByUserId(entityName, userId, viewTemplateId);
+                JsonNode entities = responseFromDb.get(entityName);
+                if (entities.size() > 0) {
+                    return new ResponseEntity<>(entities, HttpStatus.OK);
+                } else {
+                    responseParams.setErrmsg("No record found");
+                    responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                }
             } else {
-                responseParams.setErrmsg("Entity not found");
+                responseParams.setErrmsg("User id is empty");
                 responseParams.setStatus(Response.Status.UNSUCCESSFUL);
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
@@ -761,7 +778,7 @@ public class RegistryEntityController extends AbstractController {
         try {
             String tag = "RegistryController.revokeAnExistingCredential " + entityName;
             watch.start(tag);
-            JsonNode existingEntityNode = getEntityJsonNode(entityName, entityId,false, userId);
+            JsonNode existingEntityNode = getEntityJsonNode(entityName, entityId,false, userId, null);
             String signedData = existingEntityNode.get(OSSystemFields._osSignedData.name()).asText();
             if (signedData.equals(new String()) || signedData.equals(null)) {
                 throw new RecordNotFoundException("Credential is already revoked");
