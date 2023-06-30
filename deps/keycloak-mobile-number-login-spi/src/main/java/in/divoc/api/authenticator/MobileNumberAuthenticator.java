@@ -60,13 +60,13 @@ public class MobileNumberAuthenticator extends AbstractUsernameFormAuthenticator
 					if (users.size() > 0) {
 						generateOTPAndNotify(context, mobileNumber, users);
 					} else {
-						Response response = context.form().setError(System.getenv(INVALID_REGISTRATION)).createForm(MOBILE_LOGIN_UI);
+						Response response = context.form().setError(System.getenv().getOrDefault(INVALID_REGISTRATION, "No user found with this username")).createForm(MOBILE_LOGIN_UI);
 						context.failure(AuthenticationFlowError.INVALID_USER, response);
 					}
 				}
 			}
 			else {
-				Response response = context.form().setError(System.getenv(INVALID_USERNAME)).createForm(MOBILE_LOGIN_UI);
+				Response response = context.form().setError(System.getenv().getOrDefault(INVALID_USERNAME, "Please enter correct Username")).createForm(MOBILE_LOGIN_UI);
 				context.failure(AuthenticationFlowError.INVALID_USER, response);
 			}
 		} else if (type.equals(VERIFY_OTP_FORM)) {
@@ -78,14 +78,14 @@ public class MobileNumberAuthenticator extends AbstractUsernameFormAuthenticator
 					if (secret.equals(sessionKey)) {
 						context.success();
 					} else {
-						Response response = context.form().setError(System.getenv(VALID_OTP)).createForm(VERIFY_OTP_UI);
+						Response response = context.form().setError(System.getenv().getOrDefault(VALID_OTP, "Please enter correct OTP")).createForm(VERIFY_OTP_UI);
 						if(checkIfMaxOtpTriesReached(context)) {
 							return;
 						}
 						context.failure(AuthenticationFlowError.INVALID_CREDENTIALS, response);
 					}
 				} else {
-					Response response = context.form().setError(System.getenv(VALID_OTP)).createForm(VERIFY_OTP_UI);
+					Response response = context.form().setError(System.getenv().getOrDefault(VALID_OTP, "Please enter correct OTP")).createForm(VERIFY_OTP_UI);
 					if(checkIfMaxOtpTriesReached(context)) {
 						return;
 					}
@@ -104,7 +104,7 @@ public class MobileNumberAuthenticator extends AbstractUsernameFormAuthenticator
 		System.out.println("RESEND RETRIES : " +  resendTries);
 		int count = resendTries == null ? 0 : Integer.parseInt(resendTries);
 		count++;
-		if(count == Integer.parseInt(System.getenv(MAX_RESEND_TRIES)) + 1) {
+		if(count == Integer.parseInt(System.getenv().getOrDefault(MAX_RESEND_TRIES, "3")) + 1) {
 			context.getAuthenticationSession().setAuthNote(RESEND_OTP_TRY_COUNT, null);
 			context.failure(AuthenticationFlowError.INTERNAL_ERROR);
 			return true;
@@ -120,11 +120,11 @@ public class MobileNumberAuthenticator extends AbstractUsernameFormAuthenticator
 		System.out.println("OTP TRIES : " + otpTries);
 		int count = (otpTries == null ? 0 : Integer.parseInt(otpTries));
 		count++;
-		int maxLimit = Integer.parseInt(System.getenv(OTP_MAX_RETRY_LIMIT));
+		int maxLimit = Integer.parseInt(System.getenv().getOrDefault(OTP_MAX_RETRY_LIMIT, "3"));
 		if(count == maxLimit) {
 			context.getAuthenticationSession().setAuthNote(OTP_TRIES, null);
 			String MAX_RETRIES_LIMIT_MESSAGE = "MAX_RETRIES_LIMIT_MESSAGE";
-			Response response = context.form().setError(System.getenv(MAX_RETRIES_LIMIT_MESSAGE)).createForm(MOBILE_LOGIN_UI);
+			Response response = context.form().setError(System.getenv().getOrDefault(MAX_RETRIES_LIMIT_MESSAGE, "Max failed login limit reached")).createForm(MOBILE_LOGIN_UI);
 			context.failure(AuthenticationFlowError.INVALID_CREDENTIALS, response);
 			return true;
 		}
