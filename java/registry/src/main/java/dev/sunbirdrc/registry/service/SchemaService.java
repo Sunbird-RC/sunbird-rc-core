@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.helper.RegistryHelper.ROLE_ANONYMOUS;
+import static dev.sunbirdrc.registry.exception.ErrorMessages.NOT_ALLOWED_FOR_PUBLISHED_SCHEMA;
 
 @Service
 public class SchemaService {
@@ -38,7 +39,7 @@ public class SchemaService {
 
 	public void deleteSchemaIfExists(Vertex vertex) throws SchemaException {
 		if (vertex.property(STATUS) != null && vertex.property(STATUS).value().equals(SchemaStatus.PUBLISHED.toString())) {
-			throw new SchemaException("Schema delete not allowed for a published schema");
+			throw new SchemaException(NOT_ALLOWED_FOR_PUBLISHED_SCHEMA);
 		}
 		JsonNode schema = JsonNodeFactory.instance.textNode(vertex.property(Schema.toLowerCase()).value().toString());
 		try {

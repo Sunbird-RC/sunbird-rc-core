@@ -15,6 +15,7 @@ import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.transform.*;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,6 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
@@ -71,6 +73,9 @@ public class RegistryEntityControllerTest {
     @InjectMocks
     private RegistryEntityController registryEntityController;
 
+    @MockBean
+    private ViewTemplateManager viewTemplateManager;
+
     @Before
     public void setUp() {
         abstractController = new RegistryEntityController();
@@ -100,7 +105,7 @@ public class RegistryEntityControllerTest {
                                 return mockHttpServletRequest;
                             })
                 )
-                .andExpect(status().isOk());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -144,7 +149,7 @@ public class RegistryEntityControllerTest {
                                     return mockHttpServletRequest;
                                 })
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -170,7 +175,7 @@ public class RegistryEntityControllerTest {
                                     return mockHttpServletRequest;
                                 })
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

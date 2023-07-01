@@ -34,7 +34,8 @@ services:
   registry:
     image: dockerhub/sunbird-rc-core:${RELEASE_VERSION}
     volumes:
-      - ${PWD}/${SCHEMA_DIR-java/registry/src/main/resources/public/_schemas}:/home/sunbirdrc/config/public/_schemas
+      - ./${SCHEMA_DIR-java/registry/src/main/resources/public/_schemas}:/home/sunbirdrc/config/public/_schemas
+      - ./${VIEW_DIR-java/registry/src/main/resources/views}:/home/sunbirdrc/config/views/
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
@@ -101,7 +102,7 @@ services:
   keycloak:
     image: dockerhub/sunbird-rc-keycloak:latest
     volumes:
-      - ${PWD}/${KEYCLOAK_IMPORT_DIR-imports}:/opt/jboss/keycloak/imports
+      - ./${KEYCLOAK_IMPORT_DIR-imports}:/opt/jboss/keycloak/imports
     environment:
       - KEYCLOAK_LOGO=https://svgshare.com/i/hCs.svg
       - DB_VENDOR=postgres
@@ -296,7 +297,7 @@ services:
   digilocker-certificate-api:
     image: dockerhub/sunbird-rc-digilocker-certificate-api
     volumes:
-      - ${PWD}/services/digilocker-certificate-api/config/:/go/config/
+      - ./services/digilocker-certificate-api/config/:/go/config/
     ports:
       - "8087:8087"
     environment:
