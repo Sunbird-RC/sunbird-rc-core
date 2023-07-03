@@ -148,11 +148,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Value("${httpConnection.maxConnections:5}")
 	private int httpMaxConnections;
 
-	@Value("${registry.HARD_DELETE_ENABLED}")
+	@Value("${registry.hard_delete_enabled}")
 	private boolean isHardDeleteEnabled;
 
 	@Value("${search.providerName}")
 	private String searchProvider;
+
+	@Value("${elastic.search.scheme}")
+	private String scheme;
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 

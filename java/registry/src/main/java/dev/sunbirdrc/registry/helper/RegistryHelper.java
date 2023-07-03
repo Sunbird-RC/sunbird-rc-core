@@ -997,7 +997,7 @@ public class RegistryHelper {
         }
     }
 
-    public Vertex deleteEntity(String entityId, String userId) throws Exception {
+    public Vertex deleteEntity(String entityName, String entityId, String userId) throws Exception {
         RecordIdentifier recordId = RecordIdentifier.parse(entityId);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         Shard shard = shardManager.activateShard(shardId);
