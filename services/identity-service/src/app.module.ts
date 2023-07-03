@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { PrismaService } from './utils/prisma.service';
 import { DidService } from './did/did.service';
 import { DidController } from './did/did.controller';
@@ -11,6 +10,8 @@ import { VcModule } from './vc/vc.module';
 import { VaultService } from './did/vault.service';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
+import { TerminusModule } from '@nestjs/terminus';
+import { PrismaHealthIndicator } from './utils/prisma.health';
 
 @Module({
   imports: [
@@ -20,14 +21,16 @@ import { AuthGuard } from './auth/auth.guard';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    TerminusModule
   ],
   controllers: [AppController, DidController],
   providers: [
-    AppService, PrismaService, DidService, VaultService,
+    PrismaService, DidService, VaultService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
+    PrismaHealthIndicator
   ],
 })
 export class AppModule {}
