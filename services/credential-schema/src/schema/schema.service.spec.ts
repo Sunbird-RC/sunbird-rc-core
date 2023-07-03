@@ -19,18 +19,8 @@ describe('SchemaService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should create an unsigned schema and get it from DB', async () => {
-    const vcCredSchema = await service.createCredentialSchema(credentialSchemaDemoPayload);
-    expect(vcCredSchema).toBeDefined();
-    expect(vcCredSchema.schema.proof).toBeFalsy();
-    const getVCCredSchema = await service.getCredentialSchema({
-      id: vcCredSchema.schema.id,
-    });
-    expect(vcCredSchema).toEqual(getVCCredSchema);
-  });
-
   it('should create a signed schema and get it from DB', async () => {
-    const vcCredSchema = await service.createAndSignSchema(credentialSchemaDemoPayload);
+    const vcCredSchema = await service.createCredentialSchema(credentialSchemaDemoPayload);
     expect(vcCredSchema).toBeDefined();
     expect(vcCredSchema.schema.proof).toBeTruthy();
     const getVCCredSchema = await service.getCredentialSchema({

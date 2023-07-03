@@ -11,6 +11,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      test:
       
   cred-schema-test:
     build:
@@ -22,3 +24,8 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@db-test:5432/postgres
       IDENTITY_BASE_URL: ""
+    networks:
+      test:
+
+networks:
+  test:

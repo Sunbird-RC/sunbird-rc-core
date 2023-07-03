@@ -101,7 +101,7 @@ export class SchemaController {
     @Body() body: CreateCredentialDTO, //: Promise<VerifiableCredentialSchema>
   ) {
     console.log(body);
-    return this.schemaService.createAndSignSchema(body);
+    return this.schemaService.createCredentialSchema(body);
   }
 
   // TODO: Add role based guards here

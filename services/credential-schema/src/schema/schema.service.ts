@@ -10,6 +10,7 @@ import { validate } from '../utils/schema.validator';
 import { DefinedError } from 'ajv';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
 import { UtilsService } from '../utils/utils.service';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class SchemaService {
@@ -69,81 +70,52 @@ export class SchemaService {
     const data = createCredentialDto.schema;
     const tags = createCredentialDto.tags;
     if (validate(data)) {
+      const credSchema = {
+        schema: {
+          type: data.type,
+          id: randomUUID(),
+          version: data.version,
+          name: data.name,
+          author: data.author,
+          authored: data.authored,
+          schema: data.schema,
+          proof: data.proof,
+        },
+        tags: tags,
+        status: data.status,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        createdBy: data.createdBy,
+        updatedBy: data.updatedBy,
+        deprecatedId: data.deprecatedId,
+      };
+      // sign the credential schema
+      const proof = await this.utilService.sign(credSchema.schema.author, JSON.stringify(credSchema))
+      credSchema.schema.proof = proof;
       try {
-        const schema = await this.prisma.verifiableCredentialSchema.create({
+        await this.prisma.verifiableCredentialSchema.create({
           data: {
-            // id: data.id,
-            type: data?.type as string,
-            version: data.version,
-            name: data.name as string,
-            author: data.author as string,
-            authored: data.authored,
-            schema: data.schema as Prisma.JsonValue,
-            status: data.status as SchemaStatus,
-            // proof: {}, // data?.proof as Prisma.JsonValue,
-            tags: tags as string[],
+            id: credSchema.schema.id,
+            type: credSchema.schema?.type as string,
+            version: credSchema.schema.version,
+            name: credSchema.schema.name as string,
+            author: credSchema.schema.author as string,
+            authored: credSchema.schema.authored,
+            schema: credSchema.schema.schema as Prisma.JsonValue,
+            status: credSchema.status as SchemaStatus,
+            proof: credSchema.schema.proof as Prisma.JsonValue,
+            tags: credSchema.tags as string[],
             deprecatedId: deprecatedId,
           },
         });
-        return {
-          schema: {
-            type: schema.type,
-            id: schema.id,
-            version: schema.version,
-            name: schema.name,
-            author: schema.author,
-            authored: schema.authored,
-            schema: schema.schema,
-            proof: schema.proof,
-          },
-          tags: schema.tags,
-          status: schema.status,
-          createdAt: schema.createdAt,
-          updatedAt: schema.updatedAt,
-          createdBy: schema.createdBy,
-          updatedBy: schema.updatedBy,
-          deprecatedId: schema.deprecatedId,
-        };
       } catch (err) {
         throw new BadRequestException(err.message);
       }
+      return credSchema;
     } else {
       for (const err of validate.errors as DefinedError[]) {
         throw new BadRequestException(err.message);
       }
-    }
-  }
-
-  async createAndSignSchema(
-    createCredentialDto: CreateCredentialDTO,
-    deprecatedId: string = undefined,
-  ) {
-    const VCSchema = await this.createCredentialSchema(
-      createCredentialDto,
-      deprecatedId,
-    );
-    try {
-      const proof = await this.utilService.sign(
-        VCSchema.schema.author,
-        JSON.stringify(VCSchema),
-      );
-      await this.prisma.verifiableCredentialSchema.update({
-        where: { id: VCSchema.schema.id },
-        data: {
-          proof: proof,
-        },
-      });
-
-      VCSchema.schema.proof = proof;
-      return VCSchema;
-    } catch (err) {
-      // Schema not signed - so deleting the schema entry from DB
-      await this.prisma.verifiableCredentialSchema.delete({
-        where: {
-          id: VCSchema.schema.id,
-        },
-      });
-      throw err;
     }
   }
 
@@ -190,7 +162,7 @@ export class SchemaService {
             // reset the version if the version of previous credential does not follow sementic versioning
             data.schema.version = '1.0';
           }
-          
+
           return await this.createCredentialSchema(data, deprecatedSchema?.id);
         } catch (err) {
           throw new BadRequestException(err.message);
