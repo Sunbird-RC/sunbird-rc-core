@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DidService } from './did.service';
 import { PrismaService } from '../utils/prisma.service';
-import { VaultService } from './vault.service';
+import { VaultService } from '../utils/vault.service';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
 import { ConfigService } from '@nestjs/config';
 

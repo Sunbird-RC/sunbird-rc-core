@@ -3,7 +3,7 @@ import { PrismaService } from '../utils/prisma.service';
 import * as ION from '@decentralized-identity/ion-tools';
 import { DidService } from '../did/did.service';
 import { DIDDocument } from 'did-resolver';
-import { VaultService } from '../did/vault.service';
+import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
 @Injectable()
 export default class VcService {

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import VcService from './vc.service';
 import { PrismaService } from '../utils/prisma.service';
 import { DidService } from '../did/did.service';
-import { VaultService } from '../did/vault.service';
+import { VaultService } from '../utils/vault.service';
 import { setupTestValue } from './test-setup';
 
 describe('DidService', () => {

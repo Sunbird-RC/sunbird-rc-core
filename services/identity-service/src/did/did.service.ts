@@ -4,7 +4,7 @@ import { PrismaService } from '../utils/prisma.service';
 import { DIDDocument } from 'did-resolver';
 import { uuid } from 'uuidv4';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
-import { VaultService } from './vault.service';
+import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
 @Injectable()
 export class DidService {
