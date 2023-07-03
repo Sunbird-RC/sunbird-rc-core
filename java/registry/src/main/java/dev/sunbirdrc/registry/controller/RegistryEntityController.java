@@ -110,58 +110,54 @@ public class RegistryEntityController extends AbstractController {
         }
     }
     @DeleteMapping("/api/v1/{entityName}/{entityId}")
-     public ResponseEntity<Object> deleteEntity(
-          @PathVariable String entityName,
-          @PathVariable String entityId,
-          @RequestHeader HttpHeaders header,
-          HttpServletRequest request)
-       {
-            String userId = USER_ANONYMOUS;
-              logger.info("Deleting entityType {} with Id {}", entityName, entityId);
-             if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
-              try {
-              userId = registryHelper.authorize(entityName, entityId, request);
-             } catch (Exception e) {
-              return createUnauthorizedExceptionResponse(e);
-          }
-      }
-      ResponseParams responseParams = new ResponseParams();
-      Response response = new Response(Response.API_ID.DELETE, "OK", responseParams);
-      try {
-          String tag = "RegistryController.delete " + entityName;
-          watch.start(tag);
+    public ResponseEntity<Object> deleteEntity(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @RequestHeader HttpHeaders header,
+            HttpServletRequest request) {
 
-          JsonNode jsonNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false); // returns a JsonNode object, which represents the entity data in JSON format.
-          if (jsonNode != null && jsonNode.has(entityName) && jsonNode.get(entityName).has(OSSystemFields._osSignedData.name())) {
-              String signedData = jsonNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(); // Use asText() instead of toString()
+        String userId = USER_ANONYMOUS;
+        logger.info("Deleting entityType {} with Id {}", entityName, entityId);
 
-              registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
-          }
-          JsonNode signedDataNode = jsonNode.get(entityName).get(OSSystemFields._osSignedData.name().toString());
-          String signedData = null;
-          Vertex deletedEntity = null;
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
+            try {
+                userId = registryHelper.authorize(entityName, entityId, request);
+            } catch (Exception e) {
+                return createUnauthorizedExceptionResponse(e);
+            }
+        }
 
-          if (signedDataNode != null) {
-              signedData = signedDataNode.asText();
-          }
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.DELETE, "OK", responseParams);
 
-          deletedEntity = registryHelper.deleteEntity(entityId, userId);
+        try {
+            String tag = "RegistryController.delete " + entityName;
+            watch.start(tag);
 
-          if (deletedEntity != null && deletedEntity.keys().contains(OSSystemFields._osSignedData.name())) {
-              registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
-          }
+            JsonNode jsonNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
+            if (jsonNode != null && jsonNode.has(entityName) && jsonNode.get(entityName).has(OSSystemFields._osSignedData.name())) {
+                String signedData = jsonNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText();
+                registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
+            }
 
-          responseParams.setErrmsg("");
-          responseParams.setStatus(Response.Status.SUCCESSFUL);
-          watch.stop(tag);
-          return new ResponseEntity<>(response, HttpStatus.OK);
-      } catch (Exception e) {
-          logger.error("RegistryController: Exception while Deleting entity", e);
-          responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-          responseParams.setErrmsg(e.getMessage());
-          return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-  }
+            Vertex deletedEntity = registryHelper.deleteEntity(entityId, userId);
+
+            if (deletedEntity != null && deletedEntity.keys().contains(OSSystemFields._osSignedData.name())) {
+                String signedData = deletedEntity.property(OSSystemFields._osSignedData.name()).toString();
+                registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
+            }
+
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+            watch.stop(tag);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("RegistryController: Exception while Deleting entity", e);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
   @RequestMapping(value = "/api/v1/{entityName}/search", method = RequestMethod.POST)
     public ResponseEntity<Object> searchEntity(@PathVariable String entityName, @RequestHeader HttpHeaders header, @RequestBody ObjectNode searchNode) {
