@@ -10,11 +10,10 @@ export class VaultHealthIndicator extends HealthIndicator {
   async isHealthy(key: string): Promise<HealthIndicatorResult> {
     try {
       const resp = await this.vaultService.checkStatus();
-      if (resp.status.sealed === true && resp.status.initialized === true) return this.getStatus(key, true);
+      if (resp.status.sealed === false && resp.status.initialized === true) return this.getStatus(key, true);
       throw new InternalServerErrorException('Vault is not initialized or sealed');
     } catch (err) {
       throw new HealthCheckError("Prisma health check failed", err);
     }
   }
-
 }

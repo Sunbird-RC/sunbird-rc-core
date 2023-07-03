@@ -35,12 +35,16 @@ export class AuthGuard implements CanActivate {
       context.getHandler(),
     );
     if (isPublic) return true;
-    if (process.env.ENABLE_AUTH.trim() === 'false') return true;
+
+    if (process.env.ENABLE_AUTH === undefined) {
+      this.logger.warn('ENABLE_AUTH is not set, defaulting to true');
+    };
+    if (process.env.ENABLE_AUTH && process.env.ENABLE_AUTH.trim() === 'false') return true;
 
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
 
-    if ((!authHeader || !authHeader.startsWith('Bearer')) && process.env.ENABLE_AUTH.trim() === 'true') {
+    if ((!authHeader || !authHeader.startsWith('Bearer'))) {
       this.logger.log('No Bearer token found');
       return false;
     }
