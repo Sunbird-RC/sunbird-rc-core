@@ -3,7 +3,7 @@ import { SchemaService } from './schema.service';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
 import { UtilsService } from '../utils/utils.service';
 import { PrismaService } from '../prisma.service';
-import { HttpModule } from '@nestjs/axios';
+import { UtilsServiceMock } from '../utils/mock.util.service';
 
 describe('SchemaService', () => {
   let service: SchemaService;
@@ -56,9 +56,10 @@ describe('SchemaService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [HttpModule],
       providers: [SchemaService, UtilsService, PrismaService],
-    }).compile();
+    }).overrideProvider(UtilsService)
+    .useClass(UtilsServiceMock)
+    .compile();
     service = module.get<SchemaService>(SchemaService);
   });
 
@@ -74,5 +75,15 @@ describe('SchemaService', () => {
       id: vcCredSchema.schema.id,
     });
     expect(vcCredSchema).toEqual(getVCCredSchema);
+  });
+
+  it('should create a signed schema and get it from DB', async () => {
+    const vcCredSchema = await service.createAndSignSchema(testCredential);
+    expect(vcCredSchema).toBeDefined();
+    expect(vcCredSchema.schema.proof).toBeTruthy();
+    const getVCCredSchema = await service.getCredentialSchema({
+      id: vcCredSchema.schema.id,
+    });
+    expect(getVCCredSchema.schema.proof).toBeTruthy();
   });
 });
