@@ -16,7 +16,7 @@ export class SchemaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly utilService: UtilsService,
-  ) {}
+  ) { }
 
   getSchema(fileName: string): JSON {
     if (Object.keys(schemas).indexOf(fileName) === -1) {
@@ -175,6 +175,22 @@ export class SchemaService {
                 status: SchemaStatus.REVOKED,
               },
             });
+
+          const semanticVersionRegex = /^\d+(\.\d+)?$/;
+          const isValidVersion = semanticVersionRegex.test(
+            deprecatedSchema.version,
+          );
+          semanticVersionRegex.test(deprecatedSchema.version);
+          if (isValidVersion) {
+            const semVer = deprecatedSchema.version.split('.');
+            semVer[1] = (parseInt(semVer[2]) + 1).toString();
+            const newVersion = semVer.join('.');
+            data.schema.version = newVersion;
+          } else {
+            // reset the version if the version of previous credential does not follow sementic versioning
+            data.schema.version = '1.0';
+          }
+          
           return await this.createCredentialSchema(data, deprecatedSchema?.id);
         } catch (err) {
           throw new BadRequestException(err.message);
