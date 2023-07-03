@@ -1,10 +1,7 @@
 package dev.sunbirdrc.registry.service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
@@ -27,7 +24,6 @@ import dev.sunbirdrc.pojos.SearchQuery;
 import dev.sunbirdrc.registry.dao.IRegistryDao;
 import dev.sunbirdrc.registry.dao.RegistryDaoImpl;
 import dev.sunbirdrc.registry.dao.SearchDaoImpl;
-import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
@@ -66,22 +62,25 @@ public class NativeSearchService implements ISearchService {
 
 	@Value("${search.offset}")
 	private int offset;
-	
+
 	@Value("${search.limit}")
 	private int limit;
 
     @Value("${audit.enabled}")
     private boolean auditEnabled;
-    
+
     @Value("${audit.frame.suffix}")
     private String auditSuffix;
 
 	@Value("${search.expandInternal}")
 	private boolean expandInternal;
 
+	@Value("${search.removeNonPublicFieldsForNativeSearch:true}")
+	private boolean removeNonPublicFieldsForNativeSearch;
+
 	@Override
 	public JsonNode search(JsonNode inputQueryNode) throws IOException {
-		
+
 		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
 
@@ -120,8 +119,10 @@ public class NativeSearchService implements ISearchService {
 							String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
 							JSONUtil.addPrefix((ObjectNode) shardResult, prefix, new ArrayList<>(Arrays.asList(uuidPropertyName)));
 						}
-						removeNonPublicFields(result, searchQuery, shardResult);
-						transaction.add(tx.hashCode());
+						result = removeNonPublicFields(searchQuery, shardResult);
+						if (tx != null) {
+							transaction.add(tx.hashCode());
+						}
 					}
 				} catch (Exception e) {
 					logger.error("search operation failed: {}", e);
@@ -140,21 +141,27 @@ public class NativeSearchService implements ISearchService {
 
 		 	}
 		}
-		
+
 		return buildResultNode(searchQuery, result);
 	}
 
-	private void removeNonPublicFields(ArrayNode result, SearchQuery searchQuery, ObjectNode shardResult) throws Exception {
+	private ArrayNode removeNonPublicFields(SearchQuery searchQuery, ObjectNode shardResult) throws Exception {
+		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		for(String entityType: searchQuery.getEntityTypes()) {
 			ArrayNode arrayNode = (ArrayNode) shardResult.get(entityType);
-			for(JsonNode node : arrayNode) {
-				result.add(JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityType)));
+			if (removeNonPublicFieldsForNativeSearch) {
+				for(JsonNode node : arrayNode) {
+					result.add(JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityType)));
+				}
+			} else {
+				result = arrayNode;
 			}
 		}
+		return result;
 	}
 
 	/**
-	 * Builds result node from given array of shard nodes 
+	 * Builds result node from given array of shard nodes
 	 * @param searchQuery
 	 * @param allShardResult
 	 * @return

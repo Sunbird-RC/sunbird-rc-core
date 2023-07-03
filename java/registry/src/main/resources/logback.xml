@@ -55,6 +55,20 @@
         </encoder>
     </appender>
 
+    <appender name="FileEventService" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>metrics_log/metrics.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>metrics_log/metrics_%d{yyyy-MM-dd}_%d{HH-mm-ss}_%i.log</fileNamePattern>
+            <!-- Adopter's specific tags: maxHistory, totalSizeCap disabled by default -->
+            <!-- <maxHistory>10</maxHistory> -->
+            <!-- <totalSizeCap>5GB</totalSizeCap> -->
+            <maxFileSize>30MB</maxFileSize>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!-- Loggers -->
     <!-- The Perf4J logger. Note that org.perf4j.TimingLogger is the value of
         the org.perf4j.StopWatch.DEFAULT_LOGGER_NAME constant. Also, note that additivity
@@ -76,6 +90,10 @@
 
     <logger name="dev.sunbirdrc.registry.util.AuditFileWriter" level="INFO" additivity="FALSE">
         <appender-ref ref="AuditFileAppender"/>
+    </logger>
+
+    <logger name="dev.sunbirdrc.registry.service.impl.FileEventService" level="INFO" additivity="FALSE">
+        <appender-ref ref="FileEventService"/>
     </logger>
 
     <root level="INFO" additivity="FALSE">
