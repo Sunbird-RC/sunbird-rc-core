@@ -32,7 +32,7 @@ export class DidService {
       verificationMethod: [
         {
           id: 'auth-key',
-          type: 'Ed25519VerificationKey2020',
+          type: process.env.SIGNING_ALGORITHM,
           publicKeyJwk: authnKeys.publicJwk,
           controller: didUri,
         },

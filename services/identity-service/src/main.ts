@@ -10,13 +10,13 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Identity Service')
     .setDescription('The Identity Service API description')
-    .setVersion('1.0')
+    .setVersion(process.env.npm_package_version)
     .addTag('Identity Service')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
   const port = process.env.PORT || 3332;
   await app.listen(port, '0.0.0.0');
-  Logger.log(`🚀 Application is running on: http://localhost:${port}/`);
+  Logger.log(`🚀 Application is running on: http:// .0.0.0:${port}/`);
 }
 bootstrap();

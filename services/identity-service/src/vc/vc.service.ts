@@ -27,14 +27,14 @@ export default class VcService {
     if (!did) throw new NotFoundException('Signer DID not found!');
 
     try {
-      const signedJWSEd25519 = await ION.signJws({
+      const signedJWS = await ION.signJws({
         payload: toSign,
         privateJwk: await this.vault.readPvtKey(signerDID),
       });
       return {
         publicKey: (JSON.parse(did.didDoc as string) as DIDDocument)
           .verificationMethod[0].publicKeyJwk,
-        signed: signedJWSEd25519,
+        signed: signedJWS,
       };
     } catch (err) {
       Logger.error('Error signign the document:', err);
