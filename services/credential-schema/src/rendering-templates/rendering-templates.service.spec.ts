@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RenderingTemplatesService } from './rendering-templates.service';
-import { PrismaService } from '../prisma.service';
 import { ValidateTemplateService } from './validate-template.service';
 import { SchemaService } from '../schema/schema.service';
+import { PrismaClient } from '@prisma/client';
 import { UtilsService } from '../utils/utils.service';
 import { HttpModule } from '@nestjs/axios';
 describe('RenderingTemplatesService', () => {
@@ -13,7 +13,7 @@ describe('RenderingTemplatesService', () => {
       imports: [HttpModule],
       providers: [
         RenderingTemplatesService,
-        PrismaService,
+        PrismaClient,
         ValidateTemplateService,
         SchemaService,
         UtilsService,
