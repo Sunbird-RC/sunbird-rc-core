@@ -6,6 +6,8 @@ import { SchemaModule } from './schema/schema.module';
 import { PrismaService } from './prisma.service';
 import { ConfigModule } from '@nestjs/config';
 import { RenderingTemplatesModule } from './rendering-templates/rendering-templates.module';
+import { HttpModule } from '@nestjs/axios';
+import { UtilsService } from './utils/utils.service';
 
 @Module({
   imports: [
@@ -18,8 +20,9 @@ import { RenderingTemplatesModule } from './rendering-templates/rendering-templa
       max: 1000,
     }), // using in memory cache for now
     RenderingTemplatesModule,
+    HttpModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService, SchemaService],
+  providers: [AppService, PrismaService, SchemaService, UtilsService],
 })
 export class AppModule {}

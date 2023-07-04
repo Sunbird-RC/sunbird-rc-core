@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { VCSModelSchemaInterface } from 'src/types/VCModelSchema.interface';
+import { VCSModelSchemaInterface } from '../../types/VCModelSchema.interface';
 import { VCSchema } from './VCSchema.entity';
 
 export class VCModelSchema implements VCSModelSchemaInterface {
@@ -25,7 +25,7 @@ export class VCModelSchema implements VCSModelSchemaInterface {
     properties: {
       [k: string]: unknown;
     };
-    required: [] | [string];
+    required: [] | string[];
     additionalProperties: boolean;
     [k: string]: unknown;
   };
