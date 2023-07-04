@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
 import { RenderingTemplatesService } from './rendering-templates.service';
 import { RenderingTemplatesController } from './rendering-templates.controller';
-import { PrismaService } from '../prisma.service';
 import { ValidateTemplateService } from './validate-template.service';
 import { SchemaService } from '../schema/schema.service';
 import { HttpModule } from '@nestjs/axios';
 import { UtilsService } from '../utils/utils.service';
+import { PrismaClient } from '@prisma/client';
 
 @Module({
   imports: [HttpModule],
   providers: [
     RenderingTemplatesService,
-    PrismaService,
+    PrismaClient,
     ValidateTemplateService,
     SchemaService,
     UtilsService,

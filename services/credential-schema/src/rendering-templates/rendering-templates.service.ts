@@ -4,15 +4,13 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Template } from '@prisma/client';
-import { PrismaService } from '../prisma.service';
+import { PrismaClient, Template } from '@prisma/client';
 import { AddTemplateDTO } from './dto/addTemplate.dto';
 import { ValidateTemplateService } from './validate-template.service';
-
 @Injectable()
 export class RenderingTemplatesService {
   constructor(
-    private prisma: PrismaService,
+    private prisma: PrismaClient,
     private readonly verifier: ValidateTemplateService,
   ) {}
   private logger = new Logger(RenderingTemplatesService.name);

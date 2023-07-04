@@ -4,8 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, SchemaStatus } from '@prisma/client';
-import { PrismaService } from '../prisma.service';
+import { Prisma, PrismaClient, SchemaStatus } from '@prisma/client';
 import { validate } from '../utils/schema.validator';
 import { DefinedError } from 'ajv';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
@@ -15,7 +14,7 @@ import { randomUUID } from 'crypto';
 @Injectable()
 export class SchemaService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly prisma: PrismaClient,
     private readonly utilService: UtilsService,
   ) {}
   private logger = new Logger(SchemaService.name);

@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
 import { SchemaController } from './schema.controller';
 import { SchemaService } from './schema.service';
 import { HttpModule } from '@nestjs/axios';
 import { UtilsService } from '../utils/utils.service';
+import { PrismaClient } from '@prisma/client';
 
 @Module({
   imports: [HttpModule],
   controllers: [SchemaController],
-  providers: [SchemaService, PrismaService, UtilsService],
+  providers: [SchemaService, PrismaClient, UtilsService],
 })
 export class SchemaModule {}

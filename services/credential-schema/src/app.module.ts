@@ -9,10 +9,8 @@ import { HttpModule } from '@nestjs/axios';
 import { UtilsService } from './utils/utils.service';
 import { TerminusModule } from '@nestjs/terminus';
 import { PrismaHealthIndicator } from './utils/prisma.health';
-import { PrismaServiceHealthCheck } from './utils/prisma.service';
-import { PrismaService } from './prisma.service';
+import { PrismaClient } from '@prisma/client';
 
-PrismaHealthIndicator;
 @Module({
   imports: [
     SchemaModule,
@@ -29,12 +27,11 @@ PrismaHealthIndicator;
   ],
   controllers: [AppController],
   providers: [
-    PrismaService,
     AppService,
-    PrismaServiceHealthCheck,
     SchemaService,
     UtilsService,
     PrismaHealthIndicator,
+    PrismaClient,
   ],
 })
 export class AppModule {}
