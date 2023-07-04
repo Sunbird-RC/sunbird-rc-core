@@ -50,6 +50,19 @@ test: build
 	@cd java/apitest && MODE=async ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
 	@rm -rf db-data-2 || echo "no permission to delete"
+	# test with fusionauth
+	@RELEASE_VERSION=latest DB_DIR=db-data-7 SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService FUSION_WRAPPER_BUILD=services/sample-fusionauth-service/ FUSIONAUTH_ISSUER_URL=http://fusionauth:9011/ oauth2_resource_uri=http://fusionauth:9011/ oauth2_resource_roles_path=roles identity_provider=dev.sunbirdrc.auth.genericiam.AuthProviderImpl sunbird_sso_url=http://fusionauthwrapper:3990/fusionauth/api/v1/user IMPORTS_DIR=services/sample-fusionauth-service/imports docker-compose -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml up -d db es fusionauth fusionauthwrapper
+	sleep 20
+	@echo "Starting the test" && sh build/wait_for_port.sh 9011
+	@echo "Starting the test" && sh build/wait_for_port.sh 3990
+	sleep 20
+	@RELEASE_VERSION=latest DB_DIR=db-data-7 SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService FUSION_WRAPPER_BUILD=services/sample-fusionauth-service/ FUSIONAUTH_ISSUER_URL=http://fusionauth:9011/ oauth2_resource_uri=http://fusionauth:9011/ oauth2_resource_roles_path=roles identity_provider=dev.sunbirdrc.auth.genericiam.AuthProviderImpl sunbird_sso_url=http://fusionauthwrapper:3990/fusionauth/api/v1/user IMPORTS_DIR=services/sample-fusionauth-service/imports docker-compose -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml up -d --no-deps registry
+	@echo "Starting the test" && sh build/wait_for_port.sh 8081
+	@docker-compose -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml ps
+	@curl -v http://localhost:8081/health
+	@cd java/apitest && MODE=fusionauth ../mvnw -Pe2e test || echo 'Tests failed'
+	@docker-compose -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml down
+	@rm -rf db-data-7 || echo "no permission to delete"
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test

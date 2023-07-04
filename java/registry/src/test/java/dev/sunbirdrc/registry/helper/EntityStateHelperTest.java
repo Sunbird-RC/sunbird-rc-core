@@ -2,9 +2,9 @@ package dev.sunbirdrc.registry.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
-import dev.sunbirdrc.keycloak.OwnerCreationException;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityException;
+import dev.sunbirdrc.registry.identity_providers.pojos.OwnerCreationException;
 import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.registry.exception.DuplicateRecordException;
@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.api.runtime.KieContainer;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +28,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -56,7 +57,7 @@ public class EntityStateHelperTest {
     ClaimRequestClient claimRequestClient;
 
     @Mock
-    KeycloakAdminUtil keycloakAdminUtil;
+    IdentityManager identityManager;
 
     DefinitionsManager definitionsManager;
 
@@ -81,9 +82,10 @@ public class EntityStateHelperTest {
     }
 
     private void runTest(JsonNode existing, JsonNode updated, JsonNode expected, List<AttestationPolicy> attestationPolicies) throws IOException {
-        RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
+        RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, identityManager);
         EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
+        ReflectionTestUtils.setField(entityStateHelper, "setDefaultPassword", false);
         updated = entityStateHelper.applyWorkflowTransitions(existing, updated, attestationPolicies);
         assertEquals(expected, updated);
     }
@@ -112,22 +114,22 @@ public class EntityStateHelperTest {
     }
 
     @Test
-    public void shouldCreateNewOwnersForNewlyAddedOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn("456");
+    public void shouldCreateNewOwnersForNewlyAddedOwnerFields() throws IOException, DuplicateRecordException, EntityCreationException, IdentityException {
+        when(identityManager.createUser(any())).thenReturn("456");
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldAddNewOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
-    public void shouldNotCreateNewOwners() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn("456");
+    public void shouldNotCreateNewOwners() throws IOException, DuplicateRecordException, EntityCreationException, IdentityException {
+        when(identityManager.createUser(any())).thenReturn("456");
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotAddNewOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
 
     @Test
-    public void shouldNotModifyExistingOwners() throws IOException, DuplicateRecordException, EntityCreationException, OwnerCreationException {
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn("456");
+    public void shouldNotModifyExistingOwners() throws IOException, DuplicateRecordException, EntityCreationException, IdentityException {
+        when(identityManager.createUser(any())).thenReturn("456");
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldNotModifyExistingOwner.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }
@@ -145,8 +147,8 @@ public class EntityStateHelperTest {
     }
 
     @Test
-    public void shouldRemovePasswordOwnershipFields() throws IOException, OwnerCreationException {
-        when(keycloakAdminUtil.createUser(anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn("456");
+    public void shouldRemovePasswordOwnershipFields() throws IOException, OwnerCreationException, IdentityException {
+        when(identityManager.createUser(any())).thenReturn("456");
         JsonNode test = m.readTree(new File(getBaseDir() + "shouldRemovePasswordOwnershipFields.json"));
         runTest(test.get("existing"), test.get("updated"), test.get("expected"), Collections.emptyList());
     }

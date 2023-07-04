@@ -22,7 +22,7 @@ import redis.clients.jedis.JedisPoolConfig;
 import java.time.Duration;
 
 @SpringBootApplication(exclude={SecurityAutoConfiguration.class})
-@ComponentScan(basePackages = {"dev.sunbirdrc.registry", "dev.sunbirdrc.pojos", "dev.sunbirdrc.keycloak", "dev.sunbirdrc.workflow", "dev.sunbirdrc.plugin"})
+@ComponentScan(basePackages = {"dev.sunbirdrc.registry", "dev.sunbirdrc.pojos", "dev.sunbirdrc.auth", "dev.sunbirdrc.workflow", "dev.sunbirdrc.plugin"})
 public class SunbirdRCApplication {
     private static ApplicationContext context;
     private static SpringApplication application = new SpringApplication(SunbirdRCApplication.class);

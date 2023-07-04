@@ -11,6 +11,7 @@ import com.typesafe.config.ConfigFactory;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
+import dev.sunbirdrc.registry.authorization.SchemaAuthFilter;
 import dev.sunbirdrc.registry.dao.IRegistryDao;
 import dev.sunbirdrc.registry.dao.VertexReader;
 import dev.sunbirdrc.registry.dao.VertexWriter;
@@ -144,6 +145,9 @@ public class RegistryServiceImplTest {
 	@Mock
 	private IAuditService auditService;
 
+	@Mock
+	private SchemaAuthFilter schemaAuthFilter;
+
 	public void setup() throws IOException {
 		MockitoAnnotations.initMocks(this);
 		ReflectionTestUtils.setField(encryptionService, "encryptionServiceHealthCheckUri", "encHealthCheckUri");
@@ -153,6 +157,7 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(registryService, "definitionsManager", definitionsManager);
 		ReflectionTestUtils.setField(schemaService, "definitionsManager", definitionsManager);
 		ReflectionTestUtils.setField(schemaService, "validator", jsonValidationService);
+		ReflectionTestUtils.setField(schemaService, "schemaAuthFilter", schemaAuthFilter);
 		ReflectionTestUtils.setField(registryService, "schemaService", schemaService);
 		ReflectionTestUtils.setField(registryService, "objectMapper", objectMapper);
 		ReflectionTestUtils.setField(registryService, "eventService", eventService);
