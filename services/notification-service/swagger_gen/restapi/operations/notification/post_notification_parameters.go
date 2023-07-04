@@ -11,12 +11,14 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/go-openapi/validate"
 
 	"github.com/sunbirdrc/notification-service/swagger_gen/models"
 )
 
 // NewPostNotificationParams creates a new PostNotificationParams object
-// no default values defined in spec.
+//
+// There are no default values defined in the spec.
 func NewPostNotificationParams() PostNotificationParams {
 
 	return PostNotificationParams{}
@@ -54,6 +56,11 @@ func (o *PostNotificationParams) BindRequest(r *http.Request, route *middleware.
 		} else {
 			// validate body object
 			if err := body.Validate(route.Formats); err != nil {
+				res = append(res, err)
+			}
+
+			ctx := validate.WithOperationRequest(r.Context())
+			if err := body.ContextValidate(ctx, route.Formats); err != nil {
 				res = append(res, err)
 			}
 

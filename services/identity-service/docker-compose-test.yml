@@ -12,6 +12,13 @@ services:
     cap_add:
       - IPC_LOCK
     command: vault server -config=/vault/config/vault.json
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider http://127.0.0.1:8200/v1/sys/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      test:
 
   db-test:
     image: postgres:latest
@@ -24,9 +31,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      test:
 
   identity-service-test:
-    image: identity
+    image: identity-test
     build: 
       context: .
       dockerfile: Dockerfile.test
@@ -34,16 +43,28 @@ services:
       db-test:
         condition: service_healthy
       vault-test:
-        condition: service_started
+        condition: service_healthy
     environment:
       DATABASE_URL: "postgres://postgres:postgres@db-test:5432/postgres"
       VAULT_ADDR: "http://vault-test:8200"
       # This will be replaced automatically on initialisation 
       # make compose-init will call setup_vault.sh
-      VAULT_TOKEN:
+      VAULT_TOKEN: hvs.dOLOfZJe5HJW1LBgQLCnW3YU
       VAULT_BASE_URL: "http://vault-test:8200/v1"
       VAULT_ROOT_PATH: "http://vault-test:8200/v1/kv"
       VAULT_TIMEOUT: 5000
       VAULT_PROXY: 'false'
       SIGNING_ALGORITHM: "RS256"
       JWKS_URI: ""
+      ENABLE_AUTH: "false"
+    networks:
+      test:
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "curl -f http://localhost:3332/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  test:

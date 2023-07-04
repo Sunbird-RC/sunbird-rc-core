@@ -12,4 +12,4 @@ test:
 	@docker-compose -f docker-compose-test.yml up --build --abort-on-container-exit
 compose-init:
 	bash build/setup_vault.sh
-	@docker-compose up -d
+	@docker-compose up -d --build
