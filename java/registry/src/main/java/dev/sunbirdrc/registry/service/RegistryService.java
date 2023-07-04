@@ -10,9 +10,9 @@ public interface RegistryService {
 
 	HealthCheckResponse health(Shard shard) throws Exception;
 
-	Vertex deleteEntityById(Shard shard, String userId, String id) throws Exception;
+	public Vertex deleteEntityById(Shard shard, String entityName, String userId, String id) throws Exception;
 
-	String addEntity(Shard shard, String userId, JsonNode inputJson, boolean skipSignature) throws Exception;
+    String addEntity(Shard shard, String userId, JsonNode inputJson, boolean skipSignature) throws Exception;
 
 	void updateEntity(Shard shard, String userId, String id, String jsonString) throws Exception;
 

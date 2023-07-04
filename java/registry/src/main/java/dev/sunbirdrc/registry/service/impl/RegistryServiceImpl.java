@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.MessageFactory;
-import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
@@ -17,6 +16,8 @@ import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
+import dev.sunbirdrc.registry.model.EventType;
+import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.sunbird.akka.core.ActorCache;
@@ -41,6 +43,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
+
 
 @Service
 @Qualifier("sync")
@@ -59,6 +62,8 @@ public class RegistryServiceImpl implements RegistryService {
     private IDefinitionsManager definitionsManager;
 
     @Autowired
+    EntityTransformer entityTransformer;
+    @Autowired
     private EncryptionHelper encryptionHelper;
     @Autowired
     private SignatureHelper signatureHelper;
@@ -66,8 +71,10 @@ public class RegistryServiceImpl implements RegistryService {
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
-    @Value("${registry.HARD_DELETE_ENABLED}")
+    @Value("${registry.hard_delete_enabled}")
     private boolean isHardDeleteEnabled;
+    @Value("${event.enabled}")
+    private boolean isEventsEnabled;
 
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
@@ -97,6 +104,9 @@ public class RegistryServiceImpl implements RegistryService {
     private String registryBaseUrl;
 
     @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Autowired
     private EntityParenter entityParenter;
 
     @Autowired
@@ -104,6 +114,9 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private IAuditService auditService;
+
+    @Autowired
+    private IEventService eventService;
 
     @Autowired
     private SchemaService schemaService;
@@ -140,7 +153,7 @@ public class RegistryServiceImpl implements RegistryService {
      * @throws Exception
      */
     @Override  //deleteEntityById used in RegistryHelper
-    public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
+    public Vertex deleteEntityById(Shard shard, String entityName, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -174,6 +187,9 @@ public class RegistryServiceImpl implements RegistryService {
                    if (isElasticSearchEnabled()) {
                         callESActors(null, "DELETE", index, uuid, tx);
                     }
+                     if (isEventsEnabled) {
+                         maskAndEmitEvent(vertexReader.constructObject(vertex), index, EventType.DELETE, userId, uuid);
+                     }
 
                 }
 
@@ -181,8 +197,14 @@ public class RegistryServiceImpl implements RegistryService {
                 return vertex;
             }
         }
-
-
+    }
+    public void maskAndEmitEvent(JsonNode deletedNode, String index, EventType delete, String userId, String uuid) throws JsonProcessingException {
+        JsonNode maskedNode = entityTransformer.updatePrivateAndInternalFields(
+                deletedNode,
+                definitionsManager.getDefinition(index).getOsSchemaConfiguration()
+        );
+        Event event = eventService.createTelemetryObject(delete.name(), userId, "USER", uuid, index, maskedNode);
+        eventService.pushEvents(event);
     }
 
     /**

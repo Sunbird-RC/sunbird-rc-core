@@ -997,11 +997,11 @@ public class RegistryHelper {
         }
     }
 
-    public Vertex deleteEntity(String entityId, String userId) throws Exception {
+    public Vertex deleteEntity(String entityName, String entityId, String userId) throws Exception {
         RecordIdentifier recordId = RecordIdentifier.parse(entityId);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         Shard shard = shardManager.activateShard(shardId);
-        return registryService.deleteEntityById(shard, userId, recordId.getUuid());
+        return registryService.deleteEntityById(shard, entityName,userId, recordId.getUuid());
     }
 
     //TODO: add cache
@@ -1103,8 +1103,8 @@ public class RegistryHelper {
     }
 
 
-    public void deleteAttestationPolicy(AttestationPolicy attestationPolicy) throws Exception {
-        deleteEntity(attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
+    public void deleteAttestationPolicy(String entityName, AttestationPolicy attestationPolicy) throws Exception {
+        deleteEntity(entityName, attestationPolicy.getOsid(), attestationPolicy.getCreatedBy());
     }
 
     public boolean doesEntityOperationRequireAuthorization(String entity) {
