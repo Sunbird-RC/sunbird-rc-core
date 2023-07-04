@@ -1,8 +1,5 @@
 export class UtilsServiceMock {
-  constructor() { }
-
   async sign(did: string, body: any) {
-
     const signedVCResponse = {
       data: {
         signed: 'mockSignedValue',

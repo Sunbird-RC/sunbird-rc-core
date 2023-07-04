@@ -1,12 +1,9 @@
 import {
   Body,
   CacheInterceptor,
-  CACHE_MANAGER,
   Controller,
   Get,
-  Inject,
   Param,
-  Patch,
   Post,
   Query,
   UseInterceptors,
@@ -19,10 +16,8 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { Cache } from 'cache-manager';
 
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
 import { VCItem } from './entities/VCItem.entity';
@@ -32,10 +27,7 @@ import { SchemaService } from './schema.service';
 @Controller('credential-schema')
 @UseInterceptors(CacheInterceptor)
 export class SchemaController {
-  constructor(
-    private readonly schemaService: SchemaService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  constructor(private readonly schemaService: SchemaService) {}
 
   // TODO: Add role based guards here
   @Get(':id')
@@ -51,7 +43,6 @@ export class SchemaController {
     description: 'The record has not been found.',
   })
   getCredentialSchema(@Param('id') id) {
-    console.log('id: ', id);
     return this.schemaService.getCredentialSchema({ id });
   }
 
@@ -72,9 +63,6 @@ export class SchemaController {
     @Query('page') page: string,
     @Query('limit') limit: string,
   ) {
-    console.log('tags: ', tags);
-    console.log('typeof tags: ', typeof tags);
-    // console.log(tags instanceof Array);
     return this.schemaService.getSchemaByTags(
       tags.split(','),
       isNaN(parseInt(page, 10)) ? 1 : parseInt(page, 10),
@@ -100,7 +88,6 @@ export class SchemaController {
   createCredentialSchema(
     @Body() body: CreateCredentialDTO, //: Promise<VerifiableCredentialSchema>
   ) {
-    console.log(body);
     return this.schemaService.createCredentialSchema(body);
   }
 
@@ -128,8 +115,6 @@ export class SchemaController {
     description: 'There was some prioblem with the request.',
   })
   updateCredentialSchema(@Param('id') id, @Body() data: CreateCredentialDTO) {
-    // console.log('id: ', query.id);
-    // delete data['id'];
     return this.schemaService.updateCredentialSchema({
       where: { id: id },
       data,

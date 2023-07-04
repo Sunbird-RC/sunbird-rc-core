@@ -1,11 +1,11 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, SchemaStatus } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
-import schemas from './schemas';
 import { validate } from '../utils/schema.validator';
 import { DefinedError } from 'ajv';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
@@ -17,22 +17,15 @@ export class SchemaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly utilService: UtilsService,
-  ) { }
-
-  getSchema(fileName: string): JSON {
-    if (Object.keys(schemas).indexOf(fileName) === -1) {
-      throw new NotFoundException(
-        `Resource ${fileName}.json does not exist on the server`,
-      );
-    }
-
-    return schemas[fileName];
-  }
-
+  ) {}
+  private logger = new Logger(SchemaService.name);
   async getCredentialSchema(
     userWhereUniqueInput: Prisma.VerifiableCredentialSchemaWhereUniqueInput, //: Promise<VerifiableCredentialSchema>
   ) {
-    console.log(userWhereUniqueInput);
+    this.logger.debug(
+      'Search Parameters for Credential Schema',
+      userWhereUniqueInput,
+    );
     const schema = await this.prisma.verifiableCredentialSchema.findUnique({
       where: userWhereUniqueInput,
     });
@@ -58,6 +51,7 @@ export class SchemaService {
         deprecatedId: schema.deprecatedId,
       };
     } else {
+      this.logger.error('schema not found for userInput', userWhereUniqueInput);
       throw new NotFoundException('Schema not found');
     }
   }
@@ -90,7 +84,10 @@ export class SchemaService {
         deprecatedId: data.deprecatedId,
       };
       // sign the credential schema
-      const proof = await this.utilService.sign(credSchema.schema.author, JSON.stringify(credSchema))
+      const proof = await this.utilService.sign(
+        credSchema.schema.author,
+        JSON.stringify(credSchema),
+      );
       credSchema.schema.proof = proof;
       try {
         await this.prisma.verifiableCredentialSchema.create({
@@ -109,11 +106,14 @@ export class SchemaService {
           },
         });
       } catch (err) {
+        this.logger.error(err);
         throw new BadRequestException(err.message);
       }
       return credSchema;
     } else {
+      this.logger.log('Schema validation failed');
       for (const err of validate.errors as DefinedError[]) {
+        this.logger.error(err, err.message);
         throw new BadRequestException(err.message);
       }
     }
@@ -128,57 +128,64 @@ export class SchemaService {
   ) {
     // TODO: Deprecate the schema and create a new one
     const { where, data } = params;
-    console.log('where: ', where);
-    console.log('data: ', data);
-    const currentSchema =
-      await this.prisma.verifiableCredentialSchema.findUnique({
-        where,
-      });
-    if (currentSchema.status === SchemaStatus.REVOKED)
+    this.logger.debug('where', where);
+    this.logger.debug('data', data);
+    let currentSchema;
+    try {
+      currentSchema =
+        await this.prisma.verifiableCredentialSchema.findUniqueOrThrow({
+          where,
+        });
+    } catch (err) {
+      this.logger.error(err);
+      throw new BadRequestException('Schema not found');
+    }
+    if (currentSchema.status === SchemaStatus.REVOKED) {
+      this.logger.error('Scheam is already deprecated');
       throw new BadRequestException('Schema is already deprecated');
-    if (currentSchema) {
-      if (validate(data.schema)) {
-        try {
-          // deprecate the current schema
-          const deprecatedSchema =
-            await this.prisma.verifiableCredentialSchema.update({
-              where,
-              data: {
-                status: SchemaStatus.REVOKED,
-              },
-            });
+    }
+    if (validate(data.schema)) {
+      try {
+        // deprecate the current schema
+        const deprecatedSchema =
+          await this.prisma.verifiableCredentialSchema.update({
+            where,
+            data: {
+              status: SchemaStatus.REVOKED,
+            },
+          });
 
-          const semanticVersionRegex = /^\d+(\.\d+)?$/;
-          const isValidVersion = semanticVersionRegex.test(
-            deprecatedSchema.version,
-          );
-          semanticVersionRegex.test(deprecatedSchema.version);
-          if (isValidVersion) {
-            const semVer = deprecatedSchema.version.split('.');
-            semVer[1] = (parseInt(semVer[2]) + 1).toString();
-            const newVersion = semVer.join('.');
-            data.schema.version = newVersion;
-          } else {
-            // reset the version if the version of previous credential does not follow sementic versioning
-            data.schema.version = '1.0';
-          }
+        const semanticVersionRegex = /^\d+(\.\d+)?$/;
+        const isValidVersion = semanticVersionRegex.test(
+          deprecatedSchema.version,
+        );
+        semanticVersionRegex.test(deprecatedSchema.version);
+        if (isValidVersion) {
+          const semVer = deprecatedSchema.version.split('.');
+          semVer[1] = (parseInt(semVer[2]) + 1).toString();
+          const newVersion = semVer.join('.');
+          data.schema.version = newVersion;
+        } else {
+          // reset the version if the version of previous credential does not follow sementic versioning
+          data.schema.version = '1.0';
+        }
 
-          return await this.createCredentialSchema(data, deprecatedSchema?.id);
-        } catch (err) {
-          throw new BadRequestException(err.message);
-        }
-      } else {
-        for (const err of validate.errors as DefinedError[]) {
-          throw new BadRequestException(err.message);
-        }
+        return await this.createCredentialSchema(data, deprecatedSchema?.id);
+      } catch (err) {
+        this.logger.error(err, err.message);
+        throw new BadRequestException(err.message);
       }
     } else {
-      throw new NotFoundException('Credential Schema not found');
+      this.logger.log('Schema validation failed');
+      for (const err of validate.errors as DefinedError[]) {
+        this.logger.error(err, err.message);
+        throw new BadRequestException(err.message);
+      }
     }
   }
 
   async getSchemaByTags(tags: string[], page = 1, limit = 10) {
-    console.log('tags in service: ', tags);
+    this.logger.debug('Tags received to find schema', tags);
     const schemas = await this.prisma.verifiableCredentialSchema.findMany({
       where: {
         tags: {

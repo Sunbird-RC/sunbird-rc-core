@@ -1,4 +1,4 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { AuthGuard, IAuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 
@@ -7,16 +7,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') implements IAuthGuard {
   constructor(private reflector: Reflector) {
     super();
   }
+  private logger = new Logger(JwtAuthGuard.name);
 
   public async canActivate(context: ExecutionContext): Promise<boolean> {
     await super.canActivate(context);
-    console.log('context: ', context.getHandler());
-    console.log(
-      'context.switchToHttp().getRequest(): ',
-      context.switchToHttp().getRequest()['user']['roles'],
-    );
+    this.logger.debug('context', context.getHandler());
     const roles = this.reflector.get<string[]>('roles', context.getHandler());
-    console.log('roles: ', roles);
+    this.logger.debug('roles', roles);
     if (!roles) {
       // if no roles are specified in the auth guard decorator, allow access
       return true;
@@ -36,15 +33,18 @@ export class JwtAuthGuard extends AuthGuard('jwt') implements IAuthGuard {
         isAllowed = true;
       }
     } catch (error) {
-      console.log({ err: error });
+      this.logger.error('Error', error);
       isAllowed = false;
     }
     return isAllowed;
   }
 
   handleRequest(err, user, info) {
-    console.log('in handle request!');
-    console.log({ handleRequest: info, err: err, user: user });
+    this.logger.debug('Handle request', {
+      handleRequest: info,
+      err: err,
+      user: user,
+    });
     return user;
   }
 }
