@@ -14,7 +14,7 @@ public class ViewTransformer {
     /**
      * transforms a given JsonNode to representation of view templates
      * view template indicates any new field or mask fields for transformation
-     * 
+     *
      * @param viewTemplate
      * @param node
      * @return
@@ -35,7 +35,7 @@ public class ViewTransformer {
 				ArrayNode resultArray = JsonNodeFactory.instance.arrayNode();
 
 				for (int i = 0; i < nodeAttrs.size(); i++) {
-					
+
 					JsonNode tNode = transformNode(viewTemplate, nodeAttrs.get(i));
 					resultArray.add(tNode);
 				}
@@ -43,7 +43,7 @@ public class ViewTransformer {
 
 			} else if (nodeAttrs.isObject()) {
 				resultNode = transformNode(viewTemplate, nodeAttrs);
-				
+
 			} else {
 				throw new IllegalArgumentException("Not a valid node for transformation, must be a object node or array node");
 			}
@@ -56,7 +56,7 @@ public class ViewTransformer {
 
     /**
      * Transforms a single node for given view template
-     * 
+     *
      * @param viewTemplate
      * @param nodeAttrs
      * @return
@@ -70,8 +70,8 @@ public class ViewTransformer {
             if (functionStr != null) {
 
                 String fdName = field.getFunctioName();
-                FunctionDefinition funcDef = viewTemplate.getFunctionDefinition(fdName);            
-                                
+                FunctionDefinition funcDef = viewTemplate.getFunctionDefinition(fdName);
+
                 List<Object> actualValues = new ArrayList<>();
                 for (String oneArg : field.getArgNames()) {
                     // Cut off the $
@@ -79,8 +79,8 @@ public class ViewTransformer {
                         actualValues.add(ValueType.getValue(nodeAttrs.get(oneArg.substring(1))));
                 	}
                 }
-                
-                IEvaluator<Object> evaluator = EvaluatorFactory.getInstance(funcDef, actualValues, new String[0]);
+
+                IEvaluator<Object> evaluator = EvaluatorFactory.getInstance(funcDef, actualValues, field.getArgNames());
                 if (field.getDisplay()) {
                     Object evaluatedValue = evaluator.evaluate();
                     if(evaluatedValue instanceof String){
@@ -89,16 +89,16 @@ public class ViewTransformer {
                         result.set(field.getTitle(), JsonNodeFactory.instance.pojoNode(evaluatedValue));
                     }
                 }
-            // if display is set, show up the field in result    
+            // if display is set, show up the field in result
             } else if (field.getDisplay()) {
                 result.set(field.getTitle(), nodeAttrs.get(field.getName()));
             }
         }
-        
-        appendSignatures(viewTemplate, nodeAttrs,result);        
+
+        appendSignatures(viewTemplate, nodeAttrs,result);
         return result;
     }
-    
+
     /**
      * Appends the signature array to the result as per the fields specified in view template file.
      *
@@ -109,21 +109,21 @@ public class ViewTransformer {
      * */
     private JsonNode appendSignatures(ViewTemplate viewTemplate, JsonNode nodeAttrs, JsonNode resultNode) throws Exception {
     	if(nodeAttrs.get("signatures")!=null) {
-			
+
 			ArrayNode sigArray = new ObjectMapper().createArrayNode();
-			
+
 	    	for (JsonNode sigNode : nodeAttrs.get("signatures")) {
 	    		JsonNode signatureField = sigNode.get("signatureFor");
-	    		
+
 	    		if(signatureField != null){
 	    			//Adds the signatures of fields specified in view template file
 		    		for (Field fieldTemp : viewTemplate.getFields()) {
-		    			if(signatureField.asText().endsWith("/"+fieldTemp.getName()) && fieldTemp.getDisplay()){		
+		    			if(signatureField.asText().endsWith("/"+fieldTemp.getName()) && fieldTemp.getDisplay()){
 		    				sigArray.add(sigNode);
 		    			}
 		    		}
 		    		//Adds the subject signature
-		    		if(signatureField.asText().endsWith("/"+viewTemplate.getSubject())){	    				
+		    		if(signatureField.asText().endsWith("/"+viewTemplate.getSubject())){
 	    				sigArray.add(sigNode);
 	    			}
 	    		}

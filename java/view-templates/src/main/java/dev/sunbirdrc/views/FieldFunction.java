@@ -6,6 +6,7 @@ public class FieldFunction {
 
     private String expression;
     private List<Object> argValues;
+    private String[] argumentsPath;
 
     public FieldFunction(String expression) {
         this.expression = expression;
@@ -21,5 +22,13 @@ public class FieldFunction {
 
     public List<Object> getArgValues() {
         return this.argValues;
+    }
+
+    public void setArgumentsPaths(String[] argumentsPath) {
+        this.argumentsPath = argumentsPath;
+    }
+
+    public String[] getArgumentsPath() {
+        return argumentsPath;
     }
 }
