@@ -9,9 +9,10 @@ describe('SchemaService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [SchemaService, UtilsService, PrismaService],
-    }).overrideProvider(UtilsService)
-    .useClass(UtilsServiceMock)
-    .compile();
+    })
+      .overrideProvider(UtilsService)
+      .useClass(UtilsServiceMock)
+      .compile();
     service = module.get<SchemaService>(SchemaService);
   });
 
@@ -20,7 +21,9 @@ describe('SchemaService', () => {
   });
 
   it('should create a signed schema and get it from DB', async () => {
-    const vcCredSchema = await service.createCredentialSchema(credentialSchemaDemoPayload);
+    const vcCredSchema = await service.createCredentialSchema(
+      credentialSchemaDemoPayload,
+    );
     expect(vcCredSchema).toBeDefined();
     expect(vcCredSchema.schema.proof).toBeTruthy();
     const getVCCredSchema = await service.getCredentialSchema({

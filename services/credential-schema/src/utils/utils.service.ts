@@ -1,9 +1,10 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class UtilsService {
   constructor(private readonly httpService: HttpService) {}
+  private logger = new Logger(UtilsService.name);
   async sign(did: string, body: any) {
     try {
       const signedVCResponse = await this.httpService.axiosRef.post(
@@ -23,7 +24,7 @@ export class UtilsService {
       };
       return proof;
     } catch (err) {
-      console.error(err);
+      this.logger.error(err, err.response.data);
       throw new HttpException("Couldn't sign the schema", 500);
     }
   }

@@ -11,6 +11,12 @@ async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
+    {
+      logger:
+        process.env.NODE_ENV && process.env.NODE_ENV.toLowerCase() === 'debug'
+          ? ['log', 'debug', 'error', 'verbose', 'warn']
+          : ['error', 'warn', 'log'],
+    },
   );
 
   const config = new DocumentBuilder()
@@ -29,5 +35,3 @@ async function bootstrap() {
   Logger.log('Listening at http://localhost:3000');
 }
 bootstrap();
-// storing schemas
-//npx prisma migrate dev

@@ -1,11 +1,11 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private logger = new Logger(JwtStrategy.name);
   constructor() {
-    console.log('process.env.JWKS_URI : ', process.env.JWKS_URI);
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -20,12 +20,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    console.log('in validate: ', payload);
-
     if (!payload) {
+      this.logger.log('Invalid JWT, Authorization failed');
       throw new UnauthorizedException();
     }
-    console.log('VALID');
+    this.logger.debug('Valid JWT, Authorization passed');
     return { roles: payload.roles };
   }
 }

@@ -1,6 +1,7 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Template } from '@prisma/client';
@@ -14,13 +15,14 @@ export class RenderingTemplatesService {
     private prisma: PrismaService,
     private readonly verifier: ValidateTemplateService,
   ) {}
-
+  private logger = new Logger(RenderingTemplatesService.name);
   async getTemplateBySchemaID(schemaId: string): Promise<Template[]> {
     try {
       return await this.prisma.template.findMany({
         where: { schemaId },
       });
     } catch (err) {
+      this.logger.error(err);
       throw new InternalServerErrorException(err);
     }
   }
@@ -55,6 +57,7 @@ export class RenderingTemplatesService {
         );
       }
     } catch (err) {
+      this.logger.error(err);
       throw new InternalServerErrorException(err);
     }
   }
@@ -73,6 +76,7 @@ export class RenderingTemplatesService {
         },
       });
     } catch (err) {
+      this.logger.error(err);
       throw new InternalServerErrorException(err);
     }
   }
@@ -81,9 +85,9 @@ export class RenderingTemplatesService {
       await this.prisma.template.delete({
         where: { templateId: id },
       });
-
       return 'Template deleted successfully';
     } catch (err) {
+      this.logger.error(err);
       throw new InternalServerErrorException(err);
     }
   }
