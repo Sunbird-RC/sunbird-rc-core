@@ -3,12 +3,16 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SchemaService } from './schema/schema.service';
 import { SchemaModule } from './schema/schema.module';
-import { PrismaService } from './prisma.service';
 import { ConfigModule } from '@nestjs/config';
 import { RenderingTemplatesModule } from './rendering-templates/rendering-templates.module';
 import { HttpModule } from '@nestjs/axios';
 import { UtilsService } from './utils/utils.service';
+import { TerminusModule } from '@nestjs/terminus';
+import { PrismaHealthIndicator } from './utils/prisma.health';
+import { PrismaServiceHealthCheck } from './utils/prisma.service';
+import { PrismaService } from './prisma.service';
 
+PrismaHealthIndicator;
 @Module({
   imports: [
     SchemaModule,
@@ -21,8 +25,16 @@ import { UtilsService } from './utils/utils.service';
     }), // using in memory cache for now
     RenderingTemplatesModule,
     HttpModule,
+    TerminusModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService, SchemaService, UtilsService],
+  providers: [
+    PrismaService,
+    AppService,
+    PrismaServiceHealthCheck,
+    SchemaService,
+    UtilsService,
+    PrismaHealthIndicator,
+  ],
 })
 export class AppModule {}
