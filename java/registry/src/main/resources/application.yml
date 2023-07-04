@@ -253,6 +253,12 @@ authentication:
   realm:  ${authentication_realm:sunbird-rc}
   url:  ${authentication_url:localhost:8443/auth}
 
+# open policy agent configuration details
+opa:
+  enabled: ${opa_enabled:false}
+  url: ${opa_auth_url:http://localhost:8181/v1/data}
+  path: ${opa_package_path:/httpapi/authz}
+  allowKey: ${opa_allow_key_name:allow}
 
 validation:
   enabled: ${validation_enabled:true}
@@ -478,4 +484,11 @@ elastic:
     enabled: ${elastic_search_enabled:true}
     # elastic-search connection info
     connection_url: ${elastic_search_connection_url:localhost:9200}
+
+# open policy agent configuration details
+opa:
+  enabled: ${opa_enabled:false}
+  url: ${opa_auth_url:http://localhost:8181/v1/data}
+  path: ${opa_package:/httpapi/authz}
+  allowKey: ${opa_allow_key_name:allow}
 

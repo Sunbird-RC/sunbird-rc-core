@@ -16,6 +16,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper;
 import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
@@ -30,6 +31,9 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
 
     @Autowired
     private SchemaFilter schemaFilter;
+    @Autowired
+    private OpaFilter opaFilter;
+
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 
@@ -66,6 +70,7 @@ public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                     .permitAll()
                     .and()
                     .addFilterBefore(schemaFilter, WebAsyncManagerIntegrationFilter.class)
+                    .addFilterAfter(opaFilter, AnonymousAuthenticationFilter.class)
                     .authorizeRequests()
                     .anyRequest()
                     .authenticated();

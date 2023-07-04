@@ -82,6 +82,10 @@ services:
       - notification_async_enabled=${NOTIFICATION_ASYNC_ENABLED-false}
       - notification_enabled=${NOTIFICATION_ENABLED-false}
       - notification_url=${NOTIFICATION_URL-http://notification-ms:8765/notification-service/v1/notification}
+      - opa_enabled=${OPA_ENABLED-true}
+      - opa_auth_url=opa:8181/v1/data
+      - opa_package_path=${OPA_PACKAGE_PATH-/httpapi/authz}
+      - opa_allow_key_name=${OPA_ALLOW_KEY_NAME-allow}
     ports:
       - "8081:8081"
     depends_on:
@@ -270,6 +274,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+    volumes:
+      - ./policies/bundles:/usr/share/nginx/html/bundles
   metrics:
     image: dockerhub/sunbird-rc-metrics
     environment:
@@ -314,3 +320,17 @@ services:
       - "9002:9000"
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+  opa:
+    image: openpolicyagent/opa:0.54.0
+    ports:
+      - 8181:8181
+    command:
+      - "run"
+      - "--server"
+      - "--log-format=json-pretty"
+      - "--set=decision_logs.console=true"
+      - "--set=services.nginx.url=http://nginx"
+      - "--set=bundles.nginx.service=nginx"
+      - "--set=bundles.nginx.resource=bundles/bundle.tar.gz"
+    depends_on:
+      - nginx
