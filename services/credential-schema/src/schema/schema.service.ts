@@ -78,7 +78,7 @@ export class SchemaService {
                 },
               },
             ],
-            method: 'rcw',
+            method: 'schema',
           },
         ],
       };
