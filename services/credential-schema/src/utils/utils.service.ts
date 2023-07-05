@@ -38,11 +38,9 @@ export class UtilsService {
     try {
       const did = await this.httpService.axiosRef.post(
         `${process.env.IDENTITY_BASE_URL}/did/generate`,
-        {
-          payload: body,
-        },
+        body,
       );
-      return did[0];
+      return did.data[0];
     } catch (err) {
       this.logger.error(err);
       throw new InternalServerErrorException('Can not generate a new DID');

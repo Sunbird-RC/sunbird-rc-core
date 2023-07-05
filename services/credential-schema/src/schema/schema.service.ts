@@ -75,7 +75,7 @@ export class SchemaService {
       const didBody = {
         content: [
           {
-            alsoKnownAs: [data.author, data.schema.id],
+            alsoKnownAs: [data.author, data.schema.$id],
             services: [
               {
                 id: 'CredentialSchemaService',
@@ -88,6 +88,7 @@ export class SchemaService {
       };
 
       const did = await this.utilService.generateDID(didBody);
+      this.logger.debug('DID received from identity service', did);
       const credSchema = {
         schema: {
           type: data.type,
@@ -108,18 +109,11 @@ export class SchemaService {
         deprecatedId: data.deprecatedId,
       };
       // sign the credential schema (only the schema part of the credSchema object above)
-      try {
-        const proof = await this.utilService.sign(
-          credSchema.schema.author,
-          JSON.stringify(credSchema.schema),
-        );
-        credSchema.schema.proof = proof;
-      } catch (err) {
-        this.logger.error('Error signing credential schema', err);
-        throw new InternalServerErrorException(
-          'Error signing credential schema',
-        );
-      }
+      const proof = await this.utilService.sign(
+        credSchema.schema.author,
+        JSON.stringify(credSchema.schema),
+      );
+      credSchema.schema.proof = proof;
 
       try {
         await this.prisma.verifiableCredentialSchema.create({

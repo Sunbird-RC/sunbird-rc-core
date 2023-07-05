@@ -24,6 +24,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@db-test:5432/postgres
       IDENTITY_BASE_URL: ""
+      ENABLE_AUTH: "false"
     networks:
       test:
 
