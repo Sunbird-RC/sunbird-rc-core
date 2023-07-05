@@ -7,6 +7,7 @@ import {
 import { PrismaClient, Template } from '@prisma/client';
 import { AddTemplateDTO } from './dto/addTemplate.dto';
 import { ValidateTemplateService } from './validate-template.service';
+import { TemplateWarnings } from './types/TemplateWarnings.interface';
 
 @Injectable()
 export class RenderingTemplatesService {
@@ -38,7 +39,9 @@ export class RenderingTemplatesService {
     return template;
   }
 
-  async addTemplate(addTemplateDto: AddTemplateDTO): Promise<Template> {
+  async addTemplate(
+    addTemplateDto: AddTemplateDTO,
+  ): Promise<{ template: Template; warnings: TemplateWarnings }> {
     const warnings = await this.verifier.validateTemplateAgainstSchema(
       addTemplateDto.template,
       addTemplateDto.schemaId,
@@ -52,7 +55,7 @@ export class RenderingTemplatesService {
         },
       });
       this.logger.log('Template added successfully');
-      return { ...template, warnings };
+      return { template, warnings };
     } catch (err) {
       this.logger.error(err);
       throw new InternalServerErrorException(err, 'Error adding template');
