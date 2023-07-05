@@ -19,7 +19,7 @@ export class VCSchema {
     [k: string]: unknown;
   };
   @ApiProperty({ type: [String], description: 'required properties' })
-  required: [] | string[];
+  required: string[];
   @ApiProperty({
     type: Boolean,
     description: 'if the schema contains some additional properties',

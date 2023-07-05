@@ -25,7 +25,7 @@ export class VCModelSchema implements VCSModelSchemaInterface {
     properties: {
       [k: string]: unknown;
     };
-    required: [] | string[];
+    required: string[];
     additionalProperties: boolean;
     [k: string]: unknown;
   };
