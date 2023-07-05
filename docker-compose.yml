@@ -2,7 +2,7 @@ version: "2.4"
 
 services:
   es:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.1
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -34,12 +34,17 @@ services:
   registry:
     image: dockerhub/sunbird-rc-core:${RELEASE_VERSION}
     volumes:
-      - ${PWD}/${SCHEMA_DIR-java/registry/src/main/resources/public/_schemas}:/home/sunbirdrc/config/public/_schemas
+      - ./${SCHEMA_DIR-java/registry/src/main/resources/public/_schemas}:/home/sunbirdrc/config/public/_schemas
+      - ./${VIEW_DIR-java/registry/src/main/resources/views}:/home/sunbirdrc/config/views/
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
+      - event_enabled=${EVENT_ENABLED-false}
+      - event_topic=events
+      - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
       - elastic_search_connection_url=es:9200
+      - elastic_search_scheme=${ELASTIC_SEARCH_SCHEME-http}
       - elastic_search_auth_enabled=${ELASTIC_SECURITY_ENABLED-false}
       - elastic_search_username=${ELASTIC_SEARCH_USERNAME-elastic}
       - elastic_search_password=${ELASTIC_SEARCH_PASSWORD}
@@ -74,6 +79,9 @@ services:
       - redis_host=redis
       - redis_port=6379
       - manager_type=${MANAGER_TYPE-DefinitionsManager}
+      - notification_async_enabled=${NOTIFICATION_ASYNC_ENABLED-false}
+      - notification_enabled=${NOTIFICATION_ENABLED-false}
+      - notification_url=${NOTIFICATION_URL-http://notification-ms:8765/notification-service/v1/notification}
     ports:
       - "8081:8081"
     depends_on:
@@ -89,7 +97,7 @@ services:
   keycloak:
     image: dockerhub/sunbird-rc-keycloak:latest
     volumes:
-      - ${PWD}/${KEYCLOAK_IMPORT_DIR-imports}:/opt/jboss/keycloak/imports
+      - ./${KEYCLOAK_IMPORT_DIR-imports}:/opt/jboss/keycloak/imports
     environment:
       - KEYCLOAK_LOGO=https://svgshare.com/i/hCs.svg
       - DB_VENDOR=postgres
@@ -185,6 +193,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+    environment:
+      - TRACK_NOTIFICATIONS=${TRACK_NOTIFICATIONS-false}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS-kafka:9092}
+    depends_on:
+      kafka:
+        condition: service_started
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
@@ -208,7 +222,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
     healthcheck:
       test:
-        [ "CMD", "kafka-topics", "--list", "--zookeeper", "zookeeper:2181" ]
+        [ "CMD", "kafka-topics", "--list", "--bootstrap-server", "localhost:9092" ]
       interval: 30s
       timeout: 10s
       retries: 10
@@ -256,6 +270,21 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
+  metrics:
+    image: dockerhub/sunbird-rc-metrics
+    environment:
+      CLICK_HOUSE_URL: clickhouse:9000
+      CLICKHOUSE_DATABASE: default
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_METRICS_TOPIC: events
+      REDIS_URL: redis:6379
+    ports:
+      - "8070:8070"
+    depends_on:
+      kafka:
+        condition: service_started
+      registry:
+        condition: service_healthy
   redis:
     image: redis:latest
     ports:
@@ -263,7 +292,7 @@ services:
   digilocker-certificate-api:
     image: dockerhub/sunbird-rc-digilocker-certificate-api
     volumes:
-      - ${PWD}/services/digilocker-certificate-api/config/:/go/config/
+      - ./services/digilocker-certificate-api/config/:/go/config/
     ports:
       - "8087:8087"
     environment:
@@ -279,3 +308,9 @@ services:
     environment:
       REGISTRY_BASE_URL: http://registry:8081/
       DATABASE_HOST: db
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.4.2.11-alpine
+    ports:
+      - "9002:9000"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1

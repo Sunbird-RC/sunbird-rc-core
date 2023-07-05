@@ -94,12 +94,14 @@ public class Response {
 
 		PATCH(getApiPrefix() + ".patch"),
 		SEARCH(getApiPrefix() + ".search"),
+
 		SIGN(getApiName() + ".utils.sign"),
 		VERIFY(getApiName() + ".utils.verify"),
 		KEYS(getApiName() + ".utils.keys"),
 		ENCRYPT(getApiName() + ".utils.encrypt"),
 		DECRYPT(getApiName() + ".utils.decrypt"),
         SEND(getApiName() + ".registry.send"),
+		REVOKE(getApiName() + ".utils.revoke"),
 		NONE("");
         private String id;
 
