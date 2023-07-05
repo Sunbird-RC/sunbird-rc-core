@@ -1,5 +1,10 @@
 import { HttpService } from '@nestjs/axios';
-import { HttpException, Injectable, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 
 @Injectable()
 export class UtilsService {
@@ -26,6 +31,21 @@ export class UtilsService {
     } catch (err) {
       this.logger.error(err, err.response.data);
       throw new HttpException("Couldn't sign the schema", 500);
+    }
+  }
+
+  async generateDID(body: any) {
+    try {
+      const did = await this.httpService.axiosRef.post(
+        `${process.env.IDENTITY_BASE_URL}/did/generate`,
+        {
+          payload: body,
+        },
+      );
+      return did[0];
+    } catch (err) {
+      this.logger.error(err, err.response.data);
+      throw new InternalServerErrorException('Can not generate a new DID');
     }
   }
 }

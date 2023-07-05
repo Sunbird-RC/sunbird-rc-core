@@ -115,9 +115,6 @@ export class SchemaController {
     description: 'There was some prioblem with the request.',
   })
   updateCredentialSchema(@Param('id') id, @Body() data: CreateCredentialDTO) {
-    return this.schemaService.updateCredentialSchema({
-      where: { id: id },
-      data,
-    });
+    return this.schemaService.updateCredentialSchema({ id: id }, data);
   }
 }
