@@ -3,9 +3,8 @@ import { samples } from './test-samples';
 
 describe('test schema validator', () => {
   it('schema examples', () => {
-    // samples.forEach((sample) => {
-    //   expect(validate(sample.sample)).toEqual(sample.isValid);
-    // });
-    expect(1).toEqual(1);
+    samples.forEach((sample) => {
+      expect(validate(sample.sample)).toEqual(sample.isValid);
+    });
   });
 });
