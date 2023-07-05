@@ -15,4 +15,10 @@ export class UtilsServiceMock {
     };
     return proof;
   }
+
+  async generateDID(body: any) {
+    return {
+      id: 'did:example:123456789abcdefghi',
+    };
+  }
 }

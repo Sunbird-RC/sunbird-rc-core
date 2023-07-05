@@ -102,11 +102,7 @@ export class SchemaService {
         },
         tags: tags,
         status: data.status,
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
-        createdBy: data.createdBy,
-        updatedBy: data.updatedBy,
-        deprecatedId: data.deprecatedId,
+        deprecatedId: null,
       };
       // sign the credential schema (only the schema part of the credSchema object above)
       const proof = await this.utilService.sign(
@@ -116,7 +112,7 @@ export class SchemaService {
       credSchema.schema.proof = proof;
 
       try {
-        await this.prisma.verifiableCredentialSchema.create({
+        const resp = await this.prisma.verifiableCredentialSchema.create({
           data: {
             id: credSchema.schema.id,
             type: credSchema.schema?.type as string,
@@ -131,11 +127,16 @@ export class SchemaService {
             deprecatedId: deprecatedId,
           },
         });
+
+        credSchema['createdAt'] = resp.createdAt;
+        credSchema['updatedAt'] = resp.updatedAt;
+        credSchema['deletedAt'] = resp.deletedAt;
+        credSchema['createdBy'] = resp.createdBy;
+        credSchema['updatedBy'] = resp.updatedBy;
       } catch (err) {
         this.logger.error('Error saving schema to db', err);
         throw new InternalServerErrorException('Error saving schema to db');
       }
-
       return credSchema;
     } else {
       this.logger.log('Schema validation failed', validate.errors.join('\n'));
