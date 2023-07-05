@@ -14,6 +14,19 @@ spring:
     ansi:
       enabled: ALWAYS
 
+
+oauth2:
+  resources:
+    - uri: ${oauth2_resource_uri:http://localhost:8080/auth/realms/sunbird-rc}
+      properties:
+        emailPath: ${oauth2_resource_email_path:email}
+        consentPath: ${oauth2_resource_consent_path:consent}
+        rolesPath: ${oauth2_resource_roles_path:realm_access.roles}
+        entityPath: ${oauth2_resource_entity_path:entity}
+        userIdPath: ${oauth2_resource_user_id_path:sub}
+
+
+
 name: default-yaml
 environment: default
 
@@ -59,6 +72,7 @@ registry:
   schema:
     url: ${registry_schema_url:http://localhost:8081/_schemas/}
   attestationPolicy:
+    search_enabled: ${search_attestation_db:false}
     createAccess: ${create_attestation_access_entities:User}
   manager:
     type: ${manager_type:DefinitionsManager}
@@ -229,6 +243,16 @@ audit:
     store: ${audit_frame_store:DATABASE}
     suffix: ${audit_suffix:Audit}
     suffixSeparator: ${audit_suffixSeparator:_}
+
+identity:
+  provider: ${identity_provider:dev.sunbirdrc.auth.keycloak.KeycloakProviderImpl}
+  url: ${sunbird_sso_url:http://localhost:8080/auth/}
+  realm: ${sunbird_sso_realm:sunbird-rc}
+  client_id: ${sunbird_sso_admin_client_id:admin-api}
+  client_secret: ${sunbird_sso_admin_client_secret:xxx}
+  set_default_password: ${sunbird_keycloak_user_set_password:false}
+  default_password: ${sunbird_keycloak_user_password:abcd@1234}
+  user_actions: ${identity_user_actions:}
 
 keycloak:
   #publicKey:  ${sunbird_sso_publickey:pk}

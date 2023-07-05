@@ -41,7 +41,8 @@ public class APIMessage {
 		try {
 			request = new ObjectMapper().readValue(body, Request.class);
 		} catch (IOException jpe) {
-			logger.error("Can't read request body", jpe);
+			logger.error("Can't read request body, {}", jpe.getMessage());
+			logger.debug("Exception: ", jpe);
 			request = null;
 		}
 	}

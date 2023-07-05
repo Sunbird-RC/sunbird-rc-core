@@ -134,11 +134,14 @@ public class DefinitionsManager implements IDefinitionsManager {
 	}
 
 	@Override
-	public void appendNewDefinition(JsonNode jsonNode) {
+	public Definition appendNewDefinition(JsonNode jsonNode) {
 		try {
-			appendNewDefinition(Definition.toDefinition(jsonNode));
+			Definition definition = Definition.toDefinition(jsonNode);
+			appendNewDefinition(definition);
+			return definition;
 		} catch (Exception e) {
 			logger.error("Failed loading schema from DB", e);
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -150,12 +153,22 @@ public class DefinitionsManager implements IDefinitionsManager {
 		definitionMap.put(definition.getTitle(), definition);
 	}
 
+	@Override
 	public void removeDefinition(JsonNode jsonNode) {
 		try {
 			String schemaAsText = jsonNode.asText("{}");
 			JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
 			String schemaTitle = schemaJsonNode.get(TITLE).asText();
-			definitionMap.remove(schemaTitle);
+			removeDefinition(schemaTitle);
+		} catch (Exception e) {
+			logger.error("Failed removing schema from definition manager", e);
+		}
+	}
+
+	@Override
+	public void removeDefinition(String schema) {
+		try {
+			definitionMap.remove(schema);
 		} catch (Exception e) {
 			logger.error("Failed removing schema from definition manager", e);
 		}

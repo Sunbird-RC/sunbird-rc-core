@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.sunbirdrc.registry.authorization.SchemaAuthFilter;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
@@ -20,12 +21,14 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +47,9 @@ public class SchemaServiceTest {
 
 	@Mock
 	IValidate validator;
+
+	@Spy
+	SchemaAuthFilter schemaAuthFilter;
 	@InjectMocks
 	SchemaService schemaService;
 
@@ -514,5 +520,96 @@ public class SchemaServiceTest {
 		} catch (SchemaException e) {
 			assertEquals("Duplicate Error: Internal schema \"Schema\" already exists", e.getMessage());
 		}
+	}
+
+	@Test
+	public void shouldAddSchemaToSchemFilter() throws IOException, SchemaException {
+		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
+		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
+		ObjectNode object = JsonNodeFactory.instance.objectNode();
+		object.put(Schema.toLowerCase(), schema);
+		object.put("status", SchemaStatus.PUBLISHED.toString());
+		schemaNode.set(Schema, object);
+		schemaService.addSchema(schemaNode);
+		verify(schemaAuthFilter, times(1)).appendAnonymousInviteSchema(anyString());
+	}
+
+	@Test
+	public void shouldAddSchemaToSchemFilterInviteAnonymous() throws IOException, SchemaException {
+		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
+		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
+		ObjectNode object = JsonNodeFactory.instance.objectNode();
+		object.put(Schema.toLowerCase(), schema);
+		object.put("status", SchemaStatus.PUBLISHED.toString());
+		schemaNode.set(Schema, object);
+		schemaService.addSchema(schemaNode);
+		verify(schemaAuthFilter, times(1)).appendAnonymousSchema(anyString());
+	}
+
+	@Test
+	public void shouldAddSchemaToAnonymousSchemaFilterOnUpdate() throws SchemaException, IOException {
+		JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
+
+		assertNull(existingDefinition.get("_osConfig").get("certificateTemplates"));
+		JsonNode updatedSchema = objectMapper.readTree("{\n" +
+				"  \"Schema\": {\n" +
+				"    \"schema\": \"{\\n  \\\"$schema\\\": \\\"http://json-schema.org/draft-07/schema\\\",\\n  \\\"type\\\": \\\"object\\\",\\n  \\\"properties\\\": {\\n    \\\"TrainingCertificate\\\": {\\n      \\\"$ref\\\": \\\"#/definitions/TrainingCertificate\\\"\\n    }\\n  },\\n  \\\"required\\\": [\\n    \\\"TrainingCertificate\\\"\\n  ],\\n  \\\"title\\\": \\\"TrainingCertificate\\\",\\n  \\\"definitions\\\": {\\n    \\\"TrainingCertificate\\\": {\\n      \\\"$id\\\": \\\"#/properties/TrainingCertificate\\\",\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"title\\\": \\\"The TrainingCertificate Schema\\\",\\n      \\\"required\\\": [\\n        \\\"name\\\",\\n        \\\"contact\\\"\\n      ],\\n      \\\"properties\\\": {\\n        \\\"name\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"trainingTitle\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"contact\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"date\\\": {\\n          \\\"type\\\": \\\"string\\\",\\n          \\\"format\\\": \\\"date\\\"\\n        },\\n        \\\"note\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        }\\n      }\\n    }\\n  },\\n  \\\"_osConfig\\\": {\\n    \\\"uniqueIndexFields\\\": [\\n      \\\"contact\\\"\\n    ],\\n    \\\"ownershipAttributes\\\": [],\\n    \\\"roles\\\": [\\\"anonymous\\\"],\\n    \\\"inviteRoles\\\": [\\n      \\\"anonymous\\\"\\n    ],\\n    \\\"enableLogin\\\": false,\\n    \\\"credentialTemplate\\\": {\\n      \\\"@context\\\": [\\n        \\\"https://www.w3.org/2018/credentials/v1\\\",\\n        \\\"https://gist.githubusercontent.com/dileepbapat/eb932596a70f75016411cc871113a789/raw/498e5af1d94784f114b32c1ab827f951a8a24def/skill\\\"\\n      ],\\n      \\\"type\\\": [\\n        \\\"VerifiableCredential\\\"\\n      ],\\n      \\\"issuanceDate\\\": \\\"2021-08-27T10:57:57.237Z\\\",\\n      \\\"credentialSubject\\\": {\\n        \\\"type\\\": \\\"Person\\\",\\n        \\\"name\\\": \\\"{{name}}\\\",\\n        \\\"trainedOn\\\": \\\"{{trainingTitle}}\\\"\\n      },\\n      \\\"issuer\\\": \\\"did:web:sunbirdrc.dev/vc/skill\\\"\\n    },\\n    \\\"certificateTemplates\\\": {\\n      \\\"html\\\": \\\"https://raw.githubusercontent.com/dileepbapat/ref-sunbirdrc-certificate/main/schemas/templates/TrainingCertificate.html\\\"\\n    }\\n  }\\n}\",\n" +
+				"    \"osUpdatedAt\": \"2022-09-14T05:38:41.909Z\",\n" +
+				"    \"osCreatedAt\": \"2022-09-14T05:34:04.862Z\",\n" +
+				"    \"osUpdatedBy\": \"anonymous\",\n" +
+				"    \"@type\": \"Schema\",\n" +
+				"    \"name\": \"schema_new\",\n" +
+				"    \"osCreatedBy\": \"anonymous\",\n" +
+				"    \"osid\": \"756cea4b-93a0-44d5-affd-bb605cf30abd\",\n" +
+				"    \"osOwner\": [\n" +
+				"      \"anonymous\"\n" +
+				"    ],\n" +
+				"    \"status\": \"PUBLISHED\"\n" +
+				"  }\n" +
+				"}");
+		schemaService.updateSchema(updatedSchema);
+		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
+		assertNotNull(updatedDefinition.get("_osConfig").get("certificateTemplates"));
+		assertEquals(1, updatedDefinition.get("_osConfig").get("certificateTemplates").size());
+		verify(schemaAuthFilter, times(1)).appendAnonymousSchema(anyString());
+	}
+
+	@Test
+	public void shouldAddSchemaToAnonymousInviteSchemaFilterOnUpdate() throws SchemaException, IOException {
+		JsonNode existingDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
+
+		assertNull(existingDefinition.get("_osConfig").get("certificateTemplates"));
+		JsonNode updatedSchema = objectMapper.readTree("{\n" +
+				"  \"Schema\": {\n" +
+				"    \"schema\": \"{\\n  \\\"$schema\\\": \\\"http://json-schema.org/draft-07/schema\\\",\\n  \\\"type\\\": \\\"object\\\",\\n  \\\"properties\\\": {\\n    \\\"TrainingCertificate\\\": {\\n      \\\"$ref\\\": \\\"#/definitions/TrainingCertificate\\\"\\n    }\\n  },\\n  \\\"required\\\": [\\n    \\\"TrainingCertificate\\\"\\n  ],\\n  \\\"title\\\": \\\"TrainingCertificate\\\",\\n  \\\"definitions\\\": {\\n    \\\"TrainingCertificate\\\": {\\n      \\\"$id\\\": \\\"#/properties/TrainingCertificate\\\",\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"title\\\": \\\"The TrainingCertificate Schema\\\",\\n      \\\"required\\\": [\\n        \\\"name\\\",\\n        \\\"contact\\\"\\n      ],\\n      \\\"properties\\\": {\\n        \\\"name\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"trainingTitle\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"contact\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        },\\n        \\\"date\\\": {\\n          \\\"type\\\": \\\"string\\\",\\n          \\\"format\\\": \\\"date\\\"\\n        },\\n        \\\"note\\\": {\\n          \\\"type\\\": \\\"string\\\"\\n        }\\n      }\\n    }\\n  },\\n  \\\"_osConfig\\\": {\\n    \\\"uniqueIndexFields\\\": [\\n      \\\"contact\\\"\\n    ],\\n    \\\"ownershipAttributes\\\": [],\\n    \\\"roles\\\": [\\\"anonymous\\\"],\\n    \\\"inviteRoles\\\": [\\n      \\\"anonymous\\\"\\n    ],\\n    \\\"enableLogin\\\": false,\\n    \\\"credentialTemplate\\\": {\\n      \\\"@context\\\": [\\n        \\\"https://www.w3.org/2018/credentials/v1\\\",\\n        \\\"https://gist.githubusercontent.com/dileepbapat/eb932596a70f75016411cc871113a789/raw/498e5af1d94784f114b32c1ab827f951a8a24def/skill\\\"\\n      ],\\n      \\\"type\\\": [\\n        \\\"VerifiableCredential\\\"\\n      ],\\n      \\\"issuanceDate\\\": \\\"2021-08-27T10:57:57.237Z\\\",\\n      \\\"credentialSubject\\\": {\\n        \\\"type\\\": \\\"Person\\\",\\n        \\\"name\\\": \\\"{{name}}\\\",\\n        \\\"trainedOn\\\": \\\"{{trainingTitle}}\\\"\\n      },\\n      \\\"issuer\\\": \\\"did:web:sunbirdrc.dev/vc/skill\\\"\\n    },\\n    \\\"certificateTemplates\\\": {\\n      \\\"html\\\": \\\"https://raw.githubusercontent.com/dileepbapat/ref-sunbirdrc-certificate/main/schemas/templates/TrainingCertificate.html\\\"\\n    }\\n  }\\n}\",\n" +
+				"    \"osUpdatedAt\": \"2022-09-14T05:38:41.909Z\",\n" +
+				"    \"osCreatedAt\": \"2022-09-14T05:34:04.862Z\",\n" +
+				"    \"osUpdatedBy\": \"anonymous\",\n" +
+				"    \"@type\": \"Schema\",\n" +
+				"    \"name\": \"schema_new\",\n" +
+				"    \"osCreatedBy\": \"anonymous\",\n" +
+				"    \"osid\": \"756cea4b-93a0-44d5-affd-bb605cf30abd\",\n" +
+				"    \"osOwner\": [\n" +
+				"      \"anonymous\"\n" +
+				"    ],\n" +
+				"    \"status\": \"PUBLISHED\"\n" +
+				"  }\n" +
+				"}");
+		schemaService.updateSchema(updatedSchema);
+		JsonNode updatedDefinition = objectMapper.readTree(definitionsManager.getDefinition(TRAINING_CERTIFICATE).getContent());
+		assertNotNull(updatedDefinition.get("_osConfig").get("certificateTemplates"));
+		assertEquals(1, updatedDefinition.get("_osConfig").get("certificateTemplates").size());
+		verify(schemaAuthFilter, times(1)).appendAnonymousInviteSchema(anyString());
+	}
+
+	@Test
+	public void shouldDeleteSchemaFromSchemaFilter() throws SchemaException {
+		assertEquals(1, definitionsManager.getAllKnownDefinitions().size());
+		Vertex vertex = mock(Vertex.class);
+		VertexProperty vertexProperty = mock(VertexProperty.class);
+		Mockito.when(vertex.property(Schema.toLowerCase())).thenReturn(vertexProperty);
+		Mockito.when(vertexProperty.value()).thenReturn(trainingCertificateSchema);
+		schemaService.deleteSchemaIfExists(vertex);
+		verify(schemaAuthFilter, times(1)).removeSchema(anyString());
 	}
 }

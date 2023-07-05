@@ -153,9 +153,11 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
     }
 
     @Override
-    public void appendNewDefinition(JsonNode jsonNode) {
+    public Definition appendNewDefinition(JsonNode jsonNode) {
         try {
-            appendNewDefinition(Definition.toDefinition(jsonNode));
+            Definition definition = Definition.toDefinition(jsonNode);
+            appendNewDefinition(definition);
+            return definition;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -170,12 +172,21 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
 
     @Override
     public void removeDefinition(JsonNode jsonNode) {
-        try(Jedis jedis = jedisPool.getResource()) {
+        try{
             String schemaAsText = jsonNode.asText("{}");
             JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
             String schemaTitle = SCHEMA + schemaJsonNode.get(TITLE).asText();
-            jedis.del(schemaTitle);
+            removeDefinition(schemaTitle);
         } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void removeDefinition(String schema) {
+        try(Jedis jedis = jedisPool.getResource()) {
+            jedis.del(schema);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

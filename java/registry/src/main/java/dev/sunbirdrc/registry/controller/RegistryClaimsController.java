@@ -26,8 +26,6 @@ import org.springframework.web.client.HttpServerErrorException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 
-import static dev.sunbirdrc.registry.middleware.util.Constants.USER_ID;
-
 @RestController
 public class RegistryClaimsController extends AbstractController{
     private static final Logger logger = LoggerFactory.getLogger(RegistryClaimsController.class);
@@ -91,7 +89,7 @@ public class RegistryClaimsController extends AbstractController{
             pluginRequestMessage.setAttestorPlugin(attestorPlugin);
             pluginRequestMessage.setAdditionalInputs(additionalInputs);
             pluginRequestMessage.setStatus(action.asText());
-            pluginRequestMessage.setUserId(registryHelper.getKeycloakUserId(request));
+            pluginRequestMessage.setUserId(registryHelper.getPrincipalUserId());
             PluginRouter.route(pluginRequestMessage);
 
             responseParams.setStatus(Response.Status.SUCCESSFUL);
@@ -132,7 +130,7 @@ public class RegistryClaimsController extends AbstractController{
 
         try {
             // Generate property Data
-            String userId = registryHelper.getUserId(request, attestationRequest.getEntityName());
+            String userId = registryHelper.getUserId(attestationRequest.getEntityName());
             String emailId = registryHelper.fetchEmailIdFromToken(request, attestationRequest.getEntityName());
             JsonNode entityNode = registryHelper.readEntity(userId, attestationRequest.getEntityName(),
                             attestationRequest.getEntityId(), false, null, false)
