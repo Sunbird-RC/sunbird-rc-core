@@ -104,7 +104,7 @@ export class RenderingTemplatesController {
 
   @ApiOperation({ summary: 'Delete the template by templateId' })
   @ApiOkResponse({
-    status: 201,
+    status: 200,
     description: 'The record has been successfully deleted.',
     type: Template,
   })

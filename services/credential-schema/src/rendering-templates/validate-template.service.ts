@@ -4,6 +4,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { SchemaService } from '../schema/schema.service';
+import { TemplateWarnings } from './types/TemplateWarnings.interface';
 
 @Injectable()
 export class ValidateTemplateService {
@@ -22,7 +23,7 @@ export class ValidateTemplateService {
   async validateTemplateAgainstSchema(
     template: string,
     schemaID: string,
-  ): Promise<boolean> {
+  ): Promise<TemplateWarnings | null> {
     try {
       const hbsfields: Array<string> = this.parseHBSTemplate(template);
       const requiredFields: Array<string> = (
@@ -42,20 +43,35 @@ export class ValidateTemplateService {
             this.logger.log(
               'Template not validated against schema successfully, strings do not match',
             );
-            return false;
+
+            return {
+              message:
+                'Template not validated against schema successfully, strings do not match',
+
+              hsbsFields: hbsfields,
+              requiredFields: requiredFields,
+            };
           }
         }
         this.logger.log('Template validated successfully');
-        return true;
+        return;
       } else {
         this.logger.log(
           'Number of fields in HBS file does not match required field list in schema',
         );
-        return false;
+        return {
+          message:
+            'Number of fields in HBS file does not match required field list in schema',
+          hsbsFields: hbsfields,
+          requiredFields: requiredFields,
+        };
       }
     } catch (err) {
       this.logger.error(err);
-      throw new InternalServerErrorException(err.message);
+      throw new InternalServerErrorException(
+        err,
+        'Error while validating template for required fields with schema',
+      );
     }
   }
 }

@@ -7,6 +7,7 @@ import {
 import { PrismaClient, Template } from '@prisma/client';
 import { AddTemplateDTO } from './dto/addTemplate.dto';
 import { ValidateTemplateService } from './validate-template.service';
+
 @Injectable()
 export class RenderingTemplatesService {
   constructor(
@@ -21,7 +22,10 @@ export class RenderingTemplatesService {
       });
     } catch (err) {
       this.logger.error(err);
-      throw new InternalServerErrorException(err);
+      throw new InternalServerErrorException(
+        err,
+        'Error fetching templates for the schemaID',
+      );
     }
   }
 
@@ -35,22 +39,23 @@ export class RenderingTemplatesService {
   }
 
   async addTemplate(addTemplateDto: AddTemplateDTO): Promise<Template> {
+    const warnings = await this.verifier.validateTemplateAgainstSchema(
+      addTemplateDto.template,
+      addTemplateDto.schemaId,
+    );
     try {
-      const warnings = await this.verifier.validateTemplateAgainstSchema(
-        addTemplateDto.template,
-        addTemplateDto.schemaId,
-      );
-
-      return await this.prisma.template.create({
+      const template = await this.prisma.template.create({
         data: {
           schemaId: addTemplateDto.schemaId,
           template: addTemplateDto.template,
           type: addTemplateDto.type,
         },
       });
+      this.logger.log('Template added successfully');
+      return { ...template, warnings };
     } catch (err) {
       this.logger.error(err);
-      throw new InternalServerErrorException(err);
+      throw new InternalServerErrorException(err, 'Error adding template');
     }
   }
 
@@ -59,7 +64,7 @@ export class RenderingTemplatesService {
     updateTemplateDto: AddTemplateDTO,
   ): Promise<Template> {
     try {
-      return await this.prisma.template.update({
+      const template = await this.prisma.template.update({
         where: { templateId: id },
         data: {
           schemaId: updateTemplateDto.schemaId,
@@ -67,9 +72,11 @@ export class RenderingTemplatesService {
           type: updateTemplateDto.type,
         },
       });
+      this.logger.log('Template updated successfully');
+      return template;
     } catch (err) {
       this.logger.error(err);
-      throw new InternalServerErrorException(err);
+      throw new InternalServerErrorException(err, 'Error updating templates');
     }
   }
   async deleteTemplate(id: string): Promise<any> {
@@ -77,10 +84,13 @@ export class RenderingTemplatesService {
       await this.prisma.template.delete({
         where: { templateId: id },
       });
-      return 'Template deleted successfully';
+      this.logger.log('Template deleted successfully');
+      return {
+        message: 'Template deleted successfully',
+      };
     } catch (err) {
       this.logger.error(err);
-      throw new InternalServerErrorException(err);
+      throw new InternalServerErrorException(err, 'Error deleting template');
     }
   }
 }

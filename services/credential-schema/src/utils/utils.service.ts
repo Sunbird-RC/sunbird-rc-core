@@ -29,7 +29,7 @@ export class UtilsService {
       };
       return proof;
     } catch (err) {
-      this.logger.error(err, err.response.data);
+      this.logger.error(err);
       throw new HttpException("Couldn't sign the schema", 500);
     }
   }
@@ -44,7 +44,7 @@ export class UtilsService {
       );
       return did[0];
     } catch (err) {
-      this.logger.error(err, err.response.data);
+      this.logger.error(err);
       throw new InternalServerErrorException('Can not generate a new DID');
     }
   }
