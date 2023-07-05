@@ -24,14 +24,15 @@ async function bootstrap() {
     .setDescription(
       'APIs for creating and managing Verifiable Credential Schemas',
     )
-    .setVersion('1.0')
+    .setVersion(process.env.npm_package_version)
     .addTag('VC-Schemas')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
+  const port = process.env.PORT || 3000;
   await app.listen(3000, '0.0.0.0');
-  Logger.log('Listening at http://localhost:3000');
+  Logger.log(`🚀 Application is running on: http://0.0.0.0:${port}/`);
 }
 bootstrap();
