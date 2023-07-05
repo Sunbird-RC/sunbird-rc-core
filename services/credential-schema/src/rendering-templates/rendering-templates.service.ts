@@ -26,34 +26,28 @@ export class RenderingTemplatesService {
   }
 
   async getTemplateById(id: string): Promise<Template> {
-    const temp = await this.prisma.template.findUnique({
+    const template = await this.prisma.template.findUnique({
       where: { templateId: id },
     });
-    if (!temp)
+    if (!template)
       throw new NotFoundException('No template with the given id not found');
-    return temp;
+    return template;
   }
 
   async addTemplate(addTemplateDto: AddTemplateDTO): Promise<Template> {
     try {
-      if (
-        await this.verifier.validateTemplateAgainstSchema(
-          addTemplateDto.template,
-          addTemplateDto.schemaId,
-        )
-      ) {
-        return await this.prisma.template.create({
-          data: {
-            schemaId: addTemplateDto.schemaId,
-            template: addTemplateDto.template,
-            type: addTemplateDto.type,
-          },
-        });
-      } else {
-        throw new InternalServerErrorException(
-          'Template-Schema mismatch, please check if fields in the incoming template match the fields in corresponding schema',
-        );
-      }
+      const warnings = await this.verifier.validateTemplateAgainstSchema(
+        addTemplateDto.template,
+        addTemplateDto.schemaId,
+      );
+
+      return await this.prisma.template.create({
+        data: {
+          schemaId: addTemplateDto.schemaId,
+          template: addTemplateDto.template,
+          type: addTemplateDto.type,
+        },
+      });
     } catch (err) {
       this.logger.error(err);
       throw new InternalServerErrorException(err);
