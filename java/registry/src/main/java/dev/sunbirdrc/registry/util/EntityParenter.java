@@ -88,7 +88,6 @@ public class EntityParenter {
                 List<String> indexUniqueFields = definition.getOsSchemaConfiguration().getUniqueIndexFields();
                 List<String> compositeIndexFields = IndexHelper.getCompositeIndexFields(indexFields);
                 List<String> singleIndexFields = IndexHelper.getSingleIndexFields(indexFields);
-                
                 IndexFields indicesByDefinition = new IndexFields();
                 indicesByDefinition.setDefinitionName(definition.getTitle());
                 indicesByDefinition.setIndexFields(indexFields);
@@ -113,7 +112,51 @@ public class EntityParenter {
         }
         indexHelper.setDefinitionIndexMap(indexMap);
     }
+    public void loadDefinitionIndexForSchema(JsonNode schemaNode) {
+        Map<String, Boolean> indexMap = new ConcurrentHashMap<String, Boolean>();
 
+        String schemaName = schemaNode.fieldNames().next();
+
+        for (Map.Entry<String, ShardParentInfoList> entry : shardParentMap.entrySet()) {
+            String shardId = entry.getKey();
+            ShardParentInfoList shardParentInfoList = entry.getValue();
+            shardParentInfoList.getParentInfos().forEach(shardParentInfo -> {
+                Definition definition = definitionsManager.getDefinition(shardParentInfo.getName());
+                // Process only for the specific schema added through API
+                if (definition.getTitle().equals(schemaName)) {
+                    Vertex parentVertex = shardParentInfo.getVertex();
+                    List<String> indexFields = definition.getOsSchemaConfiguration().getIndexFields();
+                    if (!indexFields.contains(uuidPropertyName)) {
+                        indexFields.add(uuidPropertyName); // adds default field
+                    }
+                    List<String> indexUniqueFields = definition.getOsSchemaConfiguration().getUniqueIndexFields();
+                    List<String> compositeIndexFields = IndexHelper.getCompositeIndexFields(indexFields);
+                    List<String> singleIndexFields = IndexHelper.getSingleIndexFields(indexFields);
+
+                    IndexFields indicesByDefinition = new IndexFields();
+                    indicesByDefinition.setDefinitionName(definition.getTitle());
+                    indicesByDefinition.setIndexFields(indexFields);
+                    indicesByDefinition.setUniqueIndexFields(indexUniqueFields);
+                    indicesByDefinition.setNewSingleIndexFields(indexHelper.getNewFields(parentVertex, singleIndexFields, false));
+                    indicesByDefinition.setNewCompositeIndexFields(indexHelper.getNewFields(parentVertex, compositeIndexFields, false));
+                    indicesByDefinition.setNewUniqueIndexFields(indexHelper.getNewFields(parentVertex, indexUniqueFields, true));
+
+                    int nNewIndices = indicesByDefinition.getNewSingleIndexFields().size();
+                    int nNewUniqIndices = indicesByDefinition.getNewUniqueIndexFields().size();
+                    int nNewCompIndices = indicesByDefinition.getNewCompositeIndexFields().size();
+
+                    boolean indexingComplete = (nNewIndices == 0 && nNewUniqIndices == 0 && nNewCompIndices == 0);
+                    indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), indexingComplete);
+                    logger.info("On loadDefinitionIndex for Shard:" + shardId + " definition: {} updated index to {} ",
+                            definition.getTitle(), indexingComplete);
+
+                    definitionIndexFields.put(indicesByDefinition.getDefinitionName(), indicesByDefinition);
+                }
+            });
+        }
+
+        indexHelper.setDefinitionIndexMap(indexMap);
+    }
     /**
      * Creates the parent vertex in all the shards for all default definitions
      *
@@ -166,7 +209,7 @@ public class EntityParenter {
         return result;
     }
 
-     public Optional<String> ensureKnownParentersNew(JsonNode schemaNode) {
+     public Optional<String> ensureKnownParentNodesForSchema(JsonNode schemaNode) {
          logger.info("Start - ensure parent node for defined schema");
          Optional<String> result;
 

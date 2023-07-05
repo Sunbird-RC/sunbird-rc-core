@@ -85,6 +85,14 @@ public class Response {
 		AUDIT(getApiPrefix() + ".audit"),
 		HEALTH(getApiPrefix() + ".health"),
 		DELETE(getApiPrefix() + ".delete"),
+
+		PUT(getApiPrefix() + ".put"),
+
+		POST(getApiPrefix() + ".post"),
+
+		GET(getApiPrefix() + ".get"),
+
+		PATCH(getApiPrefix() + ".patch"),
 		SEARCH(getApiPrefix() + ".search"),
 		SIGN(getApiName() + ".utils.sign"),
 		VERIFY(getApiName() + ".utils.verify"),
