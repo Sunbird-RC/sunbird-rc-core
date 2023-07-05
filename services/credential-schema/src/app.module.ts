@@ -1,6 +1,5 @@
 import { CacheModule, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { SchemaService } from './schema/schema.service';
 import { SchemaModule } from './schema/schema.module';
 import { ConfigModule } from '@nestjs/config';
@@ -10,6 +9,8 @@ import { UtilsService } from './utils/utils.service';
 import { TerminusModule } from '@nestjs/terminus';
 import { PrismaHealthIndicator } from './utils/prisma.health';
 import { PrismaClient } from '@prisma/client';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './auth/auth.guard';
 
 @Module({
   imports: [
@@ -27,11 +28,14 @@ import { PrismaClient } from '@prisma/client';
   ],
   controllers: [AppController],
   providers: [
-    AppService,
     SchemaService,
     UtilsService,
     PrismaHealthIndicator,
     PrismaClient,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
   ],
 })
 export class AppModule {}

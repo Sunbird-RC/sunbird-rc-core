@@ -1,14 +1,21 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, PrismaClient, SchemaStatus } from '@prisma/client';
+import {
+  Prisma,
+  PrismaClient,
+  SchemaStatus,
+  VerifiableCredentialSchema,
+} from '@prisma/client';
 import { validate } from '../utils/schema.validator';
 import { DefinedError } from 'ajv';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
 import { UtilsService } from '../utils/utils.service';
+import { GetCredentialSchemaDTO } from './dto/getCredentialSchema.dto';
 
 @Injectable()
 export class SchemaService {
@@ -18,15 +25,17 @@ export class SchemaService {
   ) {}
   private logger = new Logger(SchemaService.name);
   async getCredentialSchema(
-    userWhereUniqueInput: Prisma.VerifiableCredentialSchemaWhereUniqueInput, //: Promise<VerifiableCredentialSchema>
-  ) {
-    this.logger.debug(
-      'Search Parameters for Credential Schema',
-      userWhereUniqueInput,
-    );
-    const schema = await this.prisma.verifiableCredentialSchema.findUnique({
-      where: userWhereUniqueInput,
-    });
+    userWhereUniqueInput: Prisma.VerifiableCredentialSchemaWhereUniqueInput, //
+  ): Promise<GetCredentialSchemaDTO> {
+    let schema: VerifiableCredentialSchema;
+    try {
+      schema = await this.prisma.verifiableCredentialSchema.findUnique({
+        where: userWhereUniqueInput,
+      });
+    } catch (err) {
+      this.logger.error('Error fetching schema from db', err);
+      throw new InternalServerErrorException('Error fetching schema from db');
+    }
 
     if (schema) {
       return {
@@ -58,30 +67,26 @@ export class SchemaService {
     createCredentialDto: CreateCredentialDTO,
     deprecatedId: string = undefined,
   ) {
-    // verify the Credential Schema
     const data = createCredentialDto.schema;
     const tags = createCredentialDto.tags;
 
+    // verify the Credential Schema
     if (validate(data)) {
       const didBody = {
         content: [
           {
-            alsoKnownAs: [data.author],
+            alsoKnownAs: [data.author, data.schema.id],
             services: [
               {
-                id: 'IdentityHub',
-                type: 'IdentityHub',
-                serviceEndpoint: {
-                  '@context': 'schema.identity.foundation/hub',
-                  '@type': 'UserServiceEndpoint',
-                  instance: ['did:test:hub.id'],
-                },
+                id: 'CredentialSchemaService',
+                type: 'CredentialSchema',
               },
             ],
             method: 'schema',
           },
         ],
       };
+
       const did = await this.utilService.generateDID(didBody);
       const credSchema = {
         schema: {
@@ -102,12 +107,20 @@ export class SchemaService {
         updatedBy: data.updatedBy,
         deprecatedId: data.deprecatedId,
       };
-      // sign the credential schema
-      const proof = await this.utilService.sign(
-        credSchema.schema.author,
-        JSON.stringify(credSchema),
-      );
-      credSchema.schema.proof = proof;
+      // sign the credential schema (only the schema part of the credSchema object above)
+      try {
+        const proof = await this.utilService.sign(
+          credSchema.schema.author,
+          JSON.stringify(credSchema.schema),
+        );
+        credSchema.schema.proof = proof;
+      } catch (err) {
+        this.logger.error('Error signing credential schema', err);
+        throw new InternalServerErrorException(
+          'Error signing credential schema',
+        );
+      }
+
       try {
         await this.prisma.verifiableCredentialSchema.create({
           data: {
@@ -125,16 +138,21 @@ export class SchemaService {
           },
         });
       } catch (err) {
-        this.logger.error(err);
-        throw new BadRequestException(err.message);
+        this.logger.error('Error saving schema to db', err);
+        throw new InternalServerErrorException('Error saving schema to db');
       }
+
       return credSchema;
     } else {
-      this.logger.log('Schema validation failed');
+      this.logger.log('Schema validation failed', validate.errors.join('\n'));
       for (const err of validate.errors as DefinedError[]) {
         this.logger.error(err, err.message);
-        throw new BadRequestException(err.message);
       }
+      throw new BadRequestException(
+        `Schema validation failed with the following errors: ${validate.errors.join(
+          '\n',
+        )}`,
+      );
     }
   }
 
@@ -145,8 +163,13 @@ export class SchemaService {
     //: Promise<VerifiableCredentialSchema>
   ) {
     // TODO: Deprecate the schema and create a new one
-    this.logger.debug('where', where);
-    this.logger.debug('data', data);
+    this.logger.debug(
+      'Request to update the schema where ',
+      where,
+      'with ',
+      data,
+    );
+
     const _where = { ...where, status: SchemaStatus.DRAFT };
     let currentSchema;
     try {
@@ -194,25 +217,33 @@ export class SchemaService {
         throw new BadRequestException(err.message);
       }
     } else {
-      this.logger.log('Schema validation failed');
-      for (const err of validate.errors as DefinedError[]) {
-        this.logger.error(err, err.message);
-        throw new BadRequestException(err.message);
-      }
+      this.logger.log(
+        `Schema validation failed with ${validate.errors.join('\n')}`,
+      );
+      throw new BadRequestException(
+        `Schema validation failed with ${validate.errors.join('\n')}}`,
+      );
     }
   }
 
   async getSchemaByTags(tags: string[], page = 1, limit = 10) {
     this.logger.debug('Tags received to find schema', tags);
-    const schemas = await this.prisma.verifiableCredentialSchema.findMany({
-      where: {
-        tags: {
-          hasSome: [...tags],
+
+    let schemas: ReadonlyArray<VerifiableCredentialSchema>;
+    try {
+      schemas = await this.prisma.verifiableCredentialSchema.findMany({
+        where: {
+          tags: {
+            hasSome: [...tags],
+          },
         },
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+    } catch (err) {
+      this.logger.error('Error fetching credential schema from db:', err);
+      throw new InternalServerErrorException('Error fetching schema from db');
+    }
 
     return schemas.map((schema) => {
       return {
