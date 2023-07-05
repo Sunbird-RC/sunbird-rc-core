@@ -24,7 +24,7 @@ import {
 import { Template } from './entities/Template.entity';
 import { TemplateBody } from './entities/TemplateBody.entity';
 
-@Controller('rendering-template')
+@Controller('template')
 export class RenderingTemplatesController {
   constructor(
     private readonly renderingTemplateService: RenderingTemplatesService,

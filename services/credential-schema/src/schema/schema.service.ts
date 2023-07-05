@@ -9,7 +9,6 @@ import { validate } from '../utils/schema.validator';
 import { DefinedError } from 'ajv';
 import { CreateCredentialDTO } from './dto/create-credentials.dto';
 import { UtilsService } from '../utils/utils.service';
-import { randomUUID } from 'crypto';
 
 @Injectable()
 export class SchemaService {
@@ -62,11 +61,32 @@ export class SchemaService {
     // verify the Credential Schema
     const data = createCredentialDto.schema;
     const tags = createCredentialDto.tags;
+
     if (validate(data)) {
+      const didBody = {
+        content: [
+          {
+            alsoKnownAs: [data.author],
+            services: [
+              {
+                id: 'IdentityHub',
+                type: 'IdentityHub',
+                serviceEndpoint: {
+                  '@context': 'schema.identity.foundation/hub',
+                  '@type': 'UserServiceEndpoint',
+                  instance: ['did:test:hub.id'],
+                },
+              },
+            ],
+            method: 'schema',
+          },
+        ],
+      };
+      const did = await this.utilService.generateDID(didBody);
       const credSchema = {
         schema: {
           type: data.type,
-          id: randomUUID(),
+          id: did.id,
           version: data.version,
           name: data.name,
           author: data.author,
@@ -119,21 +139,20 @@ export class SchemaService {
   }
 
   async updateCredentialSchema(
-    params: {
-      where: Prisma.VerifiableCredentialSchemaWhereUniqueInput;
-      // data: VCSModelSchemaInterface;
-      data: CreateCredentialDTO;
-    }, //: Promise<VerifiableCredentialSchema>
+    where: Prisma.VerifiableCredentialSchemaWhereUniqueInput,
+    // data: VCSModelSchemaInterface;
+    data: CreateCredentialDTO,
+    //: Promise<VerifiableCredentialSchema>
   ) {
     // TODO: Deprecate the schema and create a new one
-    const { where, data } = params;
     this.logger.debug('where', where);
     this.logger.debug('data', data);
+    const _where = { ...where, status: SchemaStatus.DRAFT };
     let currentSchema;
     try {
       currentSchema =
         await this.prisma.verifiableCredentialSchema.findUniqueOrThrow({
-          where,
+          where: _where,
         });
     } catch (err) {
       this.logger.error(err);
