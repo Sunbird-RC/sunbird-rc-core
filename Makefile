@@ -10,6 +10,17 @@ build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	rm -rf java/claim/target/*.jar
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./ && docker build -t dockerhub/sunbird-rc-core .
+	make -C java/claim
+	make -C services/certificate-api docker
+	make -C services/certificate-signer docker
+	make -C services/notification-service docker
+	make -C deps/keycloak build
+	make -C services/public-key-service docker
+	make -C services/context-proxy-service docker
+	make -C services/metrics docker
+	make -C services/digilocker-certificate-api docker
+	make -C services/bulk_issuance docker
+	docker build -t dockerhub/sunbird-rc-nginx .
 
 java/registry/target/registry.jar: $(SOURCES)
 	echo $(SOURCES)
@@ -27,7 +38,7 @@ test: build
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
 	@curl -v http://localhost:8081/health
-	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
+	@cd java/apitest && ../mvnw -Pe2e test
 	@docker-compose down
 	@rm -rf db-data-1 || echo "no permission to delete"
 	# test with kafka(async), events, notifications,
@@ -36,7 +47,7 @@ test: build
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
 	@curl -v http://localhost:8081/health
-	@cd java/apitest && MODE=async ../mvnw -Pe2e test || echo 'Tests failed'
+	@cd java/apitest && MODE=async ../mvnw -Pe2e test
 	@docker-compose down
 	@rm -rf db-data-2 || echo "no permission to delete"
 	make -C services/certificate-signer test
