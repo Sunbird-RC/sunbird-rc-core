@@ -26,6 +26,13 @@ notification:
     enabled: ${notification_enabled:false}
     connection_url: ${notification_url:http://localhost:8765/notification-service/v1/notification}
     health_url: ${notification_url:http://localhost:8765/notification-service/v1/health}
+  async:
+    enabled: ${notification_async_enabled:false}
+  topic: ${notification_topic:notify}
+
+invite:
+  required_validation_enabled: ${invite_required_validation_enabled:true}
+  signature_enabled: ${invite_signature_enabled:true}
 
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
@@ -64,8 +71,15 @@ registry:
 workflow:
   enabled: ${workflow.enable:true}
 
+view_template_decrypt_private_fields: ${view_template_decrypt_private_fields:false}
+
 async:
   enabled: ${async_enabled:false}
+
+event:
+  enabled: ${event_enabled:false}
+  topic: ${event_topic:events}
+  providerName: ${event_providerName:dev.sunbirdrc.registry.service.impl.KafkaEventService}
 
 kafka:
   bootstrapAddress: ${kafka_bootstrap_address:localhost:9092}
@@ -91,6 +105,7 @@ search:
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
   expandInternal: ${search_expandInternal:true}
+  removeNonPublicFieldsForNativeSearch: ${remove_non_public_fields_for_native_search:true}
   providerName: ${search_providerName:dev.sunbirdrc.registry.service.NativeSearchService}
 
 # This property is to be used for read request
@@ -214,7 +229,7 @@ certificate:
 #   * ELASTIC  : Store the audit log in elastic search configured in elastic properties.
 #  Note : Database Stores the created audit schema in audit_schema folder.
 audit:
-  enabled: ${audit_enabled:false}
+  enabled: ${audit_enabled:true}
   frame:
     store: ${audit_frame_store:DATABASE}
     suffix: ${audit_suffix:Audit}
@@ -236,7 +251,7 @@ keycloak-user:
   # email details should be configured in keycloak realm settings
   email-actions: ${keycloack_user_email_actions:}
 claims:
-  url: ${claims_url:http://localhost:8081}
+  url: ${claims_url:http://localhost:8082}
 authentication:
   enabled: ${authentication_enabled:true}
   publicKey:  ${authentication_publickey:}
@@ -303,6 +318,7 @@ elastic:
     auth_enabled: ${elastic_search_auth_enabled:false}
     elastic_username: ${elastic_search_username:elastic}
     elastic_password: ${elastic_search_password:elastic}
+    scheme: ${elastic_search_scheme:http}
 filestorage:
   url: ${filestorage_connection_url:http://localhost:9000}
   accesskey: ${filestorage_access_key:admin}
@@ -326,7 +342,11 @@ name: test-yaml
 enviroment: test
 workflow:
   enabled: ${workflow.enable:true}
-
+view_template:
+  decrypt_private_fields: ${view_template_decrypt_private_fields:false}
+notification:
+  service:
+    enabled: true
 perf:
   monitoring:
     enabled: false

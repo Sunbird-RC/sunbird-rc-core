@@ -15,16 +15,12 @@
       "$id": "#/properties/Institute",
       "type": "object",
       "title": "The Institute Schema",
-      "required": [],
+      "required": ["instituteName"],
       "properties": {
         "instituteName": {
           "$id": "#/properties/instituteName",
           "type": "string",
           "title": "Institute Name"
-        },
-        "address": {
-          "$ref": "Common.json/#/definitions/Address",
-          "title": "Address"
         },
         "establishmentYear": {
           "$id": "#/properties/establishmentYear",

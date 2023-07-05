@@ -86,20 +86,19 @@ public class Response {
 		HEALTH(getApiPrefix() + ".health"),
 		DELETE(getApiPrefix() + ".delete"),
 
-		POST(getApiPrefix() + ".post"),
-
-		PUT(getApiPrefix() + ".put"),
-
 		GET(getApiPrefix() + ".get"),
+		PATCH(getApiPrefix() + ".patch"),
+		PUT(getApiPrefix() + ".put"),
 		SEARCH(getApiPrefix() + ".search"),
 
-		PATCH(getApiPrefix() + ".patch"),
+		POST(getApiPrefix() + ".post"),
 		SIGN(getApiName() + ".utils.sign"),
 		VERIFY(getApiName() + ".utils.verify"),
 		KEYS(getApiName() + ".utils.keys"),
 		ENCRYPT(getApiName() + ".utils.encrypt"),
 		DECRYPT(getApiName() + ".utils.decrypt"),
         SEND(getApiName() + ".registry.send"),
+		REVOKE(getApiName() + ".utils.revoke"),
 		NONE("");
         private String id;
 

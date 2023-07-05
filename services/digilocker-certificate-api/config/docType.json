@@ -1,0 +1,13 @@
+{
+    "docType": {
+        "schema": "Schema",
+        "template": "html",
+        "searchFilter": {
+            "filters": {
+                "osid": {
+                    "eq": "{{.osid}}"
+                }
+            }
+        }
+    }
+}
