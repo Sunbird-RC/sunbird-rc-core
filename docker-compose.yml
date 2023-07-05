@@ -82,7 +82,7 @@ services:
       - notification_async_enabled=${NOTIFICATION_ASYNC_ENABLED-false}
       - notification_enabled=${NOTIFICATION_ENABLED-false}
       - notification_url=${NOTIFICATION_URL-http://notification-ms:8765/notification-service/v1/notification}
-      - opa_enabled=${OPA_ENABLED-true}
+      - opa_enabled=${OPA_ENABLED-false}
       - opa_auth_url=opa:8181/v1/data
       - opa_package_path=${OPA_PACKAGE_PATH-/httpapi/authz}
       - opa_allow_key_name=${OPA_ALLOW_KEY_NAME-allow}
