@@ -5,16 +5,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import dev.sunbirdrc.keycloak.OwnerCreationException;
 import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
 import dev.sunbirdrc.registry.exception.ErrorMessages;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -31,8 +32,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.keycloak.KeycloakPrincipal;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +40,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -104,7 +104,7 @@ public class RegistryEntityController extends AbstractController {
             createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.INVITE, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (MiddlewareHaltException | ValidationException | OwnerCreationException e) {
+        } catch (MiddlewareHaltException | ValidationException | IdentityException e) {
             return badRequestException(responseParams, response, e.getMessage());
         } catch (UnAuthorizedException unAuthorizedException) {
             return createUnauthorizedExceptionResponse(unAuthorizedException);
@@ -112,7 +112,7 @@ public class RegistryEntityController extends AbstractController {
             if (e.getCause() != null && e.getCause().getCause() != null &&
                     e.getCause().getCause() instanceof InvocationTargetException) {
                 Throwable targetException = ((InvocationTargetException) (e.getCause().getCause())).getTargetException();
-                if (targetException instanceof OwnerCreationException) {
+                if (targetException instanceof IdentityException) {
                     return badRequestException(responseParams, response, targetException.getMessage());
                 }
             }
@@ -479,13 +479,11 @@ public class RegistryEntityController extends AbstractController {
     }
 
     private ArrayList<String> getConsentFields(HttpServletRequest request) {
+        UserToken userToken = (UserToken) SecurityContextHolder.getContext().getAuthentication();
         ArrayList<String> fields = new ArrayList<>();
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
         try {
-            Map<String, Object> otherClaims = ((KeycloakPrincipal) principal.getPrincipal()).getKeycloakSecurityContext().getToken().getOtherClaims();
-            if (otherClaims.keySet().contains(dev.sunbirdrc.registry.Constants.KEY_CONSENT) && otherClaims.get(dev.sunbirdrc.registry.Constants.KEY_CONSENT) instanceof Map) {
-                Map consentFields = (Map) otherClaims.get(dev.sunbirdrc.registry.Constants.KEY_CONSENT);
-                for (Object key : consentFields.keySet()) {
+            if (userToken != null && userToken.getConsentFields().size() > 0) {
+                for (Object key : userToken.getConsentFields().keySet()) {
                     fields.add(key.toString());
                 }
             }
@@ -617,7 +615,7 @@ public class RegistryEntityController extends AbstractController {
     }
 
     private String getUserId(String entityName, HttpServletRequest request) throws Exception {
-        return registryHelper.getUserId(request, entityName);
+        return registryHelper.getUserId(entityName);
     }
 
     private void addJsonLDSpec(JsonNode node) {

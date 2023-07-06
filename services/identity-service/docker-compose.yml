@@ -1,0 +1,71 @@
+version: '3'
+services:
+  vault:
+    image: vault:1.13.3
+    restart: always
+    volumes:
+      - ./vault/vault.json:/vault/config/vault.json
+      - vault-data:/vault/file
+    environment:
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_API_ADDR=http://0.0.0.0:8200
+      - VAULT_ADDRESS=http://0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    command: vault server -config=/vault/config/vault.json
+    ports:
+      - 8200:8200
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider http://127.0.0.1:8200/v1/sys/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  db:
+    image: postgres:latest
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  identity-service:
+    image: identity
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    depends_on: 
+      db:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+    ports: 
+      - 3332:3332
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/postgres"
+      VAULT_ADDR: "http://vault:8200"
+      # This will be replaced automatically on initialisation 
+      # make compose-init will call setup_vault.sh
+      VAULT_TOKEN: hvs.jwNIOFLgGBQhHRFuRL3y9Obl
+      VAULT_BASE_URL: "http://vault:8200/v1"
+      VAULT_ROOT_PATH: "http://vault:8200/v1/kv"
+      VAULT_TIMEOUT: 5000
+      VAULT_PROXY: 'false'
+      SIGNING_ALGORITHM: "RS256"
+      JWKS_URI: 
+      ENABLE_AUTH: "false"
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "curl -f http://localhost:3332/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  data:
+  vault-data:

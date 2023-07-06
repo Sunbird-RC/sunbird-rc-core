@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.sunbirdrc.registry.authorization.SchemaAuthFilter;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -17,8 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
-import static dev.sunbirdrc.registry.Constants.PATH;
-import static dev.sunbirdrc.registry.Constants.Schema;
+import static dev.sunbirdrc.registry.Constants.*;
+import static dev.sunbirdrc.registry.helper.RegistryHelper.ROLE_ANONYMOUS;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.NOT_ALLOWED_FOR_PUBLISHED_SCHEMA;
 
 @Service
@@ -33,13 +34,28 @@ public class SchemaService {
 	@Autowired
 	private IValidate validator;
 
+	@Autowired
+	private SchemaAuthFilter schemaAuthFilter;
+
 	public void deleteSchemaIfExists(Vertex vertex) throws SchemaException {
 		if (vertex.property(STATUS) != null && vertex.property(STATUS).value().equals(SchemaStatus.PUBLISHED.toString())) {
 			throw new SchemaException(NOT_ALLOWED_FOR_PUBLISHED_SCHEMA);
 		}
 		JsonNode schema = JsonNodeFactory.instance.textNode(vertex.property(Schema.toLowerCase()).value().toString());
-		definitionsManager.removeDefinition(schema);
-		validator.removeDefinition(schema);
+		try {
+			String schemaName = getSchemaName(schema);
+			definitionsManager.removeDefinition(schemaName);
+			validator.removeDefinition(schemaName);
+			schemaAuthFilter.removeSchema(schemaName);
+		} catch (JsonProcessingException e) {
+			throw new SchemaException("Removing schemas from resources failed");
+		}
+	}
+
+	private String getSchemaName(JsonNode jsonNode) throws JsonProcessingException {
+		String schemaAsText = jsonNode.asText("{}");
+		JsonNode schemaJsonNode = new ObjectMapper().readTree(schemaAsText);
+		return schemaJsonNode.get(TITLE).asText();
 	}
 
 
@@ -53,9 +69,19 @@ public class SchemaService {
 			if (definitionsManager.getDefinition(definition.getTitle()) == null) {
 				definitionsManager.appendNewDefinition(definition);
 				validator.addDefinitions(schema);
+				addAnonymousSchemaToFilter(definition);
 			} else {
 				throw new SchemaException("Duplicate Error: Schema already exists");
 			}
+		}
+	}
+
+	private void addAnonymousSchemaToFilter(Definition definition) {
+		if (definition.getOsSchemaConfiguration().getInviteRoles().contains(ROLE_ANONYMOUS)) {
+			schemaAuthFilter.appendAnonymousInviteSchema(definition.getTitle());
+		}
+		if (definition.getOsSchemaConfiguration().getRoles().contains(ROLE_ANONYMOUS)) {
+			schemaAuthFilter.appendAnonymousSchema(definition.getTitle());
 		}
 	}
 
@@ -63,7 +89,8 @@ public class SchemaService {
 		JsonNode schemaNode = updatedSchema.get(Schema);
 		if (schemaNode.get(STATUS) != null && schemaNode.get(STATUS).textValue().equals(SchemaStatus.PUBLISHED.toString())) {
 			JsonNode schema = schemaNode.get(Schema.toLowerCase());
-			definitionsManager.appendNewDefinition(schema);
+			Definition definition = definitionsManager.appendNewDefinition(schema);
+			addAnonymousSchemaToFilter(definition);
 			validator.addDefinitions(schema);
 		}
 	}

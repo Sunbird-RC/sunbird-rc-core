@@ -1,0 +1,58 @@
+openapi: 3.0.1
+info:
+  title: User API
+  version: 1.0.0
+  description: API for creating users
+servers:
+  - url: http://api.example.com/v1
+paths:
+  /api/v1/user:
+    post:
+      summary: Create a user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                mobile:
+                  type: string
+                role:
+                  type: string
+                  enum:
+                    - admin
+                    - user
+              required:
+                - userName
+                - email
+                - mobile
+                - role
+      responses:
+        '200':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  status:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - userId
+        '400':
+          description: Invalid request payload
+        '500':
+          description: Internal server error
