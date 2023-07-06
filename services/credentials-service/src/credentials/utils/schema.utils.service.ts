@@ -1,7 +1,7 @@
-import { HttpService } from "@nestjs/axios";
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
-import { AxiosResponse } from "@nestjs/terminus/dist/health-indicator/http/axios.interfaces";
-import Ajv2019 from "ajv/dist/2019";
+import { HttpService } from '@nestjs/axios';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces';
+import Ajv2019 from 'ajv/dist/2019';
 
 @Injectable()
 export class SchemaUtilsSerivce {
@@ -34,8 +34,8 @@ export class SchemaUtilsSerivce {
   }
 
   async verifyCredentialSubject(credential, schema) {
-    const ajv = new Ajv2019();
-    ajv.addFormat("custom-date-time", function (dateTimeString) {
+    const ajv = new Ajv2019({ strictTuples: false });
+    ajv.addFormat('custom-date-time', function (dateTimeString) {
       return typeof dateTimeString === typeof new Date();
     });
     const validate = ajv.compile(schema);

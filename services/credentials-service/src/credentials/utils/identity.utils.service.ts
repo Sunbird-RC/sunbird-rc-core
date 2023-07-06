@@ -1,17 +1,22 @@
-import { HttpService } from "@nestjs/axios";
-import { JwtCredentialPayload } from "did-jwt-vc";
-import { IssuerType } from "did-jwt-vc/lib/types";
+import { HttpService } from '@nestjs/axios';
+import { JwtCredentialPayload } from 'did-jwt-vc';
+import { IssuerType } from 'did-jwt-vc/lib/types';
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces';
-import { DIDDocument } from "did-resolver";
-import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import { DIDDocument } from 'did-resolver';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 
 @Injectable()
 export class IdentityUtilsService {
-  constructor(
-    private readonly httpService: HttpService
-  ) { }
+  constructor(private readonly httpService: HttpService) {}
 
-  async signVC(credentialPlayload: JwtCredentialPayload, did: IssuerType): Promise<String> {
+  async signVC(
+    credentialPlayload: JwtCredentialPayload,
+    did: IssuerType
+  ): Promise<String> {
     try {
       const signedVCResponse: AxiosResponse =
         await this.httpService.axiosRef.post(
@@ -19,7 +24,7 @@ export class IdentityUtilsService {
           {
             DID: did,
             payload: JSON.stringify(credentialPlayload),
-          },
+          }
         );
       return signedVCResponse.data.signed as string;
     } catch (err) {
@@ -28,12 +33,11 @@ export class IdentityUtilsService {
     }
   }
 
-
   async resolveDID(issuer): Promise<DIDDocument> {
     try {
       const verificationURL = `${process.env.IDENTITY_BASE_URL}/did/resolve/${issuer}`;
       const dIDResponse: AxiosResponse = await this.httpService.axiosRef.get(
-        verificationURL,
+        verificationURL
       );
 
       return dIDResponse.data as DIDDocument;
@@ -43,7 +47,9 @@ export class IdentityUtilsService {
     }
   }
 
-  async generateDID(alsoKnownAs: ReadonlyArray<String>): Promise<ReadonlyArray<DIDDocument>> {
+  async generateDID(
+    alsoKnownAs: ReadonlyArray<String>
+  ): Promise<ReadonlyArray<DIDDocument>> {
     try {
       const didGenRes: AxiosResponse = await this.httpService.axiosRef.post(
         `${process.env.IDENTITY_BASE_URL}/did/generate`,
@@ -64,7 +70,7 @@ export class IdentityUtilsService {
               ],
             },
           ],
-        },
+        }
       );
       return didGenRes.data as ReadonlyArray<DIDDocument>;
     } catch (err) {
