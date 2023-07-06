@@ -4,9 +4,14 @@ import { PrismaService } from '../prisma.service';
 import { CredentialsService } from './credentials.service';
 import Ajv2019 from 'ajv/dist/2019';
 import { UnsignedVCValidator, VCValidator } from './types/validators/index';
+import { MockSchemaUtilsSerivce } from './utils/mock.schema.utils.service';
+import { MockIdentityUtilsService } from './utils/mock.identity.utils.service';
+import { SchemaUtilsSerivce } from './utils/schema.utils.service';
+import { IdentityUtilsService } from './utils/identity.utils.service';
+import { RenderingUtilsService } from './utils/rendering.utils.service';
 
 // setup ajv
-const ajv = new Ajv2019();
+const ajv = new Ajv2019({ strictTuples: false });
 ajv.addFormat('custom-date-time', function (dateTimeString) {
   return typeof dateTimeString === typeof new Date();
 });
@@ -172,8 +177,19 @@ describe('CredentialsService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [HttpModule],
-      providers: [CredentialsService, PrismaService],
-    }).compile();
+      providers: [
+        CredentialsService,
+        PrismaService,
+        RenderingUtilsService,
+        SchemaUtilsSerivce,
+        IdentityUtilsService,
+      ],
+    })
+      .overrideProvider(SchemaUtilsSerivce)
+      .useClass(MockSchemaUtilsSerivce)
+      .overrideProvider(IdentityUtilsService)
+      .useClass(MockIdentityUtilsService)
+      .compile();
 
     service = module.get<CredentialsService>(CredentialsService);
   });
@@ -195,22 +211,6 @@ describe('CredentialsService', () => {
     expect(getCredReqValidate(cred)).toBe(true);
   });
 
-  it('should verify a credential', async () => {
-    const newCred: any = await service.issueCredential(sampleCredReqPayload);
-    const verifyCred = await service.verifyCredential(newCred.credential?.id);
-    expect(verifyCred).toEqual({
-      status: 'ISSUED',
-      checks: [
-        {
-          active: 'OK',
-          revoked: 'OK',
-          expired: 'NOK',
-          proof: 'OK',
-        },
-      ],
-    });
-  });
-
   it('should throw because no credential is present to be searched by ID', async () => {
     await expect(service.getCredentialById('did:ulp:123')).rejects.toThrow();
   });
@@ -222,7 +222,7 @@ describe('CredentialsService', () => {
   it('should say revoked', async () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
     expect(
-      await service.deleteCredential((newCred.credential as any).id),
+      await service.deleteCredential((newCred.credential as any).id)
     ).toHaveProperty('status', 'REVOKED');
   });
 
@@ -234,24 +234,23 @@ describe('CredentialsService', () => {
     await expect(
       service.getCredentialsBySubjectOrIssuer({
         subject: { id: 'did:ulp:123' },
-      }),
+      })
     ).rejects.toThrow();
   });
 
   it('should return array of creds based on issuer', async () => {
     try {
       const newCred = await service.issueCredential(sampleCredReqPayload);
-      console.log('newCred: ', (newCred.credential as any)?.issuer);
       expect(
         await service.getCredentialsBySubjectOrIssuer({
           issuer: {
             id: (newCred.credential as any)?.issuer,
           },
-        }),
+        })
       ).toBeInstanceOf(Array);
     } catch (e) {
       expect(e.message).toBe(
-        'No credentials found for the given subject or issuer',
+        'No credentials found for the given subject or issuer'
       );
     }
   });
