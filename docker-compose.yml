@@ -303,7 +303,6 @@ services:
       - "9002:9000"
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
-      
   vault:
     image: vault:1.10.3
     restart: always
@@ -311,67 +310,127 @@ services:
       - ./vault/vault.json:/vault/config/vault.json
       - vault-data:/vault/file
     environment:
-      - VAULT_ADDR=http://0.0.0.0:8200
-      - VAULT_API_ADDR=http://0.0.0.0:8200
-      - VAULT_ADDRESS=http://0.0.0.0:8200
+      VAULT_ADDR: http://0.0.0.0:8200
+      VAULT_API_ADDR: http://0.0.0.0:8200
+      VAULT_ADDRESS: http://0.0.0.0:8200
     cap_add:
       - IPC_LOCK
     command: vault server -config=/vault/config/vault.json
     ports:
       - 8200:8200
-
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --spider http://127.0.0.1:8200/v1/sys/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
   identity-service:
     image: dockerhub/sunbird-rc-identity-service
-    ports: 
-      - '3332:3332'
+    ports:
+      - "3332:3332"
     depends_on:
-      - vault
-      - identity-service-db
+      vault:
+        condition: service_healthy
+      identity-service-db:
+        condition: service_healthy
     environment:
       DATABASE_URL: "postgres://postgres:postgres@identity-service-db:5432/postgres"
       VAULT_ADDR: "http://vault:8200"
-      VAULT_TOKEN: ${VAULT_ROOT_TOKEN}
+      # This will be replaced automatically on initialisation 
+      # make compose-init will call setup_vault.sh
+      VAULT_TOKEN: hvs.jwNIOFLgGBQhHRFuRL3y9Obl
+      VAULT_BASE_URL: "http://vault:8200/v1"
+      VAULT_ROOT_PATH: "http://vault:8200/v1/kv"
+      VAULT_TIMEOUT: 5000
+      VAULT_PROXY: 'false'
+      SIGNING_ALGORITHM: "RS256"
+      JWKS_URI: 
+      ENABLE_AUTH: "false"
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "curl -f http://localhost:3332/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   identity-service-db:
     image: postgres:12.1-alpine
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    volumes: 
-      - ./did-l3-db:/var/lib/postgresql/dataroot
-
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./identity-service-db:/var/lib/postgresql/dataroot
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   credential-schema:
     image: dockerhub/sunbird-rc-credential-schema
-    ports: 
-      - '3000:3000'
+    ports:
+      - "3333:3333"
     depends_on:
-      - credential-schema-db
+      credential-schema-db:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
     environment:
       DATABASE_URL: "postgres://postgres:postgres@credential-schema-db:5432/postgres"
+      JWKS_URI: ""
+      ENABLE_AUTH: "false"
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "curl -f http://localhost:3333/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   credential-schema-db:
     image: postgres:12.1-alpine
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    volumes: 
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
       - ./cred-schema-ms-db:/var/lib/postgresql/data
-
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   credentials-service:
-    image: dockerhub/sunbird-rc-credential-schema
-    ports: 
-      - '3000:3000'
+    image: dockerhub/sunbird-rc-credentials-service
+    ports:
+      - "3000:3000"
     depends_on:
-      - credentials-service-db
-      - identity-service
-      - credential-schema
+      credentials-service-db:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+      credential-schema:
+        condition: service_healthy
     environment:
       DATABASE_URL: "postgres://postgres:postgres@credentials-service-db:5432/postgres"
       IDENTITY_BASE_URL: "http://identity-service:3332"
+      SCHEMA_BASE_URL: "http://credential-schema:3333"
+      CREDENTIAL_SERVICE_BASE_URL: 
+      JWKS_URI: ""
+      ENABLE_AUTH: "false"
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "curl -f http://localhost:3000/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   credentials-service-db:
     image: postgres:12.1-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-    volumes: 
+    volumes:
       - ./credential-ms-db:/var/lib/postgresql/data
-  
-
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
