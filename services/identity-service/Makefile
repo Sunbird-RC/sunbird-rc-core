@@ -13,3 +13,7 @@ test:
 compose-init:
 	bash build/setup_vault.sh
 	@docker-compose up -d --build
+vault-reset:
+	@docker volume rm identity-service_vault-data || echo ""
+stop:
+	@docker-compose stop
