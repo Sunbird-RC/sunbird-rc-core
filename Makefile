@@ -73,7 +73,7 @@ test: build
 	make -C services/context-proxy-service test
 	make -C services/credentials-service test
 	make -C services/bulk_issuance test
-  make -C services/identity-service test
+	make -C services/identity-service test
 	
 clean:
 	@rm -rf target || true
