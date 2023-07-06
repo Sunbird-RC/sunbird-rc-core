@@ -1,4 +1,4 @@
-FROM jboss/keycloak:14.0.0
+FROM sunbirdrc/keycloak
 
 ADD themes /opt/jboss/keycloak/themes
 ADD providers /opt/jboss/keycloak/providers
