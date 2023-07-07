@@ -60,14 +60,10 @@ registry:
     port: ${redis_port:6379}
   hard_delete_enabled: true
 
-
-
 workflow:
   enabled: ${workflow.enable:true}
-
 async:
   enabled: ${async_enabled:false}
-
 kafka:
   bootstrapAddress: ${kafka_bootstrap_address:localhost:9092}
   createEntityTopic: ${kafka_create_entity_topic:create_entity}

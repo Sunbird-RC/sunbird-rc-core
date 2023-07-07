@@ -65,7 +65,7 @@ public class RegistryServiceImpl implements RegistryService {
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
-    @Value("${registry.HARD_DELETE_ENABLED}")
+    @Value("${registry.hard_delete_enabled}")
     private boolean isHardDeleteEnabled;
 
     @Value("${database.uuidPropertyName}")
