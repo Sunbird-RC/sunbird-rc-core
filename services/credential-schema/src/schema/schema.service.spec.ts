@@ -1,17 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SchemaService } from './schema.service';
 import { UtilsService } from '../utils/utils.service';
-import { UtilsServiceMock } from '../utils/mock.util.service';
 import { PrismaClient } from '@prisma/client';
+import { HttpModule } from '@nestjs/axios';
 import { credentialSchemaDemoPayload } from './schema.fixtures';
 describe('SchemaService', () => {
   let service: SchemaService;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [HttpModule],
       providers: [SchemaService, UtilsService, PrismaClient],
     })
-      .overrideProvider(UtilsService)
-      .useClass(UtilsServiceMock)
       .compile();
     service = module.get<SchemaService>(SchemaService);
   });
