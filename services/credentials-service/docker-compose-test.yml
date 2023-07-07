@@ -4,15 +4,24 @@ services:
   db-test:
     image: postgres:12
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-  cred-test:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  credentials-service-test:
     build:
       context: .
       dockerfile: Dockerfile.test
     depends_on:
-      - db-test
+      db-test:
+        conditions: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@db-test:5432/postgres
-      IDENTITY_BASE_URL: 
-      SCHEMA_BASE_URL: 
+      IDENTITY_BASE_URL: "http://identity-service:3332"
+      SCHEMA_BASE_URL: ""
+      ENABLE_AUTH: "false"
+      JWKS_URI: ""
+      SIGNING_ALGORITHM: "RS256"
