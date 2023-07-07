@@ -135,8 +135,6 @@ public class FileStorageService implements HealthIndicator {
 		for (MultipartFile file : files) {
 			String fileName = getFileName(file.getOriginalFilename());
 			try {
-				//String objectName = objectPath;
-
 				boolean objectExists = minioClient.statObject(
 						StatObjectArgs.builder().bucket(bucketName).object(objectPath).build()
 				) != null;

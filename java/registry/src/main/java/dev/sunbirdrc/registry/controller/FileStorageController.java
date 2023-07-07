@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -90,7 +89,7 @@ public class FileStorageController {
         }
         return fileStorageService.deleteDocument(httpServletRequest.getRequestURI());
     }
-    @GetMapping(value = "/api/v1/{entity}/{entityId}/{property}/documents/{documentId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)//it returns binary data, such as a file or an image.
+    @GetMapping(value = "/api/v1/{entity}/{entityId}/{property}/documents/{documentId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> get(@PathVariable String entity,
                                       @PathVariable String entityId,
                                       @PathVariable String property,
