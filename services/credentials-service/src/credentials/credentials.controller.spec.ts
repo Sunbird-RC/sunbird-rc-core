@@ -1,11 +1,11 @@
 import { HttpModule } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from '../prisma.service';
 import { CredentialsController } from './credentials.controller';
 import { CredentialsService } from './credentials.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
+import { PrismaClient } from '@prisma/client';
 
 describe('CredentialsController', () => {
   let controller: CredentialsController;
@@ -16,7 +16,7 @@ describe('CredentialsController', () => {
       controllers: [CredentialsController],
       providers: [
         CredentialsService,
-        PrismaService,
+        PrismaClient,
         IdentityUtilsService,
         SchemaUtilsSerivce,
         RenderingUtilsService,

@@ -1,14 +1,12 @@
 import { HttpModule } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from '../prisma.service';
 import { CredentialsService } from './credentials.service';
 import Ajv2019 from 'ajv/dist/2019';
 import { UnsignedVCValidator, VCValidator } from './types/validators/index';
-import { MockSchemaUtilsSerivce } from './utils/mock.schema.utils.service';
-import { MockIdentityUtilsService } from './utils/mock.identity.utils.service';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
+import { PrismaClient } from '@prisma/client';
 
 // setup ajv
 const ajv = new Ajv2019({ strictTuples: false });
@@ -179,17 +177,12 @@ describe('CredentialsService', () => {
       imports: [HttpModule],
       providers: [
         CredentialsService,
-        PrismaService,
+        PrismaClient,
         RenderingUtilsService,
         SchemaUtilsSerivce,
         IdentityUtilsService,
       ],
-    })
-      .overrideProvider(SchemaUtilsSerivce)
-      .useClass(MockSchemaUtilsSerivce)
-      .overrideProvider(IdentityUtilsService)
-      .useClass(MockIdentityUtilsService)
-      .compile();
+    }).compile();
 
     service = module.get<CredentialsService>(CredentialsService);
   });

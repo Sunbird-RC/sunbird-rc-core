@@ -6,7 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { VCStatus, VerifiableCredentials } from '@prisma/client';
+import { PrismaClient, VCStatus, VerifiableCredentials } from '@prisma/client';
 import {
   CredentialPayload,
   transformCredentialInput,
@@ -14,7 +14,6 @@ import {
   W3CCredential,
 } from 'did-jwt-vc';
 import { DIDDocument } from 'did-resolver';
-import { PrismaService } from '../prisma.service';
 import { GetCredentialsBySubjectOrIssuer } from './dto/getCredentialsBySubjectOrIssuer.dto';
 import { IssueCredentialDTO } from './dto/issue-credential.dto';
 import { RENDER_OUTPUT } from './enums/renderOutput.enum';
@@ -29,8 +28,7 @@ const ION = require('@decentralized-identity/ion-tools');
 @Injectable()
 export class CredentialsService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly httpService: HttpService,
+    private readonly prisma: PrismaClient,
     private readonly identityUtilsService: IdentityUtilsService,
     private readonly renderingUtilsService: RenderingUtilsService,
     private readonly schemaUtilsService: SchemaUtilsSerivce
