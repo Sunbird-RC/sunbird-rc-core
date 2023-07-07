@@ -1,13 +1,24 @@
 {
 	"name": "registry-cli",
-	"version": "1.6.5",
+	"version": "1.6.7",
 	"description": "A CLI to setup and manage Sunbird RC registry instances",
-	"author": "Vedant K <https://github.com/gamemaker1>",
-	"keywords": ["registry-cli", "sbrc", "sb-rc", "sunbird-rc", "verifiable-credentials", "registry"],
+	"author": "Sunbird-RC <https://github.com/Sunbird-RC>",
+	"keywords": [
+		"registry-cli",
+		"sbrc",
+		"sb-rc",
+		"sunbird-rc",
+		"verifiable-credentials",
+		"registry"
+	],
 	"contributors": [
 		{
 			"name": "Tejash JL",
 			"url": "https://github.com/tejash-jl"
+		},
+		{
+			"name": "Prasanna Raghu",
+			"url": "https://github.com/srprasanna"
 		}
 	],
 	"license": "MIT",
@@ -30,12 +41,12 @@
 	"scripts": {
 		"clean": "del out",
 		"copy-templates": "cp -r src/templates out/src",
-		"compile": "pnpm clean && tsc -p .",
+		"compile": "npm run clean && tsc -p .",
 		"watch": "tsc -w -p .",
-		"build": "pnpm compile && pnpm copy-templates",
+		"build": "npm run compile && npm run copy-templates",
 		"lint": "prettier -w . --ignore-path .gitignore",
 		"test": "prettier -c . --ignore-path .gitignore",
-		"prepare": "pnpm build"
+		"prepare": "npm run build"
 	},
 	"dependencies": {
 		"@types/node": "16.11.21",

@@ -8,7 +8,7 @@ import { Toolbox } from '../../types'
 // Accept a toolbox, return a registry restart viewer
 export default async (toolbox: Toolbox, soft: boolean) => {
 	const { events, system, until } = toolbox
-	
+
 	events.emit('registry.restart', {
 		status: 'progress',
 		operation: 'restart-registry',

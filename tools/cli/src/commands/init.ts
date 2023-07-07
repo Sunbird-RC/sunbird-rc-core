@@ -17,9 +17,9 @@ export default {
 			prompt,
 			registry,
 			strings,
-			handleEvent
+			handleEvent,
 		} = toolbox
-		
+
 		events.on('environment.check', handleEvent)
 		events.on('registry.create', handleEvent)
 
@@ -116,6 +116,8 @@ export default {
 		await registry.create(options as unknown as RegistrySetupOptions)
 
 		print.info('')
-		print.highlight('Sunbird-RC is configured with test/default keys for signing. It is required to be updated `imports/config.json` before going live/production')
+		print.highlight(
+			'Sunbird-RC is configured with test/default keys for signing. It is required to be updated `imports/config.json` before going live/production'
+		)
 	},
 }
