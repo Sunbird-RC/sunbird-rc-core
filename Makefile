@@ -7,6 +7,7 @@ IMAGES := dockerhub/sunbird-rc-core dockerhub/sunbird-rc-nginx dockerhub/sunbird
 			dockerhub/sunbird-rc-certificate-signer dockerhub/sunbird-rc-notification-service dockerhub/sunbird-rc-claim-ms \
 			dockerhub/sunbird-rc-digilocker-certificate-api dockerhub/sunbird-rc-bulk-issuance dockerhub/sunbird-rc-metrics \
       dockerhub/sunbird-rc-credentials-service
+      dockerhub/sunbird-rc-identity-service
       
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
@@ -24,6 +25,7 @@ build: java/registry/target/registry.jar
 	make -C services/bulk_issuance docker
 	docker build -t dockerhub/sunbird-rc-nginx .
 	make -C services/credentials-service/ docker
+	make -C services/identity-service/ docker
 
 java/registry/target/registry.jar: $(SOURCES)
 	echo $(SOURCES)
@@ -53,12 +55,26 @@ test: build
 	@cd java/apitest && MODE=async ../mvnw -Pe2e test
 	@docker-compose down
 	@rm -rf db-data-2 || echo "no permission to delete"
+	# test with fusionauth
+	@RELEASE_VERSION=latest DB_DIR=db-data-7 SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService FUSION_WRAPPER_BUILD=services/sample-fusionauth-service/ FUSIONAUTH_ISSUER_URL=http://fusionauth:9011/ oauth2_resource_uri=http://fusionauth:9011/ oauth2_resource_roles_path=roles identity_provider=dev.sunbirdrc.auth.genericiam.AuthProviderImpl sunbird_sso_url=http://fusionauthwrapper:3990/fusionauth/api/v1/user IMPORTS_DIR=services/sample-fusionauth-service/imports docker-compose -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml up -d db es fusionauth fusionauthwrapper
+	sleep 20
+	@echo "Starting the test" && sh build/wait_for_port.sh 9011
+	@echo "Starting the test" && sh build/wait_for_port.sh 3990
+	sleep 20
+	@RELEASE_VERSION=latest DB_DIR=db-data-7 SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService FUSION_WRAPPER_BUILD=services/sample-fusionauth-service/ FUSIONAUTH_ISSUER_URL=http://fusionauth:9011/ oauth2_resource_uri=http://fusionauth:9011/ oauth2_resource_roles_path=roles identity_provider=dev.sunbirdrc.auth.genericiam.AuthProviderImpl sunbird_sso_url=http://fusionauthwrapper:3990/fusionauth/api/v1/user IMPORTS_DIR=services/sample-fusionauth-service/imports docker-compose -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml up -d --no-deps registry
+	@echo "Starting the test" && sh build/wait_for_port.sh 8081
+	@docker-compose -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml ps
+	@curl -v http://localhost:8081/health
+	@cd java/apitest && MODE=fusionauth ../mvnw -Pe2e test || echo 'Tests failed'
+	@docker-compose -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml down
+	@rm -rf db-data-7 || echo "no permission to delete"
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
 	make -C services/credentials-service test
 	make -C services/bulk_issuance test
-  
+	make -C services/identity-service test
+	
 clean:
 	@rm -rf target || true
 	@rm java/registry/target/registry.jar || true

@@ -13,13 +13,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.keycloak.bom</groupId>
-                <artifactId>keycloak-adapter-bom</artifactId>
-                <version>11.0.2</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
+
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -72,5 +66,11 @@
             <artifactId>middleware-commons</artifactId>
             <version>2.0.3</version>
         </dependency>
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>identity-provider</artifactId>
+            <version>2.0.3</version>
+        </dependency>
+
     </dependencies>
 </project>

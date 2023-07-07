@@ -21,4 +21,5 @@ public interface IValidate {
     void addDefinitions(JsonNode schema) throws IOException;
 
     void removeDefinition(JsonNode jsonNode);
+    void removeDefinition(String schema);
 }
