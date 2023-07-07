@@ -9,7 +9,7 @@
     },
     "version": {
       "type": "string",
-      "pattern": "^\\d+\\.\\d+$"
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
     },
     "id": {
       "type": "string"
@@ -67,5 +67,5 @@
       ]
     }
   },
-  "required": ["type", "version", "id", "name", "author", "authored", "schema"]
+  "required": ["type", "name", "author", "authored", "schema"]
 }

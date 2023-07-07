@@ -45,6 +45,7 @@ export class RenderingTemplatesService {
     const warnings = await this.verifier.validateTemplateAgainstSchema(
       addTemplateDto.template,
       addTemplateDto.schemaId,
+      addTemplateDto.schemaVersion,
     );
     try {
       const template = await this.prisma.template.create({

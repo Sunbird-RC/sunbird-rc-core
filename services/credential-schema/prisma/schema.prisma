@@ -8,16 +8,18 @@ generator client {
 datasource db {
   provider          = "postgresql"
   url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 enum SchemaStatus {
   DRAFT
   PUBLISHED
+  DEPRECATED
   REVOKED
 }
 
 model VerifiableCredentialSchema {
-  id           String       @id @default(cuid())
+  id           String
   type         String
   version      String
   name         String
@@ -34,6 +36,7 @@ model VerifiableCredentialSchema {
   status       SchemaStatus @default(DRAFT)
   deprecatedId String?
 
+  @@id([id, version])
   @@index([type], type: Hash)
   @@index([name], type: Hash)
 }
