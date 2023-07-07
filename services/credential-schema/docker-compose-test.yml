@@ -14,7 +14,7 @@ services:
     networks:
       test:
       
-  cred-schema-test:
+  credential-schema-test:
     build:
       context: .
       dockerfile: Dockerfile.test

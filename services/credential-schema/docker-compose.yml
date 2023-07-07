@@ -14,7 +14,7 @@ services:
       timeout: 5s
       retries: 5
       
-  cred-schema:
+  credential-schema:
     image: cred
     build: .
     depends_on:
