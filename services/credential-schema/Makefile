@@ -18,3 +18,5 @@ test:
 	make -C ../identity-service compose-init
 	@docker-compose -f docker-compose-test.yml down
 	@docker-compose -f docker-compose-test.yml up --build --abort-on-container-exit
+	make -C ../identity-service stop
+	make -C ../identity-service vault-reset
