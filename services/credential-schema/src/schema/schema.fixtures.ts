@@ -46,3 +46,19 @@ export const credentialSchemaDemoPayload: CreateCredentialDTO = {
   tags: ['tag1', 'tag2'],
   status: 'DRAFT',
 };
+
+
+export const testDIDBody = {
+  content: [
+    {
+      alsoKnownAs: ["testDID"],
+      services: [
+        {
+          id: 'CredentialSchemaService',
+          type: 'CredentialSchema',
+        },
+      ],
+      method: 'schema',
+    },
+  ],
+};

@@ -3,9 +3,11 @@ import { SchemaService } from './schema.service';
 import { UtilsService } from '../utils/utils.service';
 import { PrismaClient } from '@prisma/client';
 import { HttpModule } from '@nestjs/axios';
-import { credentialSchemaDemoPayload } from './schema.fixtures';
+import { credentialSchemaDemoPayload, testDIDBody } from './schema.fixtures';
+
 describe('SchemaService', () => {
   let service: SchemaService;
+  let utilsService: UtilsService;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [HttpModule],
@@ -13,13 +15,18 @@ describe('SchemaService', () => {
     })
       .compile();
     service = module.get<SchemaService>(SchemaService);
+    utilsService = module.get<UtilsService>(UtilsService)
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+    expect(utilsService).toBeDefined();
   });
 
   it('should create a signed schema and get it from DB', async () => {
+    
+    const did = await utilsService.generateDID(testDIDBody)
+    credentialSchemaDemoPayload.schema.author = did.id;
     const vcCredSchema = await service.createCredentialSchema(
       credentialSchemaDemoPayload,
     );
