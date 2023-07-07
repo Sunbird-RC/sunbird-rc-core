@@ -26,7 +26,10 @@ services:
       IDENTITY_BASE_URL: ""
       ENABLE_AUTH: "false"
     networks:
-      test:
+      test: 
+      rcw-test:
 
 networks:
+  rcw-test:
+    external: true
   test:

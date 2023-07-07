@@ -27,6 +27,15 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
       IDENTITY_BASE_URL: ""
-      ENABLE_AUTH: "false"      
+      ENABLE_AUTH: "false" 
+    networks:
+      rcw-test:
+      default:
+
+
+networks:
+  rcw-test:
+    external: true
+
 volumes:
   data:

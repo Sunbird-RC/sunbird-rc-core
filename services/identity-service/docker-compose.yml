@@ -66,6 +66,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      rcw-test:
+      default:
+
+# rcw-test is an external network created for other upstream services dependent on identity service
+# to be able to access it
+networks:
+  rcw-test:
+    external: true
+
 volumes:
   data:
   vault-data:
