@@ -10,7 +10,7 @@ export class SchemaUtilsSerivce {
   async getCredentialSchema(schemaId: string) {
     try {
       const credSchema: AxiosResponse = await this.httpService.axiosRef.get(
-        `${process.env.SCHEMA_BASE_URL}/${schemaId}`
+        `${process.env.SCHEMA_BASE_URL}/credential-schema/${schemaId}`
       );
       return credSchema?.data?.schema;
     } catch (err) {
@@ -23,7 +23,7 @@ export class SchemaUtilsSerivce {
   async getTemplateById(templateId: string) {
     try {
       const template: AxiosResponse = await this.httpService.axiosRef.get(
-        `${process.env.SCHEMA_BASE_URL}/rendering-template/${templateId}`
+        `${process.env.SCHEMA_BASE_URL}/template/${templateId}`
       );
       return template?.data;
     } catch (err) {
