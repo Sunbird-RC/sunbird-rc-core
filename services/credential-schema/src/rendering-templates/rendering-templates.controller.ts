@@ -11,7 +11,6 @@ import {
 import { AddTemplateDTO } from './dto/addTemplate.dto';
 import { UpdateTemplateDTO } from './dto/updateTemplate.dto';
 import { RenderingTemplatesService } from './rendering-templates.service';
-
 import {
   ApiBadRequestResponse,
   ApiBody,

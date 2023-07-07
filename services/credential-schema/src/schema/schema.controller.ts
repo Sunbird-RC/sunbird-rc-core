@@ -30,7 +30,7 @@ export class SchemaController {
   constructor(private readonly schemaService: SchemaService) {}
 
   // TODO: Add role based guards here
-  @Get(':id')
+  @Get(':id/:ver')
   @ApiQuery({ name: 'id', required: true, type: String })
   @ApiOperation({ summary: 'Get a Verifiable Credential Schema by id (did)' })
   @ApiOkResponse({
@@ -42,8 +42,16 @@ export class SchemaController {
     status: 404,
     description: 'The record has not been found.',
   })
-  getCredentialSchema(@Param('id') id) {
-    return this.schemaService.getCredentialSchema({ id });
+  getCredentialSchemaByIdAndVersion(
+    @Param('id') id,
+    @Param('ver') version: string,
+  ) {
+    return this.schemaService.getCredentialSchemaByIdAndVersion({
+      id_version: {
+        id,
+        version,
+      },
+    });
   }
 
   @Get()
@@ -70,6 +78,11 @@ export class SchemaController {
     );
   }
 
+  @Get(':id')
+  async getAllSchemasWithId(@Param('id') id: string) {
+    return this.schemaService.getAllSchemasById(id);
+  }
+
   // TODO: Add role based guards here
   @Post()
   @ApiOperation({ summary: 'Create a new Verifiable Credential Schema' })
@@ -92,7 +105,7 @@ export class SchemaController {
   }
 
   // TODO: Add role based guards here
-  @Put(':id')
+  @Put(':id/:ver')
   @ApiQuery({ name: 'id', required: true, type: String })
   @ApiBody({
     type: VCModelSchema,
@@ -114,7 +127,37 @@ export class SchemaController {
     status: 400,
     description: 'There was some prioblem with the request.',
   })
-  updateCredentialSchema(@Param('id') id, @Body() data: CreateCredentialDTO) {
-    return this.schemaService.updateCredentialSchema({ id: id }, data);
+  updateCredentialSchema(
+    @Param('id') id: string,
+    @Param('ver') version: string,
+    @Body() data: CreateCredentialDTO,
+  ) {
+    return this.schemaService.updateCredentialSchema(
+      { id_version: { id, version } },
+      data,
+    );
+  }
+
+  @Put('deprecate/:id/:ver')
+  async deprecateSchema(
+    @Param('id') id: string,
+    @Param('ver') version: string,
+  ) {
+    return await this.schemaService.updateSchemaStatus(
+      {
+        id_version: { id, version },
+      },
+      'DEPRECATED',
+    );
+  }
+
+  @Put('revoke/:id/:ver')
+  async revokeSchema(@Param('id') id: string, @Param('ver') version: string) {
+    return await this.schemaService.updateSchemaStatus(
+      {
+        id_version: { id, version },
+      },
+      'REVOKED',
+    );
   }
 }

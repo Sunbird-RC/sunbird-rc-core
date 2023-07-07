@@ -23,11 +23,17 @@ export class ValidateTemplateService {
   async validateTemplateAgainstSchema(
     template: string,
     schemaID: string,
+    schemaVersion: string,
   ): Promise<TemplateWarnings | null> {
     try {
       const hbsfields: Array<string> = this.parseHBSTemplate(template);
       const requiredFields: Array<string> = (
-        await this.schemaService.getCredentialSchema({ id: schemaID })
+        await this.schemaService.getCredentialSchemaByIdAndVersion({
+          id_version: {
+            id: schemaID,
+            version: schemaVersion,
+          },
+        })
       ).schema.schema['required'];
       this.logger.debug('Required fields in Template', requiredFields);
 
