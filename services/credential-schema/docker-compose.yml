@@ -6,8 +6,6 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
-    ports:
-      - 5432:5432
     volumes:
       - data:/var/lib/postgresql/data
     healthcheck:
@@ -16,7 +14,7 @@ services:
       timeout: 5s
       retries: 5
       
-  cred-schema:
+  credential-schema:
     image: cred
     build: .
     depends_on:
@@ -26,7 +24,16 @@ services:
       - '3333:3333'
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
-      IDENTITY_BASE_URL: ""
-      ENABLE_AUTH: "false"      
+      IDENTITY_BASE_URL: "http://identity-service:3332"
+      ENABLE_AUTH: "false" 
+    networks:
+      rcw-test:
+      default:
+
+
+networks:
+  rcw-test:
+    external: true
+
 volumes:
   data:
