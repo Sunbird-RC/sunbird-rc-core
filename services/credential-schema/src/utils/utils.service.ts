@@ -29,7 +29,7 @@ export class UtilsService {
       };
       return proof;
     } catch (err) {
-      this.logger.error(err);
+      this.logger.error(err, err.response?.data);
       throw new HttpException("Couldn't sign the schema", 500);
     }
   }
