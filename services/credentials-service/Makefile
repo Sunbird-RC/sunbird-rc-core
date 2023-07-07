@@ -17,3 +17,8 @@ test:
 	make -C ../credential-schema start
 	@docker-compose -f docker-compose-test.yml down
 	@docker-compose  -f docker-compose-test.yml up --build --abort-on-container-exit
+
+#	Stopping all dependent services
+	make -C ../identity-service stop
+	make -C ../identity-service vault-reset
+	make -C ../credential-schema stop
