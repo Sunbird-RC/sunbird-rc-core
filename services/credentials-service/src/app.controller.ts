@@ -3,8 +3,8 @@ import { Controller, Get } from '@nestjs/common';
 export class AppController {
   constructor() {}
 
-  @Get()
-  handleHealthCheck(): string {
-    return 'Hello World!';
+  @Get('/health')
+  handleHealthCheck() {
+    return { status: 'ok' };
   }
 }
