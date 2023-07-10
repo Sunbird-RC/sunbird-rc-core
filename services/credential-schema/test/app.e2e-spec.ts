@@ -49,35 +49,161 @@ describe('AppController (e2e)', () => {
       .put(`/credential-schema/${schema.schema.id}/${schema.schema.version}`)
       .send({ status: 'PUBLISHED' })
       .expect(200);
-    expect(res.schema.status).toBe('PUBLISHED');
+    expect(res.status).toBe('PUBLISHED');
   });
 
-  it('should create a new schema and then update its metadata', () => {
-    return;
+  it('should create a new schema and then update its tags', async () => {
+    const schemaPayload = generateCredentialSchemaTestBody();
+    const did = await utilsService.generateDID(generateTestDIDBody());
+    schemaPayload.schema.author = did.id;
+    const { body: schema } = await request(httpServer)
+      .post('/credential-schema')
+      .send(schemaPayload)
+      .expect(201);
+    const { body: res } = await request(httpServer)
+      .put(`/credential-schema/${schema.schema.id}/${schema.schema.version}`)
+      .send({ tags: ['T1', 'T2'] })
+      .expect(200);
+    expect(res.tags).toEqual(['T1', 'T2']);
   });
 
-  it('should create a schema and then update its core fields', () => {
-    return;
+  it('should create a schema and then update its core fields', async () => {
+    const schemaPayload = generateCredentialSchemaTestBody();
+    const did = await utilsService.generateDID(generateTestDIDBody());
+    schemaPayload.schema.author = did.id;
+    const { body: schema } = await request(httpServer)
+      .post('/credential-schema')
+      .send(schemaPayload)
+      .expect(201);
+    const newSchemaPayload = generateCredentialSchemaTestBody();
+    newSchemaPayload.schema.author = schema.schema.id;
+    const { body: newSchema } = await request(httpServer)
+      .put(`/credential-schema/${schema.schema.id}/${schema.schema.version}`)
+      .send(newSchemaPayload)
+      .expect(200);
+    expect(newSchema.schema.id).toBe(schema.schema.id);
+    expect(newSchema.schema.version).toEqual('1.1.0');
+    expect(newSchema.schema.author).toEqual(schema.schema.id);
   });
 
-  it('should create a schema publish it and then update its metadata', () => {
-    return;
+  it('should create a schema publish it and then update its metadata', async () => {
+    const schemaPayload = generateCredentialSchemaTestBody();
+    const did = await utilsService.generateDID(generateTestDIDBody());
+    schemaPayload.schema.author = did.id;
+    const { body: schema } = await request(httpServer)
+      .post('/credential-schema')
+      .send(schemaPayload)
+      .expect(201);
+    const { body: resPublish } = await request(httpServer)
+      .put(
+        `/credential-schema/publish/${schema.schema.id}/${schema.schema.version}`,
+      )
+      .expect(200);
+    expect(resPublish.status).toBe('PUBLISHED');
+    expect(resPublish.schema.version).toBe('1.0.0');
+
+    const { body: resTags } = await request(httpServer)
+      .put(`/credential-schema/${schema.schema.id}/${schema.schema.version}`)
+      .send({ tags: ['T1', 'T2'] })
+      .expect(200);
+
+    expect(resTags.status).toBe('PUBLISHED');
+    expect(resTags.schema.version).toBe('1.1.0');
   });
 
-  it('should create a schema publish it and then update its core fields', () => {
-    return;
+  it('should create a schema publish it and then update its core fields', async () => {
+    const schemaPayload = generateCredentialSchemaTestBody();
+    const did = await utilsService.generateDID(generateTestDIDBody());
+    schemaPayload.schema.author = did.id;
+    const { body: schema } = await request(httpServer)
+      .post('/credential-schema')
+      .send(schemaPayload)
+      .expect(201);
+    const { body: resPublish } = await request(httpServer)
+      .put(
+        `/credential-schema/publish/${schema.schema.id}/${schema.schema.version}`,
+      )
+      .expect(200);
+    expect(resPublish.status).toBe('PUBLISHED');
+    expect(resPublish.schema.version).toBe('1.0.0');
+
+    const newSchemaPayload = generateCredentialSchemaTestBody();
+    newSchemaPayload.schema.author = schema.schema.id;
+    const { body: newSchema } = await request(httpServer)
+      .put(
+        `/credential-schema/${resPublish.schema.id}/${resPublish.schema.version}`,
+      )
+      .send(newSchemaPayload)
+      .expect(200);
+    expect(newSchema.schema.id).toBe(schema.schema.id);
+    expect(newSchema.schema.version).toEqual('2.0.0');
+    expect(newSchema.schema.author).toEqual(schema.schema.id);
+    expect(newSchema.status).toEqual('DRAFT');
   });
 
-  it('should create a schema and then deprecate it', () => {
-    return;
+  it('should create a schema and then deprecate it', async () => {
+    const schemaPayload = generateCredentialSchemaTestBody();
+    const did = await utilsService.generateDID(generateTestDIDBody());
+    schemaPayload.schema.author = did.id;
+    const { body: schema } = await request(httpServer)
+      .post('/credential-schema')
+      .send(schemaPayload)
+      .expect(201);
+    const { body: res } = await request(httpServer)
+      .put(
+        `/credential-schema/deprecate/${schema.schema.id}/${schema.schema.version}`,
+      )
+      .expect(200);
+    expect(res.status).toBe('DEPRECATED');
+    expect(res.schema.version).toBe('1.0.0');
   });
 
-  it('should create a schema, publish it and then deprecate it', () => {
-    return;
+  it('should create a schema, publish it and then deprecate it', async () => {
+    const schemaPayload = generateCredentialSchemaTestBody();
+    const did = await utilsService.generateDID(generateTestDIDBody());
+    schemaPayload.schema.author = did.id;
+    const { body: schema } = await request(httpServer)
+      .post('/credential-schema')
+      .send(schemaPayload)
+      .expect(201);
+    const { body: resPublish } = await request(httpServer)
+      .put(
+        `/credential-schema/publish/${schema.schema.id}/${schema.schema.version}`,
+      )
+      .expect(200);
+    expect(resPublish.status).toBe('PUBLISHED');
+    expect(resPublish.schema.version).toBe('1.0.0');
+    const { body: res } = await request(httpServer)
+      .put(
+        `/credential-schema/deprecate/${schema.schema.id}/${schema.schema.version}`,
+      )
+      .expect(200);
+    expect(res.status).toBe('DEPRECATED');
+    expect(res.schema.version).toBe('1.0.0');
   });
 
-  it('should create a schema, publish it and then revoke it', () => {
-    return;
+  it('should create a schema, publish it and then revoke it', async () => {
+    const schemaPayload = generateCredentialSchemaTestBody();
+    const did = await utilsService.generateDID(generateTestDIDBody());
+    schemaPayload.schema.author = did.id;
+    const { body: schema } = await request(httpServer)
+      .post('/credential-schema')
+      .send(schemaPayload)
+      .expect(201);
+    const { body: resPublish } = await request(httpServer)
+      .put(
+        `/credential-schema/publish/${schema.schema.id}/${schema.schema.version}`,
+      )
+      .expect(200);
+    expect(resPublish.status).toBe('PUBLISHED');
+    expect(resPublish.schema.version).toBe('1.0.0');
+    const { body: res } = await request(httpServer)
+      .put(
+        `/credential-schema/revoke/${schema.schema.id}/${schema.schema.version}`,
+      )
+      .expect(200);
+    expect(res.status).toBe('REVOKED');
+    expect(res.schema.version).toBe('1.0.0');
   });
 
   it('should create a schema, publish it, update it, deprecate it', () => {
