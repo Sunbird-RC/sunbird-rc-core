@@ -166,12 +166,6 @@ describe('CredentialsService', () => {
   const validate = ajv.compile(issueCredentialReturnTypeSchema);
   const getCredReqValidate = ajv.compile(getCredentialByIdSchema);
 
-  let issuerDid: string, subjectDid: string;
-
-  // beforeAll(async () => {
-  //   issuerDid = await this.httpService.
-  // })
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [HttpModule],
