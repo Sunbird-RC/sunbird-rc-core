@@ -48,7 +48,8 @@ export class IdentityUtilsService {
   }
 
   async generateDID(
-    alsoKnownAs: ReadonlyArray<String>
+    alsoKnownAs: ReadonlyArray<String>,
+    method: string = 'rcw'
   ): Promise<ReadonlyArray<DIDDocument>> {
     try {
       const didGenRes: AxiosResponse = await this.httpService.axiosRef.post(
@@ -59,15 +60,11 @@ export class IdentityUtilsService {
               alsoKnownAs: alsoKnownAs,
               services: [
                 {
-                  id: 'IdentityHub',
-                  type: 'IdentityHub',
-                  serviceEndpoint: {
-                    '@context': 'schema.identity.foundation/hub',
-                    '@type': 'UserServiceEndpoint',
-                    instance: ['did:test:hub.id'],
-                  },
+                  id: 'CredentialsService',
+                  type: 'CredentialDIDService',
                 },
               ],
+              method
             },
           ],
         }

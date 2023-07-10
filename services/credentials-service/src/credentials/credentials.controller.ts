@@ -66,6 +66,10 @@ export class CredentialsController {
   getCredentialById(@Param('id') id: string, @Req() req: Request) {
     const accept: string = req.headers['accept'];
     const templateId: string = req.headers['templateid'] as string;
+
+    if (!templateId && accept.trim() !== 'application/json') throw new BadRequestException('Template id is required');
+    else if (!templateId && accept.trim() === 'application/json') return this.credentialsService.getCredentialById(id, templateId, RENDER_OUTPUT.JSON);
+
     let output = RENDER_OUTPUT.JSON;
     switch (accept.trim()) {
       case 'application/json':

@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces';
 import Ajv2019 from 'ajv/dist/2019';
 
@@ -7,17 +7,30 @@ import Ajv2019 from 'ajv/dist/2019';
 export class SchemaUtilsSerivce {
   constructor(private readonly httpService: HttpService) {}
 
-  async getCredentialSchema(schemaId: string) {
+  async getCredentialSchema(schemaId: string, version: string) {
+    let credSchema: AxiosResponse;
     try {
-      const credSchema: AxiosResponse = await this.httpService.axiosRef.get(
-        `${process.env.SCHEMA_BASE_URL}/credential-schema/${schemaId}`
+      credSchema = await this.httpService.axiosRef.get(
+        `${process.env.SCHEMA_BASE_URL}/credential-schema/${schemaId}/${version}`
       );
-      return credSchema?.data?.schema;
     } catch (err) {
       throw new InternalServerErrorException(
         `Error fetching credential schema`
       );
     }
+    console.log('credSchema: ', credSchema);
+    if (credSchema.status === 404) {
+      Logger.error(`Schema with id ${schemaId} not found`, credSchema.data);
+      throw new BadRequestException(`Credential schema with id ${schemaId} not found`);
+    } else if (credSchema.status !== 200) {
+      Logger.error('Error fetching schema', credSchema.data);
+      throw new InternalServerErrorException(
+        `Error fetching credential schema`
+      );
+    }
+
+
+    return credSchema?.data?.schema;
   }
 
   async getTemplateById(templateId: string) {
@@ -27,6 +40,10 @@ export class SchemaUtilsSerivce {
       );
       return template?.data;
     } catch (err) {
+      Logger.error('Error fetching template', err);
+      if (err.response.status === 404) {
+        throw new BadRequestException(`Template with id ${templateId} not found`);
+      }
       throw new InternalServerErrorException(
         `Error fetching template with id ${templateId}`
       );
