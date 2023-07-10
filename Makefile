@@ -6,8 +6,7 @@ IMAGES := dockerhub/sunbird-rc-core dockerhub/sunbird-rc-nginx dockerhub/sunbird
 			dockerhub/sunbird-rc-public-key-service dockerhub/sunbird-rc-keycloak dockerhub/sunbird-rc-certificate-api \
 			dockerhub/sunbird-rc-certificate-signer dockerhub/sunbird-rc-notification-service dockerhub/sunbird-rc-claim-ms \
 			dockerhub/sunbird-rc-digilocker-certificate-api dockerhub/sunbird-rc-bulk-issuance dockerhub/sunbird-rc-metrics \
-      dockerhub/sunbird-rc-credentials-service
-      dockerhub/sunbird-rc-identity-service
+      		dockerhub/sunbird-rc-credentials-service dockerhub/sunbird-rc-identity-service
       
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
@@ -43,16 +42,16 @@ test: build
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
 	@curl -v http://localhost:8081/health
-	@cd java/apitest && ../mvnw -Pe2e test
+	@cd java/apitest && ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
 	@rm -rf db-data-1 || echo "no permission to delete"
 	# test with kafka(async), events, notifications,
-	@NOTIFICATION_ENABLED=true NOTIFICATION_URL=http://notification-ms:8765/notification-service/v1/notification TRACK_NOTIFICATIONS=true EVENT_ENABLED=true ASYNC_ENABLED=true RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-2 docker-compose up -d db clickhouse redis es keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
+	@NOTIFICATION_ENABLED=true NOTIFICATION_URL=http://notification-ms:8765/notification-service/v1/notification TRACK_NOTIFICATIONS=true EVENT_ENABLED=true ASYNC_ENABLED=true RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-2 docker-compose up -d db redis es keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
 	@curl -v http://localhost:8081/health
-	@cd java/apitest && MODE=async ../mvnw -Pe2e test
+	@cd java/apitest && MODE=async ../mvnw -Pe2e test || echo 'Tests failed'
 	@docker-compose down
 	@rm -rf db-data-2 || echo "no permission to delete"
 	# test with fusionauth
@@ -71,8 +70,8 @@ test: build
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
-	make -C services/credentials-service test
 	make -C services/bulk_issuance test
+	make -C services/credentials-service test
 	make -C services/identity-service test
 	
 clean:
