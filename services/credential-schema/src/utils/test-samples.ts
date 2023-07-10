@@ -37,7 +37,7 @@ export const samples = [
   {
     sample: {
       type: 'https://w3c-ccg.github.io/vc-json-schemas/',
-      version: '1.0',
+      version: '1.0.0',
       id: '06e126d1-fa44-4882-a243-1e326fbe21db',
       name: 'Email',
       author: 'did:example:MDP8AsFhHzhwUvGNuYkX7T',
@@ -48,8 +48,8 @@ export const samples = [
   {
     sample: {
       type: 'https://w3c-ccg.github.io/vc-json-schemas/',
-      version: '1.1',
-      id: 'did:example:MDP8AsFhHzhwUvGNuYkX7T/06e126d1-fa44-4882-a243-1e326fbe21db;version=1.1',
+      version: '1.1.0',
+      id: 'did:example:MDP8AsFhHzhwUvGNuYkX7T/06e126d1-fa44-4882-a243-1e326fbe21db;version=1.1.0',
       name: 'Email',
       author: 'did:example:MDP8AsFhHzhwUvGNuYkX7T',
       authored: '2018-01-01T00:00:00+00:00',
@@ -77,8 +77,8 @@ export const samples = [
   {
     sample: {
       type: 'https://w3c-ccg.github.io/vc-json-schemas/',
-      version: '1.1',
-      id: 'did:example:MDP8AsFhHzhwUvGNuYkX7T/06e126d1-fa44-4882-a243-1e326fbe21db;version=1.1',
+      version: '1.1.0',
+      id: 'did:example:MDP8AsFhHzhwUvGNuYkX7T/06e126d1-fa44-4882-a243-1e326fbe21db;version=1.1.0',
       name: 'Email',
       author: 'did:example:MDP8AsFhHzhwUvGNuYkX7T',
       authored: '2018-01-01T00:00:00+00:00',
@@ -106,8 +106,8 @@ export const samples = [
   {
     sample: {
       type: 'https://w3c-ccg.github.io/vc-json-schemas/',
-      version: '1.0',
-      id: 'did:example:MDP8AsFhHzhwUvGNuYkX7T/06e126d1-fa44-4882-a243-1e326fbe21db;version=1.0',
+      version: '1.0.0',
+      id: 'did:example:MDP8AsFhHzhwUvGNuYkX7T/06e126d1-fa44-4882-a243-1e326fbe21db;version=1.0.0',
       name: 'Email',
       author: 'did:example:MDP8AsFhHzhwUvGNuYkX7T',
       authored: '2018-01-01T00:00:00+00:00',
@@ -137,7 +137,7 @@ export const samples = [
         'https://w3id.org/security/suites/ed25519-2020/v1',
       ],
       type: 'https://w3c-ccg.github.io/vc-json-schemas/',
-      version: '1.0',
+      version: '1.0.0',
       id: 'did:example:ebfeb1f712ebc6f1c276e12ec21',
       name: 'Alumni Credential',
       author: 'did:example:c276e12ec21ebfeb1f712ebc6f1',
@@ -188,7 +188,7 @@ export const samples = [
         'https://w3id.org/security/suites/ed25519-2020/v1',
       ],
       type: 'https://w3c-ccg.github.io/vc-json-schemas/',
-      version: '1.0',
+      version: '1.0.0',
       id: 'did:example:ebfeb1f712ebc6f1c276e12ec21',
       name: 'Proof of Academic Evaluation Credential',
       author: 'did:example:c276e12ec21ebfeb1f712ebc6f1',
@@ -248,7 +248,7 @@ export const samples = [
         'https://w3id.org/security/suites/ed25519-2020/v1',
       ],
       type: 'https://w3c-ccg.github.io/vc-json-schemas/',
-      version: '1.0',
+      version: '1.0.0',
       id: 'did:example:ebfeb1f712ebc6f1c276e12ec21',
       name: 'Proof of Training Credential',
       author: 'did:example:c276e12ec21ebfeb1f712ebc6f1',
@@ -298,7 +298,7 @@ export const samples = [
         'https://w3id.org/security/suites/ed25519-2020/v1',
       ],
       type: 'https://w3c-ccg.github.io/vc-json-schemas/',
-      version: '1.0',
+      version: '1.0.0',
       id: 'did:example:ebfeb1f712ebc6f1c276e12ec21',
       name: 'Marks Credential',
       author: 'did:example:c276e12ec21ebfeb1f712ebc6f1',

@@ -3,7 +3,10 @@ import { SchemaService } from './schema.service';
 import { UtilsService } from '../utils/utils.service';
 import { PrismaClient } from '@prisma/client';
 import { HttpModule } from '@nestjs/axios';
-import { credentialSchemaDemoPayload, testDIDBody } from './schema.fixtures';
+import {
+  generateCredentialSchemaTestBody,
+  generateTestDIDBody,
+} from './schema.fixtures';
 
 describe('SchemaService', () => {
   let service: SchemaService;
@@ -22,35 +25,58 @@ describe('SchemaService', () => {
     expect(utilsService).toBeDefined();
   });
 
-  it('should create a signed schema and get it from DB', async () => {
-    const did = await utilsService.generateDID(testDIDBody);
-    credentialSchemaDemoPayload.schema.author = did.id;
+  it('should try creating a new schema', async () => {
+    const didBody = generateTestDIDBody();
+    const did = await utilsService.generateDID(didBody);
+    const credSchemaPayload = generateCredentialSchemaTestBody();
+    credSchemaPayload.schema.author = did.id;
     const vcCredSchema = await service.createCredentialSchema(
-      credentialSchemaDemoPayload,
+      credSchemaPayload,
     );
     expect(vcCredSchema).toBeDefined();
     expect(vcCredSchema.schema.proof).toBeTruthy();
-    const getVCCredSchema = await service.getCredentialSchema({
-      id: vcCredSchema.schema.id,
+    const getVCCredSchema = await service.getCredentialSchemaByIdAndVersion({
+      id_version: {
+        id: vcCredSchema.schema.id,
+        version: '1.0.0',
+      },
     });
-    expect(getVCCredSchema.schema.proof).toBeTruthy();
+    expect(getVCCredSchema).toBeTruthy();
+    expect(getVCCredSchema.schema.version).toBe(vcCredSchema.schema.version);
   });
 
-  it('should try creating a new schema with a given did', () => {
-    return;
-  });
-
-  it('should try adding a new schema without a given did', () => {
-    return;
-  });
   it('should try adding a schema with a version', () => {
     return;
   });
-  it('should try adding a schema without a version', () => {
-    return;
+  it('should try adding a schema without a version', async () => {
+    const didBody = generateTestDIDBody();
+    const did = await utilsService.generateDID(didBody);
+    const credSchemaPayload = generateCredentialSchemaTestBody();
+    delete credSchemaPayload.schema.version;
+    credSchemaPayload.schema.author = did.id;
+    const vcCredSchema = await service.createCredentialSchema(
+      credSchemaPayload,
+    );
+    expect(vcCredSchema).toBeDefined();
+    expect(vcCredSchema.schema.proof).toBeTruthy();
+    const getVCCredSchema = await service.getCredentialSchemaByIdAndVersion({
+      id_version: {
+        id: vcCredSchema.schema.id,
+        version: '0.0.0',
+      },
+    });
+    expect(getVCCredSchema).toBeTruthy();
+    expect(getVCCredSchema.schema.version).toBe(vcCredSchema.schema.version);
   });
-  it('should try adding a schema with a version that does not follow semver', () => {
-    return;
+  it('should try adding a schema with a version that does not follow semver', async () => {
+    const didBody = generateTestDIDBody();
+    const did = await utilsService.generateDID(didBody);
+    const credSchemaPayload = generateCredentialSchemaTestBody();
+    credSchemaPayload.schema.version = '1.0';
+    credSchemaPayload.schema.author = did.id;
+    expect(
+      service.createCredentialSchema(credSchemaPayload),
+    ).rejects.toThrowError();
   });
 
   it('should try to update ONLY metadata of a DRAFT schema', () => {
