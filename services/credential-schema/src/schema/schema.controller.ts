@@ -160,4 +160,14 @@ export class SchemaController {
       'REVOKED',
     );
   }
+
+  @Put('publish/:id/:ver')
+  async publishSchema(@Param('id') id: string, @Param('ver') version: string) {
+    return await this.schemaService.updateSchemaStatus(
+      {
+        id_version: { id, version },
+      },
+      'PUBLISHED',
+    );
+  }
 }

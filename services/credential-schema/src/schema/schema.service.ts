@@ -164,8 +164,8 @@ export class SchemaService {
           proof: data.proof,
         },
         tags: tags,
-        status: data.status,
-        deprecatedId: null,
+        status: createCredentialDto.status,
+        deprecatedId: createCredentialDto.deprecatedId,
       };
 
       // sign the credential schema (only the schema part of the credSchema object above since it is the actual schema)
@@ -291,10 +291,9 @@ export class SchemaService {
 
     let currentSchema: VerifiableCredentialSchema;
     try {
-      currentSchema =
-        await this.prisma.verifiableCredentialSchema.findUniqueOrThrow({
-          where,
-        });
+      currentSchema = await this.prisma.verifiableCredentialSchema.findUnique({
+        where,
+      });
     } catch (err) {
       this.logger.error(`Error fetching schema for update from db`, err);
       throw new InternalServerErrorException(
@@ -314,6 +313,16 @@ export class SchemaService {
       throw new BadRequestException(
         `Schema with id: ${where.id_version.id} and version: ${where.id_version.version} is already revoked`,
       );
+    }
+
+    if (
+      (!data.schema && !data.tags && data.status) ||
+      (data.schema &&
+        !data.tags &&
+        data.status &&
+        Object.keys(data.schema).length === 0)
+    ) {
+      return await this.updateSchemaStatus(where, data.status);
     }
 
     // if (validate(data.schema)) {
@@ -364,13 +373,32 @@ export class SchemaService {
     // create the new schema with the new version
     let newSchema;
     try {
+      let newStatus: SchemaStatus;
+      if (data.status) {
+        switch (data.status.toUpperCase().trim()) {
+          case 'PUBLISHED':
+            newStatus = SchemaStatus.PUBLISHED;
+            break;
+          case 'DEPRECATED':
+            newStatus = SchemaStatus.DEPRECATED;
+            break;
+          case 'REVOKED':
+            newStatus = SchemaStatus.REVOKED;
+            break;
+          default:
+            newStatus = SchemaStatus.DRAFT;
+            Logger.warn('Unknown schema status, setting to draft');
+        }
+      }
       const newSchemaPayload = {
         schema: {
           ...data.schema,
         },
-        status: data.status ? data.status : currentSchema.status,
+        status: newStatus !== undefined ? newStatus : currentSchema.status,
         tags: data.tags ? data.tags : currentSchema.tags,
+        deprecatedId: currentSchema.version,
       };
+
       newSchemaPayload.schema.authored = new Date(
         newSchemaPayload.schema.authored,
       ).toISOString();
