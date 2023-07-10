@@ -243,7 +243,6 @@ export class SchemaService {
     where: Prisma.VerifiableCredentialSchemaWhereUniqueInput,
     status: string,
   ) {
-    console.log('status in update status: ', status);
     let statusToUpdate: SchemaStatus;
     switch (status.toUpperCase().trim()) {
       case 'PUBLISHED':
@@ -316,7 +315,6 @@ export class SchemaService {
       );
     }
 
-    // if (validate(data.schema)) {
     const prevVer = currentSchema.version.trim().split('.');
 
     switch (currentSchema.status) {
@@ -386,7 +384,6 @@ export class SchemaService {
         where,
         'DEPRECATED',
       );
-      console.log('deprecatedSchema: ', deprecatedSchema);
     } catch (err) {
       this.logger.error('Error marking the current schema as deprecated', err);
       throw new InternalServerErrorException(
