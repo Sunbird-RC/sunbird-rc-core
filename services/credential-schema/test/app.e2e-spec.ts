@@ -2,39 +2,61 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
+import {
+  generateCredentialSchemaTestBody,
+  generateTestDIDBody,
+} from '../src/schema/schema.fixtures';
+import { UtilsService } from '../src/utils/utils.service';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
-
+  let utilsService: UtilsService;
+  let httpServer;
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    utilsService = moduleFixture.get<UtilsService>(UtilsService);
     await app.init();
+    httpServer = app.getHttpServer();
   });
 
   it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+    return request(httpServer).get('/health').expect(200);
   });
 
-  it('should create and return a new schema', () => {
-    return;
+  it('should create and return a new schema', async () => {
+    const schemaPayload = generateCredentialSchemaTestBody();
+    const did = await utilsService.generateDID(generateTestDIDBody());
+    schemaPayload.schema.author = did.id;
+    await request(app.getHttpServer())
+      .post('/credential-schema')
+      .send(schemaPayload)
+      .expect(201);
   });
 
-  it('should create a new schema and publish it', () => {
-    return;
+  it('should create a new schema and publish it', async () => {
+    const schemaPayload = generateCredentialSchemaTestBody();
+    const did = await utilsService.generateDID(generateTestDIDBody());
+    schemaPayload.schema.author = did.id;
+    const { body: schema } = await request(httpServer)
+      .post('/credential-schema')
+      .send(schemaPayload)
+      .expect(201);
+    const { body: res } = await request(httpServer)
+      .put(`/credential-schema/${schema.schema.id}/${schema.schema.version}`)
+      .send({ status: 'PUBLISHED' })
+      .expect(200);
+    expect(res.schema.status).toBe('PUBLISHED');
   });
 
   it('should create a new schema and then update its metadata', () => {
     return;
   });
 
-  it('should createa a schema and then update its core fields', () => {
+  it('should create a schema and then update its core fields', () => {
     return;
   });
 
