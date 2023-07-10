@@ -384,8 +384,11 @@ export class SchemaService {
           case 'REVOKED':
             newStatus = SchemaStatus.REVOKED;
             break;
+          case 'DRAFT':
+            newStatus = SchemaStatus.REVOKED;
+            break;
           default:
-            newStatus = SchemaStatus.DRAFT;
+            // newStatus = SchemaStatus.DRAFT;
             Logger.warn('Unknown schema status, setting to draft');
             throw new BadRequestException(
               'Invalid status value. Supported values are: 1. DRAFT 2. DEPRECATED 3. REVOKED 4. PUBLISHED',
