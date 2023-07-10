@@ -247,18 +247,4 @@ describe('CredentialsService', () => {
       );
     }
   });
-
-  // it('should show a stremable file', async () => {
-  //   const newCred = await service.issueCredential(sampleCredReqPayload);
-  //   const renderReq = {
-  //     ...newCred,
-  //     template:
-  //       '<html lang=\'en\'>   <head>     <meta charset=\'UTF-8\' />     <meta http-equiv=\'X-UA-Compatible\' content=\'IE=edge\' />     <meta name=\'viewport\' content=\'width=device-width, initial-scale=1.0\' />     <title>Certificate</title>   </head>   <body>   <div style="width:800px; height:600px; padding:20px; text-align:center; border: 10px solid #787878"> <div style="width:750px; height:550px; padding:20px; text-align:center; border: 5px solid #787878"> <span style="font-size:50px; font-weight:bold">Certificate of Completion</span> <br><br> <span style="font-size:25px"><i>This is to certify that</i></span> <br><br> <span style="font-size:30px"><b>{{name}}</b></span><br/><br/> <span style="font-size:25px"><i>has completed the course</i></span> <br/><br/> <span style="font-size:30px">{{programme}}</span> <br/><br/> <span style="font-size:20px">with score of <b>{{grade}}%</b></span> <br/><br/><br/><br/> <span style="font-size:25px"></span><br> </div> </div>  </body>    </html>',
-  //     output: 'PDF',
-  //     schema: {},
-  //   };
-  //   expect(service.renderCredential(renderReq as any)).toBeInstanceOf(
-  //     StreamableFile,
-  //   );
-  // });
 });
