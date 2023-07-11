@@ -66,6 +66,8 @@ services:
       rcw-test:
       default:
 
+# rcw-test is an external network created for other upstream services dependent on identity service
+# to be able to access it
 networks:
   rcw-test:
     external: true
