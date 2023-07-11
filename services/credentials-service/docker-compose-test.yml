@@ -17,11 +17,19 @@ services:
       dockerfile: Dockerfile.test
     depends_on:
       db-test:
-        conditions: service_healthy
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:postgres@db-test:5432/postgres
       IDENTITY_BASE_URL: "http://identity-service:3332"
-      SCHEMA_BASE_URL: ""
+      SCHEMA_BASE_URL: "http://credential-schema:3333"
       ENABLE_AUTH: "false"
       JWKS_URI: ""
       SIGNING_ALGORITHM: "RS256"
+    networks:
+      rcw-test:
+      default:
+
+networks:
+  rcw-test:
+    external: true
+  
