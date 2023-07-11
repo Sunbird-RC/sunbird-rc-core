@@ -11,7 +11,7 @@ import Ajv2019 from 'ajv/dist/2019';
 @Injectable()
 export class SchemaUtilsSerivce {
   constructor(private readonly httpService: HttpService) {}
-
+  private logger = new Logger(SchemaUtilsSerivce.name);
   async getCredentialSchema(schemaId: string, version: string) {
     let credSchema: AxiosResponse;
     try {
@@ -24,12 +24,15 @@ export class SchemaUtilsSerivce {
       );
     }
     if (credSchema.status === 404) {
-      Logger.error(`Schema with id ${schemaId} not found`, credSchema.data);
+      this.logger.error(
+        `Schema with id ${schemaId} not found`,
+        credSchema.data
+      );
       throw new BadRequestException(
         `Credential schema with id ${schemaId} not found`
       );
     } else if (credSchema.status !== 200) {
-      Logger.error('Error fetching schema', credSchema.data);
+      this.logger.error('Error fetching schema', credSchema.data);
       throw new InternalServerErrorException(
         `Error fetching credential schema`
       );
@@ -45,7 +48,7 @@ export class SchemaUtilsSerivce {
       );
       return template?.data;
     } catch (err) {
-      Logger.error('Error fetching template', err);
+      this.logger.error('Error fetching template', err);
       if (err.response.status === 404) {
         throw new BadRequestException(
           `Template with id ${templateId} not found`

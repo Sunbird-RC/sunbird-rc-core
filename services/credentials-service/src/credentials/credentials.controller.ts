@@ -35,12 +35,14 @@ export class CredentialsController {
   @ApiResponse({
     type: GetCredentialsByTagsResponseDTO,
     status: 200,
-    description: 'Successful operation'
+    description: 'Successful operation',
   })
   @Get()
-  getCredentials(@Query('tags') tags: string, @Query('page') page: string, @Query('limit') limit: string) {
-    console.log('page: ', page);
-    console.log('limit: ', limit);
+  getCredentials(
+    @Query('tags') tags: string,
+    @Query('page') page: string,
+    @Query('limit') limit: string
+  ) {
     return this.credentialsService.getCredentials(
       tags.split(','),
       isNaN(parseInt(page)) ? 1 : parseInt(page),
@@ -49,7 +51,11 @@ export class CredentialsController {
   }
 
   @Post('/search')
-  getCredentialsBySubject(@Body() getCreds: GetCredentialsBySubjectOrIssuer, @Query('page') page: string, @Query('limit') limit: string) {
+  getCredentialsBySubject(
+    @Body() getCreds: GetCredentialsBySubjectOrIssuer,
+    @Query('page') page: string,
+    @Query('limit') limit: string
+  ) {
     return this.credentialsService.getCredentialsBySubjectOrIssuer(
       getCreds,
       isNaN(parseInt(page)) ? 1 : parseInt(page),
@@ -61,14 +67,19 @@ export class CredentialsController {
   @ApiResponse({
     type: GetCredentialByIdResponseDTO,
     description: 'Returns a credential with the given id',
-  }
-  )
+  })
   getCredentialById(@Param('id') id: string, @Req() req: Request) {
     const accept: string = req.headers['accept'];
     const templateId: string = req.headers['templateid'] as string;
 
-    if (!templateId && accept.trim() !== 'application/json') throw new BadRequestException('Template id is required');
-    else if (!templateId && accept.trim() === 'application/json') return this.credentialsService.getCredentialById(id, templateId, RENDER_OUTPUT.JSON);
+    if (!templateId && accept.trim() !== 'application/json')
+      throw new BadRequestException('Template id is required');
+    else if (!templateId && accept.trim() === 'application/json')
+      return this.credentialsService.getCredentialById(
+        id,
+        templateId,
+        RENDER_OUTPUT.JSON
+      );
 
     let output = RENDER_OUTPUT.JSON;
     switch (accept.trim()) {

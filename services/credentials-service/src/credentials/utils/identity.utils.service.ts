@@ -13,6 +13,8 @@ import {
 export class IdentityUtilsService {
   constructor(private readonly httpService: HttpService) {}
 
+  private logger = new Logger(IdentityUtilsService.name);
+
   async signVC(
     credentialPlayload: JwtCredentialPayload,
     did: IssuerType
@@ -28,7 +30,7 @@ export class IdentityUtilsService {
         );
       return signedVCResponse.data.signed as string;
     } catch (err) {
-      Logger.error('Error signing VC: ', err);
+      this.logger.error('Error signing VC: ', err);
       throw new InternalServerErrorException('Error signing VC');
     }
   }
@@ -42,7 +44,7 @@ export class IdentityUtilsService {
 
       return dIDResponse.data as DIDDocument;
     } catch (err) {
-      Logger.error('Error resolving DID: ', err);
+      this.logger.error('Error resolving DID: ', err);
       throw new InternalServerErrorException('Error resolving DID');
     }
   }
@@ -64,14 +66,14 @@ export class IdentityUtilsService {
                   type: 'CredentialDIDService',
                 },
               ],
-              method
+              method,
             },
           ],
         }
       );
       return didGenRes.data as ReadonlyArray<DIDDocument>;
     } catch (err) {
-      Logger.error('Error generating DID: ', err);
+      this.logger.error('Error generating DID: ', err);
       throw new InternalServerErrorException('Error generating DID');
     }
   }

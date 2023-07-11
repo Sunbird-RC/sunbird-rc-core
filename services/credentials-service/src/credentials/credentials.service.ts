@@ -34,6 +34,8 @@ export class CredentialsService {
     private readonly schemaUtilsService: SchemaUtilsSerivce
   ) {}
 
+  private logger = new Logger(CredentialsService.name);
+
   async getCredentials(
     tags: ReadonlyArray<string>,
     page = 1,
@@ -52,8 +54,10 @@ export class CredentialsService {
       },
     });
 
-    if (!credentials)
+    if (!credentials) {
+      this.logger.error('Error fetching credentials');
       throw new InternalServerErrorException('Error fetching credentials');
+    }
     return credentials.map((cred: VerifiableCredentials) => {
       const res = cred.signed;
       delete res['options'];
@@ -73,9 +77,10 @@ export class CredentialsService {
         signed: true,
       },
     });
-    if (!credential)
+    if (!credential) {
+      this.logger.error('Credential not found');
       throw new NotFoundException('Credential for the given id not found');
-
+    }
     // formatting the response as per the spec
     const res = credential.signed;
     delete res['options'];
@@ -107,6 +112,7 @@ export class CredentialsService {
       case RENDER_OUTPUT.JSON:
         return res as W3CCredential;
       default:
+        this.logger.error('Output type not supported');
         throw new BadRequestException('Output type not supported');
     }
   }
@@ -124,12 +130,13 @@ export class CredentialsService {
         },
       })) as { signed: Verifiable<W3CCredential>; status: VCStatus };
 
-    Logger.log('Fetched credntial from db to verify');
+    this.logger.debug('Fetched credntial from db to verify');
 
     // invalid request in case credential is not found
-    if (!credToVerify)
+    if (!credToVerify) {
+      this.logger.error('Credential not found');
       throw new NotFoundException({ errors: ['Credential not found'] });
-
+    }
     try {
       // calling identity service to verify the issuer DID
       const verificationMethod = credToVerify.issuer;
@@ -142,7 +149,7 @@ export class CredentialsService {
         jws: credToVerify?.proof?.proofValue,
         publicJwk: did.verificationMethod[0].publicKeyJwk,
       });
-      Logger.log('Verified JWS');
+      this.logger.debug('Verified JWS');
       return {
         status: status,
         checks: [
@@ -158,7 +165,7 @@ export class CredentialsService {
         ],
       };
     } catch (e) {
-      Logger.error('Error in verifying credentials: ', e);
+      this.logger.error('Error in verifying credentials: ', e);
       return {
         errors: [e],
       };
@@ -166,7 +173,7 @@ export class CredentialsService {
   }
 
   async issueCredential(issueRequest: IssueCredentialDTO) {
-    Logger.log(`Received issue credential request`);
+    this.logger.debug(`Received issue credential request`);
     const credInReq = issueRequest.credential;
     // check for issuance date
     if (!credInReq.issuanceDate)
@@ -177,25 +184,28 @@ export class CredentialsService {
       issueRequest.credentialSchemaId,
       issueRequest.credentialSchemaVersion
     );
-    Logger.log('fetched schema');
+    this.logger.debug('fetched schema');
     const { valid, errors } =
       await this.schemaUtilsService.verifyCredentialSubject(
         credInReq,
         schema.schema
       );
-    if (!valid) throw new BadRequestException(errors);
-    Logger.log('validated schema');
+    if (!valid) {
+      this.logger.error('Invalid credential schema', errors);
+      throw new BadRequestException(errors);
+    }
+    this.logger.debug('validated schema');
     // generate the DID for credential
     const credDID: ReadonlyArray<DIDDocument> =
       await this.identityUtilsService.generateDID(
         ['verifiable credential'],
         issueRequest.method
       );
-    Logger.log('generated DID');
+    this.logger.debug('generated DID');
     try {
       credInReq.id = credDID[0].id;
     } catch (err) {
-      Logger.error('Invalid response from generate DID');
+      this.logger.error('Invalid response from generate DID', err);
       throw new InternalServerErrorException('Problem creating DID');
     }
     // sign the credential
@@ -211,11 +221,11 @@ export class CredentialsService {
         proofPurpose: 'assertionMethod',
       };
     } catch (err) {
-      Logger.error('Error signing the credential');
+      this.logger.error('Error signing the credential');
       throw new InternalServerErrorException('Problem signing the credential');
     }
 
-    Logger.log('signed credential');
+    this.logger.debug('signed credential');
 
     // TODO: add created by and updated by
     const newCred = await this.prisma.verifiableCredentials.create({
@@ -234,9 +244,11 @@ export class CredentialsService {
       },
     });
 
-    if (!newCred)
+    if (!newCred) {
+      this.logger.error('Problem saving credential to db');
       throw new InternalServerErrorException('Problem saving credential to db');
-    Logger.log('saved credential to db');
+    }
+    this.logger.debug('saved credential to db');
 
     const res = newCred.signed;
     delete res['options'];
@@ -261,7 +273,7 @@ export class CredentialsService {
       });
       return credential;
     } catch (err) {
-      Logger.error('Error revoking/soft deleting the credential: ', err);
+      this.logger.error('Error revoking/soft deleting the credential: ', err);
       throw new InternalServerErrorException('Error deleting the credential.');
     }
   }
@@ -295,8 +307,10 @@ export class CredentialsService {
       },
     });
 
-    if (!credentials.length)
+    if (!credentials.length) {
+      this.logger.error('Error fetching credentials');
       throw new InternalServerErrorException('Error fetching credentials');
+    }
 
     return credentials.map((cred) => {
       const signed: W3CCredential = cred.signed as W3CCredential;
@@ -316,7 +330,10 @@ export class CredentialsService {
         credential_schema: true,
       },
     });
-    if (!schema) throw new NotFoundException('Credential not found');
+    if (!schema) {
+      this.logger.error('Credential not found');
+      throw new NotFoundException('Credential not found');
+    }
     return schema;
   }
 }
