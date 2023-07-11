@@ -17,7 +17,8 @@ services:
     image: cred
     build: .
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - '3000:3000'
     environment:
@@ -29,7 +30,7 @@ services:
       SIGNING_ALGORITHM: "RS256"
     healthcheck:
       test:
-        [ "CMD-SHELL", "curl -f http://localhost:3333/health || exit 1" ]
+        [ "CMD-SHELL", "curl -f http://localhost:3000/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5

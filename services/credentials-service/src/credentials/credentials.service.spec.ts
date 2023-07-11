@@ -1,4 +1,4 @@
-import { HttpModule } from '@nestjs/axios';
+import { HttpModule, HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CredentialsService } from './credentials.service';
 import Ajv2019 from 'ajv/dist/2019';
@@ -7,6 +7,14 @@ import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
 import { PrismaClient } from '@prisma/client';
+import {
+  generateCredentialRequestPayload,
+  generateCredentialSchemaTestBody,
+  generateTestDIDBody,
+  getCredentialByIdSchema,
+  issueCredentialReturnTypeSchema,
+} from './credentials.fixtures';
+import { schemaHasRules } from 'ajv/dist/compile/util';
 
 // setup ajv
 const ajv = new Ajv2019({ strictTuples: false });
@@ -16,155 +24,16 @@ ajv.addFormat('custom-date-time', function (dateTimeString) {
 
 describe('CredentialsService', () => {
   let service: CredentialsService;
-  const sampleCredReqPayload: any = {
-    credential: {
-      '@context': [
-        'https://www.w3.org/2018/credentials/v1',
-        'https://www.w3.org/2018/credentials/examples/v1',
-      ],
-      type: ['VerifiableCredential', 'UniversityDegreeCredential'],
-      issuer: 'did:ulp:705a7f13-da2e-4305-a1ca-ac8e750e9ada',
-      issuanceDate: '2023-02-06T11:56:27.259Z',
-      expirationDate: '2023-02-08T11:56:27.259Z',
-      credentialSubject: {
-        id: 'did:ulp:b4a191af-d86e-453c-9d0e-dd4771067235',
-        grade: '9.23',
-        programme: 'B.Tech',
-        certifyingInstitute: 'IIIT Sonepat',
-        evaluatingInstitute: 'NIT Kurukshetra',
-      },
-    },
-    credentialSchemaId: 'did:ulpschema:c9cc0f03-4f94-4f44-9bcd-b24a86596fa2',
-    tags: ['tag1', 'tag2', 'tag3'],
-  };
-
-  const issueCredentialReturnTypeSchema = {
-    type: 'object',
-    properties: {
-      credential: {
-        type: 'object',
-        properties: {
-          '@context': {
-            type: 'array',
-            items: [{ type: 'string' }],
-          },
-          id: {
-            type: 'string',
-          },
-          type: {
-            type: 'array',
-            items: [{ type: 'string' }],
-          },
-          proof: {
-            type: 'object',
-            properties: {
-              type: { type: 'string' },
-              created: { type: 'string' },
-              proofValue: { type: 'string' },
-              proofPurpose: { type: 'string' },
-              verificationMethod: { type: 'string' },
-            },
-          },
-          issuer: { type: 'string' },
-          issuanceDate: { type: 'string' },
-          expirationDate: { type: 'string' },
-          credentialSubject: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              grade: { type: 'string' },
-              programme: { type: 'string' },
-              certifyingInstitute: { type: 'string' },
-              evaluatingInstitute: { type: 'string' },
-            },
-            required: [
-              'id',
-              'grade',
-              'programme',
-              'certifyingInstitute',
-              'evaluatingInstitute',
-            ],
-          },
-        },
-        required: [
-          '@context',
-          'id',
-          'issuer',
-          'expirationDate',
-          'credentialSubject',
-          'issuanceDate',
-          'type',
-          'proof',
-        ],
-      },
-      credentialSchemaId: { type: 'string' },
-      createdAt: { type: 'object', format: 'custom-date-time' },
-      updatedAt: { type: 'object', format: 'custom-date-time' },
-      createdBy: { type: 'string' },
-      updatedBy: { type: 'string' },
-      tags: {
-        type: 'array',
-        items: [{ type: 'string' }],
-      },
-    },
-    required: [
-      'credential',
-      'credentialSchemaId',
-      'tags',
-      'createdAt',
-      'updatedAt',
-      'createdBy',
-      'updatedBy',
-    ],
-    additionalProperties: false,
-  };
-
-  const getCredentialByIdSchema = {
-    type: 'object',
-    properties: {
-      '@context': {
-        type: 'array',
-        items: [{ type: 'string' }],
-      },
-      id: { type: 'string' },
-      type: {
-        type: 'array',
-        items: [{ type: 'string' }],
-      },
-      issuer: { type: 'string' },
-      issuanceDate: { type: 'string' },
-      expirationDate: { type: 'string' },
-      credentialSubject: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          grade: { type: 'string' },
-          programme: { type: 'string' },
-          certifyingInstitute: { type: 'string' },
-          evaluatingInstitute: { type: 'string' },
-        },
-        required: [
-          'id',
-          'grade',
-          'programme',
-          'certifyingInstitute',
-          'evaluatingInstitute',
-        ],
-      },
-    },
-    required: [
-      '@context',
-      'id',
-      'issuer',
-      'expirationDate',
-      'credentialSubject',
-      'issuanceDate',
-      'type',
-    ],
-  };
+  let httpSerivce: HttpService;
+  let identityUtilsService: IdentityUtilsService;
 
   const validate = ajv.compile(issueCredentialReturnTypeSchema);
   const getCredReqValidate = ajv.compile(getCredentialByIdSchema);
+
+  let issuerDID;
+  let subjectDID;
+  let credentialSchemaID;
+  let sampleCredReqPayload;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -179,6 +48,33 @@ describe('CredentialsService', () => {
     }).compile();
 
     service = module.get<CredentialsService>(CredentialsService);
+    httpSerivce = module.get<HttpService>(HttpService);
+    identityUtilsService =
+      module.get<IdentityUtilsService>(IdentityUtilsService);
+
+    issuerDID = await identityUtilsService.generateDID([
+      'VerifiableCredentialTESTINGIssuer',
+    ]);
+    issuerDID = issuerDID[0].id;
+
+    subjectDID = await identityUtilsService.generateDID([
+      'VerifiableCredentialTESTINGIssuer',
+    ]);
+    subjectDID = subjectDID[0].id;
+
+    const schemaPayload = generateCredentialSchemaTestBody();
+    schemaPayload.schema.author = issuerDID;
+    const schema = await httpSerivce.axiosRef.post(
+      `${process.env.SCHEMA_BASE_URL}/credential-schema`,
+      schemaPayload
+    );
+    credentialSchemaID = schema.data.schema.id;
+    sampleCredReqPayload = generateCredentialRequestPayload(
+      issuerDID,
+      subjectDID,
+      credentialSchemaID,
+      schema.data.schema.version
+    );
   });
 
   it('service should be defined', () => {
@@ -188,7 +84,7 @@ describe('CredentialsService', () => {
   it('should issue a credential', async () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
     VCValidator.parse(newCred.credential);
-    expect(validate(newCred)).toBe(true); // toHaveProperty('credential');
+    expect(validate(newCred)).toBe(true);
   });
 
   it('should get a credential', async () => {
