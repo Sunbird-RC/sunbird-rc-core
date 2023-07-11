@@ -126,7 +126,7 @@ describe('SchemaService', () => {
     expect(updatedSchema).toBeDefined();
     expect(updatedSchema.tags).toEqual(['test1', 'test2']);
     expect(updatedSchema.schema.version).toBe('1.1.0');
-    expect(updatedSchema.status).toBe('DRAFT');
+    expect(updatedSchema.status).toBe('PUBLISHED');
   });
   it('should try updating the schema fields of a DRAFT Schema', async () => {
     const didBody = generateTestDIDBody();
@@ -174,7 +174,7 @@ describe('SchemaService', () => {
 
     expect(updatedSchema).toBeDefined();
     expect(updatedSchema.schema.version).toBe('2.0.0');
-    expect(updatedSchema.status).toBe('DRAFT');
+    expect(updatedSchema.status).toBe('PUBLISHED');
     expect(updatedSchema.schema.author).toBe(pschema.schema.id);
   });
 });
