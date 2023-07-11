@@ -175,17 +175,22 @@ export class CredentialsService {
     // get the credential schema
     const schema = await this.schemaUtilsService.getCredentialSchema(
       issueRequest.credentialSchemaId,
-      '1.0.0'
+      issueRequest.credentialSchemaVersion
     );
-    console.log(schema);
     Logger.log('fetched schema');
     const { valid, errors } =
-      await this.schemaUtilsService.verifyCredentialSubject(credInReq, schema.schema);
+      await this.schemaUtilsService.verifyCredentialSubject(
+        credInReq,
+        schema.schema
+      );
     if (!valid) throw new BadRequestException(errors);
     Logger.log('validated schema');
     // generate the DID for credential
     const credDID: ReadonlyArray<DIDDocument> =
-      await this.identityUtilsService.generateDID(['verifiable credential'], issueRequest.method);
+      await this.identityUtilsService.generateDID(
+        ['verifiable credential'],
+        issueRequest.method
+      );
     Logger.log('generated DID');
     try {
       credInReq.id = credDID[0].id;
@@ -272,11 +277,11 @@ export class CredentialsService {
         issuer: getCreds.issuer?.id,
         AND: filteringSubject
           ? Object.keys(filteringSubject).map((key: string) => ({
-            subject: {
-              path: [key.toString()],
-              equals: filteringSubject[key],
-            },
-          }))
+              subject: {
+                path: [key.toString()],
+                equals: filteringSubject[key],
+              },
+            }))
           : [],
       },
       select: {

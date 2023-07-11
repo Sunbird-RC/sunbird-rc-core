@@ -1,5 +1,10 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces';
 import Ajv2019 from 'ajv/dist/2019';
 
@@ -18,17 +23,17 @@ export class SchemaUtilsSerivce {
         `Error fetching credential schema`
       );
     }
-    console.log('credSchema: ', credSchema);
     if (credSchema.status === 404) {
       Logger.error(`Schema with id ${schemaId} not found`, credSchema.data);
-      throw new BadRequestException(`Credential schema with id ${schemaId} not found`);
+      throw new BadRequestException(
+        `Credential schema with id ${schemaId} not found`
+      );
     } else if (credSchema.status !== 200) {
       Logger.error('Error fetching schema', credSchema.data);
       throw new InternalServerErrorException(
         `Error fetching credential schema`
       );
     }
-
 
     return credSchema?.data?.schema;
   }
@@ -42,7 +47,9 @@ export class SchemaUtilsSerivce {
     } catch (err) {
       Logger.error('Error fetching template', err);
       if (err.response.status === 404) {
-        throw new BadRequestException(`Template with id ${templateId} not found`);
+        throw new BadRequestException(
+          `Template with id ${templateId} not found`
+        );
       }
       throw new InternalServerErrorException(
         `Error fetching template with id ${templateId}`
