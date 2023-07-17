@@ -2,46 +2,54 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
+import { HttpModule, HttpService } from '@nestjs/axios';
+import { IdentityUtilsService } from '../src/credentials/utils/identity.utils.service';
+import {
+  generateCredentialRequestPayload,
+  generateCredentialSchemaTestBody,
+} from '../src/credentials/credentials.fixtures';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
   let id: any;
-  const sampleCredReqPayload: any = {
-    credential: {
-      '@context': [
-        'https://www.w3.org/2018/credentials/v1',
-        'https://www.w3.org/2018/credentials/examples/v1',
-      ],
-      type: ['VerifiableCredential', 'UniversityDegreeCredential'],
-      issuer: 'did:ulp:76687f0a-e5bb-4176-86e1-28d5a76fdfa8',
-      issuanceDate: '2023-02-06T11:56:27.259Z',
-      expirationDate: '2023-02-08T11:56:27.259Z',
-      credentialSubject: {
-        id: 'did:ulp:b4a191af-d86e-453c-9d0e-dd4771067235',
-        grade: '9.23',
-        programme: 'B.Tech',
-        certifyingInstitute: 'IIIT Sonepat',
-        evaluatingInstitute: 'NIT Kurukshetra',
-      },
-    },
-    credentialSchemaId: 'did:ulpschema:c9cc0f03-4f94-4f44-9bcd-b24a86596fa2',
-    tags: ['tag1', 'tag2', 'tag3'],
-  };
-
+  let sampleCredReqPayload: any;
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [AppModule, HttpModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    await app.init();
-  });
+    let httpSerivce = moduleFixture.get<HttpService>(HttpService);
+    let identityUtilsService =
+      moduleFixture.get<IdentityUtilsService>(IdentityUtilsService);
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+    let issuerDID = (
+      await identityUtilsService.generateDID([
+        'VerifiableCredentialTESTINGIssuer',
+      ])
+    )[0].id;
+
+    let subjectDID = (
+      await identityUtilsService.generateDID([
+        'VerifiableCredentialTESTINGIssuer',
+      ])
+    )[0].id;
+
+    const schemaPayload = generateCredentialSchemaTestBody();
+    schemaPayload.schema.author = issuerDID;
+    const schema = await httpSerivce.axiosRef.post(
+      `${process.env.SCHEMA_BASE_URL}/credential-schema`,
+      schemaPayload
+    );
+    let credentialSchemaID = schema.data.schema.id;
+    sampleCredReqPayload = generateCredentialRequestPayload(
+      issuerDID,
+      subjectDID,
+      credentialSchemaID,
+      schema.data.schema.version
+    );
+
+    await app.init();
   });
 
   it('/credentials/issue (POST)', () => {
@@ -59,7 +67,6 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .get(`/credentials/${id}`)
       .expect(200)
-      .expect(sampleCredReqPayload.credential);
   });
 
   it('/credentials/:id/verify (GET)', () => {

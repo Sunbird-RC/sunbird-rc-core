@@ -15,7 +15,7 @@
     "start:prod": "node dist/main",
     "start:migrate:prod": "npx prisma migrate deploy && node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test:migrate": "npx prisma migrate deploy && jest --coverage",
+    "test:migrate": "npx prisma migrate deploy && jest --coverage && jest --config ./test/jest-e2e.json",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

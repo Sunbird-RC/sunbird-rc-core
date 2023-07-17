@@ -1,4 +1,3 @@
-import { HttpService } from '@nestjs/axios';
 import {
   BadRequestException,
   Injectable,
@@ -319,21 +318,5 @@ export class CredentialsService {
       delete signed['options'];
       return { id: cred.id, ...signed };
     });
-  }
-
-  async getSchemaByCredId(credId: string) {
-    const schema = await this.prisma.verifiableCredentials.findUnique({
-      where: {
-        id: credId,
-      },
-      select: {
-        credential_schema: true,
-      },
-    });
-    if (!schema) {
-      this.logger.error('Credential not found');
-      throw new NotFoundException('Credential not found');
-    }
-    return schema;
   }
 }

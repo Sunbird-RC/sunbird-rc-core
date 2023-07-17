@@ -69,12 +69,12 @@ export class CredentialsController {
     description: 'Returns a credential with the given id',
   })
   getCredentialById(@Param('id') id: string, @Req() req: Request) {
-    const accept: string = req.headers['accept'];
+    const accept: string = req.headers['accept']?.trim() || 'application/json';
     const templateId: string = req.headers['templateid'] as string;
 
-    if (!templateId && accept.trim() !== 'application/json')
+    if (!templateId && accept !== 'application/json')
       throw new BadRequestException('Template id is required');
-    else if (!templateId && accept.trim() === 'application/json')
+    else if (!templateId && accept === 'application/json')
       return this.credentialsService.getCredentialById(
         id,
         templateId,
@@ -82,7 +82,7 @@ export class CredentialsController {
       );
 
     let output = RENDER_OUTPUT.JSON;
-    switch (accept.trim()) {
+    switch (accept) {
       case 'application/json':
         output = RENDER_OUTPUT.JSON;
         break;
@@ -116,8 +116,4 @@ export class CredentialsController {
     return this.credentialsService.verifyCredential(credId);
   }
 
-  @Get('schema/:id')
-  async getSchemaByCredId(@Param('id') id: string) {
-    return this.credentialsService.getSchemaByCredId(id);
-  }
 }

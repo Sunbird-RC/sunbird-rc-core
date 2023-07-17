@@ -10,11 +10,11 @@ import { PrismaClient } from '@prisma/client';
 import {
   generateCredentialRequestPayload,
   generateCredentialSchemaTestBody,
-  generateTestDIDBody,
   getCredentialByIdSchema,
   issueCredentialReturnTypeSchema,
+  generateRenderingTemplatePayload,
 } from './credentials.fixtures';
-import { schemaHasRules } from 'ajv/dist/compile/util';
+import { RENDER_OUTPUT } from './enums/renderOutput.enum';
 
 // setup ajv
 const ajv = new Ajv2019({ strictTuples: false });
@@ -87,9 +87,43 @@ describe('CredentialsService', () => {
     expect(validate(newCred)).toBe(true);
   });
 
-  it('should get a credential', async () => {
+  it('should get a credential in JSON', async () => {
     const newCred: any = await service.issueCredential(sampleCredReqPayload);
     const cred = await service.getCredentialById(newCred.credential?.id);
+    UnsignedVCValidator.parse(cred);
+    expect(getCredReqValidate(cred)).toBe(true);
+  });
+
+  it('should get a credential in QR', async () => {
+    const newCred: any = await service.issueCredential(sampleCredReqPayload);
+    const dataURL = await service.getCredentialById(newCred.credential?.id, null, RENDER_OUTPUT.QR);
+    expect(dataURL).toBeDefined(); // Assert that the dataURL is defined
+    expect(dataURL).toContain('data:image/png;base64,');
+  });
+
+
+  it('should get a credential in HTML', async () => {
+    const newCred: any = await service.issueCredential(sampleCredReqPayload);
+    const templatePayload = generateRenderingTemplatePayload(newCred.credentialSchemaId, "1.0.0")
+    const template = await httpSerivce.axiosRef.post(`${process.env.SCHEMA_BASE_URL}/template`, templatePayload);
+    const cred = await service.getCredentialById(newCred.credential?.id, template.data.template.templateId, RENDER_OUTPUT.HTML);
+    expect(cred).toContain('</html>')
+    expect(cred).toContain('IIIT Sonepat, NIT Kurukshetra')
+    expect(cred).toBeDefined()
+  });
+
+  it('should get a credential in PDF', async () => {
+    const newCred: any = await service.issueCredential(sampleCredReqPayload);
+    const templatePayload = generateRenderingTemplatePayload(newCred.credentialSchemaId, "1.0.0")
+    const template = await httpSerivce.axiosRef.post(`${process.env.SCHEMA_BASE_URL}/template`, templatePayload);
+    const cred = await service.getCredentialById(newCred.credential?.id, template.data.template.templateId, RENDER_OUTPUT.PDF);
+    expect(cred).toBeDefined()
+  });
+
+
+  it('should get a credential in STRING', async () => {
+    const newCred: any = await service.issueCredential(sampleCredReqPayload);
+    const cred = await service.getCredentialById(newCred.credential?.id, null, RENDER_OUTPUT.STRING);
     UnsignedVCValidator.parse(cred);
     expect(getCredReqValidate(cred)).toBe(true);
   });
@@ -100,6 +134,13 @@ describe('CredentialsService', () => {
 
   it('should throw because credential not present to be verified', async () => {
     await expect(service.verifyCredential('did:ulp:123')).rejects.toThrow();
+  });
+
+  it('should verify an issued credential', async () => {
+    const newCred = await service.issueCredential(sampleCredReqPayload);
+    const res = {checks: [{active: "OK", expired: "NOK", proof: "OK", revoked: "OK"}], status: "ISSUED"}
+    const verifyRes = await service.verifyCredential(newCred.credential['id']);
+    expect(verifyRes).toEqual(res);
   });
 
   it('should say revoked', async () => {
@@ -122,7 +163,6 @@ describe('CredentialsService', () => {
   });
 
   it('should return array of creds based on issuer', async () => {
-    try {
       const newCred = await service.issueCredential(sampleCredReqPayload);
       expect(
         await service.getCredentialsBySubjectOrIssuer({
@@ -131,10 +171,15 @@ describe('CredentialsService', () => {
           },
         })
       ).toBeInstanceOf(Array);
-    } catch (e) {
-      expect(e.message).toBe(
-        'No credentials found for the given subject or issuer'
-      );
-    }
   });
+
+
+  it('should return array of creds based on issuer', async () => {
+    const newCred = await service.issueCredential(sampleCredReqPayload);
+    expect(
+      await service.getCredentials(['tag1'])
+    ).toBeInstanceOf(Array);
+      const res = await service.getCredentials(['tag1'], 2, 1000)
+      expect(res.length).toEqual(0)
+});
 });
