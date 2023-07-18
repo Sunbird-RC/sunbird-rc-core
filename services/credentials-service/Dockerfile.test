@@ -5,7 +5,7 @@ RUN yarn
 
 FROM node:16 as build
 RUN apt-get update \
-    && apt-get install -y wkhtmltopdf
+    && apt-get install -y wkhtmltopdf=0.12.5-1
 WORKDIR /app
 COPY prisma ./prisma/
 COPY --from=install /app/node_modules ./node_modules

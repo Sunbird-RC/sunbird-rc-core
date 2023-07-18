@@ -15,7 +15,8 @@ RUN yarn build
 
 FROM node:16
 RUN apt-get update \
-    && apt-get install -y wkhtmltopdf
+    && apt-get install -y wkhtmltopdf=0.12.5-1
+
 WORKDIR /app
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
