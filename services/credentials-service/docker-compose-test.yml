@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  db-test:
+    image: postgres:12
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  credentials-service-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      db-test:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db-test:5432/postgres
+      IDENTITY_BASE_URL: "http://identity-service:3332"
+      SCHEMA_BASE_URL: "http://credential-schema:3333"
+      ENABLE_AUTH: "false"
+      JWKS_URI: ""
+      SIGNING_ALGORITHM: "RS256"
+    networks:
+      rcw-test:
+      default:
+
+networks:
+  rcw-test:
+    external: true
+  

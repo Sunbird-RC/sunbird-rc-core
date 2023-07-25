@@ -6,8 +6,8 @@ IMAGES := dockerhub/sunbird-rc-core dockerhub/sunbird-rc-nginx dockerhub/sunbird
 			dockerhub/sunbird-rc-public-key-service dockerhub/sunbird-rc-keycloak dockerhub/sunbird-rc-certificate-api \
 			dockerhub/sunbird-rc-certificate-signer dockerhub/sunbird-rc-notification-service dockerhub/sunbird-rc-claim-ms \
 			dockerhub/sunbird-rc-digilocker-certificate-api dockerhub/sunbird-rc-bulk-issuance dockerhub/sunbird-rc-metrics \
-			dockerhub/sunbird-rc-credential-schema dockerhub/sunbird-rc-identity-service
-
+      		dockerhub/sunbird-rc-identity-service dockerhub/sunbird-rc-credential-schema dockerhub/sunbird-rc-credentials-service
+      
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	rm -rf java/claim/target/*.jar
@@ -23,8 +23,9 @@ build: java/registry/target/registry.jar
 	make -C services/digilocker-certificate-api docker
 	make -C services/bulk_issuance docker
 	docker build -t dockerhub/sunbird-rc-nginx .
+	make -C services/identity-service/ docker
 	make -C services/credential-schema docker	
-	make -C services/identity-service docker
+	make -C services/credentials-service/ docker
 
 
 java/registry/target/registry.jar: $(SOURCES)
@@ -71,13 +72,15 @@ test: build
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
-	make -C services/credential-schema test
 	make -C services/bulk_issuance test
 	make -C services/identity-service test
+	make -C services/credential-schema test
+	make -C services/credentials-service test
 	
 clean:
 	@rm -rf target || true
 	@rm java/registry/target/registry.jar || true
+  
 release: test
 	for image in $(IMAGES); \
     	do \

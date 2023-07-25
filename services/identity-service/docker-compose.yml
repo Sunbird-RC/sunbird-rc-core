@@ -13,8 +13,6 @@ services:
     cap_add:
       - IPC_LOCK
     command: vault server -config=/vault/config/vault.json
-    ports:
-      - 8200:8200
     healthcheck:
       test: ["CMD-SHELL", "wget --spider http://127.0.0.1:8200/v1/sys/health || exit 1"]
       interval: 10s
@@ -50,7 +48,7 @@ services:
       VAULT_ADDR: "http://vault:8200"
       # This will be replaced automatically on initialisation 
       # make compose-init will call setup_vault.sh
-      VAULT_TOKEN: hvs.ZBCv64FQYZibBmfa6cgcc8ls
+      VAULT_TOKEN: ""
       VAULT_BASE_URL: "http://vault:8200/v1"
       VAULT_ROOT_PATH: "http://vault:8200/v1/kv"
       VAULT_TIMEOUT: 5000
