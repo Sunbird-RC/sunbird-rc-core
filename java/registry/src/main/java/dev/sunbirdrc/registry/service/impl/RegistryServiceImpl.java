@@ -17,8 +17,8 @@ import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
-import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.model.EventType;
+import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -326,8 +325,8 @@ public class RegistryServiceImpl implements RegistryService {
                 HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
 
                 // Merge the new changes
-                JsonNode mergedNode = mergeWrapper("/" + parentEntityType, (ObjectNode) readNode, (ObjectNode) inputNode);
-                logger.debug("After merge the payload is " + mergedNode.toString());
+                //JsonNode mergedNode = mergeWrapper("/" + parentEntityType, (ObjectNode) readNode, (ObjectNode) inputNode);
+                //logger.debug("After merge the payload is " + mergedNode.toString());
                 // TODO: need to revoke and re-sign the entity
                 // Re-sign, i.e., remove and add entity signature again
 /*
@@ -346,11 +345,7 @@ public class RegistryServiceImpl implements RegistryService {
 */
 
                 // TODO - Validate before update
-                JsonNode validationNode = mergedNode.deepCopy();
-                List<String> removeKeys = new LinkedList<>();
-                removeKeys.add(uuidPropertyName);
-                removeKeys.add(Constants.TYPE_STR_JSON_LD);
-                JSONUtil.removeNodes((ObjectNode) validationNode, removeKeys);
+
 //            iValidate.validate(entityNodeType, mergedNode.toString());
 //            logger.debug("Validated payload before update");
 
@@ -362,11 +357,11 @@ public class RegistryServiceImpl implements RegistryService {
                     JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
                 }
 
-                if (!skipSignature) {
+               if (!skipSignature) {
                     generateCredentials(inputNode, entityType);
                 }
 
-                if (entityType.equals(Schema)) {
+               if (entityType.equals(Schema)) {
                     schemaService.validateUpdateSchema(readNode, inputNode);
                 }
 
@@ -376,8 +371,14 @@ public class RegistryServiceImpl implements RegistryService {
                 if (entityType.equals(Schema)) {
                     schemaService.updateSchema(inputNode);
                 }
-
                 databaseProvider.commitTransaction(graph, tx);
+                JsonNode mergedNode = mergeWrapper("/" + parentEntityType, (ObjectNode) readNode, (ObjectNode) inputNode);
+                logger.debug("After merge the payload is " + mergedNode.toString());
+                JsonNode validationNode = mergedNode.deepCopy();
+                List<String> removeKeys = new LinkedList<>();
+                removeKeys.add(uuidPropertyName);
+                removeKeys.add(Constants.TYPE_STR_JSON_LD);
+                JSONUtil.removeNodes((ObjectNode) validationNode, removeKeys);
 
                 if (isInternalRegistry(entityType) && isElasticSearchEnabled()) {
                     if (addShardPrefixForESRecord && !shard.getShardLabel().isEmpty()) {
@@ -389,6 +390,7 @@ public class RegistryServiceImpl implements RegistryService {
                             JSONUtil.removeNodesByPath(mergedNode.get(entityType), definitionsManager.getExcludingFieldsForEntity(entityType)));
                     callESActors(nodeWithPublicData, "UPDATE", entityType, id, tx);
                 }
+
                 auditService.auditUpdate(
                         auditService.createAuditRecord(userId, rootId, tx, entityType),
                         shard, mergedNode, readNode);
