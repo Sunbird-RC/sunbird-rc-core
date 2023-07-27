@@ -382,7 +382,6 @@ public class RegistryServiceImpl implements RegistryService {
 
                 if (isInternalRegistry(entityType) && isElasticSearchEnabled()) {
                     if (addShardPrefixForESRecord && !shard.getShardLabel().isEmpty()) {
-                        // Replace osid with shard details
                         String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                         JSONUtil.addPrefix((ObjectNode) mergedNode, prefix, new ArrayList<>(Collections.singletonList(uuidPropertyName)));
                     }

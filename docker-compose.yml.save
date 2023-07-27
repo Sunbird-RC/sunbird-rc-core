@@ -2,13 +2,12 @@ version: "2.4"
 
 services:
   es:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - ELASTIC_PASSWORD=${ELASTIC_SEARCH_PASSWORD}
-      - xpack.security.enabled=${ELASTIC_SECURITY_ENABLED-false}
-      - logger.level=DEBUG
+      - ELASTIC_PASSWORD=
+      - xpack.security.enabled=false
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -33,28 +32,23 @@ services:
       timeout: 5s
       retries: 5
   registry:
-    image: dockerhub/sunbird-rc-core:${RELEASE_VERSION}
+    image: dockerhub/sunbird-rc-core:latest
     volumes:
-      - ./${SCHEMA_DIR-java/registry/src/main/resources/public/_schemas}:/home/sunbirdrc/config/public/_schemas
-      - ./${VIEW_DIR-java/registry/src/main/resources/views}:/home/sunbirdrc/config/views/
+      - ./schema:/home/sunbirdrc/config/public/_schemas
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
-      - event_enabled=${EVENT_ENABLED-false}
-      - event_topic=events
-      - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
       - elastic_search_connection_url=es:9200
-      - elastic_search_scheme=${ELASTIC_SEARCH_SCHEME-http}
-      - elastic_search_auth_enabled=${ELASTIC_SECURITY_ENABLED-false}
-      - elastic_search_username=${ELASTIC_SEARCH_USERNAME-elastic}
-      - elastic_search_password=${ELASTIC_SEARCH_PASSWORD}
-      - search_providerName=${SEARCH_PROVIDER_NAME-dev.sunbirdrc.registry.service.ElasticSearchService}
-      - sunbird_sso_realm=${KEYCLOAK_REALM-sunbird-rc}
+      - elastic_search_auth_enabled=false
+      - elastic_search_username=
+      - elastic_search_password=
+      - search_providerName=dev.sunbirdrc.registry.service.ElasticSearchService
+      - sunbird_sso_realm=sunbird-rc
       - sunbird_sso_url=http://keycloak:8080/auth
-      - sunbird_sso_admin_client_id=${KEYCLOAK_ADMIN_CLIENT_ID-admin-api}
-      - sunbird_sso_client_id=${KEYCLOAK_CLIENT_ID-registry-frontend}
-      - sunbird_sso_admin_client_secret=${KEYCLOAK_SECRET}
+      - sunbird_sso_admin_client_id=admin-api
+      - sunbird_sso_client_id=registry-frontend
+      - sunbird_sso_admin_client_secret=45678
       - claims_url=http://claim-ms:8082
       - sign_url=http://certificate-signer:8079/sign
       - verify_url=http://certificate-signer:8079/verify
@@ -72,17 +66,14 @@ services:
       - sunbird_keycloak_user_password=abcd@123
       - logging.level.root=INFO
       - enable_external_templates=true
-      - async_enabled=${ASYNC_ENABLED-false}
+      - async_enabled=false
       - authentication_enabled=true
       - kafka_bootstrap_address=kafka:9092
       - webhook_enabled=false
       - webhook_url=http://localhost:5001/api/v1/callback
       - redis_host=redis
       - redis_port=6379
-      - manager_type=${MANAGER_TYPE-DefinitionsManager}
-      - notification_async_enabled=${NOTIFICATION_ASYNC_ENABLED-false}
-      - notification_enabled=${NOTIFICATION_ENABLED-false}
-      - notification_url=${NOTIFICATION_URL-http://notification-ms:8765/notification-service/v1/notification}
+      - manager_type=DefinitionsManager
     ports:
       - "8081:8081"
     depends_on:
@@ -98,31 +89,33 @@ services:
   keycloak:
     image: dockerhub/sunbird-rc-keycloak:latest
     volumes:
-      - ./${KEYCLOAK_IMPORT_DIR-imports}:/opt/jboss/keycloak/imports
+      - ./imports:/opt/jboss/keycloak/imports
     environment:
-      - KEYCLOAK_LOGO=https://svgshare.com/i/hCs.svg
       - DB_VENDOR=postgres
       - DB_ADDR=db
       - DB_PORT=5432
       - DB_DATABASE=registry
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - KEYCLOAK_USER=${KEYCLOAK_ADMIN_USER-admin}
-      - KEYCLOAK_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD-admin}
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=admin
       - KEYCLOAK_IMPORT=/opt/jboss/keycloak/imports/realm-export.json
       - PROXY_ADDRESS_FORWARDING=true
+      - KEYCLOAK_LOGO=https://raw.githubusercontent.com/Sunbird-RC/demo-education-registry/federated_edu_registry/imports/ndearLogo.svg
+      - KEYCLOAK_PORTAL_TITLE=Education
+      - KEYCLOAK_PORTAL_SUB_TITLE=
+      - VALIDATE_NONCE=false
+      - KEYCLOAK_URL=http://localhost:8080/auth
     healthcheck:
-      test:
-        ["CMD-SHELL", "curl -f http://localhost:9990/ || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:9990/ || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 10
+      retries: 5
     ports:
       - "8080:8080"
       - "9990:9990"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
   claim-ms:
     image: dockerhub/sunbird-rc-claim-ms:${RELEASE_VERSION}
     environment:
@@ -194,12 +187,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-    environment:
-      - TRACK_NOTIFICATIONS=${TRACK_NOTIFICATIONS-false}
-      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS-kafka:9092}
-    depends_on:
-      kafka:
-        condition: service_started
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
@@ -223,7 +210,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
     healthcheck:
       test:
-        [ "CMD", "kafka-topics", "--list", "--bootstrap-server", "localhost:9092" ]
+        [ "CMD", "kafka-topics", "--list", "--zookeeper", "zookeeper:2181" ]
       interval: 30s
       timeout: 10s
       retries: 10
@@ -271,30 +258,14 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-  metrics:
-    image: dockerhub/sunbird-rc-metrics
-    environment:
-      CLICK_HOUSE_URL: clickhouse:9000
-      CLICKHOUSE_DATABASE: default
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      KAFKA_METRICS_TOPIC: events
-      REDIS_URL: redis:6379
-    ports:
-      - "8070:8070"
-    depends_on:
-      kafka:
-        condition: service_started
-      registry:
-        condition: service_healthy
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
-      
   digilocker-certificate-api:
-    image: dockerhub/sunbird-rc-digilocker-certificate-api
+    image: dockerhub/sunbird-digilocker-certificate-api:latest
     volumes:
-      - ./services/digilocker-certificate-api/config/:/go/config/
+      - ${PWD}/services/digilocker-certificate-api/config/:/go/config/
     ports:
       - "8087:8087"
     environment:
@@ -310,9 +281,3 @@ services:
     environment:
       REGISTRY_BASE_URL: http://registry:8081/
       DATABASE_HOST: db
-  clickhouse:
-    image: clickhouse/clickhouse-server:23.4.2.11-alpine
-    ports:
-      - "9002:9000"
-    healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1

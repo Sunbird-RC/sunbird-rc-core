@@ -226,7 +226,6 @@ public class RegistryEntityController extends AbstractController {
         String userId = USER_ANONYMOUS;
         if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
             try {
-
                 userId = registryHelper.authorize(entityName, entityId, request);
             } catch (Exception e) {
                 return createUnauthorizedExceptionResponse(e);
@@ -237,7 +236,6 @@ public class RegistryEntityController extends AbstractController {
         ((ObjectNode) rootNode).put(uuidPropertyName, entityId);
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
-
         try {
             checkEntityNameInDefinitionManager(entityName);
             String tag = "RegistryController.update " + entityName;
@@ -249,13 +247,11 @@ public class RegistryEntityController extends AbstractController {
                         existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
             }
             registryHelper.updateEntityAndState(existingNode, newRootNode, userId);
-
             registryHelper.invalidateAttestation(entityName, entityId, userId, null);
             registryHelper.autoRaiseClaim(entityName, entityId, userId, existingNode, newRootNode, emailId);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
-
             return new ResponseEntity<>(response, HttpStatus.OK);
 
         } catch (RecordNotFoundException e) {
