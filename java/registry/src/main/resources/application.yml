@@ -65,7 +65,7 @@ registry:
   redis:
     host: ${redis_host:localhost}
     port: ${redis_port:6379}
-  hard_delete_enabled: true
+  hard_delete_enabled: false
 
 
 workflow:
@@ -242,7 +242,7 @@ keycloak:
   resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
   client-id: ${sunbird_sso_admin_client_id:admin-api}
-  client-secret: ${sunbird_sso_admin_client_secret:652cc530-1a59-48ef-849f-02e96ff3b3a8}
+  client-secret: ${sunbird_sso_admin_client_secret:client_secret}
 keycloak-user:
   set-default-password: ${sunbird_keycloak_user_set_password:false}
   default-password: ${sunbird_keycloak_user_password:abcd@123}
@@ -321,9 +321,9 @@ elastic:
     scheme: ${elastic_search_scheme:http}
 filestorage:
   url: ${filestorage_connection_url:http://localhost:9000}
-  accesskey: ${filestorage_access_key:admin}
-  secretkey: ${filestorage_secret_key:12345678}
-  bucketname: ${filestorage_bucket_key:issuance}
+  accesskey: ${filestorage_access_key:XXXXX}
+  secretkey: ${filestorage_secret_key:XXXXX}
+  bucketname: ${filestorage_bucket_key:dummy}
 
 
 

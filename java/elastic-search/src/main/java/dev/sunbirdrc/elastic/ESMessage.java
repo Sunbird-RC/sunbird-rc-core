@@ -43,13 +43,4 @@ public class ESMessage {
     public void setInput(JsonNode input) {
         this.input = input;
     }
-
-// for HardDelete of ES
-    public String getDeleteType() {
-        return deleteType="hard";
-    }
-    public void setDeleteType(String deleteType)
-    {
-        this.deleteType=deleteType;
-    }
 }

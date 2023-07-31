@@ -5,23 +5,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
-import dev.sunbirdrc.registry.sink.OSGraph;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import  javax.sql.DataSource;
-import java.sql.Connection;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import javax.sql.DataSource;
 import java.util.List;
-import java.util.UUID;
 
 public class RegistryDaoImpl implements IRegistryDao {
     public String uuidPropertyName;
@@ -169,7 +163,7 @@ public class RegistryDaoImpl implements IRegistryDao {
     public void hardDeleteEntity(Vertex vertex) {
         if (null != vertex) {
             vertex.remove();
-           // logger.debug("Vertex with ID {} deleted", databaseProvider.getId(vertex));
+           logger.debug("Vertex with ID {} deleted", databaseProvider.getId(vertex));
         } else {
             logger.error("Can't delete - Null vertex passed");
         }

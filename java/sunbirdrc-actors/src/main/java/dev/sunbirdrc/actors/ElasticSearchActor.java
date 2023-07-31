@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.elastic.ESMessage;
 import dev.sunbirdrc.elastic.ElasticServiceImpl;
 import dev.sunbirdrc.elastic.IElasticService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
 
@@ -28,14 +27,10 @@ public class ElasticSearchActor extends BaseActor {
                 break;
             case "UPDATE":
                 elasticSearch.updateEntity(esMessage.getIndexName(), esMessage.getOsid(), esMessage.getInput());
-                case "DELETE":
-                if (esMessage.getDeleteType().equals("hard")) {
-                    elasticSearch.hardDeleteEntity(esMessage.getIndexName(), esMessage.getOsid());
-                } else {
-                    elasticSearch.deleteEntity(esMessage.getIndexName(), esMessage.getOsid());
-                }
                 break;
-
+            case "DELETE":
+                elasticSearch.deleteEntity(esMessage.getIndexName(), esMessage.getOsid());
+                break;
             case "READ":
                 break;
         }
