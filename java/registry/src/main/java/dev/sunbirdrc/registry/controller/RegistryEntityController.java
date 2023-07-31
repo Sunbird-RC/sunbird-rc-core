@@ -157,19 +157,18 @@ public class RegistryEntityController extends AbstractController {
             }
             Vertex deletedEntity = registryHelper.deleteEntity(entityName, entityId, userId);
             if (deletedEntity != null && deletedEntity.keys().contains(OSSystemFields._osSignedData.name())) {
-                String signedData = deletedEntity.property(OSSystemFields._osSignedData.name()).toString();
-                registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
+                deletedEntity.property(OSSystemFields._osSignedData.name()).toString();
+
             }
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
-        }catch (RecordNotFoundException e) {
+        } catch (RecordNotFoundException e) {
             createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.DELETE, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("RegistryController: Exception while Deleting entity", e);
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
