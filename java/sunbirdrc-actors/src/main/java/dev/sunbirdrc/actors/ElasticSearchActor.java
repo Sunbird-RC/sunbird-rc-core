@@ -20,20 +20,10 @@ public class ElasticSearchActor extends BaseActor {
     public IElasticService elasticSearch;
     public ObjectMapper objectMapper;
 
-
-    //@Value("${registry.HARD_DELETE_ENABLED}")
     private boolean isHardDeleteEnabled;
 
     @Value("${search.providerName}")
     private String searchProvider;
-
-
-    @Autowired
-    //public RegistryService registryService1;
-
- /*   private boolean isElasticSearchEnabled() {
-        return (searchProvider.equals("dev.sunbirdrc.registry.service.ElasticSearchService"));
-    }*/
 
     @Override
     public void onReceive(MessageProtos.Message request) throws Throwable {
@@ -43,7 +33,6 @@ public class ElasticSearchActor extends BaseActor {
         objectMapper = new ObjectMapper();
 
         ESMessage esMessage = objectMapper.readValue(request.getPayload().getStringValue(), ESMessage.class);
-        //ESMessage es =  objectMapper.writeValue(request.getPayload(), ESMessage.class);
         switch (request.getPerformOperation()) {
             case "ADD":
                 elasticSearch.addEntity(esMessage.getIndexName(), esMessage.getOsid(), esMessage.getInput());
@@ -58,8 +47,6 @@ public class ElasticSearchActor extends BaseActor {
         break;
     }
     }
-
-
     @Override
     public void onFailure(MessageProtos.Message message) {
         logger.info("Send hello failed {}", message.toString());

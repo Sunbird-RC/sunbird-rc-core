@@ -22,8 +22,6 @@ public class RegistryDaoImpl implements IRegistryDao {
     private IDefinitionsManager definitionsManager;
     private DatabaseProvider databaseProvider;
     private List<String> privatePropertyList;
-    @Autowired
-    private DataSource dataSource;
 
     private Logger logger = LoggerFactory.getLogger(RegistryDaoImpl.class);
 

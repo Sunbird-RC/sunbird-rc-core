@@ -58,7 +58,8 @@ registry:
   redis:
     host: ${redis_host:localhost}
     port: ${redis_port:6379}
-  hard_delete_enabled: true
+
+  hard_delete_enabled: ${hard_delete.enabled:false}
 
 workflow:
   enabled: ${workflow.enable:true}

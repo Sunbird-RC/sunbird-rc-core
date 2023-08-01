@@ -156,19 +156,17 @@ public class RegistryServiceImpl implements RegistryService {
                 }
                 if (isHardDeleteEnabled) {
                     registryDao.hardDeleteEntity(vertex);
-                    databaseProvider.commitTransaction(graph, tx);
-                    auditService.auditDelete(
-                            auditService.createAuditRecord(userId, uuid, tx, index),
-                            shard);
                     if (isElasticSearchEnabled()) {
                         callESActors(null, "DELETE", index, uuid, tx);
                     }
                 } else {
                     registryDao.deleteEntity(vertex);
-                    databaseProvider.commitTransaction(graph, tx);
-                    auditService.auditDelete(auditService.createAuditRecord(userId, uuid, tx, index),
-                            shard);
                 }
+
+                databaseProvider.commitTransaction(graph, tx);
+                auditService.auditDelete(
+                        auditService.createAuditRecord(userId, uuid, tx, index),
+                        shard);
                 logger.info("Entity {} marked deleted", uuid);
                 return vertex;
             }
