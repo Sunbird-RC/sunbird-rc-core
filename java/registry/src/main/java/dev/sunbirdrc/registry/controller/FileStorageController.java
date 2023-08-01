@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.controller;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.dto.DocumentsResponse;
 import dev.sunbirdrc.registry.service.FileStorageService;
+import io.minio.errors.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.rmi.ServerException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 // TODO: Get should be viewed by both attestor and reviewer
@@ -53,6 +58,23 @@ public class FileStorageController {
             return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
         DocumentsResponse documentsResponse = fileStorageService.deleteFiles(files);
+        return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
+    }
+
+    @PutMapping("/api/v1/{entity}/{entityId}/{property}/documents/{documentId}")
+    public ResponseEntity<DocumentsResponse> update(@RequestParam MultipartFile[] files,
+                                                    @PathVariable String entity,
+                                                    @PathVariable String entityId,
+                                                    @PathVariable String documentId,
+                                                    @PathVariable String property,
+                                                    HttpServletRequest httpServletRequest) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        try {
+            registryHelper.authorize(entity, entityId, httpServletRequest);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        DocumentsResponse documentsResponse = fileStorageService.updateFiles(files, httpServletRequest.getRequestURI());
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
     }
 
