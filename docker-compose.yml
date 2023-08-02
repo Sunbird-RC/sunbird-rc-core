@@ -145,6 +145,7 @@ services:
     image: dockerhub/sunbird-rc-certificate-signer:${RELEASE_VERSION}
     environment:
       - PORT=8079
+      - TIME_ZONE=Asia/Kolkata
     ports:
       - "8079:8079"
     volumes:
