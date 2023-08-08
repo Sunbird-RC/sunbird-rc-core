@@ -10,6 +10,10 @@ import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
+import dev.sunbirdrc.registry.digilocker.pulldoc.PullDocRequest;
+import dev.sunbirdrc.registry.digilocker.pulldoc.PullDocResponse;
+import dev.sunbirdrc.registry.digilocker.pulluriresponse.Person;
+import dev.sunbirdrc.registry.digilocker.pulluriresponse.PullURIResponse;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
 import dev.sunbirdrc.registry.exception.ErrorMessages;
@@ -20,13 +24,15 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.service.FileStorageService;
-import dev.sunbirdrc.registry.service.ICertificateService;
+import dev.sunbirdrc.registry.service.impl.CertificateServiceImpl;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
+import org.agrona.Strings;
+import dev.sunbirdrc.registry.util.DigiLockerUtils;
+import dev.sunbirdrc.registry.util.DocDetails;
 import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import dev.sunbirdrc.validators.ValidationException;
-import org.agrona.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +50,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -55,9 +62,12 @@ public class RegistryEntityController extends AbstractController {
 
     private static final String TRANSACTION_ID = "transactionId";
     private static Logger logger = LoggerFactory.getLogger(RegistryEntityController.class);
-
+    @Value("${GCS_SERVICE_URL:https://casa.upsmfac.org/UploadedFiles/Student/}")
+    public static final String GCS_SERVICE_URL = "http://34.100.212.156:8082/";
+    @Value("${digilocker_hmackey:}")
+    public static final String DIGILOCKER_KEY = "vTV3Jl81kXDOca70TT2+P/YAb5DXnS+DDr/ArlFhow0=";
     @Autowired
-    private ICertificateService certificateService;
+    private CertificateServiceImpl certificateService;
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -463,6 +473,37 @@ public class RegistryEntityController extends AbstractController {
         } catch (RecordNotFoundException e) {
              createSchemaNotFoundResponse(e.getMessage(), responseParams);
            Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error in partner api access", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/api/v2/{entityName}", method = RequestMethod.GET)
+    public ResponseEntity<Object> getUserDetails(
+            @PathVariable String entityName,
+            HttpServletRequest request) {
+        ResponseParams responseParams = new ResponseParams();
+        try {
+            checkEntityNameInDefinitionManager(entityName);
+            ArrayList<String> fields = getConsentFields(request);
+            JsonNode userInfoFromRegistry = registryHelper.getRequestedUserDetailsSearch(request, entityName);
+            JsonNode jsonNode = userInfoFromRegistry.get(entityName);
+            if (jsonNode instanceof ArrayNode) {
+                ArrayNode values = (ArrayNode) jsonNode;
+                if (values.size() > 0) {
+                    JsonNode node = values.get(0);
+                    if (node instanceof ObjectNode) {
+                        ObjectNode entityNode = copyWhiteListedFields(fields, node);
+                        return new ResponseEntity<>(entityNode, HttpStatus.OK);
+                    }
+                }
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (RecordNotFoundException e) {
+            createSchemaNotFoundResponse(e.getMessage(), responseParams);
+            Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             logger.error("Error in partner api access", e);
@@ -900,4 +941,154 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    /**
+     * PULL-URI-Request API for DigiLocker
+     * @param request
+     * @param entityName
+     * @return
+     */
+    @RequestMapping(value = "/api/v1/pullUriRequest/{entityName}", method = RequestMethod.POST, produces =
+            {MediaType.APPLICATION_XML_VALUE}, consumes = {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_PDF_VALUE, MediaType.TEXT_HTML_VALUE, Constants.SVG_MEDIA_TYPE})
+    public ResponseEntity<Object> issueCertificateToDigiLocker(HttpServletRequest request, @PathVariable String entityName) {
+
+        //String entityName = "RegCertificate"; - take entity name from input - TODO
+        // call template TODO
+
+        String templateurl = null;
+
+        String statusCode = "1";
+        Scanner scanner = null;
+        try {
+            scanner = new Scanner(request.getInputStream(), "UTF-8");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String xmlString = null;
+        if(scanner!=null){
+            Scanner scanner1 = scanner.useDelimiter("\\A");
+            if(scanner1.hasNext())
+                xmlString =  scanner1.next();
+        }
+        DocDetails docDetails = null;
+        // Map to JAXB
+        xmlString = DigiLockerUtils.getXmlString(xmlString);
+        //request.set
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
+        String osid = null;
+        JsonNode result = null;
+        try {
+            result = registryHelper.getRequestedUserDetailsCustom(request, entityName, xmlString);
+            if (result != null && result.get(entityName) != null && result.get(entityName).size() > 0) {
+                ArrayNode responseFromDb = registryHelper.fetchFromDBUsingEsResponse(entityName, (ArrayNode) result.get(entityName));
+                if(responseFromDb!=null && responseFromDb.size() > 0){
+                    osid = responseFromDb.get(0).get("osid").asText();
+                }
+            }
+        } catch (Exception e) {
+            statusCode = "0";
+            e.printStackTrace();
+            return new ResponseEntity<>(statusCode, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        if(osid!=null) {
+            try {
+                String readerUserId = getUserId(entityName, request);
+                JsonNode node = registryHelper.readEntity(readerUserId, entityName, osid, false, null, false)
+                        .get(entityName);
+                String fileName = DigiLockerUtils.getDocUri();
+                JsonNode signedNode = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
+                Object certificate = certificateService.getCertificateForDGL(signedNode,
+                        entityName,
+                        osid,
+                        MediaType.APPLICATION_PDF_VALUE,
+                        getTemplateUrlFromRequest(request, entityName),
+                        JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityName)), fileName
+                );
+                // Push to DGS - verify that storage required or not - TODO
+                certificateService.saveToGCS(certificate, fileName+".PDF");
+                // get Uri
+                String uri = GCS_SERVICE_URL + fileName + ".PDF";
+
+                Person person = DigiLockerUtils.getPersonDetail(result, entityName);
+                PullURIResponse pullResponse = DigiLockerUtils.getPullUriResponse(uri, statusCode, osid, certificate, person);
+                String responseString = DigiLockerUtils.convertJaxbToString(pullResponse);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_XML);
+                return new ResponseEntity<>(responseString, headers, HttpStatus.OK);
+            } catch (Exception exception) {
+                statusCode = "0";
+                exception.printStackTrace();
+                return new ResponseEntity<>(statusCode, HttpStatus.BAD_REQUEST);
+            }
+        }
+        else{
+            return new ResponseEntity<>(statusCode, HttpStatus.FORBIDDEN);
+        }
+    }
+
+    /**
+     * PULL-URI-Request API for DigiLocker
+     * @param request
+     * @param
+     * @return
+     */
+
+    @RequestMapping(value = "/api/v1/pullDocUriRequest/{entityName}", method = RequestMethod.POST, produces =
+            {MediaType.APPLICATION_XML_VALUE}, consumes = {MediaType.APPLICATION_XML_VALUE})
+    public ResponseEntity<Object> pullDocURI(HttpServletRequest request) {
+
+        String entityName = "RegCertificate"; //- take entity name from input - TODO
+        String statusCode = "1";
+        Scanner scanner = null;
+        String hmac = request.getHeader("x-digilocker-hmac");
+
+        try {
+            scanner = new Scanner(request.getInputStream(), "UTF-8");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String xmlString = null;
+        if(scanner!=null){
+            Scanner scanner1 = scanner.useDelimiter("\\A");
+            if(scanner1.hasNext())
+                xmlString =  scanner1.next();
+        }
+
+        // GET Request xml and create object
+        PullDocRequest pullDocRequest = null;
+        try {
+            pullDocRequest = DigiLockerUtils.processPullDocRequest(xmlString);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        boolean isValidReq = DigiLockerUtils.verifyHmac(pullDocRequest.getTs(), DIGILOCKER_KEY, hmac);
+        if(!isValidReq){
+            statusCode = "0";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_XML);
+            return new ResponseEntity<>(statusCode, HttpStatus.FORBIDDEN);
+        }
+        String credName = pullDocRequest.getDocDetails().getUri();
+        byte[] cred = certificateService.getCred(credName);
+        JsonNode result = null;
+        // get stident by osid
+        String osid = pullDocRequest.getTxn();
+        try {
+            result = registryHelper.getUserInfoFromRegistryByOsId(request, entityName, osid);
+            Person person = DigiLockerUtils.getPersonDetail(result, entityName);
+            PullDocResponse pullDocResponse = DigiLockerUtils.getDocPullUriResponse(osid,statusCode, cred,person);
+            Object responseString = DigiLockerUtils.convertJaxbToPullDoc(pullDocResponse);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_XML);
+            return new ResponseEntity<>(responseString, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            statusCode = "0";
+            e.printStackTrace();
+            return new ResponseEntity<>(statusCode, HttpStatus.FORBIDDEN);
+        }
+
+    }
+
 }

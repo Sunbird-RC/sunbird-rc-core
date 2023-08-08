@@ -59,6 +59,7 @@ public class SunbirdRCApplication {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOrigin(corsAllowedOrigin);
+        config.addAllowedOrigin("http://localhost:4200");
         config.addAllowedHeader("*");
         config.addAllowedMethod("POST");
         config.addAllowedMethod("DELETE");

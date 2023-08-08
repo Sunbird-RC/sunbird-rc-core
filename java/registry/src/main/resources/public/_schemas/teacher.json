@@ -1,0 +1,49 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema",
+	"type": "object",
+	"properties": {
+		"Teacher": {
+			"$ref": "#/definitions/Teacher"
+		}
+	},
+	"required": ["Teacher"],
+	"title": "Teacher",
+	"definitions": {
+		"Teacher": {
+			"$id": "#/properties/Teacher",
+			"type": "object",
+			"title": "Teacher schema",
+			"required": ["name", "phoneNumber", "email", "school"],
+			"uniqueIndexFields": ["phoneNumber"],
+			"properties": {
+				"name": { "type": "string" },
+				"phoneNumber": { "type": "string" },
+				"email": { "type": "string" },
+				"school": { "type": "string" },
+				"subject": {
+					"type": "string",
+					"enum": [
+						"Math",
+						"Hindi",
+						"English",
+						"History",
+						"Geography",
+						"Physics",
+						"Chemistry",
+						"Biology"
+					]
+				}
+			}
+		}
+	},
+	"_osConfig": {
+		"ownershipAttributes": [
+			{
+				"email": "/email",
+				"mobile": "/phoneNumber",
+				"userId": "/phoneNumber"
+			}
+		],
+		"inviteRoles": ["anonymous"]
+	}
+}

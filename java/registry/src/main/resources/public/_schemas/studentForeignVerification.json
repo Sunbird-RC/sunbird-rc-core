@@ -1,0 +1,261 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "StudentForeignVerification": {
+      "$ref": "#/definitions/StudentForeignVerification"
+    }
+  },
+  "required": [
+    "StudentForeignVerification"
+  ],
+  "title": "StudentForeignVerification",
+  "definitions": {
+    "StudentForeignVerification": {
+      "$id": "#/properties/StudentForeignVerification",
+      "type": "object",
+      "title": "StudentForeignVerification",
+      "required": [
+        "name",
+        "phoneNumber",
+        "email",
+        "council"
+      ],
+      "uniqueIndexFields": [
+        "phoneNumber"
+      ],
+      "properties": {
+        "name": {
+          "$id": "#/properties/name",
+          "type": "string",
+          "title": "name"
+        },
+        "fathersName": {
+          "$id": "#/properties/fathersName",
+          "type": "string",
+          "title": "fathersName"
+        },
+        "address": {
+          "$id": "#/properties/address",
+          "type": "string",
+          "title": "address"
+        },
+        "phoneNumber": {
+          "$id": "#/properties/phoneNumber",
+          "type": "string",
+          "title": "phoneNumber"
+        },
+        "email": {
+          "$id": "#/properties/email",
+          "type": "string",
+          "title": "email"
+        },
+        "trainingCenter": {
+          "$id": "#/properties/trainingCenter",
+          "type": "string",
+          "title": "trainingCenter"
+        },
+        "registrationNumber": {
+          "$id": "#/properties/registrationNumber",
+          "type": "string",
+          "title": "registrationNumber"
+        },
+        "council": {
+          "$id": "#/properties/council",
+          "type": "string",
+          "title": "council"
+        },
+        "workPlace": {
+          "$id": "#/properties/workPlace",
+          "type": "string",
+          "title": "workPlace"
+        },
+        "date": {
+          "$id": "#/properties/date",
+          "type": "string",
+          "title": "date"
+        },
+        "refNo": {
+          "$id": "#/properties/refNo",
+          "type": "string",
+          "title": "refNo"
+        },
+        "validityOfRegistration": {
+          "$id": "#/properties/validityOfRegistration",
+          "type": "string",
+          "title": "validityOfRegistration"
+        },
+        "dob": {
+          "$id": "#/properties/dob",
+          "type": "string",
+          "title": "dob"
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "ownershipAttributes": [
+      {
+        "email": "/email",
+        "mobile": "/phoneNumber",
+        "userId": "/phoneNumber"
+      }
+    ],
+    "inviteRoles": [
+      "anonymous"
+    ],
+    "roles": [
+      "StudentForeignVerification"
+    ],
+    "attestationPolicies": [
+      {
+        "name": "StudentForeignVerify",
+        "conditions": "(ATTESTOR#$.council#.contains(REQUESTER#$.council#))",
+        "type": "MANUAL",
+        "attestorPlugin": "did:internal:ClaimPluginActor?entity=Regulator",
+        "attestationProperties": {
+          "name": "$.name",
+          "fathersName": "$.fathersName",
+          "address": "$.address",
+          "phoneNumber": "$.phoneNumber",
+          "email": "$.email",
+          "trainingCenter": "$.trainingCenter",
+          "registrationNumber": "$.registrationNumber",
+          "workPlace": "$.workPlace",
+          "council": "$.council",
+          "refNo": "$.refNo",
+          "date": "$.date",
+          "validityOfRegistration": "$.validityOfRegistration",
+          "dob": "$.dob"
+        },
+        "credentialTemplate": {
+          "@context": [
+            "https://www.w3.org/2018/credentials/v1",
+            {
+              "@version": 1.1,
+              "@protected": true,
+              "SkillCertificate": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#SkillCertificate",
+                "@context": {
+                  "id": "@id",
+                  "@version": 1.1,
+                  "@protected": true,
+                  "skills": "schema:Text"
+                }
+              },
+              "Person": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#Person",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "trainedOn": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#trainedOn",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "fathersName": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#fathersName",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "address": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#address",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "phoneNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#phoneNumber",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "email": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#email",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "trainingCenter": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#trainingCenter",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "registrationNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#registrationNumber",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "validityOfRegistration": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#validityOfRegistration",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "council": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#council",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "dob": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#dob",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "workPlace": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#workPlace",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "refNo": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#refNo",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "date": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#date",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              }
+            }
+          ],
+          "type": [
+            "VerifiableCredential"
+          ],
+          "issuanceDate": "2021-08-27T10:57:57.237Z",
+          "credentialSubject": {
+            "type": "Person",
+            "name": "{{name}}",
+            "marriedName": "{{marriedName}}",
+            "maidenName": "{{maidenName}}",
+            "fathersName": "{{fathersName}}",
+            "presentAddress": "{{presentAddress}}",
+            "phoneNumber": "{{phoneNumber}}",
+            "email": "{{email}}",
+            "professionalQualification": "{{professionalQualification}}",
+            "trainingCenter": "{{trainingCenter}}",
+            "refNo": "{{refNo}}",
+            "date": "{{date}}",
+            "registrationNumber": "{{registrationNumber}}",
+            "workPlace": "{{workPlace}}"
+          },
+          "issuer": "did:web:sunbirdrc.dev/vc/skill"
+        }
+      }
+    ],
+    "certificateTemplates": {
+      "StudentForeignVerificationTemp": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/Foreign-certificate.html"
+    }
+  }
+}
+

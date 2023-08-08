@@ -3,7 +3,9 @@ package dev.sunbirdrc.registry.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.middleware.util.Constants;
+import dev.sunbirdrc.registry.model.dto.BarCode;
 import dev.sunbirdrc.registry.service.ICertificateService;
+import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,16 +36,18 @@ public class CertificateServiceImpl implements ICertificateService {
     private boolean signatureEnabled;
     private static Logger logger = LoggerFactory.getLogger(CertificateServiceImpl.class);
 
+    private final ClaimRequestClient claimRequestClient;
     public CertificateServiceImpl(@Value("${certificate.templateBaseUrl}") String templateBaseUrl,
                                   @Value("${certificate.apiUrl}") String certificateUrl,
                                   @Value("${signature.enabled}") boolean signatureEnabled,
                                   @Value("${certificate.healthCheckURL}") String certificateHealthCheckURL,
-                                  RestTemplate restTemplate) {
+                                  RestTemplate restTemplate,ClaimRequestClient claimRequestClient) {
         this.templateBaseUrl = templateBaseUrl;
         this.certificateUrl = certificateUrl;
         this.restTemplate = restTemplate;
         this.certificateHealthCheckURL = certificateHealthCheckURL;
         this.signatureEnabled = signatureEnabled;
+        this.claimRequestClient = claimRequestClient;
     }
 
     @Override
@@ -57,6 +61,28 @@ public class CertificateServiceImpl implements ICertificateService {
                 put("entityId", entityId);
                 put("entityName", entityName);
                 put("entity", entity);
+            }};
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Accept", mediaType);
+            HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, headers);
+            return restTemplate.postForObject(certificateUrl, httpEntity, byte[].class);
+        } catch (Exception e) {
+            logger.error("Get certificate failed", e);
+        }
+        return null;
+    }
+
+    public Object getCertificateForDGL(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl, JsonNode entity, String fileName) {
+        try {
+            String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl);
+
+            Map<String, Object> requestBody = new HashMap<String, Object>(){{
+                put("templateUrl", finalTemplateUrl);
+                put("certificate", certificateData.toString());
+                put("entityId", entityId);
+                put("entityName", entityName);
+                put("entity", entity);
+                put("credentialsFileName",fileName);
             }};
             HttpHeaders headers = new HttpHeaders();
             headers.set("Accept", mediaType);
@@ -107,6 +133,42 @@ public class CertificateServiceImpl implements ICertificateService {
         } else {
             return new ComponentHealthInfo(getServiceName(), true, "SIGNATURE_ENABLED", "false");
         }
+
+    }
+
+    public String saveToGCS(Object certificate, String entityId) {
+        String url = null;
+        logger.info("Uploading File GCP.");
+        url = claimRequestClient.saveFileToGCS(certificate, entityId);
+        logger.info("Uploading File GCP complete");
+        return url;
+    }
+
+    public BarCode getBarCode(BarCode barCode) {
+        BarCode node = null;
+        try {
+            logger.debug("BarCode start");
+            node = claimRequestClient.getBarCode(barCode);
+            logger.debug("BarCode end");
+            return node;
+        } catch (Exception e) {
+            logger.error("Get BarCode failed", e);
+        }
+        return node;
+    }
+
+
+    public byte[]  getCred(String fileName) {
+        byte[] bytes = null;
+        try {
+            logger.info("Track Certificate start");
+            bytes = claimRequestClient.getCredentials(fileName);
+            logger.info("Track Certificate end");
+        } catch (Exception e) {
+            logger.error("Track certificate failed", e);
+        }
+
+        return bytes;
 
     }
 }

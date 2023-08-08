@@ -10,6 +10,7 @@ import dev.sunbirdrc.claim.exception.UnAuthorizedException;
 import dev.sunbirdrc.claim.model.ClaimStatus;
 import dev.sunbirdrc.claim.repository.ClaimNoteRepository;
 import dev.sunbirdrc.claim.repository.ClaimRepository;
+import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.registry.middleware.util.EntityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +95,16 @@ public class ClaimService {
             addNotes(requestBody.get(NOTES).asText(), claim, EntityUtil.getFullNameOfTheEntity(attestorNode));
         }
         claim.setAttestedOn(new Date());
-        claim.setStatus(ClaimStatus.CLOSED.name());
+        String action = requestBody.get("action").asText();
+        if(Action.REJECT_CLAIM.toString().equals(action)){
+            claim.setStatus(ClaimStatus.REJECTED.name());
+        } else if (Action.GRANT_CLAIM.toString().equals(action)) {
+            claim.setStatus(ClaimStatus.APPROVED.name());
+        }else if (Action.RAISE_CLAIM.toString().equals(action)) {
+            claim.setStatus(ClaimStatus.NEW.name());
+        }else
+            claim.setStatus(ClaimStatus.OPEN.name());
+
         claim.setAttestorUserId(requestBody.get(USER_ID).asText());
         return claimRepository.save(claim);
     }

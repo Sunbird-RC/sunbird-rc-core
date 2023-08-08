@@ -131,7 +131,10 @@ public class Claim {
     }
 
     public boolean isClosed() {
-        return status != null && status.equals(ClaimStatus.CLOSED.name());
+
+        boolean closed = status != null && status.equals(ClaimStatus.REJECTED.name()) || status.equals(ClaimStatus.APPROVED.name());
+
+        return closed;
     }
 
     public String getConditions() {
