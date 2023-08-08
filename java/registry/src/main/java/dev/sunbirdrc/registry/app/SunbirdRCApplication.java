@@ -55,11 +55,14 @@ public class SunbirdRCApplication {
 
     @Bean
     public FilterRegistrationBean corsFilter() {
+        List<String> list = new ArrayList();
+        list.add("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOrigin(corsAllowedOrigin);
         config.addAllowedOrigin("http://localhost:4200");
+        config.setAllowedOrigins(list);
         config.addAllowedHeader("*");
         config.addAllowedMethod("POST");
         config.addAllowedMethod("DELETE");
