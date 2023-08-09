@@ -97,10 +97,10 @@
           },
           "title": "All Document Proof"
         },
-        "candidate-pics": {
-          "$id": "#/properties/candidate-pics",
+        "candidatePic": {
+          "$id": "#/properties/candidatePic",
           "type": "string",
-          "title": "candidate-pics"
+          "title": "candidatePic"
         },
         "paymentStatus": {
           "$id": "#/properties/paymentStatus",

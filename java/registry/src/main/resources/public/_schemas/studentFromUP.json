@@ -65,11 +65,6 @@
               "type": "string",
               "title": "barCode"
             },
-            "candidatePic": {
-              "$id": "#/properties/candidatePic",
-              "type": "string",
-              "title": "candidatePic"
-            },
             "gender": {
               "$id": "#/properties/gender",
               "type": "string",
@@ -194,10 +189,10 @@
               },
               "title": "All Document Proof"
             },
-            "candidate-pics": {
-              "$id": "#/properties/candidate-pics",
+            "candidatePic": {
+              "$id": "#/properties/candidatePic",
               "type": "string",
-              "title": "candidate-pics"
+              "title": "candidatePic"
             },
             "paymentStatus": {
               "$id": "#/properties/paymentStatus",
@@ -238,8 +233,9 @@
           "examBody": "$.examBody",
           "finalYearRollNo": "$.finalYearRollNo",
           "date": "$.date",
+          "barCode": "$.barCode",
           "doc-proof": "$.doc-proof",
-          "candidate-pics": "$.candidate-pics",
+          "candidatePic": "$.candidatePic",
           "paymentStatus": "$.paymentStatus"
         },
         "credentialTemplate": {
@@ -341,8 +337,8 @@
                   "name": "schema:Text"
                 }
               },
-              "candidate-pics": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#candidate-pics",
+              "candidatePic": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#candidatePic",
                 "@context": {
                   "name": "schema:Text"
                 }
@@ -378,7 +374,7 @@
             "examBody": "{{examBody}}",
             "finalYearRollNo": "{{finalYearRollNo}}",
             "date": "{{date}}",
-            "candidate-pics": "{{candidate-pics}}"
+            "candidatePic": "{{candidatePic}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }

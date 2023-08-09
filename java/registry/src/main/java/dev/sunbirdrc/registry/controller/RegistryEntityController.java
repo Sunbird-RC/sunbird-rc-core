@@ -567,11 +567,14 @@ public class RegistryEntityController extends AbstractController {
                             viewTemplateManager.getViewTemplateById(viewTemplateId), false)
                     .get(entityName);
             JsonNode signedNode = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
+
+            String templateUrlFromRequest = getTemplateUrlFromRequest(request, entityName);
+
             return new ResponseEntity<>(certificateService.getCertificate(signedNode,
                     entityName,
                     entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
-                    getTemplateUrlFromRequest(request, entityName),
+                    templateUrlFromRequest,
                     JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityName))
             ), HttpStatus.OK);
         } catch (Exception exception) {
@@ -582,6 +585,37 @@ public class RegistryEntityController extends AbstractController {
 
 
     private String getTemplateUrlFromRequest(HttpServletRequest request, String entityName) {
+        String template = Template;
+
+        if(entityName.equalsIgnoreCase("StudentForeignVerification")){
+            return "StudentForeignVerificationTemp";
+        } else if (entityName.equalsIgnoreCase("StudentGoodstanding")) {
+            return "StudentGoodStandingTemp";
+        }
+
+        if (externalTemplatesEnabled && !StringUtils.isEmpty(request.getHeader(template))) {
+            return request.getHeader(template);
+        }
+        if (definitionsManager.getCertificateTemplates(entityName) != null && definitionsManager.getCertificateTemplates(entityName).size() > 0 && !StringUtils.isEmpty(request.getHeader(TemplateKey))) {
+            String templateUri = definitionsManager.getCertificateTemplates(entityName).getOrDefault(request.getHeader(TemplateKey), null);
+            if (!StringUtils.isEmpty(templateUri)) {
+                try {
+                    if (templateUri.startsWith(MINIO_URI_PREFIX)) {
+                        return fileStorageService.getSignedUrl(templateUri.substring(MINIO_URI_PREFIX.length()));
+                    } else if (templateUri.startsWith(HTTP_URI_PREFIX) || templateUri.startsWith(HTTPS_URI_PREFIX)) {
+                        return templateUri;
+                    }
+                } catch (Exception e) {
+                    logger.error("Exception while parsing certificate templates DID urls", e);
+                    return null;
+                }
+            }
+
+        }
+        return null;
+    }
+
+    private String getTemplateUrlFromRequestFromRegType(HttpServletRequest request, String entityName) {
         if (externalTemplatesEnabled && !StringUtils.isEmpty(request.getHeader(Template))) {
             return request.getHeader(Template);
         }
@@ -954,9 +988,7 @@ public class RegistryEntityController extends AbstractController {
 
         //String entityName = "RegCertificate"; - take entity name from input - TODO
         // call template TODO
-
         String templateurl = null;
-
         String statusCode = "1";
         Scanner scanner = null;
         try {
@@ -998,21 +1030,23 @@ public class RegistryEntityController extends AbstractController {
                 JsonNode node = registryHelper.readEntity(readerUserId, entityName, osid, false, null, false)
                         .get(entityName);
                 String fileName = DigiLockerUtils.getDocUri();
+                Object certificate = null;
                 JsonNode signedNode = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
-                Object certificate = certificateService.getCertificateForDGL(signedNode,
-                        entityName,
-                        osid,
-                        MediaType.APPLICATION_PDF_VALUE,
-                        getTemplateUrlFromRequest(request, entityName),
-                        JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityName)), fileName
-                );
-                // Push to DGS - verify that storage required or not - TODO
-                certificateService.saveToGCS(certificate, fileName+".PDF");
-                // get Uri
-                String uri = GCS_SERVICE_URL + fileName + ".PDF";
+                certificate = certificateService.getCred(fileName + ".PDF");
 
+                if(certificate == null){
+                    certificate = certificateService.getCertificateForDGL(signedNode,
+                            entityName,
+                            osid,
+                            MediaType.APPLICATION_PDF_VALUE,
+                            getTemplateUrlFromRequest(request, entityName),
+                            JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityName)), fileName
+                    );
+
+                    certificateService.saveToGCS(certificate, fileName);
+                }
                 Person person = DigiLockerUtils.getPersonDetail(result, entityName);
-                PullURIResponse pullResponse = DigiLockerUtils.getPullUriResponse(uri, statusCode, osid, certificate, person);
+                PullURIResponse pullResponse = DigiLockerUtils.getPullUriResponse(fileName, statusCode, osid, certificate, person);
                 String responseString = DigiLockerUtils.convertJaxbToString(pullResponse);
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_XML);
@@ -1039,7 +1073,7 @@ public class RegistryEntityController extends AbstractController {
             {MediaType.APPLICATION_XML_VALUE}, consumes = {MediaType.APPLICATION_XML_VALUE})
     public ResponseEntity<Object> pullDocURI(HttpServletRequest request) {
 
-        String entityName = "RegCertificate"; //- take entity name from input - TODO
+        String entityName = "StudentFromUP"; //- take entity name from input - TODO
         String statusCode = "1";
         Scanner scanner = null;
         String hmac = request.getHeader("x-digilocker-hmac");

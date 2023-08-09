@@ -204,11 +204,6 @@
               },
               "title": "All Document Proof"
             },
-            "candidate-pics": {
-              "$id": "#/properties/candidate-pics",
-              "type": "string",
-              "title": "candidate-pics"
-            },
             "paymentStatus": {
               "$id": "#/properties/paymentStatus",
               "type": "string",
@@ -251,7 +246,7 @@
           "armyRegNo": "$.armyRegNo",
           "date": "$.date",
           "doc-proof": "$.doc-proof",
-          "candidate-pics": "$.candidate-pics",
+          "candidatePic": "$.candidatePic",
           "paymentStatus": "$.paymentStatus"
         },
         "credentialTemplate": {
@@ -359,8 +354,8 @@
                   "name": "schema:Text"
                 }
               },
-              "candidate-pics": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#candidate-pics",
+              "candidatePic": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#candidatePic",
                 "@context": {
                   "name": "schema:Text"
                 }
@@ -397,7 +392,7 @@
             "finalYearRollNo": "{{finalYearRollNo}}",
             "armyRegNo": "{{armyRegNo}}",
             "date": "{{date}}",
-            "candidate-pics": "{{candidate-pics}}"
+            "candidatePic": "{{candidatePic}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }
