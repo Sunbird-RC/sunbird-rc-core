@@ -198,6 +198,11 @@
               "$id": "#/properties/paymentStatus",
               "type": "string",
               "title": "paymentStatus"
+            },
+            "feeReciptNo": {
+              "$id": "#/properties/feeReciptNo",
+              "type": "string",
+              "title": "feeReciptNo"
             }
           }
         }
@@ -236,7 +241,8 @@
           "barCode": "$.barCode",
           "doc-proof": "$.doc-proof",
           "candidatePic": "$.candidatePic",
-          "paymentStatus": "$.paymentStatus"
+          "paymentStatus": "$.paymentStatus",
+          "feeReciptNo": "$.feeReciptNo"
         },
         "credentialTemplate": {
           "@context": [
@@ -354,6 +360,12 @@
                 "@context": {
                   "name": "schema:Text"
                 }
+              },
+              "feeReciptNo": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#feeReciptNo",
+                "@context": {
+                  "name": "schema:Text"
+                }
               }
 
             }
@@ -374,7 +386,8 @@
             "examBody": "{{examBody}}",
             "finalYearRollNo": "{{finalYearRollNo}}",
             "date": "{{date}}",
-            "candidatePic": "{{candidatePic}}"
+            "candidatePic": "{{candidatePic}}",
+            "feeReciptNo": "{{feeReciptNo}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }
