@@ -394,7 +394,9 @@
       }
     ],
     "certificateTemplates": {
-      "StudentFromUPTemp": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/nursingANM.html"
+      "ANM_DIPLOMA": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/nursingANM.html",
+      "ANM_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/nursingANM.html"
+
     }
   }
 }
