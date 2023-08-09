@@ -1,27 +1,44 @@
 package dev.sunbirdrc.registry.util;
 
 public class CredentialConstant {
-    public static final String credential1 = "REGISTRATION_CERTIFICATE";
-    public static final String REGISTRATION_CERTIFICATE_ANM = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing-ANM.html";
-    public static final String credential2 = "REGISTRATION_CERTIFICATE";
-    public static final String link2 = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing-BScNursing.html";
-    public static final String credential3 = "REGISTRATION_CERTIFICATE";
-    public static final String link3 = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing-GNM.html";
-    public static final String credential4 = "ENROLLMENT_REGISTRATION_CERTIFICATE";
-    public static final String link4 = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-Babynursing.html";
-    public static final String credential5 = "ENROLLMENT_REGISTRATION_CERTIFICATE";
-    public static final String link5 = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-BloodTransfusion.html";
-    public static final String credential6 = "ENROLLMENT_REGISTRATION_CERTIFICATE";
-    public static final String link6 = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-Cardiology.html";
-    public static final String credential7 = "ENROLLMENT_REGISTRATION_CERTIFICATE";
-    public static final String link7 = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-TraumaAssistance.html";
-    public static final String credential8 = "ENROLLMENT_REGISTRATION_CERTIFICATE";
-    public static final String link8 = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-TraumaTechnician.html";
-    public static final String credential9 = "ENROLLMENT_REGISTRATION_CERTIFICATE";
-    public static final String link9 = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-Optpmetry.html";
-    public static final String credential10 = "ENROLLMENT_REGISTRATION_CERTIFICATE";
-    public static final String link10 = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-OTtechnician.html";
-    public static final String credential11 = "ENROLLMENT_REGISTRATION_CERTIFICATE";
-    public static final String link11 = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-Sanitation.html";
-}
+    public static final String R_CERTIFICATE_ANM = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing.html";
+    public static final String R_CERTIFICATE_BSC_NURSING = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing.html";
+    public static final String R_CERTIFICATE_GNM = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing.html";
+    public static final String R_CERTIFICATE_BABY_NURSING = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html";
+    public static final String R_CERTIFICATE_BLOOD_TRANSFUSION = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html";
+    public static final String R_CERTIFICATE_CARDIOLOGY = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html";
+    public static final String R_CERTIFICATE_TRAUMA_ASSISTANCE = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html";
+    public static final String R_CERTIFICATE_TRAUMA_TECHNICIAN = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html";
+    public static final String R_CERTIFICATE_OPTOMETRY = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html";
+    public static final String R_CERTIFICATE_OTTECHNICIAN = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html";
+    public static final String R_CERTIFICATE_SANITATION = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html";
 
+    public static final String CERTIFICATE_ANM_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String CERTIFICATE_GNM_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String BABY_NURSING_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String BLOOD_TRANSFUSION_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String CARDIOLOGY_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String TRAUMA_ASSISTANCE_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String TRAUMA_TECHNICIAN_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String OPTOMETRY_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String OT_TECHNICIAN_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String PHYSIOTHERAPY_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String SANITATION_DIPLOMA = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html";
+
+    public static final String R_MSC = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/MSC-r.html";
+
+    public static final String R_PBBSC = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/MSC-r.html";
+
+    public static final String R_GOODSTANDING = "https://raw.githubusercontent.com/kumarpawantarento/templates/main/GoodStanding.html";
+}
+ 

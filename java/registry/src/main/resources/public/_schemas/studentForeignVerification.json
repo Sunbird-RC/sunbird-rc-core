@@ -89,6 +89,23 @@
           "$id": "#/properties/dob",
           "type": "string",
           "title": "dob"
+        },
+        "doc-proof": {
+          "type": "array",
+          "items": {
+            "type": "String"
+          },
+          "title": "All Document Proof"
+        },
+        "candidate-pics": {
+          "$id": "#/properties/candidate-pics",
+          "type": "string",
+          "title": "candidate-pics"
+        },
+        "paymentStatus": {
+          "$id": "#/properties/paymentStatus",
+          "type": "string",
+          "title": "paymentStatus"
         }
       }
     }
@@ -126,7 +143,9 @@
           "refNo": "$.refNo",
           "date": "$.date",
           "validityOfRegistration": "$.validityOfRegistration",
-          "dob": "$.dob"
+          "dob": "$.dob",
+          "doc-proof": "$.doc-proof",
+          "paymentStatus": "$.paymentStatus"
         },
         "credentialTemplate": {
           "@context": [
@@ -226,7 +245,19 @@
                 "@context": {
                   "name": "schema:Text"
                 }
+              },
+              "doc-proof": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#doc-proof",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "paymentStatus": {
+              "@id": "https://github.com/sunbird-specs/vc-specs#paymentStatus",
+              "@context": {
+                "name": "schema:Text"
               }
+            }
             }
           ],
           "type": [

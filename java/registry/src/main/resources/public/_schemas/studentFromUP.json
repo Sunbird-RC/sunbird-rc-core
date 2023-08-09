@@ -186,6 +186,23 @@
               "$id": "#/properties/examBody",
               "type": "string",
               "title": "examBody"
+            },
+            "doc-proof": {
+              "type": "array",
+              "items": {
+                "type": "String"
+              },
+              "title": "All Document Proof"
+            },
+            "candidate-pics": {
+              "$id": "#/properties/candidate-pics",
+              "type": "string",
+              "title": "candidate-pics"
+            },
+            "paymentStatus": {
+              "$id": "#/properties/paymentStatus",
+              "type": "string",
+              "title": "paymentStatus"
             }
           }
         }
@@ -220,7 +237,10 @@
           "passingYear": "$.passingYear",
           "examBody": "$.examBody",
           "finalYearRollNo": "$.finalYearRollNo",
-          "date": "$.date"
+          "date": "$.date",
+          "doc-proof": "$.doc-proof",
+          "candidate-pics": "$.candidate-pics",
+          "paymentStatus": "$.paymentStatus"
         },
         "credentialTemplate": {
           "@context": [
@@ -320,7 +340,26 @@
                 "@context": {
                   "name": "schema:Text"
                 }
+              },
+              "candidate-pics": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#candidate-pics",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "doc-proof": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#doc-proof",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "paymentStatus": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#paymentStatus",
+                "@context": {
+                  "name": "schema:Text"
+                }
               }
+
             }
           ],
           "type": ["VerifiableCredential"],
@@ -338,7 +377,8 @@
             "passingYear": "{{passingYear}}",
             "examBody": "{{examBody}}",
             "finalYearRollNo": "{{finalYearRollNo}}",
-            "date": "{{date}}"
+            "date": "{{date}}",
+            "candidate-pics": "{{candidate-pics}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }
