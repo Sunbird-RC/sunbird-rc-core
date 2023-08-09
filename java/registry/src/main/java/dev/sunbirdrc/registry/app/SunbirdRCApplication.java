@@ -59,10 +59,10 @@ public class SunbirdRCApplication {
         List<String> list = new ArrayList();
         list.add("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        CorsConfiguration config = new CorsConfiguration();
+        CorsConfiguration config = new CorsConfiguration();
         //config.setAllowCredentials(true);
 //        config.addAllowedOrigin(corsAllowedOrigin);
-//        config.addAllowedOrigin("*");
+          config.addAllowedOrigin("*");
 //        config.setAllowedOrigins(list);
 //        config.addAllowedHeader("*");
 //        config.addAllowedMethod("POST");
