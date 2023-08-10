@@ -48,6 +48,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -1123,6 +1124,87 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(statusCode, HttpStatus.FORBIDDEN);
         }
 
+    }
+
+    /**
+     * @param entityName
+     * @param entityId
+     * @param files
+     * @param request
+     * @return
+     */
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/upload/multi-files", method = RequestMethod.PUT)
+    public ResponseEntity<Object> putMultiEntityFiles(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @RequestParam MultipartFile[] files,
+            HttpServletRequest request) {
+
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
+            try {
+                registryHelper.authorize(entityName, entityId, request);
+            } catch (Exception e) {
+                return createUnauthorizedExceptionResponse(e);
+            }
+        }
+        ResponseParams responseParams = new ResponseParams();
+
+        try {
+            List<String> fileUrlList = certificateService.uploadMultiEntityDocFiles(files, entityName, entityId);
+
+            Response response = new Response(Response.API_ID.CREATE, HttpStatus.OK.name(), responseParams);
+            response.setResult(fileUrlList);
+
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("RegistryController: Exception while uploading files", e);
+
+            Response response = new Response(Response.API_ID.CREATE, HttpStatus.INTERNAL_SERVER_ERROR.name(), responseParams);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/upload/file", method = RequestMethod.PUT)
+    public ResponseEntity<Object> putSingleEntityFile(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @RequestParam MultipartFile file,
+            HttpServletRequest request) {
+
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
+            try {
+                registryHelper.authorize(entityName, entityId, request);
+            } catch (Exception e) {
+                return createUnauthorizedExceptionResponse(e);
+            }
+        }
+        ResponseParams responseParams = new ResponseParams();
+
+        try {
+            String fileUrl = certificateService.uploadSingleEntityDocFiles(file, entityName, entityId);
+
+            Response response = new Response(Response.API_ID.CREATE, HttpStatus.OK.name(), responseParams);
+            response.setResult(fileUrl);
+
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("RegistryController: Exception while uploading single file", e);
+
+            Response response = new Response(Response.API_ID.CREATE, HttpStatus.INTERNAL_SERVER_ERROR.name(), responseParams);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

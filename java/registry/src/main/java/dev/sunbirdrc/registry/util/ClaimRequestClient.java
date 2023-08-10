@@ -7,11 +7,14 @@ import dev.sunbirdrc.pojos.dto.ClaimDTO;
 import dev.sunbirdrc.registry.controller.RegistryController;
 import dev.sunbirdrc.registry.dao.Learner;
 import dev.sunbirdrc.registry.model.dto.BarCode;
+import dev.sunbirdrc.registry.model.dto.FileDto;
 import dev.sunbirdrc.registry.model.dto.MailDto;
+import lombok.NonNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.data.domain.Pageable;
@@ -19,11 +22,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
+import java.util.List;
 
 @Component
 public class ClaimRequestClient {
@@ -39,7 +44,8 @@ public class ClaimRequestClient {
     private static final String GET_CRED_URL = "/api/v1/files/download?";
     private static final String PDF = ".PDF";
     private static final String GCS_CODE_API = "/api/v1/files/upload";
-
+    private static final String CLAIM_MULTI_FILE_UPLOAD = "/api/v1/files/upload/multiple";
+    private static String URL_APPENDER = "/";
 
     ClaimRequestClient(@Value("${claims.url}") String claimRequestUrl, RestTemplate restTemplate) {
         this.claimRequestUrl = claimRequestUrl;
@@ -172,6 +178,36 @@ public class ClaimRequestClient {
         );        logger.info("end getCredentials ...");
         return response.getBody();
     }
+
+    /**
+     * @param files
+     * @return
+     */
+    public List<FileDto> uploadCLaimMultipleFiles(@NonNull MultipartFile[] files, String entityName, String entityId) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+
+        for (MultipartFile file : files) {
+            body.add("files", file.getResource());
+        }
+
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        String url = claimRequestUrl + CLAIM_MULTI_FILE_UPLOAD + URL_APPENDER + entityName + URL_APPENDER + entityId;
+
+        logger.debug("Claim Service url for multiple file upload:"+ url);
+        ResponseEntity<List<FileDto>> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity,
+                new ParameterizedTypeReference<List<FileDto>>() {});
+
+        List<FileDto> fileDtoList = response.getBody();
+        return fileDtoList;
+    }
+
+
+
 
 
 }

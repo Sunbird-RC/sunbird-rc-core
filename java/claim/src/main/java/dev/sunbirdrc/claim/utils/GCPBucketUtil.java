@@ -96,7 +96,7 @@ public class GCPBucketUtil {
             Bucket bucket = storage.get(gcpBucketId,Storage.BucketGetOption.fields());
 
             RandomString id = new RandomString();
-            Blob blob = bucket.get(gcpDirectoryName+"/" + fileName);
+            Blob blob = bucket.get(fileName);
             return blob;
         }catch (GCPFileUploadException e){
             LOGGER.error("An error occurred while Downloading data. Exception: ", e);

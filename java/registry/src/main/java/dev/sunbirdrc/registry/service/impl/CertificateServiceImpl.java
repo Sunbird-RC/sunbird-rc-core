@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.dto.BarCode;
+import dev.sunbirdrc.registry.model.dto.FileDto;
 import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import org.jetbrains.annotations.NotNull;
@@ -17,11 +18,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_CERTIFICATE_SERVICE_NAME;
@@ -32,6 +33,16 @@ public class CertificateServiceImpl implements ICertificateService {
     private final String certificateUrl;
     private final String certificateHealthCheckURL;
     private final RestTemplate restTemplate;
+
+    @Value("${claims.url}")
+    private String claimRequestUrl;
+
+    @Value("${claims.download-path}")
+    private String claimDownloadPath;
+
+    static String static_download_parameter = "?fileName=";
+
+    private static String URL_APPENDER = "/";
 
     private boolean signatureEnabled;
     private static Logger logger = LoggerFactory.getLogger(CertificateServiceImpl.class);
@@ -170,5 +181,55 @@ public class CertificateServiceImpl implements ICertificateService {
 
         return bytes;
 
+    }
+
+    public List<String> uploadMultiEntityDocFiles(MultipartFile[] files, String entityName, String entityId) throws Exception {
+        if (files == null || files.length == 0) {
+            logger.error("Missing files to upload document");
+            throw new Exception("Missing files to upload document");
+        }
+
+        List<FileDto> fileDtoList = claimRequestClient.uploadCLaimMultipleFiles(files, entityName, entityId);
+
+        if (fileDtoList == null || fileDtoList.isEmpty()) {
+            throw new Exception("Unable to file file details while uploading file in claim service");
+        }
+
+        List<String> fileUrlList = fileDtoList.stream()
+                .map(fileDto -> claimRequestUrl  + claimDownloadPath + static_download_parameter + fileDto.getFileName())
+                .collect(Collectors.toList());
+
+        return fileUrlList;
+    }
+
+    /**
+     * @param file
+     * @param entityName
+     * @param entityId
+     * @return
+     * @throws Exception
+     */
+    public String uploadSingleEntityDocFiles(MultipartFile file, String entityName, String entityId) throws Exception {
+        if (file == null) {
+            logger.error("Missing file in single file upload document");
+            throw new Exception("Missing file in single file upload document");
+        }
+
+        List<FileDto> fileDtoList = claimRequestClient.uploadCLaimMultipleFiles(new MultipartFile[]{file}, entityName, entityId);
+
+        if (fileDtoList == null || fileDtoList.isEmpty()) {
+            throw new Exception("Unable to file file details while uploading file in claim service");
+        }
+
+        Optional<String> fileUrl = fileDtoList.stream()
+                .map(fileDto -> claimRequestUrl  + claimDownloadPath + static_download_parameter + fileDto.getFileName())
+                .findFirst();
+
+        if (!fileUrl.isPresent()) {
+            logger.error("Missing file url after uploading file");
+            throw new Exception("Missing file url after uploading file");
+        }
+
+        return fileUrl.get();
     }
 }
