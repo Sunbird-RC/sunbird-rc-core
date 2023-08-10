@@ -398,7 +398,7 @@
       "ANM_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing.html",
       "BABY_DIPLOMA": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html",
       "BABY_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing.html",
-      "BSC_NURSING": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing.html";,
+      "BSC_NURSING": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing.html",
       "DEGREE": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html",
       "ETCA_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html",
       "ETCA_DIPLOMA": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html",
@@ -411,10 +411,10 @@
       "FOREIGN_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/Foreign-certificate.html",
       "MSC_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/MSC-r.html",
       "PBBSC_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/MSC-r.html",
-      "SANITATION_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html"
+      "SANITATION_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html",
       "SANITATION_DIPLOMA": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html",
       "PHYSIOTHERAPY_DIPLOMA": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html",
-      "OPTOMETRY_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html";
+      "OPTOMETRY_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html",
       "OPTOMETRY_DIPLOMA": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html",
       "OTTECHNICIAN_REG": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate.html",
       "OTTECHNICIAN_DIPLOMA": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html",
