@@ -185,7 +185,7 @@
             "doc-proof": {
               "type": "array",
               "items": {
-                "type": "String"
+                "type": "string"
               },
               "title": "All Document Proof"
             },
