@@ -431,9 +431,9 @@ public class RegistryEntityController extends AbstractController {
 
     private JsonNode getAttestationSignedData(String attestationId, JsonNode node) throws AttestationNotFoundException, JsonProcessingException {
         JsonNode attestationNode = getAttestationNode(attestationId, node);
-        if (attestationNode.get(OSSystemFields._osAttestedData.name()) == null)
-            throw new AttestationNotFoundException();
-        attestationNode = objectMapper.readTree(attestationNode.get(OSSystemFields._osAttestedData.name()).asText());
+//        if (attestationNode.get(OSSystemFields._osAttestedData.name()) == null)
+//            throw new AttestationNotFoundException();
+//        attestationNode = objectMapper.readTree(attestationNode.asText());
         return attestationNode;
     }
 
@@ -443,7 +443,8 @@ public class RegistryEntityController extends AbstractController {
         JsonNode attestationNode = null;
         while (iterator.hasNext()) {
             attestationNode = iterator.next();
-            if (attestationNode.get(uuidPropertyName).toString().equals(attestationId)) {
+            JsonNode jsonNode = attestationNode.get(uuidPropertyName);
+            if (jsonNode!=null && jsonNode.toString().equals(attestationId)) {
                 break;
             }
         }

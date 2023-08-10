@@ -387,7 +387,7 @@
             "finalYearRollNo": "{{finalYearRollNo}}",
             "date": "{{date}}",
             "candidatePic": "{{candidatePic}}",
-            "feeReciptNo": "{{feeReciptNo}"
+            "feeReciptNo": "{{feeReciptNo}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }
