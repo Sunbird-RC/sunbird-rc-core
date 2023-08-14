@@ -38,6 +38,7 @@ public class ClaimRequestClient {
     private static final String CLAIMS_PATH = "/api/v1/claims";
     private static final String FETCH_CLAIMS_PATH = "/api/v1/getClaims";
 
+    private static final String FETCH_CLAIMS_STUDENT_PATH = "/api/v2/getClaims";
     private static final String MAIL_SEND_URL = "/api/v1/sendMail";
     private static final String BAR_CODE_API = "/api/v1/barcode";
     private static final String SAVE_CRED_API = "/api/v1/credentials/save";
@@ -64,6 +65,14 @@ public class ClaimRequestClient {
         requestBody.set("attestorInfo", jsonNode);
         requestBody.put("entity", entityName);
         return restTemplate.postForObject(claimRequestUrl + FETCH_CLAIMS_PATH + QUERY_PARAMS, requestBody, JsonNode.class);
+    }
+
+    public JsonNode getStudentsClaims(JsonNode jsonNode, Pageable pageable, String entityName) {
+        final String QUERY_PARAMS = "?size=" + pageable.getPageSize() + "&page="+pageable.getPageNumber();
+        ObjectNode requestBody = JsonNodeFactory.instance.objectNode();
+        requestBody.set("attestorInfo", jsonNode);
+        requestBody.put("entity", entityName);
+        return restTemplate.postForObject(claimRequestUrl + FETCH_CLAIMS_STUDENT_PATH + QUERY_PARAMS, requestBody, JsonNode.class);
     }
 
     public JsonNode getClaim(JsonNode jsonNode, String entityName, String claimId) {

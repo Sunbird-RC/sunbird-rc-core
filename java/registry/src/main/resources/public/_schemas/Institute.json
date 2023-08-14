@@ -1,0 +1,212 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "Institute": {
+      "$ref": "#/definitions/Institute"
+    }
+  },
+  "required": [
+    "Institute"
+  ],
+  "title": "Institute",
+  "definitions": {
+    "Institute": {
+      "$id": "#/properties/Institute",
+      "type": "object",
+      "title": "The Institute Schema",
+      "required": [],
+      "properties": {
+        "instituteName": {
+          "$id": "#/properties/instituteName",
+          "type": "string",
+          "title": "Institute Name"
+        },
+        "address": {
+          "$ref": "Common.json/#/definitions/Address",
+          "title": "Address"
+        },
+        "establishmentYear": {
+          "$id": "#/properties/establishmentYear",
+          "type": "integer",
+          "title": "Year of establishment of institute"
+        },
+        "gstnId": {
+          "$id": "#/properties/gstnId",
+          "type": "string",
+          "title": "GSTN ID"
+        },
+        "contactNumber": {
+          "$id": "#/properties/contactNumber",
+          "type": "string",
+          "title": "Landline / Mobile"
+        },
+        "email": {
+          "$id": "#/properties/email",
+          "type": "string",
+          "format": "email",
+          "title": "Email"
+        },
+        "website": {
+          "$id": "#/properties/website",
+          "type": "string",
+          "format": "uri",
+          "title": "Website"
+        },
+        "category": {
+          "$id": "#/properties/category",
+          "type": "string",
+          "title": "Institute Category (Primary/Secondary etc)",
+          "enum": [
+            "Primary",
+            "Secondary"
+          ]
+        },
+        "schoolType": {
+          "$id": "#/properties/schoolType",
+          "type": "string",
+          "title": "School Type ",
+          "enum": [
+            "Boys",
+            "Girls",
+            "Co-ed"
+          ]
+        },
+        "instituteManagement": {
+          "$id": "#/properties/instituteManagement",
+          "type": "string",
+          "title": "Management of institute"
+        },
+        "committee": {
+          "$id": "#/properties/instituteManagement",
+          "type": "string",
+          "title": "Name of Trust / Society / Managing Committee"
+        },
+        "adminName": {
+          "$id": "#/properties/adminName",
+          "type": "string",
+          "title": "Principal / Dean / Head - Full Name"
+        },
+        "adminEmail": {
+          "$id": "#/properties/adminEmail",
+          "type": "string",
+          "title": "Principal / Dean / Head - Email"
+        },
+        "adminMobile": {
+          "$id": "#/properties/adminMobile",
+          "type": "string",
+          "title": "Principal / Dean / Head - Mobile"
+        },
+        "affiliation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Affiliation"
+          },
+          "title": "Affiliation"
+        }
+      }
+    },
+    "Affiliation": {
+      "type": "object",
+      "properties": {
+        "medium": {
+          "type": "string",
+          "enum": ["English", "Hindi", "Gujarati", "Malayalam", "Tamil"],
+          "title": "Medium of Education"
+        },
+        "board": {
+          "type": "string",
+          "title": "Affiliations Board"
+        },
+        "affiliationNumber": {
+          "type": "string",
+          "title": "Affiliation Number"
+        },
+        "grantYear": {
+          "type": "string",
+          "title": "Grant year"
+        },
+        "expiryYear": {
+          "type": "string",
+          "title": "Expiry Year"
+        },
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Pre-Pri.",
+              "Class I",
+              "Class II",
+              "Class III",
+              "Class IV",
+              "Class V",
+              "Class VI",
+              "Class VII",
+              "Class VIII",
+              "Class IX",
+              "Class X",
+              "Class XI",
+              "Class XII"
+            ]
+          },
+          "title": "Classes / Grades"
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "osComment": [
+      "This section contains the specific configuration information",
+      "privateFields: Optional; list of field names to be encrypted and stored in database",
+      "signedFields: Optional; list of field names that must be pre-signed",
+      "indexFields: Optional; list of field names used for creating index. Enclose within braces to indicate it is a composite index. In this definition, (serialNum, schoolCode) is a composite index and schoolName is a single column index.",
+      "uniqueIndexFields: Optional; list of field names used for creating unique index. Field names must be different from index field name",
+      "systemFields: Optional; list of fields names used for system standard information like created, updated timestamps and userid"
+    ],
+    "privateFields": [
+      "$.contactNumber",
+      "$.email"
+    ],
+    "internalFields": [
+      "$.adminEmail",
+      "$.adminMobile"
+    ],
+    "indexFields": [],
+    "uniqueIndexFields": [
+      "instituteName"
+    ],
+    "systemFields": [
+      "osCreatedAt",
+      "osUpdatedAt",
+      "osCreatedBy",
+      "osUpdatedBy"
+    ],
+    "attestationPolicies": [
+      {
+        "name": "instituteAffiliation",
+        "conditions": "(ATTESTOR#$.[*]#.contains('board-cbse'))",
+        "type": "MANUAL",
+        "attestorPlugin": "did:internal:ClaimPluginActor?entity=board-cbse",
+        "attestationProperties": {
+          "affiliation": "$.affiliation",
+          "instituteName": "$.instituteName"
+        }
+      }
+    ],
+    "inviteRoles":["anonymous"],
+    "roles":[],
+    "ownershipAttributes": [
+      {
+        "email": "/email",
+        "mobile": "/contactNumber",
+        "userId": "/email"
+      },
+      {
+        "email": "/adminEmail",
+        "mobile": "/adminMobile",
+        "userId": "/adminEmail"
+      }
+    ]
+  }
+}

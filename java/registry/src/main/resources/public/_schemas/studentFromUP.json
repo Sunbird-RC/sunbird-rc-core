@@ -13,198 +13,155 @@
       "$id": "#/properties/StudentFromUP",
       "type": "object",
       "title": "StudentFromUP",
+      "required": ["name", "phoneNumber", "email", "council"],
+      "uniqueIndexFields": [
+        "phoneNumber"
+      ],
       "properties": {
-        "registrationType": {
-          "$id": "#/properties/registrationType",
+        "name": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "council": {
+          "type": "string"
+        },
+        "mothersName": {
           "type": "string",
-          "title": "registrationType",
-          "required": [
-            "name",
-            "phoneNumber",
-            "email",
-            "council"
-          ],
-          "uniqueIndexFields": [
-            "phoneNumber"
-          ],
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "phoneNumber": {
-              "type": "string"
-            },
-            "email": {
-              "type": "string"
-            },
-            "council": {
-              "type": "string"
-            },
-            "mothersName": {
-              "$id": "#/properties/mothersName",
-              "type": "string",
-              "title": "motherName"
-            },
-            "fathersName": {
-              "$id": "#/properties/fathersName",
-              "type": "string",
-              "title": "fatherName"
-            },
-            "dateOfBirth": {
-              "$id": "#/properties/dateOfBirth",
-              "type": "string",
-              "title": "dateOfBirth"
-            },
-            "aadhaarNo": {
-              "$id": "#/properties/aadhaarNo",
-              "type": "string",
-              "title": "aadhaarNo"
-            },
-            "barCode": {
-              "$id": "#/properties/barCode",
-              "type": "string",
-              "title": "barCode"
-            },
-            "gender": {
-              "$id": "#/properties/gender",
-              "type": "string",
-              "title": "gender",
-              "enum": ["male", "female"]
-            },
-            "address": {
-              "$id": "#/properties/address",
-              "type": "object",
-              "title": "address",
-              "required": [],
-              "properties": {
-                "address-text": {
-                  "type": "string",
-                  "title": "Plot"
-                },
-                "state": {
-                  "$id": "#/properties/state",
-                  "type": "string",
-                  "title": "State",
-                  "enum": [
-                    "Andaman and Nicobar Islands",
-                    "Andhra Pradesh",
-                    "Arunachal Pradesh",
-                    "Assam",
-                    "Bihar",
-                    "Chandigarh",
-                    "Chhattisgarh",
-                    "Dadra and Nagar Haveli",
-                    "Daman and Diu",
-                    "Delhi",
-                    "Goa",
-                    "Gujarat",
-                    "Haryana",
-                    "Himachal Pradesh",
-                    "Jammu and Kashmir",
-                    "Jharkhand",
-                    "Karnataka",
-                    "Kerala",
-                    "Ladakh",
-                    "Lakshadweep",
-                    "Madhya Pradesh",
-                    "Maharashtra",
-                    "Manipur",
-                    "Meghalaya",
-                    "Mizoram",
-                    "Nagaland",
-                    "Odisha",
-                    "Puducherry",
-                    "Punjab",
-                    "Rajasthan",
-                    "Sikkim",
-                    "Tamil Nadu",
-                    "Telangana",
-                    "Tripura",
-                    "Uttar Pradesh",
-                    "Uttarakhand",
-                    "West Bengal"
-                  ]
-                },
-                "district": {
-                  "$id": "#/properties/district",
-                  "type": "string",
-                  "title": "district"
-                },
-                "country": {
-                  "$id": "#/properties/country",
-                  "type": "string",
-                  "title": "country"
-                },
-                "pincode": {
-                  "$id": "#/properties/pincode",
-                  "type": "string",
-                  "title": "pincode"
-                }
-              }
-            },
-            "courseName": {
-              "$id": "#/properties/courseName",
-              "type": "string",
-              "title": "courseName"
-            },
-            "nursingCollage": {
-              "$id": "#/properties/nursingCollage",
-              "type": "string",
-              "title": "nursingCollage"
-            },
-            "joiningMonth": {
-              "$id": "#/properties/joiningMonth",
-              "type": "string",
-              "title": "joiningMonth"
-            },
-            "joiningYear": {
-              "$id": "#/properties/joiningYear",
-              "type": "string",
-              "title": "joiningYear"
-            },
-            "passingMonth": {
-              "$id": "#/properties/passingMonth",
-              "type": "string",
-              "title": "passingMonth"
-            },
-            "passingYear": {
-              "$id": "#/properties/passingYear",
-              "type": "string",
-              "title": "passingYear"
-            },
-            "finalYearRollNo": {
-              "$id": "#/properties/finalYearRollNo",
-              "type": "string",
-              "title": "finalYearRollNo"
-            },
-            "examBody": {
-              "$id": "#/properties/examBody",
-              "type": "string",
-              "title": "examBody"
-            },
-            "doc-proof": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "title": "All Document Proof"
-            },
-            "candidatePic": {
-              "$id": "#/properties/candidatePic",
-              "type": "string",
-              "title": "candidatePic"
-            },
-            "paymentStatus": {
-              "$id": "#/properties/paymentStatus",
-              "type": "string",
-              "title": "paymentStatus"
-            },
-            "feeReciptNo": {
-              "$id": "#/properties/feeReciptNo",
-              "type": "string",
-              "title": "feeReciptNo"
-            }
-          }
+          "title": "motherName"
+        },
+        "fathersName": {
+          "type": "string",
+          "title": "fatherName"
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "title": "dateOfBirth"
+        },
+        "aadhaarNo": {
+          "type": "string",
+          "title": "aadhaarNo"
+        },
+        "barCode": {
+          "type": "string",
+          "title": "barCode"
+        },
+        "gender": {
+          "type": "string",
+          "title": "gender",
+          "enum": ["male", "female"]
+        },
+        "address": {
+          "type": "string"},
+        "state": {
+          "type": "string",
+          "title": "State",
+          "enum": [
+            "Andaman and Nicobar Islands",
+            "Andhra Pradesh",
+            "Arunachal Pradesh",
+            "Assam",
+            "Bihar",
+            "Chandigarh",
+            "Chhattisgarh",
+            "Dadra and Nagar Haveli",
+            "Daman and Diu",
+            "Delhi",
+            "Goa",
+            "Gujarat",
+            "Haryana",
+            "Himachal Pradesh",
+            "Jammu and Kashmir",
+            "Jharkhand",
+            "Karnataka",
+            "Kerala",
+            "Ladakh",
+            "Lakshadweep",
+            "Madhya Pradesh",
+            "Maharashtra",
+            "Manipur",
+            "Meghalaya",
+            "Mizoram",
+            "Nagaland",
+            "Odisha",
+            "Puducherry",
+            "Punjab",
+            "Rajasthan",
+            "Sikkim",
+            "Tamil Nadu",
+            "Telangana",
+            "Tripura",
+            "Uttar Pradesh",
+            "Uttarakhand",
+            "West Bengal"
+          ]
+        },
+        "district": {
+          "type": "string",
+          "title": "district"
+        },
+        "country": {
+          "type": "string",
+          "title": "country"
+        },
+        "pincode": {
+          "type": "string",
+          "title": "pincode"
+        },
+        "candidatePic": {
+      "type": "string",
+      "title": "candidatePic"
+    },
+        "doc-proof": {
+          "type": "string",
+          "items": {
+            "type": "string"
+          },
+          "title": "All Document Proof"
+        },
+        "courseName": {
+          "type": "string",
+          "title": "courseName"
+        },
+        "nursingCollage": {
+          "type": "string",
+          "title": "nursingCollage"
+        },
+        "joiningMonth": {
+          "type": "string",
+          "title": "joiningMonth"
+        },
+        "joiningYear": {
+          "type": "string",
+          "title": "joiningYear"
+        },
+        "passingMonth": {
+          "type": "string",
+          "title": "passingMonth"
+        },
+        "passingYear": {
+          "type": "string",
+          "title": "passingYear"
+        },
+        "finalYearRollNo": {
+          "type": "string",
+          "title": "finalYearRollNo"
+        },
+        "feeReciptNo": {
+          "type": "string",
+          "title": "feeReciptNo"
+        },
+        "examBody": {
+          "type": "string",
+          "title": "examBody"
+        },
+        "paymentStatus": {
+          "type": "string",
+          "title": "paymentStatus"
         }
       }
     }
@@ -219,6 +176,7 @@
     ],
     "inviteRoles": ["anonymous"],
     "roles": ["StudentFromUP"],
+
     "attestationPolicies": [
       {
         "name": "studentUPVerification",
@@ -242,7 +200,12 @@
           "doc-proof": "$.doc-proof",
           "candidatePic": "$.candidatePic",
           "paymentStatus": "$.paymentStatus",
-          "feeReciptNo": "$.feeReciptNo"
+          "feeReciptNo": "$.feeReciptNo",
+          "address": "$.address",
+          "state": "$.state",
+          "district": "$.district",
+          "country": "$.country",
+          "pincode": "$.pincode"
         },
         "credentialTemplate": {
           "@context": [
@@ -265,12 +228,6 @@
                   "name": "schema:Text"
                 }
               },
-              "trainedOn": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#trainedOn",
-                "@context": {
-                  "name": "schema:Text"
-                }
-              },
               "mothersName": {
                 "@id": "https://github.com/sunbird-specs/vc-specs#mothersName",
                 "@context": {
@@ -285,6 +242,30 @@
               },
               "address": {
                 "@id": "https://github.com/sunbird-specs/vc-specs#address",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "state": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#state",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "district": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#district",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "country": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#country",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "pincode": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#pincode",
                 "@context": {
                   "name": "schema:Text"
                 }
@@ -377,7 +358,6 @@
             "name": "{{name}}",
             "mothersName": "{{mothersName}}",
             "fathersName": "{{fathersName}}",
-            "address": "{{address}}",
             "courseName": "{{courseName}}",
             "joiningMonth": "{{joiningMonth}}",
             "joiningYear": "{{joiningYear}}",
@@ -387,7 +367,13 @@
             "finalYearRollNo": "{{finalYearRollNo}}",
             "date": "{{date}}",
             "candidatePic": "{{candidatePic}}",
-            "feeReciptNo": "{{feeReciptNo}}"
+            "feeReciptNo": "{{feeReciptNo}}",
+            "council": "{{council}}",
+            "address": "{{address}}",
+            "district": "{{district}}",
+            "country": "{{country}}",
+            "state": "{{state}}",
+            "pincode": "{{pincode}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }

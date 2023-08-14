@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": { "Student": { "$ref": "#/definitions/Student" } },
+  "required": ["Student"],
+  "title": "Student",
+  "definitions": {
+    "Student": {
+      "$id": "#/properties/Student",
+      "type": "object",
+      "title": "Student",
+      "required": ["name", "phoneNumber", "email", "school"],
+      "uniqueIndexFields": ["phoneNumber"],
+      "properties": {
+        "name": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "email": { "type": "string" },
+        "school": { "type": "string" }
+      }
+    }
+  },
+  "_osConfig": {
+
+    "ownershipAttributes": [
+      {
+        "email": "/email",
+        "mobile": "/phoneNumber",
+        "userId": "/phoneNumber"
+      }
+    ],
+    "inviteRoles": ["anonymous"],
+    "roles": ["Regulator"],
+    "attestationPolicies": [
+      {
+        "name": "studentVerification",
+        "conditions": "(ATTESTOR#$.school#.contains(REQUESTER#$.school#))",
+        "type": "MANUAL",
+        "attestorPlugin": "did:internal:ClaimPluginActor?entity=Regulator",
+        "attestationProperties": {
+          "name": "$.name",
+          "school": "$.school"
+        },
+        "credentialTemplate": {
+          "@context": [
+            "https://www.w3.org/2018/credentials/v1",
+            {
+              "@version": 1.1,
+              "@protected": true,
+              "SkillCertificate": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#SkillCertificate",
+                "@context": {
+                  "id": "@id",
+                  "@version": 1.1,
+                  "@protected": true,
+                  "skills": "schema:Text"
+                }
+              },
+              "Person": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#Person",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "trainedOn": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#trainedOn",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              }
+            }
+          ],
+          "type": ["VerifiableCredential"],
+          "issuanceDate": "2021-08-27T10:57:57.237Z",
+          "credentialSubject": {
+            "type": "Person",
+            "name": "{{name}}",
+            "trainedOn": "{{school}}"
+          },
+          "issuer": "did:web:sunbirdrc.dev/vc/skill"
+        }
+      }
+    ],
+    "certificateTemplates": {
+      "svg": "https://raw.githubusercontent.com/aniket-aditya/sunbird-rc/main/rc-demo-template.svg"
+    }
+  }
+}

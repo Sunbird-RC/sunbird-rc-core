@@ -57,6 +57,22 @@ public class RegistryClaimsController extends AbstractController{
         }
     }
 
+
+    @RequestMapping(value = "/api/v2/{entityName}/claims", method = RequestMethod.GET)
+    public ResponseEntity<Object> getStudentsClaims(@PathVariable String entityName, Pageable pageable,
+                                               HttpServletRequest request) {
+        try {
+            JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
+            JsonNode claims = claimRequestClient.getStudentsClaims(result.get(entityName).get(0).get("email"), pageable, entityName);
+            logger.info("Received {} claims", claims.size());
+            return new ResponseEntity<>(claims, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Fetching claims failed {}", e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @RequestMapping(value = "/api/v1/{entityName}/claims/{claimId}", method = RequestMethod.GET)
     public ResponseEntity<Object> getClaim(@PathVariable String entityName, @PathVariable String claimId,
                                            HttpServletRequest request) {

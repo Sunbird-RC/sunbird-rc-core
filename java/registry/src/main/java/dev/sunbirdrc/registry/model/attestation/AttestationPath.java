@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.model.attestation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.*;
 
@@ -56,24 +57,42 @@ public class AttestationPath {
                 if (currNode == null || currNode.isMissingNode()) {
                     continue;
                 }
-                ArrayNode arrayNode = (ArrayNode) currNode;
-                for (int j = 0; j < arrayNode.size(); j++) {
-                    if (arrayNode.get(j).isObject()) {
-                        JsonNode uuidNode = arrayNode.get(j).get(uuidPropertyName);
-                        String uuidPointer = SEP;
-                        if (uuidNode == null || uuidNode.isMissingNode()) {
-                            uuidPointer = uuidPointer + EntityPropertyURI.NO_UUID;
+                ArrayNode arrayNode = null;
+                ObjectNode objectNode = null;
+                if(currNode instanceof ArrayNode){
+                    arrayNode = (ArrayNode) currNode;
+                    for (int j = 0; j < arrayNode.size(); j++) {
+                        if (arrayNode.get(j).isObject()) {
+                            JsonNode uuidNode = arrayNode.get(j).get(uuidPropertyName);
+                            String uuidPointer = SEP;
+                            if (uuidNode == null || uuidNode.isMissingNode()) {
+                                uuidPointer = uuidPointer + EntityPropertyURI.NO_UUID;
+                            } else {
+                                uuidPointer = uuidPointer + uuidNode.asText();
+                            }
+                            currPaths.add(EntityPropertyURI.merge(currPath,
+                                    uuidPointer,
+                                    SEP + j
+                            ));
                         } else {
-                            uuidPointer = uuidPointer + uuidNode.asText();
+                            currPaths.add(EntityPropertyURI.merge(currPath, SEP + j, SEP + j));
                         }
-                        currPaths.add(EntityPropertyURI.merge(currPath,
-                                uuidPointer,
-                                SEP + j
-                        ));
-                    } else {
-                        currPaths.add(EntityPropertyURI.merge(currPath, SEP + j, SEP + j));
                     }
+                } else if(currNode instanceof ObjectNode){
+                    objectNode = (ObjectNode) currNode;
+                    String uuidPointer = SEP;
+                    if (objectNode == null || objectNode.isMissingNode()) {
+                        uuidPointer = uuidPointer + EntityPropertyURI.NO_UUID;
+                    } else {
+                        uuidPointer = uuidPointer + objectNode.asText();
+                    }
+                    currPaths.add(EntityPropertyURI.merge(currPath,
+                            uuidPointer,
+                            SEP
+                    ));
                 }
+
+
             }
         }
         return new HashSet<>(currPaths);
