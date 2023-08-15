@@ -17,35 +17,14 @@
       "uniqueIndexFields": [
         "phoneNumber"
       ],
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "phoneNumber": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "council": {
-          "type": "string"
-        },
-        "mothersName": {
-          "type": "string",
-          "title": "motherName"
-        },
-        "fathersName": {
-          "type": "string",
-          "title": "fatherName"
-        },
-        "dateOfBirth": {
-          "type": "string",
-          "title": "dateOfBirth"
-        },
-        "aadhaarNo": {
-          "type": "string",
-          "title": "aadhaarNo"
-        },
+      "properties": {"name": {"type": "string"},
+        "phoneNumber": {"type": "string"},
+        "email": {"type": "string"},
+        "council": {"type": "string"},
+        "mothersName": {"type": "string", "title": "motherName"},
+        "fathersName": { "type": "string","title": "fatherName"},
+        "dateOfBirth": {"type": "string", "title": "dateOfBirth"},
+        "aadhaarNo": {"type": "string",  "title": "aadhaarNo"},
         "barCode": {
           "type": "string",
           "title": "barCode"

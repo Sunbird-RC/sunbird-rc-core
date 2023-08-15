@@ -9,13 +9,17 @@
       "$id": "#/properties/Student",
       "type": "object",
       "title": "Student",
-      "required": ["name", "phoneNumber", "email", "school"],
+      "required": ["name", "phoneNumber", "email", "council"],
       "uniqueIndexFields": ["phoneNumber"],
       "properties": {
         "name": { "type": "string" },
         "phoneNumber": { "type": "string" },
         "email": { "type": "string" },
-        "school": { "type": "string" }
+        "council": { "type": "string" },
+        "mothersName": {"type": "string", "title": "motherName"},
+        "fathersName": { "type": "string","title": "fatherName"},
+        "dateOfBirth": {"type": "string", "title": "dateOfBirth"},
+        "aadhaarNo": {"type": "string",  "title": "aadhaarNo"}
       }
     }
   },
@@ -33,12 +37,18 @@
     "attestationPolicies": [
       {
         "name": "studentVerification",
-        "conditions": "(ATTESTOR#$.school#.contains(REQUESTER#$.school#))",
+        "conditions": "(ATTESTOR#$.council#.contains(REQUESTER#$.council#))",
         "type": "MANUAL",
         "attestorPlugin": "did:internal:ClaimPluginActor?entity=Regulator",
         "attestationProperties": {
           "name": "$.name",
-          "school": "$.school"
+          "email": "$.email",
+          "phoneNumber": "$.phoneNumber",
+          "council": "$.council",
+          "mothersName": "$.mothersName",
+          "fathersName": "$.fathersName",
+          "dateOfBirth": "$.dateOfBirth",
+          "aadhaarNo": "$.aadhaarNo"
         },
         "credentialTemplate": {
           "@context": [
@@ -61,12 +71,42 @@
                   "name": "schema:Text"
                 }
               },
-              "trainedOn": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#trainedOn",
+              "council": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#council",
                 "@context": {
                   "name": "schema:Text"
-                }
-              }
+                }},
+              "mothersName": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#mothersName",
+                "@context": {
+                  "name": "schema:Text"
+                }},
+              "fathersName": {
+                  "@id": "https://github.com/sunbird-specs/vc-specs#fathersName",
+                  "@context": {
+                    "name": "schema:Text"
+                  }},
+              "dateOfBirth": {
+              "@id": "https://github.com/sunbird-specs/vc-specs#dateOfBirth",
+              "@context": {
+                "name": "schema:Text"
+              }},
+              "aadhaarNo": {
+              "@id": "https://github.com/sunbird-specs/vc-specs#aadhaarNo",
+              "@context": {
+                "name": "schema:Text"
+              }},
+              "phoneNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#phoneNumber",
+                "@context": {
+                  "name": "schema:Text"
+                }},
+              "email": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#email",
+                "@context": {
+                  "name": "schema:Text"
+                }}
+
             }
           ],
           "type": ["VerifiableCredential"],
@@ -74,14 +114,21 @@
           "credentialSubject": {
             "type": "Person",
             "name": "{{name}}",
-            "trainedOn": "{{school}}"
+            "mothersName": "{{mothersName}}",
+            "fathersName": "{{fathersName}}",
+            "dateOfBirth": "{{dateOfBirth}}",
+            "aadhaarNo": "{{aadhaarNo}}",
+            "council": "{{council}}",
+            "email": "{{email}}",
+            "phoneNumber": "{{phoneNumber}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }
       }
     ],
     "certificateTemplates": {
-      "svg": "https://raw.githubusercontent.com/aniket-aditya/sunbird-rc/main/rc-demo-template.svg"
+      "svg": "https://raw.githubusercontent.com/aniket-aditya/sunbird-rc/main/rc-demo-template.svg",
+      "ANM_DIPLOMA": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/BABY-D.html"
     }
   }
 }
