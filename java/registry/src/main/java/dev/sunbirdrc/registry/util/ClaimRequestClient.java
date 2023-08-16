@@ -9,6 +9,7 @@ import dev.sunbirdrc.registry.dao.Learner;
 import dev.sunbirdrc.registry.model.dto.BarCode;
 import dev.sunbirdrc.registry.model.dto.FileDto;
 import dev.sunbirdrc.registry.model.dto.MailDto;
+import dev.sunbirdrc.registry.model.dto.PendingMailDTO;
 import lombok.NonNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -46,6 +47,8 @@ public class ClaimRequestClient {
     private static final String GCS_CODE_API = "/api/v1/files/upload";
     private static final String CLAIM_MULTI_FILE_UPLOAD = "/api/v1/files/upload/multiple";
     private static String URL_APPENDER = "/";
+
+    private static final String MAIL_SEND_PENDING_FOREIGN_ITEM_URL = "/api/v1/sendPendingForeignItemMail";
 
     ClaimRequestClient(@Value("${claims.url}") String claimRequestUrl, RestTemplate restTemplate) {
         this.claimRequestUrl = claimRequestUrl;
@@ -206,7 +209,12 @@ public class ClaimRequestClient {
         return fileDtoList;
     }
 
-
+    public String sendPendingForeignItemMail(PendingMailDTO pendingMailDTO) {
+        String mailStatus = restTemplate.postForObject(
+                claimRequestUrl + MAIL_SEND_PENDING_FOREIGN_ITEM_URL, pendingMailDTO, String.class);
+        logger.info("Pending foreign item mail status: " + mailStatus);
+        return mailStatus;
+    }
 
 
 

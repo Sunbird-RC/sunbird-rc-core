@@ -23,11 +23,13 @@ import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
+import dev.sunbirdrc.registry.model.dto.PendingMailDTO;
 import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.service.impl.CertificateServiceImpl;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
+import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import org.agrona.Strings;
 import dev.sunbirdrc.registry.util.DigiLockerUtils;
 import dev.sunbirdrc.registry.util.DocDetails;
@@ -83,6 +85,9 @@ public class RegistryEntityController extends AbstractController {
     boolean securityEnabled;
     @Value("${certificate.enableExternalTemplates:false}")
     boolean externalTemplatesEnabled;
+
+    @Autowired
+    private ClaimRequestClient claimRequestClient;
 
     @RequestMapping(value = "/api/v1/{entityName}/invite", method = RequestMethod.POST)
     public ResponseEntity<Object> invite(
@@ -1205,6 +1210,32 @@ public class RegistryEntityController extends AbstractController {
 
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}/sendPendingForeignItemMail", method = RequestMethod.POST)
+    public ResponseEntity<Object> sendPendingForeignItemMail(@PathVariable String entityName,
+                                                             @RequestBody PendingMailDTO pendingMailDTO,
+                                                             HttpServletRequest request) {
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+
+        try {
+            registryHelper.authorizeInviteEntity(request, entityName);
+
+            String mailStatus = claimRequestClient.sendPendingForeignItemMail(pendingMailDTO);
+
+            response.setResult(mailStatus);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+
+        } catch (Exception exception) {
+            logger.error("Exception : {}", exception.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

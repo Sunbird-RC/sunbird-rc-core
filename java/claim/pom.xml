@@ -154,6 +154,10 @@
             <artifactId>json</artifactId>
             <version>20210307</version>
         </dependency>
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
