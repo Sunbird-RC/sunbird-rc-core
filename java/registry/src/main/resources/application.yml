@@ -57,9 +57,9 @@ registry:
   rootEntity:
     type: ${registry_rootentity_type:Regulator}
   schema:
-    url: ${registry_schema_url:D:/Registry/sunbird-rc-core/java/registry/src/main/resources/public/_schemas}
+    url: ${registry_schema_url:/src/main/resources/public/_schemas}
   attestationPolicy:
-    createAccess: ${create_attestation_access_entities:User}
+    createAccess: ${create_attestation_access_entities:Regulator}
   manager:
     type: ${manager_type:DefinitionsManager}
   redis:
@@ -87,7 +87,7 @@ kafka:
   postCreateEntityTopic: ${kafka_post_create_entity_topic:post_create_entity}
 
 webhook:
-  enabled: ${webhook_enabled:false}
+  enabled: ${webhook_enabled:true}
   url: ${webhook_url:http://localhost:5001/api/v1/callback}
 
 conditionalAccess:
@@ -105,8 +105,8 @@ search:
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
   expandInternal: ${search_expandInternal:true}
-  removeNonPublicFieldsForNativeSearch: ${remove_non_public_fields_for_native_search:true}
-  providerName: ${search_providerName:dev.sunbirdrc.registry.service.NativeSearchService}
+  removeNonPublicFieldsForNativeSearch: ${remove_non_public_fields_for_native_search:false}
+  providerName: ${search_providerName:dev.sunbirdrc.registry.service.ElasticSearchService}
 
 # This property is to be used for read request
 read:
@@ -239,10 +239,10 @@ keycloak:
   resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
   client-id: ${sunbird_sso_admin_client_id:admin-api}
-  client-secret: ${sunbird_sso_admin_client_secret:19013b22-82b2-4a7b-a0ef-10ced3ef36f7}
+  client-secret: ${sunbird_sso_admin_client_secret:2b65f70c-bd02-4d5c-95d9-5341225aa849}
 keycloak-user:
   set-default-password: ${sunbird_keycloak_user_set_password:true}
-  default-password: ${sunbird_keycloak_user_password:medicalCouncil@123}
+  default-password: ${sunbird_keycloak_user_password:admin@123}
   # email actions which will be trigger by keycloak
   # example email actions: VERIFY_EMAIL, UPDATE_PROFILE, UPDATE_PASSWORD, TERMS_AND_CONDITIONS etc.
   # email details should be configured in keycloak realm settings
@@ -308,7 +308,7 @@ auditTaskExecutor:
 elastic:
   search:
     # elastic-search can be enable and disable through this flag
-    enabled: ${elastic_search_enabled:false}
+    enabled: ${elastic_search_enabled:true}
     # elastic-search connection info
     connection_url: ${elastic_search_connection_url:localhost:9200}
     add_shard_prefix: ${elastic_search_add_shard_prefix:true}
@@ -358,7 +358,7 @@ registry:
 # This property is to be used for read request
 read:
   # The read mechanism to use, values could be either NativeReadService or ElasticReadService
-  providerName: io.opensaber.registry.service.NativeReadService
+  providerName: io.opensaber.registry.service.ElasticReadService
 
 database:
   # This property is internal. Clients use this property to perform read/update operation.

@@ -154,13 +154,10 @@ public class DigiLockerUtils {
                 sb.append("\"name\""+":"+"\""+docDetails.getName()+"\""+",");
             if(docDetails.getMobile()!=null)
                 sb.append("\"mobile\""+":"+"\""+docDetails.getMobile()+"\""+",");
-            if(docDetails.getDateOfBirth()!=null)
-                sb.append("\"dob\""+":"+"\""+docDetails.getDateOfBirth()+"\""+",");
-            if(docDetails.getRollNumber()!=null)
-                sb.append("\"rollNumber\""+":"+"\""+docDetails.getRollNumber()+"\"");
-            else if (docDetails.getEnrollmentNumber() != null) {
-                sb.append("\"enrollmentNumber\""+":"+"\""+docDetails.getEnrollmentNumber()+"\"");
-            }
+//            if(docDetails.getDateOfBirth()!=null)
+//                sb.append("\"dob\""+":"+"\""+docDetails.getDateOfBirth()+"\""+",");
+            if(docDetails.getFinalYearRollNo()!=null)
+                sb.append("\"finalYearRollNo\""+":"+"\""+docDetails.getFinalYearRollNo()+"\"");
             sb.append("}");
             xmlString = sb.toString();
         } catch (JAXBException e) {

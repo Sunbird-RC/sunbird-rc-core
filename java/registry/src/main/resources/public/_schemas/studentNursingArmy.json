@@ -200,7 +200,7 @@
             "doc-proof": {
               "type": "array",
               "items": {
-                "type": "String"
+                "type": "string"
               },
               "title": "All Document Proof"
             },
@@ -247,7 +247,9 @@
           "date": "$.date",
           "doc-proof": "$.doc-proof",
           "candidatePic": "$.candidatePic",
-          "paymentStatus": "$.paymentStatus"
+          "paymentStatus": "$.paymentStatus",
+          "email": "$.email",
+          "phoneNumber": "$.phoneNumber"
         },
         "credentialTemplate": {
           "@context": [
@@ -371,6 +373,18 @@
                 "@context": {
                   "name": "schema:Text"
                 }
+              },
+              "phoneNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#phoneNumber",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "email": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#email",
+                "@context": {
+                  "name": "schema:Text"
+                }
               }
 
             }
@@ -392,14 +406,17 @@
             "finalYearRollNo": "{{finalYearRollNo}}",
             "armyRegNo": "{{armyRegNo}}",
             "date": "{{date}}",
-            "candidatePic": "{{candidatePic}}"
+            "candidatePic": "{{candidatePic}}",
+            "email": "{{email}}",
+            "phoneNumber": "{{phoneNumber}}",
+            "paymentStatus": "{{paymentStatus}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }
       }
     ],
     "certificateTemplates": {
-      "StudentArmyRegTemp": "https://raw.githubusercontent.com/aniket-aditya/sunbird-rc/main/rc-demo-template.svg"
+      "StudentArmyRegTemp": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/registration-certificate-nursing.html"
     }
   }
 }

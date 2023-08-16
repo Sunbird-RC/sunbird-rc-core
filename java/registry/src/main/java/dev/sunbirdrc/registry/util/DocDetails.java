@@ -8,22 +8,23 @@ public class DocDetails {
     private String digiLockerId;
     private String mobile;
     private String name;
-    private String rollNumber;
-    private String dateOfBirth;
+    private String finalYearRollNo;
     private String docType;
-    private String enrollmentNumber;
+    public String getFinalYearRollNo() {
+        return finalYearRollNo;
+    }
+
+    public void setFinalYearRollNo(String finalYearRollNo) {
+        this.finalYearRollNo = finalYearRollNo;
+    }
+
+
+
 
 
 
     private String entityName;
 
-    public String getEnrollmentNumber() {
-        return enrollmentNumber;
-    }
-
-    public void setEnrollmentNumber(String enrollmentNumber) {
-        this.enrollmentNumber = enrollmentNumber;
-    }
 
     public String getuID() {
         return uID;
@@ -57,21 +58,8 @@ public class DocDetails {
         this.name = name;
     }
 
-    public String getRollNumber() {
-        return rollNumber;
-    }
 
-    public void setRollNumber(String rollNumber) {
-        this.rollNumber = rollNumber;
-    }
 
-    public String getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(String dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
 
     public String getDocType() {
         return docType;

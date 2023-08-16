@@ -9,6 +9,8 @@ public class AttributeNames {
     public static final String ENTITY = "ENTITY";
     public static final String LOWERCASE_ENTITY = "entity";;
     public static final String ATTESTOR_INFO = "attestorInfo";
+
+    public static final String REQUESTOR_INFO = "reguestorInfo";
     public static final String CONTENT = "content";
     public static final String TOTAL_PAGES = "totalPages";
     public static final String TOTAL_ELEMENTS = "totalElements";

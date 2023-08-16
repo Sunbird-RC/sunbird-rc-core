@@ -75,7 +75,7 @@ public class NativeSearchService implements ISearchService {
 	@Value("${search.expandInternal}")
 	private boolean expandInternal;
 
-	@Value("${search.removeNonPublicFieldsForNativeSearch:true}")
+	@Value("${search.removeNonPublicFieldsForNativeSearch:false}")
 	private boolean removeNonPublicFieldsForNativeSearch;
 
 	@Override

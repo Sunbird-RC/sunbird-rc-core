@@ -1,14 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
-  "properties": { "StudentFromUP": { "$ref": "#/definitions/StudentFromUP" } },
-  "required": ["StudentFromUP"],
-  "title": "StudentFromUP",
+  "properties": { "Registration": { "$ref": "#/definitions/Registration" } },
+  "required": ["Registration"],
+  "title": "Registration",
   "definitions": {
-    "StudentFromUP": {
-      "$id": "#/properties/StudentFromUP",
+    "Registration": {
+      "$id": "#/properties/Registration",
       "type": "object",
-      "title": "StudentFromUP",
+      "title": "Registration",
       "required": ["name", "phoneNumber", "email", "council"],
       "uniqueIndexFields": ["phoneNumber"],
       "properties": {
@@ -79,14 +79,9 @@
   "_osConfig": {
 
     "ownershipAttributes": [
-      {
-        "email": "/email",
-        "mobile": "/phoneNumber",
-        "userId": "/phoneNumber"
-      }
     ],
     "inviteRoles": ["anonymous"],
-    "roles": ["Regulator"],
+    "roles": ["Regulator","Student"],
     "attestationPolicies": [
       {
         "name": "studentVerification",

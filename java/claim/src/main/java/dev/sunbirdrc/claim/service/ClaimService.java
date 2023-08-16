@@ -63,6 +63,14 @@ public class ClaimService {
         return toMap(claimsToAttestor, pageable);
     }
 
+    public List<Claim> findByRequestorName(String entity, Pageable pageable) {
+        List<Claim> claims = claimRepository.findByRequestorName(entity);
+        logger.info("Found {} claims to process", claims.size());
+        List<Claim> claimsRequestor = claims.stream()
+                .collect(Collectors.toList());
+        return claimsRequestor;
+    }
+
     private Map<String, Object> toMap(List<Claim> claims, Pageable pageable) {
         Map<String, Object> response = new HashMap<>();
         response.put(TOTAL_PAGES, (int)(Math.ceil(claims.size() * 1.0/pageable.getPageSize())));

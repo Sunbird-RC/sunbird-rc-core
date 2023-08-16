@@ -44,6 +44,7 @@
 				"userId": "/phoneNumber"
 			}
 		],
-		"inviteRoles": ["anonymous"]
+		"inviteRoles": ["anonymous"],
+		"roles": ["Teacher"]
 	}
 }

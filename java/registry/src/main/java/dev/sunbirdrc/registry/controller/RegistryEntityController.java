@@ -448,7 +448,8 @@ public class RegistryEntityController extends AbstractController {
         JsonNode attestationNode = null;
         while (iterator.hasNext()) {
             attestationNode = iterator.next();
-            if (attestationNode.get(uuidPropertyName).toString().equals(attestationId)) {
+            JsonNode jsonNode = attestationNode.get(uuidPropertyName);
+            if (jsonNode!=null && jsonNode.toString().equals(attestationId)) {
                 break;
             }
         }
@@ -494,7 +495,7 @@ public class RegistryEntityController extends AbstractController {
         try {
             checkEntityNameInDefinitionManager(entityName);
             ArrayList<String> fields = getConsentFields(request);
-            JsonNode userInfoFromRegistry = registryHelper.getRequestedUserDetailsSearch(request, entityName);
+            JsonNode userInfoFromRegistry = registryHelper.getRequestedUserDetails(request, entityName);
             JsonNode jsonNode = userInfoFromRegistry.get(entityName);
             if (jsonNode instanceof ArrayNode) {
                 ArrayNode values = (ArrayNode) jsonNode;
@@ -572,11 +573,11 @@ public class RegistryEntityController extends AbstractController {
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false,
                             viewTemplateManager.getViewTemplateById(viewTemplateId), false)
                     .get(entityName);
-            JsonNode signedNode = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
+//            JsonNode signedNode = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
 
             String templateUrlFromRequest = getTemplateUrlFromRequest(request, entityName);
 
-            return new ResponseEntity<>(certificateService.getCertificate(signedNode,
+            return new ResponseEntity<>(certificateService.getCertificate(node,
                     entityName,
                     entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
@@ -727,6 +728,13 @@ public class RegistryEntityController extends AbstractController {
                                                    @RequestHeader(required = false) String viewTemplateId) throws RecordNotFoundException {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.GET, "OK", responseParams);
+        ResponseEntity<Object> objectResponseEntity = getObjectResponseEntity(entityName, request, viewTemplateId, responseParams, response);
+        return objectResponseEntity;
+    }
+
+
+    @NotNull
+    private ResponseEntity<Object> getObjectResponseEntity(String entityName, HttpServletRequest request, String viewTemplateId, ResponseParams responseParams, Response response) {
         try {
             checkEntityNameInDefinitionManager(entityName);
             String userId = registryHelper.getUserId(request, entityName);
@@ -746,7 +754,7 @@ public class RegistryEntityController extends AbstractController {
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (RecordNotFoundException e) {
-             createSchemaNotFoundResponse(e.getMessage(),responseParams);
+             createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -981,7 +989,18 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+    @Nullable
+    private JsonNode getAttestationNode1(String attestationId, JsonNode node) {
+        Iterator<JsonNode> iterator = node.iterator();
+        JsonNode attestationNode = null;
+        while (iterator.hasNext()) {
+            attestationNode = iterator.next();
+            if (attestationNode.get(uuidPropertyName).toString().equals(attestationId)) {
+                break;
+            }
+        }
+        return attestationNode;
+    }
     /**
      * PULL-URI-Request API for DigiLocker
      * @param request
@@ -1016,19 +1035,32 @@ public class RegistryEntityController extends AbstractController {
         Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
         String osid = null;
         JsonNode result = null;
-        try {
-            result = registryHelper.getRequestedUserDetailsCustom(request, entityName, xmlString);
-            if (result != null && result.get(entityName) != null && result.get(entityName).size() > 0) {
-                ArrayNode responseFromDb = registryHelper.fetchFromDBUsingEsResponse(entityName, (ArrayNode) result.get(entityName));
-                if(responseFromDb!=null && responseFromDb.size() > 0){
-                    osid = responseFromDb.get(0).get("osid").asText();
-                }
-            }
+        try{
+            String userId = registryHelper.getUserId(request, entityName);
+            JsonNode responseFromDb = registryHelper.searchEntitiesByUserId(entityName, userId, null);
+            JsonNode entities = responseFromDb.get(entityName);
         } catch (Exception e) {
             statusCode = "0";
             e.printStackTrace();
             return new ResponseEntity<>(statusCode, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+
+//        ResponseEntity<Object> objectResponseEntity = getObjectResponseEntity(entityName, request, null, responseParams, response);
+
+//        try {
+//            result = registryHelper.getRequestedUserDetailsCustom(request, entityName, xmlString);
+//            if (result != null && result.get(entityName) != null && result.get(entityName).size() > 0) {
+//                ArrayNode responseFromDb = registryHelper.fetchFromDBUsingEsResponse(entityName, (ArrayNode) result.get(entityName));
+//                if(responseFromDb!=null && responseFromDb.size() > 0){
+//                    osid = responseFromDb.get(0).get("osid").asText();
+//                }
+//            }
+//        } catch (Exception e) {
+//            statusCode = "0";
+//            e.printStackTrace();
+//            return new ResponseEntity<>(statusCode, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
 
         if(osid!=null) {
             try {

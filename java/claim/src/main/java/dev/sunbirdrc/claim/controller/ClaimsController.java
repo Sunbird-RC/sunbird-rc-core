@@ -17,11 +17,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static dev.sunbirdrc.claim.contants.AttributeNames.ATTESTOR_INFO;
-import static dev.sunbirdrc.claim.contants.AttributeNames.LOWERCASE_ENTITY;
+import static dev.sunbirdrc.claim.contants.AttributeNames.*;
 
 @Controller
 public class ClaimsController {
@@ -45,6 +45,15 @@ public class ClaimsController {
         return new ResponseEntity<>(claims, HttpStatus.OK);
     }
 
+
+    @RequestMapping(value = "/api/v2/getClaims", method = RequestMethod.POST)
+    public ResponseEntity<List<Claim>> getStudentClaims(@RequestHeader HttpHeaders headers,
+                                                         @RequestBody JsonNode requestBody, Pageable pageable) {
+        String entity = requestBody.get(LOWERCASE_ENTITY).asText();
+        JsonNode attestorNode = requestBody.get(ATTESTOR_INFO);
+        List<Claim> claims = claimService.findByRequestorName(attestorNode.asText(), pageable);
+        return new ResponseEntity<>(claims, HttpStatus.OK);
+    }
     @RequestMapping(value = "/api/v1/getClaims/{claimId}", method = RequestMethod.POST)
     public ResponseEntity<ClaimWithNotesDTO> getClaimById(@RequestHeader HttpHeaders headers, @PathVariable String claimId,
                                               @RequestBody JsonNode requestBody) {
