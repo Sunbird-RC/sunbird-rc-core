@@ -59,7 +59,7 @@ registry:
   schema:
     url: ${registry_schema_url:/src/main/resources/public/_schemas}
   attestationPolicy:
-    createAccess: ${create_attestation_access_entities:User}
+    createAccess: ${create_attestation_access_entities:Regulator}
   manager:
     type: ${manager_type:DefinitionsManager}
   redis:
