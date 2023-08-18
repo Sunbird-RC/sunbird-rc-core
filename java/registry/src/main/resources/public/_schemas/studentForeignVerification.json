@@ -91,11 +91,7 @@
           "title": "dob"
         },
         "doc-proof": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "title": "All Document Proof"
+          "type": "string", "title": "doc-proof"
         },
         "candidatePic": {
           "$id": "#/properties/candidatePic",

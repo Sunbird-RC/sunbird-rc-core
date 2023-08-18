@@ -55,7 +55,7 @@ registry:
   system:
     base: ${registry_system_base:http://localhost:8081/}
   rootEntity:
-    type: ${registry_rootentity_type:Regulator}
+    type: ${registry_rootentity_type:User}
   schema:
     url: ${registry_schema_url:/src/main/resources/public/_schemas}
   attestationPolicy:

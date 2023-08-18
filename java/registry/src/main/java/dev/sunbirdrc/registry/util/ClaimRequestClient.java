@@ -123,6 +123,33 @@ public class ClaimRequestClient {
         return url;
     }
 
+    public String saveFileToGCSForDGL(Object certificate, String entityId) {
+        String fileName = entityId;
+        logger.info("Credentials File Name."+fileName);
+        String url = null;
+        byte[] bytes = convertObtToByte(certificate);
+        HttpHeaders headers = new HttpHeaders();
+        if(bytes!=null){
+            ByteArrayResource resource = new ByteArrayResource(bytes) {
+                @Override
+                public String getFilename() {
+                    return fileName;
+                }
+            };
+            ResponseEntity<String> response = uploadFileToGCS(headers, resource);
+            switch (response.getStatusCode()){
+                case OK:
+                    url=response.getBody();
+                    break;
+                default:
+                    break;
+
+            }
+        }
+        logger.debug("Save to GCS successfully ..."+url);
+        return url;
+    }
+
     @Nullable
     private ResponseEntity<String> uploadFileToGCS(HttpHeaders headers, ByteArrayResource resource) {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -183,7 +210,7 @@ public class ClaimRequestClient {
         // Add any required headers here
         headers.set("accept", "*/*");
         ResponseEntity<byte[]> response = restTemplate.exchange(
-                builder.toUriString(), HttpMethod.GET, null, byte[].class, queryParams, headers
+                builder.toUriString(), HttpMethod.POST, null, byte[].class, queryParams, headers
         );        logger.info("end getCredentials ...");
         return response.getBody();
     }

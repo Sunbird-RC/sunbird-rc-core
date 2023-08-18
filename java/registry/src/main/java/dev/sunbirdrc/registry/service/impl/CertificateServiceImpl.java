@@ -2,9 +2,11 @@ package dev.sunbirdrc.registry.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
+import dev.sunbirdrc.registry.dao.Learner;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.dto.BarCode;
 import dev.sunbirdrc.registry.model.dto.FileDto;
+import dev.sunbirdrc.registry.model.dto.MailDto;
 import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import org.jetbrains.annotations.NotNull;
@@ -62,9 +64,9 @@ public class CertificateServiceImpl implements ICertificateService {
     }
 
     @Override
-    public Object getCertificate(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl, JsonNode entity) {
+    public Object getCertificate(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl, JsonNode entity, String fileName, boolean wc) {
         try {
-            String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl);
+            String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl, wc);
 
             Map<String, Object> requestBody = new HashMap<String, Object>(){{
                 put("templateUrl", finalTemplateUrl);
@@ -72,6 +74,7 @@ public class CertificateServiceImpl implements ICertificateService {
                 put("entityId", entityId);
                 put("entityName", entityName);
                 put("entity", entity);
+                put("credentialsFileName",fileName);
             }};
             HttpHeaders headers = new HttpHeaders();
             headers.set("Accept", mediaType);
@@ -85,7 +88,7 @@ public class CertificateServiceImpl implements ICertificateService {
 
     public Object getCertificateForDGL(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl, JsonNode entity, String fileName) {
         try {
-            String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl);
+            String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl, false);
 
             Map<String, Object> requestBody = new HashMap<String, Object>(){{
                 put("templateUrl", finalTemplateUrl);
@@ -106,9 +109,13 @@ public class CertificateServiceImpl implements ICertificateService {
     }
 
     @NotNull
-    private String inferTemplateUrl(String entityName, String mediaType, String templateUrl) {
+    private String inferTemplateUrl(String entityName, String mediaType, String templateUrl, boolean wc) {
         if (templateUrl == null) {
-            templateUrl = templateBaseUrl + entityName + getFileExtension(mediaType);
+            if(wc)
+            templateUrl = templateBaseUrl + entityName+"-wc.html";
+            else{
+                templateUrl = templateBaseUrl + entityName+".html";
+            }
         }
         return templateUrl;
     }
@@ -154,7 +161,14 @@ public class CertificateServiceImpl implements ICertificateService {
         logger.info("Uploading File GCP complete");
         return url;
     }
-
+//saveFileToGCSForDGL
+public String saveforDGL(Object certificate, String entityId) {
+    String url = null;
+    logger.info("Uploading File GCP.");
+    url = claimRequestClient.saveFileToGCSForDGL(certificate, entityId);
+    logger.info("Uploading File GCP complete");
+    return url;
+}
     public BarCode getBarCode(BarCode barCode) {
         BarCode node = null;
         try {
@@ -231,5 +245,27 @@ public class CertificateServiceImpl implements ICertificateService {
         }
 
         return fileUrl.get();
+    }
+
+    public void trackCredentials(Learner learner) {
+        try {
+            logger.info("Track Certificate start");
+            claimRequestClient.saveCredentials(learner);
+            logger.info("Track Certificate end");
+        } catch (Exception e) {
+            logger.error("Track certificate failed", e);
+        }
+
+    }
+
+    public void shareCertificateMail(MailDto mail) {
+        try {
+            logger.info("Sharing Certificate start");
+            claimRequestClient.sendMail(mail);
+            logger.info("Sharing Certificate end");
+        } catch (Exception e) {
+            logger.error("Get certificate failed", e);
+        }
+
     }
 }

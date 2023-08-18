@@ -62,12 +62,12 @@ public interface ISearchService {
             filterList.add(freeTextFilter);
         }
 
-//        try {
-//            searchQuery.setLimit(inputQueryNode.get("limit").asInt());
-//            searchQuery.setOffset(inputQueryNode.get("offset").asInt());
-//        } catch (Exception e) {
-//            logger.warn("Populates SearchQuery for limit/offset(optional): {}", e.getMessage());
-//        }
+        try {
+            searchQuery.setLimit(inputQueryNode.get("limit").asInt());
+            searchQuery.setOffset(inputQueryNode.get("offset").asInt());
+        } catch (Exception e) {
+            logger.warn("Populates SearchQuery for limit/offset(optional): {}", e.getMessage());
+        }
 
         searchQuery.setFilters(filterList);
         return searchQuery;

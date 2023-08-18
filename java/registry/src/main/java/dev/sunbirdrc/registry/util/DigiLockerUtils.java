@@ -1,12 +1,27 @@
 package dev.sunbirdrc.registry.util;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.sunbirdrc.pojos.Response;
+import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.digilocker.pulldoc.*;
 import dev.sunbirdrc.registry.digilocker.pulluriresponse.*;
 import dev.sunbirdrc.registry.digilocker.pulluriresponse.DocDetails;
+import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.middleware.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -22,10 +37,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
 
 public class DigiLockerUtils {
 
@@ -43,10 +60,10 @@ public class DigiLockerUtils {
             JsonNode gender = regCertificate.get("gender");
             if (gender != null)
                 person.setGender(gender.asText());
-            JsonNode dateOfBirth = regCertificate.get("dob");
+            JsonNode dateOfBirth = regCertificate.get("dateOfBirth");
             if (dateOfBirth != null)
                 person.setDob(dateOfBirth.asText());
-            JsonNode mobile = regCertificate.get("contact");
+            JsonNode mobile = regCertificate.get("phoneNumber");
             if (mobile != null)
                 person.setPhone(mobile.asText());
         }
@@ -76,10 +93,15 @@ public class DigiLockerUtils {
         Element docDetailsElement = (Element) rootElement.getElementsByTagName("DocDetails").item(0);
         // Get the values of URI and DigiLockerId elements
         String uri = docDetailsElement.getElementsByTagName("URI").item(0).getTextContent();
+        String name = docDetailsElement.getElementsByTagName("FullName").item(0).getTextContent();
+        String dob = docDetailsElement.getElementsByTagName("DOB").item(0).getTextContent();
         String digiLockerId = docDetailsElement.getElementsByTagName("DigiLockerId").item(0).getTextContent();
         docDetails.setUri(uri);
         docDetails.setDigiLockerId(digiLockerId);
+        docDetails.setDob(dob);
+        docDetails.setFullName(name);
         request.setDocDetails(docDetails);
+
         // Print the values
         logger.info("URI: " + uri);
         logger.info("DigiLockerId: " + digiLockerId);
@@ -101,10 +123,10 @@ public class DigiLockerUtils {
                     request.setFormat(attributeValue);
                     break;
                 case "keyhash":
-                    request.setFormat(attributeValue);
+                    request.setKeyhash(attributeValue);
                     break;
-                case "x-digilocker-hmac":
-                    request.setFormat(attributeValue);
+                case "hmac":
+                    request.setHmac(attributeValue);
                     break;
                 default:
                     break;
@@ -153,11 +175,9 @@ public class DigiLockerUtils {
             if(docDetails.getName()!=null)
                 sb.append("\"name\""+":"+"\""+docDetails.getName()+"\""+",");
             if(docDetails.getMobile()!=null)
-                sb.append("\"mobile\""+":"+"\""+docDetails.getMobile()+"\""+",");
-//            if(docDetails.getDateOfBirth()!=null)
-//                sb.append("\"dob\""+":"+"\""+docDetails.getDateOfBirth()+"\""+",");
+                sb.append("\"phoneNumber\""+":"+"\""+docDetails.getMobile()+"\""+",");
             if(docDetails.getFinalYearRollNo()!=null)
-                sb.append("\"finalYearRollNo\""+":"+"\""+docDetails.getFinalYearRollNo()+"\"");
+                sb.append("\"email\""+":"+"\""+docDetails.getFinalYearRollNo()+"\"");
             sb.append("}");
             xmlString = sb.toString();
         } catch (JAXBException e) {
@@ -165,6 +185,27 @@ public class DigiLockerUtils {
         }
         return xmlString;
     }
+
+    public static ObjectNode getJsonQuery(String xmlString) {
+        dev.sunbirdrc.registry.util.DocDetails docDetails;
+        JsonNode jsonNode = null;
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode objectNode = objectMapper.createObjectNode();;
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(PullURIRequest.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            PullURIRequest pullUriRequest = (PullURIRequest) jaxbUnmarshaller.unmarshal(new StringReader(xmlString));
+            // Access DocDetails using getDocDetails()
+            docDetails = pullUriRequest.getDocDetails();
+            jsonNode =  getSearchNode(docDetails.getName(),docDetails.getMobile(), docDetails.getEmail());
+            jsonNode.fields().forEachRemaining(entry -> objectNode.set(entry.getKey(), entry.getValue()));
+       } catch (JAXBException e) {
+            e.printStackTrace();
+        }
+        return objectNode;
+    }
+
+
     public static PullURIResponse getPullUriResponse(String certUri, String status, String txn, Object certificate, Person person) {
         List<Person> personList = new ArrayList();
         personList.add(person);
@@ -190,6 +231,78 @@ public class DigiLockerUtils {
         return resp;
     }
 
+
+
+    private static JsonNode getSearchNode(String name,String phoneNumber, String email){
+        String searchNode = "{\n" +
+                "    \"filters\": {\n" +
+                "        \"email\": {\n" +
+                "            \"contains\": \"" + email +
+                "\"\n" +
+                "        },\n" +
+                "        \"phoneNumber\": {\n" +
+                "            \"eq\": \"" +phoneNumber+
+                "\"\n" +
+                "        },\n" +
+                "        \"name\": {\n" +
+                "            \"eq\": \"" +name+
+                "\"\n" +
+                "        }\n" +
+                "    },\n" +
+                "    \"limit\": 1,\n" +
+                "    \"offset\": 0\n" +
+                "}";
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonFactory factory = mapper.getFactory();
+        JsonNode actualObj = null;
+        try {
+        JsonParser parser = factory.createParser(searchNode);
+        actualObj = mapper.readTree(parser);
+       // ((ObjectNode) actualObj.get("filters")).put("email",email);
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+        }
+        return actualObj;
+    }
+
+
+    public static JsonNode getQuryNode(String name,String dob){
+       String formattedDateString =  formatDate(dob);
+        String searchNode = "{\n" +
+                "    \"filters\": {\n" +
+                "        \"dateOfBirth\": {\n" +
+                "            \"eq\": \"" +
+                formattedDateString +"\""+
+                "\n" +
+                "        },\n" +
+                "        \"name\": {\n" +
+                "            \"eq\": \"" +
+                name +
+                "\"\n" +
+                "        }\n" +
+                "    },\n" +
+                "    \"limit\": 1,\n" +
+                "    \"offset\": 0\n" +
+                "}";
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonFactory factory = mapper.getFactory();
+        JsonNode actualObj = null;
+        try {
+            JsonParser parser = factory.createParser(searchNode);
+            actualObj = mapper.readTree(parser);
+            // ((ObjectNode) actualObj.get("filters")).put("email",email);
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+        }
+        return actualObj;
+    }
+
+    public static void main(String[] args) {
+       System.out.println( getQuryNode("Mr Rahu","1990-01-01"));
+
+    }
 
     public static PullDocResponse getDocPullUriResponse(String osId, String status, byte[] bytes, Person person) {
         Object content = convertJaxbToBase64XmlString(person);
@@ -274,7 +387,7 @@ public class DigiLockerUtils {
     public static boolean verifyHmac(String data, String secretKey, String hmacKey) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(), "HmacSHA256");
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(), "SHA-256");
             mac.init(secretKeySpec);
             byte[] calculatedHash = mac.doFinal(data.getBytes());
             // Decode the received hash value from Base64
@@ -285,6 +398,18 @@ public class DigiLockerUtils {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public static String formatDate(String inputDateString) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        LocalDate localDate = null;
+        try {
+            localDate = LocalDate.parse(inputDateString, formatter);
+            System.out.println("Parsed LocalDate: " + localDate);
+        } catch (DateTimeParseException e) {
+            System.out.println("Parsing error: " + e.getMessage());
+        }
+        return  localDate.toString();
     }
 
     private byte[] hexEncode(byte[] data) {

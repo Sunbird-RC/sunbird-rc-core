@@ -91,11 +91,7 @@
           "title": "workPlace"
         },
         "doc-proof": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "title": "All Document Proof"
+              "type": "string", "title": "All Document Proof"
         },
         "paymentStatus": {
           "$id": "#/properties/paymentStatus",
@@ -114,7 +110,7 @@
       }
     ],
     "inviteRoles": ["anonymous"],
-    "roles": ["StudentGoodstanding"],
+    "roles": ["Regulator"],
     "attestationPolicies": [
       {
         "name": "StudentGoodStandingVerification",
