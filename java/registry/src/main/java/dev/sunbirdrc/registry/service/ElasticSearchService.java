@@ -1,27 +1,21 @@
 package dev.sunbirdrc.registry.service;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.sunbirdrc.elastic.IElasticService;
+import dev.sunbirdrc.pojos.*;
+import dev.sunbirdrc.registry.middleware.util.Constants;
+import dev.sunbirdrc.registry.util.RecordIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import dev.sunbirdrc.elastic.IElasticService;
-import dev.sunbirdrc.pojos.APIMessage;
-import dev.sunbirdrc.pojos.AuditRecord;
-import dev.sunbirdrc.pojos.Filter;
-import dev.sunbirdrc.pojos.FilterOperators;
-import dev.sunbirdrc.pojos.SearchQuery;
-import dev.sunbirdrc.registry.middleware.util.Constants;
-import dev.sunbirdrc.registry.util.RecordIdentifier;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * This class provide search option with Elastic search Hits elastic search
@@ -29,6 +23,7 @@ import dev.sunbirdrc.registry.util.RecordIdentifier;
  *
  */
 @Component
+@ConditionalOnProperty(name = "search.providerName",havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService",matchIfMissing = false)
 public class ElasticSearchService implements ISearchService {
     private static Logger logger = LoggerFactory.getLogger(ElasticSearchService.class);
 

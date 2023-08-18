@@ -4,27 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.Filter;
 import dev.sunbirdrc.pojos.FilterOperators;
 import dev.sunbirdrc.pojos.SearchQuery;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.URL;
-import java.util.*;
-
-import org.apache.commons.collections4.KeyValue;
-import org.apache.commons.collections4.keyvalue.DefaultKeyValue;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -45,8 +35,16 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.URL;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ELASTIC_SERVICE_NAME;
@@ -62,6 +60,8 @@ public class ElasticServiceImpl implements IElasticService {
     private static String password;
     private static String defaultScheme;
 
+    @Autowired
+    private static Environment environment;
     public void setConnectionInfo(String connection) {
         connectionInfo = connection;
     }
@@ -89,32 +89,41 @@ public class ElasticServiceImpl implements IElasticService {
     /**
      * This method creates the high-level-client w.r.to index, if client is not created. for every index one client object is created
      *
-     * @param indexName      for ElasticSearch
-     * @param connectionInfo of ElasticSearch
+  //   * @param indexName      for ElasticSearch
+   //  * @param connectionInfo of ElasticSearch
      */
+
     private static void createClient(String indexName, String connectionInfo) {
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY,
-                new UsernamePasswordCredentials(userName, password));
-        if (!esClient.containsKey(indexName)) {
-            Map<String, KeyValue<Integer, String>> hostPort = new HashMap<>();
-            List<HttpHost> httpHosts = new ArrayList<>();
-            for (String info : connectionInfo.split(",")) {
-                try {
-                    URL url = new URL(info);
-                    httpHosts.add(new HttpHost(url.getHost(), url.getPort(), url.getProtocol()));
-                } catch (Exception e) {
-                    String port = Optional.ofNullable(info.split(":").length == 1 ? "-1" : info.split(":")[1]).get();
-                    httpHosts.add(new HttpHost(info.split(":")[0], Integer.valueOf(port), defaultScheme));
+        if (authEnabled) {
+            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
+        }
+
+        try {
+            if (!esClient.containsKey(indexName)) {
+                List<HttpHost> httpHosts = Arrays.stream(connectionInfo.split(","))
+                        .map(info -> {
+                            try {
+                                URL url = new URL(info);
+                                return new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
+                            } catch (Exception e) {
+                                String port = Optional.ofNullable(info.split(":").length == 1 ? "-1" : info.split(":")[1]).orElse("-1");
+                                return new HttpHost(info.split(":")[0], Integer.valueOf(port), defaultScheme);
+                            }
+                        })
+                        .collect(Collectors.toList());
+
+                RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[0]));
+                if (authEnabled) {
+                    restClientBuilder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+                }
+                RestHighLevelClient client = new RestHighLevelClient(restClientBuilder);
+                if (null != client) {
+                    esClient.put(indexName, client);
                 }
             }
-            RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[httpHosts.size()]));
-            if(authEnabled) {
-                restClientBuilder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
-            }
-            RestHighLevelClient client = new RestHighLevelClient(restClientBuilder);
-            if (null != client)
-                esClient.put(indexName, client);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

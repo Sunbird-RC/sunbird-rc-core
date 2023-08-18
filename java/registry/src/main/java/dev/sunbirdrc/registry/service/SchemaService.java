@@ -26,10 +26,6 @@ public class SchemaService {
 	private static final String STATUS = "status";
 	@Autowired
 	private IDefinitionsManager definitionsManager;
-
-	@Autowired
-	private boolean isElasticSearchEnabled;
-
 	@Autowired
 	private IValidate validator;
 

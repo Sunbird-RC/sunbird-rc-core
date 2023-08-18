@@ -248,7 +248,7 @@ keycloak-user:
 claims:
   url: ${claims_url:http://localhost:8082}
 authentication:
-  enabled: ${authentication_enabled:true}
+  enabled: ${authentication_enabled:false}
   publicKey:  ${authentication_publickey:}
   realm:  ${authentication_realm:sunbird-rc}
   url:  ${authentication_url:localhost:8443/auth}
@@ -304,8 +304,6 @@ auditTaskExecutor:
 # elastic-search configuration details
 elastic:
   search:
-    # elastic-search can be enable and disable through this flag
-    enabled: ${elastic_search_enabled:false}
     # elastic-search connection info
     connection_url: ${elastic_search_connection_url:localhost:9200}
     add_shard_prefix: ${elastic_search_add_shard_prefix:true}
@@ -474,8 +472,6 @@ auditTaskExecutor:
 # elastic-search configuration details
 elastic:
   search:
-    # elastic-search can be enable and disable through this flag
-    enabled: ${elastic_search_enabled:true}
     # elastic-search connection info
     connection_url: ${elastic_search_connection_url:localhost:9200}
 

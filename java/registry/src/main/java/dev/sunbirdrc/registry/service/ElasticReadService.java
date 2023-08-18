@@ -1,29 +1,24 @@
 package dev.sunbirdrc.registry.service;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import dev.sunbirdrc.elastic.IElasticService;
-import dev.sunbirdrc.pojos.AuditRecord;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * This class provide read option with Elastic search
@@ -31,6 +26,7 @@ import dev.sunbirdrc.registry.util.ReadConfigurator;
  *
  */
 @Component
+@ConditionalOnProperty(name = "read.providerName",havingValue = "dev.sunbirdrc.registry.service.ElasticReadService",matchIfMissing = false)
 public class ElasticReadService implements IReadService {
 
     private static Logger logger = LoggerFactory.getLogger(ElasticReadService.class);
