@@ -13,7 +13,9 @@ import javax.xml.bind.annotation.XmlType;
 public class DocDetailsType {
 
     protected String uri;
+    protected String fullName;
 
+    protected String dob;
     protected String digiLockerId;
 
     public String getFullName() {
@@ -32,9 +34,7 @@ public class DocDetailsType {
         this.dob = dob;
     }
 
-    protected String fullName;
 
-    protected String dob;
     public String getUri() {
         return uri;
     }

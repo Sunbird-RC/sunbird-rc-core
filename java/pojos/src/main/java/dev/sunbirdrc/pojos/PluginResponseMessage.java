@@ -36,6 +36,8 @@ public class PluginResponseMessage {
     private String userId;
     private Map<String, List<String>> propertiesOSID;
     private String emailId;
+
+    private String credType;
     @Builder.Default
     private List<PluginFile> files = new ArrayList<>();
 }

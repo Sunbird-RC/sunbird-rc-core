@@ -110,7 +110,7 @@
       }
     ],
     "inviteRoles": ["anonymous"],
-    "roles": ["Regulator"],
+    "roles": ["StudentGoodstanding"],
     "attestationPolicies": [
       {
         "name": "StudentGoodStandingVerification",

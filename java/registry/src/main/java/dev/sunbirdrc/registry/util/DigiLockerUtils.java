@@ -4,24 +4,13 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import dev.sunbirdrc.pojos.Response;
-import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.digilocker.pulldoc.*;
 import dev.sunbirdrc.registry.digilocker.pulluriresponse.*;
 import dev.sunbirdrc.registry.digilocker.pulluriresponse.DocDetails;
-import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.middleware.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -29,6 +18,7 @@ import org.w3c.dom.NamedNodeMap;
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -41,8 +31,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-
-import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
 
 public class DigiLockerUtils {
 
@@ -304,20 +292,18 @@ public class DigiLockerUtils {
 
     }
 
-    public static PullDocResponse getDocPullUriResponse(String osId, String status, byte[] bytes, Person person) {
+    public static PullDocResponse getDocPullUriResponse(PullDocRequest pullDocRequest, String status, byte[] bytes, Person person) {
         Object content = convertJaxbToBase64XmlString(person);
         //ResponseStatus
         PullDocResponse resp = new PullDocResponse();
         ResponseStatus responseStatus = new ResponseStatus();
         responseStatus.setStatus(status);
-        responseStatus.setTxn(osId);
-        responseStatus.setTs(DateUtil.getTimeStamp());
+        responseStatus.setTxn(pullDocRequest.getTxn());
+        responseStatus.setTs(pullDocRequest.getTs());
         resp.setResponseStatus(responseStatus);
-
         DocDetailsRs docDetails = new DocDetailsRs();
         docDetails.setDataContent(content);
-        //dataCont.setContent(content);
-
+        docDetails.setDigiLockerId(pullDocRequest.getDocDetails().getDigiLockerId());
         docDetails.setDocContent(Base64.getEncoder().encodeToString(bytes));
         resp.setDocDetails(docDetails);
         return resp;
@@ -424,6 +410,17 @@ public class DigiLockerUtils {
 
     public boolean validateHMAC(byte[] actualHMAC, byte[] expectedHMAC) {
         return Arrays.equals(actualHMAC, expectedHMAC);
+    }
+
+    public byte[] getHMACFromRequest(HttpServletRequest request) {
+        String hmacDigest = request.getHeader("x-digilocker-hmac");
+        try {
+            byte[] hmacSignByteArray = Base64.getDecoder().decode(hmacDigest);
+            return hmacSignByteArray;
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error while decoding hmac digest: " + e.getMessage());
+            return null;
+        }
     }
 
 }

@@ -25,6 +25,17 @@ public class Claim {
     private String id;
     @Column
     private String entity;
+
+    public String getCredType() {
+        return credType;
+    }
+
+    public void setCredType(String credType) {
+        this.credType = credType;
+    }
+
+    @Column
+    private String credType;
     @Column
     private String entityId;
     @Column
@@ -127,6 +138,7 @@ public class Claim {
                 ", propertyURI='" + propertyURI + '\'' +
                 ", status='" + status + '\'' +
                 ", condition='" + conditions + '\'' +
+                ", credType='" + credType + '\'' +
                 '}';
     }
 
@@ -165,6 +177,7 @@ public class Claim {
         claim.setPropertyData(claimDTO.getPropertyData());
         claim.setAttestationId(claimDTO.getAttestationId());
         claim.setAttestationName(claimDTO.getAttestationName());
+        claim.setCredType(claimDTO.getCredtype());
         return claim;
     }
 

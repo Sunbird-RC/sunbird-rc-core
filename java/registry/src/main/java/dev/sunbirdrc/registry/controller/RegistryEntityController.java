@@ -1100,11 +1100,12 @@ public class RegistryEntityController extends AbstractController {
             try {
                 String uri = DigiLockerUtils.getDocUri();
                 String fileName = "issuance/"+osid+".pdf";
-                Object certificate = certificateService.getCred(fileName);
+                byte[] certificate = certificateService.getCred(fileName);
                 if(certificate!=null){
                     certificateService.saveforDGL(certificate, uri);
                     Person person = DigiLockerUtils.getPersonDetail(result, entityName);
-                    PullURIResponse pullResponse = DigiLockerUtils.getPullUriResponse(uri, statusCode, osid, certificate, person);
+                    String encodedCertificate = Base64.getEncoder().encodeToString(certificate);
+                    PullURIResponse pullResponse = DigiLockerUtils.getPullUriResponse(uri, statusCode, osid, encodedCertificate, person);
                     String responseString = DigiLockerUtils.convertJaxbToString(pullResponse);
                     HttpHeaders headers = new HttpHeaders();
                     headers.setContentType(MediaType.APPLICATION_XML);
@@ -1183,7 +1184,7 @@ public class RegistryEntityController extends AbstractController {
                 Person person = new Person();
                 person.setDob(dob);
                 person.setDob(fullName);
-                PullDocResponse pullDocResponse = DigiLockerUtils.getDocPullUriResponse(osid,statusCode, cred,person);
+                PullDocResponse pullDocResponse = DigiLockerUtils.getDocPullUriResponse(pullDocRequest, statusCode, cred, person);
                 Object responseString = DigiLockerUtils.convertJaxbToPullDoc(pullDocResponse);
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_XML);
@@ -1206,8 +1207,8 @@ public class RegistryEntityController extends AbstractController {
      * @param request
      * @return
      */
-    @CrossOrigin(origins = "*")
-    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/upload/multi-files", method = RequestMethod.POST)
+
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/upload/multi-files", method = RequestMethod.PUT)
     public ResponseEntity<Object> putMultiEntityFiles(
             @PathVariable String entityName,
             @PathVariable String entityId,
@@ -1247,7 +1248,7 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
-    @CrossOrigin(origins = "*")
+
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/upload/file", method = RequestMethod.PUT)
     public ResponseEntity<Object> putSingleEntityFile(
             @PathVariable String entityName,

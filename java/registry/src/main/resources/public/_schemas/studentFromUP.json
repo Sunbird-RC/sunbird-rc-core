@@ -105,7 +105,7 @@
           "BLOOD_TRANSFUSION_REG",
           "BLOOD_TRANSFUSION_DIPLOMA"
         ]},
-        "doc-url":{"type": "string","title": "doc-url"}
+        "docproof":{"type": "string","title": "docproof"}
       }
     }
   },
@@ -154,7 +154,7 @@
           "centerCode": "$.centerCode",
           "paymentStatus": "$.paymentStatus",
           "credType": "$.credType",
-          "doc-url": "$.doc-url"
+          "docproof": "$.docproof"
         },
         "credentialTemplate": {
           "@context": [
@@ -332,8 +332,8 @@
                   "name": "schema:Text"
                 }
               },
-              "doc-url": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#doc-url",
+              "docproof": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#docproof",
                 "@context": {
                   "name": "schema:Text"
                 }
@@ -372,7 +372,7 @@
             "centerCode": "{{centerCode}}",
             "paymentStatus": "{{paymentStatus}}",
             "credType":"{{credType}}",
-            "doc-url": "{{doc-url}}"
+            "docproof": "{{docproof}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }

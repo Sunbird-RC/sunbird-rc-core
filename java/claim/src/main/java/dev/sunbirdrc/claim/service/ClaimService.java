@@ -98,6 +98,7 @@ public class ClaimService {
     }
 
     private Claim updateClaim(JsonNode requestBody, Claim claim) {
+        logger.info("CredType"+claim.getCredType());
         JsonNode attestorNode = requestBody.get(ATTESTOR_INFO);
         if(requestBody.has(NOTES)) {
             addNotes(requestBody.get(NOTES).asText(), claim, EntityUtil.getFullNameOfTheEntity(attestorNode));

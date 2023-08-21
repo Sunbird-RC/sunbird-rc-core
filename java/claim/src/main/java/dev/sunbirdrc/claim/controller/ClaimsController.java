@@ -6,6 +6,7 @@ import dev.sunbirdrc.claim.entity.Claim;
 import dev.sunbirdrc.claim.service.ClaimService;
 import dev.sunbirdrc.claim.service.ClaimsAuthorizer;
 import dev.sunbirdrc.pojos.dto.ClaimDTO;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,7 +74,11 @@ public class ClaimsController {
 
     @RequestMapping(value = "/api/v1/claims", method = RequestMethod.POST)
     public ResponseEntity<Claim> save(@RequestBody ClaimDTO claimDTO) {
+        JSONObject jsonObject = new JSONObject(claimDTO.getPropertyData());
+        String credType1 = jsonObject.get("credType").toString();
+        claimDTO.setCredtype(credType1);
         logger.info("Adding new claimDTO {} ", claimDTO.toString());
+        logger.info("Cred Type new claimDTO {} ", claimDTO.getCredtype());
         Claim savedClaim = claimService.save(Claim.fromDTO(claimDTO));
         claimService.addNotes(claimDTO.getNotes(), savedClaim, claimDTO.getRequestorName());
         return new ResponseEntity<>(savedClaim, HttpStatus.OK);

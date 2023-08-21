@@ -130,6 +130,7 @@ public class RegistryClaimsController extends AbstractController{
         additionalInputs.set("attestorInfo", attestorInfo);
         additionalInputs.set("action", action);
         additionalInputs.set("notes", notes);
+       // additionalInputs.set("credType", entityName);
         additionalInputs.put("claimId", claimId);
         return additionalInputs;
     }
@@ -159,6 +160,7 @@ public class RegistryClaimsController extends AbstractController{
             }
             attestationRequest.setUserId(userId);
             attestationRequest.setEmailId(emailId);
+            attestationRequest.setCredType(request.getHeader("credType"));
             String attestationOSID = registryHelper.triggerAttestation(attestationRequest, attestationPolicy);
             response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
         } catch (Exception exception) {

@@ -13,7 +13,7 @@ public class PluginRequestMessageCreator {
                                               String userId,
                                               String entityId, JsonNode additionalInput, String status,
                                               String name, String attestorPlugin, String attestorEntity,
-                                              String attestorSignin, Map<String, List<String>> propertiesOSID, String emailId) {
+                                              String attestorSignin, Map<String, List<String>> propertiesOSID, String emailId, String credType) {
 
         PluginRequestMessage pluginRequestMessage = new PluginRequestMessage();
         pluginRequestMessage.setPolicyName(name);
@@ -30,6 +30,7 @@ public class PluginRequestMessageCreator {
         pluginRequestMessage.setUserId(userId);
         pluginRequestMessage.setPropertiesOSID(propertiesOSID);
         pluginRequestMessage.setEmailId(emailId);
+        pluginRequestMessage.setCredType(credType);
         return pluginRequestMessage;
     }
 
