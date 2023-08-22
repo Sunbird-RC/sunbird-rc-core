@@ -28,7 +28,7 @@
           "type": "string",
           "title": "name"
         },
-          "marriedName": {
+        "marriedName": {
           "$id": "#/properties/marriedName",
           "type": "string",
           "title": "marriedName"
@@ -90,7 +90,7 @@
           "type": "string",
           "title": "workPlace"
         },
-        "doc-proof": {
+        "docproof": {
               "type": "string", "title": "All Document Proof"
         },
         "paymentStatus": {
@@ -113,7 +113,7 @@
     "roles": ["StudentGoodstanding"],
     "attestationPolicies": [
       {
-        "name": "studentVerification",
+        "name": "studentGoodstandingVerification",
         "conditions": "(ATTESTOR#$.council#.contains(REQUESTER#$.council#))",
         "type": "MANUAL",
         "attestorPlugin": "did:internal:ClaimPluginActor?entity=Regulator",
@@ -130,7 +130,7 @@
           "registrationNumber": "$.registrationNumber",
           "workPlace": "$.workPlace",
           "council":"$.council",
-          "doc-proof": "$.doc-proof",
+          "docproof": "$.docproof",
           "paymentStatus": "$.paymentStatus"
         },
         "credentialTemplate": {
@@ -220,8 +220,8 @@
                   "name": "schema:Text"
                 }
               },
-              "doc-proof": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#doc-proof",
+              "docproof": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#docproof",
                 "@context": {
                   "name": "schema:Text"
                 }
@@ -249,7 +249,8 @@
             "professionalQualification": "{{professionalQualification}}",
             "trainingCenter": "{{trainingCenter}}",
             "registrationNumber": "{{registrationNumber}}",
-            "workPlace": "{{workPlace}}"
+            "workPlace": "{{workPlace}}",
+            "docproof": "{{docproof}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }

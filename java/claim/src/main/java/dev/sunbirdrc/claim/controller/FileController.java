@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/files/")
+@RequestMapping("/api/v1/files")
 @RequiredArgsConstructor
 public class FileController {
 
@@ -26,7 +26,7 @@ public class FileController {
 
 
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    @RequestMapping("upload")
+    @RequestMapping("/upload")
     public ResponseEntity<String> uploadFile(
             @RequestParam MultipartFile file) throws IOException {
         String fileUrl = null;
@@ -38,7 +38,7 @@ public class FileController {
         return (ResponseEntity<String>) ResponseEntity.status(HttpStatus.EXPECTATION_FAILED);
     }
 
-    @RequestMapping("download")
+    @RequestMapping("/download")
     @PostMapping(produces = {MediaType.APPLICATION_PDF_VALUE})
     public ResponseEntity<Resource> downloadFile(
             @RequestParam(value = "fileName", required = false) String fileName) {

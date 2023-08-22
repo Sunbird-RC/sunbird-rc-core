@@ -105,7 +105,9 @@
           "BLOOD_TRANSFUSION_REG",
           "BLOOD_TRANSFUSION_DIPLOMA"
         ]},
-        "docproof":{"type": "string","title": "docproof"}
+        "docproof":{"type": "string","title": "docproof"},
+        "regNumber":{"type": "string","title": "regNumber"},
+        "diplomaNumber":{"type": "string","title": "diplomaNumber"}
       }
     }
   },
@@ -154,7 +156,9 @@
           "centerCode": "$.centerCode",
           "paymentStatus": "$.paymentStatus",
           "credType": "$.credType",
-          "docproof": "$.docproof"
+          "docproof": "$.docproof",
+          "regNumber": "$.regNumber",
+          "diplomaNumber": "$.diplomaNumber"
         },
         "credentialTemplate": {
           "@context": [
@@ -337,6 +341,18 @@
                 "@context": {
                   "name": "schema:Text"
                 }
+              },
+              "regNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#regNumber",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "diplomaNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#diplomaNumber",
+                "@context": {
+                  "name": "schema:Text"
+                }
               }
             }
           ],
@@ -372,7 +388,9 @@
             "centerCode": "{{centerCode}}",
             "paymentStatus": "{{paymentStatus}}",
             "credType":"{{credType}}",
-            "docproof": "{{docproof}}"
+            "docproof": "{{docproof}}",
+            "regNumber": "{{regNumber}}",
+            "diplomaNumber": "{{diplomaNumber}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }

@@ -274,7 +274,8 @@
             "refNo": "{{refNo}}",
             "date": "{{date}}",
             "registrationNumber": "{{registrationNumber}}",
-            "workPlace": "{{workPlace}}"
+            "workPlace": "{{workPlace}}",
+            "docproof": "{{docproof}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }
