@@ -1,9 +1,10 @@
 package services
 
 import (
-	"github.com/sunbirdrc/notification-service/config"
-	log "github.com/sirupsen/logrus"
 	"net/smtp"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/sunbirdrc/notification-service/config"
 )
 
 func SendEmail(recipientEmail string, mailSubject string, mailBody string) error {
@@ -16,7 +17,7 @@ func SendEmail(recipientEmail string, mailSubject string, mailBody string) error
 			"Subject: " + mailSubject + "\n\n" +
 			mailBody
 
-		err := smtp.SendMail("smtp.gmail.com:587",
+		err := smtp.SendMail("smtp.gmail.com:465",
 			smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
 			from, []string{recipientEmail}, []byte(msg))
 

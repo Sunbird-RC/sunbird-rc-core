@@ -14,6 +14,16 @@ public class ClaimDTO {
     private String attestationId;
     private String attestationName;
 
+    public String getCredtype() {
+        return credtype;
+    }
+
+    public void setCredtype(String credtype) {
+        this.credtype = credtype;
+    }
+
+    private String credtype;
+
     public String getRequestorName() {
         return requestorName;
     }

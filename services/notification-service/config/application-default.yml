@@ -1,5 +1,5 @@
 kafka:
-  bootstrapServers: localhost
+  bootstrapServers: kafka
   certifyTopic: certify
   notifyTopic: notify
   enable: true
@@ -11,8 +11,8 @@ smsapi:
   requestTemplate: '{"sender": "AppName","route": "4","country": "91","unicode": 1,"sms": [{"message": "{{.message}}","to": ["{{.to}}"]}],"DLT_TE_ID": "templateId"}'
 
 emailsmtp:
-  fromAddress: from@gmail.com
-  password: secret
+  fromAddress: upsmf.otp@upsmfac.org
+  password: 
   enable: true
 
 flagr:

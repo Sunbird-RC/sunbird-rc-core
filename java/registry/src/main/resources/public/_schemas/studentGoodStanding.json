@@ -91,11 +91,7 @@
           "title": "workPlace"
         },
         "doc-proof": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "title": "All Document Proof"
+              "type": "string", "title": "All Document Proof"
         },
         "paymentStatus": {
           "$id": "#/properties/paymentStatus",
@@ -117,7 +113,7 @@
     "roles": ["StudentGoodstanding"],
     "attestationPolicies": [
       {
-        "name": "StudentGoodStandingVerification",
+        "name": "studentVerification",
         "conditions": "(ATTESTOR#$.council#.contains(REQUESTER#$.council#))",
         "type": "MANUAL",
         "attestorPlugin": "did:internal:ClaimPluginActor?entity=Regulator",

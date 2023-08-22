@@ -428,7 +428,7 @@ public class RegistryHelper {
                 attestationRequest.getEmailId(), attestationRequest.getEntityId(), attestationRequest.getAdditionalInput(),
                 Action.RAISE_CLAIM.name(), attestationPolicy.getName(), attestationPolicy.getAttestorPlugin(),
                 attestationPolicy.getAttestorEntity(), attestationPolicy.getAttestorSignin(),
-                attestationRequest.getPropertiesOSID(), attestationRequest.getEmailId());
+                attestationRequest.getPropertiesOSID(), attestationRequest.getEmailId(),attestationRequest.getCredType());
 
         PluginRouter.route(message);
         return attestationOSID;

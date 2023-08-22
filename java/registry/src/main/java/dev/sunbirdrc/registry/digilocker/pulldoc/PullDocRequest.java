@@ -16,6 +16,25 @@ public class PullDocRequest {
     protected String orgId;
     protected String format;
 
+    public String getKeyhash() {
+        return keyhash;
+    }
+
+    public void setKeyhash(String keyhash) {
+        this.keyhash = keyhash;
+    }
+
+    public String getHmac() {
+        return hmac;
+    }
+
+    public void setHmac(String hmac) {
+        this.hmac = hmac;
+    }
+
+    protected String keyhash;
+    protected String hmac;
+
     public DocDetailsType getDocDetails() {
         return docDetails;
     }

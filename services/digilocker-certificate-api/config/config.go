@@ -13,7 +13,7 @@ var Config = struct {
 	Keycloak struct {
 		TokenURL     string `env:"KEYCLOAK_TOKEN_URL" default:"http://keycloak:8080/auth/realms/sunbird-rc/protocol/openid-connect/token"`
 		ClientId     string `env:"KEYCLOAK_CLIENT_ID" default:"admin-api"`
-		ClientSecret string `env:"KEYCLOAK_CLIENT_SECRET" default:"**"`
+		ClientSecret string `env:"KEYCLOAK_CLIENT_SECRET" default:"2b65f70c-bd02-4d5c-95d9-5341225aa849"`
 	}
 	Digilocker struct {
 		IDPrefix    string `env:"DIGILOCKER_DOC_ID_PREFIX" default:"dev.sunbirdrc.vc"`
@@ -21,7 +21,7 @@ var Config = struct {
 		AuthHMACKey string `env:"DIGILOCKER_HMAC_AUTHKEY" default:"***"`
 	}
 	Registry struct {
-		URL string `env:"REGISTRY_URL" default:"https://demo-education-registry.xiv.in/registry/"`
+		URL string `env:"REGISTRY_URL" default:"https://localhost:8081/"`
 	}
 	LogLevel string `env:"LOG_LEVEL" yaml:"log_level" default:"DEBUG"`
 	Host     string `env:"HOST" yaml:"host" default:"0.0.0.0"`

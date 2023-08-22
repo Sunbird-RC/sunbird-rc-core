@@ -7,21 +7,18 @@ public class DocDetails {
     private String uID;
     private String digiLockerId;
     private String mobile;
+    private String email;
     private String name;
     private String finalYearRollNo;
     private String docType;
-    public String getFinalYearRollNo() {
-        return finalYearRollNo;
+
+    public String getEmail() {
+        return email;
     }
 
-    public void setFinalYearRollNo(String finalYearRollNo) {
-        this.finalYearRollNo = finalYearRollNo;
+    public void setEmail(String email) {
+        this.email = email;
     }
-
-
-
-
-
 
     private String entityName;
 
@@ -58,6 +55,13 @@ public class DocDetails {
         this.name = name;
     }
 
+    public String getFinalYearRollNo() {
+        return finalYearRollNo;
+    }
+
+    public void setFinalYearRollNo(String finalYearRollNo) {
+        this.finalYearRollNo = finalYearRollNo;
+    }
 
 
 
