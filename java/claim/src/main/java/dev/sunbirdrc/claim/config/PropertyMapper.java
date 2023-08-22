@@ -12,4 +12,10 @@ public class PropertyMapper {
 
     @Value("${foreign.pending.item.subject}")
     private String foreignPendingItemSubject;
+
+    @Value("${up.council.name}")
+    private String upCouncilName;
+
+    @Value("${regulator.table.name}")
+    private String regulatorTableName;
 }

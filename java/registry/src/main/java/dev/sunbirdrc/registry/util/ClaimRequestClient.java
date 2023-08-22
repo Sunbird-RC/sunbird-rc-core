@@ -49,8 +49,6 @@ public class ClaimRequestClient {
     private static final String CLAIM_MULTI_FILE_UPLOAD = "/api/v1/files/upload/multiple";
     private static String URL_APPENDER = "/";
 
-    private static final String MAIL_SEND_PENDING_FOREIGN_ITEM_URL = "/api/v1/sendPendingForeignItemMail";
-
     ClaimRequestClient(@Value("${claims.url}") String claimRequestUrl, RestTemplate restTemplate) {
         this.claimRequestUrl = claimRequestUrl;
         this.restTemplate = restTemplate;
@@ -217,14 +215,5 @@ public class ClaimRequestClient {
         List<FileDto> fileDtoList = response.getBody();
         return fileDtoList;
     }
-
-    public String sendPendingForeignItemMail(PendingMailDTO pendingMailDTO) {
-        String mailStatus = restTemplate.postForObject(
-                claimRequestUrl + MAIL_SEND_PENDING_FOREIGN_ITEM_URL, pendingMailDTO, String.class);
-        logger.info("Pending foreign item mail status: " + mailStatus);
-        return mailStatus;
-    }
-
-
 
 }

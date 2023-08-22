@@ -1244,30 +1244,5 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/sendPendingForeignItemMail", method = RequestMethod.POST)
-    public ResponseEntity<Object> sendPendingForeignItemMail(@PathVariable String entityName,
-                                                             @RequestBody PendingMailDTO pendingMailDTO,
-                                                             HttpServletRequest request) {
-
-        ResponseParams responseParams = new ResponseParams();
-        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
-
-        try {
-            registryHelper.authorizeInviteEntity(request, entityName);
-
-            String mailStatus = claimRequestClient.sendPendingForeignItemMail(pendingMailDTO);
-
-            response.setResult(mailStatus);
-            responseParams.setStatus(Response.Status.SUCCESSFUL);
-
-        } catch (Exception exception) {
-            logger.error("Exception : {}", exception.getMessage());
-            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg(exception.getMessage());
-            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
 
 }

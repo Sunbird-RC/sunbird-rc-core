@@ -119,11 +119,4 @@ public class EmailController {
         return new ResponseEntity<>("Mail is sending", HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/api/v1/sendPendingForeignItemMail", method = RequestMethod.POST)
-    public ResponseEntity<String> sendPendingItemMail(@RequestHeader HttpHeaders headers,
-                                           @RequestBody PendingMailDTO pendingMailDTO) {
-        emailService.sendPendingMail(pendingMailDTO);
-        return new ResponseEntity<>("Mail is sending", HttpStatus.OK);
-    }
-
 }
