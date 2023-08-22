@@ -250,7 +250,7 @@ claims:
 authentication:
   enabled: ${authentication_enabled:true}
   publicKey:  ${authentication_publickey:}
-  realm:  ${authentication_realm:sunbird-rc}e
+  realm:  ${authentication_realm:sunbird-rc}
   url:  ${authentication_url:localhost:8443/auth}
 
 

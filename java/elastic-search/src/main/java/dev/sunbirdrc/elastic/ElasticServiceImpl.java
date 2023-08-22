@@ -36,16 +36,12 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
 import java.util.*;
-
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ELASTIC_SERVICE_NAME;
 
@@ -59,9 +55,6 @@ public class ElasticServiceImpl implements IElasticService {
     private static String userName;
     private static String password;
     private static String defaultScheme;
-
-    @Autowired
-    private static Environment environment;
     public void setConnectionInfo(String connection) {
         connectionInfo = connection;
     }
@@ -89,8 +82,8 @@ public class ElasticServiceImpl implements IElasticService {
     /**
      * This method creates the high-level-client w.r.to index, if client is not created. for every index one client object is created
      *
-  //   * @param indexName      for ElasticSearch
-   //  * @param connectionInfo of ElasticSearch
+      * @param indexName      for ElasticSearch
+       * @param connectionInfo of ElasticSearch
      */
 
     private static void createClient(String indexName, String connectionInfo) {
