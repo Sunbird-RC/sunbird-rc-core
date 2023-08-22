@@ -28,7 +28,7 @@
           "type": "string",
           "title": "name"
         },
-          "marriedName": {
+        "marriedName": {
           "$id": "#/properties/marriedName",
           "type": "string",
           "title": "marriedName"
