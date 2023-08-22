@@ -20,7 +20,7 @@ public class CoursesController {
         this.coursesService = coursesService;
     }
 
-    @GetMapping
+    @GetMapping("/")
     public ResponseEntity<List<Courses>> getAllCourses() {
         List<Courses> courses = coursesService.getAllCourses();
         return ResponseEntity.ok(courses);
