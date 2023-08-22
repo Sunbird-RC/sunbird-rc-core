@@ -248,9 +248,9 @@ keycloak-user:
 claims:
   url: ${claims_url:http://localhost:8082}
 authentication:
-  enabled: ${authentication_enabled:false}
+  enabled: ${authentication_enabled:true}
   publicKey:  ${authentication_publickey:}
-  realm:  ${authentication_realm:sunbird-rc}
+  realm:  ${authentication_realm:sunbird-rc}e
   url:  ${authentication_url:localhost:8443/auth}
 
 

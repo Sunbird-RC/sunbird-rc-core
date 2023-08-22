@@ -10,6 +10,7 @@ import dev.sunbirdrc.pojos.FilterOperators;
 import dev.sunbirdrc.pojos.SearchQuery;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import org.apache.commons.collections4.KeyValue;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -44,7 +45,6 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ELASTIC_SERVICE_NAME;
@@ -95,38 +95,29 @@ public class ElasticServiceImpl implements IElasticService {
 
     private static void createClient(String indexName, String connectionInfo) {
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        if (authEnabled) {
-            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
-        }
-
-        try {
-            if (!esClient.containsKey(indexName)) {
-                List<HttpHost> httpHosts = Arrays.stream(connectionInfo.split(","))
-                        .map(info -> {
-                            try {
-                                URL url = new URL(info);
-                                return new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
-                            } catch (Exception e) {
-                                String port = Optional.ofNullable(info.split(":").length == 1 ? "-1" : info.split(":")[1]).orElse("-1");
-                                return new HttpHost(info.split(":")[0], Integer.valueOf(port), defaultScheme);
-                            }
-                        })
-                        .collect(Collectors.toList());
-
-                RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[0]));
-                if (authEnabled) {
-                    restClientBuilder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
-                }
-                RestHighLevelClient client = new RestHighLevelClient(restClientBuilder);
-                if (null != client) {
-                    esClient.put(indexName, client);
+        credentialsProvider.setCredentials(AuthScope.ANY,
+                new UsernamePasswordCredentials(userName, password));
+        if (!esClient.containsKey(indexName)) {
+            Map<String, KeyValue<Integer, String>> hostPort = new HashMap<>();
+            List<HttpHost> httpHosts = new ArrayList<>();
+            for (String info : connectionInfo.split(",")) {
+                try {
+                    URL url = new URL(info);
+                    httpHosts.add(new HttpHost(url.getHost(), url.getPort(), url.getProtocol()));
+                } catch (Exception e) {
+                    String port = Optional.ofNullable(info.split(":").length == 1 ? "-1" : info.split(":")[1]).get();
+                    httpHosts.add(new HttpHost(info.split(":")[0], Integer.valueOf(port), defaultScheme));
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[httpHosts.size()]));
+            if(authEnabled) {
+                restClientBuilder.setHttpClientConfigCallback(httpAsyncClientBuilder -> httpAsyncClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+            }
+            RestHighLevelClient client = new RestHighLevelClient(restClientBuilder);
+            if (null != client)
+                esClient.put(indexName, client);
         }
     }
-
     public void setScheme(String scheme) {
         this.defaultScheme = scheme;
     }
