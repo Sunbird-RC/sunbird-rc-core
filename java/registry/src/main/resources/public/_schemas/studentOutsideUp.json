@@ -240,10 +240,10 @@
       }
     ],
     "inviteRoles": ["anonymous"],
-    "roles": ["StudentOutsideUP"],
+    "roles": ["StudentOutsideUP","StudentFromUP"],
     "attestationPolicies": [
       {
-        "name": "studentOutsideUPVerification",
+        "name": "studentVerification",
         "conditions": "(ATTESTOR#$.council#.contains(REQUESTER#$.council#))",
         "type": "MANUAL",
         "attestorPlugin": "did:internal:ClaimPluginActor?entity=Regulator",

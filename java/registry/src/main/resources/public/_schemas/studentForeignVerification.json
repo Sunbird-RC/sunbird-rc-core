@@ -90,8 +90,8 @@
           "type": "string",
           "title": "dob"
         },
-        "doc-proof": {
-          "type": "string", "title": "doc-proof"
+        "docproof": {
+          "type": "string", "title": "docproof"
         },
         "candidatePic": {
           "$id": "#/properties/candidatePic",
@@ -140,7 +140,7 @@
           "date": "$.date",
           "validityOfRegistration": "$.validityOfRegistration",
           "dob": "$.dob",
-          "doc-proof": "$.doc-proof",
+          "docproof": "$.docproof",
           "paymentStatus": "$.paymentStatus"
         },
         "credentialTemplate": {
@@ -242,8 +242,8 @@
                   "name": "schema:Text"
                 }
               },
-              "doc-proof": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#doc-proof",
+              "docproof": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#docproof",
                 "@context": {
                   "name": "schema:Text"
                 }

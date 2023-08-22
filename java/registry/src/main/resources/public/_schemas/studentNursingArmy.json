@@ -226,7 +226,7 @@
     "roles": ["StudentNursingArmy"],
     "attestationPolicies": [
       {
-        "name": "studentArmyVerification",
+        "name": "studentVerification",
         "conditions": "(ATTESTOR#$.council#.contains(REQUESTER#$.council#))",
         "type": "MANUAL",
         "attestorPlugin": "did:internal:ClaimPluginActor?entity=Regulator",
