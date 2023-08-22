@@ -2,6 +2,8 @@ package dev.sunbirdrc.controller;
 
 
 import dev.sunbirdrc.dto.*;
+import dev.sunbirdrc.entity.UserDetails;
+import dev.sunbirdrc.service.MailService;
 import dev.sunbirdrc.service.UserService;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private MailService mailService;
 
     @PostMapping("/login")
     public ResponseEntity<UserTokenDetailsDTO> loginUser(@Valid @RequestBody UserLoginDTO userLoginDTO) {
@@ -146,6 +151,28 @@ public class UserController {
     public ResponseEntity<String> persistUserCredential(@RequestBody CustomUserDTO customUserDTO) {
         try {
             userService.persistUserDetailsWithCredentials(customUserDTO);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to persist", HttpStatus.EXPECTATION_FAILED);
+        }
+
+        return new ResponseEntity<>("Persist successfully", HttpStatus.OK);
+    }
+
+    @PostMapping("/keycloak/mail/sendOTP")
+    public ResponseEntity<String> sendOTPMail(@RequestBody UserDetails userDetails) {
+        try {
+            mailService.sendOtpMail(userDetails);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to persist", HttpStatus.EXPECTATION_FAILED);
+        }
+
+        return new ResponseEntity<>("Persist successfully", HttpStatus.OK);
+    }
+
+    @PostMapping("/keycloak/mail/userCreate")
+    public ResponseEntity<String> sendUserCreationMail(@RequestBody CustomUserDTO customUserDTO) {
+        try {
+            mailService.sendUserCreationNotification(customUserDTO);
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to persist", HttpStatus.EXPECTATION_FAILED);
         }
