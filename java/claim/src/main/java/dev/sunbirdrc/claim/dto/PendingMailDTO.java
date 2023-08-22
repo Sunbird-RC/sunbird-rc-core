@@ -17,6 +17,6 @@ public class PendingMailDTO {
     private String refNo;
     private String regulatorName;
     private String regulatorEmail;
-    private String course;
+    private String credType;
     private String registrationNumber;
 }

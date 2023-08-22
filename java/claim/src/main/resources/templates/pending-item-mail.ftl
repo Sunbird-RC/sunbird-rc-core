@@ -22,7 +22,7 @@
         <table>
           <tr>
             <th>Name</th>
-            <th>Course</th>
+            <th>Cred Type</th>
             <th>Reference Number</th>
             <th>Registration Number</th>
             <th>Email</th>
@@ -30,7 +30,7 @@
           <#list candidates as candidate >
               <tr>
                 <td>${candidate.name} </td>
-                <td>${candidate.course}</td>
+                <td>${candidate.credType}</td>
                 <td>${candidate.refNo}</td>
                 <td>${candidate.registrationNumber}</td>
                 <td>${candidate.emailAddress}</td>

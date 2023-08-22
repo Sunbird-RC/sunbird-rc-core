@@ -299,7 +299,7 @@ public class EmailService
                 JsonNode jsonNode = objectMapper.readTree(propertyData);
 
                 PendingMailDTO pendingMailDTO = PendingMailDTO.builder()
-                        .course(jsonNode.get("courseName") != null ? jsonNode.get("courseName").asText() : "")
+                        .credType(jsonNode.get("credType") != null ? jsonNode.get("credType").asText() : "")
                         .emailAddress(jsonNode.get("email") != null ? jsonNode.get("email").asText() : "")
                         .refNo(jsonNode.get("refNo") != null ? jsonNode.get("refNo").asText() : "")
                         .name(jsonNode.get("name") != null ? jsonNode.get("name").asText() : "")

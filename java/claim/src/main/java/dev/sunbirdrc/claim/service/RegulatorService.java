@@ -21,8 +21,8 @@ public class RegulatorService {
 
     public List<Regulator> findByCouncil(String council) {
         try {
-            return jdbcTemplate.query("SELECT * FROM \"V_Regulator\" where council=?", new RegulatorRowMapper(),
-                    council);
+            return jdbcTemplate.query("SELECT * FROM \"" + propertyMapper.getRegulatorTableName()
+                    + "\" where council=?", new RegulatorRowMapper(), council);
 
         } catch (IncorrectResultSizeDataAccessException e) {
             return null;
@@ -30,7 +30,8 @@ public class RegulatorService {
     }
 
     public List<Regulator> findAll() {
-        return jdbcTemplate.query("SELECT * from \"V_Regulator\"", new RegulatorRowMapper());
+        return jdbcTemplate.query("SELECT * from \"" + propertyMapper.getRegulatorTableName() + "\"",
+                new RegulatorRowMapper());
     }
 
     public boolean isRegulatorTableExist() {
