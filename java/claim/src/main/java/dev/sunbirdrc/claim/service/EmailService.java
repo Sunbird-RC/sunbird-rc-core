@@ -333,5 +333,52 @@ public class EmailService
         return council;
     }
 
+    @Async
+    public void sendManualPendingMail(PendingMailDTO pendingMailDTO) {
+
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
+
+            mimeMessageHelper.setSubject(propertyMapper.getForeignPendingItemSubject());
+            mimeMessageHelper.setFrom(new InternetAddress(propertyMapper.getSimpleMailMessageFrom(),pendingMailDTO.getName()));
+            mimeMessageHelper.setTo(pendingMailDTO.getEmailAddress());
+            mimeMessageHelper.setText(generateManualPendingMailContent(pendingMailDTO), true);
+
+            mailSender.send(mimeMessageHelper.getMimeMessage());
+        } catch (Exception e) {
+            logger.error("Exception while sending mail: ", e);
+            throw new ClaimMailException("Exception while composing and sending mail with OTP");
+        }
+
+    }
+
+    /**
+     * @param mailDto
+     * @return
+     */
+    private String generateManualPendingMailContent(PendingMailDTO pendingMailDTO) {
+        String processedTemplateString = null;
+
+        Map<String, Object> mailMap = new HashMap<>();
+        mailMap.put("name", pendingMailDTO.getName());
+        mailMap.put("council", pendingMailDTO.getCouncil());
+        mailMap.put("itemName", pendingMailDTO.getItemName());
+
+        try {
+            freeMarkerConfiguration.setClassForTemplateLoading(this.getClass(), "/templates/");
+            Template template = freeMarkerConfiguration.getTemplate("manual-pending-item-mail.ftl");
+            processedTemplateString = FreeMarkerTemplateUtils.processTemplateIntoString(template, mailMap);
+
+        } catch (TemplateException e) {
+            logger.error("TemplateException while creating mail template for certificate ", e);
+            throw new ClaimMailException("Error while creating mail template for certificate");
+        } catch (IOException e) {
+            logger.error("IOException while creating mail template for certificate ", e);
+            throw new ClaimMailException("Error while creating mail template for certificate");
+        }
+        return processedTemplateString;
+    }
 
 }
