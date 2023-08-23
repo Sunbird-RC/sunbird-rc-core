@@ -37,6 +37,30 @@ public class CoursesController {
         }
     }
 
+    @GetMapping("/category/{category}")
+    public ResponseEntity<Courses> getCourseByName(@PathVariable String category) {
+        Optional<Courses> course = coursesService.getCourseByCourse(category);
+
+        if (course.isPresent()) {
+            return ResponseEntity.ok(course.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/diploma/{category}")
+    public ResponseEntity<List<String>> getCourseByCategory(@PathVariable String category) {
+        List<String> course = coursesService.getCourseByCategory(category);
+            return ResponseEntity.ok(course);
+    }
+
+    @GetMapping("/course-short-name/{courseName}")
+    public ResponseEntity<String> getCourseShortName(@PathVariable String courseName) {
+        courseName = courseName.replace(" ","");
+        String course = coursesService.getCourseShortName(courseName);
+        return ResponseEntity.ok(course);
+    }
+
     @PostMapping
     public ResponseEntity<Courses> createCourse(@RequestBody Courses course) {
         Courses savedCourse = coursesService.createCourse(course);

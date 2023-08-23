@@ -26,7 +26,21 @@ public class CoursesService {
         return coursesRepository.findById(id);
     }
 
+    public Optional<Courses> getCourseByCourse(String category) {
+        return coursesRepository.findByCategory(category);
+    }
+
+    public List<String> getCourseByCategory(String category) {
+        return coursesRepository.findByFieldName(category);
+    }
+
+    //findByCouseName
+    public String getCourseShortName(String courseName) {
+        return coursesRepository.findByCouseName(courseName);
+    }
     public Courses createCourse(Courses course) {
         return coursesRepository.save(course);
     }
+
+
 }
