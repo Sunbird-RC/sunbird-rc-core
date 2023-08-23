@@ -107,7 +107,11 @@
         ]},
         "docproof":{"type": "string","title": "docproof"},
         "regNumber":{"type": "string","title": "regNumber"},
-        "diplomaNumber":{"type": "string","title": "diplomaNumber"}
+        "diplomaNumber":{"type": "string","title": "diplomaNumber"},
+        "nurseRegNo": {"type": "string","title": "nurseRegNo"},
+        "nurseRegdate": {"type": "string","title": "nurseRegdate"},
+        "courseState": {"type": "string","title": "courseState"},
+        "courseCouncil": {"type": "string","title": "courseCouncil"}
       }
     }
   },
@@ -121,7 +125,7 @@
       }
     ],
     "inviteRoles": ["anonymous"],
-    "roles": ["StudentFromUP"],
+    "roles": ["StudentFromUP","StudentOutsideUP"],
     "attestationPolicies": [
       {
         "name": "studentVerification",
@@ -158,7 +162,11 @@
           "credType": "$.credType",
           "docproof": "$.docproof",
           "regNumber": "$.regNumber",
-          "diplomaNumber": "$.diplomaNumber"
+          "diplomaNumber": "$.diplomaNumber",
+          "nurseRegNo": "$.nurseRegNo",
+          "nurseRegDate": "$.nurseRegDate",
+          "courseState": "$.courseState",
+          "courseCouncil": "$.courseCouncil"
         },
         "credentialTemplate": {
           "@context": [
@@ -353,6 +361,30 @@
                 "@context": {
                   "name": "schema:Text"
                 }
+              },
+              "nurseRegNo": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#nurseRegNo",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "nurseRegDate": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#nurseRegDate",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "courseState": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#courseState",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "courseCouncil": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#courseCouncil",
+                "@context": {
+                  "name": "schema:Text"
+                }
               }
             }
           ],
@@ -390,7 +422,11 @@
             "credType":"{{credType}}",
             "docproof": "{{docproof}}",
             "regNumber": "{{regNumber}}",
-            "diplomaNumber": "{{diplomaNumber}}"
+            "diplomaNumber": "{{diplomaNumber}}",
+            "nurseRegNo": "{{nurseRegNo}}",
+            "nurseRegDate": "{{nurseRegDate}}",
+            "courseState": "{{courseState}}",
+            "courseCouncil": "{{courseCouncil}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }
