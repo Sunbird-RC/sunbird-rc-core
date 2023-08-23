@@ -45,9 +45,16 @@ public class FileController {
         ByteArrayResource resource = fileService.downloadFile(fileName);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=\"" + fileName + "\"");
-        return ResponseEntity.ok().
-                contentType(MediaType.APPLICATION_PDF).
-                headers(headers).body(resource);
+
+        try {
+            MediaType mediaType = fileService.getFileMediaType(fileName);
+
+            return ResponseEntity.ok()
+                    .contentType(mediaType)
+                    .headers(headers).body(resource);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+        }
     }
 
     /**

@@ -1,7 +1,9 @@
 package dev.sunbirdrc.claim.controller;
 
 import dev.sunbirdrc.claim.dto.BarCode;
+import dev.sunbirdrc.claim.dto.CertificateMailDto;
 import dev.sunbirdrc.claim.dto.MailDto;
+import dev.sunbirdrc.claim.dto.PendingMailDTO;
 import dev.sunbirdrc.claim.service.EmailService;
 import net.sourceforge.barbecue.Barcode;
 import net.sourceforge.barbecue.BarcodeFactory;
@@ -111,5 +113,16 @@ public class EmailController {
         return body;
     }
 
+    @RequestMapping(value = "/api/v1/sendCertificateMail", method = RequestMethod.POST)
+    public ResponseEntity<String> sendCertificateMail(@RequestBody CertificateMailDto certificateMailDto) {
+        emailService.sendCertificateMail(certificateMailDto);
+        return new ResponseEntity<>("Mail is sending", HttpStatus.OK);
+    }
 
+    @RequestMapping(value = "/api/v1/sendPendingForeignItemMail", method = RequestMethod.POST)
+    public ResponseEntity<String> sendPendingItemMail(@RequestHeader HttpHeaders headers,
+                                                      @RequestBody PendingMailDTO pendingMailDTO) {
+        emailService.sendManualPendingMail(pendingMailDTO);
+        return new ResponseEntity<>("Mail is sending", HttpStatus.OK);
+    }
 }

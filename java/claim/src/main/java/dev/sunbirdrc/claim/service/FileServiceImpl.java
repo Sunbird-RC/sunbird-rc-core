@@ -6,11 +6,14 @@ import dev.sunbirdrc.claim.dto.FileDto;
 import dev.sunbirdrc.claim.exception.GCPFileUploadException;
 import dev.sunbirdrc.claim.utils.GCPBucketUtil;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,6 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import static dev.sunbirdrc.claim.contants.AttributeNames.*;
+import static dev.sunbirdrc.claim.contants.AttributeNames.PDF;
 
 
 @Service
@@ -71,6 +77,7 @@ public class FileServiceImpl implements FileService {
         for (MultipartFile file : files) {
             FileDto fileDto = new FileDto();
             String originalFileName = entityName + "_" + entityId + "_" + file.getOriginalFilename();
+            originalFileName = StringUtils.deleteWhitespace(originalFileName);
             Path path = new File(originalFileName).toPath();
 
             try {
@@ -86,5 +93,41 @@ public class FileServiceImpl implements FileService {
             fileDtoList.add(fileDto);
         }
         return fileDtoList;
+    }
+
+    /**
+     * @param fileName
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public MediaType getFileMediaType(String fileName) throws Exception {
+        if (StringUtils.isEmpty(fileName)) {
+            LOGGER.error("File name is either empty or blank - while finding file type");
+            throw new Exception("File name is either empty or blank - while finding file type");
+        }
+
+        MediaType mediaType = MediaType.APPLICATION_PDF;
+
+        String extension = FilenameUtils.getExtension(fileName);
+        extension = StringUtils.upperCase(extension);
+
+        switch (extension) {
+            case JPG:
+            case JPEG:
+                mediaType = MediaType.IMAGE_JPEG;
+                break;
+            case PNG:
+                mediaType = MediaType.IMAGE_PNG;
+                break;
+            case PDF:
+                mediaType = MediaType.APPLICATION_PDF;
+                break;
+            default:
+                LOGGER.error("File type not supported");
+                throw new Exception("File type not supported");
+        }
+
+        return mediaType;
     }
 }
