@@ -12,30 +12,26 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/v1/api/events")
-public class EventController {
-    private final EventService eventService;
+public class EventController
+{
+    @Autowired
+    private EventService eventService;
+
 
     @Autowired
     public EventController(EventService eventService) {
         this.eventService = eventService;
     }
 
-    @PostMapping("/")
-    public ResponseEntity<Event> saveEvent(@RequestBody Event event) {
-        Event savedEvent = eventService.saveEvent(event);
-        return new ResponseEntity<>(savedEvent, HttpStatus.CREATED);
+    @PostMapping
+    public ResponseEntity<Event> createEventWithTelemetry(@RequestBody Event event) {
+        Event savedEvent = eventService.saveEventWithTelemetry(event);
+        return ResponseEntity.ok(savedEvent);
     }
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<Event>> getAllEvents() {
         List<Event> events = eventService.getAllEvents();
-        return new ResponseEntity<>(events, HttpStatus.OK);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
-        Optional<Event> event = eventService.getEventById(id);
-        return event.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        return ResponseEntity.ok(events);
     }
 }
