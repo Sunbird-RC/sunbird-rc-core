@@ -287,8 +287,6 @@ public class RegistryEntityController extends AbstractController {
         Map<String, Object> result = new HashMap<>();
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
-
-       
         try {
             checkEntityNameInDefinitionManager(entityName);
             String userId = registryHelper.authorizeManageEntity(request, entityName);
@@ -302,7 +300,6 @@ public class RegistryEntityController extends AbstractController {
                 registryHelper.autoRaiseClaim(entityName, label, userId, null, newRootNode, emailId);
                 resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             }
-            
             /** Anchoring schema to chain */
             JsonNode np=rootNode.get("schema");
             JsonNode str=new ObjectMapper().readTree(np.asText());

@@ -93,6 +93,7 @@ public class RegistryHelper {
     @Value("${notification.service.enabled}") boolean notificationEnabled;
     @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
     @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
+    @Value("${cord.schemaURL}") String cord_schema_url;
     @Autowired
     private NotificationHelper notificationHelper;
     @Autowired
@@ -224,7 +225,7 @@ public class RegistryHelper {
      */
     public void anchorSchemaAPI(JsonNode obj){
         // apiHelper(obj,"http://172.24.0.1:5106/api/v1/schema");
-        apiHelper(obj,"http://localhost:5106/api/v1/schema"); // considering issuer agent running in local
+        apiHelper(obj,cord_schema_url); // considering issuer agent running in local
     }
 
 
