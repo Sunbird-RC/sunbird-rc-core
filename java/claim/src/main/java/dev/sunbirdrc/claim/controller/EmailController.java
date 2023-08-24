@@ -15,10 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
 import javax.xml.bind.DatatypeConverter;
@@ -119,10 +116,12 @@ public class EmailController {
         return new ResponseEntity<>("Mail is sending", HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/api/v1/sendPendingForeignItemMail", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/sendPendingForeignItemMail/{claimId}", method = RequestMethod.GET)
     public ResponseEntity<String> sendPendingItemMail(@RequestHeader HttpHeaders headers,
-                                                      @RequestBody PendingMailDTO pendingMailDTO) {
-        emailService.sendManualPendingMail(pendingMailDTO);
-        return new ResponseEntity<>("Mail is sending", HttpStatus.OK);
+                                                      @PathVariable String claimId) {
+
+        emailService.collectAndSendForeignCoucilMailManually(claimId);
+
+        return new ResponseEntity<>("Sending manual foreign pending item mail", HttpStatus.OK);
     }
 }
