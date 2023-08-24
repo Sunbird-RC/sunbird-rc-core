@@ -37,8 +37,8 @@ public class CoursesController {
         }
     }
 
-    @GetMapping("/category/{category}")
-    public ResponseEntity<Courses> getCourseByName(@PathVariable String category) {
+    @GetMapping("/category")
+    public ResponseEntity<Courses> getCourseByName(@RequestParam(value = "category", required = false) String category) {
         Optional<Courses> course = coursesService.getCourseByCourse(category);
 
         if (course.isPresent()) {
@@ -48,8 +48,8 @@ public class CoursesController {
         }
     }
 
-    @GetMapping("/diploma/{category}")
-    public ResponseEntity<List<String>> getCourseByCategory(@PathVariable String category) {
+    @GetMapping("/diploma")
+    public ResponseEntity<List<String>> getCourseByCategory(@RequestParam(value = "category", required = false) String category) {
         List<String> course = coursesService.getCourseByCategory(category);
             return ResponseEntity.ok(course);
     }

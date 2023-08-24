@@ -18,7 +18,7 @@ import java.util.Date;
 @Builder
 public class Credentials {
     @Value("${gcs.api.url}")
-    public static String HTTP_LOCALHOST_8080_API_V_1_FILES_DOWNLOAD_FILE_NAME = "http://localhost:8082/api/v1/files/download?fileName=";
+    public static String HTTP_LOCALHOST_8080_API_V_1_FILES_DOWNLOAD_FILE_NAME = "http://registration.uphrh.in:8082/api/v1/files/download?fileName=";
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE)
     private Long id;

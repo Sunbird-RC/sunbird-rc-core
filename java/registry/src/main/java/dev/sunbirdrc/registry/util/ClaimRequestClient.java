@@ -30,7 +30,8 @@ import java.util.List;
 
 @Component
 public class ClaimRequestClient {
-    private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
+    private static final String GET_CERTIFICATE_NUMBER = "/api/v1/generate-certNumber";
+    private static Logger logger = LoggerFactory.getLogger(ClaimRequestClient.class);
     private final String claimRequestUrl;
     private final RestTemplate restTemplate;
     private static final String CLAIMS_PATH = "/api/v1/claims";
@@ -41,6 +42,8 @@ public class ClaimRequestClient {
     private static final String BAR_CODE_API = "/api/v1/barcode";
     private static final String SAVE_CRED_API = "/api/v1/credentials/save";
     private static final String GET_CRED_URL = "/api/v1/files/download?";
+
+    private static final String GET_COURSE_CATEGORY = "/api/v1/courses/diploma";
     private static final String PDF = ".PDF";
     private static final String GCS_CODE_API = "/api/v1/files/upload";
     private static final String CLAIM_MULTI_FILE_UPLOAD = "/api/v1/files/upload/multiple";
@@ -249,4 +252,36 @@ public class ClaimRequestClient {
         logger.info("Pending foreign item mail status: " + mailStatus);
         return mailStatus;
     }
+
+    public List getCourseCategory(String category) {
+        String requestUrl = claimRequestUrl + GET_COURSE_CATEGORY;
+        MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+        queryParams.add("category", category);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl)
+                .queryParam("category", category);
+        // Set request headers if needed
+        HttpHeaders headers = new HttpHeaders();
+        // Add any required headers here
+        headers.set("accept", "*/*");
+        ResponseEntity<List> response = restTemplate.exchange(
+                builder.toUriString(), HttpMethod.GET, null, List.class, queryParams, headers
+        );        logger.info("end getCredentials ...");
+        return response.getBody();
+    }
+
+    ///api/v1/generate-certNumber
+
+    public Long getCertificateNumber() {
+        String requestUrl = claimRequestUrl + GET_CERTIFICATE_NUMBER;
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
+        // Set request headers if needed
+        HttpHeaders headers = new HttpHeaders();
+        // Add any required headers here
+        headers.set("accept", "*/*");
+        ResponseEntity<Long> response = restTemplate.exchange(
+                builder.toUriString(), HttpMethod.GET, null, Long.class, headers
+        );        logger.info("end getCredentials ...");
+        return response.getBody();
+    }
+
 }

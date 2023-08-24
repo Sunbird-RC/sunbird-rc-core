@@ -36,7 +36,7 @@ public class CertificateServiceImpl implements ICertificateService {
     private final String certificateHealthCheckURL;
     private final RestTemplate restTemplate;
 
-    @Value("${claims.url}")
+    @Value("${claims.domain-url}")
     private String claimRequestUrl;
 
     @Value("${claims.download-path}")

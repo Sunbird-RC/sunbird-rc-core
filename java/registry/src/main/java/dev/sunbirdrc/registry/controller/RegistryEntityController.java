@@ -1464,4 +1464,47 @@ public class RegistryEntityController extends AbstractController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+
+    @RequestMapping(value = "/api/v1/category/{entityName}/{category}", method = RequestMethod.GET)
+    public ResponseEntity<Object> getCourseName(@PathVariable String entityName, @PathVariable String category,HttpServletRequest request) {
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+
+        try {
+            List list = claimRequestClient.getCourseCategory(category);
+            //Long certNumber = claimRequestClient.getCertificateNumber();
+            response.setResult(list);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+
+        } catch (Exception exception) {
+            logger.error("Exception : {}", exception.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/api/v1/course/{entityName}/certificate-number", method = RequestMethod.GET)
+    public ResponseEntity<Object> getCourseCertificateNumber(@PathVariable String entityName,HttpServletRequest request) {
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+
+        try {
+            Long certNumber = claimRequestClient.getCertificateNumber();
+            response.setResult(certNumber);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+        } catch (Exception exception) {
+            logger.error("Exception : {}", exception.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }

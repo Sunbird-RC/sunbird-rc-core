@@ -249,6 +249,7 @@ keycloak-user:
   email-actions: ${keycloack_user_email_actions:}
 claims:
   url: ${claims_url:http://localhost:8082}
+  domain-url: ${claims_domain-url:http://registration.uphrh.in:8082}
   download-path: /api/v1/files/download
 authentication:
   enabled: ${authentication_enabled:true}
