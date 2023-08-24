@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.lang.NonNull;
@@ -28,6 +29,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
@@ -63,6 +65,9 @@ public class EmailService
 
     @Autowired
     private RegulatorService regulatorService;
+
+    @Autowired
+    private AsyncMailSender asyncMailSender;
  
     /**
      * This method will send compose and send the message 
@@ -189,56 +194,6 @@ public class EmailService
         return processedTemplateString;
     }
 
-    @Async
-    public void sendPendingMail(@NonNull List<PendingMailDTO> pendingMailDTOList, @NonNull String regulatorName,
-                                @NonNull String regulatorEmail) {
-
-        try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-
-            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
-
-            mimeMessageHelper.setSubject(propertyMapper.getForeignPendingItemSubject());
-            mimeMessageHelper.setFrom(new InternetAddress(propertyMapper.getSimpleMailMessageFrom(),
-                    "Pending Action Item"));
-            mimeMessageHelper.setTo(regulatorEmail);
-            mimeMessageHelper.setText(generatePendingMailContent(pendingMailDTOList, regulatorName), true);
-
-            mailSender.send(mimeMessageHelper.getMimeMessage());
-        } catch (Exception e) {
-            logger.error("Exception while sending mail: ", e);
-            throw new ClaimMailException("Exception while composing and sending mail with OTP");
-        }
-
-    }
-
-    /**
-     * @param mailDto
-     * @return
-     */
-    private String generatePendingMailContent(@NonNull List<PendingMailDTO> pendingMailDTOList,
-                                                  @NonNull String regulatorName) {
-        String processedTemplateString = null;
-
-        Map<String, Object> mailMap = new HashMap<>();
-        mailMap.put("candidates", pendingMailDTOList);
-        mailMap.put("regulatorName", regulatorName);
-
-        try {
-            freeMarkerConfiguration.setClassForTemplateLoading(this.getClass(), "/templates/");
-            Template template = freeMarkerConfiguration.getTemplate("pending-item-mail.ftl");
-            processedTemplateString = FreeMarkerTemplateUtils.processTemplateIntoString(template, mailMap);
-
-        } catch (TemplateException e) {
-            logger.error("TemplateException while creating mail template for certificate ", e);
-            throw new ClaimMailException("Error while creating mail template for certificate");
-        } catch (IOException e) {
-            logger.error("IOException while creating mail template for certificate ", e);
-            throw new ClaimMailException("Error while creating mail template for certificate");
-        }
-        return processedTemplateString;
-    }
-
     public void sendForeignPendingItemMail() {
         if (!regulatorService.isRegulatorTableExist()) {
             logger.error(">>>>>>>>>>> Unable to find regulator table in database: No further process will be occurred");
@@ -260,9 +215,7 @@ public class EmailService
 
                 List<Regulator> regulatorList = regulatorService.findByCouncil(foreignCouncilName);
 
-                for (Regulator regulator : regulatorList) {
-                    sendPendingMail(pendingMailDTOList, regulator.getName(), regulator.getEmail());
-                }
+                asyncMailSender.sendPendingMailToRegulatorList(pendingMailDTOList, regulatorList);
             }
         }
     }
@@ -297,6 +250,7 @@ public class EmailService
                 String propertyData = claim.getPropertyData();
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode jsonNode = objectMapper.readTree(propertyData);
+                String entityId = claim.getEntityId().replace(propertyMapper.getRegistryShardId() + "-", "");
 
                 PendingMailDTO pendingMailDTO = PendingMailDTO.builder()
                         .credType(jsonNode.get("credType") != null ? jsonNode.get("credType").asText() : "")
@@ -304,6 +258,7 @@ public class EmailService
                         .refNo(jsonNode.get("refNo") != null ? jsonNode.get("refNo").asText() : "")
                         .name(jsonNode.get("name") != null ? jsonNode.get("name").asText() : "")
                         .registrationNumber(jsonNode.get("registrationNumber") != null ? jsonNode.get("registrationNumber").asText() : "")
+                        .verifyLink(propertyMapper.getClaimUrl() + "/api/v1/outside/foreignStudent/" + entityId)
                         .build();
 
                 pendingMailDTOList.add(pendingMailDTO);
@@ -311,8 +266,6 @@ public class EmailService
         } catch (Exception e) {
             logger.error(">>>>>>>>>>> Unable to read council name from claim property data", e);
         }
-
-
         return pendingMailDTOList;
     }
 
@@ -333,52 +286,61 @@ public class EmailService
         return council;
     }
 
-    @Async
-    public void sendManualPendingMail(PendingMailDTO pendingMailDTO) {
+    /**
+     * @param claimId
+     */
+    public void collectAndSendForeignCoucilMailManually(String claimId) {
+        if (!StringUtils.isEmpty(claimId)) {
+            Optional<Claim> claimOptional = claimService.findById(claimId);
 
-        try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            if (claimOptional.isPresent()) {
+                Claim claim = claimOptional.get();
 
-            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
+                String foreignCouncilName = getCouncilName(claim.getPropertyData());
 
-            mimeMessageHelper.setSubject(propertyMapper.getForeignPendingItemSubject());
-            mimeMessageHelper.setFrom(new InternetAddress(propertyMapper.getSimpleMailMessageFrom(),pendingMailDTO.getName()));
-            mimeMessageHelper.setTo(pendingMailDTO.getEmailAddress());
-            mimeMessageHelper.setText(generateManualPendingMailContent(pendingMailDTO), true);
+                Optional<PendingMailDTO> pendingMailDtoOptional = collectEntityDetailsForManualMail(claim);
 
-            mailSender.send(mimeMessageHelper.getMimeMessage());
-        } catch (Exception e) {
-            logger.error("Exception while sending mail: ", e);
-            throw new ClaimMailException("Exception while composing and sending mail with OTP");
+                if (pendingMailDtoOptional.isPresent()) {
+                    List<Regulator> regulatorList = regulatorService.findByCouncil(foreignCouncilName);
+
+                    for (Regulator regulator : regulatorList) {
+                        logger.info(">>>>>>>>>>>>>>> before sending pending mail");
+                        asyncMailSender.sendManualPendingMail(pendingMailDtoOptional.get(), regulator.getName(), regulator.getEmail());
+                        logger.info(">>>>>>>>>>>>>>>>>>> mail has been processed");
+                    }
+                } else {
+                    logger.error(">>>>> Unable to collect entitiy details - while sending pending item mail to foreign council");
+                }
+            }
         }
-
     }
 
     /**
-     * @param mailDto
+     * @param claim
      * @return
      */
-    private String generateManualPendingMailContent(PendingMailDTO pendingMailDTO) {
-        String processedTemplateString = null;
-
-        Map<String, Object> mailMap = new HashMap<>();
-        mailMap.put("name", pendingMailDTO.getName());
-        mailMap.put("council", pendingMailDTO.getCouncil());
-        mailMap.put("itemName", pendingMailDTO.getItemName());
-
+    private Optional<PendingMailDTO> collectEntityDetailsForManualMail(@NonNull Claim claim) {
         try {
-            freeMarkerConfiguration.setClassForTemplateLoading(this.getClass(), "/templates/");
-            Template template = freeMarkerConfiguration.getTemplate("manual-pending-item-mail.ftl");
-            processedTemplateString = FreeMarkerTemplateUtils.processTemplateIntoString(template, mailMap);
+            String propertyData = claim.getPropertyData();
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(propertyData);
+            String entityId = claim.getEntityId().replace(propertyMapper.getRegistryShardId() + "-", "");
 
-        } catch (TemplateException e) {
-            logger.error("TemplateException while creating mail template for certificate ", e);
-            throw new ClaimMailException("Error while creating mail template for certificate");
-        } catch (IOException e) {
-            logger.error("IOException while creating mail template for certificate ", e);
-            throw new ClaimMailException("Error while creating mail template for certificate");
+            PendingMailDTO pendingMailDTO = PendingMailDTO.builder()
+                    .credType(jsonNode.get("credType") != null ? jsonNode.get("credType").asText() : "")
+                    .emailAddress(jsonNode.get("email") != null ? jsonNode.get("email").asText() : "")
+                    .refNo(jsonNode.get("refNo") != null ? jsonNode.get("refNo").asText() : "")
+                    .name(jsonNode.get("name") != null ? jsonNode.get("name").asText() : "")
+                    .registrationNumber(jsonNode.get("registrationNumber") != null ? jsonNode.get("registrationNumber").asText() : "")
+                    .verifyLink(propertyMapper.getClaimUrl() + "/api/v1/outside/foreignStudent/" + entityId)
+                    .build();
+
+            return Optional.ofNullable(pendingMailDTO);
+
+        } catch (Exception e) {
+            logger.error(">>>>>>>>>>> Unable to read council name from claim property data", e);
         }
-        return processedTemplateString;
-    }
 
+        return Optional.empty();
+    }
 }

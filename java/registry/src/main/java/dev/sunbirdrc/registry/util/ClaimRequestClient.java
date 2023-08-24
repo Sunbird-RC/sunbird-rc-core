@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -46,7 +47,7 @@ public class ClaimRequestClient {
     private static final String CLAIM_MULTI_FILE_UPLOAD = "/api/v1/files/upload/multiple";
     private static String URL_APPENDER = "/";
 
-    private static final String MAIL_SEND_PENDING_FOREIGN_ITEM_URL = "/api/v1/sendPendingForeignItemMail";
+    private static final String MAIL_SEND_PENDING_FOREIGN_ITEM_URL = "/api/v1/sendPendingForeignItemMail/";
 
     ClaimRequestClient(@Value("${claims.url}") String claimRequestUrl, RestTemplate restTemplate) {
         this.claimRequestUrl = claimRequestUrl;
@@ -242,11 +243,19 @@ public class ClaimRequestClient {
         return fileDtoList;
     }
 
-    public String sendPendingForeignItemMail(ManualPendingMailDTO pendingMailDTO) {
-        String mailStatus = restTemplate.postForObject(
-                claimRequestUrl + MAIL_SEND_PENDING_FOREIGN_ITEM_URL, pendingMailDTO, String.class);
+    public String sendPendingForeignItemMail(String claimId) {
+        if (!StringUtils.isEmpty(claimId)) {
 
-        logger.info("Pending foreign item mail status: " + mailStatus);
-        return mailStatus;
+            ResponseEntity<String> mailStatusResponse = restTemplate.getForEntity(
+                    claimRequestUrl + MAIL_SEND_PENDING_FOREIGN_ITEM_URL + claimId, String.class);
+
+            logger.info(">>>>>>>> Pending foreign item mail status: " + mailStatusResponse.getBody());
+
+            return mailStatusResponse.getBody();
+        } else {
+            logger.error(">>>>>>> Invalid claim id - while calling claim service for foreign pending item (manually)");
+        }
+
+        return "Failed to send mail to foreign pending item - invalid claim id";
     }
 }

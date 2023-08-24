@@ -63,6 +63,17 @@ public class Claim {
     @Column
     private String attestorUserId;
 
+    @Column
+    private String foreignStudentStatus;
+
+    public String getForeignStudentStatus() {
+        return foreignStudentStatus;
+    }
+
+    public void setForeignStudentStatus(String foreignStudentStatus) {
+        this.foreignStudentStatus = foreignStudentStatus;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = new Date();

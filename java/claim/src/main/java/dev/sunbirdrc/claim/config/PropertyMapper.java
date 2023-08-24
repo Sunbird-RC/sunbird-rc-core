@@ -18,4 +18,13 @@ public class PropertyMapper {
 
     @Value("${regulator.table.name}")
     private String regulatorTableName;
+
+    @Value("${student.foreign.verification.table.name}")
+    private String studentForeignVerificationTableName;
+
+    @Value("${claim.url}")
+    private String claimUrl;
+
+    @Value("${registry.shard.id}")
+    private String registryShardId;
 }

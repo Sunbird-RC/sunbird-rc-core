@@ -26,6 +26,7 @@
             <th>Reference Number</th>
             <th>Registration Number</th>
             <th>Email</th>
+            <th>Verify Link</th>
           </tr>
           <#list candidates as candidate >
               <tr>
@@ -34,6 +35,7 @@
                 <td>${candidate.refNo}</td>
                 <td>${candidate.registrationNumber}</td>
                 <td>${candidate.emailAddress}</td>
+                <td><a href = "${candidate.verifyLink}">Verify Candidate</a></td>
               </tr>
           </#list>
         </table>
