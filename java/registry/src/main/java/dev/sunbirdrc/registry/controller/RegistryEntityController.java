@@ -1438,9 +1438,9 @@ public class RegistryEntityController extends AbstractController {
         return result;
     }
 
-    @RequestMapping(value = "/api/v1/{entityName}/sendPendingForeignItemMail", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/v1/{entityName}/sendPendingForeignItemMail/{claimId}", method = RequestMethod.GET)
     public ResponseEntity<Object> sendPendingForeignItemMail(@PathVariable String entityName,
-                                                             @RequestBody ManualPendingMailDTO pendingMailDTO,
+                                                             @PathVariable String claimId,
                                                              HttpServletRequest request) {
 
         ResponseParams responseParams = new ResponseParams();
@@ -1449,7 +1449,7 @@ public class RegistryEntityController extends AbstractController {
         try {
             registryHelper.authorizeInviteEntity(request, entityName);
 
-            String mailStatus = claimRequestClient.sendPendingForeignItemMail(pendingMailDTO);
+            String mailStatus = claimRequestClient.sendPendingForeignItemMail(claimId);
 
             response.setResult(mailStatus);
             responseParams.setStatus(Response.Status.SUCCESSFUL);

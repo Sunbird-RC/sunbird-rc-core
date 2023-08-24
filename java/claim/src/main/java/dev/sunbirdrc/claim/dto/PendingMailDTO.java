@@ -19,4 +19,5 @@ public class PendingMailDTO {
     private String regulatorEmail;
     private String credType;
     private String registrationNumber;
+    private String verifyLink;
 }

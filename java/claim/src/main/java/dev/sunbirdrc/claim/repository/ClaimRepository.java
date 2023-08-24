@@ -13,4 +13,6 @@ public interface ClaimRepository extends JpaRepository<Claim, String> {
     List<Claim> findByAttestorEntity(String entity);
 
     List<Claim> findByRequestorName(String requestorName);
+
+    List<Claim> findByEntityId(String entityId);
 }
