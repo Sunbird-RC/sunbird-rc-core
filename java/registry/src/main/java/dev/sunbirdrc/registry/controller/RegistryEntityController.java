@@ -20,7 +20,7 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.service.FileStorageService;
-import dev.sunbirdrc.registry.service.ICertificateService;
+import dev.sunbirdrc.registry.service.ICertificateService;  
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
@@ -42,10 +42,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
@@ -89,7 +89,6 @@ public class RegistryEntityController extends AbstractController {
         newRootNode.set(entityName, rootNode);
         try {
             checkEntityNameInDefinitionManager(entityName);
-            registryHelper.authorizeInviteEntity(request, entityName);
             watch.start(TAG);
             String entityId = registryHelper.inviteEntity(newRootNode, "");
             registryHelper.autoRaiseClaim(entityName, entityId, "", null, newRootNode, dev.sunbirdrc.registry.Constants.USER_ANONYMOUS);
@@ -269,7 +268,7 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 
-
+    
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.POST)
     public ResponseEntity<Object> postEntity(
             @PathVariable String entityName,
@@ -278,22 +277,24 @@ public class RegistryEntityController extends AbstractController {
             @RequestParam(defaultValue = "sync") String mode,
             @RequestParam(defaultValue = "${webhook.url}") String callbackUrl,
             HttpServletRequest request
-    ) {
-
+    ) throws Exception {
         logger.info("MODE: {}", asyncRequest.isEnabled());
         logger.info("MODE: {}", asyncRequest.getWebhookUrl());
         logger.info("Adding entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.POST, "OK", responseParams);
+        logger.info("This is inside response {}",response);
         Map<String, Object> result = new HashMap<>();
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
 
+       
         try {
             checkEntityNameInDefinitionManager(entityName);
             String userId = registryHelper.authorizeManageEntity(request, entityName);
             String label = registryHelper.addEntity(newRootNode, userId);
             String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
+
             Map<String, String> resultMap = new HashMap<>();
             if (asyncRequest.isEnabled()) {
                 resultMap.put(TRANSACTION_ID, label);
@@ -301,8 +302,27 @@ public class RegistryEntityController extends AbstractController {
                 registryHelper.autoRaiseClaim(entityName, label, userId, null, newRootNode, emailId);
                 resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             }
+            
+            /** Anchoring schema to chain */
+            JsonNode np=rootNode.get("schema");
+            JsonNode str=new ObjectMapper().readTree(np.asText());
+            JsonNode schemaNode=str.get("definitions");
+            
+            JsonNode props=schemaNode.get("Place");
+            JsonNode newProps=props.get("properties");
+
+            JsonNode outputSchema=new ObjectMapper().createObjectNode()
+            .put("title",str.get("title").asText())
+            .put("description",str.get("description").asText())
+            .set("properties",props.get("properties"));
+
+            JsonNode finalSchema=new ObjectMapper().createObjectNode()
+            .set("schema",outputSchema);
+            registryHelper.anchorSchemaAPI(finalSchema);
+
+
             result.put(entityName, resultMap);
-            response.setResult(result);
+            response.setResult(result);            
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.addToExistingEntity");
 

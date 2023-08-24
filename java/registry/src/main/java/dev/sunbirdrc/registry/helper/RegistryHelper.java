@@ -59,7 +59,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.PathVariable;
-
+import org.springframework.http.MediaType;
+import reactor.core.publisher.Mono;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -72,7 +74,7 @@ import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 import static dev.sunbirdrc.registry.middleware.util.OSSystemFields.*;
-
+import org.springframework.web.reactive.function.client.WebClient;
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
  */
@@ -192,6 +194,49 @@ public class RegistryHelper {
     }
 
     /**
+    * REUSBALE METHOD FOR POST API CALLS
+     */
+    public void apiHelper(JsonNode obj,String url){
+         WebClient.Builder builder = WebClient.builder();
+        try{
+            Mono<JsonNode> responseMono = builder.build()
+                    .post()
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .bodyValue(obj)
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .onErrorResume(throwable -> {
+                        throwable.printStackTrace();
+                        return Mono.empty();
+                    });
+
+            JsonNode response = responseMono.block();
+            logger.info("RESPONSE  {}",response);
+        }catch(Exception e){
+            logger.error("Exception occurred !" , e);
+        }
+    }
+
+    /**
+     * Anchors schema to the CORD CHAIN
+     */
+    public void anchorSchemaAPI(JsonNode obj){
+        // apiHelper(obj,"http://172.24.0.1:5106/api/v1/schema");
+        apiHelper(obj,"http://localhost:5106/api/v1/schema"); // considering issuer agent running in local
+    }
+
+
+    /** 
+    * Anchors registry to the chain ,
+    * Before calling this api, schema must be created
+    
+     */
+    public void anchorRegistryAPI(){
+
+    }
+    /**
      * calls validation and then persists the record to registry.
      *
      * @param inputJson
@@ -205,6 +250,7 @@ public class RegistryHelper {
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
+        // System.out.println("lOL");
         String entityId = addEntityHandler(inputJson, userId, skipRequiredValidationForInvite, skipSignatureForInvite);
         notificationHelper.sendNotification(inputJson, INVITE);
         return entityId;
