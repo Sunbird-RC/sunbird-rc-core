@@ -1,11 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
-  "properties": {
-    "StudentOutsideUP": {
-      "$ref": "#/definitions/StudentOutsideUP"
-    }
-  },
+  "properties": { "StudentOutsideUP": { "$ref": "#/definitions/StudentOutsideUP" } },
   "required": ["StudentOutsideUP"],
   "title": "StudentOutsideUP",
   "definitions": {
@@ -14,224 +10,113 @@
       "type": "object",
       "title": "StudentOutsideUP",
       "required": ["name", "phoneNumber", "email", "council"],
+      "uniqueIndexFields": ["phoneNumber"],
       "properties": {
-        "registrationType": {
-          "$id": "#/properties/registrationType",
-          "type": "string",
-          "title": "registrationType"
-        },
-        "name": {
-          "type": "string"
-        },
-        "phoneNumber": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "mothersName": {
-          "$id": "#/properties/mothersName",
-          "type": "string",
-          "title": "motherName"
-        },
-        "fathersName": {
-          "$id": "#/properties/fathersName",
-          "type": "string",
-          "title": "fatherName"
-        },
-        "dateOfBirth": {
-          "$id": "#/properties/dateOfBirth",
-          "type": "string",
-          "title": "dateOfBirth"
-        },
-        "aadhaarNo": {
-          "$id": "#/properties/aadhaarNo",
-          "type": "string",
-          "title": "aadhaarNo"
-        },
-        "barCode": {
-          "$id": "#/properties/barCode",
-          "type": "string",
-          "title": "barCode"
-        },
-        "candidatePic": {
-          "$id": "#/properties/candidatePic",
-          "type": "string",
-          "title": "candidatePic"
-        },
-        "gender": {
-          "$id": "#/properties/gender",
-          "type": "string",
-          "title": "gender",
-          "enum": ["male", "female"]
-        },
-        "address": {
-          "type": "object",
-          "title": "address",
-          "required": [],
-          "properties": {
-            "address-text": {
-              "type": "string",
-              "title": "Plot"
-            },
-            "state": {
-              "$id": "#/properties/state",
-              "type": "string",
-              "title": "State",
-              "enum": [
-                "Andaman and Nicobar Islands",
-                "Andhra Pradesh",
-                "Arunachal Pradesh",
-                "Assam",
-                "Bihar",
-                "Chandigarh",
-                "Chhattisgarh",
-                "Dadra and Nagar Haveli",
-                "Daman and Diu",
-                "Delhi",
-                "Goa",
-                "Gujarat",
-                "Haryana",
-                "Himachal Pradesh",
-                "Jammu and Kashmir",
-                "Jharkhand",
-                "Karnataka",
-                "Kerala",
-                "Ladakh",
-                "Lakshadweep",
-                "Madhya Pradesh",
-                "Maharashtra",
-                "Manipur",
-                "Meghalaya",
-                "Mizoram",
-                "Nagaland",
-                "Odisha",
-                "Puducherry",
-                "Punjab",
-                "Rajasthan",
-                "Sikkim",
-                "Tamil Nadu",
-                "Telangana",
-                "Tripura",
-                "Uttar Pradesh",
-                "Uttarakhand",
-                "West Bengal"
-              ]
-            },
-            "district": {
-              "$id": "#/properties/district",
-              "type": "string",
-              "title": "district"
-            },
-            "country": {
-              "$id": "#/properties/country",
-              "type": "string",
-              "title": "country"
-            },
-            "pincode": {
-              "$id": "#/properties/pincode",
-              "type": "string",
-              "title": "pincode"
-            }
-          }
-        },
-        "courseName": {
-          "$id": "#/properties/courseName",
-          "type": "string",
-          "title": "courseName"
-        },
-        "nursingCollage": {
-          "$id": "#/properties/nursingCollage",
-          "type": "string",
-          "title": "nursingCollage"
-        },
-        "joiningMonth": {
-          "$id": "#/properties/joiningMonth",
-          "type": "string",
-          "title": "joiningMonth"
-        },
-        "joiningYear": {
-          "$id": "#/properties/joiningYear",
-          "type": "string",
-          "title": "joiningYear"
-        },
-        "passingMonth": {
-          "$id": "#/properties/passingMonth",
-          "type": "string",
-          "title": "passingMonth"
-        },
-        "passingYear": {
-          "$id": "#/properties/passingYear",
-          "type": "string",
-          "title": "passingYear"
-        },
-        "finalYearRollNo": {
-          "$id": "#/properties/finalYearRollNo",
-          "type": "string",
-          "title": "finalYearRollNo"
-        },
-        "examBody": {
-          "$id": "#/properties/examBody",
-          "type": "string",
-          "title": "examBody"
-        },
-        "courseState": {
-          "$id": "#/properties/courseState",
-          "type": "string",
-          "title": "courseState"
-        },
-        "council": {
-          "$id": "#/properties/council",
-          "type": "string",
-          "title": "council"
-        },
-        "registrationNo": {
-          "$id": "#/properties/registrationNo",
-          "type": "string",
-          "title": "registrationNo"
-        },
-        "date": {
-          "$id": "#/properties/date",
-          "type": "string",
-          "title": "date"
-        }
+        "name": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "email": { "type": "string" },
+        "council": { "type": "string" },
+        "mothersName": {"type": "string", "title": "motherName"},
+        "fathersName": { "type": "string","title": "fatherName"},
+        "dateOfBirth": {"type": "string", "title": "dateOfBirth"},
+        "aadhaarNo": {"type": "string",  "title": "aadhaarNo"},
+        "gender": {"type": "string", "title": "gender", "enum": ["male", "female"]},
+        "address": {"type": "string", "title": "address"},
+        "state": { "type": "string", "title": "State","enum": [
+          "Andaman and Nicobar Islands",
+          "Andhra Pradesh",
+          "Arunachal Pradesh",
+          "Assam",
+          "Bihar",
+          "Chandigarh",
+          "Chhattisgarh",
+          "Dadra and Nagar Haveli",
+          "Daman and Diu",
+          "Delhi",
+          "Goa",
+          "Gujarat",
+          "Haryana",
+          "Himachal Pradesh",
+          "Jammu and Kashmir",
+          "Jharkhand",
+          "Karnataka",
+          "Kerala",
+          "Ladakh",
+          "Lakshadweep",
+          "Madhya Pradesh",
+          "Maharashtra",
+          "Manipur",
+          "Meghalaya",
+          "Mizoram",
+          "Nagaland",
+          "Odisha",
+          "Puducherry",
+          "Punjab",
+          "Rajasthan",
+          "Sikkim",
+          "Tamil Nadu",
+          "Telangana",
+          "Tripura",
+          "Uttar Pradesh",
+          "Uttarakhand",
+          "West Bengal"
+        ] },
+        "district": {"type": "string", "title": "district"},
+        "country": {"type": "string",  "title": "country"},
+        "pincode": {"type": "string", "title": "pincode"},
+        "candidatePic": {"type": "string", "title": "candidatePic"},
+        "courseName": {"type": "string","title": "courseName"},
+        "nursingCollage": {"type": "string", "title": "nursingCollage"},
+        "joiningMonth": {"type": "string","title": "joiningMonth"},
+        "joiningYear": {"type": "string", "title": "joiningYear"},
+        "passingMonth": {"type": "string", "title": "passingMonth"},
+        "passingYear": {"type": "string","title": "passingYear"},
+        "examYear": {"type": "string","title": "examYear"},
+        "examBody":{"type": "string","title": "examBody"},
+        "centerCode": {"type": "string","title": "centerCode"},
+        "paymentStatus":{"type": "string","title": "paymentStatus"},
+        "credType":{"type": "string","title": "credType", "enum":[
+          "ANM_DIPLOMA",
+          "ANM_REG",
+          "BABY_DIPLOMA",
+          "BABY_REG",
+          "BSC_NURSING",
+          "DEGREE",
+          "ETCA_REG",
+          "ETCA_DIPLOMA",
+          "ETCT_REG",
+          "ETCT_DIPLOMA",
+          "GNM_REG",
+          "GNM_DIPLOMA",
+          "PHARMACY_DIPLOMA",
+          "GOODSTANDING_REG",
+          "FOREIGN_REG",
+          "MSC_REG",
+          "PBBSC_REG",
+          "SANITATION_REG",
+          "SANITATION_DIPLOMA",
+          "PHYSIOTHERAPY_DIPLOMA",
+          "OPTOMETRY_REG",
+          "OPTOMETRY_DIPLOMA",
+          "OTTECHNICIAN_REG",
+          "OTTECHNICIAN_DIPLOMA",
+          "CARDIOLOGY_REG",
+          "CARDIOLOGY_DIPLOMA",
+          "BLOOD_TRANSFUSION_REG",
+          "BLOOD_TRANSFUSION_DIPLOMA"
+        ]},
+        "docproof":{"type": "string","title": "docproof"},
+        "regNumber":{"type": "string","title": "regNumber"},
+        "diplomaNumber":{"type": "string","title": "diplomaNumber"},
+        "nurseRegNo": {"type": "string","title": "nurseRegNo"},
+        "nurseRegdate": {"type": "string","title": "nurseRegdate"},
+        "courseState": {"type": "string","title": "courseState"},
+        "courseCouncil": {"type": "string","title": "courseCouncil"}
       }
-    },
-    "nurseRegistration": {
-      "type": "object",
-      "properties": {
-        "nurseRegNo": {
-          "$id": "#/properties/nurseRegNo",
-          "type": "string",
-          "title": "nurseRegNo"
-        },
-        "nurseRegDate": {
-          "$id": "#/properties/nurseRegDate",
-          "type": "string",
-          "title": "nurseRegDate"
-        },
-        "date": {
-          "$id": "#/properties/date",
-          "type": "string",
-          "title": "date"
-        }
-      }
-    },
-    "doc-proof": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "title": "All Document Proof"
-    },
-    "paymentStatus": {
-      "$id": "#/properties/paymentStatus",
-      "type": "string",
-      "title": "paymentStatus"
     }
   },
-
   "_osConfig": {
+
     "ownershipAttributes": [
       {
         "email": "/email",
@@ -249,24 +134,39 @@
         "attestorPlugin": "did:internal:ClaimPluginActor?entity=Regulator",
         "attestationProperties": {
           "name": "$.name",
+          "email": "$.email",
+          "phoneNumber": "$.phoneNumber",
+          "council": "$.council",
           "mothersName": "$.mothersName",
           "fathersName": "$.fathersName",
+          "dateOfBirth": "$.dateOfBirth",
+          "aadhaarNo": "$.aadhaarNo",
+          "gender":  "$.gender",
+          "address":  "$.address",
+          "state":"$.state",
+          "district":  "$.district",
+          "country":   "$.country",
+          "pincode":  "$.pincode",
+          "candidatePic":  "$.candidatePic",
           "courseName": "$.courseName",
+          "nursingCollage":  "$.nursingCollage",
           "joiningMonth": "$.joiningMonth",
-          "joiningYear": "$.joiningYear",
-          "passingMonth": "$.passingMonth",
+          "joiningYear":  "$.joiningYear",
+          "passingMonth":  "$.passingMonth",
           "passingYear": "$.passingYear",
-          "examBody": "$.examBody",
           "finalYearRollNo": "$.finalYearRollNo",
-          "courseState": "$.courseState",
-          "council": "$.council",
-          "registrationNo": "$.registrationNo",
+          "examBody":  "$.examBody",
+          "examYear":  "$.examYear",
+          "centerCode": "$.centerCode",
+          "paymentStatus": "$.paymentStatus",
+          "credType": "$.credType",
+          "docproof": "$.docproof",
+          "regNumber": "$.regNumber",
+          "diplomaNumber": "$.diplomaNumber",
           "nurseRegNo": "$.nurseRegNo",
           "nurseRegDate": "$.nurseRegDate",
-          "date": "$.date",
-          "doc-proof": "$.doc-proof",
-          "candidatePic": "$.candidatePic",
-          "paymentStatus": "$.paymentStatus"
+          "courseState": "$.courseState",
+          "courseCouncil": "$.courseCouncil"
         },
         "credentialTemplate": {
           "@context": [
@@ -289,26 +189,91 @@
                   "name": "schema:Text"
                 }
               },
-              "trainedOn": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#trainedOn",
+              "phoneNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#phoneNumber",
                 "@context": {
                   "name": "schema:Text"
-                }
-              },
+                }},
+              "email": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#email",
+                "@context": {
+                  "name": "schema:Text"
+                }},
+              "council": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#council",
+                "@context": {
+                  "name": "schema:Text"
+                }},
               "mothersName": {
                 "@id": "https://github.com/sunbird-specs/vc-specs#mothersName",
                 "@context": {
                   "name": "schema:Text"
-                }
-              },
-              "passingMonth": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#passingMonth",
+                }},
+              "fathersName": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#fathersName",
+                "@context": {
+                  "name": "schema:Text"
+                }},
+              "dateOfBirth": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#dateOfBirth",
+                "@context": {
+                  "name": "schema:Text"
+                }},
+              "aadhaarNo": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#aadhaarNo",
+                "@context": {
+                  "name": "schema:Text"
+                }},
+              "gender": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#gender",
                 "@context": {
                   "name": "schema:Text"
                 }
               },
-              "passingYear": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#passingYear",
+              "address": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#address",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "state": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#state",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "district": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#district",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "country": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#country",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "pincode": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#pincode",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "candidatePic": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#candidatePic",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "nursingCollage": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#nursingCollage",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "courseName": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#courseName",
                 "@context": {
                   "name": "schema:Text"
                 }
@@ -325,20 +290,26 @@
                   "name": "schema:Text"
                 }
               },
-              "fathersName": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#fathersName",
+              "passingMonth": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#passingMonth",
                 "@context": {
                   "name": "schema:Text"
                 }
               },
-              "courseName": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#courseName",
+              "passingYear": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#passingYear",
                 "@context": {
                   "name": "schema:Text"
                 }
               },
-              "examBody": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#examBody",
+              "examYear": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#examYear",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "centerCode":{
+                "@id": "https://github.com/sunbird-specs/vc-specs#centerCode",
                 "@context": {
                   "name": "schema:Text"
                 }
@@ -349,8 +320,56 @@
                   "name": "schema:Text"
                 }
               },
-              "date": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#date",
+              "examBody": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#examBody",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "paymentStatus": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#paymentStatus",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "feeReciptNo": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#feeReciptNo",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "credType": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#credType",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "docproof": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#docproof",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "regNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#regNumber",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "diplomaNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#diplomaNumber",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "nurseRegNo": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#nurseRegNo",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "nurseRegDate": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#nurseRegDate",
                 "@context": {
                   "name": "schema:Text"
                 }
@@ -361,49 +380,12 @@
                   "name": "schema:Text"
                 }
               },
-              "council": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#council",
-                "@context": {
-                  "name": "schema:Text"
-                }
-              },
-              "registrationNo": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#registrationNo",
-                "@context": {
-                  "name": "schema:Text"
-                }
-              },
-              "nurseRegNo": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#registrationNo",
-                "@context": {
-                  "name": "schema:Text"
-                }
-              },
-              "nurseRegDate": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#registrationNo",
-                "@context": {
-                  "name": "schema:Text"
-                }
-              },
-              "candidatePic": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#candidatePic",
-                "@context": {
-                  "name": "schema:Text"
-                }
-              },
-              "doc-proof": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#doc-proof",
-                "@context": {
-                  "name": "schema:Text"
-                }
-              },
-              "paymentStatus": {
-                "@id": "https://github.com/sunbird-specs/vc-specs#paymentStatus",
+              "courseCouncil": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#courseCouncil",
                 "@context": {
                   "name": "schema:Text"
                 }
               }
-
             }
           ],
           "type": ["VerifiableCredential"],
@@ -411,22 +393,40 @@
           "credentialSubject": {
             "type": "Person",
             "name": "{{name}}",
+            "council": "{{council}}",
+            "email": "{{email}}",
+            "phoneNumber": "{{phoneNumber}}",
             "mothersName": "{{mothersName}}",
             "fathersName": "{{fathersName}}",
+            "dateOfBirth": "{{dateOfBirth}}",
+            "aadhaarNo": "{{aadhaarNo}}",
+            "gender":  "{{gender}}",
+            "address":  "{{address}}",
+            "state":"{{state}}",
+            "district":  "{{district}}",
+            "country":   "{{country}}",
+            "pincode":  "{{pincode}}",
+            "candidatePic":  "{{candidatePic}}",
             "courseName": "{{courseName}}",
+            "nursingCollage":  "{{nursingCollage}}",
             "joiningMonth": "{{joiningMonth}}",
-            "joiningYear": "{{joiningYear}}",
-            "passingMonth": "{{passingMonth}}",
+            "joiningYear":  "{{joiningYear}}",
+            "passingMonth":  "{{passingMonth}}",
             "passingYear": "{{passingYear}}",
-            "examBody": "{{examBody}}",
             "finalYearRollNo": "{{finalYearRollNo}}",
-            "date": "{{date}}",
-            "courseState": "{{courseState}}",
-            "council": "{{council}}",
-            "registrationNo": "{{registrationNo}}",
+            "feeReciptNo": "{{feeReciptNo}}",
+            "examBody":  "{{examBody}}",
+            "examYear":  "{{examYear}}",
+            "centerCode": "{{centerCode}}",
+            "paymentStatus": "{{paymentStatus}}",
+            "credType":"{{credType}}",
+            "docproof": "{{docproof}}",
+            "regNumber": "{{regNumber}}",
+            "diplomaNumber": "{{diplomaNumber}}",
             "nurseRegNo": "{{nurseRegNo}}",
             "nurseRegDate": "{{nurseRegDate}}",
-            "candidatePic": "{{candidatePic}}"
+            "courseState": "{{courseState}}",
+            "courseCouncil": "{{courseCouncil}}"
           },
           "issuer": "did:web:sunbirdrc.dev/vc/skill"
         }
