@@ -89,6 +89,7 @@ public class RegistryEntityController extends AbstractController {
         newRootNode.set(entityName, rootNode);
         try {
             checkEntityNameInDefinitionManager(entityName);
+            registryHelper.authorizeInviteEntity(request, entityName);
             watch.start(TAG);
             String entityId = registryHelper.inviteEntity(newRootNode, "");
             registryHelper.autoRaiseClaim(entityName, entityId, "", null, newRootNode, dev.sunbirdrc.registry.Constants.USER_ANONYMOUS);
@@ -283,7 +284,7 @@ public class RegistryEntityController extends AbstractController {
         logger.info("Adding entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.POST, "OK", responseParams);
-        logger.info("This is inside response {}",response);
+
         Map<String, Object> result = new HashMap<>();
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);

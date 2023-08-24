@@ -251,7 +251,6 @@ public class RegistryHelper {
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
-        // System.out.println("lOL");
         String entityId = addEntityHandler(inputJson, userId, skipRequiredValidationForInvite, skipSignatureForInvite);
         notificationHelper.sendNotification(inputJson, INVITE);
         return entityId;
