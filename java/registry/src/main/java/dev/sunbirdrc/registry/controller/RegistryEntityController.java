@@ -1389,7 +1389,7 @@ public class RegistryEntityController extends AbstractController {
 
     public JsonNode searchEntityForDGL(ObjectNode searchNode) {
         JsonNode result = null;
-        String[] entityArr = {"StudentFromUP","StudentOutSideUP"};
+        String[] entityArr = {"StudentFromUP","StudentOutSideUP","StudentForeignVerification","StudentGoodstanding"};
         for (String entityName: entityArr) {
              try {
                 ArrayNode entity = JsonNodeFactory.instance.arrayNode();
