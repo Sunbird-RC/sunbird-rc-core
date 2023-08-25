@@ -284,7 +284,7 @@ public class RegistryEntityController extends AbstractController {
         logger.info("Adding entity {}", rootNode);
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.POST, "OK", responseParams);
-
+        ObjectMapper objectMapper= new ObjectMapper();
         Map<String, Object> result = new HashMap<>();
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, rootNode);
@@ -301,23 +301,33 @@ public class RegistryEntityController extends AbstractController {
                 registryHelper.autoRaiseClaim(entityName, label, userId, null, newRootNode, emailId);
                 resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
             }
-            /** Anchoring schema to chain */
+
+             /** Anchoring schema to chain */
             JsonNode np=rootNode.get("schema");
-            JsonNode str=new ObjectMapper().readTree(np.asText());
+            JsonNode str=objectMapper.readTree(np.asText());
             JsonNode schemaNode=str.get("definitions");
             
             JsonNode props=schemaNode.get("Place");
             JsonNode newProps=props.get("properties");
 
-            JsonNode outputSchema=new ObjectMapper().createObjectNode()
+            JsonNode outputSchema=objectMapper.createObjectNode()
             .put("title",str.get("title").asText())
             .put("description",str.get("description").asText())
             .set("properties",props.get("properties"));
 
-            JsonNode finalSchema=new ObjectMapper().createObjectNode()
+            JsonNode finalSchema=objectMapper.createObjectNode()
             .set("schema",outputSchema);
-            registryHelper.anchorSchemaAPI(finalSchema);
-
+            JsonNode schemaId=registryHelper.anchorSchemaAPI(finalSchema);
+            logger.info("SCHEMA ID : {} ",schemaId.get("schemaId"));
+            
+            /**Anchoring registry to chain */
+            JsonNode registrySchema=objectMapper.createObjectNode()
+            .put("title",str.get("title").asText())
+            .put("description",str.get("description").asText())
+            .put("schemaId",schemaId.get("schemaId").asText());
+            
+            JsonNode registryId=registryHelper.anchorRegistryAPI(registrySchema);
+            logger.info("REGISTRY ID : {} ",registryId.get("registryId").asText());
 
             result.put(entityName, resultMap);
             response.setResult(result);            
@@ -326,7 +336,7 @@ public class RegistryEntityController extends AbstractController {
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (RecordNotFoundException e) {
-             createSchemaNotFoundResponse(e.getMessage(), responseParams);
+            createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.POST, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (MiddlewareHaltException e) {

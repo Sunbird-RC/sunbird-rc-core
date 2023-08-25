@@ -93,7 +93,9 @@ public class RegistryHelper {
     @Value("${notification.service.enabled}") boolean notificationEnabled;
     @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
     @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
-    @Value("${cord.schemaURL}") String cord_schema_url;
+    @Value("${cord.issuer_schema_url}") String cord_schema_url;
+    @Value("${cord.issuer_registry_url}") String cord_registry_url;
+
     @Autowired
     private NotificationHelper notificationHelper;
     @Autowired
@@ -197,7 +199,7 @@ public class RegistryHelper {
     /**
     * REUSBALE METHOD FOR POST API CALLS
      */
-    public void apiHelper(JsonNode obj,String url){
+    public JsonNode apiHelper(JsonNode obj,String url){
          WebClient.Builder builder = WebClient.builder();
         try{
             Mono<JsonNode> responseMono = builder.build()
@@ -214,28 +216,38 @@ public class RegistryHelper {
                     });
 
             JsonNode response = responseMono.block();
-            logger.info("RESPONSE  {}",response);
+            
+            return response;
+            
         }catch(Exception e){
             logger.error("Exception occurred !" , e);
+            JsonNode res=new ObjectMapper().createObjectNode().put("result","FAILED");
+            return res;
         }
     }
 
     /**
      * Anchors schema to the CORD CHAIN
      */
-    public void anchorSchemaAPI(JsonNode obj){
-        // apiHelper(obj,"http://172.24.0.1:5106/api/v1/schema");
-        apiHelper(obj,cord_schema_url); // considering issuer agent running in local
+    public JsonNode anchorSchemaAPI(JsonNode obj) throws Exception{
+        try{
+        JsonNode schema=apiHelper(obj,cord_schema_url);
+        return schema;
+        }catch(Exception e){
+            logger.error("ERROR : {}",e);
+            return objectMapper.createObjectNode().put("ERROR","Exception occurred!");
+        }
+
     }
 
 
     /** 
     * Anchors registry to the chain ,
     * Before calling this api, schema must be created
-    
      */
-    public void anchorRegistryAPI(){
-
+    public JsonNode anchorRegistryAPI(JsonNode obj){
+        JsonNode registryDetails=apiHelper(obj,cord_registry_url);
+        return registryDetails;
     }
     /**
      * calls validation and then persists the record to registry.
