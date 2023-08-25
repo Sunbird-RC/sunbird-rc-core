@@ -32,11 +32,8 @@ import dev.sunbirdrc.registry.service.impl.CertificateServiceImpl;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
-import dev.sunbirdrc.registry.util.ClaimRequestClient;
+import dev.sunbirdrc.registry.util.*;
 import org.agrona.Strings;
-import dev.sunbirdrc.registry.util.DigiLockerUtils;
-import dev.sunbirdrc.registry.util.DocDetails;
-import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import dev.sunbirdrc.validators.ValidationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -94,6 +91,7 @@ public class RegistryEntityController extends AbstractController {
 
     @Value("${authentication.enabled:true}")
     boolean securityEnabled;
+
     @Value("${certificate.enableExternalTemplates:false}")
     boolean externalTemplatesEnabled;
 
@@ -1141,10 +1139,11 @@ public class RegistryEntityController extends AbstractController {
 
     @RequestMapping(value = "/api/v1/pullDocUriRequest/{entityName}", method = RequestMethod.POST, produces =
             {MediaType.APPLICATION_XML_VALUE}, consumes = {MediaType.APPLICATION_XML_VALUE})
-    public ResponseEntity<Object> pullDocURI(HttpServletRequest request) {
+    public ResponseEntity<Object> pullDocURI(HttpServletRequest request) throws Exception {
         String statusCode = "1";
         Scanner scanner = null;
-        String hmac = request.getHeader("hmac");
+        String hmacFromRequest = request.getHeader("hmac");
+        logger.info(hmacFromRequest+":Hmac From server");
         try {
             scanner = new Scanner(request.getInputStream(), "UTF-8");
         } catch (IOException e) {
@@ -1157,49 +1156,47 @@ public class RegistryEntityController extends AbstractController {
                 xmlString =  scanner1.next();
         }
         PullDocRequest pullDocRequest = null;
-        try {
-            pullDocRequest = DigiLockerUtils.processPullDocRequest(xmlString);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        boolean isValidReq = DigiLockerUtils.verifyHmac(pullDocRequest.getTs(), DIGILOCKER_KEY, hmac);
-//        if(isValidReq){
-//            statusCode = "0";
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setContentType(MediaType.APPLICATION_XML);
-//            return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
-//        }
-        String fullName = pullDocRequest.getDocDetails().getFullName();
-        String dob = pullDocRequest.getDocDetails().getDob();
-        JsonNode searchNode = DigiLockerUtils.getQuryNode(fullName, dob);
-        JsonNode result = searchEntityForDGL((ObjectNode)searchNode);
-        if(result==null){
-            statusCode = "0";
-            return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
-        }
-        String credName = pullDocRequest.getDocDetails().getUri();
-        credName = "issuance/"+credName+".pdf";
-        byte[] cred = certificateService.getCred(credName);
-
-        // get stident by osid
-        String osid = pullDocRequest.getTxn();
-        if(cred!=null){
+        boolean isValidReq = HmacValidator.validateHmac(xmlString,hmacFromRequest,DIGILOCKER_KEY);
+        if(isValidReq) {
             try {
-                //DigiLockerUtils.getPersonDetail(result, "entityName");
-                Person person = new Person();
-                person.setDob(dob);
-                person.setDob(fullName);
-                PullDocResponse pullDocResponse = DigiLockerUtils.getDocPullUriResponse(pullDocRequest, statusCode, cred, person);
-                Object responseString = DigiLockerUtils.convertJaxbToPullDoc(pullDocResponse);
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_XML);
-                return new ResponseEntity<>(responseString, headers, HttpStatus.OK);
+                pullDocRequest = DigiLockerUtils.processPullDocRequest(xmlString);
             } catch (Exception e) {
                 statusCode = "0";
-                e.printStackTrace();
                 return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
             }
-        }else{
+            String fullName = pullDocRequest.getDocDetails().getFullName();
+            String dob = pullDocRequest.getDocDetails().getDob();
+            JsonNode searchNode = DigiLockerUtils.getQuryNode(fullName, dob);
+            JsonNode result = searchEntityForDGL((ObjectNode) searchNode);
+            if (result == null) {
+                statusCode = "0";
+                return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+            }
+            String credName = pullDocRequest.getDocDetails().getUri();
+            credName = "issuance/" + credName + ".pdf";
+            byte[] cred = certificateService.getCred(credName);
+            if (cred != null) {
+                try {
+                    //DigiLockerUtils.getPersonDetail(result, "entityName");
+                    Person person = new Person();
+                    person.setDob(dob);
+                    person.setDob(fullName);
+                    PullDocResponse pullDocResponse = DigiLockerUtils.getDocPullUriResponse(pullDocRequest, statusCode, cred, person);
+                    Object responseString = DigiLockerUtils.convertJaxbToPullDoc(pullDocResponse);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_XML);
+                    return new ResponseEntity<>(responseString, headers, HttpStatus.OK);
+                } catch (Exception e) {
+                    statusCode = "0";
+                    e.printStackTrace();
+                    return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+                }
+
+            } else {
+                statusCode = "0";
+                return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+            }
+        }else {
             statusCode = "0";
             return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
         }
