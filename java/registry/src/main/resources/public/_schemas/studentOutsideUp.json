@@ -116,14 +116,6 @@
     }
   },
   "_osConfig": {
-
-    "ownershipAttributes": [
-      {
-        "email": "/email",
-        "mobile": "/phoneNumber",
-        "userId": "/phoneNumber"
-      }
-    ],
     "inviteRoles": ["anonymous"],
     "roles": ["StudentOutsideUP","StudentFromUP"],
     "attestationPolicies": [
