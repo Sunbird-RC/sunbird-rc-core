@@ -1,4 +1,4 @@
-package dev.sunbirdrc.registry.model.dto;
+package dev.sunbirdrc.claim.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

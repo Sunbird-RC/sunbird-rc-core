@@ -51,6 +51,7 @@ public class ClaimRequestClient {
     private static String URL_APPENDER = "/";
 
     private static final String MAIL_SEND_PENDING_FOREIGN_ITEM_URL = "/api/v1/sendPendingForeignItemMail/";
+    private static final String MAIL_SEND_EC_PENDING_ITEM_URL = "/api/v1/sendEcPendingItemMail/";
 
     ClaimRequestClient(@Value("${claims.url}") String claimRequestUrl, RestTemplate restTemplate) {
         this.claimRequestUrl = claimRequestUrl;
@@ -260,6 +261,14 @@ public class ClaimRequestClient {
         }
 
         return "Failed to send mail to foreign pending item - invalid claim id";
+    }
+
+    public String sendEcPendingItemMail(ManualPendingMailDTO pendingMailDTO) {
+        String mailStatus = restTemplate.postForObject(
+                claimRequestUrl + MAIL_SEND_EC_PENDING_ITEM_URL, pendingMailDTO, String.class);
+
+        logger.info("Pending item mail status: " + mailStatus);
+        return mailStatus;
     }
 
     public List getCourseCategory(String category) {

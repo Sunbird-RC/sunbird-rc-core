@@ -1,9 +1,9 @@
 package dev.sunbirdrc.claim.service;
 
 import dev.sunbirdrc.claim.config.PropertyMapper;
-import dev.sunbirdrc.claim.entity.StudentForeignVerification;
+import dev.sunbirdrc.claim.entity.StudentOutsideUP;
 import dev.sunbirdrc.claim.exception.ClaimMailException;
-import dev.sunbirdrc.claim.repository.StudentForeignVerificationRowMapper;
+import dev.sunbirdrc.claim.repository.StudentOutsideUpRowMapper;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class StudentForeignVerificationService {
+public class StudentOutsideUpService {
     private static final Logger logger = LoggerFactory.getLogger(StudentForeignVerificationService.class);
     @Autowired
     private PropertyMapper propertyMapper;
@@ -36,10 +36,10 @@ public class StudentForeignVerificationService {
      * @param osid
      * @return
      */
-    public List<StudentForeignVerification> findByOsid(String osid) {
+    public List<StudentOutsideUP> findByOsid(String osid) {
         try {
-            return jdbcTemplate.query("SELECT * FROM \"" + propertyMapper.getStudentForeignVerificationTableName()
-                    + "\" where osid=?", new StudentForeignVerificationRowMapper(), osid);
+            return jdbcTemplate.query("SELECT * FROM \"" + propertyMapper.getStudentOutsideVerificationTableName()
+                    + "\" where osid=?", new StudentOutsideUpRowMapper(), osid);
 
         } catch (IncorrectResultSizeDataAccessException e) {
             return null;
@@ -49,17 +49,9 @@ public class StudentForeignVerificationService {
     /**
      * @return
      */
-    public List<StudentForeignVerification> findAll() {
-        return jdbcTemplate.query("SELECT * from \"" + propertyMapper.getStudentForeignVerificationTableName() + "\"",
-                new StudentForeignVerificationRowMapper());
-    }
-
-    /**
-     * @return
-     */
-    public boolean isStudentForeignVerificationTableExist() {
+    public boolean isStudentFromOutsideVerificationTableExist() {
         String sqlQuery = "SELECT count(*) FROM information_schema.tables WHERE table_name = '"
-                + propertyMapper.getStudentForeignVerificationTableName() + "'";
+                + propertyMapper.getStudentOutsideVerificationTableName() + "'";
 
         Integer tableCount = jdbcTemplate.queryForObject(sqlQuery, Integer.class);
 
@@ -72,18 +64,18 @@ public class StudentForeignVerificationService {
      */
     public String generatePendingMailContent(String id) {
         String processedTemplateString = null;
-        List<StudentForeignVerification> studentForeignVerificationList = findByOsid(id);
+        List<StudentOutsideUP> studentOutsideUpList = findByOsid(id);
 
-        if (studentForeignVerificationList != null && !studentForeignVerificationList.isEmpty()) {
-            StudentForeignVerification studentForeignVerification = studentForeignVerificationList.get(0);
+        if (studentOutsideUpList != null && !studentOutsideUpList.isEmpty()) {
+            StudentOutsideUP studentOutsideUP = studentOutsideUpList.get(0);
 
             Map<String, Object> mailMap = new HashMap<>();
-            mailMap.put("candidate", studentForeignVerification);
-            mailMap.put("entityId", propertyMapper.getRegistryShardId() + "-" + studentForeignVerification.getOsid());
+            mailMap.put("candidate", studentOutsideUP);
+            mailMap.put("entityId", propertyMapper.getRegistryShardId() + "-" + studentOutsideUP.getOsid());
 
             try {
                 freeMarkerConfiguration.setClassForTemplateLoading(this.getClass(), "/templates/");
-                Template template = freeMarkerConfiguration.getTemplate("foreign-student-candidate-details.ftl");
+                Template template = freeMarkerConfiguration.getTemplate("outside-up-student-candidate-details.ftl");
                 processedTemplateString = FreeMarkerTemplateUtils.processTemplateIntoString(template, mailMap);
 
             } catch (TemplateException e) {

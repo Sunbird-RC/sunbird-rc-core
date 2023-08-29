@@ -2,7 +2,7 @@ package dev.sunbirdrc.claim.controller;
 
 import dev.sunbirdrc.claim.service.ClaimService;
 import dev.sunbirdrc.claim.service.StudentForeignVerificationService;
-import dev.sunbirdrc.claim.status.Status;
+import dev.sunbirdrc.claim.service.StudentOutsideUpService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,11 +13,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/outside")
+@RequestMapping("/api/v1")
 public class OutsideStudentController {
 
     @Autowired
     private StudentForeignVerificationService foreignVerificationService;
+
+    @Autowired
+    private StudentOutsideUpService studentOutsideUpService;
 
     @Autowired
     private ClaimService claimService;
@@ -33,12 +36,23 @@ public class OutsideStudentController {
         }
     }
 
-    @GetMapping("/foreignStudent/verify/{id}/{status}")
+    @GetMapping("/outsideStudent/verify/{id}/{status}")
     public ResponseEntity<String> verifyForeignStudentVerification(@PathVariable String id,
-                                                                   @PathVariable Status status) {
+                                                                   @PathVariable String status) {
 
-        claimService.updateForeignStudentStatus(id, status);
+        claimService.updateOutsideStudentStatus(id, status);
 
-        return new ResponseEntity<>("Foreign student verification updated", HttpStatus.OK);
+        return new ResponseEntity<>("Outside/Foreign student verification updated", HttpStatus.OK);
+    }
+
+    @GetMapping("/outsideStudent/{id}")
+    public ResponseEntity<String> getOutsideStudentVerificationDetail(@PathVariable String id) {
+        String template = studentOutsideUpService.generatePendingMailContent(id);
+
+        if (!StringUtils.isEmpty(template)) {
+            return new ResponseEntity<>(template, HttpStatus.OK);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

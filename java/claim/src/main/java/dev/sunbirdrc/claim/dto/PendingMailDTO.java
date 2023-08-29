@@ -20,4 +20,10 @@ public class PendingMailDTO {
     private String credType;
     private String registrationNumber;
     private String verifyLink;
+    private String nurseRegNo;
+    private String registrationType;
+    private String courseName;
+    private String workPlace;
+    private String examBody;
+
 }
