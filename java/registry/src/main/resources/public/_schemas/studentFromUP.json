@@ -126,6 +126,20 @@
     ],
     "inviteRoles": ["anonymous"],
     "roles": ["StudentFromUP","StudentOutsideUP"],
+
+    "notificationTemplates": {
+      "create": [
+        {
+          "subject": "Credential Created from schema",
+          "body": "{\"sender\": \"AppName\",\"route\": \"4\",\"country\": \"91\",\"unicode\": 1,\"sms\": [{    \"message\": \"{{name}}, Your {{entityType}} credential has been created\",    \"to\": [      \"{{contact}}]\"    ]  \n      }],\n      ",
+          "invite": ": [],\n      ",
+          "update": ": [],\n      ",
+          "delete": ": [],\n      ",
+          "revoke": ": []\n  }\n}"
+        }
+      ]
+    },
+
     "attestationPolicies": [
       {
         "name": "studentVerification",

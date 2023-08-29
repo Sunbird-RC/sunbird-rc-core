@@ -12,7 +12,7 @@ smsapi:
 
 emailsmtp:
   fromAddress: upsmf.otp@upsmfac.org
-  password: 
+  password: OTP22023##
   enable: true
 
 flagr:

@@ -7,7 +7,7 @@ ENV GO111MODULE=on
 WORKDIR $GOPATH/src/packages/digilocker-certificate-api/
 COPY . .
 RUN go get -d -v
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /go/main .
+RUN CGO_ENABLED=0 GOOS=windows go build -a -installsuffix cgo -o /go/main .
 
 ############################
 # STEP 2 build a small image

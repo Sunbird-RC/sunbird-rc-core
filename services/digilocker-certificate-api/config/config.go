@@ -11,14 +11,14 @@ import (
 
 var Config = struct {
 	Keycloak struct {
-		TokenURL     string `env:"KEYCLOAK_TOKEN_URL" default:"http://keycloak:8080/auth/realms/sunbird-rc/protocol/openid-connect/token"`
+		TokenURL     string `env:"KEYCLOAK_TOKEN_URL" default:"http://localhost:8080/auth/realms/sunbird-rc/protocol/openid-connect/token"`
 		ClientId     string `env:"KEYCLOAK_CLIENT_ID" default:"admin-api"`
 		ClientSecret string `env:"KEYCLOAK_CLIENT_SECRET" default:"2b65f70c-bd02-4d5c-95d9-5341225aa849"`
 	}
 	Digilocker struct {
-		IDPrefix    string `env:"DIGILOCKER_DOC_ID_PREFIX" default:"dev.sunbirdrc.vc"`
+		IDPrefix    string `env:"DIGILOCKER_DOC_ID_PREFIX" default:"org.upsmfac"`
 		AuthKeyName string `env:"DIGILOCKER_AUTH_KEYNAME" default:"x-digilocker-hmac"`
-		AuthHMACKey string `env:"DIGILOCKER_HMAC_AUTHKEY" default:"***"`
+		AuthHMACKey string `env:"DIGILOCKER_HMAC_AUTHKEY" default:"84600d73-e618-4c80-a347-6b51147103ee"`
 	}
 	Registry struct {
 		URL string `env:"REGISTRY_URL" default:"https://localhost:8081/"`
