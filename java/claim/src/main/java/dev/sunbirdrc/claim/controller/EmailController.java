@@ -1,9 +1,7 @@
 package dev.sunbirdrc.claim.controller;
 
-import dev.sunbirdrc.claim.dto.BarCode;
-import dev.sunbirdrc.claim.dto.CertificateMailDto;
-import dev.sunbirdrc.claim.dto.MailDto;
-import dev.sunbirdrc.claim.dto.PendingMailDTO;
+import dev.sunbirdrc.claim.dto.*;
+import dev.sunbirdrc.claim.service.AsyncMailSender;
 import dev.sunbirdrc.claim.service.EmailService;
 import net.sourceforge.barbecue.Barcode;
 import net.sourceforge.barbecue.BarcodeFactory;
@@ -30,6 +28,10 @@ public class EmailController {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private AsyncMailSender asyncMailSender;
+
     private static final Logger logger = LoggerFactory.getLogger(EmailController.class);
     private static final Font BARCODE_TEXT_FONT = new Font(Font.SANS_SERIF, Font.PLAIN, 8);
     @Autowired
@@ -123,5 +125,12 @@ public class EmailController {
         emailService.collectAndSendForeignCoucilMailManually(claimId);
 
         return new ResponseEntity<>("Sending manual foreign pending item mail", HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/api/v1/sendEcPendingItemMail", method = RequestMethod.POST)
+    public ResponseEntity<String> sendPendingItemMail(@RequestHeader HttpHeaders headers,
+                                                      @RequestBody ManualPendingMailDTO manualPendingMailDTO) {
+        asyncMailSender.sendEcPendingItemMail(manualPendingMailDTO);
+        return new ResponseEntity<>("Mail is sending", HttpStatus.OK);
     }
 }

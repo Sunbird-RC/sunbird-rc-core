@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.claim.config.PropertyMapper;
 import dev.sunbirdrc.claim.controller.EmailController;
 import dev.sunbirdrc.claim.dto.CertificateMailDto;
-import dev.sunbirdrc.claim.dto.MailDto;
 import dev.sunbirdrc.claim.dto.PendingMailDTO;
 import dev.sunbirdrc.claim.entity.Claim;
 import dev.sunbirdrc.claim.entity.Regulator;
@@ -19,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.lang.NonNull;
@@ -29,7 +27,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
@@ -194,7 +191,7 @@ public class EmailService
         return processedTemplateString;
     }
 
-    public void sendForeignPendingItemMail() {
+    public void autoSendPendingItemMail(String entityName) {
         if (!regulatorService.isRegulatorTableExist()) {
             logger.error(">>>>>>>>>>> Unable to find regulator table in database: No further process will be occurred");
             return;
@@ -203,19 +200,19 @@ public class EmailService
         List<Claim> allClaimList = claimService.findAll();
 
         if (allClaimList != null && !allClaimList.isEmpty()) {
-            List<String> foreignCouncilNames = getPendingForeignCouncilList(allClaimList);
+            List<String> pendingItemCouncilList = getPendingItemCouncilList(allClaimList, entityName);
 
-            for (String foreignCouncilName : foreignCouncilNames) {
+            for (String councilName : pendingItemCouncilList) {
 
-                List<Claim> foreignCouncilClaims = allClaimList.stream()
-                        .filter(claim -> foreignCouncilName.equalsIgnoreCase(getCouncilName(claim.getPropertyData())))
+                List<Claim> councilClaims = allClaimList.stream()
+                        .filter(claim -> councilName.equalsIgnoreCase(getCouncilName(claim.getPropertyData())))
                         .collect(Collectors.toList());
 
-                List<PendingMailDTO> pendingMailDTOList = collectEntityDetailsForMail(foreignCouncilClaims);
+                List<PendingMailDTO> pendingMailDTOList = collectEntityDetailsForPendingItem(councilClaims, entityName);
 
-                List<Regulator> regulatorList = regulatorService.findByCouncil(foreignCouncilName);
+                List<Regulator> regulatorList = regulatorService.findByCouncil(councilName);
 
-                asyncMailSender.sendPendingMailToRegulatorList(pendingMailDTOList, regulatorList);
+                asyncMailSender.sendPendingMailToRegulatorList(pendingMailDTOList, regulatorList, entityName);
             }
         }
     }
@@ -224,11 +221,9 @@ public class EmailService
      * @param claimList
      * @return
      */
-    private @NonNull List<String> getPendingForeignCouncilList(@NonNull List<Claim> claimList) {
+    private @NonNull List<String> getPendingItemCouncilList(@NonNull List<Claim> claimList, @NonNull String entityName) {
         List<String> councilList = claimList.stream()
-                .filter(claim -> !propertyMapper.getUpCouncilName()
-                        .equalsIgnoreCase(getCouncilName(claim.getPropertyData()))
-                )
+                .filter(claim -> entityName.equalsIgnoreCase(claim.getEntity()))
                 .filter(claim -> ClaimStatus.OPEN.name().equalsIgnoreCase(claim.getStatus()))
                 .map(claim -> getCouncilName(claim.getPropertyData()))
                 .distinct()
@@ -242,7 +237,7 @@ public class EmailService
         }
     }
 
-    private @NonNull List<PendingMailDTO> collectEntityDetailsForMail(@NonNull List<Claim> claimList) {
+    private @NonNull List<PendingMailDTO> collectEntityDetailsForPendingItem(@NonNull List<Claim> claimList, String entityName) {
         List<PendingMailDTO> pendingMailDTOList = new ArrayList<>();
 
         try {
@@ -252,14 +247,37 @@ public class EmailService
                 JsonNode jsonNode = objectMapper.readTree(propertyData);
                 String entityId = claim.getEntityId().replace(propertyMapper.getRegistryShardId() + "-", "");
 
-                PendingMailDTO pendingMailDTO = PendingMailDTO.builder()
-                        .credType(jsonNode.get("credType") != null ? jsonNode.get("credType").asText() : "")
-                        .emailAddress(jsonNode.get("email") != null ? jsonNode.get("email").asText() : "")
-                        .refNo(jsonNode.get("refNo") != null ? jsonNode.get("refNo").asText() : "")
-                        .name(jsonNode.get("name") != null ? jsonNode.get("name").asText() : "")
-                        .registrationNumber(jsonNode.get("registrationNumber") != null ? jsonNode.get("registrationNumber").asText() : "")
-                        .verifyLink(propertyMapper.getClaimUrl() + "/api/v1/outside/foreignStudent/" + entityId)
-                        .build();
+                PendingMailDTO pendingMailDTO = new PendingMailDTO();
+                pendingMailDTO.setCredType(jsonNode.get("credType") != null ? jsonNode.get("credType").asText() : "");
+                pendingMailDTO.setEmailAddress(jsonNode.get("email") != null ? jsonNode.get("email").asText() : "");
+                pendingMailDTO.setName(jsonNode.get("name") != null ? jsonNode.get("name").asText() : "");
+
+
+                if (propertyMapper.getStudentForeignEntityName().equalsIgnoreCase(entityName)) {
+                    pendingMailDTO.setRefNo(jsonNode.get("refNo") != null ? jsonNode.get("refNo").asText() : "");
+                    pendingMailDTO.setRegistrationNumber(jsonNode.get("registrationNumber") != null
+                            ? jsonNode.get("registrationNumber").asText() : "");
+
+                    pendingMailDTO.setVerifyLink(propertyMapper.getClaimUrl() + "/api/v1/foreignStudent/" + entityId);
+                }
+
+                if (propertyMapper.getStudentFromOutsideEntityName().equalsIgnoreCase(entityName)) {
+                    pendingMailDTO.setNurseRegNo(jsonNode.get("nurseRegNo") != null
+                            ? jsonNode.get("nurseRegNo").asText() : "");
+                    pendingMailDTO.setRegistrationType(jsonNode.get("registrationType") != null
+                            ? jsonNode.get("registrationType").asText() : "");
+
+                    pendingMailDTO.setVerifyLink(propertyMapper.getClaimUrl() + "/api/v1/outsideStudent/" + entityId);
+                }
+
+                if (propertyMapper.getStudentFromUpEntityName().equalsIgnoreCase(entityName)) {
+                    pendingMailDTO.setCourseName(jsonNode.get("courseName") != null ? jsonNode.get("courseName").asText() : "");
+                    pendingMailDTO.setExamBody(jsonNode.get("examBody") != null ? jsonNode.get("examBody").asText() : "");
+                }
+
+                if (propertyMapper.getStudentGoodStandingEntityName().equalsIgnoreCase(entityName)) {
+                    pendingMailDTO.setCourseName(jsonNode.get("workPlace") != null ? jsonNode.get("workPlace").asText() : "");
+                }
 
                 pendingMailDTOList.add(pendingMailDTO);
             }

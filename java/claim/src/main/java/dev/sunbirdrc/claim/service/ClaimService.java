@@ -11,10 +11,8 @@ import dev.sunbirdrc.claim.exception.UnAuthorizedException;
 import dev.sunbirdrc.claim.model.ClaimStatus;
 import dev.sunbirdrc.claim.repository.ClaimNoteRepository;
 import dev.sunbirdrc.claim.repository.ClaimRepository;
-import dev.sunbirdrc.claim.status.Status;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.registry.middleware.util.EntityUtil;
-import freemarker.template.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,17 +146,17 @@ public class ClaimService {
      * @param entityId
      * @param status
      */
-    public void updateForeignStudentStatus(String entityId, Status status) {
+    public void updateOutsideStudentStatus(String entityId, String status) {
         if (!StringUtils.isEmpty(entityId) && status != null) {
             List<Claim> claimList = claimRepository.findByEntityId(entityId);
 
             if (claimList != null && !claimList.isEmpty()) {
                 Claim claim = claimList.get(0);
 
-                if (Status.Approved.name().equalsIgnoreCase(claim.getForeignStudentStatus())) {
-                    throw new ClaimAlreadyProcessedException("Claim is already approved");
+                if ("Completed".equalsIgnoreCase(claim.getOutsideStudentStatus())) {
+                    throw new ClaimAlreadyProcessedException("Claim is already completed");
                 } else {
-                    claim.setForeignStudentStatus(status.name());
+                    claim.setOutsideStudentStatus(status);
                     claimRepository.save(claim);
                 }
             }

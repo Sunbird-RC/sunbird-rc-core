@@ -64,14 +64,14 @@ public class Claim {
     private String attestorUserId;
 
     @Column
-    private String foreignStudentStatus;
+    private String outsideStudentStatus;
 
-    public String getForeignStudentStatus() {
-        return foreignStudentStatus;
+    public String getOutsideStudentStatus() {
+        return outsideStudentStatus;
     }
 
-    public void setForeignStudentStatus(String foreignStudentStatus) {
-        this.foreignStudentStatus = foreignStudentStatus;
+    public void setOutsideStudentStatus(String outsideStudentStatus) {
+        this.outsideStudentStatus = outsideStudentStatus;
     }
 
     @PrePersist
