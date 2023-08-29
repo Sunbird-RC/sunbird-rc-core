@@ -106,26 +106,56 @@ public class UserService {
         if (userLoginDTO != null && StringUtils.hasText(userLoginDTO.getUsername())
                 && StringUtils.hasText(userLoginDTO.getPassword())) {
 
-            try {
-                TokenManager tokenManager = keycloakConfig
-                        .getUserKeycloak(userLoginDTO.getUsername(), userLoginDTO.getPassword()).tokenManager();
+            String username = userLoginDTO.getUsername();
+            LOGGER.info("username {}", username);
+            List<UserRepresentation> userRepresentationList = getUserDetails(username);
+            LOGGER.info("userRepresentationList {}", userRepresentationList);
+            if (userRepresentationList != null && !userRepresentationList.isEmpty()) {
 
-                AccessTokenResponse accessTokenResponse = tokenManager.getAccessToken();
+                Optional<UserRepresentation> userRepresentationOptional = userRepresentationList.stream()
+                        .filter(userRepresentation -> username.equalsIgnoreCase(userRepresentation.getUsername()))
+                        .findFirst();
+            LOGGER.info("userRepresentationOptional {}", userRepresentationOptional);
 
-                return UserTokenDetailsDTO.builder()
-                        .accessToken(accessTokenResponse.getToken())
-                        .expiresIn(accessTokenResponse.getExpiresIn())
-                        .refreshToken(accessTokenResponse.getRefreshToken())
-                        .refreshExpiresIn(accessTokenResponse.getRefreshExpiresIn())
-                        .tokenType(accessTokenResponse.getTokenType())
-                        .scope(accessTokenResponse.getScope())
-                        .build();
-            } catch (NotAuthorizedException e) {
-                throw new AuthorizationException("Credentials have authorization issue");
-            } catch (Exception e) {
-                throw new KeycloakUserException("Unable to get user detils - Update user");
+                if (!userRepresentationOptional.isPresent()) {
+                    throw new UserCredentialsException("Username missing.");
+                }
+
+                List<RoleRepresentation> roleRepresentationList = getSystemUsersResource()
+                        .get(userRepresentationOptional.get().getId())
+                        .roles().realmLevel().listEffective();
+
+                LOGGER.info("roleRepresentationList {}", roleRepresentationList);
+
+                try {
+                    TokenManager tokenManager = keycloakConfig
+                            .getUserKeycloak(userLoginDTO.getUsername(), userLoginDTO.getPassword()).tokenManager();
+
+                    AccessTokenResponse accessTokenResponse = tokenManager.getAccessToken();
+
+                    return UserTokenDetailsDTO.builder()
+                            .accessToken(accessTokenResponse.getToken())
+                            .expiresIn(accessTokenResponse.getExpiresIn())
+                            .refreshToken(accessTokenResponse.getRefreshToken())
+                            .refreshExpiresIn(accessTokenResponse.getRefreshExpiresIn())
+                            .tokenType(accessTokenResponse.getTokenType())
+                            .scope(accessTokenResponse.getScope())
+                            .userRepresentation(userRepresentationOptional.get())
+                            .roleRepresentationList(roleRepresentationList)
+                            .build();
+                } catch (NotAuthorizedException e) {
+                    LOGGER.error("Credentials have authorization issue",e);
+                    throw new AuthorizationException("Credentials have authorization issue");
+                } catch (Exception e) {
+                    LOGGER.error("Unable to get user details",e);
+                    throw new KeycloakUserException("Unable to get user details");
+                }
+            } else {
+                LOGGER.info("User details not found");
+                throw new UserCredentialsException("User details not found");
             }
         } else {
+            LOGGER.info("User credentials are invalid");
             throw new UserCredentialsException("User credentials are invalid");
         }
     }
@@ -477,7 +507,7 @@ public class UserService {
     }
 
     /**
-     * @param adminDTO
+     * @param customUsernameDTO
      * @throws Exception
      */
     public void generateCustomUserOtp(CustomUsernameDTO customUsernameDTO) {
