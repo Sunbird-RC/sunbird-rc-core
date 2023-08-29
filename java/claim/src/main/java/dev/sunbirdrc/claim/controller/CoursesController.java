@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,10 +21,20 @@ public class CoursesController {
         this.coursesService = coursesService;
     }
 
-    @GetMapping("/")
+    @GetMapping("/all")
     public ResponseEntity<List<Courses>> getAllCourses() {
         List<Courses> courses = coursesService.getAllCourses();
         return ResponseEntity.ok(courses);
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<List<String>> getAllCourseName() {
+        List<Courses> courses = coursesService.getAllCourses();
+        List<String> courseName = new ArrayList<>();
+        for (Courses course:courses) {
+            courseName.add(course.getCourseName());
+        }
+        return ResponseEntity.ok(courseName);
     }
 
     @GetMapping("/{id}")
@@ -54,10 +65,10 @@ public class CoursesController {
             return ResponseEntity.ok(course);
     }
 
-    @GetMapping("/course-short-name/{courseName}")
+    @GetMapping("/course-template-key/{courseName}")
     public ResponseEntity<String> getCourseShortName(@PathVariable String courseName) {
         courseName = courseName.replace(" ","");
-        String course = coursesService.getCourseShortName(courseName);
+        String course = coursesService.getCourseTemplateKey(courseName);
         return ResponseEntity.ok(course);
     }
 

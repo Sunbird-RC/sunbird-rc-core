@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.dto.ClaimDTO;
-import dev.sunbirdrc.registry.controller.RegistryController;
 import dev.sunbirdrc.registry.dao.Learner;
 import dev.sunbirdrc.registry.model.dto.*;
 import lombok.NonNull;
@@ -37,7 +36,7 @@ public class ClaimRequestClient {
     private final RestTemplate restTemplate;
     private static final String CLAIMS_PATH = "/api/v1/claims";
     private static final String FETCH_CLAIMS_PATH = "/api/v1/getClaims";
-
+    private static final String TEMPLATE_KEY = "/course-template-key/";
     private static final String FETCH_CLAIMS_STUDENT_PATH = "/api/v2/getClaims";
     private static final String MAIL_SEND_URL = "/api/v1/sendMail";
     private static final String BAR_CODE_API = "/api/v1/barcode";
@@ -45,7 +44,9 @@ public class ClaimRequestClient {
     private static final String GET_CRED_URL = "/api/v1/files/download?";
 
     private static final String GET_COURSE_CATEGORY = "/api/v1/courses/diploma";
-    private static final String PDF = ".PDF";
+
+    private static final String GET_ALL_COURSES = "/api/v1/courses/";
+    private static final String PDF = ".pdf";
     private static final String GCS_CODE_API = "/api/v1/files/upload";
     private static final String CLAIM_MULTI_FILE_UPLOAD = "/api/v1/files/upload/multiple";
     private static String URL_APPENDER = "/";
@@ -286,6 +287,21 @@ public class ClaimRequestClient {
         );        logger.info("end getCredentials ...");
         return response.getBody();
     }
+
+
+    public List getAllCourses() {
+        String requestUrl = claimRequestUrl + GET_ALL_COURSES;
+        MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+        // Set request headers if needed
+        HttpHeaders headers = new HttpHeaders();
+        // Add any required headers here
+        headers.set("accept", "*/*");
+        ResponseEntity<List> response = restTemplate.exchange(
+                requestUrl, HttpMethod.GET, null, List.class, queryParams, headers
+        );        logger.info("end getCredentials ...");
+        return response.getBody();
+    }
+
 
     ///api/v1/generate-certNumber
 

@@ -30,12 +30,13 @@ public class CoursesService {
         return coursesRepository.findByCategory(category);
     }
 
+    // find Couse Name
     public List<String> getCourseByCategory(String category) {
         return coursesRepository.findByFieldName(category);
     }
 
-    //findByCouseName
-    public String getCourseShortName(String courseName) {
+    //find TemplateKey
+    public String getCourseTemplateKey(String courseName) {
         return coursesRepository.findByCouseName(courseName);
     }
     public Courses createCourse(Courses course) {

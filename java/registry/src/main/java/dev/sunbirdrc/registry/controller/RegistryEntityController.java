@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.typesafe.config.Optional;
 import dev.sunbirdrc.keycloak.OwnerCreationException;
 import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
@@ -579,7 +580,7 @@ public class RegistryEntityController extends AbstractController {
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false,
                             viewTemplateManager.getViewTemplateById(viewTemplateId), false)
                     .get(entityName);
-//            JsonNode signedNode = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
+
 
             String templateUrlFromRequest = getTemplateUrlFromRequest(request, entityName);
             String fileName = "";
@@ -981,11 +982,12 @@ public class RegistryEntityController extends AbstractController {
                 String fileName = getFileNameOfCredentials(node);
                 boolean wc = false;
                 JsonNode attestationNode = getAttestationSignedData(attestationId, node);
+                String templateUrlFromRequest = getTemplateUrlFromRequest(request, entityName);
                 certificate = certificateService.getCertificate(attestationNode,
                         entityName,
                         entityId,
                         request.getHeader(HttpHeaders.ACCEPT),
-                        getTemplateUrlFromRequest(request, entityName),
+                        templateUrlFromRequest,
                         getAttestationNode(attestationId, node),
                         fileName, wc
                 );
@@ -1489,17 +1491,46 @@ public class RegistryEntityController extends AbstractController {
 
 
     @RequestMapping(value = "/api/v1/category/{entityName}/{category}", method = RequestMethod.GET)
-    public ResponseEntity<Object> getCourseName(@PathVariable String entityName, @PathVariable String category,HttpServletRequest request) {
+    public ResponseEntity<Object> getCourseName(@PathVariable String entityName, @Optional @PathVariable String category, HttpServletRequest request) {
 
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
 
         try {
-            List list = claimRequestClient.getCourseCategory(category);
+            List list = null;
+            if(category == null || category.equals("")){
+                claimRequestClient.getAllCourses();
+            }
+            else{
+                list = claimRequestClient.getCourseCategory(category);
+            }
+
             //Long certNumber = claimRequestClient.getCertificateNumber();
             response.setResult(list);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
 
+        } catch (Exception exception) {
+            logger.error("Exception : {}", exception.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value = "/api/v1/allcourse/{entityName}", method = RequestMethod.GET)
+    public ResponseEntity<Object> getAllCourseName(@PathVariable String entityName, HttpServletRequest request) {
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+
+        try {
+            List list = claimRequestClient.getAllCourses();
+            //Long certNumber = claimRequestClient.getCertificateNumber();
+            response.setResult(list);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
         } catch (Exception exception) {
             logger.error("Exception : {}", exception.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);

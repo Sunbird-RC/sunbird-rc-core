@@ -14,7 +14,7 @@ public interface CoursesRepository extends JpaRepository<Courses, Long> {
     @Query("SELECT c.courseName FROM Courses c WHERE c.category = :value")
     List<String> findByFieldName(@Param("value") String value);
 
-    @Query("SELECT c.shortName FROM Courses c WHERE c.courseName = :value")
+    @Query("SELECT c.courseNameKey FROM Courses c WHERE c.courseName = :value")
     String findByCouseName(@Param("value") String value);
 
 
