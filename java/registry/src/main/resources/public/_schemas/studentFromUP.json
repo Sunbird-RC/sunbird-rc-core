@@ -128,14 +128,10 @@
     "roles": ["StudentFromUP","StudentOutsideUP"],
 
     "notificationTemplates": {
-      "create": [
+      "invite": [
         {
-          "subject": "Credential Created from schema",
-          "body": "{\"sender\": \"AppName\",\"route\": \"4\",\"country\": \"91\",\"unicode\": 1,\"sms\": [{    \"message\": \"{{name}}, Your {{entityType}} credential has been created\",    \"to\": [      \"{{contact}}]\"    ]  \n      }],\n      ",
-          "invite": ": [],\n      ",
-          "update": ": [],\n      ",
-          "delete": ": [],\n      ",
-          "revoke": ": []\n  }\n}"
+          "subject": "Credential Account Created",
+          "body": "<html><body> <p><H3>Hi {{name}}</H3></p> <p>Your account has been created. Please update your password.</p>Your default password is <b>{{defaultInvitePassword}}</b>.<p> </p> <p>Thank you,</p> <p>Registration Credential Issuing Authority</p> </body></html>"
         }
       ]
     },
