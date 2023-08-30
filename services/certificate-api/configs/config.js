@@ -2,7 +2,7 @@ const CUSTOM_TEMPLATE_DELIMITERS = process.env.CUSTOM_TEMPLATE_DELIMITERS?.split
 const PUPPETEER_EXECUTABLE_PATH = process.env.PUPPETEER_EXECUTABLE_PATH || ""
 const ENABLE_CUSTOM_QR_CODE_CANVAS = process.env.ENABLE_CUSTOM_QR_CODE_CANVAS || false
 const QR_TYPE = process.env.QR_TYPE || 'W3C-VC';
-const CERTIFICATE_DOMAIN_URL = process.env.CERTIFICATE_DOMAIN_URL || "https://dev.sunbirded.org";
+const CERTIFICATE_DOMAIN_URL = process.env.CERTIFICATE_DOMAIN_URL || "https://registration.uphrh.in:8082/";
 module.exports = {
     CUSTOM_TEMPLATE_DELIMITERS,
     PUPPETEER_EXECUTABLE_PATH,

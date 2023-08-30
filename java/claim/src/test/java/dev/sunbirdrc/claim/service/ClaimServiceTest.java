@@ -24,8 +24,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.*;
 
 import static dev.sunbirdrc.claim.contants.AttributeNames.*;
-import static dev.sunbirdrc.claim.model.ClaimStatus.CLOSED;
-import static dev.sunbirdrc.claim.model.ClaimStatus.OPEN;
+import static dev.sunbirdrc.claim.model.ClaimStatus.*;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -122,7 +121,7 @@ public class ClaimServiceTest {
     public void attestClaimShouldThrowExceptionIfTheClaimIsAlreadyProcessed() {
         String id = "1";
         Claim claim = getClaim(id);
-        claim.setStatus(CLOSED.name());
+        claim.setStatus(APPROVED.name());
         when(claimRepository.findById(id)).thenReturn(Optional.of(claim));
         JsonNode dummyNode = new ObjectMapper().nullNode();
         claimService.attestClaim(id, dummyNode);

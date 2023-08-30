@@ -35,6 +35,7 @@ public class PluginRequestMessage {
     private String userId;
     private Map<String, List<String>> propertiesOSID;
     private String emailId;
+    private String credType;
 
     public Optional<String> getActorName() {
         // sample names did:plugin:aadhar, did:plugin:claim,

@@ -89,7 +89,7 @@ public class RegistryEntityControllerTest {
         JsonNode node = new ObjectMapper().readTree(response);
         Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false))
                 .thenReturn(node);
-        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", node))
+        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", node,"", false))
                 .thenReturn("");
         mockMvc.perform(
                     MockMvcRequestBuilders
@@ -159,7 +159,7 @@ public class RegistryEntityControllerTest {
         JsonNode node = new ObjectMapper().readTree(response);
         Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false))
                 .thenReturn(node);
-        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", node))
+        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", node,"", false))
                 .thenThrow(new NullPointerException(""));
         mockMvc.perform(
                         MockMvcRequestBuilders

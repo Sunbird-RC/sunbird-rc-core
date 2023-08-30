@@ -58,7 +58,7 @@ public class ElasticSearchService implements ISearchService {
 
     @Override
     public JsonNode search(JsonNode inputQueryNode) throws IOException {
-        logger.debug("search request body = " + inputQueryNode);
+         logger.debug("search request body = " + inputQueryNode);
 
         SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
 
@@ -89,8 +89,12 @@ public class ElasticSearchService implements ISearchService {
         }
 
         try {
-            auditService.auditElasticSearch( new AuditRecord().setUserId(apiMessage.getUserID()),
+            String userID = apiMessage.getUserID();
+            if (userID != null) {
+            auditService.auditElasticSearch(new AuditRecord().setUserId(userID),
                     searchQuery.getEntityTypes(), inputQueryNode);
+            logger.info("No Audit Entry for Search::"+searchQuery.getEntityTypes());
+        }
         } catch (Exception e) {
             logger.error("Exception while auditing " + e);
         }

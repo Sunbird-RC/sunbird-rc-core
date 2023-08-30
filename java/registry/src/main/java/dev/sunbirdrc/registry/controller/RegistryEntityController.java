@@ -5,11 +5,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.typesafe.config.Optional;
 import dev.sunbirdrc.keycloak.OwnerCreationException;
 import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
+import dev.sunbirdrc.registry.dao.Credential;
+import dev.sunbirdrc.registry.dao.Learner;
+import dev.sunbirdrc.registry.digilocker.pulldoc.PullDocRequest;
+import dev.sunbirdrc.registry.digilocker.pulldoc.PullDocResponse;
+import dev.sunbirdrc.registry.digilocker.pulluriresponse.Person;
+import dev.sunbirdrc.registry.digilocker.pulluriresponse.PullURIResponse;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
 import dev.sunbirdrc.registry.exception.ErrorMessages;
@@ -19,14 +26,16 @@ import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
+import dev.sunbirdrc.registry.model.dto.MailDto;
+import dev.sunbirdrc.registry.model.dto.ManualPendingMailDTO;
 import dev.sunbirdrc.registry.service.FileStorageService;
-import dev.sunbirdrc.registry.service.ICertificateService;
+import dev.sunbirdrc.registry.service.impl.CertificateServiceImpl;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
-import dev.sunbirdrc.registry.util.ViewTemplateManager;
-import dev.sunbirdrc.validators.ValidationException;
+import dev.sunbirdrc.registry.util.*;
 import org.agrona.Strings;
+import dev.sunbirdrc.validators.ValidationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +51,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -56,9 +68,16 @@ public class RegistryEntityController extends AbstractController {
     private static final String TRANSACTION_ID = "transactionId";
     private static Logger logger = LoggerFactory.getLogger(RegistryEntityController.class);
 
+    @Value("${Logo.imgBaseUri:https://casa.upsmfac.org/UploadedFiles/Student/}")
+    private String imgBaseUri;
+    @Value("${GCS_SERVICE_URL:https://casa.upsmfac.org/UploadedFiles/Student/}")
+    public static final String GCS_SERVICE_URL = "http://34.100.212.156:8082/";
+    @Value("${digilocker_hmackey:}")
+    public static final String DIGILOCKER_KEY = "84600d73-e618-4c80-a347-6b51147103ee";
     @Autowired
-    private ICertificateService certificateService;
-
+    private CertificateServiceImpl certificateService;
+    @Value("${Logo.imgFormat:.jpg}")
+    private String imgFormat;
     @Autowired
     private FileStorageService fileStorageService;
 
@@ -68,8 +87,12 @@ public class RegistryEntityController extends AbstractController {
     @Autowired
     private ViewTemplateManager viewTemplateManager;
 
+    @Autowired
+    private ClaimRequestClient claimRequestClient;
+
     @Value("${authentication.enabled:true}")
     boolean securityEnabled;
+
     @Value("${certificate.enableExternalTemplates:false}")
     boolean externalTemplatesEnabled;
 
@@ -432,7 +455,8 @@ public class RegistryEntityController extends AbstractController {
         JsonNode attestationNode = null;
         while (iterator.hasNext()) {
             attestationNode = iterator.next();
-            if (attestationNode.get(uuidPropertyName).toString().equals(attestationId)) {
+            JsonNode jsonNode = attestationNode.get(uuidPropertyName);
+            if (jsonNode!=null && jsonNode.toString().equals(attestationId)) {
                 break;
             }
         }
@@ -463,6 +487,37 @@ public class RegistryEntityController extends AbstractController {
         } catch (RecordNotFoundException e) {
              createSchemaNotFoundResponse(e.getMessage(), responseParams);
            Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error in partner api access", e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/api/v2/{entityName}", method = RequestMethod.GET)
+    public ResponseEntity<Object> getUserDetails(
+            @PathVariable String entityName,
+            HttpServletRequest request) {
+        ResponseParams responseParams = new ResponseParams();
+        try {
+            checkEntityNameInDefinitionManager(entityName);
+            ArrayList<String> fields = getConsentFields(request);
+            JsonNode userInfoFromRegistry = registryHelper.getRequestedUserDetails(request, entityName);
+            JsonNode jsonNode = userInfoFromRegistry.get(entityName);
+            if (jsonNode instanceof ArrayNode) {
+                ArrayNode values = (ArrayNode) jsonNode;
+                if (values.size() > 0) {
+                    JsonNode node = values.get(0);
+                    if (node instanceof ObjectNode) {
+                        ObjectNode entityNode = copyWhiteListedFields(fields, node);
+                        return new ResponseEntity<>(entityNode, HttpStatus.OK);
+                    }
+                }
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (RecordNotFoundException e) {
+            createSchemaNotFoundResponse(e.getMessage(), responseParams);
+            Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             logger.error("Error in partner api access", e);
@@ -525,13 +580,17 @@ public class RegistryEntityController extends AbstractController {
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false,
                             viewTemplateManager.getViewTemplateById(viewTemplateId), false)
                     .get(entityName);
-            JsonNode signedNode = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
-            return new ResponseEntity<>(certificateService.getCertificate(signedNode,
+
+
+            String templateUrlFromRequest = getTemplateUrlFromRequest(request, entityName);
+            String fileName = "";
+            return new ResponseEntity<>(certificateService.getCertificate(node,
                     entityName,
                     entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
-                    getTemplateUrlFromRequest(request, entityName),
-                    JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityName))
+                    templateUrlFromRequest,
+                    JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityName)),
+                    fileName, false
             ), HttpStatus.OK);
         } catch (Exception exception) {
             exception.printStackTrace();
@@ -541,6 +600,37 @@ public class RegistryEntityController extends AbstractController {
 
 
     private String getTemplateUrlFromRequest(HttpServletRequest request, String entityName) {
+        String template = Template;
+
+        if(entityName.equalsIgnoreCase("StudentForeignVerification")){
+            return "https://raw.githubusercontent.com/kumarpawantarento/templates/main/Foreign-certificate";
+        } else if (entityName.equalsIgnoreCase("StudentGoodstanding")) {
+            return "https://raw.githubusercontent.com/kumarpawantarento/templates/main/GoodStanding";
+        }
+
+        if (externalTemplatesEnabled && !StringUtils.isEmpty(request.getHeader(template))) {
+            return request.getHeader(template);
+        }
+        if (definitionsManager.getCertificateTemplates(entityName) != null && definitionsManager.getCertificateTemplates(entityName).size() > 0 && !StringUtils.isEmpty(request.getHeader(TemplateKey))) {
+            String templateUri = definitionsManager.getCertificateTemplates(entityName).getOrDefault(request.getHeader(TemplateKey), null);
+            if (!StringUtils.isEmpty(templateUri)) {
+                try {
+                    if (templateUri.startsWith(MINIO_URI_PREFIX)) {
+                        return fileStorageService.getSignedUrl(templateUri.substring(MINIO_URI_PREFIX.length()));
+                    } else if (templateUri.startsWith(HTTP_URI_PREFIX) || templateUri.startsWith(HTTPS_URI_PREFIX)) {
+                        return templateUri;
+                    }
+                } catch (Exception e) {
+                    logger.error("Exception while parsing certificate templates DID urls", e);
+                    return null;
+                }
+            }
+
+        }
+        return null;
+    }
+
+    private String getTemplateUrlFromRequestFromRegType(HttpServletRequest request, String entityName) {
         if (externalTemplatesEnabled && !StringUtils.isEmpty(request.getHeader(Template))) {
             return request.getHeader(Template);
         }
@@ -646,6 +736,13 @@ public class RegistryEntityController extends AbstractController {
                                                    @RequestHeader(required = false) String viewTemplateId) throws RecordNotFoundException {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.GET, "OK", responseParams);
+        ResponseEntity<Object> objectResponseEntity = getObjectResponseEntity(entityName, request, viewTemplateId, responseParams, response);
+        return objectResponseEntity;
+    }
+
+
+    @NotNull
+    private ResponseEntity<Object> getObjectResponseEntity(String entityName, HttpServletRequest request, String viewTemplateId, ResponseParams responseParams, Response response) {
         try {
             checkEntityNameInDefinitionManager(entityName);
             String userId = registryHelper.getUserId(request, entityName);
@@ -665,7 +762,7 @@ public class RegistryEntityController extends AbstractController {
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
         } catch (RecordNotFoundException e) {
-             createSchemaNotFoundResponse(e.getMessage(),responseParams);
+             createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -828,20 +925,27 @@ public class RegistryEntityController extends AbstractController {
     public ResponseEntity<Object> getAttestationCertificate(HttpServletRequest request, @PathVariable String entityName, @PathVariable String entityId,
                                                             @PathVariable String attestationName, @PathVariable String attestationId) {
         ResponseParams responseParams = new ResponseParams();
+        Object certificate = null;
+        boolean wc = false;
         try {
             checkEntityNameInDefinitionManager(entityName);
             String readerUserId = getUserId(entityName, request);
-            JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
-                    .get(entityName).get(attestationName);
+            JsonNode jsonNode = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
+                    .get(entityName);
+            JsonNode node = jsonNode.get(attestationName);
+            String fileName = getFileNameOfCredentials(node);
+            JsonNode credentialsType = node.get("credType");
+            generateImageURL(jsonNode);
             JsonNode attestationNode = getAttestationSignedData(attestationId, node);
-            return new ResponseEntity<>(certificateService.getCertificate(attestationNode,
+            certificate = certificateService.getCertificate(attestationNode,
                     entityName,
                     entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
                     getTemplateUrlFromRequest(request, entityName),
-                    getAttestationNode(attestationId, node)
-            ), HttpStatus.OK);
-
+                    getAttestationNode(attestationId, node),
+                    fileName, wc
+            );
+            return new ResponseEntity<>(certificate, HttpStatus.OK);
         } catch (RecordNotFoundException re) {
             createSchemaNotFoundResponse(re.getMessage(), responseParams);
             Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
@@ -858,6 +962,61 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
+
+    @GetMapping(value = "/api/v2/{entityName}/{entityId}/attestation/{attestationName}/{attestationId}",
+            produces = {MediaType.APPLICATION_PDF_VALUE, MediaType.TEXT_HTML_VALUE, Constants.SVG_MEDIA_TYPE, MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getAttestationCertificateGCS(HttpServletRequest request, @PathVariable String entityName, @PathVariable String entityId,
+                                                            @PathVariable String attestationName, @PathVariable String attestationId) {
+        ResponseParams responseParams = new ResponseParams();
+        Object certificate = null;
+        try {
+            String checkIfAlreadyExists = "issuance/"+entityId+".pdf";
+            certificate = certificateService.getCred(checkIfAlreadyExists);
+            if(certificate == null || request.getHeader("correction")==null)
+            {
+                checkEntityNameInDefinitionManager(entityName);
+                String readerUserId = getUserId(entityName, request);
+                JsonNode jsonNode = registryHelper.readEntity(readerUserId, entityName, entityId, false, null, false)
+                        .get(entityName);
+                JsonNode node = jsonNode.get(attestationName);
+                String fileName = getFileNameOfCredentials(node);
+                boolean wc = false;
+                JsonNode attestationNode = getAttestationSignedData(attestationId, node);
+                String templateUrlFromRequest = getTemplateUrlFromRequest(request, entityName);
+                certificate = certificateService.getCertificate(attestationNode,
+                        entityName,
+                        entityId,
+                        request.getHeader(HttpHeaders.ACCEPT),
+                        templateUrlFromRequest,
+                        getAttestationNode(attestationId, node),
+                        fileName, wc
+                );
+                if(certificate!=null){
+                    String url = getCredUrl(fileName, certificate);
+                    if(url != null){
+                        shareCredentials(node, url);
+                    }}
+
+            }
+            return new ResponseEntity<>(certificate, HttpStatus.OK);
+        } catch (RecordNotFoundException re) {
+            createSchemaNotFoundResponse(re.getMessage(), responseParams);
+            Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
+            try {
+                return new ResponseEntity<>(objectMapper.writeValueAsString(response), HttpStatus.NOT_FOUND);
+            } catch (JsonProcessingException e) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (AttestationNotFoundException e) {
+            logger.error(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
     @RequestMapping(value = "/api/v1/{entityName}/{entityId}/revoke", method = RequestMethod.POST)
     public ResponseEntity<Object> revokeACredential (
             HttpServletRequest request,
@@ -900,4 +1059,506 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @Nullable
+    private JsonNode getAttestationNode1(String attestationId, JsonNode node) {
+        Iterator<JsonNode> iterator = node.iterator();
+        JsonNode attestationNode = null;
+        while (iterator.hasNext()) {
+            attestationNode = iterator.next();
+            if (attestationNode.get(uuidPropertyName).toString().equals(attestationId)) {
+                break;
+            }
+        }
+        return attestationNode;
+    }
+    /**
+     * PULL-URI-Request API for DigiLocker
+     * @param request
+     * @param entityName
+     * @return
+     */
+    @CrossOrigin (origins = "*")
+    @RequestMapping(value = "/api/v1/pullUriRequest/{entityName}", method = RequestMethod.POST, produces =
+            {MediaType.APPLICATION_XML_VALUE}, consumes = {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_PDF_VALUE, MediaType.TEXT_HTML_VALUE, Constants.SVG_MEDIA_TYPE})
+    public ResponseEntity<Object> issueCertificateToDigiLocker(HttpServletRequest request, @PathVariable String entityName) {
+        String statusCode = "1";
+        Scanner scanner = null;
+        try {
+            scanner = new Scanner(request.getInputStream(), "UTF-8");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String searchQuery = null;
+        if(scanner!=null){
+            Scanner scanner1 = scanner.useDelimiter("\\A");
+            if(scanner1.hasNext())
+                searchQuery =  scanner1.next();
+        }
+        DocDetails docDetails = null;
+        // Map to JAXB
+        ObjectNode searchNode = DigiLockerUtils.getJsonQuery(searchQuery);
+
+        JsonNode result = searchEntity(searchNode, entityName);
+        JsonNode jsonNode = result.get(entityName);
+        String osid = jsonNode!=null?jsonNode.get(0).get("osid").asText():null;
+        if(osid!=null) {
+            try {
+                String uri = DigiLockerUtils.getDocUri();
+                String fileName = "issuance/"+osid+".pdf";
+                byte[] certificate = certificateService.getCred(fileName);
+                if(certificate!=null){
+                    certificateService.saveforDGL(certificate, uri);
+                    Person person = DigiLockerUtils.getPersonDetail(result, entityName);
+                    String encodedCertificate = Base64.getEncoder().encodeToString(certificate);
+                    PullURIResponse pullResponse = DigiLockerUtils.getPullUriResponse(uri, statusCode, osid, encodedCertificate, person);
+                    String responseString = DigiLockerUtils.convertJaxbToString(pullResponse);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_XML);
+                    return new ResponseEntity<>(responseString, headers, HttpStatus.OK);
+                }else{
+                    statusCode = "0";
+                    return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+                }
+
+            } catch (Exception exception) {
+                statusCode = "0";
+                exception.printStackTrace();
+                return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+            }
+        }
+        else{
+            statusCode = "0";
+            return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
+     * PULL-URI-Request API for DigiLocker
+     * @param request
+     * @param
+     * @return
+     */
+
+    @RequestMapping(value = "/api/v1/pullDocUriRequest/{entityName}", method = RequestMethod.POST, produces =
+            {MediaType.APPLICATION_XML_VALUE}, consumes = {MediaType.APPLICATION_XML_VALUE})
+    public ResponseEntity<Object> pullDocURI(HttpServletRequest request) throws Exception {
+        String statusCode = "1";
+        Scanner scanner = null;
+        String hmacFromRequest = request.getHeader("hmac");
+        logger.info(hmacFromRequest+":Hmac From server");
+        try {
+            scanner = new Scanner(request.getInputStream(), "UTF-8");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String xmlString = null;
+        if(scanner!=null){
+            Scanner scanner1 = scanner.useDelimiter("\\A");
+            if(scanner1.hasNext())
+                xmlString =  scanner1.next();
+        }
+        PullDocRequest pullDocRequest = null;
+        boolean isValidReq = HmacValidator.validateHmac(xmlString,hmacFromRequest,DIGILOCKER_KEY);
+        if(isValidReq) {
+            try {
+                pullDocRequest = DigiLockerUtils.processPullDocRequest(xmlString);
+            } catch (Exception e) {
+                statusCode = "0";
+                return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+            }
+            String fullName = pullDocRequest.getDocDetails().getFullName();
+            String dob = pullDocRequest.getDocDetails().getDob();
+            JsonNode searchNode = DigiLockerUtils.getQuryNode(fullName, dob);
+            JsonNode result = searchEntityForDGL((ObjectNode) searchNode);
+            if (result == null) {
+                statusCode = "0";
+                return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+            }
+            String credName = pullDocRequest.getDocDetails().getUri();
+            credName = "issuance/" + credName + ".pdf";
+            byte[] cred = certificateService.getCred(credName);
+            if (cred != null) {
+                try {
+                    //DigiLockerUtils.getPersonDetail(result, "entityName");
+                    Person person = new Person();
+                    person.setDob(dob);
+                    person.setDob(fullName);
+                    PullDocResponse pullDocResponse = DigiLockerUtils.getDocPullUriResponse(pullDocRequest, statusCode, cred, person);
+                    Object responseString = DigiLockerUtils.convertJaxbToPullDoc(pullDocResponse);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_XML);
+                    return new ResponseEntity<>(responseString, headers, HttpStatus.OK);
+                } catch (Exception e) {
+                    statusCode = "0";
+                    e.printStackTrace();
+                    return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+                }
+
+            } else {
+                statusCode = "0";
+                return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+            }
+        }else {
+            statusCode = "0";
+            return new ResponseEntity<>(statusCode, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
+     * @param entityName
+     * @param entityId
+     * @param files
+     * @param request
+     * @return
+     */
+
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/upload/multi-files", method = RequestMethod.PUT)
+    public ResponseEntity<Object> putMultiEntityFiles(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @RequestParam MultipartFile[] files,
+            HttpServletRequest request) {
+
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
+            try {
+                registryHelper.authorize(entityName, entityId, request);
+            } catch (Exception e) {
+                return createUnauthorizedExceptionResponse(e);
+            }
+        }
+        ResponseParams responseParams = new ResponseParams();
+
+        try {
+            List<String> fileUrlList = certificateService.uploadMultiEntityDocFiles(files, entityName, entityId);
+            StringBuffer fileString = new StringBuffer();
+            for (String str :fileUrlList  ) {
+                fileString.append(str+",");
+            }
+
+            Response response = new Response(Response.API_ID.CREATE, HttpStatus.OK.name(), responseParams);
+            response.setResult(fileString.toString());
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("RegistryController: Exception while uploading files", e);
+
+            Response response = new Response(Response.API_ID.CREATE, HttpStatus.INTERNAL_SERVER_ERROR.name(), responseParams);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @RequestMapping(value = "/api/v1/{entityName}/{entityId}/upload/file", method = RequestMethod.PUT)
+    public ResponseEntity<Object> putSingleEntityFile(
+            @PathVariable String entityName,
+            @PathVariable String entityId,
+            @RequestParam MultipartFile file,
+            HttpServletRequest request) {
+
+        if (registryHelper.doesEntityOperationRequireAuthorization(entityName)) {
+            try {
+                registryHelper.authorize(entityName, entityId, request);
+            } catch (Exception e) {
+                return createUnauthorizedExceptionResponse(e);
+            }
+        }
+        ResponseParams responseParams = new ResponseParams();
+
+        try {
+            String fileUrl = certificateService.uploadSingleEntityDocFiles(file, entityName, entityId);
+
+            Response response = new Response(Response.API_ID.CREATE, HttpStatus.OK.name(), responseParams);
+            response.setResult(fileUrl);
+
+            responseParams.setErrmsg("");
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("RegistryController: Exception while uploading single file", e);
+
+            Response response = new Response(Response.API_ID.CREATE, HttpStatus.INTERNAL_SERVER_ERROR.name(), responseParams);
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(e.getMessage());
+
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private String getFileNameOfCredentials(JsonNode node) {
+        StringBuffer fileName = new StringBuffer();
+        String name = node.get(0).get("entityId").toString().replace(" ","");
+        name = name.replace("\"","");
+        fileName.append(name);
+        return fileName.toString();
+    }
+
+    private void trackCred(JsonNode node, String fileName) {
+        try {
+            // Track Credentials creation
+            JsonNode name = node.get("name");
+            JsonNode credentialsType = node.get("credType");
+            JsonNode course = node.get("course");
+            JsonNode rollNumber = node.get("rollNumber");
+            JsonNode regNumber = node.get("regNumber");
+
+            Learner learner = new Learner();
+            learner.setName(name!=null?name.asText():null);
+            learner.setEnrollmentNumber(regNumber!=null?regNumber.asText():"");
+            learner.setRollNumber(rollNumber!=null?rollNumber.asText():"");
+
+            Credential cred = new Credential();
+            cred.setCourse(course!=null?course.asText():"");
+            cred.setCredentialName(credentialsType!=null?credentialsType.asText():"");
+            cred.setCredentialURL(fileName);
+            List<Credential> list = new ArrayList<>();
+            list.add(cred);
+            learner.setCredentialsList(list);
+            certificateService.trackCredentials(learner);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String generateImageURL(JsonNode rootNode) {
+        JsonNode rollNumber = rootNode.get("finalYearRollNo");
+        JsonNode enrollmentNumber = rootNode.get("enrollmentNumber");
+        JsonNode examYear = rootNode.get("examYear");
+        ObjectNode node = (ObjectNode) rootNode;
+        String url = imgBaseUri;
+        if (examYear != null)
+            url = url.concat(examYear.asText());
+        if (enrollmentNumber != null) {
+            url = url.concat("/E" + enrollmentNumber.asText());
+        } else if (rollNumber != null) {
+            url = url.concat("/rp" + rollNumber.asText());
+            node.put("candidatePic", url);
+        }
+        logger.debug("Generated Img url::" + url);
+        return url;
+    }
+
+    @Nullable
+    private String getCredUrl(final String entityId, Object certificate) throws Exception {
+        String url = null;
+        try {
+            url = getCertificate(entityId, certificate);
+        } catch (Exception e) {
+            throw new Exception(e);
+        }
+        return url;
+    }
+
+    @Nullable
+    private String getCertificate(String entityId, Object certificate) throws Exception {
+        String url = null;
+        if (certificate != null) {
+            logger.info("Credentials generation for EntityId:"+entityId);
+            url = certificateService.saveToGCS(certificate, entityId);
+            logger.debug("Final url credentials:"+url);
+        }
+        return url;
+    }
+    private void shareCredentials(JsonNode node, String url) {
+        try {
+            // Mail Send Functionality -Start
+            JsonNode email = node.get("email");
+            JsonNode name = node.get("name");
+            JsonNode credentialsType = node.get("credType");
+            MailDto mail = new MailDto();
+            if (mail != null && name != null) {
+                mail.setName(name.asText());
+                mail.setEmailAddress(email.asText());
+                mail.setCertificate(url);
+                if (credentialsType != null) {
+                    mail.setCredentialsType(credentialsType.asText());
+                }
+                certificateService.shareCertificateMail(mail);
+                // Mail Send Functionality End
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public JsonNode searchEntityForDGL(ObjectNode searchNode) {
+        JsonNode result = null;
+        String[] entityArr = {"StudentFromUP","StudentOutSideUP","StudentForeignVerification","StudentGoodstanding"};
+        for (String entityName: entityArr) {
+             try {
+                ArrayNode entity = JsonNodeFactory.instance.arrayNode();
+                entity.add(entityName);
+                searchNode.set(ENTITY_TYPE, entity);
+                checkEntityNameInDefinitionManager(entityName);
+                if (definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableSearch()) {
+                    result = registryHelper.searchEntity(searchNode);
+                    watch.stop("RegistryController.searchEntity");
+                    if(result!=null || result.size() > 0)
+                    return result;
+                } else {
+                    watch.stop("RegistryController.searchEntity");
+                    logger.error("Searching on entity {} not allowed", entityName);
+                }
+            } catch (RecordNotFoundException e) {
+                return null;
+            } catch (Exception e) {
+                logger.error("Exception in controller while searching entities !", e);
+            }
+        }
+
+        return result;
+    }
+
+    public JsonNode searchEntity(ObjectNode searchNode, String entityName) {
+       JsonNode result = null;
+        try {
+            ArrayNode entity = JsonNodeFactory.instance.arrayNode();
+            entity.add(entityName);
+            searchNode.set(ENTITY_TYPE, entity);
+            checkEntityNameInDefinitionManager(entityName);
+            if (definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableSearch()) {
+                result = registryHelper.searchEntity(searchNode);
+                watch.stop("RegistryController.searchEntity");
+                return result;
+            } else {
+                watch.stop("RegistryController.searchEntity");
+                logger.error("Searching on entity {} not allowed", entityName);
+            }
+        } catch (RecordNotFoundException e) {
+            return null;
+        } catch (Exception e) {
+            logger.error("Exception in controller while searching entities !", e);
+        }
+        return result;
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}/sendPendingForeignItemMail/{claimId}", method = RequestMethod.GET)
+    public ResponseEntity<Object> sendPendingForeignItemMail(@PathVariable String entityName,
+                                                             @PathVariable String claimId,
+                                                             HttpServletRequest request) {
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+
+        try {
+            registryHelper.authorizeInviteEntity(request, entityName);
+
+            String mailStatus = claimRequestClient.sendPendingForeignItemMail(claimId);
+
+            response.setResult(mailStatus);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+
+        } catch (Exception exception) {
+            logger.error("Exception : {}", exception.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/api/v1/{entityName}/sendEcPendingItemMail", method = RequestMethod.POST)
+    public ResponseEntity<Object> sendEcPendingItemMail(@PathVariable String entityName,
+                                                        @RequestBody ManualPendingMailDTO pendingMailDTO,
+                                                             HttpServletRequest request) {
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+
+        try {
+            registryHelper.authorizeInviteEntity(request, entityName);
+
+            String mailStatus = claimRequestClient.sendEcPendingItemMail(pendingMailDTO);
+
+            response.setResult(mailStatus);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+
+        } catch (Exception exception) {
+            logger.error("Exception : {}", exception.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value = "/api/v1/category/{entityName}/{category}", method = RequestMethod.GET)
+    public ResponseEntity<Object> getCourseName(@PathVariable String entityName, @Optional @PathVariable String category, HttpServletRequest request) {
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+
+        try {
+            List list = null;
+            if(category == null || category.equals("")){
+                claimRequestClient.getAllCourses();
+            }
+            else{
+                list = claimRequestClient.getCourseCategory(category);
+            }
+
+            //Long certNumber = claimRequestClient.getCertificateNumber();
+            response.setResult(list);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+
+        } catch (Exception exception) {
+            logger.error("Exception : {}", exception.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value = "/api/v1/allcourse/{entityName}", method = RequestMethod.GET)
+    public ResponseEntity<Object> getAllCourseName(@PathVariable String entityName, HttpServletRequest request) {
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+
+        try {
+            List list = claimRequestClient.getAllCourses();
+            //Long certNumber = claimRequestClient.getCertificateNumber();
+            response.setResult(list);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+        } catch (Exception exception) {
+            logger.error("Exception : {}", exception.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/api/v1/course/{entityName}/certificate-number", method = RequestMethod.GET)
+    public ResponseEntity<Object> getCourseCertificateNumber(@PathVariable String entityName,HttpServletRequest request) {
+
+        ResponseParams responseParams = new ResponseParams();
+        Response response = new Response(Response.API_ID.SEND, "OK", responseParams);
+
+        try {
+            Long certNumber = claimRequestClient.getCertificateNumber();
+            response.setResult(certNumber);
+            responseParams.setStatus(Response.Status.SUCCESSFUL);
+        } catch (Exception exception) {
+            logger.error("Exception : {}", exception.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            responseParams.setErrmsg(exception.getMessage());
+            return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }

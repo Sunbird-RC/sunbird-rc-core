@@ -18,7 +18,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.time.Duration;
 
 @SpringBootApplication(exclude={SecurityAutoConfiguration.class})
@@ -55,18 +56,22 @@ public class SunbirdRCApplication {
 
     @Bean
     public FilterRegistrationBean corsFilter() {
+        List<String> list = new ArrayList();
+        list.add("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        config.addAllowedOrigin(corsAllowedOrigin);
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("POST");
-        config.addAllowedMethod("DELETE");
-        config.addAllowedMethod("GET");
-        config.addAllowedMethod("OPTIONS");
-        config.addAllowedMethod("PUT");
-        source.registerCorsConfiguration("/**", config);
-        FilterRegistrationBean bean = new FilterRegistrationBean(new CorsFilter(source));
+        //config.setAllowCredentials(true);
+          config.addAllowedOrigin(corsAllowedOrigin);
+          config.addAllowedOrigin("*");
+          config.setAllowedOrigins(list);
+          config.addAllowedHeader("*");
+          config.addAllowedMethod("POST");
+          config.addAllowedMethod("DELETE");
+          config.addAllowedMethod("GET");
+          config.addAllowedMethod("OPTIONS");
+          config.addAllowedMethod("PUT");
+          source.registerCorsConfiguration("/**", config);
+          FilterRegistrationBean bean = new FilterRegistrationBean(new CorsFilter(source));
         bean.setOrder(0);
         return bean;
     }

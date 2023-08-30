@@ -33,6 +33,12 @@ public class NotificationHelper {
     private EntityStateHelper entityStateHelper;
     private RegistryService registryService;
     private ObjectMapper objectMapper;
+    @Value("${keycloak-user.default-password}")
+    private String defaultInvitePassword;
+
+    @Value("${notification.sms.enabled}")
+    boolean smsEnabled;
+
     @Autowired
     public NotificationHelper(@Value("${notification.service.enabled}") boolean notificationEnabled, IDefinitionsManager definitionsManager, EntityStateHelper entityStateHelper, RegistryService registryService, ObjectMapper objectMapper) {
         this.notificationEnabled = notificationEnabled;
@@ -50,6 +56,7 @@ public class NotificationHelper {
         List<NotificationTemplate> templates = getNotificationTemplate(entityType, operationType);
         Map<String, Object> objectNodeMap = (Map<String, Object>) JSONUtil.convertJsonNodeToMap(inputJson).get(entityType);
         objectNodeMap.put("entityType", entityType);
+        objectNodeMap.put("defaultInvitePassword", defaultInvitePassword);
         for(NotificationTemplate template: templates) {
             String bodyTemplate = template.getBody();
             String subjectTemplate = template.getSubject();
@@ -65,7 +72,7 @@ public class NotificationHelper {
             for (ObjectNode owner :owners) {
                 String ownerMobile = owner.get(MOBILE).asText("");
                 String ownerEmail = owner.get(EMAIL).asText("");
-                if (!StringUtils.isEmpty(ownerMobile)) {
+                if (smsEnabled && !StringUtils.isEmpty(ownerMobile)) {
                     registryService.callNotificationActors(operation, String.format("tel:%s", ownerMobile), subject, message);
                 }
                 if (!StringUtils.isEmpty(ownerEmail)) {

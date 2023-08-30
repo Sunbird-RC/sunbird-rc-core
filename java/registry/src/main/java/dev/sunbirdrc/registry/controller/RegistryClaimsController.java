@@ -12,6 +12,7 @@ import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.dto.AttestationRequest;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
+import dev.sunbirdrc.registry.util.CommonUtils;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -24,7 +25,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.USER_ID;
 
@@ -56,6 +59,40 @@ public class RegistryClaimsController extends AbstractController{
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
+    @RequestMapping(value = "/api/v2/{entityName}/claims", method = RequestMethod.GET)
+    public ResponseEntity<Object> getStudentsClaims(@PathVariable String entityName, Pageable pageable,
+                                               HttpServletRequest request) {
+        List<String> entityList = CommonUtils.getEntityName();
+        ResponseEntity<Object> objectResponseEntity = null;
+        List list = new ArrayList();
+        JsonNode claims = null;
+        try {
+            for (String entityName1:entityList) {
+                JsonNode result = registryHelper.getRequestedUserDetails(request, entityName1);
+                if(result!=null) {
+                    JsonNode jsonNode = result.get(entityName1);
+                    if(jsonNode!=null && jsonNode.size()>0) {
+                        JsonNode email = jsonNode.get(0).get("email");
+                        if(email!=null) {
+                            claims = claimRequestClient.getStudentsClaims(email, pageable, entityName1);
+                            break;
+                        }
+                        logger.info("Received {} claims", claims.size());
+                    }
+                }
+            }
+            objectResponseEntity = new ResponseEntity<>(claims, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Fetching claims failed {}", e.getMessage());
+            e.printStackTrace();
+
+        }
+        return objectResponseEntity;
+    }
+
+
 
     @RequestMapping(value = "/api/v1/{entityName}/claims/{claimId}", method = RequestMethod.GET)
     public ResponseEntity<Object> getClaim(@PathVariable String entityName, @PathVariable String claimId,
@@ -114,6 +151,7 @@ public class RegistryClaimsController extends AbstractController{
         additionalInputs.set("attestorInfo", attestorInfo);
         additionalInputs.set("action", action);
         additionalInputs.set("notes", notes);
+       // additionalInputs.set("credType", entityName);
         additionalInputs.put("claimId", claimId);
         return additionalInputs;
     }
@@ -143,6 +181,7 @@ public class RegistryClaimsController extends AbstractController{
             }
             attestationRequest.setUserId(userId);
             attestationRequest.setEmailId(emailId);
+            attestationRequest.setCredType(request.getHeader("credType"));
             String attestationOSID = registryHelper.triggerAttestation(attestationRequest, attestationPolicy);
             response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
         } catch (Exception exception) {

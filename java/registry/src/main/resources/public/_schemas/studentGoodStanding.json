@@ -1,0 +1,264 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "StudentGoodstanding": {
+      "$ref": "#/definitions/StudentGoodstanding"
+    }
+  },
+  "required": ["StudentGoodstanding"],
+  "title": "StudentGoodstanding",
+  "definitions": {
+    "StudentGoodstanding": {
+      "$id": "#/properties/StudentGoodstanding",
+      "type": "object",
+      "title": "StudentGoodstanding",
+      "required": [
+        "name",
+        "phoneNumber",
+        "email",
+        "council"
+      ],
+      "uniqueIndexFields": [
+        "phoneNumber"
+      ],
+      "properties": {
+        "name": {
+          "$id": "#/properties/name",
+          "type": "string",
+          "title": "name"
+        },
+        "marriedName": {
+          "$id": "#/properties/marriedName",
+          "type": "string",
+          "title": "marriedName"
+        },
+        "maidenName": {
+          "$id": "#/properties/maidenName",
+          "type": "string",
+          "title": "maidenName"
+        },
+        "fathersName": {
+          "$id": "#/properties/fathersName",
+          "type": "string",
+          "title": "fathersName"
+        },
+        "presentAddress": {
+          "$id": "#/properties/presentAddress",
+          "type": "string",
+          "title": "presentAddress"
+        },
+        "phoneNumber": {
+          "$id": "#/properties/phoneNumber",
+          "type": "string",
+          "title": "phoneNumber"
+        },
+        "email": {
+          "$id": "#/properties/email",
+          "type": "string",
+          "title": "email"
+        },
+        "professionalQualification": {
+          "$id": "#/properties/professionalQualification",
+          "type": "string",
+          "enum": [
+            "A.N.M",
+            "Midwife",
+            "H.W",
+            "Nurse",
+            "B.SC.Nursing"
+          ],
+          "title": "professionalQualification"
+        },
+        "trainingCenter": {
+          "$id": "#/properties/trainingCenter",
+          "type": "string",
+          "title": "trainingCenter"
+        },
+        "registrationNumber": {
+          "$id": "#/properties/registrationNumber",
+          "type": "string",
+          "title": "registrationNumber"
+        },
+        "council": {
+          "$id": "#/properties/council",
+          "type": "string",
+          "title": "council"
+        },
+        "workPlace": {
+          "$id": "#/properties/workPlace",
+          "type": "string",
+          "title": "workPlace"
+        },
+        "docproof": {
+              "type": "string", "title": "All Document Proof"
+        },
+        "paymentStatus": {
+          "$id": "#/properties/paymentStatus",
+          "type": "string",
+          "title": "paymentStatus"
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "ownershipAttributes": [
+      {
+        "email": "/email",
+        "mobile": "/phoneNumber",
+        "userId": "/phoneNumber"
+      }
+    ],
+    "inviteRoles": ["anonymous"],
+    "roles": ["StudentGoodstanding"],
+    "attestationPolicies": [
+      {
+        "name": "studentGoodstandingVerification",
+        "conditions": "(ATTESTOR#$.council#.contains(REQUESTER#$.council#))",
+        "type": "MANUAL",
+        "attestorPlugin": "did:internal:ClaimPluginActor?entity=Regulator",
+        "attestationProperties": {
+          "name": "$.name",
+          "marriedName": "$.marriedName",
+          "maidenName": "$.maidenName",
+          "fathersName": "$.fathersName",
+          "presentAddress": "$.presentAddress",
+          "phoneNumber": "$.phoneNumber",
+          "email": "$.email",
+          "professionalQualification": "$.professionalQualification",
+          "trainingCenter": "$.trainingCenter",
+          "registrationNumber": "$.registrationNumber",
+          "workPlace": "$.workPlace",
+          "council":"$.council",
+          "docproof": "$.docproof",
+          "paymentStatus": "$.paymentStatus"
+        },
+        "credentialTemplate": {
+          "@context": [
+            "https://www.w3.org/2018/credentials/v1",
+            {
+              "@version": 1.1,
+              "@protected": true,
+              "SkillCertificate": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#SkillCertificate",
+                "@context": {
+                  "id": "@id",
+                  "@version": 1.1,
+                  "@protected": true,
+                  "skills": "schema:Text"
+                }
+              },
+              "Person": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#Person",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "trainedOn": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#trainedOn",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "maidenName": {
+              "@id": "https://github.com/sunbird-specs/vc-specs#maidenName",
+              "@context": {
+                "name": "schema:Text"
+              }
+            },
+              "marriedName": {
+              "@id": "https://github.com/sunbird-specs/vc-specs#marriedName",
+              "@context": {
+                "name": "schema:Text"
+              }
+            },
+              "fathersName": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#marriedName",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "trainingCenter": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#trainingCenter",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "presentAddress": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#marriedName",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "phoneNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#phoneNumber",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "email": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#email",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "professionalQualification": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#professionalQualification",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "registrationNumber": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#registrationNumber",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "workPlace": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#workPlace",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "docproof": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#docproof",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              },
+              "paymentStatus": {
+                "@id": "https://github.com/sunbird-specs/vc-specs#paymentStatus",
+                "@context": {
+                  "name": "schema:Text"
+                }
+              }
+
+            }
+          ],
+          "type": ["VerifiableCredential"],
+          "issuanceDate": "2021-08-27T10:57:57.237Z",
+          "credentialSubject": {
+            "type": "Person",
+            "name": "{{name}}",
+            "marriedName": "{{marriedName}}",
+            "maidenName": "{{maidenName}}",
+            "fathersName": "{{fathersName}}",
+            "presentAddress": "{{presentAddress}}",
+            "phoneNumber": "{{phoneNumber}}",
+            "email": "{{email}}",
+            "professionalQualification": "{{professionalQualification}}",
+            "trainingCenter": "{{trainingCenter}}",
+            "registrationNumber": "{{registrationNumber}}",
+            "workPlace": "{{workPlace}}",
+            "docproof": "{{docproof}}"
+          },
+          "issuer": "did:web:sunbirdrc.dev/vc/skill"
+        }
+      }
+    ],
+    "certificateTemplates": {
+      "StudentGoodStandingTemp": "https://raw.githubusercontent.com/kumarpawantarento/templates/main/Foreign-certificate.html"
+    }
+  }
+}
+

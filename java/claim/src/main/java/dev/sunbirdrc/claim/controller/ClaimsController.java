@@ -6,6 +6,7 @@ import dev.sunbirdrc.claim.entity.Claim;
 import dev.sunbirdrc.claim.service.ClaimService;
 import dev.sunbirdrc.claim.service.ClaimsAuthorizer;
 import dev.sunbirdrc.pojos.dto.ClaimDTO;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +18,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static dev.sunbirdrc.claim.contants.AttributeNames.ATTESTOR_INFO;
-import static dev.sunbirdrc.claim.contants.AttributeNames.LOWERCASE_ENTITY;
+import static dev.sunbirdrc.claim.contants.AttributeNames.*;
 
 @Controller
 public class ClaimsController {
@@ -45,6 +46,15 @@ public class ClaimsController {
         return new ResponseEntity<>(claims, HttpStatus.OK);
     }
 
+
+    @RequestMapping(value = "/api/v2/getClaims", method = RequestMethod.POST)
+    public ResponseEntity<List<Claim>> getStudentClaims(@RequestHeader HttpHeaders headers,
+                                                         @RequestBody JsonNode requestBody, Pageable pageable) {
+        String entity = requestBody.get(LOWERCASE_ENTITY).asText();
+        JsonNode attestorNode = requestBody.get(ATTESTOR_INFO);
+        List<Claim> claims = claimService.findByRequestorName(attestorNode.asText(), pageable);
+        return new ResponseEntity<>(claims, HttpStatus.OK);
+    }
     @RequestMapping(value = "/api/v1/getClaims/{claimId}", method = RequestMethod.POST)
     public ResponseEntity<ClaimWithNotesDTO> getClaimById(@RequestHeader HttpHeaders headers, @PathVariable String claimId,
                                               @RequestBody JsonNode requestBody) {
@@ -64,7 +74,11 @@ public class ClaimsController {
 
     @RequestMapping(value = "/api/v1/claims", method = RequestMethod.POST)
     public ResponseEntity<Claim> save(@RequestBody ClaimDTO claimDTO) {
+        JSONObject jsonObject = new JSONObject(claimDTO.getPropertyData());
+        String credType1 = jsonObject.get("credType").toString();
+        claimDTO.setCredtype(credType1);
         logger.info("Adding new claimDTO {} ", claimDTO.toString());
+        logger.info("Cred Type new claimDTO {} ", claimDTO.getCredtype());
         Claim savedClaim = claimService.save(Claim.fromDTO(claimDTO));
         claimService.addNotes(claimDTO.getNotes(), savedClaim, claimDTO.getRequestorName());
         return new ResponseEntity<>(savedClaim, HttpStatus.OK);

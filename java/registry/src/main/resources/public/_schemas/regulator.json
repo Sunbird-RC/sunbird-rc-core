@@ -1,0 +1,49 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema",
+	"type": "object",
+	"properties": {
+		"Regulator": {
+			"$ref": "#/definitions/Regulator"
+		}
+	},
+	"required": ["Regulator"],
+	"title": "Regulator",
+	"definitions": {
+		"Regulator": {
+			"$id": "#/properties/Regulator",
+			"type": "object",
+			"title": "Regulatorschema",
+			"required": ["name", "phoneNumber", "email"],
+			"uniqueIndexFields": ["phoneNumber"],
+			"properties": {
+				"name": { "type": "string" },
+				"phoneNumber": { "type": "string" },
+				"email": { "type": "string" },
+				"council": { "type": "string" },
+				"subject": {
+					"type": "string",
+					"enum": [
+						"Math",
+						"Hindi",
+						"English",
+						"History",
+						"Geography",
+						"Physics",
+						"Chemistry",
+						"Biology"
+					]
+				}
+			}
+		}
+	},
+	"_osConfig": {
+		"ownershipAttributes": [
+			{
+				"email": "/email",
+				"mobile": "/phoneNumber",
+				"userId": "/phoneNumber"
+			}
+		],
+		"inviteRoles": ["anonymous"]
+	}
+}

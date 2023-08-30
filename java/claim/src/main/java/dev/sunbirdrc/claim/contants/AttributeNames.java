@@ -9,7 +9,15 @@ public class AttributeNames {
     public static final String ENTITY = "ENTITY";
     public static final String LOWERCASE_ENTITY = "entity";;
     public static final String ATTESTOR_INFO = "attestorInfo";
+
+    public static final String REQUESTOR_INFO = "reguestorInfo";
     public static final String CONTENT = "content";
     public static final String TOTAL_PAGES = "totalPages";
     public static final String TOTAL_ELEMENTS = "totalElements";
+
+    public static final String JPG = "JPG";
+    public static final String JPEG = "JPEG";
+    public static final String PNG = "PNG";
+    public static final String GIF = "GIF";
+    public static final String PDF = "PDF";
 }

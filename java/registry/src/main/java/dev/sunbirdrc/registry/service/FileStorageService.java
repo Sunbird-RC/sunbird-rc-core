@@ -56,7 +56,7 @@ public class FileStorageService implements HealthIndicator {
 		for (MultipartFile file : files) {
 			String fileName = getFileName(file.getOriginalFilename());
 			try {
-				String objectName = objectPath + "/" + fileName;
+				String objectName = "/"+objectPath + "/" + fileName;
 				save(file.getInputStream(), objectName);
 				documentsResponse.addDocumentLocation(objectName);
 			} catch (Exception e) {
