@@ -87,13 +87,15 @@ public class RegistryHelper {
     private static final String ATTESTATION_RESPONSE = "attestationResponse";
     public static String ROLE_ANONYMOUS = "anonymous";
 
-    private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${notification.service.enabled}") boolean notificationEnabled;
     @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
     @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
-    @Value("${cord.schemaURL}") String cord_schema_url;
+    @Value("${cord.issuer_schema_url:http://172.24.0.1/5106/api/v1/schema}") String cord_schema_url;
+    @Value("${cord.issuer_registry_url:http://172.24.0.1/5106/api/v1/registry}") String cord_registry_url;
+
     @Autowired
     private NotificationHelper notificationHelper;
     @Autowired
@@ -193,11 +195,11 @@ public class RegistryHelper {
         }
         return requestBody;
     }
-
+    
     /**
     * REUSBALE METHOD FOR POST API CALLS
      */
-    public void apiHelper(JsonNode obj,String url){
+    public JsonNode apiHelper(JsonNode obj,String url) throws Exception{
          WebClient.Builder builder = WebClient.builder();
         try{
             Mono<JsonNode> responseMono = builder.build()
@@ -214,27 +216,66 @@ public class RegistryHelper {
                     });
 
             JsonNode response = responseMono.block();
-            logger.info("RESPONSE  {}",response);
+            return response;
         }catch(Exception e){
             logger.error("Exception occurred !" , e);
+            return new ObjectMapper().createObjectNode().put("ERROR ","exception caught");
         }
     }
 
-    /**
-     * Anchors schema to the CORD CHAIN
-     */
-    public void anchorSchemaAPI(JsonNode obj){
-        // apiHelper(obj,"http://172.24.0.1:5106/api/v1/schema");
-        apiHelper(obj,cord_schema_url); // considering issuer agent running in local
+    
+     /** Anchors schema to the CORD CHAIN*/
+    public JsonNode anchorSchemaAPI(JsonNode obj) throws Exception{
+        JsonNode schema=apiHelper(obj,cord_schema_url);
+        return schema;
+    }
+    /** Anchors registry to the CORD NETWORK ,*/
+    public JsonNode anchorRegistryAPI(JsonNode obj) throws Exception{
+        JsonNode registryDetails=apiHelper(obj,cord_registry_url);
+        return registryDetails;
     }
 
+    /** Helper function for Anchoring to CORD */
+    public JsonNode anchorToCord(JsonNode rootNode) throws Exception{
+        try{
 
-    /** 
-    * Anchors registry to the chain ,
-    * Before calling this api, schema must be created
-    
-     */
-    public void anchorRegistryAPI(){
+        ObjectMapper objectMapper=new ObjectMapper();
+            /* anchor schema */
+        JsonNode schemaProperty=rootNode.get("schema");
+        JsonNode convertedSchema=objectMapper.readTree(schemaProperty.asText());
+        
+        JsonNode schemaNode=convertedSchema.get("definitions");
+        
+        JsonNode properties=schemaNode.get(rootNode.get("name").asText());
+        JsonNode getProperties=properties.get("properties");
+        
+        JsonNode createSchema=objectMapper.createObjectNode()
+        .put("title",convertedSchema.get("title").asText())
+        .put("description",convertedSchema.get("description").asText())
+        .set("properties",properties.get("properties"));
+        
+        JsonNode schemaToBeAnchored=objectMapper.createObjectNode()
+        .set("schema",createSchema);
+        
+        JsonNode anchoredSchema=anchorSchemaAPI(schemaToBeAnchored);
+        logger.info("ANCHORED SCHEMA TO CORD CHAIN  {}",anchoredSchema);
+        /* Anchoring registry to CORD */
+        JsonNode registrySchema=objectMapper.createObjectNode()
+        .put("title",convertedSchema.get("title").asText())
+        .put("description",convertedSchema.get("description").asText())
+        .put("schemaId",anchoredSchema.get("schemaId").asText());
+        
+        JsonNode registryId=anchorRegistryAPI(registrySchema);
+        logger.info("REGISTRY ID GENERATED ON CORD {} ",registryId);
+        
+        ((ObjectNode)rootNode).set("cord_re gistry_id", registryId.get("registryId"));
+        ((ObjectNode)rootNode).set("cord_schema_id", anchoredSchema.get("schemaId"));
+        
+            return rootNode;
+        }catch(Exception e){
+            logger.error("ERROR {}",e);
+            return objectMapper.createObjectNode().put("ERROR","Exception occurred");
+        }
 
     }
     /**
