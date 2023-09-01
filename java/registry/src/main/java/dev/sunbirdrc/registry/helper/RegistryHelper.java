@@ -230,13 +230,8 @@ public class RegistryHelper {
      * Anchors schema to the CORD CHAIN
      */
     public JsonNode anchorSchemaAPI(JsonNode obj) throws Exception{
-        try{
         JsonNode schema=apiHelper(obj,cord_schema_url);
         return schema;
-        }catch(Exception e){
-            logger.error("ERROR : {}",e);
-            return objectMapper.createObjectNode().put("ERROR","Exception occurred!");
-        }
 
     }
 

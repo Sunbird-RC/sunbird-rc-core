@@ -287,26 +287,12 @@ public class RegistryEntityController extends AbstractController {
         ObjectMapper objectMapper= new ObjectMapper();
         Map<String, Object> result = new HashMap<>();
         ObjectNode newRootNode = objectMapper.createObjectNode();
-        newRootNode.set(entityName, rootNode);
-        try {
-            checkEntityNameInDefinitionManager(entityName);
-            String userId = registryHelper.authorizeManageEntity(request, entityName);
-            String label = registryHelper.addEntity(newRootNode, userId);
-            String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
-
-            Map<String, String> resultMap = new HashMap<>();
-            if (asyncRequest.isEnabled()) {
-                resultMap.put(TRANSACTION_ID, label);
-            } else {
-                registryHelper.autoRaiseClaim(entityName, label, userId, null, newRootNode, emailId);
-                resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
-            }
-
-             /** Anchoring schema to chain */
+        if("Schema".equals(entityName)){
+            logger.info("FOUND SCHEMA || ADDING TO CHAIN ");
+              /** Anchoring schema to chain */
             JsonNode np=rootNode.get("schema");
             JsonNode str=objectMapper.readTree(np.asText());
             JsonNode schemaNode=str.get("definitions");
-            
             JsonNode props=schemaNode.get("Place");
             JsonNode newProps=props.get("properties");
 
@@ -328,6 +314,26 @@ public class RegistryEntityController extends AbstractController {
             
             JsonNode registryId=registryHelper.anchorRegistryAPI(registrySchema);
             logger.info("REGISTRY ID : {} ",registryId.get("registryId").asText());
+            
+            ((ObjectNode)rootNode).set("cord_registry_id", registryId.get("registryId"));
+            ((ObjectNode)rootNode).set("cord_schema_id", schemaId.get("schemaId"));
+
+        }
+        newRootNode.set(entityName, rootNode);
+        try {
+            checkEntityNameInDefinitionManager(entityName);
+            String userId = registryHelper.authorizeManageEntity(request, entityName);
+            String label = registryHelper.addEntity(newRootNode, userId);
+            String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
+
+            Map<String, String> resultMap = new HashMap<>();
+            if (asyncRequest.isEnabled()) {
+                resultMap.put(TRANSACTION_ID, label);
+            } else {
+                registryHelper.autoRaiseClaim(entityName, label, userId, null, newRootNode, emailId);
+                resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
+            }
+
 
             result.put(entityName, resultMap);
             response.setResult(result);            
