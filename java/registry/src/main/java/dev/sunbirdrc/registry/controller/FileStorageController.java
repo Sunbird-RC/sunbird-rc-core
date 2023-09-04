@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.controller;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.dto.DocumentsResponse;
 import dev.sunbirdrc.registry.service.FileStorageService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.List;
 
 // TODO: Get should be viewed by both attestor and reviewer
 @Controller
+@ConditionalOnBean(FileStorageService.class)
 public class FileStorageController {
     private final FileStorageService fileStorageService;
     private final RegistryHelper registryHelper;

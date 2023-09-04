@@ -63,6 +63,7 @@ services:
       - certificate_health_check_url=http://certificate-api:8078/health
       - template_base_url=http://registry:8081/api/v1/templates/ #Looks for certificate templates for pdf copy of the signed certificate
       - sunbird_keycloak_user_set_password=true
+      - filestorage_enabled=false
       - filestorage_connection_url=http://file-storage:9000
       - filestorage_access_key=admin
       - filestorage_secret_key=12345678

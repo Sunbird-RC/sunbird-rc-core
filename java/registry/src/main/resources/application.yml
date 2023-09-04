@@ -315,6 +315,7 @@ elastic:
     elastic_password: ${elastic_search_password:elastic}
     scheme: ${elastic_search_scheme:http}
 filestorage:
+  enabled: ${filestorage_enabled:false}
   url: ${filestorage_connection_url:http://localhost:9000}
   accesskey: ${filestorage_access_key:XXXXX}
   secretkey: ${filestorage_secret_key:XXXXX}

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_FILE_STORAGE_SERVICE_NAME;
 
 @Service
+@ConditionalOnBean(MinioClient.class)
 public class FileStorageService implements HealthIndicator {
 	private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 	private final MinioClient minioClient;

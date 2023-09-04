@@ -6,10 +6,12 @@ import io.minio.MinioClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@ConditionalOnProperty(name = "filestorage.enabled", havingValue = "true", matchIfMissing = true)
 public class MinioClientConfig {
 
 	private static final Logger logger = LoggerFactory.getLogger(MinioClientConfig.class);

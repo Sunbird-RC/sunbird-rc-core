@@ -15,6 +15,7 @@ import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
 import dev.sunbirdrc.registry.exception.ErrorMessages;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
+import dev.sunbirdrc.registry.exception.UnreachableException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -59,7 +60,9 @@ public class RegistryEntityController extends AbstractController {
     @Autowired
     private ICertificateService certificateService;
 
-    @Autowired
+    @Value("${filestorage.enabled}")
+    private boolean fileStorageEnabled;
+    @Autowired(required = false)
     private FileStorageService fileStorageService;
 
     @Autowired
@@ -540,7 +543,7 @@ public class RegistryEntityController extends AbstractController {
     }
 
 
-    private String getTemplateUrlFromRequest(HttpServletRequest request, String entityName) {
+    private String getTemplateUrlFromRequest(HttpServletRequest request, String entityName) throws UnreachableException {
         if (externalTemplatesEnabled && !StringUtils.isEmpty(request.getHeader(Template))) {
             return request.getHeader(Template);
         }
@@ -549,10 +552,15 @@ public class RegistryEntityController extends AbstractController {
             if (!StringUtils.isEmpty(templateUri)) {
                 try {
                     if (templateUri.startsWith(MINIO_URI_PREFIX)) {
+                        if (!fileStorageEnabled) {
+                            throw new UnreachableException("File Storage Service is not enabled");
+                        }
                         return fileStorageService.getSignedUrl(templateUri.substring(MINIO_URI_PREFIX.length()));
                     } else if (templateUri.startsWith(HTTP_URI_PREFIX) || templateUri.startsWith(HTTPS_URI_PREFIX)) {
                         return templateUri;
                     }
+                } catch (UnreachableException e) {
+                    throw e;
                 } catch (Exception e) {
                     logger.error("Exception while parsing certificate templates DID urls", e);
                     return null;

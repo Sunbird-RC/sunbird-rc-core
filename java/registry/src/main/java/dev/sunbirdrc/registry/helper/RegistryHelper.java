@@ -23,6 +23,7 @@ import dev.sunbirdrc.registry.entities.FlowType;
 import dev.sunbirdrc.registry.entities.RevokedCredential;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
+import dev.sunbirdrc.registry.exception.UnreachableException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -136,7 +137,9 @@ public class RegistryHelper {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
+    @Value("${filestorage.enabled}")
+    private boolean fileStorageEnabled;
+    @Autowired(required = false)
     private FileStorageService fileStorageService;
 
     @Value("${database.uuidPropertyName}")
@@ -431,8 +434,11 @@ public class RegistryHelper {
     }
 
 
-    private void updateGetFileUrl(JsonNode additionalInput) {
+    private void updateGetFileUrl(JsonNode additionalInput) throws UnreachableException {
         if(additionalInput!= null && additionalInput.has(FILE_URL)) {
+            if (!fileStorageEnabled) {
+                throw new UnreachableException("File Storage Service is not enabled");
+            }
             ArrayNode fileUrls = (ArrayNode)(additionalInput.get(FILE_URL));
             ArrayNode signedUrls = JsonNodeFactory.instance.arrayNode();
             for (JsonNode fileNode : fileUrls) {
@@ -656,6 +662,9 @@ public class RegistryHelper {
 
     private void uploadAttestedFiles(PluginResponseMessage pluginResponseMessage, ObjectNode metaData) throws Exception {
         if (!CollectionUtils.isEmpty(pluginResponseMessage.getFiles())) {
+            if (!fileStorageEnabled) {
+                throw new UnreachableException("File Storage Service is not enabled");
+            }
             ArrayNode fileUris = JsonNodeFactory.instance.arrayNode();
             pluginResponseMessage.getFiles().forEach(file -> {
                 String propertyURI = String.format("%s/%s/%s/documents/%s", pluginResponseMessage.getSourceEntity(),

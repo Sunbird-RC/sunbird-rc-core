@@ -44,7 +44,9 @@ public class SignatureServiceImpl implements SignatureService {
 	@Autowired
 	private ObjectMapper objectMapper;
 
-	@Autowired
+	@Value("${filestorage.enabled}")
+	private boolean fileStorageEnabled;
+	@Autowired(required = false)
 	private FileStorageService fileStorageService;
 
 	/** This method checks signature service is available or not
@@ -72,6 +74,9 @@ public class SignatureServiceImpl implements SignatureService {
 	private void replaceMinioURIWithSignedURL(Map<String, Object> signRequestObject) throws Exception {
 		if (signRequestObject.containsKey(CREDENTIAL_TEMPLATE) &&  signRequestObject.get(CREDENTIAL_TEMPLATE) instanceof String
 				&& ((String) signRequestObject.get(CREDENTIAL_TEMPLATE)).startsWith(MINIO_URI_PREFIX)) {
+			if(!fileStorageEnabled) {
+				throw new SignatureException().new UnreachableException("File Storage is not enabled! Enable file storage to load credential template from Minio");
+			}
 			signRequestObject.put(CREDENTIAL_TEMPLATE, fileStorageService.getSignedUrl(((String) signRequestObject.get(CREDENTIAL_TEMPLATE)).substring(MINIO_URI_PREFIX.length())));
 		}
 	}
@@ -91,11 +96,14 @@ public class SignatureServiceImpl implements SignatureService {
 			response = retryRestTemplate.postForEntity(signURL, propertyValue);
 			result = objectMapper.readTree(response.getBody());
 			logger.info("Successfully generated signed credentials");
+		} catch (SignatureException.UnreachableException ex) {
+			logger.error("SignatureException when signing: ", ex);
+			throw ex;
 		} catch (RestClientException ex) {
 			logger.error("RestClientException when signing: ", ex);
 			throw new SignatureException().new UnreachableException(ex.getMessage());
 		} catch (Exception e) {
-			logger.error("RestClientException when signing: ", e);
+			logger.error("SignatureException when signing: ", e);
 			throw new SignatureException().new CreationException(e.getMessage());
 		}
 		return result;

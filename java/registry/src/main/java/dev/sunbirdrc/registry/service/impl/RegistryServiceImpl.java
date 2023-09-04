@@ -129,12 +129,6 @@ public class RegistryServiceImpl implements RegistryService {
     private SchemaService schemaService;
 
     @Autowired
-    private IElasticService elasticService;
-
-    @Autowired
-    private FileStorageService fileStorageService;
-
-    @Autowired
     private List<HealthIndicator> healthIndicators;
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
