@@ -1,7 +1,7 @@
 ############################
 # STEP 1 build executable binary
 ############################
-FROM golang:alpine AS builder
+FROM golang:1.20-alpine3.18 AS builder
 RUN apk update && apk add --no-cache 'git=~2'
 ENV GO111MODULE=on
 WORKDIR $GOPATH/src/packages/digilocker-certificate-api/
