@@ -1,13 +1,13 @@
 package dev.sunbirdrc.registry.service;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +29,7 @@ import dev.sunbirdrc.registry.util.RecordIdentifier;
  *
  */
 @Component
+@ConditionalOnProperty(name = "search.providerName", havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService")
 public class ElasticSearchService implements ISearchService {
     private static Logger logger = LoggerFactory.getLogger(ElasticSearchService.class);
 
