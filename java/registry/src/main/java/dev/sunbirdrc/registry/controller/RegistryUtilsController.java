@@ -13,6 +13,7 @@ import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
+import dev.sunbirdrc.registry.exception.UnreachableException;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -49,7 +50,9 @@ public class RegistryUtilsController {
 	private Type mapType = new TypeToken<Map<String, Object>>() {
 	}.getType();
 
-	@Autowired
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
+	@Autowired(required = false)
 	private SignatureService signatureService;
 
 	@Autowired
@@ -80,7 +83,9 @@ public class RegistryUtilsController {
 	public ResponseEntity<Response> generateSignature(HttpServletRequest requestModel) {
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.SIGN, "OK", responseParams);
-
+		if (!signatureEnabled) {
+			return getSignatureNotEnabledResponse(response, responseParams);
+		}
 		try {
 			watch.start("RegistryUtilsController.generateSignature");
 			Map<String, Object> requestBodyMap = apiMessage.getRequest().getRequestMap();
@@ -111,7 +116,9 @@ public class RegistryUtilsController {
 	public ResponseEntity<Response> verifySignature(HttpServletRequest request) {
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.VERIFY, "OK", responseParams);
-
+		if (!signatureEnabled) {
+			return getSignatureNotEnabledResponse(response, responseParams);
+		}
 		try {
 			watch.start("RegistryUtilsController.verifySignature");
 			Map<String, Object> map = apiMessage.getRequest().getRequestMap();
@@ -181,7 +188,9 @@ public class RegistryUtilsController {
 	public ResponseEntity<Response> getKey( @PathVariable("id") String keyId) {
 		ResponseParams responseParams = new ResponseParams();
 		Response response = new Response(Response.API_ID.KEYS, "OK", responseParams);
-
+		if (!signatureEnabled) {
+			return getSignatureNotEnabledResponse(response, responseParams);
+		}
 		try {
 			watch.start("RegistryUtilsController.getKey");
 			String result = signatureService.getKey(keyId);
@@ -206,6 +215,9 @@ public class RegistryUtilsController {
 		Response response = new Response(Response.API_ID.HEALTH, "OK", responseParams);
 
 		try {
+			if (!signatureEnabled) {
+				throw new UnreachableException("Signature service not enabled!");
+			}
 			boolean healthCheckResult = signatureService.getHealthInfo().isHealthy();
 			HealthCheckResponse healthCheck = new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME,
 					healthCheckResult, null);
@@ -219,7 +231,7 @@ public class RegistryUtilsController {
 					false, null);
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-			responseParams.setErrmsg("Error during health check");
+			responseParams.setErrmsg("Error during health check: " + e.getMessage());
 		}
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
@@ -285,5 +297,12 @@ public class RegistryUtilsController {
 		}
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	private ResponseEntity<Response> getSignatureNotEnabledResponse(Response response, ResponseParams responseParams) {
+		responseParams.setErrmsg("Signature service not enabled!");
+		responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+		response.setResponseCode("SERVICE_UNAVAILABLE");
+		return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
 	}
 }

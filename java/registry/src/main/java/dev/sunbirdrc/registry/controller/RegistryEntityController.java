@@ -50,6 +50,7 @@ import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
+import static dev.sunbirdrc.registry.service.SignatureHelper.SignatureNotEnabledResponse;
 
 @RestController
 public class RegistryEntityController extends AbstractController {
@@ -57,7 +58,9 @@ public class RegistryEntityController extends AbstractController {
     private static final String TRANSACTION_ID = "transactionId";
     private static Logger logger = LoggerFactory.getLogger(RegistryEntityController.class);
 
-    @Autowired
+    @Value("${signature.enabled}")
+    private boolean signatureEnabled;
+    @Autowired(required = false)
     private ICertificateService certificateService;
 
     @Value("${filestorage.enabled}")
@@ -506,6 +509,9 @@ public class RegistryEntityController extends AbstractController {
                                                 @RequestHeader(required = false) String viewTemplateId) {
         ResponseParams responseParams = new ResponseParams();
         Response response ;
+        if (!signatureEnabled) {
+            return SignatureNotEnabledResponse(null, responseParams);
+        }
         if (registryHelper.doesEntityOperationRequireAuthorization(entityName) && securityEnabled) {
             try {
 
@@ -793,6 +799,10 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             responseParams.setResultList(Collections.singletonList("response"));
             return new ResponseEntity<>(responseParams, HttpStatus.OK);
+        } catch (UnreachableException ex) {
+            responseParams.setErrmsg(ex.getMessage());
+            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+            return new ResponseEntity<>(responseParams, HttpStatus.SERVICE_UNAVAILABLE);
         } catch (Exception exception) {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(exception.getMessage());
@@ -806,6 +816,9 @@ public class RegistryEntityController extends AbstractController {
     public ResponseEntity<Object> getSignedEntityByToken(@PathVariable String entityName, HttpServletRequest request) {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
+        if (!signatureEnabled) {
+            return SignatureNotEnabledResponse(response, responseParams);
+        }
         try {
             checkEntityNameInDefinitionManager(entityName);
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
@@ -836,6 +849,9 @@ public class RegistryEntityController extends AbstractController {
     public ResponseEntity<Object> getAttestationCertificate(HttpServletRequest request, @PathVariable String entityName, @PathVariable String entityId,
                                                             @PathVariable String attestationName, @PathVariable String attestationId) {
         ResponseParams responseParams = new ResponseParams();
+        if (!signatureEnabled) {
+            return SignatureNotEnabledResponse(null, responseParams);
+        }
         try {
             checkEntityNameInDefinitionManager(entityName);
             String readerUserId = getUserId(entityName, request);

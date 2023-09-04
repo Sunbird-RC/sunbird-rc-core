@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -26,6 +27,7 @@ import static dev.sunbirdrc.registry.Constants.CREDENTIAL_TEMPLATE;
 import static dev.sunbirdrc.registry.Constants.MINIO_URI_PREFIX;
 
 @Component
+@ConditionalOnProperty(name = "signature.enabled", havingValue = "true")
 public class SignatureServiceImpl implements SignatureService {
 
 	private static Logger logger = LoggerFactory.getLogger(SignatureService.class);

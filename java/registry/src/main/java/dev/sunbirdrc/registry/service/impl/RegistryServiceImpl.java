@@ -59,14 +59,14 @@ public class RegistryServiceImpl implements RegistryService {
     private EntityTypeHandler entityTypeHandler;
     @Autowired
     private EncryptionService encryptionService;
-    @Autowired
+    @Autowired(required = false)
     private SignatureService signatureService;
     @Autowired
     private IDefinitionsManager definitionsManager;
 
     @Autowired
     private EncryptionHelper encryptionHelper;
-    @Autowired
+    @Autowired(required = false)
     private SignatureHelper signatureHelper;
     @Autowired
     private EntityTransformer entityTransformer;

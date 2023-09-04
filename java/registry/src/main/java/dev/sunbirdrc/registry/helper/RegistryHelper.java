@@ -170,7 +170,7 @@ public class RegistryHelper {
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
-    @Autowired
+    @Autowired(required = false)
     private SignatureService signatureService;
 
     @Autowired
@@ -576,6 +576,9 @@ public class RegistryHelper {
                 // checking size greater than 1, bcz empty template contains osid field
                 if (credentialTemplate != null) {
                     JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
+                    if (!signatureEnabled) {
+                        throw new UnreachableException("Signature service not enabled!");
+                    }
                     Object signedData = getSignedDoc(response, credentialTemplate);
                     metaData.put(
                             ATTESTED_DATA,
