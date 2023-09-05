@@ -40,6 +40,7 @@ services:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
+      - encryption_enabled=${ENCRYPTION_ENABLED-false}
       - event_enabled=${EVENT_ENABLED-false}
       - event_topic=events
       - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
@@ -214,7 +215,7 @@ services:
       zookeeper:
         condition: service_started
     ports:
-      - "9092:9092"
+      - "9094:9094"
     environment:
       KAFKA_BROKER_ID: "1"
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"

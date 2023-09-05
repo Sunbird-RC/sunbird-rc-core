@@ -38,11 +38,13 @@ public class APIMessage {
 		request = new Request();
 		requestWrapper = new RequestWrapper(servletRequest);
 		String body = requestWrapper.getBody();
-		try {
-			request = new ObjectMapper().readValue(body, Request.class);
-		} catch (IOException jpe) {
-			logger.error("Can't read request body", jpe);
-			request = null;
+		if(body != null && !body.isEmpty()) {
+			try {
+				request = new ObjectMapper().readValue(body, Request.class);
+			} catch (IOException jpe) {
+				logger.error("Can't read request body", jpe);
+				request = null;
+			}
 		}
 	}
 

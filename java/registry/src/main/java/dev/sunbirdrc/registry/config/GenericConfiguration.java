@@ -62,6 +62,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+
+import static dev.sunbirdrc.registry.Constants.ATTESTATION_POLICY;
 
 @Configuration
 @EnableRetry
@@ -427,11 +431,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			elasticService.setUserName(username);
 			elasticService.setPassword(password);
 			elasticService.setScheme(scheme);
-			elasticService.init(iDefinitionsManager.getAllKnownDefinitions());
+			Set<String> indices = new HashSet<>(iDefinitionsManager.getAllKnownDefinitions());
+			indices.add(ATTESTATION_POLICY);
+			elasticService.init(indices);
 		}
 		return elasticService;
 	}
 
+	@ConditionalOnProperty(name = "notification.service.enabled", havingValue = "true")
 	@Bean
 	public NotificationService notificationService() {
 		return new NotificationService(notificationServiceConnInfo, notificationServiceHealthUrl, notificationServiceEnabled);

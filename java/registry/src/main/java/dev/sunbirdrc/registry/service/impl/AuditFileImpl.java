@@ -2,7 +2,7 @@ package dev.sunbirdrc.registry.service.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Primary;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,6 +16,7 @@ import dev.sunbirdrc.registry.util.AuditFileWriter;
  * Audit service implementation for audit layer in the application
  */
 @Component
+@ConditionalOnExpression("${audit.enabled} and 'file'.equalsIgnoreCase('${audit.frame.store}')")
 public class AuditFileImpl extends AuditServiceImpl {
 
     private static Logger logger = LoggerFactory.getLogger(AuditFileImpl.class);

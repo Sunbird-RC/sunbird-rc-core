@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
+import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.RefResolver;
 import io.swagger.models.*;
@@ -16,6 +17,7 @@ import io.swagger.models.properties.*;
 import io.swagger.util.Json;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,12 +31,19 @@ import static dev.sunbirdrc.registry.Constants.Schema;
 import static dev.sunbirdrc.registry.Constants.TITLE;
 
 @RestController
+@ConditionalOnProperty(name = "api-swagger.enabled", havingValue = "true")
 public class RegistrySwaggerController {
     private final IDefinitionsManager definitionsManager;
     private final RefResolver refResolver;
     private final ObjectMapper objectMapper;
     @Value("${registry.schema.url}")
     private String schemaUrl;
+    @Value("${api-swagger.title}")
+    private String swaggerTitle;
+    @Value("${api-swagger.description}")
+    private String swaggerDescription;
+    @Value("${api-swagger.version}")
+    private String swaggerVersion;
 
     private RegistryHelper registryHelper;
 
@@ -81,6 +90,7 @@ public class RegistrySwaggerController {
         doc.set("definitions", definitions);
         doc.set("host", getHost(request));
         doc.set("schemes", JsonNodeFactory.instance.arrayNode().add(request.getScheme()));
+        doc.set("info", getApiInfo());
         for (String entityName : entities) {
             if (Character.isUpperCase(entityName.charAt(0))) {
                 populateEntityActions(paths, entityName);
@@ -260,5 +270,13 @@ public class RegistrySwaggerController {
                 deleteAll$Ids((ObjectNode) x);
             }
         });
+    }
+
+    private JsonNode getApiInfo() throws IOException {
+        Info info = new Info()
+        .title(swaggerTitle)
+        .version(swaggerVersion)
+        .description(swaggerDescription);
+        return JSONUtil.convertObjectJsonNode(info);
     }
 }

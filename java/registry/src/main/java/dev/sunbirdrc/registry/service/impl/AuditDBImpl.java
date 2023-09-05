@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -14,16 +15,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.pojos.AuditRecord;
 import dev.sunbirdrc.registry.exception.AuditFailedException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
-import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
-import dev.sunbirdrc.registry.util.Definition;
-import dev.sunbirdrc.registry.util.IDefinitionsManager;
 
 /**
  * Audit service implementation for audit layer in the application
  */
 @Component
+@ConditionalOnExpression("${audit.enabled} and 'database'.equalsIgnoreCase('${audit.frame.store}')")
 public class AuditDBImpl extends AuditServiceImpl {
 
     private static Logger logger = LoggerFactory.getLogger(AuditDBImpl.class);

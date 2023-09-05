@@ -92,7 +92,7 @@ public class RegistryHelper {
     @Value("${notification.service.enabled}") boolean notificationEnabled;
     @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
     @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
-    @Autowired
+    @Autowired(required = false)
     private NotificationHelper notificationHelper;
     @Autowired
     private ShardManager shardManager;
@@ -128,7 +128,9 @@ public class RegistryHelper {
     @Autowired
     private DBConnectionInfoMgr dbConnectionInfoMgr;
 
-    @Autowired
+    @Value("${encryption.enabled}")
+    private boolean encryptionEnabled;
+    @Autowired(required = false)
     private DecryptionHelper decryptionHelper;
 
     @Autowired
@@ -203,13 +205,13 @@ public class RegistryHelper {
      */
     public String addEntity(JsonNode inputJson, String userId) throws Exception {
         String entityId = addEntityHandler(inputJson, userId, false, false);
-        notificationHelper.sendNotification(inputJson, CREATE);
+        if(notificationEnabled) notificationHelper.sendNotification(inputJson, CREATE);
         return entityId;
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
         String entityId = addEntityHandler(inputJson, userId, skipRequiredValidationForInvite, skipSignatureForInvite);
-        notificationHelper.sendNotification(inputJson, INVITE);
+        if(notificationEnabled) notificationHelper.sendNotification(inputJson, INVITE);
         return entityId;
     }
 
@@ -298,6 +300,9 @@ public class RegistryHelper {
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
             if (viewTemplateDecryptPrivateFields) {
+                if (!encryptionEnabled) {
+                    throw new UnreachableException("Encryption should be enabled to decrypt private fields");
+                }
                 resultNode = includePrivateFields ? decryptionHelper.getDecryptedJson(resultNode) : resultNode;
             }
             resultNode = vTransformer.transform(viewTemplate, resultNode);
@@ -378,7 +383,7 @@ public class RegistryHelper {
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
         registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString, false);
-        notificationHelper.sendNotification(inputJson, UPDATE);
+        if(notificationEnabled) notificationHelper.sendNotification(inputJson, UPDATE);
         return "SUCCESS";
     }
 
@@ -389,7 +394,7 @@ public class RegistryHelper {
             updatedNode = entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
         }
         updateEntity(updatedNode, userId);
-        notificationHelper.sendNotification(updatedNode, UPDATE);
+        if(notificationEnabled) notificationHelper.sendNotification(updatedNode, UPDATE);
     }
 
     public void addEntityProperty(String entityName, String entityId, JsonNode inputJson, HttpServletRequest request) throws Exception {
@@ -913,7 +918,7 @@ public class RegistryHelper {
 
         List<String> managingRoles = getManageRoles(entityName);
         if (managingRoles.size() > 0) {
-            if (managingRoles.contains(ROLE_ANONYMOUS)) {
+            if (!securityEnabled || managingRoles.contains(ROLE_ANONYMOUS)) {
                 return ROLE_ANONYMOUS;
             }
             Set<String> userRoles = getUserRolesFromRequest(request);
@@ -1036,7 +1041,7 @@ public class RegistryHelper {
         Vertex vertex = registryService.deleteEntityById(shard, entityName, userId, recordId.getUuid());
         VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager);
         JsonNode deletedNode = JsonNodeFactory.instance.objectNode().set(entityName, vertexReader.constructObject(vertex));
-        notificationHelper.sendNotification(deletedNode, DELETE);
+        if(notificationEnabled) notificationHelper.sendNotification(deletedNode, DELETE);
         return vertex;
     }
 
@@ -1156,7 +1161,7 @@ public class RegistryHelper {
     }
 
     public boolean doesEntityOperationRequireAuthorization(String entity) {
-        return !getManageRoles(entity).contains("anonymous") && (doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0);
+        return securityEnabled && !getManageRoles(entity).contains("anonymous") && (doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0);
     }
 
     boolean hasAttestationPropertiesChanged(JsonNode updatedNode, JsonNode existingNode, AttestationPolicy attestationPolicy, String entityName) {

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,6 +29,7 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME;
 
 @Component
+@ConditionalOnProperty(name = "encryption.enabled", havingValue = "true")
 public class EncryptionServiceImpl implements EncryptionService {
 
 	private static Logger logger = LoggerFactory.getLogger(EncryptionServiceImpl.class);
@@ -41,7 +43,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 	private String encryptionBatchUri;
 	@Value("${decryption.batch.uri}")
 	private String decryptionBatchUri;
-	@Value("${encryption.base}")
+	@Value("${encryption.healthCheckURL}")
 	private String encryptionServiceHealthCheckUri;
 	@Autowired
 	private RetryRestTemplate retryRestTemplate;

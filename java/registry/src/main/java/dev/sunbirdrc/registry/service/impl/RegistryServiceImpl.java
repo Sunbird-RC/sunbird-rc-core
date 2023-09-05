@@ -57,14 +57,12 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private EntityTypeHandler entityTypeHandler;
-    @Autowired
-    private EncryptionService encryptionService;
     @Autowired(required = false)
     private SignatureService signatureService;
     @Autowired
     private IDefinitionsManager definitionsManager;
 
-    @Autowired
+    @Autowired(required = false)
     private EncryptionHelper encryptionHelper;
     @Autowired(required = false)
     private SignatureHelper signatureHelper;
@@ -129,20 +127,22 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SchemaService schemaService;
 
-    @Autowired
+    @Autowired(required = false)
     private List<HealthIndicator> healthIndicators;
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
         AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
         List<ComponentHealthInfo> checks = new ArrayList<>();
-        healthIndicators.parallelStream().forEach(healthIndicator -> {
-            ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
-            checks.add(healthInfo);
-            overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
-        });
+        if (healthIndicators != null) {
+            healthIndicators.parallelStream().forEach(healthIndicator -> {
+                ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
+                checks.add(healthInfo);
+                overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
+            });
+        }
 
         healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus.get(), checks);
-        logger.info("Heath Check :  {}", checks.stream().map(ComponentHealthInfo::getName).collect(Collectors.toList()));
+        logger.info("Heath Check : {}", checks.stream().map(ComponentHealthInfo::getName).collect(Collectors.toList()));
         return healthCheck;
     }
 
