@@ -86,15 +86,16 @@ public class RegistryHelper {
     private static final String CLAIM_ID = "claimId";
     private static final String ATTESTATION_RESPONSE = "attestationResponse";
     public static String ROLE_ANONYMOUS = "anonymous";
-
+    private final  WebClient.Builder builder = WebClient.builder();
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${notification.service.enabled}") boolean notificationEnabled;
     @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
     @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
-    @Value("${cord.issuer_schema_url:http://172.24.0.1/5106/api/v1/schema}") String cord_schema_url;
-    @Value("${cord.issuer_registry_url:http://172.24.0.1/5106/api/v1/registry}") String cord_registry_url;
+    @Value("${registry.cord.issuer_schema_url}") String issuer_schema_url;
+    @Value("${registry.cord.issuer_registry_url}") String issuer_registry_url;
+    @Value("${registry.cord.issuer_credential_url}") String issuer_credential_url;
 
     @Autowired
     private NotificationHelper notificationHelper;
@@ -200,9 +201,8 @@ public class RegistryHelper {
     * REUSBALE METHOD FOR POST API CALLS
      */
     public JsonNode apiHelper(JsonNode obj,String url) throws Exception{
-         WebClient.Builder builder = WebClient.builder();
         try{
-            Mono<JsonNode> responseMono = builder.build()
+            Mono<JsonNode> responseMono = this.builder.build()
                     .post()
                     .uri(url)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -226,12 +226,12 @@ public class RegistryHelper {
     
      /** Anchors schema to the CORD CHAIN*/
     public JsonNode anchorSchemaAPI(JsonNode obj) throws Exception{
-        JsonNode schema=apiHelper(obj,cord_schema_url);
+        JsonNode schema=apiHelper(obj,issuer_schema_url);
         return schema;
     }
     /** Anchors registry to the CORD NETWORK ,*/
     public JsonNode anchorRegistryAPI(JsonNode obj) throws Exception{
-        JsonNode registryDetails=apiHelper(obj,cord_registry_url);
+        JsonNode registryDetails=apiHelper(obj,issuer_registry_url);
         return registryDetails;
     }
 
@@ -268,7 +268,7 @@ public class RegistryHelper {
         JsonNode registryId=anchorRegistryAPI(registrySchema);
         logger.info("REGISTRY ID GENERATED ON CORD {} ",registryId);
         
-        ((ObjectNode)rootNode).set("cord_re gistry_id", registryId.get("registryId"));
+        ((ObjectNode)rootNode).set("cord_registry_id", registryId.get("registryId"));
         ((ObjectNode)rootNode).set("cord_schema_id", anchoredSchema.get("schemaId"));
         
             return rootNode;
@@ -277,6 +277,73 @@ public class RegistryHelper {
             return objectMapper.createObjectNode().put("ERROR","Exception occurred");
         }
 
+    }
+    /* Anchor documents to the CORD chain
+     * The below function first calls the search schema endpoint to get the registry_id & schema_id
+     * to create a proper json structure for issuer agent credentials api 
+     * 
+     * Schema for the search API
+     * {
+     *      filters:{
+     *          "name":{
+     *                  "eq":""
+     *              }
+     *      },
+     *      limit:1,
+     *      offset:1
+     * }
+     * 
+     * Schema accepted by ISSUER AGENT Credentials api
+     * {
+     *      "schemaId":"",
+     *      "registryId":"",
+     *      "holderDid":"",
+     *      "property":{
+     *         "":""    
+     *      }
+     * }
+     * 
+     */
+    public void anchorCredentialsToCord(String schemaName,JsonNode credentials) throws Exception{
+        try {
+             ObjectMapper objectMapper = new ObjectMapper();
+             JsonNode filterProperty=objectMapper.createObjectNode()
+             .put("eq",schemaName);
+             JsonNode inputJson=objectMapper.createObjectNode()
+             .set("name",filterProperty);
+             ArrayNode entity = JsonNodeFactory.instance.arrayNode();
+             entity.add("Schema");
+             JsonNode newNode= objectMapper.createObjectNode()
+             .put("limit",1)
+             .put("offset",0)
+             .set("filters",inputJson);
+             ((ObjectNode)newNode).set(ENTITY_TYPE,entity   );
+             JsonNode getDetails=searchEntity(newNode);
+             
+             JsonNode schemaArray=getDetails.get("Schema");
+             JsonNode firstSchema = schemaArray.get(0);
+             appendCredentialsToCord(firstSchema.get("cord_schema_id").asText(),firstSchema.get("cord_registry_id").asText(), credentials);
+             
+        } catch (Exception e) {
+            logger.error("EXCEPTION OCCURRED",e);
+        }   
+    }
+    // The holderDid is hardcoded for now.
+    private void appendCredentialsToCord(String schemaId,String registryId,JsonNode document){
+        try {
+            ObjectNode documentObject = (ObjectNode) document;
+            if(documentObject.has("osid")) documentObject.remove("osid");
+            if(documentObject.has("osOwner")) documentObject.remove("osOwner");
+            JsonNode rootNode=new ObjectMapper().createObjectNode()
+            .put("schemaId",schemaId)
+            .put("registryId",registryId)
+            .put("holderDid","did:cord:3yxVe6KTeexjYkK43q1SZxthbBVhnBdxwh1SYLTxzWxPobSS")
+            .set("property",documentObject);
+            
+            JsonNode anchorVC=apiHelper(rootNode,issuer_credential_url);
+        } catch (Exception e) {
+            logger.error("EXCEPTION OCCURRED WHILE APPENDING TO CORD");
+        }
     }
     /**
      * calls validation and then persists the record to registry.

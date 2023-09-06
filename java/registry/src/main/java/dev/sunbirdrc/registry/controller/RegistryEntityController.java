@@ -387,19 +387,20 @@ public class RegistryEntityController extends AbstractController {
     ObjectMapper objectMapper = new ObjectMapper();
     Map<String, Object> result = new HashMap<>();
     ObjectNode newRootNode = objectMapper.createObjectNode();
-
-    if (anchorToCord) { 
-      if("Schema".equals(entityName)){
-         JsonNode getRootNode=registryHelper.anchorToCord(rootNode);
-         newRootNode.set(entityName, getRootNode);
-      }
-    }else{
-        newRootNode.set(entityName, rootNode);
-    }
-    logger.info("NEW NODE : {}",newRootNode);
-     
+    
     try {
       checkEntityNameInDefinitionManager(entityName);
+      // anchor schema to chain 
+      if (anchorToCord) { 
+        if("Schema".equals(entityName)){
+          JsonNode getRootNode=registryHelper.anchorToCord(rootNode);
+          newRootNode.set(entityName, getRootNode);
+        }else{
+          newRootNode.set(entityName,rootNode);
+        }
+      }else{
+          newRootNode.set(entityName, rootNode);
+      }
       String userId = registryHelper.authorizeManageEntity(request, entityName);
       String label = registryHelper.addEntity(newRootNode, userId);
       String emailId = registryHelper.fetchEmailIdFromToken(
@@ -420,6 +421,9 @@ public class RegistryEntityController extends AbstractController {
         );
         resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
       }
+      // anchor a document to cord chain
+      if(anchorToCord && !"Schema".equals(entityName)) 
+          registryHelper.anchorCredentialsToCord(entityName,rootNode);
 
       result.put(entityName, resultMap);
       response.setResult(result);
