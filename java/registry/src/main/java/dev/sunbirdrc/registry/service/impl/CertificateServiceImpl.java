@@ -26,7 +26,7 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_CERTIFICATE_SERVICE_NAME;
 
 @Component
-@ConditionalOnProperty(name = "signature.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "certificate.enabled", havingValue = "true")
 public class CertificateServiceImpl implements ICertificateService {
     private final String templateBaseUrl;
     private final String certificateUrl;

@@ -55,6 +55,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -1231,5 +1233,16 @@ public class RegistryHelper {
                         JsonNodeFactory.instance.objectNode().put("eq", generateHash(signedData))));
         JsonNode searchResponse = searchEntity(searchNode);
         return searchResponse.get(REVOKED_CREDENTIAL) != null && searchResponse.get(REVOKED_CREDENTIAL).size() > 0;
+    }
+
+    public static ResponseEntity<Object> ServiceNotEnabledResponse(String message, Response response, ResponseParams responseParams) {
+        responseParams.setErrmsg(message + " not enabled!");
+        responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+        if (response != null) {
+            response.setResponseCode("SERVICE_UNAVAILABLE");
+        } else {
+            response = new Response(Response.API_ID.GET, "SERVICE_UNAVAILABLE", responseParams);
+        }
+        return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
     }
 }

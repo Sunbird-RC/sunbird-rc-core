@@ -8,6 +8,7 @@ import dev.sunbirdrc.registry.controller.RegistryController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 
 @Component
+@ConditionalOnProperty(name = "claims.enabled", havingValue = "true")
 public class ClaimRequestClient {
     private static Logger logger = LoggerFactory.getLogger(RegistryController.class);
     private final String claimRequestUrl;

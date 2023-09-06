@@ -49,8 +49,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.*;
+import static dev.sunbirdrc.registry.helper.RegistryHelper.ServiceNotEnabledResponse;
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
-import static dev.sunbirdrc.registry.service.SignatureHelper.SignatureNotEnabledResponse;
 
 @RestController
 public class RegistryEntityController extends AbstractController {
@@ -60,6 +60,8 @@ public class RegistryEntityController extends AbstractController {
 
     @Value("${signature.enabled}")
     private boolean signatureEnabled;
+    @Value("${certificate.enabled}")
+    private boolean certificateEnabled;
     @Autowired(required = false)
     private ICertificateService certificateService;
 
@@ -509,8 +511,8 @@ public class RegistryEntityController extends AbstractController {
                                                 @RequestHeader(required = false) String viewTemplateId) {
         ResponseParams responseParams = new ResponseParams();
         Response response ;
-        if (!signatureEnabled) {
-            return SignatureNotEnabledResponse(null, responseParams);
+        if (!certificateEnabled) {
+            return ServiceNotEnabledResponse("Certificate service",null, responseParams);
         }
         if (registryHelper.doesEntityOperationRequireAuthorization(entityName) && securityEnabled) {
             try {
@@ -817,7 +819,7 @@ public class RegistryEntityController extends AbstractController {
         ResponseParams responseParams = new ResponseParams();
         Response response = new Response(Response.API_ID.SEARCH, "OK", responseParams);
         if (!signatureEnabled) {
-            return SignatureNotEnabledResponse(response, responseParams);
+            return ServiceNotEnabledResponse("Signature service", response, responseParams);
         }
         try {
             checkEntityNameInDefinitionManager(entityName);
@@ -849,8 +851,8 @@ public class RegistryEntityController extends AbstractController {
     public ResponseEntity<Object> getAttestationCertificate(HttpServletRequest request, @PathVariable String entityName, @PathVariable String entityId,
                                                             @PathVariable String attestationName, @PathVariable String attestationId) {
         ResponseParams responseParams = new ResponseParams();
-        if (!signatureEnabled) {
-            return SignatureNotEnabledResponse(null, responseParams);
+        if (!certificateEnabled) {
+            return ServiceNotEnabledResponse("Certificate service", null, responseParams);
         }
         try {
             checkEntityNameInDefinitionManager(entityName);

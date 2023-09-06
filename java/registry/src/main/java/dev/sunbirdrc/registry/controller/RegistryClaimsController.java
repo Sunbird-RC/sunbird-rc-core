@@ -16,6 +16,7 @@ import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,7 @@ import java.util.Collections;
 import static dev.sunbirdrc.registry.middleware.util.Constants.USER_ID;
 
 @RestController
+@ConditionalOnProperty(name = "claims.enabled", havingValue = "true")
 public class RegistryClaimsController extends AbstractController{
     private static final Logger logger = LoggerFactory.getLogger(RegistryClaimsController.class);
     private final ClaimRequestClient claimRequestClient;

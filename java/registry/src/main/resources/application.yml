@@ -211,6 +211,7 @@ signature:
       name: SignatureShape
 
 certificate:
+  enabled: ${certificate_enabled:true}
   templateBaseUrl: ${template_base_url:http://localhost:8081/api/v1/templates/}
   healthCheckURL: ${certificate_health_check_url:http://localhost:8078/health}
   apiUrl: ${pdf_url:http://localhost:8078/api/v1/certificate}
@@ -246,6 +247,7 @@ keycloak-user:
   # email details should be configured in keycloak realm settings
   email-actions: ${keycloack_user_email_actions:}
 claims:
+  enabled: ${claims_enabled:true}
   url: ${claims_url:http://localhost:8082}
 authentication:
   enabled: ${authentication_enabled:true}

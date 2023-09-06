@@ -155,15 +155,4 @@ public class SignatureHelper {
         }
         return entitySignatureUUID;
     }
-
-    public static ResponseEntity<Object> SignatureNotEnabledResponse(Response response, ResponseParams responseParams) {
-        responseParams.setErrmsg("Signature service not enabled!");
-        responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-        if (response != null) {
-            response.setResponseCode("SERVICE_UNAVAILABLE");
-        } else {
-            response = new Response(Response.API_ID.GET, "SERVICE_UNAVAILABLE", responseParams);
-        }
-        return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
-    }
 }
