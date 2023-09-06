@@ -59,7 +59,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.PathVariable;
-
+import org.springframework.http.MediaType;
+import reactor.core.publisher.Mono;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -72,7 +74,7 @@ import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 import static dev.sunbirdrc.registry.middleware.util.OSSystemFields.*;
-
+import org.springframework.web.reactive.function.client.WebClient;
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
  */
@@ -85,12 +87,15 @@ public class RegistryHelper {
     private static final String ATTESTATION_RESPONSE = "attestationResponse";
     public static String ROLE_ANONYMOUS = "anonymous";
 
-    private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${notification.service.enabled}") boolean notificationEnabled;
     @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
     @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
+    @Value("${cord.issuer_schema_url:http://172.24.0.1/5106/api/v1/schema}") String cord_schema_url;
+    @Value("${cord.issuer_registry_url:http://172.24.0.1/5106/api/v1/registry}") String cord_registry_url;
+
     @Autowired
     private NotificationHelper notificationHelper;
     @Autowired
@@ -190,7 +195,89 @@ public class RegistryHelper {
         }
         return requestBody;
     }
+    
+    /**
+    * REUSBALE METHOD FOR POST API CALLS
+     */
+    public JsonNode apiHelper(JsonNode obj,String url) throws Exception{
+         WebClient.Builder builder = WebClient.builder();
+        try{
+            Mono<JsonNode> responseMono = builder.build()
+                    .post()
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .bodyValue(obj)
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .onErrorResume(throwable -> {
+                        throwable.printStackTrace();
+                        return Mono.empty();
+                    });
 
+            JsonNode response = responseMono.block();
+            return response;
+        }catch(Exception e){
+            logger.error("Exception occurred !" , e);
+            return new ObjectMapper().createObjectNode().put("ERROR ","exception caught");
+        }
+    }
+
+    
+     /** Anchors schema to the CORD CHAIN*/
+    public JsonNode anchorSchemaAPI(JsonNode obj) throws Exception{
+        JsonNode schema=apiHelper(obj,cord_schema_url);
+        return schema;
+    }
+    /** Anchors registry to the CORD NETWORK ,*/
+    public JsonNode anchorRegistryAPI(JsonNode obj) throws Exception{
+        JsonNode registryDetails=apiHelper(obj,cord_registry_url);
+        return registryDetails;
+    }
+
+    /** Helper function for Anchoring to CORD */
+    public JsonNode anchorToCord(JsonNode rootNode) throws Exception{
+        try{
+
+        ObjectMapper objectMapper=new ObjectMapper();
+            /* anchor schema */
+        JsonNode schemaProperty=rootNode.get("schema");
+        JsonNode convertedSchema=objectMapper.readTree(schemaProperty.asText());
+        
+        JsonNode schemaNode=convertedSchema.get("definitions");
+        
+        JsonNode properties=schemaNode.get(rootNode.get("name").asText());
+        JsonNode getProperties=properties.get("properties");
+        
+        JsonNode createSchema=objectMapper.createObjectNode()
+        .put("title",convertedSchema.get("title").asText())
+        .put("description",convertedSchema.get("description").asText())
+        .set("properties",properties.get("properties"));
+        
+        JsonNode schemaToBeAnchored=objectMapper.createObjectNode()
+        .set("schema",createSchema);
+        
+        JsonNode anchoredSchema=anchorSchemaAPI(schemaToBeAnchored);
+        logger.info("ANCHORED SCHEMA TO CORD CHAIN  {}",anchoredSchema);
+        /* Anchoring registry to CORD */
+        JsonNode registrySchema=objectMapper.createObjectNode()
+        .put("title",convertedSchema.get("title").asText())
+        .put("description",convertedSchema.get("description").asText())
+        .put("schemaId",anchoredSchema.get("schemaId").asText());
+        
+        JsonNode registryId=anchorRegistryAPI(registrySchema);
+        logger.info("REGISTRY ID GENERATED ON CORD {} ",registryId);
+        
+        ((ObjectNode)rootNode).set("cord_re gistry_id", registryId.get("registryId"));
+        ((ObjectNode)rootNode).set("cord_schema_id", anchoredSchema.get("schemaId"));
+        
+            return rootNode;
+        }catch(Exception e){
+            logger.error("ERROR {}",e);
+            return objectMapper.createObjectNode().put("ERROR","Exception occurred");
+        }
+
+    }
     /**
      * calls validation and then persists the record to registry.
      *
