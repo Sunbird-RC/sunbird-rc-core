@@ -55,13 +55,13 @@ services:
       - sunbird_sso_admin_client_id=${KEYCLOAK_ADMIN_CLIENT_ID-admin-api}
       - sunbird_sso_client_id=${KEYCLOAK_CLIENT_ID-registry-frontend}
       - sunbird_sso_admin_client_secret=${KEYCLOAK_SECRET}
-      - claims_enabled=false
+      - claims_enabled=${CLAIMS_ENABLED-false}
       - claims_url=http://claim-ms:8082
-      - signature_enabled=false
+      - signature_enabled=${SIGNATURE_ENABLED-false}
       - sign_url=http://certificate-signer:8079/sign
       - verify_url=http://certificate-signer:8079/verify
       - sign_health_check_url=http://certificate-signer:8079/health
-      - certificate_enabled=false
+      - certificate_enabled=${CERTIFICATE_ENABLED-false}
       - pdf_url=http://certificate-api:8078/api/v1/certificatePDF
       - certificate_health_check_url=http://certificate-api:8078/health
       - template_base_url=http://registry:8081/api/v1/templates/ #Looks for certificate templates for pdf copy of the signed certificate
