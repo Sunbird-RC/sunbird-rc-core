@@ -11,5 +11,6 @@ import { PrismaClient } from '@prisma/client';
   imports: [HttpModule],
   providers: [CredentialsService, PrismaClient, IdentityUtilsService, RenderingUtilsService, SchemaUtilsSerivce],
   controllers: [CredentialsController],
+  exports: [IdentityUtilsService]
 })
 export class CredentialsModule {}
