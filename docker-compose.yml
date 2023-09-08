@@ -285,9 +285,15 @@ services:
       REDIS_URL: redis:6379
     ports:
       - "8070:8070"
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8070/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
       registry:
         condition: service_healthy
   redis:
