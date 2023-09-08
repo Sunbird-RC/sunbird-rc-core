@@ -357,10 +357,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (validationEnabled) {
 			try {
 				registry.addInterceptor(validationInterceptor()).addPathPatterns("/add").order(orderIdx++);
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (CustomException e) {
-				e.printStackTrace();
+			} catch (IOException | CustomException e) {
+				logger.info("Exception occurred while adding validation interceptor: {}", e.getMessage());
 			}
 		}
 	}

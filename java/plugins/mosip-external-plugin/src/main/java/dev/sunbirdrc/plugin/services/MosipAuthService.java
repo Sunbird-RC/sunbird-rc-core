@@ -52,8 +52,7 @@ public class MosipAuthService {
         try {
             response = restTemplateProvider.exchange(webSubHubUrl + Constants.AUTH_URL, HttpMethod.POST, entity, String.class);
         } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Get auth token failed: ");
-            exception.printStackTrace();
+            LOGGER.error("Get auth token failed: {}", exception.getMessage());
         }
         if (response != null && response.getStatusCode() == HttpStatus.OK) {
             LOGGER.info("Successfully authenticated with mosip");

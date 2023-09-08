@@ -54,7 +54,6 @@ public class RegistryClaimsController extends AbstractController{
             return new ResponseEntity<>(claims, HttpStatus.OK);
         } catch (Exception e) {
             logger.error("Fetching claims failed {}", e.getMessage());
-            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -68,10 +67,9 @@ public class RegistryClaimsController extends AbstractController{
             return new ResponseEntity<>(claim, HttpStatus.OK);
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             logger.error("Fetching claim failed {}", e.getMessage());
-            e.printStackTrace();
             return new ResponseEntity<>(e.getStatusCode());
         } catch (Exception exception) {
-            exception.printStackTrace();
+            logger.info("Exception occurred while fetching claim: {}", exception.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -149,7 +147,6 @@ public class RegistryClaimsController extends AbstractController{
             response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
         } catch (Exception exception) {
             logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
-            exception.printStackTrace();
             responseParams.setErrmsg(exception.getMessage());
             response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);

@@ -80,8 +80,7 @@ public class MosipServices {
         try {
             response = restTemplateProvider.exchange(webSubHubUrl + Constants.SUBSCRIBE_URL, HttpMethod.POST, entity, String.class);
         } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Subscription to topic failed: ");
-            exception.printStackTrace();
+            LOGGER.error("Subscription to topic failed: {}", exception.getMessage());
         }
         if (response != null && response.getStatusCode() == HttpStatus.ACCEPTED) {
             LOGGER.info("subscribed for topic {} at hub", topic);
@@ -104,8 +103,7 @@ public class MosipServices {
         try {
             response = restTemplateProvider.exchange(webSubHubUrl + Constants.REGISTER_URL, HttpMethod.POST, entity, String.class);
         } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Register topic failed: ");
-            exception.printStackTrace();
+            LOGGER.error("Register topic failed: {}", exception.getMessage());
         }
         if (response != null && response.getStatusCode() == HttpStatus.ACCEPTED) {
             LOGGER.info("topic {} registered at hub", topic);
@@ -132,8 +130,7 @@ public class MosipServices {
         try {
             response = restTemplateProvider.exchange(webSubHubUrl + Constants.OTP_URL, HttpMethod.POST, entity, Object.class);
         } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Generate otp failed failed: ");
-            exception.printStackTrace();
+            LOGGER.error("Generate otp failed failed: {}", exception.getMessage());
         }
         if (response != null && response.getStatusCode() == HttpStatus.OK) {
             LOGGER.info("Successfully generated otp");
@@ -176,8 +173,7 @@ public class MosipServices {
         try {
             response = restTemplateProvider.exchange(webSubHubUrl + Constants.CREDENTIALS_URL, HttpMethod.POST, entity, Object.class);
         } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Generate credentials failed failed: ");
-            exception.printStackTrace();
+            LOGGER.error("Generate credentials failed failed: {}", exception.getMessage());
         }
         if (response != null && response.getStatusCode() == HttpStatus.OK) {
             LOGGER.info("Successfully generated credentials");
@@ -200,8 +196,7 @@ public class MosipServices {
             response = restTemplateProvider.exchange(printUrl + Constants.PRINT_PDF_URL, HttpMethod.POST, entity, byte[].class);
             return response.getBody();
         } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Failed fetching pdf failed: ");
-            exception.printStackTrace();
+            LOGGER.error("Failed fetching pdf failed: {}", exception.getMessage());
         }
         LOGGER.error("Failed fetching pdf failed: ");
         return null;

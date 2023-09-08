@@ -1,6 +1,8 @@
 package dev.sunbirdrc.registry.controller;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +13,7 @@ import java.nio.file.Files;
 
 @RestController
 public class RegistryTemplateController{
+    private static final Logger logger = LoggerFactory.getLogger(RegistryTemplateController.class);
 
     @Value("${certificate.templateFolderPath}")
     private String templatesFolderPath;
@@ -22,7 +25,7 @@ public class RegistryTemplateController{
             File file = new ClassPathResource(templatesFolderPath + fileName).getFile();
             content = new String(Files.readAllBytes(file.toPath()));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.info("Fetching template failed: {}", e.getMessage());
         }
         return content;
     }

@@ -47,14 +47,14 @@ public abstract class AbstractController {
     public String uuidPropertyName;
 
     ResponseEntity<Object> badRequestException(ResponseParams responseParams, Response response, String errorMessage) {
-        logger.info("Error in handling the invite {}", errorMessage);
+        logger.info("Error in handling the invite: {}", errorMessage);
         responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         responseParams.setErrmsg(errorMessage);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     ResponseEntity<Object> internalErrorResponse(ResponseParams responseParams, Response response, Exception ex) {
-        logger.info("Error in handling the invite", ex);
+        logger.info("Error in handling the invite: {}", ex.getMessage());
         responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         responseParams.setErrmsg("Error occurred");
         if (!StringUtils.isEmpty(ex.getMessage())) {

@@ -3,6 +3,8 @@ package dev.sunbirdrc.registry.controller;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.dto.DocumentsResponse;
 import dev.sunbirdrc.registry.service.FileStorageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +20,7 @@ import java.util.List;
 @Controller
 @ConditionalOnProperty(name = "filestorage.enabled", havingValue = "true", matchIfMissing = true)
 public class FileStorageController {
+    private static final Logger logger = LoggerFactory.getLogger(FileStorageController.class);
     private final FileStorageService fileStorageService;
     private final RegistryHelper registryHelper;
 
@@ -35,7 +38,7 @@ public class FileStorageController {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.info("Authorizing entity failed: {}", e.getMessage());
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         DocumentsResponse documentsResponse = fileStorageService.saveAndFetchFileNames(files, httpServletRequest.getRequestURI());
@@ -51,7 +54,7 @@ public class FileStorageController {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.info("Authorizing entity failed: {}", e.getMessage());
             return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
         DocumentsResponse documentsResponse = fileStorageService.deleteFiles(files);
@@ -67,7 +70,7 @@ public class FileStorageController {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.info("Authorizing entity failed: {}", e.getMessage());
             return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
         return fileStorageService.deleteDocument(httpServletRequest.getRequestURI());

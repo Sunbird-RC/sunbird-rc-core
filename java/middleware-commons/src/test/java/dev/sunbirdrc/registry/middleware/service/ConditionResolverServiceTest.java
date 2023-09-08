@@ -3,6 +3,8 @@ package dev.sunbirdrc.registry.middleware.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class ConditionResolverServiceTest {
+    private static final Logger logger = LoggerFactory.getLogger(ConditionResolverServiceTest.class);
     ConditionResolverService conditionResolverService = new ConditionResolverService();
     @Test
     public void shouldAbleToResolveRequesterPaths() throws IOException {
@@ -44,7 +47,7 @@ public class ConditionResolverServiceTest {
         try {
             resolve = conditionResolverService.resolve(getStudentJsonNode(), requester, condition, attributes);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.info("Exception occurred: {}", e.getMessage());
         }
         String attestor = "ATTESTOR";
         resolve = conditionResolverService.resolve(getTeacherJsonNode(), attestor, resolve, attributes);

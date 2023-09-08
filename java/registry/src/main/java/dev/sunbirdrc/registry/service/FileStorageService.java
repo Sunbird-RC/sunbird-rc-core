@@ -63,8 +63,7 @@ public class FileStorageService implements HealthIndicator {
 				documentsResponse.addDocumentLocation(objectName);
 			} catch (Exception e) {
 				documentsResponse.addError(file.getOriginalFilename());
-				logger.error("Error has occurred while trying to save the file {}", fileName);
-				e.printStackTrace();
+				logger.error("Error has occurred while trying to save the file {}: {}", fileName, e.getMessage());
 			}
 		}
 		return documentsResponse;
@@ -91,7 +90,6 @@ public class FileStorageService implements HealthIndicator {
 				documentsResponse.addError(result.get().bucketName());
 			} catch (Exception e) {
 				logger.error("Error has occurred while fetching the delete error result {}", e.getMessage());
-				e.printStackTrace();
 			}
 		}
 		return documentsResponse;
@@ -109,7 +107,6 @@ public class FileStorageService implements HealthIndicator {
 			bytes = IOUtils.toByteArray(inputStream);
 		} catch (Exception e) {
 			logger.error("Error has occurred while fetching the document {} {}", objectName, e.getMessage());
-			e.printStackTrace();
 		}
 		return bytes;
 	}
@@ -120,7 +117,6 @@ public class FileStorageService implements HealthIndicator {
 			minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
 		} catch (Exception e) {
 			logger.error("Error has occurred while deleting the document {}", objectName);
-			e.printStackTrace();
 			return new ResponseEntity(HttpStatus.BAD_REQUEST);
 		}
 		return new ResponseEntity(HttpStatus.OK);

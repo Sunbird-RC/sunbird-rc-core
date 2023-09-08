@@ -17,11 +17,14 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.hasNot;
 
 public class SearchDaoImpl implements SearchDao {
+    private static final Logger logger = LoggerFactory.getLogger(SearchDaoImpl.class);
     private IRegistryDao registryDao;
 
     public SearchDaoImpl(IRegistryDao registryDaoImpl) {
@@ -169,7 +172,7 @@ public class SearchDaoImpl implements SearchDao {
 					try {
 						answer = registryDao.getEntity(graph, v, configurator, expandInternal);
 					} catch (Exception e) {
-						e.printStackTrace();
+                        logger.info("Exception occurred while searching entity: {}", e.getMessage());
 					}
 					result.add(answer);
 				}

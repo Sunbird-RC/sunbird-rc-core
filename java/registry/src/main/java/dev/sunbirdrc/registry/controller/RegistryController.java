@@ -61,7 +61,7 @@ public class RegistryController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.searchEntity");
         } catch (Exception e) {
-            logger.error("Exception in controller while searching entities !", e);
+            logger.error("Exception in controller while searching entities !, {}", e.getMessage());
             response.setResult("");
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
@@ -83,12 +83,12 @@ public class RegistryController extends AbstractController {
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
         } catch (UnsupportedOperationException e) {
-            logger.error("Controller: UnsupportedOperationException while deleting entity !", e);
+            logger.error("Controller: UnsupportedOperationException while deleting entity !, {}", e.getMessage());
             response.setResult(null);
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
         } catch (Exception e) {
-            logger.error("Controller: Exception while deleting entity !", e);
+            logger.error("Controller: Exception while deleting entity !, {}", e.getMessage());
             response.setResult(null);
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg("Meh ! You encountered an error!");
@@ -114,7 +114,7 @@ public class RegistryController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.addToExistingEntity");
         } catch (Exception e) {
-            logger.error("Exception in controller while adding entity !", e);
+            logger.error("Exception in controller while adding entity !, {}", e.getMessage());
             response.setResult(result);
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
@@ -147,7 +147,7 @@ public class RegistryController extends AbstractController {
             response.setResult(resultContent.getData());
             logger.info("ReadEntity,{},{}", resultNode.get(apiMessage.getRequest().getEntityType()).get(uuidPropertyName), config);
         } catch (Exception e) {
-            logger.error("Read Api Exception occurred ", e);
+            logger.error("Read Api Exception occurred , {}", e.getMessage());
             responseParams.setErrmsg(e.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         }
@@ -166,7 +166,7 @@ public class RegistryController extends AbstractController {
             response.setResult(registryList);
             logger.info("get registers,{}", registryList);
         } catch (Exception e) {
-            logger.error("Read Api Exception occurred ", e);
+            logger.error("Read Api Exception occurred , {}", e.getMessage());
             responseParams.setErrmsg(e.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         }
@@ -183,7 +183,7 @@ public class RegistryController extends AbstractController {
             response.setResult(definition);
             logger.info("get registers,{}", entity);
         } catch (Exception e) {
-            logger.error("Read Api Exception occurred ", e);
+            logger.error("Read Api Exception occurred , {}", e.getMessage());
             responseParams.setErrmsg(e.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         }
@@ -206,7 +206,7 @@ public class RegistryController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop("RegistryController.update");
         } catch (Exception e) {
-            logger.error("RegistryController: Exception while updating entity (without id)!", e);
+            logger.error("RegistryController: Exception while updating entity (without id)!, {}", e.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
         }

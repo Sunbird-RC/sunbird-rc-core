@@ -43,7 +43,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
                 return badRequestException(responseParams, response, "Invalid entity name");
             }
         } catch (Exception e) {
-            logger.error("Failed persisting attestation policy: ", e);
+            logger.error("Failed persisting attestation policy: {}", e.getMessage());
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -70,7 +70,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
                 return badRequestException(responseParams, response, "Invalid entity name");
             }
         } catch (Exception e) {
-            logger.error("Failed getting attestation policy: ", e);
+            logger.error("Failed getting attestation policy: {}", e.getMessage());
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -93,7 +93,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             }
             return badRequestException(responseParams, response, "Invalid entity name");
         } catch (Exception e) {
-            logger.error("Failed updating attestation policy: ", e);
+            logger.error("Failed updating attestation policy: {}", e.getMessage());
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -118,7 +118,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             }
             return badRequestException(responseParams, response, "Invalid entity name");
         } catch (Exception e) {
-            logger.error("Failed updating attestation policy: ", e);
+            logger.error("Failed updating attestation policy: {}", e.getMessage());
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -143,7 +143,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             }
             return badRequestException(responseParams, response, "Invalid entity name");
         } catch (Exception e) {
-            logger.error("Failed updating attestation policy: ", e);
+            logger.error("Failed updating attestation policy: {}", e.getMessage());
             return internalErrorResponse(responseParams, response, e);
         }
     }

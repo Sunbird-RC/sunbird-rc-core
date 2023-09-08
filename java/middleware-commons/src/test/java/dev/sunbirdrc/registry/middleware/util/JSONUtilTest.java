@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.AuditRecord;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +17,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
 public class JSONUtilTest {
+    private static final Logger logger = LoggerFactory.getLogger(JSONUtilTest.class);
     private static final String TEST_DIR = "src/test/resources/";
     private static final String ACTUAL_DATA = "actual_data.json";
     private static final String EXPECTED_DATA = "expected_data.json";
@@ -131,12 +134,8 @@ public class JSONUtilTest {
             }
             return result.toString(StandardCharsets.UTF_8.name());
 
-        } catch (FileNotFoundException e1) {
-            e1.printStackTrace();
-
         } catch (IOException e) {
-            e.printStackTrace();
-
+            logger.info("Exception occurred: {}", e.getMessage());
         }
         return null;
     }

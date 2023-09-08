@@ -100,7 +100,7 @@ public class RegistryUtilsController {
 				responseParams.setErrmsg("");
 			}
 		} catch (Exception e) {
-			logger.error("Error in generating signature", e);
+			logger.error("Error in generating signature, {}", e.getMessage());
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(Constants.SIGN_ERROR_MESSAGE);
@@ -173,7 +173,7 @@ public class RegistryUtilsController {
 				responseParams.setErrmsg("");
 			}
 		} catch (Exception e) {
-			logger.error("Error in verifying signature", e);
+			logger.error("Error in verifying signature, {}", e.getMessage());
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(Constants.VERIFY_SIGN_ERROR_MESSAGE);
@@ -198,7 +198,7 @@ public class RegistryUtilsController {
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
 		} catch (Exception e) {
-			logger.error("Error in getting key ", e);
+			logger.error("Error in getting key , {}", e.getMessage());
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(Constants.KEY_RETRIEVE_ERROR_MESSAGE);
@@ -224,9 +224,9 @@ public class RegistryUtilsController {
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheck));
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
-			logger.debug("Application heath checked : ", healthCheckResult);
+			logger.debug("Application heath checked : {}", healthCheckResult);
 		} catch (Exception e) {
-			logger.error("Error in health checking!", e);
+			logger.error("Error in health checking!, {}", e.getMessage());
 			HealthCheckResponse healthCheckResult = new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME,
 					false, null);
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
@@ -255,9 +255,9 @@ public class RegistryUtilsController {
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
-			logger.debug("Application heath checked : ", healthCheckResult.toString());
+			logger.debug("Application heath checked : {}", healthCheckResult.toString());
 		} catch (Exception e) {
-			logger.error("Error in health checking!", e);
+			logger.error("Error in health checking!, {}", e.getMessage());
 			HealthCheckResponse healthCheckResult = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API,
 					false, null);
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
@@ -283,8 +283,7 @@ public class RegistryUtilsController {
 				watch.stop("RegistryController.searchEntity");
 
 			} catch (Exception e) {
-				logger.error("Error in getting audit log !", e);
-				logger.error("Exception in controller while searching entities !", e);
+				logger.error("Error in getting audit log !, {}", e.getMessage());
 				response.setResult("");
 				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 				responseParams.setErrmsg(e.getMessage());

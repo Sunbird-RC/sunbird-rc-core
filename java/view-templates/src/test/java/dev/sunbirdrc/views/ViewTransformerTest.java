@@ -76,10 +76,7 @@ public class ViewTransformerTest {
         } catch (FileNotFoundException e1) {
             e1.printStackTrace();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-
-        }
+        } catch (IOException e) {}
         return null;
     }
 

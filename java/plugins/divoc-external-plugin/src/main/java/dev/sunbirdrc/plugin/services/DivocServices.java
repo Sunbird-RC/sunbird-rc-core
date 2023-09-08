@@ -70,8 +70,7 @@ public class DivocServices {
 		try {
 			response = restTemplateProvider.exchange(divocKeycloakUrl, HttpMethod.POST, entity, Map.class);
 		} catch (HttpClientErrorException | HttpServerErrorException exception) {
-			LOGGER.error("Fetching divoc token failed: ");
-			exception.printStackTrace();
+			LOGGER.error("Fetching divoc token failed: {}", exception.getMessage());
 		}
 		if (response != null && response.getBody() != null && response.getBody().containsKey(ACCESS_TOKEN)) {
 			LOGGER.info("Divoc token fetch successfully.");
@@ -94,8 +93,7 @@ public class DivocServices {
 			response = restTemplateProvider.exchange(divocUrl, HttpMethod.POST, entity, byte[].class);
 			return response.getBody();
 		} catch (HttpClientErrorException | HttpServerErrorException exception) {
-			LOGGER.error("Fetching divoc PDF failed: ", exception);
-			exception.printStackTrace();
+			LOGGER.error("Fetching divoc PDF failed: {}", exception.getMessage());
 		}
 		return null;
 	}

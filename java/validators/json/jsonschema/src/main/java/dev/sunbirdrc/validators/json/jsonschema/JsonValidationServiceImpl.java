@@ -53,7 +53,7 @@ public class JsonValidationServiceImpl implements IValidate {
 					return null;
 				}
 			} catch (Exception ioe) {
-			    ioe.printStackTrace();
+				logger.info("can't validate, {}: schema has a problem!, {}", entityType, ioe.getMessage());
 				throw new MiddlewareHaltException("can't validate, "+ entityType + ": schema has a problem!");
 			}
 			return schema;

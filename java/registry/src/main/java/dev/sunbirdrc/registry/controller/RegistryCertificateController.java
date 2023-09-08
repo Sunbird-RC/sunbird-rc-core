@@ -3,6 +3,8 @@ package dev.sunbirdrc.registry.controller;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.sunbirdrc.registry.entities.VerificationRequest;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +16,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Controller
 public class RegistryCertificateController {
-
+    private static final Logger logger = LoggerFactory.getLogger(RegistryCertificateController.class);
 
     private static final String VERIFIED = "verified";
     private static final String RESULTS = "results";
@@ -41,6 +43,7 @@ public class RegistryCertificateController {
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
         } catch (Exception e) {
+            logger.info("Exception occurred while verifying certificate: {}", e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }

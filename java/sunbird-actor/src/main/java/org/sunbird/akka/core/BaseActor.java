@@ -79,19 +79,22 @@ public abstract class BaseActor extends UntypedAbstractActor {
                             msgWithSrc.getSourceActorName(),
                             msgWithSrc.getTargetActorName());
                 }
+                try {
+                    // Act upon the message.
+                    onReceive(msgWithSrc);
 
-                // Act upon the message.
-                onReceive(msgWithSrc);
+                    // Ack if this is of type 'ask'.
+                    if (msgWithSrc.getMsgOption() == MessageProtos.MessageOption.GET_BACK_RESPONSE) {
+                        responseMsgBldr.setPerformOperation("onSuccess");
+                        Value.Builder payloadBuilder = responseMsgBldr.getPayloadBuilder();
+                        payloadBuilder.setStringValueBytes(ByteString.EMPTY);
 
-                // Ack if this is of type 'ask'.
-                if (msgWithSrc.getMsgOption() == MessageProtos.MessageOption.GET_BACK_RESPONSE) {
-                    responseMsgBldr.setPerformOperation("onSuccess");
-                    Value.Builder payloadBuilder = responseMsgBldr.getPayloadBuilder();
-                    payloadBuilder.setStringValueBytes(ByteString.EMPTY);
+                        MessageProtos.Message response = responseMsgBldr.build();
 
-                    MessageProtos.Message response = responseMsgBldr.build();
-
-                    tellToSource(response);
+                        tellToSource(response);
+                    }
+                } catch (Exception e) {
+                    logger.info("Exception occurred while Act upon the message {}", e.getMessage());
                 }
             }
 

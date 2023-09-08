@@ -257,7 +257,7 @@ public class RegistryHelper {
             watch.stop("RegistryController.addToExistingEntity");
             logger.info("AddEntity,{}", recordId.toString());
         } catch (Exception e) {
-            logger.error("Exception in controller while adding entity !", e);
+            logger.error("Exception in controller while adding entity !, {}", e.getMessage());
             throw new Exception(e);
         }
         return recordId.toString();
@@ -456,7 +456,7 @@ public class RegistryHelper {
                 } catch (ServerException | InternalException | XmlParserException | InvalidResponseException
                          | InvalidKeyException | NoSuchAlgorithmException | IOException
                          | ErrorResponseException | InsufficientDataException e) {
-                    e.printStackTrace();
+                    logger.info("Fetching signed file url failed: {}", e.getMessage());
                 }
             }
             ((ObjectNode)additionalInput).replace(FILE_URL, signedUrls);
@@ -682,8 +682,7 @@ public class RegistryHelper {
                 try {
                     fileStorageService.save(new ByteArrayInputStream(file.getFile()), propertyURI);
                 } catch (Exception e) {
-                    logger.error("Failed persisting file", e);
-                    e.printStackTrace();
+                    logger.error("Failed persisting file: {}", e.getMessage());
                 }
                 fileUris.add(propertyURI);
             });

@@ -125,7 +125,7 @@ public class PrivateField {
                     processArray((ArrayNode) entryValue, tempFieldName, entry.getKey());
                 }
             } catch (EncryptionException e) {
-                e.printStackTrace();
+                logger.info("Exception occurred in PrivateField: {}", e.getMessage());
             }
         }
         return jsonNode;
