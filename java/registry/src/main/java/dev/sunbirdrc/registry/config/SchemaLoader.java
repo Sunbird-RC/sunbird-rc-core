@@ -49,12 +49,14 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 				try {
 					schemaService.addSchema(JsonNodeFactory.instance.objectNode().set(Schema, schemaNode));
 				} catch (Exception e) {
-					logger.error("Failed loading schema to definition manager:", e);
+					logger.error("Failed loading schema to definition manager: {}", e.getMessage());
 				}
 			}
 			logger.info("Loaded {} schema from DB", searchResults.get(Schema).size());
 		} catch (IOException e) {
 			logger.info("Exception occurred while loading schema from db: {}", e.getMessage());
+		} catch (Exception e) {
+			logger.info("Exception occurred while searching for schemas: {}", e.getMessage());
 		}
 	}
 }
