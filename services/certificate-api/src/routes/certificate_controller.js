@@ -299,9 +299,9 @@ async function createPDF(certificate) {
         // close the browser
         await page.close()
         return pdfBuffer
-    } catch (e) {
+    } catch (err) {
         console.log("Failed while creating pdf")
-        console.log(e)
+        console.log(err?.message)
     }
 }
 
