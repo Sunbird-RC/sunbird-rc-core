@@ -5,6 +5,8 @@ import path from 'path'
 
 import KeycloakWrapper from './helpers/keycloak'
 import { allUp } from './status'
+import {config} from '../../config/config'
+var keypair = require('keypair');
 
 import { RegistrySetupOptions, Toolbox } from '../../types'
 
@@ -16,7 +18,61 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		pass: setupOptions.keycloakAdminPass,
 		realm: setupOptions.realmName,
 	})
+	let enableTheseServices = [
+		config.docker_service_name.DB,
+		config.docker_service_name.REGISTRY,
+		config.docker_service_name.KEYCLOAK,
+		config.docker_service_name.CLAIMS_MS,
+		config.docker_service_name.CERTIFICATE_SIGHNER,
+		config.docker_service_name.FILE_STORAGE
+	]
 
+	// Enable redis for distributed systems
+	if (setupOptions?.managerType === Object.keys(config.definationMangerTypes)[1]) {
+		enableTheseServices.push(config.docker_service_name.REDIS);
+	}
+	setupOptions.managerType = config.definationMangerTypes[setupOptions?.managerType]
+	// Check and Enable Elastic Search 
+	if (setupOptions?.elasticSearchEnabled) {
+		setupOptions['searchProvideName'] = config.DEFAULT_ES_PROVIDER_NAME;
+		enableTheseServices.unshift(config.docker_service_name.ES);
+	} else setupOptions['searchProvideName'] = config.DEFAULT_NS_PROVIDER_NAME;
+
+	// Check and Enable Elastic Search 
+	if (setupOptions?.asyncEnabled) {
+		enableTheseServices.push(config.docker_service_name.KAFKA);
+	}
+
+	// enable certificate API service
+	if (setupOptions?.enableVCIssuance) {
+		enableTheseServices.push(config.docker_service_name.CERTIFICATE_API)
+	}
+
+	// enable Auxiliary services
+	if (setupOptions?.auxiliaryServicesToBeEnabled.length > 0 ) {
+		setupOptions?.auxiliaryServicesToBeEnabled.forEach( (i : string) => enableTheseServices.push(config.auxiliary_services[i]))
+	}
+
+	console.log(setupOptions);
+	let dockerCommand =  'docker compose up -d '
+	let conditionalEnablinOfDockerCommand  = dockerCommand + enableTheseServices.join(' ');
+	console.log(conditionalEnablinOfDockerCommand);
+
+	let deafultTemplateForKeys = require('../../templates/config.json');
+	var pair = keypair();
+	console.log( "before",deafultTemplateForKeys);
+	deafultTemplateForKeys.issuers.default.publicKey = pair.public;
+	deafultTemplateForKeys.issuers.default.privateKey = pair.private;
+	console.log( "after ",deafultTemplateForKeys);
+
+	// Convert the new object to JSON
+	const newConfigJson = JSON.stringify(deafultTemplateForKeys, null, 2);
+
+	// Specify the path to the config.json file
+	const configFilePath = 'imports/config.json';
+
+
+	
 	// Copy over config files with the proper variables
 	events.emit('registry.create', {
 		status: 'progress',
@@ -100,6 +156,12 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 				})
 			})
 	}
+
+	// Write the new JSON content to the file, replacing the old content
+	filesystem.write(configFilePath, newConfigJson);
+
+	console.log(`Updated ${configFilePath} with new content.`);
+	
 	events.emit('registry.create', {
 		status: 'success',
 		operation: 'copying-files',
@@ -120,7 +182,7 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 			message: `An unexpected error occurred while merging multiple env files: ${error.message}`,
 		})
 	})
-	await system.exec('docker compose up -d').catch((error: Error) => {
+	await system.exec(conditionalEnablinOfDockerCommand).catch((error: Error) => {
 		events.emit('registry.create', {
 			status: 'error',
 			operation: 'starting-containers',

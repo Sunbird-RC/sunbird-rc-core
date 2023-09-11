@@ -13,7 +13,6 @@ export interface RegistryContainer {
 	ports: number[]
 }
 
-
 export interface Environment {
 	check(registryPath?: string): Promise<boolean>
 }
@@ -22,7 +21,7 @@ export interface Registry {
 	status(): Promise<RegistryContainer[]>
 	restart(soft: boolean): Promise<void>
 	config(): Promise<RegistryConfiguration>
-	down (): Promise<void>
+	down(): Promise<void>
 	health(): Promise<RegistryHealth[]>
 }
 
@@ -68,6 +67,13 @@ export interface RegistrySetupOptions {
 	keycloakAdminPass: string
 	pathToEntitySchemas: 'use-example-config' | string
 	pathToConsentConfiguration: 'use-example-config' | string
+	enableRegistryAuthentication: boolean
+	elasticSearchEnabled: boolean
+	enableVCIssuance: boolean
+	asyncEnabled: boolean
+	managerType: string
+	searchProvideName: 'dev.sunbirdrc.registry.service.NativeSearchService' | string
+	auxiliaryServicesToBeEnabled: Array<string> | Array<any>
 }
 
 export interface RegistryTearDownOptions {
@@ -75,38 +81,38 @@ export interface RegistryTearDownOptions {
 }
 
 export interface RegistryHealthResponse {
-	id:           string;
-	ver:          string;
-	ets:          number;
-	params:       Params;
-	responseCode: string;
-	result:       Result;
+	id: string
+	ver: string
+	ets: number
+	params: Params
+	responseCode: string
+	result: Result
 }
 
 interface Params {
-	resmsgid: string;
-	msgid:    string;
-	err:      string;
-	status:   string;
-	errmsg:   string;
+	resmsgid: string
+	msgid: string
+	err: string
+	status: string
+	errmsg: string
 }
 
 interface Result {
-	name:    string;
-	healthy: boolean;
-	checks:  Check[];
+	name: string
+	healthy: boolean
+	checks: Check[]
 }
 
 interface Check {
-	name:    string;
-	healthy: boolean;
-	err:     string;
-	errmsg:  string;
+	name: string
+	healthy: boolean
+	err: string
+	errmsg: string
 }
-
 
 export interface RegistryHealth {
 	name: string
 	status: 'UP' | 'DOWN'
 	err: string
 }
+

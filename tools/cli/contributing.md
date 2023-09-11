@@ -73,7 +73,7 @@ v16.13.0
 Once NodeJS is installed, run the following in terminal to install PNPM:
 
 ```sh
-$ sudo npm install --global pnpm
+$ sudo npm install --global pnpm@6.20.1
 ```
 
 Run `pnpm --version` in the terminal if PNPM has been installed correctly:
