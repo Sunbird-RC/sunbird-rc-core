@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "MetroTravel": {
+      "$ref": "#/definitions/MetroTravel"
+    }
+  },
+  "required": [
+    "MetroTravel"
+  ],
+  "title": "MetroTravel",
+  "definitions": {
+    "MetroTravel": {
+      "$id": "#/properties/MetroTravel",
+      "type": "object",
+      "title": "The MetroTravel Schema",
+      "required": [
+        "name",
+        "contact",
+        "email",
+        "validupto"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Name"
+        },
+        "contact": {
+          "type": "string",
+          "title": "Contact"
+        },
+        "email": {
+          "type": "string",
+          "title": "Email"
+        },
+        "dateofBirth": {
+          "type": "string",
+          "title": "Date of Birth",
+          "format": "date"
+        },
+        "gender": {
+          "type": "string",
+          "title": "Gender"
+        },
+        "validupto": {
+          "type": "string",
+          "title": "Valid upto",
+          "format": "date"
+        },
+        "instituteName": {
+          "type": "string",
+          "title": "Institute Name"
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "uniqueIndexFields": [
+    ],
+    "privateFieldConfig": "HASH",
+    "internalFieldConfig": "FULL",
+    "ownershipAttributes": [
+      {
+        "email": "/email",
+        "mobile": "/contact",
+        "userId": "/email"
+      }
+    ],
+    "systemFields": [
+      "osCreatedAt",
+      "osUpdatedAt",
+      "osCreatedBy",
+      "osUpdatedBy"
+    ],
+    "roles": [
+      "trial-scholarship"
+    ],
+    "inviteRoles": [
+      "anonymous"
+    ],
+    "enableLogin": true,
+    "credentialTemplate": {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://gist.githubusercontent.com/varadeth/63c511c8ed3dd3a21d6a6f9b38828cd7/raw/7347d0c01bf6b478fc6b364d98dd17c7968cc3f3/metro-card.json"
+      ],
+      "type": [
+        "VerifiableCredential"
+      ],
+      "issuanceDate": "{{osCreatedAt}}",
+      "credentialSubject": {
+        "type": "Student",
+        "name": "{{name}}",
+        "dateofBirth": "{{dateofBirth}}",
+        "gender": "{{gender}}",
+        "instituteName": "{{instituteName}}"
+      },
+      "evidence": {
+        "type": "MetroTravel",
+        "validupto": "{{validupto}}"
+      },
+      "issuer": "did:web:sunbirdrc.dev/vc/metroTravel"
+    },
+    "certificateTemplates": {
+      "html": "minio://Issuer/cb6df4c3-5409-4fa2-86fc-e7558add509c/templates/documents/5cacb11d-f5c9-431c-9a64-d10354cc25ef-Travel Card.svg"
+    }
+  }
+}
