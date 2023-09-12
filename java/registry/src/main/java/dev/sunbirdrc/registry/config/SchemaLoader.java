@@ -57,6 +57,7 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 			logger.info("Exception occurred while loading schema from db: {}", e.getMessage());
 		} catch (Exception e) {
 			logger.info("Exception occurred while searching for schemas: {}", e.getMessage());
+			logger.info("Make sure, you are running a compatible version of search provider");
 		}
 	}
 }
