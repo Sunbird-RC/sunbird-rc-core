@@ -59,9 +59,9 @@ public class AuditDBImpl extends AuditServiceImpl {
             auditToDB(rootNode, entityType, shard);
 
         } catch (AuditFailedException ae) {
-            logger.error("Error in saving audit info: {}", ae);
+            logger.error("Error in saving audit info: {}", ae.getMessage());
         } catch (Exception e) {
-            logger.error("Generic error in saving audit info : {}", e);
+            logger.error("Generic error in saving audit info : {}", e.getMessage());
         }
         logger.debug("doAudit ends");
     }

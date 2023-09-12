@@ -165,7 +165,7 @@ public class AuditServiceImpl implements IAuditService {
     	try {
     		auditItemDetails = Arrays.asList(objectMapper.treeToValue(differenceJson, AuditInfo[].class));
     	} catch (Exception e) {
-    		logger.error("Generic error in saving audit info : {}", e);
+    		logger.error("Generic error in saving audit info : {}", e.getMessage());
     	}
         return auditItemDetails;
     }

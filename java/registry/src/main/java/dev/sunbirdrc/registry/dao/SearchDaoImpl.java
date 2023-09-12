@@ -172,7 +172,7 @@ public class SearchDaoImpl implements SearchDao {
 					try {
 						answer = registryDao.getEntity(graph, v, configurator, expandInternal);
 					} catch (Exception e) {
-                        logger.info("Exception occurred while searching entity: {}", e.getMessage());
+                        logger.error("Exception occurred while searching entity: {}", e.getMessage());
 					}
 					result.add(answer);
 				}

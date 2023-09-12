@@ -39,7 +39,7 @@ public class KafkaHealthService implements HealthIndicator {
 				DescribeClusterResult clusterDescription = kafkaAdminClient.describeCluster(options);
 				return new ComponentHealthInfo(getServiceName(), clusterDescription.nodes().get().size() > 0);
 			} catch (Exception e) {
-				logger.error("Kafka connection exception,", e);
+				logger.error("Kafka connection exception: {}", e.getMessage());
 				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
 			}
 		} else {

@@ -78,7 +78,7 @@ public class RefResolver {
             }
 
         } catch (Exception e) {
-            logger.error("Fetching definition of $ref {} failed", refPath, e);
+            logger.error("Fetching definition of $ref {} failed: {}", refPath, e.getMessage());
             return null;
         }
     }

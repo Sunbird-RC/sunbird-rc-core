@@ -35,7 +35,7 @@ public class ClaimsAuthorizer {
             );
             return conditionResolverService.evaluate(resolvedCondition);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error("Exception occurred while resolving condition {}", e.getMessage());
             return false;
         }
     }

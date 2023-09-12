@@ -69,7 +69,7 @@ public class MosipCallbackController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(queryParams.get(Constants.HUB_CHALLENGE));
             }
         } catch (Exception e) {
-            LOGGER.error("Failed fetching mosip pdf", e);
+            LOGGER.error("Failed fetching mosip pdf: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(queryParams.get(Constants.HUB_CHALLENGE));
         }
     }

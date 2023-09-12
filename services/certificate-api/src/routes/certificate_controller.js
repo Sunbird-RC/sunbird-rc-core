@@ -216,7 +216,7 @@ async function getCertificatePDF(req, res) {
         res = await createCertificatePDF(certificate, templateUrl, res, entityId, entityName, entity);
         return res
     } catch (err) {
-        console.error(err);
+        console.error(err?.message);
         res.statusCode = 500;
     }
 }
@@ -235,7 +235,7 @@ async function getCertificate(req, res) {
         res = await generateRawCertificate(certificate, templateUrl, entityId, entityName, entity);
         return res
     } catch (err) {
-        console.error(err);
+        console.error(err?.message);
         res.statusCode = 500;
     }
 }

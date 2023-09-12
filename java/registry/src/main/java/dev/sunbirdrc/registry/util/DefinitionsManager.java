@@ -138,7 +138,7 @@ public class DefinitionsManager implements IDefinitionsManager {
 		try {
 			appendNewDefinition(Definition.toDefinition(jsonNode));
 		} catch (Exception e) {
-			logger.error("Failed loading schema from DB", e);
+			logger.error("Failed loading schema from DB: {}", e.getMessage());
 		}
 	}
 
@@ -157,7 +157,7 @@ public class DefinitionsManager implements IDefinitionsManager {
 			String schemaTitle = schemaJsonNode.get(TITLE).asText();
 			definitionMap.remove(schemaTitle);
 		} catch (Exception e) {
-			logger.error("Failed removing schema from definition manager", e);
+			logger.error("Failed removing schema from definition manager: {}", e.getMessage());
 		}
 	}
 

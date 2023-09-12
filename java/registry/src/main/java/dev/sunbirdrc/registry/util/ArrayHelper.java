@@ -103,7 +103,7 @@ public class ArrayHelper {
             		TypeFactory.defaultInstance().constructCollectionType(List.class, Object.class));
         	 arrNode = mapper.valueToTree(itemList);
         } catch (Exception e) {
-            logger.error("Error in converting array elements to JsonNode" + e);
+            logger.error("Error in converting array elements to JsonNode: {}", e.getMessage());
         }
         return arrNode;
     }

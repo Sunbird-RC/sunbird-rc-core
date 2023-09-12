@@ -48,7 +48,7 @@ public class Definition {
             try {
                 osSchemaConfiguration = mapper.treeToValue(configJson, OSSchemaConfiguration.class);
             } catch (JsonProcessingException e) {
-                logger.error("Error processing {} JSON: ", OSCONFIG, e);
+                logger.error("Error processing {} JSON: {}", OSCONFIG, e.getMessage());
                 logger.debug(title + " does not have OS configuration.");
             }
         }

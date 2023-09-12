@@ -66,7 +66,7 @@ public class SignatureServiceImpl implements SignatureService {
 					return new ComponentHealthInfo(getServiceName(), false);
 				}
 			} catch (RestClientException ex) {
-				logger.error("RestClientException when checking the health of the Sunbird signature service: ", ex);
+				logger.error("RestClientException when checking the health of the Sunbird signature service: {}", ex.getMessage());
 				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
 			}
 		} else {
@@ -99,13 +99,13 @@ public class SignatureServiceImpl implements SignatureService {
 			result = objectMapper.readTree(response.getBody());
 			logger.info("Successfully generated signed credentials");
 		} catch (SignatureException.UnreachableException ex) {
-			logger.error("SignatureException when signing: ", ex);
+			logger.error("SignatureException when signing: {}", ex.getMessage());
 			throw ex;
 		} catch (RestClientException ex) {
-			logger.error("RestClientException when signing: ", ex);
+			logger.error("RestClientException when signing: {}", ex.getMessage());
 			throw new SignatureException().new UnreachableException(ex.getMessage());
 		} catch (Exception e) {
-			logger.error("SignatureException when signing: ", e);
+			logger.error("SignatureException when signing: {}", e.getMessage());
 			throw new SignatureException().new CreationException(e.getMessage());
 		}
 		return result;
@@ -128,10 +128,10 @@ public class SignatureServiceImpl implements SignatureService {
 			JsonNode resultNode = objectMapper.readTree(response.getBody());
 			result = resultNode.get("verified").asBoolean();
 		} catch (RestClientException ex) {
-			logger.error("RestClientException when verifying: ", ex);
+			logger.error("RestClientException when verifying: {}", ex.getMessage());
 			throw new SignatureException().new UnreachableException(ex.getMessage());
 		} catch (Exception e) {
-			logger.error("RestClientException when verifying: ", e);
+			logger.error("RestClientException when verifying: {}", e.getMessage());
 			throw new SignatureException().new VerificationException(e.getMessage());
 		}
 		logger.debug("verify method ends with value {}",result);
@@ -154,10 +154,10 @@ public class SignatureServiceImpl implements SignatureService {
 			response = retryRestTemplate.getForEntity(keysURL + "/" + keyId);
 			result = response.getBody();
 		} catch (RestClientException ex) {
-			logger.error("RestClientException when verifying: ", ex);
+			logger.error("RestClientException when verifying: {}", ex.getMessage());
 			throw new SignatureException().new UnreachableException(ex.getMessage());
 		} catch (Exception e) {
-			logger.error("RestClientException when verifying: ", e);
+			logger.error("RestClientException when verifying: {}", e.getMessage());
 			throw new SignatureException().new KeyNotFoundException(keyId);
 		}
 		logger.debug("getKey method ends with value {}",result);

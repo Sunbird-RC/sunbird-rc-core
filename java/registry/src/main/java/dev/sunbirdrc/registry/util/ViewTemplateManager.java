@@ -85,7 +85,7 @@ public class ViewTemplateManager {
 				viewTemp = getViewTemplateByContent(requestNode.get(viewTemplate).toString());
 			}
 		} catch (Exception e) {
-			logger.error("Bad request to create a view template, {}", e);
+			logger.error("Bad request to create a view template, {}", e.getMessage());
 		}
 		return viewTemp;
 	}

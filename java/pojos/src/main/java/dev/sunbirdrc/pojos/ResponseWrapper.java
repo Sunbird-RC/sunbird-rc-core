@@ -42,13 +42,13 @@ public class ResponseWrapper extends ContentCachingResponseWrapper {
 				bufferedWriter.write(content);
 			}
 		} catch (Exception ex) {
-			logger.error("ERROR IN SENDING RESPONSE:", ex);
+			logger.error("ERROR IN SENDING RESPONSE: {}", ex.getMessage());
 		} finally {
 			if (bufferedWriter != null) {
 				try {
 					bufferedWriter.close();
 				} catch (Exception ex) {
-					logger.error("ERROR in closing stream", ex);
+					logger.error("ERROR in closing stream: {}", ex.getMessage());
 				}
 			}
 		}

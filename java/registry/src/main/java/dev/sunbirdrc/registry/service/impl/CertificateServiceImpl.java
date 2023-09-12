@@ -65,7 +65,7 @@ public class CertificateServiceImpl implements ICertificateService {
             HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, headers);
             return restTemplate.postForObject(certificateUrl, httpEntity, byte[].class);
         } catch (Exception e) {
-            logger.error("Get certificate failed", e);
+            logger.error("Get certificate failed: {}", e.getMessage());
         }
         return null;
     }
@@ -103,7 +103,7 @@ public class CertificateServiceImpl implements ICertificateService {
                     return new ComponentHealthInfo(getServiceName(), false);
                 }
             } catch (RestClientException ex) {
-                logger.error("RestClientException when checking the health of the Sunbird certificate service: ", ex);
+                logger.error("RestClientException when checking the health of the certificate service: {}", ex.getMessage());
                 return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
             }
         } else {

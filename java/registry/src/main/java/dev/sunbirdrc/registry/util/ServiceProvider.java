@@ -26,7 +26,7 @@ public class ServiceProvider {
             logger.info("Invoked search provider class with classname: " + advisorProviderName);
         } catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
                 | IllegalArgumentException e) {
-            logger.error("Search provider class {} cannot be instantiate with exception:", advisorProviderName, e);
+            logger.error("Search provider class {} cannot be instantiate with exception: {}", advisorProviderName, e.getMessage());
         }
 
         return searchService;
@@ -46,7 +46,7 @@ public class ServiceProvider {
 
         } catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
                 | IllegalArgumentException e) {
-            logger.error("Search provider class {} cannot be instantiate with exception:", advisorProviderName, e);
+            logger.error("Search provider class {} cannot be instantiate with exception: {}", advisorProviderName, e.getMessage());
         }
 
         return readService;

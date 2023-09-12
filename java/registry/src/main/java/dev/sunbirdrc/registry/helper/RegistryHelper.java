@@ -456,7 +456,7 @@ public class RegistryHelper {
                 } catch (ServerException | InternalException | XmlParserException | InvalidResponseException
                          | InvalidKeyException | NoSuchAlgorithmException | IOException
                          | ErrorResponseException | InsufficientDataException e) {
-                    logger.info("Fetching signed file url failed: {}", e.getMessage());
+                    logger.error("Fetching signed file url failed: {}", e.getMessage());
                 }
             }
             ((ObjectNode)additionalInput).replace(FILE_URL, signedUrls);
@@ -631,7 +631,7 @@ public class RegistryHelper {
                             .propertyData(JSONUtil.convertStringJsonNode(pluginResponseMessage.getResponse())).build();
                     triggerAttestation(attestationRequest, nextAttestationPolicy);
                 } catch (PolicyNotFoundException e) {
-                    logger.error("Next level attestation policy not found:", e);
+                    logger.error("Next level attestation policy not found: {}", e.getMessage());
                 }
             } else if (attestationPolicy.getCompletionType() == FlowType.FUNCTION) {
                 FunctionDefinition functionDefinition = definitionsManager.getDefinition(sourceEntity).getOsSchemaConfiguration()
@@ -645,7 +645,7 @@ public class RegistryHelper {
                             updateEntity(updatedNode, userId);
                         }
                     } catch (JsonProcessingException e) {
-                        logger.error("Exception while executing function definition: {} {}", attestationPolicy.getOnComplete(), functionDefinition, e);
+                        logger.error("Exception while executing function definition: {} {}, {}", attestationPolicy.getOnComplete(), functionDefinition, e.getMessage());
                     }
                 } else {
                     logger.error("Invalid function name specified for onComplete: {}", attestationPolicy.getOnComplete());
@@ -824,7 +824,7 @@ public class RegistryHelper {
             try {
                 return authorizeManageEntity(request, entityName);
             } catch (Exception e) {
-                logger.error("Exception while authorizing roles", e);
+                logger.error("Exception while authorizing roles: {}", e.getMessage());
             }
         }
         JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
@@ -1080,7 +1080,7 @@ public class RegistryHelper {
             JsonNode searchResponse = searchEntity(searchRequest);
             return convertJsonNodeToAttestationList(searchResponse);
         } catch (Exception e) {
-            logger.error("Error fetching attestation policy", e);
+            logger.error("Error fetching attestation policy: {}", e.getMessage());
             return Collections.emptyList();
         }
     }

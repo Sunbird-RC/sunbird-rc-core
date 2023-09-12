@@ -61,7 +61,7 @@ public class ElasticReadService implements IReadService {
         try {
             response = elasticService.readEntity(entityType.toLowerCase(), id);
         } catch (IOException e) {
-            logger.error("Exception in reading a record to ElasticSearch", e);
+            logger.error("Exception in reading a record to ElasticSearch: {}", e.getMessage());
         }
         
         if (response == null || Constants.STATUS_INACTIVE.equals(response.get(Constants.STATUS_KEYWORD)) ) {

@@ -158,7 +158,7 @@ public class EntityParenter {
                             dbConnectionInfo.getShardId());
                 }
             } catch (Exception e) {
-                logger.error("Can't ensure parents for definitions " + e);
+                logger.error("Can't ensure parents for definitions: {}", e.getMessage());
             }
         });
 
@@ -237,8 +237,8 @@ public class EntityParenter {
                 asyncAddIndex(dbProvider, shardId, parentVertex, definition);
             }
         } catch (Exception e) {
-            logger.error("ensureIndexExists: Can't create index on table {} for shardId: {} ", definition.getTitle(),
-                    shardId);
+            logger.error("ensureIndexExists: Can't create index on table {} for shardId {}: {}", definition.getTitle(),
+                    shardId, e.getMessage());
         }
     }
 
@@ -273,8 +273,7 @@ public class EntityParenter {
                     indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), true);
                 }
             } catch (Exception e) {
-                logger.error(e.getMessage());
-                logger.error("Failed Transaction creating index {}", definition.getTitle());
+                logger.error("Failed Transaction creating index {}: {}", definition.getTitle(), e.getMessage());
             }
 
         } else {

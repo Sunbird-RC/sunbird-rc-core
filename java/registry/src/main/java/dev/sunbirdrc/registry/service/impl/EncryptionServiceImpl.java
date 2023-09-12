@@ -69,10 +69,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			ResponseEntity<String> response = retryRestTemplate.postForEntity(encryptionUri, request);
 			return response.getBody();
 		} catch (ResourceAccessException e) {
-			logger.error("ResourceAccessException while connecting enryption service : ", e);
-			throw new EncryptionException("Exception while connecting enryption service! ");
+			logger.error("ResourceAccessException while connecting encryption service : {}", e.getMessage());
+			throw new EncryptionException("Exception while connecting encryption service! ");
 		} catch (Exception e) {
-			logger.error("Exception in encryption service !: ", e);
+			logger.error("Exception in encryption service !: {}", e.getMessage());
 			throw new EncryptionException("Exception in encryption service");
 		}
 	}

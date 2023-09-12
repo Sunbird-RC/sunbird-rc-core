@@ -38,7 +38,7 @@ public class MinioClientConfig {
 				logger.info("Minio bucket already exists: {}", bucketName);
 			}
 		} catch (Exception e) {
-			logger.error("Minio initialization failed: {}", e.getMessage(), e);
+			logger.error("Minio initialization failed: {}", e.getMessage());
 		}
 		return minioClient;
 	}

@@ -30,13 +30,13 @@ public class RemovePathFunctionProvider implements IViewFunctionProvider<JsonNod
 					try {
 						documentContext.delete(JsonPath.compile(path));
 					} catch (Exception e) {
-						logger.error("Error while deleting path: ", e);
+						logger.error("Error while deleting path '{}': {}", path, e.getMessage());
 					}
 				}
 				return new ObjectMapper().readTree(documentContext.jsonString());
 			}
 		} catch (Exception e) {
-			logger.error("Error while removing paths: ", e);
+			logger.error("Error while removing paths: {}", e.getMessage());
 		}
 
 		return JsonNodeFactory.instance.textNode("");

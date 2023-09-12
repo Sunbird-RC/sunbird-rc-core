@@ -31,7 +31,7 @@ public class SchemaFilter implements Filter {
             }
             filterChain.doFilter(servletRequest, servletResponse);
         } catch (Exception e) {
-            logger.error("Exception while applying security filters: ", e);
+            logger.error("Exception while applying security filters: {}", e.getMessage());
             throw e;
         }
     }

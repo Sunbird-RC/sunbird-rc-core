@@ -545,7 +545,7 @@ public class RegistryEntityController extends AbstractController {
                     JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityName))
             ), HttpStatus.OK);
         } catch (Exception exception) {
-            logger.info("Exception occurred while producing entity certificate: {}", exception.getMessage());
+            logger.error("Exception occurred while producing entity certificate: {}", exception.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }

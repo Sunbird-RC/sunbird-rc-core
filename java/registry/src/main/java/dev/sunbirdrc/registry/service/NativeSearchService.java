@@ -125,7 +125,7 @@ public class NativeSearchService implements ISearchService {
 						}
 					}
 				} catch (Exception e) {
-					logger.error("search operation failed: {}", e);
+					logger.error("search operation failed: {}", e.getMessage());
 				} finally {
 					continueSearch = !isSpecificSearch;
 				}
@@ -136,7 +136,7 @@ public class NativeSearchService implements ISearchService {
 									.setTransactionId(transaction),
 							shard, searchQuery.getEntityTypes(), inputQueryNode);
 				} catch (Exception e) {
-					logger.error("Exception while auditing " + e);
+					logger.error("Exception while auditing: {}", e.getMessage());
 				}
 
 		 	}

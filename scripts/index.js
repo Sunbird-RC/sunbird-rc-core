@@ -35,7 +35,7 @@ var invoke_add = function (nIter, payload, callback) {
             //console.log("This is the api response " + JSON.stringify(body))
             var apiResponse = JSON.parse(body)
             if (err) {
-                console.error(err)
+                console.error(err?.message)
                 console.log(" error for " + payload)
                 callback(err)
             } else {
@@ -237,7 +237,7 @@ var execute_tasks = function (tasks, fileName, cb) {
             console.log("Executed tasks")
             cb(null)
         } else {
-            console.error(err)
+            console.error(err?.message)
             console.log("One or more errors occurred.")
             cb(err)
         }

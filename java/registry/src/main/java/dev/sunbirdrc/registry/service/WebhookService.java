@@ -34,7 +34,7 @@ public class WebhookService {
                 ResponseEntity<String> response = retryRestTemplate.postForEntity(event.getWebhookUrl(), entity);
 
             } catch (JsonProcessingException e) {
-                logger.error("Failed calling webhook event, {}", e.getMessage(), e);
+                logger.error("Failed calling webhook event: {}", e.getMessage());
             }
         } else {
             logger.info("Webhook service is disabled");

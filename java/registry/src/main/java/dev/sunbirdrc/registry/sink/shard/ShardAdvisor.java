@@ -25,7 +25,7 @@ public class ShardAdvisor {
 			}
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
 				| IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			logger.error("Shard advisor class {} cannot be instantiate with exception:", advisorClassName, e);
+			logger.error("Shard advisor class {} cannot be instantiate with exception: {}", advisorClassName, e.getMessage());
 		}
 
 		return advisor;

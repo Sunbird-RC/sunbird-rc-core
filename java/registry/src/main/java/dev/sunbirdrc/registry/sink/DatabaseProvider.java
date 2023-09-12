@@ -182,7 +182,7 @@ public abstract class DatabaseProvider implements HealthIndicator {
                 return new ComponentHealthInfo(getServiceName(), databaseStatusUp);
             }
         } catch (Exception ex) {
-            logger.error("Database service is not running. " + ex);
+            logger.error("Database service is not running: {}", ex.getMessage());
             return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
         }
     }

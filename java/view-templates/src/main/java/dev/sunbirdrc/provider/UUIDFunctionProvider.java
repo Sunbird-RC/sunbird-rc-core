@@ -41,7 +41,7 @@ public class UUIDFunctionProvider implements IViewFunctionProvider<String> {
         try {
             return new ObjectMapper().writeValueAsString(inputNode);
         } catch (JsonProcessingException e) {
-            logger.error("Error while performing transformation", e);
+            logger.error("Error while performing transformation: {}", e.getMessage());
             return "";
         }
     }

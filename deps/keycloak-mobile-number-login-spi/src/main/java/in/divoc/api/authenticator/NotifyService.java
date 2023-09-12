@@ -1,7 +1,8 @@
 package in.divoc.api.authenticator;
 
-import okhttp3.*;
-import org.jboss.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,7 +13,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 public class NotifyService {
-	private static final Logger logger = Logger.getLogger(NotifyService.class);
+	private static final Logger logger = LoggerFactory.getLogger(NotifyService.class);
 	private static final String notificationURL = System.getenv().getOrDefault("NOTIFICATION_SERVICE_URL", "http://localhost:8765/notification-service/v1/notification");
 	private static final String messageTemplate = System.getenv().getOrDefault("MESSAGE_TEMPLATE", "Your OTP to access SunbirdRC portal is %s. Please dont share this with anyone.");
 
@@ -44,7 +45,7 @@ public class NotifyService {
 				System.out.println(response.toString());
 			}
 		} catch (IOException e) {
-			logger.error(e);
+			logger.error("Exception occurred while notifying: {}", e.getMessage());
 		}
 
 	}

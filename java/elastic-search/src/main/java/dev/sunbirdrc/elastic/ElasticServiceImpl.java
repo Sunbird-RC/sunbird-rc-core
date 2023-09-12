@@ -200,7 +200,7 @@ public class ElasticServiceImpl implements IElasticService {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
             response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
-            logger.error("Exception in adding record to ElasticSearch", e);
+            logger.error("Exception in adding record to ElasticSearch: {}", e.getMessage());
         }
         return response.status();
     }
@@ -242,7 +242,7 @@ public class ElasticServiceImpl implements IElasticService {
             logger.debug("updateEntity inputEntity {}", inputEntity);
             response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
-            logger.error("Exception in updating a record to ElasticSearch", e);
+            logger.error("Exception in updating a record to ElasticSearch: {}", e.getMessage());
         }
         return response.status();
     }
@@ -264,7 +264,7 @@ public class ElasticServiceImpl implements IElasticService {
             readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
         } catch (NullPointerException | IOException e) {
-            logger.error("exception in deleteEntity {}", e);
+            logger.error("exception in deleteEntity {}", e.getMessage());
             return RestStatus.NOT_FOUND;
         }
         return response.status();
@@ -308,7 +308,7 @@ public class ElasticServiceImpl implements IElasticService {
             ClusterHealthResponse health = getClient("schema").cluster().health(request, RequestOptions.DEFAULT);
             return new ComponentHealthInfo(getServiceName(), Arrays.asList("yellow", "green").contains(health.getStatus().name().toLowerCase()), "", "");
         } catch (IOException e) {
-            logger.error("Elastic health status", e);
+            logger.error("Elastic health status {}", e.getMessage());
             return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
         }
     }

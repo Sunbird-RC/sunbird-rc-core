@@ -35,7 +35,7 @@ public class AuditFileImpl extends AuditServiceImpl {
 
            // sendAuditToActor(auditRecord, inputNode, auditRecord.getEntityType());
         } catch (Exception e) {
-            logger.error("Generic error in saving audit info : {}", e);
+            logger.error("Generic error in saving audit info : {}", e.getMessage());
         }
         logger.debug("doAudit ends");
 	}  
