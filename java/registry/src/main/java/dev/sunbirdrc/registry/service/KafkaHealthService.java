@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.service;
 
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthIndicator;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeClusterOptions;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
@@ -39,7 +40,7 @@ public class KafkaHealthService implements HealthIndicator {
 				DescribeClusterResult clusterDescription = kafkaAdminClient.describeCluster(options);
 				return new ComponentHealthInfo(getServiceName(), clusterDescription.nodes().get().size() > 0);
 			} catch (Exception e) {
-				logger.error("Kafka connection exception: {}", e.getMessage());
+				logger.error("Kafka connection exception: {}", ExceptionUtils.getStackTrace(e));
 				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
 			}
 		} else {

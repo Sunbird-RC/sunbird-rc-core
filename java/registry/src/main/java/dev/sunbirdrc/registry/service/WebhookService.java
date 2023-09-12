@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.registry.model.dto.WebhookEvent;
 import dev.sunbirdrc.registry.service.impl.RetryRestTemplate;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,7 @@ public class WebhookService {
                 ResponseEntity<String> response = retryRestTemplate.postForEntity(event.getWebhookUrl(), entity);
 
             } catch (JsonProcessingException e) {
-                logger.error("Failed calling webhook event: {}", e.getMessage());
+                logger.error("Failed calling webhook event: {}", ExceptionUtils.getStackTrace(e));
             }
         } else {
             logger.info("Webhook service is disabled");

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.views.IViewFunctionProvider;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,13 +31,13 @@ public class RemovePathFunctionProvider implements IViewFunctionProvider<JsonNod
 					try {
 						documentContext.delete(JsonPath.compile(path));
 					} catch (Exception e) {
-						logger.error("Error while deleting path '{}': {}", path, e.getMessage());
+						logger.error("Error while deleting path '{}': {}", path, ExceptionUtils.getStackTrace(e));
 					}
 				}
 				return new ObjectMapper().readTree(documentContext.jsonString());
 			}
 		} catch (Exception e) {
-			logger.error("Error while removing paths: {}", e.getMessage());
+			logger.error("Error while removing paths: {}", ExceptionUtils.getStackTrace(e));
 		}
 
 		return JsonNodeFactory.instance.textNode("");

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.ByteStreams;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,8 +27,8 @@ public class FrameContext {
 			in = this.getClass().getClassLoader().getResourceAsStream(frameFileName);
 			frameContent = new String(ByteStreams.toByteArray(in), StandardCharsets.UTF_8);
 
-		} catch (Exception e1) {
-			logger.error(e1.getLocalizedMessage());
+		} catch (Exception e) {
+			logger.error(ExceptionUtils.getStackTrace(e));
 
 		}
 	}
@@ -47,7 +48,7 @@ public class FrameContext {
 		try {
 			frameNode = mapper.readTree(getContent());
 		} catch (IOException e) {
-			logger.error(e.getLocalizedMessage());
+			logger.error(ExceptionUtils.getStackTrace(e));
 		}
 		return JSONUtil.findKey(frameNode, registryContextBase);
 	}

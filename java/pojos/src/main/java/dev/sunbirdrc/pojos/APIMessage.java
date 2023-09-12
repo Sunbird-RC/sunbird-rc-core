@@ -1,6 +1,7 @@
 package dev.sunbirdrc.pojos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +42,8 @@ public class APIMessage {
 		if(body != null && !body.isEmpty()) {
 			try {
 				request = new ObjectMapper().readValue(body, Request.class);
-			} catch (IOException jpe) {
-				logger.error("Can't read request body: {}", jpe.getMessage());
+			} catch (IOException e) {
+				logger.error("Can't read request body: {}", ExceptionUtils.getStackTrace(e));
 				request = null;
 			}
 		}

@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.config;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +39,7 @@ public class MinioClientConfig {
 				logger.info("Minio bucket already exists: {}", bucketName);
 			}
 		} catch (Exception e) {
-			logger.error("Minio initialization failed: {}", e.getMessage());
+			logger.error("Minio initialization failed: {}", ExceptionUtils.getStackTrace(e));
 		}
 		return minioClient;
 	}

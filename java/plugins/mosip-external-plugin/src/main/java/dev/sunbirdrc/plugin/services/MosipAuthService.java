@@ -4,6 +4,7 @@ import dev.sunbirdrc.plugin.constant.Constants;
 import dev.sunbirdrc.plugin.dto.AuthRequestDto;
 import dev.sunbirdrc.plugin.dto.RequestCredentialsDto;
 import dev.sunbirdrc.plugin.dto.RequestDto;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,8 +52,8 @@ public class MosipAuthService {
         ResponseEntity<String> response = null;
         try {
             response = restTemplateProvider.exchange(webSubHubUrl + Constants.AUTH_URL, HttpMethod.POST, entity, String.class);
-        } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Get auth token failed: {}", exception.getMessage());
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            LOGGER.error("Get auth token failed: {}", ExceptionUtils.getStackTrace(e));
         }
         if (response != null && response.getStatusCode() == HttpStatus.OK) {
             LOGGER.info("Successfully authenticated with mosip");

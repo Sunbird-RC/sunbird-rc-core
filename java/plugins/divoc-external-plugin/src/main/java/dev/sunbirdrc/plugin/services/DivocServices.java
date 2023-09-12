@@ -1,5 +1,6 @@
 package dev.sunbirdrc.plugin.services;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,8 +70,8 @@ public class DivocServices {
 		ResponseEntity<Map> response = null;
 		try {
 			response = restTemplateProvider.exchange(divocKeycloakUrl, HttpMethod.POST, entity, Map.class);
-		} catch (HttpClientErrorException | HttpServerErrorException exception) {
-			LOGGER.error("Fetching divoc token failed: {}", exception.getMessage());
+		} catch (HttpClientErrorException | HttpServerErrorException e) {
+			LOGGER.error("Fetching divoc token failed: {}", ExceptionUtils.getStackTrace(e));
 		}
 		if (response != null && response.getBody() != null && response.getBody().containsKey(ACCESS_TOKEN)) {
 			LOGGER.info("Divoc token fetch successfully.");
@@ -92,8 +93,8 @@ public class DivocServices {
 		try {
 			response = restTemplateProvider.exchange(divocUrl, HttpMethod.POST, entity, byte[].class);
 			return response.getBody();
-		} catch (HttpClientErrorException | HttpServerErrorException exception) {
-			LOGGER.error("Fetching divoc PDF failed: {}", exception.getMessage());
+		} catch (HttpClientErrorException | HttpServerErrorException e) {
+			LOGGER.error("Fetching divoc PDF failed: {}", ExceptionUtils.getStackTrace(e));
 		}
 		return null;
 	}

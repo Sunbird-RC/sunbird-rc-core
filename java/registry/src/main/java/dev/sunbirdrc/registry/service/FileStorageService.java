@@ -9,6 +9,7 @@ import io.minio.http.Method;
 import io.minio.messages.Bucket;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.poi.util.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -63,7 +64,7 @@ public class FileStorageService implements HealthIndicator {
 				documentsResponse.addDocumentLocation(objectName);
 			} catch (Exception e) {
 				documentsResponse.addError(file.getOriginalFilename());
-				logger.error("Error has occurred while trying to save the file {}: {}", fileName, e.getMessage());
+				logger.error("Error has occurred while trying to save the file {}: {}", fileName, ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return documentsResponse;
@@ -89,7 +90,7 @@ public class FileStorageService implements HealthIndicator {
 			try {
 				documentsResponse.addError(result.get().bucketName());
 			} catch (Exception e) {
-				logger.error("Error has occurred while fetching the delete error result {}", e.getMessage());
+				logger.error("Error has occurred while fetching the delete error result {}", ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return documentsResponse;
@@ -106,7 +107,7 @@ public class FileStorageService implements HealthIndicator {
 			InputStream inputStream = minioClient.getObject(GetObjectArgs.builder().bucket(bucketName).object(objectName).build());
 			bytes = IOUtils.toByteArray(inputStream);
 		} catch (Exception e) {
-			logger.error("Error has occurred while fetching the document {} {}", objectName, e.getMessage());
+			logger.error("Error has occurred while fetching the document {} {}", objectName, ExceptionUtils.getStackTrace(e));
 		}
 		return bytes;
 	}

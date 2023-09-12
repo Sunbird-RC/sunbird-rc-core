@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import javax.annotation.PostConstruct;
 
 import org.agrona.Strings;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +86,7 @@ public class ViewTemplateManager {
 				viewTemp = getViewTemplateByContent(requestNode.get(viewTemplate).toString());
 			}
 		} catch (Exception e) {
-			logger.error("Bad request to create a view template, {}", e.getMessage());
+			logger.error("Bad request to create a view template, {}", ExceptionUtils.getStackTrace(e));
 		}
 		return viewTemp;
 	}

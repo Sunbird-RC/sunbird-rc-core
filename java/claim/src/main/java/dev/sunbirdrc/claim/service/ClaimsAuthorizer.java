@@ -3,6 +3,7 @@ package dev.sunbirdrc.claim.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.claim.entity.Claim;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class ClaimsAuthorizer {
             );
             return conditionResolverService.evaluate(resolvedCondition);
         } catch (Exception e) {
-            logger.error("Exception occurred while resolving condition {}", e.getMessage());
+            logger.error("Exception occurred while resolving condition {}", ExceptionUtils.getStackTrace(e));
             return false;
         }
     }

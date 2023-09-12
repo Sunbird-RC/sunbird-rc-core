@@ -6,6 +6,7 @@ import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.exception.EncryptionException;
 import dev.sunbirdrc.registry.service.EncryptionService;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +70,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 			ResponseEntity<String> response = retryRestTemplate.postForEntity(encryptionUri, request);
 			return response.getBody();
 		} catch (ResourceAccessException e) {
-			logger.error("ResourceAccessException while connecting encryption service : {}", e.getMessage());
+			logger.error("ResourceAccessException while connecting encryption service : {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception while connecting encryption service! ");
 		} catch (Exception e) {
 			logger.error("Exception in encryption service !: {}", e.getMessage());

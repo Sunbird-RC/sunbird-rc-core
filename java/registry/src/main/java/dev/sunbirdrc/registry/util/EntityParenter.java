@@ -8,6 +8,7 @@ import dev.sunbirdrc.registry.model.IndexFields;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -158,7 +159,7 @@ public class EntityParenter {
                             dbConnectionInfo.getShardId());
                 }
             } catch (Exception e) {
-                logger.error("Can't ensure parents for definitions: {}", e.getMessage());
+                logger.error("Can't ensure parents for definitions: {}", ExceptionUtils.getStackTrace(e));
             }
         });
 
@@ -238,7 +239,7 @@ public class EntityParenter {
             }
         } catch (Exception e) {
             logger.error("ensureIndexExists: Can't create index on table {} for shardId {}: {}", definition.getTitle(),
-                    shardId, e.getMessage());
+                    shardId, ExceptionUtils.getStackTrace(e));
         }
     }
 
@@ -273,7 +274,7 @@ public class EntityParenter {
                     indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), true);
                 }
             } catch (Exception e) {
-                logger.error("Failed Transaction creating index {}: {}", definition.getTitle(), e.getMessage());
+                logger.error("Failed Transaction creating index {}: {}", definition.getTitle(), ExceptionUtils.getStackTrace(e));
             }
 
         } else {

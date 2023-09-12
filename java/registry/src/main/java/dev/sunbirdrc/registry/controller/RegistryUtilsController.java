@@ -21,6 +21,7 @@ import dev.sunbirdrc.registry.service.RegistryService;
 import dev.sunbirdrc.registry.service.SignatureService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,7 +101,7 @@ public class RegistryUtilsController {
 				responseParams.setErrmsg("");
 			}
 		} catch (Exception e) {
-			logger.error("Error in generating signature, {}", e.getMessage());
+			logger.error("Error in generating signature, {}", ExceptionUtils.getStackTrace(e));
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(Constants.SIGN_ERROR_MESSAGE);
@@ -173,7 +174,7 @@ public class RegistryUtilsController {
 				responseParams.setErrmsg("");
 			}
 		} catch (Exception e) {
-			logger.error("Error in verifying signature, {}", e.getMessage());
+			logger.error("Error in verifying signature, {}", ExceptionUtils.getStackTrace(e));
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(Constants.VERIFY_SIGN_ERROR_MESSAGE);
@@ -198,7 +199,7 @@ public class RegistryUtilsController {
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
 		} catch (Exception e) {
-			logger.error("Error in getting key , {}", e.getMessage());
+			logger.error("Error in getting key , {}", ExceptionUtils.getStackTrace(e));
 			response.setResult(null);
 			responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 			responseParams.setErrmsg(Constants.KEY_RETRIEVE_ERROR_MESSAGE);
@@ -226,7 +227,7 @@ public class RegistryUtilsController {
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
 			logger.debug("Application heath checked : {}", healthCheckResult);
 		} catch (Exception e) {
-			logger.error("Error in health checking!, {}", e.getMessage());
+			logger.error("Error in health checking!, {}", ExceptionUtils.getStackTrace(e));
 			HealthCheckResponse healthCheckResult = new HealthCheckResponse(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME,
 					false, null);
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
@@ -257,7 +258,7 @@ public class RegistryUtilsController {
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
 			logger.debug("Application heath checked : {}", healthCheckResult.toString());
 		} catch (Exception e) {
-			logger.error("Error in health checking!, {}", e.getMessage());
+			logger.error("Error in health checking!, {}", ExceptionUtils.getStackTrace(e));
 			HealthCheckResponse healthCheckResult = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API,
 					false, null);
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
@@ -283,7 +284,7 @@ public class RegistryUtilsController {
 				watch.stop("RegistryController.searchEntity");
 
 			} catch (Exception e) {
-				logger.error("Error in getting audit log !, {}", e.getMessage());
+				logger.error("Error in getting audit log !, {}", ExceptionUtils.getStackTrace(e));
 				response.setResult("");
 				responseParams.setStatus(Response.Status.UNSUCCESSFUL);
 				responseParams.setErrmsg(e.getMessage());

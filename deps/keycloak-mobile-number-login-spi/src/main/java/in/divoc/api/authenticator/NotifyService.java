@@ -1,6 +1,7 @@
 package in.divoc.api.authenticator;
 
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class NotifyService {
 				System.out.println(response.toString());
 			}
 		} catch (IOException e) {
-			logger.error("Exception occurred while notifying: {}", e.getMessage());
+			logger.error("Exception occurred while notifying: {}", ExceptionUtils.getStackTrace(e));
 		}
 
 	}

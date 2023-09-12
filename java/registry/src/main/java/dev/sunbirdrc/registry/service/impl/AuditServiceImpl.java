@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -165,7 +166,7 @@ public class AuditServiceImpl implements IAuditService {
     	try {
     		auditItemDetails = Arrays.asList(objectMapper.treeToValue(differenceJson, AuditInfo[].class));
     	} catch (Exception e) {
-    		logger.error("Generic error in saving audit info : {}", e.getMessage());
+    		logger.error("Generic error in saving audit info : {}", ExceptionUtils.getStackTrace(e));
     	}
         return auditItemDetails;
     }

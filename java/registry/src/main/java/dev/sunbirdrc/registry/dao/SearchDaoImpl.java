@@ -12,6 +12,8 @@ import dev.sunbirdrc.registry.util.ReadConfigurator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiPredicate;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -172,7 +174,7 @@ public class SearchDaoImpl implements SearchDao {
 					try {
 						answer = registryDao.getEntity(graph, v, configurator, expandInternal);
 					} catch (Exception e) {
-                        logger.error("Exception occurred while searching entity: {}", e.getMessage());
+                        logger.error("Exception occurred while searching entity: {}", ExceptionUtils.getStackTrace(e));
 					}
 					result.add(answer);
 				}

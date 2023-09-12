@@ -10,6 +10,7 @@ import dev.sunbirdrc.plugin.services.MosipServices;
 import dev.sunbirdrc.pojos.PluginFile;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.attestation.Action;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,7 +70,7 @@ public class MosipCallbackController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(queryParams.get(Constants.HUB_CHALLENGE));
             }
         } catch (Exception e) {
-            LOGGER.error("Failed fetching mosip pdf: {}", e.getMessage());
+            LOGGER.error("Failed fetching mosip pdf: {}", ExceptionUtils.getStackTrace(e));
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(queryParams.get(Constants.HUB_CHALLENGE));
         }
     }

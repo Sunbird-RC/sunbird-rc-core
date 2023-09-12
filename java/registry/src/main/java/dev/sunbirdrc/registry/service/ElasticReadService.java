@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.service;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +62,7 @@ public class ElasticReadService implements IReadService {
         try {
             response = elasticService.readEntity(entityType.toLowerCase(), id);
         } catch (IOException e) {
-            logger.error("Exception in reading a record to ElasticSearch: {}", e.getMessage());
+            logger.error("Exception in reading a record to ElasticSearch: {}", ExceptionUtils.getStackTrace(e));
         }
         
         if (response == null || Constants.STATUS_INACTIVE.equals(response.get(Constants.STATUS_KEYWORD)) ) {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -78,7 +79,7 @@ public class RefResolver {
             }
 
         } catch (Exception e) {
-            logger.error("Fetching definition of $ref {} failed: {}", refPath, e.getMessage());
+            logger.error("Fetching definition of $ref {} failed: {}", refPath, ExceptionUtils.getStackTrace(e));
             return null;
         }
     }

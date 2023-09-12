@@ -46,6 +46,7 @@ import lombok.Setter;
 import org.agrona.Strings;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
@@ -257,7 +258,7 @@ public class RegistryHelper {
             watch.stop("RegistryController.addToExistingEntity");
             logger.info("AddEntity,{}", recordId.toString());
         } catch (Exception e) {
-            logger.error("Exception in controller while adding entity !, {}", e.getMessage());
+            logger.error("Exception in controller while adding entity !, {}", ExceptionUtils.getStackTrace(e));
             throw new Exception(e);
         }
         return recordId.toString();
@@ -456,7 +457,7 @@ public class RegistryHelper {
                 } catch (ServerException | InternalException | XmlParserException | InvalidResponseException
                          | InvalidKeyException | NoSuchAlgorithmException | IOException
                          | ErrorResponseException | InsufficientDataException e) {
-                    logger.error("Fetching signed file url failed: {}", e.getMessage());
+                    logger.error("Fetching signed file url failed: {}", ExceptionUtils.getStackTrace(e));
                 }
             }
             ((ObjectNode)additionalInput).replace(FILE_URL, signedUrls);
@@ -631,7 +632,7 @@ public class RegistryHelper {
                             .propertyData(JSONUtil.convertStringJsonNode(pluginResponseMessage.getResponse())).build();
                     triggerAttestation(attestationRequest, nextAttestationPolicy);
                 } catch (PolicyNotFoundException e) {
-                    logger.error("Next level attestation policy not found: {}", e.getMessage());
+                    logger.error("Next level attestation policy not found: {}", ExceptionUtils.getStackTrace(e));
                 }
             } else if (attestationPolicy.getCompletionType() == FlowType.FUNCTION) {
                 FunctionDefinition functionDefinition = definitionsManager.getDefinition(sourceEntity).getOsSchemaConfiguration()
@@ -682,7 +683,7 @@ public class RegistryHelper {
                 try {
                     fileStorageService.save(new ByteArrayInputStream(file.getFile()), propertyURI);
                 } catch (Exception e) {
-                    logger.error("Failed persisting file: {}", e.getMessage());
+                    logger.error("Failed persisting file: {}", ExceptionUtils.getStackTrace(e));
                 }
                 fileUris.add(propertyURI);
             });
@@ -824,7 +825,7 @@ public class RegistryHelper {
             try {
                 return authorizeManageEntity(request, entityName);
             } catch (Exception e) {
-                logger.error("Exception while authorizing roles: {}", e.getMessage());
+                logger.error("Exception while authorizing roles: {}", ExceptionUtils.getStackTrace(e));
             }
         }
         JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
@@ -1080,7 +1081,7 @@ public class RegistryHelper {
             JsonNode searchResponse = searchEntity(searchRequest);
             return convertJsonNodeToAttestationList(searchResponse);
         } catch (Exception e) {
-            logger.error("Error fetching attestation policy: {}", e.getMessage());
+            logger.error("Error fetching attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return Collections.emptyList();
         }
     }

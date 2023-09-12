@@ -28,6 +28,7 @@ import dev.sunbirdrc.registry.transform.ITransformer;
 import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import dev.sunbirdrc.validators.ValidationException;
 import org.agrona.Strings;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
@@ -179,7 +180,7 @@ public class RegistryEntityController extends AbstractController {
             response = new Response(Response.API_ID.DELETE, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.error("RegistryController: Exception while Deleting entity, {}", e.getMessage());
+            logger.error("RegistryController: Exception while Deleting entity, {}", ExceptionUtils.getStackTrace(e));
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -215,7 +216,7 @@ public class RegistryEntityController extends AbstractController {
             response = new Response(Response.API_ID.SEARCH, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.error("Exception in controller while searching entities !, {}", e.getMessage());
+            logger.error("Exception in controller while searching entities !, {}", ExceptionUtils.getStackTrace(e));
             response.setResult("");
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
@@ -270,7 +271,7 @@ public class RegistryEntityController extends AbstractController {
             response = new Response(Response.API_ID.PUT, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.error("RegistryController: Exception while updating entity (without id)!, {}", e.getMessage());
+            logger.error("RegistryController: Exception while updating entity (without id)!, {}", ExceptionUtils.getStackTrace(e));
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -323,7 +324,7 @@ public class RegistryEntityController extends AbstractController {
             logger.info("Error in validating the request");
             return badRequestException(responseParams, response, e.getMessage());
         } catch (Exception e) {
-            logger.error("Exception in controller while adding entity !, {}", e.getMessage());
+            logger.error("Exception in controller while adding entity !, {}", ExceptionUtils.getStackTrace(e));
             response.setResult(result);
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
@@ -473,7 +474,7 @@ public class RegistryEntityController extends AbstractController {
            Response response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.error("Error in partner api access: {}", e.getMessage());
+            logger.error("Error in partner api access: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -497,8 +498,8 @@ public class RegistryEntityController extends AbstractController {
                     fields.add(key.toString());
                 }
             }
-        } catch (Exception ex) {
-            logger.error("Error while extracting other claims, {}", ex.getMessage());
+        } catch (Exception e) {
+            logger.error("Error while extracting other claims, {}", ExceptionUtils.getStackTrace(e));
         }
         return fields;
     }
@@ -544,8 +545,8 @@ public class RegistryEntityController extends AbstractController {
                     getTemplateUrlFromRequest(request, entityName),
                     JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityName))
             ), HttpStatus.OK);
-        } catch (Exception exception) {
-            logger.error("Exception occurred while producing entity certificate: {}", exception.getMessage());
+        } catch (Exception e) {
+            logger.error("Exception occurred while producing entity certificate: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -570,7 +571,7 @@ public class RegistryEntityController extends AbstractController {
                 } catch (UnreachableException e) {
                     throw e;
                 } catch (Exception e) {
-                    logger.error("Exception while parsing certificate templates DID urls, {}", e.getMessage());
+                    logger.error("Exception while parsing certificate templates DID urls, {}", ExceptionUtils.getStackTrace(e));
                     return null;
                 }
             }
@@ -625,7 +626,7 @@ public class RegistryEntityController extends AbstractController {
             response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.error("Read Api Exception occurred: {}", e.getMessage());
+            logger.error("Read Api Exception occurred: {}", ExceptionUtils.getStackTrace(e));
             responseParams.setErrmsg(e.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -685,7 +686,7 @@ public class RegistryEntityController extends AbstractController {
             response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.error("Exception in controller while searching entities !, {}", e.getMessage());
+            logger.error("Exception in controller while searching entities !, {}", ExceptionUtils.getStackTrace(e));
             response.setResult("");
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
@@ -717,7 +718,7 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
         catch (Exception e) {
-            logger.info("Fetching attestation properties for entity failed: {}", e.getMessage());
+            logger.error("Fetching attestation properties for entity failed: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -772,10 +773,10 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             responseParams.setResultList(Collections.singletonList(response));
             return new ResponseEntity<>(responseParams, HttpStatus.OK);
-        } catch (Exception exception) {
+        } catch (Exception e) {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg(exception.getMessage());
-            logger.info("Exception occurred which fetching a system property: {}", exception.getMessage());
+            responseParams.setErrmsg(e.getMessage());
+            logger.info("Exception occurred which fetching a system property: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -805,10 +806,10 @@ public class RegistryEntityController extends AbstractController {
             responseParams.setErrmsg(ex.getMessage());
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             return new ResponseEntity<>(responseParams, HttpStatus.SERVICE_UNAVAILABLE);
-        } catch (Exception exception) {
+        } catch (Exception e) {
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg(exception.getMessage());
-            logger.info("Exception occurred while updating attestation: {}", exception.getMessage());
+            responseParams.setErrmsg(e.getMessage());
+            logger.error("Exception occurred while updating attestation: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -838,7 +839,7 @@ public class RegistryEntityController extends AbstractController {
             response = new Response(Response.API_ID.GET, "ERROR", responseParams);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.error("Exception in controller while searching entities !, {}", e.getMessage());
+            logger.error("Exception in controller while searching entities !, {}", ExceptionUtils.getStackTrace(e));
             response.setResult("");
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
@@ -877,10 +878,10 @@ public class RegistryEntityController extends AbstractController {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
         } catch (AttestationNotFoundException e) {
-            logger.error(e.getMessage());
+            logger.error("Attestation not found: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            logger.info("Fetching attestation certificate failed: {}", e.getMessage());
+            logger.info("Fetching attestation certificate failed: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -920,7 +921,7 @@ public class RegistryEntityController extends AbstractController {
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            logger.error("Registry Controller: Exception while revoking an entity: {}", e.getMessage());
+            logger.error("Registry Controller: Exception while revoking an entity: {}", ExceptionUtils.getStackTrace(e));
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
             responseParams.setErrmsg(e.getMessage());
             return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);

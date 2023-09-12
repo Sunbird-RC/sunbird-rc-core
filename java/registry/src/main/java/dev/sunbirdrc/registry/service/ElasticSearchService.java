@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.service;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +86,7 @@ public class ElasticSearchService implements ISearchService {
                 resultNode.set(indexName, node);
             }
             catch (Exception e) {
-                logger.error("Exception in Elastic search operation: {}", e.getMessage());
+                logger.error("Exception in Elastic search operation: {}", ExceptionUtils.getStackTrace(e));
             }
         }
 
@@ -93,7 +94,7 @@ public class ElasticSearchService implements ISearchService {
             auditService.auditElasticSearch( new AuditRecord().setUserId(apiMessage.getUserID()),
                     searchQuery.getEntityTypes(), inputQueryNode);
         } catch (Exception e) {
-            logger.error("Exception while auditing: {}", e.getMessage());
+            logger.error("Exception while auditing: {}", ExceptionUtils.getStackTrace(e));
         }
 
         return resultNode;

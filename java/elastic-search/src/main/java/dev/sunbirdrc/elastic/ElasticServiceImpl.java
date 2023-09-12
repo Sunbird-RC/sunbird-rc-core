@@ -19,6 +19,7 @@ import java.util.*;
 
 import org.apache.commons.collections4.KeyValue;
 import org.apache.commons.collections4.keyvalue.DefaultKeyValue;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -200,7 +201,7 @@ public class ElasticServiceImpl implements IElasticService {
             Map<String, Object> inputMap = JSONUtil.convertJsonNodeToMap(inputEntity);
             response = getClient(index).index(new IndexRequest(index, searchType, entityId).source(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
-            logger.error("Exception in adding record to ElasticSearch: {}", e.getMessage());
+            logger.error("Exception in adding record to ElasticSearch: {}", ExceptionUtils.getStackTrace(e));
         }
         return response.status();
     }
@@ -242,7 +243,7 @@ public class ElasticServiceImpl implements IElasticService {
             logger.debug("updateEntity inputEntity {}", inputEntity);
             response = getClient(index.toLowerCase()).update(new UpdateRequest(index.toLowerCase(), searchType, osid).doc(inputMap), RequestOptions.DEFAULT);
         } catch (IOException e) {
-            logger.error("Exception in updating a record to ElasticSearch: {}", e.getMessage());
+            logger.error("Exception in updating a record to ElasticSearch: {}", ExceptionUtils.getStackTrace(e));
         }
         return response.status();
     }
@@ -264,7 +265,7 @@ public class ElasticServiceImpl implements IElasticService {
             readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
         } catch (NullPointerException | IOException e) {
-            logger.error("exception in deleteEntity {}", e.getMessage());
+            logger.error("exception in deleteEntity {}", ExceptionUtils.getStackTrace(e));
             return RestStatus.NOT_FOUND;
         }
         return response.status();
@@ -308,7 +309,7 @@ public class ElasticServiceImpl implements IElasticService {
             ClusterHealthResponse health = getClient("schema").cluster().health(request, RequestOptions.DEFAULT);
             return new ComponentHealthInfo(getServiceName(), Arrays.asList("yellow", "green").contains(health.getStatus().name().toLowerCase()), "", "");
         } catch (IOException e) {
-            logger.error("Elastic health status {}", e.getMessage());
+            logger.error("Elastic health status {}", ExceptionUtils.getStackTrace(e));
             return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
         }
     }
