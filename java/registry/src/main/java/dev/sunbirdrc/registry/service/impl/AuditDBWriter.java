@@ -59,7 +59,7 @@ public class AuditDBWriter {
 
             logger.debug("Audit added : " + entityId);
         } catch (Exception e) {
-            logger.error("Audit failed : {}" + e);
+            logger.error("Audit failed : {}", e.getMessage());
 
             throw new AuditFailedException("Audit failed : " + e.getMessage());
         } finally {

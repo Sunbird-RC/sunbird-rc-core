@@ -93,10 +93,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			logger.info("Property decrypted successfully !");
 			return response.getBody();
 		} catch (ResourceAccessException e) {
-			logger.error("ResourceAccessException while connecting dcryption service : ", e);
-			throw new EncryptionException("Exception while connecting enryption service ! ");
+			logger.error("ResourceAccessException while connecting decryption service : {}", e.getMessage());
+			throw new EncryptionException("Exception while connecting encryption service ! ");
 		} catch (Exception e) {
-			logger.error("Exception in decryption service !: ", e);
+			logger.error("Exception in decryption service !: {}", e.getMessage());
 			throw new EncryptionException("Exception in encryption service ! ");
 		}
 	}
@@ -122,10 +122,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
 			}.getType());
 		} catch (ResourceAccessException e) {
-			logger.error("Exception while connecting enryption service : ", e);
-			throw new EncryptionException("Exception while connecting enryption service! ");
+			logger.error("Exception while connecting encryption service : {}", e.getMessage());
+			throw new EncryptionException("Exception while connecting encryption service! ");
 		} catch (Exception e) {
-			logger.error("Exception in encryption servie !: ", e);
+			logger.error("Exception in encryption service !: {}", e.getMessage());
 			throw new EncryptionException("Exception in encryption service.");
 		}
 	}
@@ -152,10 +152,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
 			}.getType());
 		} catch (ResourceAccessException e) {
-			logger.error("Exception while connecting dcryption service : ", e);
-			throw new EncryptionException("Exception while connecting enryption service ! ");
+			logger.error("Exception while connecting decryption service : {}", e.getMessage());
+			throw new EncryptionException("Exception while connecting encryption service ! ");
 		} catch (Exception e) {
-			logger.error("Exception in decryption service !: ", e);
+			logger.error("Exception in decryption service !: {}", e.getMessage());
 			throw new EncryptionException("Exception in encryption service ! ");
 		}
 	}
@@ -183,7 +183,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 					return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, response.getBody());
 				}
 			} catch (RestClientException ex) {
-				logger.error("RestClientException when checking the health of the Sunbird encryption service: ", ex);
+				logger.error("RestClientException when checking the health of the encryption service: {}", ex.getMessage());
 				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
 			}
 		} else {
