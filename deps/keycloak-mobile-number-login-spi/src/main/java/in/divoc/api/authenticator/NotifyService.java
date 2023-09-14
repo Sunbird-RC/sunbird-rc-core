@@ -47,6 +47,7 @@ public class NotifyService {
 			}
 		} catch (IOException e) {
 			logger.error("Exception occurred while notifying: {}", ExceptionUtils.getStackTrace(e));
+			throw e;
 		}
 
 	}
