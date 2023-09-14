@@ -29,7 +29,7 @@ export const VerifyCertificate = () => {
         }
     };
     const handleError = err => {
-        console.error(err?.message)
+        console.error(err)
     };
     return (
         <div className="container-fluid verify-certificate-wrapper">

@@ -37,7 +37,7 @@ const server = http.createServer(async (req, res) => {
 
         console.timeEnd(req.url)
     } catch (e) {
-        console.error(e?.message)
+        console.error(e)
         res.statusCode = e["code"] || 500;
         res.end(`{"error": "${http.STATUS_CODES[res.statusCode]}", "message": ${e.message}}`)
     }

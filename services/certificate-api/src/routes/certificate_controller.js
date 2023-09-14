@@ -301,7 +301,7 @@ async function createPDF(certificate) {
         return pdfBuffer
     } catch (err) {
         console.log("Failed while creating pdf")
-        console.log(err?.message)
+        console.log(err)
     }
 }
 

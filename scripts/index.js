@@ -237,7 +237,7 @@ var execute_tasks = function (tasks, fileName, cb) {
             console.log("Executed tasks")
             cb(null)
         } else {
-            console.error(err?.message)
+            console.error(err)
             console.log("One or more errors occurred.")
             cb(err)
         }
