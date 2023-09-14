@@ -72,8 +72,14 @@ export interface RegistrySetupOptions {
 	enableVCIssuance: boolean
 	asyncEnabled: boolean
 	managerType: string
-	searchProvideName: 'dev.sunbirdrc.registry.service.NativeSearchService' | string
+	searchProvideName:
+		| 'dev.sunbirdrc.registry.service.NativeSearchService'
+		| string
 	auxiliaryServicesToBeEnabled: Array<string> | Array<any>
+	autoGenerateKeys: boolean
+	signatureEnabled: boolean
+	eventEnabled: boolean
+	enableAttestation: boolean
 }
 
 export interface RegistryTearDownOptions {
@@ -116,3 +122,6 @@ export interface RegistryHealth {
 	err: string
 }
 
+export interface SignatureOptions {
+	signatureEnabled: boolean
+}

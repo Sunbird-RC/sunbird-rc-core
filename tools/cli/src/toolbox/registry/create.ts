@@ -5,10 +5,11 @@ import path from 'path'
 
 import KeycloakWrapper from './helpers/keycloak'
 import { allUp } from './status'
-import {config} from '../../config/config'
-var keypair = require('keypair');
+import { config } from '../../config/config'
+var keypair = require('keypair')
 
 import { RegistrySetupOptions, Toolbox } from '../../types'
+import formatKey from '../utils'
 
 // Accept a toolbox and configuration, create a registry instance in return
 export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
@@ -22,57 +23,73 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		config.docker_service_name.DB,
 		config.docker_service_name.REGISTRY,
 		config.docker_service_name.KEYCLOAK,
-		config.docker_service_name.CLAIMS_MS,
-		config.docker_service_name.CERTIFICATE_SIGHNER,
-		config.docker_service_name.FILE_STORAGE
 	]
 
 	// Enable redis for distributed systems
-	if (setupOptions?.managerType === Object.keys(config.definationMangerTypes)[1]) {
-		enableTheseServices.push(config.docker_service_name.REDIS);
+	if (
+		setupOptions?.managerType === Object.keys(config.definationMangerTypes)[1]
+	) {
+		enableTheseServices.push(config.docker_service_name.REDIS)
 	}
-	setupOptions.managerType = config.definationMangerTypes[setupOptions?.managerType]
-	// Check and Enable Elastic Search 
-	if (setupOptions?.elasticSearchEnabled) {
-		setupOptions['searchProvideName'] = config.DEFAULT_ES_PROVIDER_NAME;
-		enableTheseServices.unshift(config.docker_service_name.ES);
-	} else setupOptions['searchProvideName'] = config.DEFAULT_NS_PROVIDER_NAME;
 
-	// Check and Enable Elastic Search 
+	//Enable claims for attestation work flows
+	if (setupOptions?.enableAttestation) {
+		enableTheseServices.push(config.docker_service_name.CLAIMS_MS)
+	}
+
+	//Enable Certificate Signer service
+	if (setupOptions?.signatureEnabled) {
+		enableTheseServices.push(
+			config.docker_service_name.CERTIFICATE_SIGHNER,
+			config.docker_service_name.FILE_STORAGE
+		)
+	}
+
+	// Set ManagerType
+	setupOptions.managerType =
+		config.definationMangerTypes[setupOptions?.managerType]
+
+	// Check and Enable Elastic Search
+	if (setupOptions?.elasticSearchEnabled) {
+		setupOptions['searchProvideName'] = config.DEFAULT_ES_PROVIDER_NAME
+		enableTheseServices.unshift(config.docker_service_name.ES)
+	} else setupOptions['searchProvideName'] = config.DEFAULT_NS_PROVIDER_NAME
+
+	// Check and Enable Kafka
 	if (setupOptions?.asyncEnabled) {
-		enableTheseServices.push(config.docker_service_name.KAFKA);
+		enableTheseServices.push(config.docker_service_name.KAFKA)
 	}
 
 	// enable certificate API service
 	if (setupOptions?.enableVCIssuance) {
-		enableTheseServices.push(config.docker_service_name.CERTIFICATE_API)
+		enableTheseServices.push(
+			config.docker_service_name.CERTIFICATE_API,
+			config.docker_service_name.FILE_STORAGE
+		)
 	}
 
 	// enable Auxiliary services
-	if (setupOptions?.auxiliaryServicesToBeEnabled.length > 0 ) {
-		setupOptions?.auxiliaryServicesToBeEnabled.forEach( (i : string) => enableTheseServices.push(config.auxiliary_services[i]))
+	if (setupOptions?.auxiliaryServicesToBeEnabled.length > 0) {
+		setupOptions?.auxiliaryServicesToBeEnabled.forEach((i: string) =>
+			enableTheseServices.push(config.auxiliary_services[i])
+		)
 	}
 
-	console.log(setupOptions);
-	let dockerCommand =  'docker compose up -d '
-	let conditionalEnablinOfDockerCommand  = dockerCommand + enableTheseServices.join(' ');
-	console.log(conditionalEnablinOfDockerCommand);
+	// Check for metrics and enable the events enabled flag on for registry
+	if (
+		setupOptions.auxiliaryServicesToBeEnabled.includes(
+			Object.keys(config.auxiliary_services)[4]
+		)
+	) {
+		setupOptions.eventEnabled = true
+	} else setupOptions.eventEnabled = false
 
-	let deafultTemplateForKeys = require('../../templates/config.json');
-	var pair = keypair();
-	console.log( "before",deafultTemplateForKeys);
-	deafultTemplateForKeys.issuers.default.publicKey = pair.public;
-	deafultTemplateForKeys.issuers.default.privateKey = pair.private;
-	console.log( "after ",deafultTemplateForKeys);
+	// console.log(setupOptions);
+	let dockerCommand = 'docker compose up -d '
+	let conditionalEnablinOfDockerCommand =
+		dockerCommand + enableTheseServices.join(' ')
+	// console.log(conditionalEnablinOfDockerCommand);
 
-	// Convert the new object to JSON
-	const newConfigJson = JSON.stringify(deafultTemplateForKeys, null, 2);
-
-	// Specify the path to the config.json file
-	const configFilePath = 'imports/config.json';
-
-
-	
 	// Copy over config files with the proper variables
 	events.emit('registry.create', {
 		status: 'progress',
@@ -157,11 +174,32 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 			})
 	}
 
-	// Write the new JSON content to the file, replacing the old content
-	filesystem.write(configFilePath, newConfigJson);
+	// Auto generation of keys logic
+	if (setupOptions.autoGenerateKeys) {
+		// Specify the path to the config.json file
+		const configFilePath = 'imports/config.json'
+		let deafultTemplateForKeys = require(configFilePath)
+		var pair = keypair()
+		deafultTemplateForKeys.issuers.default.publicKey = formatKey(
+			pair.public,
+			'public'
+		)
+		deafultTemplateForKeys.issuers.default.privateKey = formatKey(
+			pair.private,
+			'private'
+		)
+		// Convert the new object to JSON
+		const newConfigJson = JSON.stringify(deafultTemplateForKeys, null, 2)
 
-	console.log(`Updated ${configFilePath} with new content.`);
-	
+		// Write the new JSON content to the file, replacing the old content
+		filesystem.write(configFilePath, newConfigJson)
+		events.emit('registry.create', {
+			status: 'success',
+			operation: 'Auto generating keys',
+			message: 'Successfully generated keys for signing',
+		})
+	}
+
 	events.emit('registry.create', {
 		status: 'success',
 		operation: 'copying-files',
@@ -172,7 +210,8 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 	events.emit('registry.create', {
 		status: 'progress',
 		operation: 'starting-containers',
-		message: 'Starting all services',
+		message:
+			'Starting all services. Please be patient, as this operation may require some time to complete.',
 	})
 	//merge multiple env files
 	await system.run('cat .env-cli >> .env').catch((error: Error) => {

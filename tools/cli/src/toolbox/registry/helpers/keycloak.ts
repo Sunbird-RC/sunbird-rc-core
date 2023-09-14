@@ -32,44 +32,47 @@ class KeycloakWrapper {
 
 	// Return an access token
 	async getAccessToken(): Promise<string> {
-		let maxRetries = config.maximumRetries;
-		let retryCount = 0;
+		let maxRetries = config.maximumRetries
+		let retryCount = 0
 		while (retryCount < maxRetries) {
-		  try {
-			const response = await this.httpClient.post(
-			  '/auth/realms/master/protocol/openid-connect/token',
-			  convertToUrlEncodedForm({
-				client_id: 'admin-cli',
-				username: this.user,
-				password: this.pass,
-				grant_type: 'password',
-			  }),
-			  {
-				headers: {
-				  'content-type': 'application/x-www-form-urlencoded',
-				},
-			  }
-			) as ApiResponse;
-	  
-			if (response.ok) {
-			  return response.data.access_token;
-			} else {
-				if (retryCount === maxRetries -1 )  console.debug(response.originalError);
-			  throw new Error(
-				`There was an error while retrieving an access token from Keycloak: ${
-				  response.originalError ?? response.problem
-				}`
-			  );
+			try {
+				const response = (await this.httpClient.post(
+					'/auth/realms/master/protocol/openid-connect/token',
+					convertToUrlEncodedForm({
+						client_id: 'admin-cli',
+						username: this.user,
+						password: this.pass,
+						grant_type: 'password',
+					}),
+					{
+						headers: {
+							'content-type': 'application/x-www-form-urlencoded',
+						},
+					}
+				)) as ApiResponse
+
+				if (response.ok) {
+					return response.data.access_token
+				} else {
+					if (retryCount === maxRetries - 1)
+						console.debug(response.originalError)
+					throw new Error(
+						`There was an error while retrieving an access token from Keycloak: ${
+							response.originalError ?? response.problem
+						}`
+					)
+				}
+			} catch (error) {
+				// console.error(`API call failed. Retrying... (${retryCount + 1}/${maxRetries})`);
+				retryCount++
+				// You can adjust the delay time as needed
+				await new Promise((resolve) => setTimeout(resolve, 1000)) // 1 second delay
 			}
-		  } catch (error) {
-			// console.error(`API call failed. Retrying... (${retryCount + 1}/${maxRetries})`);
-			retryCount++;
-			// You can adjust the delay time as needed
-			await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay
-		  }
 		}
-	  
-		throw new Error(`API call failed to fetch token from keycloak after ${maxRetries} retries.`);
+
+		throw new Error(
+			`API call failed to fetch token from keycloak after ${maxRetries} retries.`
+		)
 
 		// const response = (await this.httpClient.post(
 		// 	'/auth/realms/master/protocol/openid-connect/token',
@@ -125,7 +128,7 @@ class KeycloakWrapper {
 
 	// Regenerate the client secret for a client in keycloak
 	async regenerateClientSecret(internalClientId: string): Promise<string> {
-		let token = await this.getAccessToken();
+		let token = await this.getAccessToken()
 		const response = (await this.httpClient.post(
 			`/auth/admin/realms/${this.realm}/clients/${internalClientId}/client-secret`,
 			{},

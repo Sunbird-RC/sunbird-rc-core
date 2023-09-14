@@ -50,6 +50,7 @@
 		"apisauce": "2.1.5",
 		"extract-zip": "2.0.1",
 		"gluegun": "4.7.1",
+		"keypair": "^1.0.4",
 		"update-notifier": "5.1.0",
 		"yaml": "1.10.2"
 	},
