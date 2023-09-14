@@ -73,31 +73,7 @@ class KeycloakWrapper {
 		throw new Error(
 			`API call failed to fetch token from keycloak after ${maxRetries} retries.`
 		)
-
-		// const response = (await this.httpClient.post(
-		// 	'/auth/realms/master/protocol/openid-connect/token',
-		// 	convertToUrlEncodedForm({
-		// 		client_id: 'admin-cli',
-		// 		username: this.user,
-		// 		password: this.pass,
-		// 		grant_type: 'password',
-		// 	}),
-		// 	{
-		// 		headers: {
-		// 			'content-type': 'application/x-www-form-urlencoded',
-		// 		},
-		// 	}
-		// )) as ApiResponse
-		// if (!response.ok) {
-		// 	console.debug(response.originalError)
-		// 	throw new Error(
-		// 		`There was an error while retrieving an access token from keycloak: ${
-		// 			response.originalError ?? response.problem
-		// 		}`
-		// 	)
-		// }
-
-		// return response.data.access_token
+		
 	}
 
 	// Get the keycloak client ID of a client
