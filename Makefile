@@ -31,7 +31,7 @@ test: build
 	@docker-compose down
 	@rm -rf db-data* || echo "no permission to delete"
 	# test with distributed definition manager and native search
-	@docker-compose --env-file test_environments/test1.env up -d db keycloak registry certificate-signer certificate-api redis
+	@docker-compose --env-file test_environments/test_with_distributedDefManager_nativeSearch.env up -d db keycloak registry certificate-signer certificate-api redis
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
@@ -40,7 +40,7 @@ test: build
 	@docker-compose down
 	@rm -rf db-data-1 || echo "no permission to delete"
 	# test with kafka(async), events, notifications,
-	@docker-compose --env-file test_environments/test2.env up -d db clickhouse redis es keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
+	@docker-compose --env-file test_environments/test_with_asyncCreate_events_notifications.env up -d db clickhouse redis es keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps

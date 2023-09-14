@@ -32,6 +32,7 @@ import dev.sunbirdrc.registry.util.ServiceProvider;
 import dev.sunbirdrc.validators.IValidate;
 import dev.sunbirdrc.validators.ValidationFilter;
 import dev.sunbirdrc.validators.json.jsonschema.JsonValidationServiceImpl;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -358,7 +359,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			try {
 				registry.addInterceptor(validationInterceptor()).addPathPatterns("/add").order(orderIdx++);
 			} catch (IOException | CustomException e) {
-				logger.info("Exception occurred while adding validation interceptor: {}", e.getMessage());
+				logger.error("Exception occurred while adding validation interceptor: {}", ExceptionUtils.getStackTrace(e));
 			}
 		}
 	}

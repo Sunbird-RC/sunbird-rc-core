@@ -1,6 +1,7 @@
 package dev.sunbirdrc.registry.controller;
 
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +26,7 @@ public class RegistryTemplateController{
             File file = new ClassPathResource(templatesFolderPath + fileName).getFile();
             content = new String(Files.readAllBytes(file.toPath()));
         } catch (IOException e) {
-            logger.info("Fetching template failed: {}", e.getMessage());
+            logger.info("Fetching template failed: {}", ExceptionUtils.getStackTrace(e));
         }
         return content;
     }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.service.ICertificateService;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,25 +50,20 @@ public class CertificateServiceImpl implements ICertificateService {
     }
 
     @Override
-    public Object getCertificate(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl, JsonNode entity) {
-        try {
-            String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl);
+    public Object getCertificate(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl, JsonNode entity) throws RestClientException {
+        String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl);
 
-            Map<String, Object> requestBody = new HashMap<String, Object>(){{
-                put("templateUrl", finalTemplateUrl);
-                put("certificate", certificateData.toString());
-                put("entityId", entityId);
-                put("entityName", entityName);
-                put("entity", entity);
-            }};
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", mediaType);
-            HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, headers);
-            return restTemplate.postForObject(certificateUrl, httpEntity, byte[].class);
-        } catch (Exception e) {
-            logger.error("Get certificate failed: {}", e.getMessage());
-        }
-        return null;
+        Map<String, Object> requestBody = new HashMap<String, Object>(){{
+            put("templateUrl", finalTemplateUrl);
+            put("certificate", certificateData.toString());
+            put("entityId", entityId);
+            put("entityName", entityName);
+            put("entity", entity);
+        }};
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Accept", mediaType);
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(requestBody, headers);
+        return restTemplate.postForObject(certificateUrl, httpEntity, byte[].class);
     }
 
     @NotNull
@@ -103,7 +99,7 @@ public class CertificateServiceImpl implements ICertificateService {
                     return new ComponentHealthInfo(getServiceName(), false);
                 }
             } catch (RestClientException ex) {
-                logger.error("RestClientException when checking the health of the certificate service: {}", ex.getMessage());
+                logger.error("RestClientException when checking the health of the certificate service: {}", ExceptionUtils.getStackTrace(ex));
                 return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
             }
         } else {

@@ -1,6 +1,7 @@
 package dev.sunbirdrc.registry.config;
 
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ public class SchemaFilter implements Filter {
             }
             filterChain.doFilter(servletRequest, servletResponse);
         } catch (Exception e) {
-            logger.error("Exception while applying security filters: {}", e.getMessage());
+            logger.error("Exception while applying security filters: {}", ExceptionUtils.getStackTrace(e));
             throw e;
         }
     }

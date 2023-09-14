@@ -10,6 +10,7 @@ import dev.sunbirdrc.registry.transform.ConfigurationHelper;
 import dev.sunbirdrc.registry.transform.Transformer;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,7 @@ public abstract class AbstractController {
     }
 
     ResponseEntity<Object> internalErrorResponse(ResponseParams responseParams, Response response, Exception ex) {
-        logger.info("Error in handling the invite: {}", ex.getMessage());
+        logger.error("Error in handling the invite: {}", ExceptionUtils.getStackTrace(ex));
         responseParams.setStatus(Response.Status.UNSUCCESSFUL);
         responseParams.setErrmsg("Error occurred");
         if (!StringUtils.isEmpty(ex.getMessage())) {

@@ -646,7 +646,8 @@ public class RegistryHelper {
                             updateEntity(updatedNode, userId);
                         }
                     } catch (JsonProcessingException e) {
-                        logger.error("Exception while executing function definition: {} {}, {}", attestationPolicy.getOnComplete(), functionDefinition, e.getMessage());
+                        logger.error("Exception while executing function definition: {} {}, {}", attestationPolicy.getOnComplete(), functionDefinition, ExceptionUtils.getStackTrace(e));
+                        throw e;
                     }
                 } else {
                     logger.error("Invalid function name specified for onComplete: {}", attestationPolicy.getOnComplete());

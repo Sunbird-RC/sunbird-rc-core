@@ -13,6 +13,7 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.dto.AttestationRequest;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class RegistryClaimsController extends AbstractController{
             logger.info("Received {} claims", claims.size());
             return new ResponseEntity<>(claims, HttpStatus.OK);
         } catch (Exception e) {
-            logger.error("Fetching claims failed {}", e.getMessage());
+            logger.error("Fetching claims failed {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -66,10 +67,10 @@ public class RegistryClaimsController extends AbstractController{
             JsonNode claim = claimRequestClient.getClaim(result.get(entityName).get(0), entityName, claimId);
             return new ResponseEntity<>(claim, HttpStatus.OK);
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            logger.error("Fetching claim failed {}", e.getMessage());
+            logger.error("Fetching claim failed {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(e.getStatusCode());
-        } catch (Exception exception) {
-            logger.info("Exception occurred while fetching claim: {}", exception.getMessage());
+        } catch (Exception e) {
+            logger.error("Exception occurred while fetching claim: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -96,10 +97,10 @@ public class RegistryClaimsController extends AbstractController{
 
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             return new ResponseEntity<>(responseParams, HttpStatus.OK);
-        } catch (Exception exception) {
-            logger.error("Exception : {}", exception.getMessage());
+        } catch (Exception e) {
+            logger.error("Exception : {}", ExceptionUtils.getStackTrace(e));
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg(exception.getMessage());
+            responseParams.setErrmsg(e.getMessage());
             return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -123,7 +124,7 @@ public class RegistryClaimsController extends AbstractController{
         try {
             registryHelper.authorize(attestationRequest.getEntityName(), attestationRequest.getEntityId(), request);
         } catch (Exception e) {
-            logger.error("Unauthorized exception {}", e.getMessage());
+            logger.error("Unauthorized exception {}", ExceptionUtils.getStackTrace(e));
             return createUnauthorizedExceptionResponse(e);
         }
         AttestationPolicy attestationPolicy = registryHelper.getAttestationPolicy(attestationRequest.getEntityName(), attestationRequest.getName());
@@ -145,9 +146,9 @@ public class RegistryClaimsController extends AbstractController{
             attestationRequest.setEmailId(emailId);
             String attestationOSID = registryHelper.triggerAttestation(attestationRequest, attestationPolicy);
             response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
-        } catch (Exception exception) {
-            logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
-            responseParams.setErrmsg(exception.getMessage());
+        } catch (Exception e) {
+            logger.error("Exception occurred while saving attestation data {}", ExceptionUtils.getStackTrace(e));
+            responseParams.setErrmsg(e.getMessage());
             response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }

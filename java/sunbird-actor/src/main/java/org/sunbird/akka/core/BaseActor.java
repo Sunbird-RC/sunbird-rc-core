@@ -5,6 +5,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Value;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
  * An abstract actor
@@ -94,12 +95,12 @@ public abstract class BaseActor extends UntypedAbstractActor {
                         tellToSource(response);
                     }
                 } catch (Exception e) {
-                    logger.info("Exception occurred while Act upon the message {}", e.getMessage());
+                    logger.error("Exception occurred while Act upon the message {}", ExceptionUtils.getStackTrace(e));
                 }
             }
 
         } catch (ClassCastException e) {
-            logger.info("Ignoring message because it is not in expected format {}", genericMessage.toString());
+            logger.error("Ignoring message because it is not in expected format {}", genericMessage.toString());
         }
         }
     }

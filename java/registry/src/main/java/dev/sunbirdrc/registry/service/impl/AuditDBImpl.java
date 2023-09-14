@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.service.impl;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,10 +59,10 @@ public class AuditDBImpl extends AuditServiceImpl {
         	JsonNode rootNode = convertAuditRecordToJson(auditRecord, entityType);
             auditToDB(rootNode, entityType, shard);
 
-        } catch (AuditFailedException ae) {
-            logger.error("Error in saving audit info: {}", ae.getMessage());
+        } catch (AuditFailedException e) {
+            logger.error("Error in saving audit info: {}", ExceptionUtils.getStackTrace(e));
         } catch (Exception e) {
-            logger.error("Generic error in saving audit info : {}", e.getMessage());
+            logger.error("Generic error in saving audit info : {}", ExceptionUtils.getStackTrace(e));
         }
         logger.debug("doAudit ends");
     }

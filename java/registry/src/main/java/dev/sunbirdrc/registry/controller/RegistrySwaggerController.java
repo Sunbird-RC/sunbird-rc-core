@@ -114,8 +114,13 @@ public class RegistrySwaggerController {
     @GetMapping(value = "/api/docs/{file}.json", produces = "application/json")
     public ResponseEntity<Object> getSwaggerDocImportFiles(
             @PathVariable String file
-    ) throws IOException {
-        JsonNode definitions = refResolver.getResolvedSchema(file, "properties");
+    ) {
+        JsonNode definitions = null;
+        try {
+            definitions = refResolver.getResolvedSchema(file, "properties");
+        } catch (IOException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
         return new ResponseEntity<>(definitions, HttpStatus.OK);
     }
 

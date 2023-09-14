@@ -25,7 +25,7 @@ public class RefResolver {
         this.definitionsManager = definitionsManager;
     }
 
-    public JsonNode getResolvedSchema(String rootDefinitionName, String rootContext) {
+    public JsonNode getResolvedSchema(String rootDefinitionName, String rootContext) throws IOException {
         Definition definition = definitionsManager.getDefinition(rootDefinitionName);
         String content = definition.getContent();
         try {
@@ -35,9 +35,9 @@ public class RefResolver {
             logger.info(JSONUtil.convertObjectJsonString(resolvedDefinitions));
             return resolvedDefinitions;
         } catch (IOException e) {
-            logger.info("Failed resolving schema definitions for {}: {}", rootDefinitionName, e.getMessage());
+            logger.error("Failed resolving schema definitions for {}: {}", rootDefinitionName, ExceptionUtils.getStackTrace(e));
+            throw e;
         }
-        return null;
     }
 
     public JsonNode resolveDefinitions(String currentDefinitionName, JsonNode currentNode) {

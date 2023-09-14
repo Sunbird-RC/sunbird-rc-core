@@ -6,6 +6,7 @@ import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.service.SignatureService;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,9 +66,9 @@ public class SignatureServiceImpl implements SignatureService {
 				} else {
 					return new ComponentHealthInfo(getServiceName(), false);
 				}
-			} catch (RestClientException ex) {
-				logger.error("RestClientException when checking the health of the Sunbird signature service: {}", ex.getMessage());
-				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
+			} catch (RestClientException e) {
+				logger.error("RestClientException when checking the health of the signature service: {}", ExceptionUtils.getStackTrace(e));
+				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
 			}
 		} else {
 			return new ComponentHealthInfo(getServiceName(), true, "SIGNATURE_ENABLED", "false");
@@ -98,14 +99,14 @@ public class SignatureServiceImpl implements SignatureService {
 			response = retryRestTemplate.postForEntity(signURL, propertyValue);
 			result = objectMapper.readTree(response.getBody());
 			logger.info("Successfully generated signed credentials");
-		} catch (SignatureException.UnreachableException ex) {
-			logger.error("SignatureException when signing: {}", ex.getMessage());
-			throw ex;
-		} catch (RestClientException ex) {
-			logger.error("RestClientException when signing: {}", ex.getMessage());
-			throw new SignatureException().new UnreachableException(ex.getMessage());
+		} catch (SignatureException.UnreachableException e) {
+			logger.error("SignatureException when signing: {}", ExceptionUtils.getStackTrace(e));
+			throw e;
+		} catch (RestClientException e) {
+			logger.error("RestClientException when signing: {}", ExceptionUtils.getStackTrace(e));
+			throw new SignatureException().new UnreachableException(e.getMessage());
 		} catch (Exception e) {
-			logger.error("SignatureException when signing: {}", e.getMessage());
+			logger.error("SignatureException when signing: {}", ExceptionUtils.getStackTrace(e));
 			throw new SignatureException().new CreationException(e.getMessage());
 		}
 		return result;
@@ -127,11 +128,11 @@ public class SignatureServiceImpl implements SignatureService {
 			response = retryRestTemplate.postForEntity(verifyURL, propertyValue);
 			JsonNode resultNode = objectMapper.readTree(response.getBody());
 			result = resultNode.get("verified").asBoolean();
-		} catch (RestClientException ex) {
-			logger.error("RestClientException when verifying: {}", ex.getMessage());
-			throw new SignatureException().new UnreachableException(ex.getMessage());
+		} catch (RestClientException e) {
+			logger.error("RestClientException when verifying: {}", ExceptionUtils.getStackTrace(e));
+			throw new SignatureException().new UnreachableException(e.getMessage());
 		} catch (Exception e) {
-			logger.error("RestClientException when verifying: {}", e.getMessage());
+			logger.error("RestClientException when verifying: {}", ExceptionUtils.getStackTrace(e));
 			throw new SignatureException().new VerificationException(e.getMessage());
 		}
 		logger.debug("verify method ends with value {}",result);
@@ -153,11 +154,11 @@ public class SignatureServiceImpl implements SignatureService {
 		try {
 			response = retryRestTemplate.getForEntity(keysURL + "/" + keyId);
 			result = response.getBody();
-		} catch (RestClientException ex) {
-			logger.error("RestClientException when verifying: {}", ex.getMessage());
-			throw new SignatureException().new UnreachableException(ex.getMessage());
+		} catch (RestClientException e) {
+			logger.error("RestClientException when verifying: {}", ExceptionUtils.getStackTrace(e));
+			throw new SignatureException().new UnreachableException(e.getMessage());
 		} catch (Exception e) {
-			logger.error("RestClientException when verifying: {}", e.getMessage());
+			logger.error("RestClientException when verifying: {}", ExceptionUtils.getStackTrace(e));
 			throw new SignatureException().new KeyNotFoundException(keyId);
 		}
 		logger.debug("getKey method ends with value {}",result);

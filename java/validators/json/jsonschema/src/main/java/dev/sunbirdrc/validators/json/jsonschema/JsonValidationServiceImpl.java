@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.validators.IValidate;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -52,8 +53,8 @@ public class JsonValidationServiceImpl implements IValidate {
 				} else {
 					return null;
 				}
-			} catch (Exception ioe) {
-				logger.info("can't validate, {}: schema has a problem!, {}", entityType, ioe.getMessage());
+			} catch (Exception e) {
+				logger.error("can't validate, {}: schema has a problem!, {}", entityType, ExceptionUtils.getStackTrace(e));
 				throw new MiddlewareHaltException("can't validate, "+ entityType + ": schema has a problem!");
 			}
 			return schema;

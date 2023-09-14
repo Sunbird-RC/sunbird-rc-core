@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.pojos.AuditRecord;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +123,7 @@ public class JSONUtilTest {
 //    public void findKey() {
 //    }
 
-    private String getContent(String fileName) {
+    private String getContent(String fileName) throws IOException {
         InputStream in;
         try {
             in = this.getClass().getClassLoader().getResourceAsStream(fileName);
@@ -135,9 +136,9 @@ public class JSONUtilTest {
             return result.toString(StandardCharsets.UTF_8.name());
 
         } catch (IOException e) {
-            logger.info("Exception occurred: {}", e.getMessage());
+            logger.error("Exception occurred: {}", ExceptionUtils.getStackTrace(e));
+            throw e;
         }
-        return null;
     }
 
     @Test

@@ -73,7 +73,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 			logger.error("ResourceAccessException while connecting encryption service : {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception while connecting encryption service! ");
 		} catch (Exception e) {
-			logger.error("Exception in encryption service !: {}", e.getMessage());
+			logger.error("Exception in encryption service !: {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception in encryption service");
 		}
 	}
@@ -94,10 +94,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			logger.info("Property decrypted successfully !");
 			return response.getBody();
 		} catch (ResourceAccessException e) {
-			logger.error("ResourceAccessException while connecting decryption service : {}", e.getMessage());
+			logger.error("ResourceAccessException while connecting decryption service : {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception while connecting encryption service ! ");
 		} catch (Exception e) {
-			logger.error("Exception in decryption service !: {}", e.getMessage());
+			logger.error("Exception in decryption service !: {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception in encryption service ! ");
 		}
 	}
@@ -123,10 +123,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
 			}.getType());
 		} catch (ResourceAccessException e) {
-			logger.error("Exception while connecting encryption service : {}", e.getMessage());
+			logger.error("Exception while connecting encryption service : {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception while connecting encryption service! ");
 		} catch (Exception e) {
-			logger.error("Exception in encryption service !: {}", e.getMessage());
+			logger.error("Exception in encryption service !: {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception in encryption service.");
 		}
 	}
@@ -153,10 +153,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
 			}.getType());
 		} catch (ResourceAccessException e) {
-			logger.error("Exception while connecting decryption service : {}", e.getMessage());
+			logger.error("Exception while connecting decryption service : {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception while connecting encryption service ! ");
 		} catch (Exception e) {
-			logger.error("Exception in decryption service !: {}", e.getMessage());
+			logger.error("Exception in decryption service !: {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception in encryption service ! ");
 		}
 	}
@@ -184,7 +184,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 					return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, response.getBody());
 				}
 			} catch (RestClientException ex) {
-				logger.error("RestClientException when checking the health of the encryption service: {}", ex.getMessage());
+				logger.error("RestClientException when checking the health of the encryption service: {}", ExceptionUtils.getStackTrace(ex));
 				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
 			}
 		} else {

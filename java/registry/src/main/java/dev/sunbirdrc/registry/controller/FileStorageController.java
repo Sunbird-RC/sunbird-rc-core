@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.controller;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.dto.DocumentsResponse;
 import dev.sunbirdrc.registry.service.FileStorageService;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -38,7 +39,7 @@ public class FileStorageController {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
-            logger.info("Authorizing entity failed: {}", e.getMessage());
+            logger.error("Authorizing entity failed: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         DocumentsResponse documentsResponse = fileStorageService.saveAndFetchFileNames(files, httpServletRequest.getRequestURI());
@@ -54,7 +55,7 @@ public class FileStorageController {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
-            logger.info("Authorizing entity failed: {}", e.getMessage());
+            logger.error("Authorizing entity failed: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
         DocumentsResponse documentsResponse = fileStorageService.deleteFiles(files);
@@ -70,7 +71,7 @@ public class FileStorageController {
         try {
             registryHelper.authorize(entity, entityId, httpServletRequest);
         } catch (Exception e) {
-            logger.info("Authorizing entity failed: {}", e.getMessage());
+            logger.error("Authorizing entity failed: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
         return fileStorageService.deleteDocument(httpServletRequest.getRequestURI());

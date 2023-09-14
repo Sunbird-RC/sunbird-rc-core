@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.middleware.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,8 @@ public class ConditionResolverServiceTest {
         try {
             resolve = conditionResolverService.resolve(getStudentJsonNode(), requester, condition, attributes);
         } catch (IOException e) {
-            logger.info("Exception occurred: {}", e.getMessage());
+            logger.error("Exception occurred: {}", ExceptionUtils.getStackTrace(e));
+            throw e;
         }
         String attestor = "ATTESTOR";
         resolve = conditionResolverService.resolve(getTeacherJsonNode(), attestor, resolve, attributes);

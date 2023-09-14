@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.controller;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.sunbirdrc.registry.entities.VerificationRequest;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,7 +44,7 @@ public class RegistryCertificateController {
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
         } catch (Exception e) {
-            logger.info("Exception occurred while verifying certificate: {}", e.getMessage());
+            logger.error("Exception occurred while verifying certificate: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }

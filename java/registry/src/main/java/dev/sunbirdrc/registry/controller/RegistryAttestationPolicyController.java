@@ -4,6 +4,7 @@ import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.entities.AttestationStatus;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,7 +44,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
                 return badRequestException(responseParams, response, "Invalid entity name");
             }
         } catch (Exception e) {
-            logger.error("Failed persisting attestation policy: {}", e.getMessage());
+            logger.error("Failed persisting attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -70,7 +71,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
                 return badRequestException(responseParams, response, "Invalid entity name");
             }
         } catch (Exception e) {
-            logger.error("Failed getting attestation policy: {}", e.getMessage());
+            logger.error("Failed getting attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -93,7 +94,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             }
             return badRequestException(responseParams, response, "Invalid entity name");
         } catch (Exception e) {
-            logger.error("Failed updating attestation policy: {}", e.getMessage());
+            logger.error("Failed updating attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -118,7 +119,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             }
             return badRequestException(responseParams, response, "Invalid entity name");
         } catch (Exception e) {
-            logger.error("Failed updating attestation policy: {}", e.getMessage());
+            logger.error("Failed updating attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -143,7 +144,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             }
             return badRequestException(responseParams, response, "Invalid entity name");
         } catch (Exception e) {
-            logger.error("Failed updating attestation policy: {}", e.getMessage());
+            logger.error("Failed updating attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return internalErrorResponse(responseParams, response, e);
         }
     }

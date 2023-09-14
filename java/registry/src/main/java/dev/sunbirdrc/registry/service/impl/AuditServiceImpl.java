@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import dev.sunbirdrc.registry.exception.AuditFailedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,7 +109,7 @@ public class AuditServiceImpl implements IAuditService {
     }
 
     @Override
-    public void doAudit(AuditRecord auditRecord, JsonNode inputNode, Shard shard) {
+    public void doAudit(AuditRecord auditRecord, JsonNode inputNode, Shard shard) throws AuditFailedException {
     	auditProviderFactory.getAuditService(auditFrameStore).doAudit(auditRecord, inputNode, shard);
     }
     

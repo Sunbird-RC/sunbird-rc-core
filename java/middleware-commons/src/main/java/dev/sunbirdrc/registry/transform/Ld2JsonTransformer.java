@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.middleware.util.Constants.JsonldConstants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +29,9 @@ public class Ld2JsonTransformer implements ITransformer<Object> {
 			ObjectNode input = (ObjectNode) mapper.readTree(data.getData().toString());
 			JsonNode jsonNode = getconstructedJson(input, keysToPurge);
 			return new Data<>(jsonNode);
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
-			throw new TransformationException(ex.getMessage(), ex, ErrorCode.JSONLD_TO_JSON_TRANFORMATION_ERROR);
+		} catch (Exception e) {
+			logger.error(ExceptionUtils.getStackTrace(e));
+			throw new TransformationException(e.getMessage(), e, ErrorCode.JSONLD_TO_JSON_TRANFORMATION_ERROR);
 		}
 	}
 

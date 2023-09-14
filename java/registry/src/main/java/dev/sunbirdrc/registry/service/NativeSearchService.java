@@ -137,7 +137,7 @@ public class NativeSearchService implements ISearchService {
 									.setTransactionId(transaction),
 							shard, searchQuery.getEntityTypes(), inputQueryNode);
 				} catch (Exception e) {
-					logger.error("Exception while auditing: {}", e.getMessage());
+					logger.error("Exception while auditing: {}", ExceptionUtils.getStackTrace(e));
 				}
 
 		 	}
