@@ -1,5 +1,5 @@
 
-IMAGE:=dockerhub/sunbird-rc-certificate-signer
+IMAGE:=ghcr.io/sunbird-rc/sunbird-rc-certificate-signer
 
 test: docker
 	@docker-compose -f api-test-docker-compose.yml up -d
