@@ -3,6 +3,7 @@ package dev.sunbirdrc.plugin.services;
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.plugin.constant.Constants;
 import dev.sunbirdrc.plugin.dto.*;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,9 +80,8 @@ public class MosipServices {
         ResponseEntity<String> response = null;
         try {
             response = restTemplateProvider.exchange(webSubHubUrl + Constants.SUBSCRIBE_URL, HttpMethod.POST, entity, String.class);
-        } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Subscription to topic failed: ");
-            exception.printStackTrace();
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            LOGGER.error("Subscription to topic failed: {}", ExceptionUtils.getStackTrace(e));
         }
         if (response != null && response.getStatusCode() == HttpStatus.ACCEPTED) {
             LOGGER.info("subscribed for topic {} at hub", topic);
@@ -103,9 +103,8 @@ public class MosipServices {
         ResponseEntity<String> response = null;
         try {
             response = restTemplateProvider.exchange(webSubHubUrl + Constants.REGISTER_URL, HttpMethod.POST, entity, String.class);
-        } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Register topic failed: ");
-            exception.printStackTrace();
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            LOGGER.error("Register topic failed: {}", ExceptionUtils.getStackTrace(e));
         }
         if (response != null && response.getStatusCode() == HttpStatus.ACCEPTED) {
             LOGGER.info("topic {} registered at hub", topic);
@@ -131,9 +130,8 @@ public class MosipServices {
         ResponseEntity<Object> response = null;
         try {
             response = restTemplateProvider.exchange(webSubHubUrl + Constants.OTP_URL, HttpMethod.POST, entity, Object.class);
-        } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Generate otp failed failed: ");
-            exception.printStackTrace();
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            LOGGER.error("Generate otp failed failed: {}", ExceptionUtils.getStackTrace(e));
         }
         if (response != null && response.getStatusCode() == HttpStatus.OK) {
             LOGGER.info("Successfully generated otp");
@@ -175,9 +173,8 @@ public class MosipServices {
         ResponseEntity<Object> response = null;
         try {
             response = restTemplateProvider.exchange(webSubHubUrl + Constants.CREDENTIALS_URL, HttpMethod.POST, entity, Object.class);
-        } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Generate credentials failed failed: ");
-            exception.printStackTrace();
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            LOGGER.error("Generate credentials failed failed: {}", ExceptionUtils.getStackTrace(e));
         }
         if (response != null && response.getStatusCode() == HttpStatus.OK) {
             LOGGER.info("Successfully generated credentials");
@@ -199,9 +196,8 @@ public class MosipServices {
         try {
             response = restTemplateProvider.exchange(printUrl + Constants.PRINT_PDF_URL, HttpMethod.POST, entity, byte[].class);
             return response.getBody();
-        } catch (HttpClientErrorException | HttpServerErrorException exception) {
-            LOGGER.error("Failed fetching pdf failed: ");
-            exception.printStackTrace();
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            LOGGER.error("Failed fetching pdf failed: {}", ExceptionUtils.getStackTrace(e));
         }
         LOGGER.error("Failed fetching pdf failed: ");
         return null;

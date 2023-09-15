@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotEmpty;
@@ -48,7 +49,7 @@ public class EntityStateHelper {
 
     @Autowired
     public EntityStateHelper(IDefinitionsManager definitionsManager, RuleEngineService ruleEngineService,
-                             ConditionResolverService conditionResolverService, ClaimRequestClient claimRequestClient) {
+                             ConditionResolverService conditionResolverService,@Nullable ClaimRequestClient claimRequestClient) {
         this.definitionsManager = definitionsManager;
         this.ruleEngineService = ruleEngineService;
         this.conditionResolverService = conditionResolverService;

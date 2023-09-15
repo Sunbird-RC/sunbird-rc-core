@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
+import dev.sunbirdrc.registry.exception.AuditFailedException;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -23,7 +24,7 @@ public interface IAuditService {
      *
      * 
      */
-    void doAudit(AuditRecord auditRecord, JsonNode inputNode, Shard shard);
+    void doAudit(AuditRecord auditRecord, JsonNode inputNode, Shard shard) throws AuditFailedException;
     
 	boolean shouldAudit(String entityType);
 	String isAuditAction(String entityType);
@@ -63,7 +64,7 @@ public interface IAuditService {
 		return entityType;
 	}
 	
-	default void auditAdd(AuditRecord auditRecord, Shard shard, JsonNode mergedNode){
+	default void auditAdd(AuditRecord auditRecord, Shard shard, JsonNode mergedNode) throws AuditFailedException {
 		if(shouldAudit(auditRecord.getEntityType())) {
 			auditRecord.setAction(Constants.AUDIT_ACTION_ADD);
 			JsonNode inputNode = JSONUtil.diffJsonNode(null, mergedNode);
@@ -73,7 +74,7 @@ public interface IAuditService {
 		}
 	}
 	
-	default void auditUpdate(AuditRecord auditRecord, Shard shard, JsonNode mergedNode, JsonNode readNode){
+	default void auditUpdate(AuditRecord auditRecord, Shard shard, JsonNode mergedNode, JsonNode readNode) throws AuditFailedException {
 		if(shouldAudit(auditRecord.getEntityType())) {
 			auditRecord.setAction(Constants.AUDIT_ACTION_UPDATE);
 			JsonNode inputNode = JSONUtil.diffJsonNode(readNode, mergedNode);
@@ -83,7 +84,7 @@ public interface IAuditService {
 		}
 	}
 	
-	default void auditDelete(AuditRecord auditRecord, Shard shard) {
+	default void auditDelete(AuditRecord auditRecord, Shard shard) throws AuditFailedException {
 		if(shouldAudit(auditRecord.getEntityType())) {
 			auditRecord.setAction(Constants.AUDIT_ACTION_DELETE);
 			auditRecord.setAuditInfo(createAuditInfo(auditRecord.getAction(), auditRecord.getEntityType()));
@@ -92,7 +93,7 @@ public interface IAuditService {
 		}
 	}
 	
-	default void auditRead(AuditRecord auditRecord, Shard shard) {
+	default void auditRead(AuditRecord auditRecord, Shard shard) throws AuditFailedException {
 		if(shouldAudit(auditRecord.getEntityType())) {
 			auditRecord.setAction(Constants.AUDIT_ACTION_READ);
 			auditRecord.setAuditInfo(createAuditInfo(auditRecord.getAction(), auditRecord.getEntityType()));
@@ -110,8 +111,12 @@ public interface IAuditService {
 			if(shouldAudit(auditRecord.getEntityType())) {
 				auditRecord.setAction(isAuditAction(auditRecord.getEntityType()));
 				auditRecord.setAuditInfo(createAuditInfo(auditRecord.getAction(), auditRecord.getEntityType()));
-				
-				doAudit(auditRecord, inputNode, null);
+
+				try {
+					doAudit(auditRecord, inputNode, null);
+				} catch (AuditFailedException e) {
+					throw new RuntimeException(e);
+				}
 			}
 		});
 	}
@@ -124,8 +129,12 @@ public interface IAuditService {
 			if(shouldAudit(auditRecord.getEntityType())) {
 				auditRecord.setAction(isAuditAction(auditRecord.getEntityType()));
 				auditRecord.setAuditInfo(createAuditInfo(auditRecord.getAction(), auditRecord.getEntityType()));
-				
-				doAudit(auditRecord, inputNode, shard);
+
+				try {
+					doAudit(auditRecord, inputNode, shard);
+				} catch (AuditFailedException e) {
+					throw new RuntimeException(e);
+				}
 			}
 		});
 	}

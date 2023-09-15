@@ -1,6 +1,7 @@
 package dev.sunbirdrc.pojos;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.util.ContentCachingResponseWrapper;
@@ -41,14 +42,14 @@ public class ResponseWrapper extends ContentCachingResponseWrapper {
 				bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
 				bufferedWriter.write(content);
 			}
-		} catch (Exception ex) {
-			logger.error("ERROR IN SENDING RESPONSE:", ex);
+		} catch (Exception e) {
+			logger.error("ERROR IN SENDING RESPONSE: {}", ExceptionUtils.getStackTrace(e));
 		} finally {
 			if (bufferedWriter != null) {
 				try {
 					bufferedWriter.close();
-				} catch (Exception ex) {
-					logger.error("ERROR in closing stream", ex);
+				} catch (Exception e) {
+					logger.error("ERROR in closing stream: {}", ExceptionUtils.getStackTrace(e));
 				}
 			}
 		}

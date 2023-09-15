@@ -28,12 +28,10 @@ java/registry/target/registry.jar: $(SOURCES)
 	cd java && ./mvnw clean install
 
 test: build
-	@echo "VIEW_DIR=java/apitest/src/test/resources/views" >> .env || echo "no permission to append to file"
-	@echo "SCHEMA_DIR=java/apitest/src/test/resources/schemas" >> .env || echo "no permission to append to file"
 	@docker-compose down
 	@rm -rf db-data* || echo "no permission to delete"
 	# test with distributed definition manager and native search
-	@SEARCH_PROVIDER_NAME=dev.sunbirdrc.registry.service.NativeSearchService RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 MANAGER_TYPE=DistributedDefinitionsManager DB_DIR=db-data-1 docker-compose up -d db keycloak registry certificate-signer certificate-api redis
+	@docker-compose --env-file test_environments/test_with_distributedDefManager_nativeSearch.env up -d db keycloak registry certificate-signer certificate-api redis
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
@@ -42,7 +40,7 @@ test: build
 	@docker-compose down
 	@rm -rf db-data-1 || echo "no permission to delete"
 	# test with kafka(async), events, notifications,
-	@NOTIFICATION_ENABLED=true NOTIFICATION_URL=http://notification-ms:8765/notification-service/v1/notification TRACK_NOTIFICATIONS=true EVENT_ENABLED=true ASYNC_ENABLED=true RELEASE_VERSION=latest KEYCLOAK_IMPORT_DIR=java/apitest/src/test/resources KEYCLOAK_SECRET=a52c5f4a-89fd-40b9-aea2-3f711f14c889 DB_DIR=db-data-2 docker-compose up -d db clickhouse redis es keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
+	@docker-compose --env-file test_environments/test_with_asyncCreate_events_notifications.env up -d db clickhouse redis es keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps

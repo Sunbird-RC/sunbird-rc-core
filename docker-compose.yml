@@ -2,7 +2,7 @@ version: "2.4"
 
 services:
   es:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.13
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -40,6 +40,7 @@ services:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
+      - encryption_enabled=${ENCRYPTION_ENABLED-false}
       - event_enabled=${EVENT_ENABLED-false}
       - event_topic=events
       - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
@@ -54,15 +55,18 @@ services:
       - sunbird_sso_admin_client_id=${KEYCLOAK_ADMIN_CLIENT_ID-admin-api}
       - sunbird_sso_client_id=${KEYCLOAK_CLIENT_ID-registry-frontend}
       - sunbird_sso_admin_client_secret=${KEYCLOAK_SECRET}
+      - claims_enabled=${CLAIMS_ENABLED-false}
       - claims_url=http://claim-ms:8082
+      - signature_enabled=${SIGNATURE_ENABLED-false}
       - sign_url=http://certificate-signer:8079/sign
       - verify_url=http://certificate-signer:8079/verify
       - sign_health_check_url=http://certificate-signer:8079/health
-      - signature_enabled=true
+      - certificate_enabled=${CERTIFICATE_ENABLED-false}
       - pdf_url=http://certificate-api:8078/api/v1/certificatePDF
       - certificate_health_check_url=http://certificate-api:8078/health
       - template_base_url=http://registry:8081/api/v1/templates/ #Looks for certificate templates for pdf copy of the signed certificate
       - sunbird_keycloak_user_set_password=true
+      - filestorage_enabled=false
       - filestorage_connection_url=http://file-storage:9000
       - filestorage_access_key=admin
       - filestorage_secret_key=12345678
@@ -281,9 +285,15 @@ services:
       REDIS_URL: redis:6379
     ports:
       - "8070:8070"
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8070/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
       registry:
         condition: service_healthy
   redis:
