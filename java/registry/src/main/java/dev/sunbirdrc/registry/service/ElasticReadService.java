@@ -1,15 +1,14 @@
 package dev.sunbirdrc.registry.service;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +30,7 @@ import dev.sunbirdrc.registry.util.ReadConfigurator;
  *
  */
 @Component
+@ConditionalOnProperty(name = "search.providerName", havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService")
 public class ElasticReadService implements IReadService {
 
     private static Logger logger = LoggerFactory.getLogger(ElasticReadService.class);
@@ -62,7 +62,7 @@ public class ElasticReadService implements IReadService {
         try {
             response = elasticService.readEntity(entityType.toLowerCase(), id);
         } catch (IOException e) {
-            logger.error("Exception in reading a record to ElasticSearch", e);
+            logger.error("Exception in reading a record to ElasticSearch: {}", ExceptionUtils.getStackTrace(e));
         }
         
         if (response == null || Constants.STATUS_INACTIVE.equals(response.get(Constants.STATUS_KEYWORD)) ) {
