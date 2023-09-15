@@ -13,6 +13,7 @@ import dev.sunbirdrc.registry.service.WebhookService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +79,7 @@ public class CreateEntityConsumer {
             postCreateEntityMessage = PostCreateEntityMessage.builder().entityType(entityType).osid(entityOsid)
                     .transactionId(key).userId(createEntityMessage.getUserId()).status(CreateEntityStatus.SUCCESSFUL).message("").build();
         } catch (Exception e) {
-            logger.error("Creating entity failed, {}", e.getMessage(), e);
+            logger.error("Creating entity failed: {}", ExceptionUtils.getStackTrace(e));
             postCreateEntityMessage = PostCreateEntityMessage.builder().status(CreateEntityStatus.FAILED).transactionId(key).message(e.getMessage()).build();
         } finally {
             try {
@@ -88,7 +89,7 @@ public class CreateEntityConsumer {
                         .webhookUrl(webhookUrl)
                         .timestamp(Timestamp.from(Instant.now())).build());
             } catch (Exception e) {
-                logger.error("Sending message to {} topic failed: {}", postCreateEntityMessage, e.getMessage(), e);
+                logger.error("Sending message to {} topic failed: {}", postCreateEntityMessage, ExceptionUtils.getStackTrace(e));
             }
             acknowledgment.acknowledge();
         }

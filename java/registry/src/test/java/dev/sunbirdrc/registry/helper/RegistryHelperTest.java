@@ -140,6 +140,8 @@ public class RegistryHelperTest {
 		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
 		registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
 		registryHelper.setDefinitionsManager(definitionsManager);
+		registryHelper.setNotificationEnabled(true);
+		registryHelper.setSecurityEnabled(true);
 	}
 
 	@Test
