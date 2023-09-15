@@ -48,9 +48,7 @@ func GetSmsRequestPayload(message string, mobileNumber string) map[string]interf
 		log.Infof("success")
 		return smsRequest
 	} else {
-		log.Infof("error")
-		log.Error(err)
+		log.Errorf("error: %v", err)
 	}
-	log.Infof("error")
 	return nil
 }
