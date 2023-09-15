@@ -32,7 +32,7 @@ services:
       timeout: 5s
       retries: 5
   registry:
-    image: dockerhub/sunbird-rc-core:${RELEASE_VERSION}
+    image: ghcr.io/sunbird-rc/sunbird-rc-core:${RELEASE_VERSION}
     volumes:
       - ./${SCHEMA_DIR-java/registry/src/main/resources/public/_schemas}:/home/sunbirdrc/config/public/_schemas
       - ./${VIEW_DIR-java/registry/src/main/resources/views}:/home/sunbirdrc/config/views/
@@ -99,7 +99,7 @@ services:
       timeout: 10s
       retries: 10
   keycloak:
-    image: dockerhub/sunbird-rc-keycloak:latest
+    image: ghcr.io/sunbird-rc/sunbird-rc-keycloak:latest
     volumes:
       - ./${KEYCLOAK_IMPORT_DIR-imports}:/opt/jboss/keycloak/imports
     environment:
@@ -127,7 +127,7 @@ services:
       db:
         condition: service_healthy
   claim-ms:
-    image: dockerhub/sunbird-rc-claim-ms:${RELEASE_VERSION}
+    image: ghcr.io/sunbird-rc/sunbird-rc-claim-ms:${RELEASE_VERSION}
     environment:
       - connectionInfo_uri=jdbc:postgresql://db:5432/registry
       - connectionInfo_username=postgres
@@ -146,7 +146,7 @@ services:
       timeout: 10s
       retries: 10
   certificate-signer:
-    image: dockerhub/sunbird-rc-certificate-signer:${RELEASE_VERSION}
+    image: ghcr.io/sunbird-rc/sunbird-rc-certificate-signer:${RELEASE_VERSION}
     environment:
       - PORT=8079
       - TIME_ZONE=Asia/Kolkata
@@ -161,7 +161,7 @@ services:
       timeout: 10s
       retries: 10
   certificate-api:
-    image: dockerhub/sunbird-rc-certificate-api:${RELEASE_VERSION}
+    image: ghcr.io/sunbird-rc/sunbird-rc-certificate-api:${RELEASE_VERSION}
     environment:
       - PORT=8078
     ports:
@@ -189,7 +189,7 @@ services:
       timeout: 20s
       retries: 10
   notification-ms:
-    image: dockerhub/sunbird-rc-notification-service:${RELEASE_VERSION}
+    image: ghcr.io/sunbird-rc/sunbird-rc-notification-service:${RELEASE_VERSION}
     ports:
       - "8765:8765"
     healthcheck:
@@ -232,7 +232,7 @@ services:
       timeout: 10s
       retries: 10
   public-key-service:
-    image: dockerhub/sunbird-rc-public-key-service
+    image: ghcr.io/sunbird-rc/sunbird-rc-public-key-service
     environment:
       - CONFIG_BASE_PATH=/etc/keys
     ports:
@@ -245,7 +245,7 @@ services:
     volumes:
       - ./imports:/etc/keys
   context-proxy-service:
-    image: dockerhub/sunbird-rc-context-proxy-service
+    image: ghcr.io/sunbird-rc/sunbird-rc-context-proxy-service
     ports:
       - "4400:4400"
     healthcheck:
@@ -254,7 +254,7 @@ services:
       timeout: 10s
       retries: 10
   nginx:
-    image: dockerhub/sunbird-rc-nginx
+    image: ghcr.io/sunbird-rc/sunbird-rc-nginx
     ports:
       - "80:80"
     depends_on:
@@ -276,7 +276,7 @@ services:
       timeout: 10s
       retries: 10
   metrics:
-    image: dockerhub/sunbird-rc-metrics
+    image: ghcr.io/sunbird-rc/sunbird-rc-metrics
     environment:
       CLICK_HOUSE_URL: clickhouse:9000
       CLICKHOUSE_DATABASE: default
@@ -285,12 +285,6 @@ services:
       REDIS_URL: redis:6379
     ports:
       - "8070:8070"
-    healthcheck:
-      test:
-        [ "CMD-SHELL", "wget -nv -t1 --spider http://localhost:8070/health || exit 1" ]
-      interval: 30s
-      timeout: 10s
-      retries: 10
     depends_on:
       kafka:
         condition: service_healthy
@@ -301,7 +295,7 @@ services:
     ports:
       - "6379:6379"
   digilocker-certificate-api:
-    image: dockerhub/sunbird-rc-digilocker-certificate-api
+    image: ghcr.io/sunbird-rc/sunbird-rc-digilocker-certificate-api
     volumes:
       - ./services/digilocker-certificate-api/config/:/go/config/
     ports:
@@ -313,7 +307,7 @@ services:
       DIGILOCKER_AUTH_KEYNAME: x-digilocker-hmac
       PORT: 8087
   bulk_issuance:
-    image: dockerhub/sunbird-rc-bulk-issuance
+    image: ghcr.io/sunbird-rc/sunbird-rc-bulk-issuance
     ports:
       - "5665:5665"
     environment:
