@@ -1,5 +1,5 @@
 
-IMAGE:=dockerhub/sunbird-rc-public-key-service
+IMAGE:=ghcr.io/sunbird-rc/sunbird-rc-public-key-service
 
 test: docker
 	@docker-compose -f api-test-docker-compose.yml up -d

@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: dockerhub/sunbird-rc-context-proxy-service
+  repository: ghcr.io/sunbird-rc/sunbird-rc-context-proxy-service
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
