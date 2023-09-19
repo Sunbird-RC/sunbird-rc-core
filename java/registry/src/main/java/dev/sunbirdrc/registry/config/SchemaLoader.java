@@ -8,6 +8,7 @@ import dev.sunbirdrc.registry.service.ISearchService;
 import dev.sunbirdrc.registry.service.SchemaService;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.validators.IValidate;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,12 +50,15 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 				try {
 					schemaService.addSchema(JsonNodeFactory.instance.objectNode().set(Schema, schemaNode));
 				} catch (Exception e) {
-					logger.error("Failed loading schema to definition manager:", e);
+					logger.error("Failed loading schema to definition manager: {}", ExceptionUtils.getStackTrace(e));
 				}
 			}
-			logger.info("Loaded {} schema from DB", searchResults.get(Schema).size());
+			logger.error("Loaded {} schema from DB", searchResults.get(Schema).size());
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("Exception occurred while loading schema from db: {}", ExceptionUtils.getStackTrace(e));
+		} catch (Exception e) {
+			logger.error("Exception occurred while searching for schemas: {}", ExceptionUtils.getStackTrace(e));
+			logger.error("Make sure, you are running a compatible version of search provider");
 		}
 	}
 }

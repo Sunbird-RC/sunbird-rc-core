@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
@@ -100,6 +101,9 @@ public class KeycloakAdminUtil implements IdentityManager {
     private RoleRepresentation createOrGetRealmRole(String entityName) {
         RolesResource rolesResource = keycloak.realm(providerConfiguration.getRealm()).roles();
         try {
+             return rolesResource.get(entityName).toRepresentation();
+        } catch (NotFoundException ex) {
+            logger.error("Role {} not found. Creating role {}", entityName, entityName);
             RoleRepresentation roleRepresentation = new RoleRepresentation();
             roleRepresentation.setName(entityName);
             rolesResource.create(roleRepresentation);

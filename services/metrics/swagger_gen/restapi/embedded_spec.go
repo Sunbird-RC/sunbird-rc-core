@@ -31,6 +31,23 @@ func init() {
     "version": "1.0.0"
   },
   "paths": {
+    "/health": {
+      "get": {
+        "description": "API to get the notification health status",
+        "tags": [
+          "health"
+        ],
+        "summary": "Get the health status",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
     "/v1/aggregates": {
       "get": {
         "security": [],
@@ -106,6 +123,23 @@ func init() {
     "version": "1.0.0"
   },
   "paths": {
+    "/health": {
+      "get": {
+        "description": "API to get the notification health status",
+        "tags": [
+          "health"
+        ],
+        "summary": "Get the health status",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
     "/v1/aggregates": {
       "get": {
         "security": [],

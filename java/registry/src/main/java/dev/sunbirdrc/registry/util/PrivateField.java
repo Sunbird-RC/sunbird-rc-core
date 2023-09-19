@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.sunbirdrc.registry.exception.EncryptionException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.service.EncryptionService;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -125,7 +126,7 @@ public class PrivateField {
                     processArray((ArrayNode) entryValue, tempFieldName, entry.getKey());
                 }
             } catch (EncryptionException e) {
-                e.printStackTrace();
+                logger.error("Exception occurred in PrivateField: {}", ExceptionUtils.getStackTrace(e));
             }
         }
         return jsonNode;

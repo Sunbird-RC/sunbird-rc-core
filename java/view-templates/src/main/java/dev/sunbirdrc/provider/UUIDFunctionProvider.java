@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.views.IViewFunctionProvider;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,7 @@ public class UUIDFunctionProvider implements IViewFunctionProvider<String> {
         try {
             return new ObjectMapper().writeValueAsString(inputNode);
         } catch (JsonProcessingException e) {
-            logger.error("Error while performing transformation", e);
+            logger.error("Error while performing transformation: {}", ExceptionUtils.getStackTrace(e));
             return "";
         }
     }

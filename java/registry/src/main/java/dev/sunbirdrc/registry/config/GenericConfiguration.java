@@ -34,6 +34,7 @@ import dev.sunbirdrc.registry.util.ServiceProvider;
 import dev.sunbirdrc.validators.IValidate;
 import dev.sunbirdrc.validators.ValidationFilter;
 import dev.sunbirdrc.validators.json.jsonschema.JsonValidationServiceImpl;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -42,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -62,7 +64,13 @@ import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
 import dev.sunbirdrc.registry.identity_providers.providers.IdentityProvider;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+
+import static dev.sunbirdrc.registry.Constants.ATTESTATION_POLICY;
 
 @Configuration
 @EnableRetry
@@ -365,10 +373,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (validationEnabled) {
 			try {
 				registry.addInterceptor(validationInterceptor()).addPathPatterns("/add").order(orderIdx++);
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (CustomException e) {
-				e.printStackTrace();
+			} catch (IOException | CustomException e) {
+				logger.error("Exception occurred while adding validation interceptor: {}", ExceptionUtils.getStackTrace(e));
 			}
 		}
 	}
@@ -426,6 +432,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	 * @return - IElasticService
 	 * @throws IOException
 	 */
+
+	@ConditionalOnProperty(name = "search.providerName", havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService")
 	@Bean
 	public IElasticService elasticService() throws IOException {
 		ElasticServiceImpl elasticService = new ElasticServiceImpl();
@@ -437,11 +445,14 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			elasticService.setUserName(username);
 			elasticService.setPassword(password);
 			elasticService.setScheme(scheme);
-			elasticService.init(iDefinitionsManager.getAllKnownDefinitions());
+			Set<String> indices = new HashSet<>(iDefinitionsManager.getAllKnownDefinitions());
+			indices.add(ATTESTATION_POLICY);
+			elasticService.init(indices);
 		}
 		return elasticService;
 	}
 
+	@ConditionalOnProperty(name = "notification.service.enabled", havingValue = "true")
 	@Bean
 	public NotificationService notificationService() {
 		return new NotificationService(notificationServiceConnInfo, notificationServiceHealthUrl, notificationServiceEnabled);
