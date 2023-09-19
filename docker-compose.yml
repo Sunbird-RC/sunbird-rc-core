@@ -57,7 +57,7 @@ services:
       - elastic_search_auth_enabled=${ELASTIC_SECURITY_ENABLED-false}
       - elastic_search_username=${ELASTIC_SEARCH_USERNAME-elastic}
       - elastic_search_password=${ELASTIC_SEARCH_PASSWORD}
-      - search_providerName=${SEARCH_PROVIDER_NAME-dev.sunbirdrc.registry.service.ElasticSearchService}
+      - search_providerName=${SEARCH_PROVIDER_NAME-dev.sunbirdrc.registry.service.NativeSearchService}
       - sunbird_sso_realm=${KEYCLOAK_REALM-sunbird-rc}
       - sunbird_sso_url=http://keycloak:8080/auth
       - sunbird_sso_admin_client_id=${KEYCLOAK_ADMIN_CLIENT_ID-admin-api}
@@ -134,7 +134,7 @@ services:
       - '9990:9990'
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
   claim-ms:
     image: ghcr.io/sunbird-rc/sunbird-rc-claim-ms:${RELEASE_VERSION}
     environment:
