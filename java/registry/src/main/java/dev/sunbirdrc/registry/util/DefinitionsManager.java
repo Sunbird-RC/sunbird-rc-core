@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
@@ -160,18 +161,13 @@ public class DefinitionsManager implements IDefinitionsManager {
 			String schemaAsText = jsonNode.asText("{}");
 			JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
 			String schemaTitle = schemaJsonNode.get(TITLE).asText();
-			removeDefinition(schemaTitle);
+			definitionMap.remove(schemaTitle);
+		} catch (JsonProcessingException e) {
+			logger.error("Error while processing json node: {}", ExceptionUtils.getStackTrace(e));
+			throw new RuntimeException(e);
 		} catch (Exception e) {
-            logger.error("Failed removing schema from definition manager: {}", ExceptionUtils.getStackTrace(e));
-		}
-	}
-
-	@Override
-	public void removeDefinition(String schema) {
-		try {
-			definitionMap.remove(schema);
-		} catch (Exception e) {
-			logger.error("Failed removing schema {} from definition manager: {}", schema, ExceptionUtils.getStackTrace(e));
+			logger.error("Failed removing schema from definition manager: {}", ExceptionUtils.getStackTrace(e));
+			throw new RuntimeException(e);
 		}
 	}
 

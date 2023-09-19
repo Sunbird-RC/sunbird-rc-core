@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.authorization;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ public class SchemaAuthFilter implements Filter {
             }
             filterChain.doFilter(servletRequest, servletResponse);
         } catch (Exception e) {
-            logger.error("Exception while applying security filters: ", e);
+            logger.error("Exception while applying security filters: {}", ExceptionUtils.getStackTrace(e));
             throw e;
         }
     }

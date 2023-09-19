@@ -44,7 +44,7 @@ public class SchemaService {
 		JsonNode schema = JsonNodeFactory.instance.textNode(vertex.property(Schema.toLowerCase()).value().toString());
 		try {
 			String schemaName = getSchemaName(schema);
-			definitionsManager.removeDefinition(schemaName);
+			definitionsManager.removeDefinition(schema);
 			validator.removeDefinition(schemaName);
 			schemaAuthFilter.removeSchema(schemaName);
 		} catch (JsonProcessingException e) {

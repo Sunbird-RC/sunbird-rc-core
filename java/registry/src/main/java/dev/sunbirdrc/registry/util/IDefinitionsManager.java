@@ -83,7 +83,6 @@ public interface IDefinitionsManager {
     Definition appendNewDefinition(JsonNode jsonNode);
     void appendNewDefinition(Definition definition);
     void removeDefinition(JsonNode jsonNode);
-    void removeDefinition(String schema);
 
     default List<String> getEntitiesWithAnonymousInviteRoles() {
         List<String> anonymousEntities = new ArrayList<>();

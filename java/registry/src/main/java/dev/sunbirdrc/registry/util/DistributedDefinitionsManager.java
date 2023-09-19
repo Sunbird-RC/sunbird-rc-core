@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.registry.middleware.util.Constants;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -176,17 +177,13 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
             String schemaAsText = jsonNode.asText("{}");
             JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
             String schemaTitle = SCHEMA + schemaJsonNode.get(TITLE).asText();
-            removeDefinition(schemaTitle);
+            Jedis jedis = jedisPool.getResource();
+            jedis.del(schemaTitle);
         } catch (JsonProcessingException e) {
+            logger.error("Error while processing json node: {}", ExceptionUtils.getStackTrace(e));
             throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void removeDefinition(String schema) {
-        try(Jedis jedis = jedisPool.getResource()) {
-            jedis.del(schema);
         } catch (Exception e) {
+            logger.error("Failed removing schema from definition manager: {}", ExceptionUtils.getStackTrace(e));
             throw new RuntimeException(e);
         }
     }
