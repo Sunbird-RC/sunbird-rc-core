@@ -73,7 +73,6 @@ class KeycloakWrapper {
 		throw new Error(
 			`API call failed to fetch token from keycloak after ${maxRetries} retries.`
 		)
-		
 	}
 
 	// Get the keycloak client ID of a client

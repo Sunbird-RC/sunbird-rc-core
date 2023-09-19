@@ -24,6 +24,8 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		config.docker_service_name.REGISTRY,
 		config.docker_service_name.KEYCLOAK,
 	]
+	
+	setupOptions.fileStorageEnabled = false
 
 	// Enable redis for distributed systems
 	if (
@@ -43,6 +45,7 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 			config.docker_service_name.CERTIFICATE_SIGHNER,
 			config.docker_service_name.FILE_STORAGE
 		)
+		setupOptions.fileStorageEnabled = true
 	}
 
 	// Set ManagerType
@@ -66,6 +69,7 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 			config.docker_service_name.CERTIFICATE_API,
 			config.docker_service_name.FILE_STORAGE
 		)
+		setupOptions.fileStorageEnabled = true
 	}
 
 	// enable Auxiliary services

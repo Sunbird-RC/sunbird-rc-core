@@ -1,4 +1,3 @@
-
 export interface Config {
 	DEFAULT_ES_PROVIDER_NAME: string
 	DEFAULT_NS_PROVIDER_NAME: string

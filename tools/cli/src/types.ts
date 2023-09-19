@@ -80,6 +80,7 @@ export interface RegistrySetupOptions {
 	signatureEnabled: boolean
 	eventEnabled: boolean
 	enableAttestation: boolean
+	fileStorageEnabled : boolean
 }
 
 export interface RegistryTearDownOptions {
