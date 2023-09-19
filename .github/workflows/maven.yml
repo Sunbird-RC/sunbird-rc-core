@@ -23,13 +23,13 @@ jobs:
     - name: Set up properties
       run: sh configure-dependencies.sh
 #   # debug step
-    - name: Setup upterm session
-      uses: lhotari/action-upterm@v1
-      with:
-        ## limits ssh access and adds the ssh public key for the user which triggered the workflow ie Sreejith-K
-        limit-access-to-actor: true
-    - name: Build and test
-      run: make test
+    # - name: Setup upterm session
+    #   uses: lhotari/action-upterm@v1
+    #   with:
+    #     ## limits ssh access and adds the ssh public key for the user which triggered the workflow ie Sreejith-K
+    #     limit-access-to-actor: true
+    # - name: Build and test
+    #   run: make test
 #  test:
 #    runs-on: ubuntu-latest
 #    steps:
