@@ -6,6 +6,7 @@ import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.registry.model.dto.CreateEntityMessage;
 import dev.sunbirdrc.registry.service.RegistryService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
@@ -56,8 +57,8 @@ public class RegistryAsyncServiceImpl extends RegistryServiceImpl implements Reg
 			}
 
 			@Override
-			public void onFailure(@NotNull Throwable ex) {
-				logger.error("Unable to send message=[{}] with offset=[{}] due to : {}", message, ex.getMessage(), ex);
+			public void onFailure(@NotNull Throwable e) {
+				logger.error("Unable to send message=[{}] due to : {}", message, ExceptionUtils.getStackTrace(e));
 			}
 		});
 		return transactionId;
