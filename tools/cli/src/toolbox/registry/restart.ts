@@ -20,17 +20,13 @@ export default async (toolbox: Toolbox, soft: boolean) => {
 		await system.run('docker compose ps --format json')
 	)
 
-	let activeContainer  = rawJson.map((i:GitRawJson) => i.Service).join(' ');
+	let activeContainer = rawJson.map((i: GitRawJson) => i.Service).join(' ')
 
-
-	let restartComamnd = 'docker compose up --force-recreate -d ' + activeContainer;
-
-	console.log(restartComamnd);
+	let restartComamnd =
+		'docker compose up --force-recreate -d ' + activeContainer
 
 	await system
-		.exec(
-			soft ? 'docker compose restart' : restartComamnd
-		)
+		.exec(soft ? 'docker compose restart' : restartComamnd)
 		.catch((error: Error) => {
 			events.emit('registry.create', {
 				status: 'error',

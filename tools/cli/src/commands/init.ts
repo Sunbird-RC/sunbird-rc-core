@@ -225,6 +225,7 @@ export default {
 		// ANSI escape codes to format the link
 		const formattedLink = `\u001b]8;;${url}\u0007${linkText}\u001b]8;;\u0007`
 
+		print.info('')
 		print.info(print.colors.green.bold(`Ctrl click here - ${formattedLink}.`))
 
 		// Checks for auxiliary services if needed

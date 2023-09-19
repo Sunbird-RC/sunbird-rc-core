@@ -24,7 +24,7 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		config.docker_service_name.REGISTRY,
 		config.docker_service_name.KEYCLOAK,
 	]
-	
+
 	setupOptions.fileStorageEnabled = false
 
 	// Enable redis for distributed systems
@@ -192,6 +192,9 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 			pair.private,
 			'private'
 		)
+		deafultTemplateForKeys.issuers.default['$comment'] =
+			'The above are auto generated keys !!'
+
 		// Convert the new object to JSON
 		const newConfigJson = JSON.stringify(deafultTemplateForKeys, null, 2)
 
