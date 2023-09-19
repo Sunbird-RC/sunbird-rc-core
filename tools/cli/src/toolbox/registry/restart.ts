@@ -3,7 +3,7 @@
 
 import { allUp } from './status'
 
-import { Toolbox } from '../../types'
+import { GitRawJson, Toolbox } from '../../types'
 
 // Accept a toolbox, return a registry restart viewer
 export default async (toolbox: Toolbox, soft: boolean) => {
@@ -15,9 +15,21 @@ export default async (toolbox: Toolbox, soft: boolean) => {
 		message: 'Restarting all registry containers',
 	})
 
+	// List containers
+	const rawJson = JSON.parse(
+		await system.run('docker compose ps --format json')
+	)
+
+	let activeContainer  = rawJson.map((i:GitRawJson) => i.Service).join(' ');
+
+
+	let restartComamnd = 'docker compose up --force-recreate -d ' + activeContainer;
+
+	console.log(restartComamnd);
+
 	await system
 		.exec(
-			soft ? 'docker compose restart' : 'docker compose up --force-recreate -d'
+			soft ? 'docker compose restart' : restartComamnd
 		)
 		.catch((error: Error) => {
 			events.emit('registry.create', {

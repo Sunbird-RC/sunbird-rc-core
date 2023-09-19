@@ -126,3 +126,18 @@ export interface RegistryHealth {
 export interface SignatureOptions {
 	signatureEnabled: boolean
 }
+
+export interface GitRawJson {
+	ID: string;
+	Name: string;
+	Image: string;
+	Command: string;
+	Project: string;
+	Service: string;
+	Created: number;
+	State: string;
+	Status: string;
+	Health: string;
+	ExitCode: number;
+	Publishers: any[]; // You can specify a more specific type if needed
+}
