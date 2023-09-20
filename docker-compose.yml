@@ -328,7 +328,7 @@ services:
       - '8087:8087'
     environment:
       KEYCLOAK_CLIENT_ID: admin-api
-      KEYCLOAK_CLIENT_SECRET: 61fdeaf0-9654-4c12-b7ff-f7116c9e4fca
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_SECRET}
       DIGILOCKER_HMAC_AUTHKEY: ${DIGILOCKER_HMAC_AUTHKEY}
       DIGILOCKER_AUTH_KEYNAME: x-digilocker-hmac
       PORT: 8087

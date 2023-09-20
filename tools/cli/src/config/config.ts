@@ -77,5 +77,5 @@ export let config: Config = {
 	},
 	auxiliary_services: auxiliary_services,
 	definationMangerTypes: definationsManagers,
-	maximumRetries: 30,
+	maximumRetries: 100,
 }

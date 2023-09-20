@@ -104,7 +104,7 @@ export default {
 				message:
 					print.colors.reset('Enable authentication') +
 					print.colors.yellow(
-						`(Enabling this will help you authenticate the enitity for crud operations based on the roles configurations defined in your schema)`
+						`(Enabling this will help you authenticate the enitity for crud operations based on the roles configuration defined in your schema)`
 					),
 				name: 'enableRegistryAuthentication',
 				initial: true,
