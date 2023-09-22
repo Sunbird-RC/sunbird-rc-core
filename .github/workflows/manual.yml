@@ -15,15 +15,18 @@ on:
 env:
   DOCKER_REGISTRY: ghcr.io
   DOCKER_NAMESPACE: sunbird-rc
-  REGISTRY_IMAGE_NAME: sunbird-rc-core
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs: # This workflow contains a single job called "greet"
-  release:
+  release-all:
     name: Build Docker Images and Push to Github Container Registry
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    needs: [release-sunbird-rc-core]
 
+  install-dependencies:
+    name: Install and configure dependencies
+    runs-on: ubuntu-latest
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps: # Runs a single command using the runners shell
       - name: Checkout Code
@@ -50,18 +53,23 @@ jobs: # This workflow contains a single job called "greet"
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Configure Dependencies
         run: |
-            sh configure-dependencies.sh;
-            cd java && ./mvnw clean install;
-            rm -rf java/claim/target/*.jar;
-            cd target;
-            rm -rf *;
-            jar xvf ../java/registry/target/registry.jar;
-            cp ../java/Dockerfile ./;
+          sh configure-dependencies.sh
+          cd java && ./mvnw clean install
+          rm -rf java/claim/target/*.jar
+          cd ../java/target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./
+
+  release-sunbird-rc-core:
+    name: Build and release Sunbird-RC core
+    needs: install-dependencies
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: sunbird-rc-core
+    steps:
       - name: Extract metadata (tags, labels) for Sunbird-RC Core
         id: registry-meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_NAMESPACE }}/${{ env.REGISTRY_IMAGE_NAME }}
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
             type=raw,value=${{ inputs.version }}
@@ -72,6 +80,3 @@ jobs: # This workflow contains a single job called "greet"
           push: true
           tags: ${{ steps.registry-meta.outputs.tags }}
           labels: ${{ steps.registry-meta.outputs.labels }}
-            
-        
-        
