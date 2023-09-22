@@ -59,7 +59,7 @@ jobs: # This workflow contains a single job called "greet"
           sh configure-dependencies.sh
           cd java && ./mvnw clean install
           rm -rf java/claim/target/*.jar
-          cd ../java/target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./
+          jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./
 
   release-sunbird-rc-core:
     name: Build and release Sunbird-RC core
