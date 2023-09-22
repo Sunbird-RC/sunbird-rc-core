@@ -57,10 +57,7 @@ public class PrivateField {
     public JsonNode replacePrivateFields(JsonNode rootNode, List<String> privatePropertyLst, Map<String, Object> privateFieldMap) throws IOException {
         if (privatePropertyLst != null) {
             DocumentContext documentContext = JsonPath.parse(rootNode.toString());
-            privateFieldMap.forEach((key, value) -> {
-                String privateFieldValue = value.toString();
-                documentContext.set(key, privateFieldValue);
-            });
+            privateFieldMap.forEach(documentContext::set);
             return JSONUtil.convertStringJsonNode(documentContext.jsonString());
         }
         return rootNode;

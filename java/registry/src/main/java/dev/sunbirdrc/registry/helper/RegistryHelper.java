@@ -310,7 +310,7 @@ public class RegistryHelper {
             }
             resultNode = vTransformer.transform(viewTemplate, resultNode);
         } else if (encryptionEnabled) {
-            decryptionHelper.getDecryptedJson(resultNode);
+            resultNode = decryptionHelper.getDecryptedJson(resultNode);
         }
         logger.debug("readEntity ends");
         if(isEventsEnabled) {
