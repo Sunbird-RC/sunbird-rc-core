@@ -144,6 +144,12 @@ paths:
                 $ref: '#/components/schemas/GenerateDidDTO'
       responses:
         '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DidResponseDTO'
           description: DID Generated
         '400':
           description: Bad request
@@ -162,6 +168,10 @@ paths:
             type: string
       responses:
         '200':
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/DidResponseDTO'
           description: DID resolved
         '400':
           description: Bad Request
@@ -182,6 +192,10 @@ paths:
               $ref: '#/components/schemas/SignJsonDTO'
       responses:
         '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedVCDTO'
           description: VC Signed
         '400':
           description: Bad Request
@@ -202,6 +216,11 @@ paths:
               $ref: '#/components/schemas/VerifyJsonDTO'
       responses:
         '201':
+          content:
+            application/json:
+              schema:
+                type: boolean
+                example: true
           description: ''
 components:
   schemas:
@@ -291,9 +310,73 @@ components:
           type: string
       required:
       - DID
+    DidResponseDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          example: did:rcw:71364c7e-0abe-49cf-9269-4661699f274b
+        alsoKnownAs:
+          description: AlsoKnownAs property is a unique combination aadhaar and username.
+          type: array
+          items:
+            type: string
+            example: ramesh@gmail.com
+        service:
+          description: An array of services that are used, for example a user registration
+            service.
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              serviceEndpoint:
+                type: object
+            additionalProperties: true
+            example: '{
+                        "id": "IdentityHub",
+                        "type": "IdentityHub",
+                        "serviceEndpoint": {
+                            "@context": "schema.identity.foundation/hub",
+                            "@type": "UserServiceEndpoint",
+                            "instance": [
+                                "did:test:hub.id"
+                            ]
+                        }
+                    }'
+        verificationMethod:
+          type: object
+          properties:
+            id:
+              type: string
+              example: auth-key
+            type:
+              type: string
+              example: RS256
+            publicKeyJwk:
+              type: object
+            controller:
+              type: string
+              example: did:rcw:71364c7e-0abe-49cf-9269-4661699f274b
+          description: The method of DID
+        authentication:
+          type: string
+          example: auth-key
+    SignedVCDTO:
+      type: object
+      properties:
+        publicKey:
+          type: object
+          description: Public Key of issuer
+          example: '{"kty": "EC","crv": "secp256k1","x": "1iTtnvgP141NM-4qC6BgmkeTAjV7u-gZWni71G7cAKo","y": "VSGqq6yS0w7riXXRqFxXwKvHgIpQaUNMlFQKh-xgKMI"}'
+        signed:
+          type: string
+          description: Signed VC
   securitySchemes:
     Authorization:
       type: apiKey
       name: Token
       in: header
-        
