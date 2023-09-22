@@ -5,8 +5,7 @@ name: Build and Publish
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
 on:
-  workflow_dispatch:
-    # Inputs the workflow accepts.
+  workflow_dispatch: # Inputs the workflow accepts.
     inputs:
       version:
         description: 'Enter the version number of the build to be generated'
@@ -19,16 +18,14 @@ env:
   REGISTRY_IMAGE_NAME: sunbird-rc-core
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:
-  # This workflow contains a single job called "greet"
+jobs: # This workflow contains a single job called "greet"
   release:
     name: Build Docker Images and Push to Github Container Registry
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-    # Runs a single command using the runners shell
+    steps: # Runs a single command using the runners shell
       - name: Checkout Code
         uses: actions/checkout@v3
       - name: Set up JDK 11
@@ -52,9 +49,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Configure Dependencies
-        uses: actions/github-script@v6
-        with:
-          script: |
+        run: |
             sh configure-dependencies.sh;
             cd java && ./mvnw clean install;
             rm -rf java/claim/target/*.jar;
