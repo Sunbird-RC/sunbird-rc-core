@@ -3,13 +3,13 @@ IMAGE_NAME=ghcr.io/sunbird-rc/encryption-service
 
 build:
 	rm -rf ./target
-	mvn clean install -DSkipTests
+	mvn clean install
 
-build-image: build
-	cd target && jar xvf egov-enc-service-1.1.4.jar && cp ../Dockerfile . && docker build -t $(IMAGE_NAME) .
+docker: build
+	docker build -t $(IMAGE_NAME) .
 
-release: build-image
+release: docker
 	docker tag $(IMAGE_NAME):latest $(IMAGE_NAME):$(RELEASE_VERSION)
-#    @docker push $(IMAGE_NAME):latest
-#    @docker push $(IMAGE_NAME):$(RELEASE_VERSION)
+    @docker push $(IMAGE_NAME):latest
+    @docker push $(IMAGE_NAME):$(RELEASE_VERSION)
 

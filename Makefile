@@ -20,6 +20,7 @@ build: java/registry/target/registry.jar
 	make -C services/metrics docker
 	make -C services/digilocker-certificate-api docker
 	make -C services/bulk_issuance docker
+	make -C services/encryption-service docker
 	docker build -t ghcr.io/sunbird-rc/sunbird-rc-nginx .
 
 java/registry/target/registry.jar: $(SOURCES)
