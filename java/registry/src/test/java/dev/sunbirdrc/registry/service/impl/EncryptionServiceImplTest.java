@@ -24,6 +24,8 @@ import org.springframework.web.client.RestClientException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.Collections;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -45,8 +47,6 @@ public class EncryptionServiceImplTest{
 	@Mock
 	private RetryRestTemplate retryRestTemplate;
 	@Mock
-	private Gson gson;
-	@Mock
 	public SunbirdRCInstrumentation watch;
 	@InjectMocks
 	private EncryptionServiceImpl encryptionServiceImpl;
@@ -55,6 +55,7 @@ public class EncryptionServiceImplTest{
 	public void setUp(){
 		MockitoAnnotations.initMocks(this);
 		ReflectionTestUtils.setField(encryptionServiceImpl, "encryptionEnabled", true);
+		ReflectionTestUtils.setField(encryptionServiceImpl, "gson", new Gson());
 	}
 
 	@Test
@@ -62,7 +63,7 @@ public class EncryptionServiceImplTest{
 		when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class))).thenAnswer(new Answer<ResponseEntity<String>>(){
 			@Override
 			public ResponseEntity<String>  answer(InvocationOnMock invocation) throws Throwable {
-				String response = "success";
+				String response = Collections.singletonList("success").toString();
 				return ResponseEntity.accepted().body(response);
 			}
 		});
@@ -77,13 +78,10 @@ public class EncryptionServiceImplTest{
 				Map responseMap = new HashMap();
 				responseMap.put("A","1");
 				responseMap.put("B","2");
-				return ResponseEntity.accepted().body(responseMap.toString());
+				List<Map> list = Collections.singletonList(responseMap);
+				return ResponseEntity.accepted().body(list.toString());
 			}
 		});
-
-		when(gson.toJson(any(Object.class))).thenReturn(new String());
-		when(gson.fromJson(any(String.class),any(Type.class))).thenReturn(new HashMap<String, Object>());
-		doNothing().when(watch).start(isA(String.class));
 		Map<String, Object> propertyMap = new HashMap<String, Object>();
 		propertyMap.put("school", "BVM");
 		propertyMap.put("name", "john");
@@ -131,10 +129,6 @@ public class EncryptionServiceImplTest{
 				return ResponseEntity.accepted().body(responseMap.toString());
 			}
 		});
-
-		when(gson.toJson(any(Object.class))).thenReturn(new String());
-		when(gson.fromJson(any(String.class),any(Type.class))).thenReturn(new HashMap<String, Object>());
-		doNothing().when(watch).start(isA(String.class));
 		Map<String, Object> propertyMap = new HashMap<String, Object>();
 		propertyMap.put("school", "BVM");
 		propertyMap.put("name", "john");
