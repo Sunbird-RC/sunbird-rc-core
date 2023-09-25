@@ -5,8 +5,7 @@ name: Build and Publish
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
 on:
-  workflow_dispatch:
-    # Inputs the workflow accepts.
+  workflow_dispatch: # Inputs the workflow accepts.
     inputs:
       version:
         description: 'Enter the version number of the build to be generated'
@@ -16,19 +15,23 @@ on:
 env:
   DOCKER_REGISTRY: ghcr.io
   DOCKER_NAMESPACE: sunbird-rc
-  REGISTRY_IMAGE_NAME: sunbird-rc-core
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:
-  # This workflow contains a single job called "greet"
-  release:
+jobs: # This workflow contains a single job called "greet"
+  release-all:
     name: Build Docker Images and Push to Github Container Registry
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    needs: [release-sunbird-rc-core]
     steps:
-    # Runs a single command using the runners shell
+      - name: Test
+        run: echo "Test"
+
+  install-dependencies:
+    name: Install and configure dependencies
+    runs-on: ubuntu-latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps: # Runs a single command using the runners shell
       - name: Checkout Code
         uses: actions/checkout@v3
       - name: Set up JDK 11
@@ -52,21 +55,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Configure Dependencies
-        uses: actions/github-script@v6
-        with:
-          script: |
-            sh configure-dependencies.sh;
-            cd java && ./mvnw clean install;
-            rm -rf java/claim/target/*.jar;
-            cd target;
-            rm -rf *;
-            jar xvf ../java/registry/target/registry.jar;
-            cp ../java/Dockerfile ./;
+        run: |
+          sh configure-dependencies.sh
+          cd java && ./mvnw clean install
+          rm -rf java/claim/target/*.jar
+          jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./
+
+  release-sunbird-rc-core:
+    name: Build and release Sunbird-RC core
+    needs: install-dependencies
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: sunbird-rc-core
+    steps:
       - name: Extract metadata (tags, labels) for Sunbird-RC Core
         id: registry-meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_NAMESPACE }}/${{ env.REGISTRY_IMAGE_NAME }}
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
             type=raw,value=${{ inputs.version }}
@@ -77,6 +83,3 @@ jobs:
           push: true
           tags: ${{ steps.registry-meta.outputs.tags }}
           labels: ${{ steps.registry-meta.outputs.labels }}
-            
-        
-        
