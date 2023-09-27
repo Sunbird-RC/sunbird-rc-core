@@ -13,8 +13,7 @@ import (
 )
 
 // NewGetV1MetricsParams creates a new GetV1MetricsParams object
-//
-// There are no default values defined in the spec.
+// no default values defined in spec.
 func NewGetV1MetricsParams() GetV1MetricsParams {
 
 	return GetV1MetricsParams{}

@@ -5,8 +5,11 @@ import path from 'path'
 
 import KeycloakWrapper from './helpers/keycloak'
 import { allUp } from './status'
+import { config } from '../../config/config'
+var keypair = require('keypair')
 
 import { RegistrySetupOptions, Toolbox } from '../../types'
+import formatKey from '../utils'
 
 // Accept a toolbox and configuration, create a registry instance in return
 export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
@@ -16,6 +19,80 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		pass: setupOptions.keycloakAdminPass,
 		realm: setupOptions.realmName,
 	})
+	let enableTheseServices = [
+		config.docker_service_name.DB,
+		config.docker_service_name.REGISTRY,
+		config.docker_service_name.KEYCLOAK,
+	]
+
+	setupOptions.fileStorageEnabled = false
+
+	// Enable redis for distributed systems
+	if (
+		setupOptions?.managerType === Object.keys(config.definationMangerTypes)[1]
+	) {
+		enableTheseServices.push(config.docker_service_name.REDIS)
+	}
+
+	//Enable claims for attestation work flows
+	if (setupOptions?.enableAttestation) {
+		enableTheseServices.push(config.docker_service_name.CLAIMS_MS)
+	}
+
+	//Enable Certificate Signer service
+	if (setupOptions?.signatureEnabled) {
+		enableTheseServices.push(
+			config.docker_service_name.CERTIFICATE_SIGHNER,
+			config.docker_service_name.FILE_STORAGE
+		)
+		setupOptions.fileStorageEnabled = true
+	}
+
+	// Set ManagerType
+	setupOptions.managerType =
+		config.definationMangerTypes[setupOptions?.managerType]
+
+	// Check and Enable Elastic Search
+	if (setupOptions?.elasticSearchEnabled) {
+		setupOptions['searchProvideName'] = config.DEFAULT_ES_PROVIDER_NAME
+		enableTheseServices.unshift(config.docker_service_name.ES)
+	} else setupOptions['searchProvideName'] = config.DEFAULT_NS_PROVIDER_NAME
+
+	// Check and Enable Kafka
+	if (setupOptions?.asyncEnabled) {
+		enableTheseServices.push(config.docker_service_name.KAFKA)
+	}
+
+	// enable certificate API service
+	if (setupOptions?.enableVCIssuance) {
+		enableTheseServices.push(
+			config.docker_service_name.CERTIFICATE_API,
+			config.docker_service_name.FILE_STORAGE
+		)
+		setupOptions.fileStorageEnabled = true
+	}
+
+	// enable Auxiliary services
+	if (setupOptions?.auxiliaryServicesToBeEnabled.length > 0) {
+		setupOptions?.auxiliaryServicesToBeEnabled.forEach((i: string) =>
+			enableTheseServices.push(config.auxiliary_services[i])
+		)
+	}
+
+	// Check for metrics and enable the events enabled flag on for registry
+	if (
+		setupOptions.auxiliaryServicesToBeEnabled.includes(
+			Object.keys(config.auxiliary_services)[4]
+		)
+	) {
+		setupOptions.eventEnabled = true
+	} else setupOptions.eventEnabled = false
+
+	// console.log(setupOptions);
+	let dockerCommand = 'docker compose up -d '
+	let conditionalEnablinOfDockerCommand =
+		dockerCommand + enableTheseServices.join(' ')
+	// console.log(conditionalEnablinOfDockerCommand);
 
 	// Copy over config files with the proper variables
 	events.emit('registry.create', {
@@ -100,6 +177,36 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 				})
 			})
 	}
+
+	// Auto generation of keys logic
+	if (setupOptions.autoGenerateKeys) {
+		// Specify the path to the config.json file
+		const configFilePath = 'imports/config.json'
+		let deafultTemplateForKeys = require(configFilePath)
+		var pair = keypair()
+		deafultTemplateForKeys.issuers.default.publicKey = formatKey(
+			pair.public,
+			'public'
+		)
+		deafultTemplateForKeys.issuers.default.privateKey = formatKey(
+			pair.private,
+			'private'
+		)
+		deafultTemplateForKeys.issuers.default['$comment'] =
+			'The above are auto generated keys !!'
+
+		// Convert the new object to JSON
+		const newConfigJson = JSON.stringify(deafultTemplateForKeys, null, 2)
+
+		// Write the new JSON content to the file, replacing the old content
+		filesystem.write(configFilePath, newConfigJson)
+		events.emit('registry.create', {
+			status: 'success',
+			operation: 'Auto generating keys',
+			message: 'Successfully generated keys for signing',
+		})
+	}
+
 	events.emit('registry.create', {
 		status: 'success',
 		operation: 'copying-files',
@@ -110,7 +217,8 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 	events.emit('registry.create', {
 		status: 'progress',
 		operation: 'starting-containers',
-		message: 'Starting all services',
+		message:
+			'Starting all services. Please be patient, as this operation may require some time to complete.',
 	})
 	//merge multiple env files
 	await system.run('cat .env-cli >> .env').catch((error: Error) => {
@@ -120,7 +228,7 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 			message: `An unexpected error occurred while merging multiple env files: ${error.message}`,
 		})
 	})
-	await system.exec('docker compose up -d').catch((error: Error) => {
+	await system.exec(conditionalEnablinOfDockerCommand).catch((error: Error) => {
 		events.emit('registry.create', {
 			status: 'error',
 			operation: 'starting-containers',

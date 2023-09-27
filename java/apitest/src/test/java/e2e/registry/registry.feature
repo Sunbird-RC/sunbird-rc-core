@@ -223,7 +223,7 @@ Feature: Registry api tests
     When method post
     Then status 200
     And response.result.Teacher.transactionId.length > 0
-    * sleep(3000)
+    * sleep(7000)
   # get teacher info
     Given url registryUrl
     And path 'api/v1/Teacher/search'
@@ -468,10 +468,10 @@ Feature: Registry api tests
     And response.params.errmsg == "Schema 'Teacher1' not found"
  # patch unavailable schema with sign
     Given url registryUrl
-    And path '/api/v1/Teacher/sign'
+    And path '/api/v1/Teacher1/sign'
     And header Authorization = admin_token
     And request read('TeacherRequest.json')
-    When method patch
+    When method get
     Then status 404
     Then response.params.status =="UNSUCCESSFUL"
     And response.params.errmsg == "Schema 'Teacher1' not found"

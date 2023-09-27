@@ -7,7 +7,8 @@ import { CLIEvent, Toolbox } from '../types'
 export default {
 	name: 'restart',
 	run: async (toolbox: Toolbox) => {
-		const { environment, events, parameters, print, registry, handleEvent } = toolbox
+		const { environment, events, parameters, print, registry, handleEvent } =
+			toolbox
 
 		// Listen to events and show progress
 

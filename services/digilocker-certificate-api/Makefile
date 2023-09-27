@@ -1,4 +1,4 @@
-IMAGE:=dockerhub/sunbird-rc-digilocker-certificate-api
+IMAGE:=ghcr.io/sunbird-rc/sunbird-rc-digilocker-certificate-api
 
 docker:
 	@docker build -t $(IMAGE) .

@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: dockerhub/sunbird-rc-notification-service
+  repository: ghcr.io/sunbird-rc/sunbird-rc-notification-service
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
