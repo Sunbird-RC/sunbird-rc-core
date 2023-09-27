@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
+import dev.sunbirdrc.pojos.UniqueIdentifierFields;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,6 +137,23 @@ public class DistributedDefinitionsManager implements IDefinitionsManager {
                 JsonNode schemaJson = objectMapper.readTree(value);
                 Definition definition = new Definition(schemaJson);
                 return definition.getOsSchemaConfiguration().getOwnershipAttributes();
+            }
+            return Collections.emptyList();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        } catch (NullPointerException e) {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public List<UniqueIdentifierFields> getUniqueIdentifierFields(String entity) {
+        try(Jedis jedis = jedisPool.getResource()) {
+            String value = jedis.get(SCHEMA + entity);
+            if(value != null) {
+                JsonNode schemaJson = objectMapper.readTree(value);
+                Definition definition = new Definition(schemaJson);
+                return definition.getOsSchemaConfiguration().getUniqueIdentifierFields();
             }
             return Collections.emptyList();
         } catch (JsonProcessingException e) {

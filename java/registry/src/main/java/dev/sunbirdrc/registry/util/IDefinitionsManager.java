@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
+import dev.sunbirdrc.pojos.UniqueIdentifierFields;
 
 import java.util.*;
 
@@ -73,6 +74,9 @@ public interface IDefinitionsManager {
         return excludeFields;
     }
     List<OwnershipsAttributes> getOwnershipAttributes(String entity);
+
+    List<UniqueIdentifierFields> getUniqueIdentifierFields(String entity);
+
     default Object getCredentialTemplate(String entityName) {
         return getDefinition(entityName).getOsSchemaConfiguration().getCredentialTemplate();
     }

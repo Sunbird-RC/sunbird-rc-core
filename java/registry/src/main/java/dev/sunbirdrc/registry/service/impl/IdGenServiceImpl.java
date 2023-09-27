@@ -24,15 +24,18 @@ public class IdGenServiceImpl implements IdGenService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${idgen.idgenURL}")
+    @Value("${idgen.createURL}")
     private String idgenURL;
 
+    @Value("${idgen.host}")
+    private String idgenBase;
+
     @Override
-    public Object createUniqueID(ObjectNode reqNode) throws UniqueIdentifierException.UnreachableException, UniqueIdentifierException.CreationException {
+    public Object createUniqueID (ObjectNode reqNode) throws UniqueIdentifierException.UnreachableException, UniqueIdentifierException.CreationException {
         ResponseEntity<String> response = null;
         JsonNode result = null;
         try {
-            response = retryRestTemplate.postForEntity(idgenURL,reqNode);
+            response = retryRestTemplate.postForEntity( idgenBase+idgenURL, reqNode);
             result = objectMapper.readTree(response.getBody());
             logger.info("Successfully generated unique ID");
         } catch (RestClientException ex) {
@@ -43,6 +46,11 @@ public class IdGenServiceImpl implements IdGenService {
             throw new UniqueIdentifierException().new CreationException(e.getMessage());
         }
         return result;
+    }
+
+    @Override
+    public Object createUniqueIDsForAnEntity(String enitiyName, JsonNode inputNode) throws UniqueIdentifierException.UnreachableException, UniqueIdentifierException.CreationException {
+        return null;
     }
 
 
