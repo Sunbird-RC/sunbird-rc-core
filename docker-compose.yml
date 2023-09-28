@@ -352,3 +352,10 @@ services:
       test:
         wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit
         1
+  admin_portal:
+    image: ghcr.io/sunbird-rc/sunbird-rc-admin-portal:${ADMIN_RELEASE_VERSION-main}
+    ports:
+      - '8085:8085'
+    volumes:
+      - ./imports/admin-portal/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./imports/admin-portal/config.json:/usr/share/nginx/html/admin/assets/config/config.json
