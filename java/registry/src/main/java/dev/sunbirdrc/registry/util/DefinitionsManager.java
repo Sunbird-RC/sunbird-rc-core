@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
+import dev.sunbirdrc.pojos.UniqueIdentifierFields;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -125,6 +126,16 @@ public class DefinitionsManager implements IDefinitionsManager {
 		Definition entityDefinition = definitionMap.get(entity);
 		if (entityDefinition != null) {
 			return entityDefinition.getOsSchemaConfiguration().getOwnershipAttributes();
+		} else {
+			return Collections.emptyList();
+		}
+	}
+
+	@Override
+	public List<UniqueIdentifierFields> getUniqueIdentifierFields(String entity) {
+		Definition entityDefinition = definitionMap.get(entity);
+		if (entityDefinition != null) {
+			return entityDefinition.getOsSchemaConfiguration().getUniqueIdentifierFields();
 		} else {
 			return Collections.emptyList();
 		}

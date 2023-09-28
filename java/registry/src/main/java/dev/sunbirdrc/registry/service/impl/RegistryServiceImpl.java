@@ -8,9 +8,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.MessageFactory;
 import dev.sunbirdrc.elastic.IElasticService;
-import dev.sunbirdrc.pojos.ComponentHealthInfo;
-import dev.sunbirdrc.pojos.HealthCheckResponse;
-import dev.sunbirdrc.pojos.HealthIndicator;
+import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.registry.dao.*;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
@@ -41,6 +39,7 @@ import org.sunbird.akka.core.ActorCache;
 import org.sunbird.akka.core.MessageProtos;
 import org.sunbird.akka.core.Router;
 
+import javax.json.JsonObject;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -127,6 +126,9 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SchemaService schemaService;
 
+    @Autowired
+    private IdGenService idGenService;
+
     @Autowired(required = false)
     private List<HealthIndicator> healthIndicators;
     public HealthCheckResponse health(Shard shard) throws Exception {
@@ -212,6 +214,7 @@ public class RegistryServiceImpl implements RegistryService {
         String vertexLabel = rootNode.fieldNames().next();
         Definition definition = null;
 
+        idGenService.createUniqueIDsForAnEntity(vertexLabel, rootNode);
         systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
         if (encryptionEnabled) {
