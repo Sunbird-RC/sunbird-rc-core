@@ -861,13 +861,16 @@ public class RegistryHelper {
         }
         return result;
     }
-    public JsonNode searchEntitiesByUserId(String entity, String userId, String viewTemplateId) throws Exception {
-        ObjectNode searchByOwnerQuery = getSearchByOwnerQuery(entity, userId);
-        if (!Strings.isEmpty(viewTemplateId)) {
-            searchByOwnerQuery.put(VIEW_TEMPLATE_ID, viewTemplateId);
-        }
-        return searchEntity(searchByOwnerQuery, nativeSearchService);
-    }
+    public JsonNode searchEntitiesByUserId(String entityName, String userId, String viewTemplateId, int page, int pageSize) throws Exception {
+       ObjectNode searchByOwnerQuery = getSearchByOwnerQuery(entityName, userId);
+       if (!Strings.isEmpty(viewTemplateId)) {
+           searchByOwnerQuery.put(VIEW_TEMPLATE_ID, viewTemplateId);
+       }
+       int offset = (page - 1) * pageSize;
+       searchByOwnerQuery.put("limit", pageSize);
+       searchByOwnerQuery.put("offset", offset);
+       return searchEntity(searchByOwnerQuery, nativeSearchService);
+   }
 
     public void authorizeInviteEntity(HttpServletRequest request, String entityName) throws Exception {
         List<String> inviteRoles = definitionsManager.getDefinition(entityName)

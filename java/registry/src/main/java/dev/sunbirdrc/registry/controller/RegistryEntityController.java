@@ -640,42 +640,41 @@ public class RegistryEntityController extends AbstractController {
         JsonNode entityNode = node.get(entityName);
         return entityNode != null ? entityNode : node;
     }
-
     @RequestMapping(value = "/api/v1/{entityName}", method = RequestMethod.GET)
-    public ResponseEntity<Object> getEntityByToken(@PathVariable String entityName, HttpServletRequest request,
-                                                   @RequestHeader(required = false) String viewTemplateId) throws RecordNotFoundException {
-        ResponseParams responseParams = new ResponseParams();
-        Response response = new Response(Response.API_ID.GET, "OK", responseParams);
-        try {
-            checkEntityNameInDefinitionManager(entityName);
-            String userId = registryHelper.getUserId(request, entityName);
-            if (!Strings.isEmpty(userId)) {
-                JsonNode responseFromDb = registryHelper.searchEntitiesByUserId(entityName, userId, viewTemplateId);
-                JsonNode entities = responseFromDb.get(entityName);
-                if (entities.size() > 0) {
-                    return new ResponseEntity<>(entities, HttpStatus.OK);
-                } else {
-                    responseParams.setErrmsg("No record found");
-                    responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-                }
-            } else {
-                responseParams.setErrmsg("User id is empty");
-                responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-            }
-        } catch (RecordNotFoundException e) {
-             createSchemaNotFoundResponse(e.getMessage(),responseParams);
-            response = new Response(Response.API_ID.GET, "ERROR", responseParams);
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            logger.error("Exception in controller while searching entities !", e);
-            response.setResult("");
-            responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg(e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-        }
-    }
+  public ResponseEntity<Object> getEntityByToken(@PathVariable String entityName, HttpServletRequest request,
+                                                 @RequestHeader(required = false) String viewTemplateId,
+                                                 @RequestParam(required = false, defaultValue = "1") int page,
+                                                 @RequestParam(required = false, defaultValue = "2000") int pageSize) throws RecordNotFoundException {
+      ResponseParams responseParams = new ResponseParams();
+      Response response = new Response(Response.API_ID.GET, "OK", responseParams);
+      try {
+          checkEntityNameInDefinitionManager(entityName);
+          String userId = registryHelper.getUserId(request, entityName);
+          if (!Strings.isEmpty(userId)) {
+              JsonNode responseFromDb = registryHelper.searchEntitiesByUserId(entityName, userId, viewTemplateId, page, pageSize);
+              JsonNode entities = responseFromDb.get(entityName);
+              int recordCount = entities.size(); // Calculate the record count
+              Map<String, Object> responseObject = new HashMap<>();
+              responseObject.put("entities", entities);
+              responseObject.put("record_count", recordCount);
+              return new ResponseEntity<>(responseObject, HttpStatus.OK);
+          } else {
+              responseParams.setErrmsg("User id is empty");
+              responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+              return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+          }
+      } catch (RecordNotFoundException e) {
+          createSchemaNotFoundResponse(e.getMessage(), responseParams);
+          response = new Response(Response.API_ID.GET, "ERROR", responseParams);
+          return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+      } catch (Exception e) {
+          logger.error("Exception in controller while searching entities !", e);
+          response.setResult("");
+          responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+          responseParams.setErrmsg(e.getMessage());
+          return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+      }
+  }
 
     //TODO: check the usage and deprecate the api if not used
     @GetMapping(value = "/api/v1/{entity}/{entityId}/attestationProperties")
