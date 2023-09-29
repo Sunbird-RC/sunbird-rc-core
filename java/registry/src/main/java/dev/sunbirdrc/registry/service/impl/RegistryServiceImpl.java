@@ -212,9 +212,13 @@ public class RegistryServiceImpl implements RegistryService {
         Transaction tx = null;
         String entityId = "entityPlaceholderId";
         String vertexLabel = rootNode.fieldNames().next();
-        Definition definition = null;
+        Definition definition = definitionsManager.getDefinition(vertexLabel);
 
-        idGenService.createUniqueIDsForAnEntity(vertexLabel, rootNode);
+        // Create new Unique Identifiers if configured in schema
+        if (definition.getOsSchemaConfiguration().getUniqueIdentifierFields().size() > 0) {
+            idGenService.createUniqueIDsForAnEntity(vertexLabel, rootNode);
+        }
+
         systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
         if (encryptionEnabled) {
@@ -290,6 +294,7 @@ public class RegistryServiceImpl implements RegistryService {
     public void updateEntity(Shard shard, String userId, String id, String jsonString, boolean skipSignature) throws Exception {
         JsonNode inputNode = objectMapper.readTree(jsonString);
         String entityType = inputNode.fields().next().getKey();
+        systemFieldsHelper.ensureNotToUpdateUniqueIdentifierFields(entityType, inputNode.get(entityType));
         systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
         if (encryptionEnabled) {
             inputNode = encryptionHelper.getEncryptedJson(inputNode);

@@ -117,6 +117,14 @@ public class Constants {
 	public static final String FILE="FILE";
 	public static final String DATABASE="DATABASE";
 
+	// ID Generation constants
+	public static final String APP_ID="sunbird_rc";
+	public static final String MSG_ID="request_from sunbird_RC to create a unique ID";
+	public static final String PREFIX_TENET_ID= "s.rc.";
+	public static final String PREFIX_ID_NAME= "sunbird.rc.";
+
+
+
 	//Expand config
 	public static final int MAX_EXPAND_LEVEL= 10;
 

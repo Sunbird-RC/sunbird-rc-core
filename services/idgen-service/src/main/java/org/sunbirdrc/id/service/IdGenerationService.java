@@ -158,9 +158,10 @@ public class IdGenerationService {
         // connection and prepared statement
 
         String idFormat = null;
+        String idName = idRequest.getIdName();
+        String tenantId = idRequest.getTenantId();
         try {
-            String idName = idRequest.getIdName();
-            String tenantId = idRequest.getTenantId();
+
             // select the id format from the id generation table
             StringBuffer idSelectQuery = new StringBuffer();
             idSelectQuery.append("SELECT format FROM id_generator ").append(" WHERE idname=? and tenantid=?");
@@ -177,7 +178,16 @@ public class IdGenerationService {
                     idFormat = rs;
             }
         } catch (Exception ex){
-            log.error("SQL error while trying to retrive format from DB",ex);
+            try {
+                String idFormatToBeCreated = idRequest.getFormat();
+                String res = String.valueOf(jdbcTemplate.update(
+                        "INSERT INTO id_generator(idname, tenantid, format, sequencenumber) VALUES (?, ?, ?, ?)", idName, tenantId, idFormatToBeCreated , 2));
+                log.debug( "res from db Creation of the new Format:",res);
+                return idFormatToBeCreated;
+            } catch (Exception e) {
+                throw new Exception("Eroor while creating a new format in the id_generation table: ", e );
+            }
+
         }
         return idFormat;
     }
