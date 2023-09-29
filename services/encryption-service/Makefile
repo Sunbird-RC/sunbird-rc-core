@@ -1,4 +1,4 @@
-RELEASE_VERSION=main
+RELEASE_VERSION=v0.0.14
 IMAGE_NAME=ghcr.io/sunbird-rc/encryption-service
 
 build:
