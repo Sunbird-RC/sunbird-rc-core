@@ -11,7 +11,6 @@ import org.egov.enc.web.models.RotateKeyRequest;
 import org.egov.enc.web.models.RotateKeyResponse;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Service;
@@ -33,8 +32,8 @@ public class KeyManagementService implements ApplicationRunner {
     private KeyStore keyStore;
     @Autowired
     private KeyIdGenerator keyIdGenerator;
-    @Value("${tenant.ids}")
-    private List<String> tenantIds;
+    @Autowired
+    private TenantService tenantService;
 
 
     //Initialize active tenant id list and Check for any new tenants
@@ -92,6 +91,7 @@ public class KeyManagementService implements ApplicationRunner {
     }
 
     private Set<String> makeComprehensiveListOfTenantIds() {
+        List<String> tenantIds = tenantService.getTenantIds();
         Set<String> comprehensiveTenantIdsSet = new HashSet<>(tenantIds);
 
         for (String tenantId: tenantIds) {

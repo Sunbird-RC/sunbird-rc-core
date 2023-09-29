@@ -353,12 +353,15 @@ services:
         wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit
         1
   encryption-service:
-    image: ghcr.io/sunbird-rc/encryption-service:v0.0.14
+    image: ghcr.io/sunbird-rc/encryption-service:main
     ports:
       - '8013:8013'
     environment:
+      server.port: 8013
+      server.servlet.context-path: /
       spring.datasource.url: jdbc:postgresql://db:5432/registry
       spring.flyway.url: jdbc:postgresql://db:5432/registry
+      tenant.service: DBTenantService
     depends_on:
       db:
         condition: service_healthy
