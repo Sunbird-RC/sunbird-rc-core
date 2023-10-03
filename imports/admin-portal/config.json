@@ -1,0 +1,61 @@
+{
+  "environment": "development",
+  "keycloak": {
+    "url": "/auth",
+    "clientId": "admin-portal",
+    "realm": "sunbird-rc"
+  },
+  "configFolder": "assets/config",
+  "referanceSchema" : "assets/config",
+  "languageFolder": "assets/i18n",
+  "title": "Admin Portal",
+  "baseUrl": "/registry/api/v1",
+  "schemaUrl": "/registry/api/docs/swagger.json",
+  "footerText": "Admin Portal",
+  "languages": [
+    "en",
+    "hi"
+  ],
+  "appType": "attestation",
+  "default_theme": {
+    "logoPath": "https://raw.githubusercontent.com/Sunbird-RC/Admin-Portal/main/src/assets/images/admin_portal.svg",
+    "primaryColorGreen":"#0098AB",
+    "primaryColorBlue":"#1987B6",
+    "primaryColorGrey":"#1B2124",
+    "primaryColorBlack":"#000000",
+    "greyColorOne":"#8D9091",
+    "greyColorTwo":"#CCCCCC",
+    "greyColorThree":"#EFEFEF",
+    "greyColorFour":"#F6F8FC",
+    "whiteColor":"#FFFFFF",
+    "secondaryColorNavy":"#191489",
+    "secondaryColorRed":"#C5292A",
+    "secondaryColorYellow":"#FFD965",
+    "secondaryColorLightBlue":"#A6D4FF",
+    "secondaryColorGreen":"#22B02E",
+    "cardColor":"#FFFFFF",
+    "textColor":"#000000",
+    "lightColorbtn":"#E8F3F8"
+
+  },
+  "dark_theme": {
+    "logoPath": "https://raw.githubusercontent.com/Sunbird-RC/Admin-Portal/main/src/assets/images/admin_portal.svg",
+    "primaryColorGreen":"#0098AB",
+    "primaryColorBlue":"#5BB0FF",
+    "primaryColorGrey":"#1B2124",
+    "primaryColorBlack":"#000000",
+    "greyColorOne":"#D9D9D9",
+    "greyColorTwo":"#CCCCCC",
+    "greyColorThree":"#393939",
+    "greyColorFour":"#090909",
+    "whiteColor":"#090909",
+    "secondaryColorNavy":"#191489",
+    "secondaryColorRed":"#C5292A",
+    "secondaryColorYellow":"#FFD965",
+    "secondaryColorLightBlue":"#A6D4FF",
+    "secondaryColorGreen":"#22B02E",
+    "cardColor":"#323232",
+    "textColor":"#EFEFEF",
+    "lightColorbtn":"#393939"
+  }
+}
