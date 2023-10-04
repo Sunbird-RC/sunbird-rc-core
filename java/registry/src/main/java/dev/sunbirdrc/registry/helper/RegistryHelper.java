@@ -800,14 +800,17 @@ public class RegistryHelper {
     private JsonNode getUserInfoFromRegistry(HttpServletRequest request, String entityName) throws Exception {
         String userId = getUserId(request,entityName);
         if (userId != null) {
-            ObjectNode payload = getSearchByOwnerQuery(entityName, userId);
-
-            watch.start("RegistryController.searchEntity");
-            JsonNode result = searchEntity(payload);
-            watch.stop("RegistryController.searchEntity");
-            return result;
+            return getEntityByUserId(entityName, userId);
         }
         throw new Exception("Forbidden");
+    }
+
+    private JsonNode getEntityByUserId(String entityName, String userId) throws Exception {
+        ObjectNode payload = getSearchByOwnerQuery(entityName, userId);
+        watch.start("RegistryController.searchEntity");
+        JsonNode result = searchEntity(payload);
+        watch.stop("RegistryController.searchEntity");
+        return result;
     }
 
     @NotNull
@@ -985,7 +988,7 @@ public class RegistryHelper {
             }
             if (entity.has(policyName) && entity.get(policyName).isArray()) {
                 ArrayNode attestations = (ArrayNode) entity.get(policyName);
-                updateAttestation(attestations, propertyToUpdate);
+                updateAttestation(attestationPolicy.getAttestorEntity(), userId, entity, attestations, propertyToUpdate);
             }
         }
         if (entity != null) {
@@ -999,7 +1002,7 @@ public class RegistryHelper {
         String propertyURI = getPropertyURI(entityId, request);
         return propertyURI.split("/")[0];
     }
-    private void updateAttestation(ArrayNode attestations,String propertyToUpdate) {
+    private void updateAttestation(String attestorEntity, String userId, JsonNode entity, ArrayNode attestations,String propertyToUpdate) throws Exception {
         for (JsonNode attestation : attestations) {
             if (attestation.get(_osState.name()).asText().equals(States.PUBLISHED.name())
               && !attestation.get("name").asText().equals(propertyToUpdate)
@@ -1007,8 +1010,43 @@ public class RegistryHelper {
                 ObjectNode propertiesOSID = attestation.get("propertiesOSID").deepCopy();
                 JSONUtil.removeNode(propertiesOSID, uuidPropertyName);
                 ((ObjectNode) attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.INVALID.name()));
+            } else if (attestation.get(_osState.name()).asText().equals(States.ATTESTATION_REQUESTED.name())) {
+                AttestationPolicy attestationPolicy = getAttestationPolicy(attestation.get("entityName").asText(), attestation.get("name").asText());
+                ObjectNode propertiesOSID = attestation.get("propertiesOSID").deepCopy();
+                Map<String, List<String>> propertiesOSIDMapper = new HashMap<>();
+                ObjectReader reader = objectMapper.readerFor(new TypeReference<List<String>>() {
+                });
+                for (Iterator<Map.Entry<String, JsonNode>> it = propertiesOSID.fields(); it.hasNext(); ) {
+                    Map.Entry<String, JsonNode> itr = it.next();
+                    if(itr.getValue().isArray() && !itr.getValue().isEmpty() && itr.getValue().get(0).isTextual()) {
+                        List<String> list = reader.readValue(itr.getValue());
+                        propertiesOSIDMapper.put(itr.getKey(), list);
+                    }
+                }
+                JsonNode propertyData = JSONUtil.extractPropertyDataFromEntity(entity, attestationPolicy.getAttestationProperties(), propertiesOSIDMapper);
+                if(!propertyData.equals(JSONUtil.convertStringJsonNode(attestation.get("propertyData").asText()))) {
+                    ((ObjectNode) attestation).set(_osState.name(), JsonNodeFactory.instance.textNode(States.DRAFT.name()));
+                    invalidateClaim(attestorEntity, userId, attestation.get(_osClaimId.name()).asText());
+                }
             }
         }
+    }
+
+    public void invalidateClaim(String attestorEntityName, String userId, String claimId) throws Exception {
+        final String attestorPlugin = "did:internal:ClaimPluginActor";
+        Action action = Action.SET_TO_DRAFT;
+        ObjectNode additionalInputs = JsonNodeFactory.instance.objectNode();
+        JsonNode attestorInfo = getEntityByUserId(attestorEntityName, userId).get(attestorEntityName).get(0);
+        additionalInputs.put("claimId", claimId);
+        additionalInputs.put("action", action.name());
+        additionalInputs.put("notes", "Closed due to entity update");
+        additionalInputs.set("attestorInfo", attestorInfo);
+        PluginRequestMessage pluginRequestMessage = PluginRequestMessage.builder().build();
+        pluginRequestMessage.setAttestorPlugin(attestorPlugin);
+        pluginRequestMessage.setAdditionalInputs(additionalInputs);
+        pluginRequestMessage.setStatus(action.name());
+        pluginRequestMessage.setUserId(userId);
+        PluginRouter.route(pluginRequestMessage);
     }
 
     public Object getSignedDoc(JsonNode result, Object credentialTemplate) throws
