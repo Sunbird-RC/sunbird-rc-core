@@ -5,7 +5,7 @@ RELEASE_VERSION = v0.0.14
 IMAGES := ghcr.io/sunbird-rc/sunbird-rc-core ghcr.io/sunbird-rc/sunbird-rc-nginx ghcr.io/sunbird-rc/sunbird-rc-context-proxy-service \
 			ghcr.io/sunbird-rc/sunbird-rc-public-key-service ghcr.io/sunbird-rc/sunbird-rc-keycloak ghcr.io/sunbird-rc/sunbird-rc-certificate-api \
 			ghcr.io/sunbird-rc/sunbird-rc-certificate-signer ghcr.io/sunbird-rc/sunbird-rc-notification-service ghcr.io/sunbird-rc/sunbird-rc-claim-ms \
-			ghcr.io/sunbird-rc/sunbird-rc-digilocker-certificate-api ghcr.io/sunbird-rc/sunbird-rc-bulk-issuance ghcr.io/sunbird-rc/sunbird-rc-metrics dockerhub/sunbird-rc-id-generation		
+			ghcr.io/sunbird-rc/sunbird-rc-digilocker-certificate-api ghcr.io/sunbird-rc/sunbird-rc-bulk-issuance ghcr.io/sunbird-rc/sunbird-rc-metrics ghcr.io/sunbird-rc/sunbird-rc-id-generation		
 build: java/registry/target/registry.jar
 	echo ${SOURCES}
 	rm -rf java/claim/target/*.jar
@@ -20,7 +20,7 @@ build: java/registry/target/registry.jar
 	make -C services/metrics docker
 	make -C services/digilocker-certificate-api docker
 	make -C services/bulk_issuance docker
-	make -C services/idgen_service docker
+	make -C services/idgen-service docker
 	docker build -t ghcr.io/sunbird-rc/sunbird-rc-nginx .
 
 java/registry/target/registry.jar: $(SOURCES)

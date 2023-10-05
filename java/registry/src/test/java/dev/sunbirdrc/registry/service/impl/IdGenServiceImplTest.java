@@ -59,9 +59,9 @@ public class IdGenServiceImplTest {
         // Mock the behavior of RetryRestTemplate and ObjectMapper
 
 
-        when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class))).thenAnswer(new Answer<ResponseEntity<String>>(){
+        when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class))).thenAnswer(new Answer<ResponseEntity<String>>() {
             @Override
-            public ResponseEntity<String>  answer(InvocationOnMock invocation) throws Throwable {
+            public ResponseEntity<String> answer(InvocationOnMock invocation) throws Throwable {
                 String response = "success";
                 return ResponseEntity.accepted().body(response);
             }
@@ -86,3 +86,5 @@ public class IdGenServiceImplTest {
         ObjectNode reqNode = mock(ObjectNode.class);
         idGenService.createUniqueID(reqNode);
     }
+
+}
