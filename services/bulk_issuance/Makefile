@@ -1,7 +1,7 @@
 SPEC_FILE := ./interfaces/bulk_issuance_api.yaml
 GOPATH := $(shell go env GOPATH)
 source := $(wildcard *.go **/*.go */*/*.go)
-IMAGE := dockerhub/sunbird-rc-bulk-issuance
+IMAGE := ghcr.io/sunbird-rc/sunbird-rc-bulk-issuance
 all: bulk_issuance-server
 
 deps:

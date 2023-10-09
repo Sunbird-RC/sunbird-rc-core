@@ -50,13 +50,13 @@ func (cron *Cron) SaveWeeklyMetrics() {
 	aggregate := (*cron.db).GetAggregates(clauses)
 	bytes, err := json.Marshal(aggregate)
 	if err != nil {
-		log.Infof("Error in marshalling : %v", err)
+		log.Errorf("Error in marshalling : %v", err)
 	}
 	ctx := context.Background()
 	log.Infof(string(bytes))
 	err = cron.redisClient.Set(ctx, "weeklyUpdates", string(bytes), 0).Err()
 	if err != nil {
-		log.Infof("Error in saving to redis : %v", err)
+		log.Errorf("Error in saving to redis : %v", err)
 	}
 	log.Info("Saved to redis")
 }

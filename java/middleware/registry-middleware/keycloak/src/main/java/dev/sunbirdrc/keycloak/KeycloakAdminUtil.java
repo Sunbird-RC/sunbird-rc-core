@@ -19,6 +19,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
@@ -130,6 +131,9 @@ public class KeycloakAdminUtil implements HealthIndicator {
     private RoleRepresentation createOrGetRealmRole(String entityName) {
         RolesResource rolesResource = keycloak.realm(realm).roles();
         try {
+             return rolesResource.get(entityName).toRepresentation();
+        } catch (NotFoundException ex) {
+            logger.error("Role {} not found. Creating role {}", entityName, entityName);
             RoleRepresentation roleRepresentation = new RoleRepresentation();
             roleRepresentation.setName(entityName);
             rolesResource.create(roleRepresentation);

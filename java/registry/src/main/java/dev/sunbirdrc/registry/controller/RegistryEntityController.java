@@ -20,6 +20,7 @@ import dev.sunbirdrc.registry.exception.ErrorMessages;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
+import dev.sunbirdrc.registry.exception.UnreachableException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -35,6 +36,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import org.agrona.Strings;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +53,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
+import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+
+import static dev.sunbirdrc.registry.Constants.*;
+import static dev.sunbirdrc.registry.helper.RegistryHelper.ServiceNotEnabledResponse;
+import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
+
 @RestController
 public class RegistryEntityController extends AbstractController {
 
@@ -64,6 +75,19 @@ public class RegistryEntityController extends AbstractController {
 
   @Autowired
   private FileStorageService fileStorageService;
+
+    @Value("${signature.enabled}")
+    private boolean signatureEnabled;
+    @Value("${certificate.enabled}")
+    private boolean certificateEnabled;
+    @Autowired(required = false)
+    private ICertificateService certificateService;
+
+    @Value("${filestorage.enabled}")
+    private boolean fileStorageEnabled;
+    @Autowired(required = false)
+    private FileStorageService fileStorageService;
+
 
   @Autowired
   private AsyncRequest asyncRequest;
@@ -707,7 +731,7 @@ public class RegistryEntityController extends AbstractController {
       MediaType.TEXT_HTML_VALUE,
       Constants.SVG_MEDIA_TYPE,
     }
-  )
+  ) 
   public ResponseEntity<Object> getEntityType(
     @PathVariable String entityName,
     @PathVariable String entityId,
