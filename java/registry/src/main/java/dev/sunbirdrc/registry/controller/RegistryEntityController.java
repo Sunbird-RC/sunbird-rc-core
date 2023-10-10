@@ -43,14 +43,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-import javax.persistence.metamodel.EntityType;
-import javax.persistence.metamodel.Metamodel;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -66,11 +58,6 @@ public class RegistryEntityController extends AbstractController {
 
     @Autowired
     private ICertificateService certificateService;
-
-    @PersistenceContext
-    private EntityManager entityManager;
-
-
     @Autowired
     private FileStorageService fileStorageService;
 
@@ -913,10 +900,6 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
-
-
     @RequestMapping(value = "/api/v1/{entityName}/count", method = RequestMethod.GET)
     public ResponseEntity<Object> getEntityCount(@PathVariable String entityName, HttpServletRequest request) {
         ResponseParams responseParams = new ResponseParams();
@@ -945,23 +928,3 @@ public class RegistryEntityController extends AbstractController {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
