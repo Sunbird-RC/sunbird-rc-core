@@ -9,6 +9,7 @@ import io.minio.http.Method;
 import io.minio.messages.Bucket;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.poi.util.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -156,11 +157,10 @@ public class FileStorageService implements HealthIndicator {
 				}
 			} catch (Exception e) {
 				documentsResponse.addError(file.getOriginalFilename());
-				logger.error("Error has occurred while trying to save the file {}", fileName);
-				e.printStackTrace();
+				logger.error("Error has occurred while trying to update the file {}: {}", fileName, ExceptionUtils.getStackTrace(e));
+
 			}
 		}
 		return documentsResponse;
 	}
 }
-

@@ -4,6 +4,9 @@ import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.dto.DocumentsResponse;
 import dev.sunbirdrc.registry.service.FileStorageService;
 import io.minio.errors.*;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,7 @@ public class FileStorageController {
     private final FileStorageService fileStorageService;
     private final RegistryHelper registryHelper;
 
+    private static final Logger logger = LoggerFactory.getLogger(FileStorageController.class);
     FileStorageController(FileStorageService fileStorageService, RegistryHelper registryHelper) {
         this.fileStorageService = fileStorageService;
         this.registryHelper = registryHelper;
@@ -61,17 +65,17 @@ public class FileStorageController {
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
     }
 
-    @PutMapping("/api/v1/{entity}/{entityId}/{property}/documents/{documentId}")
+    @PutMapping("/api/v1/{entityName}/{entityId}/{property}/documents/{documentId}")
     public ResponseEntity<DocumentsResponse> update(@RequestParam MultipartFile[] files,
-                                                    @PathVariable String entity,
+                                                    @PathVariable String entityName,
                                                     @PathVariable String entityId,
                                                     @PathVariable String documentId,
                                                     @PathVariable String property,
                                                     HttpServletRequest httpServletRequest) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         try {
-            registryHelper.authorize(entity, entityId, httpServletRequest);
+            registryHelper.authorize(entityName, entityId, httpServletRequest);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("An error occurred during authorization: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         DocumentsResponse documentsResponse = fileStorageService.updateFiles(files, httpServletRequest.getRequestURI());
