@@ -357,11 +357,11 @@ public class RegistryServiceImpl implements RegistryService {
                     JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
                 }
 
-               if (!skipSignature) {
+                if (!skipSignature) {
                     generateCredentials(inputNode, entityType);
                 }
 
-               if (entityType.equals(Schema)) {
+                if (entityType.equals(Schema)) {
                     schemaService.validateUpdateSchema(readNode, inputNode);
                 }
 
@@ -371,6 +371,7 @@ public class RegistryServiceImpl implements RegistryService {
                 if (entityType.equals(Schema)) {
                     schemaService.updateSchema(inputNode);
                 }
+
                 databaseProvider.commitTransaction(graph, tx);
                 JsonNode mergedNode = mergeWrapper("/" + parentEntityType, (ObjectNode) readNode, (ObjectNode) inputNode);
                 logger.debug("After merge the payload is " + mergedNode.toString());
@@ -382,6 +383,7 @@ public class RegistryServiceImpl implements RegistryService {
 
                 if (isInternalRegistry(entityType) && isElasticSearchEnabled()) {
                     if (addShardPrefixForESRecord && !shard.getShardLabel().isEmpty()) {
+                        // Replace osid with shard details
                         String prefix = shard.getShardLabel() + RecordIdentifier.getSeparator();
                         JSONUtil.addPrefix((ObjectNode) mergedNode, prefix, new ArrayList<>(Collections.singletonList(uuidPropertyName)));
                     }
@@ -389,7 +391,6 @@ public class RegistryServiceImpl implements RegistryService {
                             JSONUtil.removeNodesByPath(mergedNode.get(entityType), definitionsManager.getExcludingFieldsForEntity(entityType)));
                     callESActors(nodeWithPublicData, "UPDATE", entityType, id, tx);
                 }
-
                 auditService.auditUpdate(
                         auditService.createAuditRecord(userId, rootId, tx, entityType),
                         shard, mergedNode, readNode);
