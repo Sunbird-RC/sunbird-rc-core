@@ -244,11 +244,11 @@ public class RegistryEntityController extends AbstractController {
             watch.start(tag);
             JsonNode existingNode = registryHelper.readEntity(newRootNode, userId);
             String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
-            registryHelper.updateEntityAndState(existingNode, newRootNode, userId);
             if (existingNode.get(entityName).has(OSSystemFields._osSignedData.name())) {
                 registryHelper.revokeExistingCredentials(entityName, entityId, userId,
                         existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
             }
+            registryHelper.updateEntityAndState(existingNode, newRootNode, userId);
             registryHelper.invalidateAttestation(entityName, entityId, userId, null);
             registryHelper.autoRaiseClaim(entityName, entityId, userId, existingNode, newRootNode, emailId);
             responseParams.setErrmsg("");
