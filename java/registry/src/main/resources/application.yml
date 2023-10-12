@@ -58,11 +58,9 @@ registry:
   redis:
     host: ${redis_host:localhost}
     port: ${redis_port:6379}
-
   hard_delete_enabled: ${hard_delete.enabled:false}
-
 workflow:
-  enabled: ${workflow.enable:true}
+ enabled: ${workflow.enable:true}
 async:
   enabled: ${async_enabled:false}
 kafka:
@@ -145,9 +143,6 @@ database:
       password: ${connectionInfo_password:postgres}
       maxPoolSize: ${connectionInfo_maxPoolSize:200}
 
-
-
-
       # Any other shard information follows...
       #-
       #shardId: shard2
@@ -212,7 +207,7 @@ certificate:
 #   * ELASTIC  : Store the audit log in elastic search configured in elastic properties.
 #  Note : Database Stores the created audit schema in audit_schema folder.
 audit:
-  enabled: ${audit_enabled:false}
+  enabled: ${audit_enabled:true}
   frame:
     store: ${audit_frame_store:DATABASE}
     suffix: ${audit_suffix:Audit}
@@ -220,7 +215,7 @@ audit:
 
 keycloak:
   #publicKey:  ${sunbird_sso_publickey:pk}
-  auth-server-url: ${sunbird_sso_url:http://localhost:8888/auth}
+  auth-server-url: ${sunbird_sso_url:http://localhost:8080/auth}
   realm: ${sunbird_sso_realm:sunbird-rc}
   resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
@@ -234,7 +229,7 @@ keycloak-user:
   # email details should be configured in keycloak realm settings
   email-actions: ${keycloack_user_email_actions:}
 claims:
-  url: ${claims_url:http://localhost:8081}
+  url: ${claims_url:http://localhost:8082}
 authentication:
   enabled: ${authentication_enabled:true}
   publicKey:  ${authentication_publickey:}

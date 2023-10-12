@@ -14,4 +14,4 @@ public interface IRegistryDao {
 	public void hardDeleteEntity(Vertex vertex);
 
 
-}
+o}

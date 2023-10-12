@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.sunbird.akka.core.ActorCache;
@@ -65,6 +66,7 @@ public class RegistryServiceImpl implements RegistryService {
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
+
     @Value("${registry.hard_delete_enabled}")
     private boolean isHardDeleteEnabled;
 
@@ -89,12 +91,20 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${registry.perRequest.indexCreation.enabled:false}")
     private boolean perRequestIndexCreation;
 
-
     @Value("${elastic.search.add_shard_prefix:true}")
     private boolean addShardPrefixForESRecord;
 
     @Value("${registry.context.base}")
     private String registryBaseUrl;
+
+    @Value("${notification.async.enabled}")
+    private boolean asyncEnabled;
+
+    @Value("${notification.topic}")
+    private String notifyTopic;
+
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @Autowired
     private EntityParenter entityParenter;
@@ -116,8 +126,6 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private List<HealthIndicator> healthIndicators;
-
-
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
         AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
@@ -162,7 +170,6 @@ public class RegistryServiceImpl implements RegistryService {
                 } else {
                     registryDao.deleteEntity(vertex);
                 }
-
                 databaseProvider.commitTransaction(graph, tx);
                 auditService.auditDelete(
                         auditService.createAuditRecord(userId, uuid, tx, index),
@@ -187,6 +194,7 @@ public class RegistryServiceImpl implements RegistryService {
         Transaction tx = null;
         String entityId = "entityPlaceholderId";
         String vertexLabel = rootNode.fieldNames().next();
+        Definition definition = null;
 
         systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
@@ -220,9 +228,10 @@ public class RegistryServiceImpl implements RegistryService {
             if (perRequestIndexCreation) {
                 String shardId = shard.getShardId();
                 Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
-                Definition definition = definitionsManager.getDefinition(vertexLabel);
+                definition = definitionsManager.getDefinition(vertexLabel);
                 entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             }
+
             if (isElasticSearchEnabled()) {
                 if (addShardPrefixForESRecord && !shard.getShardLabel().isEmpty()) {
                     // Replace osid with shard details
@@ -366,7 +375,7 @@ public class RegistryServiceImpl implements RegistryService {
         return definitionsManager.getAllKnownDefinitions().contains(entityType);
     }
 
-
+    @Override
     @Async("taskExecutor")
     public void callESActors(JsonNode rootNode, String operation, String parentEntityType, String entityRootId, Transaction tx) throws JsonProcessingException {
         logger.debug("callESActors started");

@@ -19,7 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -50,6 +51,7 @@ public class FileStorageService implements HealthIndicator {
 
 	public DocumentsResponse saveAndFetchFileNames(MultipartFile[] files, String requestedURI) {
 		String objectPath = getDirectoryPath(requestedURI);
+
 		DocumentsResponse documentsResponse = new DocumentsResponse();
 		for (MultipartFile file : files) {
 			String fileName = getFileName(file.getOriginalFilename());
@@ -126,6 +128,7 @@ public class FileStorageService implements HealthIndicator {
 	public String getServiceName() {
 		return SUNBIRD_FILE_STORAGE_SERVICE_NAME;
 	}
+
 
 	@Override
 	public ComponentHealthInfo getHealthInfo() {

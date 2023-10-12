@@ -12,9 +12,7 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.sql.DataSource;
 import java.util.List;
 
 public class RegistryDaoImpl implements IRegistryDao {
@@ -56,6 +54,7 @@ public class RegistryDaoImpl implements IRegistryDao {
         String entityId = vertexWriter.writeNodeEntity(rootNode);
         return entityId;
     }
+
     /**
      * Retrieves a record from the database
      *
@@ -89,8 +88,7 @@ public class RegistryDaoImpl implements IRegistryDao {
      * This method update the inputJsonNode related vertices in the database
      * Notes:
      * This graph object is the same one used for reading the entire record
-     *
-     * @param vertex
+     *  @param vertex
      * @param inputJsonNode
      * @param parentName
      */
@@ -107,7 +105,7 @@ public class RegistryDaoImpl implements IRegistryDao {
                 updateObject(graph, vertex, (ObjectNode) inputJsonNode);
             } else {
                 VertexWriter vertexWriter = new VertexWriter(graph, getDatabaseProvider(), uuidPropertyName);
-                if (inputJsonNode.get(uuidPropertyName) != null) {
+                if(inputJsonNode.get(uuidPropertyName) != null) {
                     vertexWriter.writeSingleNode(vertex, objectName, inputJsonNode.get(objectName));
                 } else {
                     // Set parent name as label for new node.
@@ -118,6 +116,7 @@ public class RegistryDaoImpl implements IRegistryDao {
             logger.error("Unexpected input passed here.");
         }
     }
+
 
 
     private void updateObject(Graph graph, Vertex vertex, ObjectNode inputJsonNode) {
@@ -135,10 +134,9 @@ public class RegistryDaoImpl implements IRegistryDao {
         });
     }
 
-    public void deleteEntity(Vertex vertex)
-    {
-        if (null != vertex)
-        {
+
+    public void deleteEntity(Vertex vertex) {
+        if (null != vertex) {
             vertex.property(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
             logger.debug("Vertex {} {} marked deleted", vertex.label(), databaseProvider.getId(vertex));
         } else {
@@ -154,13 +152,3 @@ public class RegistryDaoImpl implements IRegistryDao {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
