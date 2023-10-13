@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_FILE_STORAGE_SERVICE_NAME;
 
 @Service
+@ConditionalOnProperty(name = "filestorage.enabled", havingValue = "true", matchIfMissing = true)
 public class FileStorageService implements HealthIndicator {
 	private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 	private final MinioClient minioClient;
@@ -62,8 +64,7 @@ public class FileStorageService implements HealthIndicator {
 				documentsResponse.addDocumentLocation(objectName);
 			} catch (Exception e) {
 				documentsResponse.addError(file.getOriginalFilename());
-				logger.error("Error has occurred while trying to save the file {}", fileName);
-				e.printStackTrace();
+				logger.error("Error has occurred while trying to save the file {}: {}", fileName, ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return documentsResponse;
@@ -89,8 +90,7 @@ public class FileStorageService implements HealthIndicator {
 			try {
 				documentsResponse.addError(result.get().bucketName());
 			} catch (Exception e) {
-				logger.error("Error has occurred while fetching the delete error result {}", e.getMessage());
-				e.printStackTrace();
+				logger.error("Error has occurred while fetching the delete error result {}", ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return documentsResponse;
@@ -107,8 +107,7 @@ public class FileStorageService implements HealthIndicator {
 			InputStream inputStream = minioClient.getObject(GetObjectArgs.builder().bucket(bucketName).object(objectName).build());
 			bytes = IOUtils.toByteArray(inputStream);
 		} catch (Exception e) {
-			logger.error("Error has occurred while fetching the document {} {}", objectName, e.getMessage());
-			e.printStackTrace();
+			logger.error("Error has occurred while fetching the document {} {}", objectName, ExceptionUtils.getStackTrace(e));
 		}
 		return bytes;
 	}
@@ -119,7 +118,6 @@ public class FileStorageService implements HealthIndicator {
 			minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
 		} catch (Exception e) {
 			logger.error("Error has occurred while deleting the document {}", objectName);
-			e.printStackTrace();
 			return new ResponseEntity(HttpStatus.BAD_REQUEST);
 		}
 		return new ResponseEntity(HttpStatus.OK);

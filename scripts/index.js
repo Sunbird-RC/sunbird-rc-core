@@ -35,8 +35,8 @@ var invoke_add = function (nIter, payload, callback) {
             //console.log("This is the api response " + JSON.stringify(body))
             var apiResponse = JSON.parse(body)
             if (err) {
-                console.error(err)
-                console.log(" error for " + payload)
+                console.error(err?.message)
+                console.error(" error for " + payload)
                 callback(err)
             } else {
                 var responseErr = apiResponse
@@ -292,7 +292,7 @@ function populateData(cb) {
 populateData(function (err, result) {
     if (err) {
         return (err);
-        console.log("Errorrrrr==>", err);
+        console.error("Errorrrrr==>", err);
     }
     console.log("Finished successfully");
     return result;
