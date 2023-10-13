@@ -7,18 +7,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.actors.factory.MessageFactory;
-import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.dao.*;
-import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
-import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.model.EventType;
+import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
@@ -33,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -46,7 +43,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
-import static dev.sunbirdrc.registry.exception.ErrorMessages.INVALID_ID_MESSAGE;
 
 @Service
 @Qualifier("sync")
@@ -157,7 +153,7 @@ public class RegistryServiceImpl implements RegistryService {
      * @throws Exception
      */
     @Override
-    public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
+    public Vertex deleteEntityById(Shard shard, String entityName, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -187,8 +183,14 @@ public class RegistryServiceImpl implements RegistryService {
             }
         }
     }
-
-    @Override
+    public void maskAndEmitEvent(JsonNode deletedNode, String index, EventType delete, String userId, String uuid) throws JsonProcessingException {
+        JsonNode maskedNode = entityTransformer.updatePrivateAndInternalFields(
+                deletedNode,
+                definitionsManager.getDefinition(index).getOsSchemaConfiguration()
+        );
+        Event event = eventService.createTelemetryObject(delete.name(), userId, "USER", uuid, index, maskedNode);
+        eventService.pushEvents(event);
+    }
 
     /**
      * This method adds the entity into db, calls elastic and audit asynchronously
@@ -253,6 +255,9 @@ public class RegistryServiceImpl implements RegistryService {
             auditService.auditAdd(
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
+            if(isEventsEnabled) {
+                maskAndEmitEvent(rootNode.get(vertexLabel), vertexLabel, EventType.ADD, userId, entityId);
+            }
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.addSchema(rootNode);
@@ -273,7 +278,7 @@ public class RegistryServiceImpl implements RegistryService {
     }
 
     @Override
-    public void updateEntity(Shard shard, String userId, String id, String jsonString) throws Exception {
+    public void updateEntity(Shard shard, String userId, String id, String jsonString, boolean skipSignature) throws Exception {
         JsonNode inputNode = objectMapper.readTree(jsonString);
         String entityType = inputNode.fields().next().getKey();
         systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
@@ -346,7 +351,9 @@ public class RegistryServiceImpl implements RegistryService {
                     JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
                 }
 
-                generateCredentials(inputNode, entityType);
+                if (!skipSignature) {
+                    generateCredentials(inputNode, entityType);
+                }
 
                 if (entityType.equals(Schema)) {
                     schemaService.validateUpdateSchema(readNode, inputNode);
@@ -374,7 +381,9 @@ public class RegistryServiceImpl implements RegistryService {
                 auditService.auditUpdate(
                         auditService.createAuditRecord(userId, rootId, tx, entityType),
                         shard, mergedNode, readNode);
-
+                if(isEventsEnabled) {
+                    maskAndEmitEvent(inputNode.get(entityType), entityType, EventType.UPDATE, userId, id);
+                }
             }
         }
     }
@@ -551,4 +560,5 @@ public class RegistryServiceImpl implements RegistryService {
         });
         return result;
     }
+
 }
