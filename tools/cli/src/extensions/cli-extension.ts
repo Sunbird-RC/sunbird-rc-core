@@ -13,7 +13,12 @@ import restart from '../toolbox/registry/restart'
 import down from '../toolbox/registry/down'
 import health from '../toolbox/registry/health'
 
-import {CLIEvent, RegistryConfiguration, RegistrySetupOptions, Toolbox} from '../types'
+import {
+	CLIEvent,
+	RegistryConfiguration,
+	RegistrySetupOptions,
+	Toolbox,
+} from '../types'
 
 export default (toolbox: Toolbox) => {
 	// Event emmitter
@@ -52,7 +57,7 @@ export default (toolbox: Toolbox) => {
 		down: () => down(toolbox),
 		health: () => health(toolbox),
 	}
-	const {print} = toolbox;
+	const { print } = toolbox
 	const spinner = print.spin('Loading...').stop()
 	toolbox.handleEvent = (event: CLIEvent) => {
 		// Print and exit on error
@@ -65,11 +70,11 @@ export default (toolbox: Toolbox) => {
 				// Else just print the message
 				print.error(print.colors.error(`${print.xmark} ${event.message}`))
 			}
-			
+
 			print.error('')
 			process.exit(1)
 		}
-		
+
 		// Print and continue on success
 		if (event.status === 'success') {
 			// Stop the spinner if it is running...
@@ -83,19 +88,19 @@ export default (toolbox: Toolbox) => {
 				)
 			}
 		}
-		
+
 		// If it is a progress event, show a spinner
 		if (event.status === 'progress') {
 			spinner.start(print.colors.highlight(`${event.message}...`))
 		}
 	}
-	
+
 	toolbox.until = async (conditionFunction: () => Promise<boolean>) => {
 		const poll = async (resolve: (value: unknown) => void) => {
 			if (await conditionFunction()) resolve(true)
 			else setTimeout((_) => poll(resolve), 400)
 		}
-		
+
 		return new Promise(poll)
 	}
 

@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.exception;
 
 import com.google.gson.Gson;
 import dev.sunbirdrc.registry.interceptor.handler.BaseResponseHandler;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -24,7 +25,7 @@ public class CustomExceptionHandler extends BaseResponseHandler implements Handl
 	public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler,
 			Exception ex) {
 		try {
-			logger.info("Exception thrown-" + ex.getMessage());
+			logger.error("Exception thrown: {}", ExceptionUtils.getStackTrace(ex));
 			setResponse(response);
 			writeResponseObj(gson, ex.getMessage());
 		} catch (Exception e) {

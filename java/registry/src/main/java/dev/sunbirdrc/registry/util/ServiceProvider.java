@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.util;
 
 import dev.sunbirdrc.registry.service.IReadService;
 import dev.sunbirdrc.registry.service.ISearchService;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ public class ServiceProvider {
             logger.info("Invoked search provider class with classname: " + advisorProviderName);
         } catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
                 | IllegalArgumentException e) {
-            logger.error("Search provider class {} cannot be instantiate with exception:", advisorProviderName, e);
+            logger.error("Search provider class {} cannot be instantiate with exception: {}", advisorProviderName, ExceptionUtils.getStackTrace(e));
         }
 
         return searchService;
@@ -46,7 +47,7 @@ public class ServiceProvider {
 
         } catch (ClassNotFoundException | SecurityException | InstantiationException | IllegalAccessException
                 | IllegalArgumentException e) {
-            logger.error("Search provider class {} cannot be instantiate with exception:", advisorProviderName, e);
+            logger.error("Search provider class {} cannot be instantiate with exception: {}", advisorProviderName, ExceptionUtils.getStackTrace(e));
         }
 
         return readService;

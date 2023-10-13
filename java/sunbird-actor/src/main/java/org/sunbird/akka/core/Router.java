@@ -5,6 +5,7 @@ import akka.actor.ActorSelection;
 import akka.dispatch.OnComplete;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -125,8 +126,7 @@ public class Router extends BaseActor {
                     public void onComplete(Throwable failure, Object result) {
                         if (failure != null) {
                             // We got a failure, handle it here
-                            logger.error(failure.getMessage(), failure);
-                            failure.printStackTrace();
+                            logger.error("Exception occurred: {}", ExceptionUtils.getStackTrace(failure));
                         }
                         onResponse(message, result, failure);
                     }

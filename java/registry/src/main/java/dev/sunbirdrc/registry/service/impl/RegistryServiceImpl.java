@@ -42,6 +42,7 @@ import org.sunbird.akka.core.Router;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.INVALID_ID_MESSAGE;
@@ -55,16 +56,14 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private EntityTypeHandler entityTypeHandler;
-    @Autowired
-    private EncryptionService encryptionService;
-    @Autowired
+    @Autowired(required = false)
     private SignatureService signatureService;
     @Autowired
     private IDefinitionsManager definitionsManager;
 
-    @Autowired
+    @Autowired(required = false)
     private EncryptionHelper encryptionHelper;
-    @Autowired
+    @Autowired(required = false)
     private SignatureHelper signatureHelper;
     @Autowired
     private EntityTransformer entityTransformer;
@@ -127,26 +126,22 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SchemaService schemaService;
 
-    @Autowired
-    private IElasticService elasticService;
-
-    @Autowired
-    private FileStorageService fileStorageService;
-
-    @Autowired
+    @Autowired(required = false)
     private List<HealthIndicator> healthIndicators;
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
         AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
         List<ComponentHealthInfo> checks = new ArrayList<>();
-        healthIndicators.parallelStream().forEach(healthIndicator -> {
-            ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
-            checks.add(healthInfo);
-            overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
-        });
+        if (healthIndicators != null) {
+            healthIndicators.parallelStream().forEach(healthIndicator -> {
+                ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
+                checks.add(healthInfo);
+                overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
+            });
+        }
 
         healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus.get(), checks);
-        logger.info("Heath Check :  ", checks.toArray().toString());
+        logger.info("Heath Check : {}", checks.stream().map(ComponentHealthInfo::getName).collect(Collectors.toList()));
         return healthCheck;
     }
 
