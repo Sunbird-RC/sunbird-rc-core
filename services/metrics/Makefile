@@ -1,4 +1,4 @@
-IMAGE:=dockerhub/sunbird-rc-metrics
+IMAGE:=ghcr.io/sunbird-rc/sunbird-rc-metrics
 SPEC_FILE := interfaces/metrics-api.yaml
 GOPATH := $(shell go env GOPATH)
 source := $(wildcard *.go **/*.go */*/*.go)

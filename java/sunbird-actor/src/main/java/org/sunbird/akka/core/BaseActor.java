@@ -5,6 +5,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Value;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
  * An abstract actor
@@ -79,24 +80,27 @@ public abstract class BaseActor extends UntypedAbstractActor {
                             msgWithSrc.getSourceActorName(),
                             msgWithSrc.getTargetActorName());
                 }
+                try {
+                    // Act upon the message.
+                    onReceive(msgWithSrc);
 
-                // Act upon the message.
-                onReceive(msgWithSrc);
+                    // Ack if this is of type 'ask'.
+                    if (msgWithSrc.getMsgOption() == MessageProtos.MessageOption.GET_BACK_RESPONSE) {
+                        responseMsgBldr.setPerformOperation("onSuccess");
+                        Value.Builder payloadBuilder = responseMsgBldr.getPayloadBuilder();
+                        payloadBuilder.setStringValueBytes(ByteString.EMPTY);
 
-                // Ack if this is of type 'ask'.
-                if (msgWithSrc.getMsgOption() == MessageProtos.MessageOption.GET_BACK_RESPONSE) {
-                    responseMsgBldr.setPerformOperation("onSuccess");
-                    Value.Builder payloadBuilder = responseMsgBldr.getPayloadBuilder();
-                    payloadBuilder.setStringValueBytes(ByteString.EMPTY);
+                        MessageProtos.Message response = responseMsgBldr.build();
 
-                    MessageProtos.Message response = responseMsgBldr.build();
-
-                    tellToSource(response);
+                        tellToSource(response);
+                    }
+                } catch (Exception e) {
+                    logger.error("Exception occurred while Act upon the message {}", ExceptionUtils.getStackTrace(e));
                 }
             }
 
         } catch (ClassCastException e) {
-            logger.info("Ignoring message because it is not in expected format {}", genericMessage.toString());
+            logger.error("Ignoring message because it is not in expected format {}", genericMessage.toString());
         }
         }
     }

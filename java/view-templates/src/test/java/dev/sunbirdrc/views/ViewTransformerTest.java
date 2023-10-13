@@ -11,9 +11,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ViewTransformerTest {
+
+    private static final Logger logger = LoggerFactory.getLogger(ViewTransformerTest.class);
 
     private ViewTransformer transformer = new ViewTransformer();
 
@@ -73,12 +79,8 @@ public class ViewTransformerTest {
             }
             return result.toString(StandardCharsets.UTF_8.name());
 
-        } catch (FileNotFoundException e1) {
-            e1.printStackTrace();
-
         } catch (IOException e) {
-            e.printStackTrace();
-
+            logger.error(ExceptionUtils.getStackTrace(e));
         }
         return null;
     }
