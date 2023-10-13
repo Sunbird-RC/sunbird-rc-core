@@ -41,4 +41,4 @@ run: ./notification-service
 	./notification-service --scheme http --port 8765
 
 docker:
-	docker build -t dockerhub/sunbird-rc-notification-service .
+	docker build -t ghcr.io/sunbird-rc/sunbird-rc-notification-service .

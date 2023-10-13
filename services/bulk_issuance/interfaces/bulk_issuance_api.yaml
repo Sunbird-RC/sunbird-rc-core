@@ -1,0 +1,231 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Bulk Issuance
+  description: Bulk Issuance API
+security:
+  - hasRole: ["Issuer"]
+securityDefinitions:
+  hasRole:
+    type: oauth2
+    flow: accessCode
+    authorizationUrl: 'https://dummy.oauth.net/auth'
+    tokenUrl: 'https://dumy.oauth.net/token'
+    scopes:
+      Issuer: scope of Issuer
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /v1/{schemaName}/sample-csv:
+    get:
+      tags:
+        - sampleTemplate
+      summary: get sample template
+      produces:
+        - application/octet-stream
+        - application/json
+      parameters:
+        - name: schemaName
+          in: path
+          required: true
+          type: string
+          description: schema name
+      responses:
+        '200':
+          description: OK
+          headers:
+            Content-Disposition:
+              type: string
+          schema:
+            $ref: '#/definitions/SampleTemplateResponse'
+        '404':
+          description: Not found
+          headers:
+            Content-Type:
+              type: string
+              default: 'application/json'
+          schema:
+            $ref: '#/definitions/ErrorPayload'
+        '400':
+          description: Bad Request
+          headers:
+            Content-Type:
+              type: string
+              default: 'application/json'
+          schema:
+            $ref: '#/definitions/ErrorPayload'
+
+  /v1/uploads:
+    get:
+      tags:
+        - uploadedFiles
+      summary: get uploaded files
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: limit
+          type: integer
+          description: Pagination limit
+          default: 20
+        - in: query
+          name: offset
+          type: integer
+          description: Pagination offset
+          default: 0
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/UploadedFilesResponse'
+        '404':
+          description: Not found
+          schema:
+            type: string
+  /v1/{schemaName}/upload:
+    post:
+      tags:
+        - uploadAndCreateRecords
+      summary: upload the file and create records
+      produces:
+        - application/json
+      consumes:
+        - multipart/form-data
+      parameters:
+        - in: formData
+          name: file
+          type: file
+          description: Certification data in the form of csv
+        - in: path
+          name: schemaName
+          type: string
+          required: true
+          description: Schema name you're uploading for
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/CreateRecordResponse'
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorPayload'
+        '404':
+          description: Not found
+          schema:
+            $ref: '#/definitions/ErrorPayload'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorPayload'
+  /v1/{id}/report:
+    get:
+      tags:
+        - downloadFileReport
+      summary: download the success and error report of file uploaded
+      produces:
+        - application/json
+        - application/octet-stream
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          description: File name
+      responses:
+        '200':
+          description: OK
+          headers:
+            Content-Disposition:
+              type: string
+          schema:
+            $ref: '#/definitions/FileDownload'
+        '404':
+          description: Not found
+          headers:
+            Content-Type:
+              type: string
+              default: 'application/json'
+          schema:
+            $ref: '#/definitions/ErrorPayload'
+        '403':
+          description: Forbidden
+          headers:
+            Content-Type:
+              type: string
+              default: 'application/json'
+          schema:
+            $ref: '#/definitions/ErrorPayload'
+
+definitions:
+  UploadedFilesResponse:
+    type: object
+    properties:
+      files:
+        type: array
+        items:
+          $ref: '#/definitions/UploadedFileDTO'
+        default: []
+  UploadedFileDTO:
+    type: object
+    properties:
+      id:
+        type: integer
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+      filename:
+        type: string
+      totalRecord:
+        type: integer
+      userId:
+        type: string
+      username:
+        type: string
+      date:
+        type: string
+  SampleTemplateResponse:
+    type: object
+  FileDownload:
+    type: object
+  CreateRecordResponse:
+    type: object
+  Group:
+    type: object
+    properties:
+      roles:
+        type: array
+        items:
+          type: string
+  JWTClaimBody:
+    type: object
+    properties:
+      token_type:
+        type: string
+      resource_access:
+        type: object
+        additionalProperties:
+          $ref: "#/definitions/Group"
+      realm_access:
+        type: object
+        properties:
+          roles:
+            type: array
+            items:
+              type: string
+      scope:
+        type: string
+      preferred_username:
+        type: string
+      user_id:
+        type: string
+  ErrorPayload:
+    type: object
+    properties:
+      message:
+        type: string

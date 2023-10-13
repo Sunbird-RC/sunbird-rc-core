@@ -11,19 +11,25 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ViewTransformerTest {
 
+    private static final Logger logger = LoggerFactory.getLogger(ViewTransformerTest.class);
+
     private ViewTransformer transformer = new ViewTransformer();
-  
+
     @Test
     public void testTransformForPersonFunction() throws Exception{
 
         ObjectNode personNode = getPerson();
         ViewTemplate viewTemplate = getViewTemplatePerson("person_vt.json");
 
-        JsonNode actualnode = transformer.transform(viewTemplate, personNode);  
+        JsonNode actualnode = transformer.transform(viewTemplate, personNode);
         JsonNode expectedNode = new ObjectMapper().readTree("{\"Person\":{\"NAME\":\"Ram\",\"lastName\":\"Moorthy\",\"Name in passport\":\"Moorthy, Ram\",\"Name as in DL\":\"Ram : Moorthy\"}}");
 
         assertEquals(expectedNode, actualnode);
@@ -38,19 +44,19 @@ public class ViewTransformerTest {
         ObjectNode node = (ObjectNode) new ObjectMapper().readTree(mathProblem);
 
         ViewTemplate viewTemplate = getViewTemplatePerson("mathVT1.json");
-        JsonNode actualnode = transformer.transform(viewTemplate, node); 
-        JsonNode expectedNode = new ObjectMapper().readTree("{\"Math\":{\"addend_A\":5,\"addend_B\":2,\"SUM\":7}}");        
+        JsonNode actualnode = transformer.transform(viewTemplate, node);
+        JsonNode expectedNode = new ObjectMapper().readTree("{\"Math\":{\"addend_A\":5,\"addend_B\":2,\"SUM\":7}}");
         assertEquals(expectedNode.toString(), actualnode.toString());
 
     }
-    
-    
+
+
     private ViewTemplate getViewTemplatePerson(String personJsonFileName) throws JsonProcessingException, IOException{
 
         String viewTemplateJson = readFileContent(personJsonFileName);
         return new ObjectMapper().readValue(viewTemplateJson, ViewTemplate.class);
     }
-    
+
     private ObjectNode getPerson() throws JsonProcessingException, IOException{
         String personJson = "{\"Person\": " +
                 "               {\"nationalIdentifier\":\"nid823\"," +
@@ -60,7 +66,7 @@ public class ViewTransformerTest {
                 "                \"dob\":\"1990-12-10\"}}";
         return (ObjectNode) new ObjectMapper().readTree(personJson);
     }
-  
+
     private static String readFileContent(String fileName) {
         InputStream in;
         try {
@@ -73,13 +79,37 @@ public class ViewTransformerTest {
             }
             return result.toString(StandardCharsets.UTF_8.name());
 
-        } catch (FileNotFoundException e1) {
-            e1.printStackTrace();
-
         } catch (IOException e) {
-            e.printStackTrace();
-
+            logger.error(ExceptionUtils.getStackTrace(e));
         }
         return null;
+    }
+
+    @Test
+    public void shouldRemovePathUsingRemovePathProvider() throws Exception {
+        String personJson = "{\n" +
+		        "  \"Person\": " +
+		        "{\n" +
+		        "    \"nationalIdentifier\": \"nid823\"," +
+		        "\n" +
+                "    \"name\": \"Ram\",\n" +
+                "    \"lastName\": \"Moorthy\"," +
+		        "\n" +
+		        "    \"gender\": \"MALE\"," +
+		        "\n" +
+                "    \"dob\": \"1990-12-10\",\n" +
+                "    \"address\": {\n" +
+                "      \"line\": \"1st stree\",\n" +
+                "      \"city\": \"bangalore\"\n" +
+                "    }\n" +
+                "  }\n" +
+		        "}";
+        ObjectNode personNode =  (ObjectNode) new ObjectMapper().readTree(personJson);
+        ViewTemplate viewTemplate = getViewTemplatePerson("90986382-4745-11ea-b77f-2e728ce88124.json");
+
+        JsonNode actualnode = transformer.transform(viewTemplate, personNode);
+        JsonNode expectedNode = new ObjectMapper().readTree("{\"Person\":{\"name\":\"Ram\",\"address\":{\"city\":\"bangalore\"}}}");
+
+        assertEquals(expectedNode.toPrettyString(), actualnode.toPrettyString());
     }
 }

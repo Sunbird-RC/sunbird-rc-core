@@ -1,0 +1,58 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Metrics
+  description: Metrics API
+security:
+  - hasRole: []
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Get the health status
+      description: API to get the notification health status
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+  /v1/metrics:
+    get:
+      tags:
+        - metrics
+      summary: get all metrics
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/LoginResponse'
+  /v1/aggregates:
+    get:
+      tags:
+        - aggregates
+      summary: get aggregates for weekly added records
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/AggregatesResponse'
+definitions:
+  LoginResponse:
+    type: object
+  AggregatesResponse:
+    type: object

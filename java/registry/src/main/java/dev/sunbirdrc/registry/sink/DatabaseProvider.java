@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.sink;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.middleware.util.Constants;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
@@ -86,7 +87,7 @@ public abstract class DatabaseProvider implements HealthIndicator {
             try {
                 graph.close();
             } catch (Exception e) {
-                logger.error("Can't close graph " + e.getMessage());
+                logger.error("Can't close graph " + ExceptionUtils.getStackTrace(e));
             }
         }
 
@@ -133,7 +134,7 @@ public abstract class DatabaseProvider implements HealthIndicator {
     protected void setUuidPropertyName(String uuidPropertyName) {
         this.uuidPropertyName = uuidPropertyName;
     }
-   
+
     /**
      * Creates index
      */
@@ -152,7 +153,11 @@ public abstract class DatabaseProvider implements HealthIndicator {
     public void createCompositeIndex(Graph graph, String label, List<String> propertyNames){
         //Does nothing, suppose to be overridden by extended classes.
     }
-        
+
+    public void createCompositeUniqueIndex(Graph graph, String label, List<String> propertyNames){
+        //Does nothing, suppose to be overridden by extended classes.
+    }
+
     public Constants.GraphDatabaseProvider getProvider() {
         return this.provider;
     }
@@ -177,9 +182,9 @@ public abstract class DatabaseProvider implements HealthIndicator {
                 databaseStatusUp = count >= 0;
                 return new ComponentHealthInfo(getServiceName(), databaseStatusUp);
             }
-        } catch (Exception ex) {
-            logger.error("Database service is not running. " + ex);
-            return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
+        } catch (Exception e) {
+            logger.error("Database service is not running: {}", ExceptionUtils.getStackTrace(e));
+            return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
         }
     }
 }

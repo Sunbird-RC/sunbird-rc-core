@@ -10,6 +10,7 @@ public class IndexFields {
 	private List<String> uniqueIndexFields = new ArrayList<>();
 	private List<String> newSingleIndexFields = new ArrayList<>();
 	private List<String> newCompositeIndexFields = new ArrayList<>();
+	private List<String> newCompositeUniqueIndexFields = new ArrayList<>();
 	private List<String> newUniqueIndexFields = new ArrayList<>();
 
 	public String getDefinitionName() {
@@ -46,6 +47,14 @@ public class IndexFields {
 
 	public List<String> getNewCompositeIndexFields() {
 		return newCompositeIndexFields;
+	}
+
+	public List<String> getNewCompositeUniqueIndexFields() {
+		return newCompositeUniqueIndexFields;
+	}
+
+	public void setNewCompositeUniqueIndexFields(List<String> newCompositeUniqueIndexFields) {
+		this.newCompositeUniqueIndexFields = newCompositeUniqueIndexFields;
 	}
 
 	public void setNewCompositeIndexFields(List<String> newCompositeIndexFields) {

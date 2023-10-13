@@ -15,6 +15,8 @@ import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
 
+import org.agrona.Strings;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +25,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ViewTemplateManager {
-	
+
 	private static Logger logger = LoggerFactory.getLogger(ViewTemplateManager.class);
 
-	
+
     public static final String viewLocation = "classpath*:views/*.json";
     private static final String viewTemplateId = "viewTemplateId";
     private static final String viewTemplate = "viewTemplate";
@@ -34,7 +36,7 @@ public class ViewTemplateManager {
     private OSResourceLoader osResourceLoader;
     private ObjectMapper mapper = new ObjectMapper();
     private Map<String, ViewTemplate> templates = new HashMap<>();
-    
+
     @Autowired
     private ResourceLoader resourceLoader;
 
@@ -58,10 +60,10 @@ public class ViewTemplateManager {
 		}
 
 	}
-    
+
     /**
-     * Returns the view template based on the request parameter viewTemplateId, viewTemplate 
-     * 
+     * Returns the view template based on the request parameter viewTemplateId, viewTemplate
+     *
      * @param requestNode
      * @return
      * @throws JsonParseException
@@ -76,7 +78,7 @@ public class ViewTemplateManager {
 			if (requestNode.has(viewTemplateId)) {
 				name = requestNode.get(viewTemplateId).asText();
 				logger.info("Applying view template {}", name);
-				viewTemp = templates.get(name);
+				viewTemp = getViewTemplateById(name);
 				if(viewTemp == null)
 					logger.error("view template for {} not found!", name);
 			} else if (requestNode.has(viewTemplate)) {
@@ -84,11 +86,19 @@ public class ViewTemplateManager {
 				viewTemp = getViewTemplateByContent(requestNode.get(viewTemplate).toString());
 			}
 		} catch (Exception e) {
-			logger.error("Bad request to create a view template, {}", e);
+			logger.error("Bad request to create a view template, {}", ExceptionUtils.getStackTrace(e));
 		}
 		return viewTemp;
 	}
-    
+
+	public ViewTemplate getViewTemplateById(String name) {
+		if (Strings.isEmpty(name) || !templates.containsKey(name)) {
+			return null;
+		}
+		return templates.get(name);
+	}
+
+
 	private ViewTemplate getViewTemplateByContent(String templateContent)
 			throws IOException {
 		return mapper.readValue(templateContent, ViewTemplate.class);
@@ -108,5 +118,5 @@ public class ViewTemplateManager {
 		}
 		return privateFieldEnabled;
 	}
-    
+
 }

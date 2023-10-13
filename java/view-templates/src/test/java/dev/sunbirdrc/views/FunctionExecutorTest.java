@@ -56,7 +56,7 @@ public class FunctionExecutorTest {
 				"}", JsonNode.class);
 		String functionCallStr = "#/functionDefinitions/mathOperation";
 		FunctionDefinition functionDefinition = new FunctionDefinition();
-		functionDefinition.setProvider("org.example.provider.UUIDFunctionProvider");
+		functionDefinition.setProvider("dev.sunbirdrc.provider.UUIDFunctionProvider");
 		JsonNode updatedNode = functionExecutor.execute(functionCallStr, functionDefinition, jsonNode);
 		System.out.println(updatedNode);
 		Assert.assertTrue(isValidUUID(updatedNode.get("output").asText()));

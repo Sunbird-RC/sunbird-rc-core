@@ -12,10 +12,13 @@ import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.registry.dao.*;
+import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
+import dev.sunbirdrc.registry.model.event.Event;
+import dev.sunbirdrc.registry.model.EventType;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
@@ -30,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -39,8 +43,10 @@ import org.sunbird.akka.core.Router;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
+import static dev.sunbirdrc.registry.exception.ErrorMessages.INVALID_ID_MESSAGE;
 
 @Service
 @Qualifier("sync")
@@ -51,17 +57,17 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private EntityTypeHandler entityTypeHandler;
-    @Autowired
-    private EncryptionService encryptionService;
-    @Autowired
+    @Autowired(required = false)
     private SignatureService signatureService;
     @Autowired
     private IDefinitionsManager definitionsManager;
 
-    @Autowired
+    @Autowired(required = false)
     private EncryptionHelper encryptionHelper;
-    @Autowired
+    @Autowired(required = false)
     private SignatureHelper signatureHelper;
+    @Autowired
+    private EntityTransformer entityTransformer;
     @Autowired
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
@@ -69,6 +75,9 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Value("${registry.hard_delete_enabled}")
     private boolean isHardDeleteEnabled;
+
+    @Value("${event.enabled}")
+    private boolean isEventsEnabled;
 
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
@@ -116,28 +125,27 @@ public class RegistryServiceImpl implements RegistryService {
     private IAuditService auditService;
 
     @Autowired
+    private IEventService eventService;
+
+    @Autowired
     private SchemaService schemaService;
 
-    @Autowired
-    private IElasticService elasticService;
-
-    @Autowired
-    private FileStorageService fileStorageService;
-
-    @Autowired
+    @Autowired(required = false)
     private List<HealthIndicator> healthIndicators;
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
         AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
         List<ComponentHealthInfo> checks = new ArrayList<>();
-        healthIndicators.parallelStream().forEach(healthIndicator -> {
-            ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
-            checks.add(healthInfo);
-            overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
-        });
+        if (healthIndicators != null) {
+            healthIndicators.parallelStream().forEach(healthIndicator -> {
+                ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
+                checks.add(healthInfo);
+                overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
+            });
+        }
 
         healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus.get(), checks);
-        logger.info("Heath Check :  ", checks.toArray().toString());
+        logger.info("Heath Check : {}", checks.stream().map(ComponentHealthInfo::getName).collect(Collectors.toList()));
         return healthCheck;
     }
 
@@ -394,6 +402,11 @@ public class RegistryServiceImpl implements RegistryService {
     @Override
     @Async("taskExecutor")
     public void callNotificationActors(String operation, String to, String subject, String message) throws JsonProcessingException {
+        if(asyncEnabled) {
+            String payload = "{\"message\":\"" + message + "\", \"subject\": \"" + subject + "\", \"recipient\": \"" + to + "\"}";
+            kafkaTemplate.send(notifyTopic, null, payload);
+            return;
+        }
         logger.debug("callNotificationActors started");
         MessageProtos.Message messageProto = MessageFactory.instance().createNotificationActorMessage(operation, to, subject, message);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(messageProto, null);

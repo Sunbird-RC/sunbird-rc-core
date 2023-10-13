@@ -1,13 +1,12 @@
 package services
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/sunbirdrc/notification-service/config"
+
 	"github.com/imroc/req"
 	log "github.com/sirupsen/logrus"
-	"text/template"
+	"github.com/sunbirdrc/notification-service/config"
 )
 
 func SendSMS(mobileNumber string, message string) (map[string]interface{}, error) {
@@ -43,18 +42,13 @@ func SendSMS(mobileNumber string, message string) (map[string]interface{}, error
 }
 
 func GetSmsRequestPayload(message string, mobileNumber string) map[string]interface{} {
-	smsRequestTemplate := template.Must(template.New("").Parse(config.Config.SmsAPI.RequestTemplate))
-	buf := bytes.Buffer{}
-	if err := smsRequestTemplate.Execute(&buf, map[string]interface{}{
-		"message": message,
-		"to":      mobileNumber,
-	}); err == nil {
-		smsRequest := make(map[string]interface{})
-		if err = json.Unmarshal(buf.Bytes(), &smsRequest); err == nil {
-			return smsRequest
-		} else {
-			log.Error(err)
-		}
+	smsRequest := make(map[string]interface{})
+	log.Infof("%v", message)
+	if err := json.Unmarshal([]byte(message), &smsRequest); err == nil {
+		log.Infof("success")
+		return smsRequest
+	} else {
+		log.Errorf("error: %v", err)
 	}
 	return nil
 }

@@ -27,8 +27,10 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.NestedExceptionUtils;
 
 public class JSONUtil {
 
@@ -292,13 +294,13 @@ public class JSONUtil {
 		parent.remove(removeKey);
 	}
 
-	public static JsonNode removeNodesByPath(JsonNode root, Set<String> nodePaths) throws Exception {
+	public static JsonNode removeNodesByPath(JsonNode root, Set<String> nodePaths) throws IOException {
 		DocumentContext doc = JsonPath.parse(convertObjectJsonString(root));
 		for (String jsonPath : nodePaths) {
 			try {
 				doc.delete(jsonPath);
 			} catch (Exception e) {
-				logger.error("Path not found {} {}", jsonPath, e.getMessage());
+				logger.error("Path not found {} {}", jsonPath, ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return convertStringJsonNode(doc.jsonString());

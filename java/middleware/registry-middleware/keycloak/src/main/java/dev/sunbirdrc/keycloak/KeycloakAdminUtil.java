@@ -2,11 +2,7 @@ package dev.sunbirdrc.keycloak;
 
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthIndicator;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient43Engine;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -23,7 +19,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
@@ -87,10 +83,10 @@ public class KeycloakAdminUtil implements HealthIndicator {
                 .build();
     }
 
-    public String createUser(String entityName, String userName, String email, String mobile) throws OwnerCreationException {
+    public String createUser(String entityName, String userName, String email, String mobile, String password) throws OwnerCreationException {
         logger.info("Creating user with mobile_number : " + userName);
         String groupId = createOrUpdateRealmGroup(entityName);
-        UserRepresentation newUser = createUserRepresentation(entityName, userName, email, mobile);
+        UserRepresentation newUser = createUserRepresentation(entityName, userName, email, mobile, password);
         UsersResource usersResource = keycloak.realm(realm).users();
         try (Response response = usersResource.create(newUser)) {
             if (response.getStatus() == 201) {
@@ -135,6 +131,9 @@ public class KeycloakAdminUtil implements HealthIndicator {
     private RoleRepresentation createOrGetRealmRole(String entityName) {
         RolesResource rolesResource = keycloak.realm(realm).roles();
         try {
+             return rolesResource.get(entityName).toRepresentation();
+        } catch (NotFoundException ex) {
+            logger.error("Role {} not found. Creating role {}", entityName, entityName);
             RoleRepresentation roleRepresentation = new RoleRepresentation();
             roleRepresentation.setName(entityName);
             rolesResource.create(roleRepresentation);
@@ -168,15 +167,19 @@ public class KeycloakAdminUtil implements HealthIndicator {
         }
     }
 
-    private UserRepresentation createUserRepresentation(String entityName, String userName, String email, String mobile) {
+    private UserRepresentation createUserRepresentation(String entityName, String userName, String email, String mobile, String password) {
         UserRepresentation newUser = new UserRepresentation();
         newUser.setEnabled(true);
         newUser.setUsername(userName);
-        if (setDefaultPassword) {
-            CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
-            credentialRepresentation.setValue(this.defaultPassword);
-            credentialRepresentation.setType(PASSWORD);
-            newUser.setCredentials(Collections.singletonList(credentialRepresentation));
+        if(Objects.equals(password, "") && this.setDefaultPassword) {
+            password = this.defaultPassword;
+        }
+        if (!Objects.equals(password, "")) {
+            CredentialRepresentation passwordCredential = new CredentialRepresentation();
+            passwordCredential.setValue(password);
+            passwordCredential.setType(PASSWORD);
+            passwordCredential.setTemporary(false);
+            newUser.setCredentials(Collections.singletonList(passwordCredential));
         }
         newUser.setGroups(Collections.singletonList(entityName));
         newUser.setEmail(email);
