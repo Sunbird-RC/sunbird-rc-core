@@ -92,6 +92,11 @@ conditionalAccess:
   internal: _internal
   private: _private
 
+idgen:
+  host: ${idgen_host:http://localhost:8088/}
+  createURL: ${idgen_generate_url:egov-idgen/id/_generate}
+
+
 # This property is to be used for search request/query
 # offset: search result starts from value provided as default
 # limits: search result to value provided as default

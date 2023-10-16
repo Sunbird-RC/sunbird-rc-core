@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
+import dev.sunbirdrc.pojos.UniqueIdentifierFields;
 import dev.sunbirdrc.pojos.attestation.auto.AutoAttestationPolicy;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.model.NotificationTemplates;
@@ -59,6 +60,11 @@ public class OSSchemaConfiguration {
      * Holds fields paths for ownership details of the entity
      * */
     private List<OwnershipsAttributes> ownershipAttributes = new ArrayList<>();
+
+    /**
+     * Holds fields paths for uniqueIdentifierFields of the entity
+     * */
+    private List<UniqueIdentifierFields> uniqueIdentifierFields = new ArrayList<>();
 
     /**
      *

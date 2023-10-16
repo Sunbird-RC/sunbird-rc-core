@@ -1,0 +1,4 @@
+INSERT INTO id_generator(idname, tenantid, format, sequencenumber) VALUES ('sunbird.rc.Pledge', 's.rc.Pledge', 'D[cy:yy][SEQ_D_SRC_NUM]', 1);
+INSERT INTO id_generator(idname, tenantid, format, sequencenumber) VALUES ('sunbird.rc.Recipients', 's.rc.Recipients', 'R[cy:yy][SEQ_D_SRC_NUM]', 2);
+INSERT INTO id_generator(idname, tenantid, format, sequencenumber) VALUES ('sunbird.rc.LivingDonor', 's.rc.LivingDonor', 'L[cy:yy][SEQ_D_SRC_NUM]', 3);
+INSERT INTO id_generator(idname, tenantid, format, sequencenumber) VALUES ('sunbird.rc.CadavericDonor', 's.rc.CadavericDonor', 'C[cy:yy][SEQ_D_SRC_NUM]', 4);
