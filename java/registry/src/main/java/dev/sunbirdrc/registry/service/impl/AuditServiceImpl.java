@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import dev.sunbirdrc.registry.exception.AuditFailedException;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +109,7 @@ public class AuditServiceImpl implements IAuditService {
     }
 
     @Override
-    public void doAudit(AuditRecord auditRecord, JsonNode inputNode, Shard shard) {
+    public void doAudit(AuditRecord auditRecord, JsonNode inputNode, Shard shard) throws AuditFailedException {
     	auditProviderFactory.getAuditService(auditFrameStore).doAudit(auditRecord, inputNode, shard);
     }
     
@@ -165,7 +167,7 @@ public class AuditServiceImpl implements IAuditService {
     	try {
     		auditItemDetails = Arrays.asList(objectMapper.treeToValue(differenceJson, AuditInfo[].class));
     	} catch (Exception e) {
-    		logger.error("Generic error in saving audit info : {}", e);
+    		logger.error("Generic error in saving audit info : {}", ExceptionUtils.getStackTrace(e));
     	}
         return auditItemDetails;
     }

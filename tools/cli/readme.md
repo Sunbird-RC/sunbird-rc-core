@@ -25,7 +25,9 @@ file to get started!
 
 ## Publish Package
 
-Update the version in `package.json` respectively following the semver and then run the below command to publish the latest version in npm portal.
+Update the version in `package.json` respectively following the semver and then
+run the below command to publish the latest version in npm portal.
+
 ```bash
 npm publish
 ```

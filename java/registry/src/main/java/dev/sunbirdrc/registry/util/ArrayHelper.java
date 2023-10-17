@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +104,7 @@ public class ArrayHelper {
             		TypeFactory.defaultInstance().constructCollectionType(List.class, Object.class));
         	 arrNode = mapper.valueToTree(itemList);
         } catch (Exception e) {
-            logger.error("Error in converting array elements to JsonNode" + e);
+            logger.error("Error in converting array elements to JsonNode: {}", ExceptionUtils.getStackTrace(e));
         }
         return arrNode;
     }

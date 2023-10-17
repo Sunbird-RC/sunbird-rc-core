@@ -6,10 +6,12 @@ import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.exception.EncryptionException;
 import dev.sunbirdrc.registry.service.EncryptionService;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,6 +30,7 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME;
 
 @Component
+@ConditionalOnProperty(name = "encryption.enabled", havingValue = "true")
 public class EncryptionServiceImpl implements EncryptionService {
 
 	private static Logger logger = LoggerFactory.getLogger(EncryptionServiceImpl.class);
@@ -41,7 +44,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 	private String encryptionBatchUri;
 	@Value("${decryption.batch.uri}")
 	private String decryptionBatchUri;
-	@Value("${encryption.base}")
+	@Value("${encryption.healthCheckURL}")
 	private String encryptionServiceHealthCheckUri;
 	@Autowired
 	private RetryRestTemplate retryRestTemplate;
@@ -67,10 +70,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			ResponseEntity<String> response = retryRestTemplate.postForEntity(encryptionUri, request);
 			return response.getBody();
 		} catch (ResourceAccessException e) {
-			logger.error("ResourceAccessException while connecting enryption service : ", e);
-			throw new EncryptionException("Exception while connecting enryption service! ");
+			logger.error("ResourceAccessException while connecting encryption service : {}", ExceptionUtils.getStackTrace(e));
+			throw new EncryptionException("Exception while connecting encryption service! ");
 		} catch (Exception e) {
-			logger.error("Exception in encryption service !: ", e);
+			logger.error("Exception in encryption service !: {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception in encryption service");
 		}
 	}
@@ -91,10 +94,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			logger.info("Property decrypted successfully !");
 			return response.getBody();
 		} catch (ResourceAccessException e) {
-			logger.error("ResourceAccessException while connecting dcryption service : ", e);
-			throw new EncryptionException("Exception while connecting enryption service ! ");
+			logger.error("ResourceAccessException while connecting decryption service : {}", ExceptionUtils.getStackTrace(e));
+			throw new EncryptionException("Exception while connecting encryption service ! ");
 		} catch (Exception e) {
-			logger.error("Exception in decryption service !: ", e);
+			logger.error("Exception in decryption service !: {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception in encryption service ! ");
 		}
 	}
@@ -120,10 +123,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
 			}.getType());
 		} catch (ResourceAccessException e) {
-			logger.error("Exception while connecting enryption service : ", e);
-			throw new EncryptionException("Exception while connecting enryption service! ");
+			logger.error("Exception while connecting encryption service : {}", ExceptionUtils.getStackTrace(e));
+			throw new EncryptionException("Exception while connecting encryption service! ");
 		} catch (Exception e) {
-			logger.error("Exception in encryption servie !: ", e);
+			logger.error("Exception in encryption service !: {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception in encryption service.");
 		}
 	}
@@ -150,10 +153,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
 			}.getType());
 		} catch (ResourceAccessException e) {
-			logger.error("Exception while connecting dcryption service : ", e);
-			throw new EncryptionException("Exception while connecting enryption service ! ");
+			logger.error("Exception while connecting decryption service : {}", ExceptionUtils.getStackTrace(e));
+			throw new EncryptionException("Exception while connecting encryption service ! ");
 		} catch (Exception e) {
-			logger.error("Exception in decryption service !: ", e);
+			logger.error("Exception in decryption service !: {}", ExceptionUtils.getStackTrace(e));
 			throw new EncryptionException("Exception in encryption service ! ");
 		}
 	}
@@ -181,7 +184,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 					return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, response.getBody());
 				}
 			} catch (RestClientException ex) {
-				logger.error("RestClientException when checking the health of the Sunbird encryption service: ", ex);
+				logger.error("RestClientException when checking the health of the encryption service: {}", ExceptionUtils.getStackTrace(ex));
 				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
 			}
 		} else {

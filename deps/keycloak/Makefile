@@ -10,3 +10,4 @@ build: build-mac-base
 push:
 	@docker push ghcr.io/sunbird-rc/sunbird-rc-keycloak
 	@docker push ghcr.io/sunbird-rc/sunbird-rc-keycloak:silicon
+  

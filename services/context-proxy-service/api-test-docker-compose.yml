@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   context-proxy-service:
-    image: dockerhub/sunbird-rc-context-proxy-service
+    image: ghcr.io/sunbird-rc/sunbird-rc-context-proxy-service
     ports:
       - "4400:4400"
     healthcheck:
@@ -10,7 +10,7 @@ services:
       timeout: 10s
       retries: 4
   test-runner:
-    image: dockerhub/python-papermill
+    image: ghcr.io/sunbird-rc/python-papermill
     command:
       - "/usr/local/bin/papermill"
       - "--log-output"
