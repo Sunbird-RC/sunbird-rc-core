@@ -1,11 +1,12 @@
+build-mac-base:
+	@docker build -t ghcr.io/sunbird-rc/keycloak-silicon -f apple-silicon/Dockerfile apple-silicon
 
-
-build:
+build: build-mac-base
 	echo "Building docker image"
 	@cd ../keycloak-mobile-number-login-spi/ && sh ./build.sh
 	@docker build -t ghcr.io/sunbird-rc/sunbird-rc-keycloak -f Dockerfile .
-	@docker build -t ghcr.io/sunbird-rc/sunbird-rc-keycloak-silicon -f Dockerfile.mac .
+	@docker build -t ghcr.io/sunbird-rc/sunbird-rc-keycloak:silicon -f Dockerfile.mac .
 
 push:
 	@docker push ghcr.io/sunbird-rc/sunbird-rc-keycloak
-	@docker push ghcr.io/sunbird-rc/sunbird-rc-keycloak-silicon
+	@docker push ghcr.io/sunbird-rc/sunbird-rc-keycloak:silicon
