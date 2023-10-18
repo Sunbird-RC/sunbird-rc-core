@@ -353,7 +353,7 @@ services:
         wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit
         1
   encryption-service:
-    image: ghcr.io/sunbird-rc/encryption-service:${RELEASE_VERSION}
+    image: ghcr.io/sunbird-rc/encryption-service
     ports:
       - '8013:8013'
     environment:
@@ -361,7 +361,7 @@ services:
       server.servlet.context-path: /
       spring.datasource.url: jdbc:postgresql://db:5432/registry
       spring.flyway.url: jdbc:postgresql://db:5432/registry
-      tenant.service: DBTenantService
+      egov.mdms.provider: org.egov.enc.masterdata.provider.DBMasterDataProvider
     depends_on:
       db:
         condition: service_healthy

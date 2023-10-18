@@ -9,11 +9,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Tenant {
-
+public class MDMSConfig {
     private int id;
-
     private String tenantId;
-
 }
-

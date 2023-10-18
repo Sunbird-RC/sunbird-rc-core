@@ -1,24 +1,30 @@
 package org.egov.enc.services;
 
 import lombok.extern.slf4j.Slf4j;
+import org.egov.enc.config.AppProperties;
 import org.egov.enc.keymanagement.KeyGenerator;
 import org.egov.enc.keymanagement.KeyIdGenerator;
 import org.egov.enc.keymanagement.KeyStore;
+import org.egov.enc.masterdata.MasterDataProvider;
 import org.egov.enc.models.AsymmetricKey;
 import org.egov.enc.models.SymmetricKey;
 import org.egov.enc.repository.KeyRepository;
 import org.egov.enc.web.models.RotateKeyRequest;
 import org.egov.enc.web.models.RotateKeyResponse;
 import org.egov.tracer.model.CustomException;
+import org.json.JSONException;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.List;
+
+import static org.egov.enc.utils.Constants.TENANTID_MDC_STRING;
 
 @Slf4j
 @Service
@@ -33,11 +39,15 @@ public class KeyManagementService implements ApplicationRunner {
     @Autowired
     private KeyIdGenerator keyIdGenerator;
     @Autowired
-    private TenantService tenantService;
+    private AppProperties appProperties;
+    @Autowired
+    private MasterDataProvider masterDataProvider;
 
 
     //Initialize active tenant id list and Check for any new tenants
     private void init() throws Exception {
+        // Adding in MDC so that tracer can add it in header
+        MDC.put(TENANTID_MDC_STRING, appProperties.getStateLevelTenantId());
         generateKeyForNewTenants();
     }
 
@@ -91,7 +101,7 @@ public class KeyManagementService implements ApplicationRunner {
     }
 
     private Set<String> makeComprehensiveListOfTenantIds() {
-        List<String> tenantIds = tenantService.getTenantIds();
+        ArrayList<String> tenantIds = getTenantIds();
         Set<String> comprehensiveTenantIdsSet = new HashSet<>(tenantIds);
 
         for (String tenantId: tenantIds) {
@@ -134,6 +144,12 @@ public class KeyManagementService implements ApplicationRunner {
         generateKeyForNewTenants();
 
         return new RotateKeyResponse(true);
+    }
+
+
+
+    private ArrayList<String> getTenantIds() throws JSONException {
+        return masterDataProvider.getTenantIds();
     }
 
     @Override

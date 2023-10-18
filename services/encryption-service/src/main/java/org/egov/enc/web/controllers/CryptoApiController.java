@@ -70,9 +70,4 @@ public class CryptoApiController{
         return new ResponseEntity<RotateKeyResponse>(keyManagementService.rotateKey(rotateKeyRequest), HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/health", method=RequestMethod.GET)
-    public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("UP");
-    }
-
 }
