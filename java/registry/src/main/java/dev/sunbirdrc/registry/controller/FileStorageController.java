@@ -28,8 +28,6 @@ public class FileStorageController {
     private static final Logger logger = LoggerFactory.getLogger(FileStorageController.class);
     private final FileStorageService fileStorageService;
     private final RegistryHelper registryHelper;
-
-    private static final Logger logger = LoggerFactory.getLogger(FileStorageController.class);
     FileStorageController(FileStorageService fileStorageService, RegistryHelper registryHelper) {
         this.fileStorageService = fileStorageService;
         this.registryHelper = registryHelper;
@@ -73,7 +71,7 @@ public class FileStorageController {
                                                     @PathVariable String entityId,
                                                     @PathVariable String documentId,
                                                     @PathVariable String property,
-                                                    HttpServletRequest httpServletRequest) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+                                                    HttpServletRequest httpServletRequest) {
         try {
             registryHelper.authorize(entityName, entityId, httpServletRequest);
         } catch (Exception e) {
