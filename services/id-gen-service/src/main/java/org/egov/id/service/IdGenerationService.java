@@ -11,14 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.id.config.PropertiesManager;
 import org.egov.id.masterdata.MasterDataProvider;
 import org.egov.id.masterdata.provider.DBMasterDataProvider;
-import org.egov.id.model.IDSeqOverflowException;
-import org.egov.id.model.IdGenerationRequest;
-import org.egov.id.model.IdGenerationResponse;
-import org.egov.id.model.IdRequest;
-import org.egov.id.model.IdResponse;
-import org.egov.id.model.InvalidIDFormatException;
-import org.egov.id.model.RequestInfo;
-import org.egov.id.model.ResponseInfoFactory;
+import org.egov.id.model.*;
+import org.egov.id.utils.IdGenUtils;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -101,6 +95,30 @@ public class IdGenerationService {
 
         return idGenerationResponse;
 
+    }
+
+    public IdFormatResponse createIdFormatResponse(IdGenerationRequest idGenerationRequest) throws Exception {
+
+        RequestInfo requestInfo = idGenerationRequest.getRequestInfo();
+        List<IdRequest> idRequests = idGenerationRequest.getIdRequests();
+
+        IdFormatResponse idFormatResponse = new IdFormatResponse();
+        boolean hasErrors = false;
+        List<String> errorMsgs = new ArrayList<>();
+
+        for (IdRequest idRequest : idRequests) {
+            try {
+                dbMasterDataProvider.createIdFormat(idRequest);
+                errorMsgs.add(null);
+            } catch (Exception e){
+                hasErrors = true;
+                errorMsgs.add(e.getMessage());
+            }
+        }
+        if(hasErrors) idFormatResponse.setErrorMsgs(errorMsgs);
+        idFormatResponse.setResponseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, !hasErrors));
+
+        return idFormatResponse;
     }
 
     ;
@@ -228,16 +246,9 @@ public class IdGenerationService {
             }
         }
 
-        List<String> matchList = new ArrayList<String>();
-
-        Pattern regExpPattern = Pattern.compile("\\[(.*?)\\]");
-        Matcher regExpMatcher = regExpPattern.matcher(idFormat);
+        List<String> matchList = IdGenUtils.getMatchList(idFormat);
 
         Integer count = getCount(idRequest);
-
-        while (regExpMatcher.find()) {// Finds Matching Pattern in String
-            matchList.add(regExpMatcher.group(1));// Fetching Group from String
-        }
 
         HashMap<String, List<String>> sequences = new HashMap<>();
         String idFormatTemplate = idFormat;

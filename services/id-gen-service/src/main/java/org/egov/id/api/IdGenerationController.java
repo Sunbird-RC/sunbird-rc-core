@@ -1,5 +1,6 @@
 package org.egov.id.api;
 
+import org.egov.id.model.IdFormatResponse;
 import org.egov.id.model.IdGenerationRequest;
 import org.egov.id.model.IdGenerationResponse;
 import org.egov.id.service.IdGenerationService;
@@ -39,6 +40,17 @@ public class IdGenerationController {
 				.generateIdResponse(idGenerationRequest);
 
 		return idGenerationResponse;
+	}
+
+	@RequestMapping(method = RequestMethod.POST, path = "_format/add")
+	public IdFormatResponse createIdFormat(
+			@RequestBody @Valid IdGenerationRequest idGenerationRequest)
+			throws Exception {
+
+		IdFormatResponse idFormatResponse = idGenerationService
+				.createIdFormatResponse(idGenerationRequest);
+
+		return idFormatResponse;
 	}
 
 }

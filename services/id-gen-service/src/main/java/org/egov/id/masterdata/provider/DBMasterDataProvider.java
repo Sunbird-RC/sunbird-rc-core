@@ -5,12 +5,12 @@ import org.egov.id.masterdata.MasterDataProvider;
 import org.egov.id.model.IdRequest;
 import org.egov.id.model.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.sql.DataSource;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -60,5 +60,20 @@ public class DBMasterDataProvider implements MasterDataProvider {
             log.error("SQL error while trying to retrieve format from DB", ex);
         }
         return idFormat;
+    }
+
+    public void createIdFormat(IdRequest idRequest) {
+        try {
+            String idName = idRequest.getIdName();
+            String tenantId = idRequest.getTenantId();
+            String idFormat = idRequest.getFormat();
+            StringBuffer idSelectQuery = new StringBuffer();
+            idSelectQuery.append("INSERT INTO id_generator(idname, tenantid, format, sequencenumber) ").append("VALUES (?, ?, ?, ?) ");
+            int rs = jdbcTemplate.update(idSelectQuery.toString(),idName,tenantId,idFormat,1);
+            if(rs != 1) throw new RuntimeException("Unable to insert the id format");
+        } catch (Exception ex){
+            log.error("SQL error while trying to retrieve format from DB", ex);
+            throw ex;
+        }
     }
 }
