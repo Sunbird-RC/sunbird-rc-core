@@ -234,6 +234,9 @@ public class RegistryServiceImpl implements RegistryService {
                 entityId = registryDao.addEntity(graph, rootNode);
                 if (commitEnabled) {
                     dbProvider.commitTransaction(graph, tx);
+                  entityParenter.ensureKnownParentNodesForSchema(rootNode);
+                  entityParenter.loadDefinitionIndexForSchema(rootNode);
+                  entityParenter.ensureIndexExists();
                 }
             } finally {
                 if (tx != null) {

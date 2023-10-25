@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.registry.dao.VertexWriter;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
@@ -26,6 +27,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static dev.sunbirdrc.registry.Constants.Schema;
 
 @Component("entityParenter")
 public class EntityParenter {
@@ -115,7 +118,51 @@ public class EntityParenter {
         }
         indexHelper.setDefinitionIndexMap(indexMap);
     }
+    public void loadDefinitionIndexForSchema(JsonNode schemaNode) {
+        Map<String, Boolean> indexMap = new ConcurrentHashMap<String, Boolean>();
 
+        String schemaName = schemaNode.fieldNames().next();
+
+        for (Map.Entry<String, ShardParentInfoList> entry : shardParentMap.entrySet()) {
+            String shardId = entry.getKey();
+            ShardParentInfoList shardParentInfoList = entry.getValue();
+            shardParentInfoList.getParentInfos().forEach(shardParentInfo -> {
+                Definition definition = definitionsManager.getDefinition(shardParentInfo.getName());
+                // Process only for the specific schema added through API
+                if (definition.getTitle().equals(schemaName)) {
+                    Vertex parentVertex = shardParentInfo.getVertex();
+                    List<String> indexFields = definition.getOsSchemaConfiguration().getIndexFields();
+                    if (!indexFields.contains(uuidPropertyName)) {
+                        indexFields.add(uuidPropertyName); // adds default field
+                    }
+                    List<String> indexUniqueFields = definition.getOsSchemaConfiguration().getUniqueIndexFields();
+                    List<String> compositeIndexFields = IndexHelper.getCompositeIndexFields(indexFields);
+                    List<String> singleIndexFields = IndexHelper.getSingleIndexFields(indexFields);
+
+                    IndexFields indicesByDefinition = new IndexFields();
+                    indicesByDefinition.setDefinitionName(definition.getTitle());
+                    indicesByDefinition.setIndexFields(indexFields);
+                    indicesByDefinition.setUniqueIndexFields(indexUniqueFields);
+                    indicesByDefinition.setNewSingleIndexFields(indexHelper.getNewFields(parentVertex, singleIndexFields, false));
+                    indicesByDefinition.setNewCompositeIndexFields(indexHelper.getNewFields(parentVertex, compositeIndexFields, false));
+                    indicesByDefinition.setNewUniqueIndexFields(indexHelper.getNewFields(parentVertex, indexUniqueFields, true));
+
+                    int nNewIndices = indicesByDefinition.getNewSingleIndexFields().size();
+                    int nNewUniqIndices = indicesByDefinition.getNewUniqueIndexFields().size();
+                    int nNewCompIndices = indicesByDefinition.getNewCompositeIndexFields().size();
+
+                    boolean indexingComplete = (nNewIndices == 0 && nNewUniqIndices == 0 && nNewCompIndices == 0);
+                    indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), indexingComplete);
+                    logger.info("On loadDefinitionIndex for Shard:" + shardId + " definition: {} updated index to {} ",
+                            definition.getTitle(), indexingComplete);
+
+                    definitionIndexFields.put(indicesByDefinition.getDefinitionName(), indicesByDefinition);
+                }
+            });
+        }
+
+        indexHelper.setDefinitionIndexMap(indexMap);
+    }
     /**
      * Creates the parent vertex in all the shards for all default definitions
      *
@@ -167,6 +214,59 @@ public class EntityParenter {
         result = Optional.empty();
         return result;
     }
+
+     public Optional<String> ensureKnownParentNodesForSchema(JsonNode schemaNode) {
+         logger.info("Start - ensure parent node for defined schema");
+         Optional<String> result;
+
+         dbConnectionInfoList.forEach(dbConnectionInfo -> {
+             logger.info("Starting to parents for {} definitions in shard {}", defintionNames.size(),
+                     dbConnectionInfo.getShardId());
+             DatabaseProvider dbProvider = dbProviderFactory.getInstance(dbConnectionInfo);
+             try {
+                 try (OSGraph osGraph = dbProvider.getOSGraph()) {
+                     Graph graph = osGraph.getGraphStore();
+                     List<ShardParentInfo> shardParentInfoList = new ArrayList<>();
+                     try (Transaction tx = dbProvider.startTransaction(graph)) {
+
+                         List<String> parentLabels = new ArrayList<>();
+                            if(schemaNode.get(Schema)==null && schemaNode.fieldNames().next()!=null) {
+                                String name = schemaNode.fieldNames().next();
+                                defintionNames.forEach(defintionName -> {
+                                    if (defintionName.contains(name)) {
+                                        String parentLabel = ParentLabelGenerator.getLabel(defintionName);
+                                        parentLabels.add(parentLabel);
+
+                                        VertexWriter vertexWriter = new VertexWriter(graph, dbProvider, uuidPropertyName);
+                                        Vertex v = vertexWriter.ensureParentVertex(parentLabel);
+
+                                        ShardParentInfo shardParentInfo = new ShardParentInfo(defintionName, v);
+                                        shardParentInfo.setUuid(dbProvider.getId(v));
+                                        shardParentInfoList.add(shardParentInfo);
+                                    }
+                                });
+
+
+                                ShardParentInfoList valList = new ShardParentInfoList();
+                                valList.setParentInfos(shardParentInfoList);
+
+                                shardParentMap.put(dbConnectionInfo.getShardId(), valList);
+
+                                dbProvider.commitTransaction(graph, tx);
+                            }
+                     }
+                     logger.info("Ensured parents for {} definitions in shard {}", defintionNames.size(),
+                             dbConnectionInfo.getShardId());
+                 }
+             } catch (Exception e) {
+                 logger.error("Can't ensure parents for definitions " + e);
+             }
+         });
+
+         logger.info("End - ensure parent node for defined schema");
+         result = Optional.empty();
+         return result;
+     }
 
     /**
      * Gets a known parent id
