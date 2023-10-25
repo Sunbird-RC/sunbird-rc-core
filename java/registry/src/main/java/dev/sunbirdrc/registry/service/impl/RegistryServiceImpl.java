@@ -318,10 +318,6 @@ public class RegistryServiceImpl implements RegistryService {
                 }
                 String parentEntityType = readNode.fields().next().getKey();
                 HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
-
-                // Merge the new changes
-                //JsonNode mergedNode = mergeWrapper("/" + parentEntityType, (ObjectNode) readNode, (ObjectNode) inputNode);
-                //logger.debug("After merge the payload is " + mergedNode.toString());
                 // TODO: need to revoke and re-sign the entity
                 // Re-sign, i.e., remove and add entity signature again
 /*
