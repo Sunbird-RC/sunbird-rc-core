@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
+import org.mockito.ArgumentMatchers;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
@@ -13,11 +14,11 @@ import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.service.ICertificateService;
 import dev.sunbirdrc.registry.transform.*;
 import dev.sunbirdrc.registry.util.DefinitionsManager;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import dev.sunbirdrc.registry.util.ViewTemplateManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -25,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
@@ -33,11 +33,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import org.springframework.http.HttpHeaders;
 import javax.servlet.http.HttpServletRequest;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 @RunWith(SpringRunner.class)
 @WebMvcTest({RegistryEntityController.class})
 @ContextConfiguration(classes = {RegistryEntityController.class})
