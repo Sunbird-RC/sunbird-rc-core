@@ -49,6 +49,15 @@ import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
@@ -90,6 +99,9 @@ public class RegistryHelper {
     public static String ROLE_ANONYMOUS = "anonymous";
 
     private static final Logger logger = LoggerFactory.getLogger(RegistryHelper.class);
+    public RegistryHelper(RestHighLevelClient restHighLevelClient) {
+            this.restHighLevelClient = restHighLevelClient;
+            }
 
     @Value("${authentication.enabled:true}") boolean securityEnabled;
     @Value("${notification.service.enabled}") boolean notificationEnabled;
@@ -186,7 +198,9 @@ public class RegistryHelper {
     @Autowired
     private AsyncRequest asyncRequest;
 
-    public JsonNode removeFormatAttr(JsonNode requestBody) {
+    @Autowired
+     private RestHighLevelClient restHighLevelClient;
+      public JsonNode removeFormatAttr(JsonNode requestBody) {
         String documents = "documents";
         if (requestBody.has(documents)) {
             JsonNode documentsNode = requestBody.get(documents);
@@ -1246,4 +1260,32 @@ public class RegistryHelper {
         }
         return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
     }
-}
+    public long getTotalRecordCount(String indexName) throws IOException {
+      SearchRequest searchRequest = new SearchRequest(indexName);
+      SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+      sourceBuilder.query(QueryBuilders.matchAllQuery());
+      AggregationBuilder aggregation = AggregationBuilders.cardinality("record_count").field("_id");
+      sourceBuilder.aggregation(aggregation);
+      searchRequest.source(sourceBuilder);
+      try {
+          SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+          Cardinality cardinality = searchResponse.getAggregations().get("record_count");
+          long totalRecordCount = (long) cardinality.getValue();
+          logger.info("Elasticsearch Query: " + searchRequest.source().toString());
+          logger.info("Total Record Count: " + totalRecordCount);
+          return totalRecordCount;
+      } catch (IOException e) {
+          logger.error("Error while retrieving record count from Elasticsearch", e);
+          throw e;
+      }
+    }
+  }
+
+
+
+
+
+
+
+
+

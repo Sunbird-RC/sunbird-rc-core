@@ -927,4 +927,14 @@ public class RegistryEntityController extends AbstractController {
             return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-}
+     @GetMapping("/api/v1/{entityName}/count")
+      public ResponseEntity<Long> getTotalRecordCount(@PathVariable String entityName, HttpServletRequest request) {
+          try {
+              long totalRecordCount = registryHelper.getTotalRecordCount(entityName);
+              return ResponseEntity.ok(totalRecordCount);
+          } catch (Exception e) {
+              e.printStackTrace();
+              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(-1L);
+          }
+      }
+  }
