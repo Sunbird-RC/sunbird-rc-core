@@ -459,8 +459,16 @@ public class JSONUtil {
 
 	public static void replaceFieldByPointerPath(JsonNode node, String jsonPointer, JsonNode value) {
 		if (value != null && jsonPointer != null) {
-			((ObjectNode) node.at(jsonPointer.substring(0, jsonPointer.lastIndexOf("/")))).set(jsonPointer.substring(jsonPointer.lastIndexOf("/") + 1), value);
+			jsonPointer = convertToJsonPointerPath(jsonPointer);
+			((ObjectNode) node.at(jsonPointer.substring(0, jsonPointer.lastIndexOf("/")))).put(jsonPointer.substring(jsonPointer.lastIndexOf("/") + 1), value);
 		}
+	}
+
+	public static String convertToJsonPointerPath(String docPath) {
+		if(docPath != null && docPath.startsWith("$.")) {
+			return docPath.replace("$", "").replaceAll("\\.", "/");
+		}
+		return docPath;
 	}
 
     public static String readValFromJsonTree(String path, JsonNode input) {

@@ -309,6 +309,8 @@ public class RegistryHelper {
                 resultNode = includePrivateFields ? decryptionHelper.getDecryptedJson(resultNode) : resultNode;
             }
             resultNode = vTransformer.transform(viewTemplate, resultNode);
+        } else if (encryptionEnabled) {
+            resultNode = decryptionHelper.getDecryptedJson(resultNode);
         }
         logger.debug("readEntity ends");
         if(isEventsEnabled) {

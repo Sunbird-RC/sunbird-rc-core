@@ -23,8 +23,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME;
@@ -36,6 +35,10 @@ public class EncryptionServiceImpl implements EncryptionService {
 	private static Logger logger = LoggerFactory.getLogger(EncryptionServiceImpl.class);
 	@Value("${encryption.enabled}")
 	private boolean encryptionEnabled;
+	@Value("${encryption.tenant.id}")
+	private String encryptionTenantId;
+	@Value("${encryption.method}")
+	private String encryptionMethod;
 	@Value("${encryption.uri}")
 	private String encryptionUri;
 	@Value("${decryption.uri}")
@@ -62,20 +65,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 	 */
 	@Override
 	public String encrypt(Object propertyValue) throws EncryptionException {
-		logger.debug("encrypt starts with value");
-		MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
-		map.add("value", propertyValue);
-		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map);
-		try {
-			ResponseEntity<String> response = retryRestTemplate.postForEntity(encryptionUri, request);
-			return response.getBody();
-		} catch (ResourceAccessException e) {
-			logger.error("ResourceAccessException while connecting encryption service : {}", ExceptionUtils.getStackTrace(e));
-			throw new EncryptionException("Exception while connecting encryption service! ");
-		} catch (Exception e) {
-			logger.error("Exception in encryption service !: {}", ExceptionUtils.getStackTrace(e));
-			throw new EncryptionException("Exception in encryption service");
-		}
+		return this.doEncrypt(propertyValue, encryptionUri).toString();
 	}
 
 	/** decrypts the input
@@ -85,21 +75,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 	 */
 	@Override
 	public String decrypt(Object propertyValue) throws EncryptionException {
-		logger.debug("decrypt starts with value {}", propertyValue);
-		MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
-		map.add("value", propertyValue);
-		HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map);
-		try {
-			ResponseEntity<String> response = retryRestTemplate.postForEntity(decryptionUri,request);
-			logger.info("Property decrypted successfully !");
-			return response.getBody();
-		} catch (ResourceAccessException e) {
-			logger.error("ResourceAccessException while connecting decryption service : {}", ExceptionUtils.getStackTrace(e));
-			throw new EncryptionException("Exception while connecting encryption service ! ");
-		} catch (Exception e) {
-			logger.error("Exception in decryption service !: {}", ExceptionUtils.getStackTrace(e));
-			throw new EncryptionException("Exception in encryption service ! ");
-		}
+		return this.doDecrypt(propertyValue, decryptionUri).toString();
 	}
 
 	/** encrypts the input which is in Map format
@@ -109,26 +85,7 @@ public class EncryptionServiceImpl implements EncryptionService {
 	 */
 	@Override
 	public Map<String, Object> encrypt(Map<String, Object> propertyValue) throws EncryptionException {
-		logger.debug("encrypt starts with value {}", propertyValue);
-		Map<String, Object> map = new HashMap<>();
-		map.put("value", propertyValue);
-
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		HttpEntity<String> entity = new HttpEntity<>(gson.toJson(map), headers);
-		try {
-			watch.start("EncryptionServiceImpl.encryptBatch");
-			ResponseEntity<String> response = retryRestTemplate.postForEntity(encryptionBatchUri,entity);
-			watch.stop("EncryptionServiceImpl.encryptBatch");
-			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
-			}.getType());
-		} catch (ResourceAccessException e) {
-			logger.error("Exception while connecting encryption service : {}", ExceptionUtils.getStackTrace(e));
-			throw new EncryptionException("Exception while connecting encryption service! ");
-		} catch (Exception e) {
-			logger.error("Exception in encryption service !: {}", ExceptionUtils.getStackTrace(e));
-			throw new EncryptionException("Exception in encryption service.");
-		}
+		return this.doEncrypt(propertyValue, encryptionBatchUri);
 	}
 
 	/** decrypts the input which is in Map format
@@ -138,19 +95,50 @@ public class EncryptionServiceImpl implements EncryptionService {
 	 */
 	@Override
 	public Map<String, Object> decrypt(Map<String, Object> propertyValue) throws EncryptionException {
-		logger.debug("decrypt starts with value {}", propertyValue);
+		return this.doDecrypt(propertyValue, decryptionBatchUri);
+	}
+
+	private <T> T doEncrypt(T propertyValue, String uri) throws EncryptionException {
+		logger.debug("encrypt starts with value {}", propertyValue);
 		Map<String, Object> map = new HashMap<>();
-		map.put("value", propertyValue);
+		Map<String, Object> encReqObj = new HashMap<>();
+		encReqObj.put("tenantId", encryptionTenantId);
+		encReqObj.put("value", propertyValue);
+		encReqObj.put("type", encryptionMethod);
+		map.put("encryptionRequests", Collections.singletonList(encReqObj));
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity<String> entity = new HttpEntity<>(gson.toJson(map), headers);
+		try {
+			watch.start("EncryptionServiceImpl.encryptBatch");
+			ResponseEntity<String> response = retryRestTemplate.postForEntity(uri, entity);
+			watch.stop("EncryptionServiceImpl.encryptBatch");
+			List<T> results = gson.fromJson(response.getBody(), new TypeToken<List<T>>() {
+			}.getType());
+			assert results != null;
+			return results.get(0);
+		} catch (ResourceAccessException e) {
+			logger.error("Exception while connecting encryption service : {}", ExceptionUtils.getStackTrace(e));
+			throw new EncryptionException("Exception while connecting encryption service! ");
+		} catch (Exception e) {
+			logger.error("Exception in encryption service !: {}", ExceptionUtils.getStackTrace(e));
+			throw new EncryptionException("Exception in encryption service.");
+		}
+	}
+
+	private  <T> T  doDecrypt(T propertyValue, String uri) throws EncryptionException {
+		logger.debug("decrypt starts with value {}", propertyValue);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		HttpEntity<String> entity = new HttpEntity<>(gson.toJson(propertyValue), headers);
 
 		try {
 			watch.start("EncryptionServiceImpl.decryptBatch");
-			ResponseEntity<String> response = retryRestTemplate.postForEntity(decryptionBatchUri,entity);
+			ResponseEntity<String> response = retryRestTemplate.postForEntity(uri, entity);
 			watch.stop("EncryptionServiceImpl.decryptBatch");
-			return gson.fromJson(response.getBody(), new TypeToken<HashMap<String, Object>>() {
+			return gson.fromJson(response.getBody(), new TypeToken<T>() {
 			}.getType());
 		} catch (ResourceAccessException e) {
 			logger.error("Exception while connecting decryption service : {}", ExceptionUtils.getStackTrace(e));
