@@ -3,18 +3,23 @@ package dev.sunbirdrc.registry.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.registry.exception.EncryptionException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
+import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.service.EncryptionService;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class PrivateField {
     @Autowired
@@ -31,13 +36,13 @@ public class PrivateField {
      */
     public Map<String, Object> getPrivateFields(JsonNode rootNode, List<String> privatePropertyLst) {
         Map<String, Object> plainKeyValues = new HashMap<>();
-        rootNode.fields().forEachRemaining(entry -> {
-            JsonNode entryValue = entry.getValue();
-            if (entryValue.isValueNode()) {
-                if (privatePropertyLst.contains(entry.getKey()))
-                    plainKeyValues.put(entry.getKey(), entryValue.asText());
-            }
-        });
+        if(privatePropertyLst != null) {
+            DocumentContext documentContext = JsonPath.parse(rootNode.toString());
+            privatePropertyLst.forEach(path -> {
+                Object read = documentContext.read(path);
+                plainKeyValues.put(path, read);
+            });
+        }
         return plainKeyValues;
     }
 
@@ -49,17 +54,12 @@ public class PrivateField {
      * @param privatePropertyLst
      * @param privateFieldMap Contains the values encrypted/decrypted based on base call
      */
-    public JsonNode replacePrivateFields(JsonNode rootNode, List<String> privatePropertyLst, Map<String, Object> privateFieldMap) {
-
-        rootNode.fields().forEachRemaining(entry -> {
-            JsonNode entryValue = entry.getValue();
-
-            if (entryValue.isValueNode() && privatePropertyLst.contains(entry.getKey())) {
-                String privateFieldValue = privateFieldMap.get(entry.getKey()).toString();
-                JsonNode encryptedValNode = JsonNodeFactory.instance.textNode(privateFieldValue);
-                entry.setValue(encryptedValNode);
-            }
-        });
+    public JsonNode replacePrivateFields(JsonNode rootNode, List<String> privatePropertyLst, Map<String, Object> privateFieldMap) throws IOException {
+        if (privatePropertyLst != null) {
+            DocumentContext documentContext = JsonPath.parse(rootNode.toString());
+            privateFieldMap.forEach(documentContext::set);
+            return JSONUtil.convertStringJsonNode(documentContext.jsonString());
+        }
         return rootNode;
     }
 
@@ -70,35 +70,50 @@ public class PrivateField {
     protected JsonNode processPrivateFields(JsonNode element, String rootDefinitionName, String childFieldName) throws EncryptionException {
         JsonNode tempElement = element;
         Definition definition = definitionsManager.getDefinition(rootDefinitionName);;
-        if (null != childFieldName) {
+        if (null != childFieldName && definition != null) {
             String defnName = definition.getDefinitionNameForField(childFieldName);
             Definition childDefinition = definitionsManager.getDefinition(defnName);
             if (null == childDefinition) {
-                logger.error("Cannot get child name definition {}", childFieldName);
+                logger.info("Cannot get child name definition {}", childFieldName);
                 return element;
             }
             definition = childDefinition;
+        } else if (definition == null) {
+            return element;
         }
 
-        List<String> privatePropertyLst = definition.getOsSchemaConfiguration().getPrivateFields();
+        List<String> privatePropertyLst = definition.getOsSchemaConfiguration().getPrivateFields()
+                .stream().map(d -> {
+                    if (!d.startsWith("$."))
+                        return String.format("$.%s", d.replaceAll("/", "."));
+                    return d;
+                }).collect(Collectors.toList());
         Map<String, Object> plainMap = getPrivateFields(element, privatePropertyLst);
         if (null != plainMap && !plainMap.isEmpty()) {
             Map<String, Object> encodedMap = performOperation(plainMap);
-            tempElement = replacePrivateFields(element, privatePropertyLst, encodedMap);
+            try {
+                tempElement = replacePrivateFields(element, privatePropertyLst, encodedMap);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
         return tempElement;
     }
 
-    private void processArray(ArrayNode arrayNode, String rootFieldName, String fieldName) throws EncryptionException {
+    private ArrayNode processArray(ArrayNode arrayNode, String rootFieldName, String fieldName) throws EncryptionException {
+        ArrayNode updatedArrayNode = JsonNodeFactory.instance.arrayNode();
         for (JsonNode jsonNode : arrayNode) {
+            JsonNode updatedNode = jsonNode;
             if (jsonNode.isObject()) {
-                process(jsonNode, rootFieldName, fieldName);
+                updatedNode = process(jsonNode, rootFieldName, fieldName);
             }
+            updatedArrayNode.add(updatedNode);
         }
+        return updatedArrayNode;
     }
 
     protected JsonNode process(JsonNode jsonNode, String rootFieldName, String fieldName) throws EncryptionException {
-        processPrivateFields(jsonNode, rootFieldName, fieldName);
+        jsonNode = processPrivateFields(jsonNode, rootFieldName, fieldName);
 
         String tempFieldName = fieldName;
         if (null == tempFieldName) {
@@ -121,9 +136,9 @@ public class PrivateField {
 
                 if (isNotSignatures && entryValue.isObject()) {
                     // Recursive calls
-                    process(entryValue, tempFieldName, entry.getKey());
+                    entry.setValue(process(entryValue, tempFieldName, entry.getKey()));
                 } else if (isNotSignatures && entryValue.isArray()) {
-                    processArray((ArrayNode) entryValue, tempFieldName, entry.getKey());
+                    entry.setValue(processArray((ArrayNode) entryValue, tempFieldName, entry.getKey()));
                 }
             } catch (EncryptionException e) {
                 logger.error("Exception occurred in PrivateField: {}", ExceptionUtils.getStackTrace(e));

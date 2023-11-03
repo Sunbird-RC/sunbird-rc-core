@@ -124,10 +124,10 @@ public class EntityStateHelper {
     }
 
     private ObjectNode createOwnershipNode(JsonNode entityNode, String entityName, OwnershipsAttributes ownershipAttribute) {
-        String mobilePath = ownershipAttribute.getMobile();
-        String emailPath = ownershipAttribute.getEmail();
-        String userIdPath = ownershipAttribute.getUserId();
-        String passwordPath = ownershipAttribute.getPassword();
+        String mobilePath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getMobile());
+        String emailPath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getEmail());
+        String userIdPath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getUserId());
+        String passwordPath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getPassword());
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
         objectNode.put(MOBILE, entityNode.at(String.format("/%s%s", entityName, mobilePath)).asText(""));
         objectNode.put(EMAIL, entityNode.at(String.format("/%s%s", entityName, emailPath)).asText(""));
