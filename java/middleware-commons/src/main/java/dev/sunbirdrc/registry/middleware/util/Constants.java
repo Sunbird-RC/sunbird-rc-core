@@ -13,6 +13,7 @@ public class Constants {
 
 	public static final String SUNBIRDRC_REGISTRY_API = "sunbirdrc-registry-api"; //todo make it configurable for backward compatibility
 	public static final String SUNBIRD_ENCRYPTION_SERVICE_NAME = "sunbird.encryption.service";
+	public static final String SUNBIRD_ID_GEN_SERVICE_NAME = "sunbird.idgen.service";
 	public static final String SUNBIRD_SIGNATURE_SERVICE_NAME = "sunbird.signature.service";
 
 	public static final String SUNBIRD_ELASTIC_SERVICE_NAME = "sunbird.elastic.service";

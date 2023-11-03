@@ -1,6 +1,8 @@
 package dev.sunbirdrc.registry.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.registry.middleware.util.DateUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import java.util.ArrayList;
@@ -88,6 +90,14 @@ public class OSSystemFieldsHelper {
         Definition def = definitionsManager.getDefinition(definitionName);
         return def != null ? def.getOsSchemaConfiguration().getSystemFields() : new ArrayList<>();
 
+    }
+
+    public void ensureNotToUpdateUniqueIdentifierFields (String vertexLabel, JsonNode node ) {
+        Definition definition =  definitionsManager.getDefinition(vertexLabel);
+        List<UniqueIdentifierField> uniqueIdentifierFields = definition.getOsSchemaConfiguration().getUniqueIdentifierFields();
+        for (UniqueIdentifierField unqIdField : uniqueIdentifierFields) {
+            ((ObjectNode) node).remove(unqIdField.getField());
+        }
     }
 
 }

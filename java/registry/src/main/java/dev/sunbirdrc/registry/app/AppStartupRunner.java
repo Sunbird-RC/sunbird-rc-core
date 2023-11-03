@@ -23,5 +23,6 @@ public class AppStartupRunner implements ApplicationRunner {
     	entityParenter.ensureKnownParenters();
     	entityParenter.loadDefinitionIndex();
 		entityParenter.ensureIndexExists();
+		entityParenter.saveIdFormat();
     }
 }
