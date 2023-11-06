@@ -2,6 +2,7 @@ package dev.sunbirdrc.registry.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
+import dev.sunbirdrc.pojos.UniqueIdentifierField;
 
 import java.util.*;
 
@@ -17,6 +18,11 @@ public interface IDefinitionsManager {
     Map<String, Definition> getDefinitionMap();
 
     Set<String> getInternalSchemas();
+
+    default List<UniqueIdentifierField> getUniqueIdentifierFields(String entityName) {
+        return Optional.ofNullable(getDefinition(entityName).getOsSchemaConfiguration()
+                .getUniqueIdentifierFields()).orElse(Collections.emptyList());
+    }
 
 
     /**

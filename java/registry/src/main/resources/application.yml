@@ -332,6 +332,12 @@ api-swagger:
   description: ${swagger_description:Sunbird registry and credential api (SunbirdRC)}
   version: ${swagger_version:1.0.0}
 
+idgen:
+  enabled: ${idgen_enabled:false}
+  tenantId: ${idgen_tenant_id:default}
+  healthCheckURL: ${idgen_health_check_url:http://localhost:8088/egov-idgen/health}
+  generateURL: ${idgen_generate_url:http://localhost:8088/egov-idgen/id/_generate}
+  idFormatURL: ${idgen_id_format_url:http://localhost:8088/egov-idgen/id/_format/add}
 
 ---
 ##################################################################

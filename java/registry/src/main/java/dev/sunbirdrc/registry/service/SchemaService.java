@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.registry.entities.SchemaStatus;
+import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.util.Definition;
@@ -13,9 +15,11 @@ import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.validators.IValidate;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 
 import static dev.sunbirdrc.registry.Constants.PATH;
 import static dev.sunbirdrc.registry.Constants.Schema;
@@ -26,6 +30,11 @@ public class SchemaService {
 	private static final String STATUS = "status";
 	@Autowired
 	private IDefinitionsManager definitionsManager;
+
+	@Autowired(required = false)
+	private IIdGenService idGenService;
+	@Value("${idgen.enabled:false}")
+	private boolean idGenEnabled;
 
 	@Autowired
 	private boolean isElasticSearchEnabled;
@@ -56,15 +65,18 @@ public class SchemaService {
 			} else {
 				throw new SchemaException("Duplicate Error: Schema already exists");
 			}
+			saveIdFormat(definition.getTitle());
 		}
 	}
 
-	public void updateSchema(JsonNode updatedSchema) throws IOException {
+	public void updateSchema(JsonNode updatedSchema) throws IOException, SchemaException {
 		JsonNode schemaNode = updatedSchema.get(Schema);
 		if (schemaNode.get(STATUS) != null && schemaNode.get(STATUS).textValue().equals(SchemaStatus.PUBLISHED.toString())) {
 			JsonNode schema = schemaNode.get(Schema.toLowerCase());
+			Definition definition = Definition.toDefinition(schema);
 			definitionsManager.appendNewDefinition(schema);
 			validator.addDefinitions(schema);
+			saveIdFormat(definition.getTitle());
 		}
 	}
 
@@ -120,6 +132,16 @@ public class SchemaService {
 		if (existingSchemaStatus != null) {
 			checkIfSchemaDefinitionUpdatedForPublishedSchema(existingSchemaNode, updatedSchemaNode, existingSchemaStatus);
 			checkIfSchemaStatusUpdatedForPublishedSchema(updatedSchemaNode, existingSchemaStatus);
+		}
+	}
+
+	private void saveIdFormat(String title) throws SchemaException {
+		if(!idGenEnabled) return;
+		List<UniqueIdentifierField> identifierFieldList = definitionsManager.getUniqueIdentifierFields(title);
+		try {
+			idGenService.saveIdFormat(identifierFieldList);
+		} catch (CustomException e) {
+			throw new SchemaException(e.getMessage(), e.getCause());
 		}
 	}
 
