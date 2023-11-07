@@ -7,6 +7,7 @@ import (
 	"metrics/models"
 	"metrics/swagger_gen/restapi/operations"
 	"metrics/swagger_gen/restapi/operations/aggregates"
+	"metrics/swagger_gen/restapi/operations/health"
 	"metrics/swagger_gen/restapi/operations/metrics"
 
 	"github.com/go-openapi/runtime/middleware"
@@ -16,6 +17,15 @@ import (
 func SetupHandlers(api *operations.MetricsAPI) {
 	api.MetricsGetV1MetricsHandler = metrics.GetV1MetricsHandlerFunc(getAllMetrics)
 	api.AggregatesGetV1AggregatesHandler = aggregates.GetV1AggregatesHandlerFunc(getWeeklyAggregates)
+	api.HealthGetHealthHandler = health.GetHealthHandlerFunc(getHealthHandle)
+}
+
+func getHealthHandle(params health.GetHealthParams) middleware.Responder {
+	response := health.NewGetHealthOK()
+	response.Payload = map[string]string{
+		"status": "UP",
+	}
+	return response
 }
 
 func getAllMetrics(params metrics.GetV1MetricsParams) middleware.Responder {

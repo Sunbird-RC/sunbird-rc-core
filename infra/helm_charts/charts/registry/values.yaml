@@ -3,9 +3,9 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-
+host: loadtesting.xiv.in
 image:
-  repository: dockerhub/sunbird-rc-core
+  repository: ghcr.io/sunbird-rc/sunbird-rc-core
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""

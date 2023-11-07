@@ -141,6 +141,8 @@ public class RegistryHelperTest {
 		registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
 		ReflectionTestUtils.setField(registryHelper.entityStateHelper, "setDefaultPassword", false);
 		registryHelper.setDefinitionsManager(definitionsManager);
+		registryHelper.setNotificationEnabled(true);
+		registryHelper.setSecurityEnabled(true);
 	}
 
 	@Test

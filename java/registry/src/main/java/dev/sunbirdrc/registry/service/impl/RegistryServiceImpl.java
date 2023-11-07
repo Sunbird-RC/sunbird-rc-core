@@ -6,14 +6,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.actors.factory.MessageFactory;
 import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
+import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.registry.dao.*;
+import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
+import dev.sunbirdrc.registry.exception.UniqueIdentifierException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
@@ -43,6 +48,7 @@ import org.sunbird.akka.core.Router;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.INVALID_ID_MESSAGE;
@@ -56,16 +62,14 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private EntityTypeHandler entityTypeHandler;
-    @Autowired
-    private EncryptionService encryptionService;
-    @Autowired
+    @Autowired(required = false)
     private SignatureService signatureService;
     @Autowired
     private IDefinitionsManager definitionsManager;
 
-    @Autowired
+    @Autowired(required = false)
     private EncryptionHelper encryptionHelper;
-    @Autowired
+    @Autowired(required = false)
     private SignatureHelper signatureHelper;
     @Autowired
     private EntityTransformer entityTransformer;
@@ -128,26 +132,27 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private SchemaService schemaService;
 
-    @Autowired
-    private IElasticService elasticService;
+    @Autowired(required = false)
+    private IIdGenService idGenService;
+    @Value("${idgen.enabled:false}")
+    private boolean idGenEnabled;
 
-    @Autowired
-    private FileStorageService fileStorageService;
-
-    @Autowired
+    @Autowired(required = false)
     private List<HealthIndicator> healthIndicators;
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
         AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
         List<ComponentHealthInfo> checks = new ArrayList<>();
-        healthIndicators.parallelStream().forEach(healthIndicator -> {
-            ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
-            checks.add(healthInfo);
-            overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
-        });
+        if (healthIndicators != null) {
+            healthIndicators.parallelStream().forEach(healthIndicator -> {
+                ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
+                checks.add(healthInfo);
+                overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
+            });
+        }
 
         healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus.get(), checks);
-        logger.info("Heath Check :  ", checks.toArray().toString());
+        logger.info("Heath Check : {}", checks.stream().map(ComponentHealthInfo::getName).collect(Collectors.toList()));
         return healthCheck;
     }
 
@@ -216,12 +221,28 @@ public class RegistryServiceImpl implements RegistryService {
         String entityId = "entityPlaceholderId";
         String vertexLabel = rootNode.fieldNames().next();
         Definition definition = null;
+        List<UniqueIdentifierField> uniqueIdentifierFields = definitionsManager.getUniqueIdentifierFields(vertexLabel);
 
-        systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
+        if(idGenEnabled && uniqueIdentifierFields != null && !uniqueIdentifierFields.isEmpty()) {
+            try {
+                Map<String, String> uid = idGenService.generateId(uniqueIdentifierFields);
+                DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(rootNode.get(vertexLabel)));
+                for(Map.Entry<String, String> entry: uid.entrySet()) {
+                    String path = String.format("$%s", entry.getKey().replaceAll("/", "."));
+                    int fieldStartIndex = path.lastIndexOf(".");
+                    doc.put(path.substring(0, fieldStartIndex), path.substring(fieldStartIndex + 1), entry.getValue());
+                }
+                ((ObjectNode) rootNode).set(vertexLabel, JSONUtil.convertStringJsonNode(doc.jsonString()));
+            } catch (CustomException e) {
+                throw new UniqueIdentifierException(e);
+            }
+        }
 
         if (encryptionEnabled) {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
+
+        systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
         if (!skipSignature) {
             generateCredentials(rootNode, vertexLabel);
@@ -292,10 +313,10 @@ public class RegistryServiceImpl implements RegistryService {
     public void updateEntity(Shard shard, String userId, String id, String jsonString, boolean skipSignature) throws Exception {
         JsonNode inputNode = objectMapper.readTree(jsonString);
         String entityType = inputNode.fields().next().getKey();
-        systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
         if (encryptionEnabled) {
             inputNode = encryptionHelper.getEncryptedJson(inputNode);
         }
+        systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
 
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
