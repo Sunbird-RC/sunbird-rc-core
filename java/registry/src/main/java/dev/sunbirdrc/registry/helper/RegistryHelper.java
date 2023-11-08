@@ -434,8 +434,14 @@ public class RegistryHelper {
 
         updateGetFileUrl(attestationRequest.getAdditionalInput());
 
+        String propertyData = null;
+        if (attestationRequest.getPropertyData() != null) {
+            propertyData = attestationRequest.getPropertyData().toString();
+        }
+
+
         PluginRequestMessage message = PluginRequestMessageCreator.create(
-                attestationRequest.getPropertyData().toString(), condition, attestationOSID, attestationRequest.getEntityName(),
+                propertyData, condition, attestationOSID, attestationRequest.getEntityName(),
                 attestationRequest.getEmailId(), attestationRequest.getEntityId(), attestationRequest.getAdditionalInput(),
                 Action.RAISE_CLAIM.name(), attestationPolicy.getName(), attestationPolicy.getAttestorPlugin(),
                 attestationPolicy.getAttestorEntity(), attestationPolicy.getAttestorSignin(),
@@ -484,7 +490,9 @@ public class RegistryHelper {
         JsonNode parentNode = nodeToUpdate.get(attestationRequest.getEntityName());
         JsonNode propertyNode = parentNode.get(attestationRequest.getName());
         ObjectNode attestationJsonNode = (ObjectNode) JSONUtil.convertObjectJsonNode(attestationRequest);
-        attestationJsonNode.set("propertyData", JsonNodeFactory.instance.textNode(attestationRequest.getPropertyData().toString()));
+        if (attestationRequest.getPropertyData() != null) {
+            attestationJsonNode.set("propertyData", JsonNodeFactory.instance.textNode(attestationRequest.getPropertyData().toString()));
+        }
         createOrUpdateProperty(attestationRequest.getEntityName(), attestationJsonNode, nodeToUpdate, attestationRequest.getName(), (ObjectNode) parentNode, propertyNode);
         updateEntityAndState(existingEntityNode, nodeToUpdate, attestationRequest.getUserId());
     }

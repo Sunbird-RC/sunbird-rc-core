@@ -9,12 +9,12 @@ Feature: Registry api tests
     * def admin_token = ""
     * def client_secret = 'a52c5f4a-89fd-40b9-aea2-3f711f14c889'
     * def sleep = function(millis){ java.lang.Thread.sleep(millis) }
-
+  @envnot=fusionauth
   Scenario: health check
     Given path 'health'
     When method get
     Then status 200
-
+  @envnot=fusionauth
   Scenario: Create birth certificate schema and issue credentials
 #    get admin token
     * url authUrl
@@ -102,7 +102,7 @@ Feature: Registry api tests
     And response.params.status == "UNSUCCESSFUL"
     And response.params.errmsg == "entity status is inactive"
 
-
+  @envnot=fusionauth
   Scenario: Create student schema and verify crud apis
   #    get admin token
     * url authUrl
@@ -234,6 +234,7 @@ Feature: Registry api tests
     And response.length == 1
     And response[0].contact == '#notpresent'
 
+  @envnot=fusionauth
   Scenario: Create Board and invite institutes
     #    get admin token
     * url authUrl
@@ -347,6 +348,7 @@ Feature: Registry api tests
     And assert response[0].address[0].phoneNo.length == 1
     And assert response[0].address[0].phoneNo[0] == "444"
 
+  @envnot=fusionauth
   Scenario: write a api test, to test the schema not found error
   # get admin token
     * url authUrl
@@ -486,6 +488,7 @@ Feature: Registry api tests
     And response.params.status =="UNSUCCESSFUL"
     And response.params.errmsg == "Schema 'Teacher1' not found"
 
+  @envnot=fusionauth
   Scenario: Create student with password schema and verify if password is set
   #    get admin token
     * url authUrl
@@ -544,6 +547,8 @@ Feature: Registry api tests
     When method get
     Then status 200
     * match response.contactDetails == { mobile: '#notpresent', email: '#present', osid: '#present' }
+
+  @envnot=fusionauth
   Scenario: Create birth certificate schema, issue credentials then revoke the credential and check for CRUD APIS
 #    get admin token
     * url authUrl
@@ -678,6 +683,7 @@ Feature: Registry api tests
     And print response[notificationStudent]
     And assert response[notificationStudent] != null
 
+  @envnot=fusionauth
   Scenario: Test unique constraints with nested and composite fields
 # create entity
     Given url registryUrl

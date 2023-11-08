@@ -64,11 +64,7 @@ import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
 import dev.sunbirdrc.registry.identity_providers.providers.IdentityProvider;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 import static dev.sunbirdrc.registry.Constants.ATTESTATION_POLICY;
 

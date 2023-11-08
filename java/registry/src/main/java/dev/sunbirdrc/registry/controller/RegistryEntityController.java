@@ -663,11 +663,11 @@ public class RegistryEntityController extends AbstractController {
         Response response = new Response(Response.API_ID.GET, "OK", responseParams);
         try {
             checkEntityNameInDefinitionManager(entityName);
-            String userId = registryHelper.getUserId(request, entityName);
+            String userId = registryHelper.getUserId(entityName);
             if (!Strings.isEmpty(userId)) {
                 JsonNode responseFromDb = registryHelper.searchEntitiesByUserId(entityName, userId, viewTemplateId);
                 JsonNode entities = responseFromDb.get(entityName);
-                if (entities.size() > 0) {
+                if (!entities.isEmpty()) {
                     return new ResponseEntity<>(entities, HttpStatus.OK);
                 } else {
                     responseParams.setErrmsg("No record found");
