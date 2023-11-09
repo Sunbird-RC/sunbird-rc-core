@@ -5,6 +5,7 @@ import { http } from 'gluegun'
 
 import { ApisauceInstance } from 'apisauce'
 import { ApiResponse } from '../../../types'
+import { config } from '../../../config/config'
 
 // Utility methods
 const convertToUrlEncodedForm = (data: Record<string, any>): string => {
@@ -31,30 +32,47 @@ class KeycloakWrapper {
 
 	// Return an access token
 	async getAccessToken(): Promise<string> {
-		const response = (await this.httpClient.post(
-			'/auth/realms/master/protocol/openid-connect/token',
-			convertToUrlEncodedForm({
-				client_id: 'admin-cli',
-				username: this.user,
-				password: this.pass,
-				grant_type: 'password',
-			}),
-			{
-				headers: {
-					'content-type': 'application/x-www-form-urlencoded',
-				},
+		let maxRetries = config.maximumRetries
+		let retryCount = 0
+		while (retryCount < maxRetries) {
+			try {
+				const response = (await this.httpClient.post(
+					'/auth/realms/master/protocol/openid-connect/token',
+					convertToUrlEncodedForm({
+						client_id: 'admin-cli',
+						username: this.user,
+						password: this.pass,
+						grant_type: 'password',
+					}),
+					{
+						headers: {
+							'content-type': 'application/x-www-form-urlencoded',
+						},
+					}
+				)) as ApiResponse
+
+				if (response.ok) {
+					return response.data.access_token
+				} else {
+					if (retryCount === maxRetries - 1)
+						console.debug(response.originalError)
+					throw new Error(
+						`There was an error while retrieving an access token from Keycloak: ${
+							response.originalError ?? response.problem
+						}`
+					)
+				}
+			} catch (error) {
+				// console.error(`API call failed. Retrying... (${retryCount + 1}/${maxRetries})`);
+				retryCount++
+				// You can adjust the delay time as needed
+				await new Promise((resolve) => setTimeout(resolve, 1000)) // 1 second delay
 			}
-		)) as ApiResponse
-		if (!response.ok) {
-			console.debug(response.originalError)
-			throw new Error(
-				`There was an error while retrieving an access token from keycloak: ${
-					response.originalError ?? response.problem
-				}`
-			)
 		}
 
-		return response.data.access_token
+		throw new Error(
+			`API call failed to fetch token from keycloak after ${maxRetries} retries.`
+		)
 	}
 
 	// Get the keycloak client ID of a client
@@ -85,12 +103,13 @@ class KeycloakWrapper {
 
 	// Regenerate the client secret for a client in keycloak
 	async regenerateClientSecret(internalClientId: string): Promise<string> {
+		let token = await this.getAccessToken()
 		const response = (await this.httpClient.post(
 			`/auth/admin/realms/${this.realm}/clients/${internalClientId}/client-secret`,
 			{},
 			{
 				headers: {
-					authorization: `Bearer ${await this.getAccessToken()}`,
+					authorization: `Bearer ${token}`,
 				},
 			}
 		)) as ApiResponse

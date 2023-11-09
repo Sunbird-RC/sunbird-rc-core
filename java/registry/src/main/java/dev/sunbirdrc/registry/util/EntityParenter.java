@@ -1,13 +1,18 @@
 package dev.sunbirdrc.registry.util;
 
+import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.registry.dao.VertexWriter;
+import dev.sunbirdrc.registry.exception.CustomException;
+import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.model.IndexFields;
+import dev.sunbirdrc.registry.service.IIdGenService;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -18,13 +23,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Component("entityParenter")
 public class EntityParenter {
@@ -38,6 +39,11 @@ public class EntityParenter {
 
     @Autowired
     private DBProviderFactory dbProviderFactory;
+
+    @Autowired(required = false)
+    private IIdGenService idGenService;
+    @Value("${idgen.enabled:false}")
+    private boolean idGenEnabled;
 
     private IDefinitionsManager definitionsManager;
     private DBConnectionInfoMgr dbConnectionInfoMgr;
@@ -158,7 +164,7 @@ public class EntityParenter {
                             dbConnectionInfo.getShardId());
                 }
             } catch (Exception e) {
-                logger.error("Can't ensure parents for definitions " + e);
+                logger.error("Can't ensure parents for definitions: {}", ExceptionUtils.getStackTrace(e));
             }
         });
 
@@ -237,8 +243,8 @@ public class EntityParenter {
                 asyncAddIndex(dbProvider, shardId, parentVertex, definition);
             }
         } catch (Exception e) {
-            logger.error("ensureIndexExists: Can't create index on table {} for shardId: {} ", definition.getTitle(),
-                    shardId);
+            logger.error("ensureIndexExists: Can't create index on table {} for shardId {}: {}", definition.getTitle(),
+                    shardId, ExceptionUtils.getStackTrace(e));
         }
     }
 
@@ -273,8 +279,7 @@ public class EntityParenter {
                     indexHelper.updateDefinitionIndex(shardId, definition.getTitle(), true);
                 }
             } catch (Exception e) {
-                logger.error(e.getMessage());
-                logger.error("Failed Transaction creating index {}", definition.getTitle());
+                logger.error("Failed Transaction creating index {}: {}", definition.getTitle(), ExceptionUtils.getStackTrace(e));
             }
 
         } else {
@@ -303,6 +308,20 @@ public class EntityParenter {
                 vertexWriter.updateParentIndexProperty(v, Constants.INDEX_FIELDS, indexFields);
                 vertexWriter.updateParentIndexProperty(v, Constants.UNIQUE_INDEX_FIELDS, indexUniqueFields);
                 dbProvider.commitTransaction(graph, tx);
+            }
+        }
+    }
+
+    public void saveIdFormat() throws SchemaException {
+        if(!idGenEnabled) return;
+        List<UniqueIdentifierField> list = this.definitionsManager.getAllDefinitions().stream()
+                .flatMap(definition -> definitionsManager.getUniqueIdentifierFields(definition.getTitle()).stream())
+                .filter(Objects::nonNull).collect(Collectors.toList());
+        if(!list.isEmpty()) {
+            try {
+                idGenService.saveIdFormat(list);
+            } catch (CustomException e) {
+                throw new SchemaException(e.getMessage(), e.getCause());
             }
         }
     }

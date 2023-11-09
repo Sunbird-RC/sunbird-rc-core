@@ -2,7 +2,7 @@ const jsigs = require('jsonld-signatures');
 const {Ed25519KeyPair, RSAKeyPair} = require('crypto-ld');
 const {Ed25519Signature2018, RsaSignature2018} = jsigs.suites;
 const {AssertionProofPurpose} = jsigs.purposes;
-const {CERTIFICATE_CONTROLLER_ID, CUSTOM_TEMPLATE_DELIMITERS} = require('../../config/config');
+const {CERTIFICATE_CONTROLLER_ID, CUSTOM_TEMPLATE_DELIMITERS, TIME_ZONE} = require('../../config/config');
 const vc = require('vc-js');
 const Handlebars = require("handlebars");
 const delimiters = require('handlebars-delimiters');
@@ -15,6 +15,16 @@ delimiters(Handlebars, CUSTOM_TEMPLATE_DELIMITERS);
 const {documentLoaders} = require('jsonld');
 const {node: documentLoader} = documentLoaders;
 const DEFAULT = "default";
+const moment = require("moment-timezone");
+
+Handlebars.registerHelper('formatTime', function (date) {
+    try {
+        if(!!TIME_ZONE) return moment.tz(date, TIME_ZONE).format();
+    } catch (err) {
+        console.log("Failed converting to timezone ", TIME_ZONE);
+    }
+    return date;
+});
 
 const KeyType = {
     RSA: "RSA", ED25519: "ED25519"

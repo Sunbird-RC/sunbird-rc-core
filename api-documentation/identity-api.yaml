@@ -1,0 +1,382 @@
+---
+openapi: 3.0.0
+info:
+  title: Sunbird RC - Identity APIs 
+  description: Identity APIs
+  termsOfService: https://sunbirdrc.dev/
+  contact:
+    email: sunbird@example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: https://sunbirdrc.dev/api/v1
+security:
+- Authorization: []
+tags:
+- name: Health
+  description: Health Check API
+- name: Identity
+  description: The following APIs are defined for generating and resolving a DID
+- name: Utils
+  description: Some common utilities
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      operationId: AppController_checkHealth
+      parameters: []
+      responses:
+        '200':
+          description: The Health Check is successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  info:
+                    type: object
+                    example:
+                      database:
+                        status: up
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                      additionalProperties:
+                        type: string
+                    nullable: true
+                  error:
+                    type: object
+                    example: {}
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                      additionalProperties:
+                        type: string
+                    nullable: true
+                  details:
+                    type: object
+                    example:
+                      database:
+                        status: up
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                      additionalProperties:
+                        type: string
+        '503':
+          description: The Health Check is not successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  info:
+                    type: object
+                    example:
+                      database:
+                        status: up
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                      additionalProperties:
+                        type: string
+                    nullable: true
+                  error:
+                    type: object
+                    example:
+                      redis:
+                        status: down
+                        message: Could not connect
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                      additionalProperties:
+                        type: string
+                    nullable: true
+                  details:
+                    type: object
+                    example:
+                      database:
+                        status: up
+                      redis:
+                        status: down
+                        message: Could not connect
+                    additionalProperties:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                      additionalProperties:
+                        type: string
+  /did/generate:
+    post:
+      tags:
+        - Identity
+      operationId: DidController_generateDID
+      summary: Generate a new DID
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/GenerateDidDTO'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DidResponseDTO'
+          description: DID Generated
+        '400':
+          description: Bad request
+  /did/resolve/{id}:
+    get:
+      tags:
+        - Identity
+      operationId: DidController_resolveDID
+      summary: Resolve a DID ID
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: The DID ID to resolve
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/DidResponseDTO'
+          description: DID resolved
+        '400':
+          description: Bad Request
+        '404':
+          description: DID not found
+  /utils/sign:
+    post:
+      tags:
+        - Utils
+      operationId: VcController_sign
+      summary: Sign an unsigned VC
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignJsonDTO'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedVCDTO'
+          description: VC Signed
+        '400':
+          description: Bad Request
+        '500':
+          description: Internal Server Error
+  /utils/verify:
+    post:
+      tags:
+        - Utils
+      operationId: VcController_verify
+      summary: Verify a signed VC
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyJsonDTO'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: boolean
+                example: true
+          description: ''
+components:
+  schemas:
+    GenerateDidDTO:
+      type: object
+      properties:
+        alsoKnownAs:
+          description: AlsoKnownAs property is a unique combination aadhaar and username.
+          type: array
+          items:
+            type: string
+            example: ramesh@gmail.com
+        services:
+          description: An array of services that are used, for example a user registration
+            service.
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              serviceEndpoint:
+                type: object
+            additionalProperties: true
+            example: '{
+                        "id": "IdentityHub",
+                        "type": "IdentityHub",
+                        "serviceEndpoint": {
+                            "@context": "schema.identity.foundation/hub",
+                            "@type": "UserServiceEndpoint",
+                            "instance": [
+                                "did:test:hub.id"
+                            ]
+                        }
+                    }'
+        method:
+          type: string
+          description: The method of DID.
+      required:
+      - alsoKnownAs
+      - services
+      - method
+    SignJsonDTO:
+      type: object
+      properties:
+        DID:
+          type: string
+          description: The unique DID id of the issuer.
+        payload:
+          type: string
+          description: JSON string of the unsigned VC.
+          example: '{
+        "@context": [
+            "https://www.w3.org/2018/credentials/v1",
+            "https://www.w3.org/2018/credentials/examples/v1"
+        ],
+        "id": "did:ulp:b4a191af-d86e-453c-9d0e-dd4771067235",
+        "type": [
+            "VerifiableCredential",
+            "UniversityDegreeCredential"
+        ],
+        "issuer": "did:rcw:6b9d7b31-bc7f-454a-be30-b6c7447b1cff",
+        "expirationDate": "2023-02-08T11:56:27.259Z",
+        "credentialSubject": {
+            "id": "did:rcw:6b9d7b31-bc7f-454a-be30-b6c7447b1cff",
+            "grade": "9.23",
+            "programme": "B.Tech",
+            "certifyingInstitute": "IIIT Sonepat",
+            "evaluatingInstitute": "NIT Kurukshetra"
+        },
+        "options": {
+            "created": "2020-04-02T18:48:36Z",
+            "credentialStatus": {
+                "type": "RevocationList2020Status"
+            }
+        }
+    }'
+      required:
+      - DID
+      - payload
+    VerifyJsonDTO:
+      type: object
+      properties:
+        DID:
+          type: string
+      required:
+      - DID
+    DidResponseDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          example: did:rcw:71364c7e-0abe-49cf-9269-4661699f274b
+        alsoKnownAs:
+          description: AlsoKnownAs property is a unique combination aadhaar and username.
+          type: array
+          items:
+            type: string
+            example: ramesh@gmail.com
+        service:
+          description: An array of services that are used, for example a user registration
+            service.
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              type:
+                type: string
+              serviceEndpoint:
+                type: object
+            additionalProperties: true
+            example: '{
+                        "id": "IdentityHub",
+                        "type": "IdentityHub",
+                        "serviceEndpoint": {
+                            "@context": "schema.identity.foundation/hub",
+                            "@type": "UserServiceEndpoint",
+                            "instance": [
+                                "did:test:hub.id"
+                            ]
+                        }
+                    }'
+        verificationMethod:
+          type: object
+          properties:
+            id:
+              type: string
+              example: auth-key
+            type:
+              type: string
+              example: RS256
+            publicKeyJwk:
+              type: object
+            controller:
+              type: string
+              example: did:rcw:71364c7e-0abe-49cf-9269-4661699f274b
+          description: The method of DID
+        authentication:
+          type: string
+          example: auth-key
+    SignedVCDTO:
+      type: object
+      properties:
+        publicKey:
+          type: object
+          description: Public Key of issuer
+          example: '{"kty": "EC","crv": "secp256k1","x": "1iTtnvgP141NM-4qC6BgmkeTAjV7u-gZWni71G7cAKo","y": "VSGqq6yS0w7riXXRqFxXwKvHgIpQaUNMlFQKh-xgKMI"}'
+        signed:
+          type: string
+          description: Signed VC
+  securitySchemes:
+    Authorization:
+      type: apiKey
+      name: Token
+      in: header

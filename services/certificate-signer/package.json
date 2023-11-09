@@ -15,6 +15,7 @@
     "handlebars-delimiters": "^1.0.0",
     "jsonld-signatures": "^6.0.0",
     "kafkajs": "^1.15.0",
+    "moment-timezone": "^0.5.43",
     "mustache": "^4.2.0",
     "node-cache": "^5.1.2",
     "object-hash": "^3.0.0",

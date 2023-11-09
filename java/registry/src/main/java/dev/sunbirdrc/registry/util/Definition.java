@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,7 @@ public class Definition {
             try {
                 osSchemaConfiguration = mapper.treeToValue(configJson, OSSchemaConfiguration.class);
             } catch (JsonProcessingException e) {
-                logger.error("Error processing {} JSON: ", OSCONFIG, e);
+                logger.error("Error processing {} JSON: {}", OSCONFIG, ExceptionUtils.getStackTrace(e));
                 logger.debug(title + " does not have OS configuration.");
             }
         }

@@ -21,6 +21,7 @@ import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import dev.sunbirdrc.registry.entities.*;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
+import dev.sunbirdrc.registry.exception.UnreachableException;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
@@ -43,6 +44,7 @@ import lombok.Setter;
 import org.agrona.Strings;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +53,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
@@ -91,7 +95,7 @@ public class RegistryHelper {
     @Value("${notification.service.enabled}") boolean notificationEnabled;
     @Value("${invite.required_validation_enabled}") boolean skipRequiredValidationForInvite = true;
     @Value("${invite.signature_enabled}") boolean skipSignatureForInvite = true;
-    @Autowired
+    @Autowired(required = false)
     private NotificationHelper notificationHelper;
     @Autowired
     private ShardManager shardManager;
@@ -127,7 +131,9 @@ public class RegistryHelper {
     @Autowired
     private DBConnectionInfoMgr dbConnectionInfoMgr;
 
-    @Autowired
+    @Value("${encryption.enabled}")
+    private boolean encryptionEnabled;
+    @Autowired(required = false)
     private DecryptionHelper decryptionHelper;
 
     @Autowired
@@ -136,7 +142,9 @@ public class RegistryHelper {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
+    @Value("${filestorage.enabled}")
+    private boolean fileStorageEnabled;
+    @Autowired(required = false)
     private FileStorageService fileStorageService;
 
     @Value("${database.uuidPropertyName}")
@@ -169,7 +177,7 @@ public class RegistryHelper {
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
-    @Autowired
+    @Autowired(required = false)
     private SignatureService signatureService;
 
     @Autowired
@@ -202,13 +210,13 @@ public class RegistryHelper {
      */
     public String addEntity(JsonNode inputJson, String userId) throws Exception {
         String entityId = addEntityHandler(inputJson, userId, false, false);
-        notificationHelper.sendNotification(inputJson, CREATE);
+        if(notificationEnabled) notificationHelper.sendNotification(inputJson, CREATE);
         return entityId;
     }
 
     public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
         String entityId = addEntityHandler(inputJson, userId, skipRequiredValidationForInvite, skipSignatureForInvite);
-        notificationHelper.sendNotification(inputJson, INVITE);
+        if(notificationEnabled) notificationHelper.sendNotification(inputJson, INVITE);
         return entityId;
     }
 
@@ -252,7 +260,7 @@ public class RegistryHelper {
             watch.stop("RegistryController.addToExistingEntity");
             logger.info("AddEntity,{}", recordId.toString());
         } catch (Exception e) {
-            logger.error("Exception in controller while adding entity !", e);
+            logger.error("Exception in controller while adding entity !, {}", ExceptionUtils.getStackTrace(e));
             throw new Exception(e);
         }
         return recordId.toString();
@@ -297,9 +305,14 @@ public class RegistryHelper {
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
             if (viewTemplateDecryptPrivateFields) {
+                if (!encryptionEnabled) {
+                    throw new UnreachableException("Encryption should be enabled to decrypt private fields");
+                }
                 resultNode = includePrivateFields ? decryptionHelper.getDecryptedJson(resultNode) : resultNode;
             }
             resultNode = vTransformer.transform(viewTemplate, resultNode);
+        } else if (encryptionEnabled) {
+            resultNode = decryptionHelper.getDecryptedJson(resultNode);
         }
         logger.debug("readEntity ends");
         if(isEventsEnabled) {
@@ -377,7 +390,7 @@ public class RegistryHelper {
         RecordIdentifier recordId = RecordIdentifier.parse(label);
         logger.info("Update Api: shard id: " + recordId.getShardLabel() + " for uuid: " + recordId.getUuid());
         registryService.updateEntity(shard, userId, recordId.getUuid(), jsonString, false);
-        notificationHelper.sendNotification(inputJson, UPDATE);
+        if(notificationEnabled) notificationHelper.sendNotification(inputJson, UPDATE);
         return "SUCCESS";
     }
 
@@ -388,7 +401,7 @@ public class RegistryHelper {
             updatedNode = entityStateHelper.applyWorkflowTransitions(existingNode, updatedNode, attestationPolicies);
         }
         updateEntity(updatedNode, userId);
-        notificationHelper.sendNotification(updatedNode, UPDATE);
+        if(notificationEnabled) notificationHelper.sendNotification(updatedNode, UPDATE);
     }
 
     public void addEntityProperty(String entityName, String entityId, JsonNode inputJson, HttpServletRequest request) throws Exception {
@@ -421,8 +434,14 @@ public class RegistryHelper {
 
         updateGetFileUrl(attestationRequest.getAdditionalInput());
 
+        String propertyData = null;
+        if (attestationRequest.getPropertyData() != null) {
+            propertyData = attestationRequest.getPropertyData().toString();
+        }
+
+
         PluginRequestMessage message = PluginRequestMessageCreator.create(
-                attestationRequest.getPropertyData().toString(), condition, attestationOSID, attestationRequest.getEntityName(),
+                propertyData, condition, attestationOSID, attestationRequest.getEntityName(),
                 attestationRequest.getEmailId(), attestationRequest.getEntityId(), attestationRequest.getAdditionalInput(),
                 Action.RAISE_CLAIM.name(), attestationPolicy.getName(), attestationPolicy.getAttestorPlugin(),
                 attestationPolicy.getAttestorEntity(), attestationPolicy.getAttestorSignin(),
@@ -433,8 +452,11 @@ public class RegistryHelper {
     }
 
 
-    private void updateGetFileUrl(JsonNode additionalInput) {
+    private void updateGetFileUrl(JsonNode additionalInput) throws UnreachableException {
         if(additionalInput!= null && additionalInput.has(FILE_URL)) {
+            if (!fileStorageEnabled) {
+                throw new UnreachableException("File Storage Service is not enabled");
+            }
             ArrayNode fileUrls = (ArrayNode)(additionalInput.get(FILE_URL));
             ArrayNode signedUrls = JsonNodeFactory.instance.arrayNode();
             for (JsonNode fileNode : fileUrls) {
@@ -445,7 +467,7 @@ public class RegistryHelper {
                 } catch (ServerException | InternalException | XmlParserException | InvalidResponseException
                          | InvalidKeyException | NoSuchAlgorithmException | IOException
                          | ErrorResponseException | InsufficientDataException e) {
-                    e.printStackTrace();
+                    logger.error("Fetching signed file url failed: {}", ExceptionUtils.getStackTrace(e));
                 }
             }
             ((ObjectNode)additionalInput).replace(FILE_URL, signedUrls);
@@ -468,7 +490,9 @@ public class RegistryHelper {
         JsonNode parentNode = nodeToUpdate.get(attestationRequest.getEntityName());
         JsonNode propertyNode = parentNode.get(attestationRequest.getName());
         ObjectNode attestationJsonNode = (ObjectNode) JSONUtil.convertObjectJsonNode(attestationRequest);
-        attestationJsonNode.set("propertyData", JsonNodeFactory.instance.textNode(attestationRequest.getPropertyData().toString()));
+        if (attestationRequest.getPropertyData() != null) {
+            attestationJsonNode.set("propertyData", JsonNodeFactory.instance.textNode(attestationRequest.getPropertyData().toString()));
+        }
         createOrUpdateProperty(attestationRequest.getEntityName(), attestationJsonNode, nodeToUpdate, attestationRequest.getName(), (ObjectNode) parentNode, propertyNode);
         updateEntityAndState(existingEntityNode, nodeToUpdate, attestationRequest.getUserId());
     }
@@ -572,6 +596,9 @@ public class RegistryHelper {
                 // checking size greater than 1, bcz empty template contains osid field
                 if (credentialTemplate != null) {
                     JsonNode response = objectMapper.readTree(pluginResponseMessage.getResponse());
+                    if (!signatureEnabled) {
+                        throw new UnreachableException("Signature service not enabled!");
+                    }
                     Object signedData = getSignedDoc(response, credentialTemplate);
                     metaData.put(
                             ATTESTED_DATA,
@@ -617,7 +644,7 @@ public class RegistryHelper {
                             .propertyData(JSONUtil.convertStringJsonNode(pluginResponseMessage.getResponse())).build();
                     triggerAttestation(attestationRequest, nextAttestationPolicy);
                 } catch (PolicyNotFoundException e) {
-                    logger.error("Next level attestation policy not found:", e);
+                    logger.error("Next level attestation policy not found: {}", ExceptionUtils.getStackTrace(e));
                 }
             } else if (attestationPolicy.getCompletionType() == FlowType.FUNCTION) {
                 FunctionDefinition functionDefinition = definitionsManager.getDefinition(sourceEntity).getOsSchemaConfiguration()
@@ -631,7 +658,8 @@ public class RegistryHelper {
                             updateEntity(updatedNode, userId);
                         }
                     } catch (JsonProcessingException e) {
-                        logger.error("Exception while executing function definition: {} {}", attestationPolicy.getOnComplete(), functionDefinition, e);
+                        logger.error("Exception while executing function definition: {} {}, {}", attestationPolicy.getOnComplete(), functionDefinition, ExceptionUtils.getStackTrace(e));
+                        throw e;
                     }
                 } else {
                     logger.error("Invalid function name specified for onComplete: {}", attestationPolicy.getOnComplete());
@@ -658,6 +686,9 @@ public class RegistryHelper {
 
     private void uploadAttestedFiles(PluginResponseMessage pluginResponseMessage, ObjectNode metaData) throws Exception {
         if (!CollectionUtils.isEmpty(pluginResponseMessage.getFiles())) {
+            if (!fileStorageEnabled) {
+                throw new UnreachableException("File Storage Service is not enabled");
+            }
             ArrayNode fileUris = JsonNodeFactory.instance.arrayNode();
             pluginResponseMessage.getFiles().forEach(file -> {
                 String propertyURI = String.format("%s/%s/%s/documents/%s", pluginResponseMessage.getSourceEntity(),
@@ -665,8 +696,7 @@ public class RegistryHelper {
                 try {
                     fileStorageService.save(new ByteArrayInputStream(file.getFile()), propertyURI);
                 } catch (Exception e) {
-                    logger.error("Failed persisting file", e);
-                    e.printStackTrace();
+                    logger.error("Failed persisting file: {}", ExceptionUtils.getStackTrace(e));
                 }
                 fileUris.add(propertyURI);
             });
@@ -806,7 +836,7 @@ public class RegistryHelper {
             try {
                 return authorizeManageEntity(request, entityName);
             } catch (Exception e) {
-                logger.error("Exception while authorizing roles", e);
+                logger.error("Exception while authorizing roles: {}", ExceptionUtils.getStackTrace(e));
             }
         }
         JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
@@ -901,7 +931,7 @@ public class RegistryHelper {
 
         List<String> managingRoles = getManageRoles(entityName);
         if (managingRoles.size() > 0) {
-            if (managingRoles.contains(ROLE_ANONYMOUS)) {
+            if (!securityEnabled || managingRoles.contains(ROLE_ANONYMOUS)) {
                 return ROLE_ANONYMOUS;
             }
             Set<String> userRoles = getUserRolesFromRequest(request);
@@ -1023,7 +1053,7 @@ public class RegistryHelper {
         Vertex vertex = registryService.deleteEntityById(shard, entityName, userId, recordId.getUuid());
         VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager);
         JsonNode deletedNode = JsonNodeFactory.instance.objectNode().set(entityName, vertexReader.constructObject(vertex));
-        notificationHelper.sendNotification(deletedNode, DELETE);
+        if(notificationEnabled) notificationHelper.sendNotification(deletedNode, DELETE);
         return vertex;
     }
 
@@ -1062,7 +1092,7 @@ public class RegistryHelper {
                 JsonNode searchResponse = searchEntity(searchRequest);
                 return convertJsonNodeToAttestationList(searchResponse);
             } catch (Exception e) {
-                logger.error("Error fetching attestation policy", e);
+                logger.error("Error fetching attestation policy: {}", ExceptionUtils.getStackTrace(e));
                 return Collections.emptyList();
             }
         } else {
@@ -1147,7 +1177,7 @@ public class RegistryHelper {
     }
 
     public boolean doesEntityOperationRequireAuthorization(String entity) {
-        return !getManageRoles(entity).contains("anonymous") && (doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0);
+        return securityEnabled && !getManageRoles(entity).contains("anonymous") && (doesEntityContainOwnershipAttributes(entity) || getManageRoles(entity).size() > 0);
     }
 
     boolean hasAttestationPropertiesChanged(JsonNode updatedNode, JsonNode existingNode, AttestationPolicy attestationPolicy, String entityName) {
@@ -1217,5 +1247,16 @@ public class RegistryHelper {
                         JsonNodeFactory.instance.objectNode().put("eq", generateHash(signedData))));
         JsonNode searchResponse = searchEntity(searchNode);
         return searchResponse.get(REVOKED_CREDENTIAL) != null && searchResponse.get(REVOKED_CREDENTIAL).size() > 0;
+    }
+
+    public static ResponseEntity<Object> ServiceNotEnabledResponse(String message, Response response, ResponseParams responseParams) {
+        responseParams.setErrmsg(message + " not enabled!");
+        responseParams.setStatus(Response.Status.UNSUCCESSFUL);
+        if (response != null) {
+            response.setResponseCode("SERVICE_UNAVAILABLE");
+        } else {
+            response = new Response(Response.API_ID.GET, "SERVICE_UNAVAILABLE", responseParams);
+        }
+        return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
     }
 }
