@@ -138,4 +138,27 @@ public class FileStorageService implements HealthIndicator {
 			return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
 		}
 	}
+	public DocumentsResponse updateFiles(MultipartFile[] files, String requestedURI) {
+		String objectPath = getDirectoryPath(requestedURI);
+		DocumentsResponse documentsResponse = new DocumentsResponse();
+		for (MultipartFile file : files) {
+			String fileName = getFileName(file.getOriginalFilename());
+			try {
+				boolean objectExists = minioClient.statObject(
+						StatObjectArgs.builder().bucket(bucketName).object(objectPath).build()
+				) != null;
+
+				if (objectExists) {
+					save(file.getInputStream(),objectPath);
+					documentsResponse.addDocumentLocation(objectPath);
+					return documentsResponse;
+				}
+			} catch (Exception e) {
+				documentsResponse.addError(file.getOriginalFilename());
+				logger.error("Error has occurred while trying to update the file {}: {}", fileName, ExceptionUtils.getStackTrace(e));
+
+			}
+		}
+		return documentsResponse;
+	}
 }

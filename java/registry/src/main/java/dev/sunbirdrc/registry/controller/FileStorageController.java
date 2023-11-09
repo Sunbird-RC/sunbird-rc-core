@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.rmi.ServerException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 // TODO: Get should be viewed by both attestor and reviewer
@@ -24,7 +28,6 @@ public class FileStorageController {
     private static final Logger logger = LoggerFactory.getLogger(FileStorageController.class);
     private final FileStorageService fileStorageService;
     private final RegistryHelper registryHelper;
-
     FileStorageController(FileStorageService fileStorageService, RegistryHelper registryHelper) {
         this.fileStorageService = fileStorageService;
         this.registryHelper = registryHelper;
@@ -59,6 +62,23 @@ public class FileStorageController {
             return new ResponseEntity(HttpStatus.FORBIDDEN);
         }
         DocumentsResponse documentsResponse = fileStorageService.deleteFiles(files);
+        return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
+    }
+
+    @PutMapping("/api/v1/{entityName}/{entityId}/{property}/documents/{documentId}")
+    public ResponseEntity<DocumentsResponse> update(@RequestParam MultipartFile[] files,
+                                                    @PathVariable String entityName,
+                                                    @PathVariable String entityId,
+                                                    @PathVariable String documentId,
+                                                    @PathVariable String property,
+                                                    HttpServletRequest httpServletRequest) {
+        try {
+            registryHelper.authorize(entityName, entityId, httpServletRequest);
+        } catch (Exception e) {
+            logger.error("An error occurred during authorization: {}", ExceptionUtils.getStackTrace(e));
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        DocumentsResponse documentsResponse = fileStorageService.updateFiles(files, httpServletRequest.getRequestURI());
         return new ResponseEntity<>(documentsResponse, HttpStatus.OK);
     }
 
