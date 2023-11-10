@@ -32,7 +32,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             List<String> userEntities = registryHelper.getUserEntities(request);
             if (createAttestationEntities.containsAll(userEntities) && definitionsManager.isValidEntityName(entityName) &&
                     !registryHelper.isAttestationPolicyNameAlreadyUsed(entityName, attestationPolicy.getName())) {
-                String userId = registryHelper.getUserId(request, entityName);
+                String userId = registryHelper.getUserId(entityName);
                 attestationPolicy.setCreatedBy(userId);
                 logger.info("Creating attestation policy for entity: {} - {}", entityName, attestationPolicy);
                 attestationPolicy.setEntity(entityName);
@@ -55,7 +55,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
             if (definitionsManager.isValidEntityName(entityName)) {
-                String userId = registryHelper.getUserId(request, entityName);
+                String userId = registryHelper.getUserId(entityName);
                 List<String> userEntities = registryHelper.getUserEntities(request);
                 if (userEntities.contains(entityName)) {
                     logger.info("Retrieving attestation policies for entity: {}", entityName);
@@ -83,7 +83,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
             if (definitionsManager.isValidEntityName(entityName)) {
-                String userId = registryHelper.getUserId(request, entityName);
+                String userId = registryHelper.getUserId(entityName);
                 final Optional<AttestationPolicy> attestationPolicyOptional = registryHelper.findAttestationPolicyById(userId, policyOSID);
                 if (attestationPolicyOptional.isPresent() && attestationPolicyOptional.get().getCreatedBy().equals(userId)) {
                     logger.info("Updating attestation policies id: {}", policyOSID);
@@ -106,7 +106,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
             if (definitionsManager.isValidEntityName(entityName)) {
-                String userId = registryHelper.getUserId(request, entityName);
+                String userId = registryHelper.getUserId(entityName);
                 Optional<AttestationPolicy> attestationPolicyOptional = registryHelper.findAttestationPolicyById(userId, policyId);
                 if (attestationPolicyOptional.isPresent() && attestationPolicyOptional.get().getCreatedBy().equals(userId)) {
                     logger.info("Updating attestation policy status of id: {}", policyId);
@@ -131,7 +131,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
             if (definitionsManager.isValidEntityName(entityName)) {
-                String userId = registryHelper.getUserId(request, entityName);
+                String userId = registryHelper.getUserId(entityName);
                 Optional<AttestationPolicy> attestationPolicyOptional = registryHelper.findAttestationPolicyById(userId, policyId);
                 if (attestationPolicyOptional.isPresent() && attestationPolicyOptional.get().getCreatedBy().equals(userId)) {
                     logger.info("Updating attestation policy status of id: {}", policyId);

@@ -8,11 +8,11 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
 import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.Constants;
@@ -111,7 +111,7 @@ public class RegistryHelperTest {
 
 
 	@Mock
-	private KeycloakAdminUtil keycloakAdminUtil;
+	private IdentityManager identityManager;
 
 	@Mock
 	private IValidate validationService;
@@ -137,8 +137,9 @@ public class RegistryHelperTest {
 		registryHelper.setObjectMapper(objectMapper);
 		MockitoAnnotations.initMocks(this);
 		registryHelper.uuidPropertyName = "osid";
-		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
+		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, identityManager);
 		registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
+		ReflectionTestUtils.setField(registryHelper.entityStateHelper, "setDefaultPassword", false);
 		registryHelper.setDefinitionsManager(definitionsManager);
 		registryHelper.setNotificationEnabled(true);
 		registryHelper.setSecurityEnabled(true);
@@ -347,7 +348,7 @@ public class RegistryHelperTest {
 		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
 		mockDefinitionManager();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
@@ -363,7 +364,7 @@ public class RegistryHelperTest {
 		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
 		mockDefinitionManager();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
@@ -392,7 +393,7 @@ public class RegistryHelperTest {
 				"  \"adminMobile\": \"1234\"\n" +
 				"}}");
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		mockDefinitionManager();
@@ -504,6 +505,7 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(registryHelper, times(1)).triggerAttestation(any(), any());
 		verify(notificationHelper, times(1)).sendNotification(any(), any());
@@ -535,6 +537,7 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(registryHelper, times(0)).triggerAttestation(any(), any());
 	}
@@ -575,6 +578,7 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
 	}
@@ -616,15 +620,16 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
 	}
 
 	@Test
-	public void shouldReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
+	public void shouldReturnFalseIfEntityContainsOwnershipAttributes() throws IOException {
 		mockDefinitionManager();
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
+		Assert.assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -642,13 +647,6 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
 		assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
-	}
-
-	@Test
-	public void shouldDeleteReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
-		mockDefinitionManager();
-		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -785,6 +783,7 @@ public class RegistryHelperTest {
 		objectNode.set("gender", JsonNodeFactory.instance.textNode("Male"));
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
 		doNothing().when(notificationHelper).sendNotification(any(), any());
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.autoRaiseClaim("Student", "12345", "556302c9-d8b4-4f60-9ac1-c16c8839a9f3", null, requestBody, "");
 		verify(conditionResolverService, times(1)).resolve(objectNode, REQUESTER, null, Collections.emptyList());
 		verify(registryHelper, times(1)).triggerAttestation(any(), any());
@@ -873,7 +872,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		mockValidationService();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
@@ -891,7 +890,7 @@ public class RegistryHelperTest {
 		mockDefinitionManager();
 		mockValidationService();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
@@ -917,5 +916,47 @@ public class RegistryHelperTest {
 		registryHelper.updateEntityAndState(existingJson, updateJson, "");
 		verify(registryService, times(1)).updateEntity(any(), any(), any(), any(), anyBoolean());
 		verify(notificationHelper, times(1)).sendNotification(any(), any());
+	}
+
+	@Test
+	public void shouldNotFetchAttestationPolicyFromDBIfDisabled() throws Exception {
+		mockDefinitionManager();
+		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
+		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
+		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy.set("onComplete", JsonNodeFactory.instance.textNode("attestation:nextAttestationPolicy"));
+		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
+		attestationArrayNodes.add(mockAttestationPolicy);
+		ObjectNode mockAttestationPolicy2 = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy2.set("name", JsonNodeFactory.instance.textNode("nextAttestationPolicy"));
+		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
+		attestationArrayNodes.add(mockAttestationPolicy2);
+		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
+		when(searchService.search(any())).thenReturn(attestationPolicyObject);
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", false);
+		List<AttestationPolicy> policies = registryHelper.getAttestationPolicies("Student");
+		assertEquals(1, policies.size());
+		verify(searchService, never()).search(any());
+	}
+
+	@Test
+	public void shouldFetchAttestationPolicyFromDBIfEnabled() throws Exception {
+		mockDefinitionManager();
+		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
+		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
+		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy.set("onComplete", JsonNodeFactory.instance.textNode("attestation:nextAttestationPolicy"));
+		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
+		attestationArrayNodes.add(mockAttestationPolicy);
+		ObjectNode mockAttestationPolicy2 = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy2.set("name", JsonNodeFactory.instance.textNode("nextAttestationPolicy"));
+		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
+		attestationArrayNodes.add(mockAttestationPolicy2);
+		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
+		when(searchService.search(any())).thenReturn(attestationPolicyObject);
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
+		List<AttestationPolicy> policies = registryHelper.getAttestationPolicies("Student");
+		assertEquals(3, policies.size());
+		verify(searchService, atMostOnce()).search(any());
 	}
 }

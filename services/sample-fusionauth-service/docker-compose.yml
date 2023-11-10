@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:12.9
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    environment:
+      cluster.name: fusionauth
+      bootstrap.memory_lock: "true"
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    healthcheck:
+      test: [ "CMD", "curl",  "--fail" ,"--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://localhost:9200/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 4
+    restart: unless-stopped
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+  fusionauth:
+    image: fusionauth/fusionauth-app:latest
+    depends_on:
+      db:
+        condition: service_healthy
+      es:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
+      DATABASE_ROOT_USERNAME: postgres
+      DATABASE_ROOT_PASSWORD: postgres
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      FUSIONAUTH_APP_MEMORY: 512M
+      FUSIONAUTH_APP_RUNTIME_MODE: development
+      FUSIONAUTH_APP_URL: http://fusionauth:9011
+      SEARCH_SERVERS: http://es:9200
+      SEARCH_TYPE: elasticsearch
+      FUSIONAUTH_APP_KICKSTART_FILE: /home/kickstart.json
+      FUSIONAUTH_ISSUER_URL: ${FUSIONAUTH_ISSUER_URL-http://localhost:9011/}
+    restart: unless-stopped
+    ports:
+      - 9011:9011
+    volumes:
+      - ./${IMPORTS_DIR-imports}/:/home/
+  fusionauthwrapper:
+    build: ${FUSION_WRAPPER_BUILD-.}
+    ports:
+      - 3990:3990
+    environment:
+      FUSIONAUTH_API_KEY: bf69486b-4733-4470-a592-f1bfce7af580
+      FUSIONAUTH_APPLICATION_ID: 85a03867-dccf-4882-adde-1a79aeec50df
+      FUSIONAUTH_BASE_URL: http://fusionauth:9011

@@ -17,6 +17,7 @@ import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.workflow.RuleEngineService;
 import dev.sunbirdrc.workflow.StateContext;
 import org.apache.commons.math3.util.Pair;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,11 @@ public class EntityStateHelper {
     private final ConditionResolverService conditionResolverService;
 
     private final ClaimRequestClient claimRequestClient;
+
+    @Value("${identity.set_default_password}")
+    private Boolean setDefaultPassword;
+    @Value("${identity.default_password}")
+    private String defaultPassword;
 
     @Autowired
     public EntityStateHelper(IDefinitionsManager definitionsManager, RuleEngineService ruleEngineService,
@@ -132,7 +138,13 @@ public class EntityStateHelper {
         objectNode.put(MOBILE, entityNode.at(String.format("/%s%s", entityName, mobilePath)).asText(""));
         objectNode.put(EMAIL, entityNode.at(String.format("/%s%s", entityName, emailPath)).asText(""));
         objectNode.put(USER_ID, entityNode.at(String.format("/%s%s", entityName, userIdPath)).asText(""));
-        objectNode.put(PASSWORD, entityNode.at(String.format("/%s%s", entityName, passwordPath)).asText(""));
+        String password = entityNode.at(String.format("/%s%s", entityName, passwordPath)).asText("");
+        if (Strings.isBlank(password)) {
+            if (setDefaultPassword && !Strings.isBlank(defaultPassword)) {
+                password = defaultPassword;
+            }
+        }
+        objectNode.put(PASSWORD, password);
         return objectNode;
     }
 

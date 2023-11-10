@@ -86,9 +86,10 @@ public interface IDefinitionsManager {
         return getDefinition(entityName).getOsSchemaConfiguration().getCertificateTemplates();
     }
     boolean isValidEntityName(String entityName);
-    void appendNewDefinition(JsonNode jsonNode);
+    Definition appendNewDefinition(JsonNode jsonNode);
     void appendNewDefinition(Definition definition);
     void removeDefinition(JsonNode jsonNode);
+    void removeDefinition(String schema);
 
     default List<String> getEntitiesWithAnonymousInviteRoles() {
         List<String> anonymousEntities = new ArrayList<>();

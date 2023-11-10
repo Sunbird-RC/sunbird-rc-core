@@ -1,6 +1,7 @@
-package dev.sunbirdrc.keycloak;
+package dev.sunbirdrc.auth.keycloak;
 
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
+import dev.sunbirdrc.registry.identity_providers.pojos.*;
 import dev.sunbirdrc.pojos.HealthIndicator;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.OAuth2Constants;
@@ -13,10 +14,6 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.stereotype.Component;
 
 import java.util.*;
 import javax.ws.rs.NotFoundException;
@@ -26,91 +23,64 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILUR
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_KEYCLOAK_SERVICE_NAME;
 
 
-@Component
-@PropertySource(value = "classpath:application.yml", ignoreResourceNotFound = true)
-public class KeycloakAdminUtil implements HealthIndicator {
+public class KeycloakAdminUtil implements IdentityManager {
     private static final Logger logger = LoggerFactory.getLogger(KeycloakAdminUtil.class);
     private static final String EMAIL = "email_id";
     private static final String ENTITY = "entity";
     private static final String MOBILE_NUMBER = "mobile_number";
     private static final String PASSWORD = "password";
-
-
-    private String realm;
-    private String adminClientSecret;
-    private String adminClientId;
-    private String authURL;
-    private String defaultPassword;
-    private boolean setDefaultPassword;
-    private List<String> emailActions;
     private final Keycloak keycloak;
-    private boolean authenticationEnabled;
 
-    @Autowired
-    public KeycloakAdminUtil(
-            @Value("${authentication.enabled}")
-            boolean authenticationEnabled,
-            @Value("${keycloak.realm:}") String realm,
-            @Value("${keycloak-admin.client-secret:}") String adminClientSecret,
-            @Value("${keycloak-admin.client-id:}") String adminClientId,
-            @Value("${keycloak-user.default-password:}") String defaultPassword,
-            @Value("${keycloak-user.set-default-password:false}") boolean setDefaultPassword,
-            @Value("${keycloak.auth-server-url:}") String authURL,
-            @Value("${keycloak-user.email-actions:}") List<String> emailActions,
-            @Value("${httpConnection.maxConnections:5}") int httpMaxConnections) {
-        this.authenticationEnabled = authenticationEnabled;
-        this.realm = realm;
-        this.adminClientSecret = adminClientSecret;
-        this.adminClientId = adminClientId;
-        this.authURL = authURL;
-        this.defaultPassword = defaultPassword;
-        this.setDefaultPassword = setDefaultPassword;
-        this.emailActions = emailActions;
-        this.keycloak = buildKeycloak(httpMaxConnections);
+    private final IdentityProviderConfiguration providerConfiguration;
+    public KeycloakAdminUtil(IdentityProviderConfiguration identityProviderConfiguration) {
+        this.providerConfiguration = identityProviderConfiguration;
+        this.keycloak = buildKeycloak(identityProviderConfiguration);
     }
 
-    private Keycloak buildKeycloak(int httpMaxConnections) {
+    private Keycloak buildKeycloak(IdentityProviderConfiguration configuration) {
         return KeycloakBuilder.builder()
-                .serverUrl(authURL)
-                .realm(realm)
+                .serverUrl(configuration.getUrl())
+                .realm(configuration.getRealm())
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-                .clientId(adminClientId)
-                .clientSecret(adminClientSecret)
+                .clientId(configuration.getClientId())
+                .clientSecret(configuration.getClientSecret())
                 .resteasyClient(
                         new ResteasyClientBuilder()
-                                .connectionPoolSize(httpMaxConnections).build()
+                                .connectionPoolSize(configuration.getHttpMaxConnections()).build()
                 )
                 .build();
     }
 
-    public String createUser(String entityName, String userName, String email, String mobile, String password) throws OwnerCreationException {
-        logger.info("Creating user with mobile_number : " + userName);
-        String groupId = createOrUpdateRealmGroup(entityName);
-        UserRepresentation newUser = createUserRepresentation(entityName, userName, email, mobile, password);
-        UsersResource usersResource = keycloak.realm(realm).users();
+    @Override
+    public String createUser(CreateUserRequest createUserRequest) throws IdentityException {
+        logger.info("Creating user with mobile_number : " + createUserRequest.getUserName());
+        String groupId = createOrUpdateRealmGroup(createUserRequest.getEntity());
+        UserRepresentation newUser = createUserRepresentation(createUserRequest);
+        UsersResource usersResource = keycloak.realm(providerConfiguration.getRealm()).users();
         try (Response response = usersResource.create(newUser)) {
             if (response.getStatus() == 201) {
                 logger.info("Response |  Status: {} | Status Info: {}", response.getStatus(), response.getStatusInfo());
                 logger.info("User ID path" + response.getLocation().getPath());
                 String userID = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
                 logger.info("User ID : " + userID);
-                if (!emailActions.isEmpty())
-                    usersResource.get(userID).executeActionsEmail(emailActions);
+                if (!providerConfiguration.getUserActions().isEmpty()) {
+                    usersResource.get(userID).executeActionsEmail(providerConfiguration.getUserActions());
+                }
                 return userID;
             } else if (response.getStatus() == 409) {
-                logger.info("UserID: {} exists", userName);
-                return updateExistingUserAttributes(entityName, userName, email, mobile, groupId);
+                logger.info("UserID: {} exists", createUserRequest.getUserName());
+                return updateExistingUserAttributes(createUserRequest, groupId);
             } else if (response.getStatus() == 500) {
-                throw new OwnerCreationException("Keycloak user creation error");
+                throw new IdentityException("Keycloak user creation error");
             } else {
-                throw new OwnerCreationException("Username already invited / registered");
+                throw new IdentityException("Username already invited / registered");
             }
         }
     }
 
     private String createOrUpdateRealmGroup(String entityName) {
         RoleRepresentation roleRepresentation = createOrGetRealmRole(entityName);
-        GroupsResource groupsResource = keycloak.realm(realm).groups();
+        GroupsResource groupsResource = keycloak.realm(providerConfiguration.getRealm()).groups();
         GroupRepresentation groupRepresentation = new GroupRepresentation();
         groupRepresentation.setName(entityName);
         Response groupAddResponse = groupsResource.add(groupRepresentation);
@@ -129,7 +99,7 @@ public class KeycloakAdminUtil implements HealthIndicator {
     }
 
     private RoleRepresentation createOrGetRealmRole(String entityName) {
-        RolesResource rolesResource = keycloak.realm(realm).roles();
+        RolesResource rolesResource = keycloak.realm(providerConfiguration.getRealm()).roles();
         try {
              return rolesResource.get(entityName).toRepresentation();
         } catch (NotFoundException ex) {
@@ -143,63 +113,65 @@ public class KeycloakAdminUtil implements HealthIndicator {
         return rolesResource.get(entityName).toRepresentation();
     }
 
-    private String updateExistingUserAttributes(String entityName, String userName, String email, String mobile,
-                                                String groupId) throws OwnerCreationException {
-        Optional<UserResource> userRepresentationOptional = getUserByUsername(userName);
+//    private String updateExistingUserAttributes(String entityName, String userName, String email, String mobile,
+    private String updateExistingUserAttributes(CreateUserRequest createUserRequest, String groupId) throws IdentityException {
+        Optional<UserResource> userRepresentationOptional = getUserByUsername(createUserRequest.getUserName());
         if (userRepresentationOptional.isPresent()) {
             UserResource userResource = userRepresentationOptional.get();
             UserRepresentation userRepresentation = userResource.toRepresentation();
-            updateUserAttributes(entityName, email, mobile, userRepresentation);
+            updateUserAttributes(createUserRequest, userRepresentation);
             List<String> groups = userRepresentation.getGroups();
             if (groups == null) {
                 groups = new ArrayList<>();
             }
-            if (!groups.contains(entityName)) {
-                groups.add(entityName);
+            if (!groups.contains(createUserRequest.getEntity())) {
+                groups.add(createUserRequest.getEntity());
                 userRepresentation.setGroups(groups);
             }
             userResource.update(userRepresentation);
             userResource.joinGroup(groupId);
             return userRepresentation.getId();
         } else {
-            logger.error("Failed fetching user by username: {}", userName);
-            throw new OwnerCreationException("Creating user failed");
+            logger.error("Failed fetching user by username: {}", createUserRequest.getUserName());
+            throw new IdentityException("Creating user failed");
         }
     }
 
-    private UserRepresentation createUserRepresentation(String entityName, String userName, String email, String mobile, String password) {
+    private UserRepresentation createUserRepresentation(CreateUserRequest createUserRequest) {
         UserRepresentation newUser = new UserRepresentation();
         newUser.setEnabled(true);
-        newUser.setUsername(userName);
-        if(Objects.equals(password, "") && this.setDefaultPassword) {
-            password = this.defaultPassword;
-        }
-        if (!Objects.equals(password, "")) {
+        newUser.setUsername(createUserRequest.getUserName());
+        if (!Objects.equals(createUserRequest.getPassword(), "") || providerConfiguration.setDefaultPassword()) {
             CredentialRepresentation passwordCredential = new CredentialRepresentation();
-            passwordCredential.setValue(password);
+            if (!Objects.equals(createUserRequest.getPassword(), "")) {
+                passwordCredential.setValue(createUserRequest.getPassword());
+                passwordCredential.setTemporary(false);
+            } else {
+                passwordCredential.setValue(providerConfiguration.getDefaultPassword());
+                passwordCredential.setTemporary(true);
+            }
             passwordCredential.setType(PASSWORD);
-            passwordCredential.setTemporary(false);
             newUser.setCredentials(Collections.singletonList(passwordCredential));
         }
-        newUser.setGroups(Collections.singletonList(entityName));
-        newUser.setEmail(email);
-        newUser.singleAttribute(MOBILE_NUMBER, mobile);
-        newUser.singleAttribute(EMAIL, email);
-        newUser.singleAttribute(ENTITY, entityName);
+        newUser.setGroups(Collections.singletonList(createUserRequest.getEntity()));
+        newUser.setEmail(createUserRequest.getEmail());
+        newUser.singleAttribute(MOBILE_NUMBER, createUserRequest.getMobile());
+        newUser.singleAttribute(EMAIL, createUserRequest.getEmail());
+        newUser.singleAttribute(ENTITY, createUserRequest.getEntity());
         return newUser;
     }
 
-    private void updateUserAttributes(String entityName, String email, String mobile, UserRepresentation userRepresentation) {
+    private void updateUserAttributes(CreateUserRequest createUserRequest, UserRepresentation userRepresentation) {
         if (userRepresentation.getAttributes() == null || !userRepresentation.getAttributes().containsKey(ENTITY)) {
-            userRepresentation.singleAttribute(ENTITY, entityName);
+            userRepresentation.singleAttribute(ENTITY, createUserRequest.getEntity());
         } else {
             List<String> entities = userRepresentation.getAttributes().getOrDefault(ENTITY, Collections.emptyList());
-            if (!entities.contains(entityName)) {
-                entities.add(entityName);
+            if (!entities.contains(createUserRequest.getEntity())) {
+                entities.add(createUserRequest.getEntity());
             }
         }
-        addAttributeIfNotExists(userRepresentation, EMAIL, email);
-        addAttributeIfNotExists(userRepresentation, MOBILE_NUMBER, mobile);
+        addAttributeIfNotExists(userRepresentation, EMAIL, createUserRequest.getEmail());
+        addAttributeIfNotExists(userRepresentation, MOBILE_NUMBER, createUserRequest.getMobile());
     }
 
     private void addAttributeIfNotExists(UserRepresentation userRepresentation, String key, String value) {
@@ -216,17 +188,17 @@ public class KeycloakAdminUtil implements HealthIndicator {
     }
 
     private Optional<UserResource> getUserByUsername(String username) {
-        List<UserRepresentation> users = keycloak.realm(realm).users().search(username);
+        List<UserRepresentation> users = keycloak.realm(providerConfiguration.getRealm()).users().search(username);
         if (users.size() > 0) {
-            return Optional.of(keycloak.realm(realm).users().get(users.get(0).getId()));
+            return Optional.of(keycloak.realm(providerConfiguration.getRealm()).users().get(users.get(0).getId()));
         }
         return Optional.empty();
     }
 
     private void addUserToGroup(String groupName, UserRepresentation user) {
-        keycloak.realm(realm).groups().groups().stream()
+        keycloak.realm(providerConfiguration.getRealm()).groups().groups().stream()
                 .filter(g -> g.getName().equals(groupName)).findFirst()
-                .ifPresent(g -> keycloak.realm(realm).users().get(user.getId()).joinGroup(g.getId()));
+                .ifPresent(g -> keycloak.realm(providerConfiguration.getRealm()).users().get(user.getId()).joinGroup(g.getId()));
     }
 
     @Override
@@ -236,7 +208,7 @@ public class KeycloakAdminUtil implements HealthIndicator {
 
     @Override
     public ComponentHealthInfo getHealthInfo() {
-        if (authenticationEnabled) {
+        if (providerConfiguration.isAuthenticationEnabled()) {
             try {
                 return new ComponentHealthInfo(getServiceName(), keycloak.serverInfo().getInfo().getSystemInfo().getUptimeMillis() > 0);
             } catch (Exception e) {

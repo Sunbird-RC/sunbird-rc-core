@@ -51,6 +51,19 @@ test: build
 	@cd java/apitest && MODE=async ../mvnw -Pe2e test
 	@docker-compose down
 	@rm -rf db-data-2 || echo "no permission to delete"
+	# test with fusionauth
+	@docker-compose --env-file test_environments/test_with_fusionauth.env -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml up -d db es fusionauth fusionauthwrapper
+	sleep 20
+	@echo "Starting the test" && sh build/wait_for_port.sh 9011
+	@echo "Starting the test" && sh build/wait_for_port.sh 3990
+	sleep 20
+	@docker-compose --env-file test_environments/test_with_fusionauth.env -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml up -d --no-deps registry
+	@echo "Starting the test" && sh build/wait_for_port.sh 8081
+	@docker-compose -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml ps
+	@curl -v http://localhost:8081/health
+	@cd java/apitest && MODE=fusionauth ../mvnw -Pe2e test || echo 'Tests failed'
+	@docker-compose -f docker-compose.yml -f services/sample-fusionauth-service/docker-compose.yml down
+	@rm -rf db-data-3 || echo "no permission to delete"
 	make -C services/certificate-signer test
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
