@@ -439,7 +439,6 @@ public class RegistryHelper {
             propertyData = attestationRequest.getPropertyData().toString();
         }
 
-
         PluginRequestMessage message = PluginRequestMessageCreator.create(
                 propertyData, condition, attestationOSID, attestationRequest.getEntityName(),
                 attestationRequest.getEmailId(), attestationRequest.getEntityId(), attestationRequest.getAdditionalInput(),
