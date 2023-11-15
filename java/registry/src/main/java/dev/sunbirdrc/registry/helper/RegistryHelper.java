@@ -814,6 +814,13 @@ public class RegistryHelper {
             watch.start("RegistryController.searchEntity");
             JsonNode result = searchEntity(payload);
             watch.stop("RegistryController.searchEntity");
+            if(result != null && result.get(entityName) != null && !result.get(entityName).isEmpty()) {
+                String uuid = result.get(entityName).get(0).get(uuidPropertyName).asText();
+                JsonNode user = readEntity(userId, entityName, uuid, true, null, false);
+                ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+                arrayNode.add(user.get(entityName));
+                ((ObjectNode) result).set(entityName, arrayNode);
+            }
             return result;
         }
         throw new Exception("Forbidden");
