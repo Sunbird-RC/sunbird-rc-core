@@ -49,6 +49,9 @@ services:
       - connectionInfo_username=postgres
       - connectionInfo_password=postgres
       - encryption_enabled=${ENCRYPTION_ENABLED-false}
+      - encryption_health_check_url=http://encryption-service:8013/health
+      - encryption_uri=http://encryption-service:8013/crypto/v1/_encrypt
+      - encryption_batch_uri=http://encryption-service:8013/crypto/v1/_encrypt
       - event_enabled=${EVENT_ENABLED-false}
       - event_topic=events
       - event_providerName=dev.sunbirdrc.registry.service.impl.KafkaEventService
@@ -63,6 +66,10 @@ services:
       - oauth2_resource_uri=${oauth2_resource_uri-http://keycloak:8080/auth/realms/sunbird-rc}
       - oauth2_resource_roles_path=${oauth2_resource_roles_path-realm_access.roles}
       - identity_provider=${identity_provider-dev.sunbirdrc.auth.keycloak.KeycloakProviderImpl}
+      - idgen_enabled=${IDGEN_ENABLED-false}
+      - idgen_health_check_url=http://id-gen-service:8088/egov-idgen/health
+      - idgen_generate_url=http://id-gen-service:8088/egov-idgen/id/_generate
+      - idgen_id_format_url=http://id-gen-service:8088/egov-idgen/id/_format/add
       - sunbird_sso_admin_client_id=${KEYCLOAK_ADMIN_CLIENT_ID-admin-api}
       - sunbird_sso_client_id=${KEYCLOAK_CLIENT_ID-registry-frontend}
       - sunbird_sso_admin_client_secret=${KEYCLOAK_SECRET}
@@ -381,6 +388,7 @@ services:
       spring.flyway.url: jdbc:postgresql://db:5432/registry
       egov.mdms.provider: org.egov.enc.masterdata.provider.DBMasterDataProvider
       spring.flyway.baseline-on-migrate: "true"
+      management.endpoints.web.base-path: /
     depends_on:
       db:
         condition: service_healthy
