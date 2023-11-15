@@ -143,7 +143,7 @@ public class EncryptionServiceImplTest{
 
 	@Test
 	public void test_encryption_isup() throws Exception {
-		when(retryRestTemplate.getForEntity(nullable(String.class))).thenReturn(ResponseEntity.accepted().body("UP"));
+		when(retryRestTemplate.getForEntity(nullable(String.class))).thenReturn(ResponseEntity.accepted().body("{\"status\": \"UP\"}"));
 		assertTrue(encryptionServiceImpl.isEncryptionServiceUp());
 	}
 

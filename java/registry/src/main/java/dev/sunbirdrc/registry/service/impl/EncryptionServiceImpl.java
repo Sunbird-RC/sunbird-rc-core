@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.exception.EncryptionException;
+import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.service.EncryptionService;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
+import java.io.IOException;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
@@ -165,13 +167,13 @@ public class EncryptionServiceImpl implements EncryptionService {
 		if (encryptionEnabled) {
 			try {
 				ResponseEntity<String> response = retryRestTemplate.getForEntity(encryptionServiceHealthCheckUri);
-				if (!StringUtils.isEmpty(response.getBody()) && response.getBody().equalsIgnoreCase("UP")) {
+				if (!StringUtils.isEmpty(response.getBody()) && JSONUtil.convertStringJsonNode(response.getBody()).get("status").asText().equalsIgnoreCase("UP")) {
 					logger.debug("Encryption service running !");
 					return new ComponentHealthInfo(getServiceName(), true);
 				} else {
 					return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, response.getBody());
 				}
-			} catch (RestClientException ex) {
+			} catch (RestClientException | IOException ex) {
 				logger.error("RestClientException when checking the health of the encryption service: {}", ExceptionUtils.getStackTrace(ex));
 				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
 			}

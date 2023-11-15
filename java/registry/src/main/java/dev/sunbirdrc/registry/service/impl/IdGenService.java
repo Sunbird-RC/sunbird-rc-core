@@ -27,6 +27,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -144,13 +145,13 @@ public class IdGenService implements IIdGenService {
         if (enabled) {
             try {
                 ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckUrl);
-                if (!StringUtils.isEmpty(response.getBody()) && response.getBody().equalsIgnoreCase("UP")) {
+                if (!StringUtils.isEmpty(response.getBody()) && JSONUtil.convertStringJsonNode(response.getBody()).get("status").asText().equalsIgnoreCase("UP")) {
                     logger.debug(" running !");
                     return new ComponentHealthInfo(getServiceName(), true);
                 } else {
                     return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, response.getBody());
                 }
-            } catch (RestClientException ex) {
+            } catch (RestClientException | IOException ex) {
                 logger.error("RestClientException when checking the health of the idgen service: {}", ExceptionUtils.getStackTrace(ex));
                 return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, ex.getMessage());
             }
