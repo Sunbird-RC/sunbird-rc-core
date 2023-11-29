@@ -82,8 +82,8 @@ public class EntityStateHelperTest {
     }
 
     private void runTest(JsonNode existing, JsonNode updated, JsonNode expected, List<AttestationPolicy> attestationPolicies) throws IOException {
-        RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, identityManager);
-        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
+        RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, identityManager, true);
+        EntityStateHelper entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient, true);
         ReflectionTestUtils.setField(entityStateHelper, "uuidPropertyName", "osid");
         ReflectionTestUtils.setField(entityStateHelper, "setDefaultPassword", false);
         updated = entityStateHelper.applyWorkflowTransitions(existing, updated, attestationPolicies);

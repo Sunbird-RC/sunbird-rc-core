@@ -8,6 +8,8 @@ import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.StatelessKieSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
 
@@ -19,24 +21,26 @@ import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 public class RuleEngineService {
     private final KieContainer kieContainer;
     private final IdentityManager identityManager;
+    private final boolean authenticationEnabled;
     private static final String PATH = "path";
 
     @Autowired
-    public RuleEngineService(KieContainer kieContainer, IdentityManager identityManager) {
+    public RuleEngineService(KieContainer kieContainer,@Nullable IdentityManager identityManager, @Value("${authentication.enabled:true}") boolean authenticationEnabled) {
         this.kieContainer = kieContainer;
         this.identityManager = identityManager;
+        this.authenticationEnabled = authenticationEnabled;
     }
 
     public void doTransition(List<StateContext> stateContexts) {
         StatelessKieSession kieSession = kieContainer.newStatelessKieSession();
-        kieSession.setGlobal("identityManager", identityManager);
+        if(authenticationEnabled) kieSession.setGlobal("identityManager", identityManager);
         kieSession.setGlobal("ruleEngineService", this);
         kieSession.execute(stateContexts);
     }
 
     public void doTransition(StateContext stateContext) {
         StatelessKieSession kieSession = kieContainer.newStatelessKieSession();
-        kieSession.setGlobal("identityManager", identityManager);
+        if(authenticationEnabled) kieSession.setGlobal("identityManager", identityManager);
         kieSession.setGlobal("ruleEngineService", this);
         kieSession.execute(stateContext);
     }

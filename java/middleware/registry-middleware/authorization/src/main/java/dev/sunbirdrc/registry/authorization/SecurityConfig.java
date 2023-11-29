@@ -20,7 +20,6 @@ import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
-@ConditionalOnProperty(name = "authentication.enabled",havingValue = "true",matchIfMissing = false)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Value("${authentication.enabled:true}")
