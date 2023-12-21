@@ -45,7 +45,7 @@ export default class VcService {
   async verify(signerDID: string, signedDoc: string): Promise<boolean> {
     let didDocument: DIDDocument;
     try {
-      didDocument = await this.didService.resolveDID(signerDID);
+      didDocument = await this.didService.resolveDID(signerDID, false);
     } catch (err) {
       Logger.error(`Error resolving signed did: `, err);
       throw new InternalServerErrorException(`Error resolving signed did`);

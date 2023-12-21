@@ -65,7 +65,7 @@ describe('DidService', () => {
   it('resolve a DID', async () => {
     const result = await service.generateDID(doc);
     const didToResolve = result.id;
-    const resolvedDid = await service.resolveDID(didToResolve);
+    const resolvedDid = await service.resolveDID(didToResolve, false);
     expect(resolvedDid).toBeDefined();
     expect(resolvedDid.id).toEqual(didToResolve);
     expect(resolvedDid).toEqual(result);

@@ -55,6 +55,16 @@ export class DidController {
   @ApiParam({ name: 'id', description: 'The DID ID to resolve' })
   @Get('/resolve/:id')
   async resolveDID(@Param('id') id: string): Promise<DIDDocument> {
-    return await this.didService.resolveDID(id);
+    return await this.didService.resolveDID(id, false);
+  }
+
+  @ApiOperation({ summary: 'Resolve a DID ID' })
+  @ApiOkResponse({ description: 'DID resolved' })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiNotFoundResponse({ description: 'DID not found' })
+  @ApiParam({ name: 'id', description: 'The DID ID to resolve' })
+  @Get('/resolve/:id/did.json')
+  async resolveWebDID(@Param('id') id: string): Promise<DIDDocument> {
+    return await this.didService.resolveDID(id, true);
   }
 }
