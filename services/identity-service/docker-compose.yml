@@ -56,7 +56,7 @@ services:
       SIGNING_ALGORITHM: "RS256"
       JWKS_URI: 
       ENABLE_AUTH: "false"
-      ENABLE_WEB_DID: "true"
+      ENABLE_WEB_DID: "false"
       WEB_DID_ENDPOINT: "identity.ngrok-free.app:did:resolve"
     healthcheck:
       test:
