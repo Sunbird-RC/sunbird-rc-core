@@ -5,8 +5,10 @@ import { VaultService } from '../utils/vault.service';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
 import { ConfigService } from '@nestjs/config';
 import { DIDResolutionResult, Resolver } from 'did-resolver';
+import * as ION from '@decentralized-identity/ion-tools';
 import { of } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import { InternalServerErrorException, NotFoundException } from '@nestjs/common/exceptions';
 
 describe('DidService', () => {
   let service: DidService;
@@ -81,6 +83,7 @@ describe('DidService', () => {
     // await app.init();
 
     service = module.get<DidService>(DidService);
+    jest.restoreAllMocks();
   });
 
   it('should be defined', () => {
@@ -130,10 +133,9 @@ describe('DidService', () => {
   it('resolve a web DID with web did generation enabled', async () => {
     let expectedDidId = "did:web:did.actor:alice";
     service.onModuleInit();
-    let webDidResolver: Resolver = service.webDidResolver;
     service.enableWebDid = true;
-    jest.spyOn(webDidResolver, 'resolve')
-      .mockReturnValue(new Promise((resolve, reject) => {
+    jest.spyOn(service.webDidResolver, 'resolve')
+      .mockImplementation(() => new Promise((resolve, reject) => {
         return resolve(expectedDidResponse);
       }));
     service.enableWebDid = true;
@@ -155,4 +157,48 @@ describe('DidService', () => {
     expect(generatedDid).toEqual(resolvedDid);
     service.enableWebDid = false;
   });
+
+  it('Should throw exception on getting error in key pair generation', async () => {
+    const spy = jest.spyOn(ION, 'generateKeyPair')
+    spy.mockImplementation(() => new Promise((resolve, reject) => {
+        return reject({ message: "Invalid id" });
+      }));
+      await expect(service.generateDID(doc)).rejects
+      .toThrow('Error generating key pair');
+    spy.mockReset();
+  });
+
+  it('Should throw exception on getting error in writing private key to vault', async () => {
+    const spy = jest.spyOn((service as any).vault, 'writePvtKey');
+    spy.mockImplementation(() => new Promise((resolve, reject) => {
+        return reject({ message: "Invalid id" });
+      }));
+    await expect(service.generateDID(doc)).rejects
+    .toThrow('Error writing private key to vault');
+    spy.mockRestore();
+  });
+
+  it('Should throw exception on getting error in writing to database', async () => {
+    const spy = jest.spyOn((service as any).prisma.identity, 'create');
+    spy.mockImplementation(() => new Promise((resolve, reject) => {
+        return reject({ message: "Invalid id" });
+      }));
+    await expect(service.generateDID(doc)).rejects
+    .toThrow('Error writing DID to database');
+    spy.mockRestore();
+  })
+
+  it('Should throw exception on getting error in finding unique id', async () => {
+    const spy = jest.spyOn((service as any).prisma.identity, 'findUnique');
+    spy.mockImplementation(() => new Promise((_resolve, reject) => {
+        return reject({ message: "Invalid id" });
+      }));
+    await expect(service.resolveDID("did:abcd:123", false)).rejects
+    .toThrow(`Error fetching DID: did:abcd:123 from db`);
+  })
+
+  it('Should throw exception on not able to find did', async () => {
+    await expect(service.resolveDID("did:abcd:123", false)).rejects
+    .toThrow(`DID: did:abcd:123 not found`);
+  })
 });
