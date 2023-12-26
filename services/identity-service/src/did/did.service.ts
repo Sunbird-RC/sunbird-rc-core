@@ -32,8 +32,15 @@ export class DidService implements OnModuleInit {
       throw new InternalServerErrorException('Error generating key pair');
     }
 
-    // Create a UUID for the DID using uuidv4
-    const didUri = `${this.enableWebDid ? this.webDidPrefix : ((doc?.method && doc.method.trim() !== '') ? `did:${doc.method.trim()}:` : 'did:rcw:')}${uuid()}`;
+    let didUri: string;
+    if(doc?.id && doc.id.startsWith("did:")) {
+      // using id as did uri if provided
+      didUri = doc.id;
+    } else if(this.enableWebDid && doc?.method === 'web') {
+      didUri = `${this.webDidPrefix}:${uuid()}`;
+    } else {
+      didUri = `${((doc?.method && doc.method?.trim() !== '') ? `did:${doc.method.trim()}:` : 'did:rcw:')}${uuid()}`;
+    }
 
     // Create a DID Document
     const document: DIDDocument = {

@@ -99,13 +99,20 @@ describe('DidService', () => {
   });
 
   it('should generate a DID with a default method', async () => {
-    const docWithoutMethod = doc;
-    delete docWithoutMethod.method;
-    const result = await service.generateDID(doc);
+    const { method, ...docWithoutMethod} = doc;
+    const result = await service.generateDID(docWithoutMethod);
     expect(result).toBeDefined();
     expect(result.verificationMethod).toBeDefined();
     expect(result.verificationMethod[0].publicKeyJwk).toBeDefined();
     expect(result.id.split(':')[1]).toEqual('rcw');
+  });
+
+  it('should generate a DID with a given id', async () => {
+    const result = await service.generateDID({ ...doc, id: 'did:web:api.dev.github.net:.well-known'});
+    expect(result).toBeDefined();
+    expect(result.verificationMethod).toBeDefined();
+    expect(result.verificationMethod[0].publicKeyJwk).toBeDefined();
+    expect(result.id).toEqual('did:web:api.dev.github.net:.well-known');
   });
 
   it('resolve a DID', async () => {
@@ -149,7 +156,7 @@ describe('DidService', () => {
     service.onModuleInit();
     service.enableWebDid = true;
     service.webDidPrefix = "did:web:did.actor:";
-    const generatedDid = await service.generateDID(doc);
+    const generatedDid = await service.generateDID({...doc, method: "web"});
     expect(generatedDid.id).toContain(service.webDidPrefix);
     let resolvedDid = await service.resolveDID(generatedDid.id, false);
     expect(generatedDid).toEqual(resolvedDid);

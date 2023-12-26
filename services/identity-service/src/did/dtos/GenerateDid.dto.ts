@@ -19,5 +19,10 @@ export class GenerateDidDTO {
   @ApiProperty({
     description: 'The method of DID.',
   })
-  method: string;
+  method?: string;
+  @ApiProperty({
+    description: 'The id for which DID Document should be created.',
+    required: false
+  })
+  id?: string;
 }
