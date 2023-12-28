@@ -23,7 +23,7 @@ import {
     @ApiBadRequestResponse({ description: 'Bad Request' })
     @ApiNotFoundResponse({ description: 'Context not found' })
     @ApiParam({ name: 'id', description: 'The Context ID to fetch' })
-    @Get('/:id')
+    @Get('/:id.json')
     async getContextById(@Param('id') id: string): Promise<Object> {
       return await this.contextService.getContextById(id);
     }

@@ -38,7 +38,7 @@ describe('ContextService', () => {
     (service as any).publicEndpoint = publicUrl;
     const contextUrl = await service.saveContext(contextToSave);
     expect(contextUrl).toBeDefined();
-    const id = contextUrl.substring(publicUrl.length + 1);
+    const id = contextUrl.substring(publicUrl.length + 1, contextUrl.length - 5);
     expect(contextUrl).toContain(publicUrl);
     const context = await service.getContextById(id);
     expect(context).toEqual(contextToSave);
@@ -46,7 +46,7 @@ describe('ContextService', () => {
     .mockImplementationOnce(() => Promise.resolve({
             data: contextToSave,
             headers: {},
-            config: { url: 'https://www.did.abc.com/context/123' },
+            config: { url: 'https://www.did.abc.com/context/123.json' },
             status: 200,
             statusText: 'OK',
           }));
@@ -54,7 +54,7 @@ describe('ContextService', () => {
         contextUrl,
         contextToSave,
         JSON.stringify(contextToSave),
-        "https://www.did.abc.com/context/123"
+        "https://www.did.abc.com/context/123.json"
     ]);
     expect(resolved).toHaveLength(4);
     expect(resolved[0]).toEqual(contextToSave);

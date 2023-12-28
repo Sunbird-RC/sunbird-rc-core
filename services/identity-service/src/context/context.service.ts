@@ -38,7 +38,7 @@ export class ContextService {
     try {
       saved = await this.prisma.context.create({
         data: {
-          id: uuid(),
+          id: `${uuid()}`,
           context: JSON.stringify(context),
         },
       });
@@ -46,7 +46,7 @@ export class ContextService {
       Logger.error(`Error writing context to database ${err}`);
       throw new InternalServerErrorException('Error writing context to database');
     }
-    return `${this.publicEndpoint}/${saved?.id}`;
+    return `${this.publicEndpoint}/${saved?.id}.json`;
   }
 
   async getContextById(id: string): Promise<object> {
@@ -70,7 +70,7 @@ export class ContextService {
           resolve(value);
         } catch(err) {
           if(d.startsWith(this.publicEndpoint)) {
-            const contextId = d.substring(this.publicEndpoint.length  + 1);
+            const contextId = d.substring(this.publicEndpoint.length  + 1, d.length - 5);
             const value = await this.getContextById(contextId);
             resolve(value);
           } else {
