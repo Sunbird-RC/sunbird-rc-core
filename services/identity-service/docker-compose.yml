@@ -48,7 +48,7 @@ services:
       VAULT_ADDR: "http://vault:8200"
       # This will be replaced automatically on initialisation 
       # make compose-init will call setup_vault.sh
-      VAULT_TOKEN: 
+      VAULT_TOKEN:
       VAULT_BASE_URL: "http://vault:8200/v1"
       VAULT_ROOT_PATH: "http://vault:8200/v1/kv"
       VAULT_TIMEOUT: 5000
@@ -56,6 +56,7 @@ services:
       SIGNING_ALGORITHM: "RS256"
       JWKS_URI: 
       ENABLE_AUTH: "false"
+      PUBLIC_CONTEXT_ENDPOINT: "http://localhost:3332/context"
     healthcheck:
       test:
         [ "CMD-SHELL", "curl -f http://localhost:3332/health || exit 1" ]

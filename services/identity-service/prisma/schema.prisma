@@ -16,3 +16,8 @@ model Identity {
   didDoc           Json
   blockchainStatus Boolean @default(false)
 }
+
+model Context {
+  id      String @id
+  context Json
+}

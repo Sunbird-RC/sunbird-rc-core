@@ -5,15 +5,17 @@ import { DidService } from '../did/did.service';
 import { DIDDocument } from 'did-resolver';
 import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
+import { ContextService } from '../context/context.service';
 @Injectable()
 export default class VcService {
   constructor(
     private readonly primsa: PrismaService,
     private readonly didService: DidService,
     private readonly vault: VaultService,
+    private readonly contextService: ContextService,
   ) {}
 
-  async sign(signerDID: string, toSign: string) {
+  async sign(signerDID: string, toSign: string, isVerifiableCredential: boolean = false) {
     let did: Identity;
     try {
       did = await this.primsa.identity.findUnique({
@@ -27,8 +29,17 @@ export default class VcService {
     if (!did) throw new NotFoundException('Signer DID not found!');
 
     try {
+      let data: any = toSign;
+      if(isVerifiableCredential) {
+        data = JSON.parse(toSign);
+        Logger.debug("parsed data to sign: ", data);
+        // TODO: validate VC format here
+        const context = data["@context"] || [];
+        data["@context"] = await this.contextService.saveContextAndGetUrl(context);
+        Logger.debug("signing with context and data: ", context, data);
+      }
       const signedJWS = await ION.signJws({
-        payload: toSign,
+        payload: data,
         privateJwk: await this.vault.readPvtKey(signerDID),
       });
       return {

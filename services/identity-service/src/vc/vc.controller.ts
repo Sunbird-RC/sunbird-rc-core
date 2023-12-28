@@ -15,7 +15,7 @@ export class VcController {
   @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
   @Post('/sign')
   sign(@Body() body: SignJsonDTO) {
-    return this.VcService.sign(body.DID, body.payload);
+    return this.VcService.sign(body.DID, body.payload, body.isVerifiableCredential);
   }
 
   @ApiOperation({ summary: 'Verify a signed VC' })
