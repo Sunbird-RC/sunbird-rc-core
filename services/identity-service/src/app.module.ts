@@ -13,11 +13,13 @@ import { AuthGuard } from './auth/auth.guard';
 import { TerminusModule } from '@nestjs/terminus';
 import { PrismaHealthIndicator } from './utils/prisma.health';
 import { VaultHealthIndicator } from './utils/vault.health';
+import { ContextModule } from './context/context.module';
 
 @Module({
   imports: [
     DidModule,
     VcModule,
+    ContextModule,
     HttpModule,
     ConfigModule.forRoot({
       isGlobal: true,

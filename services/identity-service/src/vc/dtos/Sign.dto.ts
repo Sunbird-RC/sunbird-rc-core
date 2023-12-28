@@ -8,7 +8,12 @@ export class SignJsonDTO {
   DID: string;
 
   @ApiProperty({
-    description: 'JSON string of the unsigned VC.'
+    description: 'JSON string to be signed.'
   })
   payload: string; //Only string is supported for now
+
+  @ApiProperty({
+    description: 'Boolean property to stat if the payload is a unsigned VC'
+  })
+  isVerifiableCredential?: boolean;
 }

@@ -1,11 +1,13 @@
+import { HttpModule } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import VcService from './vc.service';
 import { PrismaService } from '../utils/prisma.service';
 import { DidService } from '../did/did.service';
 import { VaultService } from '../utils/vault.service';
 import { setupTestValue } from './test-setup';
+import { ContextService } from '../context/context.service';
 
-describe('DidService', () => {
+describe('VcService', () => {
   let service: VcService;
   let didService: DidService;
   let signingDID: string;
@@ -17,7 +19,8 @@ describe('DidService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [VcService, PrismaService, DidService, VaultService],
+      providers: [VcService, ContextService, PrismaService, DidService, VaultService],
+      imports: [HttpModule]
     }).compile();
 
     service = module.get<VcService>(VcService);

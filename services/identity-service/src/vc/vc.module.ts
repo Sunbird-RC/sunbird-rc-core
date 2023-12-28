@@ -5,10 +5,11 @@ import { VaultService } from 'src/utils/vault.service';
 import { PrismaService } from 'src/utils/prisma.service';
 import { VcController } from './vc.controller';
 import VcService from './vc.service';
+import { ContextService } from 'src/context/context.service';
 
 @Module({
   imports: [HttpModule],
   controllers: [VcController],
-  providers: [VcService, PrismaService, DidService, VaultService],
+  providers: [VcService, PrismaService, DidService, VaultService, ContextService],
 })
 export class VcModule {}
