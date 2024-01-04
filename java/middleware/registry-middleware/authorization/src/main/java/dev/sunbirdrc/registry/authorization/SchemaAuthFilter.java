@@ -23,12 +23,12 @@ public class SchemaAuthFilter implements Filter {
         try {
             if (request.getRequestURI().matches(INVITE_URL_PATTERN) &&
                     anonymousInviteSchemas.stream()
-                            .map(d -> String.format("/api/v1/%s/invite(/)?", d))
+                            .map(d -> String.format("/api/v1/%s/invite(/)?(\\?.*)?", d))
                             .anyMatch(request.getRequestURI()::matches)) {
                 servletRequest.getRequestDispatcher(((HttpServletRequest) servletRequest).getServletPath()).forward(servletRequest, servletResponse);
                 return;
             } else if (!request.getRequestURI().matches(INVITE_URL_PATTERN) && anonymousSchemas.stream()
-                    .map(d -> String.format("/api/v1/%s(/.*)?", d))
+                    .map(d -> String.format("/api/v1/%s(/.*)?(\\?.*)?", d))
                     .anyMatch(request.getRequestURI()::matches)) {
                 servletRequest.getRequestDispatcher(((HttpServletRequest) servletRequest).getServletPath()).forward(servletRequest, servletResponse);
                 return;
