@@ -4,7 +4,7 @@ import { CredentialPayload, transformCredentialInput } from 'did-jwt-vc';
 import { DIDDocument } from 'did-resolver';
 import { IdentityUtilsService } from '../credentials/utils/identity.utils.service';
 // import { PrismaService } from 'src/prisma.service';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, VCStatus } from '@prisma/client';
 import { IssuerType, Proof } from 'did-jwt-vc/lib/types';
 import { JwtCredentialSubject } from 'src/app.interface';
 import { RevocationLists, VerifiableCredentials } from '@prisma/client';
@@ -14,6 +14,7 @@ import { RevocationList } from './revocation-list.helper';
 @Injectable()
 export class RevocationListService {
   constructor(
+    private readonly prisma: PrismaClient,
     private readonly prismaService: PrismaClient,
     private readonly rl: RevocationListImpl,
     private readonly identityService: IdentityUtilsService) {}
@@ -255,5 +256,26 @@ export class RevocationListService {
         'Error fetching the RevocationListCredential from db',
       );
     }
+  }
+
+  async getRevocationList(){
+    const revocatinList = await this.prisma.verifiableCredentials.findMany({
+      where: {
+        status: VCStatus.REVOKED,
+      }
+    }); 
+    return revocatinList 
+    .map((cred) => {
+      return {
+        id: cred.id,
+        status: cred.status ? cred.status : "NA",
+        tags : cred.tags ? cred.tags : [] ,
+        subjectId: cred.subjectId ? cred.subjectId : "NA",
+        issuer : cred.issuer ? cred.issuer : "NA",
+        issuanceDate: cred.issuanceDate ? cred.issuanceDate : "",
+        expirationDate: cred.expirationDate ? cred.expirationDate : "",
+        credential_schema : cred.credential_schema ? cred.credential_schema : "NA",
+      }
+    });
   }
 } 
