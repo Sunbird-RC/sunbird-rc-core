@@ -10,6 +10,7 @@ import { JwtCredentialSubject } from 'src/app.interface';
 import { RevocationLists, VerifiableCredentials } from '@prisma/client';
 import { RevocationListImpl } from './revocation-list.impl';
 import { RevocationList } from './revocation-list.helper';
+import { GetRevocationListByIssuer } from 'src/credentials/dto/getRevocationListByIssuer.dto';
 
 @Injectable()
 export class RevocationListService {
@@ -258,12 +259,28 @@ export class RevocationListService {
     }
   }
 
-  async getRevocationList(){
+  async getRevocationList(
+    getRevocationList: GetRevocationListByIssuer,
+    page = 1,
+    limit = 100
+  ){
     const revocatinList = await this.prisma.verifiableCredentials.findMany({
       where: {
+        issuer: getRevocationList.issuer?.id,
         status: VCStatus.REVOKED,
-      }
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: {
+        issuanceDate: 'desc',
+      },
     }); 
+
+    if (!revocatinList.length) {
+      Logger.error('Error fetching RevocationList');
+      throw new InternalServerErrorException('Error fetching revocationList, Please provide a valid issuer id.');
+    }
+
     return revocatinList 
     .map((cred) => {
       return {

@@ -184,11 +184,25 @@ paths:
             'appliation/json':
               schema:
                 $ref: '#/components/schemas/verifyResponse'
-  /revocation-list:
-    get:
+  /revocation/revocation-list:
+    post:
       tags: 
         - Revocation
-      summary: Complete list of revoked credentials (Need to be discussed).
+      summary: get revocationList by issuer or all issuers 
+      operationId: getRevocaitonList
+      requestBody:
+        description: revocationList payload
+        content:
+          'appliation/json':
+            schema:
+              type: object
+              properties:
+                issuer:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+        required: true
       responses:
         200:
           description: OK
@@ -198,6 +212,12 @@ paths:
                 type: array
                 items:
                  type: object
+        404:
+          description: Not Found
+          content: {}
+        500:
+          description: Error
+          content: {}         
 components:
   schemas:
     revokedResponse:
