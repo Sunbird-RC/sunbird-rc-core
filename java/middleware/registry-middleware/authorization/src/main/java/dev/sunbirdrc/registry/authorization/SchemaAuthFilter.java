@@ -20,16 +20,17 @@ public class SchemaAuthFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws ServletException, IOException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
+        String requestUri = request.getRequestURI();
         try {
-            if (request.getRequestURI().matches(INVITE_URL_PATTERN) &&
+            if (requestUri.matches(INVITE_URL_PATTERN) &&
                     anonymousInviteSchemas.stream()
-                            .map(d -> String.format("/api/v1/%s/invite(/)?(\\?.*)?", d))
-                            .anyMatch(request.getRequestURI()::matches)) {
+                            .map(d -> String.format("/api/v1/%s/invite(/)?(\\\\?.*)?", d))
+                            .anyMatch(requestUri::matches)) {
                 servletRequest.getRequestDispatcher(((HttpServletRequest) servletRequest).getServletPath()).forward(servletRequest, servletResponse);
                 return;
-            } else if (!request.getRequestURI().matches(INVITE_URL_PATTERN) && anonymousSchemas.stream()
-                    .map(d -> String.format("/api/v1/%s(/.*)?(\\?.*)?", d))
-                    .anyMatch(request.getRequestURI()::matches)) {
+            } else if (!requestUri.matches(INVITE_URL_PATTERN) && anonymousSchemas.stream()
+                    .map(d -> String.format("/api/v1/%s(/.*)?(((\\\\?)|(\\\\%s)).*)?", d, "%3F"))
+                    .anyMatch(requestUri::matches)) {
                 servletRequest.getRequestDispatcher(((HttpServletRequest) servletRequest).getServletPath()).forward(servletRequest, servletResponse);
                 return;
             }
