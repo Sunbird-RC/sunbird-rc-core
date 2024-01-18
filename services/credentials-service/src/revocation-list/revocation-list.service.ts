@@ -264,7 +264,7 @@ export class RevocationListService {
     page = 1,
     limit = 100
   ){
-    const revocatinList = await this.prisma.verifiableCredentials.findMany({
+    const revocationList = await this.prisma.verifiableCredentials.findMany({
       where: {
         issuer: getRevocationList.issuer?.id,
         status: VCStatus.REVOKED,
@@ -276,12 +276,12 @@ export class RevocationListService {
       },
     }); 
 
-    if (!revocatinList.length) {
+    if (!revocationList.length) {
       Logger.error('Error fetching RevocationList');
       throw new InternalServerErrorException('Error fetching revocationList, Please provide a valid issuer id.');
     }
 
-    return revocatinList 
+    return revocationList 
     .map((cred) => {
       return {
         id: cred.id,
