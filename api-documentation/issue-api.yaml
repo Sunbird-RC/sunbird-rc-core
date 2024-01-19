@@ -184,7 +184,7 @@ paths:
             'appliation/json':
               schema:
                 $ref: '#/components/schemas/verifyResponse'
-  /revocation/revocation-list:
+  /credentials/revocation-list:
     post:
       tags: 
         - Revocation

@@ -21,6 +21,7 @@ import { JwtCredentialSubject } from 'src/app.interface';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
+import { GetRevocationListByIssuer } from './dto/getRevocationListByIssuer.dto';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ION = require('@decentralized-identity/ion-tools');
 
@@ -317,6 +318,43 @@ export class CredentialsService {
       delete signed['id'];
       delete signed['options'];
       return { id: cred.id, ...signed };
+    });
+  }
+
+  async getRevocationList(
+    getRevocationList: GetRevocationListByIssuer,
+    page = 1,
+    limit = 100
+  ){
+    const revocationList = await this.prisma.verifiableCredentials.findMany({
+      where: {
+        issuer: getRevocationList.issuer?.id,
+        status: VCStatus.REVOKED,
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: {
+        issuanceDate: 'desc',
+      },
+    }); 
+
+    if (!revocationList.length) {
+      this.logger.error('Error fetching RevocationList');
+      throw new InternalServerErrorException('Error fetching revocationList, Please provide a valid issuer id / the revocation list is empty');
+    }
+
+    return revocationList 
+    .map((cred) => {
+      return {
+        id: cred.id,
+        status: cred.status ? cred.status : "NA",
+        tags : cred.tags ? cred.tags : [] ,
+        subjectId: cred.subjectId ? cred.subjectId : "NA",
+        issuer : cred.issuer ? cred.issuer : "NA",
+        issuanceDate: cred.issuanceDate ? cred.issuanceDate : "",
+        expirationDate: cred.expirationDate ? cred.expirationDate : "",
+        credential_schema : cred.credential_schema ? cred.credential_schema : "NA",
+      }
     });
   }
 }

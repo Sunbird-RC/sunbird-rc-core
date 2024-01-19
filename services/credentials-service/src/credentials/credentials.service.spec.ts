@@ -142,6 +142,13 @@ describe('CredentialsService', () => {
     expect(verifyRes).toEqual(res);
   });
 
+  it('should throw error for empty revocation list', async () => {
+    await expect(
+      service.getRevocationList({
+      })
+    ).rejects.toThrow();
+  });
+
   it('should say revoked', async () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
     expect(
@@ -180,5 +187,42 @@ describe('CredentialsService', () => {
     ).toBeInstanceOf(Array);
       const res = await service.getCredentials(['tag1'], 2, 1000)
       expect(res.length).toEqual(0)
-});
+  });
+
+
+
+  it('should give revockedList by issuerId', async () => {
+    const newCred = await service.issueCredential(sampleCredReqPayload);
+    const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
+    expect(
+      await service.getRevocationList({
+        issuer: {
+          id: (revockedCred as any)?.issuer,
+        },
+      })
+    ).toBeInstanceOf(Array);
+  });
+
+  it('should give revockedList of all creds', async () => {
+    const newCred = await service.issueCredential(sampleCredReqPayload);
+    const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
+    expect(
+      await service.getRevocationList({
+      })
+    ).toBeInstanceOf(Array);
+  });
+
+
+  it('should throw error by saying enter a valid issuer Id', async () => {
+    const newCred = await service.issueCredential(sampleCredReqPayload);
+    const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
+    await expect(
+      service.getRevocationList({
+        issuer: {
+          id: "",
+        },
+      })
+    ).rejects.toThrow();
+  });
+
 });
