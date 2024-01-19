@@ -326,25 +326,31 @@ export class CredentialsService {
     page = 1,
     limit = 100
   ){
-    const revocationList = await this.prisma.verifiableCredentials.findMany({
-      where: {
-        issuer: getRevocationList.issuer?.id,
-        status: VCStatus.REVOKED,
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: {
-        issuanceDate: 'desc',
-      },
-    }); 
+    let revocationList: any;
 
-    if (!revocationList.length) {
+    if (getRevocationList?.issuer?.id === "") {
+      throw new InternalServerErrorException('Please provide a valid issuer ID');
+    }
+    
+    try {
+      revocationList = await this.prisma.verifiableCredentials.findMany({
+        where: {
+          issuer: getRevocationList.issuer?.id,
+          status: VCStatus.REVOKED,
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: {
+          issuanceDate: 'desc',
+        },
+      }); 
+    } catch (error) {
       this.logger.error('Error fetching RevocationList');
-      throw new InternalServerErrorException('Error fetching revocationList, Please provide a valid issuer id / the revocation list is empty');
+      throw new InternalServerErrorException('Error fetching revocationList');
     }
 
     return revocationList 
-    .map((cred) => {
+    .map((cred : any) => {
       return {
         id: cred.id,
         status: cred.status ? cred.status : "NA",

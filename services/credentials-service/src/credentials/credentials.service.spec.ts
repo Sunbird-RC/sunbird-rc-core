@@ -142,11 +142,12 @@ describe('CredentialsService', () => {
     expect(verifyRes).toEqual(res);
   });
 
-  it('should throw error for empty revocation list', async () => {
-    await expect(
-      service.getRevocationList({
+  it('should return an empty revocation list', async () => {
+    let res = []
+    expect(
+      await service.getRevocationList({
       })
-    ).rejects.toThrow();
+    ).toEqual(res);
   });
 
   it('should say revoked', async () => {
