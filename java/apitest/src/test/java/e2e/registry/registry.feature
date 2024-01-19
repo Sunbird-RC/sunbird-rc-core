@@ -224,10 +224,28 @@ Feature: Registry api tests
     Then status 200
     And response.result.Teacher.transactionId.length > 0
     * sleep(7000)
+  # create entity for teacher
+    Given url registryUrl
+    And path 'api/v1/Teacher?mode=async'
+    * def teacherRequest = read('TeacherRequest2.json')
+    And request teacherRequest
+    When method post
+    Then status 200
+    And response.result.Teacher.transactionId.length > 0
+    * sleep(7000)
   # get teacher info
     Given url registryUrl
     And path 'api/v1/Teacher/search'
-    And request {"filters":{}}
+    And request {"filters":{ "name":  { "eq":  "abc" }}}
+    When method post
+    Then status 200
+    * print response
+    And response.length == 1
+    And response[0].contact == '#notpresent'
+  # get teacher info
+    Given url registryUrl
+    And path 'api/v1/Teacher/search'
+    And request {"filters":{ "name":  { "endsWith":  "abc" }}}
     When method post
     Then status 200
     * print response
