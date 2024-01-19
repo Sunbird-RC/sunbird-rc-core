@@ -9,6 +9,6 @@ import { HttpModule, HttpService } from '@nestjs/axios';
 
 @Module({
   imports: [HttpModule],
-  providers: [RevocationList, RevocationListService, PrismaClient, RevocationListImpl, IdentityUtilsService],
+  providers: [RevocationList, RevocationListService, PrismaClient, RevocationListImpl, IdentityUtilsService]
 })
 export class RevocationListModule {}

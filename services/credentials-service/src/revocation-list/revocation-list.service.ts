@@ -4,13 +4,12 @@ import { CredentialPayload, transformCredentialInput } from 'did-jwt-vc';
 import { DIDDocument } from 'did-resolver';
 import { IdentityUtilsService } from '../credentials/utils/identity.utils.service';
 // import { PrismaService } from 'src/prisma.service';
-import { PrismaClient, VCStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { IssuerType, Proof } from 'did-jwt-vc/lib/types';
 import { JwtCredentialSubject } from 'src/app.interface';
 import { RevocationLists, VerifiableCredentials } from '@prisma/client';
 import { RevocationListImpl } from './revocation-list.impl';
 import { RevocationList } from './revocation-list.helper';
-import { GetRevocationListByIssuer } from './../credentials/dto/getRevocationListByIssuer.dto';
 
 @Injectable()
 export class RevocationListService {
@@ -257,5 +256,4 @@ export class RevocationListService {
       );
     }
   }
-
 } 
