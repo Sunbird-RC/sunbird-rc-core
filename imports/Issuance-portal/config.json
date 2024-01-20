@@ -1,0 +1,48 @@
+{
+  "environment": "development",
+  "appType": "issuer",
+  "keycloak": {
+       "url": "/auth",
+      "realm": "sunbird-rc",
+      "clientId": "registry-frontend"
+  },
+  "baseUrl": "/registry/api/v1",
+  "domainName": "",
+  "schemaUrl": "/registry/api/docs/swagger.json",
+  "title": "Issuance Portal",
+  "footerText": "Issuance Portal",
+  "languages": [
+      "en"
+  ],
+  "configFolder": "/assets/config/ui-config",
+  "default_theme": {
+      "logoPath": "https://user-images.githubusercontent.com/580711/160328409-37b07505-399f-4feb-8dcd-4a51769c5a1b.svg",
+      "primaryColor": "#1987B6",
+      "secondaryColor": "#1987B6",
+      "bodyBackground": "#F6F8FC",
+      "cardBackground": "#FFFFFF",
+      "tagsBackground": "#F4ECFF",
+      "navLabelColor": "#0098AB",
+      "headerColor": "#FFFFFF",
+      "primaryTextColor": "#000000",
+      "secondaryTextColor": "#000000",
+      "headerLinkColor": "#000000",
+      "linkColor": "#443DF6",
+      "secondaryBtnBgColor": "#e0edf5"
+  },
+  "dark_theme": {
+      "logoPath": "https://user-images.githubusercontent.com/580711/160328409-37b07505-399f-4feb-8dcd-4a51769c5a1b.svg",
+      "primaryColor": "#1987B6",
+      "secondaryColor": "#1987B6",
+      "bodyBackground": "#080808",
+      "cardBackground": "#323232",
+      "tagsBackground": "#505050",
+      "navLabelColor": "#0098AB",
+      "headerColor": "#313131",
+      "primaryTextColor": "#FFFFFF",
+      "secondaryTextColor": "#c3c3c3",
+      "headerLinkColor": "#0098AB",
+      "linkColor": "#443DF6",
+      "secondaryBtnBgColor": "#e0edf5"
+  }
+}

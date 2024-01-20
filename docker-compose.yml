@@ -364,3 +364,15 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
+  issuance-portal: 
+    image: sreejithk1903/issuance-portal
+    ports:
+      - '8086:8086'
+    volumes:
+      - ./imports/Issuance-portal/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./imports/Issuance-portal/config.json:/usr/share/nginx/html/admin/assets/config/config.json
+    depends_on:
+      registry:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
