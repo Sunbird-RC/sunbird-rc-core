@@ -437,7 +437,7 @@
 			"serviceAccountClientId": "admin-api",
 			"disableableCredentialTypes": [],
 			"requiredActions": [],
-			"realmRoles": ["default-roles-sunbird-rc"],
+			"realmRoles": ["default-roles-sunbird-rc", "admin"],
 			"clientRoles": {
 				"realm-management": ["manage-users", "manage-realm"]
 			},
