@@ -2237,6 +2237,7 @@
 		"clientOfflineSessionMaxLifespan": "0",
 		"clientSessionIdleTimeout": "0",
 		"clientSessionMaxLifespan": "0",
+		"frontendUrl": "http://localhost:8080/auth",
 		"clientOfflineSessionIdleTimeout": "0",
 		"cibaInterval": "5"
 	},
