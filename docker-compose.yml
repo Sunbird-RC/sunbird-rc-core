@@ -370,7 +370,7 @@ services:
       - '8086:8086'
     volumes:
       - ./imports/Issuance-portal/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./imports/Issuance-portal/config.json:/usr/share/nginx/html/admin/assets/config/config.json
+      - ./imports/Issuance-portal/config.json:/usr/share/nginx/html/issuance/assets/config/config.json
     depends_on:
       registry:
         condition: service_healthy

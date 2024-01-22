@@ -2,7 +2,7 @@
   "environment": "development",
   "appType": "issuer",
   "keycloak": {
-       "url": "/auth",
+       "url": "http://localhost:8080/auth",
       "realm": "sunbird-rc",
       "clientId": "registry-frontend"
   },

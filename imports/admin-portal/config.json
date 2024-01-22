@@ -1,7 +1,7 @@
 {
   "environment": "development",
   "keycloak": {
-    "url": "/auth",
+    "url": "http://localhost:8080/auth",
     "clientId": "admin-portal",
     "realm": "sunbird-rc"
   },
