@@ -52,14 +52,17 @@ public class EntityStateHelper {
     private Boolean setDefaultPassword;
     @Value("${identity.default_password}")
     private String defaultPassword;
+    private final boolean authenticationEnabled;
 
     @Autowired
     public EntityStateHelper(IDefinitionsManager definitionsManager, RuleEngineService ruleEngineService,
-                             ConditionResolverService conditionResolverService,@Nullable ClaimRequestClient claimRequestClient) {
+                             ConditionResolverService conditionResolverService,@Nullable ClaimRequestClient claimRequestClient,
+                             @Value("${authentication.enabled:true}") boolean authenticationEnabled) {
         this.definitionsManager = definitionsManager;
         this.ruleEngineService = ruleEngineService;
         this.conditionResolverService = conditionResolverService;
         this.claimRequestClient = claimRequestClient;
+        this.authenticationEnabled = authenticationEnabled;
     }
 
     JsonNode applyWorkflowTransitions(JsonNode existing, JsonNode updated, List<AttestationPolicy> attestationPolicies) throws IOException {
@@ -98,6 +101,7 @@ public class EntityStateHelper {
                 .metadataNode((ObjectNode) modified)
                 .revertSystemFields(true)
                 .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
+                .authenticationEnabled(authenticationEnabled)
                 .build();
         allContexts.add(stateContext);
     }
@@ -124,6 +128,7 @@ public class EntityStateHelper {
                     .metadataNode((ObjectNode) modified.get(entityName))
                     .ownershipAttribute(ownershipAttribute)
                     .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
+                    .authenticationEnabled(authenticationEnabled)
                     .build();
             allContexts.add(stateContext);
         }
@@ -173,6 +178,7 @@ public class EntityStateHelper {
                         .metadataNode(metadataNodePointer.getFirst())
                         .pointerFromMetadataNode(metadataNodePointer.getSecond())
                         .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
+                        .authenticationEnabled(authenticationEnabled)
                         .build();
                 allContexts.add(stateContext);
             }
@@ -198,6 +204,7 @@ public class EntityStateHelper {
                 .metaData(metaData)
                 .metadataNode(metadataNodePointer.getFirst())
                 .pointerFromMetadataNode(metadataNodePointer.getSecond())
+                .authenticationEnabled(authenticationEnabled)
                 .build();
         ruleEngineService.doTransition(stateContext);
         return root;

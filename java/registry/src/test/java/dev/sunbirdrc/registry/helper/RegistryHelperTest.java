@@ -137,8 +137,8 @@ public class RegistryHelperTest {
 		registryHelper.setObjectMapper(objectMapper);
 		MockitoAnnotations.initMocks(this);
 		registryHelper.uuidPropertyName = "osid";
-		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, identityManager);
-		registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
+		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, identityManager, true);
+		registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient, true);
 		ReflectionTestUtils.setField(registryHelper.entityStateHelper, "setDefaultPassword", false);
 		registryHelper.setDefinitionsManager(definitionsManager);
 		registryHelper.setNotificationEnabled(true);

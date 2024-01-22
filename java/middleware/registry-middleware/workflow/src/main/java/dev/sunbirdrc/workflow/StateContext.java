@@ -36,6 +36,7 @@ public class StateContext {
     private JsonPointer pointerFromMetadataNode;
     private OwnershipsAttributes ownershipAttribute;
     private Boolean loginEnabled;
+    private boolean authenticationEnabled;
 
     @Builder.Default
     private boolean revertSystemFields = false;
@@ -142,5 +143,13 @@ public class StateContext {
 
     public void setLoginEnabled(Boolean loginEnabled) {
         this.loginEnabled = loginEnabled;
+    }
+
+    public Boolean isAuthenticationEnabled() {
+        return this.authenticationEnabled;
+    }
+
+    public void setAuthenticationEnabled(Boolean authenticationEnabled) {
+        this.authenticationEnabled = authenticationEnabled;
     }
 }
