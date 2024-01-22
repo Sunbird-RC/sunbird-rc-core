@@ -100,22 +100,22 @@ public class SearchDaoImpl implements SearchDao {
                     break;
 
                 case contains:
-                    condition = (s1, s2) -> (s1.contains(s2));
+                    condition = String::contains;
                     resultGraphTraversal = resultGraphTraversal.has(property,
                             new P<String>(condition, genericValue.toString()));
                     break;
                 case startsWith:
-                    condition = (s1, s2) -> (s1.startsWith(s2));
+                    condition = String::startsWith;
                     resultGraphTraversal = resultGraphTraversal.has(property,
                             new P<String>(condition, genericValue.toString()));
                     break;
                 case endsWith:
-                    condition = (s1, s2) -> (s1.endsWith(s2));
+                    condition = String::endsWith;
                     resultGraphTraversal = resultGraphTraversal.has(property,
                             new P<String>(condition, genericValue.toString()));
                     break;
                 case notContains:
-                    condition = (s1, s2) -> (s1.contains(s2));
+                    condition = (s1, s2) -> (!s1.contains(s2));
                     resultGraphTraversal = resultGraphTraversal.has(property,
                             new P<String>(condition, genericValue.toString()));
                     break;
