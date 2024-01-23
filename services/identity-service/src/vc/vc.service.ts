@@ -31,10 +31,14 @@ export default class VcService {
         payload: toSign,
         privateJwk: await this.vault.readPvtKey(signerDID),
       });
+      const didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
       return {
-        publicKey: (JSON.parse(did.didDoc as string) as DIDDocument)
-          .verificationMethod[0].publicKeyJwk,
-        signed: signedJWS,
+        publicKey: didDoc.verificationMethod[0].publicKeyJwk,
+        type: DidService.getKeySignType(didDoc.verificationMethod[0].publicKeyJwk?.crv).signType,
+        created: new Date().toISOString(),
+        verificationMethod: didDoc?.verificationMethod[0]?.id,
+        proofPurpose: 'assertionMethod',
+        jws: signedJWS,
       };
     } catch (err) {
       Logger.error('Error signign the document:', err);

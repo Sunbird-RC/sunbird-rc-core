@@ -209,16 +209,10 @@ export class CredentialsService {
     }
     // sign the credential
     try {
-      credInReq['proof'] = {
-        proofValue: await this.identityUtilsService.signVC(
-          transformCredentialInput(credInReq as CredentialPayload),
-          credInReq.issuer
-        ),
-        type: 'Ed25519Signature2020',
-        created: new Date().toISOString(),
-        verificationMethod: credInReq.issuer,
-        proofPurpose: 'assertionMethod',
-      };
+      credInReq['proof'] = await this.identityUtilsService.signVC(
+        transformCredentialInput(credInReq as CredentialPayload),
+        credInReq.issuer
+      );
     } catch (err) {
       this.logger.error('Error signing the credential');
       throw new InternalServerErrorException('Problem signing the credential');
