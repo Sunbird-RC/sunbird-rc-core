@@ -18,9 +18,13 @@ export class DidService {
         };
       case 'secp256k1':
       case 'ES256K':
+        // return {
+        //   keyType: "EcdsaSecp256k1VerificationKey2019",
+        //   signType: "EcdsaSecp256k1Signature2019"
+        // };
         return {
-          keyType: "EcdsaSecp256k1VerificationKey2019",
-          signType: "EcdsaSecp256k1Signature2019"
+          keyType: "JsonWebKey2020",
+          signType: "JsonWebSignature2020"
         };
       default:
         return {};
