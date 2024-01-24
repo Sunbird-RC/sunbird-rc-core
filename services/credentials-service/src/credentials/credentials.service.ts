@@ -21,8 +21,7 @@ import { JwtCredentialSubject } from 'src/app.interface';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const ION = require('@decentralized-identity/ion-tools');
+import { verify } from '@decentralized-identity/ion-tools';
 
 @Injectable()
 export class CredentialsService {
@@ -142,13 +141,13 @@ export class CredentialsService {
       const did: DIDDocument = await this.identityUtilsService.resolveDID(
         verificationMethod
       );
+      const credVerificationMethod = credToVerify?.proof?.verificationMethod
 
       // VERIFYING THE JWS
-      await ION.verifyJws({
-        jws: credToVerify?.proof?.proofValue,
-        publicJwk: did.verificationMethod[0].publicKeyJwk,
+      const verified = await verify({
+        jws: credToVerify?.proof?.jws,
+        publicJwk: did?.verificationMethod?.find(d => d.id === credVerificationMethod)?.publicKeyJwk,
       });
-      this.logger.debug('Verified JWS');
       return {
         status: status,
         checks: [
@@ -159,7 +158,7 @@ export class CredentialsService {
               new Date(credToVerify.expirationDate).getTime() < Date.now()
                 ? 'NOK'
                 : 'OK', // NOK represents expired
-            proof: 'OK',
+            proof: verified ? 'OK' : 'NOK',
           },
         ],
       };
@@ -209,16 +208,10 @@ export class CredentialsService {
     }
     // sign the credential
     try {
-      credInReq['proof'] = {
-        proofValue: await this.identityUtilsService.signVC(
-          transformCredentialInput(credInReq as CredentialPayload),
-          credInReq.issuer
-        ),
-        type: 'Ed25519Signature2020',
-        created: new Date().toISOString(),
-        verificationMethod: credInReq.issuer,
-        proofPurpose: 'assertionMethod',
-      };
+      credInReq['proof'] = await this.identityUtilsService.signVC(
+        transformCredentialInput(credInReq as CredentialPayload),
+        credInReq.issuer
+      );
     } catch (err) {
       this.logger.error('Error signing the credential');
       throw new InternalServerErrorException('Problem signing the credential');

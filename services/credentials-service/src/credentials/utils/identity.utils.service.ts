@@ -28,7 +28,8 @@ export class IdentityUtilsService {
             payload: JSON.stringify(credentialPlayload),
           }
         );
-      return signedVCResponse.data.signed as string;
+        const {publicKey, ...rest} = signedVCResponse.data;
+        return rest;
     } catch (err) {
       this.logger.error('Error signing VC: ', err);
       throw new InternalServerErrorException('Error signing VC');
