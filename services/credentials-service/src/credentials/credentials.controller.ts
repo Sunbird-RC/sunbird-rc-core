@@ -21,7 +21,6 @@ import { string } from 'zod';
 import { Credential } from 'src/app.interface';
 import { GetCredentialsByTagsResponseDTO } from './dto/getCredentialsByTags.dto';
 import { GetCredentialByIdResponseDTO } from './dto/getCredentialById.dto';
-import { GetRevocationListByIssuer } from './dto/getRevocationListByIssuer.dto';
 
 @Controller('credentials')
 export class CredentialsController {
@@ -117,17 +116,17 @@ export class CredentialsController {
     return this.credentialsService.verifyCredential(credId);
   }
 
-  @Post('/revocation-list')
+  @Get('revocation-list')
   getRevocationList(
-    @Body() getRevocationList: GetRevocationListByIssuer,
+    @Query('issuerId') issuerId : string,
     @Query('page') page: string,
     @Query('limit') limit: string
   ) {
 
     return this.credentialsService.getRevocationList(
-      getRevocationList,
+      issuerId,
       isNaN(parseInt(page)) ? 1 : parseInt(page),
-      isNaN(parseInt(limit)) ? 10 : parseInt(limit)
+      isNaN(parseInt(limit)) ? 1000 : parseInt(limit)
     );
   }
 }

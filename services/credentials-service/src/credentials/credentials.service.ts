@@ -21,7 +21,6 @@ import { JwtCredentialSubject } from 'src/app.interface';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
-import { GetRevocationListByIssuer } from './dto/getRevocationListByIssuer.dto';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ION = require('@decentralized-identity/ion-tools');
 
@@ -322,23 +321,32 @@ export class CredentialsService {
   }
 
   async getRevocationList(
-    getRevocationList: GetRevocationListByIssuer,
+    issuerId: string,
     page = 1,
-    limit = 100
+    limit= 1000,
   ){
     let revocationList: any;
 
-    if (getRevocationList?.issuer?.id === "") {
+    if (issuerId === "") {
       throw new InternalServerErrorException('Please provide a valid issuer ID');
     }
     
     try {
       revocationList = await this.prisma.verifiableCredentials.findMany({
         where: {
-          issuer: getRevocationList.issuer?.id,
+          issuer: issuerId,
           status: VCStatus.REVOKED,
         },
-        skip: (page - 1) * limit,
+        select: {
+          id: true,
+          status: true,
+          tags : true,
+          issuer : true,
+          issuanceDate: true,
+          expirationDate: true,
+          credential_schema : true,
+        },
+        skip: (page -1) * limit,
         take: limit,
         orderBy: {
           issuanceDate: 'desc',
@@ -350,17 +358,5 @@ export class CredentialsService {
     }
 
     return revocationList 
-    .map((cred : any) => {
-      return {
-        id: cred.id,
-        status: cred.status ? cred.status : "NA",
-        tags : cred.tags ? cred.tags : [] ,
-        subjectId: cred.subjectId ? cred.subjectId : "NA",
-        issuer : cred.issuer ? cred.issuer : "NA",
-        issuanceDate: cred.issuanceDate ? cred.issuanceDate : "",
-        expirationDate: cred.expirationDate ? cred.expirationDate : "",
-        credential_schema : cred.credential_schema ? cred.credential_schema : "NA",
-      }
-    });
   }
 }
