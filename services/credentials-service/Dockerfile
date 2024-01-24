@@ -1,11 +1,11 @@
-FROM node:16 AS install
+FROM node:18 AS install
 RUN apt-get update \
     && apt-get install -y wkhtmltopdf
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn
 
-FROM node:16 as build
+FROM node:18 as build
 WORKDIR /app
 COPY prisma ./prisma/
 COPY --from=install /app/node_modules ./node_modules
@@ -13,9 +13,9 @@ RUN npx prisma generate
 COPY . .
 RUN yarn build
 
-FROM node:16
+FROM node:18
 RUN apt-get update \
-    && apt-get install -y wkhtmltopdf=0.12.5-1
+    && apt-get install -y wkhtmltopdf
 
 WORKDIR /app
 COPY --from=build /app/dist ./dist

@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import * as ION from '@decentralized-identity/ion-tools';
+import { generateKeyPair } from '@decentralized-identity/ion-tools';
 import { PrismaService } from '../utils/prisma.service';
 import { DIDDocument } from 'did-resolver';
 import { uuid } from 'uuidv4';
@@ -34,7 +34,7 @@ export class DidService {
     let authnKeys;
     let signingAlgorithm: string = process.env.SIGNING_ALGORITHM;
     try {
-      authnKeys = await ION.generateKeyPair(signingAlgorithm);
+      authnKeys = await generateKeyPair(signingAlgorithm);
     } catch (err: any) {
       Logger.error(`Error generating key pair: ${err}`);
       throw new InternalServerErrorException('Error generating key pair');

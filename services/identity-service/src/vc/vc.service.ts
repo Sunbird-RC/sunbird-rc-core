@@ -1,10 +1,10 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../utils/prisma.service';
-import * as ION from '@decentralized-identity/ion-tools';
 import { DidService } from '../did/did.service';
 import { DIDDocument } from 'did-resolver';
 import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
+import { sign, verify } from '@decentralized-identity/ion-tools';
 @Injectable()
 export default class VcService {
   constructor(
@@ -27,7 +27,7 @@ export default class VcService {
     if (!did) throw new NotFoundException('Signer DID not found!');
 
     try {
-      const signedJWS = await ION.signJws({
+      const signedJWS = await sign({
         payload: toSign,
         privateJwk: await this.vault.readPvtKey(signerDID),
       });
@@ -41,7 +41,7 @@ export default class VcService {
         jws: signedJWS,
       };
     } catch (err) {
-      Logger.error('Error signign the document:', err);
+      Logger.error('Error signign the document:', JSON.stringify(err, null, 4));
       throw new InternalServerErrorException(`Error signign the document`);
     }
   }
@@ -51,12 +51,12 @@ export default class VcService {
     try {
       didDocument = await this.didService.resolveDID(signerDID);
     } catch (err) {
-      Logger.error(`Error resolving signed did: `, err);
-      throw new InternalServerErrorException(`Error resolving signed did`);
+      Logger.error(`Error resolving signer did: `, err);
+      throw new InternalServerErrorException(`Error resolving signer did`);
     }
 
     try {
-      const verified = await ION.verifyJws({
+      const verified = await verify({
         jws: signedDoc,
         publicJwk: didDocument.verificationMethod[0].publicKeyJwk,
       });

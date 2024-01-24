@@ -1,4 +1,4 @@
-IMAGE:=dockerhub/sunbird-rc-credentials-service
+IMAGE:=ghcr.io/sunbird-rc/sunbird-rc-credentials-service:ion-update
 
 .PHONY: docker publish test
 
