@@ -9,26 +9,26 @@ import { Identity } from '@prisma/client';
 @Injectable()
 export class DidService {
   static getKeySignType = (algo: string): any => {
-    switch (algo) {
-      case 'Ed25519':
-      case 'EdDSA':
-        return {
-          keyType: "JsonWebKey2020",
-          signType: "JsonWebSignature2020"
-        };
-      case 'secp256k1':
-      case 'ES256K':
-        // return {
-        //   keyType: "EcdsaSecp256k1VerificationKey2019",
-        //   signType: "EcdsaSecp256k1Signature2019"
-        // };
-        return {
-          keyType: "JsonWebKey2020",
-          signType: "JsonWebSignature2020"
-        };
-      default:
-        return {};
-    }
+    return {
+      keyType: "JsonWebKey2020",
+      signType: "JsonWebSignature2020"
+    };
+    // switch (algo) {
+    //   case 'Ed25519':
+    //   case 'EdDSA':
+    //     return {
+    //       keyType: "JsonWebKey2020",
+    //       signType: "JsonWebSignature2020"
+    //     };
+    //   case 'secp256k1':
+    //   case 'ES256K':
+    //     return {
+    //       keyType: "EcdsaSecp256k1VerificationKey2019",
+    //       signType: "EcdsaSecp256k1Signature2019"
+    //     };
+    //   default:
+    //     return {};
+    // }
   }
 
   constructor(private prisma: PrismaService, private vault: VaultService) {}
