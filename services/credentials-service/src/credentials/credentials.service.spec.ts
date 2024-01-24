@@ -145,8 +145,7 @@ describe('CredentialsService', () => {
   it('should return an empty revocation list', async () => {
     let res = []
     expect(
-      await service.getRevocationList({
-      })
+      await service.getRevocationList(undefined)
     ).toEqual(res);
   });
 
@@ -196,11 +195,9 @@ describe('CredentialsService', () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
     const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
     expect(
-      await service.getRevocationList({
-        issuer: {
-          id: (revockedCred as any)?.issuer,
-        },
-      })
+      await service.getRevocationList(
+       (revockedCred as any)?.issuer,
+      )
     ).toBeInstanceOf(Array);
   });
 
@@ -208,8 +205,7 @@ describe('CredentialsService', () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
     const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
     expect(
-      await service.getRevocationList({
-      })
+      await service.getRevocationList(undefined)
     ).toBeInstanceOf(Array);
   });
 
@@ -218,11 +214,7 @@ describe('CredentialsService', () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
     const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
     await expect(
-      service.getRevocationList({
-        issuer: {
-          id: "",
-        },
-      })
+      service.getRevocationList("")
     ).rejects.toThrow();
   });
 
