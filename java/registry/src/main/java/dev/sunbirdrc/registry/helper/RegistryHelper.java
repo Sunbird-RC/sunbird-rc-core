@@ -174,6 +174,9 @@ public class RegistryHelper {
     @Value("${view_template.decrypt_private_fields:false}")
     private boolean viewTemplateDecryptPrivateFields;
 
+    @Value("${registry.hard_delete_enabled}")
+    private boolean isHardDeleteEnabled;
+
     @Autowired
     private EntityTypeHandler entityTypeHandler;
 
@@ -1056,9 +1059,15 @@ public class RegistryHelper {
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         Shard shard = shardManager.activateShard(shardId);
         ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
+        JsonNode deletedNode = null;
+        if(isHardDeleteEnabled) {
+            deletedNode = readEntity(userId, entityName, entityId, false, null, false);
+        }
         Vertex vertex = registryService.deleteEntityById(shard, entityName, userId, recordId.getUuid());
-        VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager);
-        JsonNode deletedNode = JsonNodeFactory.instance.objectNode().set(entityName, vertexReader.constructObject(vertex));
+        if (!isHardDeleteEnabled) {
+            VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager);
+            deletedNode = JsonNodeFactory.instance.objectNode().set(entityName, vertexReader.constructObject(vertex));
+        }
         if(notificationEnabled) notificationHelper.sendNotification(deletedNode, DELETE);
         return vertex;
     }

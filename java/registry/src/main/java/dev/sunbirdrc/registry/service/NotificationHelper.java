@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.jmx.export.notification.UnableToSendNotificationException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -49,6 +50,9 @@ public class NotificationHelper {
 
     public void sendNotification(JsonNode inputJson, String operationType) throws Exception {
         if (!notificationEnabled) return;
+        if(inputJson == null) {
+            throw new UnableToSendNotificationException("Notification input is null for action " + operationType);
+        }
         String entityType = inputJson.fields().next().getKey();
         List<NotificationTemplate> templates = getNotificationTemplate(entityType, operationType);
         Map<String, Object> objectNodeMap = (Map<String, Object>) JSONUtil.convertJsonNodeToMap(inputJson).get(entityType);

@@ -8,6 +8,7 @@ import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
@@ -141,6 +142,17 @@ public class RegistryDaoImpl implements IRegistryDao {
             logger.debug("Vertex {} {} marked deleted", vertex.label(), databaseProvider.getId(vertex));
         } else {
             logger.error("Can't mark delete - Null vertex passed");
+        }
+    }
+    @Override
+    public void hardDeleteEntity(Vertex vertex) {
+        if (vertex != null) {
+            vertex.edges(Direction.OUT).forEachRemaining(d -> {
+                this.hardDeleteEntity(d.inVertex());
+            });
+            vertex.remove();
+        } else {
+            logger.error("Can't delete - Null vertex passed");
         }
     }
 }

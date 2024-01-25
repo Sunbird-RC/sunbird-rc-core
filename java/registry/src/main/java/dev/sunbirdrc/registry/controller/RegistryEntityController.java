@@ -166,15 +166,20 @@ public class RegistryEntityController extends AbstractController {
             checkEntityNameInDefinitionManager(entityName);
             String tag = "RegistryController.delete " + entityName;
             watch.start(tag);
+            JsonNode jsonNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
+            if (jsonNode != null && jsonNode.has(entityName) && jsonNode.get(entityName).has(OSSystemFields._osSignedData.name())) {
+                String signedData = jsonNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText();
+                registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
+            }
             Vertex deletedEntity = registryHelper.deleteEntity(entityName, entityId, userId);
             if (deletedEntity != null && deletedEntity.keys().contains(OSSystemFields._osSignedData.name())) {
-                registryHelper.revokeExistingCredentials(entityName, entityId, userId, deletedEntity.value(OSSystemFields._osSignedData.name()));
+                deletedEntity.property(OSSystemFields._osSignedData.name()).toString();
+
             }
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
             return new ResponseEntity<>(response, HttpStatus.OK);
-
         } catch (RecordNotFoundException e) {
             createSchemaNotFoundResponse(e.getMessage(), responseParams);
             response = new Response(Response.API_ID.DELETE, "ERROR", responseParams);
@@ -436,7 +441,7 @@ public class RegistryEntityController extends AbstractController {
     }
 
     @Nullable
-    private JsonNode getAttestationNode(String attestationId, JsonNode node) {
+    private JsonNode getAttestationNode(String attestationId, JsonNode node) throws AttestationNotFoundException, JsonProcessingException {
         Iterator<JsonNode> iterator = node.iterator();
         JsonNode attestationNode = null;
         while (iterator.hasNext()) {
@@ -445,6 +450,10 @@ public class RegistryEntityController extends AbstractController {
                 break;
             }
         }
+        assert attestationNode != null;
+        if (attestationNode.get(OSSystemFields._osAttestedData.name()) == null)
+            throw new AttestationNotFoundException();
+        attestationNode = objectMapper.readTree(attestationNode.get(OSSystemFields._osAttestedData.name()).asText());
         return attestationNode;
     }
 
