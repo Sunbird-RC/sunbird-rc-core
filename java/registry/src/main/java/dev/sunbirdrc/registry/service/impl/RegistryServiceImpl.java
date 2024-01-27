@@ -6,19 +6,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.actors.factory.MessageFactory;
 import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
-import dev.sunbirdrc.registry.dao.IRegistryDao;
-import dev.sunbirdrc.registry.dao.RegistryDaoImpl;
-import dev.sunbirdrc.registry.dao.VertexReader;
-import dev.sunbirdrc.registry.dao.VertexWriter;
+import dev.sunbirdrc.pojos.UniqueIdentifierField;
+import dev.sunbirdrc.registry.dao.*;
+import dev.sunbirdrc.registry.exception.CustomException;
+import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
+import dev.sunbirdrc.registry.exception.UniqueIdentifierException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
+import dev.sunbirdrc.registry.model.event.Event;
+import dev.sunbirdrc.registry.model.EventType;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
@@ -33,6 +38,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.sunbird.akka.core.ActorCache;
@@ -41,8 +48,10 @@ import org.sunbird.akka.core.Router;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static dev.sunbirdrc.registry.Constants.Schema;
+import static dev.sunbirdrc.registry.exception.ErrorMessages.INVALID_ID_MESSAGE;
 
 @Service
 @Qualifier("sync")
@@ -53,21 +62,24 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired
     private EntityTypeHandler entityTypeHandler;
-    @Autowired
-    private EncryptionService encryptionService;
-    @Autowired
+    @Autowired(required = false)
     private SignatureService signatureService;
     @Autowired
     private IDefinitionsManager definitionsManager;
 
-    @Autowired
+    @Autowired(required = false)
     private EncryptionHelper encryptionHelper;
-    @Autowired
+    @Autowired(required = false)
     private SignatureHelper signatureHelper;
+    @Autowired
+    private EntityTransformer entityTransformer;
     @Autowired
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
+
+    @Value("${event.enabled}")
+    private boolean isEventsEnabled;
 
     @Value("${database.uuidPropertyName}")
     public String uuidPropertyName;
@@ -96,6 +108,15 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${registry.context.base}")
     private String registryBaseUrl;
 
+    @Value("${notification.async.enabled}")
+    private boolean asyncEnabled;
+
+    @Value("${notification.topic}")
+    private String notifyTopic;
+
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+
     @Autowired
     private EntityParenter entityParenter;
 
@@ -106,15 +127,17 @@ public class RegistryServiceImpl implements RegistryService {
     private IAuditService auditService;
 
     @Autowired
+    private IEventService eventService;
+
+    @Autowired
     private SchemaService schemaService;
 
-    @Autowired
-    private IElasticService elasticService;
+    @Autowired(required = false)
+    private IIdGenService idGenService;
+    @Value("${idgen.enabled:false}")
+    private boolean idGenEnabled;
 
-    @Autowired
-    private FileStorageService fileStorageService;
-
-    @Autowired
+    @Autowired(required = false)
     private List<HealthIndicator> healthIndicators;
     @Value("${registry.expandReference}")
     private boolean expandReferenceObj;
@@ -123,14 +146,16 @@ public class RegistryServiceImpl implements RegistryService {
         HealthCheckResponse healthCheck;
         AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
         List<ComponentHealthInfo> checks = new ArrayList<>();
-        healthIndicators.parallelStream().forEach(healthIndicator -> {
-            ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
-            checks.add(healthInfo);
-            overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
-        });
+        if (healthIndicators != null) {
+            healthIndicators.parallelStream().forEach(healthIndicator -> {
+                ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
+                checks.add(healthInfo);
+                overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
+            });
+        }
 
         healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus.get(), checks);
-        logger.info("Heath Check :  ", checks.toArray().toString());
+        logger.info("Heath Check : {}", checks.stream().map(ComponentHealthInfo::getName).collect(Collectors.toList()));
         return healthCheck;
     }
 
@@ -142,7 +167,7 @@ public class RegistryServiceImpl implements RegistryService {
      * @throws Exception
      */
     @Override
-    public Vertex deleteEntityById(Shard shard, String userId, String uuid) throws Exception {
+    public Vertex deleteEntityById(Shard shard, String entityName, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
@@ -150,7 +175,10 @@ public class RegistryServiceImpl implements RegistryService {
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
                 ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
                 VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager, expandReferenceObj);
-                Vertex vertex = vertexReader.getVertex(null, uuid);
+                Vertex vertex = vertexReader.getVertex(entityName, uuid);
+                if (vertex == null) {
+                    throw new RecordNotFoundException(INVALID_ID_MESSAGE);
+                }
                 String index = vertex.property(Constants.TYPE_STR_JSON_LD).isPresent() ? (String) vertex.property(Constants.TYPE_STR_JSON_LD).value() : null;
                 if (!StringUtils.isEmpty(index) && index.equals(Schema)) {
                     schemaService.deleteSchemaIfExists(vertex);
@@ -165,15 +193,22 @@ public class RegistryServiceImpl implements RegistryService {
                     if (isElasticSearchEnabled()) {
                         callESActors(null, "DELETE", index, uuid, tx);
                     }
-
-
+                    if (isEventsEnabled) {
+                        maskAndEmitEvent(vertexReader.constructObject(vertex), index, EventType.DELETE, userId, uuid);
+                    }
                 }
                 logger.info("Entity {} marked deleted", uuid);
                 return vertex;
             }
         }
-
-
+    }
+    public void maskAndEmitEvent(JsonNode deletedNode, String index, EventType delete, String userId, String uuid) throws JsonProcessingException {
+        JsonNode maskedNode = entityTransformer.updatePrivateAndInternalFields(
+                deletedNode,
+                definitionsManager.getDefinition(index).getOsSchemaConfiguration()
+        );
+        Event event = eventService.createTelemetryObject(delete.name(), userId, "USER", uuid, index, maskedNode);
+        eventService.pushEvents(event);
     }
 
     /**
@@ -188,12 +223,29 @@ public class RegistryServiceImpl implements RegistryService {
         Transaction tx = null;
         String entityId = "entityPlaceholderId";
         String vertexLabel = rootNode.fieldNames().next();
+        Definition definition = null;
+        List<UniqueIdentifierField> uniqueIdentifierFields = definitionsManager.getUniqueIdentifierFields(vertexLabel);
 
-        systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
+        if(idGenEnabled && uniqueIdentifierFields != null && !uniqueIdentifierFields.isEmpty()) {
+            try {
+                Map<String, String> uid = idGenService.generateId(uniqueIdentifierFields);
+                DocumentContext doc = JsonPath.parse(JSONUtil.convertObjectJsonString(rootNode.get(vertexLabel)));
+                for(Map.Entry<String, String> entry: uid.entrySet()) {
+                    String path = String.format("$%s", entry.getKey().replaceAll("/", "."));
+                    int fieldStartIndex = path.lastIndexOf(".");
+                    doc.put(path.substring(0, fieldStartIndex), path.substring(fieldStartIndex + 1), entry.getValue());
+                }
+                ((ObjectNode) rootNode).set(vertexLabel, JSONUtil.convertStringJsonNode(doc.jsonString()));
+            } catch (CustomException e) {
+                throw new UniqueIdentifierException(e);
+            }
+        }
 
         if (encryptionEnabled) {
             rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
+
+        systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
         if (!skipSignature) {
             generateCredentials(rootNode, vertexLabel);
@@ -221,7 +273,7 @@ public class RegistryServiceImpl implements RegistryService {
             if (perRequestIndexCreation) {
                 String shardId = shard.getShardId();
                 Vertex parentVertex = entityParenter.getKnownParentVertex(vertexLabel, shardId);
-                Definition definition = definitionsManager.getDefinition(vertexLabel);
+                definition = definitionsManager.getDefinition(vertexLabel);
                 entityParenter.ensureIndexExists(dbProvider, parentVertex, definition, shardId);
             }
 
@@ -238,9 +290,9 @@ public class RegistryServiceImpl implements RegistryService {
             auditService.auditAdd(
                     auditService.createAuditRecord(userId, entityId, tx, vertexLabel),
                     shard, rootNode);
-
-
-
+            if(isEventsEnabled) {
+                maskAndEmitEvent(rootNode.get(vertexLabel), vertexLabel, EventType.ADD, userId, entityId);
+            }
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.addSchema(rootNode);
@@ -261,13 +313,13 @@ public class RegistryServiceImpl implements RegistryService {
     }
 
     @Override
-    public void updateEntity(Shard shard, String userId, String id, String jsonString) throws Exception {
+    public void updateEntity(Shard shard, String userId, String id, String jsonString, boolean skipSignature) throws Exception {
         JsonNode inputNode = objectMapper.readTree(jsonString);
         String entityType = inputNode.fields().next().getKey();
-        systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
         if (encryptionEnabled) {
             inputNode = encryptionHelper.getEncryptedJson(inputNode);
         }
+        systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
 
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
         IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
@@ -334,7 +386,9 @@ public class RegistryServiceImpl implements RegistryService {
                     JSONUtil.trimPrefix((ObjectNode) inputNode, uuidPropertyName, prefix);
                 }
 
-                generateCredentials(inputNode, entityType);
+                if (!skipSignature) {
+                    generateCredentials(inputNode, entityType);
+                }
 
                 if (entityType.equals(Schema)) {
                     schemaService.validateUpdateSchema(readNode, inputNode);
@@ -362,7 +416,9 @@ public class RegistryServiceImpl implements RegistryService {
                 auditService.auditUpdate(
                         auditService.createAuditRecord(userId, rootId, tx, entityType),
                         shard, mergedNode, readNode);
-
+                if(isEventsEnabled) {
+                    maskAndEmitEvent(inputNode.get(entityType), entityType, EventType.UPDATE, userId, id);
+                }
             }
         }
     }
@@ -390,13 +446,18 @@ public class RegistryServiceImpl implements RegistryService {
     @Override
     @Async("taskExecutor")
     public void callNotificationActors(String operation, String to, String subject, String message) throws JsonProcessingException {
+        if(asyncEnabled) {
+            String payload = "{\"message\":\"" + message + "\", \"subject\": \"" + subject + "\", \"recipient\": \"" + to + "\"}";
+            kafkaTemplate.send(notifyTopic, null, payload);
+            return;
+        }
         logger.debug("callNotificationActors started");
         MessageProtos.Message messageProto = MessageFactory.instance().createNotificationActorMessage(operation, to, subject, message);
         ActorCache.instance().get(Router.ROUTER_NAME).tell(messageProto, null);
         logger.debug("callNotificationActors ends");
     }
 
-    private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode, String parentName) {
+    private void doUpdateArray(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, Vertex blankArrVertex, ArrayNode arrayNode, String parentName, Vertex parentVertex) throws Exception {
         HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
         Set<Object> updatedUuids = new HashSet<Object>();
         Set<String> previousArrayItemsUuids = vr.getArrayItemUuids(blankArrVertex);
@@ -409,7 +470,7 @@ public class RegistryServiceImpl implements RegistryService {
                     Vertex existingItem = uuidVertexMap.getOrDefault(item.get(uuidPropertyName).textValue(), null);
                     if (existingItem != null) {
                         try {
-                            registryDao.updateVertex(graph, existingItem, item, parentName);
+                            doUpdate(shard, graph, registryDao, vr, item, parentName, parentVertex);
                         } catch (Exception e) {
                             logger.error("Can't update item {}", item.toString());
                         }
@@ -449,7 +510,8 @@ public class RegistryServiceImpl implements RegistryService {
         }
     }
 
-    private void doUpdate(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, JsonNode userInputNode, String userInputKey, Vertex parentVertex) throws Exception {
+    private void doUpdate(Shard shard, Graph graph, IRegistryDao registryDao, VertexReader vr, JsonNode userInputNode,
+                          String userInputKey, Vertex parentVertex) throws Exception {
         HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
         Vertex rootVertex = vr.getRootVertex();
 
@@ -491,14 +553,13 @@ public class RegistryServiceImpl implements RegistryService {
 
                         if (null != existArrayVertex) {
                             // updateArrayItems one by one
-                            doUpdateArray(shard, graph, registryDao, vr, existArrayVertex, (ArrayNode) oneElementNode, userInputKey);
+                            doUpdateArray(shard, graph, registryDao, vr, existArrayVertex, (ArrayNode) oneElementNode, userInputKey, parentVertex);
                         } else {
                             VertexWriter vertexWriter = new VertexWriter(graph, shard.getDatabaseProvider(), uuidPropertyName);
-                            vertexWriter.createArrayNode(rootVertex, oneElement.getKey(), (ArrayNode) oneElementNode);
+                            vertexWriter.createArrayNode(existingVertex, oneElement.getKey(), (ArrayNode) oneElementNode);
                         }
-                        registryDao.updateVertex(graph, existArrayVertex, oneElementNode, oneElement.getKey());
                     } else {
-                        registryDao.updateVertex(graph, existingVertex, userInputNode, userInputKey);
+                        existingVertex.property(oneElement.getKey(), ValueType.getValue(oneElement.getValue()));
                     }
                 } else if (oneElementNode.isObject()) {
                     logger.info("Object node {}", oneElement.toString());

@@ -14,6 +14,19 @@ spring:
     ansi:
       enabled: ALWAYS
 
+
+oauth2:
+  resources:
+    - uri: ${oauth2_resource_uri:http://localhost:8080/auth/realms/sunbird-rc}
+      properties:
+        emailPath: ${oauth2_resource_email_path:email}
+        consentPath: ${oauth2_resource_consent_path:consent}
+        rolesPath: ${oauth2_resource_roles_path:realm_access.roles}
+        entityPath: ${oauth2_resource_entity_path:entity}
+        userIdPath: ${oauth2_resource_user_id_path:sub}
+
+
+
 name: default-yaml
 environment: default
 
@@ -26,6 +39,13 @@ notification:
     enabled: ${notification_enabled:false}
     connection_url: ${notification_url:http://localhost:8765/notification-service/v1/notification}
     health_url: ${notification_url:http://localhost:8765/notification-service/v1/health}
+  async:
+    enabled: ${notification_async_enabled:false}
+  topic: ${notification_topic:notify}
+
+invite:
+  required_validation_enabled: ${invite_required_validation_enabled:true}
+  signature_enabled: ${invite_signature_enabled:true}
 
 cors:
   # By default, allowing all domains to access this service. Choose a particular domain,
@@ -52,6 +72,7 @@ registry:
   schema:
     url: ${registry_schema_url:http://localhost:8081/_schemas/}
   attestationPolicy:
+    search_enabled: ${search_attestation_db:false}
     createAccess: ${create_attestation_access_entities:User}
   manager:
     type: ${manager_type:DefinitionsManager}
@@ -62,11 +83,18 @@ registry:
 workflow:
   enabled: ${workflow.enable:true}
 
+view_template_decrypt_private_fields: ${view_template_decrypt_private_fields:false}
+
 async:
   enabled: ${async_enabled:false}
 
+event:
+  enabled: ${event_enabled:false}
+  topic: ${event_topic:events}
+  providerName: ${event_providerName:dev.sunbirdrc.registry.service.impl.KafkaEventService}
+
 kafka:
-  bootstrapAddress: ${kafka_bootstrap_address:localhost:9092}
+  bootstrapAddress: ${kafka_bootstrap_address:localhost:9094}
   createEntityTopic: ${kafka_create_entity_topic:create_entity}
   postCreateEntityTopic: ${kafka_post_create_entity_topic:post_create_entity}
 
@@ -89,6 +117,7 @@ search:
   # not offer high speed reads. This is the default search service, if this config is not provided.
   #   If ElasticSearchService, then Elastic search is used.
   expandInternal: ${search_expandInternal:true}
+  removeNonPublicFieldsForNativeSearch: ${remove_non_public_fields_for_native_search:true}
   providerName: ${search_providerName:dev.sunbirdrc.registry.service.NativeSearchService}
 
 # This property is to be used for read request
@@ -174,15 +203,18 @@ frame:
 
 encryption:
   enabled: ${encryption_enabled:false}
-  base: ${encryption_base:http://localhost:8013}
-  uri: ${encryption_uri:http://localhost:8013/encrypt}
+  healthCheckURL: ${encryption_health_check_url:http://localhost:8013/health}
+  uri: ${encryption_uri:http://localhost:8013/crypto/v1/_encrypt}
   batch:
-    uri: ${encryption_batch_uri:http://localhost:8013/encrypt/obj}
+    uri: ${encryption_batch_uri:http://localhost:8013/crypto/v1/_encrypt}
+  method: ${encryption_method:Normal}
+  tenant:
+    id: ${encryption_tenant_id:default}
 
 decryption:
-  uri: ${decryption_uri:http://localhost:8013/decrypt}
+  uri: ${decryption_uri:http://localhost:8013/crypto/v1/_decrypt}
   batch:
-    uri: ${decryption_batch_uri:http://localhost:8013/decrypt/obj}
+    uri: ${decryption_batch_uri:http://localhost:8013/crypto/v1/_decrypt}
 
 signature:
   enabled: ${signature_enabled:true}
@@ -196,6 +228,7 @@ signature:
       name: SignatureShape
 
 certificate:
+  enabled: ${certificate_enabled:true}
   templateBaseUrl: ${template_base_url:http://localhost:8081/api/v1/templates/}
   healthCheckURL: ${certificate_health_check_url:http://localhost:8078/health}
   apiUrl: ${pdf_url:http://localhost:8078/api/v1/certificate}
@@ -209,15 +242,25 @@ certificate:
 #   * ELASTIC  : Store the audit log in elastic search configured in elastic properties.
 #  Note : Database Stores the created audit schema in audit_schema folder.
 audit:
-  enabled: ${audit_enabled:false}
+  enabled: ${audit_enabled:true}
   frame:
     store: ${audit_frame_store:DATABASE}
     suffix: ${audit_suffix:Audit}
     suffixSeparator: ${audit_suffixSeparator:_}
 
+identity:
+  provider: ${identity_provider:dev.sunbirdrc.auth.keycloak.KeycloakProviderImpl}
+  url: ${sunbird_sso_url:http://localhost:8080/auth/}
+  realm: ${sunbird_sso_realm:sunbird-rc}
+  client_id: ${sunbird_sso_admin_client_id:admin-api}
+  client_secret: ${sunbird_sso_admin_client_secret:xxx}
+  set_default_password: ${sunbird_keycloak_user_set_password:false}
+  default_password: ${sunbird_keycloak_user_password:abcd@1234}
+  user_actions: ${identity_user_actions:}
+
 keycloak:
   #publicKey:  ${sunbird_sso_publickey:pk}
-  auth-server-url: ${sunbird_sso_url:https://localhost:8888/auth}
+  auth-server-url: ${sunbird_sso_url:http://localhost:8080/auth}
   realm: ${sunbird_sso_realm:sunbird-rc}
   resource: ${sunbird_sso_client_id:client}
 keycloak-admin:
@@ -231,7 +274,8 @@ keycloak-user:
   # email details should be configured in keycloak realm settings
   email-actions: ${keycloack_user_email_actions:}
 claims:
-  url: ${claims_url:http://localhost:8081}
+  enabled: ${claims_enabled:true}
+  url: ${claims_url:http://localhost:8082}
 authentication:
   enabled: ${authentication_enabled:true}
   publicKey:  ${authentication_publickey:}
@@ -298,13 +342,26 @@ elastic:
     auth_enabled: ${elastic_search_auth_enabled:false}
     elastic_username: ${elastic_search_username:elastic}
     elastic_password: ${elastic_search_password:elastic}
+    scheme: ${elastic_search_scheme:http}
 filestorage:
+  enabled: ${filestorage_enabled:false}
   url: ${filestorage_connection_url:http://localhost:9000}
   accesskey: ${filestorage_access_key:XXXXX}
   secretkey: ${filestorage_secret_key:XXXXX}
   bucketname: ${filestorage_bucket_key:dummy}
 
+api-swagger:
+  enabled: ${swagger_enabled:true}
+  title: ${swagger_title:Sunbird Registry and Credential}
+  description: ${swagger_description:Sunbird registry and credential api (SunbirdRC)}
+  version: ${swagger_version:1.0.0}
 
+idgen:
+  enabled: ${idgen_enabled:false}
+  tenantId: ${idgen_tenant_id:default}
+  healthCheckURL: ${idgen_health_check_url:http://localhost:8088/egov-idgen/health}
+  generateURL: ${idgen_generate_url:http://localhost:8088/egov-idgen/id/_generate}
+  idFormatURL: ${idgen_id_format_url:http://localhost:8088/egov-idgen/id/_format/add}
 
 ---
 ##################################################################
@@ -321,7 +378,11 @@ name: test-yaml
 enviroment: test
 workflow:
   enabled: ${workflow.enable:true}
-
+view_template:
+  decrypt_private_fields: ${view_template_decrypt_private_fields:false}
+notification:
+  service:
+    enabled: true
 perf:
   monitoring:
     enabled: false

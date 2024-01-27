@@ -1,0 +1,9 @@
+{
+  "personal_details": {
+    "email": "test2@rc.com"
+  },
+  "identity_details": {
+    "id": "id",
+    "value": "1"
+  }
+}

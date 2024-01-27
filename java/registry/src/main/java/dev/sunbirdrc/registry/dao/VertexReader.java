@@ -478,7 +478,7 @@ public class VertexReader {
 
         printUuidNodeMap();
 
-        logger.info("Finished loading information. Start creating the response");
+        logger.debug("Finished loading information. Start creating the response");
 
         ObjectNode entityNode = JsonNodeFactory.instance.objectNode();
         // For the entity Node, now go and replace the array values with actual

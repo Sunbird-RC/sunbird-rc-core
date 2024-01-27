@@ -13,9 +13,11 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.dto.AttestationRequest;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +28,8 @@ import org.springframework.web.client.HttpServerErrorException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 
-import static dev.sunbirdrc.registry.middleware.util.Constants.USER_ID;
-
 @RestController
+@ConditionalOnProperty(name = "claims.enabled", havingValue = "true")
 public class RegistryClaimsController extends AbstractController{
     private static final Logger logger = LoggerFactory.getLogger(RegistryClaimsController.class);
     private final ClaimRequestClient claimRequestClient;
@@ -51,8 +52,7 @@ public class RegistryClaimsController extends AbstractController{
             logger.info("Received {} claims", claims.size());
             return new ResponseEntity<>(claims, HttpStatus.OK);
         } catch (Exception e) {
-            logger.error("Fetching claims failed {}", e.getMessage());
-            e.printStackTrace();
+            logger.error("Fetching claims failed {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -65,11 +65,10 @@ public class RegistryClaimsController extends AbstractController{
             JsonNode claim = claimRequestClient.getClaim(result.get(entityName).get(0), entityName, claimId);
             return new ResponseEntity<>(claim, HttpStatus.OK);
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            logger.error("Fetching claim failed {}", e.getMessage());
-            e.printStackTrace();
+            logger.error("Fetching claim failed {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(e.getStatusCode());
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        } catch (Exception e) {
+            logger.error("Exception occurred while fetching claim: {}", ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -91,15 +90,15 @@ public class RegistryClaimsController extends AbstractController{
             pluginRequestMessage.setAttestorPlugin(attestorPlugin);
             pluginRequestMessage.setAdditionalInputs(additionalInputs);
             pluginRequestMessage.setStatus(action.asText());
-            pluginRequestMessage.setUserId(registryHelper.getKeycloakUserId(request));
+            pluginRequestMessage.setUserId(registryHelper.getPrincipalUserId());
             PluginRouter.route(pluginRequestMessage);
 
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             return new ResponseEntity<>(responseParams, HttpStatus.OK);
-        } catch (Exception exception) {
-            logger.error("Exception : {}", exception.getMessage());
+        } catch (Exception e) {
+            logger.error("Exception : {}", ExceptionUtils.getStackTrace(e));
             responseParams.setStatus(Response.Status.UNSUCCESSFUL);
-            responseParams.setErrmsg(exception.getMessage());
+            responseParams.setErrmsg(e.getMessage());
             return new ResponseEntity<>(responseParams, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -123,7 +122,7 @@ public class RegistryClaimsController extends AbstractController{
         try {
             registryHelper.authorize(attestationRequest.getEntityName(), attestationRequest.getEntityId(), request);
         } catch (Exception e) {
-            logger.error("Unauthorized exception {}", e.getMessage());
+            logger.error("Unauthorized exception {}", ExceptionUtils.getStackTrace(e));
             return createUnauthorizedExceptionResponse(e);
         }
         AttestationPolicy attestationPolicy = registryHelper.getAttestationPolicy(attestationRequest.getEntityName(), attestationRequest.getName());
@@ -132,7 +131,7 @@ public class RegistryClaimsController extends AbstractController{
 
         try {
             // Generate property Data
-            String userId = registryHelper.getUserId(request, attestationRequest.getEntityName());
+            String userId = registryHelper.getUserId(attestationRequest.getEntityName());
             String emailId = registryHelper.fetchEmailIdFromToken(request, attestationRequest.getEntityName());
             JsonNode entityNode = registryHelper.readEntity(userId, attestationRequest.getEntityName(),
                             attestationRequest.getEntityId(), false, null, false)
@@ -145,10 +144,9 @@ public class RegistryClaimsController extends AbstractController{
             attestationRequest.setEmailId(emailId);
             String attestationOSID = registryHelper.triggerAttestation(attestationRequest, attestationPolicy);
             response.setResult(Collections.singletonMap("attestationOSID", attestationOSID));
-        } catch (Exception exception) {
-            logger.error("Exception occurred while saving attestation data {}", exception.getMessage());
-            exception.printStackTrace();
-            responseParams.setErrmsg(exception.getMessage());
+        } catch (Exception e) {
+            logger.error("Exception occurred while saving attestation data {}", ExceptionUtils.getStackTrace(e));
+            responseParams.setErrmsg(e.getMessage());
             response = new Response(Response.API_ID.SEND, HttpStatus.INTERNAL_SERVER_ERROR.toString(), responseParams);
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,11 +135,14 @@ public class DefinitionsManager implements IDefinitionsManager {
 	}
 
 	@Override
-	public void appendNewDefinition(JsonNode jsonNode) {
+	public Definition appendNewDefinition(JsonNode jsonNode) {
 		try {
-			appendNewDefinition(Definition.toDefinition(jsonNode));
+			Definition definition = Definition.toDefinition(jsonNode);
+			appendNewDefinition(definition);
+			return definition;
 		} catch (Exception e) {
-			logger.error("Failed loading schema from DB", e);
+			logger.error("Failed loading schema from DB: {}", ExceptionUtils.getStackTrace(e));
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -150,14 +154,26 @@ public class DefinitionsManager implements IDefinitionsManager {
 		definitionMap.put(definition.getTitle(), definition);
 	}
 
+	@Override
 	public void removeDefinition(JsonNode jsonNode) {
 		try {
 			String schemaAsText = jsonNode.asText("{}");
 			JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
 			String schemaTitle = schemaJsonNode.get(TITLE).asText();
-			definitionMap.remove(schemaTitle);
+			removeDefinition(schemaTitle);
 		} catch (Exception e) {
-			logger.error("Failed removing schema from definition manager", e);
+			logger.error("Failed removing schema from definition manager: {}", ExceptionUtils.getStackTrace(e));
+            throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public void removeDefinition(String schema) {
+		try {
+			definitionMap.remove(schema);
+		} catch (Exception e) {
+			logger.error("Failed removing schema from definition manager: {}", ExceptionUtils.getStackTrace(e));
+            throw new RuntimeException(e);
 		}
 	}
 

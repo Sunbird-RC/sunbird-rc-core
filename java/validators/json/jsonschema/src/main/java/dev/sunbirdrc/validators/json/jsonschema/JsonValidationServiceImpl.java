@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.validators.IValidate;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -52,8 +53,8 @@ public class JsonValidationServiceImpl implements IValidate {
 				} else {
 					return null;
 				}
-			} catch (Exception ioe) {
-			    ioe.printStackTrace();
+			} catch (Exception e) {
+				logger.error("can't validate, {}: schema has a problem!, {}", entityType, ExceptionUtils.getStackTrace(e));
 				throw new MiddlewareHaltException("can't validate, "+ entityType + ": schema has a problem!");
 			}
 			return schema;
@@ -126,7 +127,16 @@ public class JsonValidationServiceImpl implements IValidate {
 			String schemaAsText = jsonNode.asText("{}");
 			JsonNode schemaJsonNode = objectMapper.readTree(schemaAsText);
 			String schemaTitle = schemaJsonNode.get(TITLE).asText();
-			definitionMap.remove(schemaTitle);
+			removeDefinition(schemaTitle);
+		} catch (Exception e) {
+			logger.error("Failed removing schema from definition manager", e);
+		}
+	}
+
+	@Override
+	public void removeDefinition(String schema) {
+		try {
+			definitionMap.remove(schema);
 		} catch (Exception e) {
 			logger.error("Failed removing schema from definition manager", e);
 		}

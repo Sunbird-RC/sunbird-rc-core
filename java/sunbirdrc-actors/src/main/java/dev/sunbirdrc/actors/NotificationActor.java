@@ -8,6 +8,8 @@ import okhttp3.Response;
 import org.sunbird.akka.core.BaseActor;
 import org.sunbird.akka.core.MessageProtos;
 
+import java.util.Map;
+
 public class NotificationActor extends BaseActor {
     public ObjectMapper objectMapper;
     private NotificationService notificationService;
@@ -18,8 +20,8 @@ public class NotificationActor extends BaseActor {
         objectMapper = new ObjectMapper();
         notificationService = new NotificationService();
         NotificationMessage notificationMessage = objectMapper.readValue(request.getPayload().getStringValue(), NotificationMessage.class);
-        Response response = notificationService.notify(notificationMessage);
-        logger.info("{}", response.body());
+        Map<String, String> response = notificationService.notify(notificationMessage);
+        logger.info("{}", response);
     }
 
     @Override

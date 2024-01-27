@@ -8,24 +8,29 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import dev.sunbirdrc.keycloak.KeycloakAdminUtil;
 import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
+import dev.sunbirdrc.registry.middleware.MiddlewareHaltException;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.service.*;
+import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.util.*;
 import dev.sunbirdrc.validators.IValidate;
+import dev.sunbirdrc.validators.json.jsonschema.JsonValidationServiceImpl;
 import dev.sunbirdrc.views.FunctionDefinition;
 import dev.sunbirdrc.views.FunctionExecutor;
 import dev.sunbirdrc.workflow.KieConfiguration;
 import dev.sunbirdrc.workflow.RuleEngineService;
 import org.apache.commons.io.IOUtils;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,8 +42,11 @@ import org.kie.api.runtime.KieContainer;
 import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.sunbird.akka.core.SunbirdActorFactory;
@@ -49,9 +57,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 
-import static dev.sunbirdrc.registry.Constants.ATTESTATION_POLICY;
-import static dev.sunbirdrc.registry.Constants.REQUESTER;
-import static dev.sunbirdrc.registry.Constants.REVOKED_CREDENTIAL;
+import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.FILTERS;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -105,7 +111,7 @@ public class RegistryHelperTest {
 
 
 	@Mock
-	private KeycloakAdminUtil keycloakAdminUtil;
+	private IdentityManager identityManager;
 
 	@Mock
 	private IValidate validationService;
@@ -125,20 +131,18 @@ public class RegistryHelperTest {
 	@Mock
 	private SignatureService signatureService;
 
-
-	private static final String INSTITUTE = "Institute";
-
 	@Before
 	public void initMocks() {
 		objectMapper = new ObjectMapper();
 		registryHelper.setObjectMapper(objectMapper);
-		ReflectionTestUtils.setField(registryHelper, "auditSuffix", "Audit");
-		ReflectionTestUtils.setField(registryHelper, "auditSuffixSeparator", "_");
 		MockitoAnnotations.initMocks(this);
 		registryHelper.uuidPropertyName = "osid";
-		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, keycloakAdminUtil);
-		registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient);
+		RuleEngineService ruleEngineService = new RuleEngineService(kieContainer, identityManager, true);
+		registryHelper.entityStateHelper = new EntityStateHelper(definitionsManager, ruleEngineService, conditionResolverService, claimRequestClient, true);
+		ReflectionTestUtils.setField(registryHelper.entityStateHelper, "setDefaultPassword", false);
 		registryHelper.setDefinitionsManager(definitionsManager);
+		registryHelper.setNotificationEnabled(true);
+		registryHelper.setSecurityEnabled(true);
 	}
 
 	@Test
@@ -336,18 +340,23 @@ public class RegistryHelperTest {
 	@Mock
 	AsyncRequest asyncRequest;
 
+	@Mock
+	NotificationHelper notificationHelper;
+
 	@Test
 	public void shouldCreateOwnersForInvite() throws Exception {
 		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
 		mockDefinitionManager();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		registryHelper.inviteEntity(inviteJson, "");
 		Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
 		assertEquals("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\",\"osOwner\":[\"" + testUserId + "\"]}}", inputJsonCapture.getValue().toString());
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	@Test
@@ -355,16 +364,14 @@ public class RegistryHelperTest {
 		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
 		mockDefinitionManager();
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
+		doNothing().when(notificationHelper).sendNotification(inviteJson, INVITE);
 		registryHelper.inviteEntity(inviteJson, "");
 		Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
-		Mockito.verify(registryService, atLeastOnce()).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
-		assertEquals("mailto:gecasu.ihises@tovinit.com", toCapture.getValue());
-		assertEquals("INVITATION TO JOIN Institute", subjectCapture.getValue());
-		assertEquals("You have been invited to join Institute registry. You can complete your profile here: https://ndear.xiv.in", messageCapture.getValue());
+		verify(notificationHelper, times(1)).sendNotification(inviteJson, INVITE);
 	}
 
 	private void mockDefinitionManager() throws IOException {
@@ -386,20 +393,15 @@ public class RegistryHelperTest {
 				"  \"adminMobile\": \"1234\"\n" +
 				"}}");
 		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
-		when(keycloakAdminUtil.createUser(any(), any(), any(), any())).thenReturn(testUserId);
+		when(identityManager.createUser(any())).thenReturn(testUserId);
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(shardManager.getShard(any())).thenReturn(new Shard());
 		mockDefinitionManager();
 		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		registryHelper.inviteEntity(inviteJson, "");
 		Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
-		Mockito.verify(registryService, times(4)).callNotificationActors(operationCapture.capture(), toCapture.capture(), subjectCapture.capture(), messageCapture.capture());
-		assertEquals("tel:123123", toCapture.getAllValues().get(0));
-		assertEquals("INVITATION TO JOIN Institute", subjectCapture.getAllValues().get(0));
-		assertEquals("You have been invited to join Institute registry. You can complete your profile here: https://ndear.xiv.in", messageCapture.getAllValues().get(0));
-		assertEquals("mailto:gecasu.ihises@tovinit.com", toCapture.getAllValues().get(1));
-		assertEquals("tel:1234", toCapture.getAllValues().get(2));
-		assertEquals("mailto:admin@email.com", toCapture.getAllValues().get(3));
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	@Test
@@ -467,7 +469,7 @@ public class RegistryHelperTest {
 		ReflectionTestUtils.setField(definitionsManager, "definitionMap", definitionMap);
 		ReflectionTestUtils.setField(registryHelper, "definitionsManager", definitionsManager);
 		registryHelper.invalidateAttestation(entity, entityId, "userId", null);
-		verify(registryService, times(1)).updateEntity(any(), any(), any(), eq(expectedUpdatedNode.toString()));
+		verify(registryService, times(1)).updateEntity(any(), any(), any(), eq(expectedUpdatedNode.toString()), any(boolean.class));
 	}
 
 	@Test
@@ -482,6 +484,7 @@ public class RegistryHelperTest {
 				.status("GRANT_CLAIM")
 				.response("{}")
 				.build();
+		ObjectNode studentJson = getMockStudent();
 		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
 		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
 		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
@@ -494,16 +497,18 @@ public class RegistryHelperTest {
 		attestationArrayNodes.add(mockAttestationPolicy2);
 		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
 		when(searchService.search(any())).thenReturn(attestationPolicyObject);
-		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(getMockStudent());
+		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(studentJson);
 		registryHelper.entityStateHelper = mock(EntityStateHelper.class);
-		when(registryHelper.entityStateHelper.manageState(any(), any(), any(), any(), any())).thenReturn(getMockStudent());
+		when(registryHelper.entityStateHelper.manageState(any(), any(), any(), any(), any())).thenReturn(studentJson);
 		when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(registryHelper, times(1)).triggerAttestation(any(), any());
-
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	@Test
@@ -532,9 +537,9 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(registryHelper, times(0)).triggerAttestation(any(), any());
-
 	}
 
 	@Test
@@ -573,9 +578,9 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
-
 	}
 
 	@Test
@@ -584,7 +589,7 @@ public class RegistryHelperTest {
 		FunctionExecutor functionExecutorMock = Mockito.spy(FunctionExecutor.class);
 		ReflectionTestUtils.setField(registryHelper, "functionExecutor", functionExecutorMock);
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setFunctionDefinitions(Arrays.asList(
-				FunctionDefinition.builder().name("userDefinedConcat").provider("org.example.provider.UUIDFunctionProvider").build()
+				FunctionDefinition.builder().name("userDefinedConcat").provider("dev.sunbirdrc.provider.UUIDFunctionProvider").build()
 		));
 		PluginResponseMessage pluginResponseMessage = PluginResponseMessage.builder()
 				.policyName("test")
@@ -615,16 +620,16 @@ public class RegistryHelperTest {
 		Config config = ConfigFactory.parseResources("sunbirdrc-actors.conf");
 		SunbirdActorFactory sunbirdActorFactory = new SunbirdActorFactory(config, "dev.sunbirdrc.actors");
 		sunbirdActorFactory.init("sunbirdrc-actors");
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.updateState(pluginResponseMessage);
 		verify(functionExecutorMock, times(1)).execute(any(), any(), any());
-
 	}
 
 	@Test
-	public void shouldReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
+	public void shouldReturnFalseIfEntityContainsOwnershipAttributes() throws IOException {
 		mockDefinitionManager();
 		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
+		Assert.assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -642,13 +647,6 @@ public class RegistryHelperTest {
 		definitionsManager.getDefinition("Student").getOsSchemaConfiguration().setOwnershipAttributes(Collections.emptyList());
 		String entity = "Student";
 		assertFalse(registryHelper.doesEntityOperationRequireAuthorization(entity));
-	}
-
-	@Test
-	public void shouldDeleteReturnTrueIfEntityContainsOwnershipAttributes() throws IOException {
-		mockDefinitionManager();
-		String entity = "Student";
-		Assert.assertTrue(registryHelper.doesEntityOperationRequireAuthorization(entity));
 	}
 
 	@Test
@@ -784,9 +782,12 @@ public class RegistryHelperTest {
 		objectNode.set("fullName", JsonNodeFactory.instance.textNode("First Avenger"));
 		objectNode.set("gender", JsonNodeFactory.instance.textNode("Male"));
 		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
+		doNothing().when(notificationHelper).sendNotification(any(), any());
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		registryHelper.autoRaiseClaim("Student", "12345", "556302c9-d8b4-4f60-9ac1-c16c8839a9f3", null, requestBody, "");
 		verify(conditionResolverService, times(1)).resolve(objectNode, REQUESTER, null, Collections.emptyList());
 		verify(registryHelper, times(1)).triggerAttestation(any(), any());
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
 	}
 
 	public void shouldStoredSignedDataInRevokedCredentialsRegistry() throws Exception {
@@ -838,17 +839,124 @@ public class RegistryHelperTest {
 
 	@Test
 	public void shouldContainShardIdInSyncMode() throws Exception {
+		mockDefinitionManager();
 		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"instituteName\":\"gecasu\"}}");
 		Shard shard = mock(Shard.class);
 		when(shard.getShardLabel()).thenReturn("1");
 		when(shardManager.getShard(any())).thenReturn(shard);
-
+		doNothing().when(notificationHelper).sendNotification(any(), any());
 		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(registryAsyncService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
 		when(asyncRequest.isEnabled()).thenReturn(Boolean.FALSE);
+		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
 		String entity = registryHelper.addEntity(inviteJson, "");
 		verify(registryService, atLeastOnce()).addEntity(any(), anyString(), any(), anyBoolean());
 		verify(registryAsyncService, never()).addEntity(any(), anyString(), any(), anyBoolean());
 		assertTrue(entity.startsWith("1-"));
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
+	}
+
+	void mockValidationService() throws IOException {
+		String studentSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
+		String instituteSchema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
+
+		IValidate jsonValidationService = new JsonValidationServiceImpl("");
+		jsonValidationService.addDefinitions("Student", studentSchema);
+		jsonValidationService.addDefinitions("Institute", instituteSchema);
+		ReflectionTestUtils.setField(registryHelper, "validationService", jsonValidationService);
+	}
+
+	@Test
+	public void shouldRaiseRequiredExceptions() throws Exception {
+		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\"}}");
+		mockDefinitionManager();
+		mockValidationService();
+		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
+		when(identityManager.createUser(any())).thenReturn(testUserId);
+		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
+		when(shardManager.getShard(any())).thenReturn(new Shard());
+		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
+		ReflectionTestUtils.setField(registryHelper, "skipRequiredValidationForInvite", false);
+		try {
+			registryHelper.inviteEntity(inviteJson, "");
+		} catch (MiddlewareHaltException e) {
+			assertEquals("Validation Exception : #/Institute: required key [instituteName] not found", e.getMessage());
+		}
+	}
+
+	@Test
+	public void shouldNotRaiseRequiredExceptionsIFFlagDisabled() throws Exception {
+		JsonNode inviteJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\"}}");
+		mockDefinitionManager();
+		mockValidationService();
+		String testUserId = "be6d30e9-7c62-4a05-b4c8-ee28364da8e4";
+		when(identityManager.createUser(any())).thenReturn(testUserId);
+		when(registryService.addEntity(any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID().toString());
+		when(shardManager.getShard(any())).thenReturn(new Shard());
+		ReflectionTestUtils.setField(registryHelper, "workflowEnabled", true);
+		ReflectionTestUtils.setField(registryHelper, "skipRequiredValidationForInvite", true);
+		doNothing().when(notificationHelper).sendNotification(any(), any());
+		registryHelper.inviteEntity(inviteJson, "");
+		Mockito.verify(registryService).addEntity(shardCapture.capture(), userIdCapture.capture(), inputJsonCapture.capture(), anyBoolean());
+		assertEquals("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\",\"osOwner\":[\"" + testUserId + "\"]}}", inputJsonCapture.getValue().toString());
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
+	}
+
+	@Test
+	public void shouldUpdateEntityAndSendNotificationToOwners() throws Exception {
+		JsonNode updateJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\", \"instituteName\": \"Insitute1\", \"osid\": \"123\"}}");
+		JsonNode existingJson = new ObjectMapper().readTree("{\"Institute\":{\"email\":\"gecasu.ihises@tovinit.com\", \"instituteName\": \"Insitute2\", \"osid\": \"123\"}}");
+		mockDefinitionManager();
+		mockValidationService();
+		when(shardManager.getShard(any())).thenReturn(new Shard());
+		when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
+		ReflectionTestUtils.setField(registryHelper, "notificationEnabled", true);
+		doNothing().when(registryService).updateEntity(any(), any(), any(), any(), anyBoolean());
+		doNothing().when(notificationHelper).sendNotification(any(), any());
+		registryHelper.updateEntityAndState(existingJson, updateJson, "");
+		verify(registryService, times(1)).updateEntity(any(), any(), any(), any(), anyBoolean());
+		verify(notificationHelper, times(1)).sendNotification(any(), any());
+	}
+
+	@Test
+	public void shouldNotFetchAttestationPolicyFromDBIfDisabled() throws Exception {
+		mockDefinitionManager();
+		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
+		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
+		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy.set("onComplete", JsonNodeFactory.instance.textNode("attestation:nextAttestationPolicy"));
+		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
+		attestationArrayNodes.add(mockAttestationPolicy);
+		ObjectNode mockAttestationPolicy2 = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy2.set("name", JsonNodeFactory.instance.textNode("nextAttestationPolicy"));
+		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
+		attestationArrayNodes.add(mockAttestationPolicy2);
+		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
+		when(searchService.search(any())).thenReturn(attestationPolicyObject);
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", false);
+		List<AttestationPolicy> policies = registryHelper.getAttestationPolicies("Student");
+		assertEquals(1, policies.size());
+		verify(searchService, never()).search(any());
+	}
+
+	@Test
+	public void shouldFetchAttestationPolicyFromDBIfEnabled() throws Exception {
+		mockDefinitionManager();
+		ObjectNode attestationPolicyObject = JsonNodeFactory.instance.objectNode();
+		ArrayNode attestationArrayNodes = JsonNodeFactory.instance.arrayNode();
+		ObjectNode mockAttestationPolicy = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy.set("onComplete", JsonNodeFactory.instance.textNode("attestation:nextAttestationPolicy"));
+		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
+		attestationArrayNodes.add(mockAttestationPolicy);
+		ObjectNode mockAttestationPolicy2 = JsonNodeFactory.instance.objectNode();
+		mockAttestationPolicy2.set("name", JsonNodeFactory.instance.textNode("nextAttestationPolicy"));
+		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
+		attestationArrayNodes.add(mockAttestationPolicy2);
+		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
+		when(searchService.search(any())).thenReturn(attestationPolicyObject);
+		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
+		List<AttestationPolicy> policies = registryHelper.getAttestationPolicies("Student");
+		assertEquals(3, policies.size());
+		verify(searchService, atMostOnce()).search(any());
 	}
 }

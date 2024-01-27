@@ -11,9 +11,11 @@ import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.AuditRecord;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.SunbirdRCInstrumentation;
+import dev.sunbirdrc.registry.authorization.SchemaAuthFilter;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.CustomExceptionHandler;
 import dev.sunbirdrc.registry.frame.FrameContext;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityProviderConfiguration;
 import dev.sunbirdrc.registry.interceptor.RequestIdValidationInterceptor;
 import dev.sunbirdrc.registry.interceptor.ValidationInterceptor;
 import dev.sunbirdrc.registry.middleware.util.Constants;
@@ -32,6 +34,7 @@ import dev.sunbirdrc.registry.util.ServiceProvider;
 import dev.sunbirdrc.validators.IValidate;
 import dev.sunbirdrc.validators.ValidationFilter;
 import dev.sunbirdrc.validators.json.jsonschema.JsonValidationServiceImpl;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -40,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -56,11 +60,13 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 import org.sunbird.akka.core.SunbirdActorFactory;
+import dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager;
+import dev.sunbirdrc.registry.identity_providers.providers.IdentityProvider;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
+import static dev.sunbirdrc.registry.Constants.ATTESTATION_POLICY;
 
 @Configuration
 @EnableRetry
@@ -147,8 +153,12 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private String schemaUrl;
 	@Value("${httpConnection.maxConnections:5}")
 	private int httpMaxConnections;
+	@Value("${elastic.search.scheme}")
+	private String scheme;
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
+	@Autowired
+	private IdentityProviderConfiguration identityProviderConfiguration;
 
 	@Bean
 	public ObjectMapper objectMapper() {
@@ -251,6 +261,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	@Bean
+	public SchemaAuthFilter schemaAuthFilter() {
+		SchemaAuthFilter schemaAuthFilter = new SchemaAuthFilter();
+		schemaAuthFilter.appendAnonymousInviteSchema(iDefinitionsManager.getEntitiesWithAnonymousInviteRoles());
+		schemaAuthFilter.appendAnonymousSchema(iDefinitionsManager.getEntitiesWithAnonymousManageRoles());
+		logger.info("Added anonymous schema to auth filters");
+		return schemaAuthFilter;
+	}
+
+	@Bean
 	@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE, proxyMode = ScopedProxyMode.TARGET_CLASS)
 	public AuditRecord auditRecord() {
 		return new AuditRecord();
@@ -286,7 +305,6 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		ServiceProvider searchProvider = new ServiceProvider();
 		return searchProvider.getSearchInstance(searchProviderName, isElasticSearchEnabled());
 	}
-
 	/**
 	 * This method creates read provider implementation bean
 	 *
@@ -351,10 +369,9 @@ public class GenericConfiguration implements WebMvcConfigurer {
 		if (validationEnabled) {
 			try {
 				registry.addInterceptor(validationInterceptor()).addPathPatterns("/add").order(orderIdx++);
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (CustomException e) {
-				e.printStackTrace();
+			} catch (IOException | CustomException e) {
+				logger.error("Exception occurred while adding validation interceptor: {}", ExceptionUtils.getStackTrace(e));
+                throw new RuntimeException(e);
 			}
 		}
 	}
@@ -412,6 +429,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	 * @return - IElasticService
 	 * @throws IOException
 	 */
+
+	@ConditionalOnProperty(name = "search.providerName", havingValue = "dev.sunbirdrc.registry.service.ElasticSearchService")
 	@Bean
 	public IElasticService elasticService() throws IOException {
 		ElasticServiceImpl elasticService = new ElasticServiceImpl();
@@ -422,11 +441,15 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			elasticService.setAuthEnabled(Boolean.parseBoolean(authEnabled));
 			elasticService.setUserName(username);
 			elasticService.setPassword(password);
-			elasticService.init(iDefinitionsManager.getAllKnownDefinitions());
+			elasticService.setScheme(scheme);
+			Set<String> indices = new HashSet<>(iDefinitionsManager.getAllKnownDefinitions());
+			indices.add(ATTESTATION_POLICY);
+			elasticService.init(indices);
 		}
 		return elasticService;
 	}
 
+	@ConditionalOnProperty(name = "notification.service.enabled", havingValue = "true")
 	@Bean
 	public NotificationService notificationService() {
 		return new NotificationService(notificationServiceConnInfo, notificationServiceHealthUrl, notificationServiceEnabled);
@@ -445,4 +468,16 @@ public class GenericConfiguration implements WebMvcConfigurer {
 //		IAuditService auditService = new AuditProviderFactory().getAuditService(auditFrameStore);
 //		return auditService;
 //	}
+
+	@ConditionalOnProperty(name = "authentication.enabled", havingValue = "true", matchIfMissing = true)
+	@Bean
+	public IdentityManager identityManager() {
+		ServiceLoader<IdentityProvider> loader = ServiceLoader.load(IdentityProvider.class);
+		for (IdentityProvider provider : loader) {
+			if (identityProviderConfiguration.getProvider().equals(provider.getClass().getName())) {
+				return provider.createManager(identityProviderConfiguration);
+			}
+		}
+		throw new RuntimeException("Identity provider " + identityProviderConfiguration.getProvider() + " not found");
+	}
 }

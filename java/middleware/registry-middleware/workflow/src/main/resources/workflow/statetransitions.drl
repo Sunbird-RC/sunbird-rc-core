@@ -1,9 +1,10 @@
 package dev.sunbirdrc.workflow;
 import dev.sunbirdrc.workflow.StateContext;
 import dev.sunbirdrc.pojos.attestation.States;
+import dev.sunbirdrc.registry.identity_providers.pojos.CreateUserRequest;
 
 dialect  "mvel"
-global dev.sunbirdrc.keycloak.KeycloakAdminUtil keycloakAdminUtil;
+global dev.sunbirdrc.registry.identity_providers.pojos.IdentityManager identityManager;
 global dev.sunbirdrc.workflow.RuleEngineService ruleEngineService;
 
 rule "Set state as draft if there is a change"
@@ -38,16 +39,18 @@ end
 
 rule "Create entity owner for newly added owner fields"
     when
-        stateDefinition:StateContext(isOwnershipProperty() && isOwnerNewlyAdded() && isLoginEnabled());
+        stateDefinition:StateContext(isAuthenticationEnabled() && isOwnershipProperty() && isOwnerNewlyAdded() && isLoginEnabled());
     then
-        String owner = keycloakAdminUtil.createUser(stateDefinition.getEntityName(), stateDefinition.getUpdated().get("userId").textValue(),
-        stateDefinition.getUpdated().get("email").textValue(), stateDefinition.getUpdated().get("mobile").textValue());
+        CreateUserRequest createUserRequest = new CreateUserRequest(stateDefinition.getEntityName(),
+        stateDefinition.getUpdated().get("userId").textValue(), stateDefinition.getUpdated().get("email").textValue(),
+        stateDefinition.getUpdated().get("mobile").textValue(), stateDefinition.getUpdated().get("password").textValue());
+        String owner = identityManager.createUser(createUserRequest);
         stateDefinition.addOwner(owner);
 end
 
 rule "Revert if any modification to ownership details"
     when
-        stateDefinition:StateContext(isOwnershipProperty() && !isOwnerNewlyAdded() && isOwnershipDetailsUpdated());
+        stateDefinition:StateContext(isAuthenticationEnabled() && isOwnershipProperty() && !isOwnerNewlyAdded() && isOwnershipDetailsUpdated());
     then
         ruleEngineService.revertOwnershipDetails(stateDefinition);
 end

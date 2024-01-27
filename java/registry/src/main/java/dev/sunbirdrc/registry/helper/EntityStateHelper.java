@@ -5,30 +5,28 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.pojos.attestation.Action;
-import dev.sunbirdrc.pojos.dto.ClaimDTO;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.middleware.service.ConditionResolverService;
-import dev.sunbirdrc.registry.middleware.util.EntityUtil;
+import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.attestation.AttestationPath;
 import dev.sunbirdrc.registry.model.attestation.EntityPropertyURI;
 import dev.sunbirdrc.registry.util.ClaimRequestClient;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
-import dev.sunbirdrc.registry.util.RecordIdentifier;
 import dev.sunbirdrc.workflow.RuleEngineService;
 import dev.sunbirdrc.workflow.StateContext;
-import net.minidev.json.JSONArray;
 import org.apache.commons.math3.util.Pair;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotEmpty;
+import java.io.IOException;
 import java.util.*;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
@@ -50,16 +48,24 @@ public class EntityStateHelper {
 
     private final ClaimRequestClient claimRequestClient;
 
+    @Value("${identity.set_default_password}")
+    private Boolean setDefaultPassword;
+    @Value("${identity.default_password}")
+    private String defaultPassword;
+    private final boolean authenticationEnabled;
+
     @Autowired
     public EntityStateHelper(IDefinitionsManager definitionsManager, RuleEngineService ruleEngineService,
-                             ConditionResolverService conditionResolverService, ClaimRequestClient claimRequestClient) {
+                             ConditionResolverService conditionResolverService,@Nullable ClaimRequestClient claimRequestClient,
+                             @Value("${authentication.enabled:true}") boolean authenticationEnabled) {
         this.definitionsManager = definitionsManager;
         this.ruleEngineService = ruleEngineService;
         this.conditionResolverService = conditionResolverService;
         this.claimRequestClient = claimRequestClient;
+        this.authenticationEnabled = authenticationEnabled;
     }
 
-    void applyWorkflowTransitions(JsonNode existing, JsonNode updated, List<AttestationPolicy> attestationPolicies) {
+    JsonNode applyWorkflowTransitions(JsonNode existing, JsonNode updated, List<AttestationPolicy> attestationPolicies) throws IOException {
         String entityName = updated.fields().next().getKey();
         JsonNode modified = updated.get(entityName);
         logger.info("Detecting state changes by comparing attestation paths in existing and the updated nodes");
@@ -70,6 +76,21 @@ public class EntityStateHelper {
         addAttestationStateTransitions(existing, entityName, modified, allContexts, attestationPolicies);
         addOwnershipStateTransitions(existing, entityName, updated, allContexts);
         ruleEngineService.doTransition(allContexts);
+        updated = removePasswordFields(entityName, updated);
+        return updated;
+    }
+
+    private JsonNode removePasswordFields(String entityName, JsonNode inputJson) throws IOException {
+        List<OwnershipsAttributes> ownershipAttributes = definitionsManager.getOwnershipAttributes(entityName);
+        JsonNode updatedNode = inputJson;
+        for (OwnershipsAttributes ownershipAttribute : ownershipAttributes) {
+            String passwordPath = ownershipAttribute.getPassword();
+            if (passwordPath != null) {
+                String jsonPath = String.format("$.%s%s", entityName, passwordPath.replaceAll("/", "."));
+                updatedNode = JSONUtil.removeNodesByPath(updatedNode, Collections.singleton(jsonPath));
+            }
+        }
+        return updatedNode;
     }
 
     private void addSystemFieldsStateTransition(JsonNode existing, JsonNode modified, String entityName, List<StateContext> allContexts) {
@@ -80,6 +101,7 @@ public class EntityStateHelper {
                 .metadataNode((ObjectNode) modified)
                 .revertSystemFields(true)
                 .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
+                .authenticationEnabled(authenticationEnabled)
                 .build();
         allContexts.add(stateContext);
     }
@@ -106,19 +128,28 @@ public class EntityStateHelper {
                     .metadataNode((ObjectNode) modified.get(entityName))
                     .ownershipAttribute(ownershipAttribute)
                     .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
+                    .authenticationEnabled(authenticationEnabled)
                     .build();
             allContexts.add(stateContext);
         }
     }
 
     private ObjectNode createOwnershipNode(JsonNode entityNode, String entityName, OwnershipsAttributes ownershipAttribute) {
-        String mobilePath = ownershipAttribute.getMobile();
-        String emailPath = ownershipAttribute.getEmail();
-        String userIdPath = ownershipAttribute.getUserId();
+        String mobilePath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getMobile());
+        String emailPath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getEmail());
+        String userIdPath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getUserId());
+        String passwordPath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getPassword());
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
         objectNode.put(MOBILE, entityNode.at(String.format("/%s%s", entityName, mobilePath)).asText(""));
         objectNode.put(EMAIL, entityNode.at(String.format("/%s%s", entityName, emailPath)).asText(""));
         objectNode.put(USER_ID, entityNode.at(String.format("/%s%s", entityName, userIdPath)).asText(""));
+        String password = entityNode.at(String.format("/%s%s", entityName, passwordPath)).asText("");
+        if (Strings.isBlank(password)) {
+            if (setDefaultPassword && !Strings.isBlank(defaultPassword)) {
+                password = defaultPassword;
+            }
+        }
+        objectNode.put(PASSWORD, password);
         return objectNode;
     }
 
@@ -147,6 +178,7 @@ public class EntityStateHelper {
                         .metadataNode(metadataNodePointer.getFirst())
                         .pointerFromMetadataNode(metadataNodePointer.getSecond())
                         .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
+                        .authenticationEnabled(authenticationEnabled)
                         .build();
                 allContexts.add(stateContext);
             }
@@ -172,6 +204,7 @@ public class EntityStateHelper {
                 .metaData(metaData)
                 .metadataNode(metadataNodePointer.getFirst())
                 .pointerFromMetadataNode(metadataNodePointer.getSecond())
+                .authenticationEnabled(authenticationEnabled)
                 .build();
         ruleEngineService.doTransition(stateContext);
         return root;

@@ -4,6 +4,7 @@ import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.entities.AttestationStatus;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +32,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             List<String> userEntities = registryHelper.getUserEntities(request);
             if (createAttestationEntities.containsAll(userEntities) && definitionsManager.isValidEntityName(entityName) &&
                     !registryHelper.isAttestationPolicyNameAlreadyUsed(entityName, attestationPolicy.getName())) {
-                String userId = registryHelper.getUserId(request, entityName);
+                String userId = registryHelper.getUserId(entityName);
                 attestationPolicy.setCreatedBy(userId);
                 logger.info("Creating attestation policy for entity: {} - {}", entityName, attestationPolicy);
                 attestationPolicy.setEntity(entityName);
@@ -43,7 +44,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
                 return badRequestException(responseParams, response, "Invalid entity name");
             }
         } catch (Exception e) {
-            logger.error("Failed persisting attestation policy: ", e);
+            logger.error("Failed persisting attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -54,7 +55,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
         Response response = new Response(Response.API_ID.READ, "OK", responseParams);
         try {
             if (definitionsManager.isValidEntityName(entityName)) {
-                String userId = registryHelper.getUserId(request, entityName);
+                String userId = registryHelper.getUserId(entityName);
                 List<String> userEntities = registryHelper.getUserEntities(request);
                 if (userEntities.contains(entityName)) {
                     logger.info("Retrieving attestation policies for entity: {}", entityName);
@@ -70,7 +71,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
                 return badRequestException(responseParams, response, "Invalid entity name");
             }
         } catch (Exception e) {
-            logger.error("Failed getting attestation policy: ", e);
+            logger.error("Failed getting attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -82,7 +83,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
             if (definitionsManager.isValidEntityName(entityName)) {
-                String userId = registryHelper.getUserId(request, entityName);
+                String userId = registryHelper.getUserId(entityName);
                 final Optional<AttestationPolicy> attestationPolicyOptional = registryHelper.findAttestationPolicyById(userId, policyOSID);
                 if (attestationPolicyOptional.isPresent() && attestationPolicyOptional.get().getCreatedBy().equals(userId)) {
                     logger.info("Updating attestation policies id: {}", policyOSID);
@@ -93,7 +94,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             }
             return badRequestException(responseParams, response, "Invalid entity name");
         } catch (Exception e) {
-            logger.error("Failed updating attestation policy: ", e);
+            logger.error("Failed updating attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -105,7 +106,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
             if (definitionsManager.isValidEntityName(entityName)) {
-                String userId = registryHelper.getUserId(request, entityName);
+                String userId = registryHelper.getUserId(entityName);
                 Optional<AttestationPolicy> attestationPolicyOptional = registryHelper.findAttestationPolicyById(userId, policyId);
                 if (attestationPolicyOptional.isPresent() && attestationPolicyOptional.get().getCreatedBy().equals(userId)) {
                     logger.info("Updating attestation policy status of id: {}", policyId);
@@ -118,7 +119,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             }
             return badRequestException(responseParams, response, "Invalid entity name");
         } catch (Exception e) {
-            logger.error("Failed updating attestation policy: ", e);
+            logger.error("Failed updating attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return internalErrorResponse(responseParams, response, e);
         }
     }
@@ -130,12 +131,12 @@ public class RegistryAttestationPolicyController extends AbstractController {
         Response response = new Response(Response.API_ID.UPDATE, "OK", responseParams);
         try {
             if (definitionsManager.isValidEntityName(entityName)) {
-                String userId = registryHelper.getUserId(request, entityName);
+                String userId = registryHelper.getUserId(entityName);
                 Optional<AttestationPolicy> attestationPolicyOptional = registryHelper.findAttestationPolicyById(userId, policyId);
                 if (attestationPolicyOptional.isPresent() && attestationPolicyOptional.get().getCreatedBy().equals(userId)) {
                     logger.info("Updating attestation policy status of id: {}", policyId);
                     AttestationPolicy attestationPolicy = attestationPolicyOptional.get();
-                    registryHelper.deleteAttestationPolicy(attestationPolicy);
+                    registryHelper.deleteAttestationPolicy(entityName, attestationPolicy);
                     response.setResult("deleted");
                     responseParams.setStatus(Response.Status.SUCCESSFUL);
                     return new ResponseEntity<>(response, HttpStatus.OK);
@@ -143,7 +144,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
             }
             return badRequestException(responseParams, response, "Invalid entity name");
         } catch (Exception e) {
-            logger.error("Failed updating attestation policy: ", e);
+            logger.error("Failed updating attestation policy: {}", ExceptionUtils.getStackTrace(e));
             return internalErrorResponse(responseParams, response, e);
         }
     }

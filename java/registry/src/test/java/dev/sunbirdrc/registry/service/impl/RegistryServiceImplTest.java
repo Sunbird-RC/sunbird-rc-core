@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.typesafe.config.Config;
@@ -10,6 +11,7 @@ import com.typesafe.config.ConfigFactory;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
+import dev.sunbirdrc.registry.authorization.SchemaAuthFilter;
 import dev.sunbirdrc.registry.dao.IRegistryDao;
 import dev.sunbirdrc.registry.dao.VertexReader;
 import dev.sunbirdrc.registry.dao.VertexWriter;
@@ -18,7 +20,10 @@ import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
+import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.IAuditService;
+import dev.sunbirdrc.registry.service.IEventService;
+import dev.sunbirdrc.registry.service.EntityTransformer;
 import dev.sunbirdrc.registry.service.SchemaService;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
@@ -106,6 +111,11 @@ public class RegistryServiceImplTest {
 	@Mock
 	private HealthIndicator healthIndicator;
 
+	@Mock
+	private IEventService eventService;
+	@Mock
+	private EntityTransformer entityTransformer;
+
 	private DatabaseProvider mockDatabaseProvider;
 
 	private IRegistryDao registryDao;
@@ -137,6 +147,9 @@ public class RegistryServiceImplTest {
 	@Mock
 	private IAuditService auditService;
 
+	@Mock
+	private SchemaAuthFilter schemaAuthFilter;
+
 	public void setup() throws IOException {
 		MockitoAnnotations.initMocks(this);
 		ReflectionTestUtils.setField(encryptionService, "encryptionServiceHealthCheckUri", "encHealthCheckUri");
@@ -146,8 +159,12 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(registryService, "definitionsManager", definitionsManager);
 		ReflectionTestUtils.setField(schemaService, "definitionsManager", definitionsManager);
 		ReflectionTestUtils.setField(schemaService, "validator", jsonValidationService);
+		ReflectionTestUtils.setField(schemaService, "schemaAuthFilter", schemaAuthFilter);
 		ReflectionTestUtils.setField(registryService, "schemaService", schemaService);
 		ReflectionTestUtils.setField(registryService, "objectMapper", objectMapper);
+		ReflectionTestUtils.setField(registryService, "eventService", eventService);
+		ReflectionTestUtils.setField(registryService, "entityTransformer", entityTransformer);
+		ReflectionTestUtils.setField(registryService, "isEventsEnabled", true);
 	}
 
 	@Before
@@ -292,15 +309,76 @@ public class RegistryServiceImplTest {
 				"  \"gender\": \"male\",\n" +
 				"  \"dob\": \"10-10-1995\"\n" +
 				"}"));
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
 		registryService.addEntity(shard, "", inputJson, true);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
+		verify(eventService, times(1)).pushEvents(event);
 		esNodeCaptor.getValue();
 		System.out.println(esNodeCaptor);
 		JsonNode output = esNodeCaptor.getValue().get("Teacher");
 		assertTrue(output.has("dob"));
 		assertTrue(output.has("gender"));
 		assertTrue(output.has("fullName"));
+		definitionsManager.removeDefinition(JsonNodeFactory.instance.textNode(schema));
+	}
+
+	@Test
+	public void shouldUpdateArrayFieldsInEntity() throws Exception {
+		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
+		definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
+		ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
+		ReflectionTestUtils.setField(registryService, "uuidPropertyName", "osid");
+		ReflectionTestUtils.setField(registryService, "searchProvider", "dev.sunbirdrc.registry.service.ElasticSearchService");
+		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
+		String instituteOsid = addInstituteToGraph();
+		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
+		ObjectNode affiliationNode = (ObjectNode) instituteNode.get("Institute").get("affiliation").get(0);
+		ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+		arrayNode.add("Class XII");
+		affiliationNode.set("classes", arrayNode);
+		when(shard.getShardLabel()).thenReturn("");
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
+		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode),false);
+		verify(eventService, times(1)).pushEvents(event);
+		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
+		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
+		esNodeCaptor.getValue();
+		System.out.println(esNodeCaptor);
+		JsonNode output = esNodeCaptor.getValue().get("Institute").get("affiliation").get(0).get("classes");
+		assertTrue(output.get(0).textValue().equals("Class XII"));
+		assertEquals(1, output.size());
+		definitionsManager.removeDefinition(JsonNodeFactory.instance.textNode(schema));
+	}
+
+	@Test
+	public void shouldUpdateTextFieldsInEntity() throws Exception {
+		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Institute.json"), Charset.defaultCharset());
+		definitionsManager.appendNewDefinition(JsonNodeFactory.instance.textNode(schema));
+		ReflectionTestUtils.setField(registryService, "persistenceEnabled", true);
+		ReflectionTestUtils.setField(registryService, "uuidPropertyName", "osid");
+		ReflectionTestUtils.setField(registryService, "searchProvider", "dev.sunbirdrc.registry.service.ElasticSearchService");
+		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
+		String instituteOsid = addInstituteToGraph();
+		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
+		((ObjectNode)instituteNode.get("Institute")).set("instituteName", JsonNodeFactory.instance.textNode("Holy Cross"));
+		when(shard.getShardLabel()).thenReturn("");
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
+		registryService.updateEntity(shard, "", instituteOsid, String.valueOf(instituteNode),false);
+		verify(eventService, times(1)).pushEvents(event);
+		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
+		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
+		esNodeCaptor.getValue();
+		System.out.println(esNodeCaptor);
+		JsonNode output = esNodeCaptor.getValue().get("Institute").get("instituteName");
+		assertTrue(output.textValue().equals("Holy Cross"));
 		definitionsManager.removeDefinition(JsonNodeFactory.instance.textNode(schema));
 	}
 
@@ -326,8 +404,11 @@ public class RegistryServiceImplTest {
 				"  }\n" +
 				"}"));
 		when(shard.getShardLabel()).thenReturn("");
-		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson));
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
+		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson), false);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
+		verify(eventService, times(1)).pushEvents(event);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
 		esNodeCaptor.getValue();
 		System.out.println(esNodeCaptor);
@@ -356,7 +437,10 @@ public class RegistryServiceImplTest {
 				"  \"dob\": \"10-10-1995\"\n" +
 				"}"));
 		when(shard.getShardLabel()).thenReturn("");
-		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson));
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
+		registryService.updateEntity(shard, "", studentOsid, String.valueOf(inputJson), false);
+		verify(eventService, times(1)).pushEvents(event);
 		ArgumentCaptor<JsonNode> esNodeCaptor = ArgumentCaptor.forClass(JsonNode.class);
 		verify(registryService, times(1)).callESActors(esNodeCaptor.capture(),any(),any(),any(),any());
 		esNodeCaptor.getValue();
@@ -384,6 +468,23 @@ public class RegistryServiceImplTest {
 				"}}"));
 	}
 
+	private String addInstituteToGraph() throws JsonProcessingException {
+		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid");
+		return vertexWriter.writeNodeEntity(objectMapper.readTree("{\"Institute\": {\n" +
+				"  \"instituteName\": \"Don bosco\",\n" +
+				"  \"email\": \"admin@gmail.com\",\n" +
+				"  \"contactNumber\": \"1234\",\n" +
+				" \"affiliation\": [{\n" +
+				" \"medium\": \"English\"," +
+				" \"board\": \"cbse\"," +
+				" \"affiliationNumber\": \"123\"," +
+				" \"grantYear\": \"2000\"," +
+				" \"expiryYear\": \"2030\"," +
+				" \"classes\": [\"Class XII\", \"Class X\"]" +
+				"}]" +
+				"}}"));
+	}
+
 	private String addTeacherToGraph() throws JsonProcessingException {
 		VertexWriter vertexWriter = new VertexWriter(graph, mockDatabaseProvider, "osid");
 		return vertexWriter.writeNodeEntity(objectMapper.readTree("{\"Teacher\":  {\n" +
@@ -404,7 +505,10 @@ public class RegistryServiceImplTest {
 		object.put(Schema.toLowerCase(), schema);
 		object.put("status", SchemaStatus.PUBLISHED.toString());
 		schemaNode.set(Schema, object);
+		Event event = mock(Event.class);
+		when(eventService.createTelemetryObject(anyString(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(event);
 		registryService.addEntity(shard, "", schemaNode, true);
+		verify(eventService, times(1)).pushEvents(event);
 		assertEquals(existingDefinitions+1, definitionsManager.getAllKnownDefinitions().size());
 		ObjectNode schemaObjectNode = (ObjectNode) objectMapper.readTree(schema);
 		((ObjectNode)schemaObjectNode.get("definitions").get("TrainingCertificate").get("properties")).remove("date");

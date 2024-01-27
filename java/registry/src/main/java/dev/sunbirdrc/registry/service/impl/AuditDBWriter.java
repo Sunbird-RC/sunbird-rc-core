@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.service.impl;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -60,8 +61,7 @@ public class AuditDBWriter {
 
             logger.debug("Audit added : " + entityId);
         } catch (Exception e) {
-            logger.error("Audit failed : {}" + e);
-
+            logger.error("Audit failed : {}", ExceptionUtils.getStackTrace(e));
             throw new AuditFailedException("Audit failed : " + e.getMessage());
         } finally {
             if (tx != null) {

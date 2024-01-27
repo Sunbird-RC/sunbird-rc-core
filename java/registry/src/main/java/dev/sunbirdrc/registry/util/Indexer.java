@@ -25,6 +25,7 @@ public class Indexer {
      * Composite index fields
      */
     private List<String> compositeIndexFields;
+    private List<String> compositeUniqueIndexFields;
     /**
      * Single index fields
      */
@@ -37,7 +38,7 @@ public class Indexer {
 
     /**
      * Required to set unique fields to create
-     * 
+     *
      * @param indexUniqueFields
      */
     public void setUniqueIndexFields(List<String> indexUniqueFields) {
@@ -45,7 +46,7 @@ public class Indexer {
     }
     /**
      * Required to set single fields to create
-     * 
+     *
      * @param singleIndexFields
      */
     public void setSingleIndexFields(List<String> singleIndexFields) {
@@ -53,16 +54,20 @@ public class Indexer {
     }
     /**
      * Required to set composite fields to create
-     * 
+     *
      * @param compositeIndexFields
      */
     public void setCompositeIndexFields(List<String> compositeIndexFields) {
         this.compositeIndexFields = compositeIndexFields;
     }
 
+    public void setCompositeUniqueIndexFields(List<String> compositeUniqueIndexFields) {
+        this.compositeUniqueIndexFields = compositeUniqueIndexFields;
+    }
+
     /**
      * Creates index for a given label
-     * 
+     *
      * @param graph
      * @param label     type vertex label (example:Teacher) and table in rdbms
      */
@@ -72,6 +77,7 @@ public class Indexer {
             databaseProvider.createUniqueIndex(graph, label, indexUniqueFields);
             databaseProvider.createIndex(graph, label, singleIndexFields);
             databaseProvider.createCompositeIndex(graph, label, compositeIndexFields);
+            databaseProvider.createCompositeUniqueIndex(graph, label, compositeUniqueIndexFields);
         } else {
             logger.info("label is required for creating indexing");
         }
