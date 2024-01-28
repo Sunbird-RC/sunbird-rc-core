@@ -507,6 +507,7 @@ public class VertexReader {
                     try {
                         references = (ObjectNode) readInternal(dependent);
                         references = (ObjectNode) references.get(references.fieldNames().next());
+                        references = (ObjectNode) JSONUtil.removeNodesByPath(references, definitionsManager.getExcludingFieldsForEntity(dids[1]));
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

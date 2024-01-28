@@ -161,7 +161,7 @@ public class ElasticSearchService implements ISearchService {
                     String[] referenceStrSplit = objectField.getValue().asText().split(":");
                     String osid = referenceStrSplit[2];
                     for(JsonNode referenceNode: finalReferenceNodes) {
-                        if(referenceNode.get("osid").textValue().equals(osid)) {
+                        if(referenceNode.get("osid").textValue().contains(osid)) {
                             objectNode.set(objectField.getKey(), referenceNode);
                         }
                     }
