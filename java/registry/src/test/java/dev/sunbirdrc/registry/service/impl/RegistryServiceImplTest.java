@@ -334,7 +334,7 @@ public class RegistryServiceImplTest {
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		String instituteOsid = addInstituteToGraph();
 		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, true );
 		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
 		ObjectNode affiliationNode = (ObjectNode) instituteNode.get("Institute").get("affiliation").get(0);
 		ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
@@ -365,7 +365,7 @@ public class RegistryServiceImplTest {
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		String instituteOsid = addInstituteToGraph();
 		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, true);
 		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
 		((ObjectNode)instituteNode.get("Institute")).set("instituteName", JsonNodeFactory.instance.textNode("Holy Cross"));
 		when(shard.getShardLabel()).thenReturn("");
