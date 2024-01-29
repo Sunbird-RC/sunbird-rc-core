@@ -106,7 +106,8 @@ public class FileStorageController {
         try {
             fileStorageService.deleteDocument(objectName);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            String errorMsg = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMsg);
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
