@@ -31,6 +31,7 @@ import dev.sunbirdrc.pojos.SearchQuery;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.util.RecordIdentifier;
 
+import static dev.sunbirdrc.registry.middleware.util.Constants.DID_TYPE;
 import static dev.sunbirdrc.registry.middleware.util.Constants.ENTITY_TYPE;
 
 /**
@@ -126,7 +127,8 @@ public class ElasticSearchService implements ISearchService {
         for (JsonNode node : arrayNode) {
             ObjectNode objectNode = (ObjectNode) node;
             objectNode.fields().forEachRemaining(objectField -> {
-                if(objectField.getValue().asText().startsWith("did:")) {
+                String pattern = "^"+ DID_TYPE+":[^:]+:[^:]+";
+                if(objectField.getValue().asText().matches(pattern)) {
                     String[] referenceStrSplit = objectField.getValue().asText().split(":");
                     String indexName = referenceStrSplit[1].toLowerCase();
                     String osid = referenceStrSplit[2];
@@ -185,7 +187,7 @@ public class ElasticSearchService implements ISearchService {
     private SearchQuery getSearchQuery(String entityName, List<String> osids) throws JsonProcessingException {
         ArrayNode osidsArrayNode = JsonNodeFactory.instance.arrayNode();
         for (String osid: osids) {
-            osidsArrayNode.add(osid);
+            osidsArrayNode.add("1-"+osid);
         }
         ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
         ObjectNode conditionNode = JsonNodeFactory.instance.objectNode();

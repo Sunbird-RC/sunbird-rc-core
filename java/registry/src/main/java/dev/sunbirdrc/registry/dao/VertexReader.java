@@ -497,7 +497,9 @@ public class VertexReader {
 
     private void expandReferenceNodes(ObjectNode rootNode) {
         rootNode.fields().forEachRemaining(entry -> {
-            if(entry.getValue().isValueNode() && entry.getValue().asText().startsWith(DID_TYPE)) {
+            // Regex pattern to check for a DID
+            String pattern = "^"+ DID_TYPE+":[^:]+:[^:]+";
+            if(entry.getValue().isValueNode() && entry.getValue().asText().matches(pattern)) {
                 String[] dids = entry.getValue().asText().split(":");
                 String osid = RecordIdentifier.parse(dids[2]).getUuid();
                 Iterator<Vertex> vertexIterator = graph.traversal().clone().V().hasLabel(dids[1]).has(uuidPropertyName, osid);
