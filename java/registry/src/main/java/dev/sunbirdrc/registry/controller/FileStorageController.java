@@ -106,8 +106,7 @@ public class FileStorageController {
         try {
             fileStorageService.deleteDocument(objectName);
         } catch (Exception e) {
-            String errorMsg = e.getMessage();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMsg);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed deleting the document");
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
@@ -132,7 +131,7 @@ public class FileStorageController {
         try {
             document = fileStorageService.getDocument(objectName);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage().getBytes(StandardCharsets.UTF_8));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed fetching the document".getBytes(StandardCharsets.UTF_8));
         }
         return ResponseEntity.ok().body(document);
     }
