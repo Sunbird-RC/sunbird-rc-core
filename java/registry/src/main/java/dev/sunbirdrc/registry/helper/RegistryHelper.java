@@ -1057,7 +1057,7 @@ public class RegistryHelper {
         Shard shard = shardManager.activateShard(shardId);
         ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
         Vertex vertex = registryService.deleteEntityById(shard, entityName, userId, recordId.getUuid());
-        VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager);
+        VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager, true);
         JsonNode deletedNode = JsonNodeFactory.instance.objectNode().set(entityName, vertexReader.constructObject(vertex));
         if(notificationEnabled) notificationHelper.sendNotification(deletedNode, DELETE);
         return vertex;

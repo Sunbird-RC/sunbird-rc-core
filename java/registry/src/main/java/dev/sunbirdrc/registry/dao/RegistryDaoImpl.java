@@ -17,6 +17,7 @@ import java.util.List;
 
 public class RegistryDaoImpl implements IRegistryDao {
     public String uuidPropertyName;
+    private final boolean expandReferenceObj;
     private IDefinitionsManager definitionsManager;
     private DatabaseProvider databaseProvider;
     private List<String> privatePropertyList;
@@ -33,10 +34,11 @@ public class RegistryDaoImpl implements IRegistryDao {
         this.privatePropertyList = privatePropertyList;
     }
 
-    public RegistryDaoImpl(DatabaseProvider dbProvider, IDefinitionsManager defnManager, String uuidPropName) {
+    public RegistryDaoImpl(DatabaseProvider dbProvider, IDefinitionsManager defnManager, String uuidPropName, boolean expandReferenceObj) {
         databaseProvider = dbProvider;
         definitionsManager = defnManager;
         uuidPropertyName = uuidPropName;
+        this.expandReferenceObj = expandReferenceObj;
     }
 
     public DatabaseProvider getDatabaseProvider() {
@@ -64,7 +66,7 @@ public class RegistryDaoImpl implements IRegistryDao {
      */
     public JsonNode getEntity(Graph graph, String entityType, String uuid, ReadConfigurator readConfigurator) throws Exception {
 
-        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
+        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager, expandReferenceObj);
         JsonNode result = vr.read(entityType, uuid);
 
         return result;
@@ -73,7 +75,7 @@ public class RegistryDaoImpl implements IRegistryDao {
 
     public JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator, boolean expandInternal) throws Exception {
 
-        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
+        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager, expandReferenceObj);
         ObjectNode constructObject = vr.constructObject(vertex);
         if (expandInternal) {
             String entityType = (String) ValueType.getValue(constructObject.get(TypePropertyHelper.getTypeName()));

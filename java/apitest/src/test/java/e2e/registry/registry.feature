@@ -295,6 +295,7 @@ Feature: Registry api tests
     And request sample.boardInviteRequest
     When method post
     Then status 200
+    * def boardOsid = response.result.Board.osid
   #  get board token
     * url authUrl
     * path 'auth/realms/sunbird-rc/protocol/openid-connect/token'
@@ -320,7 +321,9 @@ Feature: Registry api tests
   # invite institute with token
     Given url registryUrl
     And path 'api/v1/Institute/invite'
-    And request sample.instituteRequest
+    * def requestBody = sample.instituteRequest
+    * requestBody.references = 'did:Board:' + boardOsid
+    And request requestBody
     And header Authorization = board_token
     When method post
     Then status 200
