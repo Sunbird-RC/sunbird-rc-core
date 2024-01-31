@@ -1,21 +1,22 @@
-IMAGE_DESTINATION=ghcr.io/sunbird-rc
-
+IMAGE_DESTINATION=ghcr.io/sunbird-rc/sunbird-rc-keycloak
+RELEASE_VERSION=1.0.0
 build:
 	echo "Building docker image"
 	@cd ../keycloak-mobile-number-login-spi/ && sh ./build.sh
-	@docker build -t $(IMAGE_DESTINATION)/sunbird-rc-keycloak .
+	@docker build -t $(IMAGE_DESTINATION) .
 
 push:
-	@docker push $(IMAGE_DESTINATION)/sunbird-rc-keycloak
+	@docker tag $(IMAGE_DESTINATION) $(IMAGE_DESTINATION):$(RELEASE_VERSION)
+	@docker push $(IMAGE_DESTINATION):$(RELEASE_VERSION)
 
 build-silicon-base:
-	@docker build -t $(IMAGE_DESTINATION)/keycloak-silicon -f apple-silicon/Dockerfile apple-silicon
+	@docker build -t ghcr.io/sunbird-rc/keycloak:$(RELEASE_VERSION)-apple-silicon -f apple-silicon/Dockerfile apple-silicon
 
 build-silicon:
 	echo "Building docker image"
 	@cd ../keycloak-mobile-number-login-spi/ && sh ./build.sh
-	@docker build -t $(IMAGE_DESTINATION)/sunbird-rc-keycloak:silicon --build-arg KEYCLOAK_BASE_IMAGE=vikastc/sunbirdrc-keycloak:apple-silicon .
+	@docker build -t $(IMAGE_DESTINATION):$(RELEASE_VERSION)-apple-silicon --build-arg KEYCLOAK_BASE_IMAGE=ghcr.io/sunbird-rc/keycloak:1.0.0-apple-silicon .
 
 push-silicon:
-	@docker push $(IMAGE_DESTINATION)/sunbird-rc-keycloak:silicon
+	@docker push $(IMAGE_DESTINATION):$(RELEASE_VERSION)-apple-silicon
   
