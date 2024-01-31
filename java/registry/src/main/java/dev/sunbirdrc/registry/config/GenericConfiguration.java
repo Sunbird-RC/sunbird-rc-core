@@ -155,6 +155,10 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	private int httpMaxConnections;
 	@Value("${elastic.search.scheme}")
 	private String scheme;
+
+	@Value("${registry.hard_delete_enabled}")
+	private boolean isHardDeleteEnabled;
+
 	@Autowired
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 	@Autowired
@@ -445,6 +449,7 @@ public class GenericConfiguration implements WebMvcConfigurer {
 			Set<String> indices = new HashSet<>(iDefinitionsManager.getAllKnownDefinitions());
 			indices.add(ATTESTATION_POLICY);
 			elasticService.init(indices);
+			elasticService.setIsHardDeleteEnabled(isHardDeleteEnabled);
 		}
 		return elasticService;
 	}

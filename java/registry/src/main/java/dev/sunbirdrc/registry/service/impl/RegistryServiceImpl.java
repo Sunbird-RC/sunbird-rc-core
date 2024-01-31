@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.actors.factory.MessageFactory;
-import dev.sunbirdrc.elastic.IElasticService;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
@@ -22,8 +21,8 @@ import dev.sunbirdrc.registry.exception.UniqueIdentifierException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
-import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.model.EventType;
+import dev.sunbirdrc.registry.model.event.Event;
 import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
@@ -38,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -77,6 +75,9 @@ public class RegistryServiceImpl implements RegistryService {
     private ObjectMapper objectMapper;
     @Value("${encryption.enabled}")
     private boolean encryptionEnabled;
+
+    @Value("${registry.hard_delete_enabled}")
+    private boolean isHardDeleteEnabled;
 
     @Value("${event.enabled}")
     private boolean isEventsEnabled;
@@ -183,9 +184,13 @@ public class RegistryServiceImpl implements RegistryService {
                 if (!StringUtils.isEmpty(index) && index.equals(Schema)) {
                     schemaService.deleteSchemaIfExists(vertex);
                 }
-                if (!(vertex.property(Constants.STATUS_KEYWORD).isPresent()
+                if (isHardDeleteEnabled || !(vertex.property(Constants.STATUS_KEYWORD).isPresent()
                         && vertex.property(Constants.STATUS_KEYWORD).value().equals(Constants.STATUS_INACTIVE))) {
-                    registryDao.deleteEntity(vertex);
+                    if (isHardDeleteEnabled) {
+                        registryDao.hardDeleteEntity(vertex);
+                    } else {
+                        registryDao.deleteEntity(vertex);
+                    }
                     databaseProvider.commitTransaction(graph, tx);
                     auditService.auditDelete(
                             auditService.createAuditRecord(userId, uuid, tx, index),

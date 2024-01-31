@@ -688,7 +688,7 @@ Feature: Registry api tests
     And path '/v1/metrics'
     When method get
     Then status 200
-    And assert response.birthcertificate.READ == "5"
+    And assert response.birthcertificate.READ == "6"
     And assert response.birthcertificate.UPDATE == "1"
     And assert response.birthcertificate.ADD == "1"
     And assert response.birthcertificate.DELETE == "1"

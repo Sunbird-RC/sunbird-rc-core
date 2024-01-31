@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-
 public interface IRegistryDao {
 
 	String addEntity(Graph graph, JsonNode rootNode);
@@ -13,4 +12,5 @@ public interface IRegistryDao {
 	void updateVertex(Graph graph, Vertex rootVertex, JsonNode inputJsonNode, String parentName) throws Exception;
     void deleteEntity(Vertex uuid);
 
+	void hardDeleteEntity(Vertex vertex);
 }
