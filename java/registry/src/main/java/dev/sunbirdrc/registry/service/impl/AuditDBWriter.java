@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,13 +42,15 @@ public class AuditDBWriter {
 
     @Autowired
     private EntityParenter entityParenter;
+    @Value("${registry.expandReference}")
+    private boolean expandReferenceObj;
 
-	public String auditToDB(Shard shard, JsonNode rootNode, String entityType) throws AuditFailedException {
+    public String auditToDB(Shard shard, JsonNode rootNode, String entityType) throws AuditFailedException {
 
     	String entityId = "auditPlaceholderId";
 	 	Transaction tx = null;
         DatabaseProvider dbProvider = shard.getDatabaseProvider();
-        IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
+        IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
         try (OSGraph osGraph = dbProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             tx = dbProvider.startTransaction(graph);

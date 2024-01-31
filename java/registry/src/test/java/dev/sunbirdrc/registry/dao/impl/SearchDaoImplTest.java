@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -59,8 +60,10 @@ public class SearchDaoImplTest {
     private final static int limit = 1;
     private final static boolean expandInternal = true;
     private List<String> entities = new ArrayList<>();
+    @Value("${registry.expandReference}")
+    private boolean expandReferenceObj;
 
-    
+
     @Before
     public void initializeGraph() throws IOException {
         dbConnectionInfoMgr.setUuidPropertyName("tid");
@@ -68,7 +71,7 @@ public class SearchDaoImplTest {
         databaseProvider = dbProviderFactory.getInstance(null);
         graph = databaseProvider.getOSGraph().getGraphStore();
 
-        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, "tid");
+        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, "tid", expandReferenceObj);
         searchDao = new SearchDaoImpl(registryDao);
         populateGraph();
         

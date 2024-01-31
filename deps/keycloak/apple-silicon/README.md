@@ -1,0 +1,3 @@
+# Keycloak for apple silicon
+
+This build is for keycloak to run on apple M1/M2...

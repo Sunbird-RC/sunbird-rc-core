@@ -1065,7 +1065,7 @@ public class RegistryHelper {
         }
         Vertex vertex = registryService.deleteEntityById(shard, entityName, userId, recordId.getUuid());
         if (!isHardDeleteEnabled) {
-            VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager);
+            VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager, true);
             deletedNode = JsonNodeFactory.instance.objectNode().set(entityName, vertexReader.constructObject(vertex));
         }
         if(notificationEnabled) notificationHelper.sendNotification(deletedNode, DELETE);

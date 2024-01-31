@@ -140,6 +140,9 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Autowired(required = false)
     private List<HealthIndicator> healthIndicators;
+    @Value("${registry.expandReference}")
+    private boolean expandReferenceObj;
+
     public HealthCheckResponse health(Shard shard) throws Exception {
         HealthCheckResponse healthCheck;
         AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
@@ -167,12 +170,12 @@ public class RegistryServiceImpl implements RegistryService {
     @Override
     public Vertex deleteEntityById(Shard shard, String entityName, String userId, String uuid) throws Exception {
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
-        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
+        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
                 ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
-                VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager);
+                VertexReader vertexReader = new VertexReader(databaseProvider, graph, configurator, uuidPropertyName, definitionsManager, expandReferenceObj);
                 Vertex vertex = vertexReader.getVertex(entityName, uuid);
                 if (vertex == null) {
                     throw new RecordNotFoundException(INVALID_ID_MESSAGE);
@@ -258,7 +261,7 @@ public class RegistryServiceImpl implements RegistryService {
 
         if (persistenceEnabled) {
             DatabaseProvider dbProvider = shard.getDatabaseProvider();
-            IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
+            IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
             try (OSGraph osGraph = dbProvider.getOSGraph()) {
                 Graph graph = osGraph.getGraphStore();
                 tx = dbProvider.startTransaction(graph);
@@ -324,7 +327,7 @@ public class RegistryServiceImpl implements RegistryService {
         systemFieldsHelper.ensureUpdateAuditFields(entityType, inputNode.get(entityType), userId);
 
         DatabaseProvider databaseProvider = shard.getDatabaseProvider();
-        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName);
+        IRegistryDao registryDao = new RegistryDaoImpl(databaseProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
         try (OSGraph osGraph = databaseProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             try (Transaction tx = databaseProvider.startTransaction(graph)) {
@@ -332,7 +335,7 @@ public class RegistryServiceImpl implements RegistryService {
                 // Read the node and
                 // TODO - decrypt properties to pass validation
                 ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-                VertexReader vr = new VertexReader(databaseProvider, graph, readConfigurator, uuidPropertyName, definitionsManager);
+                VertexReader vr = new VertexReader(databaseProvider, graph, readConfigurator, uuidPropertyName, definitionsManager, expandReferenceObj);
                 JsonNode readNode = vr.read(entityType, id);
 
                 String rootId = readNode.findPath(Constants.ROOT_KEYWORD).textValue();
