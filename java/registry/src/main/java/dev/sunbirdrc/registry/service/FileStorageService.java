@@ -25,7 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -52,19 +54,17 @@ public class FileStorageService implements HealthIndicator {
 		logger.info("File has successfully saved");
 	}
 
-	public DocumentsResponse saveAndFetchFileNames(MultipartFile[] files, String requestedURI) {
-		String objectPath = getDirectoryPath(requestedURI);
+	public DocumentsResponse saveAndFetchFileNames(MultipartFile[] files, String objectPath) {
 
 		DocumentsResponse documentsResponse = new DocumentsResponse();
-		for (MultipartFile file : files) {
-			String fileName = getFileName(file.getOriginalFilename());
+		for (MultipartFile file: files) {
+			String objectName = objectPath +  "/" + getFileName(Objects.requireNonNull(file.getOriginalFilename()));
 			try {
-				String objectName = objectPath + "/" + fileName;
 				save(file.getInputStream(), objectName);
 				documentsResponse.addDocumentLocation(objectName);
 			} catch (Exception e) {
 				documentsResponse.addError(file.getOriginalFilename());
-				logger.error("Error has occurred while trying to save the file {}: {}", fileName, ExceptionUtils.getStackTrace(e));
+				logger.error("Error has occurred while trying to save the file {}: {}", file.getOriginalFilename(), ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return documentsResponse;
@@ -79,7 +79,7 @@ public class FileStorageService implements HealthIndicator {
 	@NotNull
 	private String getFileName(String file) {
 		String uuid = UUID.randomUUID().toString();
-		return uuid + "-" + file;
+		return uuid + "-" + file.replaceAll(" ", "_");
 	}
 
 	public DocumentsResponse deleteFiles(List<String> files) {
@@ -100,27 +100,23 @@ public class FileStorageService implements HealthIndicator {
 		return minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().method(Method.GET).bucket(bucketName).object(objectName).expiry(2, TimeUnit.HOURS).build());
 	}
 
-	public byte[] getDocument(String requestedURI) {
-		String objectName = getDirectoryPath(requestedURI);
-		byte[] bytes = new byte[0];
+	public byte[] getDocument(String objectName) throws Exception {
 		try {
 			InputStream inputStream = minioClient.getObject(GetObjectArgs.builder().bucket(bucketName).object(objectName).build());
-			bytes = IOUtils.toByteArray(inputStream);
+			return IOUtils.toByteArray(inputStream);
 		} catch (Exception e) {
 			logger.error("Error has occurred while fetching the document {} {}", objectName, ExceptionUtils.getStackTrace(e));
+			throw e;
 		}
-		return bytes;
 	}
 
-	public ResponseEntity deleteDocument(String requestedURI) {
-		String objectName = getDirectoryPath(requestedURI);
+	public void deleteDocument(String objectName) throws Exception {
 		try {
 			minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
 		} catch (Exception e) {
 			logger.error("Error has occurred while deleting the document {}", objectName);
-			return new ResponseEntity(HttpStatus.BAD_REQUEST);
+			throw e;
 		}
-		return new ResponseEntity(HttpStatus.OK);
 	}
 
 	@Override
