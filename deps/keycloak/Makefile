@@ -1,5 +1,5 @@
 IMAGE_DESTINATION=ghcr.io/sunbird-rc/sunbird-rc-keycloak
-RELEASE_VERSION=1.0.0
+RELEASE_VERSION=v1.0.1
 build:
 	echo "Building docker image"
 	@cd ../keycloak-mobile-number-login-spi/ && sh ./build.sh
@@ -7,6 +7,7 @@ build:
 
 push:
 	@docker tag $(IMAGE_DESTINATION) $(IMAGE_DESTINATION):$(RELEASE_VERSION)
+	@docker push $(IMAGE_DESTINATION)
 	@docker push $(IMAGE_DESTINATION):$(RELEASE_VERSION)
 
 build-silicon-base:
