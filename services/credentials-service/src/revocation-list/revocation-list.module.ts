@@ -3,7 +3,7 @@ import { RevocationListService } from './revocation-list.service';
 import { RevocationList } from './revocation-list.helper';
 import { PrismaClient } from '@prisma/client';
 import { RevocationListImpl } from './revocation-list.impl';
-import { CredentialsModule } from 'src/credentials/credentials.module';
+import { CredentialsModule } from './../credentials/credentials.module';
 import { IdentityUtilsService } from './../credentials/utils/identity.utils.service';
 import { HttpModule, HttpService } from '@nestjs/axios';
 

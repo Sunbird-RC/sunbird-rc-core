@@ -325,7 +325,7 @@ export class CredentialsService {
     page = 1,
     limit= 1000,
   ){
-    let revocationList: any;
+    let revocationList: Array<Object>;
 
     if (issuerId === "") {
       throw new InternalServerErrorException('Please provide a valid issuer ID');
@@ -342,9 +342,7 @@ export class CredentialsService {
           status: true,
           tags : true,
           issuer : true,
-          issuanceDate: true,
-          expirationDate: true,
-          credential_schema : true,
+          issuanceDate: true
         },
         skip: (page -1) * limit,
         take: limit,

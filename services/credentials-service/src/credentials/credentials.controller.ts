@@ -117,6 +117,10 @@ export class CredentialsController {
   }
 
   @Get('revocation-list')
+  @ApiResponse({
+    type: Array<Object>,
+    description: 'Returns a list of revocked credentials',
+  })
   getRevocationList(
     @Query('issuerId') issuerId : string,
     @Query('page') page: string,
