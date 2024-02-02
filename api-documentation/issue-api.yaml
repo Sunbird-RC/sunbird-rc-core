@@ -197,7 +197,13 @@ paths:
               schema:
                 type: array
                 items:
-                 type: object        
+                 type: object     
+        404:
+          description: Not Found
+          content: {}
+        500:
+          description: Error
+          content: {}
 components:
   schemas:
     revokedResponse:
