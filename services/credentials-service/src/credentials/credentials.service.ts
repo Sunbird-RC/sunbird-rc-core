@@ -21,6 +21,8 @@ import { JwtCredentialSubject } from 'src/app.interface';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
+import { RevocationListDTO } from './dto/revocaiton-list.dto';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 import { verify } from '@decentralized-identity/ion-tools';
 
 @Injectable()
@@ -311,5 +313,41 @@ export class CredentialsService {
       delete signed['options'];
       return { id: cred.id, ...signed };
     });
+  }
+
+  async getRevocationList(
+    issuerId: string,
+    page = 1,
+    limit= 1000,
+  ){
+    let revocationList: RevocationListDTO[]
+
+    if (issuerId === "") {
+      throw new InternalServerErrorException('Please provide a valid issuer ID');
+    }
+    
+    try {
+      revocationList = await this.prisma.verifiableCredentials.findMany({
+        where: {
+          issuer: issuerId,
+          status: VCStatus.REVOKED,
+        },
+        select: {
+          id: true,
+          tags : true,
+          issuer : true,
+          issuanceDate: true
+        },
+        skip: (page -1) * limit,
+        take: limit,
+        orderBy: {
+          issuanceDate: 'desc',
+        },
+      }); 
+    } catch (error) {
+      this.logger.error('Error fetching RevocationList');
+      throw new InternalServerErrorException('Error fetching revocationList');
+    }
+    return revocationList 
   }
 }
