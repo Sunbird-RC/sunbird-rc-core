@@ -57,6 +57,7 @@ services:
       SIGNING_ALGORITHM: "Ed25519"
       JWKS_URI: ""
       ENABLE_AUTH: "false"
+      WEB_DID_BASE_URL: "https://example.com/identity"
     networks:
       test:
     healthcheck:

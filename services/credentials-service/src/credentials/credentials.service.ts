@@ -137,7 +137,7 @@ export class CredentialsService {
     }
     try {
       // calling identity service to verify the issuer DID
-      const verificationMethod = credToVerify.issuer;
+      const verificationMethod = (credToVerify.issuer?.id || credToVerify.issuer) as string;
       const did: DIDDocument = await this.identityUtilsService.resolveDID(
         verificationMethod
       );

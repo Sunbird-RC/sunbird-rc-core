@@ -169,7 +169,7 @@ export class SchemaService {
       };
 
       // sign the credential schema (only the schema part of the credSchema object above since it is the actual schema)
-      const proof = await this.utilService.sign(
+      const { publicKey, ...proof} = await this.utilService.sign(
         credSchema.schema.author,
         JSON.stringify(credSchema.schema),
       );

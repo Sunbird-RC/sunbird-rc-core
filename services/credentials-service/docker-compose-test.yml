@@ -25,6 +25,7 @@ services:
       ENABLE_AUTH: "false"
       JWKS_URI: ""
       SIGNING_ALGORITHM: "RS256"
+      WEB_DID_BASE_URL: "https://example.com/identity"
     networks:
       rcw-test:
       default:

@@ -36,7 +36,9 @@ export class DidService {
   constructor(private prisma: PrismaService, private vault: VaultService) {
     let baseUrl: string = process.env.WEB_DID_BASE_URL;
     if(baseUrl && typeof baseUrl === "string") {
-      baseUrl = baseUrl.replace(/:/g, "%3A").replace(/\//g, ":");
+      baseUrl = baseUrl.replace("https://", "")
+      .replace(/:/g, "%3A")
+      .replace(/\//g, ":");
       this.webDidBaseUrl = `did:web:${baseUrl}:`;
     }
     this.signingAlgorithm = process.env.SIGNING_ALGORITHM;

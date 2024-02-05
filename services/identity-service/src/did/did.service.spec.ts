@@ -107,6 +107,7 @@ describe('DidService', () => {
   });
 
   it("throw exception when web did base url is not set", () => {
+    service.webDidBaseUrl = undefined;
     expect(() => service.getWebDidIdForId("abc"))
     .toThrow("Web did base url not found");
   });
