@@ -21,6 +21,7 @@ import { JwtCredentialSubject } from 'src/app.interface';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
+import { RevocationListDTO } from './dto/revocaiton-list.dto';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ION = require('@decentralized-identity/ion-tools');
 
@@ -325,7 +326,7 @@ export class CredentialsService {
     page = 1,
     limit= 1000,
   ){
-    let revocationList: Array<Object>;
+    let revocationList: RevocationListDTO[]
 
     if (issuerId === "") {
       throw new InternalServerErrorException('Please provide a valid issuer ID');
@@ -339,7 +340,6 @@ export class CredentialsService {
         },
         select: {
           id: true,
-          status: true,
           tags : true,
           issuer : true,
           issuanceDate: true
@@ -354,7 +354,6 @@ export class CredentialsService {
       this.logger.error('Error fetching RevocationList');
       throw new InternalServerErrorException('Error fetching revocationList');
     }
-
     return revocationList 
   }
 }

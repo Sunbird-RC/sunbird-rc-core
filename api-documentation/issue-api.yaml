@@ -189,6 +189,25 @@ paths:
       tags: 
         - Revocation
       summary: Complete list of revoked credentials (Need to be discussed)
+      parameters:
+        - name: issuerId
+          in: query
+          description: The ID of the issuer
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: The page number
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The limit of items per page
+          required: true
+          schema:
+            type: string
       responses:
         200:
           description: OK

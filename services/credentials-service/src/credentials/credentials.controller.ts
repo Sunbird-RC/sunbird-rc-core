@@ -21,6 +21,7 @@ import { string } from 'zod';
 import { Credential } from 'src/app.interface';
 import { GetCredentialsByTagsResponseDTO } from './dto/getCredentialsByTags.dto';
 import { GetCredentialByIdResponseDTO } from './dto/getCredentialById.dto';
+import { RevocationListDTO } from './dto/revocaiton-list.dto';
 
 @Controller('credentials')
 export class CredentialsController {
@@ -118,7 +119,7 @@ export class CredentialsController {
 
   @Get('revocation-list')
   @ApiResponse({
-    type: Array<Object>,
+    type: Array<RevocationListDTO>,
     description: 'Returns a list of revocked credentials',
   })
   getRevocationList(
