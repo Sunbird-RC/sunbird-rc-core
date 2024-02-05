@@ -70,4 +70,44 @@ describe('DidService', () => {
     expect(resolvedDid.id).toEqual(didToResolve);
     expect(resolvedDid).toEqual(result);
   });
+
+  it("key generation failure test", async () => {
+    let prevSA = service.signingAlgorithm;
+    service.signingAlgorithm = 'abc';
+    await expect(service.generateKeyPairs(1))
+    .rejects.toThrow("Error generating key pair");
+    service.signingAlgorithm = prevSA;
+  });
+
+  it("generate web did id test", () => {
+    service.webDidBaseUrl = "did:web:example.com:identity:";
+    const didId = service.generateDidUri("web");
+    expect(didId).toBeDefined();
+    expect(didId).toContain("did:web:example.com:identity");
+  });
+  it("get web did id for id test", () => {
+    service.webDidBaseUrl = "did:web:example.com:identity:";
+    const didId = service.getWebDidIdForId("abc");
+    expect(didId).toBeDefined();
+    expect(didId).toEqual("did:web:example.com:identity:abc");
+  });
+
+  it('should generate a DID with a web method', async () => {
+    service.webDidBaseUrl = "did:web:example.com:identity:";
+    const result = await service.generateDID({
+      alsoKnownAs: [],
+      services: [],
+      method: "web"
+    });
+    expect(result).toBeDefined();
+    expect(result.verificationMethod).toBeDefined();
+    expect(result.verificationMethod[0].publicKeyJwk).toBeDefined();
+    expect(result.id.split(':')[1]).toEqual('web');
+    expect(result.id).toContain("did:web:example.com:identity");
+  });
+
+  it("throw exception when web did base url is not set", () => {
+    expect(() => service.getWebDidIdForId("abc"))
+    .toThrow("Web did base url not found");
+  });
 });

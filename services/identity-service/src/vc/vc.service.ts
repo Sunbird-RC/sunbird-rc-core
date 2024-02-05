@@ -27,16 +27,17 @@ export default class VcService {
     if (!did) throw new NotFoundException('Signer DID not found!');
 
     try {
+      const didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
+      const verificationMethod = didDoc.verificationMethod[0];
       const signedJWS = await sign({
         payload: toSign,
-        privateJwk: await this.vault.readPvtKey(signerDID),
+        privateJwk: await this.vault.readPvtKey(verificationMethod?.id),
       });
-      const didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
       return {
-        publicKey: didDoc.verificationMethod[0].publicKeyJwk,
-        type: DidService.getKeySignType(didDoc.verificationMethod[0].publicKeyJwk?.crv).signType,
+        publicKey: verificationMethod?.publicKeyJwk,
+        type: DidService.getKeySignType(verificationMethod?.publicKeyJwk?.crv).signType,
         created: new Date().toISOString(),
-        verificationMethod: didDoc?.verificationMethod[0]?.id,
+        verificationMethod: verificationMethod?.id,
         proofPurpose: 'assertionMethod',
         jws: signedJWS,
       };
@@ -56,12 +57,9 @@ export default class VcService {
     }
 
     try {
-      const verified = await verify({
-        jws: signedDoc,
-        publicJwk: didDocument.verificationMethod[0].publicKeyJwk,
-      });
-      if (verified) return true;
-      return false;
+      const publicJwk = didDocument?.verificationMethod[0]?.publicKeyJwk;
+      const verified = await verify({ jws: signedDoc, publicJwk });
+      return verified;
     } catch (e) {
       Logger.error(e);
       return false;

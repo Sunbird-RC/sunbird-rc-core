@@ -23,7 +23,7 @@ describe('DidService', () => {
     service = module.get<VcService>(VcService);
     didService = module.get<DidService>(DidService);
     const testDidDoc = await didService.generateDID({
-      alsoKnownAs: ['Test DID'],
+      alsoKnownAs: [],
       services: [],
       method: 'test'
     });

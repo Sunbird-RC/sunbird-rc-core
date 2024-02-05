@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 const Vault = require("hashi-vault-js");
 
 @Injectable()
@@ -31,12 +31,17 @@ export class VaultService {
     return { status, vault_config };
   }
   async writePvtKey(secret: string, name: string, path?: string) {
-    const createSecret = await this.vault.createKVSecret(
-      this.token,
-      path ? path + `/${name}` : `rcw/identity/private_keys/${name}`,
-      secret
-    );
-    return createSecret;
+    try {
+      const createSecret = await this.vault.createKVSecret(
+        this.token,
+        path ? path + `/${name}` : `rcw/identity/private_keys/${name}`,
+        secret
+      );
+      return createSecret;
+    } catch (err) {
+      Logger.error(err);
+      throw new InternalServerErrorException('Error writing private key to vault');
+    }
   }
 
   async readPvtKey(name: string, path?: string) {

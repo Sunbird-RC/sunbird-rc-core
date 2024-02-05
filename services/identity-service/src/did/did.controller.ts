@@ -25,7 +25,7 @@ const pLimit = require('p-limit');
 const limit = pLimit(100);
 
 @ApiTags('DID')
-@Controller('did')
+@Controller()
 export class DidController {
   constructor(private readonly didService: DidService) {}
 
@@ -33,7 +33,7 @@ export class DidController {
   @ApiOkResponse({ description: 'DID Generated', isArray: true })
   @ApiBadRequestResponse({ description: 'Bad request' })
   @ApiBody({ type: GenerateDidDTO, isArray: true })
-  @Post('/generate')
+  @Post('/did/generate')
   async generateDID(
     @Body() generateRequest: { content: GenerateDidDTO[] },
   ): Promise<DIDDocument[]> {
@@ -53,8 +53,18 @@ export class DidController {
   @ApiBadRequestResponse({ description: 'Bad Request' })
   @ApiNotFoundResponse({ description: 'DID not found' })
   @ApiParam({ name: 'id', description: 'The DID ID to resolve' })
-  @Get('/resolve/:id')
+  @Get('/did/resolve/:id')
   async resolveDID(@Param('id') id: string): Promise<DIDDocument> {
     return await this.didService.resolveDID(id);
+  }
+
+  @ApiOperation({ summary: 'Resolve a Web DID ID' })
+  @ApiOkResponse({ description: 'DID resolved' })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiNotFoundResponse({ description: 'DID not found' })
+  @ApiParam({ name: 'id', description: 'The DID ID to resolve' })
+  @Get('/:id/did.json')
+  async resolveWebDID(@Param('id') id: string): Promise<DIDDocument> {
+    return await this.didService.resolveWebDID(id);
   }
 }
