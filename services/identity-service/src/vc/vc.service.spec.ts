@@ -38,19 +38,19 @@ describe('DidService', () => {
     const signedPayload = await service.sign(signingDID, 'Hello!');
     expect(signedPayload).toBeDefined();
     expect(signedPayload.publicKey).toBeDefined();
-    expect(signedPayload.signed).toBeDefined();
+    expect(signedPayload.jws).toBeDefined();
   });
 
   it('should verify a signed payload successfully', async () => {
     const signedPayload = await service.sign(signingDID, 'Hello!');
-    const verified = await service.verify(signingDID, signedPayload.signed);
+    const verified = await service.verify(signingDID, signedPayload.jws);
     expect(verified).toBeDefined();
     expect(verified).toBeTruthy();
     expect(verified).toEqual(true);
   });
   it('should fail to verify a signed payload', async () => {
     const signedPayload = await service.sign(signingDID, 'Hello!');
-    const verified = await service.verify(signingDID, (signedPayload.signed as string).slice(1));
+    const verified = await service.verify(signingDID, (signedPayload.jws as string).slice(1));
     expect(verified).toBeDefined();
     expect(verified).toBeFalsy();
     expect(verified).toEqual(false);

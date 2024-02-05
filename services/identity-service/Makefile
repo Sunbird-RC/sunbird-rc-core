@@ -1,4 +1,4 @@
-IMAGE:=dockerhub/sunbird-rc-identity-service
+IMAGE:=ghcr.io/sunbird-rc/sunbird-rc-identity-service
 
 .PHONY: docker publish test run unseal
 

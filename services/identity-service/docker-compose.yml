@@ -18,6 +18,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    ports:
+      - '8200:8200'
   db:
     image: postgres:latest
     restart: always
@@ -48,12 +50,12 @@ services:
       VAULT_ADDR: "http://vault:8200"
       # This will be replaced automatically on initialisation 
       # make compose-init will call setup_vault.sh
-      VAULT_TOKEN: 
+      VAULT_TOKEN:
       VAULT_BASE_URL: "http://vault:8200/v1"
       VAULT_ROOT_PATH: "http://vault:8200/v1/kv"
       VAULT_TIMEOUT: 5000
       VAULT_PROXY: 'false'
-      SIGNING_ALGORITHM: "RS256"
+      SIGNING_ALGORITHM: "Ed25519"
       JWKS_URI: 
       ENABLE_AUTH: "false"
     healthcheck:

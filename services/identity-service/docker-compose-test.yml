@@ -54,7 +54,7 @@ services:
       VAULT_ROOT_PATH: "http://vault-test:8200/v1/kv"
       VAULT_TIMEOUT: 5000
       VAULT_PROXY: 'false'
-      SIGNING_ALGORITHM: "RS256"
+      SIGNING_ALGORITHM: "Ed25519"
       JWKS_URI: ""
       ENABLE_AUTH: "false"
     networks:

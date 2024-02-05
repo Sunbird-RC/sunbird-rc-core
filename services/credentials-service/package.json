@@ -23,7 +23,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@decentralized-identity/ion-tools": "^0.1.1",
+    "@decentralized-identity/ion-tools": "1.0.7",
     "@fastify/static": "^6.6.0",
     "@fastify/view": "^7.4.1",
     "@nestjs/axios": "^0.1.2",
