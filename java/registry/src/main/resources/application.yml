@@ -79,7 +79,8 @@ registry:
   redis:
     host: ${redis_host:localhost}
     port: ${redis_port:6379}
-
+  hard_delete_enabled: ${hard_delete_enabled:false}
+  expandReference: ${expand_reference:false}
 workflow:
   enabled: ${workflow.enable:true}
 
@@ -94,7 +95,7 @@ event:
   providerName: ${event_providerName:dev.sunbirdrc.registry.service.impl.KafkaEventService}
 
 kafka:
-  bootstrapAddress: ${kafka_bootstrap_address:localhost:9092}
+  bootstrapAddress: ${kafka_bootstrap_address:localhost:9094}
   createEntityTopic: ${kafka_create_entity_topic:create_entity}
   postCreateEntityTopic: ${kafka_post_create_entity_topic:post_create_entity}
 
@@ -203,15 +204,18 @@ frame:
 
 encryption:
   enabled: ${encryption_enabled:false}
-  base: ${encryption_base:http://localhost:8013}
-  uri: ${encryption_uri:http://localhost:8013/encrypt}
+  healthCheckURL: ${encryption_health_check_url:http://localhost:8013/health}
+  uri: ${encryption_uri:http://localhost:8013/crypto/v1/_encrypt}
   batch:
-    uri: ${encryption_batch_uri:http://localhost:8013/encrypt/obj}
+    uri: ${encryption_batch_uri:http://localhost:8013/crypto/v1/_encrypt}
+  method: ${encryption_method:Normal}
+  tenant:
+    id: ${encryption_tenant_id:default}
 
 decryption:
-  uri: ${decryption_uri:http://localhost:8013/decrypt}
+  uri: ${decryption_uri:http://localhost:8013/crypto/v1/_decrypt}
   batch:
-    uri: ${decryption_batch_uri:http://localhost:8013/decrypt/obj}
+    uri: ${decryption_batch_uri:http://localhost:8013/crypto/v1/_decrypt}
 
 signature:
   enabled: ${signature_enabled:true}
@@ -225,6 +229,7 @@ signature:
       name: SignatureShape
 
 certificate:
+  enabled: ${certificate_enabled:true}
   templateBaseUrl: ${template_base_url:http://localhost:8081/api/v1/templates/}
   healthCheckURL: ${certificate_health_check_url:http://localhost:8078/health}
   apiUrl: ${pdf_url:http://localhost:8078/api/v1/certificate}
@@ -270,6 +275,7 @@ keycloak-user:
   # email details should be configured in keycloak realm settings
   email-actions: ${keycloack_user_email_actions:}
 claims:
+  enabled: ${claims_enabled:true}
   url: ${claims_url:http://localhost:8082}
 authentication:
   enabled: ${authentication_enabled:true}
@@ -339,12 +345,24 @@ elastic:
     elastic_password: ${elastic_search_password:elastic}
     scheme: ${elastic_search_scheme:http}
 filestorage:
+  enabled: ${filestorage_enabled:false}
   url: ${filestorage_connection_url:http://localhost:9000}
   accesskey: ${filestorage_access_key:XXXXX}
   secretkey: ${filestorage_secret_key:XXXXX}
   bucketname: ${filestorage_bucket_key:dummy}
 
+api-swagger:
+  enabled: ${swagger_enabled:true}
+  title: ${swagger_title:Sunbird Registry and Credential}
+  description: ${swagger_description:Sunbird registry and credential api (SunbirdRC)}
+  version: ${swagger_version:1.0.0}
 
+idgen:
+  enabled: ${idgen_enabled:false}
+  tenantId: ${idgen_tenant_id:default}
+  healthCheckURL: ${idgen_health_check_url:http://localhost:8088/egov-idgen/health}
+  generateURL: ${idgen_generate_url:http://localhost:8088/egov-idgen/id/_generate}
+  idFormatURL: ${idgen_id_format_url:http://localhost:8088/egov-idgen/id/_format/add}
 
 ---
 ##################################################################
@@ -375,7 +393,7 @@ registry:
     base: http://example.com/voc/teacher/1.0.0/
   system:
     base: http://example.com/voc/opensaber/
-
+  expandReference: ${expand_reference:false}
 # This property is to be used for read request
 read:
   # The read mechanism to use, values could be either NativeReadService or ElasticReadService

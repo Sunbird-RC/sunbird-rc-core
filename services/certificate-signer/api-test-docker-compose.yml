@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   certificate-signer:
-    image: docker.io/dockerhub/sunbird-rc-certificate-signer
+    image: ghcr.io/sunbird-rc/sunbird-rc-certificate-signer
     environment:
       - CONFIG_BASE_PATH=/etc/signer
     ports:
@@ -14,7 +14,7 @@ services:
     volumes:
       - ./tests/config:/etc/signer
   test-runner:
-    image: dockerhub/python-papermill
+    image: ghcr.io/sunbird-rc/python-papermill
     command:
       - "/usr/local/bin/papermill"
       - "--log-output"

@@ -3,6 +3,7 @@ package dev.sunbirdrc.registry.service;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.slf4j.Logger;
@@ -74,6 +75,8 @@ public class NativeSearchService implements ISearchService {
 
 	@Value("${search.expandInternal}")
 	private boolean expandInternal;
+	@Value("${registry.expandReference}")
+	private boolean expandReferenceObj;
 
 	@Value("${search.removeNonPublicFieldsForNativeSearch:true}")
 	private boolean removeNonPublicFieldsForNativeSearch;
@@ -108,7 +111,7 @@ public class NativeSearchService implements ISearchService {
 				List<Object> transaction = new LinkedList<>();
 
 				Shard shard = shardManager.activateShard(dbConnection.getShardId());
-				IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName);
+				IRegistryDao registryDao = new RegistryDaoImpl(shard.getDatabaseProvider(), definitionsManager, uuidPropertyName, expandReferenceObj);
 				SearchDaoImpl searchDao = new SearchDaoImpl(registryDao);
 				try (OSGraph osGraph = shard.getDatabaseProvider().getOSGraph()) {
 					Graph graph = osGraph.getGraphStore();
@@ -125,7 +128,7 @@ public class NativeSearchService implements ISearchService {
 						}
 					}
 				} catch (Exception e) {
-					logger.error("search operation failed: {}", e);
+					logger.error("search operation failed: {}", ExceptionUtils.getStackTrace(e));
 				} finally {
 					continueSearch = !isSpecificSearch;
 				}
@@ -136,7 +139,7 @@ public class NativeSearchService implements ISearchService {
 									.setTransactionId(transaction),
 							shard, searchQuery.getEntityTypes(), inputQueryNode);
 				} catch (Exception e) {
-					logger.error("Exception while auditing " + e);
+					logger.error("Exception while auditing: {}", ExceptionUtils.getStackTrace(e));
 				}
 
 		 	}

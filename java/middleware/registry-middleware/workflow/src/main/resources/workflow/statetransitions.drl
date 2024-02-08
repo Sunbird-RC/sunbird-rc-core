@@ -39,7 +39,7 @@ end
 
 rule "Create entity owner for newly added owner fields"
     when
-        stateDefinition:StateContext(isOwnershipProperty() && isOwnerNewlyAdded() && isLoginEnabled());
+        stateDefinition:StateContext(isAuthenticationEnabled() && isOwnershipProperty() && isOwnerNewlyAdded() && isLoginEnabled());
     then
         CreateUserRequest createUserRequest = new CreateUserRequest(stateDefinition.getEntityName(),
         stateDefinition.getUpdated().get("userId").textValue(), stateDefinition.getUpdated().get("email").textValue(),
@@ -50,7 +50,7 @@ end
 
 rule "Revert if any modification to ownership details"
     when
-        stateDefinition:StateContext(isOwnershipProperty() && !isOwnerNewlyAdded() && isOwnershipDetailsUpdated());
+        stateDefinition:StateContext(isAuthenticationEnabled() && isOwnershipProperty() && !isOwnerNewlyAdded() && isOwnershipDetailsUpdated());
     then
         ruleEngineService.revertOwnershipDetails(stateDefinition);
 end

@@ -67,6 +67,8 @@ public class RegistryServiceImplTest {
 	@Value("${registry.schema.url}")
 	private String schemaUrl;
 	private String validationType = "json";
+	@Value("${registry.expandReference}")
+	private boolean expandReferenceObj;
 
 	public Constants.SchemaType getValidationType() throws IllegalArgumentException {
 		String validationMechanism = validationType.toUpperCase();
@@ -332,7 +334,7 @@ public class RegistryServiceImplTest {
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		String instituteOsid = addInstituteToGraph();
 		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, true );
 		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
 		ObjectNode affiliationNode = (ObjectNode) instituteNode.get("Institute").get("affiliation").get(0);
 		ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
@@ -363,7 +365,7 @@ public class RegistryServiceImplTest {
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		String instituteOsid = addInstituteToGraph();
 		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, true);
 		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
 		((ObjectNode)instituteNode.get("Institute")).set("instituteName", JsonNodeFactory.instance.textNode("Holy Cross"));
 		when(shard.getShardLabel()).thenReturn("");
@@ -454,7 +456,7 @@ public class RegistryServiceImplTest {
 	public void shouldTestVertexWriter() throws Exception {
 		String v1 = addStudentToGraph();
 		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, expandReferenceObj);
 		JsonNode student = vertexReader.read("Student", v1);
 		assertNotNull(student);
 	}

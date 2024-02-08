@@ -8,6 +8,7 @@ import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.registry.util.ReadConfigurator;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import java.util.List;
 
 public class RegistryDaoImpl implements IRegistryDao {
     public String uuidPropertyName;
+    private final boolean expandReferenceObj;
     private IDefinitionsManager definitionsManager;
     private DatabaseProvider databaseProvider;
     private List<String> privatePropertyList;
@@ -33,10 +35,11 @@ public class RegistryDaoImpl implements IRegistryDao {
         this.privatePropertyList = privatePropertyList;
     }
 
-    public RegistryDaoImpl(DatabaseProvider dbProvider, IDefinitionsManager defnManager, String uuidPropName) {
+    public RegistryDaoImpl(DatabaseProvider dbProvider, IDefinitionsManager defnManager, String uuidPropName, boolean expandReferenceObj) {
         databaseProvider = dbProvider;
         definitionsManager = defnManager;
         uuidPropertyName = uuidPropName;
+        this.expandReferenceObj = expandReferenceObj;
     }
 
     public DatabaseProvider getDatabaseProvider() {
@@ -64,7 +67,7 @@ public class RegistryDaoImpl implements IRegistryDao {
      */
     public JsonNode getEntity(Graph graph, String entityType, String uuid, ReadConfigurator readConfigurator) throws Exception {
 
-        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
+        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager, expandReferenceObj);
         JsonNode result = vr.read(entityType, uuid);
 
         return result;
@@ -73,7 +76,7 @@ public class RegistryDaoImpl implements IRegistryDao {
 
     public JsonNode getEntity(Graph graph, Vertex vertex, ReadConfigurator readConfigurator, boolean expandInternal) throws Exception {
 
-        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager);
+        VertexReader vr = new VertexReader(getDatabaseProvider(), graph, readConfigurator, uuidPropertyName, definitionsManager, expandReferenceObj);
         ObjectNode constructObject = vr.constructObject(vertex);
         if (expandInternal) {
             String entityType = (String) ValueType.getValue(constructObject.get(TypePropertyHelper.getTypeName()));
@@ -141,6 +144,17 @@ public class RegistryDaoImpl implements IRegistryDao {
             logger.debug("Vertex {} {} marked deleted", vertex.label(), databaseProvider.getId(vertex));
         } else {
             logger.error("Can't mark delete - Null vertex passed");
+        }
+    }
+    @Override
+    public void hardDeleteEntity(Vertex vertex) {
+        if (vertex != null) {
+            vertex.edges(Direction.OUT).forEachRemaining(d -> {
+                this.hardDeleteEntity(d.inVertex());
+            });
+            vertex.remove();
+        } else {
+            logger.error("Can't delete - Null vertex passed");
         }
     }
 }

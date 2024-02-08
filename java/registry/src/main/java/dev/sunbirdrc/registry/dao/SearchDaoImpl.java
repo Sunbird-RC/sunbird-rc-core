@@ -12,16 +12,21 @@ import dev.sunbirdrc.registry.util.ReadConfigurator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiPredicate;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.has;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.hasNot;
 
 public class SearchDaoImpl implements SearchDao {
+    private static final Logger logger = LoggerFactory.getLogger(SearchDaoImpl.class);
     private IRegistryDao registryDao;
 
     public SearchDaoImpl(IRegistryDao registryDaoImpl) {
@@ -95,22 +100,22 @@ public class SearchDaoImpl implements SearchDao {
                     break;
 
                 case contains:
-                    condition = (s1, s2) -> (s1.contains(s2));
+                    condition = String::contains;
                     resultGraphTraversal = resultGraphTraversal.has(property,
                             new P<String>(condition, genericValue.toString()));
                     break;
                 case startsWith:
-                    condition = (s1, s2) -> (s1.startsWith(s2));
+                    condition = String::startsWith;
                     resultGraphTraversal = resultGraphTraversal.has(property,
                             new P<String>(condition, genericValue.toString()));
                     break;
                 case endsWith:
-                    condition = (s1, s2) -> (s1.endsWith(s2));
+                    condition = String::endsWith;
                     resultGraphTraversal = resultGraphTraversal.has(property,
                             new P<String>(condition, genericValue.toString()));
                     break;
                 case notContains:
-                    condition = (s1, s2) -> (s1.contains(s2));
+                    condition = (s1, s2) -> (!s1.contains(s2));
                     resultGraphTraversal = resultGraphTraversal.has(property,
                             new P<String>(condition, genericValue.toString()));
                     break;
@@ -169,7 +174,7 @@ public class SearchDaoImpl implements SearchDao {
 					try {
 						answer = registryDao.getEntity(graph, v, configurator, expandInternal);
 					} catch (Exception e) {
-						e.printStackTrace();
+                        logger.error("Exception occurred while searching entity: {}", ExceptionUtils.getStackTrace(e));
 					}
 					result.add(answer);
 				}

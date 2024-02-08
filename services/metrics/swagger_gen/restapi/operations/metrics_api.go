@@ -20,6 +20,7 @@ import (
 	"github.com/go-openapi/swag"
 
 	"metrics/swagger_gen/restapi/operations/aggregates"
+	"metrics/swagger_gen/restapi/operations/health"
 	"metrics/swagger_gen/restapi/operations/metrics"
 )
 
@@ -45,6 +46,9 @@ func NewMetricsAPI(spec *loads.Document) *MetricsAPI {
 
 		JSONProducer: runtime.JSONProducer(),
 
+		HealthGetHealthHandler: health.GetHealthHandlerFunc(func(params health.GetHealthParams) middleware.Responder {
+			return middleware.NotImplemented("operation health.GetHealth has not yet been implemented")
+		}),
 		AggregatesGetV1AggregatesHandler: aggregates.GetV1AggregatesHandlerFunc(func(params aggregates.GetV1AggregatesParams) middleware.Responder {
 			return middleware.NotImplemented("operation aggregates.GetV1Aggregates has not yet been implemented")
 		}),
@@ -70,11 +74,9 @@ type MetricsAPI struct {
 	// BasicAuthenticator generates a runtime.Authenticator from the supplied basic auth function.
 	// It has a default implementation in the security package, however you can replace it for your particular usage.
 	BasicAuthenticator func(security.UserPassAuthentication) runtime.Authenticator
-
 	// APIKeyAuthenticator generates a runtime.Authenticator from the supplied token auth function.
 	// It has a default implementation in the security package, however you can replace it for your particular usage.
 	APIKeyAuthenticator func(string, string, security.TokenAuthentication) runtime.Authenticator
-
 	// BearerAuthenticator generates a runtime.Authenticator from the supplied bearer token auth function.
 	// It has a default implementation in the security package, however you can replace it for your particular usage.
 	BearerAuthenticator func(string, security.ScopedTokenAuthentication) runtime.Authenticator
@@ -87,11 +89,12 @@ type MetricsAPI struct {
 	//   - application/json
 	JSONProducer runtime.Producer
 
+	// HealthGetHealthHandler sets the operation handler for the get health operation
+	HealthGetHealthHandler health.GetHealthHandler
 	// AggregatesGetV1AggregatesHandler sets the operation handler for the get v1 aggregates operation
 	AggregatesGetV1AggregatesHandler aggregates.GetV1AggregatesHandler
 	// MetricsGetV1MetricsHandler sets the operation handler for the get v1 metrics operation
 	MetricsGetV1MetricsHandler metrics.GetV1MetricsHandler
-
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
 	ServeError func(http.ResponseWriter, *http.Request, error)
@@ -168,6 +171,9 @@ func (o *MetricsAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
+	if o.HealthGetHealthHandler == nil {
+		unregistered = append(unregistered, "health.GetHealthHandler")
+	}
 	if o.AggregatesGetV1AggregatesHandler == nil {
 		unregistered = append(unregistered, "aggregates.GetV1AggregatesHandler")
 	}
@@ -262,6 +268,10 @@ func (o *MetricsAPI) initHandlerCache() {
 		o.handlers = make(map[string]map[string]http.Handler)
 	}
 
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/health"] = health.NewGetHealth(o.context, o.HealthGetHealthHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

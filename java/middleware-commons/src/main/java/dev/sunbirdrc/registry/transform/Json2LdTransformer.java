@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.middleware.util.Constants.JsonldConstants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,9 +47,9 @@ public class Json2LdTransformer implements ITransformer<Object> {
 			// Insert context to the result
 			resultNode.setAll(contextNode);
 			return new Data<>(resultNode);
-		} catch (Exception ex) {
-			logger.error("Error trnsx : " + ex.getMessage(), ex);
-			throw new TransformationException(ex.getMessage(), ex, ErrorCode.JSON_TO_JSONLD_TRANFORMATION_ERROR);
+		} catch (Exception e) {
+			logger.error("Error trnsx : {}", ExceptionUtils.getStackTrace(e));
+			throw new TransformationException(e.getMessage(), e, ErrorCode.JSON_TO_JSONLD_TRANFORMATION_ERROR);
 		}
 	}
 
