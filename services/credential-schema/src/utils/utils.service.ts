@@ -19,15 +19,7 @@ export class UtilsService {
           payload: body,
         },
       );
-
-      const proof = {
-        proofValue: signedVCResponse.data.signed as string,
-        proofPurpose: 'assertionMethod',
-        created: new Date().toISOString(),
-        type: 'Ed25519Signature2020',
-        verificationMethod: did,
-      };
-      return proof;
+      return signedVCResponse.data;
     } catch (err) {
       this.logger.error(err, err.response?.data);
       throw new HttpException("Couldn't sign the schema", 500);

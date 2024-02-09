@@ -15,6 +15,11 @@ export default class VcService {
     Ed25519VerificationKey2020: null,
     Ed25519Signature2020: null
   };
+  signTypeForKey = {
+    Ed25519VerificationKey2020: "Ed25519Signature2020",
+    JsonWebKey2020: "Ed25519Signature2020",
+    Ed25519VerificationKey2018: "Ed25519Signature2020"
+  }
   documents: object
   constructor(
     private readonly primsa: PrismaService,
@@ -47,7 +52,7 @@ export default class VcService {
     try {
       const didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
       const verificationMethod = didDoc.verificationMethod[0];
-      const suite = await this.getSuite(verificationMethod, true);
+      const suite = await this.getSuite(verificationMethod, this.signTypeForKey[verificationMethod?.type], true);
       const signedVC = await jsigs.sign(toSign, {
           purpose: new AssertionProofPurpose(),
           suite: suite,
@@ -56,12 +61,13 @@ export default class VcService {
         });
       return signedVC;
     } catch (err) {
+      console.log(JSON.stringify(err, null, 2));
       Logger.error('Error signign the document:', err);
       throw new InternalServerErrorException(`Error signign the document`);
     }
   }
 
-  async verify(signerDID: string, signedDoc: string): Promise<boolean> {
+  async verify(signerDID: string, signedDoc: any): Promise<boolean> {
     let didDocument: DIDDocument;
     try {
       didDocument = await this.didService.resolveDID(signerDID);
@@ -72,7 +78,7 @@ export default class VcService {
 
     try {
       const verificationMethod = didDocument.verificationMethod[0];
-      const suite = await this.getSuite(verificationMethod);
+      const suite = await this.getSuite(verificationMethod, signedDoc?.proof?.type);
       const results = await jsigs.verify(signedDoc, {
         purpose: new AssertionProofPurpose(),
         suite: [suite],
@@ -85,8 +91,12 @@ export default class VcService {
     }
   }
 
-  async getSuite(verificationMethod, withPrivateKey = false) {
-    if(verificationMethod.type !== "JsonWebKey2020") {
+  async getSuite(verificationMethod, signatureType: string, withPrivateKey = false) {
+    if(signatureType !== "Ed25519Signature2020") {
+      throw new NotFoundException("Suite for signature type not found");
+    }
+    const supportedMethods = ["Ed25519VerificationKey2020", "JsonWebKey2020", "Ed25519VerificationKey2018"];
+    if(!supportedMethods.includes(verificationMethod?.type)) {
       throw new NotFoundException("Suite for verification type not found");
     }
     const keyPair = await this.map.Ed25519VerificationKey2020.from(verificationMethod);

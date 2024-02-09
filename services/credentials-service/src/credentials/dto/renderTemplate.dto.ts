@@ -1,5 +1,5 @@
 import { RENDER_OUTPUT } from '../enums/renderOutput.enum';
-import { W3CCredential } from 'did-jwt-vc';
+import { W3CCredential } from 'vc.types';
 
 export class RenderTemplateDTO {
   credential?: W3CCredential; // VC JSON

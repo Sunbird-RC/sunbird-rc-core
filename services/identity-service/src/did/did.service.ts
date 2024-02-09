@@ -53,12 +53,15 @@ export class DidService {
     try {
       if(signingAlgorithm === "Ed25519Signature2020") {
         const keyPair = await this.keys[signingAlgorithm].generate({
-          id: didUri,
+          id: `${didUri}#key-0`,
           controller: didUri
         });
-        authnKeys = await keyPair.toJsonWebKey2020();
+        let {privateKeyMultibase, ...rest } = keyPair.export({
+          publicKey: true, privateKey: true, includeContext: false
+        });
+        authnKeys = rest;
         privateKeys = {
-          [authnKeys.id]: keyPair.privateKeyMultibase
+          [authnKeys.id]: privateKeyMultibase
         };
       } else {
         throw new NotFoundException("Signature type not found");

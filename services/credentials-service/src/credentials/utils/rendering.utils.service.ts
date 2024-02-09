@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { W3CCredential } from 'did-jwt-vc';
+import { W3CCredential } from 'vc.types';
 import { JwtCredentialSubject } from 'src/app.interface';
 import * as wkhtmltopdf from 'wkhtmltopdf';
 import { compile } from 'handlebars';

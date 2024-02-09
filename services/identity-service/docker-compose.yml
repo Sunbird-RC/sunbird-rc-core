@@ -55,7 +55,7 @@ services:
       VAULT_ROOT_PATH: "http://vault:8200/v1/kv"
       VAULT_TIMEOUT: 5000
       VAULT_PROXY: 'false'
-      SIGNING_ALGORITHM: "Ed25519"
+      SIGNING_ALGORITHM: "Ed25519Signature2020"
       JWKS_URI: 
       ENABLE_AUTH: "false"
     healthcheck:

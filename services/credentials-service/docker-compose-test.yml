@@ -24,7 +24,7 @@ services:
       SCHEMA_BASE_URL: "http://credential-schema:3333"
       ENABLE_AUTH: "false"
       JWKS_URI: ""
-      SIGNING_ALGORITHM: "RS256"
+      SIGNING_ALGORITHM: "Ed25519Signature2020"
     networks:
       rcw-test:
       default:
