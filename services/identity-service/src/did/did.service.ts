@@ -49,7 +49,6 @@ export class DidService {
     let authnKeys;
     let privateKeys: object;
     let signingAlgorithm: string = process.env.SIGNING_ALGORITHM;
-    const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
     try {
       if(signingAlgorithm === "Ed25519Signature2020") {
         const keyPair = await this.keys[signingAlgorithm].generate({
