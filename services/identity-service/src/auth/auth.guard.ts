@@ -2,7 +2,7 @@ import { Logger, CanActivate, Injectable, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import * as jwt from 'jsonwebtoken';
-import * as jwksClient from 'jwks-rsa';
+import jwksClient from 'jwks-rsa';
 
 @Injectable()
 export class AuthGuard implements CanActivate {

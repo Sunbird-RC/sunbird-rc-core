@@ -1,13 +1,14 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { generateKeyPair } from '@decentralized-identity/ion-tools';
 import { PrismaService } from '../utils/prisma.service';
-import { DIDDocument } from 'did-resolver';
+const { DIDDocument } = require('did-resolver');
+type DIDDocument = typeof DIDDocument;
 import { uuid } from 'uuidv4';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
 import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
 @Injectable()
 export class DidService {
+  keys = {}
   static getKeySignType = (algo: string): any => {
     return {
       keyType: "JsonWebKey2020",
@@ -31,37 +32,55 @@ export class DidService {
     // }
   }
 
-  constructor(private prisma: PrismaService, private vault: VaultService) {}
+  constructor(private prisma: PrismaService, private vault: VaultService) {
+    this.init();
+  }
+
+  async init() {
+    const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
+    this.keys['Ed25519Signature2020'] = Ed25519VerificationKey2020;
+  }
 
   async generateDID(doc: GenerateDidDTO): Promise<DIDDocument> {
+    // Create a UUID for the DID using uuidv4
+    const didUri = `did:${(doc.method && doc.method.trim() !== '') ? doc.method.trim() : 'rcw'}:${uuid()}`;
+
     // Create private/public key pair
     let authnKeys;
+    let privateKeys: object;
     let signingAlgorithm: string = process.env.SIGNING_ALGORITHM;
+    const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
     try {
-      authnKeys = await generateKeyPair(signingAlgorithm);
+      if(signingAlgorithm === "Ed25519Signature2020") {
+        const keyPair = await this.keys[signingAlgorithm].generate({
+          id: didUri,
+          controller: didUri
+        });
+        authnKeys = await keyPair.toJsonWebKey2020();
+        privateKeys = {
+          [authnKeys.id]: keyPair.privateKeyMultibase
+        };
+      } else {
+        throw new NotFoundException("Signature type not found");
+      }
     } catch (err: any) {
       Logger.error(`Error generating key pair: ${err}`);
       throw new InternalServerErrorException('Error generating key pair');
     }
 
-    // Create a UUID for the DID using uuidv4
-    const didUri = `did:${(doc.method && doc.method.trim() !== '') ? doc.method.trim() : 'rcw'}:${uuid()}`;
-
-    const keyId = `${didUri}#key-0`;
+    const keyId = authnKeys?.id;
 
     // Create a DID Document
     const document: DIDDocument = {
-      '@context': 'https://w3id.org/did/v1',
+      '@context': [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/ed25519-2020/v1",
+      ],
       id: didUri,
       alsoKnownAs: doc.alsoKnownAs,
       service: doc.services,
       verificationMethod: [
-        {
-          id: keyId,
-          type: DidService.getKeySignType(signingAlgorithm)?.keyType,
-          publicKeyJwk: authnKeys.publicJwk,
-          controller: didUri,
-        },
+        authnKeys,
       ],
       authentication: [keyId],
       assertionMethod: [keyId]
@@ -80,7 +99,7 @@ export class DidService {
     }
 
     try {
-      await this.vault.writePvtKey(authnKeys.privateJwk, didUri);
+      await this.vault.writePvtKey(privateKeys, didUri);
     } catch (err) {
       Logger.error(err);
       throw new InternalServerErrorException('Error writing private key to vault');

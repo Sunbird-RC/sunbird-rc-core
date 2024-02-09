@@ -1,19 +1,37 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../utils/prisma.service';
 import { DidService } from '../did/did.service';
-import { DIDDocument } from 'did-resolver';
+const { DIDDocument } = require('did-resolver');
+type DIDDocument = typeof DIDDocument;
 import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
-import { sign, verify } from '@decentralized-identity/ion-tools';
+import * as jsigs from 'jsonld-signatures';
+import * as jsonld from 'jsonld';
+import { DOCUMENTS } from './documents';
+const AssertionProofPurpose = jsigs.purposes.AssertionProofPurpose;
 @Injectable()
 export default class VcService {
+  map = {
+    Ed25519VerificationKey2020: null,
+    Ed25519Signature2020: null
+  };
+  documents: object
   constructor(
     private readonly primsa: PrismaService,
     private readonly didService: DidService,
     private readonly vault: VaultService,
-  ) {}
+  ) {
+    this.init();
+  }
 
-  async sign(signerDID: string, toSign: string) {
+  async init() {
+    const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
+    const {Ed25519Signature2020} = await import('@digitalbazaar/ed25519-signature-2020');
+    this.map.Ed25519VerificationKey2020 = Ed25519VerificationKey2020;
+    this.map.Ed25519Signature2020 = Ed25519Signature2020;
+  }
+
+  async sign(signerDID: string, toSign: object) {
     let did: Identity;
     try {
       did = await this.primsa.identity.findUnique({
@@ -27,21 +45,18 @@ export default class VcService {
     if (!did) throw new NotFoundException('Signer DID not found!');
 
     try {
-      const signedJWS = await sign({
-        payload: toSign,
-        privateJwk: await this.vault.readPvtKey(signerDID),
-      });
       const didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
-      return {
-        publicKey: didDoc.verificationMethod[0].publicKeyJwk,
-        type: DidService.getKeySignType(didDoc.verificationMethod[0].publicKeyJwk?.crv).signType,
-        created: new Date().toISOString(),
-        verificationMethod: didDoc?.verificationMethod[0]?.id,
-        proofPurpose: 'assertionMethod',
-        jws: signedJWS,
-      };
+      const verificationMethod = didDoc.verificationMethod[0];
+      const suite = await this.getSuite(verificationMethod, true);
+      const signedVC = await jsigs.sign(toSign, {
+          purpose: new AssertionProofPurpose(),
+          suite: suite,
+          documentLoader: this.getDocumentLoader(didDoc),
+          addSuiteContext: true
+        });
+      return signedVC;
     } catch (err) {
-      Logger.error('Error signign the document:', JSON.stringify(err, null, 4));
+      Logger.error('Error signign the document:', err);
       throw new InternalServerErrorException(`Error signign the document`);
     }
   }
@@ -56,15 +71,49 @@ export default class VcService {
     }
 
     try {
-      const verified = await verify({
-        jws: signedDoc,
-        publicJwk: didDocument.verificationMethod[0].publicKeyJwk,
+      const verificationMethod = didDocument.verificationMethod[0];
+      const suite = await this.getSuite(verificationMethod);
+      const results = await jsigs.verify(signedDoc, {
+        purpose: new AssertionProofPurpose(),
+        suite: [suite],
+        documentLoader: this.getDocumentLoader(didDocument),
       });
-      if (verified) return true;
-      return false;
+      return !!results?.verified;
     } catch (e) {
       Logger.error(e);
       return false;
     }
+  }
+
+  async getSuite(verificationMethod, withPrivateKey = false) {
+    if(verificationMethod.type !== "JsonWebKey2020") {
+      throw new NotFoundException("Suite for verification type not found");
+    }
+    const keyPair = await this.map.Ed25519VerificationKey2020.from(verificationMethod);
+    if(withPrivateKey) {
+      const privateKeys = await this.vault.readPvtKey(verificationMethod.id.split("#")[0]) || {};
+      keyPair.privateKeyMultibase = privateKeys[verificationMethod.id];
+    }
+    return new this.map.Ed25519Signature2020({key: keyPair});
+  }
+
+  getDocumentLoader(didDoc: DIDDocument) {
+    return jsigs.extendContextLoader(async url => {
+      if(url === didDoc?.id) {
+        return {
+          contextUrl: null,
+          documentUrl: url,
+          document: didDoc
+        };
+      }
+      if(DOCUMENTS[url]) {
+        return {
+          contextUrl: null,
+          documentUrl: url,
+          document: DOCUMENTS[url]
+        }
+      }
+      return await jsonld.documentLoaders.node()(url);
+    })
   }
 }
