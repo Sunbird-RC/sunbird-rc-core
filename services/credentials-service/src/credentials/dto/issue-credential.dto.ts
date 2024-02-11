@@ -1,4 +1,4 @@
-import { W3CCredential } from 'did-jwt-vc';
+import { W3CCredential } from 'vc.types';
 
 export class IssueCredentialDTO {
   credential: W3CCredential;

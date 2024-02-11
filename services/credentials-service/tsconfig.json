@@ -1,6 +1,11 @@
 {
+  "include": [
+    "src/*",
+    "vc.types.ts"
+  ],
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
