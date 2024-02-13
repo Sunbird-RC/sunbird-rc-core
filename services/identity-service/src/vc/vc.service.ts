@@ -68,7 +68,8 @@ export default class VcService {
       const didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
       const verificationMethod = didDoc.verificationMethod[0];
       const suite = await this.getSuite(verificationMethod, this.signTypeForKey[verificationMethod?.type], true);
-      const signedVC = await jsigs.sign({...toSign}, {
+      const signatures = verificationMethod.type === "RsaVerificationKey2018" ? jsigs2: jsigs;
+      const signedVC = await signatures.sign({...toSign}, {
           purpose: new AssertionProofPurpose(),
           suite: suite,
           documentLoader: this.getDocumentLoader(didDoc),
