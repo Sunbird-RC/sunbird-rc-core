@@ -1,36 +1,15 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import * as ION from '@decentralized-identity/ion-tools';
 import { PrismaService } from '../utils/prisma.service';
-import { DIDDocument } from 'did-resolver';
-import { uuid } from 'uuidv4';
+const { DIDDocument } = require('did-resolver');
+type DIDDocument = typeof DIDDocument;
+import { v4 as uuid } from 'uuid';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
 import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
+import { RSAKeyPair } from "crypto-ld";
 @Injectable()
 export class DidService {
-  static getKeySignType = (algo?: string): any => {
-    return {
-      keyType: "JsonWebKey2020",
-      signType: "JsonWebSignature2020"
-    };
-    // switch (algo) {
-    //   case 'Ed25519':
-    //   case 'EdDSA':
-    //     return {
-    //       keyType: "JsonWebKey2020",
-    //       signType: "JsonWebSignature2020"
-    //     };
-    //   case 'secp256k1':
-    //   case 'ES256K':
-    //     return {
-    //       keyType: "EcdsaSecp256k1VerificationKey2019",
-    //       signType: "EcdsaSecp256k1Signature2019"
-    //     };
-    //   default:
-    //     return {};
-    // }
-  }
-
+  keys = {}
   webDidBaseUrl: string;
   signingAlgorithm: string;
   constructor(private prisma: PrismaService, private vault: VaultService) {
@@ -42,6 +21,15 @@ export class DidService {
       this.webDidBaseUrl = `did:web:${baseUrl}:`;
     }
     this.signingAlgorithm = process.env.SIGNING_ALGORITHM;
+    this.init();
+  }
+
+  async init() {
+    const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
+    const {Ed25519VerificationKey2018} = await import('@digitalbazaar/ed25519-verification-key-2018');
+    this.keys['Ed25519Signature2020'] = Ed25519VerificationKey2020;
+    this.keys['Ed25519Signature2018'] = Ed25519VerificationKey2018;
+    this.keys['RsaSignature2018'] = RSAKeyPair;
   }
 
   generateDidUri(method: string): string {
@@ -56,52 +44,67 @@ export class DidService {
     return `${this.webDidBaseUrl}${id}`;
   }
 
-  async generateKeyPairs(num: number = 1): Promise<[{ publicJwk: string, privateJwk: string }]> {
-    try {
-      return await Promise.all(
-        Array.from(Array(1)).map(() => ION.generateKeyPair(this.signingAlgorithm))
-      );
-    } catch (err: any) {
-      Logger.error(`Error generating key pair: ${err}`);
-      throw new InternalServerErrorException('Error generating key pair');
-    }
-  }
-
-  getKeyType = () => {
-    return DidService.getKeySignType(this.signingAlgorithm)?.keyType
-  }
-
   async generateDID(doc: GenerateDidDTO): Promise<DIDDocument> {
-    // Create private/public key pair
-    let keyPairs = await this.generateKeyPairs();
-
+    // Create a UUID for the DID using uuidv4
     const didUri: string = this.generateDidUri(doc?.method);
 
-    const keytype = this.getKeyType();
+    // Create private/public key pair
+    let authnKeys;
+    let privateKeys: object;
+    let signingAlgorithm: string = this.signingAlgorithm;
+    try {
+      if(!this.keys[signingAlgorithm]) {
+        await this.init();
+      }
+      if(!this.keys[signingAlgorithm]) {
+        throw new NotFoundException("Signature suite not supported")
+      }
+      const keyPair = await this.keys[signingAlgorithm].generate({
+        id: `${didUri}#key-0`,
+        controller: didUri
+      });
+      const exportedKey = await keyPair.export({
+        publicKey: true, privateKey: true, includeContext: true
+      });
+      let privateKey = {};
+      if(signingAlgorithm === "Ed25519Signature2020") {
+        const {privateKeyMultibase, ...rest } = exportedKey;
+        authnKeys = rest;
+        privateKey = {privateKeyMultibase};
+      } else if(signingAlgorithm === "Ed25519Signature2018") {
+        const {privateKeyBase58, ...rest } = exportedKey;
+        authnKeys = rest;
+        privateKey = {privateKeyBase58};
+      } else if(signingAlgorithm === "RsaSignature2018") {
+        const {privateKeyPem, ...rest } = exportedKey;
+        authnKeys = {...rest};
+        privateKey = {privateKeyPem};
+      } else {
+        throw new NotFoundException("Signature type not found");
+      }
+      privateKeys = {
+        [authnKeys.id]: privateKey
+      };
+    } catch (err: any) {
+            Logger.error(`Error generating key pair: ${err}`);
+      throw new InternalServerErrorException('Error generating key pair');
+    }
 
-    let verificationMethodsWithPvtKeys = keyPairs.map((d, index) => ({
-      id: `${didUri}#key-${index}`,
-      type: keytype,
-      publicKeyJwk: d.publicJwk,
-      privateJwk: d.privateJwk,
-      controller: didUri,
-    }));
-    let verificationMethods = verificationMethodsWithPvtKeys.map(({privateJwk, ...d}) => d);
-    let verificationMethodIds = verificationMethods.map(d => d.id);
+    const keyId = authnKeys?.id;
 
     // Create a DID Document
     const document: DIDDocument = {
       '@context': [
-        "https://www.w3.org/ns/did/v1",
-        "https://w3id.org/security/suites/jws-2020/v1",
-        // "https://w3id.org/security/suites/ed25519-2020/v1"
+        "https://www.w3.org/ns/did/v1"
       ],
       id: didUri,
       alsoKnownAs: doc.alsoKnownAs,
       service: doc.services,
-      verificationMethod: (verificationMethods as any),
-      authentication: verificationMethodIds,
-      assertionMethod: verificationMethodIds
+      verificationMethod: [
+        authnKeys,
+      ],
+      authentication: [keyId],
+      assertionMethod: [keyId]
     };
 
     try {
@@ -116,8 +119,12 @@ export class DidService {
       throw new InternalServerErrorException('Error writing DID to database');
     }
 
-    await Promise.all(verificationMethodsWithPvtKeys.map(d => this.vault
-      .writePvtKey(d.privateJwk, d.id)));
+    try {
+      await this.vault.writePvtKey(privateKeys, didUri);
+    } catch (err) {
+      Logger.error(err);
+      throw new InternalServerErrorException('Error writing private key to vault');
+    }
 
     return document;
   }

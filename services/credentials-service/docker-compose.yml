@@ -27,7 +27,6 @@ services:
       SCHEMA_BASE_URL: 
       ENABLE_AUTH: "false"
       JWKS_URI: ""
-      SIGNING_ALGORITHM: "Ed25519"
       WEB_DID_BASE_URL: ""
     healthcheck:
       test:

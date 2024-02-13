@@ -21,6 +21,7 @@ import { string } from 'zod';
 import { Credential } from 'src/app.interface';
 import { GetCredentialsByTagsResponseDTO } from './dto/getCredentialsByTags.dto';
 import { GetCredentialByIdResponseDTO } from './dto/getCredentialById.dto';
+import { RevocationListDTO } from './dto/revocaiton-list.dto';
 
 @Controller('credentials')
 export class CredentialsController {
@@ -116,4 +117,21 @@ export class CredentialsController {
     return this.credentialsService.verifyCredential(credId);
   }
 
+  @Get('revocation-list')
+  @ApiResponse({
+    type: Array<RevocationListDTO>,
+    description: 'Returns a list of revocked credentials',
+  })
+  getRevocationList(
+    @Query('issuerId') issuerId : string,
+    @Query('page') page: string,
+    @Query('limit') limit: string
+  ) {
+
+    return this.credentialsService.getRevocationList(
+      issuerId,
+      isNaN(parseInt(page)) ? 1 : parseInt(page),
+      isNaN(parseInt(limit)) ? 1000 : parseInt(limit)
+    );
+  }
 }

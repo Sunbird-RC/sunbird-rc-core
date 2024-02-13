@@ -18,7 +18,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { DIDDocument } from 'did-resolver';
+const { DIDDocument } = require('did-resolver');
+type DIDDocument = typeof DIDDocument;
 import { DidService } from './did.service';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
 const pLimit = require('p-limit');

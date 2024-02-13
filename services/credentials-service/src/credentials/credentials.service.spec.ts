@@ -96,7 +96,7 @@ describe('CredentialsService', () => {
 
   it('should get a credential in QR', async () => {
     const newCred: any = await service.issueCredential(sampleCredReqPayload);
-    const dataURL = await service.getCredentialById(newCred.credential?.id, null, RENDER_OUTPUT.QR);
+    const dataURL = await service.getCredentialById(newCred.credential?.id, undefined, RENDER_OUTPUT.QR);
     expect(dataURL).toBeDefined(); // Assert that the dataURL is defined
     expect(dataURL).toContain('data:image/png;base64,');
   });
@@ -123,7 +123,7 @@ describe('CredentialsService', () => {
 
   it('should get a credential in STRING', async () => {
     const newCred: any = await service.issueCredential(sampleCredReqPayload);
-    const cred = await service.getCredentialById(newCred.credential?.id, null, RENDER_OUTPUT.STRING);
+    const cred = await service.getCredentialById(newCred.credential?.id, undefined, RENDER_OUTPUT.STRING);
     expect(cred).toBeDefined()
   });
 
@@ -138,8 +138,15 @@ describe('CredentialsService', () => {
   it('should verify an issued credential', async () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
     const res = {checks: [{active: "OK", expired: "NOK", proof: "OK", revoked: "OK"}], status: "ISSUED"}
-    const verifyRes = await service.verifyCredential(newCred.credential['id']);
+    const verifyRes = await service.verifyCredential((newCred.credential as any)['id']);
     expect(verifyRes).toEqual(res);
+  });
+
+  it('should return an empty revocation list', async () => {
+    let res = []
+    expect(
+      await service.getRevocationList(undefined)
+    ).toEqual(res);
   });
 
   it('should say revoked', async () => {
@@ -180,5 +187,35 @@ describe('CredentialsService', () => {
     ).toBeInstanceOf(Array);
       const res = await service.getCredentials(['tag1'], 2, 1000)
       expect(res.length).toEqual(0)
-});
+  });
+
+
+
+  it('should give revockedList by issuerId', async () => {
+    const newCred = await service.issueCredential(sampleCredReqPayload);
+    const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
+    expect(
+      await service.getRevocationList(
+       (revockedCred as any)?.issuer,
+      )
+    ).toBeInstanceOf(Array);
+  });
+
+  it('should give revockedList of all creds', async () => {
+    const newCred = await service.issueCredential(sampleCredReqPayload);
+    const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
+    expect(
+      await service.getRevocationList(undefined)
+    ).toBeInstanceOf(Array);
+  });
+
+
+  it('should throw error by saying enter a valid issuer Id', async () => {
+    const newCred = await service.issueCredential(sampleCredReqPayload);
+    const revockedCred  = await service.deleteCredential((newCred.credential as any).id)
+    await expect(
+      service.getRevocationList("")
+    ).rejects.toThrow();
+  });
+
 });

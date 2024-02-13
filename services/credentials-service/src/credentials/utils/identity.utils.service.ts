@@ -1,42 +1,47 @@
 import { HttpService } from '@nestjs/axios';
-import { JwtCredentialPayload } from 'did-jwt-vc';
-import { IssuerType } from 'did-jwt-vc/lib/types';
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces';
-import { DIDDocument } from 'did-resolver';
+import { DIDDocument, CredentialPayload, IssuerType } from 'vc.types';
 import {
   Injectable,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { parse } from 'did-resolver';
+import { W3CCredential } from 'vc.types';
 
 @Injectable()
 export class IdentityUtilsService {
   webDidBaseUrl: string;
   identityBaseUrl: string;
+  parse: any;
   constructor(private readonly httpService: HttpService) {
     this.webDidBaseUrl = process.env.WEB_DID_BASE_URL;
     this.identityBaseUrl = process.env.IDENTITY_BASE_URL;
+    this.init();
+  }
+
+  async init() {
+    const { parse } = await import('did-resolver');
+    this.parse = parse;
   }
 
   private logger = new Logger(IdentityUtilsService.name);
 
   async signVC(
-    credentialPlayload: JwtCredentialPayload,
+    credentialPlayload: CredentialPayload,
     did: IssuerType
-  ): Promise<String> {
+  ): Promise<W3CCredential> {
     try {
       const signedVCResponse: AxiosResponse =
         await this.httpService.axiosRef.post(
           `${process.env.IDENTITY_BASE_URL}/utils/sign`,
           {
             DID: did,
-            payload: JSON.stringify(credentialPlayload),
+            payload: credentialPlayload,
           }
         );
-        const {publicKey, ...rest} = signedVCResponse.data;
-        return rest;
+        return signedVCResponse.data as W3CCredential;
     } catch (err) {
+      console.log(err);
       this.logger.error('Error signing VC: ', err);
       throw new InternalServerErrorException('Error signing VC');
     }
@@ -46,7 +51,7 @@ export class IdentityUtilsService {
     try {
       let url = `${this.identityBaseUrl}/did/resolve/${issuer}`;
       if(issuer?.startsWith("did:web")) {
-        url = this.getWebDidUrl(issuer);
+        url = await this.getWebDidUrl(issuer);
       }
       if(!!this.webDidBaseUrl && !!this.identityBaseUrl && url?.startsWith(this.webDidBaseUrl)) {
         url = url.replace(this.webDidBaseUrl, this.identityBaseUrl);
@@ -59,8 +64,9 @@ export class IdentityUtilsService {
     }
   }
 
-  getWebDidUrl(did: string): string {
-    const parsed = parse(did);
+  async getWebDidUrl(did: string): Promise<string> {
+    if(!this.parse) await this.init();
+    const parsed = this.parse(did);
     let path = decodeURIComponent(parsed.id) + "/.well-known/did.json";
     const id = parsed.id.split(':')
     if (id.length > 1) {
