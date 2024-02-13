@@ -96,7 +96,7 @@ describe('CredentialsService', () => {
 
   it('should get a credential in QR', async () => {
     const newCred: any = await service.issueCredential(sampleCredReqPayload);
-    const dataURL = await service.getCredentialById(newCred.credential?.id, null, RENDER_OUTPUT.QR);
+    const dataURL = await service.getCredentialById(newCred.credential?.id, undefined, RENDER_OUTPUT.QR);
     expect(dataURL).toBeDefined(); // Assert that the dataURL is defined
     expect(dataURL).toContain('data:image/png;base64,');
   });
@@ -123,7 +123,7 @@ describe('CredentialsService', () => {
 
   it('should get a credential in STRING', async () => {
     const newCred: any = await service.issueCredential(sampleCredReqPayload);
-    const cred = await service.getCredentialById(newCred.credential?.id, null, RENDER_OUTPUT.STRING);
+    const cred = await service.getCredentialById(newCred.credential?.id, undefined, RENDER_OUTPUT.STRING);
     expect(cred).toBeDefined()
   });
 
@@ -138,7 +138,7 @@ describe('CredentialsService', () => {
   it('should verify an issued credential', async () => {
     const newCred = await service.issueCredential(sampleCredReqPayload);
     const res = {checks: [{active: "OK", expired: "NOK", proof: "OK", revoked: "OK"}], status: "ISSUED"}
-    const verifyRes = await service.verifyCredential(newCred.credential['id']);
+    const verifyRes = await service.verifyCredential((newCred.credential as any)['id']);
     expect(verifyRes).toEqual(res);
   });
 

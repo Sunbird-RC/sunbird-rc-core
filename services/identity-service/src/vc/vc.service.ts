@@ -5,20 +5,28 @@ const { DIDDocument } = require('did-resolver');
 type DIDDocument = typeof DIDDocument;
 import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
-import * as jsigs from 'jsonld-signatures';
+import * as jsigs from '@digitalcredentials/jsonld-signatures';
+import * as jsigs2 from 'jsonld-signatures';
 import * as jsonld from 'jsonld';
 import { DOCUMENTS } from './documents';
+import { RSAKeyPair } from "crypto-ld";
 const AssertionProofPurpose = jsigs.purposes.AssertionProofPurpose;
 @Injectable()
 export default class VcService {
   map = {
     Ed25519VerificationKey2020: null,
-    Ed25519Signature2020: null
+    JsonWebKey2020: null,
+    Ed25519Signature2020: null,
+    Ed25519VerificationKey2018: null,
+    Ed25519Signature2018: null,
+    RsaVerificationKey2018: null,
+    RsaSignature2018: null
   };
   signTypeForKey = {
     Ed25519VerificationKey2020: "Ed25519Signature2020",
     JsonWebKey2020: "Ed25519Signature2020",
-    Ed25519VerificationKey2018: "Ed25519Signature2020"
+    Ed25519VerificationKey2018: "Ed25519Signature2018",
+    RsaVerificationKey2018: "RsaSignature2018"
   }
   documents: object
   constructor(
@@ -32,8 +40,15 @@ export default class VcService {
   async init() {
     const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
     const {Ed25519Signature2020} = await import('@digitalbazaar/ed25519-signature-2020');
+    const {Ed25519VerificationKey2018} = await import('@digitalbazaar/ed25519-verification-key-2018');
+    const {Ed25519Signature2018} = await import('@digitalbazaar/ed25519-signature-2018');
     this.map.Ed25519VerificationKey2020 = Ed25519VerificationKey2020;
+    this.map.JsonWebKey2020 = Ed25519VerificationKey2020;
     this.map.Ed25519Signature2020 = Ed25519Signature2020;
+    this.map.Ed25519VerificationKey2018 = Ed25519VerificationKey2018;
+    this.map.Ed25519Signature2018 = Ed25519Signature2018;
+    this.map.RsaSignature2018 = jsigs2.suites.RsaSignature2018;
+    this.map.RsaVerificationKey2018 = RSAKeyPair;
   }
 
   async sign(signerDID: string, toSign: object) {
@@ -53,15 +68,16 @@ export default class VcService {
       const didDoc = (JSON.parse(did.didDoc as string) as DIDDocument);
       const verificationMethod = didDoc.verificationMethod[0];
       const suite = await this.getSuite(verificationMethod, this.signTypeForKey[verificationMethod?.type], true);
-      const signedVC = await jsigs.sign(toSign, {
+      const signedVC = await jsigs.sign({...toSign}, {
           purpose: new AssertionProofPurpose(),
           suite: suite,
           documentLoader: this.getDocumentLoader(didDoc),
-          addSuiteContext: true
+          addSuiteContext: true,
+          compactProof: false
         });
       return signedVC;
     } catch (err) {
-      console.log(JSON.stringify(err, null, 2));
+      console.log(err);
       Logger.error('Error signign the document:', err);
       throw new InternalServerErrorException(`Error signign the document`);
     }
@@ -79,10 +95,12 @@ export default class VcService {
     try {
       const verificationMethod = didDocument.verificationMethod[0];
       const suite = await this.getSuite(verificationMethod, signedDoc?.proof?.type);
-      const results = await jsigs.verify(signedDoc, {
+      const signatures = verificationMethod.type === "RsaVerificationKey2018" ? jsigs2: jsigs;
+      const results = await signatures.verify(signedDoc, {
         purpose: new AssertionProofPurpose(),
         suite: [suite],
         documentLoader: this.getDocumentLoader(didDocument),
+        compactProof: false
       });
       return !!results?.verified;
     } catch (e) {
@@ -92,19 +110,26 @@ export default class VcService {
   }
 
   async getSuite(verificationMethod, signatureType: string, withPrivateKey = false) {
-    if(signatureType !== "Ed25519Signature2020") {
+    const supportedSignatures = {
+      "Ed25519Signature2020": ["Ed25519VerificationKey2020", "JsonWebKey2020", "Ed25519VerificationKey2018"],
+      "Ed25519Signature2018": ["Ed25519VerificationKey2018"],
+      "RsaSignature2018": ["RsaVerificationKey2018"],
+    };
+    if(!(signatureType in supportedSignatures)) {
       throw new NotFoundException("Suite for signature type not found");
     }
-    const supportedMethods = ["Ed25519VerificationKey2020", "JsonWebKey2020", "Ed25519VerificationKey2018"];
-    if(!supportedMethods.includes(verificationMethod?.type)) {
+    if(!supportedSignatures[signatureType].includes(verificationMethod?.type)) {
       throw new NotFoundException("Suite for verification type not found");
     }
-    const keyPair = await this.map.Ed25519VerificationKey2020.from(verificationMethod);
+    if(!supportedSignatures[signatureType]) await this.init();
+    let keyPair = await this.map[verificationMethod?.type].from(verificationMethod);
     if(withPrivateKey) {
       const privateKeys = await this.vault.readPvtKey(verificationMethod.id.split("#")[0]) || {};
-      keyPair.privateKeyMultibase = privateKeys[verificationMethod.id];
+      Object.keys(privateKeys[verificationMethod.id] || {}).forEach(key => {
+        keyPair[key] = privateKeys[verificationMethod.id][key];
+      });
     }
-    return new this.map.Ed25519Signature2020({key: keyPair});
+    return new this.map[signatureType]({key: keyPair});
   }
 
   getDocumentLoader(didDoc: DIDDocument) {

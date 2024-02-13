@@ -2,10 +2,11 @@ import { Injectable, InternalServerErrorException, Logger, NotFoundException } f
 import { PrismaService } from '../utils/prisma.service';
 const { DIDDocument } = require('did-resolver');
 type DIDDocument = typeof DIDDocument;
-import { uuid } from 'uuidv4';
+import { v4 as uuid } from 'uuid';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
 import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
+import { RSAKeyPair } from "crypto-ld";
 @Injectable()
 export class DidService {
   keys = {}
@@ -38,7 +39,10 @@ export class DidService {
 
   async init() {
     const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
+    const {Ed25519VerificationKey2018} = await import('@digitalbazaar/ed25519-verification-key-2018');
     this.keys['Ed25519Signature2020'] = Ed25519VerificationKey2020;
+    this.keys['Ed25519Signature2018'] = Ed25519VerificationKey2018;
+    this.keys['RsaSignature2018'] = RSAKeyPair;
   }
 
   async generateDID(doc: GenerateDidDTO): Promise<DIDDocument> {
@@ -50,23 +54,40 @@ export class DidService {
     let privateKeys: object;
     let signingAlgorithm: string = process.env.SIGNING_ALGORITHM;
     try {
+      if(!this.keys[signingAlgorithm]) {
+        await this.init();
+      }
+      if(!this.keys[signingAlgorithm]) {
+        throw new NotFoundException("Signature suite not supported")
+      }
+      const keyPair = await this.keys[signingAlgorithm].generate({
+        id: `${didUri}#key-0`,
+        controller: didUri
+      });
+      const exportedKey = await keyPair.export({
+        publicKey: true, privateKey: true, includeContext: true
+      });
+      let privateKey = {};
       if(signingAlgorithm === "Ed25519Signature2020") {
-        const keyPair = await this.keys[signingAlgorithm].generate({
-          id: `${didUri}#key-0`,
-          controller: didUri
-        });
-        let {privateKeyMultibase, ...rest } = keyPair.export({
-          publicKey: true, privateKey: true, includeContext: false
-        });
+        const {privateKeyMultibase, ...rest } = exportedKey;
         authnKeys = rest;
-        privateKeys = {
-          [authnKeys.id]: privateKeyMultibase
-        };
+        privateKey = {privateKeyMultibase};
+      } else if(signingAlgorithm === "Ed25519Signature2018") {
+        const {privateKeyBase58, ...rest } = exportedKey;
+        authnKeys = rest;
+        privateKey = {privateKeyBase58};
+      } else if(signingAlgorithm === "RsaSignature2018") {
+        const {privateKeyPem, ...rest } = exportedKey;
+        authnKeys = {...rest};
+        privateKey = {privateKeyPem};
       } else {
         throw new NotFoundException("Signature type not found");
       }
+      privateKeys = {
+        [authnKeys.id]: privateKey
+      };
     } catch (err: any) {
-      Logger.error(`Error generating key pair: ${err}`);
+            Logger.error(`Error generating key pair: ${err}`);
       throw new InternalServerErrorException('Error generating key pair');
     }
 
@@ -75,8 +96,7 @@ export class DidService {
     // Create a DID Document
     const document: DIDDocument = {
       '@context': [
-        "https://www.w3.org/ns/did/v1",
-        "https://w3id.org/security/suites/ed25519-2020/v1",
+        "https://www.w3.org/ns/did/v1"
       ],
       id: didUri,
       alsoKnownAs: doc.alsoKnownAs,
