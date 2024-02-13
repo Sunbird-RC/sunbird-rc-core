@@ -9,6 +9,12 @@ describe('DidService', () => {
   let service: VcService;
   let didService: DidService;
   let signingDID: string;
+  let signPayload = {
+    "@context": {
+      "name": "http://schema.org/name"
+    },
+    "name": "Hello!"
+  }
 
   // beforeAll(async () => {
   //   // Seed the test value before running the tests
@@ -23,7 +29,7 @@ describe('DidService', () => {
     service = module.get<VcService>(VcService);
     didService = module.get<DidService>(DidService);
     const testDidDoc = await didService.generateDID({
-      alsoKnownAs: ['Test DID'],
+      alsoKnownAs: [],
       services: [],
       method: 'test'
     });
@@ -35,22 +41,22 @@ describe('DidService', () => {
   });
 
   it('should sign a payload', async () => {
-    const signedPayload = await service.sign(signingDID, { name: 'Hello!'});
+    const signedPayload = await service.sign(signingDID, signPayload);
     expect(signedPayload).toBeDefined();
-    expect(signedPayload.publicKey).toBeDefined();
-    expect(signedPayload.jws).toBeDefined();
+    expect(signedPayload.proof).toBeDefined();
   });
 
   it('should verify a signed payload successfully', async () => {
-    const signedPayload = await service.sign(signingDID, { name: 'Hello!'});
-    const verified = await service.verify(signingDID, signedPayload.jws);
+    const signedPayload = await service.sign(signingDID, signPayload);
+    const verified = await service.verify(signingDID, signedPayload);
     expect(verified).toBeDefined();
     expect(verified).toBeTruthy();
     expect(verified).toEqual(true);
   });
   it('should fail to verify a signed payload', async () => {
-    const signedPayload = await service.sign(signingDID, { name: 'Hello!'});
-    const verified = await service.verify(signingDID, (signedPayload.jws as string).slice(1));
+    const signedPayload = await service.sign(signingDID, signPayload);
+    signedPayload.name = "Hello changed";
+    const verified = await service.verify(signingDID, signedPayload);
     expect(verified).toBeDefined();
     expect(verified).toBeFalsy();
     expect(verified).toEqual(false);

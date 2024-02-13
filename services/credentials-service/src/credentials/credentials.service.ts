@@ -16,6 +16,7 @@ import { RenderingUtilsService } from './utils/rendering.utils.service';
 import * as jsigs from 'jsonld-signatures';
 import * as jsonld from 'jsonld';
 import { DOCUMENTS } from './documents';
+import { RSAKeyPair } from 'crypto-ld';
 const AssertionProofPurpose = jsigs.purposes.AssertionProofPurpose;
 import { 
   W3CCredential, Verifiable, DIDDocument,
@@ -27,7 +28,12 @@ import { RevocationListDTO } from './dto/revocaiton-list.dto';
 export class CredentialsService {
   map = {
     Ed25519VerificationKey2020: null,
+    JsonWebKey2020: null,
     Ed25519Signature2020: null,
+    Ed25519VerificationKey2018: null,
+    Ed25519Signature2018: null,
+    RsaVerificationKey2018: null,
+    RsaSignature2018: null,
     vc: null
   };
   documents: object
@@ -41,11 +47,18 @@ export class CredentialsService {
   }
 
   async init() {
+    const vc = await import('@digitalbazaar/vc');
     const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
     const {Ed25519Signature2020} = await import('@digitalbazaar/ed25519-signature-2020');
-    const vc = await import('@digitalbazaar/vc');
+    const {Ed25519VerificationKey2018} = await import('@digitalbazaar/ed25519-verification-key-2018');
+    const {Ed25519Signature2018} = await import('@digitalbazaar/ed25519-signature-2018');
     this.map.Ed25519VerificationKey2020 = Ed25519VerificationKey2020;
+    this.map.JsonWebKey2020 = Ed25519VerificationKey2020;
     this.map.Ed25519Signature2020 = Ed25519Signature2020;
+    this.map.Ed25519VerificationKey2018 = Ed25519VerificationKey2018;
+    this.map.Ed25519Signature2018 = Ed25519Signature2018;
+    this.map.RsaSignature2018 = jsigs.suites.RsaSignature2018;
+    this.map.RsaVerificationKey2018 = RSAKeyPair;
     this.map.vc = vc;
   }
 
@@ -158,17 +171,32 @@ export class CredentialsService {
       const did: DIDDocument = await this.identityUtilsService.resolveDID(
         verificationMethod
       );
-      const credVerificationMethod = credToVerify?.proof?.verificationMethod
+      const credVerificationMethod = (credToVerify?.proof || {})[Object.keys(credToVerify?.proof || {})
+      .find(d => d.indexOf("verificationMethod") > -1)]
 
       // VERIFYING THE JWS
-      const vm = did.verificationMethod?.find(d => d.id === credVerificationMethod);
+      const vm = did.verificationMethod?.find(d => (d.id === credVerificationMethod || d.id === credVerificationMethod?.id));
       const suite = await this.getSuite(vm, credToVerify?.proof?.type);
-      const results = await this.map.vc.verifyCredential({
-        credential: credToVerify,
-        purpose: new AssertionProofPurpose(),
-        suite: [suite],
-        documentLoader: this.getDocumentLoader(did),
-      });
+      let results;
+      if(credToVerify?.proof?.type === "RsaSignature2018") {
+        this.map.vc._checkCredential({
+          credential: credToVerify
+        })
+        results = await jsigs.verify(credToVerify, {
+          purpose: new AssertionProofPurpose(),
+          suite: [suite],
+          documentLoader: this.getDocumentLoader(did),
+          addSuiteContext: true,
+          compactProof: false
+        });
+      } else {
+        results = await this.map.vc.verifyCredential({
+          credential: credToVerify,
+          purpose: new AssertionProofPurpose(),
+          suite: [suite],
+          documentLoader: this.getDocumentLoader(did)
+        });
+      }
       return {
         status: status,
         checks: [
@@ -192,15 +220,21 @@ export class CredentialsService {
   }
 
   async getSuite(verificationMethod: VerificationMethod, signatureType: string) {
-    if(signatureType !== "Ed25519Signature2020") {
+    const supportedSignatures = {
+      "Ed25519Signature2020": ["Ed25519VerificationKey2020", "JsonWebKey2020", "Ed25519VerificationKey2018"],
+      "Ed25519Signature2018": ["Ed25519VerificationKey2018"],
+      "RsaSignature2018": ["RsaVerificationKey2018"],
+    };
+    if(!(signatureType in supportedSignatures)) {
       throw new NotFoundException("Suite for signature type not found");
     }
-    const supportedMethods = ["Ed25519VerificationKey2020", "JsonWebKey2020", "Ed25519VerificationKey2018"];
-    if(!supportedMethods.includes(verificationMethod?.type)) {
-      throw new NotFoundException("Suite for verification method type not found");
+    if(!supportedSignatures[signatureType].includes(verificationMethod?.type)) {
+      throw new NotFoundException("Suite for verification type not found");
     }
-    const keyPair = await this.map.Ed25519VerificationKey2020.from(verificationMethod);
-    return new this.map.Ed25519Signature2020({key: keyPair});
+    if(!this.map[verificationMethod?.type]) await this.init();
+    if(!this.map[verificationMethod?.type]) throw new NotFoundException("Library not loaded");
+    let keyPair = await this.map[verificationMethod?.type].from(verificationMethod);
+    return new this.map[signatureType]({key: keyPair});
   }
 
   getDocumentLoader(didDoc: DIDDocument) {
