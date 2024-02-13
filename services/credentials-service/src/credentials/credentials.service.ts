@@ -179,6 +179,9 @@ export class CredentialsService {
       const suite = await this.getSuite(vm, credToVerify?.proof?.type);
       let results;
       if(credToVerify?.proof?.type === "RsaSignature2018") {
+        this.map.vc._checkCredential({
+          credential: credToVerify
+        })
         results = await jsigs.verify(credToVerify, {
           purpose: new AssertionProofPurpose(),
           suite: [suite],
