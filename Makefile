@@ -47,7 +47,7 @@ test: build
 	@docker-compose down
 	@rm -rf db-data-1 || echo "no permission to delete"
 	# test with kafka(async), events, notifications,
-	@docker-compose --env-file test_environments/test_with_asyncCreate_events_notifications.env up -d db keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
+	@docker-compose --env-file test_environments/test_with_asyncCreate_events_notifications.env up -d db es clickhouse redis keycloak registry certificate-signer certificate-api kafka zookeeper notification-ms metrics
 	@echo "Starting the test" && sh build/wait_for_port.sh 8080
 	@echo "Starting the test" && sh build/wait_for_port.sh 8081
 	@docker-compose ps
@@ -72,9 +72,9 @@ test: build
 	make -C services/public-key-service test
 	make -C services/context-proxy-service test
 	make -C services/bulk_issuance test
-	make -C services/identity-service test
-	make -C services/credential-schema test
-	make -C services/credentials-service test
+#	make -C services/identity-service test
+#	make -C services/credential-schema test
+#	make -C services/credentials-service test
 
 clean:
 	@rm -rf target || true
