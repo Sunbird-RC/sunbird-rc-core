@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   public-keys-service:
-    image: dockerhub/sunbird-rc-public-key-service
+    image: ghcr.io/sunbird-rc/sunbird-rc-public-key-service
     environment:
       - CONFIG_BASE_PATH=/etc/keys
     ports:
@@ -14,7 +14,7 @@ services:
     volumes:
       - ./tests/config:/etc/keys
   test-runner:
-    image: dockerhub/python-papermill
+    image: ghcr.io/sunbird-rc/python-papermill
     command:
       - "/usr/local/bin/papermill"
       - "--log-output"

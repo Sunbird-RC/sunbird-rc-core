@@ -2,10 +2,12 @@ package dev.sunbirdrc.registry.dao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.util.ArrayHelper;
+import dev.sunbirdrc.registry.util.RecordIdentifier;
 import dev.sunbirdrc.registry.util.RefLabelHelper;
 import dev.sunbirdrc.registry.util.TypePropertyHelper;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
@@ -16,11 +18,14 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import static dev.sunbirdrc.registry.middleware.util.Constants.DID_TYPE;
 
 /**
  * Helps in writing a vertex, edge into the database
@@ -31,7 +36,6 @@ public class VertexWriter {
     private DatabaseProvider databaseProvider;
     private String parentOSid;
     private static final String EMPTY_STR = "";
-
     private Logger logger = LoggerFactory.getLogger(VertexWriter.class);
 
     public VertexWriter(Graph graph, DatabaseProvider databaseProvider, String uuidPropertyName) {
@@ -215,7 +219,6 @@ public class VertexWriter {
         jsonObject.fields().forEachRemaining(entry -> {
             JsonNode entryValue = entry.getValue();
             logger.debug("Processing {} -> {}", entry.getKey(), entry.getValue());
-
             if (entryValue.isValueNode()) {
                 // Directly add under the vertex as a property
                 vertex.property(entry.getKey(), ValueType.getValue(entryValue));

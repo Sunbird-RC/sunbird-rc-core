@@ -12,8 +12,8 @@ node {
         }
 
         stage('Build image') {
-            app = docker.build("dockerhub/sunbird-rc-core","target")
-            claimApp = docker.build("dockerhub/sunbird-rc-claim-ms","java/claim")
+            app = docker.build("ghcr.io/sunbird-rc/sunbird-rc-core","target")
+            claimApp = docker.build("ghcr.io/sunbird-rc/sunbird-rc-claim-ms","java/claim")
         }
 
         // stage('Test image') {
@@ -27,11 +27,11 @@ node {
 
 
         stage('Push image') {
-            docker.withRegistry('', 'dockerhub') {
+            docker.withRegistry('ghcr.io', 'sunbird-rc') {
                 app.push("${env.BUILD_NUMBER}")
                 app.push("latest")
            }
-           docker.withRegistry('', 'dockerhub') {
+           docker.withRegistry('ghrc.io', 'sunbird-rc') {
                claimApp.push("${env.BUILD_NUMBER}")
                claimApp.push("latest")
           }
@@ -39,8 +39,8 @@ node {
 
 //         stage('Deploy image') {
 //             sh "ssh kesavan@10.4.0.6 'kubectl get pods -n ndear'"
-//             sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/registry registry=dockerhub/sunbird-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
-//             sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/claim-ms claim-ms=dockerhub/sunbird-rc-claim-ms:${env.BUILD_NUMBER} --record --namespace=ndear'"
+//             sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/registry registry=ghcr.io/sunbird-rc/sunbird-rc:${env.BUILD_NUMBER} --record --namespace=ndear'"
+//             sh "ssh kesavan@10.4.0.6 'kubectl set image deployment/claim-ms claim-ms=ghcr.io/sunbird-rc/sunbird-rc-claim-ms:${env.BUILD_NUMBER} --record --namespace=ndear'"
 //         }
 
     }

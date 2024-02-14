@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.service.impl;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -7,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -42,13 +42,15 @@ public class AuditDBWriter {
 
     @Autowired
     private EntityParenter entityParenter;
+    @Value("${registry.expandReference}")
+    private boolean expandReferenceObj;
 
-	public String auditToDB(Shard shard, JsonNode rootNode, String entityType) throws AuditFailedException {
+    public String auditToDB(Shard shard, JsonNode rootNode, String entityType) throws AuditFailedException {
 
     	String entityId = "auditPlaceholderId";
 	 	Transaction tx = null;
         DatabaseProvider dbProvider = shard.getDatabaseProvider();
-        IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
+        IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
         try (OSGraph osGraph = dbProvider.getOSGraph()) {
             Graph graph = osGraph.getGraphStore();
             tx = dbProvider.startTransaction(graph);
@@ -59,8 +61,7 @@ public class AuditDBWriter {
 
             logger.debug("Audit added : " + entityId);
         } catch (Exception e) {
-            logger.error("Audit failed : {}" + e);
-
+            logger.error("Audit failed : {}", ExceptionUtils.getStackTrace(e));
             throw new AuditFailedException("Audit failed : " + e.getMessage());
         } finally {
             if (tx != null) {

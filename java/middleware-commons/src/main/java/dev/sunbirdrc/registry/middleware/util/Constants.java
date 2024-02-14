@@ -13,6 +13,7 @@ public class Constants {
 
 	public static final String SUNBIRDRC_REGISTRY_API = "sunbirdrc-registry-api"; //todo make it configurable for backward compatibility
 	public static final String SUNBIRD_ENCRYPTION_SERVICE_NAME = "sunbird.encryption.service";
+	public static final String SUNBIRD_ID_GEN_SERVICE_NAME = "sunbird.idgen.service";
 	public static final String SUNBIRD_SIGNATURE_SERVICE_NAME = "sunbird.signature.service";
 
 	public static final String SUNBIRD_ELASTIC_SERVICE_NAME = "sunbird.elastic.service";
@@ -126,6 +127,7 @@ public class Constants {
 	public static final String MOBILE = "mobile";
 	public static final String SVG_MEDIA_TYPE = "image/svg+xml";
 	public static final String CONNECTION_FAILURE = "CONNECTION_FAILURE";
+	public static final String DID_TYPE = "did";
 
     public enum GraphDatabaseProvider {
 		NEO4J("NEO4J"), ORIENTDB("ORIENTDB"), SQLG("SQLG"), CASSANDRA("CASSANDRA"), TINKERGRAPH("TINKERGRAPH");

@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.sink.shard;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class ShardAdvisor {
 			}
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
 				| IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			logger.error("Shard advisor class {} cannot be instantiate with exception:", advisorClassName, e);
+			logger.error("Shard advisor class {} cannot be instantiate with exception: {}", advisorClassName, ExceptionUtils.getStackTrace(e));
 		}
 
 		return advisor;

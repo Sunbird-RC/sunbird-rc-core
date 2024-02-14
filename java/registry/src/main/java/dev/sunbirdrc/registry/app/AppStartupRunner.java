@@ -22,6 +22,7 @@ public class AppStartupRunner implements ApplicationRunner {
     	logger.info("On Boot starts loading: parent vertex and shard records");
     	entityParenter.ensureKnownParenters();
     	entityParenter.loadDefinitionIndex();
-    	entityParenter.ensureIndexExists();
+		entityParenter.ensureIndexExists();
+		entityParenter.saveIdFormat();
     }
 }

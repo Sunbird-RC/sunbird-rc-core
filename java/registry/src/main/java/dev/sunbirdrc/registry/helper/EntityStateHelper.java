@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotEmpty;
@@ -51,14 +52,17 @@ public class EntityStateHelper {
     private Boolean setDefaultPassword;
     @Value("${identity.default_password}")
     private String defaultPassword;
+    private final boolean authenticationEnabled;
 
     @Autowired
     public EntityStateHelper(IDefinitionsManager definitionsManager, RuleEngineService ruleEngineService,
-                             ConditionResolverService conditionResolverService, ClaimRequestClient claimRequestClient) {
+                             ConditionResolverService conditionResolverService,@Nullable ClaimRequestClient claimRequestClient,
+                             @Value("${authentication.enabled:true}") boolean authenticationEnabled) {
         this.definitionsManager = definitionsManager;
         this.ruleEngineService = ruleEngineService;
         this.conditionResolverService = conditionResolverService;
         this.claimRequestClient = claimRequestClient;
+        this.authenticationEnabled = authenticationEnabled;
     }
 
     JsonNode applyWorkflowTransitions(JsonNode existing, JsonNode updated, List<AttestationPolicy> attestationPolicies) throws IOException {
@@ -97,6 +101,7 @@ public class EntityStateHelper {
                 .metadataNode((ObjectNode) modified)
                 .revertSystemFields(true)
                 .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
+                .authenticationEnabled(authenticationEnabled)
                 .build();
         allContexts.add(stateContext);
     }
@@ -123,16 +128,17 @@ public class EntityStateHelper {
                     .metadataNode((ObjectNode) modified.get(entityName))
                     .ownershipAttribute(ownershipAttribute)
                     .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
+                    .authenticationEnabled(authenticationEnabled)
                     .build();
             allContexts.add(stateContext);
         }
     }
 
     private ObjectNode createOwnershipNode(JsonNode entityNode, String entityName, OwnershipsAttributes ownershipAttribute) {
-        String mobilePath = ownershipAttribute.getMobile();
-        String emailPath = ownershipAttribute.getEmail();
-        String userIdPath = ownershipAttribute.getUserId();
-        String passwordPath = ownershipAttribute.getPassword();
+        String mobilePath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getMobile());
+        String emailPath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getEmail());
+        String userIdPath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getUserId());
+        String passwordPath = JSONUtil.convertToJsonPointerPath(ownershipAttribute.getPassword());
         ObjectNode objectNode = new ObjectMapper().createObjectNode();
         objectNode.put(MOBILE, entityNode.at(String.format("/%s%s", entityName, mobilePath)).asText(""));
         objectNode.put(EMAIL, entityNode.at(String.format("/%s%s", entityName, emailPath)).asText(""));
@@ -172,6 +178,7 @@ public class EntityStateHelper {
                         .metadataNode(metadataNodePointer.getFirst())
                         .pointerFromMetadataNode(metadataNodePointer.getSecond())
                         .loginEnabled(definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableLogin())
+                        .authenticationEnabled(authenticationEnabled)
                         .build();
                 allContexts.add(stateContext);
             }
@@ -197,6 +204,7 @@ public class EntityStateHelper {
                 .metaData(metaData)
                 .metadataNode(metadataNodePointer.getFirst())
                 .pointerFromMetadataNode(metadataNodePointer.getSecond())
+                .authenticationEnabled(authenticationEnabled)
                 .build();
         ruleEngineService.doTransition(stateContext);
         return root;
