@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Service } from 'did-resolver';
+const { Service } = require('did-resolver');
+type Service = typeof Service;
 
 export class GenerateDidDTO {
   @ApiProperty({

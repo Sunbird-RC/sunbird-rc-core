@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { W3CCredential } from 'did-jwt-vc';
+import { W3CCredential } from 'vc.types';
 
 export type Extensible<T> = T & { [x: string]: any };
 

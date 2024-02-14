@@ -1,13 +1,15 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { generateKeyPair } from '@decentralized-identity/ion-tools';
 import { PrismaService } from '../utils/prisma.service';
-import { DIDDocument } from 'did-resolver';
-import { uuid } from 'uuidv4';
+const { DIDDocument } = require('did-resolver');
+type DIDDocument = typeof DIDDocument;
+import { v4 as uuid } from 'uuid';
 import { GenerateDidDTO } from './dtos/GenerateDid.dto';
 import { VaultService } from '../utils/vault.service';
 import { Identity } from '@prisma/client';
+import { RSAKeyPair } from "crypto-ld";
 @Injectable()
 export class DidService {
+  keys = {}
   static getKeySignType = (algo: string): any => {
     return {
       keyType: "JsonWebKey2020",
@@ -31,37 +33,76 @@ export class DidService {
     // }
   }
 
-  constructor(private prisma: PrismaService, private vault: VaultService) {}
+  constructor(private prisma: PrismaService, private vault: VaultService) {
+    this.init();
+  }
+
+  async init() {
+    const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
+    const {Ed25519VerificationKey2018} = await import('@digitalbazaar/ed25519-verification-key-2018');
+    this.keys['Ed25519Signature2020'] = Ed25519VerificationKey2020;
+    this.keys['Ed25519Signature2018'] = Ed25519VerificationKey2018;
+    this.keys['RsaSignature2018'] = RSAKeyPair;
+  }
 
   async generateDID(doc: GenerateDidDTO): Promise<DIDDocument> {
-    // Create private/public key pair
-    let authnKeys;
-    let signingAlgorithm: string = process.env.SIGNING_ALGORITHM;
-    try {
-      authnKeys = await generateKeyPair(signingAlgorithm);
-    } catch (err: any) {
-      Logger.error(`Error generating key pair: ${err}`);
-      throw new InternalServerErrorException('Error generating key pair');
-    }
-
     // Create a UUID for the DID using uuidv4
     const didUri = `did:${(doc.method && doc.method.trim() !== '') ? doc.method.trim() : 'rcw'}:${uuid()}`;
 
-    const keyId = `${didUri}#key-0`;
+    // Create private/public key pair
+    let authnKeys;
+    let privateKeys: object;
+    let signingAlgorithm: string = process.env.SIGNING_ALGORITHM;
+    try {
+      if(!this.keys[signingAlgorithm]) {
+        await this.init();
+      }
+      if(!this.keys[signingAlgorithm]) {
+        throw new NotFoundException("Signature suite not supported")
+      }
+      const keyPair = await this.keys[signingAlgorithm].generate({
+        id: `${didUri}#key-0`,
+        controller: didUri
+      });
+      const exportedKey = await keyPair.export({
+        publicKey: true, privateKey: true, includeContext: true
+      });
+      let privateKey = {};
+      if(signingAlgorithm === "Ed25519Signature2020") {
+        const {privateKeyMultibase, ...rest } = exportedKey;
+        authnKeys = rest;
+        privateKey = {privateKeyMultibase};
+      } else if(signingAlgorithm === "Ed25519Signature2018") {
+        const {privateKeyBase58, ...rest } = exportedKey;
+        authnKeys = rest;
+        privateKey = {privateKeyBase58};
+      } else if(signingAlgorithm === "RsaSignature2018") {
+        const {privateKeyPem, ...rest } = exportedKey;
+        authnKeys = {...rest};
+        privateKey = {privateKeyPem};
+      } else {
+        throw new NotFoundException("Signature type not found");
+      }
+      privateKeys = {
+        [authnKeys.id]: privateKey
+      };
+    } catch (err: any) {
+            Logger.error(`Error generating key pair: ${err}`);
+      throw new InternalServerErrorException('Error generating key pair');
+    }
+
+    const keyId = authnKeys?.id;
 
     // Create a DID Document
     const document: DIDDocument = {
-      '@context': 'https://w3id.org/did/v1',
+      '@context': [
+        "https://www.w3.org/ns/did/v1"
+      ],
       id: didUri,
       alsoKnownAs: doc.alsoKnownAs,
       service: doc.services,
       verificationMethod: [
-        {
-          id: keyId,
-          type: DidService.getKeySignType(signingAlgorithm)?.keyType,
-          publicKeyJwk: authnKeys.publicJwk,
-          controller: didUri,
-        },
+        authnKeys,
       ],
       authentication: [keyId],
       assertionMethod: [keyId]
@@ -80,7 +121,7 @@ export class DidService {
     }
 
     try {
-      await this.vault.writePvtKey(authnKeys.privateJwk, didUri);
+      await this.vault.writePvtKey(privateKeys, didUri);
     } catch (err) {
       Logger.error(err);
       throw new InternalServerErrorException('Error writing private key to vault');

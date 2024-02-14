@@ -1,4 +1,3 @@
-import { IonDocumentModel } from '@decentralized-identity/ion-sdk';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SignJsonDTO {
@@ -8,7 +7,7 @@ export class SignJsonDTO {
   DID: string;
 
   @ApiProperty({
-    description: 'JSON string of the unsigned VC.'
+    description: 'JSON LD of the unsigned VC.'
   })
-  payload: string; //Only string is supported for now
+  payload: object; //Only JSON LD is supported for now
 }

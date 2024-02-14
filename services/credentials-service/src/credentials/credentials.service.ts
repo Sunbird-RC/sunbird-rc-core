@@ -6,33 +6,61 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaClient, VCStatus, VerifiableCredentials } from '@prisma/client';
-import {
-  CredentialPayload,
-  transformCredentialInput,
-  Verifiable,
-  W3CCredential,
-} from 'did-jwt-vc';
-import { DIDDocument } from 'did-resolver';
 import { GetCredentialsBySubjectOrIssuer } from './dto/getCredentialsBySubjectOrIssuer.dto';
 import { IssueCredentialDTO } from './dto/issue-credential.dto';
 import { RENDER_OUTPUT } from './enums/renderOutput.enum';
-import { IssuerType, Proof } from 'did-jwt-vc/lib/types';
 import { JwtCredentialSubject } from 'src/app.interface';
 import { SchemaUtilsSerivce } from './utils/schema.utils.service';
 import { IdentityUtilsService } from './utils/identity.utils.service';
 import { RenderingUtilsService } from './utils/rendering.utils.service';
+import * as jsigs from 'jsonld-signatures';
+import * as jsonld from 'jsonld';
+import { DOCUMENTS } from './documents';
+import { RSAKeyPair } from 'crypto-ld';
+const AssertionProofPurpose = jsigs.purposes.AssertionProofPurpose;
+import { 
+  W3CCredential, Verifiable, DIDDocument,
+  CredentialPayload, IssuerType, Proof, VerificationMethod
+ } from 'vc.types';
 import { RevocationListDTO } from './dto/revocaiton-list.dto';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-import { verify } from '@decentralized-identity/ion-tools';
 
 @Injectable()
 export class CredentialsService {
+  map = {
+    Ed25519VerificationKey2020: null,
+    JsonWebKey2020: null,
+    Ed25519Signature2020: null,
+    Ed25519VerificationKey2018: null,
+    Ed25519Signature2018: null,
+    RsaVerificationKey2018: null,
+    RsaSignature2018: null,
+    vc: null
+  };
+  documents: object
   constructor(
     private readonly prisma: PrismaClient,
     private readonly identityUtilsService: IdentityUtilsService,
     private readonly renderingUtilsService: RenderingUtilsService,
     private readonly schemaUtilsService: SchemaUtilsSerivce
-  ) {}
+  ) {
+    this.init();
+  }
+
+  async init() {
+    const vc = await import('@digitalbazaar/vc');
+    const {Ed25519VerificationKey2020} = await import('@digitalbazaar/ed25519-verification-key-2020');
+    const {Ed25519Signature2020} = await import('@digitalbazaar/ed25519-signature-2020');
+    const {Ed25519VerificationKey2018} = await import('@digitalbazaar/ed25519-verification-key-2018');
+    const {Ed25519Signature2018} = await import('@digitalbazaar/ed25519-signature-2018');
+    this.map.Ed25519VerificationKey2020 = Ed25519VerificationKey2020;
+    this.map.JsonWebKey2020 = Ed25519VerificationKey2020;
+    this.map.Ed25519Signature2020 = Ed25519Signature2020;
+    this.map.Ed25519VerificationKey2018 = Ed25519VerificationKey2018;
+    this.map.Ed25519Signature2018 = Ed25519Signature2018;
+    this.map.RsaSignature2018 = jsigs.suites.RsaSignature2018;
+    this.map.RsaVerificationKey2018 = RSAKeyPair;
+    this.map.vc = vc;
+  }
 
   private logger = new Logger(CredentialsService.name);
 
@@ -121,14 +149,14 @@ export class CredentialsService {
     // getting the credential from the db
     const { signed: credToVerify, status } =
       (await this.prisma.verifiableCredentials.findUnique({
-        where: {
-          id: credId,
-        },
-        select: {
-          signed: true,
-          status: true,
-        },
-      })) as { signed: Verifiable<W3CCredential>; status: VCStatus };
+      where: {
+        id: credId,
+      },
+      select: {
+        signed: true,
+        status: true,
+      },
+    })) as { signed: Verifiable<W3CCredential>; status: VCStatus };
 
     this.logger.debug('Fetched credntial from db to verify');
 
@@ -143,13 +171,32 @@ export class CredentialsService {
       const did: DIDDocument = await this.identityUtilsService.resolveDID(
         verificationMethod
       );
-      const credVerificationMethod = credToVerify?.proof?.verificationMethod
+      const credVerificationMethod = (credToVerify?.proof || {})[Object.keys(credToVerify?.proof || {})
+      .find(d => d.indexOf("verificationMethod") > -1)]
 
       // VERIFYING THE JWS
-      const verified = await verify({
-        jws: credToVerify?.proof?.jws,
-        publicJwk: did?.verificationMethod?.find(d => d.id === credVerificationMethod)?.publicKeyJwk,
-      });
+      const vm = did.verificationMethod?.find(d => (d.id === credVerificationMethod || d.id === credVerificationMethod?.id));
+      const suite = await this.getSuite(vm, credToVerify?.proof?.type);
+      let results;
+      if(credToVerify?.proof?.type === "RsaSignature2018") {
+        this.map.vc._checkCredential({
+          credential: credToVerify
+        })
+        results = await jsigs.verify(credToVerify, {
+          purpose: new AssertionProofPurpose(),
+          suite: [suite],
+          documentLoader: this.getDocumentLoader(did),
+          addSuiteContext: true,
+          compactProof: false
+        });
+      } else {
+        results = await this.map.vc.verifyCredential({
+          credential: credToVerify,
+          purpose: new AssertionProofPurpose(),
+          suite: [suite],
+          documentLoader: this.getDocumentLoader(did)
+        });
+      }
       return {
         status: status,
         checks: [
@@ -160,7 +207,7 @@ export class CredentialsService {
               new Date(credToVerify.expirationDate).getTime() < Date.now()
                 ? 'NOK'
                 : 'OK', // NOK represents expired
-            proof: verified ? 'OK' : 'NOK',
+            proof: !!results?.verified ? 'OK' : 'NOK',
           },
         ],
       };
@@ -170,6 +217,44 @@ export class CredentialsService {
         errors: [e],
       };
     }
+  }
+
+  async getSuite(verificationMethod: VerificationMethod, signatureType: string) {
+    const supportedSignatures = {
+      "Ed25519Signature2020": ["Ed25519VerificationKey2020", "JsonWebKey2020", "Ed25519VerificationKey2018"],
+      "Ed25519Signature2018": ["Ed25519VerificationKey2018"],
+      "RsaSignature2018": ["RsaVerificationKey2018"],
+    };
+    if(!(signatureType in supportedSignatures)) {
+      throw new NotFoundException("Suite for signature type not found");
+    }
+    if(!supportedSignatures[signatureType].includes(verificationMethod?.type)) {
+      throw new NotFoundException("Suite for verification type not found");
+    }
+    if(!this.map[verificationMethod?.type]) await this.init();
+    if(!this.map[verificationMethod?.type]) throw new NotFoundException("Library not loaded");
+    let keyPair = await this.map[verificationMethod?.type].from(verificationMethod);
+    return new this.map[signatureType]({key: keyPair});
+  }
+
+  getDocumentLoader(didDoc: DIDDocument) {
+    return jsigs.extendContextLoader(async url => {
+      if(url === didDoc?.id) {
+        return {
+          contextUrl: null,
+          documentUrl: url,
+          document: didDoc
+        };
+      }
+      if(DOCUMENTS[url]) {
+        return {
+          contextUrl: null,
+          documentUrl: url,
+          document: DOCUMENTS[url]
+        }
+      }
+      return await jsonld.documentLoaders.node()(url);
+    })
   }
 
   async issueCredential(issueRequest: IssueCredentialDTO) {
@@ -198,7 +283,7 @@ export class CredentialsService {
     // generate the DID for credential
     const credDID: ReadonlyArray<DIDDocument> =
       await this.identityUtilsService.generateDID(
-        ['verifiable credential'],
+        [],
         issueRequest.method
       );
     this.logger.debug('generated DID');
@@ -209,9 +294,10 @@ export class CredentialsService {
       throw new InternalServerErrorException('Problem creating DID');
     }
     // sign the credential
+    let signedCredential: W3CCredential = {};
     try {
-      credInReq['proof'] = await this.identityUtilsService.signVC(
-        transformCredentialInput(credInReq as CredentialPayload),
+      signedCredential = await this.identityUtilsService.signVC(
+        credInReq as CredentialPayload,
         credInReq.issuer
       );
     } catch (err) {
@@ -224,16 +310,16 @@ export class CredentialsService {
     // TODO: add created by and updated by
     const newCred = await this.prisma.verifiableCredentials.create({
       data: {
-        id: credInReq.id,
-        type: credInReq.type,
-        issuer: credInReq.issuer as IssuerType as string,
-        issuanceDate: credInReq.issuanceDate,
-        expirationDate: credInReq.expirationDate,
-        subject: credInReq.credentialSubject as JwtCredentialSubject,
-        subjectId: (credInReq.credentialSubject as JwtCredentialSubject).id,
-        proof: credInReq.proof as Proof,
+        id: signedCredential.id,
+        type: signedCredential.type,
+        issuer: signedCredential.issuer as IssuerType as string,
+        issuanceDate: signedCredential.issuanceDate,
+        expirationDate: signedCredential.expirationDate,
+        subject: signedCredential.credentialSubject as JwtCredentialSubject,
+        subjectId: (signedCredential.credentialSubject as JwtCredentialSubject).id,
+        proof: signedCredential.proof as Proof,
         credential_schema: issueRequest.credentialSchemaId, //because they can't refer to the schema db from here through an ID
-        signed: credInReq as object,
+        signed: signedCredential as object,
         tags: issueRequest.tags,
       },
     });

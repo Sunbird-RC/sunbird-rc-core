@@ -1,9 +1,9 @@
-FROM node:18 AS install
+FROM node:20.11.0 AS install
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn
 
-FROM node:18 as build
+FROM node:20.11.0 as build
 WORKDIR /app
 COPY prisma ./prisma/
 COPY --from=install /app/node_modules ./node_modules
@@ -11,7 +11,7 @@ RUN npx prisma generate
 COPY . .
 RUN yarn build
 
-FROM node:18
+FROM node:20.11.0
 WORKDIR /app
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./

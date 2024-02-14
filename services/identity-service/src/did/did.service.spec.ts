@@ -48,7 +48,9 @@ describe('DidService', () => {
     const result = await service.generateDID(doc);
     expect(result).toBeDefined();
     expect(result.verificationMethod).toBeDefined();
-    expect(result.verificationMethod[0].publicKeyJwk).toBeDefined();
+    expect(
+      result.verificationMethod[0].publicKeyMultibase
+      ).toBeDefined();
     expect(result.id.split(':')[1]).toEqual('C4GT');
   });
 
@@ -58,7 +60,7 @@ describe('DidService', () => {
     const result = await service.generateDID(doc);
     expect(result).toBeDefined();
     expect(result.verificationMethod).toBeDefined();
-    expect(result.verificationMethod[0].publicKeyJwk).toBeDefined();
+    expect(result.verificationMethod[0].publicKeyMultibase).toBeDefined();
     expect(result.id.split(':')[1]).toEqual('rcw');
   });
 

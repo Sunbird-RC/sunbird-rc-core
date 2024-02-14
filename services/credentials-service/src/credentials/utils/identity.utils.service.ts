@@ -1,13 +1,12 @@
 import { HttpService } from '@nestjs/axios';
-import { JwtCredentialPayload } from 'did-jwt-vc';
-import { IssuerType } from 'did-jwt-vc/lib/types';
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces';
-import { DIDDocument } from 'did-resolver';
+import { DIDDocument, CredentialPayload, IssuerType } from 'vc.types';
 import {
   Injectable,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
+import { W3CCredential } from 'vc.types';
 
 @Injectable()
 export class IdentityUtilsService {
@@ -16,21 +15,21 @@ export class IdentityUtilsService {
   private logger = new Logger(IdentityUtilsService.name);
 
   async signVC(
-    credentialPlayload: JwtCredentialPayload,
+    credentialPlayload: CredentialPayload,
     did: IssuerType
-  ): Promise<String> {
+  ): Promise<W3CCredential> {
     try {
       const signedVCResponse: AxiosResponse =
         await this.httpService.axiosRef.post(
           `${process.env.IDENTITY_BASE_URL}/utils/sign`,
           {
             DID: did,
-            payload: JSON.stringify(credentialPlayload),
+            payload: credentialPlayload,
           }
         );
-        const {publicKey, ...rest} = signedVCResponse.data;
-        return rest;
+        return signedVCResponse.data as W3CCredential;
     } catch (err) {
+      console.log(err);
       this.logger.error('Error signing VC: ', err);
       throw new InternalServerErrorException('Error signing VC');
     }

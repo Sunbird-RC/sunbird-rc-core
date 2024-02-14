@@ -1,11 +1,9 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { CredentialPayload, transformCredentialInput } from 'did-jwt-vc';
-import { DIDDocument } from 'did-resolver';
 import { IdentityUtilsService } from '../credentials/utils/identity.utils.service';
 // import { PrismaService } from 'src/prisma.service';
 import { PrismaClient } from '@prisma/client';
-import { IssuerType, Proof } from 'did-jwt-vc/lib/types';
+import { IssuerType, Proof, DIDDocument, CredentialPayload } from 'vc.types';
 import { JwtCredentialSubject } from 'src/app.interface';
 import { RevocationLists, VerifiableCredentials } from '@prisma/client';
 import { RevocationListImpl } from './revocation-list.impl';
@@ -20,15 +18,10 @@ export class RevocationListService {
 
   private async signRevocationListCredential(revocationListCredential, issuer) {
     try {
-      revocationListCredential['proof'] = {
-        proofValue: await this.identityService.signVC(
-          transformCredentialInput(revocationListCredential as CredentialPayload),
-          issuer,
-        ),
-        type: 'Ed25519Signature2020',
-        created: new Date().toISOString(),
-        verificationMethod: issuer,
-      };
+      revocationListCredential['proof'] =(await this.identityService.signVC(
+        revocationListCredential as CredentialPayload,
+        issuer,
+      ) as any)?.proof;
     } catch (err) {
       Logger.error('Error signing revocation list', err);
       throw new InternalServerErrorException(
