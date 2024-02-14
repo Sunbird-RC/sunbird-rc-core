@@ -30,7 +30,7 @@ export class VaultService {
     }
     return { status, vault_config };
   }
-  async writePvtKey(secret: string, name: string, path?: string) {
+  async writePvtKey(secret: object, name: string, path?: string) {
     try {
       const createSecret = await this.vault.createKVSecret(
         this.token,

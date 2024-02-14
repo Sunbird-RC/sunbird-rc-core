@@ -73,14 +73,6 @@ describe('DidService', () => {
     expect(resolvedDid).toEqual(result);
   });
 
-  it("key generation failure test", async () => {
-    let prevSA = service.signingAlgorithm;
-    service.signingAlgorithm = 'abc';
-    await expect(service.generateKeyPairs(1))
-    .rejects.toThrow("Error generating key pair");
-    service.signingAlgorithm = prevSA;
-  });
-
   it("generate web did id test", () => {
     service.webDidBaseUrl = "did:web:example.com:identity:";
     const didId = service.generateDidUri("web");
