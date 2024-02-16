@@ -17,10 +17,8 @@ import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
 import dev.sunbirdrc.registry.dao.VertexReader;
-import dev.sunbirdrc.registry.entities.AttestationPolicy;
-import dev.sunbirdrc.registry.entities.AttestationType;
-import dev.sunbirdrc.registry.entities.FlowType;
-import dev.sunbirdrc.registry.entities.RevokedCredential;
+import dev.sunbirdrc.registry.authorization.pojos.UserToken;
+import dev.sunbirdrc.registry.entities.*;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.exception.UnAuthorizedException;
 import dev.sunbirdrc.registry.exception.UnreachableException;
@@ -50,7 +48,6 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.jetbrains.annotations.NotNull;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +57,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -75,7 +74,8 @@ import static dev.sunbirdrc.pojos.attestation.Action.GRANT_CLAIM;
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.exception.ErrorMessages.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
-import static dev.sunbirdrc.registry.middleware.util.OSSystemFields.*;
+import static dev.sunbirdrc.registry.middleware.util.OSSystemFields._osState;
+import static dev.sunbirdrc.registry.middleware.util.OSSystemFields.osOwner;
 
 /**
  * This is helper class, user-service calls this class in-order to access registry functionality
@@ -169,8 +169,13 @@ public class RegistryHelper {
     @Value("${workflow.enabled:true}")
     private boolean workflowEnabled;
 
+    @Value("${attestationPolicy.search_enabled:false}")
+    private boolean attestationPolicySearchEnabled;
     @Value("${view_template.decrypt_private_fields:false}")
     private boolean viewTemplateDecryptPrivateFields;
+
+    @Value("${registry.hard_delete_enabled}")
+    private boolean isHardDeleteEnabled;
 
     @Autowired
     private EntityTypeHandler entityTypeHandler;
@@ -309,6 +314,8 @@ public class RegistryHelper {
                 resultNode = includePrivateFields ? decryptionHelper.getDecryptedJson(resultNode) : resultNode;
             }
             resultNode = vTransformer.transform(viewTemplate, resultNode);
+        } else if (encryptionEnabled) {
+            resultNode = decryptionHelper.getDecryptedJson(resultNode);
         }
         logger.debug("readEntity ends");
         if(isEventsEnabled) {
@@ -430,8 +437,13 @@ public class RegistryHelper {
 
         updateGetFileUrl(attestationRequest.getAdditionalInput());
 
+        String propertyData = null;
+        if (attestationRequest.getPropertyData() != null) {
+            propertyData = attestationRequest.getPropertyData().toString();
+        }
+
         PluginRequestMessage message = PluginRequestMessageCreator.create(
-                attestationRequest.getPropertyData().toString(), condition, attestationOSID, attestationRequest.getEntityName(),
+                propertyData, condition, attestationOSID, attestationRequest.getEntityName(),
                 attestationRequest.getEmailId(), attestationRequest.getEntityId(), attestationRequest.getAdditionalInput(),
                 Action.RAISE_CLAIM.name(), attestationPolicy.getName(), attestationPolicy.getAttestorPlugin(),
                 attestationPolicy.getAttestorEntity(), attestationPolicy.getAttestorSignin(),
@@ -480,7 +492,9 @@ public class RegistryHelper {
         JsonNode parentNode = nodeToUpdate.get(attestationRequest.getEntityName());
         JsonNode propertyNode = parentNode.get(attestationRequest.getName());
         ObjectNode attestationJsonNode = (ObjectNode) JSONUtil.convertObjectJsonNode(attestationRequest);
-        attestationJsonNode.set("propertyData", JsonNodeFactory.instance.textNode(attestationRequest.getPropertyData().toString()));
+        if (attestationRequest.getPropertyData() != null) {
+            attestationJsonNode.set("propertyData", JsonNodeFactory.instance.textNode(attestationRequest.getPropertyData().toString()));
+        }
         createOrUpdateProperty(attestationRequest.getEntityName(), attestationJsonNode, nodeToUpdate, attestationRequest.getName(), (ObjectNode) parentNode, propertyNode);
         updateEntityAndState(existingEntityNode, nodeToUpdate, attestationRequest.getUserId());
     }
@@ -734,43 +748,41 @@ public class RegistryHelper {
         }
     }
 
-    public String getUserId(HttpServletRequest request, String entityName) throws Exception {
+    public String getUserId(String entityName) throws Exception {
         if (doesEntityOperationRequireAuthorization(entityName)) {
-            return fetchUserIdFromToken(request);
+            return fetchUserIdFromToken();
         } else {
             return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
         }
     }
 
-    private String fetchUserIdFromToken(HttpServletRequest request) throws Exception {
+    private String fetchUserIdFromToken() throws Exception {
         if(!securityEnabled){
             return DEFAULT_USER;
         }
-        return getKeycloakUserId(request);
+        return getPrincipalUserId();
     }
 
-    public String getKeycloakUserId(HttpServletRequest request) throws Exception {
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        if (principal != null) {
-            return principal.getAccount().getPrincipal().getName();
+    public String getPrincipalUserId() throws Exception {
+        UserToken userToken = (UserToken) SecurityContextHolder.getContext().getAuthentication();
+        if (userToken != null) {
+            return userToken.getUserId();
         }
         throw new Exception("Forbidden");
     }
 
     public String fetchEmailIdFromToken(HttpServletRequest request, String entityName) throws Exception {
         if (doesEntityContainOwnershipAttributes(entityName) || getManageRoles(entityName).size() > 0) {
-            KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
+            UserToken principal = (UserToken) request.getUserPrincipal();
             if (principal != null) {
                 try{
-                    return principal.getAccount().getKeycloakSecurityContext().getToken().getEmail();
+                    return principal.getEmail();
                 }catch (Exception exception){
-                    return principal.getAccount().getPrincipal().getName();
+                    return principal.getName();
                 }
             }
-            return USER_ANONYMOUS;
-        } else {
-            return dev.sunbirdrc.registry.Constants.USER_ANONYMOUS;
         }
+        return USER_ANONYMOUS;
     }
 
     public JsonNode getRequestedUserDetails(HttpServletRequest request, String entityName) throws Exception {
@@ -798,13 +810,20 @@ public class RegistryHelper {
     }
 
     private JsonNode getUserInfoFromRegistry(HttpServletRequest request, String entityName) throws Exception {
-        String userId = getUserId(request,entityName);
+        String userId = getUserId(entityName);
         if (userId != null) {
             ObjectNode payload = getSearchByOwnerQuery(entityName, userId);
 
             watch.start("RegistryController.searchEntity");
             JsonNode result = searchEntity(payload);
             watch.stop("RegistryController.searchEntity");
+            if(result != null && result.get(entityName) != null && !result.get(entityName).isEmpty()) {
+                String uuid = result.get(entityName).get(0).get(uuidPropertyName).asText();
+                JsonNode user = readEntity(userId, entityName, uuid, true, null, false);
+                ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+                arrayNode.add(user.get(entityName));
+                ((ObjectNode) result).set(entityName, arrayNode);
+            }
             return result;
         }
         throw new Exception("Forbidden");
@@ -821,7 +840,7 @@ public class RegistryHelper {
     }
 
     public String authorize(String entityName, String entityId, HttpServletRequest request) throws Exception {
-        String userIdFromRequest = getUserId(request, entityName);
+        String userIdFromRequest = getUserId(entityName);
         if (getManageRoles(entityName).size() > 0) {
             try {
                 return authorizeManageEntity(request, entityName);
@@ -906,7 +925,7 @@ public class RegistryHelper {
             return entityName;
         }
         Set<String> userRoles = getUserRolesFromRequest(request);
-        String userIdFromRequest = getUserId(request, entityName);
+        String userIdFromRequest = getUserId(entityName);
         JsonNode response = readEntity(userIdFromRequest, entityName, entityId, false, null, false);
         JsonNode entityFromDB = response.get(entityName);
         final boolean hasNoValidRole = !deleteRoles.isEmpty() && deleteRoles.stream().noneMatch(userRoles::contains);
@@ -926,7 +945,7 @@ public class RegistryHelper {
             }
             Set<String> userRoles = getUserRolesFromRequest(request);
             authorizeUserRole(userRoles, managingRoles);
-            return fetchUserIdFromToken(request);
+            return fetchUserIdFromToken();
         } else {
             return ROLE_ANONYMOUS;
         }
@@ -944,8 +963,12 @@ public class RegistryHelper {
     }
 
     private Set<String> getUserRolesFromRequest(HttpServletRequest request) {
-        KeycloakAuthenticationToken userPrincipal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        return userPrincipal!=null ? userPrincipal.getAccount().getRoles():Collections.emptySet();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Set<String> roles = new HashSet<>();
+        if (authentication != null) {
+            authentication.getAuthorities().forEach(authority -> roles.add(authority.getAuthority()));
+        }
+        return roles;
     }
 
     private void authorizeUserRole(Set<String> userRoles, List<String> allowedRoles) throws Exception {
@@ -955,23 +978,18 @@ public class RegistryHelper {
     }
 
     public void authorizeAttestor(String entity, HttpServletRequest request) throws Exception {
-        List<String> keyCloakEntities = getUserEntities(request);
+        List<String> userEntities = getUserEntities(request);
         Set<String> allTheAttestorEntities = definitionsManager.getDefinition(entity)
                 .getOsSchemaConfiguration()
                 .getAllTheAttestorEntities();
-        if (keyCloakEntities.stream().noneMatch(allTheAttestorEntities::contains)) {
+        if (userEntities.stream().noneMatch(allTheAttestorEntities::contains)) {
             throw new Exception(UNAUTHORIZED_EXCEPTION_MESSAGE);
         }
     }
 
     public List<String> getUserEntities(HttpServletRequest request) {
-        KeycloakAuthenticationToken principal = (KeycloakAuthenticationToken) request.getUserPrincipal();
-        Object customAttributes = principal.getAccount()
-                .getKeycloakSecurityContext()
-                .getToken()
-                .getOtherClaims()
-                .get("entity");
-        return (List<String>) customAttributes;
+        UserToken principal = (UserToken) request.getUserPrincipal();
+        return principal.getEntities();
     }
 
     @Async
@@ -1041,9 +1059,15 @@ public class RegistryHelper {
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         Shard shard = shardManager.activateShard(shardId);
         ReadConfigurator configurator = ReadConfiguratorFactory.getOne(false);
+        JsonNode deletedNode = null;
+        if(isHardDeleteEnabled) {
+            deletedNode = readEntity(userId, entityName, entityId, false, null, false);
+        }
         Vertex vertex = registryService.deleteEntityById(shard, entityName, userId, recordId.getUuid());
-        VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager);
-        JsonNode deletedNode = JsonNodeFactory.instance.objectNode().set(entityName, vertexReader.constructObject(vertex));
+        if (!isHardDeleteEnabled) {
+            VertexReader vertexReader = new VertexReader(shard.getDatabaseProvider(), vertex.graph(), configurator, uuidPropertyName, definitionsManager, true);
+            deletedNode = JsonNodeFactory.instance.objectNode().set(entityName, vertexReader.constructObject(vertex));
+        }
         if(notificationEnabled) notificationHelper.sendNotification(deletedNode, DELETE);
         return vertex;
     }
@@ -1068,21 +1092,25 @@ public class RegistryHelper {
     }
 
     private List<AttestationPolicy> getAttestationsFromRegistry(String entityName) {
-        try {
-            JsonNode searchRequest = objectMapper.readTree("{\n" +
-                    "    \"entityType\": [\n" +
-                    "        \"" + ATTESTATION_POLICY + "\"\n" +
-                    "    ],\n" +
-                    "    \"filters\": {\n" +
-                    "       \"entity\": {\n" +
-                    "           \"eq\": \"" + entityName + "\"\n" +
-                    "       }\n" +
-                    "    }\n" +
-                    "}");
-            JsonNode searchResponse = searchEntity(searchRequest);
-            return convertJsonNodeToAttestationList(searchResponse);
-        } catch (Exception e) {
-            logger.error("Error fetching attestation policy: {}", ExceptionUtils.getStackTrace(e));
+        if (attestationPolicySearchEnabled) {
+            try {
+                JsonNode searchRequest = objectMapper.readTree("{\n" +
+                        "    \"entityType\": [\n" +
+                        "        \"" + ATTESTATION_POLICY + "\"\n" +
+                        "    ],\n" +
+                        "    \"filters\": {\n" +
+                        "       \"entity\": {\n" +
+                        "           \"eq\": \"" + entityName + "\"\n" +
+                        "       }\n" +
+                        "    }\n" +
+                        "}");
+                JsonNode searchResponse = searchEntity(searchRequest);
+                return convertJsonNodeToAttestationList(searchResponse);
+            } catch (Exception e) {
+                logger.error("Error fetching attestation policy: {}", ExceptionUtils.getStackTrace(e));
+                return Collections.emptyList();
+            }
+        } else {
             return Collections.emptyList();
         }
     }

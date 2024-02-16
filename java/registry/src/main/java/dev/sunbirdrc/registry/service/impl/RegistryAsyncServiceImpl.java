@@ -3,12 +3,12 @@ package dev.sunbirdrc.registry.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.AsyncRequest;
+import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import dev.sunbirdrc.registry.model.dto.CreateEntityMessage;
 import dev.sunbirdrc.registry.service.RegistryService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,10 +39,10 @@ public class RegistryAsyncServiceImpl extends RegistryServiceImpl implements Reg
 
 	@Override
 	public String addEntity(Shard shard, String userId, JsonNode inputJson, boolean skipSignature) throws Exception {
-		KeycloakAuthenticationToken keycloakAuthenticationToken = (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+		UserToken authenticationToken = (UserToken) SecurityContextHolder.getContext().getAuthentication();
 		CreateEntityMessage createEntityMessage = CreateEntityMessage.builder().userId(userId).inputJson(inputJson)
 				.skipSignature(skipSignature).webhookUrl(asyncRequest.getWebhookUrl())
-				.emailId(keycloakAuthenticationToken == null ? "" : keycloakAuthenticationToken.getAccount().getKeycloakSecurityContext().getToken().getEmail())
+				.emailId(authenticationToken == null ? "" : authenticationToken.getEmail())
 				.build();
 		String message = objectMapper.writeValueAsString(createEntityMessage);
 		String transactionId = UUID.randomUUID().toString();

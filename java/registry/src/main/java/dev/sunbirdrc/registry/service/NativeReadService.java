@@ -47,6 +47,9 @@ public class NativeReadService implements IReadService {
     @Value("${audit.enabled}")
     private boolean auditEnabled;
 
+	@Value("${registry.expandReference}")
+	private boolean expandReferenceObj;
+
 	/**
 	 * This method interacts with the native db and reads the record
 	 *
@@ -59,7 +62,7 @@ public class NativeReadService implements IReadService {
 	@Override
 	public JsonNode getEntity(Shard shard, String userId, String id, String entityType, ReadConfigurator configurator) throws Exception {
 		DatabaseProvider dbProvider = shard.getDatabaseProvider();
-		IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName);
+		IRegistryDao registryDao = new RegistryDaoImpl(dbProvider, definitionsManager, uuidPropertyName, expandReferenceObj);
 		try (OSGraph osGraph = dbProvider.getOSGraph()) {
 			Graph graph = osGraph.getGraphStore();
 			try (Transaction tx = dbProvider.startTransaction(graph)) {

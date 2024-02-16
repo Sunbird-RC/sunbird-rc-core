@@ -11,6 +11,7 @@ import com.typesafe.config.ConfigFactory;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
+import dev.sunbirdrc.registry.authorization.SchemaAuthFilter;
 import dev.sunbirdrc.registry.dao.IRegistryDao;
 import dev.sunbirdrc.registry.dao.VertexReader;
 import dev.sunbirdrc.registry.dao.VertexWriter;
@@ -66,6 +67,8 @@ public class RegistryServiceImplTest {
 	@Value("${registry.schema.url}")
 	private String schemaUrl;
 	private String validationType = "json";
+	@Value("${registry.expandReference}")
+	private boolean expandReferenceObj;
 
 	public Constants.SchemaType getValidationType() throws IllegalArgumentException {
 		String validationMechanism = validationType.toUpperCase();
@@ -144,6 +147,9 @@ public class RegistryServiceImplTest {
 	@Mock
 	private IAuditService auditService;
 
+	@Mock
+	private SchemaAuthFilter schemaAuthFilter;
+
 	public void setup() throws IOException {
 		MockitoAnnotations.initMocks(this);
 		ReflectionTestUtils.setField(encryptionService, "encryptionServiceHealthCheckUri", "encHealthCheckUri");
@@ -153,6 +159,7 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(registryService, "definitionsManager", definitionsManager);
 		ReflectionTestUtils.setField(schemaService, "definitionsManager", definitionsManager);
 		ReflectionTestUtils.setField(schemaService, "validator", jsonValidationService);
+		ReflectionTestUtils.setField(schemaService, "schemaAuthFilter", schemaAuthFilter);
 		ReflectionTestUtils.setField(registryService, "schemaService", schemaService);
 		ReflectionTestUtils.setField(registryService, "objectMapper", objectMapper);
 		ReflectionTestUtils.setField(registryService, "eventService", eventService);
@@ -327,7 +334,7 @@ public class RegistryServiceImplTest {
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		String instituteOsid = addInstituteToGraph();
 		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, true );
 		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
 		ObjectNode affiliationNode = (ObjectNode) instituteNode.get("Institute").get("affiliation").get(0);
 		ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
@@ -358,7 +365,7 @@ public class RegistryServiceImplTest {
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		String instituteOsid = addInstituteToGraph();
 		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, true);
 		JsonNode instituteNode = vertexReader.read("Institute", instituteOsid);
 		((ObjectNode)instituteNode.get("Institute")).set("instituteName", JsonNodeFactory.instance.textNode("Holy Cross"));
 		when(shard.getShardLabel()).thenReturn("");
@@ -449,7 +456,7 @@ public class RegistryServiceImplTest {
 	public void shouldTestVertexWriter() throws Exception {
 		String v1 = addStudentToGraph();
 		ReadConfigurator readConfigurator = ReadConfiguratorFactory.getForUpdateValidation();
-		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager);
+		VertexReader vertexReader = new VertexReader(mockDatabaseProvider, graph, readConfigurator, "osid", definitionsManager, expandReferenceObj);
 		JsonNode student = vertexReader.read("Student", v1);
 		assertNotNull(student);
 	}

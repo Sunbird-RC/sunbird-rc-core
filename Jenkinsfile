@@ -27,11 +27,11 @@ node {
 
 
         stage('Push image') {
-            docker.withRegistry('', 'dockerhub') {
+            docker.withRegistry('ghcr.io', 'sunbird-rc') {
                 app.push("${env.BUILD_NUMBER}")
                 app.push("latest")
            }
-           docker.withRegistry('', 'dockerhub') {
+           docker.withRegistry('ghrc.io', 'sunbird-rc') {
                claimApp.push("${env.BUILD_NUMBER}")
                claimApp.push("latest")
           }

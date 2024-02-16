@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.Filter;
 import dev.sunbirdrc.pojos.FilterOperators;
@@ -25,11 +23,13 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -62,6 +62,7 @@ public class ElasticServiceImpl implements IElasticService {
     private static String userName;
     private static String password;
     private static String defaultScheme;
+    private static boolean isHardDeleteEnabled;
 
     public void setConnectionInfo(String connection) {
         connectionInfo = connection;
@@ -257,13 +258,16 @@ public class ElasticServiceImpl implements IElasticService {
      */
     @Override
     public RestStatus deleteEntity(String index, String osid) {
-        UpdateResponse response = null;
+        DocWriteResponse response = null;
         try {
             String indexL = index.toLowerCase();
             Map<String, Object> readMap = readEntity(indexL, osid);
-           // Map<String, Object> entityMap = (Map<String, Object>) readMap.get(index);
-            readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
-            response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
+            if (isHardDeleteEnabled) {
+                response = getClient(indexL).delete(new DeleteRequest(indexL, searchType, osid), RequestOptions.DEFAULT);
+            } else {
+                readMap.put(Constants.STATUS_KEYWORD, Constants.STATUS_INACTIVE);
+                response = getClient(indexL).update(new UpdateRequest(indexL, searchType, osid).doc(readMap), RequestOptions.DEFAULT);
+            }
         } catch (NullPointerException | IOException e) {
             logger.error("exception in deleteEntity {}", ExceptionUtils.getStackTrace(e));
             return RestStatus.NOT_FOUND;
@@ -335,7 +339,7 @@ public class ElasticServiceImpl implements IElasticService {
             }
             switch (operator) {
             case eq:
-                query = query.must(QueryBuilders.matchPhraseQuery(field, value));
+                query = query.must(QueryBuilders.matchPhraseQuery(String.format("%s.keyword", field), value));
                 break;
             case neq:
                 query = query.mustNot(QueryBuilders.matchPhraseQuery(field, value));
@@ -369,7 +373,7 @@ public class ElasticServiceImpl implements IElasticService {
                 query = query.must(QueryBuilders.matchPhrasePrefixQuery(field, value.toString()));
                 break;
             case endsWith:
-                query = query.must(QueryBuilders.wildcardQuery(field, "*" + value));
+                query = query.must(QueryBuilders.wildcardQuery(String.format("%s.keyword", field), "*" + value));
                 break;
             case notContains:
                 query = query.mustNot(QueryBuilders.matchPhraseQuery(field, value));
@@ -402,5 +406,8 @@ public class ElasticServiceImpl implements IElasticService {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+    public void setIsHardDeleteEnabled(boolean isHardDeleteEnabled) {
+        ElasticServiceImpl.isHardDeleteEnabled = isHardDeleteEnabled;
     }
 }

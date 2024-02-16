@@ -11,11 +11,20 @@
         <version>2.0.3</version>
         <artifactId>middleware-bom</artifactId>
     </parent>
-
+    <dependencies>
+        <dependency>
+            <groupId>dev.sunbirdrc</groupId>
+            <artifactId>pojos</artifactId>
+            <version>2.0.3</version>
+        </dependency>
+    </dependencies>
     <modules>
         <module>authorization</module>
         <module>validation</module>
         <module>keycloak</module>
         <module>workflow</module>
+        <module>identity-provider</module>
+        <module>auth0</module>
+        <module>generic-iam</module>
     </modules>
 </project>

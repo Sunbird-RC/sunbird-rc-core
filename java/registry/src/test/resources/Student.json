@@ -161,6 +161,8 @@
         "mobile": "/contactDetails/mobile",
         "userId": "/contactDetails/mobile"
       }
-    ]
+    ],
+    "inviteRoles": ["anonymous"],
+    "roles": ["anonymous"]
   }
 }

@@ -1,10 +1,14 @@
 package dev.sunbirdrc.registry.util;
 
+import dev.sunbirdrc.pojos.UniqueIdentifierField;
 import dev.sunbirdrc.registry.dao.VertexWriter;
+import dev.sunbirdrc.registry.exception.CustomException;
+import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.model.IndexFields;
+import dev.sunbirdrc.registry.service.IIdGenService;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.OSGraph;
@@ -19,13 +23,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Component("entityParenter")
 public class EntityParenter {
@@ -39,6 +39,11 @@ public class EntityParenter {
 
     @Autowired
     private DBProviderFactory dbProviderFactory;
+
+    @Autowired(required = false)
+    private IIdGenService idGenService;
+    @Value("${idgen.enabled:false}")
+    private boolean idGenEnabled;
 
     private IDefinitionsManager definitionsManager;
     private DBConnectionInfoMgr dbConnectionInfoMgr;
@@ -303,6 +308,20 @@ public class EntityParenter {
                 vertexWriter.updateParentIndexProperty(v, Constants.INDEX_FIELDS, indexFields);
                 vertexWriter.updateParentIndexProperty(v, Constants.UNIQUE_INDEX_FIELDS, indexUniqueFields);
                 dbProvider.commitTransaction(graph, tx);
+            }
+        }
+    }
+
+    public void saveIdFormat() throws SchemaException {
+        if(!idGenEnabled) return;
+        List<UniqueIdentifierField> list = this.definitionsManager.getAllDefinitions().stream()
+                .flatMap(definition -> definitionsManager.getUniqueIdentifierFields(definition.getTitle()).stream())
+                .filter(Objects::nonNull).collect(Collectors.toList());
+        if(!list.isEmpty()) {
+            try {
+                idGenService.saveIdFormat(list);
+            } catch (CustomException e) {
+                throw new SchemaException(e.getMessage(), e.getCause());
             }
         }
     }
