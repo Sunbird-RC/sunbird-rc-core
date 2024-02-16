@@ -4,7 +4,7 @@
 import { http } from 'gluegun'
 
 import { ApisauceInstance } from 'apisauce'
-import { ApiResponse } from '../../../types'
+import { ApiResponse, KeycloakUserDTO } from '../../../types'
 import { config } from '../../../config/config'
 
 // Utility methods
@@ -20,6 +20,7 @@ class KeycloakWrapper {
 	user: string
 	pass: string
 	realm: string
+	ADMIN_ROLE_NAME : string
 
 	constructor(options: { user: string; pass: string; realm: string }) {
 		this.httpClient = http.create({
@@ -28,6 +29,7 @@ class KeycloakWrapper {
 		this.user = options.user
 		this.pass = options.pass
 		this.realm = options.realm
+		this.ADMIN_ROLE_NAME = "admin"
 	}
 
 	// Return an access token
@@ -230,6 +232,95 @@ class KeycloakWrapper {
 			)
 		}
 	}
+
+	// Fetch User By Username
+	async fetchUserByUserName( username : string): Promise<Array<KeycloakUserDTO>> {
+		const response = (await this.httpClient.get(
+			`/auth/admin/realms/${this.realm}/users?username=${username}`,
+			{},
+			{
+				headers: {
+					authorization: `Bearer ${await this.getAccessToken()}`,
+				},
+			}
+		)) as ApiResponse
+		if (!response.ok) {
+			console.debug(response.originalError)
+			throw new Error(
+				`There was an error while making client scope optional for a client in keycloak: ${
+					response.originalError ?? response.problem
+				}`
+			)
+		}
+		return response.data;
+	};
+
+
+	// Assign Admin Role to Users
+	async assignAdminRoleToUser( user : KeycloakUserDTO, clientId : string) : Promise<void> {
+		// Fetch admin role ID
+		let adminRoleId;
+		const response = (await this.httpClient.get(
+			`/auth/admin/realms/${this.realm}/roles`,
+			{},
+			{
+				headers: {
+					authorization: `Bearer ${await this.getAccessToken()}`,
+				},
+			}
+		)) as ApiResponse
+		if (!response.ok) {
+			console.debug(response.originalError)
+			throw new Error(
+				`There was an error while making client scope optional for a client in keycloak: ${
+					response.originalError ?? response.problem
+				}`
+			)
+		}
+    	const roles = await response.data;
+		for (const role of roles) {
+			if (role.name === 'admin') {
+				adminRoleId = role.id;
+				break;
+			}
+		}
+		if (!adminRoleId) {
+			console.log("Admin role not found!");
+			return;
+		}
+
+		let responseOfRole = (await this.httpClient.post(
+			`/auth/admin/realms/${this.realm}/users/${user.id}/role-mappings/realm`,
+			[{
+				id: adminRoleId,
+				name: "admin"
+			}],
+			{
+				headers: {
+					authorization: `Bearer ${await this.getAccessToken()}`,
+					'Content-Type': 'application/json',
+				},
+			}
+		)) as ApiResponse
+		if (!responseOfRole.ok) {
+			console.debug(responseOfRole.originalError)
+			throw new Error(
+				`There was an error while creating a client scope in keycloak: ${
+					responseOfRole.originalError ?? responseOfRole.problem
+				}`
+			)
+		}
+		
+        if (responseOfRole.status === 204) {
+            console.log(`Admin role assigned to user: ${user.username}`);
+        } else {
+            console.log(`Failed to assign admin role to user: ${user.username}`);
+        }
+    }
+	  
 }
+
+
+
 
 export default KeycloakWrapper

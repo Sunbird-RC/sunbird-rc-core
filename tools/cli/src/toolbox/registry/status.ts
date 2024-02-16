@@ -1,8 +1,9 @@
 // @/toolbox/registry/status
 // View registry status
 
-import { RegistryContainer, Toolbox } from '../../types'
-
+import { RegistryContainer, Toolbox} from '../../types';
+// A helper function to check if all the containers are up and running
+import { system } from 'gluegun'
 // Accept a toolbox, return a registry status viewer
 export default async (toolbox: Toolbox): Promise<RegistryContainer[]> => {
 	const { events, system } = toolbox
@@ -14,9 +15,21 @@ export default async (toolbox: Toolbox): Promise<RegistryContainer[]> => {
 	})
 
 	// List containers
-	const rawJson = JSON.parse(
-		await system.run('docker compose ps --format json')
-	)
+	let rawJson;
+	try {
+		let dockerFunciton = await system.run('docker compose ps --format json')
+		rawJson = JSON.parse(dockerFunciton);
+	} catch (error) {
+		let dockerFunciton = await system.run('docker compose ps --format json')
+		let jsonArray = []
+		if (dockerFunciton) {
+			// Convert the string response into array of JSON Strings
+			let jsonStringArray = dockerFunciton.trim().split('\n');
+			// Convert each JSON string into a JavaScript object
+			jsonArray = jsonStringArray?.map(jsonString => JSON.parse(jsonString));
+		}
+		rawJson = jsonArray;
+	}
 
 	// Parse the JSON
 	let containers = []
@@ -52,15 +65,27 @@ export default async (toolbox: Toolbox): Promise<RegistryContainer[]> => {
 	return containers
 }
 
-// A helper function to check if all the containers are up and running
-import { system } from 'gluegun'
 export const allUp = async (): Promise<boolean> => {
 	// List the containers
-	const rawJson = JSON.parse(
-		await system.run('docker compose ps --format json')
-	)
+	
+	let rawJson = [];
 
-	for (const rawInfo of rawJson) {
+	try {
+		let dockerFunciton = await system.run('docker compose ps --format json')
+		rawJson = JSON.parse(dockerFunciton);
+	} catch (error) {
+		let dockerFunciton = await system.run('docker compose ps --format json')
+		let jsonArray = []
+		if (dockerFunciton) {
+			// Convert the string response into array of JSON Strings
+			let jsonStringArray = dockerFunciton.trim().split('\n');
+			// Convert each JSON string into a JavaScript object
+			jsonArray = jsonStringArray?.map(jsonString => JSON.parse(jsonString));
+		}
+		rawJson = jsonArray;
+	}
+
+	for (let rawInfo of rawJson) {
 		if (rawInfo.State !== 'running') {
 			return false
 		}

@@ -21,6 +21,8 @@ export interface Config {
 		REDIS: string
 		DIGI_LOCKER: string
 		BULK_ISSUANCE: string
+		ADMIN_PORTAL: string
+		ISSUANCE_PORTAL: string
 	}
 	auxiliary_services: AuxiliaryServices
 	definationMangerTypes: DefinationsManager
@@ -42,6 +44,8 @@ const auxiliary_services: AuxiliaryServices = {
 	'Metrics Service': 'kafka clickhouse metrics',
 	'Bulk Issuance Service': 'bulk_issuance',
 	'Digilocker Certificate Service': 'digilocker-certificate-api',
+	'Admin Portal': 'admin-portal',
+	'Issuance Portal': 'issuance-portal'
 }
 
 const definationsManagers = {
@@ -74,6 +78,8 @@ export let config: Config = {
 		REDIS: 'redis',
 		DIGI_LOCKER: 'digilocker-certificate-api',
 		BULK_ISSUANCE: 'bulk_issuance',
+		ADMIN_PORTAL: 'admin-portal',
+		ISSUANCE_PORTAL: 'issuance-portal'
 	},
 	auxiliary_services: auxiliary_services,
 	definationMangerTypes: definationsManagers,

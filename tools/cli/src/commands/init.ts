@@ -9,6 +9,8 @@ import {
 	RegistrySetupOptions,
 	Toolbox,
 	SignatureOptions,
+	Auxiliary_Services,
+	PortalAdminUser,
 } from '../types'
 import { config } from '../config/config'
 
@@ -162,7 +164,9 @@ export default {
 			signatureEnabled: false,
 		}
 		let importdirectories = {}
-		let auxiliaryServices = {}
+		let auxiliaryServices : Auxiliary_Services = {
+			auxiliaryServicesToBeEnabled: [],
+		}
 
 		// Checks for enabling the signature service if attestation flow is not enabled
 		if (!options.enableAttestation) {
@@ -243,16 +247,48 @@ export default {
 
 		print.info('')
 
+		let portalUserCredOptions: PortalAdminUser= {
+			portalAdminUser : '',
+		}
+		if (auxiliaryServices.auxiliaryServicesToBeEnabled.includes(
+			Object.keys(config.auxiliary_services)[7] 
+		) || auxiliaryServices.auxiliaryServicesToBeEnabled.includes(
+			Object.keys(config.auxiliary_services)[6] 
+		) ) { 
+			portalUserCredOptions = await prompt.ask([
+				{
+					type: 'input',
+					message: print.colors.reset(
+						'Enter a username for creating a user to access portal/portals'
+					),
+					name: 'portalAdminUser',
+					initial: 'portal_admin',
+				}
+			])
+		}
+
 		let optionsToCheck = {
 			...options,
 			...signatureOptions,
 			...importdirectories,
 			...autoGenerateKeyOptions,
 			...auxiliaryServices,
+			...portalUserCredOptions,
 		}
 		// Setup the registry
 		// print.debug(options);
 		await registry.create(optionsToCheck as unknown as RegistrySetupOptions)
+
+		print.info('')
+		if (auxiliaryServices.auxiliaryServicesToBeEnabled.includes(
+			Object.keys(config.auxiliary_services)[7] 
+		) || auxiliaryServices.auxiliaryServicesToBeEnabled.includes(
+			Object.keys(config.auxiliary_services)[6] 
+		) ) {
+			let message = `You can use ${optionsToCheck.portalAdminUser} as your Username to login to the portal/portal with the default password ( abcd@123 ). You can reset it by loging into keycloak ` 
+			print.success(message);
+		}
+		print.info('');
 
 		print.info('')
 		if (options.autoGenerateKeys) {
@@ -264,5 +300,6 @@ export default {
 				'Sunbird-RC is configured with test/default keys for signing. It is required to be updated `imports/config.json` before going live/production'
 			)
 		}
+
 	},
 }

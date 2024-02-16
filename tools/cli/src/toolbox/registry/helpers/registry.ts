@@ -20,7 +20,6 @@ class RegistryWrapper {
     async createAUserInRegistry (userName : string , email: string) : Promise<string> {
         // Create a user(admin/Issuer) via registry
         let data = this.getAdminUserReq(userName , email);
-        console.log(data);
         let maxRetries = config.maximumRetries
 		let retryCount = 0;
         while (retryCount < maxRetries) {
@@ -38,9 +37,7 @@ class RegistryWrapper {
 
 
             if (response.ok) {
-                // get the keycloak osOwnerID and use it assign admin role
                 return "success";
-                // return response.data.access_token
             } else {
                 // if (retryCount === maxRetries - 1)
                 //     console.debug(response.originalError)
@@ -67,7 +64,6 @@ class RegistryWrapper {
     async createDocumentTypeInRegistry () : Promise<string> {
         // Create a user(admin/Issuer) via registry
         let data = this.getDocumentTypeReq();
-        console.log(data);
         let maxRetries = config.maximumRetries
 		let retryCount = 0;
         while (retryCount < maxRetries) {
@@ -85,13 +81,10 @@ class RegistryWrapper {
 
 
             if (response.ok) {
-                // get the keycloak osOwnerID and use it assign admin role
                 return "success";
-                // return response.data.access_token
             } else {
                 // if (retryCount === maxRetries - 1)
                 //     console.debug(response.originalError)
-                console.log(retryCount);
                 throw new Error(
                     `There was an error while creating an User in registry: ${
                         response.originalError ?? response.problem

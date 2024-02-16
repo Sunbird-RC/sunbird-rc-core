@@ -5,12 +5,12 @@
     "clientId": "admin-portal",
     "realm": "<%= props.realmName %>"
   },
-  "configFolder": "assets/config",
-  "referanceSchema" : "assets/config",
-  "languageFolder": "assets/i18n",
+  "configFolder": "/assets/config",
+  "referanceSchema" : "/assets/config",
+  "languageFolder": "/assets/i18n",
   "title": "Admin Portal",
   "baseUrl": "/registry/api/v1",
-  "schemaUrl": "/registry/api/docs/swagger.json",
+  "schemaUrl": "http:localhost:8081/api/docs/swagger.json",
   "footerText": "Admin Portal",
   "languages": [
     "en",

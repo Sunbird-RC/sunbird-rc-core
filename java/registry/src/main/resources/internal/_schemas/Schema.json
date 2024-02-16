@@ -48,8 +48,8 @@
       "osCreatedBy",
       "osUpdatedBy"
     ],
-    "roles": ["admin"],
-    "inviteRoles": ["admin"],
+    "roles": ["admin", "Issuer"],
+    "inviteRoles": ["admin", "Issuer"],
     "ownershipAttributes": []
   }
 }
