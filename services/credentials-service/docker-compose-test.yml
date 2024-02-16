@@ -25,7 +25,6 @@ services:
       ENABLE_AUTH: "false"
       JWKS_URI: ""
       SIGNING_ALGORITHM: "Ed25519Signature2020"
-      WEB_DID_BASE_URL: "https://example.com/identity"
     networks:
       rcw-test:
       default:

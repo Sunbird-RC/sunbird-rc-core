@@ -27,7 +27,6 @@ services:
       SCHEMA_BASE_URL: 
       ENABLE_AUTH: "false"
       JWKS_URI: ""
-      WEB_DID_BASE_URL: ""
     healthcheck:
       test:
         [ "CMD-SHELL", "curl -f http://localhost:3000/health || exit 1" ]
