@@ -12,6 +12,7 @@ export class DidService {
   keys = {}
   webDidBaseUrl: string;
   signingAlgorithm: string;
+  didResolver: any;
   constructor(private prisma: PrismaService, private vault: VaultService) {
     let baseUrl: string = process.env.WEB_DID_BASE_URL;
     if(baseUrl && typeof baseUrl === "string") {
@@ -30,9 +31,17 @@ export class DidService {
     this.keys['Ed25519Signature2020'] = Ed25519VerificationKey2020;
     this.keys['Ed25519Signature2018'] = Ed25519VerificationKey2018;
     this.keys['RsaSignature2018'] = RSAKeyPair;
+    const { Resolver } = await import('did-resolver');
+    const { getResolver } = await import('web-did-resolver');
+    const webResolver = getResolver();
+    this.didResolver = new Resolver({
+      ...webResolver
+        //...you can flatten multiple resolver methods into the Resolver
+    });
   }
 
-  generateDidUri(method: string): string {
+  generateDidUri(method: string, id: string): string {
+    if(id) return id;
     if (method === 'web') {
       return this.getWebDidIdForId(uuid());
     }
@@ -46,7 +55,7 @@ export class DidService {
 
   async generateDID(doc: GenerateDidDTO): Promise<DIDDocument> {
     // Create a UUID for the DID using uuidv4
-    const didUri: string = this.generateDidUri(doc?.method);
+    const didUri: string = this.generateDidUri(doc?.method, doc?.id);
 
     // Create private/public key pair
     let authnKeys;
@@ -138,6 +147,15 @@ export class DidService {
     } catch (err) {
       Logger.error(`Error fetching DID: ${id} from db, ${err}`);
       throw new InternalServerErrorException(`Error fetching DID: ${id} from db`);
+    }
+
+    if(!artifact && id?.startsWith("did:web") && !id?.startsWith(this.webDidBaseUrl)) {
+      try {
+        return (await this.didResolver.resolve(id)).didDocument;
+      } catch (err) {
+        Logger.error(`Error fetching DID: ${id} from web, ${err}`);
+        throw new InternalServerErrorException(`Error fetching DID: ${id} from web`);
+      }
     }
 
     if (artifact) {

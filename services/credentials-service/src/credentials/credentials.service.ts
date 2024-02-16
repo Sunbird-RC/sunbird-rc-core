@@ -147,7 +147,7 @@ export class CredentialsService {
 
   async verifyCredential(credId: string) {
     // getting the credential from the db
-    const { signed: credToVerify, status } =
+    const stored =
       (await this.prisma.verifiableCredentials.findUnique({
       where: {
         id: credId,
@@ -156,7 +156,8 @@ export class CredentialsService {
         signed: true,
         status: true,
       },
-    })) as { signed: Verifiable<W3CCredential>; status: VCStatus };
+    }));
+    const { signed: credToVerify, status } = (stored || {}) as { signed: Verifiable<W3CCredential>; status: VCStatus };
 
     this.logger.debug('Fetched credntial from db to verify');
 
@@ -167,9 +168,9 @@ export class CredentialsService {
     }
     try {
       // calling identity service to verify the issuer DID
-      const verificationMethod = (credToVerify.issuer?.id || credToVerify.issuer) as string;
+      const issuerId = (credToVerify.issuer?.id || credToVerify.issuer) as string;
       const did: DIDDocument = await this.identityUtilsService.resolveDID(
-        verificationMethod
+        issuerId
       );
       const credVerificationMethod = (credToVerify?.proof || {})[Object.keys(credToVerify?.proof || {})
       .find(d => d.indexOf("verificationMethod") > -1)]

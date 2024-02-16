@@ -21,4 +21,5 @@ export class GenerateDidDTO {
     description: 'The method of DID.',
   })
   method: string;
+  id?: string;
 }
