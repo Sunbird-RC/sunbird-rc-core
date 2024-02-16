@@ -364,6 +364,26 @@ idgen:
   generateURL: ${idgen_generate_url:http://localhost:8088/egov-idgen/id/_generate}
   idFormatURL: ${idgen_id_format_url:http://localhost:8088/egov-idgen/id/_format/add}
 
+did:
+  enabled: ${did_enabled:false}
+  healthCheckURL: ${did_health_check_url:http://localhost:3332/health}
+  generateURL: ${did_generate_url:http://localhost:3332/did/generate}
+  resolveURL: ${did_resolve_url:http://localhost:3332/did/resolve}
+
+credential:
+  enabled: ${credential_enabled:false}
+  healthCheckURL: ${credential_health_check_url:http://localhost:3000/health}
+  issueCredentialURL: ${credential_issue_url:http://localhost:3332/credentials/issue}
+  getCredentialByIdURL: ${credential_get_url:http://localhost:3332/credentials/%s}
+  verifyCredentialURL: ${credential_verify_url:http://localhost:3332/credentials/%s/verify}
+  schema:
+    enabled: ${credential_schema_enabled:false}
+    healthCheckURL: ${credential_schema_health_check_url:http://localhost:3333/health}
+    createSchemaURL: ${credential_schema_create_url:http://localhost:3332/credential-schema}
+    updateSchemaURL: ${credential_schema_update_url:http://localhost:3332/credential-schema}
+    getSchemaByIdAndVersionURL: ${credential_schema_get_by_id_and_version_url:http://localhost:3332/credential-schema}
+    getSchemaByTagsURL: ${credential_schema_search_by_tags_url:http://localhost:3332/credential-schema}
+
 ---
 ##################################################################
 #                      TEST PROFILE                              #
