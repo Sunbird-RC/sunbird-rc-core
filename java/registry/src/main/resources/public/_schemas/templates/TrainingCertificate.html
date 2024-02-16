@@ -1,0 +1,29 @@
+<html lang="en">
+<head>
+    <style>
+        .line{text-align:center;font-family: 'Imperial Script';font-size: 2em;}
+    </style>
+</head>
+<body style="width: 900px">
+<div style="margin: 1em;border: 3px solid darkgoldenrod;border-radius: 5px;background-color: lightgoldenrodyellow;height: 600px">
+    <div style="padding:1em;text-align:center;font-family: Canterbury;font-size: 4em;">Certificate of Training</div>
+    <table width="100%"><tr>
+        <td valign="bottom"><img style="float:left;padding-left: 2em;" src="{{qrCode}}" alt="qr_code"/>
+    </td><td>
+    <div class="line">
+        <div>This is to certify that</div>
+        <div><b>{{credentialSubject.name}}</b></div>
+        <div>has successfully completed training requirements for</div>
+        <div style="padding: 1em;font-family: 'Open Sans', sans-serif">{{credentialSubject.trainedOn}} </div>
+        <div>and is awarded this certificate on </div>
+        <div>{{dateFormat proof.created "dddd, MMMM Do YYYY"}}</div>
+
+    </div>
+    </td></tr></table>
+</div>
+</div>
+<div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,68 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "properties": {
+      "SkillCertificate": {
+        "$ref": "#/definitions/SkillCertificate"
+      }
+    },
+    "required": [
+      "SkillCertificate"
+    ],
+    "title": "SkillCertificate",
+    "definitions": {
+      "SkillCertificate": {
+        "$id": "#/properties/SkillCertificate",
+        "type": "object",
+        "title": "The SkillCertificate Schema",
+        "required": [
+          "name",
+          "contact"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "trainingTitle": {
+            "type": "string"
+          },
+          "contact": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "note": {
+            "type": "string"
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "skill": {
+                  "type": "string"
+                },
+                "certifiedOn": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "_osConfig": {
+      "uniqueIndexFields": [
+        "contact"
+      ],
+      "ownershipAttributes": [],
+      "roles": [],
+      "inviteRoles": [
+        "anonymous"
+      ],
+      "enableLogin": false,
+      "credentialTemplate": "https://gist.githubusercontent.com/tejash-jl/550aa1365c37e09065f1f134c936530d/raw/54f10668f8cad3953d9b09c09212d4ec4434ae7f/SkillExternalCredentialTemplate.json"
+    }
+  }

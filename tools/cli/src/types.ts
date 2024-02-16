@@ -81,6 +81,11 @@ export interface RegistrySetupOptions {
 	eventEnabled: boolean
 	enableAttestation: boolean
 	fileStorageEnabled: boolean
+	keycloakAdminPortalUser: string
+	keyckoakAdminPortalPass: string
+	keycloakIssuancePortalUser: string
+	keyckoakIssuancePortalPass: string
+	portalAdminUser: string
 }
 
 export interface RegistryTearDownOptions {
@@ -127,6 +132,14 @@ export interface SignatureOptions {
 	signatureEnabled: boolean
 }
 
+export interface Auxiliary_Services {
+	auxiliaryServicesToBeEnabled : Array<String>
+}
+
+export interface PortalAdminUser{
+	portalAdminUser : String
+}
+
 export interface GitRawJson {
 	ID: string
 	Name: string
@@ -141,3 +154,29 @@ export interface GitRawJson {
 	ExitCode: number
 	Publishers: any[] // You can specify a more specific type if needed
 }
+
+export interface ComposeService {
+	id: string;
+	name: string;
+	labels: Record<string, string>;
+	replicas: number;
+	networks: string[];
+	ports: number[];
+	status: string;
+  }
+
+export interface KeycloakUserDTO {
+	id: string,
+	createdTimestamp: number,
+	username: string,
+	enabled: boolean,
+	totp: boolean,
+	emailVerified: boolean,
+	email: string,
+	attributes: Object[],
+	disableableCredentialTypes: any[],
+	requiredActions: any[],
+	notBefore: number,
+	access: Object[]
+}
+  

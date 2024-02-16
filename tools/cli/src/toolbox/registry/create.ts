@@ -10,6 +10,7 @@ var keypair = require('keypair')
 
 import { RegistrySetupOptions, Toolbox } from '../../types'
 import formatKey from '../utils'
+import RegistryWrapper from './helpers/registry'
 
 // Accept a toolbox and configuration, create a registry instance in return
 export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
@@ -19,6 +20,8 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		pass: setupOptions.keycloakAdminPass,
 		realm: setupOptions.realmName,
 	})
+	const registry = new RegistryWrapper();
+
 	let enableTheseServices = [
 		config.docker_service_name.DB,
 		config.docker_service_name.REGISTRY,
@@ -37,6 +40,17 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 	//Enable claims for attestation work flows
 	if (setupOptions?.enableAttestation) {
 		enableTheseServices.push(config.docker_service_name.CLAIMS_MS)
+	}
+
+
+	// Enable necessary services for Issuance and Admin portal 
+	if (setupOptions.auxiliaryServicesToBeEnabled.includes(
+		Object.keys(config.auxiliary_services)[7] 
+	) || setupOptions.auxiliaryServicesToBeEnabled.includes(
+		Object.keys(config.auxiliary_services)[6] 
+	) ) {
+		setupOptions.signatureEnabled = true
+		setupOptions.enableVCIssuance = true
 	}
 
 	//Enable Certificate Signer service
@@ -82,7 +96,7 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 	// Check for metrics and enable the events enabled flag on for registry
 	if (
 		setupOptions.auxiliaryServicesToBeEnabled.includes(
-			Object.keys(config.auxiliary_services)[4]
+			Object.keys(config.auxiliary_services)[3]
 		)
 	) {
 		setupOptions.eventEnabled = true
@@ -130,6 +144,26 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		target: 'imports/realm-export.json',
 		props: setupOptions,
 	})
+	template.generate({
+		template: 'config/admin-portal/config.json',
+		target: 'imports/admin-portal/config.json',
+		props: setupOptions,
+	})
+	template.generate({
+		template: 'config/admin-portal/nginx.conf',
+		target: 'imports/admin-portal/nginx.conf',
+		props: setupOptions,
+	})
+	template.generate({
+		template: 'config/Issuance-portal/config.json',
+		target: 'imports/Issuance-portal/config.json',
+		props: setupOptions,
+	})
+	template.generate({
+		template: 'config/Issuance-portal/nginx.conf',
+		target: 'imports/Issuance-portal/nginx.conf',
+		props: setupOptions,
+	})
 	if (setupOptions.pathToEntitySchemas === 'use-example-config') {
 		template.generate({
 			template: 'config/schemas/student.json',
@@ -139,6 +173,16 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		template.generate({
 			template: 'config/schemas/teacher.json',
 			target: 'config/schemas/teacher.json',
+			props: setupOptions,
+		})
+		template.generate({
+			template: 'config/schemas/Issuer.json',
+			target: 'config/schemas/Issuer.json',
+			props: setupOptions,
+		})
+		template.generate({
+			template: 'config/schemas/DocumentType.json',
+			target: 'config/schemas/DocumentType.json',
 			props: setupOptions,
 		})
 	} else {
@@ -279,6 +323,23 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		})
 	}
 
+	// Restart Registry
+	events.emit('registry.create', {
+		status: 'progress',
+		operation: 'restarting-containers',
+		message: 'Restarting all services',
+	})
+	await system
+		.exec('docker compose up --force-recreate --no-deps -d registry')
+		.catch((error: Error) => {
+			events.emit('registry.create', {
+				status: 'error',
+				operation: 'restarting-containers',
+				message: `An unexpected error occurred while restarting the registry: ${error.message}`,
+		})
+	})
+
+
 	// Check if we need to create scopes in keycloak
 	if (
 		await filesystem.existsAsync(
@@ -325,6 +386,44 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 		}
 	}
 
+		// Create default user for admin and issuance portal 
+
+	events.emit('registry.create', {
+		status: 'progress',
+		operation: 'configuring-portal-User',
+		message: 'Setting up Admin User in the Registry ',
+	})
+	if (setupOptions.auxiliaryServicesToBeEnabled.includes(
+		Object.keys(config.auxiliary_services)[7] 
+	) || setupOptions.auxiliaryServicesToBeEnabled.includes(
+		Object.keys(config.auxiliary_services)[6] 
+	) ) {
+
+		try {
+			await registry.createAUserInRegistry("portalAdmin", setupOptions.portalAdminUser);
+			// Fetch the user that we created 
+			let user = await keycloak.fetchUserByUserName(setupOptions.portalAdminUser);
+			// give admin role to the User (admin role needs to be assigned for both issuance and admin portal user)
+			const clientId = await keycloak.getInternalClientId(
+				setupOptions.keycloakAdminClientId
+			)
+			await  keycloak.assignAdminRoleToUser( user[0], clientId);
+			if (setupOptions.auxiliaryServicesToBeEnabled.includes(
+				Object.keys(config.auxiliary_services)[7] )) {
+				await registry.createDocumentTypeInRegistry();		
+			}
+		} catch (errorObject : unknown) {
+			console.log(errorObject);
+			const error = errorObject as Error
+			events.emit('registry.create', {
+				status: 'error',
+				operation: 'configuring-keycloak-portal-user',
+				message: `An unexpected error occurred while creating portal user: ${error.message}`,
+			})
+		}
+
+	}
+
 	// Restart containers
 	events.emit('registry.create', {
 		status: 'progress',
@@ -338,8 +437,8 @@ export default async (toolbox: Toolbox, setupOptions: RegistrySetupOptions) => {
 				status: 'error',
 				operation: 'restarting-containers',
 				message: `An unexpected error occurred while restarting the registry: ${error.message}`,
-			})
 		})
+	})
 	// Wait for the containers to start
 	await until(allUp)
 

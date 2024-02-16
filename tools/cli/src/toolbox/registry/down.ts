@@ -46,9 +46,23 @@ export default async (toolbox: Toolbox) => {
 
 const allDown = async (): Promise<boolean> => {
 	// List the containers
-	const rawJson = JSON.parse(
-		await system.run('docker compose ps --format json')
-	)
+
+		
+	let rawJson = [];
+	try {
+		let dockerFunciton = await system.run('docker compose ps --format json')
+		rawJson = JSON.parse(dockerFunciton);
+	} catch (error) {
+		let dockerFunciton = await system.run('docker compose ps --format json')
+		let jsonArray = []
+		if (dockerFunciton) {
+			// Convert the string response into array of JSON Strings
+			let jsonStringArray = dockerFunciton.trim().split('\n');
+			// Convert each JSON string into a JavaScript object
+			jsonArray = jsonStringArray?.map(jsonString => JSON.parse(jsonString));
+		}
+		rawJson = jsonArray;
+	}
 
 	for (const rawInfo of rawJson) {
 		if (rawInfo.State !== 'exited') {
