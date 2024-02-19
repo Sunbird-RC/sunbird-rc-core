@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class SchemaAuthFilter implements Filter {
     private static final Logger logger = LoggerFactory.getLogger(SchemaAuthFilter.class);
-    private static final String INVITE_URL_ENDPOINT = "/invite";
+    private static final String INVITE_URL_PATTERN = "/api/v1/([A-Za-z0-9_])+/invite(/)?";
 
     private final Set<String> anonymousInviteSchemas =  new HashSet<>();
     private final Set<String> anonymousSchemas =  new HashSet<>();
@@ -20,12 +20,17 @@ public class SchemaAuthFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws ServletException, IOException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
+        String requestUri = request.getRequestURI();
         try {
-            if (request.getRequestURI().contains(INVITE_URL_ENDPOINT) &&
-                    anonymousInviteSchemas.stream().anyMatch(request.getRequestURI()::contains)) {
+            if (requestUri.matches(INVITE_URL_PATTERN) &&
+                    anonymousInviteSchemas.stream()
+                            .map(d -> String.format("/api/v1/%s/invite(/)?(\\\\?.*)?", d))
+                            .anyMatch(requestUri::matches)) {
                 servletRequest.getRequestDispatcher(((HttpServletRequest) servletRequest).getServletPath()).forward(servletRequest, servletResponse);
                 return;
-            } else if (!request.getRequestURI().contains(INVITE_URL_ENDPOINT) && anonymousSchemas.stream().anyMatch(request.getRequestURI()::contains)) {
+            } else if (!requestUri.matches(INVITE_URL_PATTERN) && anonymousSchemas.stream()
+                    .map(d -> String.format("/api/v1/%s(/.*)?(((\\\\?)|(\\\\%s)).*)?", d, "%3F"))
+                    .anyMatch(requestUri::matches)) {
                 servletRequest.getRequestDispatcher(((HttpServletRequest) servletRequest).getServletPath()).forward(servletRequest, servletResponse);
                 return;
             }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.OwnershipsAttributes;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,7 +141,7 @@ public class DefinitionsManager implements IDefinitionsManager {
 			appendNewDefinition(definition);
 			return definition;
 		} catch (Exception e) {
-			logger.error("Failed loading schema from DB", e);
+			logger.error("Failed loading schema from DB: {}", ExceptionUtils.getStackTrace(e));
 			throw new RuntimeException(e);
 		}
 	}
@@ -161,7 +162,8 @@ public class DefinitionsManager implements IDefinitionsManager {
 			String schemaTitle = schemaJsonNode.get(TITLE).asText();
 			removeDefinition(schemaTitle);
 		} catch (Exception e) {
-			logger.error("Failed removing schema from definition manager", e);
+			logger.error("Failed removing schema from definition manager: {}", ExceptionUtils.getStackTrace(e));
+            throw new RuntimeException(e);
 		}
 	}
 
@@ -170,7 +172,8 @@ public class DefinitionsManager implements IDefinitionsManager {
 		try {
 			definitionMap.remove(schema);
 		} catch (Exception e) {
-			logger.error("Failed removing schema from definition manager", e);
+			logger.error("Failed removing schema from definition manager: {}", ExceptionUtils.getStackTrace(e));
+            throw new RuntimeException(e);
 		}
 	}
 

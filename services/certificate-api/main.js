@@ -1,56 +1,33 @@
-const axios = require('axios');
-let token = '';
-let osids = [""];
-osids.forEach(osid => {
+const certificateController = require("./src/routes/certificate_controller");
+const http = require('http');
+const port = process.env.PORT || 4321;
 
-
-    let config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: 'http://localhost:8081/api/v1/ProofOfAchievement/'+osid,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token,
+const server = http.createServer(async (req, res) => {
+    const label = `${req.url}-${new Date().getTime()}`;
+    console.time(label)
+    console.log(`API ${req.method} ${req.url} called`);
+    try {
+        if (req.method === 'GET' && req.url.startsWith("/health")) {
+            res.end("OK")
+        } else if (req.method === 'POST' && req.url.startsWith("/api/v1/certificate") && ["application/pdf"].includes(req.headers.accept)) {
+            const data = await certificateController.getCertificatePDF(req, res);
+            res.end(data)
+        } else if (req.method === 'POST' && req.url.startsWith("/api/v1/certificate") && ["text/html", "image/svg+xml"].includes(req.headers.accept)) {
+            const data = await certificateController.getCertificate(req, res);
+            res.end(data)
+        } else {
+            res.statusCode = 404;
+            res.end("Not found");
         }
-    };
+    } finally {
+        if (!res.writableEnded) {
+            res.statusCode = 500;
+            res.end("Error occurred");
+        }
+    }
+    console.timeEnd(label)
+});
 
-    axios.request(config)
-        .then((response) => {
-            const getResp = response.data;
-            delete getResp["osUpdatedAt"]
-            delete getResp["osUpdatedBy"]
-            delete getResp["_osSignedData"]
-            delete getResp["osOwner"]
-            delete getResp["osCreatedAt"]
-            delete getResp["osCreatedBy"]
-            getResp["achievementTitle"] = "Participation"
-            console.log(getResp)
-            let config = {
-                method: 'put',
-                maxBodyLength: Infinity,
-                url: 'http://localhost:8081/api/v1/ProofOfAchievement/' + getResp["osid"],
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token,
-                },
-                data : getResp
-            };
-
-            axios.request(config)
-                .then((response) => {
-                    console.log(JSON.stringify(response.data));
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
-
-
-        })
-        .catch((error) => {
-            console.log(error);
-        });
-})
-
-
-
-
+server.listen(port, async () => {
+    console.log(`Server listening on port ${port}`);
+});

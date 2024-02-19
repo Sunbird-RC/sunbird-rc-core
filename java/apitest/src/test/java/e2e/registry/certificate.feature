@@ -2,6 +2,8 @@ Feature: Get certificate pdf
   Background:
     * def certUrl = "http://localhost:8078"
     * def templateBody = {"certificate": "{\"name\":\"Test Name\", \"dob\":\"2002-12-22\"}","templateUrl": "http://registry:8081/api/v1/templates/Student.html"}
+
+  @envnot=fusionauth
   Scenario:
     And header Accept = 'application/pdf'
     Given url certUrl
@@ -11,6 +13,7 @@ Feature: Get certificate pdf
     Then status 200
     #* print response
 
+  @envnot=fusionauth
   Scenario:
     And header Accept = 'application/pdf'
     Given url certUrl

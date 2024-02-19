@@ -1,4 +1,5 @@
-FROM sunbirdrc/keycloak
+ARG KEYCLOAK_BASE_IMAGE=sunbirdrc/keycloak
+FROM $KEYCLOAK_BASE_IMAGE
 
 ADD themes /opt/jboss/keycloak/themes
 ADD providers /opt/jboss/keycloak/providers

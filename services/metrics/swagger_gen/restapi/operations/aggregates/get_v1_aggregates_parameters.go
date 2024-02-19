@@ -13,8 +13,7 @@ import (
 )
 
 // NewGetV1AggregatesParams creates a new GetV1AggregatesParams object
-//
-// There are no default values defined in the spec.
+// no default values defined in spec.
 func NewGetV1AggregatesParams() GetV1AggregatesParams {
 
 	return GetV1AggregatesParams{}
