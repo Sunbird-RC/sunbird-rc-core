@@ -10,7 +10,10 @@ import { W3CCredential } from 'vc.types';
 
 @Injectable()
 export class IdentityUtilsService {
-  constructor(private readonly httpService: HttpService) {}
+  identityBaseUrl: string;
+  constructor(private readonly httpService: HttpService) {
+    this.identityBaseUrl = process.env.IDENTITY_BASE_URL;
+  }
 
   private logger = new Logger(IdentityUtilsService.name);
 
@@ -35,13 +38,12 @@ export class IdentityUtilsService {
     }
   }
 
-  async resolveDID(issuer): Promise<DIDDocument> {
+  async resolveDID(issuer: string): Promise<DIDDocument> {
     try {
-      const verificationURL = `${process.env.IDENTITY_BASE_URL}/did/resolve/${issuer}`;
+      let url = `${this.identityBaseUrl}/did/resolve/${encodeURIComponent(issuer)}`;
       const dIDResponse: AxiosResponse = await this.httpService.axiosRef.get(
-        verificationURL
+        url
       );
-
       return dIDResponse.data as DIDDocument;
     } catch (err) {
       this.logger.error('Error resolving DID: ', err);
