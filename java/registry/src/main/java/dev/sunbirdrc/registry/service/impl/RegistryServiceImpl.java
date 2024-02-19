@@ -353,10 +353,6 @@ public class RegistryServiceImpl implements RegistryService {
                 }
                 String parentEntityType = readNode.fields().next().getKey();
                 HashMap<String, Vertex> uuidVertexMap = vr.getUuidVertexMap();
-
-                // Merge the new changes
-                JsonNode mergedNode = mergeWrapper("/" + parentEntityType, (ObjectNode) readNode, (ObjectNode) inputNode);
-                logger.debug("After merge the payload is " + mergedNode.toString());
                 // TODO: need to revoke and re-sign the entity
                 // Re-sign, i.e., remove and add entity signature again
 /*
@@ -375,11 +371,7 @@ public class RegistryServiceImpl implements RegistryService {
 */
 
                 // TODO - Validate before update
-                JsonNode validationNode = mergedNode.deepCopy();
-                List<String> removeKeys = new LinkedList<>();
-                removeKeys.add(uuidPropertyName);
-                removeKeys.add(Constants.TYPE_STR_JSON_LD);
-                JSONUtil.removeNodes((ObjectNode) validationNode, removeKeys);
+
 //            iValidate.validate(entityNodeType, mergedNode.toString());
 //            logger.debug("Validated payload before update");
 
@@ -407,6 +399,13 @@ public class RegistryServiceImpl implements RegistryService {
                 }
 
                 databaseProvider.commitTransaction(graph, tx);
+                JsonNode mergedNode = mergeWrapper("/" + parentEntityType, (ObjectNode) readNode, (ObjectNode) inputNode);
+                logger.debug("After merge the payload is " + mergedNode.toString());
+                JsonNode validationNode = mergedNode.deepCopy();
+                List<String> removeKeys = new LinkedList<>();
+                removeKeys.add(uuidPropertyName);
+                removeKeys.add(Constants.TYPE_STR_JSON_LD);
+                JSONUtil.removeNodes((ObjectNode) validationNode, removeKeys);
 
                 if (isInternalRegistry(entityType) && isElasticSearchEnabled()) {
                     if (addShardPrefixForESRecord && !shard.getShardLabel().isEmpty()) {
