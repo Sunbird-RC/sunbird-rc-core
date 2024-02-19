@@ -23,7 +23,7 @@ services:
       - '3000:3000'
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
-      IDENTITY_BASE_URL: 
+      IDENTITY_BASE_URL: "http://identity-service:3332"
       SCHEMA_BASE_URL: 
       ENABLE_AUTH: "false"
       JWKS_URI: ""
