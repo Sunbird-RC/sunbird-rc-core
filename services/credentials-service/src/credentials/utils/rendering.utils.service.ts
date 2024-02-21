@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { W3CCredential } from 'vc.types';
 import { JwtCredentialSubject } from 'src/app.interface';
-import * as wkhtmltopdf from 'wkhtmltopdf';
+import wkhtmltopdf from 'wkhtmltopdf';
 import { compile } from 'handlebars';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const QRCode = require('qrcode');

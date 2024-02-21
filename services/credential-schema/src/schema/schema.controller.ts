@@ -106,7 +106,6 @@ export class SchemaController {
 
   // TODO: Add role based guards here
   @Put(':id/:ver')
-  @ApiQuery({ name: 'id', required: true, type: String })
   @ApiBody({
     type: VCModelSchema,
   })

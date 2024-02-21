@@ -198,6 +198,9 @@ export class CredentialsService {
           documentLoader: this.getDocumentLoader(did)
         });
       }
+      if(!results?.verified) {
+        this.logger.error('Error in verifying credentials: ', results);
+      }
       return {
         status: status,
         checks: [

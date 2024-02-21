@@ -12,12 +12,12 @@ export class ValidateTemplateService {
   private logger = new Logger(ValidateTemplateService.name);
   private parseHBSTemplate(HBSstr: string): Array<string> {
     const hbsfields: Array<string> = HBSstr.match(/{{[{]?(.*?)[}]?}}/g);
-    hbsfields.forEach((fieldname: string) => {
+    hbsfields?.forEach((fieldname: string) => {
       const len = fieldname.length;
       fieldname = fieldname.slice(2, len - 2);
     });
-    hbsfields.sort();
-    return hbsfields;
+    hbsfields?.sort();
+    return hbsfields || [];
   }
 
   async validateTemplateAgainstSchema(
