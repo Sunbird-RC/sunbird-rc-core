@@ -113,7 +113,7 @@ public class DidHelper implements HealthIndicator {
                 return node.get(0).get("id").asText();
             }
         } catch (RestClientException | IOException e) {
-            logger.error("Exception when checking the health of the Sunbird {} service: {}", getServiceName(), ExceptionUtils.getStackTrace(e));
+            logger.error("Exception when generating a did for method: {}, {}", method, ExceptionUtils.getStackTrace(e));
         }
         return null;
     }

@@ -21,10 +21,7 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.model.event.Event;
-import dev.sunbirdrc.registry.service.IAuditService;
-import dev.sunbirdrc.registry.service.IEventService;
-import dev.sunbirdrc.registry.service.EntityTransformer;
-import dev.sunbirdrc.registry.service.SchemaService;
+import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.shard.Shard;
@@ -120,7 +117,7 @@ public class RegistryServiceImplTest {
 
 	private IRegistryDao registryDao;
 	@InjectMocks
-	private RegistryServiceImpl registryServiceForHealth;
+	private HealthCheckService registryServiceForHealth;
 
 	@Autowired
 	private DBProviderFactory dbProviderFactory;

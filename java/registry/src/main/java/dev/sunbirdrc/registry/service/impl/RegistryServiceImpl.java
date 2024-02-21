@@ -138,27 +138,8 @@ public class RegistryServiceImpl implements RegistryService {
     @Value("${idgen.enabled:false}")
     private boolean idGenEnabled;
 
-    @Autowired(required = false)
-    private List<HealthIndicator> healthIndicators;
     @Value("${registry.expandReference}")
     private boolean expandReferenceObj;
-
-    public HealthCheckResponse health(Shard shard) throws Exception {
-        HealthCheckResponse healthCheck;
-        AtomicBoolean overallHealthStatus = new AtomicBoolean(true);
-        List<ComponentHealthInfo> checks = new ArrayList<>();
-        if (healthIndicators != null) {
-            healthIndicators.parallelStream().forEach(healthIndicator -> {
-                ComponentHealthInfo healthInfo = healthIndicator.getHealthInfo();
-                checks.add(healthInfo);
-                overallHealthStatus.set(overallHealthStatus.get() & healthInfo.isHealthy());
-            });
-        }
-
-        healthCheck = new HealthCheckResponse(Constants.SUNBIRDRC_REGISTRY_API, overallHealthStatus.get(), checks);
-        logger.info("Heath Check : {}", checks.stream().map(ComponentHealthInfo::getName).collect(Collectors.toList()));
-        return healthCheck;
-    }
 
     /**
      * delete the vertex and changes the status

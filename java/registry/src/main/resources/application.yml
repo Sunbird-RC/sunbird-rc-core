@@ -373,16 +373,18 @@ did:
 credential:
   enabled: ${credential_enabled:false}
   healthCheckURL: ${credential_health_check_url:http://localhost:3000/health}
-  issueCredentialURL: ${credential_issue_url:http://localhost:3332/credentials/issue}
-  getCredentialByIdURL: ${credential_get_url:http://localhost:3332/credentials/%s}
-  verifyCredentialURL: ${credential_verify_url:http://localhost:3332/credentials/%s/verify}
+  issueCredentialURL: ${credential_issue_url:http://localhost:3000/credentials/issue}
+  getCredentialByIdURL: ${credential_get_url:http://localhost:3000/credentials/{id}}
+  deleteCredentialByIdURL: ${credential_delete_url:http://localhost:3000/credentials/{id}}
+  verifyCredentialURL: ${credential_verify_url:http://localhost:3000/credentials/{id}/verify}
+  getRevocationListURL: ${credential_revocation_list_url:http://localhost:3000/credentials/revocation-list?issuerId={issuerDid}&page={page}&limit={limit}}
   schema:
     enabled: ${credential_schema_enabled:false}
     healthCheckURL: ${credential_schema_health_check_url:http://localhost:3333/health}
-    createSchemaURL: ${credential_schema_create_url:http://localhost:3332/credential-schema}
-    updateSchemaURL: ${credential_schema_update_url:http://localhost:3332/credential-schema}
-    getSchemaByIdAndVersionURL: ${credential_schema_get_by_id_and_version_url:http://localhost:3332/credential-schema}
-    getSchemaByTagsURL: ${credential_schema_search_by_tags_url:http://localhost:3332/credential-schema}
+    createSchemaURL: ${credential_schema_create_url:http://localhost:3333/credential-schema}
+    updateSchemaURL: ${credential_schema_update_url:http://localhost:3333/credential-schema/{id}/{version}}
+    getSchemaByIdAndVersionURL: ${credential_schema_get_by_id_and_version_url:http://localhost:3333/credential-schema/{id}/{version}
+    getSchemaByTagsURL: ${credential_schema_search_by_tags_url:http://localhost:3333/credential-schema?tags={tags}}
 
 ---
 ##################################################################

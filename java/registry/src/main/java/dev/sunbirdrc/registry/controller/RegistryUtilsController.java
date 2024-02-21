@@ -17,7 +17,7 @@ import dev.sunbirdrc.registry.exception.UnreachableException;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
-import dev.sunbirdrc.registry.service.RegistryService;
+import dev.sunbirdrc.registry.service.HealthCheckService;
 import dev.sunbirdrc.registry.service.SignatureService;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
@@ -69,7 +69,7 @@ public class RegistryUtilsController {
 	RegistryHelper registryHelper;
 
 	@Autowired
-	private RegistryService registryService;
+	private HealthCheckService healthCheckService;
 
 	@Value("${frame.file}")
 	private String frameFile;
@@ -252,7 +252,7 @@ public class RegistryUtilsController {
 
 		try {
 			Shard shard = shardManager.getDefaultShard();
-			HealthCheckResponse healthCheckResult = registryService.health(shard);
+			HealthCheckResponse healthCheckResult = healthCheckService.health(shard);
 			response.setResult(JSONUtil.convertObjectJsonMap(healthCheckResult));
 			responseParams.setErrmsg("");
 			responseParams.setStatus(Response.Status.SUCCESSFUL);
