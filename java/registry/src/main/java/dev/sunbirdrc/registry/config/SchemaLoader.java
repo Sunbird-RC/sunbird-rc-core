@@ -45,7 +45,7 @@ public class SchemaLoader implements ApplicationListener<ContextRefreshedEvent> 
 		objectNode.set(ENTITY_TYPE, JsonNodeFactory.instance.arrayNode().add(Schema));
 		objectNode.set(FILTERS, JsonNodeFactory.instance.objectNode());
 		try {
-			JsonNode searchResults = searchService.search(objectNode);
+			JsonNode searchResults = searchService.search(objectNode, "");
 			for (JsonNode schemaNode : searchResults.get(Schema)) {
 				try {
 					schemaService.addSchema(JsonNodeFactory.instance.objectNode().set(Schema, schemaNode));

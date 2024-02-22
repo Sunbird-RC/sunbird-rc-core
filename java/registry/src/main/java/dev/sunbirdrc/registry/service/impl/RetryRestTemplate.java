@@ -9,6 +9,7 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.util.Collections;
 
@@ -43,6 +44,7 @@ public class RetryRestTemplate {
     public ResponseEntity<String> getForEntity(String url, Object... uriVariables){
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory());
         return restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(null, headers), String.class, uriVariables);
     }
 

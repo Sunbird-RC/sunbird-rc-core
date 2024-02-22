@@ -4,7 +4,7 @@ public class SignatureException extends Exception {
 
 	private static final long serialVersionUID = -6315798195661762882L;
 
-	public class CreationException extends CustomException {
+	public static class CreationException extends CustomException {
 		private static final long serialVersionUID = 6174717850058203376L;
 
 		public CreationException(String msg) {
@@ -12,7 +12,7 @@ public class SignatureException extends Exception {
 		}
 	}
 
-	public class VerificationException extends CustomException {
+	public static class VerificationException extends CustomException {
 
 		private static final long serialVersionUID = 4996784337180620650L;
 

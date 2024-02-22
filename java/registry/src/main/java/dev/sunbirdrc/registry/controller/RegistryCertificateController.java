@@ -3,9 +3,11 @@ package dev.sunbirdrc.registry.controller;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import dev.sunbirdrc.registry.entities.VerificationRequest;
 import dev.sunbirdrc.registry.helper.RegistryHelper;
+import dev.sunbirdrc.registry.helper.SignatureHelper;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,17 +23,10 @@ public class RegistryCertificateController {
 
     private static final String VERIFIED = "verified";
     private static final String RESULTS = "results";
-    private final RestTemplate restTemplate;
-    private final String verifyURL;
-
-    private final RegistryHelper registryHelper;
-
-    public RegistryCertificateController(RestTemplate restTemplate, @Value("${signature.verifyURL}") String verifyURL,
-                                         RegistryHelper registryHelper) {
-        this.restTemplate = restTemplate;
-        this.verifyURL = verifyURL;
-        this.registryHelper = registryHelper;
-    }
+    @Autowired
+    private SignatureHelper signatureHelper;
+    @Autowired
+    private RegistryHelper registryHelper;
 
     @RequestMapping(value = "/api/v1/verify", method = RequestMethod.POST)
     public ResponseEntity<Object> verifyCertificate(@RequestBody VerificationRequest verificationRequest) {
@@ -40,7 +35,7 @@ public class RegistryCertificateController {
                 return new ResponseEntity<>(JsonNodeFactory.instance.objectNode().put(VERIFIED, false)
                         .put(RESULTS, "Credential is revoked"), HttpStatus.BAD_REQUEST);
             } else {
-                Object response = restTemplate.postForObject(verifyURL, verificationRequest, Object.class);
+                Object response = signatureHelper.verify(verificationRequest);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
         } catch (Exception e) {

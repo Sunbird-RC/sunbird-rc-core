@@ -16,6 +16,7 @@ import dev.sunbirdrc.pojos.*;
 import dev.sunbirdrc.pojos.attestation.Action;
 import dev.sunbirdrc.pojos.attestation.States;
 import dev.sunbirdrc.pojos.attestation.exception.PolicyNotFoundException;
+import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.dao.VertexReader;
 import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import dev.sunbirdrc.registry.entities.*;
@@ -53,6 +54,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
@@ -81,6 +83,7 @@ import static dev.sunbirdrc.registry.middleware.util.OSSystemFields.osOwner;
  * This is helper class, user-service calls this class in-order to access registry functionality
  */
 @Component
+@Lazy
 @Setter
 public class RegistryHelper {
     private static final String SIGNED_HASH = "signedHash";
@@ -181,7 +184,7 @@ public class RegistryHelper {
     private EntityTypeHandler entityTypeHandler;
 
     @Autowired(required = false)
-    private SignatureService signatureService;
+    private SignatureHelper signatureHelper;
 
     @Autowired
     private ConditionResolverService conditionResolverService;
@@ -211,23 +214,23 @@ public class RegistryHelper {
      * @return
      * @throws Exception
      */
-    public String addEntity(JsonNode inputJson, String userId) throws Exception {
-        String entityId = addEntityHandler(inputJson, userId, false, false);
+    public String addEntity(JsonNode inputJson, String userId, boolean checkAsync) throws Exception {
+        String entityId = addEntityHandler(inputJson, userId, false, false, checkAsync);
         if(notificationEnabled) notificationHelper.sendNotification(inputJson, CREATE);
         return entityId;
     }
 
-    public String inviteEntity(JsonNode inputJson, String userId) throws Exception {
-        String entityId = addEntityHandler(inputJson, userId, skipRequiredValidationForInvite, skipSignatureForInvite);
+    public String inviteEntity(JsonNode inputJson, String userId, boolean checkAsync) throws Exception {
+        String entityId = addEntityHandler(inputJson, userId, skipRequiredValidationForInvite, skipSignatureForInvite, checkAsync);
         if(notificationEnabled) notificationHelper.sendNotification(inputJson, INVITE);
         return entityId;
     }
 
-    private String addEntityWithoutValidation(JsonNode inputJson, String userId, String entityName) throws Exception {
-        return addEntity(inputJson, userId, entityName, true);
+    private String addEntityWithoutValidation(JsonNode inputJson, String userId, String entityName, boolean checkAsync) throws Exception {
+        return addEntity(inputJson, userId, entityName, true, checkAsync);
     }
 
-    private String addEntityHandler(JsonNode inputJson, String userId, boolean skipRequiredValidation, boolean skipSignature) throws Exception {
+    private String addEntityHandler(JsonNode inputJson, String userId, boolean skipRequiredValidation, boolean skipSignature, boolean checkAsync) throws Exception {
         String entityType = inputJson.fields().next().getKey();
         validationService.validate(entityType, objectMapper.writeValueAsString(inputJson), skipRequiredValidation);
         String entityName = inputJson.fields().next().getKey();
@@ -243,17 +246,17 @@ public class RegistryHelper {
             }
             jsonNode.add(userId);
         }
-        return addEntity(inputJson, userId, entityType, skipSignature);
+        return addEntity(inputJson, userId, entityType, skipSignature, checkAsync);
     }
 
-    private String addEntity(JsonNode inputJson, String userId, String entityType, boolean skipSignature) throws Exception {
+    private String addEntity(JsonNode inputJson, String userId, String entityType, boolean skipSignature, boolean checkAsync) throws Exception {
         RecordIdentifier recordId;
         try {
             logger.info("Add api: entity type: {} and shard propery: {}", entityType, shardManager.getShardProperty());
             Shard shard = shardManager.getShard(inputJson.get(entityType).get(shardManager.getShardProperty()));
             watch.start("RegistryController.addToExistingEntity");
             String resultId;
-            if (asyncRequest.isEnabled()) {
+            if (checkAsync && asyncRequest.isEnabled()) {
                 resultId = registryAsyncService.addEntity(shard, userId, inputJson, skipSignature);
                 recordId = new RecordIdentifier(null, resultId);
             } else {
@@ -353,7 +356,7 @@ public class RegistryHelper {
 
     private JsonNode searchEntity(JsonNode inputJson, ISearchService service) throws Exception {
         logger.debug("searchEntity starts");
-        JsonNode resultNode = service.search(inputJson);
+        JsonNode resultNode = service.search(inputJson, null);
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
@@ -727,7 +730,7 @@ public class RegistryHelper {
         newEntityArrNode.add(entityType + auditSuffixSeparator + auditSuffix);
         ((ObjectNode) queryNode).set(ENTITY_TYPE, newEntityArrNode);
 
-        JsonNode resultNode = searchService.search(queryNode);
+        JsonNode resultNode = searchService.search(queryNode, null);
 
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
@@ -1034,7 +1037,7 @@ public class RegistryHelper {
         Map<String, Object> requestBodyMap = new HashMap<>();
         requestBodyMap.put("data", result);
         requestBodyMap.put(CREDENTIAL_TEMPLATE, credentialTemplate);
-        return signatureService.sign(requestBodyMap);
+        return signatureHelper.sign(requestBodyMap);
     }
 
     // TODO: can be async?
@@ -1047,7 +1050,7 @@ public class RegistryHelper {
             ObjectNode updatedNode = (ObjectNode) readEntity(userId, entityName, entityId, false, null, false)
                     .get(entityName);
             Object signedCredentials = getSignedDoc(updatedNode, credentialTemplate);
-            updatedNode.set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+            OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), updatedNode, signedCredentials);
             ObjectNode updatedNodeParent = JsonNodeFactory.instance.objectNode();
             updatedNodeParent.set(entityName, updatedNode);
             updateProperty(updatedNodeParent, userId);
@@ -1076,7 +1079,7 @@ public class RegistryHelper {
         RecordIdentifier recordId = RecordIdentifier.parse(entityId);
         String shardId = dbConnectionInfoMgr.getShardId(recordId.getShardLabel());
         Shard shard = shardManager.activateShard(shardId);
-        ((ObjectNode) currentJsonNode).put(OSSystemFields._osSignedData.name(), "");
+        OSSystemFields.credentials.removeCredential(GenericConfiguration.getSignatureProvider(), currentJsonNode);
         ObjectNode newRootNode = objectMapper.createObjectNode();
         newRootNode.set(entityName, JSONUtil.convertObjectJsonNode(currentJsonNode));
         String jsonString = objectMapper.writeValueAsString(newRootNode);
@@ -1139,15 +1142,15 @@ public class RegistryHelper {
                 .orElseThrow(() -> new PolicyNotFoundException("Policy " + policyName + " is not found"));
     }
 
-    public String createAttestationPolicy(AttestationPolicy attestationPolicy, String userId) throws Exception {
+    public String createAttestationPolicy(AttestationPolicy attestationPolicy, String userId, boolean checkAsync) throws Exception {
         ObjectNode entity = createJsonNodeForAttestationPolicy(attestationPolicy);
-        return addEntityWithoutValidation(entity, userId, ATTESTATION_POLICY);
+        return addEntityWithoutValidation(entity, userId, ATTESTATION_POLICY, checkAsync);
     }
 
-    public String addRevokedCredential(JsonNode credential, String userId) throws Exception {
+    public String addRevokedCredential(JsonNode credential, String userId, boolean checkAsync) throws Exception {
         ObjectNode entity = JsonNodeFactory.instance.objectNode();
         entity.set(ATTESTATION_POLICY, credential);
-        return addEntityWithoutValidation(entity, userId, REVOKED_CREDENTIAL);
+        return addEntityWithoutValidation(entity, userId, REVOKED_CREDENTIAL, checkAsync);
     }
 
     private ObjectNode createJsonNodeForAttestationPolicy(AttestationPolicy attestationPolicy) {
@@ -1238,15 +1241,15 @@ public class RegistryHelper {
         }
     }
 
-    public void revokeExistingCredentials(String entity, String entityId, String userId, String signedData) throws Exception {
+    public void revokeExistingCredentials(String entity, String entityId, String userId, String signedData, boolean checkAsync) throws Exception {
         if (!StringUtils.isEmpty(signedData)) {
             RevokedCredential revokedCredential = RevokedCredential.builder().entity(entity).entityId(entityId)
                     .signedData(signedData).signedHash(generateHash(signedData)).userId(userId).build();
             ObjectNode newRootNode = objectMapper.createObjectNode();
+            signatureHelper.revoke(entity, entityId, signedData);
             newRootNode.set(REVOKED_CREDENTIAL, JSONUtil.convertObjectJsonNode(revokedCredential));
-            String revokedId = addEntity(newRootNode, userId, REVOKED_CREDENTIAL, false);
+            String revokedId = addEntity(newRootNode, userId, REVOKED_CREDENTIAL, false, checkAsync);
             logger.info("Added deleted credential to revoked list: {}", revokedId);
-
         }
     }
 

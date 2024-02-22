@@ -13,11 +13,13 @@ import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthCheckResponse;
 import dev.sunbirdrc.pojos.HealthIndicator;
 import dev.sunbirdrc.pojos.UniqueIdentifierField;
+import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.dao.*;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.RecordNotFoundException;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.exception.UniqueIdentifierException;
+import dev.sunbirdrc.registry.helper.SignatureHelper;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
@@ -37,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -61,14 +64,12 @@ public class RegistryServiceImpl implements RegistryService {
     @Autowired
     private EntityTypeHandler entityTypeHandler;
     @Autowired(required = false)
-    private SignatureService signatureService;
+    private SignatureHelper signatureHelper;
     @Autowired
     private IDefinitionsManager definitionsManager;
 
     @Autowired(required = false)
     private EncryptionHelper encryptionHelper;
-    @Autowired(required = false)
-    private SignatureHelper signatureHelper;
     @Autowired
     private EntityTransformer entityTransformer;
     @Autowired
@@ -227,14 +228,13 @@ public class RegistryServiceImpl implements RegistryService {
             }
         }
 
-        if (encryptionEnabled) {
-            rootNode = encryptionHelper.getEncryptedJson(rootNode);
-        }
-
         systemFieldsHelper.ensureCreateAuditFields(vertexLabel, rootNode.get(vertexLabel), userId);
 
         if (!skipSignature) {
-            generateCredentials(rootNode, vertexLabel);
+            generateCredentials(rootNode, null, vertexLabel);
+        }
+        if (encryptionEnabled) {
+            rootNode = encryptionHelper.getEncryptedJson(rootNode);
         }
         if (vertexLabel.equals(Schema)) {
             schemaService.validateNewSchema(rootNode);
@@ -287,14 +287,16 @@ public class RegistryServiceImpl implements RegistryService {
     }
 
 
-    private void generateCredentials(JsonNode rootNode, String vertexLabel) throws SignatureException.UnreachableException, SignatureException.CreationException {
+    private void generateCredentials(JsonNode rootNode, JsonNode inputNode, String vertexLabel) throws SignatureException.UnreachableException, SignatureException.CreationException {
         Object credentialTemplate = definitionsManager.getCredentialTemplate(vertexLabel);
         if (signatureEnabled && credentialTemplate != null) {
             Map<String, Object> requestBodyMap = new HashMap<>();
+            requestBodyMap.put("title", vertexLabel);
             requestBodyMap.put("data", rootNode.get(vertexLabel));
             requestBodyMap.put("credentialTemplate", credentialTemplate);
-            Object signedCredentials = signatureService.sign(requestBodyMap);
-            ((ObjectNode) rootNode.get(vertexLabel)).set(OSSystemFields._osSignedData.name(), JsonNodeFactory.instance.textNode(signedCredentials.toString()));
+            Object signedCredentials = signatureHelper.sign(requestBodyMap);
+            OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), rootNode.get(vertexLabel), signedCredentials);
+            if(inputNode != null) OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), inputNode.get(vertexLabel), signedCredentials);
         }
     }
 
@@ -373,18 +375,18 @@ public class RegistryServiceImpl implements RegistryService {
                 }
 
                 if (!skipSignature) {
-                    generateCredentials(inputNode, entityType);
+                    generateCredentials(mergedNode, inputNode, entityType);
                 }
 
                 if (entityType.equals(Schema)) {
-                    schemaService.validateUpdateSchema(readNode, inputNode);
+                    schemaService.validateUpdateSchema(readNode, mergedNode);
                 }
 
                 // The entity type is a child and so could be different from parent entity type.
                 doUpdate(shard, graph, registryDao, vr, inputNode.get(entityType), entityType, null);
 
                 if (entityType.equals(Schema)) {
-                    schemaService.updateSchema(inputNode);
+                    schemaService.updateSchema(mergedNode);
                 }
 
                 databaseProvider.commitTransaction(graph, tx);

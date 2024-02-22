@@ -34,6 +34,7 @@ import dev.sunbirdrc.registry.util.ServiceProvider;
 import dev.sunbirdrc.validators.IValidate;
 import dev.sunbirdrc.validators.ValidationFilter;
 import dev.sunbirdrc.validators.json.jsonschema.JsonValidationServiceImpl;
+import lombok.Getter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.client.HttpClient;
@@ -86,6 +87,8 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	}
 
 	private final String NONE_STR = "none";
+	@Getter
+	private static String signatureProvider;
 
 	@Autowired
 	private IDefinitionsManager iDefinitionsManager;
@@ -323,6 +326,11 @@ public class GenericConfiguration implements WebMvcConfigurer {
 	@Bean
 	public boolean isElasticSearchEnabled() {
 		return (searchProviderName.equals("dev.sunbirdrc.registry.service.ElasticSearchService"));
+	}
+
+	@Autowired
+	public void setSignatureProvider(@Value("${signature.provider}") String signatureProvider) {
+		GenericConfiguration.signatureProvider = signatureProvider;
 	}
 
 	@Bean

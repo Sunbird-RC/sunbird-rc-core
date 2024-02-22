@@ -1,4 +1,4 @@
-package dev.sunbirdrc.registry.helper;
+package dev.sunbirdrc.registry.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,7 +21,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -29,50 +28,55 @@ import java.util.*;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 
-@Component
-public class CredentialsHelper implements HealthIndicator {
-    private static final Logger logger = LoggerFactory.getLogger(CredentialsHelper.class);
-    @Value("${credential.healthCheckURL}")
+public class CredentialService implements HealthIndicator {
+    private static final Logger logger = LoggerFactory.getLogger(CredentialService.class);
+    @Value("${signature.v2.healthCheckURL}")
     private String healthCheckUrl;
-    @Value("${credential.issueCredentialURL}")
+    @Value("${signature.v2.issueCredentialURL}")
     private String issueCredentialURL;
-    @Value("${credential.getCredentialByIdURL}")
+    @Value("${signature.v2.getCredentialByIdURL}")
     private String getCredentialByIdURL;
-    @Value("${credential.deleteCredentialByIdURL}")
+    @Value("${signature.v2.deleteCredentialByIdURL}")
     private String deleteCredentialByIdURL;
-    @Value("${credential.verifyCredentialURL}")
+    @Value("${signature.v2.verifyCredentialURL}")
     private String verifyCredentialURL;
-    @Value("${credential.getRevocationListURL}")
+    @Value("${signature.v2.getRevocationListURL}")
     private String getRevocationListURL;
 
     private static final String credentialMethod = "rcw";
     private static final String credentialIssuerMethod = "abc";
 
     @Autowired
-    private RetryRestTemplate retryRestTemplate;
+    protected RetryRestTemplate retryRestTemplate;
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
-    private CredentialSchemaHelper credentialSchemaHelper;
+    private CredentialSchemaService credentialSchemaService;
     @Autowired
-    private DidHelper didHelper;
+    private dev.sunbirdrc.registry.service.DIDService DIDService;
 
     public JsonNode issueCredential(String title, Object credentialTemplate, JsonNode input) throws Exception {
         // Render the credential using credential template
         Handlebars hb = new Handlebars();
-        Template template = hb.compileInline((String) credentialTemplate);
+        String templateJsonString = null;
+        if(credentialTemplate instanceof LinkedHashMap || credentialTemplate instanceof JsonNode) {
+            templateJsonString = JSONUtil.convertObjectJsonString(credentialTemplate);
+        } else {
+            templateJsonString = (String) credentialTemplate;
+        }
+        Template template = hb.compileInline(templateJsonString);
         String credString = template.apply(JSONUtil.convertJsonNodeToMap(input));
         ObjectNode credential = (ObjectNode) objectMapper.readTree(credString);
 
         // Fetch the credentials schema to get credential schema id and version
-        JsonNode credSchema = credentialSchemaHelper.getLatestSchemaByTags(Collections.singletonList(title));
+        JsonNode credSchema = credentialSchemaService.getLatestSchemaByTags(Collections.singletonList(title));
         if (credSchema == null) throw new NotFoundException("CredentialSchema", title);
         JsonNode credSchemaDid = credSchema.get("schema").get("id");
         JsonNode credSchemaVersion = credSchema.get("schema").get("version");
 
 
         // ensure issuer did
-        String issuerDid = didHelper.ensureDidForName(credential.get("issuer").asText(), credentialIssuerMethod);
+        String issuerDid = DIDService.ensureDidForName(credential.get("issuer").asText(), credentialIssuerMethod);
         credential.set("issuer", JsonNodeFactory.instance.textNode(issuerDid));
 
         // Wire the create credential request payload
@@ -83,7 +87,7 @@ public class CredentialsHelper implements HealthIndicator {
         node.set("method", JsonNodeFactory.instance.textNode(credentialMethod));
         ArrayNode tags = JsonNodeFactory.instance.arrayNode();
         tags.add(title);
-        tags.add(input.get("osid"));
+        if(input.get("osid") != null) tags.add(input.get("osid"));
         node.set("tags", tags);
 
         // send the request and issue credential
@@ -93,7 +97,7 @@ public class CredentialsHelper implements HealthIndicator {
             JsonNode result = JSONUtil.convertStringJsonNode(response.getBody());
             return result.get("credential");
         }
-        throw new RuntimeException("Unable to create credential schema");
+        throw new RuntimeException("Unable to issue credential");
     }
 
     public JsonNode getCredentialById(String credentialId) throws IOException, NotFoundException {
@@ -107,7 +111,7 @@ public class CredentialsHelper implements HealthIndicator {
     public byte[] getCredentialById(String credentialId, String format, String templateId, String template) throws IOException, NotFoundException {
         HttpHeaders headers = new HttpHeaders();
         headers.set("templateId", templateId);
-        headers.set("template", template);
+        if(template != null) headers.set("template", template.trim());
         headers.setAccept(Collections.singletonList(MediaType.valueOf(format)));
         ResponseEntity<byte[]> response = retryRestTemplate.getForObject(getCredentialByIdURL, headers, byte[].class, credentialId);
         if (response.getStatusCode().is2xxSuccessful()) {

@@ -1,4 +1,4 @@
-package dev.sunbirdrc.registry.helper;
+package dev.sunbirdrc.registry.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,8 +7,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.pojos.HealthIndicator;
+import dev.sunbirdrc.registry.helper.RegistryHelper;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
-import dev.sunbirdrc.registry.service.ISearchService;
 import dev.sunbirdrc.registry.service.impl.RetryRestTemplate;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -29,8 +29,8 @@ import java.util.*;
 import static dev.sunbirdrc.registry.middleware.util.Constants.*;
 
 @Component
-public class DidHelper implements HealthIndicator {
-    private static final Logger logger = LoggerFactory.getLogger(DidHelper.class);
+public class DIDService implements HealthIndicator {
+    private static final Logger logger = LoggerFactory.getLogger(DIDService.class);
     @Value("${did.healthCheckURL}")
     private String healthCheckUrl;
     @Value("${did.generateURL}")
@@ -45,9 +45,9 @@ public class DidHelper implements HealthIndicator {
     private RetryRestTemplate retryRestTemplate;
     @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
+    @Autowired(required = false)
     private ISearchService searchService;
-    @Autowired
+    @Autowired(required = false)
     private RegistryHelper registryHelper;
     @Autowired
     private Gson gson;
@@ -66,7 +66,7 @@ public class DidHelper implements HealthIndicator {
         ObjectNode filters = JsonNodeFactory.instance.objectNode();
         filters.set(propertyName, JsonNodeFactory.instance.objectNode().put("eq", value));
         payload.set(FILTERS, filters);
-        JsonNode results = searchService.search(payload);
+        JsonNode results = searchService.search(payload, "");
         if(results.get(authorSchemaName).isEmpty()) {
             throw new RuntimeException(String.format("%s %s not found in schema %s for property %s", propertyName, value, authorSchemaName, didPropertyName));
         }
@@ -84,7 +84,7 @@ public class DidHelper implements HealthIndicator {
             rootNode.set("did", JsonNodeFactory.instance.textNode(did));
             ObjectNode newRootNode = objectMapper.createObjectNode();
             newRootNode.set(authorSchemaName, rootNode);
-            registryHelper.addEntity(newRootNode, null);
+            registryHelper.addEntity(newRootNode, "", false);
         }
         return did;
     }
@@ -118,12 +118,11 @@ public class DidHelper implements HealthIndicator {
         return null;
     }
 
-    public String resolveDid(String didId) {
+    public JsonNode resolveDid(String didId) {
         try {
             ResponseEntity<String> response = retryRestTemplate.getForEntity(resolveIdUrl + "/" + didId);
             if (response.getStatusCode().is2xxSuccessful()) {
-                JsonNode node = JSONUtil.convertStringJsonNode(response.getBody());
-                return node.get("id").asText();
+                return JSONUtil.convertStringJsonNode(response.getBody());
             }
         } catch (RestClientException | IOException e) {
             logger.error("Exception when checking the health of the Sunbird {} service: {}", getServiceName(), ExceptionUtils.getStackTrace(e));
