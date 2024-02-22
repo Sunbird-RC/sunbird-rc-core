@@ -4,13 +4,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.annotation.RequestScope;
 
 import javax.servlet.http.HttpServletRequest;
 
 @Component("asyncRequest")
-@RequestScope
+@Scope(value = WebApplicationContext.SCOPE_REQUEST,
+		proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class AsyncRequest {
 	private static final String MODE = "mode";
 	private static final String ASYNC = "async";

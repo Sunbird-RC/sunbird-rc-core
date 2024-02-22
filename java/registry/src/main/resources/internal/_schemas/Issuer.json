@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "properties": {
+    "Issuer": {
+      "$ref": "#/definitions/Issuer"
+    }
+  },
+  "required": [
+    "Issuer"
+  ],
+  "title":"Issuer",
+  "definitions": {
+    "Issuer": {
+      "$id": "#/properties/Issuer",
+      "type": "object",
+      "title": "Issuer",
+      "required": [
+        "did"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "did": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "entityOsid": {
+          "type": "string"
+        },
+        "entityName": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "_osConfig": {
+    "osComment": [],
+    "privateFields": [],
+    "signedFields": [],
+    "systemFields": [
+      "osCreatedAt",
+      "osUpdatedAt",
+      "osCreatedBy",
+      "osUpdatedBy"
+    ],
+    "roles": ["admin"],
+    "inviteRoles": ["admin"],
+    "ownershipAttributes": []
+  }
+}

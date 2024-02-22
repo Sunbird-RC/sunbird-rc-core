@@ -21,10 +21,7 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.model.DBConnectionInfo;
 import dev.sunbirdrc.registry.model.DBConnectionInfoMgr;
 import dev.sunbirdrc.registry.model.event.Event;
-import dev.sunbirdrc.registry.service.IAuditService;
-import dev.sunbirdrc.registry.service.IEventService;
-import dev.sunbirdrc.registry.service.EntityTransformer;
-import dev.sunbirdrc.registry.service.SchemaService;
+import dev.sunbirdrc.registry.service.*;
 import dev.sunbirdrc.registry.sink.DBProviderFactory;
 import dev.sunbirdrc.registry.sink.DatabaseProvider;
 import dev.sunbirdrc.registry.sink.shard.Shard;
@@ -106,7 +103,7 @@ public class RegistryServiceImplTest {
 	@Mock
 	private EncryptionServiceImpl encryptionService;
 	@Mock
-	private SignatureServiceImpl signatureService;
+	private SignatureV1ServiceImpl signatureService;
 
 	@Mock
 	private HealthIndicator healthIndicator;
@@ -120,7 +117,7 @@ public class RegistryServiceImplTest {
 
 	private IRegistryDao registryDao;
 	@InjectMocks
-	private RegistryServiceImpl registryServiceForHealth;
+	private HealthCheckService registryServiceForHealth;
 
 	@Autowired
 	private DBProviderFactory dbProviderFactory;
@@ -204,7 +201,7 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(registryServiceForHealth, "healthIndicators", Arrays.asList(encryptionService, mockDatabaseProvider));
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		when(shardManager.getDefaultShard()).thenReturn(shard);
-		when(signatureService.isServiceUp()).thenReturn(true);
+		when(signatureService.getHealthInfo().isHealthy()).thenReturn(true);
 		HealthCheckResponse response = registryServiceForHealth.health(shardManager.getDefaultShard());
 		assertTrue(response.isHealthy());
 		response.getChecks().forEach(ch -> assertTrue(ch.isHealthy()));
@@ -219,7 +216,7 @@ public class RegistryServiceImplTest {
 		ReflectionTestUtils.setField(registryServiceForHealth, "healthIndicators", Arrays.asList(signatureService, encryptionService, mockDatabaseProvider));
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		when(shardManager.getDefaultShard()).thenReturn(shard);
-		when(signatureService.isServiceUp()).thenReturn(true);
+		when(signatureService.getHealthInfo().isHealthy()).thenReturn(true);
 		ReflectionTestUtils.setField(registryServiceForHealth, "encryptionEnabled", true);
 		ReflectionTestUtils.setField(registryServiceForHealth, "signatureEnabled", true);
 

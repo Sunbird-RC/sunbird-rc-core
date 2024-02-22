@@ -15,4 +15,6 @@ public interface SignatureService extends HealthIndicator {
 
 	String getKey(String keyId) throws SignatureException.UnreachableException, SignatureException.KeyNotFoundException;
 
+	void revoke(String entityName, String entityId, String signed);
+
 }

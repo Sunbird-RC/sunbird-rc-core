@@ -80,7 +80,7 @@ public class NativeSearchServiceTest {
 	@Test
 	public void shouldReturnRecordsMatchingFilters() throws IOException {
 		JsonNode query = getSearchQuery();
-		JsonNode results = nativeSearchService.search(query);
+		JsonNode results = nativeSearchService.search(query, "");
 		Assert.assertEquals(1, results.get("Teacher").size());
 	}
 
@@ -100,7 +100,7 @@ public class NativeSearchServiceTest {
 	public void shouldRemovePublicFields() throws IOException {
 		ReflectionTestUtils.setField(nativeSearchService, "removeNonPublicFieldsForNativeSearch", true);
 		JsonNode query = getSearchQuery();
-		JsonNode results = nativeSearchService.search(query);
+		JsonNode results = nativeSearchService.search(query, "");
 		System.out.println(results.get("Teacher"));
 		Assert.assertEquals(1, results.get("Teacher").size());
 		Assert.assertEquals(4, results.get("Teacher").get(0).size());
@@ -112,7 +112,7 @@ public class NativeSearchServiceTest {
 	public void shouldNotRemovePublicFields() throws IOException {
 		ReflectionTestUtils.setField(nativeSearchService, "removeNonPublicFieldsForNativeSearch", false);
 		JsonNode query = getSearchQuery();
-		JsonNode results = nativeSearchService.search(query);
+		JsonNode results = nativeSearchService.search(query, "");
 		Assert.assertEquals(1, results.get("Teacher").size());
 		Assert.assertEquals(5, results.get("Teacher").get(0).size());
 		Assert.assertNotNull(results.get("Teacher").get(0).get("serialNum"));

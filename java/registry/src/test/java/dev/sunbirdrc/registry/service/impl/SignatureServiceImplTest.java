@@ -45,7 +45,7 @@ public class SignatureServiceImplTest {
 	@Mock
     private ObjectMapper objectMapper;
 	@InjectMocks
-	private SignatureServiceImpl signatureServiceImpl;
+	private SignatureV1ServiceImpl signatureServiceImpl;
 
 	@Before
 	public void setUp(){
@@ -136,13 +136,13 @@ public class SignatureServiceImplTest {
     @Test
     public void test_encryption_isup() throws Exception {
         when(retryRestTemplate.getForEntity(nullable(String.class))).thenReturn(ResponseEntity.accepted().body("UP"));
-        assertTrue(signatureServiceImpl.isServiceUp());
+        assertTrue(signatureServiceImpl.getHealthInfo().isHealthy());
     }
 
     @Test
     public void test_encryption_isup_throw_restclientexception() throws Exception {
         when(retryRestTemplate.getForEntity(nullable(String.class))).thenThrow(RestClientException.class);
-        assertFalse(signatureServiceImpl.isServiceUp());
+        assertFalse(signatureServiceImpl.getHealthInfo().isHealthy());
     }
 
 }

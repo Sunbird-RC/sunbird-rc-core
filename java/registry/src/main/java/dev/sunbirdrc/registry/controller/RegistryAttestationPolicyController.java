@@ -37,7 +37,7 @@ public class RegistryAttestationPolicyController extends AbstractController {
                 logger.info("Creating attestation policy for entity: {} - {}", entityName, attestationPolicy);
                 attestationPolicy.setEntity(entityName);
                 attestationPolicy.setStatus(AttestationStatus.DRAFT);
-                response.setResult(registryHelper.createAttestationPolicy(attestationPolicy, userId));
+                response.setResult(registryHelper.createAttestationPolicy(attestationPolicy, userId, true));
                 responseParams.setStatus(Response.Status.SUCCESSFUL);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             } else {

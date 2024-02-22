@@ -1,12 +1,12 @@
 package dev.sunbirdrc.registry.middleware.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.collections4.ListUtils;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * System fields for created, updated time and userId appended to the json node.
@@ -44,7 +44,37 @@ public enum OSSystemFields {
           JSONUtil.addField((ObjectNode) node, osOwner.toString(), ListUtils.emptyIfNull(owners));
       }
     },
-    _osState, _osClaimId, _osAttestedData, _osSignedData;
+    credentials {
+        private String getCredentialPropertyName(String signatureProvider) {
+            String signatureProperty = _osSignedData.name();
+            if(Objects.equals(signatureProvider, "dev.sunbirdrc.registry.service.impl.signature.SignatureV2Provider")) {
+                signatureProperty = _osCredentialId.name();
+            }
+            return signatureProperty;
+        }
+        @Override
+        public void setCredential(String signatureProvider, JsonNode node, Object signedCredential) {
+            if(Objects.equals(signatureProvider, "dev.sunbirdrc.registry.service.impl.signature.SignatureV2Provider")) {
+                JSONUtil.addField((ObjectNode) node, String.valueOf(_osCredentialId), ((ObjectNode) signedCredential).get("id").asText());
+            } else {
+                JSONUtil.addField((ObjectNode) node, String.valueOf(_osSignedData), signedCredential.toString());
+            }
+        }
+        @Override
+        public void removeCredential(String signatureProvider, JsonNode node) {
+            ((ObjectNode) node).put(getCredentialPropertyName(signatureProvider), "");
+        }
+        @Override
+        public JsonNode getCredential(String signatureProvider, JsonNode node) {
+            return node.get(getCredentialPropertyName(signatureProvider));
+        }
+        @Override
+        public boolean hasCredential(String signatureProvider, JsonNode node) {
+            String property =  getCredentialPropertyName(signatureProvider);
+            return node.get(property) != null && !node.get(property).asText().isEmpty();
+        }
+    },
+    _osState, _osClaimId, _osAttestedData, _osSignedData, _osCredentialId;
 
     public void createdBy(JsonNode node, String userId){};
 
@@ -65,4 +95,11 @@ public enum OSSystemFields {
         return null;
     }
 
+    public void setCredential(String signatureProvider, JsonNode node, Object signedCredential){};
+
+    public void removeCredential(String signatureProvider, JsonNode node) {};
+
+    public JsonNode getCredential(String signatureProvider, JsonNode node){ return null; };
+
+    public boolean hasCredential(String signatureProvider, JsonNode node) { return  false; }
 }

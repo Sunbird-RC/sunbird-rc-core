@@ -1,6 +1,8 @@
 package dev.sunbirdrc.registry.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.middleware.util.Constants;
 import dev.sunbirdrc.registry.service.ICertificateService;
@@ -9,9 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -19,15 +22,17 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
 import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_CERTIFICATE_SERVICE_NAME;
 
 @Component
-@ConditionalOnProperty(name = "certificate.enabled", havingValue = "true")
+@ConditionalOnExpression("${certificate.enabled:false} && ('${signature.provider}' == 'dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl')")
 public class CertificateServiceImpl implements ICertificateService {
     private final String templateBaseUrl;
     private final String certificateUrl;
@@ -50,7 +55,14 @@ public class CertificateServiceImpl implements ICertificateService {
     }
 
     @Override
-    public Object getCertificate(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl, JsonNode entity) throws RestClientException {
+    public Object getCertificate(JsonNode certificateData, String entityName, String entityId, String mediaType, String templateUrl, String templateId, JsonNode entity) throws RestClientException, CertificateException {
+        if(Objects.equals(mediaType, MediaType.APPLICATION_JSON_VALUE)) {
+            try {
+                return new ObjectMapper().readTree(certificateData.asText());
+            } catch (JsonProcessingException e) {
+                throw new CertificateException(e.getMessage());
+            }
+        }
         String finalTemplateUrl = inferTemplateUrl(entityName, mediaType, templateUrl);
 
         Map<String, Object> requestBody = new HashMap<String, Object>(){{

@@ -1,8 +1,5 @@
-package dev.sunbirdrc.registry.service.impl;
+package dev.sunbirdrc.registry.helper;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.sunbirdrc.pojos.ComponentHealthInfo;
 import dev.sunbirdrc.registry.exception.SignatureException;
 import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.service.SignatureService;
@@ -14,13 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
-
-import java.util.Arrays;
-
-import static dev.sunbirdrc.registry.middleware.util.Constants.CONNECTION_FAILURE;
-import static dev.sunbirdrc.registry.middleware.util.Constants.SUNBIRD_SIGNATURE_SERVICE_NAME;
 
 import java.util.Map;
 
@@ -29,51 +20,17 @@ import static dev.sunbirdrc.registry.Constants.MINIO_URI_PREFIX;
 
 @Component
 @ConditionalOnProperty(name = "signature.enabled", havingValue = "true")
-public class SignatureServiceImpl implements SignatureService {
+public class SignatureHelper {
 
-	private static Logger logger = LoggerFactory.getLogger(SignatureService.class);
-	@Value("${signature.enabled}")
-	private boolean signatureEnabled;
-	@Value("${signature.healthCheckURL}")
-	private String healthCheckURL;
-	@Value("${signature.signURL}")
-	private String signURL;
-	@Value("${signature.verifyURL}")
-	private String verifyURL;
-	@Value("${signature.keysURL}")
-	private String keysURL;
+	private static Logger logger = LoggerFactory.getLogger(SignatureHelper.class);
 	@Autowired
-	private RetryRestTemplate retryRestTemplate;
-	@Autowired
-	private ObjectMapper objectMapper;
+	private SignatureService signatureService;
 
 	@Value("${filestorage.enabled}")
 	private boolean fileStorageEnabled;
 	@Autowired(required = false)
 	private FileStorageService fileStorageService;
 
-	/** This method checks signature service is available or not
-	 * @return - true or false
-	 */
-	@Override
-	public ComponentHealthInfo getHealthInfo() {
-		if (signatureEnabled) {
-			try {
-				ResponseEntity<String> response = retryRestTemplate.getForEntity(healthCheckURL);
-				if (!StringUtils.isEmpty(response.getBody()) && Arrays.asList("UP", "OK").contains(response.getBody().toUpperCase())) {
-					logger.debug("Signature service running !");
-					return new ComponentHealthInfo(getServiceName(), true);
-				} else {
-					return new ComponentHealthInfo(getServiceName(), false);
-				}
-			} catch (RestClientException e) {
-				logger.error("RestClientException when checking the health of the signature service: {}", ExceptionUtils.getStackTrace(e));
-				return new ComponentHealthInfo(getServiceName(), false, CONNECTION_FAILURE, e.getMessage());
-			}
-		} else {
-			return new ComponentHealthInfo(getServiceName(), true, "SIGNATURE_ENABLED", "false");
-		}
-	}
 	private void replaceMinioURIWithSignedURL(Map<String, Object> signRequestObject) throws Exception {
 		if (signRequestObject.containsKey(CREDENTIAL_TEMPLATE) &&  signRequestObject.get(CREDENTIAL_TEMPLATE) instanceof String
 				&& ((String) signRequestObject.get(CREDENTIAL_TEMPLATE)).startsWith(MINIO_URI_PREFIX)) {
@@ -89,15 +46,14 @@ public class SignatureServiceImpl implements SignatureService {
 	 * @throws SignatureException.UnreachableException
 	 * @throws SignatureException.CreationException
 	 */
-	@Override
+
 	public Object sign(Map<String, Object> propertyValue)
 			throws SignatureException.UnreachableException, SignatureException.CreationException {
 		ResponseEntity<String> response = null;
 		Object result = null;
 		try {
 			replaceMinioURIWithSignedURL(propertyValue);
-			response = retryRestTemplate.postForEntity(signURL, propertyValue);
-			result = objectMapper.readTree(response.getBody());
+			result = signatureService.sign(propertyValue);
 			logger.info("Successfully generated signed credentials");
 		} catch (SignatureException.UnreachableException e) {
 			logger.error("SignatureException when signing: {}", ExceptionUtils.getStackTrace(e));
@@ -107,7 +63,7 @@ public class SignatureServiceImpl implements SignatureService {
 			throw new SignatureException().new UnreachableException(e.getMessage());
 		} catch (Exception e) {
 			logger.error("SignatureException when signing: {}", ExceptionUtils.getStackTrace(e));
-			throw new SignatureException().new CreationException(e.getMessage());
+			throw new SignatureException.CreationException(e.getMessage());
 		}
 		return result;
 	}
@@ -118,22 +74,19 @@ public class SignatureServiceImpl implements SignatureService {
 	 * @throws SignatureException.UnreachableException
 	 * @throws SignatureException.VerificationException
 	 */
-	@Override
 	public boolean verify(Object propertyValue)
 			throws SignatureException.UnreachableException, SignatureException.VerificationException {
 		logger.debug("verify method starts with value {}",propertyValue);
 		ResponseEntity<String> response = null;
 		boolean result = false;
 		try {
-			response = retryRestTemplate.postForEntity(verifyURL, propertyValue);
-			JsonNode resultNode = objectMapper.readTree(response.getBody());
-			result = resultNode.get("verified").asBoolean();
+			result = signatureService.verify(propertyValue);
 		} catch (RestClientException e) {
 			logger.error("RestClientException when verifying: {}", ExceptionUtils.getStackTrace(e));
 			throw new SignatureException().new UnreachableException(e.getMessage());
 		} catch (Exception e) {
 			logger.error("RestClientException when verifying: {}", ExceptionUtils.getStackTrace(e));
-			throw new SignatureException().new VerificationException(e.getMessage());
+			throw new SignatureException.VerificationException(e.getMessage());
 		}
 		logger.debug("verify method ends with value {}",result);
 		return result;
@@ -145,15 +98,13 @@ public class SignatureServiceImpl implements SignatureService {
 	 * @throws SignatureException.UnreachableException
 	 * @throws SignatureException.KeyNotFoundException
 	 */
-	@Override
 	public String getKey(String keyId)
 			throws SignatureException.UnreachableException, SignatureException.KeyNotFoundException {
 		logger.debug("getKey method starts with value {}",keyId);
 		ResponseEntity<String> response = null;
 		String result = null;
 		try {
-			response = retryRestTemplate.getForEntity(keysURL + "/" + keyId);
-			result = response.getBody();
+			result = signatureService.getKey(keyId);
 		} catch (RestClientException e) {
 			logger.error("RestClientException when verifying: {}", ExceptionUtils.getStackTrace(e));
 			throw new SignatureException().new UnreachableException(e.getMessage());
@@ -165,12 +116,11 @@ public class SignatureServiceImpl implements SignatureService {
 		return result;
 	}
 
-	@Override
-	public String getServiceName() {
-		return SUNBIRD_SIGNATURE_SERVICE_NAME;
+	public void revoke(String entityName, String entityId, String signed) {
+		signatureService.revoke(entityName, entityId, signed);
 	}
 
-	public boolean isServiceUp() {
-		return getHealthInfo().isHealthy();
+	public boolean isHealthy() {
+		return this.signatureService.getHealthInfo().isHealthy();
 	}
 }

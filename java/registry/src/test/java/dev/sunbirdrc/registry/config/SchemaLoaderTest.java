@@ -47,7 +47,7 @@ public class SchemaLoaderTest {
 
 	@Test
 	public void shouldLoadSchemasToDefinitionManager() throws IOException {
-		Mockito.when(searchService.search(Mockito.any())).thenReturn(objectMapper.readTree("{\n" +
+		Mockito.when(searchService.search(Mockito.any(), "")).thenReturn(objectMapper.readTree("{\n" +
 				"  \"Schema\": [\n" +
 				"    {\n" +
 				"      \"name\": \"DeathCertificateV2\",\n" +

@@ -82,7 +82,7 @@ public class NativeSearchService implements ISearchService {
 	private boolean removeNonPublicFieldsForNativeSearch;
 
 	@Override
-	public JsonNode search(JsonNode inputQueryNode) throws IOException {
+	public JsonNode search(JsonNode inputQueryNode, String userId) throws IOException {
 
 		ArrayNode result = JsonNodeFactory.instance.arrayNode();
 		SearchQuery searchQuery = getSearchQuery(inputQueryNode, offset, limit);
@@ -133,9 +133,10 @@ public class NativeSearchService implements ISearchService {
 					continueSearch = !isSpecificSearch;
 				}
 				try {
+					if(userId == null) userId = apiMessage.getUserID();
 					auditService.auditNativeSearch(
 							new AuditRecord()
-									.setUserId(apiMessage.getUserID())
+									.setUserId(userId)
 									.setTransactionId(transaction),
 							shard, searchQuery.getEntityTypes(), inputQueryNode);
 				} catch (Exception e) {

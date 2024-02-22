@@ -11,6 +11,7 @@ import dev.sunbirdrc.registry.entities.SchemaStatus;
 import dev.sunbirdrc.registry.exception.CustomException;
 import dev.sunbirdrc.registry.exception.SchemaException;
 import dev.sunbirdrc.registry.middleware.util.JSONUtil;
+import dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl;
 import dev.sunbirdrc.registry.util.Definition;
 import dev.sunbirdrc.registry.util.IDefinitionsManager;
 import dev.sunbirdrc.validators.IValidate;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import static dev.sunbirdrc.registry.Constants.*;
 import static dev.sunbirdrc.registry.helper.RegistryHelper.ROLE_ANONYMOUS;
@@ -31,6 +33,13 @@ public class SchemaService {
 	private static final String STATUS = "status";
 	@Autowired
 	private IDefinitionsManager definitionsManager;
+
+	@Value("${signature.enabled:false}")
+	private boolean signatureEnabled;
+	@Value("${signature.provider}")
+	private String signatureProvider;
+	@Autowired(required = false)
+	private CredentialSchemaService credentialSchemaService;
 
 	@Autowired(required = false)
 	private IIdGenService idGenService;
@@ -79,6 +88,7 @@ public class SchemaService {
 				definitionsManager.appendNewDefinition(definition);
 				validator.addDefinitions(schema);
 				addAnonymousSchemaToFilter(definition);
+				this.ensureCredentialSchema(definition.getTitle(), definitionsManager.getCredentialTemplate(definition.getTitle()), SchemaStatus.PUBLISHED.toString());
 			} else {
 				throw new SchemaException("Duplicate Error: Schema already exists");
 			}
@@ -103,6 +113,7 @@ public class SchemaService {
 			addAnonymousSchemaToFilter(definition);
 			validator.addDefinitions(schema);
 			saveIdFormat(definition.getTitle());
+			ensureCredentialSchema(definition.getTitle(), definitionsManager.getCredentialTemplate(definition.getTitle()), SchemaStatus.PUBLISHED.toString());
 		}
 	}
 
@@ -160,6 +171,17 @@ public class SchemaService {
 			checkIfSchemaStatusUpdatedForPublishedSchema(updatedSchemaNode, existingSchemaStatus);
 		}
 	}
+
+	private void ensureCredentialSchema(String title, Object credentialTemplate, String status) throws SchemaException {
+		if(!signatureEnabled || !Objects.equals(signatureProvider, SignatureV2ServiceImpl.class.getName())) {
+			return;
+		}
+        try {
+            credentialSchemaService.ensureCredentialSchema(title, credentialTemplate, status);
+        } catch (Exception e) {
+			throw new SchemaException(e.getMessage(), e.getCause());
+        }
+    }
 
 	private void saveIdFormat(String title) throws SchemaException {
 		if(!idGenEnabled) return;

@@ -89,7 +89,7 @@ public class RegistryEntityControllerTest {
         JsonNode node = new ObjectMapper().readTree(response);
         Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false))
                 .thenReturn(node);
-        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", node))
+        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com",null, node))
                 .thenReturn("");
         mockMvc.perform(
                     MockMvcRequestBuilders
@@ -159,7 +159,7 @@ public class RegistryEntityControllerTest {
         JsonNode node = new ObjectMapper().readTree(response);
         Mockito.when(registryHelper.readEntity("anonymous", "Institute", "123", false, null, false))
                 .thenReturn(node);
-        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", node))
+        Mockito.when(certificateService.getCertificate(node, "Institute", "123", "application/pdf", "http://dummy.com", null, node))
                 .thenThrow(new NullPointerException(""));
         mockMvc.perform(
                         MockMvcRequestBuilders
@@ -187,7 +187,7 @@ public class RegistryEntityControllerTest {
         when(registryHelper.revokeAnEntity(anyString(), anyString(), anyString(), any(JsonNode.class))).thenReturn(null);
         ResponseEntity<Object> response = registryEntityController.revokeACredential(request, "mockEntityName", "mockEntityId", headers);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString());
+        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString(), false);
     }
 
     @Test
@@ -200,7 +200,7 @@ public class RegistryEntityControllerTest {
         ResponseEntity<Object> response = registryEntityController.revokeACredential(request, "mockEntityName", "mockEntityId", headers);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         verify(registryHelper, never()).revokeAnEntity(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any(JsonNode.class));
-        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString());
+        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString(), false);
     }
 
     @Test

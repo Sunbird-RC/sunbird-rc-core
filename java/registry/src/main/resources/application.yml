@@ -217,17 +217,6 @@ decryption:
   batch:
     uri: ${decryption_batch_uri:http://localhost:8013/crypto/v1/_decrypt}
 
-signature:
-  enabled: ${signature_enabled:true}
-  healthCheckURL: ${sign_health_check_url:http://localhost:8079/health}
-  signURL: ${sign_url:http://localhost:8079/sign}
-  verifyURL: ${verify_url:http://localhost:8079/verify}
-  keysURL: ${keys_url:http://localhost:8013/keys/}
-  domain: ${domain_url:https://w3id.org/security/v1/}
-  schema:
-    config:
-      name: SignatureShape
-
 certificate:
   enabled: ${certificate_enabled:true}
   templateBaseUrl: ${template_base_url:http://localhost:8081/api/v1/templates/}
@@ -364,6 +353,35 @@ idgen:
   generateURL: ${idgen_generate_url:http://localhost:8088/egov-idgen/id/_generate}
   idFormatURL: ${idgen_id_format_url:http://localhost:8088/egov-idgen/id/_format/add}
 
+did:
+  enabled: ${did_enabled:false}
+  healthCheckURL: ${did_health_check_url:http://localhost:3332/health}
+  generateURL: ${did_generate_url:http://localhost:3332/did/generate}
+  resolveURL: ${did_resolve_url:http://localhost:3332/did/resolve}
+
+signature:
+  enabled: ${signature_enabled:false}
+  provider: ${signature_provider:dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl}
+  v1:
+    healthCheckURL: ${sign_health_check_url:http://localhost:8079/health}
+    signURL: ${sign_url:http://localhost:8079/sign}
+    verifyURL: ${verify_url:http://localhost:8079/verify}
+    keysURL: ${keys_url:http://localhost:8013/keys/}
+    domain: ${domain_url:https://w3id.org/security/v1/}
+  v2:
+    healthCheckURL: ${signature_v2_health_check_url:http://localhost:3000/health}
+    issueCredentialURL: ${signature_v2_issue_url:http://localhost:3000/credentials/issue}
+    getCredentialByIdURL: ${signature_v2_get_url:http://localhost:3000/credentials/{id}}
+    deleteCredentialByIdURL: ${signature_v2_delete_url:http://localhost:3000/credentials/{id}}
+    verifyCredentialURL: ${signature_v2_verify_url:http://localhost:3000/credentials/{id}/verify}
+    getRevocationListURL: ${signature_v2_revocation_list_url:http://localhost:3000/credentials/revocation-list?issuerId={issuerDid}&page={page}&limit={limit}}
+    schema:
+      healthCheckURL: ${signature_v2_schema_health_check_url:http://localhost:3333/health}
+      createSchemaURL: ${signature_v2_schema_create_url:http://localhost:3333/credential-schema}
+      updateSchemaURL: ${signature_v2_schema_update_url:http://localhost:3333/credential-schema/{id}/{version}}
+      getSchemaByIdAndVersionURL: ${signature_v2_schema_get_by_id_and_version_url:http://localhost:3333/credential-schema/{id}/{version}
+      getSchemaByTagsURL: ${signature_v2_schema_search_by_tags_url:http://localhost:3333/credential-schema?tags={tags}}
+
 ---
 ##################################################################
 #                      TEST PROFILE                              #
@@ -434,14 +452,14 @@ decryption:
 
 signature:
   enabled: ${signature_enabled:true}
-  healthCheckURL: ${sign_health_check_url:https://dev.sunbirded.org/encryption/}
-  signURL: ${sign_url:https://dev.sunbirded.org/encryption/sign}
-  verifyURL: ${verify_url:https://dev.sunbirded.org/encryption/verify}
-  keysURL: ${keys_url:https://dev.sunbirded.org/encryption/keys/}
-  domain: ${domain_url:https://w3id.org/security/v1/}
-  schema:
-    config:
-      name: SignatureShape
+  provider: ${signature_provider:dev.sunbirdrc.registry.service.impl.SignatureV1ServiceImpl}
+  v1:
+    healthCheckURL: ${sign_health_check_url:https://dev.sunbirded.org/encryption/}
+    signURL: ${sign_url:https://dev.sunbirded.org/encryption/sign}
+    verifyURL: ${verify_url:https://dev.sunbirded.org/encryption/verify}
+    keysURL: ${keys_url:https://dev.sunbirded.org/encryption/keys/}
+    domain: ${domain_url:https://w3id.org/security/v1/}
+
 
 # These properties are used to enable the audit log
 # enabled : should be true to enable audit log and false to disable audit log

@@ -1,5 +1,6 @@
 package dev.sunbirdrc.registry.app;
 
+import dev.sunbirdrc.registry.service.CredentialSchemaService;
 import dev.sunbirdrc.registry.util.EntityParenter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,9 @@ public class AppStartupRunner implements ApplicationRunner {
 	@Autowired
 	EntityParenter entityParenter;
 
+	@Autowired
+	CredentialSchemaService credentialSchemaService;
+
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -24,5 +28,8 @@ public class AppStartupRunner implements ApplicationRunner {
     	entityParenter.loadDefinitionIndex();
 		entityParenter.ensureIndexExists();
 		entityParenter.saveIdFormat();
+		logger.info("On Boot starts loading: credential schemas");
+		credentialSchemaService.ensureCredentialSchemas();
+		logger.info("Startup completed!");
     }
 }
