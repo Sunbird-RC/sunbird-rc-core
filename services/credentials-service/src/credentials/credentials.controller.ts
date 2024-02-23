@@ -71,16 +71,16 @@ export class CredentialsController {
   })
   getCredentialById(@Param('id') id: string, @Req() req: Request) {
     const accept: string = req.headers['accept']?.trim() || 'application/json';
-    const templateId: string = req.headers['templateid'] as string;
-    const template: string = req.headers['template'] as string;
+    const requestedTemplateId: string = req.headers['templateid'] as string;
+    const externalTemplate: string = req.headers['template'] as string;
 
-    if (!templateId && !template && accept !== 'application/json')
+    if (!requestedTemplateId && !externalTemplate && accept !== 'application/json')
       throw new BadRequestException('Template id is required');
-    else if (!templateId && accept === 'application/json')
+    else if (!requestedTemplateId && !externalTemplate && accept === 'application/json')
       return this.credentialsService.getCredentialById(
         id,
-        templateId,
-        template,
+        requestedTemplateId,
+        externalTemplate,
         RENDER_OUTPUT.JSON
       );
 
@@ -101,7 +101,7 @@ export class CredentialsController {
       case 'image/svg+xml':
         output = RENDER_OUTPUT.QR;
     }
-    return this.credentialsService.getCredentialById(id, templateId, template, output);
+    return this.credentialsService.getCredentialById(id, requestedTemplateId, externalTemplate, output);
   }
 
   @Post('issue')
