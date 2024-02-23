@@ -97,6 +97,7 @@ export class CredentialsService {
   async getCredentialById(
     id: string,
     templateId: string = null,
+    externalTemplate: string = null,
     output: string = 'json' // : Promise<W3CCredential>
   ) {
     const credential = await this.prisma.verifiableCredentials.findUnique({
@@ -124,16 +125,16 @@ export class CredentialsService {
       case RENDER_OUTPUT.PDF:
         // fetch the template
         // TODO: Add type here
-        template = await this.schemaUtilsService.getTemplateById(templateId);
+        template = externalTemplate || (await this.schemaUtilsService.getTemplateById(templateId))?.template;
         return this.renderingUtilsService.renderAsPDF(
           res as W3CCredential,
-          template.template
+          template
         );
       case RENDER_OUTPUT.HTML:
-        template = await this.schemaUtilsService.getTemplateById(templateId);
+        template = externalTemplate || (await this.schemaUtilsService.getTemplateById(templateId))?.template;
         return await this.renderingUtilsService.compileHBSTemplate(
           res as W3CCredential,
-          template.template
+          template
         );
       case RENDER_OUTPUT.STRING:
         return JSON.stringify(res);
