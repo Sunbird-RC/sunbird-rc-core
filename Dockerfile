@@ -1,7 +1,7 @@
 FROM node:lts-alpine3.13 as verification_ui
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
-COPY services/verification-ui ./
+COPY ../auxillary-services/verification-ui ./
 RUN npm install
 RUN npm run build
 
