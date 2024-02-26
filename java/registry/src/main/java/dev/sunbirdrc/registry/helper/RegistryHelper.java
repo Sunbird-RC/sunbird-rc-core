@@ -350,13 +350,13 @@ public class RegistryHelper {
      * @return
      * @throws Exception
      */
-    public JsonNode searchEntity(JsonNode inputJson) throws Exception {
-        return searchEntity(inputJson, searchService);
+    public JsonNode searchEntity(JsonNode inputJson, String userId) throws Exception {
+        return searchEntity(inputJson, searchService, userId);
     }
 
-    private JsonNode searchEntity(JsonNode inputJson, ISearchService service) throws Exception {
+    private JsonNode searchEntity(JsonNode inputJson, ISearchService service, String userId) throws Exception {
         logger.debug("searchEntity starts");
-        JsonNode resultNode = service.search(inputJson, null);
+        JsonNode resultNode = service.search(inputJson, userId);
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
             ViewTransformer vTransformer = new ViewTransformer();
@@ -721,7 +721,7 @@ public class RegistryHelper {
      * @throws Exception
      */
 
-    public JsonNode getAuditLog(JsonNode inputJson) throws Exception {
+    public JsonNode getAuditLog(JsonNode inputJson, String userId) throws Exception {
         logger.debug("get audit log starts");
         String entityType = inputJson.fields().next().getKey();
         JsonNode queryNode = inputJson.get(entityType);
@@ -730,7 +730,7 @@ public class RegistryHelper {
         newEntityArrNode.add(entityType + auditSuffixSeparator + auditSuffix);
         ((ObjectNode) queryNode).set(ENTITY_TYPE, newEntityArrNode);
 
-        JsonNode resultNode = searchService.search(queryNode, null);
+        JsonNode resultNode = searchService.search(queryNode, userId);
 
         ViewTemplate viewTemplate = viewTemplateManager.getViewTemplate(inputJson);
         if (viewTemplate != null) {
@@ -818,7 +818,7 @@ public class RegistryHelper {
             ObjectNode payload = getSearchByOwnerQuery(entityName, userId);
 
             watch.start("RegistryController.searchEntity");
-            JsonNode result = searchEntity(payload);
+            JsonNode result = searchEntity(payload, userId);
             watch.stop("RegistryController.searchEntity");
             if(result != null && result.get(entityName) != null && !result.get(entityName).isEmpty()) {
                 String uuid = result.get(entityName).get(0).get(uuidPropertyName).asText();
@@ -908,7 +908,7 @@ public class RegistryHelper {
         if (!Strings.isEmpty(viewTemplateId)) {
             searchByOwnerQuery.put(VIEW_TEMPLATE_ID, viewTemplateId);
         }
-        return searchEntity(searchByOwnerQuery, nativeSearchService);
+        return searchEntity(searchByOwnerQuery, nativeSearchService, userId);
     }
 
     public void authorizeInviteEntity(HttpServletRequest request, String entityName) throws Exception {
@@ -1107,7 +1107,7 @@ public class RegistryHelper {
                         "       }\n" +
                         "    }\n" +
                         "}");
-                JsonNode searchResponse = searchEntity(searchRequest);
+                JsonNode searchResponse = searchEntity(searchRequest, "");
                 return convertJsonNodeToAttestationList(searchResponse);
             } catch (Exception e) {
                 logger.error("Error fetching attestation policy: {}", ExceptionUtils.getStackTrace(e));
@@ -1123,7 +1123,7 @@ public class RegistryHelper {
                 = new TypeReference<List<AttestationPolicy>>() {
         };
         ObjectReader reader = objectMapper.readerFor(typeRef);
-        if (searchResponse.size() == 0) {
+        if (searchResponse.isEmpty()) {
             return Collections.emptyList();
         }
         return reader.readValue(searchResponse.get(ATTESTATION_POLICY));
@@ -1174,7 +1174,7 @@ public class RegistryHelper {
                 "       }\n" +
                 "    }\n" +
                 "}");
-        searchEntity(searchRequest);
+        searchEntity(searchRequest, userId);
         return Collections.emptyList();
     }
 
@@ -1257,13 +1257,13 @@ public class RegistryHelper {
         return DigestUtils.md5DigestAsHex(signedData.getBytes()).toUpperCase();
     }
 
-    public boolean checkIfCredentialIsRevoked(String signedData) throws Exception {
+    public boolean checkIfCredentialIsRevoked(String signedData, String userId) throws Exception {
         ObjectNode searchNode = JsonNodeFactory.instance.objectNode();
         searchNode.set(ENTITY_TYPE, JsonNodeFactory.instance.arrayNode().add(REVOKED_CREDENTIAL));
         searchNode.set(FILTERS,
                 JsonNodeFactory.instance.objectNode().set(SIGNED_HASH,
                         JsonNodeFactory.instance.objectNode().put("eq", generateHash(signedData))));
-        JsonNode searchResponse = searchEntity(searchNode);
+        JsonNode searchResponse = searchEntity(searchNode, userId);
         return searchResponse.get(REVOKED_CREDENTIAL) != null && searchResponse.get(REVOKED_CREDENTIAL).size() > 0;
     }
 

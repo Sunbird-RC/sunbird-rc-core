@@ -1,13 +1,17 @@
 package dev.sunbirdrc.registry.app;
 
 import dev.sunbirdrc.registry.service.CredentialSchemaService;
+import dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl;
 import dev.sunbirdrc.registry.util.EntityParenter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
+
+import java.util.Objects;
 
 @Component
 public class AppStartupRunner implements ApplicationRunner {
@@ -17,7 +21,11 @@ public class AppStartupRunner implements ApplicationRunner {
 	@Autowired
 	EntityParenter entityParenter;
 
-	@Autowired
+	@Value("${signature.enabled}")
+	private boolean signatureEnabled;
+	@Value("${signature.provider}")
+	private String signatureProvider;
+	@Autowired(required = false)
 	CredentialSchemaService credentialSchemaService;
 
 
@@ -28,8 +36,10 @@ public class AppStartupRunner implements ApplicationRunner {
     	entityParenter.loadDefinitionIndex();
 		entityParenter.ensureIndexExists();
 		entityParenter.saveIdFormat();
-		logger.info("On Boot starts loading: credential schemas");
-		credentialSchemaService.ensureCredentialSchemas();
+		if(signatureEnabled && Objects.equals(signatureProvider, SignatureV2ServiceImpl.class.getName())) {
+			logger.info("On Boot starts loading: credential schemas");
+			credentialSchemaService.ensureCredentialSchemas();
+		}
 		logger.info("Startup completed!");
     }
 }

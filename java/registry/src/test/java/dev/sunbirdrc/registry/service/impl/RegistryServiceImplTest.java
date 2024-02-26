@@ -117,7 +117,7 @@ public class RegistryServiceImplTest {
 
 	private IRegistryDao registryDao;
 	@InjectMocks
-	private HealthCheckService registryServiceForHealth;
+	private HealthCheckService healthCheckService;
 
 	@Autowired
 	private DBProviderFactory dbProviderFactory;
@@ -198,11 +198,11 @@ public class RegistryServiceImplTest {
 		when(encryptionService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, true));
 		mockDatabaseProvider = mock(DatabaseProvider.class);
 		when(mockDatabaseProvider.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRDRC_DATABASE_NAME, true));
-		ReflectionTestUtils.setField(registryServiceForHealth, "healthIndicators", Arrays.asList(encryptionService, mockDatabaseProvider));
+		ReflectionTestUtils.setField(healthCheckService, "healthIndicators", Arrays.asList(encryptionService, mockDatabaseProvider));
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		when(shardManager.getDefaultShard()).thenReturn(shard);
-		when(signatureService.getHealthInfo().isHealthy()).thenReturn(true);
-		HealthCheckResponse response = registryServiceForHealth.health(shardManager.getDefaultShard());
+		when(signatureService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, true));
+		HealthCheckResponse response = healthCheckService.health(shardManager.getDefaultShard());
 		assertTrue(response.isHealthy());
 		response.getChecks().forEach(ch -> assertTrue(ch.isHealthy()));
 	}
@@ -213,14 +213,12 @@ public class RegistryServiceImplTest {
 		when(signatureService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, true));
 		when(encryptionService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_ENCRYPTION_SERVICE_NAME, false));
 		when(mockDatabaseProvider.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRDRC_DATABASE_NAME, true));
-		ReflectionTestUtils.setField(registryServiceForHealth, "healthIndicators", Arrays.asList(signatureService, encryptionService, mockDatabaseProvider));
+		ReflectionTestUtils.setField(healthCheckService, "healthIndicators", Arrays.asList(signatureService, encryptionService, mockDatabaseProvider));
 		when(shard.getDatabaseProvider()).thenReturn(mockDatabaseProvider);
 		when(shardManager.getDefaultShard()).thenReturn(shard);
-		when(signatureService.getHealthInfo().isHealthy()).thenReturn(true);
-		ReflectionTestUtils.setField(registryServiceForHealth, "encryptionEnabled", true);
-		ReflectionTestUtils.setField(registryServiceForHealth, "signatureEnabled", true);
+		when(signatureService.getHealthInfo()).thenReturn(new ComponentHealthInfo(Constants.SUNBIRD_SIGNATURE_SERVICE_NAME, true));
 
-		HealthCheckResponse response = registryServiceForHealth.health(shardManager.getDefaultShard());
+		HealthCheckResponse response = healthCheckService.health(shardManager.getDefaultShard());
 		System.out.println(response.toString());
 
 		assertFalse(response.isHealthy());
@@ -237,7 +235,7 @@ public class RegistryServiceImplTest {
 
 	@Test
 	public void shouldAddSchemaToDefinitionManager() throws Exception {
-		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
+		int previousSize = definitionsManager.getAllKnownDefinitions().size();
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
 		ObjectNode object = JsonNodeFactory.instance.objectNode();
@@ -245,12 +243,12 @@ public class RegistryServiceImplTest {
 		object.put("status", SchemaStatus.PUBLISHED.toString());
 		schemaNode.set(Schema, object);
 		registryService.addEntity(shard, "", schemaNode, true);
-		assertEquals(3, definitionsManager.getAllKnownDefinitions().size());
+		assertEquals(previousSize + 1, definitionsManager.getAllKnownDefinitions().size());
 	}
 
 	@Test
 	public void shouldNotAddSchemaToDefinitionManagerForDraftStatus() throws Exception {
-		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
+		int previousSize = definitionsManager.getAllKnownDefinitions().size();
 		String schema = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("Student.json"), Charset.defaultCharset());
 		ObjectNode schemaNode = JsonNodeFactory.instance.objectNode();
 		ObjectNode object = JsonNodeFactory.instance.objectNode();
@@ -259,7 +257,7 @@ public class RegistryServiceImplTest {
 		assertNull(schemaNode.get("status"));
 		registryService.addEntity(shard, "", schemaNode, true);
 		assertNotNull(schemaNode.get(Schema).get("status"));
-		assertEquals(2, definitionsManager.getAllKnownDefinitions().size());
+		assertEquals(previousSize, definitionsManager.getAllKnownDefinitions().size());
 	}
 
 	@Test

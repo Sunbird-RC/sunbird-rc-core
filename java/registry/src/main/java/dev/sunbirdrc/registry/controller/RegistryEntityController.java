@@ -203,7 +203,7 @@ public class RegistryEntityController extends AbstractController {
             searchNode.set(ENTITY_TYPE, entity);
             checkEntityNameInDefinitionManager(entityName);
             if (definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableSearch()) {
-                JsonNode result = registryHelper.searchEntity(searchNode);
+                JsonNode result = registryHelper.searchEntity(searchNode, null);
                 watch.stop("RegistryController.searchEntity");
                 return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
             } else {

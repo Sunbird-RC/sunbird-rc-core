@@ -187,7 +187,7 @@ public class RegistryEntityControllerTest {
         when(registryHelper.revokeAnEntity(anyString(), anyString(), anyString(), any(JsonNode.class))).thenReturn(null);
         ResponseEntity<Object> response = registryEntityController.revokeACredential(request, "mockEntityName", "mockEntityId", headers);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString(), false);
+        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString(), booleanThat(v -> v == true));
     }
 
     @Test
@@ -200,7 +200,7 @@ public class RegistryEntityControllerTest {
         ResponseEntity<Object> response = registryEntityController.revokeACredential(request, "mockEntityName", "mockEntityId", headers);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         verify(registryHelper, never()).revokeAnEntity(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.any(JsonNode.class));
-        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString(), false);
+        verify(registryHelper, never()).revokeExistingCredentials(anyString(), anyString(), anyString(), anyString(), booleanThat(v -> v == true));
     }
 
     @Test
