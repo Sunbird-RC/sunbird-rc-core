@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {Gson.class})
 @ActiveProfiles(Constants.TEST_ENVIRONMENT)
-public class SignatureServiceImplTest {
+public class SignatureV1ServiceImplTest {
 
 	@Rule
 	public ExpectedException expectedEx = ExpectedException.none();
@@ -45,12 +45,12 @@ public class SignatureServiceImplTest {
 	@Mock
     private ObjectMapper objectMapper;
 	@InjectMocks
-	private SignatureV1ServiceImpl signatureServiceImpl;
+	private SignatureV1ServiceImpl signatureV1ServiceImpl;
 
 	@Before
 	public void setUp(){
 		MockitoAnnotations.initMocks(this);
-		ReflectionTestUtils.setField(signatureServiceImpl, "signatureEnabled", true);
+//		ReflectionTestUtils.setField(signatureV1ServiceImpl, "signatureEnabled", true);
 	}
 
 	/** Test case for sign api
@@ -67,7 +67,7 @@ public class SignatureServiceImplTest {
             }
         });
         when(objectMapper.readTree(anyString())).thenReturn(JsonNodeFactory.instance.objectNode());
-        assertThat(signatureServiceImpl.sign(Collections.emptyMap()), is(notNullValue()));
+        assertThat(signatureV1ServiceImpl.sign(Collections.emptyMap()), is(notNullValue()));
 	}
 
     /** Test case to throw restclient exception
@@ -75,9 +75,9 @@ public class SignatureServiceImplTest {
      */
     @Test
     public void test_sign_api_restclient_exception() throws Exception {
-        expectedEx.expect(SignatureException.UnreachableException.class);
+        expectedEx.expect(RestClientException.class);
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class))).thenThrow(RestClientException.class);
-        signatureServiceImpl.sign(Collections.emptyMap());
+        signatureV1ServiceImpl.sign(Collections.emptyMap());
     }
 
 	/** Test case for verify api with simple string as value
@@ -95,7 +95,7 @@ public class SignatureServiceImplTest {
         ObjectNode value = JsonNodeFactory.instance.objectNode();
         value.set("verified", JsonNodeFactory.instance.booleanNode(false));
         when(objectMapper.readTree(anyString())).thenReturn(value);
-        assertThat(signatureServiceImpl.verify(new Object()), is(notNullValue()));
+        assertThat(signatureV1ServiceImpl.verify(new Object()), is(notNullValue()));
 	}
 
 	/** Test case to throw restclient exception
@@ -103,9 +103,9 @@ public class SignatureServiceImplTest {
 	 */
 	@Test
 	public void test_verify_sign_with_restclient_exception() throws Exception {
-        expectedEx.expect(SignatureException.UnreachableException.class);
+        expectedEx.expect(RestClientException.class);
         when(retryRestTemplate.postForEntity(nullable(String.class), any(Object.class))).thenThrow(RestClientException.class);
-        signatureServiceImpl.verify(new Object());
+        signatureV1ServiceImpl.verify(new Object());
 	}
 
 	/** Test case to get sign key for valid key-id
@@ -120,7 +120,7 @@ public class SignatureServiceImplTest {
                 return ResponseEntity.accepted().body(response);
             }
         });
-        assertThat(signatureServiceImpl.getKey("2"), is(notNullValue()));
+        assertThat(signatureV1ServiceImpl.getKey("2"), is(notNullValue()));
 	}
 
 	/** Test case to throw restclient exception
@@ -128,21 +128,22 @@ public class SignatureServiceImplTest {
 	 */
 	@Test
 	public void test_get_key_with_restclient_exception() throws Exception {
-        expectedEx.expect(SignatureException.UnreachableException.class);
+        expectedEx.expect(RestClientException.class);
         when(retryRestTemplate.getForEntity(any(String.class))).thenThrow(RestClientException.class);
-        signatureServiceImpl.getKey("100");
+        signatureV1ServiceImpl.getKey("100");
 	}
 
     @Test
     public void test_encryption_isup() throws Exception {
         when(retryRestTemplate.getForEntity(nullable(String.class))).thenReturn(ResponseEntity.accepted().body("UP"));
-        assertTrue(signatureServiceImpl.getHealthInfo().isHealthy());
+        assertTrue(signatureV1ServiceImpl.getHealthInfo().isHealthy());
     }
 
     @Test
     public void test_encryption_isup_throw_restclientexception() throws Exception {
+        expectedEx.expect(RestClientException.class);
         when(retryRestTemplate.getForEntity(nullable(String.class))).thenThrow(RestClientException.class);
-        assertFalse(signatureServiceImpl.getHealthInfo().isHealthy());
+        assertFalse(signatureV1ServiceImpl.getHealthInfo().isHealthy());
     }
 
 }

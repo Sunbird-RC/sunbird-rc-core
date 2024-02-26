@@ -159,10 +159,10 @@ public class RegistryHelperTest {
 		resultNode = objectMapper.readTree(result);
 
 //        when(objectMapperMock.createArrayNode()).thenReturn(objectMapper.createArrayNode());
-		when(searchService.search(ArgumentMatchers.any(), "")).thenReturn(resultNode);
+		when(searchService.search(ArgumentMatchers.any(), anyString())).thenReturn(resultNode);
 		when(viewTemplateManager.getViewTemplate(ArgumentMatchers.any())).thenReturn(null);
 
-		JsonNode node = registryHelper.getAuditLog(jsonNode);
+		JsonNode node = registryHelper.getAuditLog(jsonNode, "");
 		assertEquals(jsonNode.get("Teacher").get(FILTERS).get("recordId").get("eq"), node.get("Teacher_Audit").get(0).get("recordId"));
 	}
 
@@ -493,7 +493,7 @@ public class RegistryHelperTest {
 		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
 		attestationArrayNodes.add(mockAttestationPolicy2);
 		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
-		when(searchService.search(any(), "")).thenReturn(attestationPolicyObject);
+		when(searchService.search(any(), anyString())).thenReturn(attestationPolicyObject);
 		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(studentJson);
 		registryHelper.entityStateHelper = mock(EntityStateHelper.class);
 		when(registryHelper.entityStateHelper.manageState(any(), any(), any(), any(), any())).thenReturn(studentJson);
@@ -526,7 +526,7 @@ public class RegistryHelperTest {
 		mockAttestationPolicy.set("name", JsonNodeFactory.instance.textNode("testAttestationPolicy"));
 		attestationArrayNodes.add(mockAttestationPolicy);
 		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
-		when(searchService.search(any(), "")).thenReturn(attestationPolicyObject);
+		when(searchService.search(any(), anyString())).thenReturn(attestationPolicyObject);
 		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(getMockStudent());
 		registryHelper.entityStateHelper = mock(EntityStateHelper.class);
 		when(registryHelper.entityStateHelper.manageState(any(), any(), any(), any(), any())).thenReturn(getMockStudent());
@@ -567,7 +567,7 @@ public class RegistryHelperTest {
 		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
 		attestationArrayNodes.add(mockAttestationPolicy2);
 		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
-		when(searchService.search(any(), "")).thenReturn(attestationPolicyObject);
+		when(searchService.search(any(), anyString())).thenReturn(attestationPolicyObject);
 		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(getMockStudent());
 		registryHelper.entityStateHelper = mock(EntityStateHelper.class);
 		when(registryHelper.entityStateHelper.manageState(any(), any(), any(), any(), any())).thenReturn(getMockStudent());
@@ -608,7 +608,7 @@ public class RegistryHelperTest {
 		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
 		attestationArrayNodes.add(mockAttestationPolicy2);
 		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
-		when(searchService.search(any(), "")).thenReturn(attestationPolicyObject);
+		when(searchService.search(any(), anyString())).thenReturn(attestationPolicyObject);
 		ObjectNode mockStudent = getMockStudent();
 		when(readService.getEntity(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(mockStudent);
 		registryHelper.entityStateHelper = mock(EntityStateHelper.class);
@@ -706,7 +706,7 @@ public class RegistryHelperTest {
 				"        }\n" +
 				"    ]\n" +
 				"}\n}");
-		when(searchService.search(any(), "")).thenReturn(attestationPolicyObject);
+		when(searchService.search(any(), anyString())).thenReturn(attestationPolicyObject);
 		when(dbConnectionInfoMgr.getUuidPropertyName()).thenReturn("osid");
 		ObjectNode student = new ObjectMapper().createObjectNode();
 		JsonNode studentNodeContent = new ObjectMapper().readTree("{\n" +
@@ -807,15 +807,15 @@ public class RegistryHelperTest {
 	@Test
 	public void shouldReturnTrueIFSignedDataIsRevoked() throws Exception {
 		JsonNode searchResponse = JsonNodeFactory.instance.objectNode().set(REVOKED_CREDENTIAL, JsonNodeFactory.instance.arrayNode().add(JsonNodeFactory.instance.objectNode().put("signedData", "xyz")));
-		when(searchService.search(any(), "")).thenReturn(searchResponse);
-		assertTrue(registryHelper.checkIfCredentialIsRevoked("signedData"));
+		when(searchService.search(any(), anyString())).thenReturn(searchResponse);
+		assertTrue(registryHelper.checkIfCredentialIsRevoked("signedData", ""));
 	}
 
 	@Test
 	public void shouldReturnFalseIfSignedDataIsNotRevoked() throws Exception {
 		JsonNode searchResponse = JsonNodeFactory.instance.objectNode().set(REVOKED_CREDENTIAL, JsonNodeFactory.instance.arrayNode());
-		when(searchService.search(any(), "")).thenReturn(searchResponse);
-		assertFalse(registryHelper.checkIfCredentialIsRevoked("signedData"));
+		when(searchService.search(any(), anyString())).thenReturn(searchResponse);
+		assertFalse(registryHelper.checkIfCredentialIsRevoked("signedData", ""));
 	}
 
 	@Test
@@ -929,11 +929,11 @@ public class RegistryHelperTest {
 		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
 		attestationArrayNodes.add(mockAttestationPolicy2);
 		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
-		when(searchService.search(any(), "")).thenReturn(attestationPolicyObject);
+		when(searchService.search(any(), anyString())).thenReturn(attestationPolicyObject);
 		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", false);
 		List<AttestationPolicy> policies = registryHelper.getAttestationPolicies("Student");
 		assertEquals(1, policies.size());
-		verify(searchService, never()).search(any(), "");
+		verify(searchService, never()).search(any(), anyString());
 	}
 
 	@Test
@@ -950,10 +950,10 @@ public class RegistryHelperTest {
 		mockAttestationPolicy2.set("attestorPlugin", JsonNodeFactory.instance.textNode("did:internal:ClaimPluginActor?entity=board-cbse"));
 		attestationArrayNodes.add(mockAttestationPolicy2);
 		attestationPolicyObject.set(ATTESTATION_POLICY, attestationArrayNodes);
-		when(searchService.search(any(), "")).thenReturn(attestationPolicyObject);
+		when(searchService.search(any(), anyString())).thenReturn(attestationPolicyObject);
 		ReflectionTestUtils.setField(registryHelper, "attestationPolicySearchEnabled", true);
 		List<AttestationPolicy> policies = registryHelper.getAttestationPolicies("Student");
 		assertEquals(3, policies.size());
-		verify(searchService, atMostOnce()).search(any(), "");
+		verify(searchService, atMostOnce()).search(any(), anyString());
 	}
 }

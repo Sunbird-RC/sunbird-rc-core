@@ -277,7 +277,7 @@ public class RegistryUtilsController {
 		if (auditEnabled && Constants.DATABASE.equals(auditStoreType)) {
 			try {
 				watch.start("RegistryController.audit");
-				JsonNode result = registryHelper.getAuditLog(payload);
+				JsonNode result = registryHelper.getAuditLog(payload, null);
 
 				response.setResult(result);
 				responseParams.setStatus(Response.Status.SUCCESSFUL);

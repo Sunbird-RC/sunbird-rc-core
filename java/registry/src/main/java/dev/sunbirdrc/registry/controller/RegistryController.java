@@ -56,7 +56,7 @@ public class RegistryController extends AbstractController {
 
         try {
             watch.start("RegistryController.searchEntity");
-            JsonNode result = registryHelper.searchEntity(payload);
+            JsonNode result = registryHelper.searchEntity(payload, null);
 
             response.setResult(result);
             responseParams.setStatus(Response.Status.SUCCESSFUL);

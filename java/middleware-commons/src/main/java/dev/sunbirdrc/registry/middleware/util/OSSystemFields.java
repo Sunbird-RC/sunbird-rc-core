@@ -47,14 +47,14 @@ public enum OSSystemFields {
     credentials {
         private String getCredentialPropertyName(String signatureProvider) {
             String signatureProperty = _osSignedData.name();
-            if(Objects.equals(signatureProvider, "dev.sunbirdrc.registry.service.impl.signature.SignatureV2Provider")) {
+            if(Objects.equals(signatureProvider, "dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl")) {
                 signatureProperty = _osCredentialId.name();
             }
             return signatureProperty;
         }
         @Override
         public void setCredential(String signatureProvider, JsonNode node, Object signedCredential) {
-            if(Objects.equals(signatureProvider, "dev.sunbirdrc.registry.service.impl.signature.SignatureV2Provider")) {
+            if(Objects.equals(signatureProvider, "dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl")) {
                 JSONUtil.addField((ObjectNode) node, String.valueOf(_osCredentialId), ((ObjectNode) signedCredential).get("id").asText());
             } else {
                 JSONUtil.addField((ObjectNode) node, String.valueOf(_osSignedData), signedCredential.toString());

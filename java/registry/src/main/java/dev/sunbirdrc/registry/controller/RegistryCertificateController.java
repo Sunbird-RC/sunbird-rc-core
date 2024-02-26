@@ -23,7 +23,7 @@ public class RegistryCertificateController {
 
     private static final String VERIFIED = "verified";
     private static final String RESULTS = "results";
-    @Autowired
+    @Autowired(required = false)
     private SignatureHelper signatureHelper;
     @Autowired
     private RegistryHelper registryHelper;
@@ -31,7 +31,7 @@ public class RegistryCertificateController {
     @RequestMapping(value = "/api/v1/verify", method = RequestMethod.POST)
     public ResponseEntity<Object> verifyCertificate(@RequestBody VerificationRequest verificationRequest) {
         try {
-            if (registryHelper.checkIfCredentialIsRevoked(verificationRequest.getSignedCredentials().toString())) {
+            if (registryHelper.checkIfCredentialIsRevoked(verificationRequest.getSignedCredentials().toString(), null)) {
                 return new ResponseEntity<>(JsonNodeFactory.instance.objectNode().put(VERIFIED, false)
                         .put(RESULTS, "Credential is revoked"), HttpStatus.BAD_REQUEST);
             } else {
