@@ -24,6 +24,7 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.service.ICertificateService;
+import dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
@@ -432,10 +433,13 @@ public class RegistryEntityController extends AbstractController {
 
     private JsonNode getAttestationSignedData(String attestationId, JsonNode node) throws AttestationNotFoundException, JsonProcessingException {
         JsonNode attestationNode = getAttestationNode(attestationId, node);
-        if (attestationNode.get(OSSystemFields._osAttestedData.name()) == null)
+        if (!OSSystemFields.attestation.hasCredential(GenericConfiguration.getSignatureProvider(), attestationNode))
             throw new AttestationNotFoundException();
-        attestationNode = objectMapper.readTree(attestationNode.get(OSSystemFields._osAttestedData.name()).asText());
-        return attestationNode;
+        JsonNode signed = OSSystemFields.attestation.getCredential(GenericConfiguration.getSignatureProvider(), attestationNode);
+        if(GenericConfiguration.getSignatureProvider().equals(SignatureV2ServiceImpl.class.getName())) {
+            return signed;
+        }
+        return objectMapper.readTree(signed.asText());
     }
 
     @Nullable
@@ -449,9 +453,6 @@ public class RegistryEntityController extends AbstractController {
             }
         }
         assert attestationNode != null;
-        if (attestationNode.get(OSSystemFields._osAttestedData.name()) == null)
-            throw new AttestationNotFoundException();
-        attestationNode = objectMapper.readTree(attestationNode.get(OSSystemFields._osAttestedData.name()).asText());
         return attestationNode;
     }
 
@@ -835,7 +836,7 @@ public class RegistryEntityController extends AbstractController {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
             if (result.get(entityName).size() > 0) {
                 Object credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
-                Object signedCredentials = registryHelper.getSignedDoc(result.get(entityName).get(0), credentialTemplate);
+                Object signedCredentials = registryHelper.getSignedDoc(entityName, result.get(entityName).get(0), credentialTemplate);
                 return new ResponseEntity<>(signedCredentials, HttpStatus.OK);
             } else {
                 responseParams.setErrmsg("Entity not found");

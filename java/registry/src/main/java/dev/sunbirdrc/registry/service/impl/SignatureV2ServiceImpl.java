@@ -76,6 +76,7 @@ public class SignatureV2ServiceImpl implements SignatureService, ICertificateSer
         try {
             return this.issueCredential(title, credentialTemplate, data);
         } catch (Exception e) {
+            logger.error("Exception occurred while issuing a credential for {}: {}", title, ExceptionUtils.getStackTrace(e));
             throw new SignatureException.CreationException(e.getMessage());
         }
     }

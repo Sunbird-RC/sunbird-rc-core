@@ -57,6 +57,7 @@ public class CredentialSchemaService implements HealthIndicator {
     private RetryRestTemplate retryRestTemplate;
 
     public JsonNode convertCredentialTemplateToSchema(String title, Object credTemplate) throws IOException {
+        logger.debug("Converting credential template to credential schema for {}", title);
         String name = "Proof of " + title + " Credential";
         String schemaId = "Proof-of-" + title + "-Credential";
         String templateJsonString = null;
@@ -77,27 +78,37 @@ public class CredentialSchemaService implements HealthIndicator {
             value.put("type", "string");
             ((ObjectNode) schemaProperties).set(key, value);
         });
+        logger.debug("Successfully converted credential template to credential schema for {}", title);
         return credSchema;
     }
 
     public void ensureCredentialSchemas() {
-        this.definitionsManager.getAllDefinitions()
-                .forEach(definition -> {
+        Map<String, Object> credTemplates = new HashMap<>();
+        this.definitionsManager.getAllDefinitions().forEach(definition -> {
+            Object credTemplate = definition.getOsSchemaConfiguration().getCredentialTemplate();
+            if(credTemplate != null) credTemplates.put(definition.getTitle(), credTemplate);
+            definition.getOsSchemaConfiguration().getAttestationPolicies().forEach(attestationPolicy -> {
+                if(attestationPolicy.getCredentialTemplate() != null) {
+                    String name = String.format("%s_%s", definition.getTitle(), attestationPolicy.getName());
+                    credTemplates.put(name, attestationPolicy.getCredentialTemplate());
+                }
+            });
+        });
+        credTemplates.forEach((key, value) -> {
                     try {
-                        Object credTemplate = definition.getOsSchemaConfiguration().getCredentialTemplate();
-                        if(credTemplate != null) {
-                            this.ensureCredentialSchema(
-                                    definition.getTitle(),
-                                    credTemplate, null);
-                            logger.info("Ensured credential schema for definition: {}", definition.getTitle());
-                        }
+                        this.ensureCredentialSchema(
+                                key,
+                                value, null);
+                        logger.info("Ensured credential schema for : {}", key);
                     } catch (Exception e) {
+                        logger.error("Exception occurred while ensuring credential Schema for {} : {}", key, ExceptionUtils.getStackTrace(e));
                         throw new RuntimeException(e);
                     }
                 });
     }
 
     public void ensureCredentialSchema(String title, Object credTemplate, String status) throws Exception {
+        logger.debug("Ensuring credential schema for {}", title);
         JsonNode schema = convertCredentialTemplateToSchema(title, credTemplate);
         ObjectNode prevSchema = (ObjectNode) getLatestSchemaByTags(Collections.singletonList(title));
         String author = DIDService.ensureDidForName(authorName, authorDidMethod);
@@ -106,6 +117,7 @@ public class CredentialSchemaService implements HealthIndicator {
         ((ObjectNode) schema).set("authored", JsonNodeFactory.instance.textNode(authored));
         if (prevSchema == null) {
             createSchema(title, schema, status);
+            logger.debug("Created credential schema for {}", title);
         } else {
             ObjectNode prevProps = (ObjectNode) prevSchema.get("schema").get("schema").get("properties");
             ObjectNode currProps = (ObjectNode) schema.get("schema").get("properties");
@@ -118,6 +130,7 @@ public class CredentialSchemaService implements HealthIndicator {
             if(updateRequired.get()) {
                 if(status == null) status = prevSchema.get("status").asText();
                 updateSchema(did, version, schema, status);
+                logger.debug("Updated credential schema for {}", title);
             }
         }
     }
