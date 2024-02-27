@@ -1,7 +1,7 @@
 #SOURCES = $(wildcard java/**/*.java)
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 SOURCES := $(call rwildcard,java/,*.java)
-RELEASE_VERSION = v1.0.0
+RELEASE_VERSION = v2.0.0-rc1
 IMAGES := ghcr.io/sunbird-rc/sunbird-rc-core ghcr.io/sunbird-rc/sunbird-rc-nginx ghcr.io/sunbird-rc/sunbird-rc-context-proxy-service \
 			ghcr.io/sunbird-rc/sunbird-rc-public-key-service ghcr.io/sunbird-rc/sunbird-rc-keycloak ghcr.io/sunbird-rc/sunbird-rc-certificate-api \
 			ghcr.io/sunbird-rc/sunbird-rc-certificate-signer ghcr.io/sunbird-rc/sunbird-rc-notification-service ghcr.io/sunbird-rc/sunbird-rc-claim-ms \
@@ -13,15 +13,8 @@ build: java/registry/target/registry.jar
 	rm -rf java/claim/target/*.jar
 	cd target && rm -rf * && jar xvf ../java/registry/target/registry.jar && cp ../java/Dockerfile ./ && docker build -t ghcr.io/sunbird-rc/sunbird-rc-core .
 	make -C java/claim
-	make -C services/certificate-api docker
-	make -C services/certificate-signer docker
 	make -C services/notification-service docker
-	make -C deps/keycloak build
-	make -C services/public-key-service docker
-	make -C services/context-proxy-service docker
 	make -C services/metrics docker
-	make -C services/digilocker-certificate-api docker
-	make -C services/bulk_issuance docker
 	make -C services/id-gen-service docker
 	make -C services/encryption-service docker
 	make -C services/identity-service/ docker
