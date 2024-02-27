@@ -88,5 +88,6 @@ out
 
 .ipynb_checkpoints
 db-data*
+vault-data
 es-data*
 keycloak-mobile*.jar

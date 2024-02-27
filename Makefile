@@ -84,3 +84,6 @@ release: test
     	  docker push $$image:$(RELEASE_VERSION);\
       	done
 	@cd tools/cli/ && npm publish
+
+compose-init:
+	bash setup_vault.sh docker-compose.yml vault
