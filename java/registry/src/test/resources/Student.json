@@ -89,7 +89,7 @@
             },
             "address": {
               "$id": "#/properties/address",
-              "$ref": "#/definitions/Address",
+              "type": "string",
               "title": "Address"
             }
           }
@@ -113,10 +113,7 @@
     "internalFields": [
       "$.contactDetails.email",
       "$.contactDetails.mobile",
-      "$.contactDetails.address.plot",
-      "$.contactDetails.address.street",
-      "$.contactDetails.address.landmark",
-      "$.contactDetails.address.locality"
+      "$.contactDetails.address"
     ],
     "signedFields": [],
     "indexFields": ["studentName"],

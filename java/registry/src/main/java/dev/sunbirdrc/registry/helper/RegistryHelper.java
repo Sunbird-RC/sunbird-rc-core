@@ -32,6 +32,7 @@ import dev.sunbirdrc.registry.model.EventType;
 import dev.sunbirdrc.registry.model.attestation.EntityPropertyURI;
 import dev.sunbirdrc.registry.model.dto.AttestationRequest;
 import dev.sunbirdrc.registry.service.*;
+import dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl;
 import dev.sunbirdrc.registry.sink.shard.Shard;
 import dev.sunbirdrc.registry.sink.shard.ShardManager;
 import dev.sunbirdrc.registry.util.*;
@@ -604,10 +605,15 @@ public class RegistryHelper {
                     if (!signatureEnabled) {
                         throw new UnreachableException("Signature service not enabled!");
                     }
-                    Object signedData = getSignedDoc(response, credentialTemplate);
+                    String title = String.format("%s_%s", pluginResponseMessage.getSourceEntity(), pluginResponseMessage.getPolicyName());
+                    Object signedData = getSignedDoc(title, response, credentialTemplate);
+                    String value = signedData.toString();
+                    if(GenericConfiguration.getSignatureProvider().equals(SignatureV2ServiceImpl.class.getName())) {
+                        value = ((ObjectNode) signedData).get("id").asText();
+                    }
                     metaData.put(
                             ATTESTED_DATA,
-                            signedData.toString()
+                            value
                     );
                 } else {
                     metaData.put(
@@ -1032,9 +1038,10 @@ public class RegistryHelper {
         }
     }
 
-    public Object getSignedDoc(JsonNode result, Object credentialTemplate) throws
+    public Object getSignedDoc(String title, JsonNode result, Object credentialTemplate) throws
             SignatureException.CreationException, SignatureException.UnreachableException {
         Map<String, Object> requestBodyMap = new HashMap<>();
+        requestBodyMap.put("title", title);
         requestBodyMap.put("data", result);
         requestBodyMap.put(CREDENTIAL_TEMPLATE, credentialTemplate);
         return signatureHelper.sign(requestBodyMap);
@@ -1049,7 +1056,7 @@ public class RegistryHelper {
         if (credentialTemplate != null) {
             ObjectNode updatedNode = (ObjectNode) readEntity(userId, entityName, entityId, false, null, false)
                     .get(entityName);
-            Object signedCredentials = getSignedDoc(updatedNode, credentialTemplate);
+            Object signedCredentials = getSignedDoc(entityId, updatedNode, credentialTemplate);
             OSSystemFields.credentials.setCredential(GenericConfiguration.getSignatureProvider(), updatedNode, signedCredentials);
             ObjectNode updatedNodeParent = JsonNodeFactory.instance.objectNode();
             updatedNodeParent.set(entityName, updatedNode);

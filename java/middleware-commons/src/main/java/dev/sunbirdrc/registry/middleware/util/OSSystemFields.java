@@ -74,6 +74,36 @@ public enum OSSystemFields {
             return node.get(property) != null && !node.get(property).asText().isEmpty();
         }
     },
+    attestation {
+        private String getCredentialPropertyName(String signatureProvider) {
+            String signatureProperty = _osAttestedData.name();
+            if(Objects.equals(signatureProvider, "dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl")) {
+                signatureProperty = _osAttestedData.name();
+            }
+            return signatureProperty;
+        }
+        @Override
+        public void setCredential(String signatureProvider, JsonNode node, Object signedCredential) {
+            if(Objects.equals(signatureProvider, "dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl")) {
+                JSONUtil.addField((ObjectNode) node, String.valueOf(_osAttestedData), ((ObjectNode) signedCredential).get("id").asText());
+            } else {
+                JSONUtil.addField((ObjectNode) node, String.valueOf(_osAttestedData), signedCredential.toString());
+            }
+        }
+        @Override
+        public void removeCredential(String signatureProvider, JsonNode node) {
+            ((ObjectNode) node).put(getCredentialPropertyName(signatureProvider), "");
+        }
+        @Override
+        public JsonNode getCredential(String signatureProvider, JsonNode node) {
+            return node.get(getCredentialPropertyName(signatureProvider));
+        }
+        @Override
+        public boolean hasCredential(String signatureProvider, JsonNode node) {
+            String property =  getCredentialPropertyName(signatureProvider);
+            return node.get(property) != null && !node.get(property).asText().isEmpty();
+        }
+    },
     _osState, _osClaimId, _osAttestedData, _osSignedData, _osCredentialId;
 
     public void createdBy(JsonNode node, String userId){};

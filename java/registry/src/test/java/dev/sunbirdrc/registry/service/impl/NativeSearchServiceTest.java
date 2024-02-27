@@ -24,6 +24,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.keycloak.common.util.RandomString;
+import org.kie.api.runtime.manager.audit.AuditService;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -51,6 +53,8 @@ public class NativeSearchServiceTest {
 	private DBConnectionInfoMgr dbConnectionInfoMgr;
 	@Autowired
 	private ShardManager shardManager;
+	@Mock
+	private AuditService auditService;
 
 	private NativeSearchService nativeSearchService;
 
