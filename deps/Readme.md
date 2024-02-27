@@ -1,0 +1,1 @@
+Keycloak moved to https://github.com/Sunbird-RC/sunbird-rc-keycloak

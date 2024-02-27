@@ -1,0 +1,72 @@
+version: '3'
+services:
+  vault-test:
+    image: vault:1.13.3
+    restart: always
+    volumes:
+      - ./vault/vault.json:/vault/config/vault.json
+    environment:
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_API_ADDR=http://0.0.0.0:8200
+      - VAULT_ADDRESS=http://0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    command: vault server -config=/vault/config/vault.json
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider http://127.0.0.1:8200/v1/sys/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      test:
+
+  db-test:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      test:
+
+  identity-service-test:
+    image: identity-test
+    build: 
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on: 
+      db-test:
+        condition: service_healthy
+      vault-test:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@db-test:5432/postgres"
+      VAULT_ADDR: "http://vault-test:8200"
+      # This will be replaced automatically on initialisation 
+      # make compose-init will call setup_vault.sh
+      VAULT_TOKEN: ""
+      VAULT_BASE_URL: "http://vault-test:8200/v1"
+      VAULT_ROOT_PATH: "http://vault-test:8200/v1/kv"
+      VAULT_TIMEOUT: 5000
+      VAULT_PROXY: 'false'
+      SIGNING_ALGORITHM: "Ed25519Signature2020"
+      JWKS_URI: ""
+      ENABLE_AUTH: "false"
+      WEB_DID_BASE_URL: "https://example.com/identity"
+    networks:
+      test:
+    healthcheck:
+      test:
+        [ "CMD-SHELL", "curl -f http://localhost:3332/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  test:
+  

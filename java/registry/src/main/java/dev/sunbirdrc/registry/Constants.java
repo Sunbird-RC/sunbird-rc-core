@@ -20,6 +20,7 @@ public class Constants {
     public static final String REVOKED_CREDENTIAL = "RevokedCredential";
     public static final String Schema = "Schema";
     public static final String Template = "template";
+    public static final String TemplateId = "template-id";
     public static final String TemplateKey = "template-key";
     public final static String TITLE = "title";
     public final static String PATH = "path";

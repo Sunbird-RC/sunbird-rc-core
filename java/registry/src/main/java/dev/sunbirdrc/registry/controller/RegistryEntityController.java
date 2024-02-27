@@ -9,6 +9,7 @@ import dev.sunbirdrc.pojos.AsyncRequest;
 import dev.sunbirdrc.pojos.PluginResponseMessage;
 import dev.sunbirdrc.pojos.Response;
 import dev.sunbirdrc.pojos.ResponseParams;
+import dev.sunbirdrc.registry.config.GenericConfiguration;
 import dev.sunbirdrc.registry.entities.AttestationPolicy;
 import dev.sunbirdrc.registry.authorization.pojos.UserToken;
 import dev.sunbirdrc.registry.exception.AttestationNotFoundException;
@@ -23,6 +24,7 @@ import dev.sunbirdrc.registry.middleware.util.JSONUtil;
 import dev.sunbirdrc.registry.middleware.util.OSSystemFields;
 import dev.sunbirdrc.registry.service.FileStorageService;
 import dev.sunbirdrc.registry.service.ICertificateService;
+import dev.sunbirdrc.registry.service.impl.SignatureV2ServiceImpl;
 import dev.sunbirdrc.registry.transform.Configuration;
 import dev.sunbirdrc.registry.transform.Data;
 import dev.sunbirdrc.registry.transform.ITransformer;
@@ -100,7 +102,7 @@ public class RegistryEntityController extends AbstractController {
             checkEntityNameInDefinitionManager(entityName);
             registryHelper.authorizeInviteEntity(request, entityName);
             watch.start(TAG);
-            String entityId = registryHelper.inviteEntity(newRootNode, "");
+            String entityId = registryHelper.inviteEntity(newRootNode, "", true);
             registryHelper.autoRaiseClaim(entityName, entityId, "", null, newRootNode, dev.sunbirdrc.registry.Constants.USER_ANONYMOUS);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), entityId);
@@ -167,15 +169,11 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.delete " + entityName;
             watch.start(tag);
             JsonNode jsonNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
-            if (jsonNode != null && jsonNode.has(entityName) && jsonNode.get(entityName).has(OSSystemFields._osSignedData.name())) {
-                String signedData = jsonNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText();
-                registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
+            if (jsonNode != null && jsonNode.has(entityName) && OSSystemFields.credentials.hasCredential(GenericConfiguration.getSignatureProvider(), jsonNode.get(entityName))) {
+                String signedData = OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), jsonNode.get(entityName)).asText();
+                registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData, true);
             }
             Vertex deletedEntity = registryHelper.deleteEntity(entityName, entityId, userId);
-            if (deletedEntity != null && deletedEntity.keys().contains(OSSystemFields._osSignedData.name())) {
-                deletedEntity.property(OSSystemFields._osSignedData.name()).toString();
-
-            }
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
             watch.stop(tag);
@@ -206,7 +204,7 @@ public class RegistryEntityController extends AbstractController {
             searchNode.set(ENTITY_TYPE, entity);
             checkEntityNameInDefinitionManager(entityName);
             if (definitionsManager.getDefinition(entityName).getOsSchemaConfiguration().getEnableSearch()) {
-                JsonNode result = registryHelper.searchEntity(searchNode);
+                JsonNode result = registryHelper.searchEntity(searchNode, null);
                 watch.stop("RegistryController.searchEntity");
                 return new ResponseEntity<>(result.get(entityName), HttpStatus.OK);
             } else {
@@ -259,11 +257,12 @@ public class RegistryEntityController extends AbstractController {
             JsonNode existingNode = registryHelper.readEntity(newRootNode, userId);
             String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
             registryHelper.updateEntityAndState(existingNode, newRootNode, userId);
-            if (existingNode.get(entityName).has(OSSystemFields._osSignedData.name())) {
+            if (OSSystemFields.credentials.hasCredential(GenericConfiguration.getSignatureProvider(), existingNode.get(entityName))) {
                 registryHelper.revokeExistingCredentials(entityName, entityId, userId,
-                        existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
+                        OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), existingNode.get(entityName)).asText(), true);
             }
             registryHelper.invalidateAttestation(entityName, entityId, userId, null);
+            existingNode = registryHelper.readEntity(newRootNode, userId);
             registryHelper.autoRaiseClaim(entityName, entityId, userId, existingNode, newRootNode, emailId);
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
@@ -306,7 +305,7 @@ public class RegistryEntityController extends AbstractController {
         try {
             checkEntityNameInDefinitionManager(entityName);
             String userId = registryHelper.authorizeManageEntity(request, entityName);
-            String label = registryHelper.addEntity(newRootNode, userId);
+            String label = registryHelper.addEntity(newRootNode, userId, true);
             String emailId = registryHelper.fetchEmailIdFromToken(request, entityName);
             Map<String, String> resultMap = new HashMap<>();
             if (asyncRequest.isEnabled()) {
@@ -364,9 +363,9 @@ public class RegistryEntityController extends AbstractController {
             requestBody = registryHelper.removeFormatAttr(requestBody);
             JsonNode existingNode = registryHelper.readEntity(userId, entityName, entityId, false, null, false);
             registryHelper.updateEntityProperty(entityName, entityId, requestBody, request, existingNode);
-            if (existingNode.get(entityName).has(OSSystemFields._osSignedData.name())) {
+            if (OSSystemFields.credentials.hasCredential(GenericConfiguration.getSignatureProvider(), existingNode.get(entityName))) {
                 registryHelper.revokeExistingCredentials(entityName, entityId, userId,
-                        existingNode.get(entityName).get(OSSystemFields._osSignedData.name()).asText(""));
+                        OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), existingNode.get(entityName)).asText(), true);
             }
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);
@@ -434,10 +433,13 @@ public class RegistryEntityController extends AbstractController {
 
     private JsonNode getAttestationSignedData(String attestationId, JsonNode node) throws AttestationNotFoundException, JsonProcessingException {
         JsonNode attestationNode = getAttestationNode(attestationId, node);
-        if (attestationNode.get(OSSystemFields._osAttestedData.name()) == null)
+        if (!OSSystemFields.attestation.hasCredential(GenericConfiguration.getSignatureProvider(), attestationNode))
             throw new AttestationNotFoundException();
-        attestationNode = objectMapper.readTree(attestationNode.get(OSSystemFields._osAttestedData.name()).asText());
-        return attestationNode;
+        JsonNode signed = OSSystemFields.attestation.getCredential(GenericConfiguration.getSignatureProvider(), attestationNode);
+        if(GenericConfiguration.getSignatureProvider().equals(SignatureV2ServiceImpl.class.getName())) {
+            return signed;
+        }
+        return objectMapper.readTree(signed.asText());
     }
 
     @Nullable
@@ -451,9 +453,6 @@ public class RegistryEntityController extends AbstractController {
             }
         }
         assert attestationNode != null;
-        if (attestationNode.get(OSSystemFields._osAttestedData.name()) == null)
-            throw new AttestationNotFoundException();
-        attestationNode = objectMapper.readTree(attestationNode.get(OSSystemFields._osAttestedData.name()).asText());
         return attestationNode;
     }
 
@@ -544,12 +543,13 @@ public class RegistryEntityController extends AbstractController {
             JsonNode node = registryHelper.readEntity(readerUserId, entityName, entityId, false,
                             viewTemplateManager.getViewTemplateById(viewTemplateId), false)
                     .get(entityName);
-            JsonNode signedNode = objectMapper.readTree(node.get(OSSystemFields._osSignedData.name()).asText());
-            return new ResponseEntity<>(certificateService.getCertificate(signedNode,
+            JsonNode credentialData = OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), node);
+            return new ResponseEntity<>(certificateService.getCertificate(credentialData,
                     entityName,
                     entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
                     getTemplateUrlFromRequest(request, entityName),
+                    request.getHeader(TemplateId),
                     JSONUtil.removeNodesByPath(node, definitionsManager.getExcludingFieldsForEntity(entityName))
             ), HttpStatus.OK);
         } catch (Exception e) {
@@ -623,8 +623,10 @@ public class RegistryEntityController extends AbstractController {
             if (requireLDResponse) {
                 addJsonLDSpec(node);
             } else if (requireVCResponse) {
-                String vcString = node.get(OSSystemFields._osSignedData.name()).textValue();
-                return new ResponseEntity<>(vcString, HttpStatus.OK);
+                // TODO: return credentials from credential service
+                JsonNode vcString = OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), node);
+                Object res = certificateService.getCertificate(vcString, entityName, entityId, MediaType.APPLICATION_JSON_VALUE.toString(), null, null, node);
+                return new ResponseEntity<>(res, HttpStatus.OK);
             }
             return new ResponseEntity<>(node, HttpStatus.OK);
 
@@ -834,7 +836,7 @@ public class RegistryEntityController extends AbstractController {
             JsonNode result = registryHelper.getRequestedUserDetails(request, entityName);
             if (result.get(entityName).size() > 0) {
                 Object credentialTemplate = definitionsManager.getCredentialTemplate(entityName);
-                Object signedCredentials = registryHelper.getSignedDoc(result.get(entityName).get(0), credentialTemplate);
+                Object signedCredentials = registryHelper.getSignedDoc(entityName, result.get(entityName).get(0), credentialTemplate);
                 return new ResponseEntity<>(signedCredentials, HttpStatus.OK);
             } else {
                 responseParams.setErrmsg("Entity not found");
@@ -873,6 +875,7 @@ public class RegistryEntityController extends AbstractController {
                     entityId,
                     request.getHeader(HttpHeaders.ACCEPT),
                     getTemplateUrlFromRequest(request, entityName),
+                    request.getHeader(TemplateId),
                     getAttestationNode(attestationId, node)
             ), HttpStatus.OK);
 
@@ -915,13 +918,13 @@ public class RegistryEntityController extends AbstractController {
             String tag = "RegistryController.revokeAnExistingCredential " + entityName;
             watch.start(tag);
             JsonNode existingEntityNode = getEntityJsonNode(entityName, entityId,false, userId, null);
-            String signedData = existingEntityNode.get(OSSystemFields._osSignedData.name()).asText();
+            String signedData = OSSystemFields.credentials.getCredential(GenericConfiguration.getSignatureProvider(), existingEntityNode).asText();
             if (signedData.equals(new String()) || signedData.equals(null)) {
                 throw new RecordNotFoundException("Credential is already revoked");
             }
             JsonNode revokedEntity = registryHelper.revokeAnEntity( entityName ,entityId, userId, existingEntityNode);
             if (revokedEntity != null) {
-                registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData);
+                registryHelper.revokeExistingCredentials(entityName, entityId, userId, signedData, true);
             }
             responseParams.setErrmsg("");
             responseParams.setStatus(Response.Status.SUCCESSFUL);

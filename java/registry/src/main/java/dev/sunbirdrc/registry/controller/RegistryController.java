@@ -56,7 +56,7 @@ public class RegistryController extends AbstractController {
 
         try {
             watch.start("RegistryController.searchEntity");
-            JsonNode result = registryHelper.searchEntity(payload);
+            JsonNode result = registryHelper.searchEntity(payload, null);
 
             response.setResult(result);
             responseParams.setStatus(Response.Status.SUCCESSFUL);
@@ -106,7 +106,7 @@ public class RegistryController extends AbstractController {
         JsonNode rootNode = apiMessage.getRequest().getRequestMapNode();
 
         try {
-            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID());
+            String label = registryHelper.addEntity(rootNode, apiMessage.getUserID(), true);
             Map resultMap = new HashMap();
             resultMap.put(dbConnectionInfoMgr.getUuidPropertyName(), label);
 
