@@ -353,6 +353,7 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
+        <!-- Include this dependency for MSSQL Server support -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
@@ -369,6 +370,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- End dependency for MSSQL Server support -->
         <dependency>
             <groupId>com.steelbridgelabs.oss</groupId>
             <artifactId>neo4j-gremlin-bolt</artifactId>
