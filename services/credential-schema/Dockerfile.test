@@ -1,9 +1,11 @@
-FROM node:16 AS install
+FROM node:20.11.0-alpine3.18 AS install
+RUN apk add openssl curl
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn
 
-FROM node:16 as test
+FROM node:20.11.0-alpine3.18 as test
+RUN apk add openssl curl
 WORKDIR /app
 COPY prisma ./prisma/
 COPY --from=install /app/node_modules ./node_modules
